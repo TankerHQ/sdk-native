@@ -10,7 +10,7 @@
 
 #include <doctest.h>
 #include <mockaron/mockaron.hpp>
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 namespace Tanker
 {

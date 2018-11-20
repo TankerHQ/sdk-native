@@ -17,7 +17,7 @@
 
 #include <mockaron/mockaron.hpp>
 
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 #include <Helpers/Buffers.hpp>
 

@@ -3,7 +3,7 @@
 #include <Tanker/AConnection.hpp>
 
 #include <nlohmann/json.hpp>
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 #include <map>
 

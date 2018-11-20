@@ -4,7 +4,7 @@
 
 #include <mockaron/mockaron.hpp>
 
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 class UserAccessorMock : public mockaron::mock_impl
 {
