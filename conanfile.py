@@ -50,7 +50,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
-        self.requires("mockaron/0.1@tanker/testing", private=private)
+        self.requires("mockaron/0.2@tanker/testing", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
         self.requires("socket.io-client-cpp/1.6.1@tanker/testing", private=private)
         self.requires("sqlpp11/0.57@tanker/testing", private=private)
