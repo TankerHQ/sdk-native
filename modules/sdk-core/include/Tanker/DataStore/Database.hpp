@@ -9,8 +9,11 @@
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 
-#include <optional.hpp>
+#include <sqlpp11/sqlite3/connection.h>
+
 #include <tconcurrent/coroutine.hpp>
+
+#include <optional.hpp>
 
 #include <memory>
 #include <stdexcept>
@@ -45,7 +48,7 @@ public:
                     nonstd::optional<Crypto::SymmetricKey> const& userSecret,
                     bool exclusive);
 
-  Connection* getConnection();
+  tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f);
 
   tc::cotask<void> putUserPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
@@ -103,10 +106,16 @@ public:
 private:
   ConnPtr _db;
 
+  std::vector<sqlpp::transaction_t<sqlpp::sqlite3::connection>> _transactions;
+
   bool isMigrationNeeded();
   void flushAllCaches();
   tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
                                    Crypto::Mac const& resourceId);
+
+  tc::cotask<void> startTransaction();
+  tc::cotask<void> commitTransaction();
+  tc::cotask<void> rollbackTransaction();
 };
 
 using DatabasePtr = std::unique_ptr<Database>;

@@ -190,9 +190,58 @@ void Database::flushAllCaches()
   flushTable(GroupsTable{});
 }
 
-Connection* Database::getConnection()
+tc::cotask<void> Database::inTransaction(
+    std::function<tc::cotask<void>()> const& f)
 {
-  return _db.get();
+  TC_AWAIT(startTransaction());
+  bool transaction = true;
+  try
+  {
+    TC_AWAIT(f());
+    transaction = false;
+    TC_AWAIT(commitTransaction());
+  }
+  catch (...)
+  {
+    if (transaction)
+    {
+      try
+      {
+        TC_AWAIT(rollbackTransaction());
+      }
+      catch (std::exception const& e)
+      {
+        TERROR("Failed to rollback transaction: {}", e.what());
+      }
+      catch (...)
+      {
+        TERROR("Failed to rollback transaction: unknown error");
+      }
+    }
+    throw;
+  }
+}
+
+tc::cotask<void> Database::startTransaction()
+{
+  _transactions.push_back(start_transaction(*_db));
+  TC_RETURN();
+}
+
+tc::cotask<void> Database::commitTransaction()
+{
+  assert(!_transactions.empty());
+  auto t = std::move(_transactions.back());
+  _transactions.pop_back();
+  t.commit();
+  TC_RETURN();
+}
+
+tc::cotask<void> Database::rollbackTransaction()
+{
+  assert(!_transactions.empty());
+  _transactions.pop_back();
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::putUserPrivateKey(
@@ -394,7 +443,8 @@ tc::cotask<void> Database::putContact(
   }
   else
   {
-    // We do not want to delete a user key, so use insert_into, not insert_or_*
+    // We do not want to delete a user key, so use insert_into, not
+    // insert_or_*
     (*_db)(insert_into(tab).set(tab.user_id = userId.base(),
                                 tab.public_encryption_key = sqlpp::null));
   }
