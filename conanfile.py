@@ -77,6 +77,7 @@ class TankerConan(ConanFile):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.0.1@tanker/testing")
+            self.build_requires("doctest-async/2.0.7@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
 
     def build(self):

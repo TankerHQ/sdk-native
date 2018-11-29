@@ -1,4 +1,3 @@
-
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Test/Functional/Trustchain.hpp>

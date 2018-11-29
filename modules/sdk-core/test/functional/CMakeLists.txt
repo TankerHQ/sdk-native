@@ -10,7 +10,8 @@ add_executable(test_functional
 target_link_libraries(test_functional
   tankercore_test
   tankertesthelpers
-  CONAN_PKG::doctest
+  tankercore
+  CONAN_PKG::doctest-async
 )
 
 target_compile_definitions(test_functional PRIVATE FMT_STRING_ALIAS)

@@ -19,6 +19,9 @@ int main(int argc, char* argv[])
   Tanker::TimeoutTerminate tt(5min);
   doctest::Context context(argc, argv);
 
+  // We run the tests on a different thread than the default thread to be closer
+  // to real use-cases. We can't run them on the main thread because we need
+  // coroutines
   tc::thread_pool tp;
   tp.start(1);
 
@@ -28,7 +31,7 @@ int main(int argc, char* argv[])
                                auto& trustchain =
                                    Tanker::Test::Trustchain::getInstance();
                                TC_AWAIT(trustchain.init());
-                               auto const ret = context.run();
+                               auto const ret = TC_AWAIT(context.run());
                                TC_AWAIT(trustchain.destroy());
                                TC_RETURN(ret);
                              })
