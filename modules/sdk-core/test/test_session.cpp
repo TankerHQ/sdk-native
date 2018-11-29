@@ -5,7 +5,6 @@
 #include <Tanker/Session.hpp>
 
 #include <doctest.h>
-#include <sqlpp11/sqlpp11.h>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -24,18 +23,6 @@ std::unique_ptr<Client> makeClient()
   ALLOW_CALL(*connection, on("new relevant block", trompeloeil::_));
   return std::make_unique<Client>(std::move(connection));
 }
-
-Crypto::PublicEncryptionKey userKeyFromDb(
-    sqlpp::sqlite3::connection* connection, UserId const& id)
-{
-  Tanker::DbModels::contact_user_keys::contact_user_keys tab{};
-
-  auto rows = (*connection)(select(tab.public_encryption_key)
-                                .from(tab)
-                                .where(tab.user_id == id.base()));
-  return DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-      rows.front().public_encryption_key);
-}
 }
 
 TEST_CASE(
@@ -48,7 +35,7 @@ TEST_CASE(
   auto const aliceUserKeyPair = alice.user.userKeys.back();
 
   auto db = AWAIT(DataStore::createDatabase(":memory:"));
-  auto connection = db.get()->getConnection();
+  auto dbPtr = db.get();
   auto deviceKeyStore = AWAIT(DeviceKeyStore::open(db.get(), aliceDevice.keys));
   auto client = makeClient();
 
@@ -65,6 +52,6 @@ TEST_CASE(
 
   AWAIT_VOID(session.catchUserKey(DeviceId{entry.hash}, deviceCreation));
 
-  CHECK_EQ(userKeyFromDb(connection, alice.user.userId),
+  CHECK_EQ(AWAIT(dbPtr->getContactUserKey(alice.user.userId)).value(),
            aliceUserKeyPair.keyPair.publicKey);
 }
