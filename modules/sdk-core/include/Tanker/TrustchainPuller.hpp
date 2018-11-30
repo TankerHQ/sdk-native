@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Types/UserId.hpp>
@@ -28,7 +28,7 @@ public:
 
   TrustchainPuller(Trustchain* trustchain,
                    TrustchainVerifier* verifier,
-                   DataStore::Database* db,
+                   DataStore::ADatabase* db,
                    Client* client,
                    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
                    DeviceId const& deviceId,
@@ -50,7 +50,7 @@ public:
 private:
   Trustchain* _trustchain;
   TrustchainVerifier* _verifier;
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
   Client* _client;
 
   Crypto::PublicSignatureKey _devicePublicSignatureKey;

@@ -638,7 +638,7 @@ Tanker::BlockGenerator TrustchainBuilder::makeBlockGenerator(
 }
 
 std::unique_ptr<Tanker::UserKeyStore> TrustchainBuilder::makeUserKeyStore(
-    User const& user, Tanker::DataStore::Database* conn) const
+    User const& user, Tanker::DataStore::ADatabase* conn) const
 {
   auto result = std::make_unique<Tanker::UserKeyStore>(conn);
   for (auto const& userKey : user.userKeys)
@@ -649,7 +649,7 @@ std::unique_ptr<Tanker::UserKeyStore> TrustchainBuilder::makeUserKeyStore(
 
 std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
     std::vector<std::string> const& suserIds,
-    Tanker::DataStore::Database* conn) const
+    Tanker::DataStore::ADatabase* conn) const
 {
   auto contactStore = std::make_unique<Tanker::ContactStore>(conn);
   for (auto const& suserId : suserIds)
@@ -665,7 +665,7 @@ std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
 
 std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
     TrustchainBuilder::User const& user,
-    Tanker::DataStore::Database* conn) const
+    Tanker::DataStore::ADatabase* conn) const
 {
   auto result = std::make_unique<Tanker::GroupStore>(conn);
   for (auto const& group : _groups)

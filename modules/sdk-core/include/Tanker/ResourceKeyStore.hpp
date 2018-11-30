@@ -16,7 +16,7 @@ class SymmetricKey;
 
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class ResourceKeyStore
@@ -27,7 +27,7 @@ public:
   ResourceKeyStore& operator=(ResourceKeyStore const&) = delete;
   ResourceKeyStore& operator=(ResourceKeyStore&&) = delete;
 
-  ResourceKeyStore(DataStore::Database* dbConn);
+  ResourceKeyStore(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> putKey(Crypto::Mac const& mac,
                           Crypto::SymmetricKey const& key);
@@ -36,6 +36,6 @@ public:
   tc::cotask<Crypto::SymmetricKey> getKey(Crypto::Mac const& mac) const;
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
 };
 }

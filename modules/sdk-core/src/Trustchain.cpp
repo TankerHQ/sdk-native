@@ -3,7 +3,7 @@
 #include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
@@ -16,7 +16,7 @@ TLOG_CATEGORY(Trustchain);
 
 namespace Tanker
 {
-Trustchain::Trustchain(DataStore::Database* dbConn) : _db(dbConn)
+Trustchain::Trustchain(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 

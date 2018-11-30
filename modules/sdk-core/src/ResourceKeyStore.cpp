@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
@@ -10,7 +10,7 @@ TLOG_CATEGORY(ResourceKeyStore);
 
 namespace Tanker
 {
-ResourceKeyStore::ResourceKeyStore(DataStore::Database* dbConn) : _db(dbConn)
+ResourceKeyStore::ResourceKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 

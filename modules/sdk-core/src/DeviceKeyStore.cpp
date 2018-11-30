@@ -1,6 +1,6 @@
 #include <Tanker/DeviceKeyStore.hpp>
 
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
@@ -11,7 +11,7 @@
 namespace Tanker
 {
 tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
-    DataStore::Database* dbConn)
+    DataStore::ADatabase* dbConn)
 {
   std::unique_ptr<DeviceKeyStore> deviceKeyStore(new DeviceKeyStore(dbConn));
 
@@ -31,7 +31,7 @@ tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
 }
 
 tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
-    DataStore::Database* dbConn, DeviceKeys const& keys)
+    DataStore::ADatabase* dbConn, DeviceKeys const& keys)
 {
   // FIXME blast this constructor and write tests correctly
 
@@ -42,7 +42,7 @@ tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
   TC_RETURN(std::move(deviceKeyStore));
 }
 
-DeviceKeyStore::DeviceKeyStore(DataStore::Database* dbConn) : _db(dbConn)
+DeviceKeyStore::DeviceKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 

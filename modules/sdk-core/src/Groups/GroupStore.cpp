@@ -1,7 +1,7 @@
 #include <Tanker/Groups/GroupStore.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
@@ -12,7 +12,7 @@ TLOG_CATEGORY(GroupStore);
 
 namespace Tanker
 {
-GroupStore::GroupStore(DataStore::Database* dbConn) : _db(dbConn)
+GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 

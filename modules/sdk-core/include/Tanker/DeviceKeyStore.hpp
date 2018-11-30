@@ -12,7 +12,7 @@ namespace Tanker
 {
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class DeviceKeyStore
@@ -31,15 +31,15 @@ public:
   DeviceKeys const& deviceKeys() const;
 
   static tc::cotask<std::unique_ptr<DeviceKeyStore>> open(
-      DataStore::Database* dbConn);
+      DataStore::ADatabase* dbConn);
   // for tests
   static tc::cotask<std::unique_ptr<DeviceKeyStore>> open(
-      DataStore::Database* dbConn, DeviceKeys const& keys);
+      DataStore::ADatabase* dbConn, DeviceKeys const& keys);
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
   DeviceKeys _keys;
 
-  DeviceKeyStore(DataStore::Database* dbConn);
+  DeviceKeyStore(DataStore::ADatabase* dbConn);
 };
 }

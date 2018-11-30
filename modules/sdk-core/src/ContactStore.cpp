@@ -1,7 +1,7 @@
 #include <Tanker/ContactStore.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -18,7 +18,7 @@
 
 namespace Tanker
 {
-ContactStore::ContactStore(DataStore::Database* db) : _db(db)
+ContactStore::ContactStore(DataStore::ADatabase* db) : _db(db)
 {
 }
 

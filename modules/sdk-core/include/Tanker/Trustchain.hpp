@@ -21,13 +21,13 @@ struct Entry;
 
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class Trustchain
 {
 public:
-  Trustchain(DataStore::Database* dbConn);
+  Trustchain(DataStore::ADatabase* dbConn);
   Trustchain(Trustchain const&) = delete;
   Trustchain(Trustchain&&) = delete;
   Trustchain& operator=(Trustchain const&) = delete;
@@ -41,7 +41,7 @@ public:
   tc::cotask<uint64_t> getLastIndex();
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
 
   uint64_t _lastIndex = 0;
 };

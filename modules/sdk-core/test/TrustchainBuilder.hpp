@@ -125,13 +125,13 @@ public:
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;
   std::unique_ptr<Tanker::UserKeyStore> makeUserKeyStore(
-      User const& user, Tanker::DataStore::Database* conn) const;
+      User const& user, Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,
-      Tanker::DataStore::Database* conn) const;
+      Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::GroupStore> makeGroupStore(
       TrustchainBuilder::User const& user,
-      Tanker::DataStore::Database* conn) const;
+      Tanker::DataStore::ADatabase* conn) const;
 
   std::vector<Tanker::Block> const& blocks() const;
   std::vector<Group> groups() const;

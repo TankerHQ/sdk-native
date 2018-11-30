@@ -1,7 +1,7 @@
 #include <Tanker/UserKeyStore.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
@@ -12,7 +12,7 @@ TLOG_CATEGORY(UserKeyStore);
 
 namespace Tanker
 {
-UserKeyStore::UserKeyStore(DataStore::Database* dbConn) : _db(dbConn)
+UserKeyStore::UserKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 

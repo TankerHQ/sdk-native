@@ -10,7 +10,7 @@ namespace Tanker
 {
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class GroupStore
@@ -21,7 +21,7 @@ public:
   GroupStore& operator=(GroupStore const&) = delete;
   GroupStore& operator=(GroupStore&&) = delete;
 
-  GroupStore(DataStore::Database* dbConn);
+  GroupStore(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(ExternalGroup const& group);
@@ -39,6 +39,6 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
 };
 }

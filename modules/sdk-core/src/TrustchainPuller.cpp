@@ -38,7 +38,7 @@ namespace Tanker
 TrustchainPuller::TrustchainPuller(
     Trustchain* trustchain,
     TrustchainVerifier* verifier,
-    DataStore::Database* db,
+    DataStore::ADatabase* db,
     Client* client,
     Crypto::PublicSignatureKey const& deviceSignatureKey,
     DeviceId const& deviceId,
