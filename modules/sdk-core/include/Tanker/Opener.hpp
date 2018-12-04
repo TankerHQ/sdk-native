@@ -13,7 +13,6 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/signals2/signal.hpp>
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -36,7 +35,7 @@ class DeviceKeyStore;
 class Opener
 {
 public:
-  Opener(std::string url, SdkInfo info, boost::filesystem::path writablePath);
+  Opener(std::string url, SdkInfo info, std::string writablePath);
 
   Status status() const;
 
@@ -52,7 +51,7 @@ public:
 private:
   std::string _url;
   SdkInfo _info;
-  boost::filesystem::path _writablePath;
+  std::string _writablePath;
 
   nonstd::optional<UserId> _userId;
   nonstd::optional<Crypto::SymmetricKey> _userSecret;
