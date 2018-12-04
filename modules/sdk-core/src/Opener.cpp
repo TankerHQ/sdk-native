@@ -66,8 +66,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
       _userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
-  _client =
-      std::make_unique<Client>(std::make_unique<Connection>(_trustchainUrl));
+  _client = std::make_unique<Client>(makeConnection(_trustchainUrl));
   _client->start();
 
   auto const userStatusResult = TC_AWAIT(_client->userStatus(

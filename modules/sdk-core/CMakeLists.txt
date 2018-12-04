@@ -107,6 +107,7 @@ add_library(tankercore STATIC
   src/DataStore/Table.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
+  src/AConnection.cpp
   src/Connection.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
