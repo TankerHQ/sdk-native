@@ -17,11 +17,7 @@
 
 #include <doctest.h>
 
-#include <boost/filesystem.hpp>
-
 using namespace Tanker;
-
-namespace bfs = boost::filesystem;
 
 namespace
 {

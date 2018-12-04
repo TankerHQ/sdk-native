@@ -15,11 +15,8 @@
 
 #include <Helpers/UniquePath.hpp>
 
-#include <boost/filesystem.hpp>
-
 TLOG_CATEGORY(DataStoreTest);
 
-namespace bfs = boost::filesystem;
 using namespace Tanker::DataStore;
 
 namespace
