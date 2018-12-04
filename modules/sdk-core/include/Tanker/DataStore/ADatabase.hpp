@@ -143,5 +143,10 @@ protected:
 };
 
 using DatabasePtr = std::unique_ptr<ADatabase>;
+
+tc::cotask<DatabasePtr> createDatabase(
+    std::string const& dbPath,
+    nonstd::optional<Crypto::SymmetricKey> const& userSecret = {},
+    bool exclusive = true);
 }
 }

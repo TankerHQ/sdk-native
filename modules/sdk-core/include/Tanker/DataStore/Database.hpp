@@ -83,13 +83,5 @@ private:
   tc::cotask<void> commitTransaction() override;
   tc::cotask<void> rollbackTransaction() override;
 };
-
-inline tc::cotask<DatabasePtr> createDatabase(
-    std::string const& dbPath,
-    nonstd::optional<Crypto::SymmetricKey> const& userSecret = {},
-    bool exclusive = true)
-{
-  TC_RETURN(std::make_unique<Database>(dbPath, userSecret, exclusive));
-}
 }
 }
