@@ -1,5 +1,5 @@
 #include <Tanker/ContactStore.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/UserAccessor.hpp>

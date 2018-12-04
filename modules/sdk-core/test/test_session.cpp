@@ -1,6 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ContactUserKeys.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Session.hpp>
 

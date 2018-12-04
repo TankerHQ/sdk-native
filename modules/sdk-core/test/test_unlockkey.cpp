@@ -1,7 +1,6 @@
 #include "TrustchainBuilder.hpp"
 
 #include <Helpers/UniquePath.hpp>
-#include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Entry.hpp>
@@ -148,7 +147,8 @@ TEST_CASE("unlockKey")
                   ghostDeviceKeys.signatureKeyPair.privateKey);
     auto ghostDeviceEntry = toVerifiedEntry(
         blockToUnverifiedEntry(Serialization::deserialize<Block>(reg->block)));
-    auto const dc = mpark::get<DeviceCreation>(ghostDeviceEntry.action.variant());
+    auto const dc =
+        mpark::get<DeviceCreation>(ghostDeviceEntry.action.variant());
     FAST_CHECK_EQ(gh.deviceId, ghostDeviceEntry.hash);
     FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
                   dc.publicEncryptionKey());
@@ -191,7 +191,8 @@ TEST_CASE("unlockKey")
     auto const vdc =
         mpark::get<DeviceCreation>(validatedDeviceEntry.action.variant());
     REQUIRE(vdc.userKeyPair().has_value());
-    auto const userKey = vdc.userKeyPair().value().encryptedPrivateEncryptionKey;
+    auto const userKey =
+        vdc.userKeyPair().value().encryptedPrivateEncryptionKey;
     REQUIRE(!userKey.is_null());
 
     auto const privateEncryptionKey =

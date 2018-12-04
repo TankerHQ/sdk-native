@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/TrustchainPuller.hpp>

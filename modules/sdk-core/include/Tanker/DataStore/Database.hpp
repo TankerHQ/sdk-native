@@ -2,6 +2,8 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 
+#include <Tanker/DataStore/Connection.hpp>
+
 namespace Tanker
 {
 namespace DataStore

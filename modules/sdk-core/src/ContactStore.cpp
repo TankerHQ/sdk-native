@@ -10,7 +10,6 @@
 
 #include <fmt/format.h>
 #include <optional.hpp>
-#include <sqlpp11/transaction.h>
 #include <tconcurrent/coroutine.hpp>
 
 #include <stdexcept>

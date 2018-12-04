@@ -8,7 +8,6 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Crypto/base64.hpp>
-#include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -20,7 +19,6 @@
 
 #include <mockaron/mockaron.hpp>
 #include <mpark/variant.hpp>
-#include <sqlpp11/transaction.h>
 #include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>

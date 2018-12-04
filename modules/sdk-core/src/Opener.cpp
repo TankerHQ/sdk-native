@@ -5,7 +5,6 @@
 #include <Tanker/Connection.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
