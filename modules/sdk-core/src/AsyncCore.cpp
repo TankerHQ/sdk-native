@@ -59,6 +59,9 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
       case Event::UnlockRequired:
         return this->_core->unlockRequired.connect(
             [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
+      case Event::DeviceRevoked:
+        return this->_core->deviceRevoked.connect(
+            [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
       default:
         throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
                                                       static_cast<int>(event));
@@ -217,6 +220,13 @@ tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor(
       });
 }
 
+tc::future<void> AsyncCore::revokeDevice(DeviceId const& deviceId)
+{
+  return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
+    TC_AWAIT(this->_core->revokeDevice(deviceId));
+  });
+}
+
 tc::future<void> AsyncCore::syncTrustchain()
 {
   return tc::async_resumable([this]() -> tc::cotask<void> {
@@ -237,6 +247,11 @@ boost::signals2::signal<void()>& AsyncCore::sessionClosed()
 boost::signals2::signal<void()>& AsyncCore::deviceCreated()
 {
   return this->_core->deviceCreated;
+}
+
+boost::signals2::signal<void()>& AsyncCore::deviceRevoked()
+{
+  return this->_core->deviceRevoked;
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)

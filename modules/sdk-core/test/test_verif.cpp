@@ -100,10 +100,19 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
 template <typename T>
 void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
-                                Device const& authorDevice,
+                                Device authorDevice,
                                 TrustchainBuilder::ResultDevice secondDevice)
 {
   auto const tankerUser = user.user.asTankerUser();
+
+  SUBCASE("it should reject a device creation when author device is revoked")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyDeviceCreation(
+            secondDevice.entry, authorDevice, tankerUser),
+        Error::VerificationCode::InvalidAuthor);
+  }
 
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
@@ -148,6 +157,45 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   {
     CHECK_NOTHROW(Verif::verifyDeviceCreation(
         secondDevice.entry, authorDevice, tankerUser));
+  }
+}
+
+void deviceRevocationCommonChecks(UnverifiedEntry deviceRevocation,
+                                  Device authorDevice,
+                                  Device targetDevice,
+                                  User const& user)
+{
+  SUBCASE("should reject an incorrectly signed DeviceRevocation")
+  {
+    deviceRevocation.signature[0]++;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyDeviceRevocation(
+            deviceRevocation, authorDevice, targetDevice, user),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a revocation from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyDeviceRevocation(
+            deviceRevocation, authorDevice, targetDevice, user),
+        Error::VerificationCode::InvalidAuthor);
+  }
+
+  SUBCASE("should reject a revocation of an already revoked device")
+  {
+    targetDevice.revokedAtBlkIndex = targetDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyDeviceRevocation(
+            deviceRevocation, authorDevice, targetDevice, user),
+        Error::VerificationCode::InvalidTargetDevice);
+  }
+
+  SUBCASE("should accept a valid deviceRevocation")
+  {
+    CHECK_NOTHROW(Verif::verifyDeviceRevocation(
+        deviceRevocation, authorDevice, targetDevice, user));
   }
 }
 }
@@ -326,7 +374,7 @@ TEST_CASE("KeyPublishToDevice")
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
   auto kp2dEntry = blockToUnverifiedEntry(kp2d.front());
   auto const targetUser = secondDevice.user;
-  auto const authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrectly signed KeyPublishToDevice")
   {
@@ -346,13 +394,19 @@ TEST_CASE("KeyPublishToDevice")
         Error::VerificationCode::InvalidUserKey);
   }
 
+  SUBCASE("should reject a KeyPublishToDevice from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyKeyPublishToDevice(kp2dEntry, authorDevice, targetUser),
+        Error::VerificationCode::InvalidAuthor);
+  }
+
   SUBCASE("should accept a valid KeyPublishToDevice")
   {
     CHECK_NOTHROW(
         Verif::verifyKeyPublishToDevice(kp2dEntry, authorDevice, targetUser));
   }
-
-  // TODO: should reject a keypublish to user that targets an old user key
 }
 
 TEST_CASE("KeyPublishToUser")
@@ -367,7 +421,7 @@ TEST_CASE("KeyPublishToUser")
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
   auto kp2uEntry = blockToUnverifiedEntry(kp2u);
   auto const targetUser = secondDevice.user;
-  auto const authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
   {
@@ -375,6 +429,14 @@ TEST_CASE("KeyPublishToUser")
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice, targetUser),
         Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a KeyPublishToUser from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice, targetUser),
+        Error::VerificationCode::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToUser")
@@ -400,7 +462,7 @@ TEST_CASE("KeyPublishToUserGroups")
       secondDevice.device, resultGroup.group, resourceId, symmetricKey);
   auto kp2gEntry = blockToUnverifiedEntry(kp2g);
   auto const targetGroup = resultGroup.group.tankerGroup;
-  auto const authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrecly signed KeyPublishToUserGroups")
   {
@@ -408,6 +470,14 @@ TEST_CASE("KeyPublishToUserGroups")
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyKeyPublishToUserGroup(
                                        kp2gEntry, authorDevice, targetGroup),
                                    Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a KeyPublishToUserGroup from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyKeyPublishToUserGroup(
+                                       kp2gEntry, authorDevice, targetGroup),
+                                   Error::VerificationCode::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToUserGroups")
@@ -430,6 +500,11 @@ TEST_CASE("Verif DeviceRevocationV1")
   auto const revokeBlock =
       builder.revokeDevice1(secondDevice.device, thirdDevice.device);
 
+  deviceRevocationCommonChecks(blockToUnverifiedEntry(revokeBlock),
+                               authorDevice,
+                               targetDevice,
+                               thirdDevice.user);
+
   SUBCASE("should reject a revocation for another user's device")
   {
     auto bob = builder.makeUser1("bob");
@@ -445,16 +520,6 @@ TEST_CASE("Verif DeviceRevocationV1")
         Error::VerificationCode::InvalidUser);
   }
 
-  SUBCASE("should reject an incorrectly signed DeviceRevocationV1")
-  {
-    auto entry = blockToUnverifiedEntry(revokeBlock);
-    entry.signature[0]++;
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidSignature);
-  }
-
   SUBCASE("should reject a revocation whose user has a userKey v1")
   {
     auto fourthDevice = builder.makeDevice3("alice");
@@ -465,15 +530,6 @@ TEST_CASE("Verif DeviceRevocationV1")
                                       fourthDevice.user),
         Error::VerificationCode::InvalidUserKey);
   }
-
-  SUBCASE("should accept a valid deviceRevocationV1")
-  {
-    CHECK_NOTHROW(
-        Verif::verifyDeviceRevocation(blockToUnverifiedEntry(revokeBlock),
-                                      authorDevice,
-                                      targetDevice,
-                                      thirdDevice.user));
-  }
 }
 
 TEST_CASE("Verif DeviceRevocationV2")
@@ -483,8 +539,8 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto user = builder.makeUser3("alice");
   auto secondDevice = builder.makeDevice3("alice");
   auto thirdDevice = builder.makeDevice3("alice");
-  auto const authorDevice = secondDevice.device.asTankerDevice();
-  auto const targetDevice = thirdDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
+  auto targetDevice = thirdDevice.device.asTankerDevice();
   auto aliceUser = builder.getUser("alice");
   auto const revokeBlock = builder.revokeDevice2(
       secondDevice.device, thirdDevice.device, *aliceUser);
@@ -499,6 +555,11 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto const revokeBlockUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
   auto entryUserV1 = blockToUnverifiedEntry(revokeBlockUserV1);
+
+  deviceRevocationCommonChecks(blockToUnverifiedEntry(revokeBlock),
+                               authorDevice,
+                               targetDevice,
+                               thirdDevice.user);
 
   SUBCASE(
       "should reject a revocation whose user has no userKey when "
@@ -538,15 +599,6 @@ TEST_CASE("Verif DeviceRevocationV2")
                                       targetDeviceV1,
                                       secondDevice.user),
         Error::VerificationCode::InvalidUser);
-  }
-
-  SUBCASE("should reject an incorrectly signed DeviceRevocationV2")
-  {
-    entry.signature[0]++;
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidSignature);
   }
 
   SUBCASE(
@@ -626,15 +678,6 @@ TEST_CASE("Verif DeviceRevocationV2")
             entry, authorDevice, targetDevice, thirdDevice.user),
         Error::VerificationCode::InvalidUserKeys);
   }
-
-  SUBCASE("should accept a valid deviceRevocationV2")
-  {
-    CHECK_NOTHROW(
-        Verif::verifyDeviceRevocation(blockToUnverifiedEntry(revokeBlock),
-                                      authorDevice,
-                                      targetDevice,
-                                      thirdDevice.user));
-  }
 }
 
 TEST_CASE("Verif UserGroupCreation")
@@ -647,7 +690,7 @@ TEST_CASE("Verif UserGroupCreation")
       builder.makeGroup(secondDevice.device, {resultUser.user});
 
   auto gcEntry = resultGroup.entry;
-  auto const authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
@@ -666,6 +709,14 @@ TEST_CASE("Verif UserGroupCreation")
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
         Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a UserGroupCreation from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Error::VerificationCode::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
@@ -688,7 +739,7 @@ TEST_CASE("Verif UserGroupAddition")
 
   auto gaEntry = resultUserGroupAddition.entry;
   auto const& group = resultGroup.group.tankerGroup;
-  auto const authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrectly signed UserGroupAddition")
   {
@@ -720,6 +771,14 @@ TEST_CASE("Verif UserGroupAddition")
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
         Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a UserGroupAddition from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
+        Error::VerificationCode::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupAddition")

@@ -180,14 +180,22 @@ void Database::flushAllCaches()
   };
 
   // flush all tables but DeviceKeysTable
+  // Order matter for foreign key constraints
+  flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
-  flushTable(TrustchainTable{});
   flushTable(TrustchainIndexesTable{});
   flushTable(TrustchainResourceIdToKeyPublishTable{});
+  flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
-  flushTable(ContactDevicesTable{});
   flushTable(GroupsTable{});
+}
+
+tc::cotask<void> Database::nuke()
+{
+  flushAllCaches();
+  DeviceKeysTable tab;
+  (*_db)(remove_from(tab).unconditionally());
 }
 
 tc::cotask<void> Database::startTransaction()
@@ -306,7 +314,7 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
 }
 
 tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
-    Crypto::Hash const& hash) const
+    Crypto::Hash const& hash)
 {
   TrustchainTable tab;
 
@@ -438,6 +446,33 @@ Database::getContactUserKey(UserId const& userId)
       row.public_encryption_key));
 }
 
+tc::cotask<nonstd::optional<UserId>> Database::getContactUserId(
+    Crypto::PublicEncryptionKey const& userPublicKey)
+{
+  ContactUserKeysTable tab;
+  auto rows =
+      (*_db)(select(tab.user_id)
+                 .from(tab)
+                 .where(tab.public_encryption_key == userPublicKey.base()));
+
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const& row = *rows.begin();
+
+  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
+}
+
+tc::cotask<void> Database::setPublicEncryptionKey(
+    UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
+{
+  ContactUserKeysTable tab;
+  (*_db)(update(tab)
+             .set(tab.public_encryption_key = userPublicKey.base())
+             .where(tab.user_id == userId.base()));
+  TC_RETURN();
+}
+
 tc::cotask<void> Database::putResourceKey(Crypto::Mac const& mac,
                                           Crypto::SymmetricKey const& key)
 {
@@ -522,8 +557,7 @@ tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Device>> Database::getOptDevice(
-    DeviceId const& id) const
+tc::cotask<nonstd::optional<Device>> Database::getOptDevice(DeviceId const& id)
 {
   ContactDevicesTable tab;
 
@@ -536,7 +570,7 @@ tc::cotask<nonstd::optional<Device>> Database::getOptDevice(
   TC_RETURN(rowToDevice(row));
 }
 
-tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id) const
+tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
 {
   ContactDevicesTable tab;
 
@@ -547,6 +581,32 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id) const
   for (auto const& row : rows)
     ret.push_back(rowToDevice(row));
   TC_RETURN(ret);
+}
+
+tc::cotask<nonstd::optional<UserId>> Database::getDeviceUserId(
+    DeviceId const& id)
+{
+  ContactDevicesTable tab;
+
+  auto rows = (*_db)(select(tab.user_id).from(tab).where(tab.id == id.base()));
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const& row = *rows.begin();
+
+  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
+}
+
+tc::cotask<void> Database::updateDeviceRevokedAt(DeviceId const& id,
+                                                 uint64_t revokedAtBlkIndex)
+{
+  ContactDevicesTable tab;
+
+  (*_db)(update(tab)
+             .set(tab.revoked_at_block_index = revokedAtBlkIndex)
+             .where(tab.id == id.base()));
+
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::putFullGroup(Group const& group)
@@ -602,7 +662,7 @@ tc::cotask<void> Database::updateLastGroupBlock(
 }
 
 tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
-    GroupId const& groupId) const
+    GroupId const& groupId)
 {
   GroupsTable groups;
 
@@ -623,7 +683,7 @@ tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>>
-Database::findExternalGroupByGroupId(GroupId const& groupId) const
+Database::findExternalGroupByGroupId(GroupId const& groupId)
 {
   GroupsTable groups;
 
@@ -641,7 +701,7 @@ Database::findExternalGroupByGroupId(GroupId const& groupId) const
 
 tc::cotask<nonstd::optional<Group>>
 Database::findFullGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey) const
+    Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   GroupsTable groups;
 
@@ -664,7 +724,7 @@ Database::findFullGroupByGroupPublicEncryptionKey(
 
 tc::cotask<nonstd::optional<ExternalGroup>>
 Database::findExternalGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey) const
+    Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   GroupsTable groups;
 

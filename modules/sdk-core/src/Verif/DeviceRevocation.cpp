@@ -61,7 +61,11 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
             "A revocation V2 previousPublicEncryptionKey should be the same as "
             "its user userKey");
   }
-  ensures(deviceRevocation.userKeys.size() == user.devices.size() - 1,
+  size_t const nbrDevicesNotRevoked = std::count_if(
+      user.devices.begin(), user.devices.end(), [](auto const& device) {
+        return device.revokedAtBlkIndex == nonstd::nullopt;
+      });
+  ensures(deviceRevocation.userKeys.size() == nbrDevicesNotRevoked - 1,
           Error::VerificationCode::InvalidUserKeys,
           "A revocation V2 should have exactly one userKey per remaining "
           "device of the user");
@@ -95,6 +99,14 @@ void verifyDeviceRevocation(UnverifiedEntry const& entry,
 {
   assert(entry.nature == Nature::DeviceRevocation ||
          entry.nature == Nature::DeviceRevocation2);
+
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "Author device of revocation must not be revoked");
+
+  ensures(!target.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidTargetDevice,
+          "The target of a revocation must not be already revoked");
 
   ensures(std::find(user.devices.begin(), user.devices.end(), author) !=
                   user.devices.end() &&
