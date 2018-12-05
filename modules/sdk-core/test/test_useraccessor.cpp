@@ -13,7 +13,7 @@
 #include <mockaron/mockaron.hpp>
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 using namespace Tanker;
 

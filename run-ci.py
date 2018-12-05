@@ -18,6 +18,8 @@ def main() -> None:
     build_and_test_parser.add_argument("--bindings", action="store_true")
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
+    clean_cache_parser = subparsers.add_parser("clean-cache")
+
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument(
         "--profile", action="append", dest="profiles", required=True
@@ -33,7 +35,9 @@ def main() -> None:
     ci.cpp.update_conan_config(platform)
 
     args = parser.parse_args()
-    if args.command == "build-and-test":
+    if args.command == "clean-cache":
+        ci.cpp.clean_conan_cache()
+    elif args.command == "build-and-test":
         ci.cpp.build_and_test(args.profile, args.bindings, args.coverage)
     elif args.command == "deploy":
         git_tag = args.git_tag
@@ -45,7 +49,6 @@ def main() -> None:
         deployer.build()
         deployer.upload()
     elif args.command == "nightly":
-        ci.cpp.clean_conan_cache()
         try:
             if platform == "linux":
                 ci.android.check(native_from_sources=True)

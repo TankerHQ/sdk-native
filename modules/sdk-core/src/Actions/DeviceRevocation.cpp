@@ -36,6 +36,12 @@ bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs)
   return !(lhs == rhs);
 }
 
+void to_json(nlohmann::json& j, EncryptedPrivateUserKey const& epuk)
+{
+  j["deviceId"] = epuk.deviceId;
+  j["encryptedPrivateEncryptionKey"] = epuk.privateEncryptionKey;
+}
+
 void from_serialized(Serialization::SerializedSource& ss,
                      EncryptedPrivateUserKey& key)
 {

@@ -51,6 +51,8 @@ struct EncryptedPrivateUserKey
   Crypto::SealedPrivateEncryptionKey privateEncryptionKey;
 };
 
+void to_json(nlohmann::json& j, EncryptedPrivateUserKey const& epuk);
+
 void from_serialized(Serialization::SerializedSource& ss,
                      EncryptedPrivateUserKey& key);
 

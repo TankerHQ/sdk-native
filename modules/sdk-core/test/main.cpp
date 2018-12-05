@@ -1,7 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 
 #include <doctest.h>
-#include <trompeloeil/trompeloeil.hpp>
+#include <trompeloeil.hpp>
 
 #include <Helpers/TimeoutTerminate.hpp>
 
