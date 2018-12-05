@@ -33,6 +33,7 @@ public:
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>> getOptLastKeyPair()
       const;
   tc::cotask<Crypto::EncryptionKeyPair> getLastKeyPair() const;
+  tc::cotask<bool> isEmpty() const;
 
 private:
   DataStore::ADatabase* _db;
