@@ -19,6 +19,7 @@
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
+#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -80,9 +81,12 @@ public:
       gsl::span<uint8_t const> encryptedSeal,
       std::chrono::steady_clock::duration timeout);
 
+  tc::cotask<void> revokeDevice(DeviceId const& deviceId);
+
   boost::signals2::signal<void()> unlockRequired;
   boost::signals2::signal<void()> sessionClosed;
   boost::signals2::signal<void()> deviceCreated;
+  boost::signals2::signal<void()> deviceRevoked;
 
   static SResourceId getResourceId(gsl::span<uint8_t const> encryptedData);
 
@@ -98,6 +102,8 @@ private:
   boost::filesystem::path _writablePath;
 
   mpark::variant<Opener, SessionType> _state;
+
+  tc::task_auto_canceler _taskCanceler;
 
   void reset();
 };

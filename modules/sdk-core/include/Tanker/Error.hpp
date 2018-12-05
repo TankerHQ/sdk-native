@@ -43,6 +43,7 @@ enum class Code
   InvalidGroupSize,
   RecipientNotFound,
   GroupNotFound,
+  DeviceNotFound,
 
   Last,
 };
@@ -102,6 +103,7 @@ DECLARE_ERROR(MaxVerificationAttemptsReached);
 DECLARE_ERROR(InvalidGroupSize);
 // RecipientNotFound has its own header
 // GroupNotFound has its own header
+DECLARE_ERROR(DeviceNotFound);
 
 #undef DECLARE_ERROR
 

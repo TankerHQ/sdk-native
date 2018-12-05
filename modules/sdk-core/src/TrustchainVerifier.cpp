@@ -13,6 +13,7 @@
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
+#include <Tanker/Verif/Helpers.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 #include <Tanker/Verif/KeyPublishToUser.hpp>
 #include <Tanker/Verif/KeyPublishToUserGroup.hpp>
@@ -110,11 +111,9 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
 {
   auto const author = TC_AWAIT(getAuthor(kp.author));
 
-  if (!isDeviceCreation(author.nature))
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidAuthor,
-                                    "Invalid author nature for keyPublish");
-  }
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for keyPublish");
   auto const& authorDeviceCreation =
       mpark::get<DeviceCreation>(author.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
@@ -125,6 +124,15 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
   }
   else if (kp.nature == Nature::KeyPublishToUser)
   {
+    auto const& keyPublishToUser =
+        mpark::get<KeyPublishToUser>(kp.action.variant());
+    auto const targetUserId = TC_AWAIT(_contacts->findUserIdByUserPublicKey(
+        keyPublishToUser.recipientPublicEncryptionKey));
+    Verif::ensures(targetUserId.has_value(),
+                   Error::VerificationCode::InvalidUserKey,
+                   "KeyPublishToUser target has a non-existant or superseded "
+                   "user public key");
+
     Verif::verifyKeyPublishToUser(kp, authorDevice, user);
   }
   else
@@ -139,11 +147,9 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
 {
   auto const author = TC_AWAIT(getAuthor(kp.author));
 
-  if (!isDeviceCreation(author.nature))
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidAuthor,
-                                    "Invalid author nature for keyPublish");
-  }
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for keyPublish");
   auto const& authorDeviceCreation =
       mpark::get<DeviceCreation>(author.action.variant());
   auto const& keyPublishToUserGroup =
@@ -162,12 +168,9 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
 {
   auto const author = TC_AWAIT(getAuthor(dr.author));
 
-  if (!isDeviceCreation(author.nature))
-  {
-    throw Error::VerificationFailed(
-        Error::VerificationCode::InvalidAuthor,
-        "Invalid author nature for deviceRevocation");
-  }
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for deviceRevocation");
   auto const& authorDeviceCreation =
       mpark::get<DeviceCreation>(author.action.variant());
   auto const& revocation = mpark::get<DeviceRevocation>(dr.action.variant());
@@ -185,12 +188,9 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
 {
   auto const author = TC_AWAIT(getAuthor(ga.author));
 
-  if (!isDeviceCreation(author.nature))
-  {
-    throw Error::VerificationFailed(
-        Error::VerificationCode::InvalidAuthor,
-        "Invalid author nature for userGroupAddition");
-  }
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for userGroupAddition");
   auto const& authorDeviceCreation =
       mpark::get<DeviceCreation>(author.action.variant());
   auto const& userGroupAddition =
@@ -208,12 +208,9 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 {
   auto const author = TC_AWAIT(getAuthor(gc.author));
 
-  if (!isDeviceCreation(author.nature))
-  {
-    throw Error::VerificationFailed(
-        Error::VerificationCode::InvalidAuthor,
-        "Invalid author nature for userGroupCreation");
-  }
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for userGroupCreation");
   auto const& authorDeviceCreation =
       mpark::get<DeviceCreation>(author.action.variant());
   auto const& userGroupCreation =
@@ -223,11 +220,9 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
       userGroupCreation.publicEncryptionKey));
-  if (group)
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidGroup,
-                                    "UserGroupCreation - group already exist");
-  }
+  Verif::ensures(!group,
+                 Error::VerificationCode::InvalidGroup,
+                 "UserGroupCreation - group already exist");
 
   Verif::verifyUserGroupCreation(gc, authorDevice);
 
@@ -238,22 +233,17 @@ tc::cotask<Entry> TrustchainVerifier::getAuthor(
     Crypto::Hash const& authorHash) const
 {
   auto const authorOpt = TC_AWAIT(_db->findTrustchainEntry(authorHash));
-  if (!authorOpt)
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidAuthor,
-                                    "author not found");
-  }
+  Verif::ensures(authorOpt.has_value(),
+                 Error::VerificationCode::InvalidAuthor,
+                 "author not found");
   TC_RETURN(*authorOpt);
 }
 
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
 {
   auto const user = TC_AWAIT(_contacts->findUser(userId));
-  if (!user)
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidUser,
-                                    "user not found");
-  }
+  Verif::ensures(
+      user.has_value(), Error::VerificationCode::InvalidUser, "user not found");
   TC_RETURN(*user);
 }
 
@@ -273,11 +263,9 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
 {
   auto const group = TC_AWAIT(
       _groups->findExternalByPublicEncryptionKey(recipientPublicEncryptionKey));
-  if (!group)
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidGroup,
-                                    "group not found");
-  }
+  Verif::ensures(group.has_value(),
+                 Error::VerificationCode::InvalidGroup,
+                 "group not found");
   TC_RETURN(*group);
 }
 
@@ -285,11 +273,9 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupById(
     GroupId const& groupId) const
 {
   auto const group = TC_AWAIT(_groups->findExternalById(groupId));
-  if (!group)
-  {
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidGroup,
-                                    "group not found");
-  }
+  Verif::ensures(group.has_value(),
+                 Error::VerificationCode::InvalidGroup,
+                 "group not found");
   TC_RETURN(*group);
 }
 }

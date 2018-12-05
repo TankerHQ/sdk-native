@@ -108,11 +108,14 @@ public:
 
   std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
 
+  tc::cotask<void> revokeDevice(DeviceId const& deviceId);
+
   tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
       gsl::span<uint8_t const> encryptedSeal,
       std::chrono::steady_clock::duration timeout);
 
   boost::signals2::signal<void()> deviceCreated;
+  boost::signals2::signal<void()> deviceRevoked;
 
   tc::cotask<void> catchUserKey(DeviceId const& id,
                                 DeviceCreation const& deviceCreation);
@@ -126,6 +129,7 @@ private:
   tc::cotask<void> setDeviceId(DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
   tc::cotask<void> onDeviceCreated(Entry const& entry);
+  tc::cotask<void> onDeviceRevoked(Entry const& entry);
   void onKeyToUserReceived(Entry const& entry);
   void onKeyToUserGroupReceived(Entry const& entry);
   tc::cotask<void> onUserGroupEntry(Entry const& entry);
@@ -158,5 +162,6 @@ private:
   tc::cotask<tc::shared_future<void>> waitForKey(Crypto::Mac const& mac);
   tc::cotask<void> connectionHandler();
   void signalKeyReady(Crypto::Mac const& mac);
+  tc::cotask<void> nukeDatabase();
 };
 }

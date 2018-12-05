@@ -259,4 +259,30 @@ TEST_CASE("TrustchainVerifier")
         AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(blockKp2g))),
         Error::VerificationFailed);
   }
+
+  SUBCASE("verif kp2u throws if userPublicKey has been superseded")
+  {
+    auto const userResult = builder.makeUser3("bob");
+    TC_AWAIT(db->addTrustchainEntry(toVerifiedEntry(userResult.entry)));
+    auto const aliceUserResult = builder.makeUser3("alice");
+    TC_AWAIT(db->addTrustchainEntry(toVerifiedEntry(aliceUserResult.entry)));
+    auto const blockKp2u = builder.shareToUser(userResult.user.devices[0],
+                                               aliceUserResult.user,
+                                               resourceId,
+                                               symmetricKey);
+
+    auto const contactStore =
+        builder.makeContactStoreWith({"bob", "alice"}, db.get());
+    TrustchainVerifier const verifier(
+        builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
+
+    auto kp2uEntry = blockToUnverifiedEntry(blockKp2u);
+    auto payload = mpark::get<KeyPublishToUser>(kp2uEntry.action.variant());
+    payload.recipientPublicEncryptionKey =
+        make<Crypto::PublicEncryptionKey>("dummy publicKey");
+    kp2uEntry.action = payload;
+
+    CHECK_THROWS_AS(AWAIT_VOID(verifier.verify(kp2uEntry)),
+                    Error::VerificationFailed);
+  }
 }

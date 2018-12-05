@@ -51,38 +51,47 @@ public:
       Crypto::PublicEncryptionKey const& publicKey,
       Crypto::PrivateEncryptionKey const& privateKey);
   tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey);
+      Crypto::PublicEncryptionKey const& publicKey) const;
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
-  getUserOptLastKeyPair();
+  getUserOptLastKeyPair() const;
 
-  tc::cotask<uint64_t> getTrustchainLastIndex();
+  tc::cotask<uint64_t> getTrustchainLastIndex() const;
   tc::cotask<void> addTrustchainEntry(Entry const& Entry);
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) const;
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Crypto::Mac const& resourceId);
-  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(UserId const& userId);
-  tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId);
+      Crypto::Mac const& resourceId) const;
+  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
+      UserId const& userId) const;
+  tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) const;
 
   tc::cotask<void> putContact(
       UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey);
 
   tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> getContactUserKey(
-      UserId const& userId);
+      UserId const& userId) const;
+  tc::cotask<nonstd::optional<UserId>> getContactUserId(
+      Crypto::PublicEncryptionKey const& userPublicKey) const;
+  tc::cotask<void> setPublicEncryptionKey(
+      UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey);
 
   tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
                                   Crypto::SymmetricKey const& key);
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
-      Crypto::Mac const& mac);
+      Crypto::Mac const& mac) const;
 
-  tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys();
+  tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() const;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
   tc::cotask<void> setDeviceId(DeviceId const& deviceId);
 
   tc::cotask<void> putDevice(UserId const& userId, Device const& device);
   tc::cotask<nonstd::optional<Device>> getOptDevice(DeviceId const& id) const;
   tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) const;
+  tc::cotask<nonstd::optional<UserId>> getDeviceUserId(
+      DeviceId const& id) const;
+  tc::cotask<void> updateDeviceRevokedAt(DeviceId const& id,
+                                         uint64_t revokedAtBlkIndex) const;
 
   tc::cotask<void> putFullGroup(Group const& group);
   tc::cotask<void> putExternalGroup(ExternalGroup const& group);
@@ -100,10 +109,12 @@ public:
   findExternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
 
+  tc::cotask<void> nuke();
+
 private:
   ConnPtr _db;
 
-  bool isMigrationNeeded();
+  bool isMigrationNeeded() const;
   void flushAllCaches();
   tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
                                    Crypto::Mac const& resourceId);

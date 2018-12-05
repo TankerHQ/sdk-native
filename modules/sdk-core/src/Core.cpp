@@ -79,7 +79,13 @@ tc::cotask<void> Core::open(SUserId const& suserId,
   _state.emplace<SessionType>(
       std::make_unique<Session>(TC_AWAIT(pcore->open(suserId, userToken))));
   auto const& session = mpark::get<SessionType>(_state);
-  session->deviceCreated.connect([this] { deviceCreated(); });
+  session->deviceCreated.connect(deviceCreated);
+  session->deviceRevoked.connect([&] {
+    _taskCanceler.add(tc::async([this] {
+      close();
+      deviceRevoked();
+    }));
+  });
   TC_AWAIT(session->startConnection());
 }
 
@@ -246,6 +252,14 @@ tc::cotask<std::unique_ptr<ChunkEncryptor>> Core::makeChunkEncryptor(
   if (!psession)
     throw INVALID_STATUS(makeChunkEncryptor);
   TC_RETURN(TC_AWAIT((*psession)->makeChunkEncryptor(encryptedSeal, timeout)));
+}
+
+tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(revokeDevice);
+  TC_AWAIT((*psession)->revokeDevice(deviceId));
 }
 
 SResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
