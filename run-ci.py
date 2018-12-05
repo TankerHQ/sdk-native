@@ -46,8 +46,7 @@ def main() -> None:
         deployer = ci.cpp.Deployer(
             profiles=args.profiles, user="tanker", channel=args.channel
         )
-        deployer.build()
-        deployer.upload()
+        deployer.build(upload=True)
     elif args.command == "nightly":
         try:
             if platform == "linux":
