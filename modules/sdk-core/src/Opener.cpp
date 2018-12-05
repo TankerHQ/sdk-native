@@ -1,8 +1,8 @@
 #include <Tanker/Opener.hpp>
 
+#include <Tanker/AConnection.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
-#include <Tanker/Connection.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/EnumFormat.hpp>
