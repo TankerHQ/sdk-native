@@ -25,6 +25,7 @@ add_executable(test_tanker
   test_groups.cpp
   test_verif.cpp
   test_trustchainverifier.cpp
+  test_revocation.cpp
 
   TestVerifier.cpp
   MockConnection.cpp

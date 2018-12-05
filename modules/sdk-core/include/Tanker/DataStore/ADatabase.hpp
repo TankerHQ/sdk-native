@@ -56,7 +56,7 @@ public:
   virtual tc::cotask<uint64_t> getTrustchainLastIndex() = 0;
   virtual tc::cotask<void> addTrustchainEntry(Entry const& Entry) = 0;
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
-      Crypto::Hash const& hash) const = 0;
+      Crypto::Hash const& hash) = 0;
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
       Crypto::Mac const& resourceId) = 0;
   virtual tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
@@ -69,6 +69,11 @@ public:
 
   virtual tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
   getContactUserKey(UserId const& userId) = 0;
+  virtual tc::cotask<nonstd::optional<UserId>> getContactUserId(
+      Crypto::PublicEncryptionKey const& userPublicKey) = 0;
+  virtual tc::cotask<void> setPublicEncryptionKey(
+      UserId const& userId,
+      Crypto::PublicEncryptionKey const& userPublicKey) = 0;
 
   virtual tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
                                           Crypto::SymmetricKey const& key) = 0;
@@ -82,9 +87,12 @@ public:
   virtual tc::cotask<void> putDevice(UserId const& userId,
                                      Device const& device) = 0;
   virtual tc::cotask<nonstd::optional<Device>> getOptDevice(
-      DeviceId const& id) const = 0;
-  virtual tc::cotask<std::vector<Device>> getDevicesOf(
-      UserId const& id) const = 0;
+      DeviceId const& id) = 0;
+  virtual tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) = 0;
+  virtual tc::cotask<nonstd::optional<UserId>> getDeviceUserId(
+      DeviceId const& id) = 0;
+  virtual tc::cotask<void> updateDeviceRevokedAt(
+      DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;
 
   virtual tc::cotask<void> putFullGroup(Group const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
@@ -94,15 +102,17 @@ public:
       Crypto::Hash const& lastBlockHash,
       uint64_t lastBlockIndex) = 0;
   virtual tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
-      GroupId const& groupId) const = 0;
+      GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupId(GroupId const& groupId) const = 0;
+  findExternalGroupByGroupId(GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<Group>>
   findFullGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const = 0;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
   virtual tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const = 0;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
+
+  virtual tc::cotask<void> nuke() = 0;
 
 protected:
   virtual tc::cotask<void> startTransaction() = 0;

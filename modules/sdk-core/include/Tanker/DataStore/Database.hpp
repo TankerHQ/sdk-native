@@ -26,7 +26,7 @@ public:
   tc::cotask<uint64_t> getTrustchainLastIndex() override;
   tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
-      Crypto::Hash const& hash) const override;
+      Crypto::Hash const& hash) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
       Crypto::Mac const& resourceId) override;
   tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
@@ -39,6 +39,11 @@ public:
 
   tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> getContactUserKey(
       UserId const& userId) override;
+  tc::cotask<nonstd::optional<UserId>> getContactUserId(
+      Crypto::PublicEncryptionKey const& userPublicKey) override;
+  tc::cotask<void> setPublicEncryptionKey(
+      UserId const& userId,
+      Crypto::PublicEncryptionKey const& userPublicKey) override;
 
   tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
                                   Crypto::SymmetricKey const& key) override;
@@ -52,8 +57,12 @@ public:
   tc::cotask<void> putDevice(UserId const& userId,
                              Device const& device) override;
   tc::cotask<nonstd::optional<Device>> getOptDevice(
-      DeviceId const& id) const override;
-  tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) const override;
+      DeviceId const& id) override;
+  tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) override;
+  tc::cotask<nonstd::optional<UserId>> getDeviceUserId(
+      DeviceId const& id) override;
+  tc::cotask<void> updateDeviceRevokedAt(DeviceId const& id,
+                                         uint64_t revokedAtBlkIndex) override;
 
   tc::cotask<void> putFullGroup(Group const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
@@ -62,14 +71,16 @@ public:
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
-      GroupId const& groupId) const override;
+      GroupId const& groupId) override;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
-      GroupId const& groupId) const override;
+      GroupId const& groupId) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const override;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const override;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
+
+  tc::cotask<void> nuke() override;
 
 private:
   ConnPtr _db;
