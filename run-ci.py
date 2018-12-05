@@ -6,6 +6,7 @@ import ci.android
 import ci.cpp
 import ci.ios
 import ci.mail
+import ci.git
 
 
 def main() -> None:
@@ -26,6 +27,7 @@ def main() -> None:
     deploy_parser.add_argument("--git-tag", required=True)
 
     subparsers.add_parser("nightly")
+    subparsers.add_parser("mirror")
 
     platform = sys.platform.lower()
     ci.cpp.update_conan_config(platform)
@@ -52,8 +54,10 @@ def main() -> None:
             else:
                 sys.exit(f"Unknown platform: {platform}")
         except Exception as e:
-            ci.mail.notify_nightly_failure("Native")
+            ci.mail.notify_nightly_failure("sdk-native")
             sys.exit(e)
+    elif args.command == "mirror":
+        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
     else:
         parser.print_help()
         sys.exit(1)
