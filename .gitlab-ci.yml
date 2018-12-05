@@ -1,0 +1,99 @@
+stages:
+  - build
+  - deploy
+
+build/linux:
+  stage: build
+  except:
+    - schedules
+  tags:
+    - linux
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py build-and-test --profile gcc8
+
+deploy/linux:
+  stage: deploy
+  except:
+    - schedules
+  when: manual
+  tags:
+    - linux
+  only:
+    - tags
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py deploy --profile gcc8 --profile android --git-tag ${CI_COMMIT_TAG}
+
+build/macos:
+  stage: build
+  except:
+    - schedules
+  tags:
+    - macos
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py build-and-test --profile macos
+
+deploy/macos:
+  stage: deploy
+  except:
+    - schedules
+  when: manual
+  tags:
+    - macos
+  only:
+    - tags
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py deploy --profile macos --profile ios --git-tag ${CI_COMMIT_TAG}
+
+nightly/android:
+  stage: build
+  only:
+    - schedules
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py nightly
+  tags:
+    - linux
+
+nightly/ios:
+  stage: build
+  only:
+    - schedules
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py nightly
+  tags:
+    - macos
+
+coverage:
+  stage: build
+  only:
+    - schedules
+  script:
+    - dmenv install
+    - dmenv run -- python run-ci.py build-and-test --profile gcc8 --coverage
+    - mv build/gcc8/x86_64/Release/coverage coverage
+  tags:
+    - linux
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 7 days
+
+pages:
+  stage: deploy
+  only:
+    - schedules
+  dependencies:
+    - coverage
+  script:
+    - mv coverage/ public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 7 days
+  tags:
+    - linux

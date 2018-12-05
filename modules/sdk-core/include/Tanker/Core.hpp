@@ -1,0 +1,104 @@
+#pragma once
+
+#include <Tanker/Opener.hpp>
+#include <Tanker/Session.hpp>
+#include <Tanker/Status.hpp>
+#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SResourceId.hpp>
+#include <Tanker/Types/SUserId.hpp>
+#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationCode.hpp>
+#include <Tanker/Unlock/DeviceLocker.hpp>
+#include <Tanker/Unlock/Options.hpp>
+
+#include <boost/filesystem/path.hpp>
+#include <boost/signals2/signal.hpp>
+#include <gsl-lite.hpp>
+#include <mpark/variant.hpp>
+#include <tconcurrent/coroutine.hpp>
+
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace Tanker
+{
+class ChunkEncryptor;
+
+class Core
+{
+public:
+  Core(std::string const& trustchainId,
+       std::string const& trustchainUrl,
+       std::string const& writablePath);
+
+  Status status() const;
+
+  tc::cotask<void> open(SUserId const& suserId, std::string const& userToken);
+  void close();
+
+  tc::cotask<void> encrypt(uint8_t* encryptedData,
+                           gsl::span<uint8_t const> clearData,
+                           std::vector<SUserId> const& userIds = {},
+                           std::vector<SGroupId> const& groupIds = {});
+
+  tc::cotask<void> decrypt(uint8_t* decryptedData,
+                           gsl::span<uint8_t const> encryptedData,
+                           std::chrono::steady_clock::duration timeout);
+
+  tc::cotask<void> share(std::vector<SResourceId> const& resourceId,
+                         std::vector<SUserId> const& userIds,
+                         std::vector<SGroupId> const& groupIds);
+
+  tc::cotask<SGroupId> createGroup(std::vector<SUserId> const& members);
+  tc::cotask<void> updateGroupMembers(SGroupId const& groupId,
+                                      std::vector<SUserId> const& usersToAdd);
+
+  tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
+
+  tc::cotask<void> setupUnlock(Unlock::CreationOptions const& options);
+  tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
+  tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
+  tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
+  tc::cotask<bool> isUnlockAlreadySetUp() const;
+  bool hasRegisteredUnlockMethods() const;
+  bool hasRegisteredUnlockMethods(Unlock::Method) const;
+  Unlock::Methods registeredUnlockMethods() const;
+
+  DeviceId const& deviceId() const;
+
+  tc::cotask<void> syncTrustchain();
+
+  std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
+
+  tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
+      gsl::span<uint8_t const> encryptedSeal,
+      std::chrono::steady_clock::duration timeout);
+
+  boost::signals2::signal<void()> unlockRequired;
+  boost::signals2::signal<void()> sessionClosed;
+  boost::signals2::signal<void()> deviceCreated;
+
+  static SResourceId getResourceId(gsl::span<uint8_t const> encryptedData);
+
+private:
+  // We store the session as a unique_ptr so that open() does not
+  // emplace<Session>. The Session constructor is asynchronous, so the user
+  // could try to observe the variant state while it is emplacing. variant is
+  // not reentrant so the observation would trigger undefined behavior.
+  using SessionType = std::unique_ptr<Session>;
+
+  TrustchainId _trustchainId;
+  std::string _trustchainUrl;
+  boost::filesystem::path _writablePath;
+
+  mpark::variant<Opener, SessionType> _state;
+
+  void reset();
+};
+}

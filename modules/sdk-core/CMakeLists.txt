@@ -1,0 +1,230 @@
+cmake_minimum_required(VERSION 3.4)
+
+project(TankerSDK-Core)
+
+option(TANKER_BUILD_WITH_SSL "Tanker uses ssl" ON)
+
+add_library(tankercore STATIC
+  include/Tanker/Constants.hpp
+  include/Tanker/AsyncCore.hpp
+  include/Tanker/Admin.hpp
+  include/Tanker/BasicPullResult.hpp
+  include/Tanker/Init.hpp
+  include/Tanker/ssl.hpp
+  include/Tanker/AConnection.hpp
+  include/Tanker/Trustchain.hpp
+  include/Tanker/TrustchainPuller.hpp
+  include/Tanker/TrustchainVerifier.hpp
+  include/Tanker/BlockGenerator.hpp
+  include/Tanker/GhostDevice.hpp
+  include/Tanker/EncryptedUserKey.hpp
+  include/Tanker/Unlock/Registration.hpp
+  include/Tanker/Unlock/Create.hpp
+  include/Tanker/Unlock/Claims.hpp
+  include/Tanker/Unlock/Messages.hpp
+  include/Tanker/Unlock/DeviceLocker.hpp
+  include/Tanker/Unlock/Options.hpp
+  include/Tanker/Unlock/Methods.hpp
+  include/Tanker/Opener.hpp
+  include/Tanker/DeviceKeyStore.hpp
+  include/Tanker/DeviceKeys.hpp
+  include/Tanker/Client.hpp
+  include/Tanker/Connection.hpp
+  include/Tanker/Block.hpp
+  include/Tanker/Entry.hpp
+  include/Tanker/Error.hpp
+  include/Tanker/UserNotFound.hpp
+  include/Tanker/RecipientNotFound.hpp
+  include/Tanker/GroupNotFound.hpp
+  include/Tanker/Index.hpp
+  include/Tanker/ReceiveKey.hpp
+  include/Tanker/Actions/UserKeyPair.hpp
+  include/Tanker/Actions/TrustchainCreation.hpp
+  include/Tanker/Actions/DeviceCreation.hpp
+  include/Tanker/Actions/DeviceRevocation.hpp
+  include/Tanker/Actions/KeyPublishToDevice.hpp
+  include/Tanker/Actions/KeyPublishToUser.hpp
+  include/Tanker/Actions/KeyPublishToUserGroup.hpp
+  include/Tanker/Actions/UserGroupAddition.hpp
+  include/Tanker/Actions/UserGroupCreation.hpp
+  include/Tanker/DbModels/ContactDevices.hpp
+  include/Tanker/DbModels/ContactUserKeys.hpp
+  include/Tanker/DbModels/DeviceKeyStore.hpp
+  include/Tanker/DbModels/Groups.hpp
+  include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
+  include/Tanker/DbModels/ResourceKeys.hpp
+  include/Tanker/DbModels/Trustchain.hpp
+  include/Tanker/DbModels/TrustchainIndexes.hpp
+  include/Tanker/DbModels/UserKeys.hpp
+  include/Tanker/DbModels/Versions.hpp
+  include/Tanker/Groups/Group.hpp
+  include/Tanker/Groups/GroupEncryptedKey.hpp
+  include/Tanker/Groups/GroupStore.hpp
+  include/Tanker/Groups/GroupUpdater.hpp
+  include/Tanker/Groups/GroupAccessor.hpp
+  include/Tanker/Groups/Manager.hpp
+  include/Tanker/Log.hpp
+  include/Tanker/LogHandler.hpp
+  include/Tanker/ResourceKeyStore.hpp
+  include/Tanker/Session.hpp
+  include/Tanker/Core.hpp
+  include/Tanker/Encryptor.hpp
+  include/Tanker/Seal.hpp
+  include/Tanker/ChunkEncryptorImpl.hpp
+  include/Tanker/ChunkEncryptor.hpp
+  include/Tanker/UserKeyStore.hpp
+  include/Tanker/ContactStore.hpp
+  include/Tanker/Version.hpp
+  include/Tanker/Share.hpp
+  include/Tanker/Status.hpp
+  include/Tanker/Nature.hpp
+  include/Tanker/EnumFormat.hpp
+  include/Tanker/DataStore/Connection.hpp
+  include/Tanker/DataStore/Database.hpp
+  include/Tanker/DataStore/Table.hpp
+  include/Tanker/DataStore/Utils.hpp
+  include/Tanker/Device.hpp
+  include/Tanker/User.hpp
+  include/Tanker/UserAccessor.hpp
+  include/Tanker/Action.hpp
+  include/Tanker/UnverifiedEntry.hpp
+  include/Tanker/Verif/DeviceCreation.hpp
+  include/Tanker/Verif/DeviceRevocation.hpp
+  include/Tanker/Verif/KeyPublishToDevice.hpp
+  include/Tanker/Verif/KeyPublishToUser.hpp
+  include/Tanker/Verif/KeyPublishToUserGroup.hpp
+  include/Tanker/Verif/TrustchainCreation.hpp
+  include/Tanker/Verif/UserGroupAddition.hpp
+  include/Tanker/Verif/UserGroupCreation.hpp
+  include/Tanker/Verif/Helpers.hpp
+
+  src/AsyncCore.cpp
+  src/Admin.cpp
+  src/Init.cpp
+  src/DataStore/Connection.cpp
+  src/DataStore/Database.cpp
+  src/DataStore/Table.cpp
+  src/BlockGenerator.cpp
+  src/Client.cpp
+  src/Connection.cpp
+  src/GhostDevice.cpp
+  src/Unlock/Create.cpp
+  src/Unlock/Claims.cpp
+  src/Unlock/Messages.cpp
+  src/Unlock/Methods.cpp
+  src/Session.cpp
+  src/Opener.cpp
+  src/Core.cpp
+  src/Status.cpp
+  src/Nature.cpp
+  src/Trustchain.cpp
+  src/TrustchainPuller.cpp
+  src/TrustchainVerifier.cpp
+  src/DeviceKeyStore.cpp
+  src/DeviceKeys.cpp
+  src/ReceiveKey.cpp
+  src/ResourceKeyStore.cpp
+  src/Block.cpp
+  src/Entry.cpp
+  src/LogHandler.cpp
+  src/Encryptor.cpp
+  src/Error.cpp
+  src/Seal.cpp
+  src/Share.cpp
+  src/ChunkEncryptorImpl.cpp
+  src/ChunkEncryptor.cpp
+  src/UserKeyStore.cpp
+  src/ContactStore.cpp
+  src/DbModels/ContactDevices.cpp
+  src/DbModels/ContactUserKeys.cpp
+  src/DbModels/DeviceKeyStore.cpp
+  src/DbModels/Groups.cpp
+  src/DbModels/ResourceIdToKeyPublish.cpp
+  src/DbModels/ResourceKeys.cpp
+  src/DbModels/Trustchain.cpp
+  src/DbModels/TrustchainIndexes.cpp
+  src/DbModels/UserKeys.cpp
+  src/DbModels/Versions.cpp
+  src/Actions/TrustchainCreation.cpp
+  src/Actions/DeviceCreation.cpp
+  src/Actions/DeviceRevocation.cpp
+  src/Actions/KeyPublishToDevice.cpp
+  src/Actions/KeyPublishToUser.cpp
+  src/Actions/KeyPublishToUserGroup.cpp
+  src/Actions/UserKeyPair.cpp
+  src/Actions/UserGroupAddition.cpp
+  src/Actions/UserGroupCreation.cpp
+  src/Groups/Group.cpp
+  src/Groups/GroupEncryptedKey.cpp
+  src/Groups/GroupStore.cpp
+  src/Groups/GroupAccessor.cpp
+  src/Groups/GroupUpdater.cpp
+  src/Groups/Manager.cpp
+  src/Device.cpp
+  src/User.cpp
+  src/UserAccessor.cpp
+  src/Action.cpp
+  src/UnverifiedEntry.cpp
+  src/Verif/DeviceCreation.cpp
+  src/Verif/DeviceRevocation.cpp
+  src/Verif/KeyPublishToDevice.cpp
+  src/Verif/KeyPublishToUser.cpp
+  src/Verif/KeyPublishToUserGroup.cpp
+  src/Verif/TrustchainCreation.cpp
+  src/Verif/UserGroupAddition.cpp
+  src/Verif/UserGroupCreation.cpp
+)
+
+target_include_directories(tankercore
+  PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(tankercore
+  tankerserialization
+  tankerusertoken
+  tankertypes
+  tankercrypto
+  CONAN_PKG::Boost
+  CONAN_PKG::socket.io-client-cpp
+  CONAN_PKG::sqlpp11-connector-sqlite3
+  CONAN_PKG::tconcurrent
+  CONAN_PKG::cppcodec
+  CONAN_PKG::variant
+  CONAN_PKG::gsl-lite
+  CONAN_PKG::fmt
+  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::optional-lite
+  CONAN_PKG::mockaron
+  CONAN_PKG::enum-flags
+)
+
+install(TARGETS tankercore
+  EXPORT tanker
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
+add_library(tankercore_test STATIC
+  include/Tanker/Test/Functional/Trustchain.hpp
+  include/Tanker/Test/Functional/User.hpp
+  include/Tanker/Test/Functional/Device.hpp
+
+  src/Test/Functional/Trustchain.cpp
+  src/Test/Functional/User.cpp
+  src/Test/Functional/Device.cpp
+  )
+
+if(TANKER_BUILD_WITH_SSL)
+  target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
+endif()
+
+target_link_libraries(tankercore_test tankercore tankertesthelpers)
+target_compile_definitions(tankercore PRIVATE FMT_STRING_ALIAS)
+target_compile_definitions(tankercore_test PRIVATE FMT_STRING_ALIAS)
+
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()

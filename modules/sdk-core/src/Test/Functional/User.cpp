@@ -1,0 +1,51 @@
+#include <Tanker/AsyncCore.hpp>
+
+#include <Tanker/Test/Functional/User.hpp>
+
+namespace Tanker
+{
+namespace Test
+{
+
+User::User(std::string trustchainUrl,
+           std::string trustchainId,
+           std::string trustchainPrivateSignatureKey)
+  : _trustchainUrl(std::move(trustchainUrl)),
+    _trustchainId(std::move(trustchainId))
+{
+  Crypto::Hash buf;
+  Crypto::randomFill(buf);
+  _userId = SUserId{base64::encode(gsl::make_span(buf).subspan(0, 8))};
+  _userToken = UserToken::generateUserToken(
+      _trustchainId, trustchainPrivateSignatureKey, _userId);
+}
+
+void User::reuseCache()
+{
+  _currentDevice = 0;
+}
+
+Device User::makeDevice(DeviceType type)
+{
+  if (type == DeviceType::New)
+    return Device(_trustchainUrl, _trustchainId, _userId, _userToken);
+
+  if (_currentDevice == _cachedDevices->size())
+    _cachedDevices->push_back(
+        Device(_trustchainUrl, _trustchainId, _userId, _userToken));
+  return (*_cachedDevices)[_currentDevice++];
+}
+
+tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
+{
+  std::vector<Device> devices;
+  devices.reserve(nb);
+  std::generate_n(
+      std::back_inserter(devices), nb, [&] { return makeDevice(); });
+  auto session = TC_AWAIT(devices.front().open());
+  for (auto device = ++devices.begin(); device != devices.end(); ++device)
+    TC_AWAIT(device->attachDevice(*session));
+  TC_RETURN(devices);
+}
+}
+}

@@ -1,0 +1,9 @@
+build*
+.tags
+.DS_Store
+._*
+conan_ycm_flags.json
+__pycache__
+
+.venv/
+*.egg-info/

@@ -1,0 +1,90 @@
+#pragma once
+
+#include <iterator>
+#include <map>
+#include <stdexcept>
+#include <type_traits>
+#include <typeinfo>
+#include <vector>
+
+#include <Tanker/Serialization/SerializedSource.hpp>
+#include <Tanker/Serialization/detail/static_const.hpp>
+
+#include <fmt/format.h>
+
+// For more info:
+// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
+
+namespace Tanker
+{
+namespace Serialization
+{
+namespace detail
+{
+template <typename T>
+T deserialize_impl(SerializedSource&);
+
+template <typename T>
+void deserialize_impl(SerializedSource&, T&);
+
+template <typename T>
+void from_serialized(SerializedSource& ss, std::vector<T>& vals)
+{
+  auto const nbVals = ss.read_varint();
+  vals.reserve(nbVals);
+
+  for (std::size_t i = 0; i < nbVals; ++i)
+    vals.push_back(deserialize_impl<T>(ss));
+}
+
+template <typename K, typename V>
+void from_serialized(SerializedSource& ss, std::map<K, V>& m)
+{
+  auto const nbVals = ss.read_varint();
+  for (std::size_t i = 0; i < nbVals; ++i)
+  {
+    auto key = deserialize_impl<K>(ss);
+    m[std::move(key)] = deserialize_impl<V>(ss);
+  }
+}
+
+template <typename T>
+T deserialize_impl(SerializedSource& ss)
+{
+  T ret;
+  deserialize_impl(ss, ret);
+  return ret;
+}
+
+template <typename T>
+void deserialize_impl(SerializedSource& ss, T& val)
+{
+  try
+  {
+    from_serialized(ss, val);
+  }
+  catch (std::exception const& e)
+  {
+    throw std::runtime_error(fmt::format(
+        "Could not deserialize into type: {}: {}", typeid(T).name(), e.what()));
+  }
+}
+
+struct from_serialized_fn
+{
+  template <typename T>
+  void operator()(SerializedSource& ss, T& val) const
+      noexcept(noexcept(from_serialized(ss, val)))
+  {
+    return from_serialized(ss, val);
+  }
+};
+}
+
+namespace
+{
+constexpr auto const& from_serialized =
+    detail::static_const<detail::from_serialized_fn>::value;
+}
+}
+}
