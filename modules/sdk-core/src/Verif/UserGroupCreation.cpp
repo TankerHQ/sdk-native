@@ -16,6 +16,10 @@ void verifyUserGroupCreation(UnverifiedEntry const& entry, Device const& author)
 {
   assert(entry.nature == Nature::UserGroupCreation);
 
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "A revoked device must not be the author of UserGroupCreation");
+
   ensures(
       Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,

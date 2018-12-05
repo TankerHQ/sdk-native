@@ -19,6 +19,7 @@
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -124,6 +125,9 @@ Session::Session(Config&& config)
     _trustchainPuller(&_trustchain,
                       &_verifier,
                       _db.get(),
+                      &_contactStore,
+                      &_userKeyStore,
+                      &*_deviceKeyStore,
                       _client.get(),
                       _deviceKeyStore->signatureKeyPair().publicKey,
                       _deviceKeyStore->deviceId(),
@@ -161,6 +165,10 @@ Session::Session(Config&& config)
   _trustchainPuller.userGroupActionReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onUserGroupEntry(entry));
+  };
+  _trustchainPuller.deviceRevoked =
+      [this](auto const& entry) -> tc::cotask<void> {
+    TC_AWAIT(onDeviceRevoked(entry));
   };
 }
 
@@ -497,15 +505,6 @@ tc::cotask<void> Session::catchUserKey(DeviceId const& deviceId,
   // you need this so that Share shares to self using the user key
   TC_AWAIT(_contactStore.putUserKey(deviceCreation.userId(),
                                     optUserKeyPair->publicEncryptionKey));
-  if (deviceId == this->deviceId())
-  {
-    auto const key = Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-        optUserKeyPair->encryptedPrivateEncryptionKey,
-        _deviceKeyStore->encryptionKeyPair());
-
-    TC_AWAIT(
-        _userKeyStore.putPrivateKey(optUserKeyPair->publicEncryptionKey, key));
-  }
 }
 
 tc::cotask<void> Session::onKeyToDeviceReceived(Entry const& entry)
@@ -532,6 +531,28 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
   TC_AWAIT(_contactStore.putUserDevice(deviceCreation.userId(), createdDevice));
   if (deviceCreation.userId() == userId() && !deviceCreation.isGhostDevice())
     deviceCreated();
+}
+
+tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
+{
+  auto const& deviceRevocation =
+      mpark::get<DeviceRevocation>(entry.action.variant());
+
+  if (deviceRevocation.deviceId() == this->deviceId())
+  {
+    TINFO("This device has been revoked");
+    TC_AWAIT(nukeDatabase());
+    deviceRevoked();
+    TC_RETURN();
+  }
+
+  TC_AWAIT(Revocation::onOtherDeviceRevocation(deviceRevocation,
+                                               entry,
+                                               _userId,
+                                               deviceId(),
+                                               _contactStore,
+                                               _deviceKeyStore,
+                                               _userKeyStore));
 }
 
 void Session::onKeyToUserReceived(Entry const& entry)
@@ -582,6 +603,17 @@ void Session::signalKeyReady(Crypto::Mac const& mac)
   }
 }
 
+tc::cotask<void> Session::revokeDevice(DeviceId const& deviceId)
+{
+  TC_AWAIT(_userAccessor.pull({_userId}));
+  TC_AWAIT(Revocation::revokeDevice(deviceId,
+                                    _userId,
+                                    _contactStore,
+                                    _userKeyStore,
+                                    _blockGenerator,
+                                    _client));
+}
+
 tc::cotask<tc::shared_future<void>> Session::waitForKey(Crypto::Mac const& mac)
 {
   if (TC_AWAIT(_resourceKeyStore.findKey(mac)))
@@ -597,5 +629,10 @@ tc::cotask<tc::shared_future<void>> Session::waitForKey(Crypto::Mac const& mac)
   tc::promise<void> prom;
   _pendingRequests[mac] = prom;
   TC_RETURN(prom.get_future());
+}
+
+tc::cotask<void> Session::nukeDatabase()
+{
+  TC_AWAIT(_db->nuke());
 }
 }

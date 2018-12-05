@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
@@ -66,6 +67,13 @@ public:
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
+
+  std::vector<uint8_t> revokeDevice2(
+      DeviceId const& deviceId,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
+      Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
+      std::vector<EncryptedPrivateUserKey> const& userKeys) const;
 
   std::vector<uint8_t> keyPublish(Crypto::EncryptedSymmetricKey const& symKey,
                                   Crypto::Mac const& mac,

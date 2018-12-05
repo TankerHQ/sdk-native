@@ -15,13 +15,13 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyKeyPublishToUser(UnverifiedEntry const& entry,
-                            Device const& author,
-                            User const& recipientUser)
+void verifyKeyPublishToUser(UnverifiedEntry const& entry, Device const& author)
 {
   assert(entry.nature == Nature::KeyPublishToUser);
-  assert(recipientUser.userKey.has_value());
 
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "author device must not be revoked");
   ensures(
       Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,
