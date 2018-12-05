@@ -21,6 +21,9 @@ void verifyKeyPublishToDevice(UnverifiedEntry const& entry,
 {
   assert(entry.nature == Nature::KeyPublishToDevice);
 
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "author device must not be revoked");
   ensures(
       Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,

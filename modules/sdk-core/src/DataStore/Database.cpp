@@ -153,7 +153,7 @@ Database::Database(std::string const& dbPath,
   }
 }
 
-bool Database::isMigrationNeeded()
+bool Database::isMigrationNeeded() const
 {
   auto const deviceCount = [&] {
     ContactDevicesTable tab;
@@ -180,14 +180,22 @@ void Database::flushAllCaches()
   };
 
   // flush all tables but DeviceKeysTable
+  // Order matter for foreign key constraints
+  flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
-  flushTable(TrustchainTable{});
   flushTable(TrustchainIndexesTable{});
   flushTable(TrustchainResourceIdToKeyPublishTable{});
+  flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
-  flushTable(ContactDevicesTable{});
   flushTable(GroupsTable{});
+}
+
+tc::cotask<void> Database::nuke()
+{
+  flushAllCaches();
+  DeviceKeysTable tab;
+  (*_db)(remove_from(tab).unconditionally());
 }
 
 Connection* Database::getConnection()
@@ -207,7 +215,7 @@ tc::cotask<void> Database::putUserPrivateKey(
 }
 
 tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
-    Crypto::PublicEncryptionKey const& publicKey)
+    Crypto::PublicEncryptionKey const& publicKey) const
 {
   UserKeysTable tab;
 
@@ -226,7 +234,7 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
 }
 
 tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
-Database::getUserOptLastKeyPair()
+Database::getUserOptLastKeyPair() const
 {
   UserKeysTable tab;
 
@@ -247,7 +255,7 @@ Database::getUserOptLastKeyPair()
            row.private_encryption_key)}}));
 }
 
-tc::cotask<uint64_t> Database::getTrustchainLastIndex()
+tc::cotask<uint64_t> Database::getTrustchainLastIndex() const
 {
   TrustchainTable tab;
   TC_RETURN(
@@ -311,7 +319,7 @@ tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
 }
 
 tc::cotask<nonstd::optional<Entry>> Database::findTrustchainKeyPublish(
-    Crypto::Mac const& resourceId)
+    Crypto::Mac const& resourceId) const
 {
   TrustchainResourceIdToKeyPublishTable tab_index;
   TrustchainTable tab_trustchain;
@@ -331,7 +339,7 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainKeyPublish(
 }
 
 tc::cotask<std::vector<Entry>> Database::getTrustchainDevicesOf(
-    UserId const& userId)
+    UserId const& userId) const
 {
   TrustchainIndexesTable tab_index;
   TrustchainTable tab_trustchain;
@@ -356,7 +364,7 @@ tc::cotask<std::vector<Entry>> Database::getTrustchainDevicesOf(
   TC_RETURN(ret);
 }
 
-tc::cotask<Entry> Database::getTrustchainDevice(DeviceId const& deviceId)
+tc::cotask<Entry> Database::getTrustchainDevice(DeviceId const& deviceId) const
 {
   TrustchainTable tab_trustchain;
   auto rows = (*_db)(select(tab_trustchain.idx,
@@ -402,7 +410,7 @@ tc::cotask<void> Database::putContact(
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-Database::getContactUserKey(UserId const& userId)
+Database::getContactUserKey(UserId const& userId) const
 {
   ContactUserKeysTable tab;
   auto rows = (*_db)(select(tab.public_encryption_key)
@@ -420,6 +428,33 @@ Database::getContactUserKey(UserId const& userId)
       row.public_encryption_key));
 }
 
+tc::cotask<nonstd::optional<UserId>> Database::getContactUserId(
+    Crypto::PublicEncryptionKey const& userPublicKey) const
+{
+  ContactUserKeysTable tab;
+  auto rows =
+      (*_db)(select(tab.user_id)
+                 .from(tab)
+                 .where(tab.public_encryption_key == userPublicKey.base()));
+
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const& row = *rows.begin();
+
+  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
+}
+
+tc::cotask<void> Database::setPublicEncryptionKey(
+    UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
+{
+  ContactUserKeysTable tab;
+  (*_db)(update(tab)
+             .set(tab.public_encryption_key = userPublicKey.base())
+             .where(tab.user_id == userId.base()));
+  TC_RETURN();
+}
+
 tc::cotask<void> Database::putResourceKey(Crypto::Mac const& mac,
                                           Crypto::SymmetricKey const& key)
 {
@@ -431,7 +466,7 @@ tc::cotask<void> Database::putResourceKey(Crypto::Mac const& mac,
 }
 
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
-    Crypto::Mac const& mac)
+    Crypto::Mac const& mac) const
 {
   ResourceKeysTable tab;
   auto rows =
@@ -443,7 +478,7 @@ tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
   TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
 }
 
-tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
+tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys() const
 {
   DeviceKeysTable tab;
   auto rows = (*_db)(select(tab.private_signature_key,
@@ -529,6 +564,32 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id) const
   for (auto const& row : rows)
     ret.push_back(rowToDevice(row));
   TC_RETURN(ret);
+}
+
+tc::cotask<nonstd::optional<UserId>> Database::getDeviceUserId(
+    DeviceId const& id) const
+{
+  ContactDevicesTable tab;
+
+  auto rows = (*_db)(select(tab.user_id).from(tab).where(tab.id == id.base()));
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const& row = *rows.begin();
+
+  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
+}
+
+tc::cotask<void> Database::updateDeviceRevokedAt(
+    DeviceId const& id, uint64_t revokedAtBlkIndex) const
+{
+  ContactDevicesTable tab;
+
+  (*_db)(update(tab)
+             .set(tab.revoked_at_block_index = revokedAtBlkIndex)
+             .where(tab.id == id.base()));
+
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::putFullGroup(Group const& group)

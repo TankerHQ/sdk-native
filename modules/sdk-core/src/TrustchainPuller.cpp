@@ -6,10 +6,12 @@
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain.hpp>
@@ -39,6 +41,9 @@ TrustchainPuller::TrustchainPuller(
     Trustchain* trustchain,
     TrustchainVerifier* verifier,
     DataStore::Database* db,
+    ContactStore* contactStore,
+    UserKeyStore* userKeyStore,
+    DeviceKeyStore* deviceKeyStore,
     Client* client,
     Crypto::PublicSignatureKey const& deviceSignatureKey,
     DeviceId const& deviceId,
@@ -46,6 +51,9 @@ TrustchainPuller::TrustchainPuller(
   : _trustchain(trustchain),
     _verifier(verifier),
     _db(db),
+    _contactStore(contactStore),
+    _userKeyStore(userKeyStore),
+    _deviceKeyStore(deviceKeyStore),
     _client(client),
     _devicePublicSignatureKey(deviceSignatureKey),
     _deviceId(deviceId),
@@ -105,7 +113,9 @@ tc::cotask<void> TrustchainPuller::catchUp()
     std::set<Crypto::Hash> processed;
     if (_deviceId.is_null())
     {
-      TINFO("No user id, processing our devices first");
+      TINFO("No device id, processing our devices first");
+      std::vector<UserKeyPair> encryptedUserKeys;
+      std::vector<Crypto::EncryptionKeyPair> userEncryptionKeys;
       // process our blocks first or here's what'll happen!
       // if you receive:
       // - Device Creation
@@ -114,34 +124,94 @@ tc::cotask<void> TrustchainPuller::catchUp()
       // If I process the Group Creation, I won't be able to decrypt it. More
       // generally, I can't process stuff if I don't have my user keys and
       // device id, so we do not process other blocks before we have those.
+      // - Device revocation
+      // I need to get all the previous userKeys in order of creation to fill
+      // the userKeyStore. To do that we have to store all previous sealed
+      // private user keys and decrypt them one by one in reverse order. If we
+      // don't do that It will not be possible for the new device to decrypt old
+      // ressources.
       for (auto const& unverifiedEntry : entries)
-        if (mpark::get_if<TrustchainCreation>(
-                &unverifiedEntry.action.variant()))
+      {
+        try
         {
-          TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
-          processed.insert(unverifiedEntry.hash);
-        }
-        else if (auto const deviceCreation = mpark::get_if<DeviceCreation>(
-                     &unverifiedEntry.action.variant()))
-        {
-          if (deviceCreation->userId() == _userId)
+          if (mpark::get_if<TrustchainCreation>(
+                  &unverifiedEntry.action.variant()))
           {
             TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
             processed.insert(unverifiedEntry.hash);
           }
+          else if (auto const deviceCreation = mpark::get_if<DeviceCreation>(
+                       &unverifiedEntry.action.variant()))
+          {
+            if (deviceCreation->userId() == _userId)
+            {
+              verifyAndAddEntry(unverifiedEntry);
+              processed.insert(unverifiedEntry.hash);
+              if (!deviceCreation->userKeyPair().has_value())
+              {
+                throw std::runtime_error(
+                    "assertion failed: self device must have a user key");
+              }
+              if (DeviceId{unverifiedEntry.hash} == _deviceId)
+              {
+                auto const lastPrivateEncryptionKey =
+                    Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+                        deviceCreation->userKeyPair()
+                            ->encryptedPrivateEncryptionKey,
+                        _deviceKeyStore->encryptionKeyPair());
+
+                userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
+                    deviceCreation->userKeyPair()->publicEncryptionKey,
+                    lastPrivateEncryptionKey});
+              }
+            }
+          }
+          else if (auto const deviceRevocation =
+                       mpark::get_if<DeviceRevocation>(
+                           &unverifiedEntry.action.variant()))
+          {
+            auto const userId = TC_AWAIT(_contactStore->findUserIdByDeviceId(
+                deviceRevocation->deviceId()));
+            if (userId == _userId)
+            {
+              verifyAndAddEntry(unverifiedEntry);
+              processed.insert(unverifiedEntry.hash);
+              if (auto const deviceRevocation2 =
+                      mpark::get_if<DeviceRevocation2>(
+                          &deviceRevocation->variant()))
+              {
+                encryptedUserKeys.push_back(UserKeyPair{
+                    deviceRevocation2->previousPublicEncryptionKey,
+                    deviceRevocation2->encryptedKeyForPreviousUserKey});
+              }
+            }
+          }
         }
+        catch (Error::VerificationFailed const& err)
+        {
+          TERROR("Verification failed: {}", err.what());
+        }
+      }
+      recoverUserKeys(encryptedUserKeys, userEncryptionKeys);
     }
 
     for (auto const& unverifiedEntry : entries)
     {
-      if (processed.count(unverifiedEntry.hash))
-        continue;
-
-      auto const existingEntry =
-          TC_AWAIT(_db->findTrustchainEntry(unverifiedEntry.hash));
-      if (!existingEntry)
+      try
       {
-        TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+        if (processed.count(unverifiedEntry.hash))
+          continue;
+
+        auto const existingEntry =
+            TC_AWAIT(_db->findTrustchainEntry(unverifiedEntry.hash));
+        if (!existingEntry)
+        {
+          TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+        }
+      }
+      catch (Error::VerificationFailed const& err)
+      {
+        TERROR("Verification failed: {}", err.what());
       }
     }
     tx.commit();
@@ -151,6 +221,36 @@ tc::cotask<void> TrustchainPuller::catchUp()
   {
     TERROR("Failed to catch up: {}", e.what());
     throw;
+  }
+}
+
+tc::cotask<void> TrustchainPuller::recoverUserKeys(
+    std::vector<UserKeyPair> const& encryptedUserKeys,
+    std::vector<Crypto::EncryptionKeyPair>& userEncryptionKeys)
+{
+  auto const user = TC_AWAIT(_contactStore->findUser(_userId));
+  for (auto userKeyIt = encryptedUserKeys.rbegin();
+       userKeyIt != encryptedUserKeys.rend();
+       ++userKeyIt)
+  {
+    auto const encryptionPrivateKey =
+        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+            userKeyIt->encryptedPrivateEncryptionKey.base(),
+            userEncryptionKeys.back());
+    userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
+        userKeyIt->publicEncryptionKey, encryptionPrivateKey});
+  }
+  if (userEncryptionKeys.empty())
+  {
+    throw std::runtime_error(
+        "assertion failed: self device must have a user key");
+  }
+  for (auto encryptionKeyPairIt = userEncryptionKeys.rbegin();
+       encryptionKeyPairIt != userEncryptionKeys.rend();
+       ++encryptionKeyPairIt)
+  {
+    TC_AWAIT(_userKeyStore->putPrivateKey(encryptionKeyPairIt->publicKey,
+                                          encryptionKeyPairIt->privateKey));
   }
 }
 
@@ -178,5 +278,7 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
   if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()) ||
       mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
     TC_AWAIT(userGroupActionReceived(entry));
+  if (mpark::holds_alternative<DeviceRevocation>(entry.action.variant()))
+    deviceRevoked(entry);
 }
 }

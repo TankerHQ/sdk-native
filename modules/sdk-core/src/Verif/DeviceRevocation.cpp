@@ -96,6 +96,14 @@ void verifyDeviceRevocation(UnverifiedEntry const& entry,
   assert(entry.nature == Nature::DeviceRevocation ||
          entry.nature == Nature::DeviceRevocation2);
 
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "Author device of revocation must not be revoked");
+
+  ensures(!target.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidTargetDevice,
+          "The target of a revocation must not be already revoked");
+
   ensures(std::find(user.devices.begin(), user.devices.end(), author) !=
                   user.devices.end() &&
               std::find(user.devices.begin(), user.devices.end(), target) !=

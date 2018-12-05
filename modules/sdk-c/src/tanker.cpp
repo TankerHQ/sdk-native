@@ -88,11 +88,12 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
   EVENT_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
   EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
   EVENT_ENUM_CHECK(TANKER_EVENT_UNLOCK_REQUIRED, Event::UnlockRequired);
+  EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
 
 #undef EVENT_ENUM_CHECK
 
   static_assert(
-      TANKER_EVENT_LAST == 3,
+      TANKER_EVENT_LAST == 4,
       "Please update the event assertions above if you added a new event");
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
@@ -346,6 +347,16 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
 catch (std::exception const& e)
 {
   return makeFuture(tc::make_exceptional_future<void>(e));
+}
+
+tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
+                                      b64char const* device_id)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  auto const device_id_size = std::strlen(device_id);
+  auto const deviceId =
+      base64::decode<DeviceId>(gsl::make_span(device_id, device_id_size));
+  return makeFuture(tanker->revokeDevice(deviceId));
 }
 
 void tanker_free_buffer(void* buffer)

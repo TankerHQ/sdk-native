@@ -60,4 +60,10 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getLastKeyPair() const
     throw Error::formatEx<Error::UserKeyNotFound>("user has no user key yet");
   TC_RETURN(*keyPair);
 }
+
+tc::cotask<bool> UserKeyStore::isEmpty() const
+{
+  auto const keyPair = TC_AWAIT(getOptLastKeyPair());
+  TC_RETURN(keyPair.has_value());
+}
 }

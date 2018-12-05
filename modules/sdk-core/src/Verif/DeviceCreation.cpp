@@ -41,6 +41,11 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
 {
   assert(entry.nature == Nature::DeviceCreation ||
          entry.nature == Nature::DeviceCreation3);
+
+  ensures(!author.revokedAtBlkIndex,
+          Error::VerificationCode::InvalidAuthor,
+          "author device must not be revoked");
+
   assert(std::find(user.devices.begin(), user.devices.end(), author) !=
          user.devices.end());
 

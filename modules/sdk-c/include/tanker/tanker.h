@@ -27,8 +27,9 @@ enum tanker_event
   TANKER_EVENT_SESSION_CLOSED,
   TANKER_EVENT_DEVICE_CREATED,
   TANKER_EVENT_UNLOCK_REQUIRED,
+  TANKER_EVENT_DEVICE_REVOKED,
 
-  TANKER_EVENT_LAST = TANKER_EVENT_UNLOCK_REQUIRED
+  TANKER_EVENT_LAST = TANKER_EVENT_DEVICE_REVOKED
 };
 
 enum tanker_unlock_method
@@ -432,6 +433,22 @@ tanker_future_t* tanker_share(tanker_t* session,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,
                               uint64_t nb_resource_ids);
+
+/*!
+ * Revoke a device by device id.
+ *
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_OPEN
+ * \param device_id the device identifier as returned by tanker_device_id().
+ *
+ * \return An empty future.
+ * \throws TANKER_DEVICE_NOT_FOUND The device_id in parameter does not
+ * corresponds to a valid device
+ * \throws TANKER_INVALID_ARGUMENT The device_id in parameter correspond to
+ * another user's device.
+ */
+tanker_future_t* tanker_revoke_device(tanker_t* session,
+                                      b64char const* device_id);
 
 void tanker_free_buffer(void* buffer);
 

@@ -84,6 +84,7 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Table.hpp
   include/Tanker/DataStore/Utils.hpp
   include/Tanker/Device.hpp
+  include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
   include/Tanker/UserAccessor.hpp
   include/Tanker/Action.hpp
@@ -164,6 +165,7 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Action.cpp
+  src/Revocation.cpp
   src/UnverifiedEntry.cpp
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp

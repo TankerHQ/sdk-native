@@ -36,6 +36,16 @@ public:
   tc::cotask<nonstd::optional<User>> findUser(UserId const& id) const;
   tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) const;
   tc::cotask<std::vector<Device>> findUserDevices(UserId const& id) const;
+  tc::cotask<nonstd::optional<UserId>> findUserIdByUserPublicKey(
+      Crypto::PublicEncryptionKey const& userKey) const;
+  tc::cotask<nonstd::optional<UserId>> findUserIdByDeviceId(
+      DeviceId const& id) const;
+
+  tc::cotask<void> revokeDevice(DeviceId const& id,
+                                uint64_t revokedAtBlkIndex) const;
+  tc::cotask<void> rotateContactPublicEncryptionKey(
+      UserId const& userId,
+      Crypto::PublicEncryptionKey const& userPublicKey) const;
 
 private:
   DataStore::Database* _db;

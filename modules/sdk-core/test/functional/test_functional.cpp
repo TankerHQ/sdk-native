@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/RecipientNotFound.hpp>
+#include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
 #include <Tanker/Test/Functional/Trustchain.hpp>
@@ -15,6 +16,8 @@
 
 #include "CheckDecrypt.hpp"
 #include "TrustchainFixture.hpp"
+
+#include <tconcurrent/async_wait.hpp>
 
 using namespace std::string_literals;
 
@@ -256,5 +259,33 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->share(resourceIds, {bob.suserId()}, {})));
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
+{
+  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const deviceId = TC_AWAIT(aliceSession->deviceId());
+
+  tc::promise<void> prom;
+  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
+
+  std::vector<tc::future<void>> futures;
+  futures.push_back(prom.get_future());
+  futures.push_back(tc::async_wait(std::chrono::seconds(2)));
+  auto const result =
+      TC_AWAIT(tc::when_any(std::make_move_iterator(futures.begin()),
+                            std::make_move_iterator(futures.end()),
+                            tc::when_any_options::auto_cancel));
+  CHECK(result.index == 0);
+
+  CHECK(aliceSession->status() == Status::Closed);
+
+  CHECK_THROWS_AS(TC_AWAIT(aliceDevice.open()),
+                  Error::InvalidUnlockEventHandler);
 }
 }
