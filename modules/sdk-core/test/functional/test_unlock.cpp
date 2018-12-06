@@ -1,4 +1,3 @@
-
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
 #include <Tanker/AsyncCore.hpp>
@@ -202,7 +201,7 @@ TEST_SUITE("Unlock")
       auto const code =
           TC_AWAIT(trustchain.getVerificationCode(alice.suserId(), email));
       core2->unlockRequired().connect([&] {
-        tc::async_resumable([&] {
+        tc::async_resumable([&]() -> tc::cotask<void> {
           try
           {
             TC_AWAIT(core2->unlockCurrentDevice(code));

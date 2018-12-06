@@ -32,7 +32,7 @@ class TankerConan(ConanFile):
     @property
     def sanitizer_flag(self):
         if self.options.sanitizer:
-            return "-fsanitize=%s" % self.options.sanitizer
+            return " -fsanitize=%s " % self.options.sanitizer
         return None
 
     def requirements(self):
@@ -77,13 +77,14 @@ class TankerConan(ConanFile):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.0.1@tanker/testing")
+            self.build_requires("doctest-async/2.0.7@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
 
     def build(self):
         cmake = CMake(self)
         if self.options.sanitizer:
-            cmake.definitions["CONAN_C_FLAGS"] = self.sanitizer_flag
-            cmake.definitions["CONAN_CXX_FLAGS"] = self.sanitizer_flag
+            cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
+            cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
         cmake.definitions["BUILD_TESTS"] = self.should_build_tests
         cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
