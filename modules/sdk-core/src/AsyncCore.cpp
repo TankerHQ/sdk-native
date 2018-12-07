@@ -26,10 +26,9 @@ TLOG_CATEGORY(sdk);
 
 namespace Tanker
 {
-AsyncCore::AsyncCore(std::string const& trustchainId,
-                     std::string const& trustchainUrl,
-                     std::string const& writablePath)
-  : _core(std::make_unique<Core>(trustchainId, trustchainUrl, writablePath))
+AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
+  : _core(std::make_unique<Core>(
+        std::move(url), std::move(info), std::move(writablePath)))
 {
 }
 

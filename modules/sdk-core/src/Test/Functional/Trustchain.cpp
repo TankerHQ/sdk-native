@@ -18,7 +18,7 @@ namespace Test
 {
 Trustchain::Trustchain()
   : _trustchainUrl(Tanker::TestConstants::trustchainUrl()),
-    _admin(ConnectionFactory::create(_trustchainUrl),
+    _admin(ConnectionFactory::create(_trustchainUrl, nonstd::nullopt),
            Tanker::TestConstants::idToken()),
     _trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair())
 {

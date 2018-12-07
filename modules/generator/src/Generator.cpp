@@ -23,16 +23,18 @@ using namespace literals;
 
 Gen::Gen(std::string url, std::string idToken, std::size_t nb_cl)
   : _uuidGen(),
-    _admin(std::make_unique<Admin>(ConnectionFactory::create(url), idToken)),
+    _admin(std::make_unique<Admin>(
+        ConnectionFactory::create(url, nonstd::nullopt), idToken)),
     _keyPair{Crypto::makeSignatureKeyPair()},
     _trustchainId{},
     _name{defaultName()},
     _currentClient{0}
 
 {
+  // FIXME
   for (auto i = 0u; i < nb_cl; ++i)
-    _clients.emplace_back(
-        std::make_unique<Client>(ConnectionFactory::create(url)));
+    _clients.emplace_back(std::make_unique<Client>(ConnectionFactory::create(
+        url, SdkInfo{"test", _trustchainId, "0.0.1"})));
 }
 
 std::string Gen::createUid() const noexcept

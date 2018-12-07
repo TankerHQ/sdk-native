@@ -114,10 +114,10 @@ AsyncCorePtr openTanker(MainArgs const& args)
   }();
 
   writefile(userTokenFile, userToken);
-
-  auto core = AsyncCorePtr{new AsyncCore(args.at("<trustchainid>").asString(),
-                                         args.at("<trustchainurl>").asString(),
-                                         ".")};
+  auto core = AsyncCorePtr{new AsyncCore(
+      args.at("<trustchainUrl>").asString(),
+      {"test", base64::decode<TrustchainId>(trustchainId), "0.0.1"},
+      ".")};
 
   auto const connection =
       core->connectEvent(Event::UnlockRequired, [&](void*, void*) {

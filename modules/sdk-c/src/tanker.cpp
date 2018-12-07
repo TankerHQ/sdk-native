@@ -51,18 +51,29 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
   return makeFuture(tc::sync([&] {
     if (options == nullptr)
       throw Error::formatEx<Error::InvalidArgument>("options is null");
+    if (options->version != 2)
+      throw Error::formatEx<Error::InvalidArgument>(
+          "options version is {:d} should be {:d}", options->version, 2);
     if (options->trustchain_id == nullptr)
       throw Error::formatEx<Error::InvalidArgument>("trustchain_id is null");
+    if (options->sdk_type == nullptr)
+      throw Error::formatEx<Error::InvalidArgument>("sdk_type is null");
+    if (options->sdk_version == nullptr)
+      throw Error::formatEx<Error::InvalidArgument>("sdk_version is null");
 
-    char const* trustchain_url = options->trustchain_url;
-    if (trustchain_url == nullptr)
-      trustchain_url = "https://api.tanker.io";
+    char const* url = options->trustchain_url;
+    if (url == nullptr)
+      url = "https://api.tanker.io";
 
     if (options->writable_path == nullptr)
       throw Error::formatEx<Error::InvalidArgument>("writable_path is null");
 
     return static_cast<void*>(new AsyncCore(
-        options->trustchain_id, trustchain_url, options->writable_path));
+        url,
+        {options->sdk_type,
+         base64::decode<TrustchainId>(std::string(options->trustchain_id)),
+         options->sdk_version},
+        options->writable_path));
   }));
 }
 

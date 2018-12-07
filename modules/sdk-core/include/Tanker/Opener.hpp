@@ -3,6 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/Password.hpp>
@@ -35,9 +36,7 @@ class DeviceKeyStore;
 class Opener
 {
 public:
-  Opener(TrustchainId const& trustchainId,
-         std::string const& trustchainUrl,
-         boost::filesystem::path const& writablePath);
+  Opener(std::string url, SdkInfo info, boost::filesystem::path writablePath);
 
   Status status() const;
 
@@ -51,8 +50,8 @@ public:
   boost::signals2::signal<void()> unlockRequired;
 
 private:
-  TrustchainId const _trustchainId;
-  std::string _trustchainUrl;
+  std::string _url;
+  SdkInfo _info;
   boost::filesystem::path _writablePath;
 
   nonstd::optional<UserId> _userId;

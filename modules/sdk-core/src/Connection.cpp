@@ -1,6 +1,6 @@
 #include <Tanker/Connection.hpp>
 
-#include <Tanker/AConnection.hpp>
+#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
@@ -20,7 +20,8 @@ TLOG_CATEGORY(Connection);
 namespace Tanker
 {
 
-Connection::Connection(std::string url) : _trustchainUrl(std::move(url))
+Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
+  : _url(std::move(url)), _infos(std::move(infos))
 {
   _client.set_socket_open_listener([this](auto const&) {
     _taskCanceler.add(tc::async([this] {
@@ -44,7 +45,14 @@ bool Connection::isOpen() const
 
 void Connection::connect()
 {
-  this->_client.connect(this->_trustchainUrl);
+  if (_infos)
+    this->_client.connect(
+        _url,
+        {{"type", _infos->sdkType},
+         {"version", _infos->version},
+         {"trustchainId", base64::encode(_infos->trustchainId)}});
+  else
+    this->_client.connect(_url);
 }
 
 void Connection::on(std::string const& eventName, AConnection::Handler handler)

@@ -20,8 +20,8 @@ tanker_future_t* tanker_admin_connect(char const* trustchain_url,
       [trustchainUrl = std::string(trustchain_url),
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Tanker::init();
-        const auto admin =
-            new Admin(ConnectionFactory::create(trustchainUrl), idToken);
+        const auto admin = new Admin(
+            ConnectionFactory::create(trustchainUrl, nonstd::nullopt), idToken);
         TC_AWAIT(admin->start());
         TC_RETURN(static_cast<void*>(admin));
       }));

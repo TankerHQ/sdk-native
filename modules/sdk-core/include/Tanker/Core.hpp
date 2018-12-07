@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Opener.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -34,9 +35,7 @@ class ChunkEncryptor;
 class Core
 {
 public:
-  Core(std::string const& trustchainId,
-       std::string const& trustchainUrl,
-       std::string const& writablePath);
+  Core(std::string url, SdkInfo infos, std::string writablePath);
 
   Status status() const;
 
@@ -97,8 +96,8 @@ private:
   // not reentrant so the observation would trigger undefined behavior.
   using SessionType = std::unique_ptr<Session>;
 
-  TrustchainId _trustchainId;
-  std::string _trustchainUrl;
+  std::string _url;
+  SdkInfo _info;
   boost::filesystem::path _writablePath;
 
   mpark::variant<Opener, SessionType> _state;

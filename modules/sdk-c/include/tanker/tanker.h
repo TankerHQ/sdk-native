@@ -70,11 +70,13 @@ struct tanker_options
   b64char const* trustchain_id; /*!< Must not be NULL. */
   char const* trustchain_url;   /*!< Must not be NULL. */
   char const* writable_path;    /*!< Must not be NULL. */
+  char const* sdk_type;         /*!< Must not be NULL. */
+  char const* sdk_version;      /*!< Must not be NULL. */
 };
 
-#define TANKER_OPTIONS_INIT \
-  {                         \
-    1, NULL, NULL, NULL     \
+#define TANKER_OPTIONS_INIT         \
+  {                                 \
+    2, NULL, NULL, NULL, NULL, NULL \
   }
 
 struct tanker_encrypt_options

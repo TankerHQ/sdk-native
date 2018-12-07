@@ -45,6 +45,8 @@ tanker_t* create_user(TestTrustchain const& trustchain)
   tanker_options_t opts = TANKER_OPTIONS_INIT;
   opts.trustchain_url = trustchain.url();
   opts.trustchain_id = trustchain.id();
+  opts.sdk_version = "0.0.1";
+  opts.sdk_type = "test";
   UniquePath prefix("tmptest");
   opts.writable_path = prefix.path.c_str();
 
@@ -95,6 +97,8 @@ TEST_CASE("tanker_create should throw an error if the base64 is invalid")
 {
   tanker_options_t opts = TANKER_OPTIONS_INIT;
   opts.trustchain_id = ",,,,!!";
+  opts.sdk_version = "0.0.1";
+  opts.sdk_type = "test";
   UniquePath prefix("tmptest");
   opts.writable_path = prefix.path.c_str();
 
@@ -115,6 +119,8 @@ TEST_CASE("Create/destroy tanker instance")
 
   tanker_options_t opts = TANKER_OPTIONS_INIT;
   opts.trustchain_id = trustchain.id();
+  opts.sdk_version = "0.0.1";
+  opts.sdk_type = "test";
   UniquePath prefix("tmptest");
   opts.writable_path = prefix.path.c_str();
 
@@ -139,6 +145,8 @@ TEST_CASE("Connect/Disconnect tanker instance")
   tanker_options_t opts = TANKER_OPTIONS_INIT;
   opts.trustchain_url = trustchain.url();
   opts.trustchain_id = trustchain.id();
+  opts.sdk_version = "0.0.1";
+  opts.sdk_type = "test";
   UniquePath prefix("tmptest");
   opts.writable_path = prefix.path.c_str();
 

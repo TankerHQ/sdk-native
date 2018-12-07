@@ -2,6 +2,7 @@
 
 #include <Tanker/Constants.hpp>
 #include <Tanker/LogHandler.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -55,9 +56,7 @@ class AsyncCore
   std::unique_ptr<Core> _core;
 
 public:
-  AsyncCore(std::string const& trustchainId,
-            std::string const& trustchainUrl,
-            std::string const& writablePath);
+  AsyncCore(std::string url, SdkInfo info, std::string writablePath);
   ~AsyncCore();
 
   tc::future<void> destroy();

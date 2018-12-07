@@ -4,8 +4,9 @@
 
 namespace Tanker
 {
-ConnectionPtr ConnectionFactory::create(std::string url)
+ConnectionPtr ConnectionFactory::create(std::string url,
+                                        nonstd::optional<SdkInfo> info)
 {
-  return std::make_unique<Connection>(std::move(url));
+  return std::make_unique<Connection>(std::move(url), std::move(info));
 }
 }

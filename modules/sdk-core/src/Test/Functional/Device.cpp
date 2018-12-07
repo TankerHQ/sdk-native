@@ -46,14 +46,16 @@ Device::Device(std::string trustchainUrl,
 
 AsyncCorePtr Device::createCore(SessionType type)
 {
+  auto info =
+      SdkInfo{"test", base64::decode<TrustchainId>(_trustchainId), "0.0.1"};
   if (type == SessionType::New)
     return AsyncCorePtr(
-        new AsyncCore(_trustchainId, _trustchainUrl, _storage->path.string()),
+        new AsyncCore(_trustchainUrl, info, _storage->path.string()),
         AsyncCoreDeleter{});
 
   if (!*_cachedSession)
     *_cachedSession = AsyncCorePtr(
-        new AsyncCore(_trustchainId, _trustchainUrl, _storage->path.string()),
+        new AsyncCore(_trustchainUrl, info, _storage->path.string()),
         AsyncCoreDeleter{});
 
   return *_cachedSession;
