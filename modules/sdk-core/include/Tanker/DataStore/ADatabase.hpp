@@ -5,7 +5,6 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 
@@ -44,37 +43,7 @@ class ADatabase
 public:
   virtual ~ADatabase() = default;
 
-  tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f)
-  {
-    TLOG_CATEGORY("ADatabase");
-    TC_AWAIT(startTransaction());
-    bool transaction = true;
-    try
-    {
-      TC_AWAIT(f());
-      transaction = false;
-      TC_AWAIT(commitTransaction());
-    }
-    catch (...)
-    {
-      if (transaction)
-      {
-        try
-        {
-          TC_AWAIT(rollbackTransaction());
-        }
-        catch (std::exception const& e)
-        {
-          TERROR("Failed to rollback transaction: {}", e.what());
-        }
-        catch (...)
-        {
-          TERROR("Failed to rollback transaction: unknown error");
-        }
-      }
-      throw;
-    }
-  }
+  tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f);
 
   virtual tc::cotask<void> putUserPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
