@@ -1,122 +1,89 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
+
 #include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/Device.hpp>
-#include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Entry.hpp>
-#include <Tanker/Groups/Group.hpp>
-#include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
-
-#include <optional.hpp>
-#include <tconcurrent/coroutine.hpp>
-
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace Tanker
 {
 namespace DataStore
 {
-class RecordNotFound : public std::exception
-{
-public:
-  RecordNotFound(std::string msg) : _msg(std::move(msg))
-  {
-  }
-
-  char const* what() const noexcept override
-  {
-    return _msg.c_str();
-  }
-
-private:
-  std::string _msg;
-};
-
-class Database
+class Database : public ADatabase
 {
 public:
   explicit Database(std::string const& dbPath,
                     nonstd::optional<Crypto::SymmetricKey> const& userSecret,
                     bool exclusive);
 
-  Connection* getConnection();
-
   tc::cotask<void> putUserPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
-      Crypto::PrivateEncryptionKey const& privateKey);
+      Crypto::PrivateEncryptionKey const& privateKey) override;
   tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey);
+      Crypto::PublicEncryptionKey const& publicKey) override;
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
-  getUserOptLastKeyPair();
+  getUserOptLastKeyPair() override;
 
-  tc::cotask<uint64_t> getTrustchainLastIndex();
-  tc::cotask<void> addTrustchainEntry(Entry const& Entry);
+  tc::cotask<uint64_t> getTrustchainLastIndex() override;
+  tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
-      Crypto::Hash const& hash) const;
+      Crypto::Hash const& hash) const override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Crypto::Mac const& resourceId);
-  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(UserId const& userId);
-  tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId);
+      Crypto::Mac const& resourceId) override;
+  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
+      UserId const& userId) override;
+  tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
       UserId const& userId,
-      nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey);
+      nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
 
   tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> getContactUserKey(
-      UserId const& userId);
+      UserId const& userId) override;
 
   tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
-                                  Crypto::SymmetricKey const& key);
+                                  Crypto::SymmetricKey const& key) override;
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
-      Crypto::Mac const& mac);
+      Crypto::Mac const& mac) override;
 
-  tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys();
-  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
-  tc::cotask<void> setDeviceId(DeviceId const& deviceId);
+  tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
+  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
+  tc::cotask<void> setDeviceId(DeviceId const& deviceId) override;
 
-  tc::cotask<void> putDevice(UserId const& userId, Device const& device);
-  tc::cotask<nonstd::optional<Device>> getOptDevice(DeviceId const& id) const;
-  tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) const;
+  tc::cotask<void> putDevice(UserId const& userId,
+                             Device const& device) override;
+  tc::cotask<nonstd::optional<Device>> getOptDevice(
+      DeviceId const& id) const override;
+  tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) const override;
 
-  tc::cotask<void> putFullGroup(Group const& group);
-  tc::cotask<void> putExternalGroup(ExternalGroup const& group);
+  tc::cotask<void> putFullGroup(Group const& group) override;
+  tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
   // Does nothing if the group does not exist
   tc::cotask<void> updateLastGroupBlock(GroupId const& groupId,
                                         Crypto::Hash const& lastBlockHash,
-                                        uint64_t lastBlockIndex);
+                                        uint64_t lastBlockIndex) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
-      GroupId const& groupId) const;
+      GroupId const& groupId) const override;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
-      GroupId const& groupId) const;
+      GroupId const& groupId) const override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) const override;
   tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) const override;
 
 private:
   ConnPtr _db;
+
+  std::vector<sqlpp::transaction_t<sqlpp::sqlite3::connection>> _transactions;
 
   bool isMigrationNeeded();
   void flushAllCaches();
   tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
                                    Crypto::Mac const& resourceId);
+
+  tc::cotask<void> startTransaction() override;
+  tc::cotask<void> commitTransaction() override;
+  tc::cotask<void> rollbackTransaction() override;
 };
-
-using DatabasePtr = std::unique_ptr<Database>;
-
-inline tc::cotask<DatabasePtr> createDatabase(
-    std::string const& dbPath,
-    nonstd::optional<Crypto::SymmetricKey> const& userSecret = {},
-    bool exclusive = true)
-{
-  TC_RETURN(std::make_unique<Database>(dbPath, userSecret, exclusive));
-}
 }
 }

@@ -1,7 +1,7 @@
 #include <Tanker/TrustchainVerifier.hpp>
 
 #include <Tanker/ContactStore.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
@@ -39,7 +39,7 @@ bool isDeviceCreation(Nature nature)
 }
 
 TrustchainVerifier::TrustchainVerifier(TrustchainId const& id,
-                                       DataStore::Database* db,
+                                       DataStore::ADatabase* db,
                                        ContactStore* contacts,
                                        GroupStore* groups)
   : _trustchainId(id), _db(db), _contacts(contacts), _groups(groups)

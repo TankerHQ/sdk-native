@@ -4,6 +4,10 @@
 
 #include <boost/signals2/signal.hpp>
 
+#include <functional>
+#include <memory>
+#include <string>
+
 namespace Tanker
 {
 class AConnection
@@ -24,4 +28,6 @@ public:
   boost::signals2::signal<void()> reconnected;
 };
 
-} // Tanker
+using ConnectionPtr = std::unique_ptr<AConnection>;
+ConnectionPtr makeConnection(std::string const& url);
+}

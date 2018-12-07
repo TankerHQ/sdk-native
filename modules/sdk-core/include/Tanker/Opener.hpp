@@ -2,7 +2,7 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/Password.hpp>

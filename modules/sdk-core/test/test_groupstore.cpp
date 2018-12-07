@@ -1,10 +1,7 @@
 #include <Tanker/Groups/GroupStore.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/Groups.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>

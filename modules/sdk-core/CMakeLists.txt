@@ -102,10 +102,12 @@ add_library(tankercore STATIC
   src/Admin.cpp
   src/Init.cpp
   src/DataStore/Connection.cpp
+  src/DataStore/ADatabase.cpp
   src/DataStore/Database.cpp
   src/DataStore/Table.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
+  src/AConnection.cpp
   src/Connection.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp

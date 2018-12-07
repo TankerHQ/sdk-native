@@ -1,7 +1,7 @@
 #include <Tanker/ContactStore.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -10,7 +10,6 @@
 
 #include <fmt/format.h>
 #include <optional.hpp>
-#include <sqlpp11/transaction.h>
 #include <tconcurrent/coroutine.hpp>
 
 #include <stdexcept>
@@ -18,7 +17,7 @@
 
 namespace Tanker
 {
-ContactStore::ContactStore(DataStore::Database* db) : _db(db)
+ContactStore::ContactStore(DataStore::ADatabase* db) : _db(db)
 {
 }
 
@@ -31,12 +30,10 @@ tc::cotask<void> ContactStore::putUser(User const& user)
     throw Error::formatEx<std::runtime_error>(
         fmt("User {:s} is already stored"), user.id);
   }
-  auto tr = sqlpp::start_transaction(*_db->getConnection());
 
   TC_AWAIT(_db->putContact(user.id, user.userKey));
   for (auto const& device : user.devices)
     TC_AWAIT(_db->putDevice(user.id, device));
-  tr.commit();
 }
 
 tc::cotask<void> ContactStore::putUserKey(

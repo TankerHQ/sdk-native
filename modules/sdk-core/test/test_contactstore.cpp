@@ -1,6 +1,6 @@
 #include <Tanker/ContactStore.hpp>
 
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <Helpers/Await.hpp>

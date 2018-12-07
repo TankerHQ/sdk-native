@@ -8,7 +8,6 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Crypto/base64.hpp>
-#include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -20,7 +19,6 @@
 
 #include <mockaron/mockaron.hpp>
 #include <mpark/variant.hpp>
-#include <sqlpp11/transaction.h>
 #include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>
@@ -38,7 +36,7 @@ namespace Tanker
 TrustchainPuller::TrustchainPuller(
     Trustchain* trustchain,
     TrustchainVerifier* verifier,
-    DataStore::Database* db,
+    DataStore::ADatabase* db,
     Client* client,
     Crypto::PublicSignatureKey const& deviceSignatureKey,
     DeviceId const& deviceId,
@@ -101,50 +99,50 @@ tc::cotask<void> TrustchainPuller::catchUp()
               Serialization::deserialize<Block>(base64::decode(block)));
         });
 
-    auto tx = start_transaction(*(_db->getConnection()));
-    std::set<Crypto::Hash> processed;
-    if (_deviceId.is_null())
-    {
-      TINFO("No user id, processing our devices first");
-      // process our blocks first or here's what'll happen!
-      // if you receive:
-      // - Device Creation
-      // - Group Creation (with a key encrypted for my user key)
-      // - My Device Creation (with my user key that I can decrypt)
-      // If I process the Group Creation, I won't be able to decrypt it. More
-      // generally, I can't process stuff if I don't have my user keys and
-      // device id, so we do not process other blocks before we have those.
-      for (auto const& unverifiedEntry : entries)
-        if (mpark::get_if<TrustchainCreation>(
-                &unverifiedEntry.action.variant()))
-        {
-          TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
-          processed.insert(unverifiedEntry.hash);
-        }
-        else if (auto const deviceCreation = mpark::get_if<DeviceCreation>(
-                     &unverifiedEntry.action.variant()))
-        {
-          if (deviceCreation->userId() == _userId)
+    TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
+      std::set<Crypto::Hash> processed;
+      if (_deviceId.is_null())
+      {
+        TINFO("No user id, processing our devices first");
+        // process our blocks first or here's what'll happen!
+        // if you receive:
+        // - Device Creation
+        // - Group Creation (with a key encrypted for my user key)
+        // - My Device Creation (with my user key that I can decrypt)
+        // If I process the Group Creation, I won't be able to decrypt it. More
+        // generally, I can't process stuff if I don't have my user keys and
+        // device id, so we do not process other blocks before we have those.
+        for (auto const& unverifiedEntry : entries)
+          if (mpark::get_if<TrustchainCreation>(
+                  &unverifiedEntry.action.variant()))
           {
             TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
             processed.insert(unverifiedEntry.hash);
           }
-        }
-    }
-
-    for (auto const& unverifiedEntry : entries)
-    {
-      if (processed.count(unverifiedEntry.hash))
-        continue;
-
-      auto const existingEntry =
-          TC_AWAIT(_db->findTrustchainEntry(unverifiedEntry.hash));
-      if (!existingEntry)
-      {
-        TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+          else if (auto const deviceCreation = mpark::get_if<DeviceCreation>(
+                       &unverifiedEntry.action.variant()))
+          {
+            if (deviceCreation->userId() == _userId)
+            {
+              TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+              processed.insert(unverifiedEntry.hash);
+            }
+          }
       }
-    }
-    tx.commit();
+
+      for (auto const& unverifiedEntry : entries)
+      {
+        if (processed.count(unverifiedEntry.hash))
+          continue;
+
+        auto const existingEntry =
+            TC_AWAIT(_db->findTrustchainEntry(unverifiedEntry.hash));
+        if (!existingEntry)
+        {
+          TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+        }
+      }
+    }));
     TINFO("Caught up");
   }
   catch (std::exception const& e)

@@ -1,7 +1,7 @@
 #include <Tanker/ReceiveKey.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 

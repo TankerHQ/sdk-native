@@ -16,14 +16,14 @@ struct Device;
 
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class TrustchainVerifier
 {
 public:
   TrustchainVerifier(TrustchainId const&,
-                     DataStore::Database*,
+                     DataStore::ADatabase*,
                      ContactStore*,
                      GroupStore*);
 
@@ -50,7 +50,7 @@ private:
   tc::cotask<ExternalGroup> getGroupById(GroupId const& groupId) const;
 
   TrustchainId _trustchainId;
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
   ContactStore* _contacts;
   GroupStore* _groups;
 };

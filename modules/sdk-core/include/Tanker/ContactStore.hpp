@@ -11,7 +11,7 @@ namespace Tanker
 {
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 struct Device;
@@ -19,7 +19,7 @@ struct Device;
 class ContactStore
 {
 public:
-  ContactStore(DataStore::Database* dbConn);
+  ContactStore(DataStore::ADatabase* dbConn);
 
   ContactStore() = delete;
   ContactStore(ContactStore const&) = delete;
@@ -38,6 +38,6 @@ public:
   tc::cotask<std::vector<Device>> findUserDevices(UserId const& id) const;
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
 };
 }

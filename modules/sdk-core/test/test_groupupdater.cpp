@@ -1,7 +1,7 @@
 #include <Tanker/Groups/GroupUpdater.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 
 #include <Helpers/Await.hpp>

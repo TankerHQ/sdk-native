@@ -9,7 +9,7 @@ namespace Tanker
 {
 namespace DataStore
 {
-class Database;
+class ADatabase;
 }
 
 class UserKeyStore
@@ -20,7 +20,7 @@ public:
   UserKeyStore& operator=(UserKeyStore const&) = delete;
   UserKeyStore& operator=(UserKeyStore&&) = delete;
 
-  UserKeyStore(DataStore::Database* dbConn);
+  UserKeyStore(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> putPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
@@ -35,6 +35,6 @@ public:
   tc::cotask<Crypto::EncryptionKeyPair> getLastKeyPair() const;
 
 private:
-  DataStore::Database* _db;
+  DataStore::ADatabase* _db;
 };
 }
