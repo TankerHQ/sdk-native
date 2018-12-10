@@ -1,5 +1,5 @@
 #include <Generator/Generator.hpp>
-#include <Tanker/AConnection.hpp>
+#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -23,7 +23,7 @@ using namespace literals;
 
 Gen::Gen(std::string url, std::string idToken, std::size_t nb_cl)
   : _uuidGen(),
-    _admin(std::make_unique<Admin>(makeConnection(url), idToken)),
+    _admin(std::make_unique<Admin>(ConnectionFactory::create(url), idToken)),
     _keyPair{Crypto::makeSignatureKeyPair()},
     _trustchainId{},
     _name{defaultName()},
@@ -31,7 +31,8 @@ Gen::Gen(std::string url, std::string idToken, std::size_t nb_cl)
 
 {
   for (auto i = 0u; i < nb_cl; ++i)
-    _clients.emplace_back(std::make_unique<Client>(makeConnection(url)));
+    _clients.emplace_back(
+        std::make_unique<Client>(ConnectionFactory::create(url)));
 }
 
 std::string Gen::createUid() const noexcept

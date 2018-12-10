@@ -30,6 +30,7 @@ add_library(tankercore STATIC
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
   include/Tanker/Connection.hpp
+  include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
   include/Tanker/Error.hpp
@@ -108,8 +109,8 @@ add_library(tankercore STATIC
   src/DataStore/Table.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
-  src/AConnection.cpp
   src/Connection.cpp
+  src/ConnectionFactory.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
   src/Unlock/Claims.cpp

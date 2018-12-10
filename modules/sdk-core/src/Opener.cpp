@@ -1,8 +1,8 @@
 #include <Tanker/Opener.hpp>
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/EnumFormat.hpp>
@@ -65,7 +65,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
       _userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
-  _client = std::make_unique<Client>(makeConnection(_trustchainUrl));
+  _client = std::make_unique<Client>(ConnectionFactory::create(_trustchainUrl));
   _client->start();
 
   auto const userStatusResult = TC_AWAIT(_client->userStatus(

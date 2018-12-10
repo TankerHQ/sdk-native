@@ -29,5 +29,4 @@ public:
 };
 
 using ConnectionPtr = std::unique_ptr<AConnection>;
-ConnectionPtr makeConnection(std::string const& url);
 }
