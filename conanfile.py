@@ -41,7 +41,7 @@ class TankerConan(ConanFile):
         # Thus we embed every dep in the shared lib
         private = (self.settings.os == "Android")
 
-        self.requires("Boost/1.66.0@tanker/testing", private=private, override=True)
+        self.requires("Boost/1.68.0@tanker/testing", private=private, override=True)
         if self.options.with_ssl:
             self.requires("LibreSSL/2.6.3@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
