@@ -15,9 +15,12 @@ class UserNotFoundBase
 {
 public:
   UserNotFoundBase() = default;
-  UserNotFoundBase(std::vector<UserId> const& userIds)
-    : _userIds(userIds)
+  UserNotFoundBase(std::vector<UserId> const& userIds) : _userIds(userIds)
   {
+  }
+  UserNotFoundBase(UserId const& userId)
+  {
+    _userIds.push_back(userId);
   }
 
   std::vector<UserId> const& userIds() const
@@ -38,7 +41,14 @@ public:
   }
 
   UserNotFound(std::string message, std::vector<UserId> const& userIds)
-    : Exception(Code::UserNotFound, std::move(message)), UserNotFoundBase(userIds)
+    : Exception(Code::UserNotFound, std::move(message)),
+      UserNotFoundBase(userIds)
+  {
+  }
+
+  UserNotFound(std::string message, UserId const& userId)
+    : Exception(Code::UserNotFound, std::move(message)),
+      UserNotFoundBase(userId)
   {
   }
 };

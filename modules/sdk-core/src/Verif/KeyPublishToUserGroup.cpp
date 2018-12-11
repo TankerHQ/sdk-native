@@ -24,6 +24,9 @@ void verifyKeyPublishToUserGroup(UnverifiedEntry const& entry,
          mpark::get<KeyPublishToUserGroup>(entry.action.variant())
              .recipientPublicEncryptionKey);
 
+  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+          Error::VerificationCode::InvalidAuthor,
+          "author device must not be revoked");
   ensures(
       Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,

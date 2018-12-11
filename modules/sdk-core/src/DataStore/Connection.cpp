@@ -102,6 +102,8 @@ ConnPtr createConnection(std::string const& dbPath,
     });
     // enable foreign key support
     db->execute("PRAGMA foreign_keys = ON");
+    // for revocation (when wiping db)
+    db->execute("PRAGMA secure_delete = ON");
 
     // migrate from clear to encrypted db
     if (shouldMigrate)

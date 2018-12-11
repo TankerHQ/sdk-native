@@ -2,6 +2,7 @@
 
 #include <Tanker/Action.hpp>
 #include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
@@ -124,6 +125,23 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
           delegation, signatureKey, encryptionKey, userEncryptionKey, false),
       _deviceId,
       delegation.ephemeralKeyPair.privateKey));
+}
+
+std::vector<uint8_t> BlockGenerator::revokeDevice2(
+    DeviceId const& deviceId,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
+    Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
+    std::vector<EncryptedPrivateUserKey> const& userKeys) const
+{
+  return Serialization::serialize(makeBlock(
+      DeviceRevocation{DeviceRevocation2{deviceId,
+                                         publicEncryptionKey,
+                                         previousPublicEncryptionKey,
+                                         encryptedKeyForPreviousUserKey,
+                                         userKeys}},
+      _deviceId,
+      _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::keyPublish(

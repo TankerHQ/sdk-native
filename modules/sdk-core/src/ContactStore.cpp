@@ -70,4 +70,29 @@ tc::cotask<std::vector<Device>> ContactStore::findUserDevices(
 {
   TC_RETURN(TC_AWAIT(_db->getDevicesOf(id)));
 }
+
+tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByUserPublicKey(
+    Crypto::PublicEncryptionKey const& userKey) const
+{
+  TC_RETURN(TC_AWAIT(_db->getContactUserId(userKey)));
+}
+
+tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByDeviceId(
+    DeviceId const& id) const
+{
+  TC_RETURN(TC_AWAIT(_db->getDeviceUserId(id)));
+}
+
+tc::cotask<void> ContactStore::revokeDevice(DeviceId const& id,
+                                            uint64_t revokedAtBlkIndex) const
+{
+  TC_AWAIT(_db->updateDeviceRevokedAt(id, revokedAtBlkIndex));
+}
+
+tc::cotask<void> ContactStore::rotateContactPublicEncryptionKey(
+    UserId const& userId,
+    Crypto::PublicEncryptionKey const& userPublicKey) const
+{
+  TC_AWAIT(_db->setPublicEncryptionKey(userId, userPublicKey));
+}
 }

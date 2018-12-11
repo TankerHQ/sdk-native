@@ -44,6 +44,7 @@ enum class Event
   SessionClosed = 1,
   DeviceCreated,
   UnlockRequired,
+  DeviceRevoked,
 
   Last
 };
@@ -104,6 +105,7 @@ public:
   boost::signals2::signal<void()>& unlockRequired();
   boost::signals2::signal<void()>& sessionClosed();
   boost::signals2::signal<void()>& deviceCreated();
+  boost::signals2::signal<void()>& deviceRevoked();
 
   tc::future<DeviceId> deviceId() const;
 
@@ -113,6 +115,8 @@ public:
       gsl::span<uint8_t const> encryptedSeal,
       std::chrono::steady_clock::duration timeout =
           Constants::DefaultDecryptTimeout);
+
+  tc::future<void> revokeDevice(DeviceId const& deviceId);
 
   tc::future<void> syncTrustchain();
 

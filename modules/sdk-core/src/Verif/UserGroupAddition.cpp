@@ -18,6 +18,10 @@ void verifyUserGroupAddition(UnverifiedEntry const& entry,
 {
   assert(entry.nature == Nature::UserGroupAddition);
 
+  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+          Error::VerificationCode::InvalidAuthor,
+          "A revoked device must not be the author of a UserGroupAddition");
+
   ensures(
       Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,
