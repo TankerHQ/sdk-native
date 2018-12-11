@@ -185,11 +185,13 @@ target_include_directories(tankercore
   $<INSTALL_INTERFACE:include>
 )
 
+
 target_link_libraries(tankercore
   tankerserialization
   tankerusertoken
   tankertypes
   tankercrypto
+  ttracer
   CONAN_PKG::Boost
   CONAN_PKG::socket.io-client-cpp
   CONAN_PKG::sqlpp11-connector-sqlite3
@@ -203,6 +205,7 @@ target_link_libraries(tankercore
   CONAN_PKG::mockaron
   CONAN_PKG::enum-flags
 )
+
 
 install(TARGETS tankercore
   EXPORT tanker

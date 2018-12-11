@@ -18,6 +18,8 @@
 #include <tconcurrent/executor.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>

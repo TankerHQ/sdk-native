@@ -82,6 +82,7 @@ public:
       std::vector<UserId> const& extra_users,
       std::vector<GroupId> const& extra_groups);
 
+  std::string connectionId() const;
   boost::signals2::signal<void()> blockAvailable;
   boost::signals2::signal<void()> deviceCreated;
 

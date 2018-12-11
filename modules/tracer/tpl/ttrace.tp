@@ -1,0 +1,23 @@
+TRACEPOINT_EVENT(
+    ttracer,
+    coro_beacon,
+    TP_ARGS(
+      int, id,
+      const char *, name
+      ),
+    TP_FIELDS(
+      ctf_string(query_field, name)
+      ctf_integer(int, coro_id, id)
+      )
+    )
+
+TRACEPOINT_ENUM(
+    ttracer,
+    coro_gate,
+    TP_ENUM_VALUES(
+      ctf_enum_value("OPEN", 0)
+      ctf_enum_value("CLOSE", 1)
+      ctf_enum_value("ERROR", 2)
+      )
+    )
+

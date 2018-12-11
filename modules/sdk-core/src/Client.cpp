@@ -10,6 +10,9 @@
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
+#include <Tanker/Tracer/FuncTracer.hpp>
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <fmt/format.h>
 
 #include <nlohmann/json.hpp>
@@ -24,6 +27,7 @@ TLOG_CATEGORY(Client);
 
 namespace Tanker
 {
+
 Client::Client(std::unique_ptr<AConnection> cx,
                ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
@@ -38,7 +42,13 @@ Client::Client(std::unique_ptr<AConnection> cx,
 
 void Client::start()
 {
+  FUNC_BEGIN("client connection", Net);
   _cx->connect();
+}
+
+std::string Client::connectionId() const
+{
+  return this->_cx->id();
 }
 
 void Client::setConnectionHandler(ConnectionHandler handler)
@@ -49,7 +59,9 @@ void Client::setConnectionHandler(ConnectionHandler handler)
 
 tc::cotask<void> Client::handleConnection()
 {
+  FUNC_TIMER(Net);
   TC_AWAIT(_connectionHandler());
+  FUNC_END("client connection", Net);
 }
 
 tc::cotask<void> Client::pushBlock(gsl::span<uint8_t const> block)
@@ -74,6 +86,7 @@ tc::cotask<UserStatusResult> Client::userStatus(
     UserId const& userId,
     Crypto::PublicSignatureKey const& publicSignatureKey)
 {
+  FUNC_TIMER(Proc);
   nlohmann::json request{
       {"trustchain_id", trustchainId},
       {"user_id", userId},

@@ -26,6 +26,8 @@
 #include <nlohmann/json.hpp>
 #include <tconcurrent/promise.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <memory>
 #include <utility>
 
@@ -48,6 +50,7 @@ Status Opener::status() const
 tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
                                          std::string const& b64UserToken)
 {
+  SCOPE_TIMER("opener_open", Proc);
   auto const userToken = UserToken::extract(b64UserToken);
 
   _userId = userToken.delegation.userId;
@@ -173,6 +176,7 @@ Session::Config Opener::makeConfig(Crypto::SymmetricKey const& userSecret)
 tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
 {
   TINFO("createUser");
+  FUNC_TIMER(Proc);
 
   auto const block =
       BlockGenerator(
@@ -188,6 +192,7 @@ tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
 tc::cotask<void> Opener::createDevice()
 {
   TINFO("createDevice");
+  FUNC_TIMER(Proc);
 
   unlockRequired();
 
