@@ -210,7 +210,10 @@ tc::cotask<void> Session::startConnection()
 
   tc::async_resumable([this]() -> tc::cotask<void> {
     TC_AWAIT(syncTrustchain());
-    _ready.set_value({});
+    if (!_ready.get_future().is_ready())
+    {
+      _ready.set_value({});
+    }
   });
 
   TC_AWAIT(_ready.get_future());
@@ -541,6 +544,10 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
   if (deviceRevocation.deviceId() == this->deviceId())
   {
     TINFO("This device has been revoked");
+    if (!_ready.get_future().is_ready())
+    {
+      _ready.set_value({});
+    }
     TC_AWAIT(nukeDatabase());
     deviceRevoked();
     TC_RETURN();
