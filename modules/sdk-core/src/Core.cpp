@@ -32,16 +32,11 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Core::Core(std::string const& trustchainId,
-           std::string const& trustchainUrl,
-           std::string const& writablePath)
-  : _trustchainId(base64::decode<TrustchainId>(trustchainId)),
-    _trustchainUrl(trustchainUrl),
-    _writablePath(writablePath),
-    _state(mpark::in_place_type<Opener>,
-           _trustchainId,
-           _trustchainUrl,
-           _writablePath)
+Core::Core(std::string url, SdkInfo info, std::string writablePath)
+  : _url(std::move(url)),
+    _info(std::move(info)),
+    _writablePath(std::move(writablePath)),
+    _state(mpark::in_place_type<Opener>, _url, _info, _writablePath)
 {
   reset();
 }
@@ -91,7 +86,7 @@ tc::cotask<void> Core::open(SUserId const& suserId,
 
 void Core::close()
 {
-  _state.emplace<Opener>(_trustchainId, _trustchainUrl, _writablePath);
+  _state.emplace<Opener>(_url, _info, _writablePath);
   sessionClosed();
   reset();
 }

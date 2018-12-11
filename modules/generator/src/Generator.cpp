@@ -1,5 +1,5 @@
 #include <Generator/Generator.hpp>
-#include <Tanker/AConnection.hpp>
+#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -21,17 +21,51 @@ namespace Generator
 {
 using namespace literals;
 
-Gen::Gen(std::string url, std::string idToken, std::size_t nb_cl)
+namespace
+{
+auto make_info(TrustchainId tid)
+{
+  return SdkInfo{"test", std::move(tid), "0.0.1"};
+}
+}
+
+Gen::Gen(std::string url, std::string idToken, std::size_t nbClients)
   : _uuidGen(),
-    _admin(std::make_unique<Admin>(makeConnection(url), idToken)),
+    _url(std::move(url)),
+    _idToken(std::move(idToken)),
+    _clients(nbClients),
     _keyPair{Crypto::makeSignatureKeyPair()},
-    _trustchainId{},
     _name{defaultName()},
     _currentClient{0}
 
 {
-  for (auto i = 0u; i < nb_cl; ++i)
-    _clients.emplace_back(std::make_unique<Client>(makeConnection(url)));
+}
+
+tc::cotask<void> Gen::launchClients()
+{
+  for (auto& client : _clients)
+  {
+    if (!client)
+    {
+      client = std::make_unique<Client>(
+          ConnectionFactory::create(_url, _info.value()));
+    }
+    TC_AWAIT(client->start());
+  }
+}
+
+tc::cotask<void> Gen::bootstrap(bool keep)
+{
+  if (!_admin)
+  {
+    _admin = std::make_unique<Admin>(
+        ConnectionFactory::create(_url, nonstd::nullopt), _idToken);
+    TC_AWAIT(_admin->start());
+    auto trustchainId =
+        TC_AWAIT(_admin->createTrustchain(this->_name, this->_keyPair, !keep));
+    _info = make_info(std::move(trustchainId));
+  }
+  TC_AWAIT(launchClients());
 }
 
 std::string Gen::createUid() const noexcept
@@ -62,7 +96,7 @@ Gen::~Gen()
   if (!this->_keep && !this->name().empty())
   {
     tc::async_resumable([this]() -> tc::cotask<void> {
-      TC_AWAIT(_admin->deleteTrustchain(this->_trustchainId));
+      TC_AWAIT(_admin->deleteTrustchain(this->_info->trustchainId));
     })
         .get();
   }
@@ -70,61 +104,42 @@ Gen::~Gen()
 
 Gen& Gen::create(bool keep) &
 {
-  tc::async_resumable([&, this]() -> tc::cotask<void> {
-    TC_AWAIT(_admin->start());
-    for (auto&& client : _clients)
-      client->start();
-    _keep = keep;
-    _trustchainId =
-        TC_AWAIT(_admin->createTrustchain(this->_name, this->_keyPair, !keep));
-  })
+  tc::async_resumable(
+      [&, this]() -> tc::cotask<void> { TC_AWAIT(bootstrap(keep)); })
       .get();
   return *this;
 }
 
 Gen& Gen::use(std::string trustchainId, std::string privateKey) &
 {
-  this->_trustchainId = base64::decode<Crypto::Hash>(trustchainId);
+  this->_info = make_info(base64::decode<TrustchainId>(trustchainId));
   this->_keep = true;
   this->_name = "";
   this->_keyPair = Crypto::makeSignatureKeyPair(
       base64::decode<Crypto::PrivateSignatureKey>(privateKey));
-  this->_keep = true;
-  tc::async_resumable([&, this]() -> tc::cotask<void> {
-    TC_AWAIT(_admin->start());
-    for (auto&& client : _clients)
-      client->start();
-  })
+  tc::async_resumable(
+      [&, this]() -> tc::cotask<void> { TC_AWAIT(launchClients()); })
       .get();
   return *this;
 }
 
 Gen&& Gen::create(bool keep) &&
 {
-  tc::async_resumable([&, this]() -> tc::cotask<void> {
-    TC_AWAIT(_admin->start());
-    for (auto&& client : _clients)
-      client->start();
-    _keep = keep;
-    _trustchainId =
-        TC_AWAIT(_admin->createTrustchain(this->_name, this->_keyPair, !keep));
-  })
+  tc::async_resumable(
+      [&, this]() -> tc::cotask<void> { TC_AWAIT(bootstrap(keep)); })
       .get();
   return std::move(*this);
 }
 
 Gen&& Gen::use(std::string trustchainId, std::string privateKey) &&
 {
-  this->_trustchainId = base64::decode<Crypto::Hash>(trustchainId);
+  this->_info = make_info(base64::decode<TrustchainId>(trustchainId));
   this->_keep = true;
   this->_name = "";
   this->_keyPair = Crypto::makeSignatureKeyPair(
       base64::decode<Crypto::PrivateSignatureKey>(privateKey));
-  tc::async_resumable([&, this]() -> tc::cotask<void> {
-    TC_AWAIT(_admin->start());
-    for (auto&& client : _clients)
-      client->start();
-  })
+  tc::async_resumable(
+      [&, this]() -> tc::cotask<void> { TC_AWAIT(launchClients()); })
       .get();
   return std::move(*this);
 }
@@ -134,8 +149,9 @@ Devices Gen::make(UserQuant q)
   Devices users;
   users.reserve(q.value);
   for (auto c = 0u; c < q.value; c++)
-    users.emplace_back(
-        SUserId{this->createUid()}, this->_trustchainId, keyPair().privateKey);
+    users.emplace_back(SUserId{this->createUid()},
+                       this->_info->trustchainId,
+                       keyPair().privateKey);
   return users;
 }
 
@@ -150,12 +166,9 @@ Shares Gen::makeShares(Device const& sender,
                        Resource res)
 {
   Shares shares;
-  auto const count = std::distance(beg, end) - 1;
+  auto const count = std::distance(beg, end);
   shares.reserve(count);
   std::generate_n(std::back_inserter(shares), count, [&] {
-    // FIXME or the server...
-    if (beg->deviceId == sender.deviceId)
-      std::advance(beg, 1);
     return Share(sender, *beg++, res);
   });
 
@@ -252,7 +265,7 @@ std::string const& Gen::name() const noexcept
 
 std::string Gen::trustchainId() const
 {
-  return base64::encode(this->_trustchainId);
+  return base64::encode(this->_info->trustchainId);
 }
 }
 } /* Tanker */

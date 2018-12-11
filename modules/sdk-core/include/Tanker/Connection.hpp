@@ -1,11 +1,14 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/SdkInfo.hpp>
 
-#include <sio_client.h>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
+#include <sio_client.h>
+
+#include <optional.hpp>
 #include <string>
 
 namespace Tanker
@@ -18,7 +21,7 @@ public:
   Connection& operator=(Connection const&) = delete;
   Connection& operator=(Connection&&) = delete;
 
-  Connection(std::string url);
+  Connection(std::string url, nonstd::optional<SdkInfo>);
 
   bool isOpen() const override;
   void connect() override;
@@ -29,7 +32,8 @@ public:
   void on(std::string const& message, AConnection::Handler handler) override;
 
 private:
-  std::string _trustchainUrl;
+  std::string _url;
+  nonstd::optional<SdkInfo> _infos;
 
   tc::task_auto_canceler _taskCanceler;
   sio::client _client;

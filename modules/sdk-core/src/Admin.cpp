@@ -27,7 +27,7 @@ TLOG_CATEGORY(Admin);
 
 namespace Tanker
 {
-Admin::Admin(std::unique_ptr<AConnection> cx, std::string idToken)
+Admin::Admin(ConnectionPtr cx, std::string idToken)
   : _cx(std::move(cx)), _idToken(std::move(idToken))
 {
   _cx->connected.connect([this]() {

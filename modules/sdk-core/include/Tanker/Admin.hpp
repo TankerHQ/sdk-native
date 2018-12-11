@@ -22,7 +22,7 @@ namespace Tanker
 class Admin
 {
 public:
-  Admin(std::unique_ptr<AConnection> cx, std::string idToken);
+  Admin(ConnectionPtr cx, std::string idToken);
   Admin(Admin&&) = default;
   Admin& operator=(Admin&&) = default;
 
@@ -43,7 +43,7 @@ public:
   boost::signals2::signal<void()> connected;
 
 private:
-  std::unique_ptr<AConnection> _cx;
+  ConnectionPtr _cx;
   std::string _idToken;
 
   tc::task_auto_canceler _taskCanceler;

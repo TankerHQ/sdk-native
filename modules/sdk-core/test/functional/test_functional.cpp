@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/RecipientNotFound.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -69,7 +70,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   UniquePath p{"testtmp"};
 
   AsyncCore tanker(
-      base64::encode(trustchain.id()), trustchain.url(), p.path.string());
+      trustchain.url(), {"test", trustchain.id(), "0.0.1"}, p.path.string());
 
   REQUIRE_THROWS(TC_AWAIT(
       tanker.open("alice"_uid,

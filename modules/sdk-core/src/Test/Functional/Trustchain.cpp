@@ -1,6 +1,6 @@
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
-#include <Tanker/AConnection.hpp>
+#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Crypto/base64.hpp>
 
@@ -18,7 +18,8 @@ namespace Test
 {
 Trustchain::Trustchain()
   : _trustchainUrl(Tanker::TestConstants::trustchainUrl()),
-    _admin(makeConnection(_trustchainUrl), Tanker::TestConstants::idToken()),
+    _admin(ConnectionFactory::create(_trustchainUrl, nonstd::nullopt),
+           Tanker::TestConstants::idToken()),
     _trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair())
 {
 }

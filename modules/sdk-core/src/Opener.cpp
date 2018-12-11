@@ -1,8 +1,8 @@
 #include <Tanker/Opener.hpp>
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/EnumFormat.hpp>
@@ -33,12 +33,12 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Opener::Opener(TrustchainId const& trustchainId,
-               std::string const& trustchainUrl,
-               boost::filesystem::path const& writablePath)
-  : _trustchainId(trustchainId),
-    _trustchainUrl(trustchainUrl),
-    _writablePath(writablePath)
+Opener::Opener(std::string url,
+               SdkInfo info,
+               boost::filesystem::path writablePath)
+  : _url(std::move(url)),
+    _info(std::move(info)),
+    _writablePath(std::move(writablePath))
 {
 }
 
@@ -54,7 +54,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
 
   _userId = userToken.delegation.userId;
   _userSecret = userToken.userSecret;
-  if (obfuscateUserId(suserId, _trustchainId) != _userId)
+  if (obfuscateUserId(suserId, _info.trustchainId) != _userId)
     throw Error::formatEx<Error::InvalidArgument>(
         fmt("User id mismatch. Provided: {:s}, inside user_token: {:s}"),
         suserId,
@@ -65,11 +65,13 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
       _userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
-  _client = std::make_unique<Client>(makeConnection(_trustchainUrl));
+  _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
   _client->start();
 
-  auto const userStatusResult = TC_AWAIT(_client->userStatus(
-      _trustchainId, _userId.value(), _keyStore->signatureKeyPair().publicKey));
+  auto const userStatusResult =
+      TC_AWAIT(_client->userStatus(_info.trustchainId,
+                                   _userId.value(),
+                                   _keyStore->signatureKeyPair().publicKey));
 
   if (userStatusResult.deviceExists)
     TC_AWAIT(openDevice());
@@ -94,7 +96,7 @@ tc::cotask<void> Opener::connectionHandler()
   {
     auto const skp = _keyStore->signatureKeyPair();
     TC_AWAIT(_client->subscribeToCreation(
-        _trustchainId,
+        _info.trustchainId,
         skp.publicKey,
         Crypto::sign(skp.publicKey, skp.privateKey)));
   }
@@ -106,7 +108,7 @@ tc::cotask<void> Opener::connectionHandler()
 
 tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
 {
-  auto const req = Unlock::Request(_trustchainId, _userId.value(), locker);
+  auto const req = Unlock::Request(_info.trustchainId, _userId.value(), locker);
   try
   {
     auto const fetchAnswer = TC_AWAIT(_client->fetchUnlockKey(req));
@@ -151,10 +153,10 @@ tc::cotask<void> Opener::unlockCurrentDevice(UnlockKey const& unlockKey)
         static_cast<Status>(_status));
   auto const ghostDevice = Unlock::extract(unlockKey);
 
-  auto const encryptedUserKey =
-      TC_AWAIT(_client->getLastUserKey(_trustchainId, ghostDevice.deviceId));
+  auto const encryptedUserKey = TC_AWAIT(
+      _client->getLastUserKey(_info.trustchainId, ghostDevice.deviceId));
 
-  auto const block = Unlock::createValidatedDevice(_trustchainId,
+  auto const block = Unlock::createValidatedDevice(_info.trustchainId,
                                                    *_userId,
                                                    ghostDevice,
                                                    _keyStore->deviceKeys(),
@@ -165,7 +167,7 @@ tc::cotask<void> Opener::unlockCurrentDevice(UnlockKey const& unlockKey)
 Session::Config Opener::makeConfig(Crypto::SymmetricKey const& userSecret)
 {
   return {std::move(_db),
-          _trustchainId,
+          _info.trustchainId,
           _userId.value(),
           userSecret,
           std::move(_keyStore),
@@ -178,7 +180,7 @@ tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
 
   auto const block =
       BlockGenerator(
-          _trustchainId, _keyStore->signatureKeyPair().privateKey, {})
+          _info.trustchainId, _keyStore->signatureKeyPair().privateKey, {})
           .addUser(userToken.delegation,
                    _keyStore->signatureKeyPair().publicKey,
                    _keyStore->encryptionKeyPair().publicKey,

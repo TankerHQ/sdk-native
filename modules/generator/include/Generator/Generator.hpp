@@ -8,6 +8,7 @@
 #include <Tanker/Admin.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -30,10 +31,12 @@ using UuIdGen = boost::uuids::random_generator;
 class Gen
 {
   UuIdGen mutable _uuidGen;
+  std::string _url;
+  std::string _idToken;
+  nonstd::optional<SdkInfo> _info;
   std::unique_ptr<Admin> _admin;
   std::vector<std::unique_ptr<Client>> _clients;
   Crypto::SignatureKeyPair _keyPair;
-  TrustchainId _trustchainId;
   std::string _name;
   bool _keep;
   std::size_t _currentClient;
@@ -44,6 +47,9 @@ class Gen
   std::string createUid() const noexcept;
 
   static std::string defaultName();
+
+  tc::cotask<void> bootstrap(bool keep);
+  tc::cotask<void> launchClients();
 
 public:
   Gen(std::string url, std::string idToken, std::size_t nb_cl = 1);
