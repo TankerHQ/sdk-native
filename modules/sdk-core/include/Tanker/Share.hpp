@@ -42,13 +42,13 @@ std::vector<uint8_t> makeKeyPublishToDevice(
     Crypto::Mac const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-std::vector<uint8_t> makeKeyPublishToDeviceToUser(
+std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Crypto::Mac const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-std::vector<uint8_t> makeKeyPublishToDeviceToGroup(
+std::vector<uint8_t> makeKeyPublishToGroup(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Crypto::Mac const& resourceId,

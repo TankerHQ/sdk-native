@@ -40,7 +40,7 @@ std::vector<uint8_t> makeKeyPublishToDevice(
   return blockGenerator.keyPublish(encryptedKey, resourceId, recipientDeviceId);
 }
 
-std::vector<uint8_t> makeKeyPublishToDeviceToUser(
+std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Crypto::Mac const& resourceId,
@@ -53,7 +53,7 @@ std::vector<uint8_t> makeKeyPublishToDeviceToUser(
       encryptedKey, resourceId, recipientPublicEncryptionKey);
 }
 
-std::vector<uint8_t> makeKeyPublishToDeviceToGroup(
+std::vector<uint8_t> makeKeyPublishToGroup(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Crypto::Mac const& resourceId,
@@ -89,11 +89,11 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToUsers(
   out.reserve(recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
-      out.push_back(makeKeyPublishToDeviceToUser(
-          blockGenerator,
-          recipientKey,
-          std::get<Crypto::Mac>(keyResource),
-          std::get<Crypto::SymmetricKey>(keyResource)));
+      out.push_back(
+          makeKeyPublishToUser(blockGenerator,
+                               recipientKey,
+                               std::get<Crypto::Mac>(keyResource),
+                               std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
 
@@ -106,11 +106,11 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
   out.reserve(recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
-      out.push_back(makeKeyPublishToDeviceToGroup(
-          blockGenerator,
-          recipientKey,
-          std::get<Crypto::Mac>(keyResource),
-          std::get<Crypto::SymmetricKey>(keyResource)));
+      out.push_back(
+          makeKeyPublishToGroup(blockGenerator,
+                                recipientKey,
+                                std::get<Crypto::Mac>(keyResource),
+                                std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
 

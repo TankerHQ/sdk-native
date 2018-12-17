@@ -13,7 +13,7 @@ Share::Share(Device const& sender, Device const& recipient, Resource res)
     sender(sender.deviceId),
     recipient(recipient.deviceId),
     privateSigKey(sender.sigKeys.privateKey),
-    buffer(Tanker::Share::makeKeyPublishToDeviceToUser(
+    buffer(Tanker::Share::makeKeyPublishToUser(
         sender.bgen, recipient.userKeys.publicKey, res.mac, res.key)),
     hash{Serialization::deserialize<Block>(buffer).hash()}
 {

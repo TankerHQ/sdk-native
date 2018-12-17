@@ -80,7 +80,7 @@ void assertKeyPublishToDevicesTargetedAt(
   }
 }
 
-void assertKeyPublishToDevicesTargetedAt(
+void assertKeyPublishToUsersTargetedAt(
     Share::ResourceKey const& resourceKey,
     std::vector<KeyPublishToUser> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
@@ -369,7 +369,7 @@ TEST_CASE(
                                                  keyRecipients);
 
   auto const keyPublishes = extract<KeyPublishToUser>(blocks);
-  assertKeyPublishToDevicesTargetedAt(
+  assertKeyPublishToUsersTargetedAt(
       resourceKeys[0], keyPublishes, {newUserKeyPair.keyPair});
 }
 

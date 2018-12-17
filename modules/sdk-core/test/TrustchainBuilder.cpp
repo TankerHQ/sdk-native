@@ -452,7 +452,7 @@ Tanker::Block TrustchainBuilder::shareToUser(
 
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
-  auto const block = Share::makeKeyPublishToDeviceToUser(
+  auto const block = Share::makeKeyPublishToUser(
       BlockGenerator(_trustchainId,
                      sender.keys.signatureKeyPair.privateKey,
                      sender.keys.deviceId),
