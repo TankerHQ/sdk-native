@@ -7,7 +7,7 @@ stages:
 
 build/linux:
   variables:
-    CONAN_USER_HOME: '$HOME/.conan_persistent'
+    CONAN_USER_HOME: '~/.conan_persistent'
   stage: build
   except:
     - schedules
