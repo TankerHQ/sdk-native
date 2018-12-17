@@ -26,6 +26,7 @@ deploy/linux:
   only:
     - tags
   script:
+    - mkdir -p ${CONAN_USER_HOME}
     - dmenv run -- python run-ci.py clean-cache
     - dmenv run -- python run-ci.py deploy --profile android --git-tag ${CI_COMMIT_TAG}
 
