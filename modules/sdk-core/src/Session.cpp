@@ -245,7 +245,14 @@ tc::cotask<void> Session::encrypt(uint8_t* encryptedData,
   userIds.insert(userIds.begin(), this->_userId);
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.mac, metadata.key));
-  TC_AWAIT(share({metadata.mac}, userIds, groupIds));
+  TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
+                        _userAccessor,
+                        _groupAcessor,
+                        _blockGenerator,
+                        *_client,
+                        {{metadata.key, metadata.mac}},
+                        userIds,
+                        groupIds));
 }
 
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
