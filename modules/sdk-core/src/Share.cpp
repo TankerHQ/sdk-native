@@ -26,20 +26,6 @@ namespace Tanker
 {
 namespace Share
 {
-std::vector<uint8_t> makeKeyPublishToDevice(
-    BlockGenerator const& blockGenerator,
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
-    DeviceId const& recipientDeviceId,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
-    Crypto::SymmetricKey const& resourceKey)
-{
-  auto const encryptedKey = Crypto::asymEncrypt<Crypto::EncryptedSymmetricKey>(
-      resourceKey, selfPrivateEncryptionKey, recipientPublicEncryptionKey);
-
-  return blockGenerator.keyPublish(encryptedKey, resourceId, recipientDeviceId);
-}
-
 std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
@@ -113,26 +99,6 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
-
-std::vector<std::vector<uint8_t>> generateShareBlocksToDevices(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
-    BlockGenerator const& blockGenerator,
-    ResourceKeys const& resourceKeys,
-    std::vector<Device> const& recipientDevices)
-{
-  std::vector<std::vector<uint8_t>> out;
-  out.reserve(recipientDevices.size());
-  for (auto const& keyResource : resourceKeys)
-    for (auto const& recipientDevice : recipientDevices)
-      out.push_back(
-          makeKeyPublishToDevice(blockGenerator,
-                                 selfPrivateEncryptionKey,
-                                 recipientDevice.id,
-                                 recipientDevice.publicEncryptionKey,
-                                 std::get<Crypto::Mac>(keyResource),
-                                 std::get<Crypto::SymmetricKey>(keyResource)));
-  return out;
-}
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
@@ -161,13 +127,10 @@ tc::cotask<KeyRecipients> generateRecipientList(
   KeyRecipients out;
   for (auto const& user : userResult.found)
   {
-    // if the user doesn't have a user key (device creation < 3), share to each
-    // device
-    if (user.userKey)
-      out.recipientUserKeys.push_back(*user.userKey);
-    else
-      out.recipientDevices.insert(
-          out.recipientDevices.end(), user.devices.begin(), user.devices.end());
+    if (!user.userKey)
+      throw std::runtime_error(
+          "sharing to users without user key is not supported anymore");
+    out.recipientUserKeys.push_back(*user.userKey);
   }
 
   std::transform(begin(groupResult.found),
@@ -188,17 +151,10 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
       blockGenerator, resourceKeys, keyRecipients.recipientUserKeys);
   auto keyPublishesToGroups = generateShareBlocksToGroups(
       blockGenerator, resourceKeys, keyRecipients.recipientGroupKeys);
-  auto keyPublishesToDevices =
-      generateShareBlocksToDevices(selfPrivateEncryptionKey,
-                                   blockGenerator,
-                                   resourceKeys,
-                                   keyRecipients.recipientDevices);
 
   auto out = keyPublishesToUsers;
   out.insert(
       out.end(), keyPublishesToGroups.begin(), keyPublishesToGroups.end());
-  out.insert(
-      out.end(), keyPublishesToDevices.begin(), keyPublishesToDevices.end());
   return out;
 }
 

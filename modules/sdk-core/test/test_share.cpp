@@ -45,41 +45,6 @@ void assertEqual(std::vector<T> aa, std::vector<U> bb)
   CHECK(std::equal(aa.begin(), aa.end(), bb.begin(), bb.end()));
 }
 
-void assertDevicesEqual(
-    std::vector<TrustchainBuilder::Device> const& builderDevices,
-    std::vector<Device> const& tankerDevices)
-{
-  std::vector<DeviceId> builderDeviceIds;
-  for (auto const& device : builderDevices)
-    builderDeviceIds.push_back(device.keys.deviceId);
-
-  std::vector<DeviceId> tankerDeviceIds;
-  for (auto const& entry : tankerDevices)
-    tankerDeviceIds.push_back(entry.id);
-
-  assertEqual(builderDeviceIds, tankerDeviceIds);
-}
-
-void assertKeyPublishToDevicesTargetedAt(
-    Share::ResourceKey const& resourceKey,
-    TrustchainBuilder::Device const& keySenderDevice,
-    std::vector<KeyPublishToDevice> const& keyPublishes,
-    std::vector<TrustchainBuilder::Device> const& devices)
-{
-  REQUIRE(keyPublishes.size() == devices.size());
-
-  for (unsigned int i = 0; i < keyPublishes.size(); ++i)
-  {
-    CHECK(keyPublishes[i].recipient == devices[i].keys.deviceId);
-    CHECK(keyPublishes[i].mac == std::get<Crypto::Mac>(resourceKey));
-    CHECK_EQ(Crypto::asymDecrypt<Crypto::SymmetricKey>(
-                 keyPublishes[i].key,
-                 keySenderDevice.keys.encryptionKeyPair.publicKey,
-                 devices[i].keys.encryptionKeyPair.privateKey),
-             std::get<Crypto::SymmetricKey>(resourceKey));
-  }
-}
-
 void assertKeyPublishToUsersTargetedAt(
     Share::ResourceKey const& resourceKey,
     std::vector<KeyPublishToUser> const& keyPublishes,
@@ -132,40 +97,6 @@ public:
 };
 }
 
-TEST_CASE(
-    "generateRecipientList of and old user should return their device entries")
-{
-  TrustchainBuilder builder;
-  builder.makeUser1("oldUser");
-  builder.makeDevice1("oldUser");
-  builder.makeUser3("keySender");
-
-  auto const oldUser = *builder.getUser("oldUser");
-  auto const keySender = *builder.getUser("keySender");
-
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
-
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{oldUser.userId})))
-      .LR_RETURN((UserAccessor::PullResult{{oldUser.asTankerUser()}, {}}));
-
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<GroupId const>{})))
-      .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
-
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         std::vector<UserId>{oldUser.userId},
-                                         {}));
-
-  // there should be only device entries
-  CHECK(recipients.recipientUserKeys.empty());
-  CHECK(recipients.recipientGroupKeys.empty());
-  assertDevicesEqual(oldUser.devices, recipients.recipientDevices);
-}
-
 TEST_CASE("generateRecipientList of a new user should return their user key")
 {
   TrustchainBuilder builder;
@@ -190,7 +121,6 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
       userAccessor.get(), groupAccessor.get(), {newUser.userId}, {}));
 
   // there should be only user keys
-  CHECK(recipients.recipientDevices.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientUserKeys,
@@ -226,7 +156,6 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
                                          {newGroup.group.tankerGroup.id}));
 
   // there should be only group keys
-  CHECK(recipients.recipientDevices.size() == 0);
   CHECK(recipients.recipientUserKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientGroupKeys,
@@ -305,42 +234,6 @@ std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
 }
 
 TEST_CASE(
-    "generateShareBlocks of and old user should generate KeyPublishToDevice1 "
-    "blocks "
-    "for each target device")
-{
-  TrustchainBuilder builder;
-  builder.makeUser1("oldUser");
-  builder.makeDevice1("oldUser");
-  builder.makeUser3("keySender");
-
-  auto const oldUser = *builder.getUser("oldUser");
-  auto const keySender = *builder.getUser("keySender");
-  auto const keySenderDevice = keySender.devices.front();
-  auto const keySenderPrivateEncryptionKey =
-      keySenderDevice.keys.encryptionKeyPair.privateKey;
-  auto const keySenderBlockGenerator =
-      builder.makeBlockGenerator(keySenderDevice);
-
-  Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Crypto::Mac>("resource mac")}};
-
-  Share::KeyRecipients keyRecipients{
-      {},
-      {},
-      {oldUser.asTankerUser().devices[0], oldUser.asTankerUser().devices[1]}};
-
-  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
-                                                 keySenderBlockGenerator,
-                                                 resourceKeys,
-                                                 keyRecipients);
-
-  auto const keyPublishes = extract<KeyPublishToDevice>(blocks);
-  assertKeyPublishToDevicesTargetedAt(
-      resourceKeys[0], keySenderDevice, keyPublishes, oldUser.devices);
-}
-
-TEST_CASE(
     "generateShareBlocks of a new user should generate one KeyPublishToUser "
     "block")
 {
@@ -361,8 +254,7 @@ TEST_CASE(
 
   auto const newUserKeyPair = newUser.userKeys.back();
 
-  Share::KeyRecipients keyRecipients{
-      {newUserKeyPair.keyPair.publicKey}, {}, {}};
+  Share::KeyRecipients keyRecipients{{newUserKeyPair.keyPair.publicKey}, {}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,
@@ -393,7 +285,7 @@ TEST_CASE(
                                        make<Crypto::Mac>("resource mac")}};
 
   Share::KeyRecipients keyRecipients{
-      {}, {newGroup.group.asExternalGroup().publicEncryptionKey}, {}};
+      {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,

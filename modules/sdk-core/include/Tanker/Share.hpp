@@ -31,16 +31,7 @@ struct KeyRecipients
 {
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
-  std::vector<Device> recipientDevices;
 };
-
-std::vector<uint8_t> makeKeyPublishToDevice(
-    BlockGenerator const& blockGenerator,
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
-    DeviceId const& recipientDeviceId,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
-    Crypto::SymmetricKey const& resourceKey);
 
 std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
