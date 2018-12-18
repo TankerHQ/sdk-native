@@ -64,7 +64,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # warns about void foo(); (should be void foo(void);).
   tanker_add_flags(CMAKE_C_FLAGS "-Wstrict-prototypes")
-  set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type")
+  set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type -Wno-c++17-extensions")
 elseif(MSVC)
   set(COMMON_COMPILE_FLAGS "/MP")
 endif()
