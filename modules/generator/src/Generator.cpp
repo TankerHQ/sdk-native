@@ -50,8 +50,9 @@ tc::cotask<void> Gen::launchClients()
       client = std::make_unique<Client>(
           ConnectionFactory::create(_url, _info.value()));
     }
-    TC_AWAIT(client->start());
+    client->start();
   }
+  TC_RETURN();
 }
 
 tc::cotask<void> Gen::bootstrap(bool keep)

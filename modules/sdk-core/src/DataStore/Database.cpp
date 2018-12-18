@@ -196,6 +196,7 @@ tc::cotask<void> Database::nuke()
   flushAllCaches();
   DeviceKeysTable tab;
   (*_db)(remove_from(tab).unconditionally());
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::startTransaction()
