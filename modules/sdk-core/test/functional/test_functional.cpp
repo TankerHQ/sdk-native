@@ -63,6 +63,23 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice();
+  auto core = TC_AWAIT(device.open());
+  REQUIRE(core->status() == Status::Open);
+  SignalSpy<void> spyClose(core->sessionClosed());
+  TC_AWAIT(core->close());
+  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(spyClose.receivedEvents.size() == 1);
+  core = TC_AWAIT(device.open());
+  REQUIRE(core->status() == Status::Open);
+  TC_AWAIT(core->close());
+  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(spyClose.receivedEvents.size() == 2);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "it fails to open when wrong userId/userToken is provided")
 {
