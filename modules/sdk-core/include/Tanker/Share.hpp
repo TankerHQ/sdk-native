@@ -68,6 +68,16 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
 
 tc::cotask<void> share(
     Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
+    UserAccessor& userAccessor,
+    GroupAccessor& groupAccessor,
+    BlockGenerator const& blockGenerator,
+    Client& client,
+    ResourceKeys const& resourceKeys,
+    std::vector<UserId> const& userIds,
+    std::vector<GroupId> const& groupIds);
+
+tc::cotask<void> share(
+    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
     ResourceKeyStore const& resourceKeyStore,
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
