@@ -423,15 +423,17 @@ std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
 
   for (auto const& receiverDevice : receiver.devices)
   {
-    auto const block = Share::makeKeyPublishToDevice(
+    auto const encryptedKey =
+        Crypto::asymEncrypt<Crypto::EncryptedSymmetricKey>(
+            key,
+            sender.keys.encryptionKeyPair.privateKey,
+            receiverDevice.keys.encryptionKeyPair.publicKey);
+
+    auto const block =
         BlockGenerator(_trustchainId,
                        sender.keys.signatureKeyPair.privateKey,
-                       sender.keys.deviceId),
-        sender.keys.encryptionKeyPair.privateKey,
-        receiverDevice.keys.deviceId,
-        receiverDevice.keys.encryptionKeyPair.publicKey,
-        mac,
-        key);
+                       sender.keys.deviceId)
+            .keyPublish(encryptedKey, mac, receiverDevice.keys.deviceId);
 
     auto deserializedBlock = Serialization::deserialize<Block>(block);
     deserializedBlock.index = _blocks.size() + 1;
@@ -452,7 +454,7 @@ Tanker::Block TrustchainBuilder::shareToUser(
 
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
-  auto const block = Share::makeKeyPublishToDeviceToUser(
+  auto const block = Share::makeKeyPublishToUser(
       BlockGenerator(_trustchainId,
                      sender.keys.signatureKeyPair.privateKey,
                      sender.keys.deviceId),
