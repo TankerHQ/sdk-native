@@ -126,50 +126,50 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should not find a a userId with a superseded userPublicKey")
   {
-    TC_AWAIT(contacts.putUser(alice));
-    TC_AWAIT(contacts.putUserKey(alice.id,
-                                 make<Crypto::PublicEncryptionKey>("pubkey")));
-    CHECK_EQ(TC_AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
+    AWAIT_VOID(contacts.putUser(alice));
+    AWAIT_VOID(contacts.putUserKey(
+        alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
              nonstd::nullopt);
   }
 
   SUBCASE("it should find a userId with a valid userPublicKey")
   {
-    TC_AWAIT(contacts.putUser(alice));
-    CHECK_EQ(TC_AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
+    AWAIT_VOID(contacts.putUser(alice));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
              alice.id);
   }
 
   SUBCASE("it should find a userId with a deviceId")
   {
-    TC_AWAIT(contacts.putUser(alice));
-    CHECK_EQ(TC_AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id)), alice.id);
+    AWAIT_VOID(contacts.putUser(alice));
+    CHECK_EQ(AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id)), alice.id);
   }
 
   SUBCASE("it should revoke a device")
   {
-    TC_AWAIT(contacts.putUser(alice));
-    TC_AWAIT(
+    AWAIT_VOID(contacts.putUser(alice));
+    AWAIT_VOID(
         contacts.revokeDevice(aliceDevice.id, aliceDevice.createdAtBlkIndex));
-    auto const device = TC_AWAIT(contacts.findDevice(aliceDevice.id));
+    auto const device = AWAIT(contacts.findDevice(aliceDevice.id));
     CHECK_EQ(device.value().revokedAtBlkIndex.value(),
              aliceDevice.createdAtBlkIndex);
   }
 
   SUBCASE("it should not find userId with old userPublicEncyptionKey")
   {
-    TC_AWAIT(contacts.putUser(alice));
-    TC_AWAIT(contacts.rotateContactPublicEncryptionKey(
+    AWAIT_VOID(contacts.putUser(alice));
+    AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(
         alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
-    CHECK_EQ(TC_AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
              nonstd::nullopt);
   }
 
   SUBCASE("it should find a userId with an updated userPublicKey")
   {
-    TC_AWAIT(contacts.putUser(alice));
+    AWAIT_VOID(contacts.putUser(alice));
     auto const newKey = make<Crypto::PublicEncryptionKey>("pubkey");
-    TC_AWAIT(contacts.rotateContactPublicEncryptionKey(alice.id, newKey));
-    CHECK_EQ(TC_AWAIT(contacts.findUserIdByUserPublicKey(newKey)), alice.id);
+    AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(alice.id, newKey));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(newKey)), alice.id);
   }
 }

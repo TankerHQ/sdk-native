@@ -107,7 +107,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
               Serialization::deserialize<Block>(base64::decode(block)));
         });
 
-    _db->inTransaction([&]() -> tc::cotask<void> {
+    TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
       std::set<Crypto::Hash> processed;
       if (_deviceId.is_null())
       {
@@ -143,7 +143,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
             {
               if (deviceCreation->userId() == _userId)
               {
-                verifyAndAddEntry(unverifiedEntry);
+                TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
                 processed.insert(unverifiedEntry.hash);
                 if (!deviceCreation->userKeyPair().has_value())
                 {
@@ -172,7 +172,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
                   deviceRevocation->deviceId()));
               if (userId == _userId)
               {
-                verifyAndAddEntry(unverifiedEntry);
+                TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
                 processed.insert(unverifiedEntry.hash);
                 if (auto const deviceRevocation2 =
                         mpark::get_if<DeviceRevocation2>(
@@ -190,7 +190,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
             TERROR("Verification failed: {}", err.what());
           }
         }
-        recoverUserKeys(encryptedUserKeys, userEncryptionKeys);
+        TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
       }
 
       for (auto const& unverifiedEntry : entries)
@@ -212,7 +212,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
           TERROR("Verification failed: {}", err.what());
         }
       }
-    });
+    }));
     TINFO("Caught up");
   }
   catch (std::exception const& e)
@@ -277,6 +277,6 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
     TC_AWAIT(userGroupActionReceived(entry));
   if (mpark::holds_alternative<DeviceRevocation>(entry.action.variant()))
-    deviceRevoked(entry);
+    TC_AWAIT(deviceRevoked(entry));
 }
 }
