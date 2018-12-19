@@ -30,12 +30,9 @@ tanker_future_t* tanker_make_chunk_encryptor_from_seal(
     uint64_t data_size,
     tanker_decrypt_options_t const* options)
 {
-  auto const timeout = options ? std::chrono::milliseconds(options->timeout) :
-                                 Constants::DefaultDecryptTimeout;
-
   auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
-      tanker->makeChunkEncryptor(gsl::make_span(data, data_size), timeout)
+      tanker->makeChunkEncryptor(gsl::make_span(data, data_size))
           .and_then(tc::get_synchronous_executor(), [](auto chunky) {
             return static_cast<void*>(chunky.release());
           }));
@@ -58,10 +55,10 @@ tanker_future_t* tanker_chunk_encryptor_seal(
   auto groupIds = std::vector<SGroupId>{};
   if (options)
   {
-    userIds = to_vector<SUserId>(options->recipient_uids,
-        options->nb_recipient_uids);
+    userIds =
+        to_vector<SUserId>(options->recipient_uids, options->nb_recipient_uids);
     groupIds = to_vector<SGroupId>(options->recipient_gids,
-        options->nb_recipient_gids);
+                                   options->nb_recipient_gids);
   }
 
   return makeFuture(tc::async_resumable(

@@ -22,7 +22,6 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
-#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -48,8 +47,7 @@ public:
                            std::vector<SGroupId> const& groupIds = {});
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
-                           gsl::span<uint8_t const> encryptedData,
-                           std::chrono::steady_clock::duration timeout);
+                           gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& resourceId,
                          std::vector<SUserId> const& userIds,
@@ -77,8 +75,7 @@ public:
   std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
 
   tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal,
-      std::chrono::steady_clock::duration timeout);
+      gsl::span<uint8_t const> encryptedSeal);
 
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 

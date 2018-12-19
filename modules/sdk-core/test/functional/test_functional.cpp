@@ -252,8 +252,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   decryptedData.resize(clearData.size());
 
   CHECK_THROWS_AS(
-      TC_AWAIT(bobSession->decrypt(
-          decryptedData.data(), encryptedData, std::chrono::milliseconds(500))),
+      TC_AWAIT(bobSession->decrypt(decryptedData.data(), encryptedData)),
       Error::ResourceKeyNotFound);
 }
 

@@ -22,7 +22,6 @@
 #include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 
-#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -77,9 +76,7 @@ public:
                            std::vector<SUserId> const& userIds = {},
                            std::vector<SGroupId> const& groupIds = {});
   tc::future<void> decrypt(uint8_t* decryptedData,
-                           gsl::span<uint8_t const> encryptedData,
-                           std::chrono::steady_clock::duration timeout =
-                               Constants::DefaultDecryptTimeout);
+                           gsl::span<uint8_t const> encryptedData);
 
   tc::future<void> share(std::vector<SResourceId> const& resourceId,
                          std::vector<SUserId> const& userIds,
@@ -111,9 +108,7 @@ public:
   tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor();
 
   tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal,
-      std::chrono::steady_clock::duration timeout =
-          Constants::DefaultDecryptTimeout);
+      gsl::span<uint8_t const> encryptedSeal);
 
   tc::future<void> revokeDevice(DeviceId const& deviceId);
 

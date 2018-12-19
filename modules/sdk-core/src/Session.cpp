@@ -256,25 +256,36 @@ tc::cotask<void> Session::encrypt(uint8_t* encryptedData,
 }
 
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
-                                  gsl::span<uint8_t const> encryptedData,
-                                  std::chrono::steady_clock::duration timeout)
+                                  gsl::span<uint8_t const> encryptedData)
 {
   auto const mac = Encryptor::extractMac(encryptedData);
-  auto const futures = {TC_AWAIT(waitForKey(mac)),
-                        tc::async_wait(timeout).to_shared()};
-  auto const result = TC_AWAIT(tc::when_any(
-      futures.begin(), futures.end(), tc::when_any_options::auto_cancel));
-  if (result.index == 1)
+
+  // Try to get the key, in order:
+  // - from the resource key store
+  // - from the trustchain
+  // - from the tanker server
+  // In all cases, we put the key in the resource key store
+  auto key = TC_AWAIT(_resourceKeyStore.findKey(mac));
+  if (!key)
+  {
+    auto keyPublish = TC_AWAIT(_trustchain.findKeyPublish(mac));
+    if (!keyPublish)
+    {
+      TC_AWAIT(_trustchainPuller.scheduleCatchUp());
+      keyPublish = TC_AWAIT(_trustchain.findKeyPublish(mac));
+    }
+    if (keyPublish) // do not use else!
+    {
+      TC_AWAIT(ReceiveKey::decryptAndStoreKey(
+          _resourceKeyStore, _userKeyStore, _groupStore, *keyPublish));
+      key = TC_AWAIT(_resourceKeyStore.findKey(mac));
+    }
+  }
+  if (!key)
     throw Error::formatEx<Error::ResourceKeyNotFound>(
         fmt("couldn't find key for {:s}"), mac);
 
-  auto const keyPublish = TC_AWAIT(_trustchain.findKeyPublish(mac));
-  if (keyPublish)
-    TC_AWAIT(ReceiveKey::decryptAndStoreKey(
-        _resourceKeyStore, _userKeyStore, _groupStore, *keyPublish));
-
-  auto const key = TC_AWAIT(_resourceKeyStore.getKey(mac));
-  Encryptor::decrypt(decryptedData, key, encryptedData);
+  Encryptor::decrypt(decryptedData, *key, encryptedData);
 }
 
 tc::cotask<void> Session::setDeviceId(DeviceId const& deviceId)
@@ -599,11 +610,10 @@ std::unique_ptr<ChunkEncryptor> Session::makeChunkEncryptor()
 }
 
 tc::cotask<std::unique_ptr<ChunkEncryptor>> Session::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal,
-    std::chrono::steady_clock::duration timeout)
+    gsl::span<uint8_t const> encryptedSeal)
 {
   auto chunkEncryptor = std::make_unique<ChunkEncryptor>(this);
-  TC_AWAIT(chunkEncryptor->open(encryptedSeal, timeout));
+  TC_AWAIT(chunkEncryptor->open(encryptedSeal));
   TC_RETURN(std::move(chunkEncryptor));
 }
 
@@ -626,23 +636,6 @@ tc::cotask<void> Session::revokeDevice(DeviceId const& deviceId)
                                     _userKeyStore,
                                     _blockGenerator,
                                     _client));
-}
-
-tc::cotask<tc::shared_future<void>> Session::waitForKey(Crypto::Mac const& mac)
-{
-  if (TC_AWAIT(_resourceKeyStore.findKey(mac)))
-    TC_RETURN(tc::make_ready_future());
-
-  if (TC_AWAIT(_trustchain.findKeyPublish(mac)))
-    TC_RETURN(tc::make_ready_future());
-
-  auto const it = _pendingRequests.find(mac);
-  if (it != _pendingRequests.end())
-    TC_RETURN(it->second.get_future());
-
-  tc::promise<void> prom;
-  _pendingRequests[mac] = prom;
-  TC_RETURN(prom.get_future());
 }
 
 tc::cotask<void> Session::nukeDatabase()

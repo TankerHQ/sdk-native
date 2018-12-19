@@ -7,7 +7,6 @@
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
-#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -24,8 +23,7 @@ class ChunkEncryptor
 public:
   ChunkEncryptor(Session* session);
 
-  tc::cotask<void> open(gsl::span<uint8_t const> encryptedSeal,
-                        std::chrono::steady_clock::duration timeout);
+  tc::cotask<void> open(gsl::span<uint8_t const> encryptedSeal);
 
   tc::cotask<void> seal(gsl::span<uint8_t> encryptedSeal,
                         std::vector<SUserId> const& suserIds,

@@ -12,12 +12,10 @@ ChunkEncryptor::ChunkEncryptor(Session* session) : _session(session)
 {
 }
 
-tc::cotask<void> ChunkEncryptor::open(
-    gsl::span<uint8_t const> encryptedSeal,
-    std::chrono::steady_clock::duration timeout)
+tc::cotask<void> ChunkEncryptor::open(gsl::span<uint8_t const> encryptedSeal)
 {
   std::vector<uint8_t> decryptedSeal(Encryptor::decryptedSize(encryptedSeal));
-  TC_AWAIT(_session->decrypt(decryptedSeal.data(), encryptedSeal, timeout));
+  TC_AWAIT(_session->decrypt(decryptedSeal.data(), encryptedSeal));
   _impl.inflate(decryptedSeal);
 }
 

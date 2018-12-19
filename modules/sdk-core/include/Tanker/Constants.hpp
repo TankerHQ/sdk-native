@@ -6,6 +6,5 @@ namespace Tanker
 {
 namespace Constants
 {
-constexpr std::chrono::seconds DefaultDecryptTimeout{10};
 }
 }
