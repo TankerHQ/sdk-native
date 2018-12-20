@@ -68,10 +68,11 @@ public:
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
 
   virtual tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-  getContactUserKey(UserId const& userId) = 0;
-  virtual tc::cotask<nonstd::optional<UserId>> getContactUserId(
+  findContactUserKey(UserId const& userId) = 0;
+  virtual tc::cotask<nonstd::optional<UserId>>
+  findContactUserIdByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& userPublicKey) = 0;
-  virtual tc::cotask<void> setPublicEncryptionKey(
+  virtual tc::cotask<void> setContactPublicEncryptionKey(
       UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) = 0;
 
@@ -86,10 +87,10 @@ public:
 
   virtual tc::cotask<void> putDevice(UserId const& userId,
                                      Device const& device) = 0;
-  virtual tc::cotask<nonstd::optional<Device>> getOptDevice(
+  virtual tc::cotask<nonstd::optional<Device>> findDevice(
       DeviceId const& id) = 0;
   virtual tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) = 0;
-  virtual tc::cotask<nonstd::optional<UserId>> getDeviceUserId(
+  virtual tc::cotask<nonstd::optional<UserId>> findDeviceUserId(
       DeviceId const& id) = 0;
   virtual tc::cotask<void> updateDeviceRevokedAt(
       DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;

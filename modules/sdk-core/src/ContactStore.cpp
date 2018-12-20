@@ -55,14 +55,14 @@ tc::cotask<nonstd::optional<User>> ContactStore::findUser(
   if (devices.empty())
     TC_RETURN(nonstd::nullopt);
 
-  auto userKey = TC_AWAIT(_db->getContactUserKey(id));
+  auto userKey = TC_AWAIT(_db->findContactUserKey(id));
   TC_RETURN((User{id, std::move(userKey), std::move(devices)}));
 }
 
 tc::cotask<nonstd::optional<Device>> ContactStore::findDevice(
     DeviceId const& id) const
 {
-  TC_RETURN(TC_AWAIT(_db->getOptDevice(id)));
+  TC_RETURN(TC_AWAIT(_db->findDevice(id)));
 }
 
 tc::cotask<std::vector<Device>> ContactStore::findUserDevices(
@@ -74,13 +74,13 @@ tc::cotask<std::vector<Device>> ContactStore::findUserDevices(
 tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByUserPublicKey(
     Crypto::PublicEncryptionKey const& userKey) const
 {
-  TC_RETURN(TC_AWAIT(_db->getContactUserId(userKey)));
+  TC_RETURN(TC_AWAIT(_db->findContactUserIdByPublicEncryptionKey(userKey)));
 }
 
 tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByDeviceId(
     DeviceId const& id) const
 {
-  TC_RETURN(TC_AWAIT(_db->getDeviceUserId(id)));
+  TC_RETURN(TC_AWAIT(_db->findDeviceUserId(id)));
 }
 
 tc::cotask<void> ContactStore::revokeDevice(DeviceId const& id,
@@ -93,6 +93,6 @@ tc::cotask<void> ContactStore::rotateContactPublicEncryptionKey(
     UserId const& userId,
     Crypto::PublicEncryptionKey const& userPublicKey) const
 {
-  TC_AWAIT(_db->setPublicEncryptionKey(userId, userPublicKey));
+  TC_AWAIT(_db->setContactPublicEncryptionKey(userId, userPublicKey));
 }
 }

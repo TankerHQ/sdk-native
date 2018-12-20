@@ -429,7 +429,7 @@ tc::cotask<void> Database::putContact(
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-Database::getContactUserKey(UserId const& userId)
+Database::findContactUserKey(UserId const& userId)
 {
   ContactUserKeysTable tab;
   auto rows = (*_db)(select(tab.public_encryption_key)
@@ -447,7 +447,8 @@ Database::getContactUserKey(UserId const& userId)
       row.public_encryption_key));
 }
 
-tc::cotask<nonstd::optional<UserId>> Database::getContactUserId(
+tc::cotask<nonstd::optional<UserId>>
+Database::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
   ContactUserKeysTable tab;
@@ -464,7 +465,7 @@ tc::cotask<nonstd::optional<UserId>> Database::getContactUserId(
   TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
 }
 
-tc::cotask<void> Database::setPublicEncryptionKey(
+tc::cotask<void> Database::setContactPublicEncryptionKey(
     UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
 {
   ContactUserKeysTable tab;
@@ -558,7 +559,7 @@ tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Device>> Database::getOptDevice(DeviceId const& id)
+tc::cotask<nonstd::optional<Device>> Database::findDevice(DeviceId const& id)
 {
   ContactDevicesTable tab;
 
@@ -584,7 +585,7 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<UserId>> Database::getDeviceUserId(
+tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
     DeviceId const& id)
 {
   ContactDevicesTable tab;
