@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Constants.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
