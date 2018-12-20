@@ -1,14 +1,14 @@
 #pragma once
 
-#include <boost/filesystem/path.hpp>
+#include <string>
 
 namespace Tanker
 {
 struct UniquePath
 {
-  boost::filesystem::path path;
+  std::string path;
 
-  explicit UniquePath(boost::filesystem::path const& dir);
+  explicit UniquePath(std::string const& dir);
 
   UniquePath(UniquePath const&) = delete;
   UniquePath& operator=(UniquePath const&) = delete;

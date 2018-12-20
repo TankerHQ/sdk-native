@@ -49,14 +49,13 @@ AsyncCorePtr Device::createCore(SessionType type)
   auto info =
       SdkInfo{"test", base64::decode<TrustchainId>(_trustchainId), "0.0.1"};
   if (type == SessionType::New)
-    return AsyncCorePtr(
-        new AsyncCore(_trustchainUrl, info, _storage->path.string()),
-        AsyncCoreDeleter{});
+    return AsyncCorePtr(new AsyncCore(_trustchainUrl, info, _storage->path),
+                        AsyncCoreDeleter{});
 
   if (!*_cachedSession)
-    *_cachedSession = AsyncCorePtr(
-        new AsyncCore(_trustchainUrl, info, _storage->path.string()),
-        AsyncCoreDeleter{});
+    *_cachedSession =
+        AsyncCorePtr(new AsyncCore(_trustchainUrl, info, _storage->path),
+                     AsyncCoreDeleter{});
 
   return *_cachedSession;
 }

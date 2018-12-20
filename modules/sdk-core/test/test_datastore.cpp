@@ -73,8 +73,7 @@ void setupDummyMigration(Connection& db)
 TEST_CASE("Connection" * doctest::test_suite("DataStore"))
 {
   Tanker::UniquePath testtmp("testtmp");
-  auto const dbfile =
-      fmt::format("{}", (testtmp.path / "datastore.db").string());
+  auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
   SUBCASE("I can create a connection")
   {
     REQUIRE_NOTHROW(createConnection(dbfile));
@@ -97,8 +96,7 @@ TEST_CASE("Connection encrypted" * doctest::test_suite("DataStore") *
           doctest::skip(!hasCipher()))
 {
   Tanker::UniquePath testtmp("testtmp");
-  auto const dbfile =
-      fmt::format("{}", (testtmp.path / "datastore.db").string());
+  auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
 
   SUBCASE("Can migrate from a clear database to an encrypted database")
   {
@@ -148,8 +146,7 @@ TEST_CASE("Table" * doctest::test_suite("DataStore"))
   using VersionsTable = Tanker::DbModels::versions::versions;
   Tanker::UniquePath testtmp("testtmp");
 
-  auto const dbfile =
-      fmt::format("{}", (testtmp.path / "datastore.db").string());
+  auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
   using TrustchainTable = Tanker::DbModels::trustchain::trustchain;
 
   auto dbPtr = createConnection(dbfile);
@@ -200,8 +197,7 @@ TEST_CASE("Table" * doctest::test_suite("DataStore"))
 TEST_CASE("Migration" * doctest::test_suite("DataStore"))
 {
   Tanker::UniquePath testtmp("testtmp");
-  auto const dbfile =
-      fmt::format("{}", (testtmp.path / "datastore.db").string());
+  auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
 
   dummy::dummy tab;
   auto dbPtr = createConnection(dbfile);
