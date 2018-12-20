@@ -51,6 +51,6 @@ TEST_CASE(
 
   AWAIT_VOID(session.catchUserKey(DeviceId{entry.hash}, deviceCreation));
 
-  CHECK_EQ(AWAIT(dbPtr->getContactUserKey(alice.user.userId)).value(),
+  CHECK_EQ(AWAIT(dbPtr->findContactUserKey(alice.user.userId)).value(),
            aliceUserKeyPair.keyPair.publicKey);
 }

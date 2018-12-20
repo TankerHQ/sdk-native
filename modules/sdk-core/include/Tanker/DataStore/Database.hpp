@@ -37,11 +37,11 @@ public:
       UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
 
-  tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> getContactUserKey(
+  tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
       UserId const& userId) override;
-  tc::cotask<nonstd::optional<UserId>> getContactUserId(
+  tc::cotask<nonstd::optional<UserId>> findContactUserIdByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& userPublicKey) override;
-  tc::cotask<void> setPublicEncryptionKey(
+  tc::cotask<void> setContactPublicEncryptionKey(
       UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) override;
 
@@ -56,10 +56,9 @@ public:
 
   tc::cotask<void> putDevice(UserId const& userId,
                              Device const& device) override;
-  tc::cotask<nonstd::optional<Device>> getOptDevice(
-      DeviceId const& id) override;
+  tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) override;
   tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) override;
-  tc::cotask<nonstd::optional<UserId>> getDeviceUserId(
+  tc::cotask<nonstd::optional<UserId>> findDeviceUserId(
       DeviceId const& id) override;
   tc::cotask<void> updateDeviceRevokedAt(DeviceId const& id,
                                          uint64_t revokedAtBlkIndex) override;
