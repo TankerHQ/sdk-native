@@ -26,6 +26,11 @@ class TankerConan(ConanFile):
         return self.develop and not self.cross_building
 
     @property
+    def should_build_bench(self):
+        # develop is false when the package is used as a requirement.
+        return self.develop and not self.cross_building and self.settings.os == "Linux"
+
+    @property
     def should_run_tests(self):
         return self.options.with_ssl and self.should_build_tests and self.should_test and not self.cross_building
 
@@ -79,6 +84,8 @@ class TankerConan(ConanFile):
             self.build_requires("doctest/2.0.1@tanker/testing")
             self.build_requires("doctest-async/2.0.7@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
+            if self.should_build_bench:
+                self.build_requires("google-benchmark/1.4.1@tanker/testing")
 
     def build(self):
         cmake = CMake(self)
@@ -86,6 +93,7 @@ class TankerConan(ConanFile):
             cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
             cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
         cmake.definitions["BUILD_TESTS"] = self.should_build_tests
+        cmake.definitions["BUILD_BENCH"] = self.should_build_bench
         cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
         cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
