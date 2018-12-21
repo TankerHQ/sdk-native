@@ -33,9 +33,7 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Opener::Opener(std::string url,
-               SdkInfo info,
-               boost::filesystem::path writablePath)
+Opener::Opener(std::string url, SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath))
@@ -61,8 +59,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
         _userId.value());
 
   _db = TC_AWAIT(DataStore::createDatabase(
-      (_writablePath / fmt::format("tanker-{:S}.db", *_userId)).string(),
-      _userSecret));
+      fmt::format("{}/tanker-{:S}.db", _writablePath, *_userId), _userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
   _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));

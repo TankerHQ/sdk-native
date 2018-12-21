@@ -13,7 +13,6 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
-#include <Helpers/UniquePath.hpp>
 
 using namespace Tanker;
 
@@ -55,9 +54,7 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
 
 TEST_CASE("resource keys")
 {
-  UniquePath prefix("tmptest");
-  auto const dbPath = prefix.path / "resourcekeys.db";
-  auto const dbPtr = AWAIT(DataStore::createDatabase(dbPath.string()));
+  auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
 
   SUBCASE("it should create and destroy a ResourceKeyStore")
   {
@@ -104,9 +101,7 @@ TEST_CASE("resource keys")
 
 TEST_CASE("Migration")
 {
-  UniquePath prefix("tmptest");
-  auto const dbPath = prefix.path / "resourcekeys.db";
-  auto const dbPtr = DataStore::createConnection(dbPath.string());
+  auto const dbPtr = DataStore::createConnection(":memory:");
   auto& db = *dbPtr;
 
   DataStore::detail::createOrMigrateTableVersions(db);

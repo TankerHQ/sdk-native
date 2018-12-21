@@ -87,7 +87,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   UniquePath p{"testtmp"};
 
   AsyncCore tanker(
-      trustchain.url(), {"test", trustchain.id(), "0.0.1"}, p.path.string());
+      trustchain.url(), {"test", trustchain.id(), "0.0.1"}, p.path);
 
   REQUIRE_THROWS(TC_AWAIT(
       tanker.open("alice"_uid,

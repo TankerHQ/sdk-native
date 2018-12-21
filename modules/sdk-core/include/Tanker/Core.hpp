@@ -15,7 +15,6 @@
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -98,7 +97,7 @@ private:
 
   std::string _url;
   SdkInfo _info;
-  boost::filesystem::path _writablePath;
+  std::string _writablePath;
 
   mpark::variant<Opener, SessionType> _state;
 
