@@ -32,9 +32,13 @@ public:
          std::string userToken);
 
   AsyncCorePtr createCore(SessionType type);
-  tc::cotask<AsyncCorePtr> open();
+  std::unique_ptr<AsyncCore> createAsyncCore();
+  tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
   tc::cotask<AsyncCorePtr> open(AsyncCore& session);
   tc::cotask<void> attachDevice(AsyncCore& parentSession);
+  tc::cotask<void> registerUnlock(AsyncCore& session);
+  SUserId const& suserId() const;
+  std::string const& userToken() const;
 
 private:
   std::string _trustchainUrl;
