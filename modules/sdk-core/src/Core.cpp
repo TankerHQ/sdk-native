@@ -103,13 +103,12 @@ tc::cotask<void> Core::encrypt(uint8_t* encryptedData,
 }
 
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
-                               gsl::span<uint8_t const> encryptedData,
-                               std::chrono::steady_clock::duration timeout)
+                               gsl::span<uint8_t const> encryptedData)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(decrypt);
-  TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData, timeout));
+  TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData));
 }
 
 tc::cotask<void> Core::share(std::vector<SResourceId> const& sresourceIds,
@@ -240,13 +239,12 @@ std::unique_ptr<ChunkEncryptor> Core::makeChunkEncryptor()
 }
 
 tc::cotask<std::unique_ptr<ChunkEncryptor>> Core::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal,
-    std::chrono::steady_clock::duration timeout)
+    gsl::span<uint8_t const> encryptedSeal)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(makeChunkEncryptor);
-  TC_RETURN(TC_AWAIT((*psession)->makeChunkEncryptor(encryptedSeal, timeout)));
+  TC_RETURN(TC_AWAIT((*psession)->makeChunkEncryptor(encryptedSeal)));
 }
 
 tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)

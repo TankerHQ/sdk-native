@@ -32,7 +32,6 @@
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
 
-#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -76,8 +75,7 @@ public:
                            std::vector<SGroupId> const& sgroupIds = {});
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
-                           gsl::span<uint8_t const> encryptedData,
-                           std::chrono::steady_clock::duration timeout);
+                           gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
                          std::vector<SUserId> const& userIds,
@@ -111,8 +109,7 @@ public:
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 
   tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal,
-      std::chrono::steady_clock::duration timeout);
+      gsl::span<uint8_t const> encryptedSeal);
 
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;
@@ -159,7 +156,6 @@ private:
 
   tc::promise<void> _ready;
 
-  tc::cotask<tc::shared_future<void>> waitForKey(Crypto::Mac const& mac);
   tc::cotask<void> connectionHandler();
   void signalKeyReady(Crypto::Mac const& mac);
   tc::cotask<void> nukeDatabase();

@@ -96,13 +96,7 @@ struct tanker_encrypt_options
 struct tanker_decrypt_options
 {
   uint8_t version;
-  /** Time to wait for the key if it is not available in milliseconds
-   *
-   * Defaults to 10 seconds.
-   *
-   * Use 0 to avoid waiting.
-   */
-  uint64_t timeout;
+  uint64_t timeout; // ignored
 };
 
 #define TANKER_DECRYPT_DEFAULT_TIMEOUT 10000

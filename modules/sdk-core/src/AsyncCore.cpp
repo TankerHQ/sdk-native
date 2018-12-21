@@ -104,11 +104,10 @@ tc::future<void> AsyncCore::encrypt(uint8_t* encryptedData,
 }
 
 tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
-                                    gsl::span<uint8_t const> encryptedData,
-                                    std::chrono::steady_clock::duration timeout)
+                                    gsl::span<uint8_t const> encryptedData)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->decrypt(decryptedData, encryptedData, timeout));
+    TC_AWAIT(this->_core->decrypt(decryptedData, encryptedData));
   });
 }
 
@@ -209,13 +208,11 @@ tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor()
 }
 
 tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal,
-    std::chrono::steady_clock::duration timeout)
+    gsl::span<uint8_t const> encryptedSeal)
 {
   return tc::async_resumable(
       [=]() -> tc::cotask<std::unique_ptr<ChunkEncryptor>> {
-        TC_RETURN(
-            TC_AWAIT(this->_core->makeChunkEncryptor(encryptedSeal, timeout)));
+        TC_RETURN(TC_AWAIT(this->_core->makeChunkEncryptor(encryptedSeal)));
       });
 }
 

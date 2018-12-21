@@ -5,7 +5,6 @@ project(TankerSDK-Core)
 option(TANKER_BUILD_WITH_SSL "Tanker uses ssl" ON)
 
 add_library(tankercore STATIC
-  include/Tanker/Constants.hpp
   include/Tanker/AsyncCore.hpp
   include/Tanker/Admin.hpp
   include/Tanker/BasicPullResult.hpp

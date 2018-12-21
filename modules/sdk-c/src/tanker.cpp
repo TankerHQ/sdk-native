@@ -323,21 +323,15 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
       encrypted_data, gsl::make_span(data, data_size), suserIds, sgroupIds));
 }
 
-static_assert(Constants::DefaultDecryptTimeout ==
-                  std::chrono::milliseconds(TANKER_DECRYPT_DEFAULT_TIMEOUT),
-              "default decrypt timeout differ between C and C++");
-
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
                                 uint8_t* decrypted_data,
                                 uint8_t const* data,
                                 uint64_t data_size,
                                 tanker_decrypt_options_t const* options)
 {
-  auto const timeout = options ? std::chrono::milliseconds(options->timeout) :
-                                 Constants::DefaultDecryptTimeout;
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->decrypt(
-      decrypted_data, gsl::make_span(data, data_size), timeout));
+  return makeFuture(
+      tanker->decrypt(decrypted_data, gsl::make_span(data, data_size)));
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,
