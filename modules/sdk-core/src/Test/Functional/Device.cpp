@@ -46,27 +46,32 @@ Device::Device(std::string trustchainUrl,
 
 AsyncCorePtr Device::createCore(SessionType type)
 {
-  auto info =
-      SdkInfo{"test", base64::decode<TrustchainId>(_trustchainId), "0.0.1"};
   if (type == SessionType::New)
-    return AsyncCorePtr(new AsyncCore(_trustchainUrl, info, _storage->path),
-                        AsyncCoreDeleter{});
+    return AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
 
   if (!*_cachedSession)
     *_cachedSession =
-        AsyncCorePtr(new AsyncCore(_trustchainUrl, info, _storage->path),
-                     AsyncCoreDeleter{});
+        AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
 
   return *_cachedSession;
 }
 
-tc::cotask<AsyncCorePtr> Device::open()
+std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
-  auto tanker = createCore(SessionType::Cached);
+  return std::make_unique<AsyncCore>(
+      _trustchainUrl,
+      SdkInfo{"test", base64::decode<TrustchainId>(_trustchainId), "0.0.1"},
+      _storage->path);
+}
 
-  if (tanker->status() != Status::Open)
-    TC_AWAIT(tanker->open(_suserId, _userToken));
-  TC_RETURN(std::move(tanker));
+SUserId const& Device::suserId() const
+{
+  return this->_suserId;
+}
+
+std::string const& Device::userToken() const
+{
+  return this->_userToken;
 }
 
 tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
@@ -75,13 +80,16 @@ tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
   auto const core = TC_AWAIT(this->open(parentSession));
 }
 
-tc::cotask<AsyncCorePtr> Device::open(AsyncCore& session)
+tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 {
-  if (!TC_AWAIT(session.isUnlockAlreadySetUp()))
-    TC_AWAIT(session.setupUnlock(
-        Unlock::CreationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
+  assert(session.status() == Status::Open);
+  TC_AWAIT(session.registerUnlock(
+      Unlock::RegistrationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
+}
 
-  auto tanker = createCore(SessionType::Cached);
+tc::cotask<AsyncCorePtr> Device::open(SessionType type)
+{
+  auto tanker = createCore(type);
   if (tanker->status() == Status::Open)
     TC_RETURN(std::move(tanker));
 
@@ -104,6 +112,12 @@ tc::cotask<AsyncCorePtr> Device::open(AsyncCore& session)
   if (tanker->status() != Status::Open)
     throw std::runtime_error("attach device fail");
   TC_RETURN(std::move(tanker));
+}
+
+tc::cotask<AsyncCorePtr> Device::open(AsyncCore& session)
+{
+  TC_AWAIT(registerUnlock(session));
+  TC_RETURN(TC_AWAIT(open(SessionType::Cached)));
 }
 }
 }

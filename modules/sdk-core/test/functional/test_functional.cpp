@@ -305,9 +305,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   TC_AWAIT(waitForPromise(prom));
 
   CHECK(aliceSession->status() == Status::Closed);
+  auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceDevice.open()),
-                  Error::InvalidUnlockEventHandler);
+  CHECK_THROWS_AS(
+      TC_AWAIT(core->open(aliceDevice.suserId(), aliceDevice.userToken())),
+      Error::InvalidUnlockEventHandler);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -366,8 +368,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   CHECK(otherSession->status() == Status::Closed);
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceSecondDevice.open()),
-                  Error::InvalidUnlockEventHandler);
+  {
+    auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
+
+    CHECK_THROWS_AS(TC_AWAIT(core->open(aliceSecondDevice.suserId(),
+                                        aliceSecondDevice.userToken())),
+                    Error::InvalidUnlockEventHandler);
+  }
 
   tc::promise<void> prom2;
   aliceSession->deviceRevoked().connect([&] { prom2.set_value({}); });
@@ -378,7 +385,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   CHECK(aliceSession->status() == Status::Closed);
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceDevice.open()),
-                  Error::InvalidUnlockEventHandler);
+  auto core = aliceDevice.createCore(Test::SessionType::Cached);
+
+  CHECK_THROWS_AS(
+      TC_AWAIT(core->open(aliceDevice.suserId(), aliceDevice.userToken())),
+      Error::InvalidUnlockEventHandler);
 }
 }

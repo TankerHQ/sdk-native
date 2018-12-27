@@ -232,3 +232,7 @@ target_compile_definitions(tankercore_test PRIVATE FMT_STRING_ALIAS)
 if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
+
+if(BUILD_BENCH)
+  add_subdirectory(bench)
+endif()
