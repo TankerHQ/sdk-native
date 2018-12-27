@@ -57,8 +57,7 @@ flags = [
  '-I./modules/serialization/include',
  '-I./modules/crocket/include',
  '-I./modules/test-helpers/include',
- '-I./modules/types/include',
- '-DFMT_STRING_ALIAS'
+ '-I./modules/types/include'
 ]
 
 conan_flags = json.loads(open("conan_ycm_flags.json", "r").read())

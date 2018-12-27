@@ -14,5 +14,4 @@ target_link_libraries(test_functional
   CONAN_PKG::doctest-async
 )
 
-target_compile_definitions(test_functional PRIVATE FMT_STRING_ALIAS)
 add_test(NAME test_functional COMMAND test_functional --duration=true)

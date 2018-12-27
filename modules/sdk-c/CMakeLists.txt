@@ -39,8 +39,6 @@ if(BUILD_SHARED_LIBS)
   endif()
 endif()
 
-target_compile_definitions(tanker PRIVATE FMT_STRING_ALIAS)
-
 install(TARGETS tanker
   EXPORT tanker
   RUNTIME DESTINATION bin
