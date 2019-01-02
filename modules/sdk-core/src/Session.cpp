@@ -44,6 +44,8 @@
 #include <tconcurrent/promise.hpp>
 #include <tconcurrent/when.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -176,15 +178,12 @@ tc::cotask<void> Session::connectionHandler()
 {
   // NOTE: It is MANDATORY to check this prefix is valid, or the server could
   // get us to sign anything!
-  constexpr static const char challengePrefix[] =
+  static std::string const challengePrefix =
       "\U0001F512 Auth Challenge. 1234567890.";
   try
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
-    if (challenge.size() < sizeof(challengePrefix) ||
-        !std::equal(challengePrefix,
-                    challengePrefix + sizeof(challengePrefix) - 1,
-                    begin(challenge)))
+    if (!boost::algorithm::starts_with(challenge, challengePrefix))
       throw std::runtime_error(
           "Received auth challenge does not contain mandatory prefix. Server "
           "may not be up to date, or we may be under attack.");
