@@ -226,8 +226,6 @@ if(TANKER_BUILD_WITH_SSL)
 endif()
 
 target_link_libraries(tankercore_test tankercore tankertesthelpers)
-target_compile_definitions(tankercore PRIVATE FMT_STRING_ALIAS)
-target_compile_definitions(tankercore_test PRIVATE FMT_STRING_ALIAS)
 
 if(BUILD_TESTS)
   add_subdirectory(test)

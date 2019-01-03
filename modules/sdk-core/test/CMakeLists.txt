@@ -39,7 +39,6 @@ target_link_libraries(test_tanker
   CONAN_PKG::doctest
   CONAN_PKG::trompeloeil
 )
-target_compile_definitions(test_tanker PRIVATE FMT_STRING_ALIAS)
 add_test(NAME test_tanker COMMAND test_tanker --duration=true)
 
 add_subdirectory(functional)
