@@ -58,18 +58,17 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
         suserId,
         _userId.value());
 
+  _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
+  _client->start();
+
   _db = TC_AWAIT(DataStore::createDatabase(
       fmt::format("{}/tanker-{:S}.db", _writablePath, *_userId), _userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
-
-  _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
-  _client->start();
 
   auto const userStatusResult =
       TC_AWAIT(_client->userStatus(_info.trustchainId,
                                    _userId.value(),
                                    _keyStore->signatureKeyPair().publicKey));
-
   if (userStatusResult.deviceExists)
     TC_AWAIT(openDevice());
   else if (userStatusResult.userExists)
