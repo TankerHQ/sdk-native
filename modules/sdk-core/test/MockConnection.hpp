@@ -15,6 +15,8 @@ public:
   MockConnection();
   // bool isOpen() const override;
   MAKE_CONST_MOCK0(isOpen, bool(), override);
+  // std::string id() const override;
+  MAKE_CONST_MOCK0(id, std::string(), override);
   // void connect() override;
   MAKE_MOCK0(connect, void(), override);
   // tc::cotask<std::string> emit(

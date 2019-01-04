@@ -9,10 +9,11 @@ class TankerConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "with_ssl": [True, False],
+        "with_tracer": [True, False],
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         }
-    default_options = "shared=False", "fPIC=True", "with_ssl=True", "sanitizer=None", "coverage=False"
+    default_options = "shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "sanitizer=None", "coverage=False"
     exports_sources = "CMakeLists.txt", "modules/*"
     generators = "cmake", "json", "ycm"
 
@@ -29,6 +30,10 @@ class TankerConan(ConanFile):
     def should_build_bench(self):
         # develop is false when the package is used as a requirement.
         return self.develop and not self.cross_building and self.settings.os == "Linux"
+
+    @property
+    def should_build_tracer(self):
+        return self.should_build_bench and self.options.with_tracer
 
     @property
     def should_run_tests(self):
@@ -94,6 +99,7 @@ class TankerConan(ConanFile):
             cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
         cmake.definitions["BUILD_TESTS"] = self.should_build_tests
         cmake.definitions["BUILD_BENCH"] = self.should_build_bench
+        cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
         cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared

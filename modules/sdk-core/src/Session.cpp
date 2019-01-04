@@ -36,6 +36,8 @@
 #include <Tanker/UserNotFound.hpp>
 #include <Tanker/UserToken/Delegation.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
@@ -205,6 +207,7 @@ tc::cotask<void> Session::connectionHandler()
 
 tc::cotask<void> Session::startConnection()
 {
+  FUNC_TIMER(Net);
   TC_AWAIT(_client->handleConnection());
 
   tc::async_resumable([this]() -> tc::cotask<void> {
@@ -215,7 +218,10 @@ tc::cotask<void> Session::startConnection()
     }
   });
 
-  TC_AWAIT(_ready.get_future());
+  {
+    SCOPE_TIMER("wait for trustchain sync", Net);
+    TC_AWAIT(_ready.get_future());
+  }
 }
 
 UserId const& Session::userId() const

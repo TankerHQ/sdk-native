@@ -8,6 +8,7 @@
 
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
+#include <cstdio>
 #include <string>
 using namespace std::string_literals;
 
@@ -21,6 +22,10 @@ int main(int argc, char** argv)
   Log::setLogHandler(&log_handler);
   AWAIT_VOID(Tanker::Test::Trustchain::getInstance().init());
   benchmark::Initialize(&argc, argv);
+#ifdef TANKER_ENABLE_TRACER
+  fmt::print("Waiting for input...");
+  std::getchar();
+#endif
   benchmark::RunSpecifiedBenchmarks();
   return 0;
 }

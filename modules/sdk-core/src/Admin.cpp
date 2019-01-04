@@ -20,6 +20,8 @@
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <algorithm>
 #include <iterator>
 
@@ -64,6 +66,7 @@ tc::cotask<TrustchainId> Admin::createTrustchain(
     Crypto::SignatureKeyPair const& keyPair,
     bool isTest)
 {
+  FUNC_TIMER(Net);
   Block block{};
   block.nature = Nature::TrustchainCreation;
   block.payload =

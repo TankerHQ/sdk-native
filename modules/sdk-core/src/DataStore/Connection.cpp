@@ -11,6 +11,8 @@
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlpp11.h>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <fstream>
 #include <iterator>
 #include <stdexcept>

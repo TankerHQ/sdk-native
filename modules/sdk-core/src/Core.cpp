@@ -16,6 +16,8 @@
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
@@ -68,6 +70,7 @@ Status Core::status() const
 tc::cotask<void> Core::open(SUserId const& suserId,
                             std::string const& userToken)
 {
+  SCOPE_TIMER("core_open", Proc);
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
     throw INVALID_STATUS(open);

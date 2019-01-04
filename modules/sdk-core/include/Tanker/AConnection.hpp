@@ -17,6 +17,7 @@ public:
 
   virtual bool isOpen() const = 0;
   virtual void connect() = 0;
+  virtual std::string id() const = 0;
 
   virtual tc::cotask<std::string> emit(std::string const& eventName,
                                        std::string const& data) = 0;

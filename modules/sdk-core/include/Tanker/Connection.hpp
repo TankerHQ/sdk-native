@@ -25,6 +25,7 @@ public:
 
   bool isOpen() const override;
   void connect() override;
+  std::string id() const override;
 
   tc::cotask<std::string> emit(std::string const& eventName,
                                std::string const& data) override;

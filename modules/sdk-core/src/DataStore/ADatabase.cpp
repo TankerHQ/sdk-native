@@ -3,6 +3,8 @@
 #include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Log.hpp>
 
+#include <Tanker/Tracer/ScopeTimer.hpp>
+
 TLOG_CATEGORY("ADatabase");
 
 namespace Tanker
@@ -46,6 +48,7 @@ tc::cotask<DatabasePtr> createDatabase(
     nonstd::optional<Crypto::SymmetricKey> const& userSecret,
     bool exclusive)
 {
+  FUNC_TIMER(DB);
   TC_RETURN(std::make_unique<Database>(dbPath, userSecret, exclusive));
 }
 }
