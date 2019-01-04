@@ -21,7 +21,7 @@ Also you probably don't need the latest release, 2.10 here, but 2.10 works.
 
 Recompile `tanker` with the 'tanker:with_tracer=True' conan flag.
 
-if you want more reliable mesurment, I highly recommend to set you cpu frequency scaling to `performance`
+if you want more reliable measurement, I highly recommend to set you cpu frequency scaling to `performance`
 
 ```
 $ sudo cpupower frequency-set --governor performance
@@ -104,7 +104,7 @@ You can start/stop a lttng session whenever you want, even while your scenario i
 This is the hard part, since tooling is certainly lacking.
 Your session must be stoped in order to be inspected, otherwise you see nothing.
 
-The simplest way to view your generated tracepoint is 
+The simplest way to view your generated tracepoint is
 ```
 $ lttng view
 ```
