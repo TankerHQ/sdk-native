@@ -1,3 +1,7 @@
+if (NOT EMSCRIPTEN)
+  set(TEST_TANKER_EXTRA_SRC test_datastore.cpp)
+endif()
+
 add_executable(test_tanker
   test_serialization.cpp
   test_client.cpp
@@ -12,7 +16,6 @@ add_executable(test_tanker
   test_blockgenerator.cpp
   test_log.cpp
   test_encryptor.cpp
-  test_datastore.cpp
   test_chunkencryptor.cpp
   test_receivekey.cpp
   test_seal.cpp
@@ -32,6 +35,8 @@ add_executable(test_tanker
   TrustchainBuilder.cpp
 
   main.cpp
+
+  ${TEST_TANKER_EXTRA_SRC}
 )
 target_link_libraries(test_tanker
   tankercore_test

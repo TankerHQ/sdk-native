@@ -24,7 +24,7 @@ class TankerConan(ConanFile):
     @property
     def should_build_tests(self):
         # develop is false when the package is used as a requirement.
-        return self.develop and not self.cross_building
+        return self.develop and (not self.cross_building or self.settings.os == "Emscripten")
 
     @property
     def should_build_bench(self):
@@ -52,8 +52,12 @@ class TankerConan(ConanFile):
         private = (self.settings.os == "Android")
 
         self.requires("Boost/1.68.0@tanker/testing", private=private, override=True)
-        if self.options.with_ssl:
-            self.requires("LibreSSL/2.6.3@tanker/testing", private=private)
+        if self.settings.os != "Emscripten":
+            if self.options.with_ssl:
+                self.requires("LibreSSL/2.6.3@tanker/testing", private=private)
+            self.requires("socket.io-client-cpp/1.6.1@tanker/testing", private=private)
+            self.requires("sqlpp11/0.57@tanker/testing", private=private)
+            self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
         self.requires("fmt/5.2.1@tanker/testing", private=private)
@@ -62,9 +66,6 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
         self.requires("mockaron/0.2@tanker/testing", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("socket.io-client-cpp/1.6.1@tanker/testing", private=private)
-        self.requires("sqlpp11/0.57@tanker/testing", private=private)
-        self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
         self.requires("tconcurrent/0.16@tanker/testing", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
 
@@ -77,6 +78,9 @@ class TankerConan(ConanFile):
         self.copy("copying", dst="licenses", folder=True, ignore_case=True)
 
     def configure(self):
+        if self.settings.os == "Emscripten":
+            self.options["Boost"].header_only = True
+
         if tools.cross_building(self.settings):
             del self.settings.compiler.libcxx
         if self.settings.os in ["Android", "iOS"]:
