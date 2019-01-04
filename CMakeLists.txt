@@ -33,6 +33,8 @@ if(WIN32)
 
   # allow tanker to allocate more than 1gb of ram
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+elseif(EMSCRIPTEN)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MODULARIZE=1 -s EXPORT_NAME=Tanker -s NO_FILESYSTEM=0 --bind")
 endif()
 
 if(BUILD_TESTS)

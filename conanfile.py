@@ -12,8 +12,9 @@ class TankerConan(ConanFile):
         "with_tracer": [True, False],
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
+        "coroutinests": [True, False],
         }
-    default_options = "shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "sanitizer=None", "coverage=False"
+    default_options = "shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "sanitizer=None", "coverage=False", "coroutinests=False"
     exports_sources = "CMakeLists.txt", "modules/*"
     generators = "cmake", "json", "ycm"
 
@@ -98,9 +99,17 @@ class TankerConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
+
+        if "CONAN_CXX_FLAGS" not in cmake.definitions:
+            cmake.definitions["CONAN_CXX_FLAGS"] = ""
+        if "CONAN_C_FLAGS" not in cmake.definitions:
+            cmake.definitions["CONAN_C_FLAGS"] = ""
+
         if self.options.sanitizer:
             cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
             cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
+        if self.options.coroutinests:
+            cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
         cmake.definitions["BUILD_TESTS"] = self.should_build_tests
         cmake.definitions["BUILD_BENCH"] = self.should_build_bench
         cmake.definitions["WITH_TRACER"] = self.should_build_tracer
