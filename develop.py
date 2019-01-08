@@ -6,7 +6,7 @@ from path import Path
 import ci
 import ci.cpp
 import ci.ios
-import ui
+import cli_ui as ui
 
 
 def main() -> None:

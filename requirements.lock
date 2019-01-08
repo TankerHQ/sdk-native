@@ -1,5 +1,5 @@
 # Generated with dmenv 0.8.0, python 3.7.1, on Linux
--e git+ssh://git@tanker.gitlab.local/Tanker/ci@2e537923cb93be3563143e4878029df735953826#egg=ci
+-e git+ssh://git@tanker.gitlab.local/Tanker/ci@87817657f2e7731b849353885bd87387bbc92ca5#egg=ci
 astroid==2.1.0
 attrs==18.2.0
 bottle==0.12.16
@@ -30,7 +30,6 @@ Pygments==2.3.1
 PyJWT==1.7.1
 pylint==2.2.2
 pyparsing==2.3.0
-python-cli-ui==0.7.4
 python-gitlab==1.7.0
 PyYAML==3.13
 requests==2.21.0
