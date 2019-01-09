@@ -54,6 +54,7 @@ add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/Admin.hpp
   include/Tanker/BasicPullResult.hpp
+  include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
   include/Tanker/AConnection.hpp
@@ -134,6 +135,7 @@ add_library(tankercore STATIC
   src/Admin.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
+  src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
