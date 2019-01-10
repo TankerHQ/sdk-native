@@ -1,10 +1,6 @@
 #include <doctest.h>
 
-#include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/DeviceKeyStore.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
@@ -15,6 +11,12 @@
 #include <fmt/format.h>
 
 using namespace Tanker;
+
+#ifndef EMSCRIPTEN
+#include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Table.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/DeviceKeyStore.hpp>
 
 namespace
 {
@@ -67,6 +69,7 @@ OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
   return {b64PrivSigK, b64PubSigK, b64PrivEncK, b64PubEncK, b64DeviceId};
 }
 }
+#endif
 
 TEST_CASE("device keystore")
 {
@@ -113,6 +116,7 @@ TEST_CASE("device keystore")
   }
 }
 
+#ifndef EMSCRIPTEN
 TEST_CASE("device keystore migration")
 {
   auto const dbPtr = DataStore::createConnection(":memory:");
@@ -158,3 +162,4 @@ TEST_CASE("device keystore migration")
     CHECK_EQ(deviceId, base64::decode<DeviceId>(oldKeystore.b64DeviceId));
   }
 }
+#endif

@@ -3,18 +3,20 @@
 #include <Tanker/ResourceKeyStore.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ResourceKeys.hpp>
-#include <Tanker/DbModels/Versions.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+
+#ifndef EMSCRIPTEN
+#include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Table.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/ResourceKeys.hpp>
+#include <Tanker/DbModels/Versions.hpp>
 
 namespace
 {
@@ -51,6 +53,7 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
   return {b64Mac, b64ResourceKey};
 }
 }
+#endif
 
 TEST_CASE("resource keys")
 {
@@ -99,6 +102,7 @@ TEST_CASE("resource keys")
   }
 }
 
+#ifndef EMSCRIPTEN
 TEST_CASE("Migration")
 {
   auto const dbPtr = DataStore::createConnection(":memory:");
@@ -125,3 +129,4 @@ TEST_CASE("Migration")
     CHECK_EQ(key, base64::decode<Crypto::SymmetricKey>(oldKeys.b64ResourceKey));
   }
 }
+#endif

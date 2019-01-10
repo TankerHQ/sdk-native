@@ -1,12 +1,17 @@
 #include <Helpers/Config.hpp>
 
+#include <fmt/core.h>
+
+#include <nlohmann/json.hpp>
+
+#include <optional.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cstdlib>
-#include <fmt/core.h>
 #include <fstream>
 #include <iterator>
-#include <nlohmann/json.hpp>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -24,6 +29,16 @@ std::string getSafeEnv(std::string key)
   return env;
 }
 
+std::string readfile(std::string const& file)
+{
+  std::ifstream in(file);
+  if (!in.is_open())
+    throw std::runtime_error(
+        fmt::format("Could not open config file '{}'\n", file));
+  return std::string(std::istreambuf_iterator<char>(in),
+                     std::istreambuf_iterator<char>());
+}
+
 struct Config
 {
   std::string url;
@@ -36,15 +51,9 @@ void from_json(const nlohmann::json& j, Config& c)
   j.at("idToken").get_to(c.idToken);
 }
 
-Config parseConfigFromFile(std::string configName)
+Config parseConfig(std::string const& config, std::string const& configName)
 {
-  auto const configPath = getSafeEnv("TANKER_CONFIG_FILEPATH");
-  std::ifstream file(configPath);
-  if (!file.is_open())
-    throw std::runtime_error(
-        fmt::format("Could not open config file '{}'\n", configPath));
-  nlohmann::json configs;
-  file >> configs;
+  auto const configs = nlohmann::json::parse(config);
   auto const found = configs.find(configName);
   if (found == end(configs))
     throw std::runtime_error(fmt::format(
@@ -52,21 +61,30 @@ Config parseConfigFromFile(std::string configName)
   return found->get<Config>();
 }
 
-Config createConfig()
+Config loadConfig()
 {
   auto const projectConfig = getSafeEnv("TANKER_CONFIG_NAME");
-  return parseConfigFromFile(projectConfig);
+  auto const configPath = getSafeEnv("TANKER_CONFIG_FILEPATH");
+  auto const config = readfile(configPath);
+  return parseConfig(config, projectConfig);
 }
+
+nonstd::optional<Config> config;
 
 Config const& getConfig()
 {
-  static auto const config = createConfig();
-  return config;
+  if (!config)
+    config = loadConfig();
+  return *config;
 }
 }
 
 namespace TestConstants
 {
+void setConfig(std::string const& cfg, std::string const& env)
+{
+  config = parseConfig(cfg, env);
+}
 
 std::string const& trustchainUrl()
 {

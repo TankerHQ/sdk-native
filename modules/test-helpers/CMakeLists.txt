@@ -23,4 +23,4 @@ target_include_directories(tankertesthelpers
   ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(tankertesthelpers CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt)
+target_link_libraries(tankertesthelpers CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt CONAN_PKG::optional-lite)

@@ -73,6 +73,16 @@ nightly/ios:
   tags:
     - macos
 
+nightly/emscripten:
+  stage: build
+  only:
+    - schedules
+  script:
+    - dmenv run -- python run-ci.py clean-cache
+    - dmenv run -- python run-ci.py build-and-test --profile emscripten
+  tags:
+    - linux
+
 coverage:
   stage: build
   only:

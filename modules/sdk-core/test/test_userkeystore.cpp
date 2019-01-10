@@ -2,12 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/base64.hpp>
-#include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/UserKeys.hpp>
-#include <Tanker/DbModels/Versions.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 
 #include <Helpers/Await.hpp>
@@ -17,6 +12,13 @@
 #include <doctest.h>
 
 using namespace Tanker;
+
+#ifndef EMSCRIPTEN
+#include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Table.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/UserKeys.hpp>
+#include <Tanker/DbModels/Versions.hpp>
 
 namespace
 {
@@ -52,6 +54,7 @@ OldUserKeys setupUserKeysMigration(DataStore::Connection& db)
   return {b64PrivateKey, b64PublicKey};
 }
 }
+#endif
 
 TEST_CASE("user keys")
 {
@@ -129,6 +132,7 @@ TEST_CASE("user keys")
   }
 }
 
+#ifndef EMSCRIPTEN
 TEST_CASE("user keys migration")
 {
   using UserKeysTable = Tanker::DbModels::user_keys::user_keys;
@@ -160,3 +164,4 @@ TEST_CASE("user keys migration")
                  oldKeys.b64PublicEncryptionKey));
   }
 }
+#endif

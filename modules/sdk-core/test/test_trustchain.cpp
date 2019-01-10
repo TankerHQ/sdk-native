@@ -1,12 +1,7 @@
 #include <doctest.h>
 
 #include <Tanker/Crypto/base64.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/DbModels/TrustchainIndexes.hpp>
-#include <Tanker/DbModels/Versions.hpp>
+#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -17,12 +12,19 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/UniquePath.hpp>
 
-#include <sqlpp11/sqlpp11.h>
-
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
 using namespace Tanker;
+
+#ifndef EMSCRIPTEN
+#include <Tanker/DataStore/Table.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/Trustchain.hpp>
+#include <Tanker/DbModels/TrustchainIndexes.hpp>
+#include <Tanker/DbModels/Versions.hpp>
+
+#include <sqlpp11/sqlpp11.h>
 
 namespace
 {
@@ -95,6 +97,7 @@ OldIndex setupTrustchainIndexesMigration(DataStore::Connection& db)
   return {b64Hash, b64Value};
 }
 }
+#endif
 
 TEST_CASE("trustchain")
 {
@@ -215,6 +218,7 @@ TEST_CASE("trustchain")
   }
 }
 
+#ifndef EMSCRIPTEN
 TEST_CASE("trustchain migration")
 {
   auto const dbPtr = DataStore::createConnection(":memory:");
@@ -272,3 +276,4 @@ TEST_CASE("trustchain migration")
     }
   }
 }
+#endif

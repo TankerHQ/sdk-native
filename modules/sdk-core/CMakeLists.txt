@@ -4,10 +4,57 @@ project(TankerSDK-Core)
 
 option(TANKER_BUILD_WITH_SSL "Tanker uses ssl" ON)
 
+if (NOT EMSCRIPTEN)
+  set(TANKER_CORE_DATASTORE_SRC
+    include/Tanker/DataStore/Connection.hpp
+    include/Tanker/DataStore/Database.hpp
+    include/Tanker/DataStore/Table.hpp
+    include/Tanker/DataStore/Utils.hpp
+    include/Tanker/DbModels/ContactDevices.hpp
+    include/Tanker/DbModels/ContactUserKeys.hpp
+    include/Tanker/DbModels/DeviceKeyStore.hpp
+    include/Tanker/DbModels/Groups.hpp
+    include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
+    include/Tanker/DbModels/ResourceKeys.hpp
+    include/Tanker/DbModels/Trustchain.hpp
+    include/Tanker/DbModels/TrustchainIndexes.hpp
+    include/Tanker/DbModels/UserKeys.hpp
+    include/Tanker/DbModels/Versions.hpp
+
+    src/DataStore/Connection.cpp
+    src/DataStore/Database.cpp
+    src/DataStore/Table.cpp
+    src/DbModels/ContactDevices.cpp
+    src/DbModels/ContactUserKeys.cpp
+    src/DbModels/DeviceKeyStore.cpp
+    src/DbModels/Groups.cpp
+    src/DbModels/ResourceIdToKeyPublish.cpp
+    src/DbModels/ResourceKeys.cpp
+    src/DbModels/Trustchain.cpp
+    src/DbModels/TrustchainIndexes.cpp
+    src/DbModels/UserKeys.cpp
+    src/DbModels/Versions.cpp
+  )
+  set(TANKER_CORE_CONNECTION_SRC
+    include/Tanker/Connection.hpp
+    src/Connection.cpp
+  )
+else()
+  set(TANKER_CORE_DATASTORE_SRC
+    include/Tanker/DataStore/JsDatabase.hpp
+    src/DataStore/JsDatabase.cpp
+  )
+  set(TANKER_CORE_CONNECTION_SRC
+    include/Tanker/JsConnection.hpp
+    src/JsConnection.cpp
+  )
+endif()
+
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/Admin.hpp
   include/Tanker/BasicPullResult.hpp
+  include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
   include/Tanker/AConnection.hpp
@@ -28,7 +75,6 @@ add_library(tankercore STATIC
   include/Tanker/DeviceKeyStore.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
-  include/Tanker/Connection.hpp
   include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
@@ -47,16 +93,6 @@ add_library(tankercore STATIC
   include/Tanker/Actions/KeyPublishToUserGroup.hpp
   include/Tanker/Actions/UserGroupAddition.hpp
   include/Tanker/Actions/UserGroupCreation.hpp
-  include/Tanker/DbModels/ContactDevices.hpp
-  include/Tanker/DbModels/ContactUserKeys.hpp
-  include/Tanker/DbModels/DeviceKeyStore.hpp
-  include/Tanker/DbModels/Groups.hpp
-  include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
-  include/Tanker/DbModels/ResourceKeys.hpp
-  include/Tanker/DbModels/Trustchain.hpp
-  include/Tanker/DbModels/TrustchainIndexes.hpp
-  include/Tanker/DbModels/UserKeys.hpp
-  include/Tanker/DbModels/Versions.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
   include/Tanker/Groups/GroupStore.hpp
@@ -79,10 +115,6 @@ add_library(tankercore STATIC
   include/Tanker/Status.hpp
   include/Tanker/Nature.hpp
   include/Tanker/EnumFormat.hpp
-  include/Tanker/DataStore/Connection.hpp
-  include/Tanker/DataStore/Database.hpp
-  include/Tanker/DataStore/Table.hpp
-  include/Tanker/DataStore/Utils.hpp
   include/Tanker/Device.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
@@ -102,13 +134,10 @@ add_library(tankercore STATIC
   src/AsyncCore.cpp
   src/Admin.cpp
   src/Init.cpp
-  src/DataStore/Connection.cpp
   src/DataStore/ADatabase.cpp
-  src/DataStore/Database.cpp
-  src/DataStore/Table.cpp
+  src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
-  src/Connection.cpp
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
@@ -138,16 +167,6 @@ add_library(tankercore STATIC
   src/ChunkEncryptor.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
-  src/DbModels/ContactDevices.cpp
-  src/DbModels/ContactUserKeys.cpp
-  src/DbModels/DeviceKeyStore.cpp
-  src/DbModels/Groups.cpp
-  src/DbModels/ResourceIdToKeyPublish.cpp
-  src/DbModels/ResourceKeys.cpp
-  src/DbModels/Trustchain.cpp
-  src/DbModels/TrustchainIndexes.cpp
-  src/DbModels/UserKeys.cpp
-  src/DbModels/Versions.cpp
   src/Actions/TrustchainCreation.cpp
   src/Actions/DeviceCreation.cpp
   src/Actions/DeviceRevocation.cpp
@@ -177,6 +196,9 @@ add_library(tankercore STATIC
   src/Verif/TrustchainCreation.cpp
   src/Verif/UserGroupAddition.cpp
   src/Verif/UserGroupCreation.cpp
+
+  ${TANKER_CORE_DATASTORE_SRC}
+  ${TANKER_CORE_CONNECTION_SRC}
 )
 
 target_include_directories(tankercore
@@ -193,8 +215,6 @@ target_link_libraries(tankercore
   tankercrypto
   ttracer
   CONAN_PKG::Boost
-  CONAN_PKG::socket.io-client-cpp
-  CONAN_PKG::sqlpp11-connector-sqlite3
   CONAN_PKG::tconcurrent
   CONAN_PKG::cppcodec
   CONAN_PKG::variant
@@ -206,6 +226,12 @@ target_link_libraries(tankercore
   CONAN_PKG::enum-flags
 )
 
+if (NOT EMSCRIPTEN)
+  target_link_libraries(tankercore
+    CONAN_PKG::socket.io-client-cpp
+    CONAN_PKG::sqlpp11-connector-sqlite3
+  )
+endif()
 
 install(TARGETS tankercore
   EXPORT tanker
