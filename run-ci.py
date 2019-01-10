@@ -56,7 +56,7 @@ def main() -> None:
             else:
                 sys.exit(f"Unknown platform: {platform}")
         except Exception as e:
-            ci.mail.notify_nightly_failure("sdk-native")
+            ci.mail.notify_failure("sdk-native")
             sys.exit(e)
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
