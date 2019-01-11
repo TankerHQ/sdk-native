@@ -18,7 +18,7 @@ def main() -> None:
     build_and_test_parser.add_argument("--bindings", action="store_true")
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
-    clean_cache_parser = subparsers.add_parser("clean-cache")
+    subparsers.add_parser("clean-cache")
 
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument(
@@ -48,16 +48,13 @@ def main() -> None:
         )
         deployer.build(upload=True)
     elif args.command == "nightly":
-        try:
+        with ci.mail.notify_failure("sdk-native"):
             if platform == "linux":
                 ci.android.check(native_from_sources=True)
             elif platform == "darwin":
                 ci.ios.check(native_from_sources=True)
             else:
                 sys.exit(f"Unknown platform: {platform}")
-        except Exception as e:
-            ci.mail.notify_failure("sdk-native")
-            sys.exit(e)
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
     else:
