@@ -48,16 +48,13 @@ def main() -> None:
         )
         deployer.build(upload=True)
     elif args.command == "nightly":
-        try:
+        with ci.mail.notify_failure("sdk-native"):
             if platform == "linux":
                 ci.android.check(native_from_sources=True)
             elif platform == "darwin":
                 ci.ios.check(native_from_sources=True)
             else:
                 sys.exit(f"Unknown platform: {platform}")
-        except Exception as e:
-            ci.mail.notify_failure("sdk-native")
-            sys.exit(e)
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
     else:
