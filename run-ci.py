@@ -18,7 +18,7 @@ def main() -> None:
     build_and_test_parser.add_argument("--bindings", action="store_true")
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
-    clean_cache_parser = subparsers.add_parser("clean-cache")
+    subparsers.add_parser("clean-cache")
 
     deploy_parser = subparsers.add_parser("deploy")
     deploy_parser.add_argument(
