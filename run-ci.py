@@ -15,7 +15,6 @@ def main() -> None:
 
     build_and_test_parser = subparsers.add_parser("build-and-test")
     build_and_test_parser.add_argument("--profile", required=True)
-    build_and_test_parser.add_argument("--bindings", action="store_true")
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
     subparsers.add_parser("clean-cache")
@@ -38,7 +37,7 @@ def main() -> None:
     if args.command == "clean-cache":
         ci.cpp.clean_conan_cache()
     elif args.command == "build-and-test":
-        ci.cpp.build_and_test(args.profile, args.bindings, args.coverage)
+        ci.cpp.build_and_test(args.profile, args.coverage)
     elif args.command == "deploy":
         git_tag = args.git_tag
         version = ci.version_from_git_tag(git_tag)
