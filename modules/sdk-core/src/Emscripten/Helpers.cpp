@@ -34,7 +34,7 @@ std::vector<uint8_t> copyToVector(const emscripten::val& typedArray)
 }
 
 template <typename Sig>
-emscripten::val toJsFunctor(std::function<Sig> functor)
+emscripten::val toJsFunctionObject(std::function<Sig> functor)
 {
   return emscripten::val(functor)["opcall"].template call<emscripten::val>(
       "bind", emscripten::val(functor));
@@ -58,8 +58,8 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
                                  error.call<std::string>("toString") + "\n" +
                                          error["stack"].as<std::string>())));
       });
-  jspromise.call<emscripten::val>("then", toJsFunctor(thenCb))
-      .call<emscripten::val>("catch", toJsFunctor(catchCb));
+  jspromise.call<emscripten::val>("then", toJsFunctionObject(thenCb))
+      .call<emscripten::val>("catch", toJsFunctionObject(catchCb));
   TC_RETURN(TC_AWAIT(cpppromise.get_future()));
 }
 }
