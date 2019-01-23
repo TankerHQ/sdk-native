@@ -90,171 +90,69 @@ class JsDatabaseInterfaceWrapper
 public:
   EMSCRIPTEN_WRAPPER(JsDatabaseInterfaceWrapper);
 
-  emscripten::val putUserPrivateKey(emscripten::val const& publicKey,
-                                    emscripten::val const& privateKey) override
-  {
-    return call<emscripten::val>("putUserPrivateKey", publicKey, privateKey);
+#define FORWARD_CALL0(name)              \
+  emscripten::val name() override        \
+  {                                      \
+    return call<emscripten::val>(#name); \
   }
-  emscripten::val getUserKeyPair(emscripten::val const& publicKey) override
-  {
-    return call<emscripten::val>("getUserKeyPair", publicKey);
+#define FORWARD_CALL1(name)                                \
+  emscripten::val name(emscripten::val const& a1) override \
+  {                                                        \
+    return call<emscripten::val>(#name, a1);               \
   }
-  emscripten::val getUserOptLastKeyPair() override
-  {
-    return call<emscripten::val>("getUserOptLastKeyPair");
+#define FORWARD_CALL2(name)                                                  \
+  emscripten::val name(emscripten::val const& a1, emscripten::val const& a2) \
+      override                                                               \
+  {                                                                          \
+    return call<emscripten::val>(#name, a1, a2);                             \
   }
-
-  emscripten::val getTrustchainLastIndex() override
-  {
-    return call<emscripten::val>("getTrustchainLastIndex");
-  }
-  emscripten::val addTrustchainEntry(emscripten::val const& entry) override
-  {
-    return call<emscripten::val>("addTrustchainEntry", entry);
-  }
-  emscripten::val findTrustchainEntry(emscripten::val const& hash) override
-  {
-    return call<emscripten::val>("findTrustchainEntry", hash);
-  }
-  emscripten::val findTrustchainKeyPublish(
-      emscripten::val const& resourceId) override
-  {
-    return call<emscripten::val>("findTrustchainKeyPublish", resourceId);
-  }
-  emscripten::val getTrustchainDevicesOf(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("getTrustchainDevicesOf", userId);
-  }
-  emscripten::val getTrustchainDevice(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("getTrustchainDevice", deviceId);
+#define FORWARD_CALL3(name)                                \
+  emscripten::val name(emscripten::val const& a1,          \
+                       emscripten::val const& a2,          \
+                       emscripten::val const& a3) override \
+  {                                                        \
+    return call<emscripten::val>(#name, a1, a2, a3);       \
   }
 
-  emscripten::val putContact(emscripten::val const& userId,
-                             emscripten::val const& publicKey) override
-  {
-    return call<emscripten::val>("putContact", userId, publicKey);
-  }
-  emscripten::val findContactUserKey(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("findContactUserKey", userId);
-  }
-  emscripten::val findContactUserIdByPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findContactUserIdByPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val setContactPublicEncryptionKey(
-      emscripten::val const& userId,
-      emscripten::val const& userPublicKey) override
-  {
-    return call<emscripten::val>(
-        "setContactPublicEncryptionKey", userId, userPublicKey);
-  }
+  FORWARD_CALL2(putUserPrivateKey)
+  FORWARD_CALL1(getUserKeyPair)
+  FORWARD_CALL0(getUserOptLastKeyPair)
+  FORWARD_CALL0(getTrustchainLastIndex)
+  FORWARD_CALL1(addTrustchainEntry)
+  FORWARD_CALL1(findTrustchainEntry)
+  FORWARD_CALL1(findTrustchainKeyPublish)
+  FORWARD_CALL1(getTrustchainDevicesOf)
+  FORWARD_CALL1(getTrustchainDevice)
+  FORWARD_CALL2(putContact)
+  FORWARD_CALL1(findContactUserKey)
+  FORWARD_CALL1(findContactUserIdByPublicEncryptionKey)
+  FORWARD_CALL2(setContactPublicEncryptionKey)
+  FORWARD_CALL2(putResourceKey)
+  FORWARD_CALL1(findResourceKey)
+  FORWARD_CALL0(getDeviceKeys)
+  FORWARD_CALL1(setDeviceKeys)
+  FORWARD_CALL1(setDeviceId)
+  FORWARD_CALL2(putDevice)
+  FORWARD_CALL1(findDevice)
+  FORWARD_CALL1(findDeviceUserId)
+  FORWARD_CALL1(getDevicesOf)
+  FORWARD_CALL2(updateDeviceRevokedAt)
+  FORWARD_CALL1(putFullGroup)
+  FORWARD_CALL1(putExternalGroup)
+  FORWARD_CALL3(updateLastGroupBlock)
+  FORWARD_CALL1(findFullGroupByGroupId)
+  FORWARD_CALL1(findExternalGroupByGroupId)
+  FORWARD_CALL1(findFullGroupByGroupPublicEncryptionKey)
+  FORWARD_CALL1(findExternalGroupByGroupPublicEncryptionKey)
+  FORWARD_CALL0(nuke)
+  FORWARD_CALL0(startTransaction)
+  FORWARD_CALL0(commitTransaction)
+  FORWARD_CALL0(rollbackTransaction)
 
-  emscripten::val putResourceKey(emscripten::val const& mac,
-                                 emscripten::val const& key) override
-  {
-    return call<emscripten::val>("putResourceKey", mac, key);
-  }
-  emscripten::val findResourceKey(emscripten::val const& mac) override
-  {
-    return call<emscripten::val>("findResourceKey", mac);
-  }
-
-  emscripten::val getDeviceKeys() override
-  {
-    return call<emscripten::val>("getDeviceKeys");
-  }
-  emscripten::val setDeviceKeys(emscripten::val const& deviceKeys) override
-  {
-    return call<emscripten::val>("setDeviceKeys", deviceKeys);
-  }
-  emscripten::val setDeviceId(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("setDeviceId", deviceId);
-  }
-
-  emscripten::val putDevice(emscripten::val const& userId,
-                            emscripten::val const& device) override
-  {
-    return call<emscripten::val>("putDevice", userId, device);
-  }
-  emscripten::val findDevice(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("findDevice", deviceId);
-  }
-  emscripten::val findDeviceUserId(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("findDeviceUserId", deviceId);
-  }
-  emscripten::val getDevicesOf(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("getDevicesOf", userId);
-  }
-  emscripten::val updateDeviceRevokedAt(
-      emscripten::val const& deviceId,
-      emscripten::val const& revokedAtBlkIndex) override
-  {
-    return call<emscripten::val>(
-        "updateDeviceRevokedAt", deviceId, revokedAtBlkIndex);
-  }
-
-  emscripten::val putFullGroup(emscripten::val const& group) override
-  {
-    return call<emscripten::val>("putFullGroup", group);
-  }
-  emscripten::val putExternalGroup(emscripten::val const& group) override
-  {
-    return call<emscripten::val>("putExternalGroup", group);
-  }
-  emscripten::val updateLastGroupBlock(
-      emscripten::val const& groupId,
-      emscripten::val const& lastBlockHash,
-      emscripten::val const& lastBlockIndex) override
-  {
-    return call<emscripten::val>(
-        "updateLastGroupBlock", groupId, lastBlockHash, lastBlockIndex);
-  }
-  emscripten::val findFullGroupByGroupId(
-      emscripten::val const& groupId) override
-  {
-    return call<emscripten::val>("findFullGroupByGroupId", groupId);
-  }
-  emscripten::val findExternalGroupByGroupId(
-      emscripten::val const& groupId) override
-  {
-    return call<emscripten::val>("findExternalGroupByGroupId", groupId);
-  }
-  emscripten::val findFullGroupByGroupPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findFullGroupByGroupPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val findExternalGroupByGroupPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findExternalGroupByGroupPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val nuke() override
-  {
-    return call<emscripten::val>("nuke");
-  }
-  emscripten::val startTransaction() override
-  {
-    return call<emscripten::val>("startTransaction");
-  }
-  emscripten::val commitTransaction() override
-  {
-    return call<emscripten::val>("commitTransaction");
-  }
-  emscripten::val rollbackTransaction() override
-  {
-    return call<emscripten::val>("rollbackTransaction");
-  }
+#undef FORWARD_CALL0
+#undef FORWARD_CALL1
+#undef FORWARD_CALL2
+#undef FORWARD_CALL3
 };
 
 std::function<tc::cotask<std::unique_ptr<JsDatabaseInterface>>(
