@@ -49,14 +49,16 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
       });
   auto const catchCb = std::function<void(emscripten::val const&)>(
       [=](emscripten::val const& error) mutable {
-        cpppromise.set_exception(
-            std::make_exception_ptr(Error::formatEx<std::runtime_error>(
-                "some error happened, deal with it: {}",
-                error.isNull() ? "null" :
-                                 error.isUndefined() ?
-                                 "undefined" :
-                                 error.call<std::string>("toString") + "\n" +
-                                         error["stack"].as<std::string>())));
+        std::string errorMsg;
+        if (error.isNull())
+          errorMsg = "null";
+        else if (error.isUndefined())
+          errorMsg = "undefined";
+        else
+          errorMsg = error.call<std::string>("toString") + "\n" +
+                     error["stack"].as<std::string>();
+        cpppromise.set_exception(std::make_exception_ptr(
+            Error::formatEx<std::runtime_error>("JS error: {}", errorMsg)));
       });
   jspromise.call<emscripten::val>("then", toJsFunctionObject(thenCb))
       .call<emscripten::val>("catch", toJsFunctionObject(catchCb));
