@@ -12,7 +12,8 @@ namespace Tanker
 namespace Emscripten
 {
 template <typename T>
-emscripten::val vectorToJs(T const& vec);
+emscripten::val containerToJs(T const& vec);
+
 std::vector<uint8_t> copyToVector(const emscripten::val& typedArray);
 
 template <typename Sig>

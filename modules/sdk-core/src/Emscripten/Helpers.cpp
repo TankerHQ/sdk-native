@@ -7,15 +7,16 @@ namespace Tanker
 namespace Emscripten
 {
 template <typename T>
-emscripten::val vectorToJs(T const& vec)
+emscripten::val containerToJs(T const& cont)
 {
   using emscripten::val;
 
   auto const Uint8Array = val::global("Uint8Array");
   val memory = val::module_property("buffer");
   return Uint8Array.new_(
-      memory, reinterpret_cast<uintptr_t>(vec.data()), vec.size());
+      memory, reinterpret_cast<uintptr_t>(cont.data()), cont.size());
 }
+
 std::vector<uint8_t> copyToVector(const emscripten::val& typedArray)
 {
   using emscripten::val;
