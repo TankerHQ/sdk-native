@@ -49,7 +49,7 @@ void sealDecryptImpl(gsl::span<uint8_t const> cipherData,
                      gsl::span<uint8_t> clearData,
                      EncryptionKeyPair const& recipientKeyPair)
 {
-  assert(cipherData.size() - crypto_box_SEALBYTES);
+  assert(cipherData.size() >= crypto_box_SEALBYTES);
   auto const error = crypto_box_seal_open(clearData.data(),
                                           cipherData.data(),
                                           cipherData.size(),
