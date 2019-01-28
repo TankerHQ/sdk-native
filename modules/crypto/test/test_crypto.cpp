@@ -39,6 +39,19 @@ TEST_CASE("aead")
       gsl::make_span("This is a test buffer").as_span<uint8_t const>();
   auto const key = makeSymmetricKey();
 
+  SUBCASE("it should encrypt/decrypt an empty buffer")
+  {
+    std::vector<uint8_t> empty;
+    std::vector<uint8_t> encryptedBuffer(encryptedSize(empty.size()));
+    AeadIv iv{};
+    encryptAead(key, iv.data(), encryptedBuffer.data(), empty, {});
+
+    std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
+    decryptAead(key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {});
+
+    CHECK(decryptedBuffer.empty());
+  }
+
   SUBCASE("it should encrypt/decrypt a buffer")
   {
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
@@ -184,6 +197,15 @@ TEST_CASE("asymmetric seal")
 {
   auto const buf = gsl::make_span("Test buffer").as_span<uint8_t const>();
   auto const bobKeyPair = makeEncryptionKeyPair();
+
+  SUBCASE("it should encrypt/decrypt an empty buffer")
+  {
+    std::vector<uint8_t> empty;
+    auto const enc = sealEncrypt(empty, bobKeyPair.publicKey);
+    auto const dec = sealDecrypt(enc, bobKeyPair);
+
+    CHECK(dec.empty());
+  }
 
   SUBCASE("it should encrypt/decrypt a buffer")
   {
