@@ -2,6 +2,8 @@
 
 #include <Tanker/Error.hpp>
 
+using OneArgFunction = std::function<void(emscripten::val const&)>;
+
 namespace Tanker
 {
 namespace Emscripten
@@ -43,11 +45,11 @@ emscripten::val toJsFunctionObject(std::function<Sig> functor)
 tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
 {
   tc::promise<emscripten::val> cpppromise;
-  auto const thenCb = std::function<void(emscripten::val const& val)>(
+  auto const thenCb = OneArgFunction(
       [=](emscripten::val const& value) mutable {
         cpppromise.set_value(value);
       });
-  auto const catchCb = std::function<void(emscripten::val const&)>(
+  auto const catchCb = OneArgFunction(
       [=](emscripten::val const& error) mutable {
         std::string errorMsg;
         if (error.isNull())
@@ -69,9 +71,9 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
 
 EMSCRIPTEN_BINDINGS(jshelpers)
 {
-  emscripten::class_<std::function<void(emscripten::val const&)>>(
+  emscripten::class_<OneArgFunction>(
       "NoargOrMaybeMoreFunction")
       .constructor<>()
       .function("opcall",
-                &std::function<void(emscripten::val const&)>::operator());
+                &OneArgFunction::operator());
 }
