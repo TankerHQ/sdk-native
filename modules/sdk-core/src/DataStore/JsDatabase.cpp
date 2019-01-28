@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/DataStore/JsDatabase.hpp>
+#include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
@@ -8,69 +9,12 @@
 
 TLOG_CATEGORY(Database);
 
+using namespace Tanker::Emscripten;
+
 namespace Tanker
 {
 namespace DataStore
 {
-namespace
-{
-template <typename T>
-emscripten::val vectorToJs(T const& vec)
-{
-  using emscripten::val;
-
-  auto const Uint8Array = val::global("Uint8Array");
-  val memory = val::module_property("buffer");
-  return Uint8Array.new_(
-      memory, reinterpret_cast<uintptr_t>(vec.data()), vec.size());
-}
-std::vector<uint8_t> copyToVector(const emscripten::val& typedArray)
-{
-  using emscripten::val;
-
-  unsigned int length = typedArray["length"].as<unsigned int>();
-  std::vector<uint8_t> vec(length);
-
-  val memory = val::module_property("buffer");
-  val memoryView = typedArray["constructor"].new_(
-      memory, reinterpret_cast<uintptr_t>(vec.data()), length);
-
-  memoryView.call<void>("set", typedArray);
-
-  return vec;
-}
-
-template <typename Sig>
-emscripten::val toJsFunctor(std::function<Sig> functor)
-{
-  return emscripten::val(functor)["opcall"].template call<emscripten::val>(
-      "bind", emscripten::val(functor));
-}
-
-tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
-{
-  tc::promise<emscripten::val> cpppromise;
-  auto const thenCb = std::function<void(emscripten::val const& val)>(
-      [=](emscripten::val const& value) mutable {
-        cpppromise.set_value(value);
-      });
-  auto const catchCb = std::function<void(emscripten::val const&)>(
-      [=](emscripten::val const& error) mutable {
-        cpppromise.set_exception(
-            std::make_exception_ptr(Error::formatEx<std::runtime_error>(
-                "some error happened, deal with it: {}",
-                error.isNull() ? "null" :
-                                 error.isUndefined() ?
-                                 "undefined" :
-                                 error.call<std::string>("toString") + "\n" +
-                                         error["stack"].as<std::string>())));
-      });
-  jspromise.call<emscripten::val>("then", toJsFunctor(thenCb))
-      .call<emscripten::val>("catch", toJsFunctor(catchCb));
-  TC_RETURN(TC_AWAIT(cpppromise.get_future()));
-}
-}
-
 class JsDatabaseInterface
 {
 public:
@@ -146,171 +90,69 @@ class JsDatabaseInterfaceWrapper
 public:
   EMSCRIPTEN_WRAPPER(JsDatabaseInterfaceWrapper);
 
-  emscripten::val putUserPrivateKey(emscripten::val const& publicKey,
-                                    emscripten::val const& privateKey) override
-  {
-    return call<emscripten::val>("putUserPrivateKey", publicKey, privateKey);
+#define FORWARD_CALL0(name)              \
+  emscripten::val name() override        \
+  {                                      \
+    return call<emscripten::val>(#name); \
   }
-  emscripten::val getUserKeyPair(emscripten::val const& publicKey) override
-  {
-    return call<emscripten::val>("getUserKeyPair", publicKey);
+#define FORWARD_CALL1(name)                                \
+  emscripten::val name(emscripten::val const& a1) override \
+  {                                                        \
+    return call<emscripten::val>(#name, a1);               \
   }
-  emscripten::val getUserOptLastKeyPair() override
-  {
-    return call<emscripten::val>("getUserOptLastKeyPair");
+#define FORWARD_CALL2(name)                                                  \
+  emscripten::val name(emscripten::val const& a1, emscripten::val const& a2) \
+      override                                                               \
+  {                                                                          \
+    return call<emscripten::val>(#name, a1, a2);                             \
   }
-
-  emscripten::val getTrustchainLastIndex() override
-  {
-    return call<emscripten::val>("getTrustchainLastIndex");
-  }
-  emscripten::val addTrustchainEntry(emscripten::val const& entry) override
-  {
-    return call<emscripten::val>("addTrustchainEntry", entry);
-  }
-  emscripten::val findTrustchainEntry(emscripten::val const& hash) override
-  {
-    return call<emscripten::val>("findTrustchainEntry", hash);
-  }
-  emscripten::val findTrustchainKeyPublish(
-      emscripten::val const& resourceId) override
-  {
-    return call<emscripten::val>("findTrustchainKeyPublish", resourceId);
-  }
-  emscripten::val getTrustchainDevicesOf(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("getTrustchainDevicesOf", userId);
-  }
-  emscripten::val getTrustchainDevice(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("getTrustchainDevice", deviceId);
+#define FORWARD_CALL3(name)                                \
+  emscripten::val name(emscripten::val const& a1,          \
+                       emscripten::val const& a2,          \
+                       emscripten::val const& a3) override \
+  {                                                        \
+    return call<emscripten::val>(#name, a1, a2, a3);       \
   }
 
-  emscripten::val putContact(emscripten::val const& userId,
-                             emscripten::val const& publicKey) override
-  {
-    return call<emscripten::val>("putContact", userId, publicKey);
-  }
-  emscripten::val findContactUserKey(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("findContactUserKey", userId);
-  }
-  emscripten::val findContactUserIdByPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findContactUserIdByPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val setContactPublicEncryptionKey(
-      emscripten::val const& userId,
-      emscripten::val const& userPublicKey) override
-  {
-    return call<emscripten::val>(
-        "setContactPublicEncryptionKey", userId, userPublicKey);
-  }
+  FORWARD_CALL2(putUserPrivateKey)
+  FORWARD_CALL1(getUserKeyPair)
+  FORWARD_CALL0(getUserOptLastKeyPair)
+  FORWARD_CALL0(getTrustchainLastIndex)
+  FORWARD_CALL1(addTrustchainEntry)
+  FORWARD_CALL1(findTrustchainEntry)
+  FORWARD_CALL1(findTrustchainKeyPublish)
+  FORWARD_CALL1(getTrustchainDevicesOf)
+  FORWARD_CALL1(getTrustchainDevice)
+  FORWARD_CALL2(putContact)
+  FORWARD_CALL1(findContactUserKey)
+  FORWARD_CALL1(findContactUserIdByPublicEncryptionKey)
+  FORWARD_CALL2(setContactPublicEncryptionKey)
+  FORWARD_CALL2(putResourceKey)
+  FORWARD_CALL1(findResourceKey)
+  FORWARD_CALL0(getDeviceKeys)
+  FORWARD_CALL1(setDeviceKeys)
+  FORWARD_CALL1(setDeviceId)
+  FORWARD_CALL2(putDevice)
+  FORWARD_CALL1(findDevice)
+  FORWARD_CALL1(findDeviceUserId)
+  FORWARD_CALL1(getDevicesOf)
+  FORWARD_CALL2(updateDeviceRevokedAt)
+  FORWARD_CALL1(putFullGroup)
+  FORWARD_CALL1(putExternalGroup)
+  FORWARD_CALL3(updateLastGroupBlock)
+  FORWARD_CALL1(findFullGroupByGroupId)
+  FORWARD_CALL1(findExternalGroupByGroupId)
+  FORWARD_CALL1(findFullGroupByGroupPublicEncryptionKey)
+  FORWARD_CALL1(findExternalGroupByGroupPublicEncryptionKey)
+  FORWARD_CALL0(nuke)
+  FORWARD_CALL0(startTransaction)
+  FORWARD_CALL0(commitTransaction)
+  FORWARD_CALL0(rollbackTransaction)
 
-  emscripten::val putResourceKey(emscripten::val const& mac,
-                                 emscripten::val const& key) override
-  {
-    return call<emscripten::val>("putResourceKey", mac, key);
-  }
-  emscripten::val findResourceKey(emscripten::val const& mac) override
-  {
-    return call<emscripten::val>("findResourceKey", mac);
-  }
-
-  emscripten::val getDeviceKeys() override
-  {
-    return call<emscripten::val>("getDeviceKeys");
-  }
-  emscripten::val setDeviceKeys(emscripten::val const& deviceKeys) override
-  {
-    return call<emscripten::val>("setDeviceKeys", deviceKeys);
-  }
-  emscripten::val setDeviceId(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("setDeviceId", deviceId);
-  }
-
-  emscripten::val putDevice(emscripten::val const& userId,
-                            emscripten::val const& device) override
-  {
-    return call<emscripten::val>("putDevice", userId, device);
-  }
-  emscripten::val findDevice(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("findDevice", deviceId);
-  }
-  emscripten::val findDeviceUserId(emscripten::val const& deviceId) override
-  {
-    return call<emscripten::val>("findDeviceUserId", deviceId);
-  }
-  emscripten::val getDevicesOf(emscripten::val const& userId) override
-  {
-    return call<emscripten::val>("getDevicesOf", userId);
-  }
-  emscripten::val updateDeviceRevokedAt(
-      emscripten::val const& deviceId,
-      emscripten::val const& revokedAtBlkIndex) override
-  {
-    return call<emscripten::val>(
-        "updateDeviceRevokedAt", deviceId, revokedAtBlkIndex);
-  }
-
-  emscripten::val putFullGroup(emscripten::val const& group) override
-  {
-    return call<emscripten::val>("putFullGroup", group);
-  }
-  emscripten::val putExternalGroup(emscripten::val const& group) override
-  {
-    return call<emscripten::val>("putExternalGroup", group);
-  }
-  emscripten::val updateLastGroupBlock(
-      emscripten::val const& groupId,
-      emscripten::val const& lastBlockHash,
-      emscripten::val const& lastBlockIndex) override
-  {
-    return call<emscripten::val>(
-        "updateLastGroupBlock", groupId, lastBlockHash, lastBlockIndex);
-  }
-  emscripten::val findFullGroupByGroupId(
-      emscripten::val const& groupId) override
-  {
-    return call<emscripten::val>("findFullGroupByGroupId", groupId);
-  }
-  emscripten::val findExternalGroupByGroupId(
-      emscripten::val const& groupId) override
-  {
-    return call<emscripten::val>("findExternalGroupByGroupId", groupId);
-  }
-  emscripten::val findFullGroupByGroupPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findFullGroupByGroupPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val findExternalGroupByGroupPublicEncryptionKey(
-      emscripten::val const& publicEncryptionKey) override
-  {
-    return call<emscripten::val>("findExternalGroupByGroupPublicEncryptionKey",
-                                 publicEncryptionKey);
-  }
-  emscripten::val nuke() override
-  {
-    return call<emscripten::val>("nuke");
-  }
-  emscripten::val startTransaction() override
-  {
-    return call<emscripten::val>("startTransaction");
-  }
-  emscripten::val commitTransaction() override
-  {
-    return call<emscripten::val>("commitTransaction");
-  }
-  emscripten::val rollbackTransaction() override
-  {
-    return call<emscripten::val>("rollbackTransaction");
-  }
+#undef FORWARD_CALL0
+#undef FORWARD_CALL1
+#undef FORWARD_CALL2
+#undef FORWARD_CALL3
 };
 
 std::function<tc::cotask<std::unique_ptr<JsDatabaseInterface>>(
@@ -342,16 +184,16 @@ tc::cotask<void> JsDatabase::putUserPrivateKey(
     Crypto::PublicEncryptionKey const& publicKey,
     Crypto::PrivateEncryptionKey const& privateKey)
 {
-  TC_AWAIT(jsPromiseToFuture(
-      _db->putUserPrivateKey(vectorToJs(publicKey), vectorToJs(privateKey))));
+  TC_AWAIT(jsPromiseToFuture(_db->putUserPrivateKey(
+      containerToJs(publicKey), containerToJs(privateKey))));
   TC_RETURN();
 }
 
 tc::cotask<Crypto::EncryptionKeyPair> JsDatabase::getUserKeyPair(
     Crypto::PublicEncryptionKey const& publicKey)
 {
-  auto const keys =
-      TC_AWAIT(jsPromiseToFuture(_db->getUserKeyPair(vectorToJs(publicKey))));
+  auto const keys = TC_AWAIT(
+      jsPromiseToFuture(_db->getUserKeyPair(containerToJs(publicKey))));
   if (keys.isNull() || keys.isUndefined())
     throw DataStore::RecordNotFound("user key not found");
   TC_RETURN((Crypto::EncryptionKeyPair{
@@ -384,7 +226,7 @@ struct toVal
   emscripten::val operator()(TrustchainCreation const& tc)
   {
     auto ret = emscripten::val::object();
-    ret.set("publicSignatureKey", vectorToJs(tc.publicSignatureKey));
+    ret.set("publicSignatureKey", containerToJs(tc.publicSignatureKey));
     return ret;
   }
   emscripten::val operator()(DeviceCreation const& tc)
@@ -393,28 +235,29 @@ struct toVal
     {
       auto ret = emscripten::val::object();
       ret.set("ephemeralPublicSignatureKey",
-              vectorToJs(dc1->ephemeralPublicSignatureKey));
-      ret.set("userId", vectorToJs(dc1->userId));
-      ret.set("delegationSignature", vectorToJs(dc1->delegationSignature));
-      ret.set("publicSignatureKey", vectorToJs(dc1->publicSignatureKey));
-      ret.set("publicEncryptionKey", vectorToJs(dc1->publicEncryptionKey));
+              containerToJs(dc1->ephemeralPublicSignatureKey));
+      ret.set("userId", containerToJs(dc1->userId));
+      ret.set("delegationSignature", containerToJs(dc1->delegationSignature));
+      ret.set("publicSignatureKey", containerToJs(dc1->publicSignatureKey));
+      ret.set("publicEncryptionKey", containerToJs(dc1->publicEncryptionKey));
       return ret;
     }
     else if (auto const dc3 = mpark::get_if<DeviceCreation3>(&tc.variant()))
     {
       auto ret = emscripten::val::object();
       ret.set("ephemeralPublicSignatureKey",
-              vectorToJs(dc3->ephemeralPublicSignatureKey));
-      ret.set("userId", vectorToJs(dc3->userId));
-      ret.set("delegationSignature", vectorToJs(dc3->delegationSignature));
-      ret.set("publicSignatureKey", vectorToJs(dc3->publicSignatureKey));
-      ret.set("publicEncryptionKey", vectorToJs(dc3->publicEncryptionKey));
+              containerToJs(dc3->ephemeralPublicSignatureKey));
+      ret.set("userId", containerToJs(dc3->userId));
+      ret.set("delegationSignature", containerToJs(dc3->delegationSignature));
+      ret.set("publicSignatureKey", containerToJs(dc3->publicSignatureKey));
+      ret.set("publicEncryptionKey", containerToJs(dc3->publicEncryptionKey));
       ret.set("userKeyPair", emscripten::val::object());
-      ret["userKeyPair"].set("publicEncryptionKey",
-                             vectorToJs(dc3->userKeyPair.publicEncryptionKey));
+      ret["userKeyPair"].set(
+          "publicEncryptionKey",
+          containerToJs(dc3->userKeyPair.publicEncryptionKey));
       ret["userKeyPair"].set(
           "encryptedPrivateEncryptionKey",
-          vectorToJs(dc3->userKeyPair.encryptedPrivateEncryptionKey));
+          containerToJs(dc3->userKeyPair.encryptedPrivateEncryptionKey));
       ret.set("isGhostDevice", emscripten::val(dc3->isGhostDevice));
       return ret;
     }
@@ -425,9 +268,9 @@ struct toVal
   emscripten::val operator()(KeyPublishToDevice const& tc)
   {
     auto ret = emscripten::val::object();
-    ret.set("recipient", vectorToJs(tc.recipient));
-    ret.set("resourceId", vectorToJs(tc.mac));
-    ret.set("resourceKey", vectorToJs(tc.key));
+    ret.set("recipient", containerToJs(tc.recipient));
+    ret.set("resourceId", containerToJs(tc.mac));
+    ret.set("resourceKey", containerToJs(tc.key));
     return ret;
   }
   emscripten::val operator()(DeviceRevocation const& tc)
@@ -439,9 +282,9 @@ struct toVal
   {
     auto ret = emscripten::val::object();
     ret.set("recipientPublicEncryptionKey",
-            vectorToJs(tc.recipientPublicEncryptionKey));
-    ret.set("resourceId", vectorToJs(tc.mac));
-    ret.set("resourceKey", vectorToJs(tc.key));
+            containerToJs(tc.recipientPublicEncryptionKey));
+    ret.set("resourceId", containerToJs(tc.mac));
+    ret.set("resourceKey", containerToJs(tc.key));
     return ret;
   }
   emscripten::val operator()(UserGroupCreation const& tc)
@@ -453,9 +296,9 @@ struct toVal
   {
     auto ret = emscripten::val::object();
     ret.set("recipientPublicEncryptionKey",
-            vectorToJs(tc.recipientPublicEncryptionKey));
-    ret.set("resourceId", vectorToJs(tc.resourceId));
-    ret.set("resourceKey", vectorToJs(tc.key));
+            containerToJs(tc.recipientPublicEncryptionKey));
+    ret.set("resourceId", containerToJs(tc.resourceId));
+    ret.set("resourceKey", containerToJs(tc.key));
     return ret;
   }
   emscripten::val operator()(UserGroupAddition const& tc)
@@ -471,9 +314,9 @@ tc::cotask<void> JsDatabase::addTrustchainEntry(Entry const& entry)
   auto val = emscripten::val::object();
   val.set("index", emscripten::val(static_cast<double>(entry.index)));
   val.set("nature", emscripten::val(static_cast<int>(entry.nature)));
-  val.set("author", emscripten::val(vectorToJs(entry.author)));
+  val.set("author", emscripten::val(containerToJs(entry.author)));
   val.set("action", mpark::visit(toVal{}, entry.action.variant()));
-  val.set("hash", emscripten::val(vectorToJs(entry.hash)));
+  val.set("hash", emscripten::val(containerToJs(entry.hash)));
   TC_AWAIT(jsPromiseToFuture(_db->addTrustchainEntry(val)));
 }
 
@@ -553,8 +396,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
 tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainEntry(
     Crypto::Hash const& hash)
 {
-  auto const entry =
-      TC_AWAIT(jsPromiseToFuture(_db->findTrustchainEntry(vectorToJs(hash))));
+  auto const entry = TC_AWAIT(
+      jsPromiseToFuture(_db->findTrustchainEntry(containerToJs(hash))));
   if (entry.isNull() || entry.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -564,8 +407,8 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainEntry(
 tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
     Crypto::Mac const& resourceId)
 {
-  auto const entry = TC_AWAIT(
-      jsPromiseToFuture(_db->findTrustchainKeyPublish(vectorToJs(resourceId))));
+  auto const entry = TC_AWAIT(jsPromiseToFuture(
+      _db->findTrustchainKeyPublish(containerToJs(resourceId))));
   if (entry.isNull() || entry.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -576,7 +419,7 @@ tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
     UserId const& userId)
 {
   auto const entries = TC_AWAIT(
-      jsPromiseToFuture(_db->getTrustchainDevicesOf(vectorToJs(userId))));
+      jsPromiseToFuture(_db->getTrustchainDevicesOf(containerToJs(userId))));
 
   auto const length = entries["length"].as<unsigned int>();
   std::vector<Entry> ret;
@@ -589,7 +432,7 @@ tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
 tc::cotask<Entry> JsDatabase::getTrustchainDevice(DeviceId const& deviceId)
 {
   auto const jsEntry = TC_AWAIT(
-      jsPromiseToFuture(_db->getTrustchainDevice(vectorToJs(deviceId))));
+      jsPromiseToFuture(_db->getTrustchainDevice(containerToJs(deviceId))));
   if (jsEntry.isNull() || jsEntry.isUndefined())
     throw Error::formatEx<RecordNotFound>("couldn't find block with hash {}",
                                           deviceId);
@@ -602,15 +445,15 @@ tc::cotask<void> JsDatabase::putContact(
     nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->putContact(
-      vectorToJs(userId),
-      publicKey ? vectorToJs(*publicKey) : emscripten::val::null())));
+      containerToJs(userId),
+      publicKey ? containerToJs(*publicKey) : emscripten::val::null())));
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
 JsDatabase::findContactUserKey(UserId const& userId)
 {
-  auto const key =
-      TC_AWAIT(jsPromiseToFuture(_db->findContactUserKey(vectorToJs(userId))));
+  auto const key = TC_AWAIT(
+      jsPromiseToFuture(_db->findContactUserKey(containerToJs(userId))));
   if (key.isNull() || key.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -621,8 +464,9 @@ tc::cotask<nonstd::optional<UserId>>
 JsDatabase::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
-  auto const userId = TC_AWAIT(jsPromiseToFuture(
-      _db->findContactUserIdByPublicEncryptionKey(vectorToJs(userPublicKey))));
+  auto const userId =
+      TC_AWAIT(jsPromiseToFuture(_db->findContactUserIdByPublicEncryptionKey(
+          containerToJs(userPublicKey))));
   if (userId.isNull() || userId.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -633,21 +477,21 @@ tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
     UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->setContactPublicEncryptionKey(
-      vectorToJs(userId), vectorToJs(userPublicKey))));
+      containerToJs(userId), containerToJs(userPublicKey))));
 }
 
 tc::cotask<void> JsDatabase::putResourceKey(Crypto::Mac const& mac,
                                             Crypto::SymmetricKey const& key)
 {
-  TC_AWAIT(
-      jsPromiseToFuture(_db->putResourceKey(vectorToJs(mac), vectorToJs(key))));
+  TC_AWAIT(jsPromiseToFuture(
+      _db->putResourceKey(containerToJs(mac), containerToJs(key))));
 }
 
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> JsDatabase::findResourceKey(
     Crypto::Mac const& mac)
 {
   auto const key =
-      TC_AWAIT(jsPromiseToFuture(_db->findResourceKey(vectorToJs(mac))));
+      TC_AWAIT(jsPromiseToFuture(_db->findResourceKey(containerToJs(mac))));
   if (key.isNull() || key.isUndefined())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(Crypto::SymmetricKey(copyToVector(key)));
@@ -672,37 +516,37 @@ tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
 {
   auto jsDeviceKeys = emscripten::val::object();
   jsDeviceKeys.set("privateSignatureKey",
-                   vectorToJs(deviceKeys.signatureKeyPair.privateKey));
+                   containerToJs(deviceKeys.signatureKeyPair.privateKey));
   jsDeviceKeys.set("publicSignatureKey",
-                   vectorToJs(deviceKeys.signatureKeyPair.publicKey));
+                   containerToJs(deviceKeys.signatureKeyPair.publicKey));
   jsDeviceKeys.set("privateEncryptionKey",
-                   vectorToJs(deviceKeys.encryptionKeyPair.privateKey));
+                   containerToJs(deviceKeys.encryptionKeyPair.privateKey));
   jsDeviceKeys.set("publicEncryptionKey",
-                   vectorToJs(deviceKeys.encryptionKeyPair.publicKey));
-  jsDeviceKeys.set("deviceId", vectorToJs(deviceKeys.deviceId));
+                   containerToJs(deviceKeys.encryptionKeyPair.publicKey));
+  jsDeviceKeys.set("deviceId", containerToJs(deviceKeys.deviceId));
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceKeys(jsDeviceKeys)));
 }
 
 tc::cotask<void> JsDatabase::setDeviceId(DeviceId const& deviceId)
 {
-  TC_AWAIT(jsPromiseToFuture(_db->setDeviceId(vectorToJs(deviceId))));
+  TC_AWAIT(jsPromiseToFuture(_db->setDeviceId(containerToJs(deviceId))));
 }
 
 tc::cotask<void> JsDatabase::putDevice(UserId const& userId,
                                        Device const& device)
 {
   auto jsdev = emscripten::val::object();
-  jsdev.set("id", vectorToJs(device.id));
+  jsdev.set("id", containerToJs(device.id));
   jsdev.set("createdAtBlkIndex", static_cast<double>(device.createdAtBlkIndex));
   jsdev.set(
       "revokedAtBlkIndex",
       device.revokedAtBlkIndex ?
           emscripten::val(static_cast<double>(*device.revokedAtBlkIndex)) :
           emscripten::val::null());
-  jsdev.set("publicSignatureKey", vectorToJs(device.publicSignatureKey));
-  jsdev.set("publicEncryptionKey", vectorToJs(device.publicEncryptionKey));
+  jsdev.set("publicSignatureKey", containerToJs(device.publicSignatureKey));
+  jsdev.set("publicEncryptionKey", containerToJs(device.publicEncryptionKey));
   jsdev.set("isGhostDevice", device.isGhostDevice);
-  TC_AWAIT(jsPromiseToFuture(_db->putDevice(vectorToJs(userId), jsdev)));
+  TC_AWAIT(jsPromiseToFuture(_db->putDevice(containerToJs(userId), jsdev)));
 }
 
 namespace
@@ -726,7 +570,7 @@ Device fromJsDevice(emscripten::val const& jsdev)
 tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(DeviceId const& id)
 {
   auto const jsdev =
-      TC_AWAIT(jsPromiseToFuture(_db->findDevice(vectorToJs(id))));
+      TC_AWAIT(jsPromiseToFuture(_db->findDevice(containerToJs(id))));
   if (jsdev.isNull() || jsdev.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -737,7 +581,7 @@ tc::cotask<nonstd::optional<UserId>> JsDatabase::findDeviceUserId(
     DeviceId const& id)
 {
   auto const jsdev =
-      TC_AWAIT(jsPromiseToFuture(_db->findDeviceUserId(vectorToJs(id))));
+      TC_AWAIT(jsPromiseToFuture(_db->findDeviceUserId(containerToJs(id))));
   if (jsdev.isNull() || jsdev.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -748,14 +592,14 @@ tc::cotask<void> JsDatabase::updateDeviceRevokedAt(DeviceId const& id,
                                                    uint64_t revokedAtBlkIndex)
 {
   TC_AWAIT(jsPromiseToFuture(_db->updateDeviceRevokedAt(
-      vectorToJs(id),
+      containerToJs(id),
       emscripten::val(static_cast<double>(revokedAtBlkIndex)))));
 }
 
 tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
 {
   auto const jsdevs =
-      TC_AWAIT(jsPromiseToFuture(_db->getDevicesOf(vectorToJs(id))));
+      TC_AWAIT(jsPromiseToFuture(_db->getDevicesOf(containerToJs(id))));
 
   auto const size = jsdevs["length"].as<size_t>();
   std::vector<Device> out;
@@ -768,16 +612,16 @@ tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
 tc::cotask<void> JsDatabase::putFullGroup(Group const& group)
 {
   auto jsgroup = emscripten::val::object();
-  jsgroup.set("id", vectorToJs(group.id));
+  jsgroup.set("id", containerToJs(group.id));
   jsgroup.set("publicSignatureKey",
-              vectorToJs(group.signatureKeyPair.publicKey));
+              containerToJs(group.signatureKeyPair.publicKey));
   jsgroup.set("privateSignatureKey",
-              vectorToJs(group.signatureKeyPair.privateKey));
+              containerToJs(group.signatureKeyPair.privateKey));
   jsgroup.set("publicEncryptionKey",
-              vectorToJs(group.encryptionKeyPair.publicKey));
+              containerToJs(group.encryptionKeyPair.publicKey));
   jsgroup.set("privateEncryptionKey",
-              vectorToJs(group.encryptionKeyPair.privateKey));
-  jsgroup.set("lastBlockHash", vectorToJs(group.lastBlockHash));
+              containerToJs(group.encryptionKeyPair.privateKey));
+  jsgroup.set("lastBlockHash", containerToJs(group.lastBlockHash));
   jsgroup.set("lastBlockIndex", static_cast<double>(group.lastBlockIndex));
   TC_AWAIT(jsPromiseToFuture(_db->putFullGroup(jsgroup)));
 }
@@ -785,14 +629,14 @@ tc::cotask<void> JsDatabase::putFullGroup(Group const& group)
 tc::cotask<void> JsDatabase::putExternalGroup(ExternalGroup const& group)
 {
   auto jsgroup = emscripten::val::object();
-  jsgroup.set("id", vectorToJs(group.id));
-  jsgroup.set("publicSignatureKey", vectorToJs(group.publicSignatureKey));
+  jsgroup.set("id", containerToJs(group.id));
+  jsgroup.set("publicSignatureKey", containerToJs(group.publicSignatureKey));
   jsgroup.set("encryptedPrivateSignatureKey",
               group.encryptedPrivateSignatureKey ?
-                  vectorToJs(*group.encryptedPrivateSignatureKey) :
+                  containerToJs(*group.encryptedPrivateSignatureKey) :
                   emscripten::val::null());
-  jsgroup.set("publicEncryptionKey", vectorToJs(group.publicEncryptionKey));
-  jsgroup.set("lastBlockHash", vectorToJs(group.lastBlockHash));
+  jsgroup.set("publicEncryptionKey", containerToJs(group.publicEncryptionKey));
+  jsgroup.set("lastBlockHash", containerToJs(group.lastBlockHash));
   jsgroup.set("lastBlockIndex", static_cast<double>(group.lastBlockIndex));
   TC_AWAIT(jsPromiseToFuture(_db->putExternalGroup(jsgroup)));
 }
@@ -803,8 +647,8 @@ tc::cotask<void> JsDatabase::updateLastGroupBlock(
     uint64_t lastBlockIndex)
 {
   TC_AWAIT(jsPromiseToFuture(_db->updateLastGroupBlock(
-      vectorToJs(groupId),
-      vectorToJs(lastBlockHash),
+      containerToJs(groupId),
+      containerToJs(lastBlockHash),
       emscripten::val(static_cast<double>(lastBlockIndex)))));
 }
 
@@ -846,8 +690,8 @@ ExternalGroup fromJsExternalGroup(emscripten::val const& group)
 tc::cotask<nonstd::optional<Group>> JsDatabase::findFullGroupByGroupId(
     GroupId const& id)
 {
-  auto const jsgroup =
-      TC_AWAIT(jsPromiseToFuture(_db->findFullGroupByGroupId(vectorToJs(id))));
+  auto const jsgroup = TC_AWAIT(
+      jsPromiseToFuture(_db->findFullGroupByGroupId(containerToJs(id))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -858,7 +702,7 @@ tc::cotask<nonstd::optional<ExternalGroup>>
 JsDatabase::findExternalGroupByGroupId(GroupId const& id)
 {
   auto const jsgroup = TC_AWAIT(
-      jsPromiseToFuture(_db->findExternalGroupByGroupId(vectorToJs(id))));
+      jsPromiseToFuture(_db->findExternalGroupByGroupId(containerToJs(id))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -871,7 +715,7 @@ JsDatabase::findFullGroupByGroupPublicEncryptionKey(
 {
   auto const jsgroup =
       TC_AWAIT(jsPromiseToFuture(_db->findFullGroupByGroupPublicEncryptionKey(
-          vectorToJs(publicEncryptionKey))));
+          containerToJs(publicEncryptionKey))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -884,7 +728,7 @@ JsDatabase::findExternalGroupByGroupPublicEncryptionKey(
 {
   auto const jsgroup = TC_AWAIT(
       jsPromiseToFuture(_db->findExternalGroupByGroupPublicEncryptionKey(
-          vectorToJs(publicEncryptionKey))));
+          containerToJs(publicEncryptionKey))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
@@ -914,12 +758,6 @@ tc::cotask<void> JsDatabase::rollbackTransaction()
 EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
 {
   using namespace Tanker::DataStore;
-
-  emscripten::class_<std::function<void(emscripten::val const&)>>(
-      "NoargOrMaybeMoreFunction")
-      .constructor<>()
-      .function("opcall",
-                &std::function<void(emscripten::val const&)>::operator());
 
   emscripten::class_<JsDatabaseInterface>("JsDatabaseInterface")
       .function("putUserPrivateKey",

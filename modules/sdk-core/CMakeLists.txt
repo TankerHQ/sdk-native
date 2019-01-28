@@ -48,6 +48,10 @@ else()
     include/Tanker/JsConnection.hpp
     src/JsConnection.cpp
   )
+  set(TANKER_CORE_EXTRA_SRC
+    include/Tanker/Emscripten/Helpers.hpp
+    src/Emscripten/Helpers.cpp
+  )
 endif()
 
 add_library(tankercore STATIC
@@ -199,6 +203,7 @@ add_library(tankercore STATIC
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
+  ${TANKER_CORE_EXTRA_SRC}
 )
 
 target_include_directories(tankercore
