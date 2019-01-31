@@ -120,6 +120,11 @@ char const* tanker_version_string(void);
 void tanker_set_log_handler(tanker_log_handler_t handler);
 
 /*!
+ * Initialize the SDK
+ */
+void tanker_init();
+
+/*!
  * Create a Tanker instance.
  * \param options struct tanker_options_t with the following preconditions.
  * \pre The *option* structure must not be NULL, as well as the fields

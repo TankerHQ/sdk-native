@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Unlock/Methods.hpp>
+#include <Tanker/Init.hpp>
 
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
@@ -44,6 +45,11 @@ static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
 char const* tanker_version_string(void)
 {
   return AsyncCore::version().c_str();
+}
+
+void tanker_init()
+{
+  Tanker::init();
 }
 
 tanker_future_t* tanker_create(const tanker_options_t* options)
