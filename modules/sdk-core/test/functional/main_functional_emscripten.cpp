@@ -11,14 +11,11 @@
 #include <Tanker/Init.hpp>
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
-#include <sodium.h>
-
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
 void runTests(std::string const& config, std::string const& env)
 {
-  randombytes_stir();
   Tanker::init();
 
   Tanker::TestConstants::setConfig(config, env);
