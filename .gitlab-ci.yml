@@ -1,20 +1,20 @@
+image: 10.100.0.1:5000/ci-cpp:2
+
 before_script:
  - dmenv install
+ - export PATH=$(dmenv show:venv_path)/bin:$PATH
 
 stages:
   - build
   - deploy
 
 build/linux:
-  variables:
-    CONAN_USER_HOME: '~/.conan_persistent'
   stage: build
   except:
     - schedules
   tags:
     - linux
   script:
-    - mkdir -p ${CONAN_USER_HOME}
     - dmenv run -- python run-ci.py build-and-test --profile gcc8
 
 deploy/linux:
