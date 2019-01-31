@@ -1,5 +1,11 @@
+if (NOT EMSCRIPTEN)
+  set(_main_cpp main_functional.cpp)
+else ()
+  set(_main_cpp main_functional_emscripten.cpp)
+endif()
+
 add_executable(test_functional
-  main_functional.cpp
+  ${_main_cpp}
   test_functional.cpp
   test_unlock.cpp
   test_unlock_methods.cpp
