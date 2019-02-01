@@ -54,6 +54,7 @@ deploy/macos:
     - dmenv run -- python run-ci.py deploy --profile ios --git-tag ${CI_COMMIT_TAG}
 
 nightly/android:
+  image: 10.100.0.1:5000/ci-android:1
   stage: build
   only:
     - schedules
