@@ -16,6 +16,9 @@ build/linux:
     - linux
   script:
     - dmenv run -- python run-ci.py build-and-test --profile gcc8
+  cache:
+    paths:
+      - build
 
 deploy/linux:
   stage: deploy
@@ -29,6 +32,9 @@ deploy/linux:
   script:
     - dmenv run -- python run-ci.py clean-cache
     - dmenv run -- python run-ci.py deploy --profile android --git-tag ${CI_COMMIT_TAG}
+  cache:
+    paths:
+      - build
 
 build/macos:
   stage: build
