@@ -136,6 +136,7 @@ add_library(tankercore STATIC
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
   include/Tanker/EncryptionFormat/EncryptorV2.hpp
+  include/Tanker/EncryptionFormat/EncryptorV3.hpp
 
   src/AsyncCore.cpp
   src/Admin.cpp
@@ -203,6 +204,7 @@ add_library(tankercore STATIC
   src/Verif/UserGroupCreation.cpp
   src/Encryptor.cpp
   src/EncryptionFormat/EncryptorV2.cpp
+  src/EncryptionFormat/EncryptorV3.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}

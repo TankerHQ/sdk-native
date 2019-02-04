@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV2.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV3.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
@@ -14,7 +15,7 @@ namespace Encryptor
 {
 uint64_t encryptedSize(uint64_t clearSize)
 {
-  return EncryptorV2::encryptedSize(clearSize);
+  return EncryptorV3::encryptedSize(clearSize);
 }
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
@@ -27,6 +28,8 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
     {
     case EncryptorV2::version():
       return EncryptorV2::decryptedSize(encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::decryptedSize(encryptedData);
     default:
       throw Error::formatEx<Error::VersionNotSupported>(
           "unsupported version: {:d}", version);
@@ -41,7 +44,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
                                              gsl::span<uint8_t const> clearData)
 {
-  return EncryptorV2::encrypt(encryptedData, clearData);
+  return EncryptorV3::encrypt(encryptedData, clearData);
 }
 
 void decrypt(uint8_t* decryptedData,
@@ -56,6 +59,8 @@ void decrypt(uint8_t* decryptedData,
     {
     case EncryptorV2::version():
       return EncryptorV2::decrypt(decryptedData, key, encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::decrypt(decryptedData, key, encryptedData);
     default:
       throw Error::formatEx<Error::VersionNotSupported>(
           "unsupported version: {:d}", version);
@@ -77,6 +82,8 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
     {
     case EncryptorV2::version():
       return EncryptorV2::extractResourceId(encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::extractResourceId(encryptedData);
     default:
       throw Error::formatEx<Error::VersionNotSupported>(
           "unsupported version: {:d}", version);
