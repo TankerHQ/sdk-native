@@ -108,7 +108,6 @@ add_library(tankercore STATIC
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/Encryptor.hpp
   include/Tanker/Seal.hpp
   include/Tanker/ChunkEncryptorImpl.hpp
   include/Tanker/ChunkEncryptor.hpp
@@ -134,7 +133,9 @@ add_library(tankercore STATIC
   include/Tanker/Verif/UserGroupAddition.hpp
   include/Tanker/Verif/UserGroupCreation.hpp
   include/Tanker/Verif/Helpers.hpp
+  include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
+  include/Tanker/EncryptionFormat/EncryptorV2.hpp
 
   src/AsyncCore.cpp
   src/Admin.cpp
@@ -164,7 +165,6 @@ add_library(tankercore STATIC
   src/Block.cpp
   src/Entry.cpp
   src/LogHandler.cpp
-  src/Encryptor.cpp
   src/Error.cpp
   src/Seal.cpp
   src/Share.cpp
@@ -201,6 +201,8 @@ add_library(tankercore STATIC
   src/Verif/TrustchainCreation.cpp
   src/Verif/UserGroupAddition.cpp
   src/Verif/UserGroupCreation.cpp
+  src/Encryptor.cpp
+  src/EncryptionFormat/EncryptorV2.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
