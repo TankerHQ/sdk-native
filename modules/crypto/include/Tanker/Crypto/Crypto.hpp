@@ -158,6 +158,8 @@ std::vector<uint8_t> decryptAead(SymmetricKey const& key,
                                  gsl::span<uint8_t const> data,
                                  gsl::span<uint8_t const> ad = {});
 
+AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number);
+
 template <typename OutputContainer = std::vector<uint8_t>>
 OutputContainer asymEncrypt(gsl::span<uint8_t const> clearData,
                             PrivateEncryptionKey const& senderKey,
