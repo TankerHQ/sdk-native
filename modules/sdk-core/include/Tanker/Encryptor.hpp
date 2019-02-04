@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Types/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
 
@@ -12,7 +13,7 @@ namespace Encryptor
 {
 struct EncryptionMetadata
 {
-  Crypto::Mac mac;
+  ResourceId resourceId;
   Crypto::SymmetricKey key;
 };
 
@@ -23,6 +24,6 @@ EncryptionMetadata encrypt(uint8_t* encryptedData,
 void decrypt(uint8_t* decryptedData,
              Crypto::SymmetricKey const& key,
              gsl::span<uint8_t const> encryptedData);
-Crypto::Mac extractMac(gsl::span<uint8_t const> encryptedData);
+ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData);
 }
 }

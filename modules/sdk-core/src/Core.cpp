@@ -260,6 +260,7 @@ tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)
 
 SResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
 {
-  return base64::encode<SResourceId>(Encryptor::extractMac(encryptedData));
+  return base64::encode<SResourceId>(
+      Encryptor::extractResourceId(encryptedData));
 }
 }

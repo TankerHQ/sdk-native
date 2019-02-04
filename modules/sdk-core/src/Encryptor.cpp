@@ -97,7 +97,7 @@ void decrypt(uint8_t* decryptedData,
   }
 }
 
-Crypto::Mac extractMac(gsl::span<uint8_t const> encryptedData)
+ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
   try
   {

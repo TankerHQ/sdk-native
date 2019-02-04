@@ -33,10 +33,12 @@ TEST_CASE(
 TEST_CASE("encryptedSize should return the right size")
 {
   constexpr auto versionSize = 1;
-  constexpr auto MacSize = 16;
+  constexpr auto ResourceIdSize = 16;
   constexpr auto IvSize = 24;
-  CHECK(Encryptor::encryptedSize(0) == versionSize + 0 + MacSize + IvSize);
-  CHECK(Encryptor::encryptedSize(1) == versionSize + 1 + MacSize + IvSize);
+  CHECK(Encryptor::encryptedSize(0) ==
+        versionSize + 0 + ResourceIdSize + IvSize);
+  CHECK(Encryptor::encryptedSize(1) ==
+        versionSize + 1 + ResourceIdSize + IvSize);
 }
 
 TEST_CASE("encrypt/decrypt should work with an empty buffer")
@@ -82,7 +84,7 @@ TEST_CASE("encrypt should never give the same result twice")
   CHECK(encryptedData1 != encryptedData2);
 }
 
-TEST_CASE("extractMac should give the same result as encrypt")
+TEST_CASE("extractResourceId should give the same result as encrypt")
 {
   auto clearData = make_buffer("this is the data to encrypt");
   std::vector<uint8_t> encryptedData(
@@ -90,7 +92,7 @@ TEST_CASE("extractMac should give the same result as encrypt")
 
   auto const metadata = Encryptor::encrypt(encryptedData.data(), clearData);
 
-  CHECK(Encryptor::extractMac(encryptedData) == metadata.mac);
+  CHECK(Encryptor::extractResourceId(encryptedData) == metadata.resourceId);
 }
 
 TEST_CASE("decrypt should work with a buffer v2")
