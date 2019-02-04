@@ -56,8 +56,8 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   }
 }
 
-EncryptionMetadata encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData)
+EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
+                                             gsl::span<uint8_t const> clearData)
 {
   Serialization::varint_write(encryptedData, lastVersion);
   auto const key = Crypto::makeSymmetricKey();

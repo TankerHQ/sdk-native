@@ -134,6 +134,7 @@ add_library(tankercore STATIC
   include/Tanker/Verif/UserGroupAddition.hpp
   include/Tanker/Verif/UserGroupCreation.hpp
   include/Tanker/Verif/Helpers.hpp
+  include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
 
   src/AsyncCore.cpp
   src/Admin.cpp
