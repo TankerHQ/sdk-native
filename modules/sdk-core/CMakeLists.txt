@@ -135,6 +135,7 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
+  include/Tanker/EncryptionFormat/EncryptorV4.hpp
   include/Tanker/EncryptionFormat/EncryptorV2.hpp
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
 
@@ -205,6 +206,7 @@ add_library(tankercore STATIC
   src/Encryptor.cpp
   src/EncryptionFormat/EncryptorV2.cpp
   src/EncryptionFormat/EncryptorV3.cpp
+  src/EncryptionFormat/EncryptorV4.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
