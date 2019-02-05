@@ -1,4 +1,4 @@
-image: 10.100.0.1:5000/ci-cpp:2
+image: 10.100.0.1:5000/ci-cpp:latest
 
 before_script:
  - dmenv install
@@ -60,7 +60,7 @@ deploy/macos:
     - dmenv run -- python run-ci.py deploy --profile ios --git-tag ${CI_COMMIT_TAG}
 
 nightly/android:
-  image: 10.100.0.1:5000/ci-android:1
+  image: 10.100.0.1:5000/ci-android:latest
   stage: build
   only:
     - schedules
