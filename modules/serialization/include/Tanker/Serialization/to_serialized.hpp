@@ -36,6 +36,16 @@ void to_serialized(OutputIterator it, std::map<K, V> const& vals)
   }
 }
 
+template <typename OutputIterator,
+          typename T,
+          typename = std::enable_if_t<std::is_integral<T>::value>>
+void to_serialized(OutputIterator it, T const& number)
+{
+  std::copy(reinterpret_cast<const char*>(&number),
+            reinterpret_cast<const char*>(&number) + sizeof(number),
+            it);
+}
+
 template <typename OutputIterator, typename T>
 void to_serialized(OutputIterator it, nonstd::optional<T> const& opt)
 {
@@ -43,7 +53,7 @@ void to_serialized(OutputIterator it, nonstd::optional<T> const& opt)
     to_serialized(it, *opt);
 }
 
-template <typename OutputIterator, typename ...Args>
+template <typename OutputIterator, typename... Args>
 void to_serialized(OutputIterator it, mpark::variant<Args...> const& v)
 {
   mpark::visit([it](auto const& a) { to_serialized(it, a); }, v);

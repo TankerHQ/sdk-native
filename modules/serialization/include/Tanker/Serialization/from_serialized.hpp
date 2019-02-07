@@ -48,6 +48,13 @@ void from_serialized(SerializedSource& ss, std::map<K, V>& m)
   }
 }
 
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+void from_serialized(SerializedSource& ss, T& number)
+{
+  auto const buffer = ss.read(sizeof(T));
+  std::copy(buffer.begin(), buffer.end(), reinterpret_cast<char*>(&number));
+}
+
 template <typename T>
 T deserialize_impl(SerializedSource& ss)
 {

@@ -18,7 +18,7 @@ namespace Serialization
 {
 namespace detail
 {
-template <typename ...Args>
+template <typename... Args>
 std::size_t serialized_size(mpark::variant<Args...> const& val)
 {
   return mpark::visit([](auto const& a) { return serialized_size(a); }, val);
@@ -45,6 +45,12 @@ std::size_t serialized_size(std::map<K, V> const& vals)
                            return acc + serialized_size(p.first) +
                                   serialized_size(p.second);
                          });
+}
+
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+std::size_t serialized_size(T const& number)
+{
+  return sizeof(number);
 }
 
 template <typename T>
