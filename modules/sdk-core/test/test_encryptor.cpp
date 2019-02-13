@@ -31,7 +31,7 @@ TEST_SUITE("EncryptorV2")
     auto const truncatedBuffer = make_buffer("\2");
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV2::decryptedSize(unsupportedBuffer),
-        Error::VersionNotSupported);
+        Error::DecryptFailed);
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV2::decryptedSize(truncatedBuffer),
         Error::DecryptFailed);
@@ -151,7 +151,7 @@ TEST_SUITE("EncryptorV3")
     auto const truncatedBuffer = make_buffer("\3");
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV3::decryptedSize(unsupportedBuffer),
-        Error::VersionNotSupported);
+        Error::DecryptFailed);
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV3::decryptedSize(truncatedBuffer),
         Error::DecryptFailed);

@@ -134,8 +134,8 @@ void decrypt(uint8_t* decryptedData,
       // Header
       auto const versionResult = Serialization::varint_read(chunk);
       if (versionResult.first != version())
-        throw Error::formatEx<Error::VersionNotSupported>(
-            "unsupported version: {:d}", versionResult.first);
+        throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                    versionResult.first);
       auto const headerRemoved =
           versionResult.second.subspan(ResourceId::arraySize + sizeOfChunkSize);
 

@@ -46,8 +46,8 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
     case EncryptorV4::version():
       return EncryptorV4::decryptedSize(encryptedData);
     default:
-      throw Error::formatEx<Error::VersionNotSupported>(
-          "unsupported version: {:d}", version);
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
     }
   }
   catch (std::out_of_range const&)
@@ -81,8 +81,8 @@ void decrypt(uint8_t* decryptedData,
     case EncryptorV4::version():
       return EncryptorV4::decrypt(decryptedData, key, encryptedData);
     default:
-      throw Error::formatEx<Error::VersionNotSupported>(
-          "unsupported version: {:d}", version);
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
     }
   }
   catch (std::out_of_range const&)
@@ -106,8 +106,8 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
     case EncryptorV4::version():
       return EncryptorV4::extractResourceId(encryptedData);
     default:
-      throw Error::formatEx<Error::VersionNotSupported>(
-          "unsupported version: {:d}", version);
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
     }
   }
   catch (std::out_of_range const&)
