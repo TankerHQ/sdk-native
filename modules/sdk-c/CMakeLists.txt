@@ -49,6 +49,3 @@ install(TARGETS tanker
 
 install(DIRECTORY include DESTINATION .)
 
-if(BUILD_TESTS)
-  add_subdirectory(test)
-endif()
