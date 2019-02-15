@@ -6,7 +6,6 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Encryptor.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/LogHandler.hpp>

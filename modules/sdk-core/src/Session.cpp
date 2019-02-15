@@ -25,6 +25,7 @@
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/ResourceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/UserId.hpp>
@@ -249,13 +250,13 @@ tc::cotask<void> Session::encrypt(uint8_t* encryptedData,
   auto groupIds = convertToGroupIds(sgroupIds);
   userIds.insert(userIds.begin(), this->_userId);
 
-  TC_AWAIT(_resourceKeyStore.putKey(metadata.mac, metadata.key));
+  TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
                         _userAccessor,
                         _groupAcessor,
                         _blockGenerator,
                         *_client,
-                        {{metadata.key, metadata.mac}},
+                        {{metadata.key, metadata.resourceId}},
                         userIds,
                         groupIds));
 }
@@ -263,32 +264,32 @@ tc::cotask<void> Session::encrypt(uint8_t* encryptedData,
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {
-  auto const mac = Encryptor::extractMac(encryptedData);
+  auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
   // Try to get the key, in order:
   // - from the resource key store
   // - from the trustchain
   // - from the tanker server
   // In all cases, we put the key in the resource key store
-  auto key = TC_AWAIT(_resourceKeyStore.findKey(mac));
+  auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
   if (!key)
   {
-    auto keyPublish = TC_AWAIT(_trustchain.findKeyPublish(mac));
+    auto keyPublish = TC_AWAIT(_trustchain.findKeyPublish(resourceId));
     if (!keyPublish)
     {
       TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-      keyPublish = TC_AWAIT(_trustchain.findKeyPublish(mac));
+      keyPublish = TC_AWAIT(_trustchain.findKeyPublish(resourceId));
     }
     if (keyPublish) // do not use else!
     {
       TC_AWAIT(ReceiveKey::decryptAndStoreKey(
           _resourceKeyStore, _userKeyStore, _groupStore, *keyPublish));
-      key = TC_AWAIT(_resourceKeyStore.findKey(mac));
+      key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
     }
   }
   if (!key)
     throw Error::formatEx<Error::ResourceKeyNotFound>(
-        fmt("couldn't find key for {:s}"), mac);
+        fmt("couldn't find key for {:s}"), resourceId);
 
   Encryptor::decrypt(decryptedData, *key, encryptedData);
 }
@@ -305,7 +306,7 @@ DeviceId const& Session::deviceId() const
   return _deviceKeyStore->deviceId();
 }
 
-tc::cotask<void> Session::share(std::vector<Crypto::Mac> const& resourceIds,
+tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
                                 std::vector<UserId> const& userIds,
                                 std::vector<GroupId> const& groupIds)
 {
@@ -327,7 +328,7 @@ tc::cotask<void> Session::share(std::vector<SResourceId> const& sresourceIds,
   auto userIds = obfuscateUserIds(suserIds, this->_trustchainId);
   auto groupIds = convertToGroupIds(sgroupIds);
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return base64::decode<Crypto::Mac>(resourceId);
+    return base64::decode<ResourceId>(resourceId);
   });
 
   // we remove ourselves from the recipients

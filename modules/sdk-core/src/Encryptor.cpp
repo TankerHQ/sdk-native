@@ -2,53 +2,53 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV2.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV3.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
-#include <fmt/format.h>
-
-#include <stdexcept>
-
 namespace Tanker
 {
+using namespace EncryptionFormat;
+
 namespace Encryptor
 {
 namespace
 {
-constexpr auto lastVersion = 2u;
-auto const maxVersionSize = Serialization::varint_size(lastVersion);
+constexpr auto hugeDataThreshold = 1024 * 1024;
 
-// version 2 format layout:
-// [version, 1B] [IV, 24B] [[ciphertext, variable] [MAC, 16B]]
-void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
+constexpr bool isHugeClearData(uint64_t dataSize)
 {
-  auto const dataVersion = Serialization::varint_read(encryptedData).first;
-  if (dataVersion != lastVersion)
-    throw Error::formatEx<Error::VersionNotSupported>(
-        fmt("unsupported version: {:d}"), dataVersion);
-  if (encryptedData.size() <
-      (Serialization::varint_size(dataVersion) + Crypto::AeadIv::arraySize))
-    throw Error::DecryptFailed("truncated encrypted buffer");
+  return dataSize > hugeDataThreshold;
 }
 }
 
 uint64_t encryptedSize(uint64_t clearSize)
 {
-  return maxVersionSize + Crypto::AeadIv::arraySize +
-         Crypto::encryptedSize(clearSize);
+  if (isHugeClearData(clearSize))
+    return EncryptorV4::encryptedSize(clearSize);
+  return EncryptorV3::encryptedSize(clearSize);
 }
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
   try
   {
-    checkEncryptedFormat(encryptedData);
     auto const version = Serialization::varint_read(encryptedData).first;
-    auto const versionSize = Serialization::varint_size(version);
-    if (encryptedData.size() < versionSize + Crypto::AeadIv::arraySize)
-      throw Error::DecryptFailed("truncated encrypted buffer");
-    return Crypto::decryptedSize(encryptedData.size() - versionSize -
-                                 Crypto::AeadIv::arraySize);
+
+    switch (version)
+    {
+    case EncryptorV2::version():
+      return EncryptorV2::decryptedSize(encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::decryptedSize(encryptedData);
+    case EncryptorV4::version():
+      return EncryptorV4::decryptedSize(encryptedData);
+    default:
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
+    }
   }
   catch (std::out_of_range const&)
   {
@@ -56,20 +56,12 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   }
 }
 
-EncryptionMetadata encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData)
+EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
+                                             gsl::span<uint8_t const> clearData)
 {
-  Serialization::varint_write(encryptedData, lastVersion);
-  auto const key = Crypto::makeSymmetricKey();
-  auto const iv = encryptedData + maxVersionSize;
-  Crypto::randomFill(gsl::span<uint8_t>(iv, Crypto::AeadIv::arraySize));
-  auto const mac = Crypto::encryptAead(
-      key,
-      iv,
-      encryptedData + maxVersionSize + Crypto::AeadIv::arraySize,
-      clearData,
-      {});
-  return {Crypto::Mac(mac), key};
+  if (isHugeClearData(clearData.size()))
+    return EncryptorV4::encrypt(encryptedData, clearData);
+  return EncryptorV3::encrypt(encryptedData, clearData);
 }
 
 void decrypt(uint8_t* decryptedData,
@@ -78,36 +70,45 @@ void decrypt(uint8_t* decryptedData,
 {
   try
   {
-    checkEncryptedFormat(encryptedData);
-
     auto const version = Serialization::varint_read(encryptedData).first;
-    auto const versionSize = Serialization::varint_size(version);
-    auto const iv = encryptedData.subspan(versionSize).data();
-    auto const cipherText =
-        encryptedData.subspan(versionSize + Crypto::AeadIv::arraySize);
-    Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
+
+    switch (version)
+    {
+    case EncryptorV2::version():
+      return EncryptorV2::decrypt(decryptedData, key, encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::decrypt(decryptedData, key, encryptedData);
+    case EncryptorV4::version():
+      return EncryptorV4::decrypt(decryptedData, key, encryptedData);
+    default:
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
+    }
   }
   catch (std::out_of_range const&)
   {
     throw Error::DecryptFailed("truncated encrypted buffer");
   }
-  catch (Crypto::DecryptFailed const& e)
-  {
-    throw Error::DecryptFailed(e.what());
-  }
 }
 
-Crypto::Mac extractMac(gsl::span<uint8_t const> encryptedData)
+ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
   try
   {
-    checkEncryptedFormat(encryptedData);
-
     auto const version = Serialization::varint_read(encryptedData).first;
-    auto const versionSize = Serialization::varint_size(version);
-    auto const cipherText =
-        encryptedData.subspan(versionSize, encryptedData.size() - versionSize);
-    return Crypto::Mac{Crypto::extractMac(cipherText)};
+
+    switch (version)
+    {
+    case EncryptorV2::version():
+      return EncryptorV2::extractResourceId(encryptedData);
+    case EncryptorV3::version():
+      return EncryptorV3::extractResourceId(encryptedData);
+    case EncryptorV4::version():
+      return EncryptorV4::extractResourceId(encryptedData);
+    default:
+      throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
+                                                  version);
+    }
   }
   catch (std::out_of_range const&)
   {

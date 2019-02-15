@@ -16,6 +16,7 @@ add_executable(test_tanker
   test_blockgenerator.cpp
   test_log.cpp
   test_encryptor.cpp
+  test_encryptorstream.cpp
   test_chunkencryptor.cpp
   test_receivekey.cpp
   test_seal.cpp

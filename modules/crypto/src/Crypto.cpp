@@ -262,5 +262,17 @@ std::vector<uint8_t> decryptAead(SymmetricKey const& key,
       key, aeadBuffer.iv.data(), res.data(), aeadBuffer.encryptedData, ad);
   return res;
 }
+
+AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number)
+{
+  auto pointer = reinterpret_cast<uint8_t const*>(&number);
+  auto const numberSize = sizeof(number);
+
+  std::vector<uint8_t> toHash;
+  toHash.reserve(numberSize + AeadIv::arraySize);
+  toHash.insert(toHash.end(), ivSeed.begin(), ivSeed.end());
+  toHash.insert(toHash.end(), pointer, pointer + numberSize);
+  return generichash<AeadIv>(gsl::make_span(toHash.data(), toHash.size()));
+}
 }
 }

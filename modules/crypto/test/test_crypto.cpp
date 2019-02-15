@@ -124,6 +124,19 @@ TEST_CASE("aead")
     CHECK_THROWS(decryptAead(
         key, iv.data(), decryptedBuffer.data(), encryptedBuffer, additional));
   }
+
+  SUBCASE("it should be able to derive an IV")
+  {
+    AeadIv iv{};
+    randomFill(iv);
+    auto const ivOne = deriveIv(iv, 1);
+    auto const ivOneBis = deriveIv(iv, 1);
+    auto const ivTwo = deriveIv(iv, 2);
+
+    CHECK(ivOne == ivOneBis);
+    CHECK(ivOne != ivTwo);
+    CHECK(ivOne != iv);
+  }
 }
 
 TEST_CASE("asymmetric")
