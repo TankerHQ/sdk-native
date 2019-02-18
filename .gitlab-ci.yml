@@ -1,4 +1,4 @@
-image: docker.local:5000/ci-cpp:latest
+image: tanker.local:5000/ci-cpp:latest
 
 before_script:
  - dmenv install
@@ -60,7 +60,7 @@ deploy/macos:
     - dmenv run -- python run-ci.py deploy --profile ios --git-tag ${CI_COMMIT_TAG}
 
 nightly/android:
-  image: docker.local:5000/ci-android:latest
+  image: tanker.local:5000/ci-android:latest
   stage: build
   only:
     - schedules
