@@ -156,22 +156,6 @@ tc::cotask<UnlockKey> Core::generateAndRegisterUnlockKey()
   TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterUnlockKey()));
 }
 
-tc::cotask<void> Core::setupUnlock(Unlock::CreationOptions const& options)
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(setupUnlock);
-  TC_AWAIT((*psession)->createUnlockKey(options));
-}
-
-tc::cotask<void> Core::updateUnlock(Unlock::UpdateOptions const& options)
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(updateUnlock);
-  TC_AWAIT((*psession)->updateUnlock(options));
-}
-
 tc::cotask<void> Core::registerUnlock(
     Unlock::RegistrationOptions const& options)
 {

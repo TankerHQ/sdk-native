@@ -144,20 +144,6 @@ tc::future<UnlockKey> AsyncCore::generateAndRegisterUnlockKey()
   });
 }
 
-tc::future<void> AsyncCore::setupUnlock(Unlock::CreationOptions const& options)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->setupUnlock(options));
-  });
-}
-
-tc::future<void> AsyncCore::updateUnlock(Unlock::UpdateOptions const& options)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->updateUnlock(options));
-  });
-}
-
 tc::future<void> AsyncCore::registerUnlock(
     Unlock::RegistrationOptions const& options)
 {

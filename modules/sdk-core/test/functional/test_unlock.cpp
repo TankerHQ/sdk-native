@@ -42,29 +42,6 @@ TEST_SUITE("Unlock")
           TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
     }
 
-    SUBCASE("it sets up an unlock password and unlock a new device")
-    {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
-          Unlock::CreationOptions{}.set(Password{"my password"}))));
-
-      core2->unlockRequired().connect([&] {
-        tc::async_resumable([&core2]() -> tc::cotask<void> {
-          try
-          {
-            TC_AWAIT(core2->unlockCurrentDevice(Password{"my password"}));
-          }
-          catch (std::exception const& e)
-          {
-            FAIL(e.what());
-            core2->close();
-          }
-        });
-      });
-
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
-    }
-
     SUBCASE("it register an unlock password and unlock a new device")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
@@ -75,32 +52,6 @@ TEST_SUITE("Unlock")
           try
           {
             TC_AWAIT(core2->unlockCurrentDevice(Password{"my password"}));
-          }
-          catch (std::exception const& e)
-          {
-            FAIL(e.what());
-            core2->close();
-          }
-        });
-      });
-
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
-    }
-
-    SUBCASE("it sets up an unlock email and unlock a new device")
-    {
-      auto const email = Email{"kirby@dreamland.nes"};
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->setupUnlock(Unlock::CreationOptions{}.set(email))));
-
-      auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(alice.suserId(), email));
-      core2->unlockRequired().connect([&] {
-        tc::async_resumable([&]() -> tc::cotask<void> {
-          try
-          {
-            TC_AWAIT(core2->unlockCurrentDevice(code));
           }
           catch (std::exception const& e)
           {
@@ -140,31 +91,6 @@ TEST_SUITE("Unlock")
           TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
     }
 
-    SUBCASE("it sets up an unlock password and update it")
-    {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
-          Unlock::CreationOptions{}.set(Password{"my password"}))));
-      REQUIRE_NOTHROW(TC_AWAIT(core1->updateUnlock(
-          Unlock::UpdateOptions{}.set(Password{"my new password"}))));
-
-      core2->unlockRequired().connect([&] {
-        tc::async_resumable([&core2]() -> tc::cotask<void> {
-          try
-          {
-            TC_AWAIT(core2->unlockCurrentDevice(Password{"my new password"}));
-          }
-          catch (std::exception const& e)
-          {
-            FAIL(e.what());
-            core2->close();
-          }
-        });
-      });
-
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
-    }
-
     SUBCASE("it register an unlock password then re-register a new one")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
@@ -190,37 +116,10 @@ TEST_SUITE("Unlock")
           TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
     }
 
-    SUBCASE("it sets up an unlock email and update it")
-    {
-      auto const email = Email{"kirby@dreamland.nes"};
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
-          Unlock::CreationOptions{}.set(Email{"bowser@dreamland.net"}))));
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->updateUnlock(Unlock::UpdateOptions{}.set(email))));
-
-      auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(alice.suserId(), email));
-      core2->unlockRequired().connect([&] {
-        tc::async_resumable([&]() -> tc::cotask<void> {
-          try
-          {
-            TC_AWAIT(core2->unlockCurrentDevice(code));
-          }
-          catch (std::exception const& e)
-          {
-            FAIL(e.what());
-          }
-        });
-      });
-
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
-    }
-
     SUBCASE("it throws when trying to unlock with an invalid password")
     {
 
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
           Unlock::CreationOptions{}.set(Password{"my password"}))));
 
       bool ok = false;
@@ -242,7 +141,7 @@ TEST_SUITE("Unlock")
 
     SUBCASE("it throws when trying to unlock with an invalid verification code")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
           Unlock::CreationOptions{}.set(Email{"bowser@dreamland.net"}))));
 
       bool ok = false;
@@ -266,7 +165,7 @@ TEST_SUITE("Unlock")
         "it fails to unlock after trying too many times with an invalid "
         "verification code")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
           Unlock::CreationOptions{}.set(Email{"bowser@dreamland.net"}))));
 
       bool ok = false;
@@ -297,8 +196,8 @@ TEST_SUITE("Unlock")
     }
 
     SUBCASE(
-        "it throws when trying to unlock when setup has not been done, with a "
-        "password")
+        "it throws when trying to unlock when register has not been done, with "
+        "a password")
     {
       bool ok = false;
 
@@ -318,8 +217,8 @@ TEST_SUITE("Unlock")
     }
 
     SUBCASE(
-        "it throws when trying to unlock when setup has not been done, with a "
-        "verification code")
+        "it throws when trying to unlock when register has not been done, with "
+        "a verification code")
     {
       bool ok = false;
 
@@ -336,35 +235,6 @@ TEST_SUITE("Unlock")
 
       REQUIRE_THROWS(TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
       REQUIRE(ok);
-    }
-
-    SUBCASE(
-        "it throws when trying to update a password when setup has not been "
-        "done")
-    {
-      REQUIRE_UNARY_FALSE(TC_AWAIT(core1->isUnlockAlreadySetUp()));
-      CHECK_THROWS_AS(TC_AWAIT(core1->updateUnlock(Unlock::UpdateOptions{}.set(
-                          Password{"my password"}))),
-                      Error::InvalidUnlockKey);
-    }
-
-    SUBCASE(
-        "it throws when trying to update an email when setup has not been "
-        "done")
-    {
-      REQUIRE_UNARY_FALSE(TC_AWAIT(core1->isUnlockAlreadySetUp()));
-      CHECK_THROWS_AS(TC_AWAIT(core1->updateUnlock(Unlock::UpdateOptions{}.set(
-                          Email{"alice@valdemarne.edu"}))),
-                      Error::InvalidUnlockKey);
-    }
-
-    SUBCASE("it fails to setup unlock twice")
-    {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
-          Unlock::CreationOptions{}.set(Password{"my password"}))));
-      CHECK_THROWS_AS(TC_AWAIT(core1->setupUnlock(
-                          Unlock::CreationOptions{}.set(Email{"my password"}))),
-                      Error::UnlockKeyAlreadyExists);
     }
   }
 }

@@ -85,8 +85,6 @@ public:
 
   tc::future<UnlockKey> generateAndRegisterUnlockKey();
 
-  tc::future<void> setupUnlock(Unlock::CreationOptions const& options);
-  tc::future<void> updateUnlock(Unlock::UpdateOptions const& options);
   tc::future<void> registerUnlock(Unlock::RegistrationOptions const& options);
   tc::future<void> unlockCurrentDevice(Unlock::DeviceLocker const& locker);
 

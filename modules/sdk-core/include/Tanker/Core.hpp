@@ -56,8 +56,6 @@ public:
 
   tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
 
-  tc::cotask<void> setupUnlock(Unlock::CreationOptions const& options);
-  tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
   tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
   tc::cotask<bool> isUnlockAlreadySetUp() const;

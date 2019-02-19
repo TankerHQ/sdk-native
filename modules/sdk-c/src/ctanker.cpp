@@ -197,27 +197,6 @@ tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_setup_unlock(tanker_t* ctanker,
-                                     char const* email,
-                                     char const* pass)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->setupUnlock(Unlock::CreationOptions{
-      nullableToOpt<Email>(email), nullableToOpt<Password>(pass)}));
-}
-
-tanker_future_t* tanker_update_unlock(tanker_t* ctanker,
-                                      char const* email,
-                                      char const* pass,
-                                      char const* unlockKey)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->updateUnlock(
-      Unlock::UpdateOptions{nullableToOpt<Email>(email),
-                            nullableToOpt<Password>(pass),
-                            nullableToOpt<UnlockKey>(unlockKey)}));
-}
-
 tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
                                         char const* new_email,
                                         char const* new_password)

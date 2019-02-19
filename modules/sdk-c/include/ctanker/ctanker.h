@@ -229,34 +229,6 @@ tanker_future_t* tanker_device_id(tanker_t* session);
 tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
 
 /*!
- * Sets-up an unlock password for the current user
- * \param session a tanker tanker_t* instance
- * \param email to send the verification code or NULL
- * \param password to protect the access to the unlock key or NULL
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return a future to void
- */
-tanker_future_t* tanker_setup_unlock(tanker_t* session,
-                                     char const* email,
-                                     char const* password);
-
-/*!
- * Update the user's unlock claims. Set arguments to NULL to leave the values as
- * they are.
- *
- * \param session a tanker tanker_t* instance
- * \param new_email the new desired email or NULL
- * \param new_password the new desired password or NULL
- * \param new_unlock_key the new unlockKey or NULL
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return a future to void
- */
-tanker_future_t* tanker_update_unlock(tanker_t* session,
-                                      char const* new_email,
-                                      char const* new_password,
-                                      char const* new_unlock_key);
-
-/*!
  * Registers, or updates, the user's unlock claims,
  * creates an unlock key if necessary
  * \param session a tanker tanker_t* instance
