@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Types.hpp>
@@ -104,12 +103,7 @@ public:
 
   tc::cotask<void> syncTrustchain();
 
-  std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
-
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
-
-  tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
 
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;

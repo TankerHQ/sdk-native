@@ -1,6 +1,5 @@
 #include <Tanker/Core.hpp>
 
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Encryptor.hpp>
@@ -231,23 +230,6 @@ tc::cotask<void> Core::syncTrustchain()
   if (!psession)
     throw INVALID_STATUS(syncTrustchain);
   TC_AWAIT((*psession)->syncTrustchain());
-}
-
-std::unique_ptr<ChunkEncryptor> Core::makeChunkEncryptor()
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(makeChunkEncryptor);
-  return (*psession)->makeChunkEncryptor();
-}
-
-tc::cotask<std::unique_ptr<ChunkEncryptor>> Core::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal)
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(makeChunkEncryptor);
-  TC_RETURN(TC_AWAIT((*psession)->makeChunkEncryptor(encryptedSeal)));
 }
 
 tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)

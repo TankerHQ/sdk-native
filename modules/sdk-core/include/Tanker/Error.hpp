@@ -31,11 +31,8 @@ enum class Code
   UserNotFound,
   DecryptFailed,
   InvalidUnlockEventHandler,
-  ChunkIndexOutOfRange,
-  VersionNotSupported,
   InvalidUnlockKey,
   InternalError,
-  ChunkNotFound,
   InvalidUnlockPassword,
   InvalidVerificationCode,
   UnlockKeyAlreadyExists,
@@ -91,11 +88,8 @@ DECLARE_ERROR(ResourceKeyNotFound);
 // UserNotFound has its own header
 DECLARE_ERROR(DecryptFailed);
 DECLARE_ERROR(InvalidUnlockEventHandler);
-DECLARE_ERROR(ChunkIndexOutOfRange);
-DECLARE_ERROR(VersionNotSupported);
 DECLARE_ERROR(InvalidUnlockKey);
 DECLARE_ERROR(InternalError);
-DECLARE_ERROR(ChunkNotFound);
 DECLARE_ERROR(InvalidUnlockPassword);
 DECLARE_ERROR(InvalidVerificationCode);
 DECLARE_ERROR(UnlockKeyAlreadyExists);

@@ -28,8 +28,6 @@
 
 namespace Tanker
 {
-class ChunkEncryptor;
-
 class Core
 {
 public:
@@ -70,11 +68,6 @@ public:
   DeviceId const& deviceId() const;
 
   tc::cotask<void> syncTrustchain();
-
-  std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
-
-  tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
 
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 

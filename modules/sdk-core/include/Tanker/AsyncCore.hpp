@@ -29,8 +29,6 @@
 
 namespace Tanker
 {
-class ChunkEncryptor;
-
 // You don't have to wait for these,
 // result will always be immediately available.
 // This is only for documentation purpose,
@@ -103,11 +101,6 @@ public:
   boost::signals2::signal<void()>& deviceRevoked();
 
   tc::future<DeviceId> deviceId() const;
-
-  tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor();
-
-  tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
 
   tc::future<void> revokeDevice(DeviceId const& deviceId);
 

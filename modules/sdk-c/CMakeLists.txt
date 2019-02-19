@@ -15,7 +15,6 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/ctanker.h
   include/ctanker/async.h
   include/ctanker/base64.h
-  include/ctanker/chunk_encryptor.h
   include/ctanker/user_token.h
   include/ctanker/admin.h
   include/ctanker/groups.h
@@ -23,7 +22,6 @@ add_library(ctanker ${tankerlib_type}
   src/async.cpp
   src/base64.cpp
   src/ctanker.cpp
-  src/chunk_encryptor.cpp
   src/CFuture.hpp
   src/Utils.hpp
   src/user_token.cpp

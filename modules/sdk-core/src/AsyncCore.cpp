@@ -1,6 +1,5 @@
 #include <Tanker/AsyncCore.hpp>
 
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Error.hpp>
@@ -202,20 +201,6 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethods(
 tc::future<DeviceId> AsyncCore::deviceId() const
 {
   return tc::async([this]() { return this->_core->deviceId(); });
-}
-
-tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor()
-{
-  return tc::async([this] { return this->_core->makeChunkEncryptor(); });
-}
-
-tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal)
-{
-  return tc::async_resumable(
-      [=]() -> tc::cotask<std::unique_ptr<ChunkEncryptor>> {
-        TC_RETURN(TC_AWAIT(this->_core->makeChunkEncryptor(encryptedSeal)));
-      });
 }
 
 tc::future<void> AsyncCore::revokeDevice(DeviceId const& deviceId)

@@ -9,7 +9,6 @@ add_executable(test_functional
   test_functional.cpp
   test_unlock.cpp
   test_unlock_methods.cpp
-  test_chunkencryptor.cpp
   test_groups.cpp
 )
 

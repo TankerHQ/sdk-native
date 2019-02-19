@@ -5,7 +5,6 @@
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
@@ -608,19 +607,6 @@ tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 tc::cotask<void> Session::syncTrustchain()
 {
   TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-}
-
-std::unique_ptr<ChunkEncryptor> Session::makeChunkEncryptor()
-{
-  return std::make_unique<ChunkEncryptor>(ChunkEncryptor(this));
-}
-
-tc::cotask<std::unique_ptr<ChunkEncryptor>> Session::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal)
-{
-  auto chunkEncryptor = std::make_unique<ChunkEncryptor>(this);
-  TC_AWAIT(chunkEncryptor->open(encryptedSeal));
-  TC_RETURN(std::move(chunkEncryptor));
 }
 
 void Session::signalKeyReady(Crypto::Mac const& mac)
