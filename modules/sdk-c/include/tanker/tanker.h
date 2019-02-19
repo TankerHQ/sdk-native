@@ -122,7 +122,7 @@ void tanker_set_log_handler(tanker_log_handler_t handler);
 /*!
  * Initialize the SDK
  */
-void tanker_init();
+void tanker_init(void);
 
 /*!
  * Create a Tanker instance.
