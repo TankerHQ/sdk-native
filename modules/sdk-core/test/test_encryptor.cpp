@@ -11,6 +11,18 @@ using namespace Tanker;
 
 TEST_SUITE("EncryptorV2")
 {
+  auto const keyVector = Crypto::SymmetricKey(std::vector<uint8_t>(
+      {0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
+       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
+       0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd}));
+
+  auto encryptedTestVector = std::vector<uint8_t>(
+      {0x02, 0x32, 0x93, 0xa3, 0xf8, 0x6c, 0xa8, 0x82, 0x25, 0xbc, 0x17, 0x7e,
+       0xb5, 0x65, 0x9b, 0xee, 0xd,  0xfd, 0xcf, 0xc6, 0x5c, 0x6d, 0xb4, 0x72,
+       0xe0, 0x5b, 0x33, 0x27, 0x4c, 0x83, 0x84, 0xd1, 0xad, 0xda, 0x5f, 0x86,
+       0x2,  0x46, 0x42, 0x91, 0x71, 0x30, 0x65, 0x2e, 0x72, 0x47, 0xe6, 0x48,
+       0x20, 0xa1, 0x86, 0x91, 0x7f, 0x9c, 0xb5, 0x5e, 0x91, 0xb3, 0x65, 0x2d});
+
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(EncryptionFormat::EncryptorV2::encryptedSize(0));
@@ -114,23 +126,42 @@ TEST_SUITE("EncryptorV2")
   TEST_CASE("decrypt should work with a buffer v2")
   {
     auto const clearData = make_buffer("this is very secret");
-    auto const key = base64::decode<Crypto::SymmetricKey>(
-        "XqV1NmaWWhDumAmjIg7SLckNO+UJczlclFFNGjgkZx0=");
-    auto const encryptedData = base64::decode(
-        "Ag40o25KiX7q4WjhCitEmYOBwGhZMTuPw+1j/"
-        "Kuy+Nez89AWogT17gKzaViCZ13r7YhA9077CX1mwuxy");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV2::decryptedSize(encryptedData));
+        EncryptionFormat::EncryptorV2::decryptedSize(encryptedTestVector));
     EncryptionFormat::EncryptorV2::decrypt(
-        decryptedData.data(), key, encryptedData);
+        decryptedData.data(), keyVector, encryptedTestVector);
 
     CHECK(decryptedData == clearData);
+  }
+
+  TEST_CASE("decrypt should not work with a corrupted buffer v2")
+  {
+    auto const clearData = make_buffer("this is very secret");
+
+    std::vector<uint8_t> decryptedData(
+        EncryptionFormat::EncryptorV2::decryptedSize(encryptedTestVector));
+
+    encryptedTestVector[2]++;
+
+    CHECK_THROWS_AS(EncryptionFormat::EncryptorV2::decrypt(
+                        decryptedData.data(), keyVector, encryptedTestVector),
+                    Error::DecryptFailed);
   }
 }
 
 TEST_SUITE("EncryptorV3")
 {
+  auto const keyVector = Crypto::SymmetricKey(std::vector<uint8_t>(
+      {0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
+       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
+       0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd}));
+
+  auto encryptedTestVector = std::vector<uint8_t>(
+      {0x03, 0x37, 0xb5, 0x3d, 0x55, 0x34, 0xb5, 0xc1, 0x3f, 0xe3, 0x72, 0x81,
+       0x47, 0xf0, 0xca, 0xda, 0x29, 0x99, 0x6e, 0x4,  0xa8, 0x41, 0x81, 0xa0,
+       0xe0, 0x5e, 0x8e, 0x3a, 0x8,  0xd3, 0x78, 0xfa, 0x5,  0x9f, 0x17, 0xfa});
+
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(EncryptionFormat::EncryptorV3::encryptedSize(0));
@@ -232,26 +263,27 @@ TEST_SUITE("EncryptorV3")
 
   TEST_CASE("decrypt should work with a buffer v3")
   {
-    auto clearData = make_buffer("very secret test buffer");
-
-    auto encryptedTestVector = std::vector<uint8_t>(
-        {0x3,  0x89, 0x2c, 0x2a, 0x8e, 0xb,  0x62, 0x3f, 0x19, 0xd9,
-         0xae, 0x47, 0x9c, 0x70, 0x23, 0xc5, 0x18, 0x75, 0xbd, 0x24,
-         0x2,  0x79, 0x81, 0xec, 0x3d, 0xca, 0xe2, 0xc3, 0x14, 0xe1,
-         0x91, 0x9b, 0xab, 0xa8, 0x7e, 0x2f, 0xa1, 0x77, 0x71, 0xae});
-
-    auto keyVector = std::vector<uint8_t>(
-        {0x20, 0xc0, 0x4f, 0xcf, 0x9d, 0x5a, 0xf9, 0x99, 0x5c, 0xf4, 0x51,
-         0xef, 0xcc, 0xb3, 0xe3, 0x35, 0xc5, 0x4c, 0x4f, 0x7b, 0x20, 0x59,
-         0x11, 0x97, 0x2d, 0x87, 0xe8, 0x6d, 0x4f, 0x62, 0xbc, 0xa1});
+    auto clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
         EncryptionFormat::EncryptorV3::decryptedSize(encryptedTestVector));
 
-    EncryptionFormat::EncryptorV3::decrypt(decryptedData.data(),
-                                           Crypto::SymmetricKey{keyVector},
-                                           encryptedTestVector);
+    EncryptionFormat::EncryptorV3::decrypt(
+        decryptedData.data(), keyVector, encryptedTestVector);
 
     CHECK(clearData == decryptedData);
+  }
+
+  TEST_CASE("decrypt should not work with a corrupted buffer v3")
+  {
+    auto const clearData = make_buffer("this is very secret");
+
+    std::vector<uint8_t> decryptedData(
+        EncryptionFormat::EncryptorV3::decryptedSize(encryptedTestVector));
+    encryptedTestVector[2]++;
+
+    CHECK_THROWS_AS(EncryptionFormat::EncryptorV3::decrypt(
+                        decryptedData.data(), keyVector, encryptedTestVector),
+                    Error::DecryptFailed);
   }
 }
