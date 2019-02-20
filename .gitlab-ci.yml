@@ -119,15 +119,3 @@ pages:
     expire_in: 7 days
   tags:
     - linux
-
-mirror:
-  tags:
-    - linux
-  stage: deploy
-  only:
-    - /\Av[0-9.]+\z/   # public release tags only
-    - master
-  except:
-    - schedules
-  script:
-    - dmenv run python run-ci.py mirror
