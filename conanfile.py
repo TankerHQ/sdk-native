@@ -3,7 +3,7 @@ from conans import tools, CMake, ConanFile
 
 class TankerConan(ConanFile):
     name = "tanker"
-    version = "dev"
+    version = "1.10.0-r1"
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
