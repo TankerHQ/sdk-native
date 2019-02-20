@@ -273,3 +273,10 @@ endif()
 if(BUILD_BENCH)
   add_subdirectory(bench)
 endif()
+
+if(EMSCRIPTEN)
+  add_executable(emtanker
+    src/emtanker.cpp
+    )
+  target_link_libraries(emtanker tankercore)
+endif()

@@ -3,6 +3,7 @@
 #include <Tanker/Error.hpp>
 
 using OneArgFunction = std::function<void(emscripten::val const&)>;
+using PromiseCallback = std::function<void(emscripten::val, emscripten::val)>;
 
 namespace Tanker
 {
@@ -55,4 +56,8 @@ EMSCRIPTEN_BINDINGS(jshelpers)
   emscripten::class_<OneArgFunction>("NoargOrMaybeMoreFunction")
       .constructor<>()
       .function("opcall", &OneArgFunction::operator());
+
+  emscripten::class_<PromiseCallback>("PromiseCallback")
+      .constructor<>()
+      .function("opcall", &PromiseCallback::operator());
 }
