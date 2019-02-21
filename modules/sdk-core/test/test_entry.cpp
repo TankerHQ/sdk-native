@@ -11,7 +11,7 @@
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -31,7 +31,7 @@ TEST_CASE("blockToUnverifiedEntry")
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const userEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const delegation =
-      UserToken::makeDelegation(userId, trustchainKeyPair.privateKey);
+      Identity::makeDelegation(userId, trustchainKeyPair.privateKey);
 
   auto const sblock = blockGenerator.addUser(delegation,
                                              mySignKeyPair.publicKey,

@@ -15,7 +15,7 @@
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -38,7 +38,7 @@ std::unique_ptr<Registration> generate(
     DeviceKeys const& deviceKeys)
 {
   auto const ghostDeviceBlock = blockGen.addGhostDevice(
-      UserToken::makeDelegation(userId, blockGen.signatureKey()),
+      Identity::makeDelegation(userId, blockGen.signatureKey()),
       deviceKeys.signatureKeyPair.publicKey,
       deviceKeys.encryptionKeyPair.publicKey,
       userKeypair);
@@ -79,7 +79,7 @@ std::vector<uint8_t> createValidatedDevice(
                         ghostDevice.privateSignatureKey,
                         ghostDevice.deviceId)
       .addDevice(
-          UserToken::makeDelegation(userId, ghostDevice.privateSignatureKey),
+          Identity::makeDelegation(userId, ghostDevice.privateSignatureKey),
           deviceKeys.signatureKeyPair.publicKey,
           deviceKeys.encryptionKeyPair.publicKey,
           Crypto::EncryptionKeyPair{encryptedUserKey.publicKey,

@@ -2,7 +2,7 @@
 
 #include <Generator/Generator.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -49,7 +49,7 @@ void testKeys(T const& obj)
   testKeyPair(obj.encKeys);
 }
 
-void testDelegation(UserToken::Delegation const& delegation)
+void testDelegation(Identity::Delegation const& delegation)
 {
   CHECK_FALSE(delegation.ephemeralKeyPair.publicKey.is_null());
   CHECK_FALSE(delegation.ephemeralKeyPair.privateKey.is_null());

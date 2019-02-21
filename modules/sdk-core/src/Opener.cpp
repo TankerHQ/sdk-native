@@ -17,8 +17,8 @@
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <fmt/format.h>
@@ -51,7 +51,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
                                          std::string const& b64UserToken)
 {
   SCOPE_TIMER("opener_open", Proc);
-  auto const userToken = UserToken::extract(b64UserToken);
+  auto const userToken = Identity::extract(b64UserToken);
 
   _userId = userToken.delegation.userId;
   _userSecret = userToken.userSecret;
@@ -173,7 +173,7 @@ Session::Config Opener::makeConfig(Crypto::SymmetricKey const& userSecret)
           std::move(_client)};
 }
 
-tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
+tc::cotask<void> Opener::createUser(Identity::UserToken const& userToken)
 {
   TINFO("createUser");
   FUNC_TIMER(Proc);

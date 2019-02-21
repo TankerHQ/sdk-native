@@ -7,7 +7,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <Helpers/Await.hpp>
 
@@ -108,7 +108,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
       _blocks.size() + 1,
   };
   auto const delegation =
-      UserToken::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
+      Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId, trustchainPrivateKey(), {})
@@ -153,7 +153,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   };
 
   auto const delegation =
-      UserToken::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
+      Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId, trustchainPrivateKey(), {})
@@ -201,7 +201,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   // the device that will validate this device
   auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
 
-  auto const delegation = UserToken::makeDelegation(
+  auto const delegation = Identity::makeDelegation(
       user.userId, validatorDevice.keys.signatureKeyPair.privateKey);
 
   auto const preserializedBlock =
@@ -251,7 +251,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   // the device that will validate this device
   auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
 
-  auto const delegation = UserToken::makeDelegation(
+  auto const delegation = Identity::makeDelegation(
       user.userId, validatorDevice.keys.signatureKeyPair.privateKey);
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,

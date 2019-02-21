@@ -35,7 +35,7 @@
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/UserNotFound.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 

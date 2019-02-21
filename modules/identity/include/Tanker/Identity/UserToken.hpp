@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url.hpp>
@@ -15,7 +15,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 using base64 = cppcodec::base64_rfc4648;
 using safeBase64 = cppcodec::base64_url;

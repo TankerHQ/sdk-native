@@ -223,7 +223,7 @@ install(DIRECTORY include DESTINATION .)
 
 target_link_libraries(tankercore
   tankerserialization
-  tankerusertoken
+  tankeridentity
   tankertypes
   tankercrypto
   ttracer

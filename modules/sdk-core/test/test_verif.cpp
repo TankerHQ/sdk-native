@@ -3,7 +3,7 @@
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>

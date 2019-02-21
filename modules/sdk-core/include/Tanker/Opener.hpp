@@ -25,7 +25,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 struct UserToken;
 }
@@ -62,7 +62,7 @@ private:
   Status _status = Status::Closed;
 
   Session::Config makeConfig(Crypto::SymmetricKey const& userSecret);
-  tc::cotask<void> createUser(UserToken::UserToken const& userToken);
+  tc::cotask<void> createUser(Identity::UserToken const& userToken);
   tc::cotask<void> createDevice();
   tc::cotask<void> openDevice();
   tc::future<void> waitForUnlock();

@@ -17,7 +17,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 struct Delegation;
 }
@@ -85,12 +85,12 @@ public:
   DeviceCreation& operator=(DeviceCreation&&) = default;
 
   static DeviceCreation createV1(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey);
 
   static DeviceCreation createV3(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey,

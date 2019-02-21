@@ -1,6 +1,6 @@
 #include <ctanker/user_token.h>
 
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 
 #include <tconcurrent/async.hpp>
 
@@ -14,7 +14,7 @@ tanker_expected_t* tanker_generate_user_token(
 {
   return makeFuture(tc::sync([&] {
     return static_cast<void*>(
-        duplicateString(Tanker::UserToken::generateUserToken(
+        duplicateString(Tanker::Identity::generateUserToken(
             trustchain_id, trustchain_private_key, Tanker::SUserId{user_id})));
   }));
 }

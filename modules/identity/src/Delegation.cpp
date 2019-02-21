@@ -1,4 +1,4 @@
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
@@ -11,7 +11,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 Delegation makeDelegation(
     UserId const& userId,

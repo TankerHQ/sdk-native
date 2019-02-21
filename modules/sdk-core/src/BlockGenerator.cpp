@@ -9,10 +9,10 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
 
 #include <stdexcept>
 
@@ -49,7 +49,7 @@ Crypto::PrivateSignatureKey const& BlockGenerator::signatureKey() const noexcept
 }
 
 std::vector<uint8_t> BlockGenerator::addUser(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey) const
@@ -58,7 +58,7 @@ std::vector<uint8_t> BlockGenerator::addUser(
 }
 
 std::vector<uint8_t> BlockGenerator::addUser1(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
@@ -69,7 +69,7 @@ std::vector<uint8_t> BlockGenerator::addUser1(
 }
 
 std::vector<uint8_t> BlockGenerator::addUser3(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey) const
@@ -82,7 +82,7 @@ std::vector<uint8_t> BlockGenerator::addUser3(
 }
 
 std::vector<uint8_t> BlockGenerator::addDevice(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey) const
@@ -91,7 +91,7 @@ std::vector<uint8_t> BlockGenerator::addDevice(
 }
 
 std::vector<uint8_t> BlockGenerator::addGhostDevice(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey) const
@@ -104,7 +104,7 @@ std::vector<uint8_t> BlockGenerator::addGhostDevice(
 }
 
 std::vector<uint8_t> BlockGenerator::addDevice1(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
@@ -115,7 +115,7 @@ std::vector<uint8_t> BlockGenerator::addDevice1(
 }
 
 std::vector<uint8_t> BlockGenerator::addDevice3(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey) const

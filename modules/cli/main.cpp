@@ -14,7 +14,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 
 #include <docopt/docopt.h>
 
@@ -23,7 +23,7 @@
 using namespace Tanker;
 
 static constexpr auto TrustchainPrivateKeyOpt = "--trustchain-private-key";
-static constexpr auto UserTokenOpt = "--user-token";
+static constexpr auto UserTokenOpt = "--identity";
 static constexpr auto UnlockKeyOpt = "--unlock-key";
 static constexpr auto UnlockPasswordOpt = "--unlock-password";
 
@@ -33,8 +33,8 @@ static const char USAGE[] =
     Usage:
       tcli deserializeblock [-x] <block>
       tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
-      tcli createusertoken <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
-      tcli open <trustchainurl> <trustchainid> (--user-token=<usertoken>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-key=<unlockkey>] [--unlock-password=<unlockpassword>] <userid>
+      tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
+      tcli open <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-key=<unlockkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli --help
@@ -86,7 +86,7 @@ std::string createUserToken(MainArgs const& args)
 {
   auto const trustchainId = args.at("<trustchainid>").asString();
   auto const userId = args.at("<userid>").asString();
-  return Tanker::UserToken::generateUserToken(
+  return Tanker::Identity::generateUserToken(
       trustchainId,
       args.at(TrustchainPrivateKeyOpt).asString(),
       Tanker::SUserId{userId});
@@ -97,7 +97,7 @@ AsyncCorePtr openTanker(MainArgs const& args)
   auto const trustchainId = args.at("<trustchainid>").asString();
   auto const userId = args.at("<userid>").asString();
 
-  auto const userTokenFile = userId + ".usertoken";
+  auto const userTokenFile = userId + ".identity";
 
   auto const savedUserToken = readfile(userTokenFile);
 
@@ -107,7 +107,7 @@ AsyncCorePtr openTanker(MainArgs const& args)
     else if (!savedUserToken.empty())
       return savedUserToken;
     else
-      return Tanker::UserToken::generateUserToken(
+      return Tanker::Identity::generateUserToken(
           trustchainId,
           args.at(TrustchainPrivateKeyOpt).asString(),
           Tanker::SUserId{userId});
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
   {
     auto const core = openTanker(args);
   }
-  else if (args.at("createusertoken").asBool())
+  else if (args.at("createidentity").asBool())
   {
     std::cout << createUserToken(args) << std::endl;
   }

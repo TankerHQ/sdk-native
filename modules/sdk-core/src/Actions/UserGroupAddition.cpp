@@ -7,7 +7,7 @@
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>

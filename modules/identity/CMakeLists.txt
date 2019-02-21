@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.4)
 
-project(tankerusertoken)
+project(tankeridentity)
 
-add_library(tankerusertoken STATIC
-  include/Tanker/UserToken/UserToken.hpp
-  include/Tanker/UserToken/Delegation.hpp
+add_library(tankeridentity STATIC
+  include/Tanker/Identity/UserToken.hpp
+  include/Tanker/Identity/Delegation.hpp
 
   src/UserToken.cpp
   src/Delegation.cpp
 )
 
-target_include_directories(tankerusertoken
+target_include_directories(tankeridentity
   PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/include
   PUBLIC
@@ -20,10 +20,10 @@ target_include_directories(tankerusertoken
 
 install(DIRECTORY include DESTINATION .)
 
-target_link_libraries(tankerusertoken tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite)
+target_link_libraries(tankeridentity tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite)
 
-install(TARGETS tankerusertoken
-  EXPORT tankerusertoken
+install(TARGETS tankeridentity
+  EXPORT tankeridentity
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib

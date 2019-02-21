@@ -91,7 +91,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE_THROWS(TC_AWAIT(
       tanker.open("alice"_uid,
-                  UserToken::generateUserToken(
+                  Identity::generateUserToken(
                       base64::encode(trustchain.id()),
                       base64::encode(trustchain.signatureKeys().privateKey),
                       "bob"_uid))));

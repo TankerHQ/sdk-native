@@ -14,7 +14,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 struct Delegation;
 }
@@ -33,37 +33,37 @@ public:
   DeviceId const& deviceId() const;
 
   std::vector<uint8_t> addUser(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
   std::vector<uint8_t> addUser1(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey) const;
   std::vector<uint8_t> addUser3(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
   std::vector<uint8_t> addDevice(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
   std::vector<uint8_t> addDevice1(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey) const;
   std::vector<uint8_t> addDevice3(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
   std::vector<uint8_t> addGhostDevice(
-      UserToken::Delegation const& delegation,
+      Identity::Delegation const& delegation,
       Crypto::PublicSignatureKey const& signatureKey,
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;

@@ -5,7 +5,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 
 #include <string>
 

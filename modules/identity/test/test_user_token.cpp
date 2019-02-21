@@ -1,7 +1,7 @@
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
-#include <Tanker/UserToken/UserToken.hpp>
 
 #include <doctest.h>
 #include <gsl-lite.hpp>
@@ -16,7 +16,7 @@
 namespace Tanker
 {
 using namespace type_literals;
-namespace UserToken
+namespace Identity
 {
 namespace
 {
@@ -90,7 +90,7 @@ TEST_CASE("Generate user token (string version)")
     CHECK_THROWS_AS(generateUserToken("trustchainID", "", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should generate a UserToken")
+  SUBCASE("should generate a Identity")
   {
     auto const userTokenString =
         generateUserToken(trustchainIdString, privateKeyString, "alice"_uid);
@@ -111,7 +111,7 @@ TEST_CASE("Generate user token")
     auto const clearStr = base64::decode(userToken2);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr));
   }
-  SUBCASE("should be able to be deserialize in UserToken")
+  SUBCASE("should be able to be deserialize in Identity")
   {
     auto const userTokenString = generateUserToken(privateKey, userId);
     auto const clearStr = base64::decode(userTokenString);
@@ -155,7 +155,7 @@ TEST_CASE("User Token")
     CHECK(userToken.delegation.signature == signature);
     CHECK(userToken.userSecret == userSecret);
   }
-  SUBCASE("We can get back the same string from the UserToken")
+  SUBCASE("We can get back the same string from the Identity")
   {
     UserToken const token{{{publicKey, privateKey}, userId, signature},
                           userSecret};

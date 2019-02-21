@@ -31,7 +31,7 @@ add_library(ctanker ${tankerlib_type}
   src/groups.cpp
 )
 
-target_link_libraries(ctanker PUBLIC tankercore tankercrypto tankerusertoken)
+target_link_libraries(ctanker PUBLIC tankercore tankercrypto tankeridentity)
 target_include_directories(ctanker
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

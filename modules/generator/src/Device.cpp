@@ -11,7 +11,7 @@
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -29,7 +29,7 @@ Device::Device(BuildFrom, Device const& d)
     bgen{d.bgen}, // deviceId will be fixed later
     userId{d.userId},
     obfuscatedId{d.obfuscatedId},
-    delegation{UserToken::makeDelegation(obfuscatedId, d.sigKeys.privateKey)},
+    delegation{Identity::makeDelegation(obfuscatedId, d.sigKeys.privateKey)},
     author{d.deviceId},
     buffer{bgen.addDevice(
         delegation, sigKeys.publicKey, encKeys.publicKey, d.userKeys)},
@@ -45,7 +45,7 @@ Device::Device(Ghost, Device const& d)
     bgen{d.bgen}, // deviceId will be fixed later
     userId{d.userId},
     obfuscatedId{d.obfuscatedId},
-    delegation{UserToken::makeDelegation(obfuscatedId, d.sigKeys.privateKey)},
+    delegation{Identity::makeDelegation(obfuscatedId, d.sigKeys.privateKey)},
     author{d.deviceId},
     buffer{bgen.addGhostDevice(
         delegation, sigKeys.publicKey, encKeys.publicKey, d.userKeys)},
@@ -63,7 +63,7 @@ Device::Device(SUserId const& uid,
     bgen{trustchainId, sigKeys.privateKey, {}},
     userId{uid},
     obfuscatedId{obfuscateUserId(uid, trustchainId)},
-    delegation{UserToken::makeDelegation(obfuscatedId, trustchainPrivateKey)},
+    delegation{Identity::makeDelegation(obfuscatedId, trustchainPrivateKey)},
     author{std::move(trustchainId)},
     buffer{bgen.addUser(
         delegation, sigKeys.publicKey, encKeys.publicKey, userKeys)},

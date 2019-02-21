@@ -1,9 +1,9 @@
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -14,7 +14,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 std::vector<uint8_t> userSecretHash(gsl::span<uint8_t const> secretRand,
                                     UserId const& userId)

@@ -16,7 +16,7 @@ User::User(std::string trustchainUrl,
   Crypto::Hash buf;
   Crypto::randomFill(buf);
   _userId = SUserId{base64::encode(gsl::make_span(buf).subspan(0, 8))};
-  _userToken = UserToken::generateUserToken(
+  _userToken = Identity::generateUserToken(
       _trustchainId, trustchainPrivateSignatureKey, _userId);
 }
 
