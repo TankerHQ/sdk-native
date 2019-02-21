@@ -1,5 +1,5 @@
 add_executable(test_identity
-  test_user_token.cpp
+  test_identity.cpp
   main.cpp
 )
 

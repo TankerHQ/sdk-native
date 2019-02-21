@@ -1,6 +1,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/UserToken.hpp>
+#include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <doctest.h>

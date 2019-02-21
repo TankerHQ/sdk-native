@@ -8,6 +8,9 @@
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/UserToken.hpp>
+#include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
@@ -17,8 +20,6 @@
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
-#include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Identity/UserToken.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <fmt/format.h>

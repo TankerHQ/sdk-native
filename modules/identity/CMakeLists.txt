@@ -5,9 +5,11 @@ project(tankeridentity)
 add_library(tankeridentity STATIC
   include/Tanker/Identity/UserToken.hpp
   include/Tanker/Identity/Delegation.hpp
+  include/Tanker/Identity/Utils.hpp
 
   src/UserToken.cpp
   src/Delegation.cpp
+  src/Utils.cpp
 )
 
 target_include_directories(tankeridentity
