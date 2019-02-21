@@ -6,10 +6,14 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/UserToken.hpp
   include/Tanker/Identity/Delegation.hpp
   include/Tanker/Identity/Utils.hpp
+  include/Tanker/Identity/Identity.hpp
+  include/Tanker/Identity/PublicIdentity.hpp
 
   src/UserToken.cpp
   src/Delegation.cpp
   src/Utils.cpp
+  src/Identity.cpp
+  src/PublicIdentity.cpp
 )
 
 target_include_directories(tankeridentity
@@ -30,6 +34,8 @@ install(TARGETS tankeridentity
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
+
+install(DIRECTORY include DESTINATION .)
 
 if(BUILD_TESTS)
   enable_testing()

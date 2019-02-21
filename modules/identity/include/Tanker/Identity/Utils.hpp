@@ -19,5 +19,8 @@ UserToken extract(std::string const& userToken);
 UserToken generateUserToken(
     Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     UserId const& userId);
+
+template <typename I>
+I from_string(std::string const&);
 }
 }
