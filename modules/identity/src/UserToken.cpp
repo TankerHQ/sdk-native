@@ -25,7 +25,7 @@ std::string generateUserToken(std::string const& trustchainIdString,
   if (trustchainPrivateKey.empty())
     throw std::invalid_argument("Empty trustchainPrivateKey");
 
-  auto const trustchainId = base64::decode<UserId>(trustchainIdString);
+  auto const trustchainId = base64::decode<TrustchainId>(trustchainIdString);
   return generateUserToken(
       base64::decode<Tanker::Crypto::PrivateSignatureKey>(trustchainPrivateKey),
       Tanker::obfuscateUserId(userId, trustchainId));
