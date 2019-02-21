@@ -26,9 +26,12 @@ std::string generateUserToken(std::string const& trustchainIdString,
     throw std::invalid_argument("Empty trustchainPrivateKey");
 
   auto const trustchainId = base64::decode<TrustchainId>(trustchainIdString);
-  return generateUserToken(
-      base64::decode<Tanker::Crypto::PrivateSignatureKey>(trustchainPrivateKey),
-      Tanker::obfuscateUserId(userId, trustchainId));
+  return base64::encode(
+      nlohmann::json(
+          generateUserToken(base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+                                trustchainPrivateKey),
+                            Tanker::obfuscateUserId(userId, trustchainId)))
+          .dump());
 }
 
 void from_json(nlohmann::json const& j, UserToken& result)

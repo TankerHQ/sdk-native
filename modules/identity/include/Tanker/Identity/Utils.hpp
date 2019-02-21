@@ -16,7 +16,7 @@ Tanker::Crypto::SymmetricKey generateUserSecret(UserId const& userId);
 
 UserToken extract(std::string const& userToken);
 
-std::string generateUserToken(
+UserToken generateUserToken(
     Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     UserId const& userId);
 }

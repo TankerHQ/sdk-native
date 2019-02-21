@@ -91,40 +91,12 @@ TEST_CASE("Generate user token (string version)")
     CHECK_THROWS_AS(generateUserToken("trustchainID", "", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should generate a Identity")
+  SUBCASE("should generate a UserToken")
   {
     auto const userTokenString =
         generateUserToken(trustchainIdString, privateKeyString, "alice"_uid);
     auto const clearStr = base64::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
-  }
-}
-TEST_CASE("Generate user token")
-{
-  SUBCASE("Should return a base64 string")
-  {
-    auto const userToken2 = generateUserToken(privateKey, userId);
-    CHECK_NOTHROW(base64::decode(userToken2));
-  }
-  SUBCASE("should be json format")
-  {
-    auto const userToken2 = generateUserToken(privateKey, userId);
-    auto const clearStr = base64::decode(userToken2);
-    CHECK_NOTHROW(nlohmann::json::parse(clearStr));
-  }
-  SUBCASE("should be able to be deserialize in Identity")
-  {
-    auto const userTokenString = generateUserToken(privateKey, userId);
-    auto const clearStr = base64::decode(userTokenString);
-    CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
-  }
-  SUBCASE("user secret have good format")
-  {
-    auto const userTokenString = generateUserToken(privateKey, userId);
-    auto const clearStr = base64::decode(userTokenString);
-    auto const userToken2 = nlohmann::json::parse(clearStr).get<UserToken>();
-
-    CHECK_NOTHROW(checkUserSecret(userToken2.userSecret, userId));
   }
 }
 
@@ -156,7 +128,7 @@ TEST_CASE("User Token")
     CHECK(userToken.delegation.signature == signature);
     CHECK(userToken.userSecret == userSecret);
   }
-  SUBCASE("We can get back the same string from the Identity")
+  SUBCASE("We can get back the same string from the UserToken")
   {
     UserToken const token{{{publicKey, privateKey}, userId, signature},
                           userSecret};

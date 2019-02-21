@@ -32,15 +32,14 @@ UserToken extract(std::string const& token)
   return nlohmann::json::parse(base64::decode(token)).get<UserToken>();
 }
 
-std::string generateUserToken(
+UserToken generateUserToken(
     Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     UserId const& obfuscatedUserId)
 {
   UserToken userToken{};
   userToken.delegation = makeDelegation(obfuscatedUserId, trustchainPrivateKey);
   userToken.userSecret = generateUserSecret(obfuscatedUserId);
-
-  return base64::encode(nlohmann::json(userToken).dump());
+  return userToken;
 }
 }
 }
