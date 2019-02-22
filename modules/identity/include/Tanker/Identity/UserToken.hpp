@@ -1,17 +1,12 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Types/SUserId.hpp>
+#include <Tanker/Types/TrustchainId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/base64_url.hpp>
-#include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-#include <cstdint>
 #include <string>
-#include <vector>
 
 namespace Tanker
 {
