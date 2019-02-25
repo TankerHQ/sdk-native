@@ -28,18 +28,35 @@ nonstd::optional<T> nullableToOpt(char const* str)
     return nonstd::nullopt;
 }
 
-#define UNLOCK_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "UNLOCK enums not in sync")
+#define STATIC_ENUM_CHECK(cval, cppval)           \
+  static_assert(cval == static_cast<int>(cppval), \
+                "enum values not in sync: " #cval " and " #cppval)
 
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+// Unlock
 
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
-#undef UNLOCK_ENUM_CHECK
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
 
 static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
               "Please update the event assertions above if you added a new "
               "unlock methods");
+
+// Status
+
+STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
+STATIC_ENUM_CHECK(TANKER_STATUS_USER_CREATION, Status::UserCreation);
+STATIC_ENUM_CHECK(TANKER_STATUS_DEVICE_CREATION, Status::DeviceCreation);
+STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
+
+STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
+
+static_assert(
+    TANKER_STATUS_LAST == 5,
+    "Please update the status assertions above if you added a new status");
+
+#undef STATIC_ENUM_CHECK
 }
 
 char const* tanker_version_string(void)
@@ -152,22 +169,6 @@ tanker_future_t* tanker_close(tanker_t* ctanker)
 
 enum tanker_status tanker_get_status(tanker_t* ctanker)
 {
-#define STATIC_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "Status enums not in sync")
-
-  STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
-  STATIC_ENUM_CHECK(TANKER_STATUS_USER_CREATION, Status::UserCreation);
-  STATIC_ENUM_CHECK(TANKER_STATUS_DEVICE_CREATION, Status::DeviceCreation);
-  STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
-
-  STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
-
-#undef STATIC_ENUM_CHECK
-
-  static_assert(
-      TANKER_STATUS_LAST == 5,
-      "Please update the status assertions above if you added a new status");
-
   return static_cast<tanker_status>(
       reinterpret_cast<AsyncCore*>(ctanker)->status());
 }
