@@ -135,11 +135,17 @@ TEST_CASE("ugprade a user token to an identity")
   SUBCASE("We can upgrade a userToken to an identity")
   {
     auto identity = extract<Identity>(
-        upgradeUserToken(trustchainIdString, GOOD_USER_TOKEN));
+        upgradeUserToken(trustchainIdString, suserId, GOOD_USER_TOKEN));
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
     CHECK_NOTHROW(checkUserSecret(identity.userSecret, obfuscatedUserId));
+  }
+  SUBCASE("should throw when upgrading the wrong userId")
+  {
+    CHECK_THROWS_AS(
+        upgradeUserToken(trustchainIdString, "herbert"_uid, GOOD_USER_TOKEN),
+        std::invalid_argument);
   }
 }
 

@@ -44,16 +44,22 @@ std::string createIdentity(std::string const& trustchainIdParam,
 }
 
 Identity upgradeUserToken(TrustchainId const& trustchainId,
+                          UserId const& userId,
                           UserToken const& userToken)
 {
+  if (userToken.delegation.userId != userId)
+    throw std::invalid_argument("Wrong userId provided");
   return Identity(std::move(userToken), std::move(trustchainId));
 }
 
-std::string upgradeUserToken(std::string const& trustchainId,
-                             std::string const& userToken)
+std::string upgradeUserToken(std::string const& strustchainId,
+                             SUserId const& suserId,
+                             std::string const& suserToken)
 {
-  return to_string(upgradeUserToken(base64::decode<TrustchainId>(trustchainId),
-                                    extract<UserToken>(userToken)));
+  auto const trustchainId = base64::decode<TrustchainId>(strustchainId);
+  auto const userId = Tanker::obfuscateUserId(suserId, trustchainId);
+  auto const userToken = extract<UserToken>(suserToken);
+  return to_string(upgradeUserToken(trustchainId, userId, userToken));
 }
 
 void from_json(nlohmann::json const& j, Identity& identity)

@@ -43,9 +43,11 @@ std::string createIdentity(std::string const& trustchainId,
                            SUserId const& userId);
 
 Identity upgradeUserToken(TrustchainId const& trustchainId,
+                          UserId const& userId,
                           UserToken const& userToken);
 
 std::string upgradeUserToken(std::string const& trustchainId,
+                             SUserId const& suserId,
                              std::string const& userToken);
 }
 }

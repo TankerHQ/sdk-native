@@ -23,11 +23,14 @@ tanker_expected_t* tanker_create_identity(b64char const* trustchain_id,
 /*!
  * Upgrade a UserToken to an Identity
  * \param trustchain_id the ID of the trustchain
+ * \param user_id the user for whom the token is upgraded
  * \param user_token the user token you want to upgrade
  * \return an expected of base64-encoded identity (b64char*)
  * \post the identity must be freed with tanker_free_buffer()
+ * \throws TANKER_INVALID_ARGUMENT if the wrong userId is provided
  */
 tanker_expected_t* tanker_upgrade_user_token(b64char const* trustchain_id,
+                                             char const* user_id,
                                              b64char const* user_token);
 
 /*!
