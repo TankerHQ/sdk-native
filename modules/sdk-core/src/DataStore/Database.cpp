@@ -159,13 +159,13 @@ bool Database::isMigrationNeeded()
 {
   FUNC_TIMER(DB);
   auto const deviceCount = [&] {
-    ContactDevicesTable tab;
+    ContactDevicesTable tab{};
     auto rows = (*_db)(select(count(tab.id)).from(tab).unconditionally());
     auto const& row = *rows.begin();
     return int(row.count);
   }();
   auto const blockCount = [&] {
-    TrustchainTable tab;
+    TrustchainTable tab{};
     auto rows = (*_db)(select(count(tab.hash)).from(tab).unconditionally());
     auto const& row = *rows.begin();
     return int(row.count);
@@ -199,7 +199,7 @@ tc::cotask<void> Database::nuke()
 {
   FUNC_TIMER(DB);
   flushAllCaches();
-  DeviceKeysTable tab;
+  DeviceKeysTable tab{};
   (*_db)(remove_from(tab).unconditionally());
   TC_RETURN();
 }
@@ -234,7 +234,7 @@ tc::cotask<void> Database::putUserPrivateKey(
     Crypto::PrivateEncryptionKey const& privateKey)
 {
   FUNC_TIMER(DB);
-  UserKeysTable tab;
+  UserKeysTable tab{};
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.public_encryption_key = publicKey.base(),
       tab.private_encryption_key = privateKey.base()));
@@ -245,7 +245,7 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
     Crypto::PublicEncryptionKey const& publicKey)
 {
   FUNC_TIMER(DB);
-  UserKeysTable tab;
+  UserKeysTable tab{};
 
   auto rows = (*_db)(select(tab.private_encryption_key)
                          .from(tab)
@@ -265,7 +265,7 @@ tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
 Database::getUserOptLastKeyPair()
 {
   FUNC_TIMER(DB);
-  UserKeysTable tab;
+  UserKeysTable tab{};
 
   auto rows =
       (*_db)(select(tab.public_encryption_key, tab.private_encryption_key)
@@ -287,7 +287,7 @@ Database::getUserOptLastKeyPair()
 tc::cotask<uint64_t> Database::getTrustchainLastIndex()
 {
   FUNC_TIMER(DB);
-  TrustchainTable tab;
+  TrustchainTable tab{};
   TC_RETURN(
       (*_db)(select(max(tab.idx)).from(tab).unconditionally()).front().max);
 }
@@ -295,7 +295,7 @@ tc::cotask<uint64_t> Database::getTrustchainLastIndex()
 tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
 {
   FUNC_TIMER(DB);
-  TrustchainTable tab;
+  TrustchainTable tab{};
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.idx = entry.index,
       tab.nature = static_cast<unsigned>(entry.action.nature()),
@@ -331,7 +331,7 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
     Crypto::Hash const& hash)
 {
   FUNC_TIMER(DB);
-  TrustchainTable tab;
+  TrustchainTable tab{};
 
   auto rows =
       (*_db)(select(all_of(tab)).from(tab).where(tab.hash == hash.base()));
@@ -344,7 +344,7 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
 tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
                                            Crypto::Mac const& resourceId)
 {
-  TrustchainResourceIdToKeyPublishTable tab;
+  TrustchainResourceIdToKeyPublishTable tab{};
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.resource_id = resourceId.base(), tab.hash = hash.base()));
   TC_RETURN();
@@ -355,7 +355,7 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainKeyPublish(
 {
   FUNC_TIMER(DB);
   TrustchainResourceIdToKeyPublishTable tab_index;
-  TrustchainTable tab_trustchain;
+  TrustchainTable tab_trustchain{};
   auto rows = (*_db)(select(tab_trustchain.idx,
                             tab_trustchain.author,
                             tab_trustchain.nature,
@@ -428,7 +428,7 @@ tc::cotask<void> Database::putContact(
     nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
 {
   FUNC_TIMER(DB);
-  ContactUserKeysTable tab;
+  ContactUserKeysTable tab{};
 
   if (publicKey)
   {
@@ -450,7 +450,7 @@ tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
 Database::findContactUserKey(UserId const& userId)
 {
   FUNC_TIMER(DB);
-  ContactUserKeysTable tab;
+  ContactUserKeysTable tab{};
   auto rows = (*_db)(select(tab.public_encryption_key)
                          .from(tab)
                          .where(tab.user_id == userId.base()));
@@ -471,7 +471,7 @@ Database::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
   FUNC_TIMER(DB);
-  ContactUserKeysTable tab;
+  ContactUserKeysTable tab{};
   auto rows =
       (*_db)(select(tab.user_id)
                  .from(tab)
@@ -489,7 +489,7 @@ tc::cotask<void> Database::setContactPublicEncryptionKey(
     UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
 {
   FUNC_TIMER(DB);
-  ContactUserKeysTable tab;
+  ContactUserKeysTable tab{};
   (*_db)(update(tab)
              .set(tab.public_encryption_key = userPublicKey.base())
              .where(tab.user_id == userId.base()));
@@ -500,7 +500,7 @@ tc::cotask<void> Database::putResourceKey(Crypto::Mac const& mac,
                                           Crypto::SymmetricKey const& key)
 {
   FUNC_TIMER(DB);
-  ResourceKeysTable tab;
+  ResourceKeysTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.mac = mac.base(), tab.resource_key = key.base()));
@@ -511,7 +511,7 @@ tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
     Crypto::Mac const& mac)
 {
   FUNC_TIMER(DB);
-  ResourceKeysTable tab;
+  ResourceKeysTable tab{};
   auto rows =
       (*_db)(select(tab.resource_key).from(tab).where(tab.mac == mac.base()));
   if (rows.empty())
@@ -524,7 +524,7 @@ tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
 tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
 {
   FUNC_TIMER(DB);
-  DeviceKeysTable tab;
+  DeviceKeysTable tab{};
   auto rows = (*_db)(select(tab.private_signature_key,
                             tab.public_signature_key,
                             tab.private_encryption_key,
@@ -550,7 +550,7 @@ tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
 tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
 {
   FUNC_TIMER(DB);
-  DeviceKeysTable tab;
+  DeviceKeysTable tab{};
   (*_db)(insert_into(tab).set(
       tab.private_signature_key = deviceKeys.signatureKeyPair.privateKey.base(),
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
@@ -564,7 +564,7 @@ tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
 tc::cotask<void> Database::setDeviceId(DeviceId const& deviceId)
 {
   FUNC_TIMER(DB);
-  DeviceKeysTable tab;
+  DeviceKeysTable tab{};
   (*_db)(update(tab).set(tab.device_id = deviceId.base()).unconditionally());
   TC_RETURN();
 }
@@ -572,7 +572,7 @@ tc::cotask<void> Database::setDeviceId(DeviceId const& deviceId)
 tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
 {
   FUNC_TIMER(DB);
-  ContactDevicesTable tab;
+  ContactDevicesTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.id = device.id.base(),
@@ -589,7 +589,7 @@ tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
 tc::cotask<nonstd::optional<Device>> Database::findDevice(DeviceId const& id)
 {
   FUNC_TIMER(DB);
-  ContactDevicesTable tab;
+  ContactDevicesTable tab{};
 
   auto rows = (*_db)(select(all_of(tab)).from(tab).where(tab.id == id.base()));
   if (rows.empty())
@@ -603,7 +603,7 @@ tc::cotask<nonstd::optional<Device>> Database::findDevice(DeviceId const& id)
 tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
 {
   FUNC_TIMER(DB);
-  ContactDevicesTable tab;
+  ContactDevicesTable tab{};
 
   auto rows =
       (*_db)(select(all_of(tab)).from(tab).where(tab.user_id == id.base()));
@@ -618,7 +618,7 @@ tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
     DeviceId const& id)
 {
   FUNC_TIMER(DB);
-  ContactDevicesTable tab;
+  ContactDevicesTable tab{};
 
   auto rows = (*_db)(select(tab.user_id).from(tab).where(tab.id == id.base()));
   if (rows.empty())
@@ -633,7 +633,7 @@ tc::cotask<void> Database::updateDeviceRevokedAt(DeviceId const& id,
                                                  uint64_t revokedAtBlkIndex)
 {
   FUNC_TIMER(DB);
-  ContactDevicesTable tab;
+  ContactDevicesTable tab{};
 
   (*_db)(update(tab)
              .set(tab.revoked_at_block_index = revokedAtBlkIndex)
@@ -701,7 +701,7 @@ tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
     GroupId const& groupId)
 {
   FUNC_TIMER(DB);
-  GroupsTable groups;
+  GroupsTable groups{};
 
   auto rows = (*_db)(select(all_of(groups))
                          .from(groups)
@@ -723,7 +723,7 @@ tc::cotask<nonstd::optional<ExternalGroup>>
 Database::findExternalGroupByGroupId(GroupId const& groupId)
 {
   FUNC_TIMER(DB);
-  GroupsTable groups;
+  GroupsTable groups{};
 
   auto rows = (*_db)(select(all_of(groups))
                          .from(groups)
@@ -742,7 +742,7 @@ Database::findFullGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);
-  GroupsTable groups;
+  GroupsTable groups{};
 
   auto rows = (*_db)(
       select(all_of(groups))
@@ -766,7 +766,7 @@ Database::findExternalGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);
-  GroupsTable groups;
+  GroupsTable groups{};
 
   auto rows = (*_db)(
       select(all_of(groups))

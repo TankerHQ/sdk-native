@@ -27,12 +27,11 @@ std::vector<uint8_t> copyToVector(const emscripten::val& typedArray)
 tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
 {
   tc::promise<emscripten::val> cpppromise;
-  auto const thenCb = OneArgFunction(
-      [=](emscripten::val const& value) mutable {
-        cpppromise.set_value(value);
-      });
-  auto const catchCb = OneArgFunction(
-      [=](emscripten::val const& error) mutable {
+  auto const thenCb = OneArgFunction([=](emscripten::val const& value) mutable {
+    cpppromise.set_value(value);
+  });
+  auto const catchCb =
+      OneArgFunction([=](emscripten::val const& error) mutable {
         std::string errorMsg;
         if (error.isNull())
           errorMsg = "null";
@@ -53,9 +52,7 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
 
 EMSCRIPTEN_BINDINGS(jshelpers)
 {
-  emscripten::class_<OneArgFunction>(
-      "NoargOrMaybeMoreFunction")
+  emscripten::class_<OneArgFunction>("NoargOrMaybeMoreFunction")
       .constructor<>()
-      .function("opcall",
-                &OneArgFunction::operator());
+      .function("opcall", &OneArgFunction::operator());
 }

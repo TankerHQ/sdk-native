@@ -43,7 +43,8 @@ TEST_CASE("BlockGenerator")
     auto const block = Serialization::deserialize<Block>(sblock);
     CHECK_EQ(block.author, trustchainId);
     auto const entry = blockToUnverifiedEntry(block);
-    auto const deviceCreation = mpark::get_if<DeviceCreation>(&entry.action.variant());
+    auto const deviceCreation =
+        mpark::get_if<DeviceCreation>(&entry.action.variant());
     REQUIRE(deviceCreation != nullptr);
     CHECK(deviceCreation->userId() == userId);
     CHECK(deviceCreation->publicSignatureKey() == mySignKeyPair.publicKey);

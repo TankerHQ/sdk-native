@@ -85,7 +85,7 @@ class TankerConan(ConanFile):
         if tools.cross_building(self.settings):
             del self.settings.compiler.libcxx
         if self.settings.os in ["Android", "iOS"]:
-            # On Android OpenSSL can't use system ca-certificates, so we ship mozilla's cacert.pem instead
+            # On Android and iOS OpenSSL can't use system ca-certificates, so we ship mozilla's cacert.pem instead
             self.options["socket.io-client-cpp"].embed_cacerts = True
 
     def build_requirements(self):
@@ -135,5 +135,8 @@ class TankerConan(ConanFile):
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
+
+        if self.settings.os == "Windows" and self.options.with_ssl:
+            libs.extend(["crypt32", "cryptui"])
 
         self.cpp_info.libs = libs

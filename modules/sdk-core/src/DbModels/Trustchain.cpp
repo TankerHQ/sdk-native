@@ -44,7 +44,7 @@ void base64ToBinary(DataStore::Connection& db)
   // we can retrieve BLOB even if stored value was TEXT
   using DataStore::extractBlob;
 
-  trustchain tab;
+  trustchain tab{};
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {

@@ -45,9 +45,8 @@ struct formatter<
 
   auto format(CryptoType const& c, format_context& ctx)
   {
-    return format_to(ctx.out(),
-                     "{:s}",
-                     format_crypto_array(c.base().begin(), c.base().size()));
+    return format_to(
+        ctx.out(), "{:s}", format_crypto_array(c.data(), c.size()));
   }
 };
 }

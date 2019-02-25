@@ -14,8 +14,7 @@ class GroupNotFoundBase
 {
 public:
   GroupNotFoundBase() = default;
-  GroupNotFoundBase(std::vector<GroupId> const& groupIds)
-    : _groupIds(groupIds)
+  GroupNotFoundBase(std::vector<GroupId> const& groupIds) : _groupIds(groupIds)
   {
   }
 
@@ -37,10 +36,10 @@ public:
   }
 
   GroupNotFound(std::string message, std::vector<GroupId> const& groupIds)
-    : Exception(Code::GroupNotFound, std::move(message)), GroupNotFoundBase(groupIds)
+    : Exception(Code::GroupNotFound, std::move(message)),
+      GroupNotFoundBase(groupIds)
   {
   }
 };
 }
 }
-

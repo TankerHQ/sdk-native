@@ -69,7 +69,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
   tanker_add_flags(CMAKE_C_FLAGS "-Wstrict-prototypes")
   set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type -Wno-c++17-extensions")
 elseif(MSVC)
-  set(COMMON_COMPILE_FLAGS "/MP")
+  set(COMMON_COMPILE_FLAGS "/MP /bigobj")
 endif()
 
 tanker_add_flags(CMAKE_C_FLAGS ${COMMON_COMPILE_FLAGS})

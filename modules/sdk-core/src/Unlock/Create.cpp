@@ -19,8 +19,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include <stdexcept>
 #include <cstdint>
+#include <stdexcept>
 
 namespace Tanker
 {

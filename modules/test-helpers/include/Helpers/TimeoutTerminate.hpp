@@ -9,9 +9,9 @@ namespace Tanker
 class TimeoutTerminate
 {
 public:
-  TimeoutTerminate(TimeoutTerminate&) = delete;
+  TimeoutTerminate(TimeoutTerminate&&) = delete;
   TimeoutTerminate(TimeoutTerminate const&) = delete;
-  TimeoutTerminate& operator=(TimeoutTerminate&) = delete;
+  TimeoutTerminate& operator=(TimeoutTerminate&&) = delete;
   TimeoutTerminate& operator=(TimeoutTerminate const&) = delete;
 
   TimeoutTerminate(std::chrono::steady_clock::duration timeout);

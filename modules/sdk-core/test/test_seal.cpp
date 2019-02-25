@@ -153,8 +153,8 @@ TEST_CASE("splitRange")
 
 TEST_CASE("removeFromRanges")
 {
-  std::vector<uint8_t> sealContent = {
-      Seal::defaultSealVersion(), 4, 1, 3, 4, 4};
+  std::vector<uint8_t> sealContent{
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 4, 1, 3, 4, 4};
   auto const key = Crypto::makeSymmetricKey();
   sealContent.insert(sealContent.end(), key.begin(), key.end());
   Seal testSeal = Seal::inflate(sealContent);
@@ -208,7 +208,7 @@ TEST_CASE("removeFromRanges")
 TEST_CASE("Update ranges after removing them")
 {
   std::vector<uint8_t> sealContent = {
-      Seal::defaultSealVersion(), 4, 1, 2, 4, 4};
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 4, 1, 2, 4, 4};
   Seal testSeal = Seal::inflate(sealContent);
 
   SUBCASE("Does nothing with no empty ranges")
@@ -243,7 +243,7 @@ TEST_CASE("Update ranges after removing them")
   SUBCASE("Updates ranges with multiple elements")
   {
     std::vector<uint8_t> sealContent = {
-        Seal::defaultSealVersion(), 4, 1, 3, 5, 5};
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 4, 1, 3, 5, 5};
     Seal seal = Seal::inflate(sealContent);
     std::vector<uint64_t> indexes({0, 2});
     seal.removeFromRanges(indexes);
@@ -258,7 +258,7 @@ TEST_CASE("Update ranges after removing them")
 TEST_CASE("Emplace Range")
 {
   std::vector<uint8_t> sealContent = {
-      Seal::defaultSealVersion(), 4, 1, 2, 4, 4};
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 4, 1, 2, 4, 4};
   Seal testSeal = Seal::inflate(sealContent);
 
   SUBCASE("Throws if range is not ordered")
@@ -330,7 +330,8 @@ TEST_CASE("Serialize")
 
   SUBCASE("Can serialize non empty seal")
   {
-    std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 0};
+    std::vector<uint8_t> sealContent = {
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 0};
     auto testSeal = Seal::inflate(sealContent);
     CHECK_NOTHROW(testSeal.serialize());
   }
@@ -338,7 +339,7 @@ TEST_CASE("Serialize")
   SUBCASE("Serialize and inflates leads to the same seal")
   {
     std::vector<uint8_t> sealContent = {
-        Seal::defaultSealVersion(), 4, 1, 3, 4, 4};
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 4, 1, 3, 4, 4};
     auto const key = Crypto::makeSymmetricKey();
     sealContent.insert(sealContent.end(), key.begin(), key.end());
     auto testSeal = Seal::inflate(sealContent);
@@ -359,14 +360,16 @@ TEST_CASE("Elements")
 
   SUBCASE("Size is right with only empty ranges")
   {
-    std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 2, 0, 1};
+    std::vector<uint8_t> sealContent = {
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 2, 0, 1};
     auto testSeal = Seal::inflate(sealContent);
     CHECK(testSeal.nbElements() == 2);
   }
 
   SUBCASE("Size is right with only keys")
   {
-    std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 0};
+    std::vector<uint8_t> sealContent = {
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 0};
     auto const key = Crypto::makeSymmetricKey();
     sealContent.insert(sealContent.end(), key.begin(), key.end());
     auto testSeal = Seal::inflate(sealContent);
@@ -375,7 +378,8 @@ TEST_CASE("Elements")
 
   SUBCASE("Size is right")
   {
-    std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 2, 0, 1};
+    std::vector<uint8_t> sealContent = {
+        static_cast<uint8_t>(Seal::defaultSealVersion()), 2, 0, 1};
     auto const key = Crypto::makeSymmetricKey();
     sealContent.insert(sealContent.end(), key.begin(), key.end());
     sealContent.insert(sealContent.end(), key.begin(), key.end());
@@ -386,7 +390,8 @@ TEST_CASE("Elements")
 
 TEST_CASE("ChunkAt")
 {
-  std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 2, 0, 1};
+  std::vector<uint8_t> sealContent = {
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 2, 0, 1};
   auto const key = Crypto::makeSymmetricKey();
   sealContent.insert(sealContent.end(), key.begin(), key.end());
   auto testSeal = Seal::inflate(sealContent);
@@ -409,7 +414,8 @@ TEST_CASE("ChunkAt")
 
 TEST_CASE("Remove")
 {
-  std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 2, 0, 1};
+  std::vector<uint8_t> sealContent = {
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 2, 0, 1};
   auto const key = Crypto::makeSymmetricKey();
   sealContent.insert(sealContent.end(), key.begin(), key.end());
   Seal testSeal = Seal::inflate(sealContent);
@@ -448,7 +454,8 @@ TEST_CASE("Remove")
 
 TEST_CASE("Add chunk at")
 {
-  std::vector<uint8_t> sealContent = {Seal::defaultSealVersion(), 2, 0, 1};
+  std::vector<uint8_t> sealContent = {
+      static_cast<uint8_t>(Seal::defaultSealVersion()), 2, 0, 1};
   auto const key = Crypto::makeSymmetricKey();
   sealContent.insert(sealContent.end(), key.begin(), key.end());
   Seal testSeal = Seal::inflate(sealContent);

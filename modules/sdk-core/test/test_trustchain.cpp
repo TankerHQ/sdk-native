@@ -238,7 +238,7 @@ TEST_CASE("trustchain migration")
 
       DataStore::createOrMigrateTable<TrustchainTable>(db);
 
-      TrustchainTable tab;
+      TrustchainTable tab{};
 
       auto const blocks = db(select(all_of(tab)).from(tab).unconditionally());
       auto const& rootBlock = blocks.front();
@@ -261,7 +261,7 @@ TEST_CASE("trustchain migration")
 
       DataStore::createOrMigrateTable<TrustchainIndexesTable>(db);
 
-      TrustchainIndexesTable tab;
+      TrustchainIndexesTable tab{};
 
       auto const indexes = db(select(all_of(tab)).from(tab).unconditionally());
       auto const& index = indexes.front();

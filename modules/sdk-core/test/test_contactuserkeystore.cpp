@@ -108,7 +108,7 @@ TEST_CASE("contact user keys migration")
 
   SUBCASE("Migration from version 1 should convert from base64")
   {
-    ContactUserKeysTable tab;
+    ContactUserKeysTable tab{};
 
     auto const oldKeys = setupContactUserKeysMigration(db);
 
@@ -128,7 +128,7 @@ TEST_CASE("contact user keys migration")
 
   SUBCASE("Migration from version 2 should allow null public encryption keys")
   {
-    ContactUserKeysTable tab;
+    ContactUserKeysTable tab{};
 
     CHECK_NOTHROW(
         db(insert_into(tab).set(tab.user_id = make<UserId>("unexistent").base(),
