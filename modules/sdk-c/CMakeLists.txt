@@ -54,3 +54,6 @@ install(TARGETS ctanker
 )
 
 install(DIRECTORY include DESTINATION .)
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()
