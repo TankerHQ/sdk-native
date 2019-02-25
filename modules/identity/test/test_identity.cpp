@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Identity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
@@ -112,7 +113,7 @@ TEST_CASE("generate Identity")
   }
   SUBCASE("We can construct an identity from a good string")
   {
-    auto identity = from_string<Identity>(GOOD_IDENTITY);
+    auto identity = extract<Identity>(GOOD_IDENTITY);
     CHECK(identity.delegation.ephemeralKeyPair.publicKey == publicKey);
     CHECK(identity.delegation.ephemeralKeyPair.privateKey == privateKey);
     CHECK(identity.delegation.userId == userId);
@@ -124,7 +125,7 @@ TEST_CASE("generate Identity")
     auto const identity = Identity(
         UserToken{{{publicKey, privateKey}, userId, signature}, userSecret},
         trustchainId);
-    auto const identity2 = from_string<Identity>(to_string(identity));
+    auto const identity2 = extract<Identity>(to_string(identity));
     CHECK(identity == identity2);
   }
 }
@@ -133,7 +134,7 @@ TEST_CASE("ugprade a user token to an identity")
 {
   SUBCASE("We can upgrade a userToken to an identity")
   {
-    auto identity = from_string<Identity>(
+    auto identity = extract<Identity>(
         upgradeUserToken(trustchainIdString, GOOD_USER_TOKEN));
     CHECK(identity.delegation.ephemeralKeyPair.publicKey == publicKey);
     CHECK(identity.delegation.ephemeralKeyPair.privateKey == privateKey);
@@ -151,7 +152,7 @@ TEST_CASE("get a public identity")
   SUBCASE("get a public identity from a normal identity")
   {
     auto const publicIdentityStr = getPublicIdentity(identityStr);
-    auto const publicIdentity = from_string<PublicIdentity>(publicIdentityStr);
+    auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
     auto* p = mpark::get_if<PublicNormalIdentity>(&publicIdentity);
     CHECK(p);

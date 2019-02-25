@@ -9,6 +9,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log.hpp>
@@ -52,7 +53,7 @@ tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
                                          std::string const& b64UserToken)
 {
   SCOPE_TIMER("opener_open", Proc);
-  auto const userToken = Identity::extract(b64UserToken);
+  auto const userToken = Identity::extract<Identity::UserToken>(b64UserToken);
 
   _userId = userToken.delegation.userId;
   _userSecret = userToken.userSecret;

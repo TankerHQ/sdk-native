@@ -27,11 +27,6 @@ Crypto::SymmetricKey generateUserSecret(UserId const& userId)
   return random;
 }
 
-UserToken extract(std::string const& token)
-{
-  return nlohmann::json::parse(base64::decode(token)).get<UserToken>();
-}
-
 UserToken generateUserToken(
     Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     UserId const& obfuscatedUserId)

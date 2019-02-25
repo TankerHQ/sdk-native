@@ -1,5 +1,6 @@
 #include <Tanker/Identity/Identity.hpp>
 
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 
 #include <Tanker/Types/TrustchainId.hpp>
@@ -52,7 +53,7 @@ std::string upgradeUserToken(std::string const& trustchainId,
                              std::string const& userToken)
 {
   return to_string(upgradeUserToken(base64::decode<TrustchainId>(trustchainId),
-                                    extract(userToken)));
+                                    extract<UserToken>(userToken)));
 }
 
 void from_json(nlohmann::json const& j, Identity& identity)
@@ -88,12 +89,6 @@ void to_json(nlohmann::json& j, Identity const& identity)
 std::string to_string(Identity const& identity)
 {
   return base64::encode(nlohmann::json(identity).dump());
-}
-
-template <>
-Identity from_string(std::string const& s)
-{
-  return nlohmann::json::parse(base64::decode(s)).get<Identity>();
 }
 }
 }

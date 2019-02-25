@@ -48,11 +48,5 @@ std::string to_string(PublicIdentity const& identity)
 {
   return base64::encode(nlohmann::json(identity).dump());
 }
-
-template <>
-PublicIdentity from_string(std::string const& s)
-{
-  return nlohmann::json::parse(base64::decode(s)).get<PublicIdentity>();
-}
 }
 }

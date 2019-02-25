@@ -29,7 +29,5 @@ std::string getPublicIdentity(std::string const& identity);
 void from_json(nlohmann::json const& j, PublicIdentity& result);
 void to_json(nlohmann::json& j, PublicIdentity const& identity);
 std::string to_string(PublicIdentity const& identity);
-template <>
-PublicIdentity from_string(std::string const&);
 }
 }

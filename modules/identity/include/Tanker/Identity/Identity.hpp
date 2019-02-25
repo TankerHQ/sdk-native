@@ -34,9 +34,6 @@ void from_json(nlohmann::json const& j, Identity& result);
 void to_json(nlohmann::json& j, Identity const& identity);
 std::string to_string(Identity const& identity);
 
-template <>
-Identity from_string(std::string const&);
-
 Identity createIdentity(TrustchainId const& trustchainId,
                         Crypto::PrivateSignatureKey const& trustchainPrivateKey,
                         UserId const& userId);
