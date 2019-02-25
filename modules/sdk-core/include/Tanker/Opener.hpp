@@ -6,7 +6,6 @@
 #include <Tanker/Identity/Identity.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
-#include <Tanker/Status.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
@@ -57,8 +56,6 @@ public:
 
   Opener(std::string url, SdkInfo info, std::string writablePath);
 
-  Status status() const;
-
   tc::cotask<OpenResult> open(std::string const& b64Identity,
                               SignInOptions const& signInOptions,
                               OpenMode mode);
@@ -75,8 +72,6 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
-
-  Status _status = Status::Closed;
 
   Session::Config makeConfig();
   tc::cotask<OpenResult> createUser();
