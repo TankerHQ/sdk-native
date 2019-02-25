@@ -35,15 +35,9 @@ TEST_SUITE("EncryptorV2")
     CHECK(EncryptionFormat::EncryptorV2::decryptedSize(a42) == 42);
   }
 
-  TEST_CASE(
-      "decryptedSize should throw if the version is unsupported or the buffer "
-      "is truncated")
+  TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
-    auto const unsupportedBuffer = make_buffer("\42aaaaaaaaa");
     auto const truncatedBuffer = make_buffer("\2");
-    CHECK_THROWS_AS(
-        EncryptionFormat::EncryptorV2::decryptedSize(unsupportedBuffer),
-        Error::DecryptFailed);
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV2::decryptedSize(truncatedBuffer),
         Error::DecryptFailed);
@@ -174,15 +168,9 @@ TEST_SUITE("EncryptorV3")
     CHECK(EncryptionFormat::EncryptorV3::decryptedSize(a42) == 42);
   }
 
-  TEST_CASE(
-      "decryptedSize should throw if the version is unsupported or the buffer "
-      "is truncated")
+  TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
-    auto const unsupportedBuffer = make_buffer("\62aaaaaaaaa");
     auto const truncatedBuffer = make_buffer("\3");
-    CHECK_THROWS_AS(
-        EncryptionFormat::EncryptorV3::decryptedSize(unsupportedBuffer),
-        Error::DecryptFailed);
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV3::decryptedSize(truncatedBuffer),
         Error::DecryptFailed);
