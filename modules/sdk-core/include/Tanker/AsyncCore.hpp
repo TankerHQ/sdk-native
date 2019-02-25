@@ -39,7 +39,7 @@ using expected = tc::future<T>;
 
 enum class Event
 {
-  SessionClosed = 1,
+  SessionClosed,
   DeviceCreated,
   DeviceRevoked,
 

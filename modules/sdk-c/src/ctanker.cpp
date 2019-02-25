@@ -68,6 +68,18 @@ static_assert(
     TANKER_SIGN_IN_RESULT_LAST == 3,
     "Please update the result assertions above if you added a new result");
 
+// Event
+
+STATIC_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
+STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
+STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
+
+STATIC_ENUM_CHECK(TANKER_EVENT_LAST, Event::Last);
+
+static_assert(
+    TANKER_EVENT_LAST == 3,
+    "Please update the event assertions above if you added a new event");
+
 #undef STATIC_ENUM_CHECK
 }
 
@@ -128,19 +140,6 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
                                         tanker_event_callback_t cb,
                                         void* data)
 {
-#define EVENT_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "Event enums not in sync")
-
-  EVENT_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
-  EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
-  EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
-
-#undef EVENT_ENUM_CHECK
-
-  static_assert(
-      TANKER_EVENT_LAST == 3,
-      "Please update the event assertions above if you added a new event");
-
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
       tanker->connectEvent(static_cast<Event>(event), cb, data)
