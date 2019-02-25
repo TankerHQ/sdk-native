@@ -25,12 +25,10 @@ enum class Code
   Other,
   InvalidTankerStatus,
   ServerError,
-  Unused1,
   InvalidArgument,
   ResourceKeyNotFound,
   UserNotFound,
   DecryptFailed,
-  InvalidUnlockEventHandler,
   InvalidUnlockKey,
   InternalError,
   InvalidUnlockPassword,
@@ -87,7 +85,6 @@ DECLARE_ERROR(InvalidArgument);
 DECLARE_ERROR(ResourceKeyNotFound);
 // UserNotFound has its own header
 DECLARE_ERROR(DecryptFailed);
-DECLARE_ERROR(InvalidUnlockEventHandler);
 DECLARE_ERROR(InvalidUnlockKey);
 DECLARE_ERROR(InternalError);
 DECLARE_ERROR(InvalidUnlockPassword);

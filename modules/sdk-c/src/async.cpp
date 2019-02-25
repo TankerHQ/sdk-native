@@ -63,7 +63,6 @@ CHECK_ENUM(SERVER_ERROR, ServerError);
 CHECK_ENUM(RESOURCE_KEY_NOT_FOUND, ResourceKeyNotFound);
 CHECK_ENUM(USER_NOT_FOUND, UserNotFound);
 CHECK_ENUM(DECRYPT_FAILED, DecryptFailed);
-CHECK_ENUM(INVALID_UNLOCK_EVENT_HANDLER, InvalidUnlockEventHandler);
 CHECK_ENUM(INVALID_UNLOCK_KEY, InvalidUnlockKey);
 CHECK_ENUM(INTERNAL_ERROR, InternalError);
 CHECK_ENUM(INVALID_UNLOCK_PASSWORD, InvalidUnlockPassword);
@@ -82,7 +81,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 20,
+static_assert(TANKER_ERROR_LAST == 18,
               "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
