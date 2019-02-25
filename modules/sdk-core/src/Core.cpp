@@ -70,7 +70,7 @@ tc::cotask<void> Core::signUp(std::string const& identity,
     session->deviceCreated.connect(deviceCreated);
     session->deviceRevoked.connect([&] {
       _taskCanceler.add(tc::async([this] {
-        close();
+        signOut();
         deviceRevoked();
       }));
     });
@@ -121,7 +121,7 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
     session->deviceCreated.connect(deviceCreated);
     session->deviceRevoked.connect([&] {
       _taskCanceler.add(tc::async([this] {
-        close();
+        signOut();
         deviceRevoked();
       }));
     });
@@ -135,7 +135,7 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
   }
 }
 
-void Core::close()
+void Core::signOut()
 {
   _state.emplace<Opener>(_url, _info, _writablePath);
   sessionClosed();

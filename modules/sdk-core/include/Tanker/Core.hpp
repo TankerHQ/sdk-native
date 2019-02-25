@@ -54,7 +54,7 @@ public:
                           AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signIn(std::string const& identity,
                                 SignInOptions const& signInOptions);
-  void close();
+  void signOut();
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,
                            gsl::span<uint8_t const> clearData,

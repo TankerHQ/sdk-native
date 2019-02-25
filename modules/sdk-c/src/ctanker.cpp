@@ -216,10 +216,10 @@ tanker_future_t* tanker_sign_in(tanker_t* ctanker,
                     [](OpenResult r) { return reinterpret_cast<void*>(r); }));
 }
 
-tanker_future_t* tanker_close(tanker_t* ctanker)
+tanker_future_t* tanker_sign_out(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->close());
+  return makeFuture(tanker->signOut());
 }
 
 enum tanker_status tanker_get_status(tanker_t* ctanker)

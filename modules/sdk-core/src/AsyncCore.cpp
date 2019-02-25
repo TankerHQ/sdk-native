@@ -89,9 +89,9 @@ tc::future<OpenResult> AsyncCore::signIn(std::string const& identity,
   });
 }
 
-tc::future<void> AsyncCore::close()
+tc::future<void> AsyncCore::signOut()
 {
-  return tc::async([this] { this->_core->close(); });
+  return tc::async([this] { this->_core->signOut(); });
 }
 
 Status AsyncCore::status() const

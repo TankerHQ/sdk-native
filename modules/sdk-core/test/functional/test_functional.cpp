@@ -58,7 +58,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto const core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
@@ -70,12 +70,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 1);
   core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 2);
 }
@@ -86,7 +86,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto device = alice.makeDevice();
 
   auto const core = TC_AWAIT(device.open());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   TC_AWAIT(core->signIn(alice.identity()));
   REQUIRE(core->status() == Status::Open);
@@ -183,7 +183,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares to all her devices")
       AsyncCore::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
-  TC_AWAIT(aliceSession->close());
+  TC_AWAIT(aliceSession->signOut());
   REQUIRE(TC_AWAIT(
       checkDecrypt(aliceDevices, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -205,7 +205,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceSecondSession =
       TC_AWAIT(aliceSecondDevice.open(*aliceFirstSession));
 
-  TC_AWAIT(aliceSecondSession->close());
+  TC_AWAIT(aliceSecondSession->signOut());
 
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));

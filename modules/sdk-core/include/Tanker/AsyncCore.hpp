@@ -66,7 +66,7 @@ public:
   tc::future<OpenResult> signIn(std::string const& identity,
                                 SignInOptions const& signInOptions = {});
 
-  tc::future<void> close();
+  tc::future<void> signOut();
 
   Status status() const;
 
