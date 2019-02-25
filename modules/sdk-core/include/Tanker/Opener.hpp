@@ -66,8 +66,6 @@ public:
   tc::cotask<UnlockKey> fetchUnlockKey(Unlock::DeviceLocker const& pass);
   tc::cotask<void> unlockCurrentDevice(UnlockKey const& unlockKey);
 
-  boost::signals2::signal<void()> unlockRequired;
-
 private:
   std::string _url;
   SdkInfo _info;

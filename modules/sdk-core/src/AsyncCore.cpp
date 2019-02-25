@@ -56,9 +56,6 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
       case Event::SessionClosed:
         return this->_core->sessionClosed.connect(
             [cb, data] { tc::async([=] { cb(nullptr, data); }); });
-      case Event::UnlockRequired:
-        return this->_core->unlockRequired.connect(
-            [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
       case Event::DeviceRevoked:
         return this->_core->deviceRevoked.connect(
             [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
@@ -209,11 +206,6 @@ tc::future<void> AsyncCore::syncTrustchain()
   return tc::async_resumable([this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core->syncTrustchain());
   });
-}
-
-boost::signals2::signal<void()>& AsyncCore::unlockRequired()
-{
-  return this->_core->unlockRequired;
 }
 
 boost::signals2::signal<void()>& AsyncCore::sessionClosed()

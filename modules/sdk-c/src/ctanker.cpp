@@ -135,13 +135,12 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
 
   EVENT_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
   EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
-  EVENT_ENUM_CHECK(TANKER_EVENT_UNLOCK_REQUIRED, Event::UnlockRequired);
   EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
 
 #undef EVENT_ENUM_CHECK
 
   static_assert(
-      TANKER_EVENT_LAST == 4,
+      TANKER_EVENT_LAST == 3,
       "Please update the event assertions above if you added a new event");
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);

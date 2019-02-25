@@ -41,7 +41,6 @@ enum class Event
 {
   SessionClosed = 1,
   DeviceCreated,
-  UnlockRequired,
   DeviceRevoked,
 
   Last
@@ -96,7 +95,6 @@ public:
   expected<bool> hasRegisteredUnlockMethods(Unlock::Method) const;
   expected<Unlock::Methods> registeredUnlockMethods() const;
 
-  boost::signals2::signal<void()>& unlockRequired();
   boost::signals2::signal<void()>& sessionClosed();
   boost::signals2::signal<void()>& deviceCreated();
   boost::signals2::signal<void()>& deviceRevoked();

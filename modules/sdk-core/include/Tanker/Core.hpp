@@ -87,7 +87,6 @@ public:
 
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> unlockRequired;
   boost::signals2::signal<void()> sessionClosed;
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;

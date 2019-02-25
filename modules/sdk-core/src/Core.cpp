@@ -39,19 +39,6 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
     _writablePath(std::move(writablePath)),
     _state(mpark::in_place_type<Opener>, _url, _info, _writablePath)
 {
-  reset();
-}
-
-void Core::reset()
-{
-  mpark::get<Opener>(_state).unlockRequired.connect([this] {
-    if (unlockRequired.empty())
-    {
-      throw Error::formatEx<Error::InvalidUnlockEventHandler>(
-          "No unlock handler registered");
-    }
-    unlockRequired();
-  });
 }
 
 Status Core::status() const
@@ -152,7 +139,6 @@ void Core::close()
 {
   _state.emplace<Opener>(_url, _info, _writablePath);
   sessionClosed();
-  reset();
 }
 
 tc::cotask<void> Core::encrypt(uint8_t* encryptedData,
