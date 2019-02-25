@@ -46,14 +46,12 @@ static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
 // Status
 
 STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
-STATIC_ENUM_CHECK(TANKER_STATUS_USER_CREATION, Status::UserCreation);
-STATIC_ENUM_CHECK(TANKER_STATUS_DEVICE_CREATION, Status::DeviceCreation);
 STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
 
 STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
 
 static_assert(
-    TANKER_STATUS_LAST == 5,
+    TANKER_STATUS_LAST == 2,
     "Please update the status assertions above if you added a new status");
 
 // OpenResult

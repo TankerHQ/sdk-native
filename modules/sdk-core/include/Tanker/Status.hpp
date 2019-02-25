@@ -11,9 +11,6 @@ enum class Status
 {
   Closed,
   Open,
-  UserCreation,
-  DeviceCreation,
-  Closing,
   Last
 };
 
