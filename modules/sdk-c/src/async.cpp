@@ -73,6 +73,7 @@ CHECK_ENUM(INVALID_GROUP_SIZE, InvalidGroupSize);
 CHECK_ENUM(RECIPIENT_NOT_FOUND, RecipientNotFound);
 CHECK_ENUM(GROUP_NOT_FOUND, GroupNotFound);
 CHECK_ENUM(DEVICE_NOT_FOUND, DeviceNotFound);
+CHECK_ENUM(IDENTITY_ALREADY_REGISTERED, IdentityAlreadyRegistered);
 CHECK_ENUM(LAST, Last);
 
 // Hi fellow Tanker developer!
@@ -81,7 +82,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 18,
+static_assert(TANKER_ERROR_LAST == 19,
               "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)

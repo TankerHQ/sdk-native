@@ -73,16 +73,16 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
   else if (userStatusResult.userExists)
   {
     if (mode == OpenMode::SignUp)
-    {
-      // TODO
-      throw std::runtime_error("user already exists");
-    }
+      throw Error::IdentityAlreadyRegistered(
+          "signUp failed: user already exists");
     TC_RETURN(TC_AWAIT(createDevice(signInOptions)));
   }
   else if (mode == OpenMode::SignUp)
     TC_RETURN(TC_AWAIT(createUser()));
-  else // mode == OpenMode::SignIn
+  else if (mode == OpenMode::SignIn)
     TC_RETURN(StatusIdentityNotRegistered{});
+  else
+    throw std::runtime_error("assertion error: invalid open mode");
 }
 
 tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)

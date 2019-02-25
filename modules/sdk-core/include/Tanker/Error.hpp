@@ -39,6 +39,7 @@ enum class Code
   RecipientNotFound,
   GroupNotFound,
   DeviceNotFound,
+  IdentityAlreadyRegistered,
 
   Last,
 };
@@ -95,6 +96,7 @@ DECLARE_ERROR(InvalidGroupSize);
 // RecipientNotFound has its own header
 // GroupNotFound has its own header
 DECLARE_ERROR(DeviceNotFound);
+DECLARE_ERROR(IdentityAlreadyRegistered);
 
 #undef DECLARE_ERROR
 
