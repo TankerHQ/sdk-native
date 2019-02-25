@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Core.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
@@ -46,7 +47,6 @@ enum class Event
   Last
 };
 
-class Core;
 class AsyncCore
 {
   std::unique_ptr<Core> _core;
@@ -62,7 +62,10 @@ public:
 
   expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
 
-  tc::future<void> open(SUserId const& userId, std::string const& userToken);
+  tc::future<void> signUp(std::string const& identity,
+                          AuthenticationMethods const& authMethods = {});
+  tc::future<OpenResult> signIn(std::string const& identity,
+                                SignInOptions const& signInOptions = {});
 
   tc::future<void> close();
 

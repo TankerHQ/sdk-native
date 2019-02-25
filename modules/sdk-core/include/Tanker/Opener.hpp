@@ -3,6 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/Identity/Identity.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
@@ -25,25 +26,44 @@
 
 namespace Tanker
 {
-namespace Identity
-{
-struct UserToken;
-}
-
 class DeviceKeyStore;
+
+enum class OpenMode
+{
+  SignUp,
+  SignIn,
+};
+
+struct SignInOptions
+{
+  nonstd::optional<UnlockKey> unlockKey;
+  nonstd::optional<VerificationCode> verificationCode;
+  nonstd::optional<Password> password;
+};
 
 class Opener
 {
 public:
+  struct StatusIdentityNotRegistered
+  {
+  };
+  struct StatusIdentityVerificationNeeded
+  {
+  };
+
+  using OpenResult = mpark::variant<Session::Config,
+                                    StatusIdentityNotRegistered,
+                                    StatusIdentityVerificationNeeded>;
+
   Opener(std::string url, SdkInfo info, std::string writablePath);
 
   Status status() const;
 
-  tc::cotask<Session::Config> open(SUserId const& suserId,
-                                   std::string const& userToken);
+  tc::cotask<OpenResult> open(std::string const& b64Identity,
+                              SignInOptions const& signInOptions,
+                              OpenMode mode);
 
   tc::cotask<UnlockKey> fetchUnlockKey(Unlock::DeviceLocker const& pass);
-
   tc::cotask<void> unlockCurrentDevice(UnlockKey const& unlockKey);
 
   boost::signals2::signal<void()> unlockRequired;
@@ -53,19 +73,16 @@ private:
   SdkInfo _info;
   std::string _writablePath;
 
-  nonstd::optional<UserId> _userId;
-  nonstd::optional<Crypto::SymmetricKey> _userSecret;
+  nonstd::optional<Identity::Identity> _identity;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
 
   Status _status = Status::Closed;
 
-  Session::Config makeConfig(Crypto::SymmetricKey const& userSecret);
-  tc::cotask<void> createUser(Identity::UserToken const& userToken);
-  tc::cotask<void> createDevice();
-  tc::cotask<void> openDevice();
-  tc::future<void> waitForUnlock();
-  tc::cotask<void> connectionHandler();
+  Session::Config makeConfig();
+  tc::cotask<OpenResult> createUser();
+  tc::cotask<OpenResult> createDevice(SignInOptions const& signInOptions);
+  tc::cotask<OpenResult> openDevice();
 };
 }

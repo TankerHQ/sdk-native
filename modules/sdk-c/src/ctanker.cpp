@@ -56,6 +56,20 @@ static_assert(
     TANKER_STATUS_LAST == 5,
     "Please update the status assertions above if you added a new status");
 
+// OpenResult
+
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_OK, OpenResult::Ok);
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
+                  OpenResult::IdentityVerificationNeeded);
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
+                  OpenResult::IdentityNotRegistered);
+
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_LAST, OpenResult::Last);
+
+static_assert(
+    TANKER_SIGN_IN_RESULT_LAST == 3,
+    "Please update the result assertions above if you added a new result");
+
 #undef STATIC_ENUM_CHECK
 }
 
@@ -146,19 +160,63 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
       *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection))));
 }
 
-tanker_future_t* tanker_open(tanker_t* ctanker,
-                             char const* user_id,
-                             char const* user_token)
+tanker_future_t* tanker_sign_up(
+    tanker_t* ctanker,
+    char const* identity,
+    tanker_authentication_methods_t const* authentication_methods)
 {
-  if (user_id == nullptr)
+  if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("user_id is null")));
-  if (user_token == nullptr)
+        Error::formatEx<Error::InvalidArgument>("identity is null")));
+  if (authentication_methods && authentication_methods->version != 1)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("user_token is null")));
+        Error::formatEx<Error::InvalidArgument>(
+            "unsupported tanker_authentication_methods struct version")));
 
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->open(SUserId(user_id), std::string(user_token)));
+  auto authenticationMethods = AuthenticationMethods{};
+  if (authentication_methods)
+  {
+    if (authentication_methods->password)
+      authenticationMethods.password =
+          Password{authentication_methods->password};
+    if (authentication_methods->email)
+      authenticationMethods.email = Email{authentication_methods->email};
+  }
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(
+      tanker->signUp(std::string(identity), authenticationMethods));
+}
+
+tanker_future_t* tanker_sign_in(tanker_t* ctanker,
+                                char const* identity,
+                                tanker_sign_in_options_t const* sign_in_options)
+{
+  if (identity == nullptr)
+    return makeFuture(tc::make_exceptional_future<void*>(
+        Error::formatEx<Error::InvalidArgument>("identity is null")));
+  if (sign_in_options && sign_in_options->version != 1)
+    return makeFuture(tc::make_exceptional_future<void*>(
+        Error::formatEx<Error::InvalidArgument>(
+            "unsupported tanker_authentication_methods struct version")));
+
+  auto signInOptions = SignInOptions{};
+  if (sign_in_options)
+  {
+    if (sign_in_options->unlock_key)
+      signInOptions.unlockKey = UnlockKey{sign_in_options->unlock_key};
+    if (sign_in_options->verification_code)
+      signInOptions.verificationCode =
+          VerificationCode{sign_in_options->verification_code};
+    if (sign_in_options->password)
+      signInOptions.password = Password{sign_in_options->password};
+  }
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(
+      tanker->signIn(std::string(identity), signInOptions)
+          .and_then(tc::get_synchronous_executor(),
+                    [](OpenResult r) { return reinterpret_cast<void*>(r); }));
 }
 
 tanker_future_t* tanker_close(tanker_t* ctanker)

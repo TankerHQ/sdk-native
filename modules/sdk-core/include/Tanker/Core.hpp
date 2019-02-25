@@ -28,6 +28,21 @@
 
 namespace Tanker
 {
+struct AuthenticationMethods
+{
+  nonstd::optional<Password> password;
+  nonstd::optional<Email> email;
+};
+
+enum OpenResult
+{
+  Ok,
+  IdentityNotRegistered,
+  IdentityVerificationNeeded,
+
+  Last,
+};
+
 class Core
 {
 public:
@@ -35,7 +50,10 @@ public:
 
   Status status() const;
 
-  tc::cotask<void> open(SUserId const& suserId, std::string const& userToken);
+  tc::cotask<void> signUp(std::string const& identity,
+                          AuthenticationMethods const& authMethods);
+  tc::cotask<OpenResult> signIn(std::string const& identity,
+                                SignInOptions const& signInOptions);
   void close();
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,

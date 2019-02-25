@@ -21,6 +21,15 @@ enum tanker_status
   TANKER_STATUS_LAST
 };
 
+enum tanker_sign_in_result
+{
+  TANKER_SIGN_IN_RESULT_OK,
+  TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
+  TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
+
+  TANKER_SIGN_IN_RESULT_LAST,
+};
+
 enum tanker_event
 {
   TANKER_EVENT_UNUSED1,
@@ -42,6 +51,8 @@ enum tanker_unlock_method
 
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
+typedef struct tanker_authentication_methods tanker_authentication_methods_t;
+typedef struct tanker_sign_in_options tanker_sign_in_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_decrypt_options tanker_decrypt_options_t;
 
@@ -77,6 +88,31 @@ struct tanker_options
 #define TANKER_OPTIONS_INIT         \
   {                                 \
     2, NULL, NULL, NULL, NULL, NULL \
+  }
+
+struct tanker_authentication_methods
+{
+  uint8_t version;
+  char const* password;
+  char const* email;
+};
+
+#define TANKER_AUTHENTICATION_METHODS_INIT \
+  {                                        \
+    1, NULL, NULL                          \
+  }
+
+struct tanker_sign_in_options
+{
+  uint8_t version;
+  char const* unlock_key;
+  char const* verification_code;
+  char const* password;
+};
+
+#define TANKER_SIGN_IN_OPTIONS_INIT \
+  {                                 \
+    1, NULL, NULL, NULL             \
   }
 
 struct tanker_encrypt_options
@@ -167,32 +203,43 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
                                            tanker_connection_t* connection);
 
 /*!
- * Open a tanker session.
+ * Sign up to Tanker.
  *
- * The returned future does not resolve until the session is opened. When adding
- * a new device, TANKER_EVENT_UNLOCK_REQUIRED event will be triggered and user
- * intervention will be required to complete the session opening.
- *
- * \param tanker A tanker tanker_t* instance.
- * \param user_id the user ID you want to open a session for.
- * \param user_token the user token for the user id.
- * \pre The user token must be a valid user token for this user that is normally
- * provided by the authentication server.
- * \return a future of a tanker_t*
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_id is NULL
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_token is NULL
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_token does not match \p user_id
- * \throws TANKER_ERROR_INVALID_DEVICE_VALIDATION_EVENT_HANDLER opening a
- * session on a new device, but the TANKER_EVENT_UNLOCK_REQUIRED was not
- * connected, the session will never open
+ * \param tanker a tanker tanker_t* instance.
+ * \param identity the user identity.
+ * \param authentication_methods the authentication methods to set up for the
+ * user, or NULL.
+ * \return a future of NULL
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
- * \throws TANKER_ERROR_OTHER \p user_token is invalid
  */
-tanker_future_t* tanker_open(tanker_t* tanker,
-                             char const* user_id,
-                             char const* user_token);
+tanker_future_t* tanker_sign_up(
+    tanker_t* tanker,
+    char const* identity,
+    tanker_authentication_methods_t const* authentication_methods);
+
+/*!
+ * Sign in to Tanker.
+ *
+ * \param tanker a tanker tanker_t* instance.
+ * \param identity the user identity.
+ * \param sign_in_options the authentication options to use when this device is
+ * not registered, or NULL.
+ * \return a future of tanker_sign_in_result
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
+ * \throws TANKER_ERROR_INVALID_UNLOCK_KEY unlock key is incorrect
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
+ * or the server returned an error
+ * \throws TANKER_ERROR_OTHER could not open the local storage
+ */
+tanker_future_t* tanker_sign_in(
+    tanker_t* tanker,
+    char const* identity,
+    tanker_sign_in_options_t const* sign_in_options);
 
 /*!
  * Close a tanker session.

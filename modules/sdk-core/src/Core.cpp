@@ -66,24 +66,86 @@ Status Core::status() const
   std::terminate();
 }
 
-tc::cotask<void> Core::open(SUserId const& suserId,
-                            std::string const& userToken)
+tc::cotask<void> Core::signUp(std::string const& identity,
+                              AuthenticationMethods const& authMethods)
 {
-  SCOPE_TIMER("core_open", Proc);
-  auto pcore = mpark::get_if<Opener>(&_state);
-  if (!pcore)
-    throw INVALID_STATUS(open);
-  _state.emplace<SessionType>(
-      std::make_unique<Session>(TC_AWAIT(pcore->open(suserId, userToken))));
-  auto const& session = mpark::get<SessionType>(_state);
-  session->deviceCreated.connect(deviceCreated);
-  session->deviceRevoked.connect([&] {
-    _taskCanceler.add(tc::async([this] {
-      close();
-      deviceRevoked();
-    }));
-  });
-  TC_AWAIT(session->startConnection());
+  SCOPE_TIMER("core_signup", Proc);
+  try
+  {
+    auto pcore = mpark::get_if<Opener>(&_state);
+    if (!pcore)
+      throw INVALID_STATUS(signUp);
+    auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
+    assert(mpark::holds_alternative<Session::Config>(openResult));
+    _state.emplace<SessionType>(std::make_unique<Session>(
+        mpark::get<Session::Config>(std::move(openResult))));
+    auto const& session = mpark::get<SessionType>(_state);
+    session->deviceCreated.connect(deviceCreated);
+    session->deviceRevoked.connect([&] {
+      _taskCanceler.add(tc::async([this] {
+        close();
+        deviceRevoked();
+      }));
+    });
+    TC_AWAIT(session->startConnection());
+    if (authMethods.password || authMethods.email)
+    {
+      Unlock::RegistrationOptions options{};
+      if (authMethods.password)
+        options.set(*authMethods.password);
+      if (authMethods.email)
+        options.set(*authMethods.email);
+      TC_AWAIT(session->registerUnlock(options));
+    }
+  }
+  catch (...)
+  {
+    _state.emplace<Opener>(_url, _info, _writablePath);
+    throw;
+  }
+}
+
+tc::cotask<OpenResult> Core::signIn(std::string const& identity,
+                                    SignInOptions const& signInOptions)
+{
+  SCOPE_TIMER("core_signin", Proc);
+  try
+  {
+    auto pcore = mpark::get_if<Opener>(&_state);
+    if (!pcore)
+      throw INVALID_STATUS(signIn);
+    auto openResult =
+        TC_AWAIT(pcore->open(identity, signInOptions, OpenMode::SignIn));
+    if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(
+            openResult))
+    {
+      _state.emplace<Opener>(_url, _info, _writablePath);
+      TC_RETURN(OpenResult::IdentityNotRegistered);
+    }
+    else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
+                 openResult))
+    {
+      _state.emplace<Opener>(_url, _info, _writablePath);
+      TC_RETURN(OpenResult::IdentityVerificationNeeded);
+    }
+    _state.emplace<SessionType>(std::make_unique<Session>(
+        mpark::get<Session::Config>(std::move(openResult))));
+    auto const& session = mpark::get<SessionType>(_state);
+    session->deviceCreated.connect(deviceCreated);
+    session->deviceRevoked.connect([&] {
+      _taskCanceler.add(tc::async([this] {
+        close();
+        deviceRevoked();
+      }));
+    });
+    TC_AWAIT(session->startConnection());
+    TC_RETURN(OpenResult::Ok);
+  }
+  catch (...)
+  {
+    _state.emplace<Opener>(_url, _info, _writablePath);
+    throw;
+  }
 }
 
 void Core::close()

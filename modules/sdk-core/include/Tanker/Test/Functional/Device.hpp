@@ -29,7 +29,7 @@ public:
   Device(std::string trustchainUrl,
          std::string trustchainId,
          SUserId suserId,
-         std::string userToken);
+         std::string identity);
 
   AsyncCorePtr createCore(SessionType type);
   std::unique_ptr<AsyncCore> createAsyncCore();
@@ -38,13 +38,13 @@ public:
   tc::cotask<void> attachDevice(AsyncCore& parentSession);
   tc::cotask<void> registerUnlock(AsyncCore& session);
   SUserId const& suserId() const;
-  std::string const& userToken() const;
+  std::string const& identity() const;
 
 private:
   std::string _trustchainUrl;
   std::string _trustchainId;
   SUserId _suserId;
-  std::string _userToken;
+  std::string _identity;
   std::shared_ptr<UniquePath> _storage;
 
   // Since Device is copyable and since we want to share the cache between all

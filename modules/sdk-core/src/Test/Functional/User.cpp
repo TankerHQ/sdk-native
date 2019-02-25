@@ -16,7 +16,7 @@ User::User(std::string trustchainUrl,
   Crypto::Hash buf;
   Crypto::randomFill(buf);
   _userId = SUserId{base64::encode(gsl::make_span(buf).subspan(0, 8))};
-  _userToken = Identity::generateUserToken(
+  _identity = Identity::createIdentity(
       _trustchainId, trustchainPrivateSignatureKey, _userId);
 }
 
@@ -28,11 +28,11 @@ void User::reuseCache()
 Device User::makeDevice(DeviceType type)
 {
   if (type == DeviceType::New)
-    return Device(_trustchainUrl, _trustchainId, _userId, _userToken);
+    return Device(_trustchainUrl, _trustchainId, _userId, _identity);
 
   if (_currentDevice == _cachedDevices->size())
     _cachedDevices->push_back(
-        Device(_trustchainUrl, _trustchainId, _userId, _userToken));
+        Device(_trustchainUrl, _trustchainId, _userId, _identity));
   return (*_cachedDevices)[_currentDevice++];
 }
 

@@ -76,11 +76,19 @@ expected<void> AsyncCore::disconnectEvent(
   return tc::make_ready_future();
 }
 
-tc::future<void> AsyncCore::open(SUserId const& userId,
-                                 std::string const& userToken)
+tc::future<void> AsyncCore::signUp(std::string const& identity,
+                                   AuthenticationMethods const& authMethods)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->open(userId, userToken));
+    TC_AWAIT(this->_core->signUp(identity, authMethods));
+  });
+}
+
+tc::future<OpenResult> AsyncCore::signIn(std::string const& identity,
+                                         SignInOptions const& signInOptions)
+{
+  return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
+    TC_RETURN(TC_AWAIT(this->_core->signIn(identity, signInOptions)));
   });
 }
 
