@@ -20,16 +20,18 @@ std::string getPublicIdentity(std::string const& token)
   if (j.find("user_id") != j.end())
     return to_string(getPublicIdentity(j.get<Identity>()));
   else
-    throw std::runtime_error("not implemented");
+    throw std::runtime_error("getPublicIdentity not implemented");
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)
 {
-  if (j.find("user_id") != j.end())
+  auto const target = j.at("target").get<std::string>();
+  if (target == "user")
     identity = PublicNormalIdentity{j.at("trustchain_id").get<TrustchainId>(),
                                     j.at("user_id").get<UserId>()};
   else
-    throw std::runtime_error("not implemented");
+    throw std::runtime_error(
+        "PublicIdentity deserialization type not implemented");
 }
 
 void to_json(nlohmann::json& j, PublicIdentity const& publicIdentity)
@@ -39,9 +41,11 @@ void to_json(nlohmann::json& j, PublicIdentity const& publicIdentity)
   {
     j["user_id"] = identity->userId;
     j["trustchain_id"] = identity->trustchainId;
+    j["target"] = "user";
   }
   else
-    throw std::runtime_error("not implemented");
+    throw std::runtime_error(
+        "PublicIdentity serialiation type not implemented");
 }
 
 std::string to_string(PublicIdentity const& identity)

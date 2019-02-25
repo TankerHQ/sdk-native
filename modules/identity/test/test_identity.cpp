@@ -27,50 +27,58 @@ namespace Identity
 namespace
 {
 auto const GOOD_USER_TOKEN =
-    "eyJlcGhlbWVyYWxfcHVibGljX3NpZ25hdHVyZV9rZXkiOiJCRUtpZ0t0YkkxVlR1U1NKanpMTE"
-    "NNY2ZiTi96OEtYci9oNVcyYnp6ZU5VPSIsImVwaGVtZXJhbF9wcml2YXRlX3NpZ25hdHVyZV9r"
-    "ZXkiOiJHYlFidnhsMlZRTklOTjgzM1BBcGxDcTJGRG5kYnpZdWpiNzgwbUtISnJBRVFxS0FxMX"
-    "NqVlZPNUpJbVBNc3NJeHg5czMvUHdwZXYrSGxiWnZQTjQxUT09IiwidXNlcl9pZCI6Ik9UUFJX"
-    "ODFDU1Nja0UyWExYbEFHbi8rZ1k0b3J2ejV4SWpOZUV3blNNems9IiwiZGVsZWdhdGlvbl9zaW"
-    "duYXR1cmUiOiI4L003M1J1Y0ttNzBWQkl2WEpWZEx1MUtJUElpaEZqYzk4RjNseXZlSGJ6UWZp"
-    "clpzUjhmald2SEFsb1lNOE1uZ282NEpMMlU2UmZ1VENTY21qS2lBZz09IiwidXNlcl9zZWNyZX"
-    "QiOiJ2alZxWlVYNTVEbDJBc3J2NXlRczV4TElpaUNxYm00UmRYc0JUNkpVRjE0PSJ9"s;
+    "eyJkZWxlZ2F0aW9uX3NpZ25hdHVyZSI6IlU5V1FvbEN2UnlqVDhvUjJQUW1kMVdYTkNpMHFtTD"
+    "EyaE5ydEdhYllSRVdpcnk1MmtXeDFBZ1l6a0x4SDZncG8zTWlBOXIrK3pobm1vWWRFSjArSkN3"
+    "PT0iLCJlcGhlbWVyYWxfcHJpdmF0ZV9zaWduYXR1cmVfa2V5IjoiakVEVDR3UUNjMURGd29kWE"
+    "5QSEZDbG5kVFBuRnVGbVhoQnQraXNLVTRacGVIZUxURU5PbXZjZGUwSFpEblh0QXEvZHJNM05j"
+    "c3RjeDBrTk5JZmh0M2c9PSIsImVwaGVtZXJhbF9wdWJsaWNfc2lnbmF0dXJlX2tleSI6IlhoM2"
+    "kweERUcHIzSFh0QjJRNTE3UUt2M2F6TnpYTExYTWRKRFRTSDRiZDQ9IiwidXNlcl9pZCI6IlJE"
+    "YTBlcTRYTnVqNXRWN2hkYXBqT3hobWhlVGg0UUJETnB5NFN2eTlYb2s9IiwidXNlcl9zZWNyZX"
+    "QiOiI3RlNmL24wZTc2UVQzczBEa3ZldFJWVkpoWFpHRWpPeGo1RVdBRmV4dmpJPSJ9"s;
 
 auto const GOOD_IDENTITY =
-    "eyJkZWxlZ2F0aW9uIjp7ImVwaGVtZXJhbF9zaWduYXR1cmUiOiI4L003M1J1Y0ttNzBWQkl2WE"
-    "pWZEx1MUtJUElpaEZqYzk4RjNseXZlSGJ6UWZpclpzUjhmald2SEFsb1lNOE1uZ282NEpMMlU2"
-    "UmZ1VENTY21qS2lBZz09IiwiZXBoZW1lcmFsX3NpZ25hdHVyZV9wcml2YXRlX2tleSI6IkdiUW"
-    "J2eGwyVlFOSU5OODMzUEFwbENxMkZEbmRiell1amI3ODBtS0hKckFFUXFLQXExc2pWVk81Sklt"
-    "UE1zc0l4eDlzMy9Qd3BlditIbGJadlBONDFRPT0iLCJlcGhlbWVyYWxfc2lnbmF0dXJlX3B1Ym"
-    "xpY19rZXkiOiJCRUtpZ0t0YkkxVlR1U1NKanpMTENNY2ZiTi96OEtYci9oNVcyYnp6ZU5VPSJ9"
-    "LCJ0cnVzdGNoYWluX2lkIjoibVEyWDRyTStVV1ZWZzJlQzZhVGgwbmY4a25XRkkxWWc3SnhhQj"
-    "BVMnA5ND0iLCJ1c2VyX2lkIjoiT1RQUlc4MUNTU2NrRTJYTFhsQUduLytnWTRvcnZ6NXhJak5l"
-    "RXduU016az0iLCJ1c2VyX3NlY3JldCI6InZqVnFaVVg1NURsMkFzcnY1eVFzNXhMSWlpQ3FibT"
-    "RSZFhzQlQ2SlVGMTQ9In0="s;
+    "eyJkZWxlZ2F0aW9uX3NpZ25hdHVyZSI6IlU5V1FvbEN2UnlqVDhvUjJQUW1kMVdYTkNpMHFtTD"
+    "EyaE5ydEdhYllSRVdpcnk1MmtXeDFBZ1l6a0x4SDZncG8zTWlBOXIrK3pobm1vWWRFSjArSkN3"
+    "PT0iLCJlcGhlbWVyYWxfcHJpdmF0ZV9zaWduYXR1cmVfa2V5IjoiakVEVDR3UUNjMURGd29kWE"
+    "5QSEZDbG5kVFBuRnVGbVhoQnQraXNLVTRacGVIZUxURU5PbXZjZGUwSFpEblh0QXEvZHJNM05j"
+    "c3RjeDBrTk5JZmh0M2c9PSIsImVwaGVtZXJhbF9wdWJsaWNfc2lnbmF0dXJlX2tleSI6IlhoM2"
+    "kweERUcHIzSFh0QjJRNTE3UUt2M2F6TnpYTExYTWRKRFRTSDRiZDQ9IiwidHJ1c3RjaGFpbl9p"
+    "ZCI6InRwb3h5TnpoMGhVOUcyaTlhZ012SHl5ZCtwTzZ6R0NqTzlCZmhyQ0xqZDQ9IiwidXNlcl"
+    "9pZCI6IlJEYTBlcTRYTnVqNXRWN2hkYXBqT3hobWhlVGg0UUJETnB5NFN2eTlYb2s9IiwidXNl"
+    "cl9zZWNyZXQiOiI3RlNmL24wZTc2UVQzczBEa3ZldFJWVkpoWFpHRWpPeGo1RVdBRmV4dmpJPS"
+    "J9"s;
 
-auto const userIdString = "OTPRW81CSSckE2XLXlAGn/+gY4orvz5xIjNeEwnSMzk="s;
-auto const userId = base64::decode<UserId>(userIdString);
+auto const trustchainIdString = "tpoxyNzh0hU9G2i9agMvHyyd+pO6zGCjO9BfhrCLjd4="s;
+auto const trustchainPrivateKeyString =
+    "cTMoGGUKhwN47ypq4xAXAtVkNWeyUtMltQnYwJhxWYSvqjPVGmXd2wwa7y17QtPTZhn8bxb015CZC/e4ZI7+MQ=="s;
+
+auto const trustchainId = base64::decode<TrustchainId>(trustchainIdString);
+auto const trustchainPrivateKey =
+    base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+        trustchainPrivateKeyString);
+
+auto const suserId = "b_eich"_uid;
+auto const obfuscatedUserId = obfuscateUserId(suserId, trustchainId);
 
 auto const userSecret = base64::decode<Tanker::Crypto::SymmetricKey>(
-    "vjVqZUX55Dl2Asrv5yQs5xLIiiCqbm4RdXsBT6JUF14=");
+    "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
 
-auto const trustchainIdString = "mQ2X4rM+UWVVg2eC6aTh0nf8knWFI1Yg7JxaB0U2p94="s;
-auto const trustchainId = base64::decode<TrustchainId>(trustchainIdString);
+auto const publicEphemeralKey =
+    base64::decode<Tanker::Crypto::PublicSignatureKey>(
+        "Xh3i0xDTpr3HXtB2Q517QKv3azNzXLLXMdJDTSH4bd4=");
+auto const privateEphemeralKey =
+    base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+        "jEDT4wQCc1DFwodXNPHFClndTPnFuFmXhBt+isKU4ZpeHeLTENOmvcde0HZDnXtAq/"
+        "drM3Ncstcx0kNNIfht3g==");
+auto const delegation_signature = base64::decode<Tanker::Crypto::Signature>(
+    "U9WQolCvRyjT8oR2PQmd1WXNCi0qmL12hNrtGabYREWiry52kWx1AgYzkLxH6gpo3MiA9r++"
+    "zhnmoYdEJ0+JCw==");
 
-auto const publicKey = base64::decode<Tanker::Crypto::PublicSignatureKey>(
-    "BEKigKtbI1VTuSSJjzLLCMcfbN/z8KXr/h5W2bzzeNU=");
+auto const ephemeralKeyPair =
+    Crypto::SignatureKeyPair{publicEphemeralKey, privateEphemeralKey};
 
-auto const privateKeyString =
-    "GbQbvxl2VQNINN833PAplCq2FDndbzYujb780mKHJrAEQqKAq1sjVVO5JImPMssIxx9s3/"
-    "Pwpev+HlbZvPN41Q=="s;
-
-auto const privateKey =
-    base64::decode<Tanker::Crypto::PrivateSignatureKey>(privateKeyString);
-
-auto const signature = base64::decode<Tanker::Crypto::Signature>(
-    "8/"
-    "M73RucKm70VBIvXJVdLu1KIPIihFjc98F3lyveHbzQfirZsR8fjWvHAloYM8Mngo64JL2U6Rfu"
-    "TCScmjKiAg==");
+auto const delegation =
+    Delegation{ephemeralKeyPair, obfuscatedUserId, delegation_signature};
 
 void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
                      UserId const& userId)
@@ -86,7 +94,7 @@ void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
 
 TEST_CASE("checkUserSecret")
 {
-  CHECK_NOTHROW(checkUserSecret(userSecret, userId));
+  CHECK_NOTHROW(checkUserSecret(userSecret, obfuscatedUserId));
 }
 
 TEST_CASE("generate Identity")
@@ -109,24 +117,16 @@ TEST_CASE("generate Identity")
   SUBCASE("We can create an identity from strings")
   {
     CHECK_NOTHROW(createIdentity(
-        trustchainIdString, privateKeyString, SUserId{userIdString}));
+        trustchainIdString, trustchainPrivateKeyString, suserId));
   }
   SUBCASE("We can construct an identity from a good string")
   {
     auto identity = extract<Identity>(GOOD_IDENTITY);
-    CHECK(identity.delegation.ephemeralKeyPair.publicKey == publicKey);
-    CHECK(identity.delegation.ephemeralKeyPair.privateKey == privateKey);
-    CHECK(identity.delegation.userId == userId);
-    CHECK(identity.delegation.signature == signature);
-    CHECK(identity.userSecret == userSecret);
-  }
-  SUBCASE("We can get back the same string from an Identity")
-  {
-    auto const identity = Identity(
-        UserToken{{{publicKey, privateKey}, userId, signature}, userSecret},
-        trustchainId);
-    auto const identity2 = extract<Identity>(to_string(identity));
-    CHECK(identity == identity2);
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.delegation, delegation);
+    CHECK_EQ(identity.userSecret, userSecret);
+    CHECK_NOTHROW(checkUserSecret(identity.userSecret,
+                                  obfuscateUserId(suserId, trustchainId)));
   }
 }
 
@@ -136,26 +136,24 @@ TEST_CASE("ugprade a user token to an identity")
   {
     auto identity = extract<Identity>(
         upgradeUserToken(trustchainIdString, GOOD_USER_TOKEN));
-    CHECK(identity.delegation.ephemeralKeyPair.publicKey == publicKey);
-    CHECK(identity.delegation.ephemeralKeyPair.privateKey == privateKey);
-    CHECK(identity.delegation.userId == userId);
-    CHECK(identity.delegation.signature == signature);
-    CHECK(identity.userSecret == userSecret);
-    CHECK(identity.trustchainId == trustchainId);
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.delegation, delegation);
+    CHECK_EQ(identity.userSecret, userSecret);
+    CHECK_NOTHROW(checkUserSecret(identity.userSecret, obfuscatedUserId));
   }
 }
 
 TEST_CASE("get a public identity")
 {
-  auto const identityStr =
-      createIdentity(trustchainIdString, privateKeyString, "alice"_uid);
+  auto const identityStr = createIdentity(
+      trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
   SUBCASE("get a public identity from a normal identity")
   {
     auto const publicIdentityStr = getPublicIdentity(identityStr);
     auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
     auto* p = mpark::get_if<PublicNormalIdentity>(&publicIdentity);
-    CHECK(p);
+    CHECK_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
     CHECK_EQ(p->userId, aliceO);
   }
@@ -180,82 +178,49 @@ TEST_CASE("Generate user token")
   }
   SUBCASE("should generate a UserToken")
   {
-    auto const userTokenString =
-        generateUserToken(trustchainIdString, privateKeyString, "alice"_uid);
-    auto const clearStr = base64::decode(userTokenString);
-    CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
+    CHECK_NOTHROW(generateUserToken(
+        trustchainIdString, trustchainPrivateKeyString, "alice"_uid));
   }
-  SUBCASE("Should return a base64 string")
-  {
-    auto const userToken2 = generateUserToken(
-        trustchainIdString, privateKeyString, Tanker::SUserId{userIdString});
-    CHECK_NOTHROW(base64::decode(userToken2));
-  }
-  SUBCASE("should be json format")
-  {
-    auto const userToken2 = generateUserToken(
-        trustchainIdString, privateKeyString, Tanker::SUserId{userIdString});
-    auto const clearStr = base64::decode(userToken2);
-    CHECK_NOTHROW(nlohmann::json::parse(clearStr));
-  }
-  SUBCASE("should be able to be deserialize in Identity")
+  SUBCASE("should be able to be deserialize a user token")
   {
     auto const userTokenString = generateUserToken(
-        trustchainIdString, privateKeyString, Tanker::SUserId{userIdString});
+        trustchainIdString, trustchainPrivateKeyString, suserId);
     auto const clearStr = base64::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
   }
   SUBCASE("user secret have good format")
   {
-    auto const userTokenString =
-        generateUserToken(trustchainIdString, privateKeyString, "alice"_uid);
-    auto const clearStr = base64::decode<std::string>(userTokenString);
-    auto const userToken2 = nlohmann::json::parse(clearStr).get<UserToken>();
+    auto const userTokenString = generateUserToken(
+        trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
+    auto const userToken2 = extract<UserToken>(userTokenString);
 
     CHECK_NOTHROW(checkUserSecret(userToken2.userSecret,
                                   obfuscateUserId("alice"_uid, trustchainId)));
+  }
+  SUBCASE("We can construct one user token from a good string")
+  {
+    auto const userToken = extract<UserToken>(GOOD_USER_TOKEN);
+
+    CHECK_EQ(userToken.delegation, delegation);
+    CHECK_EQ(userToken.userSecret, userSecret);
+    CHECK_NOTHROW(checkUserSecret(userToken.userSecret,
+                                  obfuscateUserId(suserId, trustchainId)));
   }
 }
 
 TEST_CASE("generateUserSecret can be checked")
 {
-  CHECK_NOTHROW(checkUserSecret(generateUserSecret(userId), userId));
+  CHECK_NOTHROW(
+      checkUserSecret(generateUserSecret(obfuscatedUserId), obfuscatedUserId));
 }
 
 TEST_CASE("userSecretHash")
 {
   SUBCASE("crash when bad args")
   {
-    CHECK_THROWS_AS(
-        userSecretHash(gsl::make_span(std::vector<uint8_t>()), userId),
-        std::invalid_argument);
-  }
-}
-
-TEST_CASE("User Token")
-{
-  SUBCASE("We can construct one user token from a good string")
-  {
-    auto const jsonTok = nlohmann::json::parse(base64::decode(GOOD_USER_TOKEN));
-    auto const userToken = jsonTok.get<UserToken>();
-
-    CHECK(userToken.delegation.ephemeralKeyPair.publicKey == publicKey);
-    CHECK(userToken.delegation.ephemeralKeyPair.privateKey == privateKey);
-    CHECK(userToken.delegation.userId == userId);
-    CHECK(userToken.delegation.signature == signature);
-    CHECK(userToken.userSecret == userSecret);
-  }
-
-  SUBCASE("We can get back the same string from the UserToken")
-  {
-    UserToken const token{{{publicKey, privateKey}, userId, signature},
-                          userSecret};
-    auto const tokenString = base64::encode(nlohmann::json(token).dump());
-
-    auto const jsonTok = nlohmann::json::parse(base64::decode(GOOD_USER_TOKEN));
-    auto const userToken = jsonTok.get<UserToken>();
-
-    CHECK(token == userToken);
+    CHECK_THROWS_AS(userSecretHash(gsl::make_span(std::vector<uint8_t>()),
+                                   obfuscatedUserId),
+                    std::invalid_argument);
   }
 }
 }

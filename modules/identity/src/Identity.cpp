@@ -61,15 +61,11 @@ void from_json(nlohmann::json const& j, Identity& identity)
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("user_id").get_to(identity.delegation.userId);
   j.at("user_secret").get_to(identity.userSecret);
-  j.at("delegation")
-      .at("ephemeral_signature_public_key")
+  j.at("ephemeral_public_signature_key")
       .get_to(identity.delegation.ephemeralKeyPair.publicKey);
-  j.at("delegation")
-      .at("ephemeral_signature_private_key")
+  j.at("ephemeral_private_signature_key")
       .get_to(identity.delegation.ephemeralKeyPair.privateKey);
-  j.at("delegation")
-      .at("ephemeral_signature")
-      .get_to(identity.delegation.signature);
+  j.at("delegation_signature").get_to(identity.delegation.signature);
 }
 
 void to_json(nlohmann::json& j, Identity const& identity)
@@ -77,13 +73,11 @@ void to_json(nlohmann::json& j, Identity const& identity)
   j["trustchain_id"] = identity.trustchainId;
   j["user_id"] = identity.delegation.userId;
   j["user_secret"] = identity.userSecret;
-  j["delegation"] = {
-      {"ephemeral_signature_public_key",
-       identity.delegation.ephemeralKeyPair.publicKey},
-      {"ephemeral_signature_private_key",
-       identity.delegation.ephemeralKeyPair.privateKey},
-      {"ephemeral_signature", identity.delegation.signature},
-  };
+  j["ephemeral_public_signature_key"] =
+      identity.delegation.ephemeralKeyPair.publicKey;
+  j["ephemeral_private_signature_key"] =
+      identity.delegation.ephemeralKeyPair.privateKey;
+  j["delegation_signature"] = identity.delegation.signature;
 }
 
 std::string to_string(Identity const& identity)
