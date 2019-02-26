@@ -1,5 +1,6 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Identity.hpp>
 
 #include <nlohmann/json.hpp>
@@ -16,7 +17,7 @@ PublicIdentity getPublicIdentity(Identity const& identity)
 
 std::string getPublicIdentity(std::string const& token)
 {
-  auto const j = nlohmann::json::parse(base64::decode(token));
+  auto const j = extract(token);
   if (j.find("user_id") != j.end())
     return to_string(getPublicIdentity(j.get<Identity>()));
   else

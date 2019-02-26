@@ -8,8 +8,10 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/Utils.hpp
   include/Tanker/Identity/Identity.hpp
   include/Tanker/Identity/PublicIdentity.hpp
+  include/Tanker/Identity/Extract.hpp
 
   src/UserToken.cpp
+  src/Extract.cpp
   src/Delegation.cpp
   src/Utils.cpp
   src/Identity.cpp

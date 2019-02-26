@@ -10,10 +10,12 @@ namespace Tanker
 {
 namespace Identity
 {
+nlohmann::json extract(std::string const& token);
+
 template <typename I>
 I extract(std::string const& token)
 {
-  return nlohmann::json::parse(base64::decode(token)).get<I>();
+  return extract(token).get<I>();
 }
 }
 }
