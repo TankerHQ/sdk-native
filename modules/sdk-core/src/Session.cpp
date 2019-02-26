@@ -73,14 +73,6 @@ auto convertList(std::vector<T> const& source, F&& f)
   return ret;
 }
 
-std::vector<UserId> obfuscateUserIds(std::vector<SUserId> const& suserIds,
-                                     TrustchainId const& trustchainId)
-{
-  return convertList(suserIds, [&](auto&& suserId) {
-    return obfuscateUserId(suserId, trustchainId);
-  });
-}
-
 // this function can exist because for the moment, a public identity can only
 // contain a user id
 std::vector<UserId> publicIdentitiesToUserIds(
@@ -376,10 +368,11 @@ tc::cotask<void> Session::share(
   }
 }
 
-tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
+tc::cotask<SGroupId> Session::createGroup(
+    std::vector<SPublicIdentity> spublicIdentities)
 {
-  suserIds = removeDuplicates(std::move(suserIds));
-  auto userIds = obfuscateUserIds(suserIds, _trustchainId);
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
 
   try
   {
@@ -391,7 +384,7 @@ tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
   }
   catch (Error::UserNotFound const& e)
   {
-    auto const clearUids = toClearId(e.userIds(), suserIds, userIds);
+    auto const clearUids = toClearId(e.userIds(), spublicIdentities, userIds);
     throw Error::formatEx<Error::UserNotFound>(
         fmt("Unknown users: {:s}"),
         fmt::join(clearUids.begin(), clearUids.end(), ", "));
@@ -399,12 +392,13 @@ tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
   throw std::runtime_error("unreachable code");
 }
 
-tc::cotask<void> Session::updateGroupMembers(SGroupId const& groupIdString,
-                                             std::vector<SUserId> userIdsToAdd)
+tc::cotask<void> Session::updateGroupMembers(
+    SGroupId const& groupIdString,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd)
 {
   auto const groupId = base64::decode<GroupId>(groupIdString);
-  userIdsToAdd = removeDuplicates(std::move(userIdsToAdd));
-  auto const usersToAdd = obfuscateUserIds(userIdsToAdd, _trustchainId);
+  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
+  auto const usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
 
   try
   {
@@ -417,7 +411,8 @@ tc::cotask<void> Session::updateGroupMembers(SGroupId const& groupIdString,
   }
   catch (Error::UserNotFound const& e)
   {
-    auto const clearUids = toClearId(e.userIds(), userIdsToAdd, usersToAdd);
+    auto const clearUids =
+        toClearId(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
     throw Error::formatEx<Error::UserNotFound>(
         fmt("Unknown users: {:s}"),
         fmt::join(clearUids.begin(), clearUids.end(), ", "));

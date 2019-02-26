@@ -174,7 +174,8 @@ tc::cotask<void> Core::share(
   TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
 }
 
-tc::cotask<SGroupId> Core::createGroup(std::vector<SUserId> const& members)
+tc::cotask<SGroupId> Core::createGroup(
+    std::vector<SPublicIdentity> const& members)
 {
   auto const psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
@@ -183,7 +184,8 @@ tc::cotask<SGroupId> Core::createGroup(std::vector<SUserId> const& members)
 }
 
 tc::cotask<void> Core::updateGroupMembers(
-    SGroupId const& groupIdString, std::vector<SUserId> const& usersToAdd)
+    SGroupId const& groupIdString,
+    std::vector<SPublicIdentity> const& usersToAdd)
 {
   auto const psession = mpark::get_if<SessionType>(&_state);
   if (!psession)

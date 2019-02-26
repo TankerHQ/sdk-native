@@ -83,9 +83,9 @@ public:
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::future<SGroupId> createGroup(std::vector<SUserId> const& suserIds);
-  tc::future<void> updateGroupMembers(SGroupId const& groupId,
-                                      std::vector<SUserId> const& usersToAdd);
+  tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
+  tc::future<void> updateGroupMembers(
+      SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
   tc::future<UnlockKey> generateAndRegisterUnlockKey();
 

@@ -26,9 +26,10 @@ extern "C" {
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE The group is either empty, or has too
  * many members
  */
-tanker_future_t* tanker_create_group(tanker_t* session,
-                                     char const* const* member_uids,
-                                     uint64_t nb_members);
+tanker_future_t* tanker_create_group(
+    tanker_t* session,
+    char const* const* members_public_identities,
+    uint64_t nb_members);
 
 /*!
  * Updates an existing group, referenced by its groupId,
@@ -46,10 +47,11 @@ tanker_future_t* tanker_create_group(tanker_t* session,
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE Too many users were added to the
  * group.
  */
-tanker_future_t* tanker_update_group_members(tanker_t* session,
-                                             char const* group_id,
-                                             char const* const* users_to_add,
-                                             uint64_t nb_users_to_add);
+tanker_future_t* tanker_update_group_members(
+    tanker_t* session,
+    char const* group_id,
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add);
 
 #ifdef __cplusplus
 }

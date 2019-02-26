@@ -70,9 +70,9 @@ public:
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::cotask<SGroupId> createGroup(std::vector<SUserId> const& members);
-  tc::cotask<void> updateGroupMembers(SGroupId const& groupId,
-                                      std::vector<SUserId> const& usersToAdd);
+  tc::cotask<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
+  tc::cotask<void> updateGroupMembers(
+      SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
   tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
 

@@ -130,15 +130,15 @@ tc::future<void> AsyncCore::share(
 }
 
 tc::future<SGroupId> AsyncCore::createGroup(
-    std::vector<SUserId> const& suserIds)
+    std::vector<SPublicIdentity> const& members)
 {
   return tc::async_resumable([=]() -> tc::cotask<SGroupId> {
-    TC_RETURN(TC_AWAIT(this->_core->createGroup(suserIds)));
+    TC_RETURN(TC_AWAIT(this->_core->createGroup(members)));
   });
 }
 
 tc::future<void> AsyncCore::updateGroupMembers(
-    SGroupId const& groupId, std::vector<SUserId> const& usersToAdd)
+    SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core->updateGroupMembers(groupId, usersToAdd));
