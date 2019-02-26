@@ -1,5 +1,6 @@
 #include <Tanker/AsyncCore.hpp>
 
+#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Test/Functional/User.hpp>
 
 namespace Tanker
@@ -46,6 +47,11 @@ tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
   for (auto device = ++devices.begin(); device != devices.end(); ++device)
     TC_AWAIT(device->attachDevice(*session));
   TC_RETURN(devices);
+}
+
+SPublicIdentity User::spublicIdentity() const
+{
+  return SPublicIdentity{Identity::getPublicIdentity(_identity)};
 }
 }
 }

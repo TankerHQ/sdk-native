@@ -349,18 +349,21 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
                                 uint64_t data_size,
                                 tanker_encrypt_options_t const* options)
 {
-  std::vector<SUserId> suserIds{};
+  std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
   if (options)
   {
-    suserIds =
-        to_vector<SUserId>(options->recipient_uids, options->nb_recipient_uids);
+    spublicIdentities =
+        to_vector<SPublicIdentity>(options->recipient_public_identities,
+                                   options->nb_recipient_public_identities);
     sgroupIds = to_vector<SGroupId>(options->recipient_gids,
                                     options->nb_recipient_gids);
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(
-      encrypted_data, gsl::make_span(data, data_size), suserIds, sgroupIds));
+  return makeFuture(tanker->encrypt(encrypted_data,
+                                    gsl::make_span(data, data_size),
+                                    spublicIdentities,
+                                    sgroupIds));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
@@ -375,19 +378,20 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,
-                              char const* const* recipient_uids,
-                              uint64_t nb_recipient_uids,
+                              char const* const* recipient_public_identities,
+                              uint64_t nb_recipient_public_identities,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,
                               uint64_t nb_resource_ids) try
 {
-  auto suserIds = to_vector<SUserId>(recipient_uids, nb_recipient_uids);
-  auto sgroupIds = to_vector<SGroupId>(recipient_gids, nb_recipient_gids);
-  auto resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  auto const spublicIdentities = to_vector<SPublicIdentity>(
+      recipient_public_identities, nb_recipient_public_identities);
+  auto const sgroupIds = to_vector<SGroupId>(recipient_gids, nb_recipient_gids);
+  auto const resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
-  return makeFuture(tanker->share(resources, suserIds, sgroupIds));
+  return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
 }
 catch (std::exception const& e)
 {

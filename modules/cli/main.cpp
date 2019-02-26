@@ -15,6 +15,7 @@
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <Tanker/Identity/Identity.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 
 #include <docopt/docopt.h>
 
@@ -235,18 +236,27 @@ int main(int argc, char* argv[])
   }
   else if (args.at("encrypt").asBool())
   {
+    auto const trustchainId =
+        base64::decode<TrustchainId>(args.at("<trustchainid>").asString());
+
     auto const core = signIn(args);
 
     std::vector<Tanker::SUserId> shareTo;
     if (args.at("--share"))
       shareTo.push_back(SUserId{args.at("--share").asString()});
 
+    std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
+    for (auto const& userId : shareTo)
+      shareToPublicIdentities.push_back(
+          SPublicIdentity{to_string(Identity::PublicNormalIdentity{
+              trustchainId, obfuscateUserId(userId, trustchainId)})});
+
     auto const cleartext = args.at("<cleartext>").asString();
     std::vector<uint8_t> encrypted(AsyncCore::encryptedSize(cleartext.size()));
 
     core->encrypt(encrypted.data(),
                   gsl::make_span(cleartext).as_span<uint8_t const>(),
-                  shareTo)
+                  shareToPublicIdentities)
         .get();
     fmt::print("encrypted: {}\n", base64::encode(encrypted));
   }

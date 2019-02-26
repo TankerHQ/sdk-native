@@ -1,6 +1,7 @@
 #include <benchmark/benchmark.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/LogHandler.hpp>
 
 #include <Helpers/Await.hpp>
@@ -27,6 +28,18 @@ tc::cotask<std::vector<Tanker::SUserId>> createUsers(Trustchain& tr,
     res[i] = device.suserId();
   }
   TC_RETURN(res);
+}
+
+std::vector<Tanker::SPublicIdentity> userIdsToPublicIdentities(
+    Tanker::TrustchainId const& trustchainId,
+    std::vector<Tanker::SUserId> const& suserIds)
+{
+  auto res = std::vector<Tanker::SPublicIdentity>();
+  for (auto const& suserId : suserIds)
+    res.push_back(Tanker::SPublicIdentity{
+        to_string(Tanker::Identity::PublicNormalIdentity{
+            trustchainId, obfuscateUserId(suserId, trustchainId)})});
+  return res;
 }
 
 auto create_encrypted(std::string const& plain_data)
@@ -241,7 +254,8 @@ static void share_to_unverified_users(benchmark::State& state)
 {
   auto& tr = Trustchain::getInstance();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
+    auto publicIdentities = userIdsToPublicIdentities(
+        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     for (auto _ : state)
     {
@@ -251,7 +265,7 @@ static void share_to_unverified_users(benchmark::State& state)
       auto laptop = laptopDev.createAsyncCore();
       TC_AWAIT(laptop->signUp(laptopDev.identity()));
       state.ResumeTiming();
-      TC_AWAIT(laptop->encrypt(&p.second[0], p.first, users));
+      TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
       state.PauseTiming();
       TC_AWAIT(laptop->signOut());
       laptop.reset();
@@ -273,7 +287,8 @@ static void share_to_users(benchmark::State& state)
 {
   auto& tr = Trustchain::getInstance();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
+    auto publicIdentities = userIdsToPublicIdentities(
+        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     auto alice = tr.makeUser(UserType::New);
     auto laptopDev = alice.makeDevice();
@@ -281,9 +296,9 @@ static void share_to_users(benchmark::State& state)
     TC_AWAIT(laptop->signUp(laptopDev.identity()));
 
     // we trigger the verification
-    TC_AWAIT(laptop->encrypt(&p.second[0], p.first, users));
+    TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
     for (auto _ : state)
-      TC_AWAIT(laptop->encrypt(&p.second[0], p.first, users));
+      TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
     TC_AWAIT(laptop->signOut());
   })
       .get();

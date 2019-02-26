@@ -141,15 +141,17 @@ void Core::signOut()
   sessionClosed();
 }
 
-tc::cotask<void> Core::encrypt(uint8_t* encryptedData,
-                               gsl::span<uint8_t const> clearData,
-                               std::vector<SUserId> const& userIds,
-                               std::vector<SGroupId> const& groupIds)
+tc::cotask<void> Core::encrypt(
+    uint8_t* encryptedData,
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(encrypt);
-  TC_AWAIT((*psession)->encrypt(encryptedData, clearData, userIds, groupIds));
+  TC_AWAIT((*psession)->encrypt(
+      encryptedData, clearData, publicIdentities, groupIds));
 }
 
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
@@ -161,14 +163,15 @@ tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
   TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData));
 }
 
-tc::cotask<void> Core::share(std::vector<SResourceId> const& sresourceIds,
-                             std::vector<SUserId> const& userIds,
-                             std::vector<SGroupId> const& groupIds)
+tc::cotask<void> Core::share(
+    std::vector<SResourceId> const& sresourceIds,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(share);
-  TC_AWAIT((*psession)->share(sresourceIds, userIds, groupIds));
+  TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
 }
 
 tc::cotask<SGroupId> Core::createGroup(std::vector<SUserId> const& members)

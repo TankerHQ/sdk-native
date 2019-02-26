@@ -8,6 +8,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
@@ -70,15 +71,16 @@ public:
 
   Status status() const;
 
-  tc::future<void> encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData,
-                           std::vector<SUserId> const& userIds = {},
-                           std::vector<SGroupId> const& groupIds = {});
+  tc::future<void> encrypt(
+      uint8_t* encryptedData,
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
   tc::future<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::future<void> share(std::vector<SResourceId> const& resourceId,
-                         std::vector<SUserId> const& userIds,
+                         std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
   tc::future<SGroupId> createGroup(std::vector<SUserId> const& suserIds);

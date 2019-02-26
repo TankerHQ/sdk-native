@@ -163,8 +163,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share to Bob")
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(
-      aliceSession->encrypt(encryptedData.data(), clearData, {bob.suserId()})));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(), clearData, {bob.spublicIdentity()})));
 
   REQUIRE(TC_AWAIT(
       checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
@@ -266,7 +266,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
   }
 
   REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->share(resourceIds, {bob.suserId()}, {})));
+      TC_AWAIT(aliceSession->share(resourceIds, {bob.spublicIdentity()}, {})));
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 

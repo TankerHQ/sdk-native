@@ -113,8 +113,8 @@ struct tanker_sign_in_options
 struct tanker_encrypt_options
 {
   uint8_t version;
-  b64char const* const* recipient_uids;
-  uint32_t nb_recipient_uids;
+  b64char const* const* recipient_public_identities;
+  uint32_t nb_recipient_public_identities;
   b64char const* const* recipient_gids;
   uint32_t nb_recipient_gids;
 };
@@ -426,8 +426,10 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param recipient_uids Array of strings describing the user recipients.
- * \param nb_recipient_uids The number of recipients in recipient_uids.
+ * \param recipient_public_identities Array of strings describing the user
+ * recipients.
+ * \param nb_recipient_public_identities The number of recipients in
+ * recipient_public_identities.
  * \param recipient_gids Array of strings describing the group recipients.
  * \param nb_recipient_gids The number of recipients in recipient_gids.
  * \param resource_ids Array of string describing the resources.
@@ -442,8 +444,8 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * server returned an error
  */
 tanker_future_t* tanker_share(tanker_t* session,
-                              char const* const* recipient_uids,
-                              uint64_t nb_recipient_uids,
+                              char const* const* recipient_public_identities,
+                              uint64_t nb_recipient_public_identities,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,

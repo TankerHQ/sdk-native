@@ -99,13 +99,15 @@ Status AsyncCore::status() const
   return this->_core->status();
 }
 
-tc::future<void> AsyncCore::encrypt(uint8_t* encryptedData,
-                                    gsl::span<uint8_t const> clearData,
-                                    std::vector<SUserId> const& userIds,
-                                    std::vector<SGroupId> const& groupIds)
+tc::future<void> AsyncCore::encrypt(
+    uint8_t* encryptedData,
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->encrypt(encryptedData, clearData, userIds, groupIds));
+    TC_AWAIT(this->_core->encrypt(
+        encryptedData, clearData, publicIdentities, groupIds));
   });
 }
 
@@ -117,12 +119,13 @@ tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
   });
 }
 
-tc::future<void> AsyncCore::share(std::vector<SResourceId> const& resourceId,
-                                  std::vector<SUserId> const& userIds,
-                                  std::vector<SGroupId> const& groupIds)
+tc::future<void> AsyncCore::share(
+    std::vector<SResourceId> const& resourceId,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->share(resourceId, userIds, groupIds));
+    TC_AWAIT(this->_core->share(resourceId, publicIdentities, groupIds));
   });
 }
 

@@ -7,6 +7,7 @@
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
@@ -56,16 +57,17 @@ public:
                                 SignInOptions const& signInOptions);
   void signOut();
 
-  tc::cotask<void> encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData,
-                           std::vector<SUserId> const& userIds = {},
-                           std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<void> encrypt(
+      uint8_t* encryptedData,
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& resourceId,
-                         std::vector<SUserId> const& userIds,
+                         std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
   tc::cotask<SGroupId> createGroup(std::vector<SUserId> const& members);
