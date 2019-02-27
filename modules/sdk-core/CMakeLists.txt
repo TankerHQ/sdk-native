@@ -219,6 +219,7 @@ target_include_directories(tankercore
   $<INSTALL_INTERFACE:include>
 )
 
+install(DIRECTORY include DESTINATION .)
 
 target_link_libraries(tankercore
   tankerserialization
