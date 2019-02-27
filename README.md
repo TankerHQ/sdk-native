@@ -1,31 +1,31 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[license-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
+[license-link]: https://opensource.org/licenses/Apache-2.0
 
-# Tanker Native SDK
+[last-commit-badge]: https://img.shields.io/github/last-commit/TankerHQ/sdk-js.svg?label=Last%20commit&logo=github
 
-## Table of Contents
+<img src="https://cdn.jsdelivr.net/gh/TankerHQ/sdk-js@v1.10.1/src/public/tanker.png" alt="Tanker logo" width="180" />
 
- * [Overview](#overview)
- * [Setup](#setup)
- * [Contributing](#contributing)
- * [License and Terms](#license-and-terms)
+[![License][license-badge]][license-link]
+![Last Commit][last-commit-badge]
+
+# Encryption SDK for C++ / C
+
+[Overview](#overview) · [Contributing](#contributing) · [License](#license)
+
 ## Overview
 
-[The Tanker SDK](https://tanker.io) provides an easy-to-use SDK allowing you to protect your users'
-data.
+Tanker is an open-source client SDK that can be embedded in any application.
 
-The Tanker Native SDK is the base of the [Tanker Android SDK](https://github.com/TankerHQ/sdk-android) and the [Tanker iOS SDK](https://github.com/TankerHQ/sdk-ios).
+It leverages powerful **client-side encryption** of any type of data, textual or binary, but without performance loss and assuring a **seamless end-user experience**. No cryptographic skills are required.
 
-It exposes a C++ and a C API. None of them are, to this day, considered stable.
-
-### Setup
-
-We are actively working to allow external developers to build and test this sdk from its source.
+The Tanker Native SDK exposes C++ and C APIs, that are wrapped in our [Android](https://github.com/TankerHQ/sdk-android) and [iOS](https://github.com/TankerHQ/sdk-ios) SDKs.
 
 ## Contributing
 
 We welcome feedback. Feel free to open any issue on the Github bug tracker.
 
-## License and Terms
+We are actively working to allow external developers to build and test this sdk from its source.
 
-The Tanker Native SDK is licensed under the
-[Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+## License
+
+The Tanker Native SDK is licensed under the [Apache License, version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
