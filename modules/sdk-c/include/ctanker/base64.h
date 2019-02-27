@@ -1,9 +1,9 @@
-#ifndef TANKER_SDK_TANKER_BASE64_H
-#define TANKER_SDK_TANKER_BASE64_H
+#ifndef CTANKER_SDK_TANKER_BASE64_H
+#define CTANKER_SDK_TANKER_BASE64_H
 
 #include <stdint.h>
 
-#include <tanker/async.h>
+#include <ctanker/async.h>
 
 #ifdef __cplusplus
 extern "C" {
