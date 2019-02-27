@@ -20,7 +20,17 @@ add_library(tankertesthelpers STATIC
 
 target_include_directories(tankertesthelpers
   PUBLIC
-  ${PROJECT_SOURCE_DIR}/include
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+install(DIRECTORY include DESTINATION .)
+
+install(TARGETS tankertesthelpers
+  EXPORT tankertesthelpers
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
 )
 
 target_link_libraries(tankertesthelpers CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt CONAN_PKG::optional-lite)
