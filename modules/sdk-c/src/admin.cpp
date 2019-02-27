@@ -1,5 +1,5 @@
-#include <tanker/admin.h>
-#include <tanker/tanker.h>
+#include <ctanker/admin.h>
+#include <ctanker/ctanker.h>
 
 #include <Tanker/Admin.hpp>
 #include <Tanker/ConnectionFactory.hpp>
