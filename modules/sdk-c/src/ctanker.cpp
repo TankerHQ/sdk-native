@@ -353,6 +353,10 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
   std::vector<SGroupId> sgroupIds{};
   if (options)
   {
+    if (options->version != 2)
+      return makeFuture(tc::make_exceptional_future<void>(
+          Error::formatEx<Error::InvalidArgument>(
+              "unsupported tanker_encrypt_options struct version")));
     spublicIdentities =
         to_vector<SPublicIdentity>(options->recipient_public_identities,
                                    options->nb_recipient_public_identities);

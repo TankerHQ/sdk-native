@@ -121,7 +121,7 @@ struct tanker_encrypt_options
 
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
-    1, NULL, 0, NULL, 0             \
+    2, NULL, 0, NULL, 0             \
   }
 
 struct tanker_decrypt_options
