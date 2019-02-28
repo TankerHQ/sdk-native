@@ -117,6 +117,19 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it fails to signUp if the user already exists")
+{
+  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto device1 = alice.makeDevice();
+  {
+    auto session = TC_AWAIT(device1.open(Test::SessionType::New));
+  }
+  auto session = device1.createCore(Test::SessionType::New);
+  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity())),
+                    Error::IdentityAlreadyRegistered);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "it fails to open if no sign in options are provided")
 {
   auto alice = trustchain.makeUser();

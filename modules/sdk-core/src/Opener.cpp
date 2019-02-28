@@ -68,15 +68,13 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
       TC_AWAIT(_client->userStatus(_info.trustchainId,
                                    _identity->delegation.userId,
                                    _keyStore->signatureKeyPair().publicKey));
+  if (userStatusResult.userExists && mode == OpenMode::SignUp)
+    throw Error::IdentityAlreadyRegistered(
+        "signUp failed: user already exists");
   if (userStatusResult.deviceExists)
     TC_RETURN(TC_AWAIT(openDevice()));
   else if (userStatusResult.userExists)
-  {
-    if (mode == OpenMode::SignUp)
-      throw Error::IdentityAlreadyRegistered(
-          "signUp failed: user already exists");
     TC_RETURN(TC_AWAIT(createDevice(signInOptions)));
-  }
   else if (mode == OpenMode::SignUp)
     TC_RETURN(TC_AWAIT(createUser()));
   else if (mode == OpenMode::SignIn)
