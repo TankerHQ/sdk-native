@@ -2,7 +2,6 @@ image: tanker.local:5000/ci-cpp:latest
 
 before_script:
  - dmenv install
- - export PATH=$(dmenv show:venv_path)/bin:$PATH
 
 stages:
   - build
@@ -45,6 +44,16 @@ build/macos:
   script:
     - dmenv run -- python run-ci.py clean-cache
     - dmenv run -- python run-ci.py build-and-test --profile macos
+
+build/windows:
+  stage: build
+  except:
+    - schedules
+  tags:
+    - windows
+  script:
+    - dmenv run -- python run-ci.py clean-cache
+    - dmenv run -- python run-ci.py build-and-test --profile windows
 
 deploy/macos:
   stage: deploy

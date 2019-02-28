@@ -37,7 +37,7 @@ def main() -> None:
     if args.command == "clean-cache":
         ci.cpp.clean_conan_cache()
     elif args.command == "build-and-test":
-        ci.cpp.build_and_test(args.profile, args.coverage)
+        ci.cpp.build_and_test(args.profile, coverage=args.coverage)
     elif args.command == "deploy":
         git_tag = args.git_tag
         version = ci.version_from_git_tag(git_tag)
