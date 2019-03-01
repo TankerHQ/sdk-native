@@ -48,6 +48,11 @@ auto const GOOD_IDENTITY =
     "cl9zZWNyZXQiOiI3RlNmL24wZTc2UVQzczBEa3ZldFJWVkpoWFpHRWpPeGo1RVdBRmV4dmpJPS"
     "J9"s;
 
+auto const GOOD_PUBLIC_IDENTITY =
+    "eyJ0YXJnZXQiOiJ1c2VyIiwidHJ1c3RjaGFpbl9pZCI6InRwb3h5TnpoMGhVOUcyaTlhZ012SH"
+    "l5ZCtwTzZ6R0NqTzlCZmhyQ0xqZDQ9IiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
+    "aG1oZVRoNFFCRE5weTRTdnk5WG9rPSJ9"s;
+
 auto const trustchainIdString = "tpoxyNzh0hU9G2i9agMvHyyd+pO6zGCjO9BfhrCLjd4="s;
 auto const trustchainPrivateKeyString =
     "cTMoGGUKhwN47ypq4xAXAtVkNWeyUtMltQnYwJhxWYSvqjPVGmXd2wwa7y17QtPTZhn8bxb015CZC/e4ZI7+MQ=="s;
@@ -121,12 +126,18 @@ TEST_CASE("generate Identity")
   }
   SUBCASE("We can construct an identity from a good string")
   {
-    auto identity = extract<Identity>(GOOD_IDENTITY);
+    auto const identity = extract<Identity>(GOOD_IDENTITY);
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
-    CHECK_NOTHROW(checkUserSecret(identity.userSecret,
-                                  obfuscateUserId(suserId, trustchainId)));
+  }
+  SUBCASE("We can construct a public identity from a good string")
+  {
+    auto const publicIdentity = extract<PublicIdentity>(GOOD_PUBLIC_IDENTITY);
+    auto const publicNormalIdentity =
+        mpark::get<PublicNormalIdentity>(publicIdentity);
+    CHECK_EQ(publicNormalIdentity.trustchainId, trustchainId);
+    CHECK_EQ(publicNormalIdentity.userId, obfuscatedUserId);
   }
 }
 
