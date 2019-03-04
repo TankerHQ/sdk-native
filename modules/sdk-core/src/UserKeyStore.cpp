@@ -31,7 +31,7 @@ UserKeyStore::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
   {
     TC_RETURN(TC_AWAIT(_db->getUserKeyPair(publicKey)));
   }
-  catch (DataStore::RecordNotFound const& e)
+  catch (DataStore::RecordNotFound const&)
   {
     TC_RETURN(nonstd::nullopt);
   }

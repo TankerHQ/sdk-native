@@ -128,11 +128,12 @@ TEST_CASE("device keystore migration")
   {
     using DeviceKeyStoreTable =
         Tanker::DbModels::device_key_store::device_key_store;
-    DeviceKeyStoreTable tab;
+    DeviceKeyStoreTable tab{};
 
     auto const oldKeystore = setupDeviceKeyStoreMigration(db);
 
     DataStore::createOrMigrateTable<DeviceKeyStoreTable>(db);
+
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& deviceKeyStore = keys.front();
 

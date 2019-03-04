@@ -65,7 +65,7 @@ namespace
 template <typename T, typename F>
 auto convertList(std::vector<T> const& source, F&& f)
 {
-  std::vector<std::result_of_t<F(decltype(*begin(source)))>> ret;
+  std::vector<std::result_of_t<F(T)>> ret;
   ret.reserve(source.size());
 
   std::transform(begin(source), end(source), std::back_inserter(ret), f);
@@ -182,7 +182,7 @@ tc::cotask<void> Session::connectionHandler()
   // NOTE: It is MANDATORY to check this prefix is valid, or the server could
   // get us to sign anything!
   static std::string const challengePrefix =
-      "\U0001F512 Auth Challenge. 1234567890.";
+      u8"\U0001F512 Auth Challenge. 1234567890.";
   try
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());

@@ -55,7 +55,7 @@ void migrateTable(Connection& db, int dbVersion, dummy const& tab = {})
 void setupDummyMigration(Connection& db)
 {
   using VersionsTable = Tanker::DbModels::versions::versions;
-  VersionsTable tab;
+  VersionsTable tab{};
 
   dummy::dummy dummy;
 
@@ -196,7 +196,7 @@ TEST_CASE("Migration" * doctest::test_suite("DataStore"))
   Tanker::UniquePath testtmp("testtmp");
   auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
 
-  dummy::dummy tab;
+  dummy::dummy tab{};
   auto dbPtr = createConnection(dbfile);
   auto& db = *dbPtr;
 
@@ -215,7 +215,7 @@ TEST_CASE("Migration" * doctest::test_suite("DataStore"))
   {
     using VersionsTable = Tanker::DbModels::versions::versions;
 
-    VersionsTable tab;
+    VersionsTable tab{};
     db(update(tab)
            .set(tab.version = dummy::currentTableVersion() + 1)
            .where(tab.name == tableName<dummy::dummy>()));

@@ -26,7 +26,7 @@ void migrate1To2(DataStore::Connection& db)
   // we can retrieve BLOB even if stored value was TEXT
   using DataStore::extractBlob;
 
-  trustchain_indexes tab;
+  trustchain_indexes tab{};
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {

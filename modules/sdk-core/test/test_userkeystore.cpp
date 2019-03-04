@@ -145,7 +145,7 @@ TEST_CASE("user keys migration")
   {
     auto const oldKeys = setupUserKeysMigration(db);
 
-    UserKeysTable tab;
+    UserKeysTable tab{};
 
     DataStore::createOrMigrateTable<UserKeysTable>(db);
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());

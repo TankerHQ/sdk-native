@@ -23,7 +23,7 @@ void migrate1To2(DataStore::Connection& db)
 {
   using DataStore::extractBlob;
 
-  device_key_store tab;
+  device_key_store tab{};
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {

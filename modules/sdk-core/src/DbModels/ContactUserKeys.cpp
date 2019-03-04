@@ -24,7 +24,7 @@ void migrate1To2(DataStore::Connection& db)
 {
   using DataStore::extractBlob;
 
-  contact_user_keys tab;
+  contact_user_keys tab{};
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
@@ -80,7 +80,6 @@ void migrateTable(DataStore::Connection& db,
   case 0:
   case 1:
     migrate1To2(db);
-  [[fallthrough]];
   case 2:
     migrate2To3(db);
     break;

@@ -36,7 +36,7 @@ void updateVersion(Connection& db)
 {
   using VersionsTable = DbModels::versions::versions;
 
-  VersionsTable tab;
+  VersionsTable tab{};
 
   auto const name = tableName<sqlpp::name_of<Table>>::get();
   auto const version = currentTableVersion(Table{});

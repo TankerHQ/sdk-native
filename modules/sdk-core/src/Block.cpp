@@ -8,8 +8,8 @@
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
-#include <nlohmann/json.hpp>
 #include <gsl-lite.hpp>
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <cstdint>

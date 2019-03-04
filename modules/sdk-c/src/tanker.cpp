@@ -3,8 +3,8 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Init.hpp>
+#include <Tanker/Unlock/Methods.hpp>
 
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>

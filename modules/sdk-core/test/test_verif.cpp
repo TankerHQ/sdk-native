@@ -784,4 +784,3 @@ TEST_CASE("Verif UserGroupAddition")
     CHECK_NOTHROW(Verif::verifyUserGroupAddition(gaEntry, authorDevice, group));
   }
 }
-

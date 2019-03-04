@@ -67,7 +67,7 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
         self.requires("mockaron/0.2@tanker/testing", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.16@tanker/testing", private=private)
+        self.requires("tconcurrent/0.17@tanker/testing", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
 
     def imports(self):
@@ -85,14 +85,14 @@ class TankerConan(ConanFile):
         if tools.cross_building(self.settings):
             del self.settings.compiler.libcxx
         if self.settings.os in ["Android", "iOS"]:
-            # On Android OpenSSL can't use system ca-certificates, so we ship mozilla's cacert.pem instead
+            # On Android and iOS OpenSSL can't use system ca-certificates, so we ship mozilla's cacert.pem instead
             self.options["socket.io-client-cpp"].embed_cacerts = True
 
     def build_requirements(self):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.0.1@tanker/testing")
-            self.build_requires("doctest-async/2.0.7@tanker/testing")
+            self.build_requires("doctest-async/2.0.8@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")
@@ -135,5 +135,8 @@ class TankerConan(ConanFile):
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
+
+        if self.settings.os == "Windows" and self.options.with_ssl:
+            libs.extend(["crypt32", "cryptui"])
 
         self.cpp_info.libs = libs

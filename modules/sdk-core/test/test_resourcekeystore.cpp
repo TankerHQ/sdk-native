@@ -113,7 +113,7 @@ TEST_CASE("Migration")
   SUBCASE("Migration from version 1 should convert from base64")
   {
     using ResourceKeysTable = Tanker::DbModels::resource_keys::resource_keys;
-    ResourceKeysTable tab;
+    ResourceKeysTable tab{};
 
     auto const oldKeys = setupResourceKeysMigration(db);
 

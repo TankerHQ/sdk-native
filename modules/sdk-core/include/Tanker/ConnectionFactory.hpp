@@ -9,7 +9,6 @@ namespace Tanker
 {
 struct ConnectionFactory
 {
-  [[nodiscard]] static ConnectionPtr create(std::string url,
-                                            nonstd::optional<SdkInfo> info);
+  static ConnectionPtr create(std::string url, nonstd::optional<SdkInfo> info);
 };
 }

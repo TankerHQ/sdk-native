@@ -31,7 +31,7 @@ bool tableExists(Connection& db, std::string const& tableName)
 nonstd::optional<int> tableVersion(Connection& db, std::string const& tableName)
 {
   using VersionsTable = DbModels::versions::versions;
-  VersionsTable tab;
+  VersionsTable tab{};
 
   auto rows = db(select(tab.version).from(tab).where(tab.name == tableName));
   if (rows.empty())

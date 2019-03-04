@@ -6,8 +6,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include <tuple>
 #include <cstddef>
+#include <tuple>
 
 namespace Tanker
 {

@@ -17,7 +17,7 @@ UniquePath::~UniquePath()
 }
 #else
 UniquePath::UniquePath(std::string const& dir)
-  : path((dir / boost::filesystem::unique_path()).c_str())
+  : path((dir / boost::filesystem::unique_path()).string())
 {
   boost::filesystem::create_directories(path);
 }
