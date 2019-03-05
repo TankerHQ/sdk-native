@@ -29,6 +29,7 @@ def main() -> None:
 
     subparsers.add_parser("nightly")
     subparsers.add_parser("mirror")
+    subparsers.add_parser("nightly-build-emscripten")
 
     platform = sys.platform.lower()
     ci.cpp.update_conan_config(platform)
@@ -37,7 +38,10 @@ def main() -> None:
     if args.command == "clean-cache":
         ci.cpp.clean_conan_cache()
     elif args.command == "build-and-test":
-        ci.cpp.build_and_test(args.profile, coverage=args.coverage)
+        ci.cpp.check(args.profile, coverage=args.coverage, test=True)
+    elif args.command == "nightly-build-emscripten":
+        with ci.mail.notify_failure("sdk-native"):
+            ci.cpp.check("emscripten", test=False)
     elif args.command == "deploy":
         git_tag = args.git_tag
         version = ci.version_from_git_tag(git_tag)
