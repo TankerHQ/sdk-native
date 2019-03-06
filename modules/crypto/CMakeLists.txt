@@ -31,6 +31,8 @@ install(TARGETS tankercrypto
   ARCHIVE DESTINATION lib
 )
 
+install(DIRECTORY include DESTINATION .)
+
 if(BUILD_TESTS)
   enable_testing()
   add_subdirectory(test)

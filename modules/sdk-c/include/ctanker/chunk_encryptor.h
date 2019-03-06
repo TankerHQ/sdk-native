@@ -1,11 +1,11 @@
-#ifndef TANKER_SDK_TANKER_CHUNK_ENCRYPTOR_H
-#define TANKER_SDK_TANKER_CHUNK_ENCRYPTOR_H
+#ifndef CTANKER_SDK_TANKER_CHUNK_ENCRYPTOR_H
+#define CTANKER_SDK_TANKER_CHUNK_ENCRYPTOR_H
 
 #include <stdint.h>
 
-#include <tanker/async.h>
-#include <tanker/base64.h>
-#include <tanker/tanker.h>
+#include <ctanker/async.h>
+#include <ctanker/base64.h>
+#include <ctanker/ctanker.h>
 
 #ifdef __cplusplus
 extern "C" {
