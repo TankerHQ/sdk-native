@@ -18,6 +18,7 @@ option(BUILD_TESTS "Enable test building" ON)
 option(WITH_COVERAGE "Enable coverage" OFF)
 option(BUILD_TANKER_TOOLS "Build Tanker Tools" ON)
 option(WITH_TRACER "Enable tracer library" OFF)
+option(TANKERLIB_SHARED "whether to build the main tanker library as a shared" OFF)
 
 add_definitions("-DGSL_THROW_ON_CONTRACT_VIOLATION")
 
@@ -36,6 +37,7 @@ if(WIN32)
 elseif(EMSCRIPTEN)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MODULARIZE=1 -s EXPORT_NAME=Tanker -s NO_FILESYSTEM=0 --bind")
 endif()
+
 
 if(BUILD_TESTS)
   enable_testing()

@@ -6,7 +6,7 @@ class TankerConan(ConanFile):
     version = "dev"
     settings = "os", "compiler", "build_type", "arch"
     options = {
-        "shared": [True, False],
+        "tankerlib_shared": [True, False],
         "fPIC": [True, False],
         "with_ssl": [True, False],
         "with_tracer": [True, False],
@@ -14,7 +14,7 @@ class TankerConan(ConanFile):
         "coverage": [True, False],
         "coroutinests": [True, False],
         }
-    default_options = "shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "sanitizer=None", "coverage=False", "coroutinests=False"
+    default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "sanitizer=None", "coverage=False", "coroutinests=False"
     exports_sources = "CMakeLists.txt", "modules/*"
     generators = "cmake", "json", "ycm"
 
@@ -115,7 +115,7 @@ class TankerConan(ConanFile):
         cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
-        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
+        cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         cmake.definitions["WITH_COVERAGE"] = self.options.coverage
         if self.should_configure:
@@ -129,7 +129,7 @@ class TankerConan(ConanFile):
 
     def package_info(self):
         libs = ["tanker"]
-        if not self.options.shared:
+        if not self.options.tankerlib_shared:
             libs.extend(["tankercore", "tankerusertoken", "tankercrypto"])
 
         if self.sanitizer_flag:
