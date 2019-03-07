@@ -7,62 +7,49 @@ stages:
   - build
   - deploy
 
-build/linux:
+.build:
   stage: build
   except:
     - schedules
-  tags:
-    - linux
-  script:
-    - dmenv run -- python run-ci.py build-and-test --profile gcc8
-  cache:
-    paths:
-      - build
 
-deploy/linux:
-  stage: deploy
-  except:
-    - schedules
-  when: manual
-  tags:
-    - linux
-  only:
-    - tags
+build/linux:
+  extends: .build
+  tags: [linux]
   script:
-    - dmenv run -- python run-ci.py deploy --profile android --git-tag ${CI_COMMIT_TAG}
-  cache:
-    paths:
-      - build
+    - dmenv run -- python run-ci.py build-and-test --profile gcc8-release
 
 build/macos:
-  stage: build
-  except:
-    - schedules
-  tags:
-    - macos
+  extends: .build
+  tags: [macos]
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile macos
+    - dmenv run -- python run-ci.py build-and-test --profile macos-release
 
 build/windows:
-  stage: build
-  except:
-    - schedules
-  tags:
-    - windows
+  extends: .build
+  tags: [windows]
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile windows
+    - dmenv run -- python run-ci.py build-and-test --profile vs2017-release
 
-deploy/macos:
+
+.deploy:
   stage: deploy
   except:
     - schedules
   when: manual
-  tags:
-    - macos
   only:
     - tags
+
+deploy/linux:
+  extends: .deploy
+  tags: [linux]
   script:
-    - dmenv run -- python run-ci.py deploy --profile ios --git-tag ${CI_COMMIT_TAG}
+    - dmenv run -- python run-ci.py deploy
+
+deploy/macos:
+  extends: .deploy
+  tags: [macos]
+  script:
+    - dmenv run -- python run-ci.py deploy
 
 nightly/android:
   image: tanker.local:5000/ci-android:latest
