@@ -4,32 +4,7 @@ before_script:
  - dmenv install
 
 stages:
-  - build
   - deploy
-
-.build:
-  stage: build
-  except:
-    - schedules
-
-build/linux:
-  extends: .build
-  tags: [linux]
-  script:
-    - dmenv run -- python run-ci.py build-and-test --profile gcc8-release
-
-build/macos:
-  extends: .build
-  tags: [macos]
-  script:
-    - dmenv run -- python run-ci.py build-and-test --profile macos-release
-
-build/windows:
-  extends: .build
-  tags: [windows]
-  script:
-    - dmenv run -- python run-ci.py build-and-test --profile vs2017-release
-
 
 .deploy:
   stage: deploy
@@ -57,47 +32,6 @@ deploy/windows:
   script:
     - dmenv run -- python run-ci.py deploy
 
-nightly/android:
-  image: tanker.local:5000/ci-android:latest
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py nightly
-  tags:
-    - linux
-
-nightly/ios:
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py nightly
-  tags:
-    - macos
-
-nightly/emscripten:
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py nightly-build-emscripten
-  tags:
-    - linux
-
-coverage:
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py build-and-test --profile gcc8 --coverage
-    - mv build/gcc8/x86_64/Release/coverage coverage
-  tags:
-    - linux
-  artifacts:
-    paths:
-      - coverage/
-    expire_in: 7 days
 
 pages:
   stage: deploy
