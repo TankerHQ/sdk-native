@@ -28,7 +28,6 @@ class TankerNativeTestPackage(ConanFile):
 
     def test(self):
         if tools.cross_building(self.settings):
-            assert(os.path.exists(os.path.join("bin", "example")))
             return
         env = ""
         if self.options.tankerlib_shared:
