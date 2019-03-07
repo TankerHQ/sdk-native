@@ -37,10 +37,6 @@ class TankerConan(ConanFile):
         return self.should_build_bench and self.options.with_tracer
 
     @property
-    def should_run_tests(self):
-        return self.options.with_ssl and self.should_build_tests and self.should_test and not self.cross_building
-
-    @property
     def sanitizer_flag(self):
         if self.options.sanitizer:
             return " -fsanitize=%s " % self.options.sanitizer
@@ -122,8 +118,6 @@ class TankerConan(ConanFile):
             cmake.configure()
         if self.should_build:
             cmake.build()
-        if self.should_run_tests:
-            cmake.test()
         if self.should_install:
             cmake.install()
 
