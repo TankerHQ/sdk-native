@@ -129,7 +129,7 @@ class TankerConan(ConanFile):
 
     def package_info(self):
         libs = ["tanker"]
-        if not self.options.shared:
+        if not self.options.tankerlib_shared:
             libs.extend(["tankercore", "tankerusertoken", "tankercrypto"])
 
         if self.sanitizer_flag:

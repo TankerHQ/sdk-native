@@ -5,6 +5,11 @@ import os
 class TankerNativeTestPackage(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
+    options = {
+        "tankerlib_shared": [True, False]
+    }
+    default_options = "tankerlib_shared=False"
+
 
     def configure(self):
         del self.settings.compiler.libcxx
@@ -23,12 +28,12 @@ class TankerNativeTestPackage(ConanFile):
 
     def test(self):
         if tools.cross_building(self.settings):
-            assert(os.path.exists(os.path.join("bin", "example")))
-        else:
-            env = ""
+            return
+        env = ""
+        if self.options.tankerlib_shared:
             if self.settings.os == "Macos":
                 env = "DYLD_FALLBACK_LIBRARY_PATH= DYLD_LIBRARY_PATH=./bin"
             elif self.settings.os == "Linux":
                 env = "LD_LIBRARY_PATH=./bin"
-            exec_path = os.path.join('bin', 'example')
-            self.run("%s %s" % (env, exec_path))
+        exec_path = os.path.join('bin', 'example')
+        self.run("%s %s" % (env, exec_path))
