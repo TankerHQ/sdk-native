@@ -51,6 +51,12 @@ deploy/macos:
   script:
     - dmenv run -- python run-ci.py deploy
 
+deploy/windows:
+  extends: .deploy
+  tags: [windows]
+  script:
+    - dmenv run -- python run-ci.py deploy
+
 nightly/android:
   image: tanker.local:5000/ci-android:latest
   stage: build
