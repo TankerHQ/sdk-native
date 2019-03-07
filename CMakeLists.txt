@@ -37,6 +37,8 @@ elseif(EMSCRIPTEN)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MODULARIZE=1 -s EXPORT_NAME=Tanker -s NO_FILESYSTEM=0 --bind")
 endif()
 
+option(TANKERLIB_SHARED "wehther to build the main tanker library as a shared" OFF)
+
 if(BUILD_TESTS)
   enable_testing()
 endif()
