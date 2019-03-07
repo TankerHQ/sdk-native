@@ -33,21 +33,6 @@ deploy/windows:
     - dmenv run -- python run-ci.py deploy
 
 
-pages:
-  stage: deploy
-  only:
-    - schedules
-  dependencies:
-    - coverage
-  script:
-    - mv coverage/ public/
-  artifacts:
-    paths:
-      - public
-    expire_in: 7 days
-  tags:
-    - linux
-
 mirror:
   tags:
     - linux
