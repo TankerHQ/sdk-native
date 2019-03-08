@@ -1,4 +1,5 @@
 #include <Helpers/Config.hpp>
+#include <Helpers/JsonFile.hpp>
 
 #include <fmt/core.h>
 
@@ -29,16 +30,6 @@ std::string getSafeEnv(std::string key)
   return env;
 }
 
-std::string readfile(std::string const& file)
-{
-  std::ifstream in(file);
-  if (!in.is_open())
-    throw std::runtime_error(
-        fmt::format("Could not open config file '{}'\n", file));
-  return std::string(std::istreambuf_iterator<char>(in),
-                     std::istreambuf_iterator<char>());
-}
-
 struct Config
 {
   std::string url;
@@ -51,9 +42,9 @@ void from_json(const nlohmann::json& j, Config& c)
   j.at("idToken").get_to(c.idToken);
 }
 
-Config parseConfig(std::string const& config, std::string const& configName)
+Config selectConfig(nlohmann::json const& configs,
+                    std::string const& configName)
 {
-  auto const configs = nlohmann::json::parse(config);
   auto const found = configs.find(configName);
   if (found == end(configs))
     throw std::runtime_error(fmt::format(
@@ -65,8 +56,7 @@ Config loadConfig()
 {
   auto const projectConfig = getSafeEnv("TANKER_CONFIG_NAME");
   auto const configPath = getSafeEnv("TANKER_CONFIG_FILEPATH");
-  auto const config = readfile(configPath);
-  return parseConfig(config, projectConfig);
+  return selectConfig(loadJson(configPath), projectConfig);
 }
 
 nonstd::optional<Config> config;
@@ -83,7 +73,7 @@ namespace TestConstants
 {
 void setConfig(std::string const& cfg, std::string const& env)
 {
-  config = parseConfig(cfg, env);
+  config = selectConfig(nlohmann::json::parse(cfg), env);
 }
 
 std::string const& trustchainUrl()
