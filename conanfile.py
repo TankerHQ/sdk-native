@@ -129,6 +129,8 @@ class TankerConan(ConanFile):
 
     def package_info(self):
         libs = ["ctanker", "tankercore", "tankertesthelpers", "tankerusertoken", "tankercrypto"]
+        if self.should_build_tests:
+            lib.append("tankercompathelpers")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
