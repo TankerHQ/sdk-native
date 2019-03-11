@@ -53,6 +53,7 @@ flags = [
  '-I./modules/sdk-c/include',
  '-I./modules/tracer/include',
  '-I./modules/identity/include',
+ '-I./modules/compat-helpers/include',
  '-I./modules/generator/include',
  '-I./modules/crypto/include',
  '-I./modules/serialization/include',
