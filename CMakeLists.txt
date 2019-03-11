@@ -89,6 +89,7 @@ add_subdirectory(modules/serialization)
 add_subdirectory(modules/test-helpers)
 add_subdirectory(modules/types)
 add_subdirectory(modules/user-token)
+add_subdirectory(modules/compat-helpers)
 
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
