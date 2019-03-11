@@ -93,6 +93,7 @@ add_subdirectory(modules/user-token)
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
   add_subdirectory(modules/generator)
+  add_subdirectory(modules/compat-helpers)
 endif()
 
 if(WITH_COVERAGE)
