@@ -16,19 +16,19 @@ build/linux:
   extends: .build
   tags: [linux]
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile gcc8-release
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 build/macos:
   extends: .build
   tags: [macos]
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile macos-release
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
 build/windows:
   extends: .build
   tags: [windows]
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile vs2017-release
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile vs2017-release
 
 
 .deploy:
@@ -43,13 +43,13 @@ deploy/linux:
   extends: .deploy
   tags: [linux]
   script:
-    - dmenv run -- python run-ci.py deploy
+    - dmenv run -- python run-ci.py --isolate-conan-user-home deploy
 
 deploy/macos:
   extends: .deploy
   tags: [macos]
   script:
-    - dmenv run -- python run-ci.py deploy
+    - dmenv run -- python run-ci.py --isolate-conan-user-home deploy
 
 deploy/windows:
   extends: .deploy
@@ -63,7 +63,7 @@ nightly/android:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py nightly
+    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly
   tags:
     - linux
 
@@ -72,7 +72,7 @@ nightly/ios:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py nightly
+    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly
   tags:
     - macos
 
@@ -81,7 +81,7 @@ nightly/emscripten:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py nightly-build-emscripten
+    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly-build-emscripten
   tags:
     - linux
 
@@ -90,7 +90,7 @@ coverage:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py build-and-test --profile gcc8 --coverage
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8 --coverage
     - mv build/gcc8/x86_64/Release/coverage coverage
   tags:
     - linux
@@ -124,4 +124,4 @@ mirror:
   except:
     - schedules
   script:
-    - dmenv run python run-ci.py mirror
+    - dmenv run python run-ci.py --isolate-conan-user-home mirror

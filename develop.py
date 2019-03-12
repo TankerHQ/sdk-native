@@ -11,6 +11,7 @@ import cli_ui as ui
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
 
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
@@ -24,6 +25,8 @@ def main() -> None:
     configure_parser.set_defaults(build_type="Debug")
 
     args = parser.parse_args()
+    if args.home_isolation:
+        ci.cpp.set_home_isolation()
     command = args.command
     if command == "update-conan-config":
         ci.cpp.update_conan_config()
