@@ -64,8 +64,11 @@ std::string upgradeUserToken(std::string const& strustchainId,
 
 void from_json(nlohmann::json const& j, Identity& identity)
 {
+  auto const target = j.at("target").get<std::string>();
+  if (target != "user")
+    throw std::invalid_argument("failed to deserialize identity");
   j.at("trustchain_id").get_to(identity.trustchainId);
-  j.at("user_id").get_to(identity.delegation.userId);
+  j.at("value").get_to(identity.delegation.userId);
   j.at("user_secret").get_to(identity.userSecret);
   j.at("ephemeral_public_signature_key")
       .get_to(identity.delegation.ephemeralKeyPair.publicKey);
@@ -77,7 +80,8 @@ void from_json(nlohmann::json const& j, Identity& identity)
 void to_json(nlohmann::json& j, Identity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
-  j["user_id"] = identity.delegation.userId;
+  j["target"] = "user";
+  j["value"] = identity.delegation.userId;
   j["user_secret"] = identity.userSecret;
   j["ephemeral_public_signature_key"] =
       identity.delegation.ephemeralKeyPair.publicKey;

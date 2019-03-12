@@ -17,11 +17,7 @@ PublicIdentity getPublicIdentity(Identity const& identity)
 
 std::string getPublicIdentity(std::string const& token)
 {
-  auto const j = extract(token);
-  if (j.find("user_id") != j.end())
-    return to_string(getPublicIdentity(j.get<Identity>()));
-  else
-    throw std::runtime_error("getPublicIdentity not implemented");
+  return to_string(getPublicIdentity(extract(token).get<Identity>()));
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)
