@@ -1,6 +1,6 @@
 #include <ctanker/identity.h>
 
-#include <Tanker/Identity/Identity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 

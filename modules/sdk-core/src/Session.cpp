@@ -79,7 +79,7 @@ std::vector<UserId> publicIdentitiesToUserIds(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
   return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return mpark::get<Identity::PublicNormalIdentity>(
+    return mpark::get<Identity::PublicPermanentIdentity>(
                Identity::extract<Identity::PublicIdentity>(
                    spublicIdentity.string()))
         .userId;

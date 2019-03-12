@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Identity/Identity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Types/Password.hpp>
@@ -68,7 +68,7 @@ private:
   SdkInfo _info;
   std::string _writablePath;
 
-  nonstd::optional<Identity::Identity> _identity;
+  nonstd::optional<Identity::SecretPermanentIdentity> _identity;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;

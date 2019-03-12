@@ -1,4 +1,4 @@
-#include <Tanker/Identity/Identity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
@@ -12,17 +12,19 @@ namespace Tanker
 namespace Identity
 {
 
-Identity::Identity(UserToken const& userToken, TrustchainId const& trustchainId)
+SecretPermanentIdentity::SecretPermanentIdentity(
+    UserToken const& userToken, TrustchainId const& trustchainId)
   : UserToken(userToken), trustchainId(trustchainId)
 {
 }
 
-Identity createIdentity(TrustchainId const& trustchainId,
-                        Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-                        UserId const& userId)
+SecretPermanentIdentity createIdentity(
+    TrustchainId const& trustchainId,
+    Crypto::PrivateSignatureKey const& trustchainPrivateKey,
+    UserId const& userId)
 {
-  return Identity(generateUserToken(trustchainPrivateKey, userId),
-                  std::move(trustchainId));
+  return SecretPermanentIdentity(
+      generateUserToken(trustchainPrivateKey, userId), std::move(trustchainId));
 }
 
 std::string createIdentity(std::string const& trustchainIdParam,
@@ -43,13 +45,13 @@ std::string createIdentity(std::string const& trustchainIdParam,
       Tanker::obfuscateUserId(userId, trustchainId)));
 }
 
-Identity upgradeUserToken(TrustchainId const& trustchainId,
-                          UserId const& userId,
-                          UserToken const& userToken)
+SecretPermanentIdentity upgradeUserToken(TrustchainId const& trustchainId,
+                                         UserId const& userId,
+                                         UserToken const& userToken)
 {
   if (userToken.delegation.userId != userId)
     throw std::invalid_argument("Wrong userId provided");
-  return Identity(std::move(userToken), std::move(trustchainId));
+  return SecretPermanentIdentity(std::move(userToken), std::move(trustchainId));
 }
 
 std::string upgradeUserToken(std::string const& strustchainId,
@@ -62,11 +64,12 @@ std::string upgradeUserToken(std::string const& strustchainId,
   return to_string(upgradeUserToken(trustchainId, userId, userToken));
 }
 
-void from_json(nlohmann::json const& j, Identity& identity)
+void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target != "user")
-    throw std::invalid_argument("failed to deserialize identity");
+    throw std::invalid_argument(
+        "failed to deserialize secret permanent identity");
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("value").get_to(identity.delegation.userId);
   j.at("user_secret").get_to(identity.userSecret);
@@ -77,7 +80,7 @@ void from_json(nlohmann::json const& j, Identity& identity)
   j.at("delegation_signature").get_to(identity.delegation.signature);
 }
 
-void to_json(nlohmann::json& j, Identity const& identity)
+void to_json(nlohmann::json& j, SecretPermanentIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "user";
@@ -90,7 +93,7 @@ void to_json(nlohmann::json& j, Identity const& identity)
   j["delegation_signature"] = identity.delegation.signature;
 }
 
-std::string to_string(Identity const& identity)
+std::string to_string(SecretPermanentIdentity const& identity)
 {
   return base64::encode(nlohmann::json(identity).dump());
 }

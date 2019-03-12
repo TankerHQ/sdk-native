@@ -1,8 +1,8 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
-#include <Tanker/Identity/Identity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Types/UserId.hpp>
@@ -36,7 +36,7 @@ auto const GOOD_USER_TOKEN =
     "YTBlcTRYTnVqNXRWN2hkYXBqT3hobWhlVGg0UUJETnB5NFN2eTlYb2s9IiwidXNlcl9zZWNyZX"
     "QiOiI3RlNmL24wZTc2UVQzczBEa3ZldFJWVkpoWFpHRWpPeGo1RVdBRmV4dmpJPSJ9"s;
 
-auto const GOOD_IDENTITY =
+auto const GOOD_SECRET_PERMANENT_IDENTITY =
     "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
     "JDTGpkND0iLCJ0YXJnZXQiOiJ1c2VyIiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
     "aG1oZVRoNFFCRE5weTRTdnk5WG9rPSIsImRlbGVnYXRpb25fc2lnbmF0dXJlIjoiVTlXUW9sQ3"
@@ -48,7 +48,7 @@ auto const GOOD_IDENTITY =
     "SWZodDNnPT0iLCJ1c2VyX3NlY3JldCI6IjdGU2YvbjBlNzZRVDNzMERrdmV0UlZWSmhYWkdFak"
     "94ajVFV0FGZXh2akk9In0="s;
 
-auto const GOOD_PUBLIC_IDENTITY =
+auto const GOOD_PUBLIC_PERMANENT_IDENTITY =
     "eyJ0YXJnZXQiOiJ1c2VyIiwidHJ1c3RjaGFpbl9pZCI6InRwb3h5TnpoMGhVOUcyaTlhZ012SH"
     "l5ZCtwTzZ6R0NqTzlCZmhyQ0xqZDQ9IiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
     "aG1oZVRoNFFCRE5weTRTdnk5WG9rPSJ9"s;
@@ -125,20 +125,22 @@ TEST_CASE("generate Identity")
     CHECK_NOTHROW(createIdentity(
         trustchainIdString, trustchainPrivateKeyString, suserId));
   }
-  SUBCASE("We can construct an identity from a good string")
+  SUBCASE("We can deserialize an identity from a good string")
   {
-    auto const identity = extract<Identity>(GOOD_IDENTITY);
+    auto const identity =
+        extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
   }
-  SUBCASE("We can construct a public identity from a good string")
+  SUBCASE("We can deserialize a public identity from a good string")
   {
-    auto const publicIdentity = extract<PublicIdentity>(GOOD_PUBLIC_IDENTITY);
-    auto const publicNormalIdentity =
-        mpark::get<PublicNormalIdentity>(publicIdentity);
-    CHECK_EQ(publicNormalIdentity.trustchainId, trustchainId);
-    CHECK_EQ(publicNormalIdentity.userId, obfuscatedUserId);
+    auto const publicIdentity =
+        extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
+    auto const publicPermanentIdentity =
+        mpark::get<PublicPermanentIdentity>(publicIdentity);
+    CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
+    CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
   }
 }
 
@@ -146,7 +148,7 @@ TEST_CASE("ugprade a user token to an identity")
 {
   SUBCASE("We can upgrade a userToken to an identity")
   {
-    auto identity = extract<Identity>(
+    auto identity = extract<SecretPermanentIdentity>(
         upgradeUserToken(trustchainIdString, suserId, GOOD_USER_TOKEN));
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
@@ -165,12 +167,12 @@ TEST_CASE("get a public identity")
 {
   auto const identityStr = createIdentity(
       trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
-  SUBCASE("get a public identity from a normal identity")
+  SUBCASE("get a public identity from a secret permanent identity")
   {
     auto const publicIdentityStr = getPublicIdentity(identityStr);
     auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-    auto* p = mpark::get_if<PublicNormalIdentity>(&publicIdentity);
+    auto* p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
     CHECK_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
     CHECK_EQ(p->userId, aliceO);

@@ -12,17 +12,17 @@ namespace Tanker
 {
 namespace Identity
 {
-struct Identity;
+struct SecretPermanentIdentity;
 
-struct PublicNormalIdentity
+struct PublicPermanentIdentity
 {
   TrustchainId trustchainId;
   UserId userId;
 };
 
-using PublicIdentity = mpark::variant<PublicNormalIdentity>;
+using PublicIdentity = mpark::variant<PublicPermanentIdentity>;
 
-PublicIdentity getPublicIdentity(Identity const& identity);
+PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity);
 
 std::string getPublicIdentity(std::string const& identity);
 

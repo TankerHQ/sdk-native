@@ -14,7 +14,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
-#include <Tanker/Identity/Identity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 
 #include <docopt/docopt.h>
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
     std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
     for (auto const& userId : shareTo)
       shareToPublicIdentities.push_back(
-          SPublicIdentity{to_string(Identity::PublicNormalIdentity{
+          SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
               trustchainId, obfuscateUserId(userId, trustchainId)})});
 
     auto const cleartext = args.at("<cleartext>").asString();

@@ -47,7 +47,7 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
                                             OpenMode mode)
 {
   SCOPE_TIMER("opener_signup", Proc);
-  _identity = Identity::extract<Identity::Identity>(b64Identity);
+  _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
   if (_identity->trustchainId != _info.trustchainId)
     throw Error::formatEx<Error::InvalidArgument>(

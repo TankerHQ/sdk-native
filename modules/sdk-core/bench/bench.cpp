@@ -37,7 +37,7 @@ std::vector<Tanker::SPublicIdentity> userIdsToPublicIdentities(
   auto res = std::vector<Tanker::SPublicIdentity>();
   for (auto const& suserId : suserIds)
     res.push_back(Tanker::SPublicIdentity{
-        to_string(Tanker::Identity::PublicNormalIdentity{
+        to_string(Tanker::Identity::PublicPermanentIdentity{
             trustchainId, obfuscateUserId(suserId, trustchainId)})});
   return res;
 }
