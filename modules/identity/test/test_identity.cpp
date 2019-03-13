@@ -103,29 +103,29 @@ TEST_CASE("checkUserSecret")
   CHECK_NOTHROW(checkUserSecret(userSecret, obfuscatedUserId));
 }
 
-TEST_CASE("generate Identity")
+TEST_SUITE("generate Identity")
 {
-  SUBCASE("should throw given empty userId")
+  TEST_CASE("should throw given empty userId")
   {
     CHECK_THROWS_AS(createIdentity("trustchainID", "privateKey", ""_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should throw given empty trustchainId")
+  TEST_CASE("should throw given empty trustchainId")
   {
     CHECK_THROWS_AS(createIdentity("", "privateKey", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should throw given empty privateKey")
+  TEST_CASE("should throw given empty privateKey")
   {
     CHECK_THROWS_AS(createIdentity("trustchainID", "", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("We can create an identity from strings")
+  TEST_CASE("We can create an identity from strings")
   {
     CHECK_NOTHROW(createIdentity(
         trustchainIdString, trustchainPrivateKeyString, suserId));
   }
-  SUBCASE("We can deserialize an identity from a good string")
+  TEST_CASE("We can deserialize an identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
@@ -133,7 +133,7 @@ TEST_CASE("generate Identity")
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
   }
-  SUBCASE("We can deserialize a public identity from a good string")
+  TEST_CASE("We can deserialize a public identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
@@ -144,18 +144,17 @@ TEST_CASE("generate Identity")
   }
 }
 
-TEST_CASE("ugprade a user token to an identity")
+TEST_SUITE("ugprade a user token to an identity")
 {
-  SUBCASE("We can upgrade a userToken to an identity")
+  TEST_CASE("We can upgrade a userToken to an identity")
   {
     auto identity = extract<SecretPermanentIdentity>(
         upgradeUserToken(trustchainIdString, suserId, GOOD_USER_TOKEN));
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
-    CHECK_NOTHROW(checkUserSecret(identity.userSecret, obfuscatedUserId));
   }
-  SUBCASE("should throw when upgrading the wrong userId")
+  TEST_CASE("should throw when upgrading the wrong userId")
   {
     CHECK_THROWS_AS(
         upgradeUserToken(trustchainIdString, "herbert"_uid, GOOD_USER_TOKEN),
@@ -163,52 +162,49 @@ TEST_CASE("ugprade a user token to an identity")
   }
 }
 
-TEST_CASE("get a public identity")
+TEST_CASE("get a public identity from a secret permanent identity")
 {
   auto const identityStr = createIdentity(
       trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
-  SUBCASE("get a public identity from a secret permanent identity")
-  {
-    auto const publicIdentityStr = getPublicIdentity(identityStr);
-    auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
-    auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-    auto* p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
-    CHECK_UNARY(p);
-    CHECK_EQ(p->trustchainId, trustchainId);
-    CHECK_EQ(p->userId, aliceO);
-  }
+  auto const publicIdentityStr = getPublicIdentity(identityStr);
+  auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
+  auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
+  auto* p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
+  CHECK_UNARY(p);
+  CHECK_EQ(p->trustchainId, trustchainId);
+  CHECK_EQ(p->userId, aliceO);
 }
 
-TEST_CASE("Generate user token")
+TEST_SUITE("Generate user token")
 {
-  SUBCASE("should throw given empty userId")
+  TEST_CASE("should throw given empty userId")
   {
     CHECK_THROWS_AS(generateUserToken("trustchainID", "privateKey", ""_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should throw given empty trustchainId")
+  TEST_CASE("should throw given empty trustchainId")
   {
     CHECK_THROWS_AS(generateUserToken("", "privateKey", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should throw given empty privateKey")
+  TEST_CASE("should throw given empty privateKey")
   {
     CHECK_THROWS_AS(generateUserToken("trustchainID", "", "userId"_uid),
                     std::invalid_argument);
   }
-  SUBCASE("should generate a UserToken")
+  TEST_CASE("should generate a UserToken")
   {
     CHECK_NOTHROW(generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, "alice"_uid));
   }
-  SUBCASE("should be able to be deserialize a user token")
+  TEST_CASE("should be able to be deserialize a user token")
   {
     auto const userTokenString = generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, suserId);
     auto const clearStr = base64::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
   }
-  SUBCASE("user secret have good format")
+  TEST_CASE("user secret have good format")
   {
     auto const userTokenString = generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
@@ -217,7 +213,7 @@ TEST_CASE("Generate user token")
     CHECK_NOTHROW(checkUserSecret(userToken2.userSecret,
                                   obfuscateUserId("alice"_uid, trustchainId)));
   }
-  SUBCASE("We can construct one user token from a good string")
+  TEST_CASE("We can construct one user token from a good string")
   {
     auto const userToken = extract<UserToken>(GOOD_USER_TOKEN);
 
@@ -234,9 +230,9 @@ TEST_CASE("generateUserSecret can be checked")
       checkUserSecret(generateUserSecret(obfuscatedUserId), obfuscatedUserId));
 }
 
-TEST_CASE("userSecretHash")
+TEST_SUITE("userSecretHash")
 {
-  SUBCASE("crash when bad args")
+  TEST_CASE("crash when bad args")
   {
     CHECK_THROWS_AS(userSecretHash(gsl::make_span(std::vector<uint8_t>()),
                                    obfuscatedUserId),

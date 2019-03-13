@@ -17,12 +17,6 @@ enum class TargetType
   Email = 1,
 };
 
-struct PreshareKeys
-{
-  Crypto::EncryptionKeyPair encryptionKeys;
-  Crypto::SignatureKeyPair signatureKeys;
-};
-
 struct SecretPermanentIdentity : public UserToken
 {
   TrustchainId trustchainId;
