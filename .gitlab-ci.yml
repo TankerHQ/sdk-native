@@ -88,8 +88,8 @@ coverage:
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8 --coverage
-    - mv build/gcc8-release/coverage coverage
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-debug --coverage
+    - mv build/gcc8-debug/coverage coverage
   tags:
     - linux
   artifacts:
