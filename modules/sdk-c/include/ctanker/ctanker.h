@@ -49,7 +49,6 @@ typedef struct tanker_options tanker_options_t;
 typedef struct tanker_authentication_methods tanker_authentication_methods_t;
 typedef struct tanker_sign_in_options tanker_sign_in_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
-typedef struct tanker_decrypt_options tanker_decrypt_options_t;
 
 /*!
  * \brief Callback type to filter Tanker SDK logs.
@@ -122,19 +121,6 @@ struct tanker_encrypt_options
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
     2, NULL, 0, NULL, 0             \
-  }
-
-struct tanker_decrypt_options
-{
-  uint8_t version;
-  uint64_t timeout; // ignored
-};
-
-#define TANKER_DECRYPT_DEFAULT_TIMEOUT 10000
-
-#define TANKER_DECRYPT_OPTIONS_INIT   \
-  {                                   \
-    1, TANKER_DECRYPT_DEFAULT_TIMEOUT \
   }
 
 /*!
@@ -412,14 +398,12 @@ tanker_future_t* tanker_encrypt(tanker_t* tanker,
  *
  * \return An empty future.
  * \throws TANKER_ERROR_DECRYPT_FAILED The buffer was corrupt or truncated
- * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found and was
- * not received within timeout
+ * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found
  */
 tanker_future_t* tanker_decrypt(tanker_t* session,
                                 uint8_t* decrypted_data,
                                 uint8_t const* data,
-                                uint64_t data_size,
-                                tanker_decrypt_options_t const* options);
+                                uint64_t data_size);
 
 /*!
  * Share a symetric key of an encrypted data with other users.

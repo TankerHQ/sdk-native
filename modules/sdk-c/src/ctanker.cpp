@@ -373,8 +373,7 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
                                 uint8_t* decrypted_data,
                                 uint8_t const* data,
-                                uint64_t data_size,
-                                tanker_decrypt_options_t const* options)
+                                uint64_t data_size)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
