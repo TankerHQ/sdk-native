@@ -17,7 +17,7 @@ extern "C" {
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param member_uids Array of strings describing the group members.
+ * \param members_public_identities Array of the group members' public identities.
  * \param nb_members The number of members in member_uids.
  *
  * \return A future of the group ID as a string.
@@ -38,8 +38,8 @@ tanker_future_t* tanker_create_group(
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
  * \param group_id The group ID returned by tanker_create_group
- * \param users_to_add Array of strings describing the new group members.
- * \param nb_users_to_add The number of users in users_to_add.
+ * \param public_identities_to_add Array of the new group members' public identities.
+ * \param nb_public_identities_to_add The number of users in public_identities_to_add.
  *
  * \return An empty future.
  * \throws TANKER_ERROR_USER_NOT_FOUND One of the users was not found, no
