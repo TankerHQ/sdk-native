@@ -410,12 +410,11 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param recipient_public_identities Array of strings describing the user
- * recipients.
+ * \param recipient_public_identities Array containing the recipients' public identities.
  * \param nb_recipient_public_identities The number of recipients in
  * recipient_public_identities.
- * \param recipient_gids Array of strings describing the group recipients.
- * \param nb_recipient_gids The number of recipients in recipient_gids.
+ * \param recipient_gids Array of strings describing the recipient groups.
+ * \param nb_recipient_gids The number of groups in recipient_gids.
  * \param resource_ids Array of string describing the resources.
  * \param nb_resource_ids The number of resources in resource_ids.
  *

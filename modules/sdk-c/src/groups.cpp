@@ -12,11 +12,11 @@ using namespace Tanker;
 
 tanker_future_t* tanker_create_group(
     tanker_t* ctanker,
-    char const* const* members_public_identities,
-    uint64_t nb_members)
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add)
 {
-  auto const members =
-      to_vector<SPublicIdentity>(members_public_identities, nb_members);
+  auto const members = to_vector<SPublicIdentity>(public_identities_to_add,
+                                                  nb_public_identities_to_add);
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
   return makeFuture(tanker->createGroup(members).and_then(
