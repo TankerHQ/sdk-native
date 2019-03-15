@@ -1,8 +1,8 @@
-#ifndef TANKER_SDK_USERTOKEN_H
-#define TANKER_SDK_USERTOKEN_H
+#ifndef CTANKER_SDK_USERTOKEN_H
+#define CTANKER_SDK_USERTOKEN_H
 
-#include <tanker/async.h>
-#include <tanker/base64.h>
+#include <ctanker/async.h>
+#include <ctanker/base64.h>
 
 #include <stdint.h>
 

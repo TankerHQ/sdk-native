@@ -1,9 +1,9 @@
-#ifndef TANKER_SDK_TANKER_ASYNC_H
-#define TANKER_SDK_TANKER_ASYNC_H
+#ifndef CTANKER_SDK_TANKER_ASYNC_H
+#define CTANKER_SDK_TANKER_ASYNC_H
 
 #include <stdbool.h>
 
-#include <tanker/error.h>
+#include <ctanker/error.h>
 
 #ifdef __cplusplus
 extern "C" {

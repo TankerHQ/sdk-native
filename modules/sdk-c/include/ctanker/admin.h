@@ -1,8 +1,8 @@
-#ifndef TANKER_SDK_TANKER_ADMIN_H
-#define TANKER_SDK_TANKER_ADMIN_H
+#ifndef CTANKER_SDK_TANKER_ADMIN_H
+#define CTANKER_SDK_TANKER_ADMIN_H
 
-#include <tanker/async.h>
-#include <tanker/base64.h>
+#include <ctanker/async.h>
+#include <ctanker/base64.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,4 +61,4 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin);
 }
 #endif
 
-#endif // TANKER_SDK_TANKER_ADMIN_H
+#endif // CTANKER_SDK_TANKER_ADMIN_H

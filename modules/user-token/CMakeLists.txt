@@ -18,6 +18,8 @@ target_include_directories(tankerusertoken
     $<INSTALL_INTERFACE:include>
 )
 
+install(DIRECTORY include DESTINATION .)
+
 target_link_libraries(tankerusertoken tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite)
 
 install(TARGETS tankerusertoken

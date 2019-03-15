@@ -26,4 +26,6 @@ target_include_directories(tankertypes
     $<INSTALL_INTERFACE:include>
 )
 
+install(DIRECTORY include DESTINATION .)
+
 target_link_libraries(tankertypes INTERFACE tankercrypto)

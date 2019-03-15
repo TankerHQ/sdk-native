@@ -1,11 +1,11 @@
-#ifndef TANKER_SDK_TANKER_GROUPS_H
-#define TANKER_SDK_TANKER_GROUPS_H
+#ifndef CTANKER_SDK_TANKER_GROUPS_H
+#define CTANKER_SDK_TANKER_GROUPS_H
 
 #include <stdint.h>
 
-#include <tanker/async.h>
-#include <tanker/base64.h>
-#include <tanker/tanker.h>
+#include <ctanker/async.h>
+#include <ctanker/base64.h>
+#include <ctanker/ctanker.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,4 +55,4 @@ tanker_future_t* tanker_update_group_members(tanker_t* session,
 }
 #endif
 
-#endif // TANKER_SDK_TANKER_GROUPS_H
+#endif // CTANKER_SDK_TANKER_GROUPS_H

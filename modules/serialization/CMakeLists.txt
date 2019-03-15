@@ -12,6 +12,8 @@ target_include_directories(tankerserialization
 
 target_link_libraries(tankerserialization INTERFACE CONAN_PKG::gsl-lite CONAN_PKG::optional-lite CONAN_PKG::fmt CONAN_PKG::variant)
 
+install(DIRECTORY include DESTINATION .)
+
 if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
