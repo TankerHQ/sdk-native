@@ -10,7 +10,7 @@ endif()
 
 message(STATUS "Bulding tanker as ${tankerlib_type}")
 
-add_library(ctanker
+add_library(ctanker ${tankerlib_type}
   include/ctanker.h
   include/ctanker/ctanker.h
   include/ctanker/async.h
