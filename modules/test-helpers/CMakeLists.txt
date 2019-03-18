@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(tankerusertoken CXX)
+project(tankeridentity CXX)
 
 add_library(tankertesthelpers STATIC
   include/Helpers/Config.hpp

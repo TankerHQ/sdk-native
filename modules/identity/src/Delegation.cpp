@@ -1,17 +1,13 @@
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Types/UserId.hpp>
 
-#include <array>
-#include <cstdint>
 #include <tuple>
 #include <vector>
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 Delegation makeDelegation(
     UserId const& userId,

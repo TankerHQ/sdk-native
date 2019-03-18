@@ -8,17 +8,17 @@
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Session.hpp>
-#include <Tanker/Status.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
-#include <Tanker/UserToken/UserToken.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <fmt/format.h>
@@ -42,76 +42,55 @@ Opener::Opener(std::string url, SdkInfo info, std::string writablePath)
 {
 }
 
-Status Opener::status() const
+tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
+                                            SignInOptions const& signInOptions,
+                                            OpenMode mode)
 {
-  return _status;
-}
+  SCOPE_TIMER("opener_signup", Proc);
+  _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
-tc::cotask<Session::Config> Opener::open(SUserId const& suserId,
-                                         std::string const& b64UserToken)
-{
-  SCOPE_TIMER("opener_open", Proc);
-  auto const userToken = UserToken::extract(b64UserToken);
-
-  _userId = userToken.delegation.userId;
-  _userSecret = userToken.userSecret;
-  if (obfuscateUserId(suserId, _info.trustchainId) != _userId)
+  if (_identity->trustchainId != _info.trustchainId)
     throw Error::formatEx<Error::InvalidArgument>(
-        fmt("User id mismatch. Provided: {:s}, inside user_token: {:s}"),
-        suserId,
-        _userId.value());
+        fmt("Identity's trustchain is {:s}, expected {:s}"),
+        _identity->trustchainId,
+        _info.trustchainId);
 
   _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
   _client->start();
 
   _db = TC_AWAIT(DataStore::createDatabase(
-      fmt::format("{}/tanker-{:S}.db", _writablePath, *_userId), _userSecret));
+      fmt::format(
+          "{}/tanker-{:S}.db", _writablePath, _identity->delegation.userId),
+      _identity->userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
   auto const userStatusResult =
       TC_AWAIT(_client->userStatus(_info.trustchainId,
-                                   _userId.value(),
+                                   _identity->delegation.userId,
                                    _keyStore->signatureKeyPair().publicKey));
+  if (userStatusResult.userExists && mode == OpenMode::SignUp)
+    throw Error::IdentityAlreadyRegistered(
+        "signUp failed: user already exists");
   if (userStatusResult.deviceExists)
-    TC_AWAIT(openDevice());
+    TC_RETURN(TC_AWAIT(openDevice()));
   else if (userStatusResult.userExists)
-  {
-    _status = Status::DeviceCreation;
-    TC_AWAIT(createDevice());
-  }
+    TC_RETURN(TC_AWAIT(createDevice(signInOptions)));
+  else if (mode == OpenMode::SignUp)
+    TC_RETURN(TC_AWAIT(createUser()));
+  else if (mode == OpenMode::SignIn)
+    TC_RETURN(StatusIdentityNotRegistered{});
   else
-  {
-    _status = Status::UserCreation;
-    TC_AWAIT(createUser(userToken));
-  }
-
-  _status = Status::Closed;
-  TC_RETURN(makeConfig(userToken.userSecret));
-}
-
-tc::cotask<void> Opener::connectionHandler()
-{
-  try
-  {
-    auto const skp = _keyStore->signatureKeyPair();
-    TC_AWAIT(_client->subscribeToCreation(
-        _info.trustchainId,
-        skp.publicKey,
-        Crypto::sign(skp.publicKey, skp.privateKey)));
-  }
-  catch (std::exception const& e)
-  {
-    TERROR("Failed to subscribe to device creation {}", e.what());
-  }
+    throw std::runtime_error("assertion error: invalid open mode");
 }
 
 tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
 {
-  auto const req = Unlock::Request(_info.trustchainId, _userId.value(), locker);
+  auto const req =
+      Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
   try
   {
     auto const fetchAnswer = TC_AWAIT(_client->fetchUnlockKey(req));
-    TC_RETURN(fetchAnswer.getUnlockKey(_userSecret.value()));
+    TC_RETURN(fetchAnswer.getUnlockKey(_identity->userSecret));
   }
   catch (Error::ServerError const& err)
   {
@@ -131,49 +110,32 @@ tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
   throw std::runtime_error("unreachable code");
 }
 
-tc::future<void> Opener::waitForUnlock()
-{
-  tc::promise<void> prom;
-  auto fut = prom.get_future();
-  auto const conn = std::make_shared<boost::signals2::connection>();
-  *conn =
-      _client->deviceCreated.connect([prom = std::move(prom), conn]() mutable {
-        prom.set_value({});
-        conn->disconnect();
-      });
-  return fut;
-}
-
 tc::cotask<void> Opener::unlockCurrentDevice(UnlockKey const& unlockKey)
 {
-  if (_status != Status::DeviceCreation)
-    throw Error::formatEx<Error::InvalidTankerStatus>(
-        fmt("invalid status {:e} for validatedCurrentDevice"),
-        static_cast<Status>(_status));
   auto const ghostDevice = Unlock::extract(unlockKey);
 
   auto const encryptedUserKey = TC_AWAIT(
       _client->getLastUserKey(_info.trustchainId, ghostDevice.deviceId));
 
   auto const block = Unlock::createValidatedDevice(_info.trustchainId,
-                                                   *_userId,
+                                                   _identity->delegation.userId,
                                                    ghostDevice,
                                                    _keyStore->deviceKeys(),
                                                    encryptedUserKey);
   TC_AWAIT(_client->pushBlock(block));
 }
 
-Session::Config Opener::makeConfig(Crypto::SymmetricKey const& userSecret)
+Session::Config Opener::makeConfig()
 {
   return {std::move(_db),
           _info.trustchainId,
-          _userId.value(),
-          userSecret,
+          _identity->delegation.userId,
+          _identity->userSecret,
           std::move(_keyStore),
           std::move(_client)};
 }
 
-tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
+tc::cotask<Opener::OpenResult> Opener::createUser()
 {
   TINFO("createUser");
   FUNC_TIMER(Proc);
@@ -181,31 +143,38 @@ tc::cotask<void> Opener::createUser(UserToken::UserToken const& userToken)
   auto const block =
       BlockGenerator(
           _info.trustchainId, _keyStore->signatureKeyPair().privateKey, {})
-          .addUser(userToken.delegation,
+          .addUser(_identity->delegation,
                    _keyStore->signatureKeyPair().publicKey,
                    _keyStore->encryptionKeyPair().publicKey,
                    Crypto::makeEncryptionKeyPair());
 
   TC_AWAIT(_client->pushBlock(block));
+  TC_RETURN(makeConfig());
 }
 
-tc::cotask<void> Opener::createDevice()
+tc::cotask<Opener::OpenResult> Opener::createDevice(
+    SignInOptions const& signInOptions)
 {
   TINFO("createDevice");
   FUNC_TIMER(Proc);
 
-  unlockRequired();
+  if (signInOptions.unlockKey)
+    TC_AWAIT(unlockCurrentDevice(*signInOptions.unlockKey));
+  else if (signInOptions.verificationCode)
+    TC_AWAIT(unlockCurrentDevice(
+        TC_AWAIT(fetchUnlockKey(*signInOptions.verificationCode))));
+  else if (signInOptions.password)
+    TC_AWAIT(
+        unlockCurrentDevice(TC_AWAIT(fetchUnlockKey(*signInOptions.password))));
+  else
+    TC_RETURN(StatusIdentityVerificationNeeded{});
 
-  auto fut = waitForUnlock();
-  _client->setConnectionHandler(
-      [this]() -> tc::cotask<void> { TC_AWAIT(connectionHandler()); });
-  TC_AWAIT(_client->handleConnection());
-  TC_AWAIT(std::move(fut));
+  TC_RETURN(makeConfig());
 }
 
-tc::cotask<void> Opener::openDevice()
+tc::cotask<Opener::OpenResult> Opener::openDevice()
 {
   TINFO("openDevice");
-  TC_RETURN();
+  TC_RETURN(makeConfig());
 }
 }

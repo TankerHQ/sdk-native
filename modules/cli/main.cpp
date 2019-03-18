@@ -14,7 +14,8 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
-#include <Tanker/UserToken/UserToken.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 
 #include <docopt/docopt.h>
 
@@ -23,7 +24,7 @@
 using namespace Tanker;
 
 static constexpr auto TrustchainPrivateKeyOpt = "--trustchain-private-key";
-static constexpr auto UserTokenOpt = "--user-token";
+static constexpr auto IdentityOpt = "--identity";
 static constexpr auto UnlockKeyOpt = "--unlock-key";
 static constexpr auto UnlockPasswordOpt = "--unlock-password";
 
@@ -33,8 +34,9 @@ static const char USAGE[] =
     Usage:
       tcli deserializeblock [-x] <block>
       tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
-      tcli createusertoken <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
-      tcli open <trustchainurl> <trustchainid> (--user-token=<usertoken>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-key=<unlockkey>] [--unlock-password=<unlockpassword>] <userid>
+      tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
+      tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
+      tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-key=<unlockkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli --help
@@ -82,73 +84,93 @@ struct AsyncCoreDeleter
 
 using AsyncCorePtr = std::unique_ptr<AsyncCore, AsyncCoreDeleter>;
 
-std::string createUserToken(MainArgs const& args)
+std::string createIdentity(MainArgs const& args)
 {
   auto const trustchainId = args.at("<trustchainid>").asString();
   auto const userId = args.at("<userid>").asString();
-  return Tanker::UserToken::generateUserToken(
+  return Tanker::Identity::createIdentity(
       trustchainId,
       args.at(TrustchainPrivateKeyOpt).asString(),
       Tanker::SUserId{userId});
 }
 
-AsyncCorePtr openTanker(MainArgs const& args)
+std::string loadIdentity(std::string const& trustchainId,
+                         std::string const& userId,
+                         MainArgs const& args)
 {
-  auto const trustchainId = args.at("<trustchainid>").asString();
-  auto const userId = args.at("<userid>").asString();
+  auto const identityFile = userId + ".identity";
 
-  auto const userTokenFile = userId + ".usertoken";
+  auto const savedIdentity = readfile(identityFile);
 
-  auto const savedUserToken = readfile(userTokenFile);
-
-  auto const userToken = [&] {
-    if (args.at(UserTokenOpt))
-      return args.at(UserTokenOpt).asString();
-    else if (!savedUserToken.empty())
-      return savedUserToken;
+  auto const identity = [&] {
+    if (args.at(IdentityOpt))
+      return args.at(IdentityOpt).asString();
+    else if (!savedIdentity.empty())
+      return savedIdentity;
     else
-      return Tanker::UserToken::generateUserToken(
+      return Tanker::Identity::createIdentity(
           trustchainId,
           args.at(TrustchainPrivateKeyOpt).asString(),
           Tanker::SUserId{userId});
   }();
 
-  writefile(userTokenFile, userToken);
+  writefile(identityFile, identity);
+  return identity;
+}
+
+auto const sdkType = "test";
+auto const sdkVersion = "0.0.1";
+
+AsyncCorePtr signUp(MainArgs const& args)
+{
+  auto const trustchainId = args.at("<trustchainid>").asString();
+  auto const userId = args.at("<userid>").asString();
+
+  auto const identity = loadIdentity(trustchainId, userId, args);
+
   auto core = AsyncCorePtr{new AsyncCore(
-      args.at("<trustchainUrl>").asString(),
-      {"test", base64::decode<TrustchainId>(trustchainId), "0.0.1"},
+      args.at("<trustchainurl>").asString(),
+      {sdkType, base64::decode<TrustchainId>(trustchainId), sdkVersion},
       ".")};
 
-  auto const connection =
-      core->connectEvent(Event::UnlockRequired, [&](void*, void*) {
-        tc::async_resumable([&]() -> tc::cotask<void> {
-          try
-          {
-            if (args.at(UnlockKeyOpt))
-            {
-              auto const unlockKey = args.at(UnlockKeyOpt).asString();
-              TC_AWAIT(core->unlockCurrentDevice(UnlockKey{unlockKey}));
-            }
-            else if (args.at(UnlockPasswordOpt))
-            {
-              auto const unlockPassword = args.at(UnlockPasswordOpt).asString();
-              TC_AWAIT(core->unlockCurrentDevice(Password{unlockPassword}));
-            }
-            else
-              throw std::runtime_error(
-                  "Unlock required but no unlock key, nor unlock password "
-                  "provided");
-          }
-          catch (std::exception const& e)
-          {
-            std::cout << "Failed to unlock: " << e.what() << std::endl;
-            core->close();
-          }
-        });
-      });
+  AuthenticationMethods authenticationMethods;
+  if (args.at(UnlockPasswordOpt))
+    authenticationMethods.password =
+        Password{args.at(UnlockPasswordOpt).asString()};
 
-  core->open(Tanker::SUserId{args.at("<userid>").asString()}, userToken).get();
-  core->syncTrustchain().get();
+  core->signUp(identity, authenticationMethods).get();
+
+  return core;
+}
+
+AsyncCorePtr signIn(MainArgs const& args)
+{
+  auto const trustchainId = args.at("<trustchainid>").asString();
+  auto const userId = args.at("<userid>").asString();
+
+  auto const identity = loadIdentity(trustchainId, userId, args);
+
+  auto core = AsyncCorePtr{new AsyncCore(
+      args.at("<trustchainurl>").asString(),
+      {sdkType, base64::decode<TrustchainId>(trustchainId), sdkVersion},
+      ".")};
+
+  SignInOptions signInOptions;
+  if (args.at(UnlockKeyOpt))
+    signInOptions.unlockKey = UnlockKey{args.at(UnlockKeyOpt).asString()};
+  else if (args.at(UnlockPasswordOpt))
+    signInOptions.password = Password{args.at(UnlockPasswordOpt).asString()};
+
+  auto const status = core->signIn(identity, signInOptions).get();
+  if (status != OpenResult::Ok)
+  {
+    std::cout << "Failed to sign in: "
+              << (status == OpenResult::IdentityNotRegistered ?
+                      "identity not registered" :
+                      "identity verification needed")
+              << std::endl;
+  }
+
   return core;
 }
 }
@@ -200,34 +222,47 @@ int main(int argc, char* argv[])
     auto const entry = blockToUnverifiedEntry(block);
     std::cout << formatEntry(block, entry) << std::endl;
   }
-  else if (args.at("open").asBool())
+  else if (args.at("signup").asBool())
   {
-    auto const core = openTanker(args);
+    auto const core = signUp(args);
   }
-  else if (args.at("createusertoken").asBool())
+  else if (args.at("signin").asBool())
   {
-    std::cout << createUserToken(args) << std::endl;
+    auto const core = signIn(args);
+  }
+  else if (args.at("createidentity").asBool())
+  {
+    fmt::print("{}\n", createIdentity(args));
   }
   else if (args.at("encrypt").asBool())
   {
-    auto const core = openTanker(args);
+    auto const trustchainId =
+        base64::decode<TrustchainId>(args.at("<trustchainid>").asString());
+
+    auto const core = signIn(args);
 
     std::vector<Tanker::SUserId> shareTo;
     if (args.at("--share"))
       shareTo.push_back(SUserId{args.at("--share").asString()});
+
+    std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
+    for (auto const& userId : shareTo)
+      shareToPublicIdentities.push_back(
+          SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+              trustchainId, obfuscateUserId(userId, trustchainId)})});
 
     auto const cleartext = args.at("<cleartext>").asString();
     std::vector<uint8_t> encrypted(AsyncCore::encryptedSize(cleartext.size()));
 
     core->encrypt(encrypted.data(),
                   gsl::make_span(cleartext).as_span<uint8_t const>(),
-                  shareTo)
+                  shareToPublicIdentities)
         .get();
     fmt::print("encrypted: {}\n", base64::encode(encrypted));
   }
   else if (args.at("decrypt").asBool())
   {
-    auto const core = openTanker(args);
+    auto const core = signIn(args);
 
     auto const encrypteddata =
         base64::decode(args.at("<encrypteddata>").asString());

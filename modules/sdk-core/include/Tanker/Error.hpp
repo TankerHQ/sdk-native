@@ -25,17 +25,12 @@ enum class Code
   Other,
   InvalidTankerStatus,
   ServerError,
-  Unused1,
   InvalidArgument,
   ResourceKeyNotFound,
   UserNotFound,
   DecryptFailed,
-  InvalidUnlockEventHandler,
-  ChunkIndexOutOfRange,
-  VersionNotSupported,
   InvalidUnlockKey,
   InternalError,
-  ChunkNotFound,
   InvalidUnlockPassword,
   InvalidVerificationCode,
   UnlockKeyAlreadyExists,
@@ -44,6 +39,7 @@ enum class Code
   RecipientNotFound,
   GroupNotFound,
   DeviceNotFound,
+  IdentityAlreadyRegistered,
 
   Last,
 };
@@ -90,12 +86,8 @@ DECLARE_ERROR(InvalidArgument);
 DECLARE_ERROR(ResourceKeyNotFound);
 // UserNotFound has its own header
 DECLARE_ERROR(DecryptFailed);
-DECLARE_ERROR(InvalidUnlockEventHandler);
-DECLARE_ERROR(ChunkIndexOutOfRange);
-DECLARE_ERROR(VersionNotSupported);
 DECLARE_ERROR(InvalidUnlockKey);
 DECLARE_ERROR(InternalError);
-DECLARE_ERROR(ChunkNotFound);
 DECLARE_ERROR(InvalidUnlockPassword);
 DECLARE_ERROR(InvalidVerificationCode);
 DECLARE_ERROR(UnlockKeyAlreadyExists);
@@ -104,6 +96,7 @@ DECLARE_ERROR(InvalidGroupSize);
 // RecipientNotFound has its own header
 // GroupNotFound has its own header
 DECLARE_ERROR(DeviceNotFound);
+DECLARE_ERROR(IdentityAlreadyRegistered);
 
 #undef DECLARE_ERROR
 

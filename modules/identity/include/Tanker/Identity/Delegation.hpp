@@ -5,7 +5,7 @@
 
 namespace Tanker
 {
-namespace UserToken
+namespace Identity
 {
 struct Delegation
 {

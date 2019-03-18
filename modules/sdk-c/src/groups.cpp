@@ -1,6 +1,7 @@
 #include <ctanker.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 
 #include <tconcurrent/async.hpp>
 
@@ -9,11 +10,13 @@
 
 using namespace Tanker;
 
-tanker_future_t* tanker_create_group(tanker_t* ctanker,
-                                     char const* const* member_uids,
-                                     uint64_t nb_members)
+tanker_future_t* tanker_create_group(
+    tanker_t* ctanker,
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add)
 {
-  auto const members = to_vector<SUserId>(member_uids, nb_members);
+  auto const members = to_vector<SPublicIdentity>(public_identities_to_add,
+                                                  nb_public_identities_to_add);
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
   return makeFuture(tanker->createGroup(members).and_then(
@@ -22,15 +25,16 @@ tanker_future_t* tanker_create_group(tanker_t* ctanker,
       }));
 }
 
-tanker_future_t* tanker_update_group_members(tanker_t* ctanker,
-                                             char const* group_id,
-                                             char const* const* users_to_add,
-                                             uint64_t nb_users_to_add)
+tanker_future_t* tanker_update_group_members(
+    tanker_t* ctanker,
+    char const* group_id,
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto const users_to_add_vec =
-      to_vector<SUserId>(users_to_add, nb_users_to_add);
+  auto const public_identities_to_add_vec = to_vector<SPublicIdentity>(
+      public_identities_to_add, nb_public_identities_to_add);
 
-  return makeFuture(
-      tanker->updateGroupMembers(SGroupId{group_id}, users_to_add_vec));
+  return makeFuture(tanker->updateGroupMembers(SGroupId{group_id},
+                                               public_identities_to_add_vec));
 }

@@ -14,22 +14,26 @@ enum tanker_status
 {
   TANKER_STATUS_CLOSED,
   TANKER_STATUS_OPEN,
-  TANKER_STATUS_USER_CREATION,
-  TANKER_STATUS_DEVICE_CREATION,
-  TANKER_STATUS_CLOSING,
 
   TANKER_STATUS_LAST
 };
 
+enum tanker_sign_in_result
+{
+  TANKER_SIGN_IN_RESULT_OK,
+  TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
+  TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
+
+  TANKER_SIGN_IN_RESULT_LAST,
+};
+
 enum tanker_event
 {
-  TANKER_EVENT_UNUSED1,
   TANKER_EVENT_SESSION_CLOSED,
   TANKER_EVENT_DEVICE_CREATED,
-  TANKER_EVENT_UNLOCK_REQUIRED,
   TANKER_EVENT_DEVICE_REVOKED,
 
-  TANKER_EVENT_LAST = TANKER_EVENT_DEVICE_REVOKED
+  TANKER_EVENT_LAST,
 };
 
 enum tanker_unlock_method
@@ -42,8 +46,9 @@ enum tanker_unlock_method
 
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
+typedef struct tanker_authentication_methods tanker_authentication_methods_t;
+typedef struct tanker_sign_in_options tanker_sign_in_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
-typedef struct tanker_decrypt_options tanker_decrypt_options_t;
 
 /*!
  * \brief Callback type to filter Tanker SDK logs.
@@ -79,31 +84,43 @@ struct tanker_options
     2, NULL, NULL, NULL, NULL, NULL \
   }
 
+struct tanker_authentication_methods
+{
+  uint8_t version;
+  char const* password;
+  char const* email;
+};
+
+#define TANKER_AUTHENTICATION_METHODS_INIT \
+  {                                        \
+    1, NULL, NULL                          \
+  }
+
+struct tanker_sign_in_options
+{
+  uint8_t version;
+  char const* unlock_key;
+  char const* verification_code;
+  char const* password;
+};
+
+#define TANKER_SIGN_IN_OPTIONS_INIT \
+  {                                 \
+    1, NULL, NULL, NULL             \
+  }
+
 struct tanker_encrypt_options
 {
   uint8_t version;
-  b64char const* const* recipient_uids;
-  uint32_t nb_recipient_uids;
+  b64char const* const* recipient_public_identities;
+  uint32_t nb_recipient_public_identities;
   b64char const* const* recipient_gids;
   uint32_t nb_recipient_gids;
 };
 
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
-    1, NULL, 0, NULL, 0             \
-  }
-
-struct tanker_decrypt_options
-{
-  uint8_t version;
-  uint64_t timeout; // ignored
-};
-
-#define TANKER_DECRYPT_DEFAULT_TIMEOUT 10000
-
-#define TANKER_DECRYPT_OPTIONS_INIT   \
-  {                                   \
-    1, TANKER_DECRYPT_DEFAULT_TIMEOUT \
+    2, NULL, 0, NULL, 0             \
   }
 
 /*!
@@ -167,32 +184,43 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
                                            tanker_connection_t* connection);
 
 /*!
- * Open a tanker session.
+ * Sign up to Tanker.
  *
- * The returned future does not resolve until the session is opened. When adding
- * a new device, TANKER_EVENT_UNLOCK_REQUIRED event will be triggered and user
- * intervention will be required to complete the session opening.
- *
- * \param tanker A tanker tanker_t* instance.
- * \param user_id the user ID you want to open a session for.
- * \param user_token the user token for the user id.
- * \pre The user token must be a valid user token for this user that is normally
- * provided by the authentication server.
- * \return a future of a tanker_t*
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_id is NULL
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_token is NULL
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p user_token does not match \p user_id
- * \throws TANKER_ERROR_INVALID_DEVICE_VALIDATION_EVENT_HANDLER opening a
- * session on a new device, but the TANKER_EVENT_UNLOCK_REQUIRED was not
- * connected, the session will never open
+ * \param tanker a tanker tanker_t* instance.
+ * \param identity the user identity.
+ * \param authentication_methods the authentication methods to set up for the
+ * user, or NULL.
+ * \return a future of NULL
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
- * \throws TANKER_ERROR_OTHER \p user_token is invalid
  */
-tanker_future_t* tanker_open(tanker_t* tanker,
-                             char const* user_id,
-                             char const* user_token);
+tanker_future_t* tanker_sign_up(
+    tanker_t* tanker,
+    char const* identity,
+    tanker_authentication_methods_t const* authentication_methods);
+
+/*!
+ * Sign in to Tanker.
+ *
+ * \param tanker a tanker tanker_t* instance.
+ * \param identity the user identity.
+ * \param sign_in_options the authentication options to use when this device is
+ * not registered, or NULL.
+ * \return a future of tanker_sign_in_result
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
+ * \throws TANKER_ERROR_INVALID_UNLOCK_KEY unlock key is incorrect
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
+ * or the server returned an error
+ * \throws TANKER_ERROR_OTHER could not open the local storage
+ */
+tanker_future_t* tanker_sign_in(
+    tanker_t* tanker,
+    char const* identity,
+    tanker_sign_in_options_t const* sign_in_options);
 
 /*!
  * Close a tanker session.
@@ -200,7 +228,7 @@ tanker_future_t* tanker_open(tanker_t* tanker,
  * \pre tanker must be allocated with tanker_create().
  * \pre tanker must be opened with tanker_open().
  */
-tanker_future_t* tanker_close(tanker_t* tanker);
+tanker_future_t* tanker_sign_out(tanker_t* tanker);
 
 /*!
  * Get the status of the tanker instance.
@@ -227,34 +255,6 @@ tanker_future_t* tanker_device_id(tanker_t* session);
  * server returned an error
  */
 tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
-
-/*!
- * Sets-up an unlock password for the current user
- * \param session a tanker tanker_t* instance
- * \param email to send the verification code or NULL
- * \param password to protect the access to the unlock key or NULL
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return a future to void
- */
-tanker_future_t* tanker_setup_unlock(tanker_t* session,
-                                     char const* email,
-                                     char const* password);
-
-/*!
- * Update the user's unlock claims. Set arguments to NULL to leave the values as
- * they are.
- *
- * \param session a tanker tanker_t* instance
- * \param new_email the new desired email or NULL
- * \param new_password the new desired password or NULL
- * \param new_unlock_key the new unlockKey or NULL
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return a future to void
- */
-tanker_future_t* tanker_update_unlock(tanker_t* session,
-                                      char const* new_email,
-                                      char const* new_password,
-                                      char const* new_unlock_key);
 
 /*!
  * Registers, or updates, the user's unlock claims,
@@ -398,24 +398,23 @@ tanker_future_t* tanker_encrypt(tanker_t* tanker,
  *
  * \return An empty future.
  * \throws TANKER_ERROR_DECRYPT_FAILED The buffer was corrupt or truncated
- * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found and was
- * not received within timeout
+ * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found
  */
 tanker_future_t* tanker_decrypt(tanker_t* session,
                                 uint8_t* decrypted_data,
                                 uint8_t const* data,
-                                uint64_t data_size,
-                                tanker_decrypt_options_t const* options);
+                                uint64_t data_size);
 
 /*!
  * Share a symetric key of an encrypted data with other users.
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param recipient_uids Array of strings describing the user recipients.
- * \param nb_recipient_uids The number of recipients in recipient_uids.
- * \param recipient_gids Array of strings describing the group recipients.
- * \param nb_recipient_gids The number of recipients in recipient_gids.
+ * \param recipient_public_identities Array containing the recipients' public identities.
+ * \param nb_recipient_public_identities The number of recipients in
+ * recipient_public_identities.
+ * \param recipient_gids Array of strings describing the recipient groups.
+ * \param nb_recipient_gids The number of groups in recipient_gids.
  * \param resource_ids Array of string describing the resources.
  * \param nb_resource_ids The number of resources in resource_ids.
  *
@@ -428,8 +427,8 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * server returned an error
  */
 tanker_future_t* tanker_share(tanker_t* session,
-                              char const* const* recipient_uids,
-                              uint64_t nb_recipient_uids,
+                              char const* const* recipient_public_identities,
+                              uint64_t nb_recipient_public_identities,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,

@@ -17,9 +17,7 @@ add_executable(test_tanker
   test_log.cpp
   test_encryptor.cpp
   test_encryptorstream.cpp
-  test_chunkencryptor.cpp
   test_receivekey.cpp
-  test_seal.cpp
   test_session.cpp
   test_share.cpp
   test_ghostdevice.cpp

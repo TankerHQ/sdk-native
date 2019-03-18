@@ -7,7 +7,7 @@
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -167,7 +167,7 @@ std::vector<Index> DeviceCreation::makeIndexes() const
 }
 
 DeviceCreation DeviceCreation::createV1(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey)
 {
@@ -180,7 +180,7 @@ DeviceCreation DeviceCreation::createV1(
 }
 
 DeviceCreation DeviceCreation::createV3(
-    UserToken::Delegation const& delegation,
+    Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKey,

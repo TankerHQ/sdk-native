@@ -4,8 +4,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/UserToken.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/UserToken/UserToken.hpp>
 
 #include <string>
 
@@ -37,16 +38,18 @@ public:
     return _userId;
   }
 
-  std::string userToken() const
+  std::string identity() const
   {
-    return _userToken;
+    return _identity;
   }
+
+  SPublicIdentity spublicIdentity() const;
 
 private:
   std::string _trustchainUrl;
   std::string _trustchainId;
   SUserId _userId;
-  std::string _userToken;
+  std::string _identity;
 
   unsigned int _currentDevice = 0;
   std::shared_ptr<std::vector<Device>> _cachedDevices =

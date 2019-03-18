@@ -8,7 +8,7 @@
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <cstdint>
 #include <string>
@@ -26,7 +26,7 @@ struct Device
   BlockGenerator bgen;
   SUserId userId;
   UserId obfuscatedId;
-  UserToken::Delegation delegation;
+  Identity::Delegation delegation;
   Crypto::Hash author;
   std::vector<uint8_t> buffer;
   DeviceId deviceId;

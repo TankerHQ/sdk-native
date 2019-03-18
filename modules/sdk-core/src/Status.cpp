@@ -11,10 +11,7 @@ std::string to_string(Status s)
   switch (s)
   {
     CASE(Closed);
-    CASE(UserCreation);
-    CASE(DeviceCreation);
     CASE(Open);
-    CASE(Last);
   default:
     return "INVALID";
   }

@@ -17,8 +17,8 @@ extern "C" {
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param member_uids Array of strings describing the group members.
- * \param nb_members The number of members in member_uids.
+ * \param public_identities_to_add Array of the group members' public identities.
+ * \param nb_public_identities_to_add The number of members in public_identities_to_add.
  *
  * \return A future of the group ID as a string.
  * \throws TANKER_ERROR_USER_NOT_FOUND One of the members was not found, no
@@ -26,9 +26,10 @@ extern "C" {
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE The group is either empty, or has too
  * many members
  */
-tanker_future_t* tanker_create_group(tanker_t* session,
-                                     char const* const* member_uids,
-                                     uint64_t nb_members);
+tanker_future_t* tanker_create_group(
+    tanker_t* session,
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add);
 
 /*!
  * Updates an existing group, referenced by its groupId,
@@ -37,8 +38,8 @@ tanker_future_t* tanker_create_group(tanker_t* session,
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
  * \param group_id The group ID returned by tanker_create_group
- * \param users_to_add Array of strings describing the new group members.
- * \param nb_users_to_add The number of users in users_to_add.
+ * \param public_identities_to_add Array of the new group members' public identities.
+ * \param nb_public_identities_to_add The number of users in public_identities_to_add.
  *
  * \return An empty future.
  * \throws TANKER_ERROR_USER_NOT_FOUND One of the users was not found, no
@@ -46,10 +47,11 @@ tanker_future_t* tanker_create_group(tanker_t* session,
  * \throws TANKER_ERROR_INVALID_GROUP_SIZE Too many users were added to the
  * group.
  */
-tanker_future_t* tanker_update_group_members(tanker_t* session,
-                                             char const* group_id,
-                                             char const* const* users_to_add,
-                                             uint64_t nb_users_to_add);
+tanker_future_t* tanker_update_group_members(
+    tanker_t* session,
+    char const* group_id,
+    char const* const* public_identities_to_add,
+    uint64_t nb_public_identities_to_add);
 
 #ifdef __cplusplus
 }

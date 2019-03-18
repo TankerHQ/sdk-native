@@ -15,23 +15,21 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/ctanker.h
   include/ctanker/async.h
   include/ctanker/base64.h
-  include/ctanker/chunk_encryptor.h
-  include/ctanker/user_token.h
+  include/ctanker/identity.h
   include/ctanker/admin.h
   include/ctanker/groups.h
 
   src/async.cpp
   src/base64.cpp
   src/ctanker.cpp
-  src/chunk_encryptor.cpp
   src/CFuture.hpp
   src/Utils.hpp
-  src/user_token.cpp
+  src/identity.cpp
   src/admin.cpp
   src/groups.cpp
 )
 
-target_link_libraries(ctanker PUBLIC tankercore tankercrypto tankerusertoken)
+target_link_libraries(ctanker PUBLIC tankercore tankercrypto tankeridentity)
 target_include_directories(ctanker
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -56,3 +54,6 @@ install(TARGETS ctanker
 )
 
 install(DIRECTORY include DESTINATION .)
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()

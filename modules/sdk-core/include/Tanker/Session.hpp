@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Types.hpp>
@@ -17,6 +16,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
@@ -71,19 +71,21 @@ public:
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,
                            gsl::span<uint8_t const> clearData,
-                           std::vector<SUserId> const& suserIds = {},
+                           std::vector<SPublicIdentity> const& suserIds = {},
                            std::vector<SGroupId> const& sgroupIds = {});
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
-                         std::vector<SUserId> const& userIds,
+                         std::vector<SPublicIdentity> const& userIds,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::cotask<SGroupId> createGroup(std::vector<SUserId> stringUserIds);
-  tc::cotask<void> updateGroupMembers(SGroupId const& groupIdString,
-                                      std::vector<SUserId> usersToAdd);
+  tc::cotask<SGroupId> createGroup(
+      std::vector<SPublicIdentity> spublicIdentities);
+  tc::cotask<void> updateGroupMembers(
+      SGroupId const& groupIdString,
+      std::vector<SPublicIdentity> spublicIdentitiesToAdd);
 
   tc::cotask<std::unique_ptr<Unlock::Registration>> generateUnlockKey();
 
@@ -104,12 +106,7 @@ public:
 
   tc::cotask<void> syncTrustchain();
 
-  std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
-
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
-
-  tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
 
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;

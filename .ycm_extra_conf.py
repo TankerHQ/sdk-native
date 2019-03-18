@@ -52,7 +52,7 @@ flags = [
  '-I./modules/sdk-core/include',
  '-I./modules/sdk-c/include',
  '-I./modules/tracer/include',
- '-I./modules/user-token/include',
+ '-I./modules/identity/include',
  '-I./modules/generator/include',
  '-I./modules/crypto/include',
  '-I./modules/serialization/include',

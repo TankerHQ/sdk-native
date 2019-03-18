@@ -108,9 +108,6 @@ add_library(tankercore STATIC
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/Seal.hpp
-  include/Tanker/ChunkEncryptorImpl.hpp
-  include/Tanker/ChunkEncryptor.hpp
   include/Tanker/UserKeyStore.hpp
   include/Tanker/ContactStore.hpp
   include/Tanker/Version.hpp
@@ -168,10 +165,7 @@ add_library(tankercore STATIC
   src/Entry.cpp
   src/LogHandler.cpp
   src/Error.cpp
-  src/Seal.cpp
   src/Share.cpp
-  src/ChunkEncryptorImpl.cpp
-  src/ChunkEncryptor.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
   src/Actions/TrustchainCreation.cpp
@@ -223,7 +217,7 @@ install(DIRECTORY include DESTINATION .)
 
 target_link_libraries(tankercore
   tankerserialization
-  tankerusertoken
+  tankeridentity
   tankertypes
   tankercrypto
   ttracer

@@ -25,8 +25,8 @@ TEST_SUITE("Groups")
 
     TC_AWAIT(aliceSession->syncTrustchain());
 
-    REQUIRE_NOTHROW(
-        TC_AWAIT(aliceSession->createGroup({bob.suserId(), alice.suserId()})));
+    REQUIRE_NOTHROW(TC_AWAIT(aliceSession->createGroup(
+        {bob.spublicIdentity(), alice.spublicIdentity()})));
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share to a group")
@@ -40,7 +40,7 @@ TEST_SUITE("Groups")
 
     TC_AWAIT(aliceSession->syncTrustchain());
 
-    auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.suserId()}));
+    auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
     auto const clearData = make_buffer("my clear data is clear");
     std::vector<uint8_t> encryptedData(
@@ -63,7 +63,7 @@ TEST_SUITE("Groups")
 
     TC_AWAIT(aliceSession->syncTrustchain());
 
-    auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.suserId()}));
+    auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
     auto const clearData = make_buffer("my clear data is clear");
     std::vector<uint8_t> encryptedData(
@@ -86,10 +86,11 @@ TEST_SUITE("Groups")
     auto bob = trustchain.makeUser();
     auto bobDevices = TC_AWAIT(bob.makeDevices(1));
 
-    auto const groupId = TC_AWAIT(aliceSession->createGroup({alice.suserId()}));
+    auto const groupId =
+        TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
-    REQUIRE_NOTHROW(
-        TC_AWAIT(aliceSession->updateGroupMembers(groupId, {bob.suserId()})));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
@@ -110,9 +111,12 @@ TEST_SUITE("Groups")
       auto BobSession = TC_AWAIT(BobDevice.open());
       auto CharlieSession = TC_AWAIT(CharlieDevice.open());
 
-      auto const groupId = TC_AWAIT(AliceSession->createGroup({Bob.suserId()}));
-      TC_AWAIT(BobSession->updateGroupMembers(groupId, {Charlie.suserId()}));
-      TC_AWAIT(CharlieSession->updateGroupMembers(groupId, {Alice.suserId()}));
+      auto const groupId =
+          TC_AWAIT(AliceSession->createGroup({Bob.spublicIdentity()}));
+      TC_AWAIT(
+          BobSession->updateGroupMembers(groupId, {Charlie.spublicIdentity()}));
+      TC_AWAIT(CharlieSession->updateGroupMembers(groupId,
+                                                  {Alice.spublicIdentity()}));
 
       REQUIRE_NOTHROW(TC_AWAIT(CharlieSession->encrypt(
           encryptedData.data(), clearData, {}, {groupId})));

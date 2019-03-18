@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Core.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
@@ -7,6 +8,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
@@ -29,8 +31,6 @@
 
 namespace Tanker
 {
-class ChunkEncryptor;
-
 // You don't have to wait for these,
 // result will always be immediately available.
 // This is only for documentation purpose,
@@ -40,15 +40,13 @@ using expected = tc::future<T>;
 
 enum class Event
 {
-  SessionClosed = 1,
+  SessionClosed,
   DeviceCreated,
-  UnlockRequired,
   DeviceRevoked,
 
   Last
 };
 
-class Core;
 class AsyncCore
 {
   std::unique_ptr<Core> _core;
@@ -64,31 +62,33 @@ public:
 
   expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
 
-  tc::future<void> open(SUserId const& userId, std::string const& userToken);
+  tc::future<void> signUp(std::string const& identity,
+                          AuthenticationMethods const& authMethods = {});
+  tc::future<OpenResult> signIn(std::string const& identity,
+                                SignInOptions const& signInOptions = {});
 
-  tc::future<void> close();
+  tc::future<void> signOut();
 
   Status status() const;
 
-  tc::future<void> encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData,
-                           std::vector<SUserId> const& userIds = {},
-                           std::vector<SGroupId> const& groupIds = {});
+  tc::future<void> encrypt(
+      uint8_t* encryptedData,
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
   tc::future<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::future<void> share(std::vector<SResourceId> const& resourceId,
-                         std::vector<SUserId> const& userIds,
+                         std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::future<SGroupId> createGroup(std::vector<SUserId> const& suserIds);
-  tc::future<void> updateGroupMembers(SGroupId const& groupId,
-                                      std::vector<SUserId> const& usersToAdd);
+  tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
+  tc::future<void> updateGroupMembers(
+      SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
   tc::future<UnlockKey> generateAndRegisterUnlockKey();
 
-  tc::future<void> setupUnlock(Unlock::CreationOptions const& options);
-  tc::future<void> updateUnlock(Unlock::UpdateOptions const& options);
   tc::future<void> registerUnlock(Unlock::RegistrationOptions const& options);
   tc::future<void> unlockCurrentDevice(Unlock::DeviceLocker const& locker);
 
@@ -97,17 +97,11 @@ public:
   expected<bool> hasRegisteredUnlockMethods(Unlock::Method) const;
   expected<Unlock::Methods> registeredUnlockMethods() const;
 
-  boost::signals2::signal<void()>& unlockRequired();
   boost::signals2::signal<void()>& sessionClosed();
   boost::signals2::signal<void()>& deviceCreated();
   boost::signals2::signal<void()>& deviceRevoked();
 
   tc::future<DeviceId> deviceId() const;
-
-  tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor();
-
-  tc::future<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
 
   tc::future<void> revokeDevice(DeviceId const& deviceId);
 

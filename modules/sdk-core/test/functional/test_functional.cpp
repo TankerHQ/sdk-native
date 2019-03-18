@@ -58,7 +58,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto const core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
@@ -70,32 +70,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 1);
   core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Open);
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
   REQUIRE(spyClose.receivedEvents.size() == 2);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it fails to open when wrong userId/userToken is provided")
-{
-  auto alice = trustchain.makeUser();
-  UniquePath p{"testtmp"};
-
-  AsyncCore tanker(
-      trustchain.url(), {"test", trustchain.id(), "0.0.1"}, p.path);
-
-  REQUIRE_THROWS(TC_AWAIT(
-      tanker.open("alice"_uid,
-                  UserToken::generateUserToken(
-                      base64::encode(trustchain.id()),
-                      base64::encode(trustchain.signatureKeys().privateKey),
-                      "bob"_uid))));
-  REQUIRE_NOTHROW(TC_AWAIT(tanker.close()));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
@@ -104,9 +86,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto device = alice.makeDevice();
 
   auto const core = TC_AWAIT(device.open());
-  TC_AWAIT(core->close());
+  TC_AWAIT(core->signOut());
   REQUIRE(core->status() == Status::Closed);
-  TC_AWAIT(core->open(alice.suserId(), alice.userToken()));
+  TC_AWAIT(core->signIn(alice.identity()));
   REQUIRE(core->status() == Status::Open);
 }
 
@@ -119,7 +101,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Test::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
+  REQUIRE_THROWS(TC_AWAIT(core2->signIn(alice.identity())));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
@@ -134,17 +116,29 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   CHECK(deviceCreatedSpy.receivedEvents.size() == 1);
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "it fails to open if no device validation handler is registered")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it fails to signUp if the user already exists")
+{
+  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto device1 = alice.makeDevice();
+  {
+    auto session = TC_AWAIT(device1.open(Test::SessionType::New));
+  }
+  auto session = device1.createCore(Test::SessionType::New);
+  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity())),
+                    Error::IdentityAlreadyRegistered);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it fails to open if no sign in options are provided")
 {
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto device2 = alice.makeDevice(Test::DeviceType::New);
   auto session = TC_AWAIT(device1.open());
   auto tanker2 = device2.createCore(Test::SessionType::New);
-  REQUIRE_THROWS_AS(TC_AWAIT(tanker2->open(alice.suserId(), alice.userToken())),
-                    Error::InvalidUnlockEventHandler);
+  REQUIRE_EQ(TC_AWAIT(tanker2->signIn(alice.identity())),
+             OpenResult::IdentityVerificationNeeded);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
@@ -182,8 +176,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share to Bob")
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(
-      aliceSession->encrypt(encryptedData.data(), clearData, {bob.suserId()})));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(), clearData, {bob.spublicIdentity()})));
 
   REQUIRE(TC_AWAIT(
       checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
@@ -202,7 +196,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares to all her devices")
       AsyncCore::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
-  TC_AWAIT(aliceSession->close());
+  TC_AWAIT(aliceSession->signOut());
   REQUIRE(TC_AWAIT(
       checkDecrypt(aliceDevices, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -224,7 +218,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceSecondSession =
       TC_AWAIT(aliceSecondDevice.open(*aliceFirstSession));
 
-  TC_AWAIT(aliceSecondSession->close());
+  TC_AWAIT(aliceSecondSession->signOut());
 
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
@@ -285,7 +279,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
   }
 
   REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->share(resourceIds, {bob.suserId()}, {})));
+      TC_AWAIT(aliceSession->share(resourceIds, {bob.spublicIdentity()}, {})));
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 
@@ -307,9 +301,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   CHECK(aliceSession->status() == Status::Closed);
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_THROWS_AS(
-      TC_AWAIT(core->open(aliceDevice.suserId(), aliceDevice.userToken())),
-      Error::InvalidUnlockEventHandler);
+  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
+           OpenResult::IdentityVerificationNeeded);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -371,9 +364,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   {
     auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
 
-    CHECK_THROWS_AS(TC_AWAIT(core->open(aliceSecondDevice.suserId(),
-                                        aliceSecondDevice.userToken())),
-                    Error::InvalidUnlockEventHandler);
+    CHECK_EQ(TC_AWAIT(core->signIn(aliceSecondDevice.identity())),
+             OpenResult::IdentityVerificationNeeded);
   }
 
   tc::promise<void> prom2;
@@ -387,8 +379,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_THROWS_AS(
-      TC_AWAIT(core->open(aliceDevice.suserId(), aliceDevice.userToken())),
-      Error::InvalidUnlockEventHandler);
+  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
+           OpenResult::IdentityVerificationNeeded);
 }
 }

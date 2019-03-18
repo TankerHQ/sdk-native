@@ -1,6 +1,5 @@
 #include <Tanker/AsyncCore.hpp>
 
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Error.hpp>
@@ -57,9 +56,6 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
       case Event::SessionClosed:
         return this->_core->sessionClosed.connect(
             [cb, data] { tc::async([=] { cb(nullptr, data); }); });
-      case Event::UnlockRequired:
-        return this->_core->unlockRequired.connect(
-            [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
       case Event::DeviceRevoked:
         return this->_core->deviceRevoked.connect(
             [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
@@ -77,17 +73,25 @@ expected<void> AsyncCore::disconnectEvent(
   return tc::make_ready_future();
 }
 
-tc::future<void> AsyncCore::open(SUserId const& userId,
-                                 std::string const& userToken)
+tc::future<void> AsyncCore::signUp(std::string const& identity,
+                                   AuthenticationMethods const& authMethods)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->open(userId, userToken));
+    TC_AWAIT(this->_core->signUp(identity, authMethods));
   });
 }
 
-tc::future<void> AsyncCore::close()
+tc::future<OpenResult> AsyncCore::signIn(std::string const& identity,
+                                         SignInOptions const& signInOptions)
 {
-  return tc::async([this] { this->_core->close(); });
+  return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
+    TC_RETURN(TC_AWAIT(this->_core->signIn(identity, signInOptions)));
+  });
+}
+
+tc::future<void> AsyncCore::signOut()
+{
+  return tc::async([this] { this->_core->signOut(); });
 }
 
 Status AsyncCore::status() const
@@ -95,13 +99,15 @@ Status AsyncCore::status() const
   return this->_core->status();
 }
 
-tc::future<void> AsyncCore::encrypt(uint8_t* encryptedData,
-                                    gsl::span<uint8_t const> clearData,
-                                    std::vector<SUserId> const& userIds,
-                                    std::vector<SGroupId> const& groupIds)
+tc::future<void> AsyncCore::encrypt(
+    uint8_t* encryptedData,
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->encrypt(encryptedData, clearData, userIds, groupIds));
+    TC_AWAIT(this->_core->encrypt(
+        encryptedData, clearData, publicIdentities, groupIds));
   });
 }
 
@@ -113,25 +119,26 @@ tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
   });
 }
 
-tc::future<void> AsyncCore::share(std::vector<SResourceId> const& resourceId,
-                                  std::vector<SUserId> const& userIds,
-                                  std::vector<SGroupId> const& groupIds)
+tc::future<void> AsyncCore::share(
+    std::vector<SResourceId> const& resourceId,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->share(resourceId, userIds, groupIds));
+    TC_AWAIT(this->_core->share(resourceId, publicIdentities, groupIds));
   });
 }
 
 tc::future<SGroupId> AsyncCore::createGroup(
-    std::vector<SUserId> const& suserIds)
+    std::vector<SPublicIdentity> const& members)
 {
   return tc::async_resumable([=]() -> tc::cotask<SGroupId> {
-    TC_RETURN(TC_AWAIT(this->_core->createGroup(suserIds)));
+    TC_RETURN(TC_AWAIT(this->_core->createGroup(members)));
   });
 }
 
 tc::future<void> AsyncCore::updateGroupMembers(
-    SGroupId const& groupId, std::vector<SUserId> const& usersToAdd)
+    SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core->updateGroupMembers(groupId, usersToAdd));
@@ -142,20 +149,6 @@ tc::future<UnlockKey> AsyncCore::generateAndRegisterUnlockKey()
 {
   return tc::async_resumable([this]() -> tc::cotask<UnlockKey> {
     TC_RETURN(TC_AWAIT(this->_core->generateAndRegisterUnlockKey()));
-  });
-}
-
-tc::future<void> AsyncCore::setupUnlock(Unlock::CreationOptions const& options)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->setupUnlock(options));
-  });
-}
-
-tc::future<void> AsyncCore::updateUnlock(Unlock::UpdateOptions const& options)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->updateUnlock(options));
   });
 }
 
@@ -204,20 +197,6 @@ tc::future<DeviceId> AsyncCore::deviceId() const
   return tc::async([this]() { return this->_core->deviceId(); });
 }
 
-tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor()
-{
-  return tc::async([this] { return this->_core->makeChunkEncryptor(); });
-}
-
-tc::future<std::unique_ptr<ChunkEncryptor>> AsyncCore::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal)
-{
-  return tc::async_resumable(
-      [=]() -> tc::cotask<std::unique_ptr<ChunkEncryptor>> {
-        TC_RETURN(TC_AWAIT(this->_core->makeChunkEncryptor(encryptedSeal)));
-      });
-}
-
 tc::future<void> AsyncCore::revokeDevice(DeviceId const& deviceId)
 {
   return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
@@ -230,11 +209,6 @@ tc::future<void> AsyncCore::syncTrustchain()
   return tc::async_resumable([this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core->syncTrustchain());
   });
-}
-
-boost::signals2::signal<void()>& AsyncCore::unlockRequired()
-{
-  return this->_core->unlockRequired;
 }
 
 boost::signals2::signal<void()>& AsyncCore::sessionClosed()

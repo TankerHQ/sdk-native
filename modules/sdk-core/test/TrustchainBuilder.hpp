@@ -16,7 +16,7 @@
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 
 #include <optional.hpp>
 
@@ -30,7 +30,7 @@ public:
   struct Device
   {
     Tanker::DeviceKeys keys;
-    Tanker::UserToken::Delegation delegation;
+    Tanker::Identity::Delegation delegation;
     uint64_t blockIndex;
 
     Tanker::Device asTankerDevice() const;

@@ -35,11 +35,11 @@ struct AsyncCoreDeleter
 Device::Device(std::string trustchainUrl,
                std::string trustchainId,
                SUserId suserId,
-               std::string userToken)
+               std::string identity)
   : _trustchainUrl(std::move(trustchainUrl)),
     _trustchainId(std::move(trustchainId)),
     _suserId(std::move(suserId)),
-    _userToken(std::move(userToken)),
+    _identity(std::move(identity)),
     _storage(std::make_shared<UniquePath>(TMP_PATH))
 {
 }
@@ -69,9 +69,9 @@ SUserId const& Device::suserId() const
   return this->_suserId;
 }
 
-std::string const& Device::userToken() const
+std::string const& Device::identity() const
 {
-  return this->_userToken;
+  return this->_identity;
 }
 
 tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
@@ -93,24 +93,21 @@ tc::cotask<AsyncCorePtr> Device::open(SessionType type)
   if (tanker->status() == Status::Open)
     TC_RETURN(std::move(tanker));
 
-  auto const conn =
-      tanker->connectEvent(Event::UnlockRequired, [&](void* param, void* data) {
-        tc::async_resumable([&tanker]() -> tc::cotask<void> {
-          try
-          {
-            TC_AWAIT(tanker->unlockCurrentDevice(STRONG_PASSWORD_DO_NOT_LEAK));
-          }
-          catch (std::exception const& e)
-          {
-            // TODO i'm sure we can do better than a cerr here
-            fmt::print(stderr, "ERROR: can't unlock device: {:s}", e.what());
-          }
-        });
-      });
-
-  TC_AWAIT(tanker->open(_suserId, _userToken));
-  if (tanker->status() != Status::Open)
-    throw std::runtime_error("attach device fail");
+  auto const openResult = TC_AWAIT(tanker->signIn(_identity));
+  if (openResult == OpenResult::IdentityNotRegistered)
+    TC_AWAIT(tanker->signUp(_identity));
+  else if (openResult == OpenResult::IdentityVerificationNeeded)
+  {
+    auto const openResult2 =
+        TC_AWAIT(tanker->signIn(_identity,
+                                SignInOptions{
+                                    nonstd::nullopt,
+                                    nonstd::nullopt,
+                                    STRONG_PASSWORD_DO_NOT_LEAK,
+                                }));
+    if (openResult2 != OpenResult::Ok)
+      throw std::runtime_error("could not open functional test session");
+  }
   TC_RETURN(std::move(tanker));
 }
 

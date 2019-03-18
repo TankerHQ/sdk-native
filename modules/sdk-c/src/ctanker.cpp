@@ -28,18 +28,59 @@ nonstd::optional<T> nullableToOpt(char const* str)
     return nonstd::nullopt;
 }
 
-#define UNLOCK_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "UNLOCK enums not in sync")
+#define STATIC_ENUM_CHECK(cval, cppval)           \
+  static_assert(cval == static_cast<int>(cppval), \
+                "enum values not in sync: " #cval " and " #cppval)
 
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+// Unlock
 
-UNLOCK_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
-#undef UNLOCK_ENUM_CHECK
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
 
 static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
               "Please update the event assertions above if you added a new "
               "unlock methods");
+
+// Status
+
+STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
+STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
+
+STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
+
+static_assert(
+    TANKER_STATUS_LAST == 2,
+    "Please update the status assertions above if you added a new status");
+
+// OpenResult
+
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_OK, OpenResult::Ok);
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
+                  OpenResult::IdentityVerificationNeeded);
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
+                  OpenResult::IdentityNotRegistered);
+
+STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_LAST, OpenResult::Last);
+
+static_assert(
+    TANKER_SIGN_IN_RESULT_LAST == 3,
+    "Please update the result assertions above if you added a new result");
+
+// Event
+
+STATIC_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
+STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
+STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
+
+STATIC_ENUM_CHECK(TANKER_EVENT_LAST, Event::Last);
+
+static_assert(
+    TANKER_EVENT_LAST == 3,
+    "Please update the event assertions above if you added a new event");
+
+#undef STATIC_ENUM_CHECK
 }
 
 char const* tanker_version_string(void)
@@ -99,20 +140,6 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
                                         tanker_event_callback_t cb,
                                         void* data)
 {
-#define EVENT_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "Event enums not in sync")
-
-  EVENT_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
-  EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
-  EVENT_ENUM_CHECK(TANKER_EVENT_UNLOCK_REQUIRED, Event::UnlockRequired);
-  EVENT_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
-
-#undef EVENT_ENUM_CHECK
-
-  static_assert(
-      TANKER_EVENT_LAST == 4,
-      "Please update the event assertions above if you added a new event");
-
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
       tanker->connectEvent(static_cast<Event>(event), cb, data)
@@ -129,45 +156,73 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
       *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection))));
 }
 
-tanker_future_t* tanker_open(tanker_t* ctanker,
-                             char const* user_id,
-                             char const* user_token)
+tanker_future_t* tanker_sign_up(
+    tanker_t* ctanker,
+    char const* identity,
+    tanker_authentication_methods_t const* authentication_methods)
 {
-  if (user_id == nullptr)
+  if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("user_id is null")));
-  if (user_token == nullptr)
+        Error::formatEx<Error::InvalidArgument>("identity is null")));
+  if (authentication_methods && authentication_methods->version != 1)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("user_token is null")));
+        Error::formatEx<Error::InvalidArgument>(
+            "unsupported tanker_authentication_methods struct version")));
 
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->open(SUserId(user_id), std::string(user_token)));
+  auto authenticationMethods = AuthenticationMethods{};
+  if (authentication_methods)
+  {
+    if (authentication_methods->password)
+      authenticationMethods.password =
+          Password{authentication_methods->password};
+    if (authentication_methods->email)
+      authenticationMethods.email = Email{authentication_methods->email};
+  }
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(
+      tanker->signUp(std::string(identity), authenticationMethods));
 }
 
-tanker_future_t* tanker_close(tanker_t* ctanker)
+tanker_future_t* tanker_sign_in(tanker_t* ctanker,
+                                char const* identity,
+                                tanker_sign_in_options_t const* sign_in_options)
+{
+  if (identity == nullptr)
+    return makeFuture(tc::make_exceptional_future<void*>(
+        Error::formatEx<Error::InvalidArgument>("identity is null")));
+  if (sign_in_options && sign_in_options->version != 1)
+    return makeFuture(tc::make_exceptional_future<void*>(
+        Error::formatEx<Error::InvalidArgument>(
+            "unsupported tanker_authentication_methods struct version")));
+
+  auto signInOptions = SignInOptions{};
+  if (sign_in_options)
+  {
+    if (sign_in_options->unlock_key)
+      signInOptions.unlockKey = UnlockKey{sign_in_options->unlock_key};
+    if (sign_in_options->verification_code)
+      signInOptions.verificationCode =
+          VerificationCode{sign_in_options->verification_code};
+    if (sign_in_options->password)
+      signInOptions.password = Password{sign_in_options->password};
+  }
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(
+      tanker->signIn(std::string(identity), signInOptions)
+          .and_then(tc::get_synchronous_executor(),
+                    [](OpenResult r) { return reinterpret_cast<void*>(r); }));
+}
+
+tanker_future_t* tanker_sign_out(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->close());
+  return makeFuture(tanker->signOut());
 }
 
 enum tanker_status tanker_get_status(tanker_t* ctanker)
 {
-#define STATIC_ENUM_CHECK(cval, cppval) \
-  static_assert(cval == static_cast<int>(cppval), "Status enums not in sync")
-
-  STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
-  STATIC_ENUM_CHECK(TANKER_STATUS_USER_CREATION, Status::UserCreation);
-  STATIC_ENUM_CHECK(TANKER_STATUS_DEVICE_CREATION, Status::DeviceCreation);
-  STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
-
-  STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
-
-#undef STATIC_ENUM_CHECK
-
-  static_assert(
-      TANKER_STATUS_LAST == 5,
-      "Please update the status assertions above if you added a new status");
-
   return static_cast<tanker_status>(
       reinterpret_cast<AsyncCore*>(ctanker)->status());
 }
@@ -195,27 +250,6 @@ tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
       tc::get_synchronous_executor(), [](auto uk) {
         return static_cast<void*>(duplicateString(uk.string()));
       }));
-}
-
-tanker_future_t* tanker_setup_unlock(tanker_t* ctanker,
-                                     char const* email,
-                                     char const* pass)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->setupUnlock(Unlock::CreationOptions{
-      nullableToOpt<Email>(email), nullableToOpt<Password>(pass)}));
-}
-
-tanker_future_t* tanker_update_unlock(tanker_t* ctanker,
-                                      char const* email,
-                                      char const* pass,
-                                      char const* unlockKey)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->updateUnlock(
-      Unlock::UpdateOptions{nullableToOpt<Email>(email),
-                            nullableToOpt<Password>(pass),
-                            nullableToOpt<UnlockKey>(unlockKey)}));
 }
 
 tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
@@ -315,25 +349,31 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
                                 uint64_t data_size,
                                 tanker_encrypt_options_t const* options)
 {
-  std::vector<SUserId> suserIds{};
+  std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
   if (options)
   {
-    suserIds =
-        to_vector<SUserId>(options->recipient_uids, options->nb_recipient_uids);
+    if (options->version != 2)
+      return makeFuture(tc::make_exceptional_future<void>(
+          Error::formatEx<Error::InvalidArgument>(
+              "unsupported tanker_encrypt_options struct version")));
+    spublicIdentities =
+        to_vector<SPublicIdentity>(options->recipient_public_identities,
+                                   options->nb_recipient_public_identities);
     sgroupIds = to_vector<SGroupId>(options->recipient_gids,
                                     options->nb_recipient_gids);
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(
-      encrypted_data, gsl::make_span(data, data_size), suserIds, sgroupIds));
+  return makeFuture(tanker->encrypt(encrypted_data,
+                                    gsl::make_span(data, data_size),
+                                    spublicIdentities,
+                                    sgroupIds));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
                                 uint8_t* decrypted_data,
                                 uint8_t const* data,
-                                uint64_t data_size,
-                                tanker_decrypt_options_t const* options)
+                                uint64_t data_size)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
@@ -341,19 +381,20 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,
-                              char const* const* recipient_uids,
-                              uint64_t nb_recipient_uids,
+                              char const* const* recipient_public_identities,
+                              uint64_t nb_recipient_public_identities,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,
                               uint64_t nb_resource_ids) try
 {
-  auto suserIds = to_vector<SUserId>(recipient_uids, nb_recipient_uids);
-  auto sgroupIds = to_vector<SGroupId>(recipient_gids, nb_recipient_gids);
-  auto resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  auto const spublicIdentities = to_vector<SPublicIdentity>(
+      recipient_public_identities, nb_recipient_public_identities);
+  auto const sgroupIds = to_vector<SGroupId>(recipient_gids, nb_recipient_gids);
+  auto const resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
-  return makeFuture(tanker->share(resources, suserIds, sgroupIds));
+  return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
 }
 catch (std::exception const& e)
 {

@@ -7,6 +7,7 @@
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
@@ -28,7 +29,20 @@
 
 namespace Tanker
 {
-class ChunkEncryptor;
+struct AuthenticationMethods
+{
+  nonstd::optional<Password> password;
+  nonstd::optional<Email> email;
+};
+
+enum OpenResult
+{
+  Ok,
+  IdentityNotRegistered,
+  IdentityVerificationNeeded,
+
+  Last,
+};
 
 class Core
 {
@@ -37,29 +51,31 @@ public:
 
   Status status() const;
 
-  tc::cotask<void> open(SUserId const& suserId, std::string const& userToken);
-  void close();
+  tc::cotask<void> signUp(std::string const& identity,
+                          AuthenticationMethods const& authMethods);
+  tc::cotask<OpenResult> signIn(std::string const& identity,
+                                SignInOptions const& signInOptions);
+  void signOut();
 
-  tc::cotask<void> encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData,
-                           std::vector<SUserId> const& userIds = {},
-                           std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<void> encrypt(
+      uint8_t* encryptedData,
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& resourceId,
-                         std::vector<SUserId> const& userIds,
+                         std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
-  tc::cotask<SGroupId> createGroup(std::vector<SUserId> const& members);
-  tc::cotask<void> updateGroupMembers(SGroupId const& groupId,
-                                      std::vector<SUserId> const& usersToAdd);
+  tc::cotask<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
+  tc::cotask<void> updateGroupMembers(
+      SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
   tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
 
-  tc::cotask<void> setupUnlock(Unlock::CreationOptions const& options);
-  tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
   tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
   tc::cotask<bool> isUnlockAlreadySetUp() const;
@@ -71,14 +87,8 @@ public:
 
   tc::cotask<void> syncTrustchain();
 
-  std::unique_ptr<ChunkEncryptor> makeChunkEncryptor();
-
-  tc::cotask<std::unique_ptr<ChunkEncryptor>> makeChunkEncryptor(
-      gsl::span<uint8_t const> encryptedSeal);
-
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> unlockRequired;
   boost::signals2::signal<void()> sessionClosed;
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;

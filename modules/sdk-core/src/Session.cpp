@@ -5,7 +5,6 @@
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ChunkEncryptor.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
@@ -15,6 +14,9 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Manager.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/RecipientNotFound.hpp>
@@ -35,7 +37,6 @@
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/UserNotFound.hpp>
-#include <Tanker/UserToken/Delegation.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -72,11 +73,16 @@ auto convertList(std::vector<T> const& source, F&& f)
   return ret;
 }
 
-std::vector<UserId> obfuscateUserIds(std::vector<SUserId> const& suserIds,
-                                     TrustchainId const& trustchainId)
+// this function can exist because for the moment, a public identity can only
+// contain a user id
+std::vector<UserId> publicIdentitiesToUserIds(
+    std::vector<SPublicIdentity> const& spublicIdentities)
 {
-  return convertList(suserIds, [&](auto&& suserId) {
-    return obfuscateUserId(suserId, trustchainId);
+  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
+    return mpark::get<Identity::PublicPermanentIdentity>(
+               Identity::extract<Identity::PublicIdentity>(
+                   spublicIdentity.string()))
+        .userId;
   });
 }
 
@@ -240,13 +246,14 @@ Crypto::SymmetricKey const& Session::userSecret() const
   return this->_userSecret;
 }
 
-tc::cotask<void> Session::encrypt(uint8_t* encryptedData,
-                                  gsl::span<uint8_t const> clearData,
-                                  std::vector<SUserId> const& suserIds,
-                                  std::vector<SGroupId> const& sgroupIds)
+tc::cotask<void> Session::encrypt(
+    uint8_t* encryptedData,
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
   auto const metadata = Encryptor::encrypt(encryptedData, clearData);
-  auto userIds = obfuscateUserIds(suserIds, this->_trustchainId);
+  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
   auto groupIds = convertToGroupIds(sgroupIds);
   userIds.insert(userIds.begin(), this->_userId);
 
@@ -321,11 +328,12 @@ tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
                         groupIds));
 }
 
-tc::cotask<void> Session::share(std::vector<SResourceId> const& sresourceIds,
-                                std::vector<SUserId> const& suserIds,
-                                std::vector<SGroupId> const& sgroupIds)
+tc::cotask<void> Session::share(
+    std::vector<SResourceId> const& sresourceIds,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
-  auto userIds = obfuscateUserIds(suserIds, this->_trustchainId);
+  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
   auto groupIds = convertToGroupIds(sgroupIds);
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
     return base64::decode<ResourceId>(resourceId);
@@ -348,20 +356,23 @@ tc::cotask<void> Session::share(std::vector<SResourceId> const& sresourceIds,
     }
     catch (Error::RecipientNotFound const& e)
     {
-      auto const clearUids = toClearId(e.userIds(), suserIds, userIds);
+      auto const clearPublicIdentities =
+          toClearId(e.userIds(), spublicIdentities, userIds);
       auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
       throw Error::formatEx<Error::RecipientNotFound>(
-          fmt("Unknown users: [{:s}], groups: [{:s}]"),
-          fmt::join(clearUids.begin(), clearUids.end(), ", "),
+          fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+          fmt::join(
+              clearPublicIdentities.begin(), clearPublicIdentities.end(), ", "),
           fmt::join(clearGids.begin(), clearGids.end(), ", "));
     }
   }
 }
 
-tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
+tc::cotask<SGroupId> Session::createGroup(
+    std::vector<SPublicIdentity> spublicIdentities)
 {
-  suserIds = removeDuplicates(std::move(suserIds));
-  auto userIds = obfuscateUserIds(suserIds, _trustchainId);
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
 
   try
   {
@@ -373,7 +384,7 @@ tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
   }
   catch (Error::UserNotFound const& e)
   {
-    auto const clearUids = toClearId(e.userIds(), suserIds, userIds);
+    auto const clearUids = toClearId(e.userIds(), spublicIdentities, userIds);
     throw Error::formatEx<Error::UserNotFound>(
         fmt("Unknown users: {:s}"),
         fmt::join(clearUids.begin(), clearUids.end(), ", "));
@@ -381,12 +392,13 @@ tc::cotask<SGroupId> Session::createGroup(std::vector<SUserId> suserIds)
   throw std::runtime_error("unreachable code");
 }
 
-tc::cotask<void> Session::updateGroupMembers(SGroupId const& groupIdString,
-                                             std::vector<SUserId> userIdsToAdd)
+tc::cotask<void> Session::updateGroupMembers(
+    SGroupId const& groupIdString,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd)
 {
   auto const groupId = base64::decode<GroupId>(groupIdString);
-  userIdsToAdd = removeDuplicates(std::move(userIdsToAdd));
-  auto const usersToAdd = obfuscateUserIds(userIdsToAdd, _trustchainId);
+  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
+  auto const usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
 
   try
   {
@@ -399,7 +411,8 @@ tc::cotask<void> Session::updateGroupMembers(SGroupId const& groupIdString,
   }
   catch (Error::UserNotFound const& e)
   {
-    auto const clearUids = toClearId(e.userIds(), userIdsToAdd, usersToAdd);
+    auto const clearUids =
+        toClearId(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
     throw Error::formatEx<Error::UserNotFound>(
         fmt("Unknown users: {:s}"),
         fmt::join(clearUids.begin(), clearUids.end(), ", "));
@@ -608,19 +621,6 @@ tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 tc::cotask<void> Session::syncTrustchain()
 {
   TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-}
-
-std::unique_ptr<ChunkEncryptor> Session::makeChunkEncryptor()
-{
-  return std::make_unique<ChunkEncryptor>(ChunkEncryptor(this));
-}
-
-tc::cotask<std::unique_ptr<ChunkEncryptor>> Session::makeChunkEncryptor(
-    gsl::span<uint8_t const> encryptedSeal)
-{
-  auto chunkEncryptor = std::make_unique<ChunkEncryptor>(this);
-  TC_AWAIT(chunkEncryptor->open(encryptedSeal));
-  TC_RETURN(std::move(chunkEncryptor));
 }
 
 void Session::signalKeyReady(Crypto::Mac const& mac)
