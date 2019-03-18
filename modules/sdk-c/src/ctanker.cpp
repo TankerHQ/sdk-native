@@ -261,27 +261,6 @@ tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
       nullableToOpt<Email>(new_email), nullableToOpt<Password>(new_password)}));
 }
 
-tanker_future_t* tanker_unlock_current_device_with_password(tanker_t* ctanker,
-                                                            char const* pass)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(Password{pass}));
-}
-
-tanker_future_t* tanker_unlock_current_device_with_verification_code(
-    tanker_t* ctanker, char const* code)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(VerificationCode{code}));
-}
-
-tanker_future_t* tanker_unlock_current_device_with_unlock_key(
-    tanker_t* ctanker, char const* unlockKey)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(UnlockKey{unlockKey}));
-}
-
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);

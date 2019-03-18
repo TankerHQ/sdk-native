@@ -160,14 +160,6 @@ tc::future<void> AsyncCore::registerUnlock(
   });
 }
 
-tc::future<void> AsyncCore::unlockCurrentDevice(
-    Unlock::DeviceLocker const& locker)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->unlockCurrentDevice(locker));
-  });
-}
-
 tc::future<bool> AsyncCore::isUnlockAlreadySetUp() const
 {
   return tc::async_resumable([this]() -> tc::cotask<bool> {

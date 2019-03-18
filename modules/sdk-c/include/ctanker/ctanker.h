@@ -270,40 +270,6 @@ tanker_future_t* tanker_register_unlock(tanker_t* session,
                                         char const* new_password);
 
 /*!
- * Unlock the current device with the previously set-up unlock key
- * \param session a tanker tanker_t* instance
- * \param pass the password previously given for the unlock key protection
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \return a future to void
- */
-tanker_future_t* tanker_unlock_current_device_with_password(tanker_t* session,
-                                                            char const* pass);
-
-/*!
- * Unlock the current device with the previously set-up unlock key
- * \param session a tanker tanker_t* instance
- * \param verification_code the verification code sent to the email previously
- * given for the unlock key protection
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \return a future to void
- */
-tanker_future_t* tanker_unlock_current_device_with_verification_code(
-    tanker_t* session, char const* verification_code);
-
-/*!
- * Unlock this device with the user's unlockKey.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \param unlock_key The user's unlock_key
- * \throws TANKER_ERROR_INVALID_UNLOCK_KEY if the unlockKey format or the key
- * itself is incorrect
- * \throws TANKER_ERROR_OTHER could not connect to the
- * Tanker server or the server returned an error
- */
-tanker_future_t* tanker_unlock_current_device_with_unlock_key(
-    tanker_t* session, b64char const* unlock_key);
-
-/*!
  * Check if unlock mechanism has been set up for the current user.
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
@@ -410,8 +376,8 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param recipient_public_identities Array containing the recipients' public identities.
- * \param nb_recipient_public_identities The number of recipients in
+ * \param recipient_public_identities Array containing the recipients' public
+ * identities. \param nb_recipient_public_identities The number of recipients in
  * recipient_public_identities.
  * \param recipient_gids Array of strings describing the recipient groups.
  * \param nb_recipient_gids The number of groups in recipient_gids.

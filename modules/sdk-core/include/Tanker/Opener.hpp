@@ -61,7 +61,6 @@ public:
                               OpenMode mode);
 
   tc::cotask<UnlockKey> fetchUnlockKey(Unlock::DeviceLocker const& pass);
-  tc::cotask<void> unlockCurrentDevice(UnlockKey const& unlockKey);
 
 private:
   std::string _url;
@@ -73,6 +72,7 @@ private:
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
 
+  tc::cotask<void> unlockCurrentDevice(UnlockKey const& unlockKey);
   Session::Config makeConfig();
   tc::cotask<OpenResult> createUser();
   tc::cotask<OpenResult> createDevice(SignInOptions const& signInOptions);

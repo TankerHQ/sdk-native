@@ -90,7 +90,6 @@ public:
   tc::future<UnlockKey> generateAndRegisterUnlockKey();
 
   tc::future<void> registerUnlock(Unlock::RegistrationOptions const& options);
-  tc::future<void> unlockCurrentDevice(Unlock::DeviceLocker const& locker);
 
   tc::future<bool> isUnlockAlreadySetUp() const;
   expected<bool> hasRegisteredUnlockMethods() const;
