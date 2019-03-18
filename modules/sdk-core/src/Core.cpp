@@ -53,6 +53,11 @@ Status Core::status() const
   std::terminate();
 }
 
+bool Core::isOpen() const
+{
+  return this->status() == Status::Open;
+}
+
 tc::cotask<void> Core::signUp(std::string const& identity,
                               AuthenticationMethods const& authMethods)
 {

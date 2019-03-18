@@ -76,13 +76,13 @@ std::string const& Device::identity() const
 
 tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
 {
-  assert(parentSession.status() == Status::Open);
+  assert(parentSession.isOpen());
   auto const core = TC_AWAIT(this->open(parentSession));
 }
 
 tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 {
-  assert(session.status() == Status::Open);
+  assert(TC_AWAIT(session.isOpen()));
   TC_AWAIT(session.registerUnlock(
       Unlock::RegistrationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
 }
@@ -90,7 +90,7 @@ tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 tc::cotask<AsyncCorePtr> Device::open(SessionType type)
 {
   auto tanker = createCore(type);
-  if (tanker->status() == Status::Open)
+  if (tanker->isOpen())
     TC_RETURN(std::move(tanker));
 
   auto const openResult = TC_AWAIT(tanker->signIn(_identity));

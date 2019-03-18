@@ -69,7 +69,7 @@ public:
 
   tc::future<void> signOut();
 
-  Status status() const;
+  bool isOpen() const;
 
   tc::future<void> encrypt(
       uint8_t* encryptedData,

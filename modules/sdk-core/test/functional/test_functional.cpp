@@ -56,10 +56,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto const core = TC_AWAIT(device.open());
-  REQUIRE(core->status() == Status::Open);
+  REQUIRE(core->isOpen());
   SignalSpy<void> spyClose(core->sessionClosed());
   TC_AWAIT(core->signOut());
-  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
 
@@ -68,15 +68,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto core = TC_AWAIT(device.open());
-  REQUIRE(core->status() == Status::Open);
+  REQUIRE(core->isOpen());
   SignalSpy<void> spyClose(core->sessionClosed());
   TC_AWAIT(core->signOut());
-  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 1);
   core = TC_AWAIT(device.open());
-  REQUIRE(core->status() == Status::Open);
+  REQUIRE(core->isOpen());
   TC_AWAIT(core->signOut());
-  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 2);
 }
 
@@ -87,9 +87,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
 
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->signOut());
-  REQUIRE(core->status() == Status::Closed);
+  REQUIRE(!core->isOpen());
   TC_AWAIT(core->signIn(alice.identity()));
-  REQUIRE(core->status() == Status::Open);
+  REQUIRE(core->isOpen());
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -298,7 +298,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 
   TC_AWAIT(waitForPromise(prom));
 
-  CHECK(aliceSession->status() == Status::Closed);
+  CHECK(!aliceSession->isOpen());
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
   CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
@@ -332,7 +332,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TC_AWAIT(waitForPromise(prom));
 
-  CHECK(otherSession->status() == Status::Closed);
+  CHECK(!otherSession->isOpen());
 
   TC_AWAIT(aliceSecondDevice.open(*aliceSession));
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
@@ -359,7 +359,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TC_AWAIT(waitForPromise(prom));
 
-  CHECK(otherSession->status() == Status::Closed);
+  CHECK(!otherSession->isOpen());
 
   {
     auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
@@ -375,7 +375,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TC_AWAIT(waitForPromise(prom2));
 
-  CHECK(aliceSession->status() == Status::Closed);
+  CHECK(!aliceSession->isOpen());
 
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 

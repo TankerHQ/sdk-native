@@ -221,10 +221,10 @@ tanker_future_t* tanker_sign_out(tanker_t* ctanker)
   return makeFuture(tanker->signOut());
 }
 
-enum tanker_status tanker_get_status(tanker_t* ctanker)
+bool tanker_is_open(tanker_t* ctanker)
 {
-  return static_cast<tanker_status>(
-      reinterpret_cast<AsyncCore*>(ctanker)->status());
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return tanker->isOpen();
 }
 
 tanker_future_t* tanker_device_id(tanker_t* ctanker)

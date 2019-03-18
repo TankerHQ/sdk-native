@@ -94,9 +94,9 @@ tc::future<void> AsyncCore::signOut()
   return tc::async([this] { this->_core->signOut(); });
 }
 
-Status AsyncCore::status() const
+bool AsyncCore::isOpen() const
 {
-  return this->_core->status();
+  return this->_core->isOpen();
 }
 
 tc::future<void> AsyncCore::encrypt(

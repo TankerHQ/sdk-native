@@ -4,6 +4,7 @@
 #include <ctanker/async.h>
 #include <ctanker/base64.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -231,12 +232,12 @@ tanker_future_t* tanker_sign_in(
 tanker_future_t* tanker_sign_out(tanker_t* tanker);
 
 /*!
- * Get the status of the tanker instance.
+ * Is tanker currently opened.
  * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
- * \return the tanker status.
+ * \return true if tanker is open, false otherwise.
  */
-enum tanker_status tanker_get_status(tanker_t* tanker);
+bool tanker_is_open(tanker_t* tanker);
 
 /*!
  * Get the current device id.
@@ -377,7 +378,8 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
  * \param recipient_public_identities Array containing the recipients' public
- * identities. \param nb_recipient_public_identities The number of recipients in
+ * identities.
+ * \param nb_recipient_public_identities The number of recipients in
  * recipient_public_identities.
  * \param recipient_gids Array of strings describing the recipient groups.
  * \param nb_recipient_gids The number of groups in recipient_gids.
