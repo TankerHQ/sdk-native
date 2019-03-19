@@ -11,6 +11,7 @@ import ci.git
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
     build_and_test_parser = subparsers.add_parser("build-and-test")
@@ -31,9 +32,11 @@ def main() -> None:
     subparsers.add_parser("mirror")
 
     platform = sys.platform.lower()
-    ci.cpp.update_conan_config(platform)
+    ci.cpp.update_conan_config()
 
     args = parser.parse_args()
+    if args.home_isolation:
+        ci.cpp.set_home_isolation()
     if args.command == "clean-cache":
         ci.cpp.clean_conan_cache()
     elif args.command == "build-and-test":
