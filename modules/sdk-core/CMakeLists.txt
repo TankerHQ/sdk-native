@@ -265,6 +265,9 @@ add_library(tankercore_test STATIC
 
 if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
+  if (WIN32)
+     target_link_libraries(tankercore crypt32 cryptui)
+  endif()
 endif()
 
 target_link_libraries(tankercore_test tankercore tankertesthelpers)
