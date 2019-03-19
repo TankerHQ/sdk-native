@@ -49,13 +49,13 @@ class Core
 public:
   Core(std::string url, SdkInfo infos, std::string writablePath);
 
-  Status status() const;
-
   tc::cotask<void> signUp(std::string const& identity,
                           AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signIn(std::string const& identity,
                                 SignInOptions const& signInOptions);
   void signOut();
+
+  bool isOpen() const;
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
@@ -111,5 +111,6 @@ private:
   tc::task_auto_canceler _taskCanceler;
 
   void reset();
+  Status status() const;
 };
 }

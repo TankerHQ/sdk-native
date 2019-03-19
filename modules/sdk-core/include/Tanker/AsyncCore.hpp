@@ -69,7 +69,7 @@ public:
 
   tc::future<void> signOut();
 
-  Status status() const;
+  bool isOpen() const;
 
   tc::future<void> encrypt(
       uint8_t* encryptedData,
@@ -90,7 +90,6 @@ public:
   tc::future<UnlockKey> generateAndRegisterUnlockKey();
 
   tc::future<void> registerUnlock(Unlock::RegistrationOptions const& options);
-  tc::future<void> unlockCurrentDevice(Unlock::DeviceLocker const& locker);
 
   tc::future<bool> isUnlockAlreadySetUp() const;
   expected<bool> hasRegisteredUnlockMethods() const;

@@ -4,6 +4,7 @@
 #include <ctanker/async.h>
 #include <ctanker/base64.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -231,12 +232,12 @@ tanker_future_t* tanker_sign_in(
 tanker_future_t* tanker_sign_out(tanker_t* tanker);
 
 /*!
- * Get the status of the tanker instance.
+ * Is tanker currently opened.
  * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
- * \return the tanker status.
+ * \return true if tanker is open, false otherwise.
  */
-enum tanker_status tanker_get_status(tanker_t* tanker);
+bool tanker_is_open(tanker_t* tanker);
 
 /*!
  * Get the current device id.
@@ -268,40 +269,6 @@ tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
 tanker_future_t* tanker_register_unlock(tanker_t* session,
                                         char const* new_email,
                                         char const* new_password);
-
-/*!
- * Unlock the current device with the previously set-up unlock key
- * \param session a tanker tanker_t* instance
- * \param pass the password previously given for the unlock key protection
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \return a future to void
- */
-tanker_future_t* tanker_unlock_current_device_with_password(tanker_t* session,
-                                                            char const* pass);
-
-/*!
- * Unlock the current device with the previously set-up unlock key
- * \param session a tanker tanker_t* instance
- * \param verification_code the verification code sent to the email previously
- * given for the unlock key protection
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \return a future to void
- */
-tanker_future_t* tanker_unlock_current_device_with_verification_code(
-    tanker_t* session, char const* verification_code);
-
-/*!
- * Unlock this device with the user's unlockKey.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_DEVICE_CREATION
- * \param unlock_key The user's unlock_key
- * \throws TANKER_ERROR_INVALID_UNLOCK_KEY if the unlockKey format or the key
- * itself is incorrect
- * \throws TANKER_ERROR_OTHER could not connect to the
- * Tanker server or the server returned an error
- */
-tanker_future_t* tanker_unlock_current_device_with_unlock_key(
-    tanker_t* session, b64char const* unlock_key);
 
 /*!
  * Check if unlock mechanism has been set up for the current user.
@@ -410,7 +377,8 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_OPEN
- * \param recipient_public_identities Array containing the recipients' public identities.
+ * \param recipient_public_identities Array containing the recipients' public
+ * identities.
  * \param nb_recipient_public_identities The number of recipients in
  * recipient_public_identities.
  * \param recipient_gids Array of strings describing the recipient groups.

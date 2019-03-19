@@ -221,10 +221,10 @@ tanker_future_t* tanker_sign_out(tanker_t* ctanker)
   return makeFuture(tanker->signOut());
 }
 
-enum tanker_status tanker_get_status(tanker_t* ctanker)
+bool tanker_is_open(tanker_t* ctanker)
 {
-  return static_cast<tanker_status>(
-      reinterpret_cast<AsyncCore*>(ctanker)->status());
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return tanker->isOpen();
 }
 
 tanker_future_t* tanker_device_id(tanker_t* ctanker)
@@ -259,27 +259,6 @@ tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->registerUnlock(Unlock::CreationOptions{
       nullableToOpt<Email>(new_email), nullableToOpt<Password>(new_password)}));
-}
-
-tanker_future_t* tanker_unlock_current_device_with_password(tanker_t* ctanker,
-                                                            char const* pass)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(Password{pass}));
-}
-
-tanker_future_t* tanker_unlock_current_device_with_verification_code(
-    tanker_t* ctanker, char const* code)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(VerificationCode{code}));
-}
-
-tanker_future_t* tanker_unlock_current_device_with_unlock_key(
-    tanker_t* ctanker, char const* unlockKey)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->unlockCurrentDevice(UnlockKey{unlockKey}));
 }
 
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)

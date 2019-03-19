@@ -53,6 +53,11 @@ Status Core::status() const
   std::terminate();
 }
 
+bool Core::isOpen() const
+{
+  return this->status() == Status::Open;
+}
+
 tc::cotask<void> Core::signUp(std::string const& identity,
                               AuthenticationMethods const& authMethods)
 {
@@ -216,17 +221,6 @@ tc::cotask<void> Core::registerUnlock(
   if (!psession)
     throw INVALID_STATUS(registerUnlock);
   TC_AWAIT((*psession)->registerUnlock(options));
-}
-
-tc::cotask<void> Core::unlockCurrentDevice(Unlock::DeviceLocker const& locker)
-{
-  auto popener = mpark::get_if<Opener>(&_state);
-  if (!popener)
-    throw INVALID_STATUS(unlockCurrentDevice);
-  auto const unlockKey = mpark::holds_alternative<UnlockKey>(locker) ?
-                             mpark::get<UnlockKey>(locker) :
-                             TC_AWAIT(popener->fetchUnlockKey(locker));
-  TC_AWAIT(popener->unlockCurrentDevice(unlockKey));
 }
 
 tc::cotask<bool> Core::isUnlockAlreadySetUp() const

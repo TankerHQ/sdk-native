@@ -94,9 +94,9 @@ tc::future<void> AsyncCore::signOut()
   return tc::async([this] { this->_core->signOut(); });
 }
 
-Status AsyncCore::status() const
+bool AsyncCore::isOpen() const
 {
-  return this->_core->status();
+  return this->_core->isOpen();
 }
 
 tc::future<void> AsyncCore::encrypt(
@@ -157,14 +157,6 @@ tc::future<void> AsyncCore::registerUnlock(
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core->registerUnlock(options));
-  });
-}
-
-tc::future<void> AsyncCore::unlockCurrentDevice(
-    Unlock::DeviceLocker const& locker)
-{
-  return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->unlockCurrentDevice(locker));
   });
 }
 
