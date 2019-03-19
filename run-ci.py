@@ -1,52 +1,53 @@
 import argparse
+import os
 import sys
+
+from path import Path
 
 import ci
 import ci.android
 import ci.cpp
+import ci.git
 import ci.ios
 import ci.mail
-import ci.git
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
     build_and_test_parser = subparsers.add_parser("build-and-test")
     build_and_test_parser.add_argument("--profile", required=True)
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
-    subparsers.add_parser("clean-cache")
-
-    deploy_parser = subparsers.add_parser("deploy")
-    deploy_parser.add_argument(
-        "--profile", action="append", dest="profiles", required=True
-    )
-    deploy_parser.add_argument("--channel", default="stable")
-    deploy_parser.add_argument("--user", default="tanker")
-    deploy_parser.add_argument("--git-tag", required=True)
-
+    subparsers.add_parser("deploy")
     subparsers.add_parser("nightly")
     subparsers.add_parser("mirror")
-
-    platform = sys.platform.lower()
-    ci.cpp.update_conan_config(platform)
+    subparsers.add_parser("nightly-build-emscripten")
 
     args = parser.parse_args()
-    if args.command == "clean-cache":
-        ci.cpp.clean_conan_cache()
-    elif args.command == "build-and-test":
-        ci.cpp.build_and_test(args.profile, args.coverage)
+    if args.home_isolation:
+        ci.cpp.set_home_isolation()
+
+    ci.cpp.update_conan_config()
+
+    if args.command == "build-and-test":
+        ci.cpp.check(args.profile, coverage=args.coverage, run_tests=True)
+    elif args.command == "nightly-build-emscripten":
+        with ci.mail.notify_failure("sdk-native"):
+            ci.cpp.check("emscripten", run_tests=False)
     elif args.command == "deploy":
-        git_tag = args.git_tag
+        git_tag = os.environ["CI_COMMIT_TAG"]
         version = ci.version_from_git_tag(git_tag)
         ci.bump_files(version)
-        deployer = ci.cpp.Deployer(
-            profiles=args.profiles, user="tanker", channel=args.channel
+        ci.cpp.build_recipe(
+            Path.getcwd(),
+            conan_reference=f"tanker/{version}@tanker/stable",
+            upload=True,
         )
-        deployer.build(upload=True)
     elif args.command == "nightly":
+        platform = sys.platform
         with ci.mail.notify_failure("sdk-native"):
             if platform == "linux":
                 ci.android.check(native_from_sources=True)
