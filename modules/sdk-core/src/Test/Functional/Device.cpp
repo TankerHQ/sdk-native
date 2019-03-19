@@ -82,7 +82,7 @@ tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
 
 tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 {
-  assert(TC_AWAIT(session.isOpen()));
+  assert(session.isOpen());
   TC_AWAIT(session.registerUnlock(
       Unlock::RegistrationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
 }
