@@ -18,6 +18,7 @@ option(BUILD_TESTS "Enable test building" ON)
 option(WITH_COVERAGE "Enable coverage" OFF)
 option(BUILD_TANKER_TOOLS "Build Tanker Tools" ON)
 option(WITH_TRACER "Enable tracer library" OFF)
+option(TANKERLIB_SHARED "whether to build the main tanker library as a shared" OFF)
 
 add_definitions("-DGSL_THROW_ON_CONTRACT_VIOLATION")
 
@@ -69,7 +70,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
   tanker_add_flags(CMAKE_C_FLAGS "-Wstrict-prototypes")
   set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type -Wno-c++17-extensions")
 elseif(MSVC)
-  set(COMMON_COMPILE_FLAGS "/MP")
+  set(COMMON_COMPILE_FLAGS "/MP /bigobj")
 endif()
 
 tanker_add_flags(CMAKE_C_FLAGS ${COMMON_COMPILE_FLAGS})

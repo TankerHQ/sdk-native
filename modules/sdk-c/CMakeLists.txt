@@ -2,7 +2,15 @@ cmake_minimum_required(VERSION 3.4)
 
 project(TankerSDK-C)
 
-add_library(ctanker
+if(TANKERLIB_SHARED)
+  set(tankerlib_type SHARED)
+else()
+  set(tankerlib_type STATIC)
+endif()
+
+message(STATUS "Bulding tanker as ${tankerlib_type}")
+
+add_library(ctanker ${tankerlib_type}
   include/ctanker.h
   include/ctanker/ctanker.h
   include/ctanker/async.h

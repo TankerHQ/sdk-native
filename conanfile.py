@@ -6,7 +6,7 @@ class TankerConan(ConanFile):
     version = "1.10.0-r1"
     settings = "os", "compiler", "build_type", "arch"
     options = {
-        "shared": [True, False],
+        "tankerlib_shared": [True, False],
         "fPIC": [True, False],
         "with_ssl": [True, False],
         "with_tracer": [True, False],
@@ -37,10 +37,6 @@ class TankerConan(ConanFile):
         return self.should_build_bench and self.options.with_tracer
 
     @property
-    def should_run_tests(self):
-        return self.options.with_ssl and self.should_build_tests and self.should_test and not self.cross_building
-
-    @property
     def sanitizer_flag(self):
         if self.options.sanitizer:
             return " -fsanitize=%s " % self.options.sanitizer
@@ -65,9 +61,9 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
-        self.requires("mockaron/0.2@tanker/testing", private=private)
+        self.requires("mockaron/0.9.0@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.16@tanker/testing", private=private)
+        self.requires("tconcurrent/0.18.1@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
 
     def imports(self):
@@ -115,15 +111,13 @@ class TankerConan(ConanFile):
         cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
-        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
+        cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         cmake.definitions["WITH_COVERAGE"] = self.options.coverage
         if self.should_configure:
             cmake.configure()
         if self.should_build:
             cmake.build()
-        if self.should_run_tests:
-            cmake.test()
         if self.should_install:
             cmake.install()
 
@@ -133,5 +127,8 @@ class TankerConan(ConanFile):
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
+
+        if self.settings.os == "Windows" and self.options.with_ssl:
+            libs.extend(["crypt32", "cryptui"])
 
         self.cpp_info.libs = libs
