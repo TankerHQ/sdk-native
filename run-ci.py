@@ -7,9 +7,10 @@ from path import Path
 import ci
 import ci.android
 import ci.cpp
+import ci.endtoend
+import ci.git
 import ci.ios
 import ci.mail
-import ci.git
 
 
 def main() -> None:
@@ -25,6 +26,7 @@ def main() -> None:
     subparsers.add_parser("nightly")
     subparsers.add_parser("mirror")
     subparsers.add_parser("nightly-build-emscripten")
+    subparsers.add_parser("e2e")
 
     args = parser.parse_args()
     if args.home_isolation:
@@ -57,6 +59,8 @@ def main() -> None:
                 sys.exit(f"Unknown platform: {platform}")
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
+    elif args.command == "e2e":
+        ci.endtoend.test(env="dev")
     else:
         parser.print_help()
         sys.exit(1)
