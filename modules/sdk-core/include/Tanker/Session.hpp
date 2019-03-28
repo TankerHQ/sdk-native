@@ -31,6 +31,7 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
+#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <cstdint>
 #include <map>
@@ -135,6 +136,7 @@ private:
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
+  tc::task_auto_canceler _taskCanceler;
   std::unique_ptr<Client> _client;
   Trustchain _trustchain;
   UserKeyStore _userKeyStore;

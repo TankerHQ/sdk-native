@@ -217,13 +217,13 @@ tc::cotask<void> Session::startConnection()
   FUNC_TIMER(Net);
   TC_AWAIT(_client->handleConnection());
 
-  tc::async_resumable([this]() -> tc::cotask<void> {
+  _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
     TC_AWAIT(syncTrustchain());
     if (!_ready.get_future().is_ready())
     {
       _ready.set_value({});
     }
-  });
+  }));
 
   {
     SCOPE_TIMER("wait for trustchain sync", Net);
