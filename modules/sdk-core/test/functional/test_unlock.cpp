@@ -42,6 +42,22 @@ TEST_SUITE("Unlock")
           TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
     }
 
+    SUBCASE("it throws when calling deviceId before open returns")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
+          Unlock::CreationOptions{}.set(Password{"my password"}))));
+
+      core2->unlockRequired().connect([&] {
+        tc::async_resumable([&core2]() -> tc::cotask<void> {
+          TC_AWAIT(core2->unlockCurrentDevice(Password{"my password"}));
+          REQUIRE_THROWS(TC_AWAIT(core2->deviceId()));
+        });
+      });
+
+      REQUIRE_NOTHROW(
+          TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
+    }
+
     SUBCASE("it sets up an unlock password and unlock a new device")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->setupUnlock(
