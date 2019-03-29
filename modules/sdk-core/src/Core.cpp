@@ -146,7 +146,14 @@ DeviceId const& Core::deviceId() const
   auto const psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(deviceId);
-  return (*psession)->deviceId();
+  auto const& ret = (*psession)->deviceId();
+  // HOTFIX
+  if (ret == DeviceId{})
+  {
+    throw Error::formatEx<Error::DeviceNotFound>(
+        "Device is not fully initialized, please wait for open to finish");
+  }
+  return ret;
 }
 
 tc::cotask<UnlockKey> Core::generateAndRegisterUnlockKey()
