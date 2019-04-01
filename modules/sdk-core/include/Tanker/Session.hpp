@@ -136,7 +136,6 @@ private:
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
-  tc::task_auto_canceler _taskCanceler;
   std::unique_ptr<Client> _client;
   Trustchain _trustchain;
   UserKeyStore _userKeyStore;
@@ -154,6 +153,7 @@ private:
   std::map<Crypto::Mac, tc::promise<void>> _pendingRequests;
 
   tc::promise<void> _ready;
+  tc::task_auto_canceler _taskCanceler;
 
   tc::cotask<void> connectionHandler();
   void signalKeyReady(Crypto::Mac const& mac);
