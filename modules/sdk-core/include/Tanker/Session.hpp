@@ -31,6 +31,7 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
+#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <cstdint>
 #include <map>
@@ -152,6 +153,7 @@ private:
   std::map<Crypto::Mac, tc::promise<void>> _pendingRequests;
 
   tc::promise<void> _ready;
+  tc::task_auto_canceler _taskCanceler;
 
   tc::cotask<void> connectionHandler();
   void signalKeyReady(Crypto::Mac const& mac);
