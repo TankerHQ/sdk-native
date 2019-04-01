@@ -130,3 +130,5 @@ check/e2e:
     - dmenv run -- python run-ci.py --isolate-conan-user-home e2e
   tags:
     - linux
+  except:
+    - tags
