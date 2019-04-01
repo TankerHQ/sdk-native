@@ -635,7 +635,7 @@ void Session::signalKeyReady(Crypto::Mac const& mac)
 
 tc::cotask<void> Session::revokeDevice(DeviceId const& deviceId)
 {
-  TC_AWAIT(_userAccessor.pull({_userId}));
+  TC_AWAIT(syncTrustchain());
   TC_AWAIT(Revocation::revokeDevice(deviceId,
                                     _userId,
                                     _contactStore,
