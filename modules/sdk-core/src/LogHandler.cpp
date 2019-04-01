@@ -1,7 +1,10 @@
+#include <Tanker/EnumFormat.hpp>
 #include <Tanker/LogHandler.hpp>
 
-#include <cstdio>
+#include <fmt/format.h>
 
+namespace Tanker
+{
 namespace Log
 {
 namespace detail
@@ -9,9 +12,28 @@ namespace detail
 LogHandler currentHandler = &consoleHandler;
 }
 
-void consoleHandler(char const*, char, char const* msg)
+std::string to_string(Level l)
 {
-  std::fputs(msg, stdout);
+  switch (l)
+  {
+  case Level::Debug:
+    return "D";
+  case Level::Info:
+    return "I";
+  case Level::Error:
+    return "E";
+  }
+  return "Unknown";
+}
+
+void consoleHandler(Record const& record)
+{
+  fmt::print("{0:s}:{1:s}:{2:d}:{3:s}: {4:s}\n",
+             record.category,
+             record.file,
+             record.line,
+             record.level,
+             record.message);
 }
 
 void setLogHandler(LogHandler handler)
@@ -20,5 +42,6 @@ void setLogHandler(LogHandler handler)
     detail::currentHandler = &consoleHandler;
   else
     detail::currentHandler = handler;
+}
 }
 }

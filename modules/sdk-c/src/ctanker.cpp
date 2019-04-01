@@ -132,7 +132,16 @@ tanker_future_t* tanker_destroy(tanker_t* ctanker)
 
 void tanker_set_log_handler(tanker_log_handler_t handler)
 {
-  AsyncCore::setLogHandler(handler);
+  AsyncCore::setLogHandler([handler](Tanker::Log::Record const& record) {
+    tanker_log_record_t crecord = {
+        record.category,
+        static_cast<std::uint32_t>(record.level),
+        record.file,
+        record.line,
+        record.message,
+    };
+    handler(&crecord);
+  });
 }
 
 tanker_expected_t* tanker_event_connect(tanker_t* ctanker,

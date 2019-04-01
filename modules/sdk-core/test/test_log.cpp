@@ -19,9 +19,10 @@ TLOG_CATEGORY(test);
 
 namespace
 {
-void myLogHandler(char const* cat, char level, char const* msg)
+void myLogHandler(Tanker::Log::Record const& s)
 {
-  std::cout << " this my log handler " << level << " \"" << msg << '"';
+  std::cout << " this my log handler " << static_cast<std::uint32_t>(s.level)
+            << " \"" << s.message << '"';
 }
 }
 
@@ -29,7 +30,7 @@ TEST_CASE("print a formated log")
 {
   using namespace fmt::literals;
   std::string err = "this is a vary naughty error";
-  Log::setLogHandler(nullptr);
+  Tanker::Log::setLogHandler(nullptr);
 
   SUBCASE("Print a log")
   {
@@ -39,15 +40,15 @@ TEST_CASE("print a formated log")
 
   SUBCASE("Set a loghandler")
   {
-    Log::setLogHandler(&myLogHandler);
+    Tanker::Log::setLogHandler(&myLogHandler);
     TINFO("I am the message");
   }
 
   SUBCASE("Reset a LogHandler")
   {
-    Log::setLogHandler(&myLogHandler);
+    Tanker::Log::setLogHandler(&myLogHandler);
     TINFO("I am the message");
-    Log::setLogHandler(nullptr);
+    Tanker::Log::setLogHandler(nullptr);
     TINFO("I am the message no handler");
   }
 

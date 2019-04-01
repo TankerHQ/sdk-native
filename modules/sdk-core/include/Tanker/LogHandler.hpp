@@ -1,16 +1,44 @@
 #pragma once
 
-#include <functional>
+#include <Tanker/EnumTrait.hpp>
 
+#include <functional>
+#include <string>
+
+namespace Tanker
+{
 namespace Log
 {
-using LogHandler =
-    std::function<void(char const* category, char level, const char*)>;
-void consoleHandler(char const* category, char level, const char*);
+enum class Level : std::uint8_t
+{
+  Debug = 1,
+  Info,
+  Error,
+};
+
+std::string to_string(Level l);
+
+struct Record
+{
+  char const* category;
+  Level level;
+  char const* file;
+  std::uint32_t line;
+  char const* message;
+};
+
+using LogHandler = std::function<void(Record const&)>;
+void consoleHandler(Record const&);
 void setLogHandler(LogHandler handler);
 
 namespace detail
 {
 extern LogHandler currentHandler;
 }
+}
+
+template <>
+struct is_enum_type<Log::Level> : std::true_type
+{
+};
 }

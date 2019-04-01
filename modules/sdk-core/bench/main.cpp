@@ -12,14 +12,14 @@
 #include <string>
 using namespace std::string_literals;
 
-static void log_handler(char const* cat, char level, char const* msg)
+static void log_handler(Tanker::Log::Record const&)
 {
 }
 
 int main(int argc, char** argv)
 {
   Tanker::init();
-  Log::setLogHandler(&log_handler);
+  Tanker::Log::setLogHandler(&log_handler);
   AWAIT_VOID(Tanker::Test::Trustchain::getInstance().init());
   benchmark::Initialize(&argc, argv);
 #ifdef TANKER_ENABLE_TRACER
