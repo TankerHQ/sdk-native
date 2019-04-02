@@ -74,6 +74,11 @@ emscripten::val CoreSignIn(AsyncCore& core,
   return Emscripten::tcFutureToJsPromise(core.signIn(identity, signInOptions));
 }
 
+emscripten::val CoreIsOpen(AsyncCore& core)
+{
+  return emscripten::val(core.isOpen());
+}
+
 emscripten::val CoreEncrypt(AsyncCore& core,
                             uintptr_t iencryptedData,
                             uintptr_t iclearData,
@@ -269,6 +274,7 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .constructor(&makeCore)
       .function("signUp", &CoreSignUp)
       .function("signIn", &CoreSignIn)
+      .function("isOpen", &CoreIsOpen)
       .function("encryptedSize", &CoreEncryptedSize)
       .function("decryptedSize", &CoreDecryptedSize)
       .function("encrypt", &CoreEncrypt, emscripten::allow_raw_pointers())
