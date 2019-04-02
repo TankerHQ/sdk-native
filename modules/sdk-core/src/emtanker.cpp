@@ -110,6 +110,26 @@ emscripten::val CoreShare(AsyncCore& core,
       core.share(resourceIds, publicIdentities, groupIds));
 }
 
+emscripten::val CoreCreateGroup(AsyncCore& core, emscripten::val const& members)
+{
+  auto const publicIdentities =
+      Emscripten::copyToStringLikeVector<SPublicIdentity>(members);
+  return Emscripten::tcFutureToJsPromise(
+      core.createGroup(publicIdentities).and_then([](auto const& groupId) {
+        return groupId.string();
+      }));
+}
+
+emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
+                                       emscripten::val const& jgroupId,
+                                       emscripten::val const& jusersToAdd)
+{
+  auto const usersToAdd =
+      Emscripten::copyToStringLikeVector<SPublicIdentity>(jusersToAdd);
+  return Emscripten::tcFutureToJsPromise(core.updateGroupMembers(
+      SGroupId(jgroupId.as<std::string>()), usersToAdd));
+}
+
 uint32_t CoreEncryptedSize(AsyncCore&, uint32_t clearSize)
 {
   return Encryptor::encryptedSize(clearSize);
@@ -162,5 +182,7 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("decryptedSize", &CoreDecryptedSize)
       .function("encrypt", &CoreEncrypt, emscripten::allow_raw_pointers())
       .function("decrypt", &CoreDecrypt, emscripten::allow_raw_pointers())
-      .function("share", &CoreShare);
+      .function("share", &CoreShare)
+      .function("createGroup", &CoreCreateGroup)
+      .function("updateGroupMembers", &CoreUpdateGroupMembers);
 }
