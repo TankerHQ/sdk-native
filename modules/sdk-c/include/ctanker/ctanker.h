@@ -49,6 +49,7 @@ enum tanker_log_level
 {
   TANKER_LOG_DEBUG = 1,
   TANKER_LOG_INFO,
+  TANKER_LOG_WARNING,
   TANKER_LOG_ERROR,
 };
 

@@ -20,6 +20,8 @@ std::string to_string(Level l)
     return "D";
   case Level::Info:
     return "I";
+  case Level::Warning:
+    return "W";
   case Level::Error:
     return "E";
   }

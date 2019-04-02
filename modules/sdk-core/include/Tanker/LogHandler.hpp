@@ -13,6 +13,7 @@ enum class Level : std::uint8_t
 {
   Debug = 1,
   Info,
+  Warning,
   Error,
 };
 
