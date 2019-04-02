@@ -96,6 +96,20 @@ emscripten::val CoreDecrypt(AsyncCore& core,
       decryptedData, gsl::span<uint8_t const>(encryptedData, encryptedSize)));
 }
 
+emscripten::val CoreShare(AsyncCore& core,
+                          emscripten::val const& jresourceIds,
+                          emscripten::val const& jpublicIdentities,
+                          emscripten::val const& jgroupIds)
+{
+  auto const resourceIds =
+      Emscripten::copyToStringLikeVector<SResourceId>(jresourceIds);
+  auto const publicIdentities =
+      Emscripten::copyToStringLikeVector<SPublicIdentity>(jpublicIdentities);
+  auto const groupIds = Emscripten::copyToStringLikeVector<SGroupId>(jgroupIds);
+  return Emscripten::tcFutureToJsPromise(
+      core.share(resourceIds, publicIdentities, groupIds));
+}
+
 uint32_t CoreEncryptedSize(AsyncCore&, uint32_t clearSize)
 {
   return Encryptor::encryptedSize(clearSize);
@@ -147,5 +161,6 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("encryptedSize", &CoreEncryptedSize)
       .function("decryptedSize", &CoreDecryptedSize)
       .function("encrypt", &CoreEncrypt, emscripten::allow_raw_pointers())
-      .function("decrypt", &CoreDecrypt, emscripten::allow_raw_pointers());
+      .function("decrypt", &CoreDecrypt, emscripten::allow_raw_pointers())
+      .function("share", &CoreShare);
 }

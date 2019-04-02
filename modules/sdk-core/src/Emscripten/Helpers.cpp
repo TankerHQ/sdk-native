@@ -9,11 +9,11 @@ namespace Tanker
 {
 namespace Emscripten
 {
-std::vector<uint8_t> copyToVector(const emscripten::val& typedArray)
+std::vector<uint8_t> copyToVector(emscripten::val const& typedArray)
 {
   using emscripten::val;
 
-  unsigned int length = typedArray["length"].as<unsigned int>();
+  auto const length = typedArray["length"].as<unsigned int>();
   std::vector<uint8_t> vec(length);
 
   val memory = val::module_property("buffer");
