@@ -45,24 +45,40 @@ enum tanker_unlock_method
   TANKER_UNLOCK_METHOD_LAST = TANKER_UNLOCK_METHOD_PASSWORD
 };
 
+enum tanker_log_level
+{
+  TANKER_LOG_DEBUG = 1,
+  TANKER_LOG_INFO,
+  TANKER_LOG_WARNING,
+  TANKER_LOG_ERROR,
+};
+
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
 typedef struct tanker_authentication_methods tanker_authentication_methods_t;
 typedef struct tanker_sign_in_options tanker_sign_in_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
+typedef struct tanker_log_record tanker_log_record_t;
+
+/*!
+ * \brief a struct describing a log message
+ */
+struct tanker_log_record
+{
+  char const* category;
+  uint32_t level;
+  char const* file;
+  uint32_t line;
+  char const* message;
+};
 
 /*!
  * \brief Callback type to filter Tanker SDK logs.
  * \discussion Should be used with tanker_set_log_handler.
  *
- * \param category a string describing the log's category
- * \param level the level of priority of the message.
- *        (Either 'I' for info, 'E' for error or 'D' for debug)
- * \param message the message to log.
+ * \param record a struct containing all message informations
  */
-typedef void (*tanker_log_handler_t)(char const* category,
-                                     char level,
-                                     char const* message);
+typedef void (*tanker_log_handler_t)(tanker_log_record_t const* record);
 
 typedef struct tanker_connection tanker_connection_t;
 typedef void (*tanker_event_callback_t)(void* arg, void* data);

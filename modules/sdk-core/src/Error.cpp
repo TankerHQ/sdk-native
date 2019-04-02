@@ -31,7 +31,7 @@
 
 #include <sstream>
 
-TLOG_CATEGORY(Error);
+TLOG_CATEGORY(Exception);
 
 namespace Tanker
 {
@@ -41,9 +41,9 @@ Exception::Exception(Code code, std::string message)
   : _code(code),
     _message(std::move(message)),
     _backtrace(backtraceAsString()),
-    _buffer(fmt::format("{}: {}", static_cast<int>(_code), _message))
+    _buffer(fmt::format("{:d}: {:s}", static_cast<int>(_code), _message))
 {
-  TERROR("Error {}", _buffer);
+  TERROR("{}", _buffer);
 }
 
 char const* Exception::what() const noexcept
