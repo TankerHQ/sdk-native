@@ -152,13 +152,10 @@ private:
   BlockGenerator _blockGenerator;
   Unlock::Methods _unlockMethods;
 
-  std::map<Crypto::Mac, tc::promise<void>> _pendingRequests;
-
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 
   tc::cotask<void> connectionHandler();
-  void signalKeyReady(Crypto::Mac const& mac);
   tc::cotask<void> nukeDatabase();
 };
 }

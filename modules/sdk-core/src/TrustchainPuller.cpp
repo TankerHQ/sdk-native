@@ -261,18 +261,12 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       TC_AWAIT(receivedThisDeviceId(DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
-  // Legacy key publishes
   if (auto const keyPublish =
           mpark::get_if<KeyPublishToDevice>(&entry.action.variant()))
   {
     if (keyPublish->recipient == _deviceId)
       TC_AWAIT(receivedKeyToDevice(entry));
   }
-  // current key publishes
-  if (mpark::holds_alternative<KeyPublishToUser>(entry.action.variant()))
-    receivedKeyToUser(entry);
-  if (mpark::holds_alternative<KeyPublishToUserGroup>(entry.action.variant()))
-    receivedKeyToUserGroup(entry);
   if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()) ||
       mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
     TC_AWAIT(userGroupActionReceived(entry));

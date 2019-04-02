@@ -165,12 +165,6 @@ Session::Session(Config&& config)
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(this->onKeyToDeviceReceived(entry));
   };
-  _trustchainPuller.receivedKeyToUser = [this](auto const& entry) {
-    this->onKeyToUserReceived(entry);
-  };
-  _trustchainPuller.receivedKeyToUserGroup = [this](auto const& entry) {
-    this->onKeyToUserGroupReceived(entry);
-  };
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
@@ -611,20 +605,6 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
                                                _userKeyStore));
 }
 
-void Session::onKeyToUserReceived(Entry const& entry)
-{
-  auto const& keyPublishToUser =
-      mpark::get<KeyPublishToUser>(entry.action.variant());
-  signalKeyReady(keyPublishToUser.mac);
-}
-
-void Session::onKeyToUserGroupReceived(Entry const& entry)
-{
-  auto const& keyPublishToUserGroup =
-      mpark::get<KeyPublishToUserGroup>(entry.action.variant());
-  signalKeyReady(keyPublishToUserGroup.resourceId);
-}
-
 tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 {
   TC_AWAIT(GroupUpdater::applyEntry(_groupStore, _userKeyStore, entry));
@@ -633,16 +613,6 @@ tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 tc::cotask<void> Session::syncTrustchain()
 {
   TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-}
-
-void Session::signalKeyReady(Crypto::Mac const& mac)
-{
-  auto const it = _pendingRequests.find(mac);
-  if (it != _pendingRequests.end())
-  {
-    it->second.set_value({});
-    _pendingRequests.erase(it);
-  }
 }
 
 tc::cotask<void> Session::revokeDevice(DeviceId const& deviceId)
