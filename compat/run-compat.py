@@ -45,8 +45,17 @@ def run_test(base_path, next_path, version, command):
         ui.info(ui.green, ui.check, ui.green, "compat", command, version, "->", CURRENT, "success")
 
 
-def export_tanker_dev():
-    ci.cpp.run_conan("export", ".", "compat/dev")
+def create_tanker_dev(profile: str) -> None:
+    # fmt: off
+    ci.cpp.run_conan(
+            "create", ".",
+            "compat/dev",
+            "--profile", profile,
+            "--update",
+            "--build", "tanker"
+            )
+    # fmt: on
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -57,7 +66,7 @@ def main() -> None:
     if args.home_isolation:
         ci.cpp.set_home_isolation()
 
-    export_tanker_dev()
+    create_tanker_dev(args.profile)
     built_binary = build_all(profile=args.profile)
 
     old_tests = {k: v for k, v in TESTS.items() if k != CURRENT}
