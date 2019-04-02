@@ -331,6 +331,32 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(waitForPromise(prom));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
+{
+  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+
+  {
+    auto const aliceSession = TC_AWAIT(aliceDevice.open());
+    auto const deviceId = TC_AWAIT(aliceSession->deviceId());
+    REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
+    TC_AWAIT(aliceSession->signOut());
+  }
+
+  try
+  {
+    auto const aliceSession = aliceDevice.createCore(Test::SessionType::New);
+    auto const result = TC_AWAIT(aliceSession->signIn(aliceDevice.identity()));
+    // the revocation was handled before the session was closed
+    CHECK(result == OpenResult::IdentityVerificationNeeded);
+  }
+  catch (Error::OperationCanceled const&)
+  {
+    // the revocation was handled during the open()
+    CHECK(true);
+  }
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can reopen and decrypt with a revoked device")
 {
