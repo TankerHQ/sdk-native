@@ -40,6 +40,7 @@ enum class Code
   GroupNotFound,
   DeviceNotFound,
   IdentityAlreadyRegistered,
+  OperationCanceled,
 
   Last,
 };
@@ -97,6 +98,7 @@ DECLARE_ERROR(InvalidGroupSize);
 // GroupNotFound has its own header
 DECLARE_ERROR(DeviceNotFound);
 DECLARE_ERROR(IdentityAlreadyRegistered);
+DECLARE_ERROR(OperationCanceled);
 
 #undef DECLARE_ERROR
 

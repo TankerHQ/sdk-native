@@ -62,6 +62,7 @@ tc::cotask<void> Core::signUp(std::string const& identity,
                               AuthenticationMethods const& authMethods)
 {
   SCOPE_TIMER("core_signup", Proc);
+  std::exception_ptr exception;
   try
   {
     auto pcore = mpark::get_if<Opener>(&_state);
@@ -84,8 +85,12 @@ tc::cotask<void> Core::signUp(std::string const& identity,
   }
   catch (...)
   {
+    exception = std::current_exception();
+  }
+  if (exception)
+  {
     reset();
-    throw;
+    std::rethrow_exception(exception);
   }
 }
 
@@ -93,6 +98,7 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
                                     SignInOptions const& signInOptions)
 {
   SCOPE_TIMER("core_signin", Proc);
+  std::exception_ptr exception;
   try
   {
     auto pcore = mpark::get_if<Opener>(&_state);
@@ -119,9 +125,14 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
   }
   catch (...)
   {
-    reset();
-    throw;
+    exception = std::current_exception();
   }
+  if (exception)
+  {
+    reset();
+    std::rethrow_exception(exception);
+  }
+  throw std::runtime_error("unreachable code");
 }
 
 void Core::signOut()

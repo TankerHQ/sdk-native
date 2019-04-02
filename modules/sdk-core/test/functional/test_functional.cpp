@@ -307,6 +307,31 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can revoke a device while it is disconnected")
+{
+  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const deviceId = TC_AWAIT(aliceSession->deviceId());
+
+  auto aliceDevice2 = alice.makeDevice();
+  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open(*aliceSession));
+
+  TC_AWAIT(aliceSession->signOut());
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession2->revokeDevice(deviceId)));
+
+  tc::promise<void> prom;
+  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+
+  CHECK_THROWS_AS(TC_AWAIT(aliceSession->signIn(aliceDevice.identity())),
+                  Error::OperationCanceled);
+
+  TC_AWAIT(waitForPromise(prom));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can reopen and decrypt with a revoked device")
 {
   auto alice = trustchain.makeUser(Test::UserType::New);

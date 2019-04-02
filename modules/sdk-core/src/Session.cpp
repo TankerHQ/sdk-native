@@ -594,7 +594,8 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
     TINFO("This device has been revoked");
     if (!_ready.get_future().is_ready())
     {
-      _ready.set_value({});
+      _ready.set_exception(std::make_exception_ptr(
+          Error::OperationCanceled("this device was revoked")));
     }
     TC_AWAIT(nukeDatabase());
     deviceRevoked();
