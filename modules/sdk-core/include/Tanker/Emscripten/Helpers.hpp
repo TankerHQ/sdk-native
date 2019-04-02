@@ -109,5 +109,26 @@ emscripten::val tcFutureToJsPromise(tc::future<T> fut)
 
   return promise;
 }
+
+template <typename T>
+emscripten::val tcExpectedToJsValue(tc::future<T> fut)
+{
+  assert(fut.is_ready());
+
+  if (!fut.has_exception())
+    return emscripten::val(fut.get());
+  else
+  {
+    try
+    {
+      fut.get();
+      throw std::runtime_error("unreachable code");
+    }
+    catch (...)
+    {
+      return currentExceptionToJs();
+    }
+  }
+}
 }
 }

@@ -130,6 +130,76 @@ emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
       SGroupId(jgroupId.as<std::string>()), usersToAdd));
 }
 
+emscripten::val CoreGenerateAndRegisterUnlockKey(AsyncCore& core)
+{
+  return Emscripten::tcFutureToJsPromise(
+      core.generateAndRegisterUnlockKey().and_then(
+          [](auto const& unlockKey) { return unlockKey.string(); }));
+}
+
+emscripten::val CoreRegisterUnlock(AsyncCore& core,
+                                   emscripten::val const& unlockMethods)
+{
+  Unlock::RegistrationOptions o;
+  if (auto const email =
+          Emscripten::optionalFromValue<Email>(unlockMethods, "email"))
+    o.set(*email);
+  if (auto const password =
+          Emscripten::optionalFromValue<Password>(unlockMethods, "password"))
+    o.set(*password);
+  return Emscripten::tcFutureToJsPromise(core.registerUnlock(o));
+}
+
+emscripten::val CoreIsUnlockAlreadySetUp(AsyncCore& core)
+{
+  return Emscripten::tcFutureToJsPromise(core.isUnlockAlreadySetUp());
+}
+
+emscripten::val CoreHasRegisteredUnlockMethods(AsyncCore& core)
+{
+  return Emscripten::tcExpectedToJsValue(core.hasRegisteredUnlockMethods());
+}
+
+emscripten::val CoreHasRegisteredUnlockMethod(AsyncCore& core,
+                                              emscripten::val const& jmethod)
+{
+  auto const smethod = jmethod.as<std::string>();
+  Unlock::Method method;
+  if (smethod == "password")
+    method = Unlock::Method::Password;
+  else if (smethod == "email")
+    method = Unlock::Method::Email;
+  else
+    return emscripten::val(false);
+
+  return Emscripten::tcExpectedToJsValue(
+      core.hasRegisteredUnlockMethod(method));
+}
+
+namespace
+{
+emscripten::val toUnlockMethod(std::string const& name)
+{
+  auto o = emscripten::val::object();
+  o.set("type", name);
+  return o;
+}
+}
+
+emscripten::val CoreRegisteredUnlockMethods(AsyncCore& core)
+{
+  return Emscripten::tcExpectedToJsValue(
+      core.registeredUnlockMethods().and_then(
+          tc::get_synchronous_executor(), [](auto const& methods) {
+            auto const ret = emscripten::val::array();
+            if (methods & Unlock::Method::Email)
+              ret.call<void>("push", toUnlockMethod("email"));
+            if (methods & Unlock::Method::Password)
+              ret.call<void>("push", toUnlockMethod("password"));
+            return ret;
+          }));
+}
+
 uint32_t CoreEncryptedSize(AsyncCore&, uint32_t clearSize)
 {
   return Encryptor::encryptedSize(clearSize);
@@ -184,5 +254,12 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("decrypt", &CoreDecrypt, emscripten::allow_raw_pointers())
       .function("share", &CoreShare)
       .function("createGroup", &CoreCreateGroup)
-      .function("updateGroupMembers", &CoreUpdateGroupMembers);
+      .function("updateGroupMembers", &CoreUpdateGroupMembers)
+      .function("generateAndRegisterUnlockKey",
+                &CoreGenerateAndRegisterUnlockKey)
+      .function("registerUnlock", &CoreRegisterUnlock)
+      .function("isUnlockAlreadySetUp", &CoreIsUnlockAlreadySetUp)
+      .function("hasRegisteredUnlockMethods", &CoreHasRegisteredUnlockMethods)
+      .function("hasRegisteredUnlockMethod", &CoreHasRegisteredUnlockMethod)
+      .function("registeredUnlockMethods", &CoreRegisteredUnlockMethods);
 }
