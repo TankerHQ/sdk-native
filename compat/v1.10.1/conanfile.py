@@ -1,7 +1,7 @@
 from conans import ConanFile, CMake
 
 class Compat(ConanFile):
-    requires = "tanker/1.10.1-r15@tanker/stable", "docopt.cpp/0.6.2@tanker/testing", "Boost/1.68.0@tanker/testing"
+    requires = "tanker/1.10.0-r16@tanker/stable", "docopt.cpp/0.6.2@tanker/testing", "Boost/1.68.0@tanker/testing"
     generators = "cmake", "ycm"
 
     def build(self):
