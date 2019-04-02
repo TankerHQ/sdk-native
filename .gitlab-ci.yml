@@ -3,12 +3,17 @@ before_script:
 
 stages:
   - build
+  - check
   - deploy
 
 .build:
   stage: build
   except:
     - schedules
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - build/
 
 build/linux:
   extends: .build
@@ -124,8 +129,21 @@ mirror:
   script:
     - dmenv run -- python run-ci.py  mirror
 
+check/compat:
+  stage: check
+  dependencies:
+    - build/linux
+  except:
+    - master
+  script:
+    - dmenv run -- python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
+  tags:
+    - linux
+
 check/e2e:
-  stage: build
+  stage: check
+  dependencies:
+    - build/linux
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home e2e
   tags:

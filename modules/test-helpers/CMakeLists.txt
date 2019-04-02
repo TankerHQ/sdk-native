@@ -10,12 +10,14 @@ add_library(tankertesthelpers STATIC
   include/Helpers/UniquePath.hpp
   include/Helpers/Buffers.hpp
   include/Helpers/WaitForSignal.hpp
+  include/Helpers/JsonFile.hpp
 
   src/Config.cpp
   src/TimeoutTerminate.cpp
   src/Barrier.cpp
   src/Stepper.cpp
   src/UniquePath.cpp
+  src/JsonFile.cpp
 )
 
 target_include_directories(tankertesthelpers
