@@ -110,16 +110,16 @@ tc::cotask<void> Admin::pushKeys(
 }
 
 tc::cotask<VerificationCode> Admin::getVerificationCode(
-    TrustchainId const& tcid, UserId const& userId, Email const& email)
+    TrustchainId const& tcid, Email const& email)
 {
   auto const msg = nlohmann::json(
-      {{"email", email}, {"trustchain_id", tcid}, {"user_id", userId}});
+      {{"email", email}, {"trustchain_id", tcid}});
 
   auto const answer = TC_AWAIT(emit("get verification code", msg));
   auto it = answer.find("verification_code");
   if (it == answer.end())
     throw Error::formatEx<Error::InvalidUnlockKey>(
-        "could not find unlockKey key for {} {}", userId, email);
+        "could not find unlockKey key for {}", email);
   TC_RETURN(it->get<std::string>());
 }
 

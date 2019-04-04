@@ -60,11 +60,10 @@ User Trustchain::makeUser(UserType type)
   return _cachedUsers[_currentUser++];
 }
 
-tc::cotask<VerificationCode> Trustchain::getVerificationCode(
-    SUserId const& userId, Email const& email)
+tc::cotask<VerificationCode> Trustchain::getVerificationCode(Email const& email)
 {
   TC_RETURN(TC_AWAIT(this->_admin.getVerificationCode(
-      this->id(), obfuscateUserId(userId, this->id()), email)));
+      this->id(), email)));
 }
 
 Trustchain& Trustchain::getInstance()

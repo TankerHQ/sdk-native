@@ -55,7 +55,7 @@ TEST_SUITE("Unlock")
           core1->registerUnlock(Unlock::RegistrationOptions{}.set(email))));
 
       auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(alice.suserId(), email));
+          TC_AWAIT(trustchain.getVerificationCode(email));
 
       REQUIRE_EQ(TC_AWAIT(core2->signIn(
                      alice.identity(),
@@ -111,7 +111,7 @@ TEST_SUITE("Unlock")
           core1->registerUnlock(Unlock::CreationOptions{}.set(email))));
 
       auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(alice.suserId(), email));
+          TC_AWAIT(trustchain.getVerificationCode(email));
 
       for (int i = 0; i < 3; ++i)
         CHECK_THROWS_AS(

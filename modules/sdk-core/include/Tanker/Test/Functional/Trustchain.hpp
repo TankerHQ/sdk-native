@@ -49,8 +49,7 @@ public:
     return this->_trustchainSignatureKeyPair;
   }
 
-  tc::cotask<VerificationCode> getVerificationCode(SUserId const& suserId,
-                                                   Email const& email);
+  tc::cotask<VerificationCode> getVerificationCode(Email const& email);
 
   static Trustchain& getInstance();
 
