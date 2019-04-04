@@ -72,3 +72,16 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
   return makeFuture(
       tc::async([admin = reinterpret_cast<Admin*>(admin)] { delete admin; }));
 }
+
+tanker_future_t* tanker_admin_get_verification_code(
+    tanker_admin_t* admin, char const* trustchain_id, char const* user_email)
+{
+  return makeFuture(tc::async_resumable(
+      [admin = reinterpret_cast<Admin*>(admin),
+       trustchainId = std::string(trustchain_id),
+       email = std::string(user_email)]() -> tc::cotask<void*> {
+         auto verifCode = TC_AWAIT(admin->getVerificationCode(base64::decode<TrustchainId>({trustchainId}), Email{email}));
+         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
+         }
+      ));
+}
