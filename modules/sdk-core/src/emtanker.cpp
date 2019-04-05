@@ -82,12 +82,21 @@ emscripten::val CoreIsOpen(AsyncCore& core)
 emscripten::val CoreEncrypt(AsyncCore& core,
                             uintptr_t iencryptedData,
                             uintptr_t iclearData,
-                            uint32_t clearSize)
+                            uint32_t clearSize,
+                            emscripten::val const& shareWithUsers,
+                            emscripten::val const& shareWithGroups)
 {
   auto const encryptedData = reinterpret_cast<uint8_t*>(iencryptedData);
   auto const clearData = reinterpret_cast<uint8_t const*>(iclearData);
-  return Emscripten::tcFutureToJsPromise(core.encrypt(
-      encryptedData, gsl::span<uint8_t const>(clearData, clearSize)));
+  auto const publicIdentities =
+      Emscripten::copyToStringLikeVector<SPublicIdentity>(shareWithUsers);
+  auto const groupIds =
+      Emscripten::copyToStringLikeVector<SGroupId>(shareWithGroups);
+  return Emscripten::tcFutureToJsPromise(
+      core.encrypt(encryptedData,
+                   gsl::span<uint8_t const>(clearData, clearSize),
+                   publicIdentities,
+                   groupIds));
 }
 
 emscripten::val CoreDecrypt(AsyncCore& core,
