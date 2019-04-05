@@ -231,13 +231,20 @@ uint32_t CoreEncryptedSize(AsyncCore&, uint32_t clearSize)
   return Encryptor::encryptedSize(clearSize);
 }
 
-uint32_t CoreDecryptedSize(AsyncCore&,
-                           uintptr_t iencryptedData,
-                           uint32_t encryptedSize)
+emscripten::val CoreDecryptedSize(AsyncCore&,
+                                  uintptr_t iencryptedData,
+                                  uint32_t encryptedSize)
 {
-  auto const encryptedData = reinterpret_cast<uint8_t const*>(iencryptedData);
-  return Encryptor::decryptedSize(
-      gsl::span<uint8_t const>(encryptedData, encryptedSize));
+  try
+  {
+    auto const encryptedData = reinterpret_cast<uint8_t const*>(iencryptedData);
+    return emscripten::val(static_cast<double>(Encryptor::decryptedSize(
+        gsl::span<uint8_t const>(encryptedData, encryptedSize))));
+  }
+  catch (...)
+  {
+    return Emscripten::currentExceptionToJs();
+  }
 }
 
 std::string TankerCreateIdentity(std::string const& trustchainId,

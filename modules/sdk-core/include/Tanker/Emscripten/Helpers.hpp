@@ -1,3 +1,5 @@
+#include <Tanker/Error.hpp>
+
 #include <functional>
 #include <optional.hpp>
 #include <string>
@@ -13,6 +15,12 @@ namespace Tanker
 {
 namespace Emscripten
 {
+struct EmError
+{
+  Error::Code code;
+  std::string message;
+};
+
 inline bool isNone(emscripten::val const& v)
 {
   return v.isNull() || v.isUndefined();
@@ -78,6 +86,8 @@ inline void resolveJsPromise(emscripten::val resolve, tc::future<T> fut)
 }
 }
 
+emscripten::val currentExceptionToJs();
+
 template <typename T>
 emscripten::val tcFutureToJsPromise(tc::future<T> fut)
 {
@@ -97,13 +107,9 @@ emscripten::val tcFutureToJsPromise(tc::future<T> fut)
     {
       detail::resolveJsPromise(resolve, std::move(fut));
     }
-    catch (std::exception const& e)
-    {
-      reject(typeid(e).name() + std::string(e.what()));
-    }
     catch (...)
     {
-      reject(std::string("unknown error"));
+      reject(currentExceptionToJs());
     }
   });
 
