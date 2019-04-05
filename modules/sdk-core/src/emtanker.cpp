@@ -235,6 +235,11 @@ void CoreConnectDeviceRevoked(AsyncCore& core, emscripten::val const& cb)
   core.deviceRevoked().connect(cb);
 }
 
+emscripten::val CoreSyncTrustchain(AsyncCore& core)
+{
+  return Emscripten::tcFutureToJsPromise(core.syncTrustchain());
+}
+
 uint32_t CoreEncryptedSize(AsyncCore&, uint32_t clearSize)
 {
   return Encryptor::encryptedSize(clearSize);
@@ -307,5 +312,6 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("registeredUnlockMethods", &CoreRegisteredUnlockMethods)
       .function("deviceId", &CoreDeviceId)
       .function("revokeDevice", &CoreRevokeDevice)
-      .function("connectDeviceRevoked", &CoreConnectDeviceRevoked);
+      .function("connectDeviceRevoked", &CoreConnectDeviceRevoked)
+      .function("syncTrustchain", &CoreSyncTrustchain);
 }
