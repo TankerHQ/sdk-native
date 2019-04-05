@@ -194,6 +194,8 @@ tc::cotask<void> Core::unlockCurrentDevice(Unlock::DeviceLocker const& locker)
   auto popener = mpark::get_if<Opener>(&_state);
   if (!popener)
     throw INVALID_STATUS(unlockCurrentDevice);
+  if (popener->status() != Status::DeviceCreation)
+    throw INVALID_STATUS(unlockCurrentDevice);
   auto const unlockKey = mpark::holds_alternative<UnlockKey>(locker) ?
                              mpark::get<UnlockKey>(locker) :
                              TC_AWAIT(popener->fetchUnlockKey(locker));

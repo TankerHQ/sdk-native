@@ -122,6 +122,18 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_THROWS(TC_AWAIT(core2->open(alice.suserId(), alice.userToken())));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it should throw unlocking a device for which open is not being called")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice();
+
+  auto const core = device.createCore(Test::SessionType::New);
+
+  REQUIRE_THROWS_AS(TC_AWAIT(core->unlockCurrentDevice(Password{""})),
+                    Error::InvalidTankerStatus);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 {
   auto alice = trustchain.makeUser();
