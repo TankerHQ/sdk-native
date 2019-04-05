@@ -57,6 +57,13 @@ void tanker_admin_trustchain_descriptor_free(
  */
 tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin);
 
+/*!
+ * Gets verification code of a user from the server
+ */
+tanker_future_t* tanker_admin_get_verification_code(
+    tanker_admin_t* admin, char const* trustchain_id, char const* user_email);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -37,7 +37,6 @@ public:
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
   tc::cotask<void> pushKeys(std::vector<std::vector<uint8_t>> const& block);
   tc::cotask<VerificationCode> getVerificationCode(TrustchainId const& tcId,
-                                                   UserId const& userId,
                                                    Email const&);
 
   boost::signals2::signal<void()> connected;
