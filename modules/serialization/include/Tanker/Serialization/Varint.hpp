@@ -60,8 +60,7 @@ inline std::pair<std::size_t, gsl::span<uint8_t const>> varint_read(
   return {value, data};
 }
 
-template <typename OutputIterator>
-void varint_write(OutputIterator it, std::size_t value)
+inline std::uint8_t* varint_write(std::uint8_t* it, std::size_t value)
 {
   while (value > 127)
   {
@@ -69,11 +68,7 @@ void varint_write(OutputIterator it, std::size_t value)
     value /= 128;
   }
   *it++ = value;
-}
-
-inline void varint_write(std::vector<std::uint8_t>& vec, std::size_t value)
-{
-  varint_write(std::back_inserter(vec), value);
+  return it;
 }
 }
 }

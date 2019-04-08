@@ -37,7 +37,9 @@ void to_serialized(OutputIterator it, KeyPublishToDevice const& kp)
 {
   Serialization::serialize(it, kp.recipient);
   Serialization::serialize(it, kp.mac);
-  Serialization::varint_write(it, kp.key.size());
+  std::vector<std::uint8_t> varintBuffer(Serialization::varint_size(kp.key.size()));
+  Serialization::varint_write(varintBuffer.data(), kp.key.size());
+  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
   Serialization::serialize(it, kp.key);
 }
 

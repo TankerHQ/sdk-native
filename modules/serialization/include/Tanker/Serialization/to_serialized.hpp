@@ -20,7 +20,9 @@ namespace detail
 template <typename OutputIterator, typename T>
 void to_serialized(OutputIterator it, std::vector<T> const& vals)
 {
-  varint_write(it, vals.size());
+  std::vector<std::uint8_t> varintBuffer(varint_size(vals.size()));
+  varint_write(varintBuffer.data(), vals.size());
+  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
   for (auto const& val : vals)
     to_serialized(it, val);
 }
@@ -28,7 +30,9 @@ void to_serialized(OutputIterator it, std::vector<T> const& vals)
 template <typename OutputIterator, typename K, typename V>
 void to_serialized(OutputIterator it, std::map<K, V> const& vals)
 {
-  varint_write(it, vals.size());
+  std::vector<std::uint8_t> varintBuffer(varint_size(vals.size()));
+  varint_write(varintBuffer.data(), vals.size());
+  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
   for (auto const& p : vals)
   {
     to_serialized(it, p.first);

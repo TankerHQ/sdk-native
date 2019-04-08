@@ -26,10 +26,10 @@ TEST_SUITE("EncryptorV2")
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(EncryptionFormat::EncryptorV2::encryptedSize(0));
-    Serialization::varint_write(a0.begin(),
+    Serialization::varint_write(a0.data(),
                                 EncryptionFormat::EncryptorV2::version());
     std::vector<uint8_t> a42(EncryptionFormat::EncryptorV2::encryptedSize(42));
-    Serialization::varint_write(a42.begin(),
+    Serialization::varint_write(a42.data(),
                                 EncryptionFormat::EncryptorV2::version());
     CHECK(EncryptionFormat::EncryptorV2::decryptedSize(a0) == 0);
     CHECK(EncryptionFormat::EncryptorV2::decryptedSize(a42) == 42);
@@ -159,10 +159,10 @@ TEST_SUITE("EncryptorV3")
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(EncryptionFormat::EncryptorV3::encryptedSize(0));
-    Serialization::varint_write(a0.begin(),
+    Serialization::varint_write(a0.data(),
                                 EncryptionFormat::EncryptorV3::version());
     std::vector<uint8_t> a42(EncryptionFormat::EncryptorV3::encryptedSize(42));
-    Serialization::varint_write(a42.begin(),
+    Serialization::varint_write(a42.data(),
                                 EncryptionFormat::EncryptorV3::version());
     CHECK(EncryptionFormat::EncryptorV3::decryptedSize(a0) == 0);
     CHECK(EncryptionFormat::EncryptorV3::decryptedSize(a42) == 42);

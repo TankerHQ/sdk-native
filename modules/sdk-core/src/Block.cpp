@@ -42,8 +42,11 @@ Crypto::Hash Block::hash() const
   std::vector<uint8_t> hashedPayload;
   hashedPayload.reserve(Serialization::varint_size(natureInt) + author.size() +
                         payload.size());
+  std::vector<std::uint8_t> varint_buffer(Serialization::varint_size(natureInt));
+  Serialization::varint_write(varint_buffer.data(), natureInt);
+
   auto it = std::back_inserter(hashedPayload);
-  Serialization::varint_write(it, natureInt);
+  std::copy(varint_buffer.begin(), varint_buffer.end(), it);
   Serialization::serialize(it, author);
   std::copy(payload.begin(), payload.end(), it);
 

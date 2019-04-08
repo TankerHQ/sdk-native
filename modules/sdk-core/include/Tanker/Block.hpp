@@ -37,15 +37,20 @@ void to_serialized(OutputIterator it, Block const& b)
   auto const natureInt = static_cast<unsigned>(b.nature);
   auto const version = 1;
 
-  Serialization::varint_write(it, version);
-  Serialization::varint_write(it, b.index);
-  Serialization::serialize(it, b.trustchainId);
-  Serialization::varint_write(it, natureInt);
+  std::vector<std::uint8_t> buffer(Serialization::serialized_size(b));
+  auto bufferIt = buffer.data();
+  bufferIt = Serialization::varint_write(bufferIt, version);
+  bufferIt = Serialization::varint_write(bufferIt, b.index);
+  Serialization::serialize(bufferIt, b.trustchainId);
+  bufferIt += Serialization::serialized_size(b.trustchainId);
+  bufferIt = Serialization::varint_write(bufferIt, natureInt);
   // payload is a vector<uint8_t>, cannot call serialize with it
-  Serialization::varint_write(it, b.payload.size());
-  std::copy(b.payload.begin(), b.payload.end(), it);
-  Serialization::serialize(it, b.author);
-  Serialization::serialize(it, b.signature);
+  bufferIt = Serialization::varint_write(bufferIt, b.payload.size());
+  bufferIt = std::copy(b.payload.begin(), b.payload.end(), bufferIt);
+  Serialization::serialize(bufferIt, b.author);
+  bufferIt += Serialization::serialized_size(b.author);
+  Serialization::serialize(bufferIt, b.signature);
+  std::copy(buffer.begin(), buffer.end(), it);
 }
 
 std::size_t serialized_size(Block const&);
