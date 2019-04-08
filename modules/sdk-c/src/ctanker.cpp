@@ -241,13 +241,7 @@ tanker_future_t* tanker_device_id(tanker_t* ctanker)
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   auto fut = tanker->deviceId().and_then(
       tc::get_synchronous_executor(), [](auto const& deviceId) {
-        auto const encodedSize = tanker_base64_encoded_size(deviceId.size());
-        auto const ret = static_cast<b64char*>(std::malloc(encodedSize + 1));
-        if (!ret)
-          throw std::bad_alloc{};
-        tanker_base64_encode(ret, deviceId.data(), deviceId.size());
-        ret[encodedSize] = '\0';
-        return reinterpret_cast<void*>(ret);
+        return static_cast<void*>(duplicateString(deviceId.string()));
       });
   return makeFuture(std::move(fut));
 }
@@ -393,10 +387,7 @@ tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
                                       b64char const* device_id)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto const device_id_size = std::strlen(device_id);
-  auto const deviceId =
-      base64::decode<DeviceId>(gsl::make_span(device_id, device_id_size));
-  return makeFuture(tanker->revokeDevice(deviceId));
+  return makeFuture(tanker->revokeDevice(SDeviceId(device_id)));
 }
 
 void tanker_free_buffer(void* buffer)
