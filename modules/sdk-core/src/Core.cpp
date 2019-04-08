@@ -142,11 +142,14 @@ void Core::initSession(Opener::OpenResult&& openResult)
       deviceRevoked();
     }));
   });
+  session->gotDeviceId.connect(
+      [this](auto const& deviceId) { _deviceId = deviceId; });
 }
 
 void Core::reset()
 {
   _state.emplace<Opener>(_url, _info, _writablePath);
+  _deviceId = DeviceId{};
 }
 
 tc::cotask<void> Core::encrypt(
@@ -203,10 +206,10 @@ tc::cotask<void> Core::updateGroupMembers(
 
 DeviceId const& Core::deviceId() const
 {
-  auto const psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
+  if (!isOpen())
     throw INVALID_STATUS(deviceId);
-  return (*psession)->deviceId();
+  else
+    return _deviceId;
 }
 
 tc::cotask<UnlockKey> Core::generateAndRegisterUnlockKey()

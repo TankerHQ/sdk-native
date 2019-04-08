@@ -216,6 +216,10 @@ tc::cotask<void> Session::connectionHandler()
 tc::cotask<void> Session::startConnection()
 {
   FUNC_TIMER(Net);
+  auto const deviceId = _deviceKeyStore->deviceId();
+  if (!deviceId.is_null())
+    gotDeviceId(deviceId);
+
   TC_AWAIT(_client->handleConnection());
 
   _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
@@ -306,6 +310,7 @@ tc::cotask<void> Session::setDeviceId(DeviceId const& deviceId)
   TC_AWAIT(_deviceKeyStore->setDeviceId(deviceId));
   _trustchainPuller.setDeviceId(deviceId);
   _blockGenerator.setDeviceId(deviceId);
+  gotDeviceId(deviceId);
 }
 
 DeviceId const& Session::deviceId() const

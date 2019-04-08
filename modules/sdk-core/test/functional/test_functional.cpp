@@ -290,7 +290,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
-  auto const deviceId = TC_AWAIT(aliceSession->deviceId());
+  auto const deviceId = aliceSession->deviceId().get();
 
   tc::promise<void> prom;
   aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
@@ -316,7 +316,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSecondDevice = alice.makeDevice();
   auto otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
 
-  auto const deviceId = TC_AWAIT(otherSession->deviceId());
+  auto const deviceId = otherSession->deviceId().get();
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
@@ -347,11 +347,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
-  auto const deviceId = TC_AWAIT(aliceSession->deviceId());
+  auto const deviceId = aliceSession->deviceId().get();
 
   auto aliceSecondDevice = alice.makeDevice();
   auto const otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
-  auto const otherDeviceId = TC_AWAIT(otherSession->deviceId());
+  auto const otherDeviceId = otherSession->deviceId().get();
 
   tc::promise<void> prom;
   otherSession->deviceRevoked().connect([&] { prom.set_value({}); });

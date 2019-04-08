@@ -108,6 +108,8 @@ private:
 
   mpark::variant<Opener, SessionType> _state;
 
+  DeviceId _deviceId{};
+
   tc::task_auto_canceler _taskCanceler;
 
   void reset();

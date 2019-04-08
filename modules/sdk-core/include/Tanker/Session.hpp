@@ -111,6 +111,7 @@ public:
 
   boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;
+  boost::signals2::signal<void(DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(DeviceId const& id,
                                 DeviceCreation const& deviceCreation);
