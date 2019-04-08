@@ -29,11 +29,6 @@ bool operator!=(TrustchainCreation const& l, TrustchainCreation const& r)
   return !(l == r);
 }
 
-std::size_t serialized_size(TrustchainCreation const& tc)
-{
-  return tc.publicSignatureKey.size();
-}
-
 void from_serialized(Serialization::SerializedSource& ss,
                      TrustchainCreation& tc)
 {

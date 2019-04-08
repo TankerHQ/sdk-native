@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -25,7 +25,12 @@ bool operator!=(TrustchainCreation const& l, TrustchainCreation const& r);
 void to_json(nlohmann::json& j, TrustchainCreation const& tc);
 
 std::uint8_t* to_serialized(std::uint8_t* it, TrustchainCreation const& tc);
-std::size_t serialized_size(TrustchainCreation const&);
+
+constexpr std::size_t serialized_size(TrustchainCreation const& tc)
+{
+  return tc.publicSignatureKey.size();
+}
+
 void from_serialized(Serialization::SerializedSource& ss,
                      TrustchainCreation& tc);
 }

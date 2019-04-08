@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>

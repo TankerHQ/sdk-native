@@ -100,7 +100,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, UserGroupAddition const& dc)
 std::size_t serialized_size(UserGroupAddition const& dc)
 {
   return dc.groupId.size() + dc.previousGroupBlock.size() +
-         Serialization::detail::serialized_size(
+         Serialization::serialized_size(
              dc.encryptedGroupPrivateEncryptionKeysForUsers) +
          dc.selfSignatureWithCurrentKey.size();
 }

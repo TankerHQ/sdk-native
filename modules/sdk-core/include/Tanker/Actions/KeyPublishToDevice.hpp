@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -33,5 +32,10 @@ KeyPublishToDevice deserializeKeyPublishToDevice(gsl::span<uint8_t const> data);
 void to_json(nlohmann::json& j, KeyPublishToDevice const& kp);
 
 std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp);
-std::size_t serialized_size(KeyPublishToDevice const& kp);
+
+constexpr std::size_t serialized_size(KeyPublishToDevice const& kp)
+{
+  return DeviceId::arraySize + kp.mac.size() + kp.key.size() +
+         Serialization::varint_size(kp.key.size());
+}
 }

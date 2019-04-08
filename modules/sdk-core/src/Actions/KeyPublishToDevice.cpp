@@ -71,10 +71,4 @@ void to_json(nlohmann::json& j, KeyPublishToDevice const& kp)
   j["mac"] = kp.mac;
   j["key"] = kp.key;
 }
-
-std::size_t serialized_size(KeyPublishToDevice const& kp)
-{
-  return DeviceId::arraySize + kp.mac.size() + kp.key.size() +
-         Serialization::varint_size(kp.key.size());
-}
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 

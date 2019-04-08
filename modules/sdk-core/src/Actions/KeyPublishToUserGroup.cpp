@@ -37,12 +37,6 @@ bool operator!=(KeyPublishToUserGroup const& l, KeyPublishToUserGroup const& r)
   return !(l == r);
 }
 
-std::size_t serialized_size(KeyPublishToUserGroup const& kp)
-{
-  return kp.recipientPublicEncryptionKey.size() + kp.resourceId.size() +
-         kp.key.size();
-}
-
 KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
     gsl::span<uint8_t const> data)
 {

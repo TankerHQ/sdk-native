@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -16,8 +16,6 @@
 
 namespace Tanker
 {
-
-// Device Revocation1:
 struct DeviceRevocation1
 {
   DeviceId deviceId;
@@ -52,7 +50,11 @@ void to_json(nlohmann::json& j, EncryptedPrivateUserKey const& epuk);
 void from_serialized(Serialization::SerializedSource& ss,
                      EncryptedPrivateUserKey& key);
 
-std::size_t serialized_size(EncryptedPrivateUserKey const& key);
+constexpr std::size_t serialized_size(EncryptedPrivateUserKey const& key)
+{
+  return Serialization::serialized_size(key.deviceId) +
+         Serialization::serialized_size(key.privateEncryptionKey);
+}
 
 bool operator==(EncryptedPrivateUserKey const& lhs,
                 EncryptedPrivateUserKey const& rhs);

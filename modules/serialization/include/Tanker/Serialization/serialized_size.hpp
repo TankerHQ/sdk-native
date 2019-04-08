@@ -48,7 +48,7 @@ std::size_t serialized_size(std::map<K, V> const& vals)
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-std::size_t serialized_size(T const& number)
+constexpr std::size_t serialized_size(T const& number)
 {
   return sizeof(number);
 }
@@ -64,7 +64,7 @@ std::size_t serialized_size(nonstd::optional<T> const& opt)
 struct serialized_size_fn
 {
   template <typename T>
-  std::size_t operator()(T&& val) const
+  constexpr std::size_t operator()(T&& val) const
       noexcept(noexcept(serialized_size(std::forward<T>(val))))
   {
     return serialized_size(std::forward<T>(val));

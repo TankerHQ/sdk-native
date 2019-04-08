@@ -61,10 +61,11 @@ std::size_t serialized_size(Block const& b)
   auto const version = 1;
   auto const natureInt = static_cast<unsigned>(b.nature);
 
-  return Serialization::varint_size(
-             version, b.index, natureInt, b.payload.size()) +
-         b.trustchainId.size() + b.payload.size() + b.author.size() +
-         b.signature.size();
+  return Serialization::varint_size(version) +
+         Serialization::varint_size(b.index) +
+         Serialization::varint_size(natureInt) +
+         Serialization::varint_size(b.payload.size()) + b.trustchainId.size() +
+         b.payload.size() + b.author.size() + b.signature.size();
 }
 
 void from_serialized(Serialization::SerializedSource& ss, Block& b)

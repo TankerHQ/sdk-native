@@ -2,8 +2,7 @@
 
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Serialization/Varint.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>

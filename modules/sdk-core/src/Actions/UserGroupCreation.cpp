@@ -35,7 +35,7 @@ std::vector<uint8_t> UserGroupCreation::signatureData() const
   std::vector<uint8_t> signatureData;
   signatureData.reserve(publicSignatureKey.size() + publicEncryptionKey.size() +
                         encryptedPrivateSignatureKey.size() +
-                        Serialization::detail::serialized_size(
+                        Serialization::serialized_size(
                             encryptedGroupPrivateEncryptionKeysForUsers));
   signatureData.insert(signatureData.end(),
                        publicSignatureKey.begin(),
@@ -113,7 +113,7 @@ std::size_t serialized_size(UserGroupCreation const& dc)
 {
   return dc.publicSignatureKey.size() + dc.publicEncryptionKey.size() +
          dc.encryptedPrivateSignatureKey.size() +
-         Serialization::detail::serialized_size(
+         Serialization::serialized_size(
              dc.encryptedGroupPrivateEncryptionKeysForUsers) +
          dc.selfSignature.size();
 }

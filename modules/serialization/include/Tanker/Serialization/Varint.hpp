@@ -10,9 +10,9 @@
 #pragma once
 
 #include <cstdlib>
-#include <iterator>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 
 #include <gsl-lite.hpp>
 
@@ -22,7 +22,7 @@ namespace Serialization
 {
 // https://developers.google.com/protocol-buffers/docs/encoding#varints
 
-inline std::size_t varint_size(std::size_t value)
+constexpr std::size_t varint_size(std::size_t value)
 {
   std::size_t n = 1;
   while (value > 127)
@@ -31,17 +31,6 @@ inline std::size_t varint_size(std::size_t value)
     value /= 128;
   }
   return n;
-}
-
-inline constexpr std::size_t varint_size()
-{
-  return 0;
-}
-
-template <typename... Ints>
-std::size_t varint_size(std::size_t value, Ints... tail)
-{
-  return varint_size(value) + varint_size(tail...);
 }
 
 inline std::pair<std::size_t, gsl::span<uint8_t const>> varint_read(

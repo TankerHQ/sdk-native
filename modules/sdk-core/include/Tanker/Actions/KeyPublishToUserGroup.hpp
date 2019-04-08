@@ -31,6 +31,12 @@ KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
     gsl::span<uint8_t const> data);
 
 std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUserGroup const& dc);
-std::size_t serialized_size(KeyPublishToUserGroup const& dc);
+
+constexpr std::size_t serialized_size(KeyPublishToUserGroup const& kp)
+{
+  return kp.recipientPublicEncryptionKey.size() + kp.resourceId.size() +
+         kp.key.size();
+}
+
 void to_json(nlohmann::json& j, KeyPublishToUserGroup const& dc);
 }

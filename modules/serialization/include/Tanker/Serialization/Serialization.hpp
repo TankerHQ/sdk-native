@@ -32,37 +32,34 @@ std::uint8_t* serialize(std::uint8_t* it, T const& val)
 }
 
 template <typename T>
-void deserialize(SerializedSource& ss, T& val)
+void deserialize_to(SerializedSource& ss, T& val)
 {
   detail::deserialize_impl(ss, val);
 }
 
-template <typename T,
-          typename = std::enable_if_t<std::is_default_constructible<T>::value>>
+template <typename T>
 T deserialize(SerializedSource& ss)
 {
   T ret;
-  deserialize(ss, ret);
+  deserialize_to(ss, ret);
   return ret;
 }
 
-template <typename T,
-          typename = std::enable_if_t<std::is_default_constructible<T>::value>>
-void deserialize(gsl::span<std::uint8_t const> serialized, T& val)
+template <typename T>
+void deserialize_to(gsl::span<std::uint8_t const> serialized, T& val)
 {
   SerializedSource ss{serialized};
 
-  deserialize(ss, val);
+  deserialize_to(ss, val);
   if (!ss.eof())
     throw std::runtime_error("deserialize: some input left");
 }
 
-template <typename T,
-          typename = std::enable_if_t<std::is_default_constructible<T>::value>>
+template <typename T>
 T deserialize(gsl::span<std::uint8_t const> serialized)
 {
   T ret;
-  deserialize(serialized, ret);
+  deserialize_to(serialized, ret);
   return ret;
 }
 }

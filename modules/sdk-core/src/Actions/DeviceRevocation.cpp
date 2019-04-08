@@ -18,7 +18,7 @@ namespace Tanker
 {
 void from_serialized(Serialization::SerializedSource& ss, DeviceRevocation1& dr)
 {
-  Serialization::deserialize(ss, dr.deviceId);
+  Serialization::deserialize_to(ss, dr.deviceId);
 }
 
 void to_json(nlohmann::json& j, DeviceRevocation1 const& dr)
@@ -45,14 +45,8 @@ void to_json(nlohmann::json& j, EncryptedPrivateUserKey const& epuk)
 void from_serialized(Serialization::SerializedSource& ss,
                      EncryptedPrivateUserKey& key)
 {
-  Serialization::deserialize(ss, key.deviceId);
-  Serialization::deserialize(ss, key.privateEncryptionKey);
-}
-
-std::size_t serialized_size(EncryptedPrivateUserKey const& key)
-{
-  return Serialization::serialized_size(key.deviceId) +
-         Serialization::serialized_size(key.privateEncryptionKey);
+  Serialization::deserialize_to(ss, key.deviceId);
+  Serialization::deserialize_to(ss, key.privateEncryptionKey);
 }
 
 bool operator==(EncryptedPrivateUserKey const& lhs,
@@ -97,13 +91,14 @@ std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation2 const& dr)
   return Serialization::serialize(it, dr.userKeys);
 }
 
+
 void from_serialized(Serialization::SerializedSource& ss, DeviceRevocation2& dr)
 {
-  Serialization::deserialize(ss, dr.deviceId);
-  Serialization::deserialize(ss, dr.publicEncryptionKey);
-  Serialization::deserialize(ss, dr.previousPublicEncryptionKey);
-  Serialization::deserialize(ss, dr.encryptedKeyForPreviousUserKey);
-  Serialization::deserialize(ss, dr.userKeys);
+  Serialization::deserialize_to(ss, dr.deviceId);
+  Serialization::deserialize_to(ss, dr.publicEncryptionKey);
+  Serialization::deserialize_to(ss, dr.previousPublicEncryptionKey);
+  Serialization::deserialize_to(ss, dr.encryptedKeyForPreviousUserKey);
+  Serialization::deserialize_to(ss, dr.userKeys);
 }
 
 void to_json(nlohmann::json& j, DeviceRevocation2 const& dr)

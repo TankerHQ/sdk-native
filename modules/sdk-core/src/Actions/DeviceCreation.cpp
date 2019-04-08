@@ -3,11 +3,11 @@
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/UserId.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -66,11 +66,11 @@ template <typename T>
 void deserializeDeviceCreationCommonFields(Serialization::SerializedSource& ss,
                                            T& dc)
 {
-  Serialization::deserialize(ss, dc.ephemeralPublicSignatureKey);
-  Serialization::deserialize(ss, dc.userId);
-  Serialization::deserialize(ss, dc.delegationSignature);
-  Serialization::deserialize(ss, dc.publicSignatureKey);
-  Serialization::deserialize(ss, dc.publicEncryptionKey);
+  Serialization::deserialize_to(ss, dc.ephemeralPublicSignatureKey);
+  Serialization::deserialize_to(ss, dc.userId);
+  Serialization::deserialize_to(ss, dc.delegationSignature);
+  Serialization::deserialize_to(ss, dc.publicSignatureKey);
+  Serialization::deserialize_to(ss, dc.publicEncryptionKey);
 }
 
 template <typename T>
@@ -294,7 +294,7 @@ void from_serialized(Serialization::SerializedSource& ss, DeviceCreation1& dc)
 void from_serialized(Serialization::SerializedSource& ss, DeviceCreation3& dc)
 {
   deserializeDeviceCreationCommonFields(ss, dc);
-  Serialization::deserialize(ss, dc.userKeyPair);
+  Serialization::deserialize_to(ss, dc.userKeyPair);
   dc.isGhostDevice = static_cast<bool>(ss.read(1)[0]);
 }
 
