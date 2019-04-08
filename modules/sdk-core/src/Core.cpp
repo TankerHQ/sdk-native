@@ -69,16 +69,8 @@ tc::cotask<void> Core::signUp(std::string const& identity,
       throw INVALID_STATUS(signUp);
     auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
     assert(mpark::holds_alternative<Session::Config>(openResult));
-    _state.emplace<SessionType>(std::make_unique<Session>(
-        mpark::get<Session::Config>(std::move(openResult))));
+    initSession(std::move(openResult));
     auto const& session = mpark::get<SessionType>(_state);
-    session->deviceCreated.connect(deviceCreated);
-    session->deviceRevoked.connect([&] {
-      _taskCanceler.add(tc::async([this] {
-        signOut();
-        deviceRevoked();
-      }));
-    });
     TC_AWAIT(session->startConnection());
     if (authMethods.password || authMethods.email)
     {
@@ -120,16 +112,8 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
       reset();
       TC_RETURN(OpenResult::IdentityVerificationNeeded);
     }
-    _state.emplace<SessionType>(std::make_unique<Session>(
-        mpark::get<Session::Config>(std::move(openResult))));
+    initSession(std::move(openResult));
     auto const& session = mpark::get<SessionType>(_state);
-    session->deviceCreated.connect(deviceCreated);
-    session->deviceRevoked.connect([&] {
-      _taskCanceler.add(tc::async([this] {
-        signOut();
-        deviceRevoked();
-      }));
-    });
     TC_AWAIT(session->startConnection());
     TC_RETURN(OpenResult::Ok);
   }
@@ -144,6 +128,20 @@ void Core::signOut()
 {
   reset();
   sessionClosed();
+}
+
+void Core::initSession(Opener::OpenResult&& openResult)
+{
+  _state.emplace<SessionType>(std::make_unique<Session>(
+      mpark::get<Session::Config>(std::move(openResult))));
+  auto const& session = mpark::get<SessionType>(_state);
+  session->deviceCreated.connect(deviceCreated);
+  session->deviceRevoked.connect([&] {
+    _taskCanceler.add(tc::async([this] {
+      signOut();
+      deviceRevoked();
+    }));
+  });
 }
 
 void Core::reset()

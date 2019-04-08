@@ -111,6 +111,7 @@ private:
   tc::task_auto_canceler _taskCanceler;
 
   void reset();
+  void initSession(Opener::OpenResult&& openResult);
   Status status() const;
 };
 }
