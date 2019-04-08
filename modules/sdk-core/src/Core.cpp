@@ -92,7 +92,7 @@ tc::cotask<void> Core::signUp(std::string const& identity,
   }
   catch (...)
   {
-    _state.emplace<Opener>(_url, _info, _writablePath);
+    reset();
     throw;
   }
 }
@@ -111,13 +111,13 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
     if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(
             openResult))
     {
-      _state.emplace<Opener>(_url, _info, _writablePath);
+      reset();
       TC_RETURN(OpenResult::IdentityNotRegistered);
     }
     else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
                  openResult))
     {
-      _state.emplace<Opener>(_url, _info, _writablePath);
+      reset();
       TC_RETURN(OpenResult::IdentityVerificationNeeded);
     }
     _state.emplace<SessionType>(std::make_unique<Session>(
@@ -135,15 +135,20 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
   }
   catch (...)
   {
-    _state.emplace<Opener>(_url, _info, _writablePath);
+    reset();
     throw;
   }
 }
 
 void Core::signOut()
 {
-  _state.emplace<Opener>(_url, _info, _writablePath);
+  reset();
   sessionClosed();
+}
+
+void Core::reset()
+{
+  _state.emplace<Opener>(_url, _info, _writablePath);
 }
 
 tc::cotask<void> Core::encrypt(
