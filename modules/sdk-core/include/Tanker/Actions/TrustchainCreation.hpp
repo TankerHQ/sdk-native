@@ -24,12 +24,7 @@ bool operator!=(TrustchainCreation const& l, TrustchainCreation const& r);
 
 void to_json(nlohmann::json& j, TrustchainCreation const& tc);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, TrustchainCreation const& tc)
-{
-  Serialization::serialize(it, tc.publicSignatureKey);
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, TrustchainCreation const& tc);
 std::size_t serialized_size(TrustchainCreation const&);
 void from_serialized(Serialization::SerializedSource& ss,
                      TrustchainCreation& tc);

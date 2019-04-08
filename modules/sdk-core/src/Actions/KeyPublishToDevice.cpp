@@ -57,6 +57,14 @@ KeyPublishToDevice deserializeKeyPublishToDevice(gsl::span<uint8_t const> data)
   return out;
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp)
+{
+  it = Serialization::serialize(it, kp.recipient);
+  it = Serialization::serialize(it, kp.mac);
+  it = Serialization::varint_write(it, kp.key.size());
+  return Serialization::serialize(it, kp.key);
+}
+
 void to_json(nlohmann::json& j, KeyPublishToDevice const& kp)
 {
   j["recipient"] = kp.recipient;

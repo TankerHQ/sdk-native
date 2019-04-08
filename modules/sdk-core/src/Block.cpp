@@ -40,14 +40,11 @@ Crypto::Hash Block::hash() const
   auto const natureInt = static_cast<unsigned>(this->nature);
 
   std::vector<uint8_t> hashedPayload;
-  hashedPayload.reserve(Serialization::varint_size(natureInt) + author.size() +
-                        payload.size());
-  std::vector<std::uint8_t> varint_buffer(Serialization::varint_size(natureInt));
-  Serialization::varint_write(varint_buffer.data(), natureInt);
-
-  auto it = std::back_inserter(hashedPayload);
-  std::copy(varint_buffer.begin(), varint_buffer.end(), it);
-  Serialization::serialize(it, author);
+  hashedPayload.resize(Serialization::varint_size(natureInt) + author.size() +
+                       payload.size());
+  auto it = hashedPayload.data();
+  it = Serialization::varint_write(it, natureInt);
+  it = Serialization::serialize(it , author);
   std::copy(payload.begin(), payload.end(), it);
 
   return Crypto::generichash(hashedPayload);
@@ -87,6 +84,22 @@ void from_serialized(Serialization::SerializedSource& ss, Block& b)
   b.payload.insert(b.payload.begin(), payloadSpan.begin(), payloadSpan.end());
   b.author = Serialization::deserialize<Crypto::Hash>(ss);
   b.signature = Serialization::deserialize<Crypto::Signature>(ss);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, Block const& b)
+{
+  auto const natureInt = static_cast<unsigned>(b.nature);
+  auto const version = 1;
+
+  it = Serialization::varint_write(it, version);
+  it = Serialization::varint_write(it, b.index);
+  it = Serialization::serialize(it, b.trustchainId);
+  it = Serialization::varint_write(it, natureInt);
+  // payload is a vector<uint8_t>, cannot call serialize with it
+  it = Serialization::varint_write(it, b.payload.size());
+  it = std::copy(b.payload.begin(), b.payload.end(), it);
+  it = Serialization::serialize(it, b.author);
+  return Serialization::serialize(it, b.signature);
 }
 
 void to_json(nlohmann::json& j, Block const& b)

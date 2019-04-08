@@ -11,6 +11,12 @@ void from_serialized(Serialization::SerializedSource& ss,
   Serialization::deserialize(ss, keys.encryptedGroupPrivateEncryptionKey);
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, GroupEncryptedKey const& key)
+{
+  it = Serialization::serialize(it, key.publicUserEncryptionKey);
+  return Serialization::serialize(it, key.encryptedGroupPrivateEncryptionKey);
+}
+
 std::size_t serialized_size(GroupEncryptedKey const& keys)
 {
   return Serialization::serialized_size(keys.publicUserEncryptionKey) +

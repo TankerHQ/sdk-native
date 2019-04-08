@@ -19,17 +19,16 @@ std::vector<std::uint8_t> serialize(T const& val)
 {
   std::vector<std::uint8_t> buffer;
   auto const size = serialized_size(val);
-  buffer.reserve(size);
-  to_serialized(std::back_inserter(buffer), val);
-  assert(buffer.capacity() == size);
-  assert(buffer.size() == size);
+  buffer.resize(size);
+  auto const it = to_serialized(buffer.data(), val);
+  assert(it == buffer.data() + size);
   return buffer;
 }
 
-template <typename OutputIterator, typename T>
-void serialize(OutputIterator it, T const& val)
+template <typename T>
+std::uint8_t* serialize(std::uint8_t* it, T const& val)
 {
-  to_serialized(it, val);
+  return to_serialized(it, val);
 }
 
 template <typename T>

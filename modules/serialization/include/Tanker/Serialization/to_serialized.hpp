@@ -17,56 +17,54 @@ namespace Serialization
 {
 namespace detail
 {
-template <typename OutputIterator, typename T>
-void to_serialized(OutputIterator it, std::vector<T> const& vals)
+template <typename T>
+std::uint8_t* to_serialized(std::uint8_t* it, std::vector<T> const& vals)
 {
-  std::vector<std::uint8_t> varintBuffer(varint_size(vals.size()));
-  varint_write(varintBuffer.data(), vals.size());
-  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
+  it = varint_write(it, vals.size());
   for (auto const& val : vals)
-    to_serialized(it, val);
+    it = to_serialized(it, val);
+  return it;
 }
 
-template <typename OutputIterator, typename K, typename V>
-void to_serialized(OutputIterator it, std::map<K, V> const& vals)
+template <typename K, typename V>
+std::uint8_t* to_serialized(std::uint8_t* it, std::map<K, V> const& vals)
 {
-  std::vector<std::uint8_t> varintBuffer(varint_size(vals.size()));
-  varint_write(varintBuffer.data(), vals.size());
-  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
+  it = varint_write(it, vals.size());
   for (auto const& p : vals)
   {
-    to_serialized(it, p.first);
-    to_serialized(it, p.second);
+    it = to_serialized(it, p.first);
+    it = to_serialized(it, p.second);
   }
+  return it;
 }
 
-template <typename OutputIterator,
-          typename T,
-          typename = std::enable_if_t<std::is_integral<T>::value>>
-void to_serialized(OutputIterator it, T const& number)
+template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+std::uint8_t* to_serialized(std::uint8_t* it, T number)
 {
-  std::copy(reinterpret_cast<const char*>(&number),
-            reinterpret_cast<const char*>(&number) + sizeof(number),
-            it);
+  return std::copy(reinterpret_cast<char const*>(&number),
+                   reinterpret_cast<char const*>(&number) + sizeof(number),
+                   it);
 }
 
-template <typename OutputIterator, typename T>
-void to_serialized(OutputIterator it, nonstd::optional<T> const& opt)
+template <typename T>
+std::uint8_t* to_serialized(std::uint8_t* it,
+                            nonstd::optional<T> const& opt)
 {
   if (opt)
-    to_serialized(it, *opt);
+    it = to_serialized(it, *opt);
+  return it;
 }
 
-template <typename OutputIterator, typename... Args>
-void to_serialized(OutputIterator it, mpark::variant<Args...> const& v)
+template <typename... Args>
+std::uint8_t* to_serialized(std::uint8_t* it, mpark::variant<Args...> const& v)
 {
-  mpark::visit([it](auto const& a) { to_serialized(it, a); }, v);
+  return mpark::visit([it](auto const& a) { return to_serialized(it, a); }, v);
 }
 
 struct to_serialized_fn
 {
-  template <typename OutputIterator, typename T>
-  void operator()(OutputIterator it, T const& val) const
+  template <typename T>
+  std::uint8_t* operator()(std::uint8_t* it, T const& val) const
       noexcept(noexcept(to_serialized(it, val)))
   {
     return to_serialized(it, val);

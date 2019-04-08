@@ -19,11 +19,14 @@ auto const versionSize = Serialization::varint_size(EncryptorV4::version());
 TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
 {
   std::vector<uint8_t> a0(EncryptorV4::encryptedSize(0));
-  Serialization::varint_write(a0.data(), EncryptorV4::version());
-  Serialization::varint_write(a0.data() + versionSize, encryptedChunkSize);
+  auto it0 = a0.data();
+  it0 = Serialization::varint_write(it0, EncryptorV4::version());
+  Serialization::varint_write(it0, encryptedChunkSize);
+
   std::vector<uint8_t> a42(EncryptorV4::encryptedSize(42));
-  Serialization::varint_write(a42.data(), EncryptorV4::version());
-  Serialization::varint_write(a42.data() + versionSize, encryptedChunkSize);
+  auto it42 = a42.data();
+  it42 = Serialization::varint_write(it42, EncryptorV4::version());
+  Serialization::varint_write(it42, encryptedChunkSize);
   CHECK(EncryptorV4::decryptedSize(a0) == 0);
   CHECK(EncryptorV4::decryptedSize(a42) == 42);
 }

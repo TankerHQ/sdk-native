@@ -35,16 +35,9 @@ bool operator!=(UserGroupCreation const& l, UserGroupCreation const& r);
 
 UserGroupCreation deserializeUserGroupCreation(gsl::span<uint8_t const> data);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, UserGroupCreation const& dc)
-{
-  Serialization::serialize(it, dc.publicSignatureKey);
-  Serialization::serialize(it, dc.publicEncryptionKey);
-  Serialization::serialize(it, dc.encryptedPrivateSignatureKey);
-  Serialization::serialize(it, dc.encryptedGroupPrivateEncryptionKeysForUsers);
-  Serialization::serialize(it, dc.selfSignature);
-}
+std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation const& dc);
 
 std::size_t serialized_size(UserGroupCreation const& dc);
+
 void to_json(nlohmann::json& j, UserGroupCreation const& dc);
 }

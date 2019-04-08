@@ -32,16 +32,6 @@ KeyPublishToDevice deserializeKeyPublishToDevice(gsl::span<uint8_t const> data);
 
 void to_json(nlohmann::json& j, KeyPublishToDevice const& kp);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, KeyPublishToDevice const& kp)
-{
-  Serialization::serialize(it, kp.recipient);
-  Serialization::serialize(it, kp.mac);
-  std::vector<std::uint8_t> varintBuffer(Serialization::varint_size(kp.key.size()));
-  Serialization::varint_write(varintBuffer.data(), kp.key.size());
-  std::copy(varintBuffer.begin(), varintBuffer.end(), it);
-  Serialization::serialize(it, kp.key);
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp);
 std::size_t serialized_size(KeyPublishToDevice const& kp);
 }

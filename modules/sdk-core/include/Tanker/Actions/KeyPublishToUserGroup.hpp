@@ -30,14 +30,7 @@ bool operator!=(KeyPublishToUserGroup const& l, KeyPublishToUserGroup const& r);
 KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
     gsl::span<uint8_t const> data);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, KeyPublishToUserGroup const& dc)
-{
-  Serialization::serialize(it, dc.recipientPublicEncryptionKey);
-  Serialization::serialize(it, dc.resourceId);
-  Serialization::serialize(it, dc.key);
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUserGroup const& dc);
 std::size_t serialized_size(KeyPublishToUserGroup const& dc);
 void to_json(nlohmann::json& j, KeyPublishToUserGroup const& dc);
 }

@@ -88,6 +88,15 @@ UserGroupAddition deserializeUserGroupAddition(gsl::span<uint8_t const> data)
   return out;
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, UserGroupAddition const& dc)
+{
+  it = Serialization::serialize(it, dc.groupId);
+  it = Serialization::serialize(it, dc.previousGroupBlock);
+  it = Serialization::serialize(it,
+                                dc.encryptedGroupPrivateEncryptionKeysForUsers);
+  return Serialization::serialize(it, dc.selfSignatureWithCurrentKey);
+}
+
 std::size_t serialized_size(UserGroupAddition const& dc)
 {
   return dc.groupId.size() + dc.previousGroupBlock.size() +

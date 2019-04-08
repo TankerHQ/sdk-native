@@ -16,13 +16,7 @@ struct GroupEncryptedKey
 void from_serialized(Serialization::SerializedSource& ss,
                      GroupEncryptedKey& keys);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, GroupEncryptedKey const& key)
-{
-  Serialization::serialize(it, key.publicUserEncryptionKey);
-  Serialization::serialize(it, key.encryptedGroupPrivateEncryptionKey);
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, GroupEncryptedKey const& key);
 std::size_t serialized_size(GroupEncryptedKey const& keys);
 
 bool operator==(GroupEncryptedKey const& lhs, GroupEncryptedKey const& rhs);

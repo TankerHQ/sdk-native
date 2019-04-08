@@ -41,6 +41,11 @@ void from_serialized(Serialization::SerializedSource& ss,
       Serialization::deserialize<Crypto::PublicSignatureKey>(ss);
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, TrustchainCreation const& tc)
+{
+  return Serialization::serialize(it, tc.publicSignatureKey);
+}
+
 void to_json(nlohmann::json& j, TrustchainCreation const& tc)
 {
   j["publicSignatureKey"] = tc.publicSignatureKey;

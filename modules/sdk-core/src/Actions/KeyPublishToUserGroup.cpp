@@ -61,6 +61,13 @@ KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
   return out;
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUserGroup const& dc)
+{
+  it = Serialization::serialize(it, dc.recipientPublicEncryptionKey);
+  it = Serialization::serialize(it, dc.resourceId);
+  return Serialization::serialize(it, dc.key);
+}
+
 void to_json(nlohmann::json& j, KeyPublishToUserGroup const& kp)
 {
   j["recipientPublicEncryptionKey"] = kp.recipientPublicEncryptionKey;

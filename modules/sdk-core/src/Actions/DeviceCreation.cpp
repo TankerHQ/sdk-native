@@ -53,6 +53,16 @@ struct UserKeyPairVisitor
 };
 
 template <typename T>
+std::uint8_t* serializeCommonDeviceCreationFields(std::uint8_t* it, T const& dc)
+{
+  it = Serialization::serialize(it, dc.ephemeralPublicSignatureKey);
+  it = Serialization::serialize(it, dc.userId);
+  it = Serialization::serialize(it, dc.delegationSignature);
+  it = Serialization::serialize(it, dc.publicSignatureKey);
+  return Serialization::serialize(it, dc.publicEncryptionKey);
+}
+
+template <typename T>
 void deserializeDeviceCreationCommonFields(Serialization::SerializedSource& ss,
                                            T& dc)
 {
@@ -291,6 +301,24 @@ void from_serialized(Serialization::SerializedSource& ss, DeviceCreation3& dc)
 std::size_t serialized_size(DeviceCreation const& dc)
 {
   return Serialization::serialized_size(dc.variant());
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation1 const& dc)
+{
+  return serializeCommonDeviceCreationFields(it, dc);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation3 const& dc)
+{
+  it = serializeCommonDeviceCreationFields(it, dc);
+  it = Serialization::serialize(it, dc.userKeyPair);
+  *it++ = static_cast<std::uint8_t>(dc.isGhostDevice);
+  return it;
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation const& dc)
+{
+  return Serialization::serialize(it, dc.variant());
 }
 
 void to_json(nlohmann::json& j, DeviceCreation1 const& dc)

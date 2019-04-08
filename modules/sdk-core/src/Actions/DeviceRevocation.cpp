@@ -74,11 +74,27 @@ bool operator<(EncryptedPrivateUserKey const& lhs,
   return lhs.deviceId < rhs.deviceId;
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it,
+                            EncryptedPrivateUserKey const& key)
+{
+  it = Serialization::serialize(it, key.deviceId);
+  return Serialization::serialize(it, key.privateEncryptionKey);
+}
+
 std::size_t serialized_size(DeviceRevocation2 const& dr)
 {
   return DeviceId::arraySize + Crypto::PublicEncryptionKey::arraySize * 2 +
          Crypto::SealedPrivateEncryptionKey::arraySize +
          Serialization::serialized_size(dr.userKeys);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation2 const& dr)
+{
+  it = Serialization::serialize(it, dr.deviceId);
+  it = Serialization::serialize(it, dr.publicEncryptionKey);
+  it = Serialization::serialize(it, dr.previousPublicEncryptionKey);
+  it = Serialization::serialize(it, dr.encryptedKeyForPreviousUserKey);
+  return Serialization::serialize(it, dr.userKeys);
 }
 
 void from_serialized(Serialization::SerializedSource& ss, DeviceRevocation2& dr)
@@ -161,6 +177,16 @@ std::vector<Index> DeviceRevocation::makeIndexes() const
 std::size_t serialized_size(DeviceRevocation const& dr)
 {
   return Serialization::serialized_size(dr.variant());
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation1 const& dr)
+{
+  return Serialization::serialize(it, dr.deviceId);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation const& dr)
+{
+  return Serialization::serialize(it, dr.variant());
 }
 
 void to_json(nlohmann::json& j, DeviceRevocation const& dc)

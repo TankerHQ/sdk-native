@@ -15,6 +15,11 @@
 
 namespace Tanker
 {
+std::uint8_t* to_serialized(std::uint8_t* it, Action const& dr)
+{
+  return Serialization::serialize(it, dr.variant());
+}
+
 Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
 {
   switch (nature)
