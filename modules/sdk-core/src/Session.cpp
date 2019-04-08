@@ -529,7 +529,7 @@ bool Session::hasRegisteredUnlockMethods() const
   return !!_unlockMethods;
 }
 
-bool Session::hasRegisteredUnlockMethods(Unlock::Method method) const
+bool Session::hasRegisteredUnlockMethod(Unlock::Method method) const
 {
   return !!(_unlockMethods & method);
 }

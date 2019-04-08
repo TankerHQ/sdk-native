@@ -177,11 +177,11 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethods() const
   return tc::sync([&] { return this->_core->hasRegisteredUnlockMethods(); });
 }
 
-expected<bool> AsyncCore::hasRegisteredUnlockMethods(
+expected<bool> AsyncCore::hasRegisteredUnlockMethod(
     Unlock::Method method) const
 {
   return tc::sync(
-      [&] { return this->_core->hasRegisteredUnlockMethods(method); });
+      [&] { return this->_core->hasRegisteredUnlockMethod(method); });
 }
 
 tc::future<DeviceId> AsyncCore::deviceId() const

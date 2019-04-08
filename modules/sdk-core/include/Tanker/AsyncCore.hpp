@@ -93,7 +93,7 @@ public:
 
   tc::future<bool> isUnlockAlreadySetUp() const;
   expected<bool> hasRegisteredUnlockMethods() const;
-  expected<bool> hasRegisteredUnlockMethods(Unlock::Method) const;
+  expected<bool> hasRegisteredUnlockMethod(Unlock::Method) const;
   expected<Unlock::Methods> registeredUnlockMethods() const;
 
   boost::signals2::signal<void()>& sessionClosed();
