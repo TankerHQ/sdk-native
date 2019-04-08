@@ -53,7 +53,7 @@ struct UserKeyPairVisitor
 };
 
 template <typename T>
-std::uint8_t* serializeCommonDeviceCreationFields(std::uint8_t* it, T const& dc)
+std::uint8_t* serializeDeviceCreationCommonFields(std::uint8_t* it, T const& dc)
 {
   it = Serialization::serialize(it, dc.ephemeralPublicSignatureKey);
   it = Serialization::serialize(it, dc.userId);
@@ -305,12 +305,12 @@ std::size_t serialized_size(DeviceCreation const& dc)
 
 std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation1 const& dc)
 {
-  return serializeCommonDeviceCreationFields(it, dc);
+  return serializeDeviceCreationCommonFields(it, dc);
 }
 
 std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation3 const& dc)
 {
-  it = serializeCommonDeviceCreationFields(it, dc);
+  it = serializeDeviceCreationCommonFields(it, dc);
   it = Serialization::serialize(it, dc.userKeyPair);
   *it++ = static_cast<std::uint8_t>(dc.isGhostDevice);
   return it;
