@@ -122,7 +122,7 @@ using LogCallback = std::function<void(emscripten::val const&)>;
 void TankerSetLogHandler(emscripten::val const& cb)
 {
   Log::setLogHandler(
-      [=](char const*, char, char const* msg) { cb(emscripten::val(msg)); });
+      [=](auto const record) { cb(emscripten::val(record.msg)); });
 }
 }
 
