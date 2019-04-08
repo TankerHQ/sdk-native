@@ -10,7 +10,6 @@ profiles:
     - android-armv7-release
     - android-armv8-debug
     - android-armv8-release
-    - emscripten
   darwin:
     - macos-debug
     - macos-release
