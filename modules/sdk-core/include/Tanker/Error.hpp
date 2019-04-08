@@ -83,7 +83,7 @@ TANKER_WARN_UNUSED_RESULT EX formatEx(String format, Args const&... args)
 
 DECLARE_ERROR(InvalidTankerStatus);
 DECLARE_ERROR(InvalidArgument);
-DECLARE_ERROR(ResourceKeyNotFound);
+// ResourceKeyNotFound has its own header
 // UserNotFound has its own header
 DECLARE_ERROR(DecryptFailed);
 DECLARE_ERROR(InvalidUnlockKey);
@@ -141,11 +141,14 @@ private:
   VerificationCode _code;
 };
 
-// Let's expose this error as ResourceKeyNotFound to the user
-class UserKeyNotFound : public ResourceKeyNotFound
+// We expose this error as ResourceKeyNotFound (same error code)
+class UserKeyNotFound : public Exception
 {
 public:
-  using ResourceKeyNotFound::ResourceKeyNotFound;
+  UserKeyNotFound(std::string message)
+    : Exception(Code::ResourceKeyNotFound, std::move(message))
+  {
+  }
 };
 
 class ServerError : public Exception

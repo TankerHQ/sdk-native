@@ -20,6 +20,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/RecipientNotFound.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
@@ -295,8 +296,7 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
     }
   }
   if (!key)
-    throw Error::formatEx<Error::ResourceKeyNotFound>(
-        fmt("couldn't find key for {:s}"), resourceId);
+    throw Error::ResourceKeyNotFound(resourceId);
 
   Encryptor::decrypt(decryptedData, *key, encryptedData);
 }

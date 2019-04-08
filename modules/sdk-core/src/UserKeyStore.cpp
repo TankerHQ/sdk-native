@@ -4,6 +4,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>

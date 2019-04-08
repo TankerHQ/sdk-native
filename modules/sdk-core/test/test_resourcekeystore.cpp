@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>

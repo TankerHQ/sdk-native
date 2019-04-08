@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/RecipientNotFound.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>

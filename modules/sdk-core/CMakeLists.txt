@@ -84,6 +84,7 @@ add_library(tankercore STATIC
   include/Tanker/Entry.hpp
   include/Tanker/Error.hpp
   include/Tanker/UserNotFound.hpp
+  include/Tanker/ResourceKeyNotFound.hpp
   include/Tanker/RecipientNotFound.hpp
   include/Tanker/GroupNotFound.hpp
   include/Tanker/Index.hpp
