@@ -40,7 +40,7 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
           Unlock::CreationOptions{}.set(Email{"alice@yahou.com"}))));
       auto const method =
-          TC_AWAIT(core1->hasRegisteredUnlockMethods(Unlock::Method::Email));
+          TC_AWAIT(core1->hasRegisteredUnlockMethod(Unlock::Method::Email));
       FAST_CHECK_UNARY(method);
     }
 
@@ -49,7 +49,7 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
           Unlock::CreationOptions{}.set(Password{"my password"}))));
       auto const method =
-          TC_AWAIT(core1->hasRegisteredUnlockMethods(Unlock::Method::Password));
+          TC_AWAIT(core1->hasRegisteredUnlockMethod(Unlock::Method::Password));
       FAST_CHECK_UNARY(method);
     }
 

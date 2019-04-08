@@ -300,7 +300,7 @@ tanker_expected_t* tanker_has_registered_unlock_method(
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->hasRegisteredUnlockMethods(static_cast<Unlock::Method>(method))
+      tanker->hasRegisteredUnlockMethod(static_cast<Unlock::Method>(method))
           .and_then(tc::get_synchronous_executor(),
                     [](bool b) { return reinterpret_cast<void*>(b); }));
 }

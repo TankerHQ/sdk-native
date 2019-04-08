@@ -103,7 +103,7 @@ public:
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   Unlock::Methods registeredUnlockMethods() const;
   bool hasRegisteredUnlockMethods() const;
-  bool hasRegisteredUnlockMethods(Unlock::Method) const;
+  bool hasRegisteredUnlockMethod(Unlock::Method) const;
 
   tc::cotask<void> syncTrustchain();
 

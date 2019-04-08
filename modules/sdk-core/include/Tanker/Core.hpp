@@ -80,7 +80,7 @@ public:
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   bool hasRegisteredUnlockMethods() const;
-  bool hasRegisteredUnlockMethods(Unlock::Method) const;
+  bool hasRegisteredUnlockMethod(Unlock::Method) const;
   Unlock::Methods registeredUnlockMethods() const;
 
   DeviceId const& deviceId() const;

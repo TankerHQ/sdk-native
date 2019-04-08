@@ -247,12 +247,12 @@ bool Core::hasRegisteredUnlockMethods() const
   return (*psession)->hasRegisteredUnlockMethods();
 }
 
-bool Core::hasRegisteredUnlockMethods(Unlock::Method method) const
+bool Core::hasRegisteredUnlockMethod(Unlock::Method method) const
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(hasRegisteredUnlockMethods);
-  return (*psession)->hasRegisteredUnlockMethods(method);
+    throw INVALID_STATUS(hasRegisteredUnlockMethod);
+  return (*psession)->hasRegisteredUnlockMethod(method);
 }
 
 tc::cotask<void> Core::syncTrustchain()
