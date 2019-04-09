@@ -12,6 +12,7 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/Traits.hpp
     include/Tanker/Crypto/detail/CryptographicTypeImpl.hpp
     include/Tanker/Crypto/detail/CryptographicType.hpp
+    include/Tanker/Crypto/detail/IsCryptographicType.hpp
     include/Tanker/Crypto/detail/ArrayHelpers.hpp
     include/Tanker/Crypto/KeyUsage.hpp
     include/Tanker/Crypto/KeyType.hpp

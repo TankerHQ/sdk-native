@@ -8,6 +8,7 @@
 #include <Tanker/Crypto/detail/ArrayHelpers.hpp>
 #include <Tanker/Crypto/detail/CryptographicType.hpp>
 #include <Tanker/Crypto/detail/CryptographicTypeImpl.hpp>
+#include <Tanker/Crypto/detail/IsCryptographicType.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
 
@@ -164,19 +165,13 @@ struct is_cryptographic_type<BasicHash<T>> : std::true_type
 {
 };
 
-#define IS_CRYPTO_TRAIT(Self)                         \
-  template <>                                         \
-  struct is_cryptographic_type<Self> : std::true_type \
-  {                                                   \
-  }
-
-IS_CRYPTO_TRAIT(Signature);
-IS_CRYPTO_TRAIT(Mac);
-IS_CRYPTO_TRAIT(SymmetricKey);
-IS_CRYPTO_TRAIT(SealedPrivateEncryptionKey);
-IS_CRYPTO_TRAIT(SealedPrivateSignatureKey);
-IS_CRYPTO_TRAIT(EncryptedSymmetricKey);
-IS_CRYPTO_TRAIT(SealedSymmetricKey);
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Signature)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Mac)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SymmetricKey)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedPrivateEncryptionKey)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey)
+TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey)
 
 template <typename T,
           typename = std::enable_if_t<is_cryptographic_type<T>::value>>
@@ -216,8 +211,6 @@ TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SealedPrivateSignatureKey);
 TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::EncryptedSymmetricKey);
 TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SealedSymmetricKey);
 }
-
-#undef IS_CRYPTO_TRAIT
 
 namespace nlohmann
 {
