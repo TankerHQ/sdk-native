@@ -16,6 +16,7 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
+#include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
@@ -36,9 +37,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey,
-                                 crypto_sign_SECRETKEYBYTES +
-                                     crypto_box_SEALBYTES)
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
                                      crypto_box_MACBYTES +
@@ -47,7 +45,6 @@ TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
                                      crypto_box_SEALBYTES)
 
-TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey)
 
@@ -77,8 +74,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(
-    ::Tanker::Crypto::SealedPrivateSignatureKey)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::EncryptedSymmetricKey)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SealedSymmetricKey)
 }
