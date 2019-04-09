@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/AsymmetricKey.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyPair.hpp>
@@ -30,34 +31,9 @@ namespace Tanker
 {
 namespace Crypto
 {
-using Hash = BasicHash<void>;
-
-template <typename T>
-bool operator==(BasicHash<void> const& lhs, BasicHash<T> const& rhs) noexcept
-{
-  return lhs.base() == rhs.base();
-}
-
-template <typename T>
-bool operator==(BasicHash<T> const& lhs, BasicHash<void> const& rhs) noexcept
-{
-  return rhs == lhs;
-}
-
-template <typename T>
-bool operator!=(BasicHash<void> const& lhs, BasicHash<T> const& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
-template <typename T>
-bool operator!=(BasicHash<T> const& lhs, BasicHash<void> const& rhs) noexcept
-{
-  return !(lhs == rhs);
-}
-
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Signature, crypto_sign_BYTES)
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac, crypto_aead_xchacha20poly1305_ietf_ABYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac,
+                                 crypto_aead_xchacha20poly1305_ietf_ABYTES)
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES)
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(AeadIv,
