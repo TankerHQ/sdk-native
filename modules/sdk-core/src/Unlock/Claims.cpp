@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <iterator>
@@ -26,21 +27,27 @@ Claims::Claims(UpdateOptions const& lockOptions,
 void from_json(nlohmann::json const& j, Claims& c)
 {
   if (j.count("email"))
-    c.email = base64::decode<Email>(j.at("email").get<Email>());
+  {
+    c.email =
+        cppcodec::base64_rfc4648::decode<Email>(j.at("email").get<Email>());
+  }
   if (j.count("password"))
     c.password = j.at("password").get<Crypto::Hash>();
   if (j.count("unlock_key"))
-    c.unlockKey = base64::decode(j.at("unlock_key").get<std::string>());
+  {
+    c.unlockKey =
+        cppcodec::base64_rfc4648::decode(j.at("unlock_key").get<std::string>());
+  }
 }
 
 void to_json(nlohmann::json& j, Claims const& c)
 {
   if (c.email.has_value())
-    j["email"] = base64::encode(c.email.value());
+    j["email"] = cppcodec::base64_rfc4648::encode(c.email.value());
   if (c.password.has_value())
     j["password"] = c.password.value();
   if (c.unlockKey.has_value())
-    j["unlock_key"] = base64::encode(c.unlockKey.value());
+    j["unlock_key"] = cppcodec::base64_rfc4648::encode(c.unlockKey.value());
 }
 
 std::size_t Claims::size() const

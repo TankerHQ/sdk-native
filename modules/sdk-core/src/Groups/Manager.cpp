@@ -8,6 +8,8 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserNotFound.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
+
 namespace Tanker
 {
 namespace Groups
@@ -83,7 +85,7 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
       memberUserKeys, blockGenerator, groupSignatureKey, groupEncryptionKey));
   TC_AWAIT(client.pushBlock(groupBlock));
 
-  TC_RETURN(Tanker::base64::encode(groupSignatureKey.publicKey));
+  TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
 }
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(

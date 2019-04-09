@@ -4,7 +4,6 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>
@@ -17,6 +16,7 @@
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
@@ -28,7 +28,8 @@ namespace Unlock
 {
 UnlockKey ghostDeviceToUnlockKey(GhostDevice const& ghostDevice)
 {
-  return UnlockKey{base64::encode(nlohmann::json(ghostDevice).dump())};
+  return UnlockKey{
+      cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
 }
 
 std::unique_ptr<Registration> generate(
@@ -56,7 +57,8 @@ std::unique_ptr<Registration> generate(
 
 GhostDevice extract(UnlockKey const& unlockKey) try
 {
-  return nlohmann::json::parse(base64::decode(unlockKey)).get<GhostDevice>();
+  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(unlockKey))
+      .get<GhostDevice>();
 }
 catch (std::exception const& e)
 {

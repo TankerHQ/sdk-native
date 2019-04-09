@@ -8,7 +8,6 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
@@ -19,6 +18,7 @@
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <mockaron/mockaron.hpp>
 #include <mpark/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -103,8 +103,8 @@ tc::cotask<void> TrustchainPuller::catchUp()
         std::end(blocks),
         std::back_inserter(entries),
         [](auto const& block) {
-          return blockToUnverifiedEntry(
-              Serialization::deserialize<Block>(base64::decode(block)));
+          return blockToUnverifiedEntry(Serialization::deserialize<Block>(
+              cppcodec::base64_rfc4648::decode(block)));
         });
 
     TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {

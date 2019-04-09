@@ -4,7 +4,6 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>
@@ -16,6 +15,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <sodium/randombytes.h>
 
 #include <iostream>
@@ -32,12 +32,12 @@ AsyncCore* makeCore(std::string trustchainId,
 {
   try
   {
-    return new AsyncCore(
-        std::move(url),
-        SdkInfo{"client-emscripten",
-                base64::decode<TrustchainId>(std::move(trustchainId)),
-                "0.0.1"},
-        std::move(writablePath));
+    return new AsyncCore(std::move(url),
+                         SdkInfo{"client-emscripten",
+                                 cppcodec::base64_rfc4648::decode<TrustchainId>(
+                                     std::move(trustchainId)),
+                                 "0.0.1"},
+                         std::move(writablePath));
   }
   catch (std::exception const& e)
   {

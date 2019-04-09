@@ -11,6 +11,7 @@
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Version.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -186,14 +187,16 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethod(
 
 expected<SDeviceId> AsyncCore::deviceId() const
 {
-  return tc::sync([&] { return SDeviceId(base64::encode(_core->deviceId())); });
+  return tc::sync([&] {
+    return SDeviceId(cppcodec::base64_rfc4648::encode(_core->deviceId()));
+  });
 }
 
 tc::future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
 {
   return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
-    TC_AWAIT(
-        this->_core->revokeDevice(base64::decode<DeviceId>(deviceId.string())));
+    TC_AWAIT(this->_core->revokeDevice(
+        cppcodec::base64_rfc4648::decode<DeviceId>(deviceId.string())));
   });
 }
 

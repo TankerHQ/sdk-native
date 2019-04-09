@@ -8,6 +8,8 @@
 #include <Tanker/Init.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
+
 #include "CFuture.hpp"
 #include "Utils.hpp"
 
@@ -39,9 +41,11 @@ tanker_future_t* tanker_admin_create_trustchain(tanker_admin_t* admin,
         admin->createTrustchain(name, trustchainSignatureKeyPair, true));
     TC_RETURN(static_cast<void*>(new tanker_trustchain_descriptor_t{
         duplicateString(name),
-        duplicateString(base64::encode(trustchainId)),
-        duplicateString(base64::encode(trustchainSignatureKeyPair.privateKey)),
-        duplicateString(base64::encode(trustchainSignatureKeyPair.publicKey)),
+        duplicateString(cppcodec::base64_rfc4648::encode(trustchainId)),
+        duplicateString(cppcodec::base64_rfc4648::encode(
+            trustchainSignatureKeyPair.privateKey)),
+        duplicateString(cppcodec::base64_rfc4648::encode(
+            trustchainSignatureKeyPair.publicKey)),
     }));
   }));
 }
@@ -53,7 +57,7 @@ tanker_future_t* tanker_admin_delete_trustchain(tanker_admin_t* admin,
       [admin = reinterpret_cast<Admin*>(admin),
        trustchainId = std::string(trustchain_id)]() -> tc::cotask<void> {
         TC_AWAIT(admin->deleteTrustchain(
-            base64::decode<TrustchainId>({trustchainId})));
+            cppcodec::base64_rfc4648::decode<TrustchainId>({trustchainId})));
       }));
 }
 
@@ -80,7 +84,7 @@ tanker_future_t* tanker_admin_get_verification_code(
       [admin = reinterpret_cast<Admin*>(admin),
        trustchainId = std::string(trustchain_id),
        email = std::string(user_email)]() -> tc::cotask<void*> {
-         auto verifCode = TC_AWAIT(admin->getVerificationCode(base64::decode<TrustchainId>({trustchainId}), Email{email}));
+         auto verifCode = TC_AWAIT(admin->getVerificationCode(cppcodec::base64_rfc4648::decode<TrustchainId>({trustchainId}), Email{email}));
          TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
          }
       ));

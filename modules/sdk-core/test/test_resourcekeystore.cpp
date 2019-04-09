@@ -1,5 +1,3 @@
-#include <doctest.h>
-
 #include <Tanker/ResourceKeyStore.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
@@ -9,6 +7,9 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+
+#include <doctest.h>
+#include <cppcodec/base64_rfc4648.hpp>
 
 using namespace Tanker;
 
@@ -33,8 +34,9 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
 
   auto const resourceKey = Crypto::makeSymmetricKey();
 
-  auto const b64Mac = base64::encode(make<Crypto::Mac>("michel"));
-  auto const b64ResourceKey = base64::encode(resourceKey);
+  auto const b64Mac =
+      cppcodec::base64_rfc4648::encode(make<Crypto::Mac>("michel"));
+  auto const b64ResourceKey = cppcodec::base64_rfc4648::encode(resourceKey);
 
   db.execute(R"(
     CREATE TABLE resource_keys (
@@ -126,8 +128,11 @@ TEST_CASE("Migration")
     auto const key =
         DataStore::extractBlob<Crypto::SymmetricKey>(resourceKeys.resource_key);
 
-    CHECK_EQ(mac, base64::decode<Crypto::Mac>(oldKeys.b64Mac));
-    CHECK_EQ(key, base64::decode<Crypto::SymmetricKey>(oldKeys.b64ResourceKey));
+    CHECK_EQ(mac,
+             cppcodec::base64_rfc4648::decode<Crypto::Mac>(oldKeys.b64Mac));
+    CHECK_EQ(key,
+             cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
+                 oldKeys.b64ResourceKey));
   }
 }
 #endif

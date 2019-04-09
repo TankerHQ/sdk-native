@@ -8,6 +8,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/UniquePath.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 
 using namespace Tanker;
@@ -36,13 +37,15 @@ OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
   auto const deviceKeys = DeviceKeys::create();
 
   auto const b64PrivSigK =
-      base64::encode(deviceKeys.signatureKeyPair.privateKey);
-  auto const b64PubSigK = base64::encode(deviceKeys.signatureKeyPair.publicKey);
+      cppcodec::base64_rfc4648::encode(deviceKeys.signatureKeyPair.privateKey);
+  auto const b64PubSigK =
+      cppcodec::base64_rfc4648::encode(deviceKeys.signatureKeyPair.publicKey);
   auto const b64PrivEncK =
-      base64::encode(deviceKeys.encryptionKeyPair.privateKey);
+      cppcodec::base64_rfc4648::encode(deviceKeys.encryptionKeyPair.privateKey);
   auto const b64PubEncK =
-      base64::encode(deviceKeys.encryptionKeyPair.publicKey);
-  auto const b64DeviceId = base64::encode(deviceKeys.deviceId);
+      cppcodec::base64_rfc4648::encode(deviceKeys.encryptionKeyPair.publicKey);
+  auto const b64DeviceId =
+      cppcodec::base64_rfc4648::encode(deviceKeys.deviceId);
 
   db.execute(R"(
     CREATE TABLE device_key_store (
@@ -148,19 +151,21 @@ TEST_CASE("device keystore migration")
     auto const deviceId =
         DataStore::extractBlob<DeviceId>(deviceKeyStore.device_id);
 
+    CHECK_EQ(privSigK,
+             cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+                 oldKeystore.b64PrivSigK));
+    CHECK_EQ(pubSigK,
+             cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
+                 oldKeystore.b64PubSigK));
+    CHECK_EQ(privEncK,
+             cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
+                 oldKeystore.b64PrivEncK));
+    CHECK_EQ(pubEncK,
+             cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+                 oldKeystore.b64PubEncK));
     CHECK_EQ(
-        privSigK,
-        base64::decode<Crypto::PrivateSignatureKey>(oldKeystore.b64PrivSigK));
-    CHECK_EQ(
-        pubSigK,
-        base64::decode<Crypto::PublicSignatureKey>(oldKeystore.b64PubSigK));
-    CHECK_EQ(
-        privEncK,
-        base64::decode<Crypto::PrivateEncryptionKey>(oldKeystore.b64PrivEncK));
-    CHECK_EQ(
-        pubEncK,
-        base64::decode<Crypto::PublicEncryptionKey>(oldKeystore.b64PubEncK));
-    CHECK_EQ(deviceId, base64::decode<DeviceId>(oldKeystore.b64DeviceId));
+        deviceId,
+        cppcodec::base64_rfc4648::decode<DeviceId>(oldKeystore.b64DeviceId));
   }
 }
 #endif

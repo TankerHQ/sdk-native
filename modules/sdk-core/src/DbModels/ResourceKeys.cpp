@@ -1,9 +1,10 @@
 #include <Tanker/DbModels/ResourceKeys.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 #include <cassert>
 #include <exception>
@@ -26,9 +27,11 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const mac = base64::decode<Crypto::Mac>(extractBlob(row.mac));
+    auto const mac =
+        cppcodec::base64_rfc4648::decode<Crypto::Mac>(extractBlob(row.mac));
     auto const resourceKey =
-        base64::decode<Crypto::SymmetricKey>(extractBlob(row.resource_key));
+        cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
+            extractBlob(row.resource_key));
 
     db(update(tab)
            .set(tab.mac = mac.base(), tab.resource_key = resourceKey.base())

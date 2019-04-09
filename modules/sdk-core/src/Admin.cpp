@@ -6,7 +6,6 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Nature.hpp>
@@ -14,6 +13,7 @@
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <boost/signals2/connection.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -76,7 +76,8 @@ tc::cotask<TrustchainId> Admin::createTrustchain(
   auto const message = nlohmann::json{
       {"is_test", isTest},
       {"name", name},
-      {"root_block", base64::encode(Serialization::serialize(block))},
+      {"root_block",
+       cppcodec::base64_rfc4648::encode(Serialization::serialize(block))},
   };
   TC_AWAIT(emit("create trustchain", message));
 
@@ -93,7 +94,7 @@ tc::cotask<void> Admin::deleteTrustchain(TrustchainId const& trustchainId)
 
 tc::cotask<void> Admin::pushBlock(gsl::span<uint8_t const> block)
 {
-  TC_AWAIT(emit("push block", base64::encode(block)));
+  TC_AWAIT(emit("push block", cppcodec::base64_rfc4648::encode(block)));
 }
 
 tc::cotask<void> Admin::pushKeys(
@@ -103,7 +104,7 @@ tc::cotask<void> Admin::pushKeys(
   sb.reserve(blocks.size());
   std::transform(
       begin(blocks), end(blocks), std::back_inserter(sb), [](auto&& block) {
-        return base64::encode(block);
+        return cppcodec::base64_rfc4648::encode(block);
       });
 
   TC_AWAIT(emit("push keys", sb));

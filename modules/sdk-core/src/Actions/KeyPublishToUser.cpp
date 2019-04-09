@@ -1,11 +1,11 @@
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
@@ -64,6 +64,6 @@ void to_json(nlohmann::json& j, KeyPublishToUser const& kp)
 {
   j["recipientPublicEncryptionKey"] = kp.recipientPublicEncryptionKey;
   j["mac"] = kp.mac;
-  j["key"] = base64::encode(kp.key);
+  j["key"] = cppcodec::base64_rfc4648::encode(kp.key);
 }
 }

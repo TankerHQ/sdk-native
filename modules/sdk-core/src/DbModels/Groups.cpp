@@ -1,7 +1,6 @@
 #include <Tanker/DbModels/Groups.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>

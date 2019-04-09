@@ -6,6 +6,7 @@
 #include <Tanker/Init.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
@@ -115,12 +116,13 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     if (options->writable_path == nullptr)
       throw Error::formatEx<Error::InvalidArgument>("writable_path is null");
 
-    return static_cast<void*>(new AsyncCore(
-        url,
-        {options->sdk_type,
-         base64::decode<TrustchainId>(std::string(options->trustchain_id)),
-         options->sdk_version},
-        options->writable_path));
+    return static_cast<void*>(
+        new AsyncCore(url,
+                      {options->sdk_type,
+                       cppcodec::base64_rfc4648::decode<TrustchainId>(
+                           std::string(options->trustchain_id)),
+                       options->sdk_version},
+                      options->writable_path));
   }));
 }
 

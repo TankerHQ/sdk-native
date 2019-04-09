@@ -5,13 +5,13 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 
 #include <algorithm>
@@ -29,8 +29,8 @@ tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
   auto const userId = TC_AWAIT(contactStore.findUserIdByDeviceId(deviceId));
   if (!userId || userId != selfUserId)
   {
-    throw Error::formatEx<Error::DeviceNotFound>(
-        fmt::format("Unknown device: {:s}", base64::encode(deviceId)));
+    throw Error::formatEx<Error::DeviceNotFound>(fmt::format(
+        "Unknown device: {:s}", cppcodec::base64_rfc4648::encode(deviceId)));
   }
 }
 

@@ -1,19 +1,18 @@
 #pragma once
 
 #include <Tanker/Crypto/Traits.hpp>
-#include <Tanker/Crypto/base64.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
+#include <gsl-lite.hpp>
+#include <nlohmann/json_fwd.hpp>
+#include <sodium.h>
 
 #include <array>
 #include <iterator>
 #include <stdexcept>
 #include <vector>
-
-#include <gsl-lite.hpp>
-
-#include <nlohmann/json_fwd.hpp>
-#include <sodium.h>
 
 #define KEY_IMPL_DOC(Self, ArraySize, Name)                              \
                                                                          \
@@ -500,13 +499,14 @@ struct adl_serializer<
   template <typename BasicJsonType>
   static void to_json(BasicJsonType& j, CryptoType const& value)
   {
-    j = Tanker::base64::encode(value);
+    j = cppcodec::base64_rfc4648::encode(value);
   }
 
   template <typename BasicJsonType>
   static void from_json(BasicJsonType const& j, CryptoType& value)
   {
-    value = Tanker::base64::decode<CryptoType>(j.template get<std::string>());
+    value = cppcodec::base64_rfc4648::decode<CryptoType>(
+        j.template get<std::string>());
   }
 };
 }

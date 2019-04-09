@@ -41,6 +41,7 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
@@ -90,7 +91,7 @@ std::vector<UserId> publicIdentitiesToUserIds(
 std::vector<GroupId> convertToGroupIds(std::vector<SGroupId> const& sgroupIds)
 {
   return convertList(sgroupIds, [](auto&& sgroupId) {
-    return base64::decode<GroupId>(sgroupId.string());
+    return cppcodec::base64_rfc4648::decode<GroupId>(sgroupId.string());
   });
 }
 
@@ -341,7 +342,7 @@ tc::cotask<void> Session::share(
   auto userIds = publicIdentitiesToUserIds(spublicIdentities);
   auto groupIds = convertToGroupIds(sgroupIds);
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return base64::decode<ResourceId>(resourceId);
+    return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
   });
 
   // we remove ourselves from the recipients
@@ -401,7 +402,7 @@ tc::cotask<void> Session::updateGroupMembers(
     SGroupId const& groupIdString,
     std::vector<SPublicIdentity> spublicIdentitiesToAdd)
 {
-  auto const groupId = base64::decode<GroupId>(groupIdString);
+  auto const groupId = cppcodec::base64_rfc4648::decode<GroupId>(groupIdString);
   spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
   auto const usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
 

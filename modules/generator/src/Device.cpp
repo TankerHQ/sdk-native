@@ -5,7 +5,6 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -13,6 +12,7 @@
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -79,7 +79,7 @@ Device Device::makeDevice() const
 
 UnlockKey Device::asUnlockKey() const
 {
-  return UnlockKey{Tanker::base64::encode(
+  return UnlockKey{cppcodec::base64_rfc4648::encode(
       nlohmann::json(
           GhostDevice{deviceId, sigKeys.privateKey, encKeys.privateKey})
           .dump())};

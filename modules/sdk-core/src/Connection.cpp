@@ -1,9 +1,9 @@
 #include <Tanker/Connection.hpp>
 
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <sio_message.h>
 #include <sio_socket.h>
 #include <tconcurrent/async.hpp>
@@ -60,7 +60,8 @@ void Connection::connect()
         _url,
         {{"type", _infos->sdkType},
          {"version", _infos->version},
-         {"trustchainId", base64::encode(_infos->trustchainId)}});
+         {"trustchainId",
+          cppcodec::base64_rfc4648::encode(_infos->trustchainId)}});
   else
     this->_client.connect(_url);
 }

@@ -1,6 +1,5 @@
 #include <doctest.h>
 
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain.hpp>
@@ -11,6 +10,8 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 #include <Helpers/UniquePath.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
@@ -45,9 +46,11 @@ OldBlock setupTrustchainMigration(DataStore::Connection& db)
 {
   using VersionsTable = DbModels::versions::versions;
 
-  auto const b64Hash = base64::encode(make<Crypto::Hash>("hash"));
-  auto const b64Author = base64::encode(make<Crypto::Hash>("author"));
-  auto const b64Record = base64::encode("record");
+  auto const b64Hash =
+      cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("hash"));
+  auto const b64Author =
+      cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("author"));
+  auto const b64Record = cppcodec::base64_rfc4648::encode("record");
 
   db.execute(R"(
     CREATE TABLE trustchain (
@@ -74,8 +77,9 @@ OldIndex setupTrustchainIndexesMigration(DataStore::Connection& db)
 {
   using VersionsTable = DbModels::versions::versions;
 
-  auto const b64Hash = base64::encode(make<Crypto::Hash>("hash"));
-  auto const b64Value = base64::encode("value");
+  auto const b64Hash =
+      cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("hash"));
+  auto const b64Value = cppcodec::base64_rfc4648::encode("value");
 
   db.execute(R"(
     CREATE TABLE trustchain_indexes (
@@ -247,9 +251,14 @@ TEST_CASE("trustchain migration")
       auto const author = extractBlob<Crypto::Hash>(rootBlock.author);
       auto const action = extractBlob<std::vector<uint8_t>>(rootBlock.action);
 
-      CHECK_EQ(hash, base64::decode<Crypto::Hash>(oldRootBlock.b64Hash));
-      CHECK_EQ(author, base64::decode<Crypto::Hash>(oldRootBlock.b64Author));
-      CHECK_EQ(action, base64::decode(oldRootBlock.b64Action));
+      CHECK_EQ(
+          hash,
+          cppcodec::base64_rfc4648::decode<Crypto::Hash>(oldRootBlock.b64Hash));
+      CHECK_EQ(author,
+               cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+                   oldRootBlock.b64Author));
+      CHECK_EQ(action,
+               cppcodec::base64_rfc4648::decode(oldRootBlock.b64Action));
     }
 
     SUBCASE("TrustchainIndexes")
@@ -271,8 +280,10 @@ TEST_CASE("trustchain migration")
       auto const sp = extractBlob(index.value);
       std::vector<uint8_t> const value(sp.begin(), sp.end());
 
-      CHECK_EQ(value, base64::decode(oldIndex.b64Value));
-      CHECK_EQ(hash, base64::decode<Crypto::Hash>(oldIndex.b64Hash));
+      CHECK_EQ(value, cppcodec::base64_rfc4648::decode(oldIndex.b64Value));
+      CHECK_EQ(
+          hash,
+          cppcodec::base64_rfc4648::decode<Crypto::Hash>(oldIndex.b64Hash));
     }
   }
 }

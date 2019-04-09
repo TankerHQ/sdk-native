@@ -1,7 +1,6 @@
 #include <Tanker/Core.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
@@ -17,6 +16,7 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
@@ -279,7 +279,7 @@ tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)
 
 SResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
 {
-  return base64::encode<SResourceId>(
+  return cppcodec::base64_rfc4648::encode<SResourceId>(
       Encryptor::extractResourceId(encryptedData));
 }
 }

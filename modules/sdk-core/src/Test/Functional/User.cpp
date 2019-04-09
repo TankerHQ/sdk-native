@@ -3,6 +3,8 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Test/Functional/User.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
+
 namespace Tanker
 {
 namespace Test
@@ -16,7 +18,8 @@ User::User(std::string trustchainUrl,
 {
   Crypto::Hash buf;
   Crypto::randomFill(buf);
-  _userId = SUserId{base64::encode(gsl::make_span(buf).subspan(0, 8))};
+  _userId = SUserId{
+      cppcodec::base64_rfc4648::encode(gsl::make_span(buf).subspan(0, 8))};
   _identity = Identity::createIdentity(
       _trustchainId, trustchainPrivateSignatureKey, _userId);
 }

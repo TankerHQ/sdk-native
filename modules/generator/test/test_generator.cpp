@@ -4,13 +4,12 @@
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
+#include <fmt/format.h>
 #include <tconcurrent/coroutine.hpp>
-
-#include <cppcodec/base64_default_rfc4648.hpp>
 
 #include <Helpers/Config.hpp>
 
-#include <fmt/format.h>
 
 using namespace Tanker;
 using namespace Tanker::Generator;
@@ -92,7 +91,8 @@ TEST_CASE_FIXTURE(UniqueTc, "UserGenerator")
     auto uGen = gen.make(1_users);
     SUBCASE("with a random uuid")
     {
-      CHECK(base64::encode(uGen.front().author) == gen.trustchainId());
+      CHECK(cppcodec::base64_rfc4648::encode(uGen.front().author) ==
+            gen.trustchainId());
       CHECK_FALSE(uGen.front().obfuscatedId.is_null());
       testDelegation(uGen.front().delegation);
       testKeys(uGen.front());
@@ -107,7 +107,8 @@ TEST_CASE_FIXTURE(UniqueTc, "UserGenerator")
     SUBCASE("with a random uuid")
     {
       auto uGen = gen.make(5_users);
-      CHECK(base64::encode(uGen.front().author) == gen.trustchainId());
+      CHECK(cppcodec::base64_rfc4648::encode(uGen.front().author) ==
+            gen.trustchainId());
       CHECK_FALSE(uGen.front().obfuscatedId.is_null());
       testDelegation(uGen.front().delegation);
       testKeys(uGen.front());
