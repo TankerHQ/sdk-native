@@ -8,7 +8,6 @@ add_library(tankercrypto STATIC
 
     include/Tanker/Crypto/Crypto.hpp
     include/Tanker/Crypto/Types.hpp
-    include/Tanker/Crypto/base64.hpp
     include/Tanker/Crypto/Traits.hpp
     include/Tanker/Crypto/KeyFormat.hpp
     include/Tanker/Crypto/JsonFormat.hpp

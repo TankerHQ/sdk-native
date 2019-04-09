@@ -4,6 +4,7 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -63,11 +64,12 @@ User Trustchain::createUser() const
 {
   auto userId = Tanker::UserId{};
   Crypto::randomFill(userId);
-  auto const suserId = Tanker::SUserId{base64::encode(userId)};
+  auto const suserId =
+      Tanker::SUserId{cppcodec::base64_rfc4648::encode(userId)};
   return User{suserId,
               Tanker::Identity::createIdentity(
-                  Tanker::base64::encode(id()),
-                  Tanker::base64::encode(keyPair().privateKey),
+                  cppcodec::base64_rfc4648::encode(id()),
+                  cppcodec::base64_rfc4648::encode(keyPair().privateKey),
                   suserId),
               nonstd::nullopt};
 }

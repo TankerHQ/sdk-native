@@ -1,10 +1,11 @@
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 #include <cassert>
 #include <exception>
@@ -27,15 +28,20 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const privSigK = base64::decode<Crypto::PrivateSignatureKey>(
-        extractBlob(row.private_signature_key));
-    auto const pubSigK = base64::decode<Crypto::PublicSignatureKey>(
-        extractBlob(row.public_signature_key));
-    auto const privEncK = base64::decode<Crypto::PrivateEncryptionKey>(
-        extractBlob(row.private_encryption_key));
-    auto const pubEncK = base64::decode<Crypto::PublicEncryptionKey>(
-        extractBlob(row.public_encryption_key));
-    auto const deviceId = base64::decode<DeviceId>(extractBlob(row.device_id));
+    auto const privSigK =
+        cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+            extractBlob(row.private_signature_key));
+    auto const pubSigK =
+        cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
+            extractBlob(row.public_signature_key));
+    auto const privEncK =
+        cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
+            extractBlob(row.private_encryption_key));
+    auto const pubEncK =
+        cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+            extractBlob(row.public_encryption_key));
+    auto const deviceId =
+        cppcodec::base64_rfc4648::decode<DeviceId>(extractBlob(row.device_id));
 
     db(update(tab)
            .set(tab.private_signature_key = privSigK.base(),

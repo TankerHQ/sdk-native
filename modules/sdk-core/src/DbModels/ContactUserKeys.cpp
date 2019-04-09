@@ -1,11 +1,12 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/UserId.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 #include <cassert>
 #include <exception>
@@ -28,9 +29,11 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const pubK = base64::decode<Crypto::PublicEncryptionKey>(
-        extractBlob(row.public_encryption_key));
-    auto const userId = base64::decode<UserId>(extractBlob(row.user_id));
+    auto const pubK =
+        cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+            extractBlob(row.public_encryption_key));
+    auto const userId =
+        cppcodec::base64_rfc4648::decode<UserId>(extractBlob(row.user_id));
 
     db(update(tab)
            .set(tab.public_encryption_key = pubK.base(),

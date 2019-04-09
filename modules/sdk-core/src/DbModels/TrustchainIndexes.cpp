@@ -1,11 +1,11 @@
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <sqlpp11/sqlpp11.h>
 
 #include <cassert>
@@ -30,8 +30,9 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const hash = base64::decode<Crypto::Hash>(extractBlob(row.hash));
-    auto const value = base64::decode(extractBlob(row.value));
+    auto const hash =
+        cppcodec::base64_rfc4648::decode<Crypto::Hash>(extractBlob(row.hash));
+    auto const value = cppcodec::base64_rfc4648::decode(extractBlob(row.value));
 
     db(update(tab)
            .set(tab.hash = hash.base(), tab.value = value)

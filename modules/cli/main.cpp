@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/hex_lower.hpp>
 
 #include <fmt/format.h>
@@ -10,7 +11,6 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Block.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
@@ -130,7 +130,7 @@ AsyncCorePtr signUp(MainArgs const& args)
 
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
-      {sdkType, base64::decode<TrustchainId>(trustchainId), sdkVersion},
+      {sdkType, cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId), sdkVersion},
       ".")};
 
   AuthenticationMethods authenticationMethods;
@@ -152,7 +152,7 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
-      {sdkType, base64::decode<TrustchainId>(trustchainId), sdkVersion},
+      {sdkType, cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId), sdkVersion},
       ".")};
 
   SignInOptions signInOptions;
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
           cppcodec::hex_lower::decode(args.at("<block>").asString()));
     else
       block = Serialization::deserialize<Block>(
-          base64::decode(args.at("<block>").asString()));
+          cppcodec::base64_rfc4648::decode(args.at("<block>").asString()));
 
     auto const entry = blockToUnverifiedEntry(block);
     std::cout << formatEntry(block, entry) << std::endl;
@@ -214,9 +214,9 @@ int main(int argc, char* argv[])
     }
     else
     {
-      block.payload = base64::decode(args.at("<payload>").asString());
-      block.author = base64::decode(args.at("<author>").asString());
-      block.signature = base64::decode(args.at("<signature>").asString());
+      block.payload = cppcodec::base64_rfc4648::decode(args.at("<payload>").asString());
+      block.author = cppcodec::base64_rfc4648::decode(args.at("<author>").asString());
+      block.signature = cppcodec::base64_rfc4648::decode(args.at("<signature>").asString());
     }
 
     auto const entry = blockToUnverifiedEntry(block);
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
   else if (args.at("encrypt").asBool())
   {
     auto const trustchainId =
-        base64::decode<TrustchainId>(args.at("<trustchainid>").asString());
+        cppcodec::base64_rfc4648::decode<TrustchainId>(args.at("<trustchainid>").asString());
 
     auto const core = signIn(args);
 
@@ -258,14 +258,14 @@ int main(int argc, char* argv[])
                   gsl::make_span(cleartext).as_span<uint8_t const>(),
                   shareToPublicIdentities)
         .get();
-    fmt::print("encrypted: {}\n", base64::encode(encrypted));
+    fmt::print("encrypted: {}\n", cppcodec::base64_rfc4648::encode(encrypted));
   }
   else if (args.at("decrypt").asBool())
   {
     auto const core = signIn(args);
 
     auto const encrypteddata =
-        base64::decode(args.at("<encrypteddata>").asString());
+        cppcodec::base64_rfc4648::decode(args.at("<encrypteddata>").asString());
     std::vector<uint8_t> decrypted(
         AsyncCore::decryptedSize(encrypteddata).get());
 

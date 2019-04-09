@@ -2,8 +2,6 @@
 
 #include <Tanker/Identity/UserToken.hpp>
 
-#include <Tanker/Crypto/base64.hpp>
-
 #include <nlohmann/json.hpp>
 
 namespace Tanker

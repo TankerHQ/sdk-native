@@ -17,7 +17,7 @@
 
 #include "MockConnection.hpp"
 
-#include <cppcodec/base64_default_rfc4648.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 
 using namespace std::string_literals;
 
@@ -75,7 +75,9 @@ TEST_CASE("Client pushes")
   SUBCASE("pushblock()")
   {
     auto const block = make_buffer("hello");
-    REQUIRE_CALL(cl.mconn, emit("push block", eq(base64::encode(block))))
+    REQUIRE_CALL(
+        cl.mconn,
+        emit("push block", eq(cppcodec::base64_rfc4648::encode(block))))
         .LR_RETURN(WRAP_COTASK(nlohmann::json{}.dump()));
     REQUIRE_NOTHROW(AWAIT_VOID(cl.c->pushBlock(block)));
   }
@@ -97,7 +99,7 @@ TEST_CASE("Client pushes")
       auto encoded_blocks = std::array<std::string, 3>{};
       std::transform(
           begin(blocks), end(blocks), begin(encoded_blocks), [](auto&& b) {
-            return base64::encode(b);
+            return cppcodec::base64_rfc4648::encode(b);
           });
       REQUIRE_CALL(cl.mconn,
                    emit("push keys", nlohmann::json(encoded_blocks).dump()))

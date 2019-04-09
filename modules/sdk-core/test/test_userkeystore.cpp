@@ -1,7 +1,6 @@
 #include <Tanker/UserKeyStore.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 
@@ -9,6 +8,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/UniquePath.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
 
 using namespace Tanker;
@@ -34,8 +34,9 @@ OldUserKeys setupUserKeysMigration(DataStore::Connection& db)
 
   auto const keyPair = Crypto::makeEncryptionKeyPair();
 
-  auto const b64PublicKey = base64::encode(keyPair.publicKey);
-  auto const b64PrivateKey = base64::encode(keyPair.privateKey);
+  auto const b64PublicKey = cppcodec::base64_rfc4648::encode(keyPair.publicKey);
+  auto const b64PrivateKey =
+      cppcodec::base64_rfc4648::encode(keyPair.privateKey);
 
   db.execute(R"(
     CREATE TABLE user_keys (
@@ -157,10 +158,10 @@ TEST_CASE("user keys migration")
         userKeys.public_encryption_key);
 
     CHECK_EQ(privK,
-             base64::decode<Crypto::PrivateEncryptionKey>(
+             cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
                  oldKeys.b64PrivateEncryptionKey));
     CHECK_EQ(pubK,
-             base64::decode<Crypto::PublicEncryptionKey>(
+             cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
                  oldKeys.b64PublicEncryptionKey));
   }
 }

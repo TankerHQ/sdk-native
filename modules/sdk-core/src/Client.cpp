@@ -2,7 +2,6 @@
 
 #include <Tanker/AConnection.hpp>
 #include <Tanker/Crypto/JsonFormat.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
@@ -13,6 +12,7 @@
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 
 #include <nlohmann/json.hpp>
@@ -66,7 +66,7 @@ tc::cotask<void> Client::handleConnection()
 
 tc::cotask<void> Client::pushBlock(gsl::span<uint8_t const> block)
 {
-  TC_AWAIT(emit("push block", base64::encode(block)));
+  TC_AWAIT(emit("push block", cppcodec::base64_rfc4648::encode(block)));
 }
 
 tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
@@ -75,7 +75,7 @@ tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
   sb.reserve(blocks.size());
   std::transform(
       begin(blocks), end(blocks), std::back_inserter(sb), [](auto&& block) {
-        return base64::encode(block);
+        return cppcodec::base64_rfc4648::encode(block);
       });
 
   TC_AWAIT(emit("push keys", sb));
@@ -199,7 +199,8 @@ void from_json(nlohmann::json const& j, UserStatusResult& result)
   result.userExists = j.at("user_exists").get<bool>();
   auto const lastReset = j.at("last_reset").get<std::string>();
   if (!lastReset.empty())
-    result.lastReset = base64::decode<Crypto::Hash>(lastReset);
+    result.lastReset =
+        cppcodec::base64_rfc4648::decode<Crypto::Hash>(lastReset);
   else
     result.lastReset = Crypto::Hash{};
 }

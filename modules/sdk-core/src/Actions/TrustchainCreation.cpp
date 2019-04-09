@@ -1,7 +1,6 @@
 #include <Tanker/Actions/TrustchainCreation.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 
 #include <nlohmann/json.hpp>
 

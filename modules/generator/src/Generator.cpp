@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include <cppcodec/base64_default_rfc4648.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
@@ -113,11 +113,13 @@ Gen& Gen::create(bool keep) &
 
 Gen& Gen::use(std::string trustchainId, std::string privateKey) &
 {
-  this->_info = make_info(base64::decode<TrustchainId>(trustchainId));
+  this->_info =
+      make_info(cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId));
   this->_keep = true;
   this->_name = "";
   this->_keyPair = Crypto::makeSignatureKeyPair(
-      base64::decode<Crypto::PrivateSignatureKey>(privateKey));
+      cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+          privateKey));
   tc::async_resumable(
       [&, this]() -> tc::cotask<void> { TC_AWAIT(launchClients()); })
       .get();
@@ -134,11 +136,13 @@ Gen&& Gen::create(bool keep) &&
 
 Gen&& Gen::use(std::string trustchainId, std::string privateKey) &&
 {
-  this->_info = make_info(base64::decode<TrustchainId>(trustchainId));
+  this->_info =
+      make_info(cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId));
   this->_keep = true;
   this->_name = "";
   this->_keyPair = Crypto::makeSignatureKeyPair(
-      base64::decode<Crypto::PrivateSignatureKey>(privateKey));
+      cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+          privateKey));
   tc::async_resumable(
       [&, this]() -> tc::cotask<void> { TC_AWAIT(launchClients()); })
       .get();
@@ -209,14 +213,14 @@ void Gen::upload(UnlockPassword const& password, Devices const& ghosts)
   futs.reserve(ghosts.size());
   for (auto const& ghost : ghosts)
   {
-    auto const msg =
-        Unlock::Message(base64::decode<TrustchainId>(trustchainId()),
-                        ghost.deviceId,
-                        Unlock::UpdateOptions{}
-                            .set(Password{password})
-                            .set(ghost.asUnlockKey()),
-                        Crypto::makeSymmetricKey(),
-                        ghost.sigKeys.privateKey);
+    auto const msg = Unlock::Message(
+        cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId()),
+        ghost.deviceId,
+        Unlock::UpdateOptions{}
+            .set(Password{password})
+            .set(ghost.asUnlockKey()),
+        Crypto::makeSymmetricKey(),
+        ghost.sigKeys.privateKey);
     auto fut = this->dispatch(
         [message = std::move(msg)](auto&& client) -> tc::cotask<void> {
           TC_AWAIT(client->createUnlockKey(message));
@@ -266,7 +270,7 @@ std::string const& Gen::name() const noexcept
 
 std::string Gen::trustchainId() const
 {
-  return base64::encode(this->_info->trustchainId);
+  return cppcodec::base64_rfc4648::encode(this->_info->trustchainId);
 }
 }
 } /* Tanker */

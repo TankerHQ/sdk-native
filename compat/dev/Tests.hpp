@@ -8,6 +8,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <boost/filesystem/operations.hpp>
 
 using namespace std::string_literals;
@@ -44,7 +45,7 @@ void to_json(nlohmann::json& j, EncryptState const& state)
   if (state.groupId)
     j["group"] = state.groupId.value();
   j["clear_data"] = state.clearData;
-  j["encrypted_data"] = Tanker::base64::encode(state.encryptedData);
+  j["encrypted_data"] = cppcodec::base64_rfc4648::encode(state.encryptedData);
 }
 
 void from_json(nlohmann::json const& j, EncryptState& state)
@@ -56,7 +57,8 @@ void from_json(nlohmann::json const& j, EncryptState& state)
     state.groupId = group->get<Tanker::SGroupId>();
   j.at("clear_data").get_to(state.clearData);
   auto const str = j.at("encrypted_data").get<std::string>();
-  state.encryptedData = Tanker::base64::decode<std::vector<uint8_t>>(str);
+  state.encryptedData =
+      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(str);
 }
 
 void decrypt(CorePtr const& core,
@@ -89,10 +91,10 @@ User upgradeToIdentity(Tanker::TrustchainId const& trustchainId, User user)
 {
   if (user.user_token)
   {
-    user.identity =
-        Tanker::Identity::upgradeUserToken(Tanker::base64::encode(trustchainId),
-                                           user.suserId,
-                                           user.user_token.value());
+    user.identity = Tanker::Identity::upgradeUserToken(
+        cppcodec::base64_rfc4648::encode(trustchainId),
+        user.suserId,
+        user.user_token.value());
     user.user_token.reset();
   }
   return user;

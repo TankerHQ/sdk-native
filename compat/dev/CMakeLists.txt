@@ -8,4 +8,4 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
 add_executable(compat main.cpp)
-target_link_libraries(compat CONAN_PKG::docopt.cpp CONAN_PKG::tanker)
+target_link_libraries(compat CONAN_PKG::docopt.cpp CONAN_PKG::tanker CONAN_PKG::cppcodec)

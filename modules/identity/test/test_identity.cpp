@@ -7,6 +7,7 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Types/UserId.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
 #include <fmt/format.h>
 #include <gsl-lite.hpp>
@@ -58,25 +59,28 @@ auto const trustchainPrivateKeyString =
     "cTMoGGUKhwN47ypq4xAXAtVkNWeyUtMltQnYwJhxWYSvqjPVGmXd2wwa7y17QtPTZhn8bxb015"
     "CZC/e4ZI7+MQ=="s;
 
-auto const trustchainId = base64::decode<TrustchainId>(trustchainIdString);
+auto const trustchainId =
+    cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdString);
 auto const trustchainPrivateKey =
-    base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);
 
 auto const suserId = "b_eich"_uid;
 auto const obfuscatedUserId = obfuscateUserId(suserId, trustchainId);
 
-auto const userSecret = base64::decode<Tanker::Crypto::SymmetricKey>(
-    "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
+auto const userSecret =
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::SymmetricKey>(
+        "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
 
 auto const publicEphemeralKey =
-    base64::decode<Tanker::Crypto::PublicSignatureKey>(
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
         "Xh3i0xDTpr3HXtB2Q517QKv3azNzXLLXMdJDTSH4bd4=");
 auto const privateEphemeralKey =
-    base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
         "jEDT4wQCc1DFwodXNPHFClndTPnFuFmXhBt+isKU4ZpeHeLTENOmvcde0HZDnXtAq/"
         "drM3Ncstcx0kNNIfht3g==");
-auto const delegation_signature = base64::decode<Tanker::Crypto::Signature>(
+auto const delegation_signature = cppcodec::base64_rfc4648::decode<
+    Tanker::Crypto::Signature>(
     "U9WQolCvRyjT8oR2PQmd1WXNCi0qmL12hNrtGabYREWiry52kWx1AgYzkLxH6gpo3MiA9r++"
     "zhnmoYdEJ0+JCw==");
 
@@ -201,7 +205,7 @@ TEST_SUITE("Generate user token")
   {
     auto const userTokenString = generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, suserId);
-    auto const clearStr = base64::decode(userTokenString);
+    auto const clearStr = cppcodec::base64_rfc4648::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
   }
   TEST_CASE("user secret have good format")

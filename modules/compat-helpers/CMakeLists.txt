@@ -28,4 +28,5 @@ install(TARGETS tankercompathelpers
 target_link_libraries(tankercompathelpers
   tankercore
   tankertesthelpers
+  CONAN_PKG::cppcodec
 )

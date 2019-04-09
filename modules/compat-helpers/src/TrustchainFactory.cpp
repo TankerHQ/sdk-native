@@ -50,7 +50,7 @@ tc::future<Trustchain::Ptr> TrustchainFactory::createTrustchain(
     auto trustchainDefault = Tanker::TrustchainId{};
     Crypto::randomFill(trustchainDefault);
     auto trustchainId = TC_AWAIT(_admin->createTrustchain(
-        trustchainName.value_or(base64::encode(trustchainDefault)),
+        trustchainName.value_or(cppcodec::base64_rfc4648::encode(trustchainDefault)),
         kp,
         isTest));
     TC_RETURN(Trustchain::make(

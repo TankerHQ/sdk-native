@@ -2,8 +2,8 @@
 
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <Helpers/Config.hpp>
@@ -47,9 +47,10 @@ void Trustchain::reuseCache()
 
 User Trustchain::makeUser(UserType type)
 {
-  auto const trustchainIdString = base64::encode(_trustchainId);
+  auto const trustchainIdString =
+      cppcodec::base64_rfc4648::encode(_trustchainId);
   auto const trustchainPrivateKeyString =
-      base64::encode(_trustchainSignatureKeyPair.privateKey);
+      cppcodec::base64_rfc4648::encode(_trustchainSignatureKeyPair.privateKey);
 
   if (type == UserType::New)
     return User(_trustchainUrl, trustchainIdString, trustchainPrivateKeyString);

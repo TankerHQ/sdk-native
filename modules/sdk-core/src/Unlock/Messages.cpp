@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
@@ -10,6 +9,8 @@
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
+#include <cppcodec/base64_url_unpadded.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
@@ -26,12 +27,13 @@ void to_json(nlohmann::json& j, Request const& m)
   j["trustchain_id"] = m.trustchainId;
   j["user_id"] = m.userId;
   j["type"] = to_string(m.type);
-  j["value"] = base64::encode(m.value);
+  j["value"] = cppcodec::base64_rfc4648::encode(m.value);
 }
 
 void to_json(nlohmann::json& j, FetchAnswer const& m)
 {
-  j["encrypted_unlock_key"] = base64::encode(m.encryptedUnlockKey);
+  j["encrypted_unlock_key"] =
+      cppcodec::base64_rfc4648::encode(m.encryptedUnlockKey);
 }
 
 void to_json(nlohmann::json& j, Message const& m)
@@ -44,7 +46,7 @@ void to_json(nlohmann::json& j, Message const& m)
 
 void from_json(nlohmann::json const& j, FetchAnswer& f)
 {
-  f.encryptedUnlockKey = base64::decode<std::vector<uint8_t>>(
+  f.encryptedUnlockKey = cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
       j.at("encrypted_unlock_key").get<std::string>());
 }
 
@@ -70,7 +72,7 @@ Request::Request(TrustchainId const& trustchainId,
   }
   else if (auto rawcode = mpark::get_if<VerificationCode>(&locker))
   {
-    auto const code = safeBase64Unpadded::decode(*rawcode);
+    auto const code = cppcodec::base64_url_unpadded::decode(*rawcode);
     value.assign(code.begin(), code.end());
     type = Type::VerificationCode;
   }

@@ -9,6 +9,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/UserId.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <Helpers/Await.hpp>
@@ -33,8 +34,9 @@ OldContactUserKeys setupContactUserKeysMigration(DataStore::Connection& db)
 
   auto const keyPair = Crypto::makeEncryptionKeyPair();
 
-  auto const b64PublicKey = base64::encode(keyPair.publicKey);
-  auto const b64UserId = base64::encode(make<UserId>("michel"));
+  auto const b64PublicKey = cppcodec::base64_rfc4648::encode(keyPair.publicKey);
+  auto const b64UserId =
+      cppcodec::base64_rfc4648::encode(make<UserId>("michel"));
 
   db.execute(R"(
     CREATE TABLE contact_user_keys (
@@ -120,9 +122,10 @@ TEST_CASE("contact user keys migration")
     auto const pubK = DataStore::extractBlob<Crypto::PublicEncryptionKey>(
         contactUserKeys.public_encryption_key);
 
-    CHECK_EQ(userId, base64::decode<UserId>(oldKeys.b64UserId));
+    CHECK_EQ(userId,
+             cppcodec::base64_rfc4648::decode<UserId>(oldKeys.b64UserId));
     CHECK_EQ(pubK,
-             base64::decode<Crypto::PublicEncryptionKey>(
+             cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
                  oldKeys.b64PublicEncryptionKey));
   }
 

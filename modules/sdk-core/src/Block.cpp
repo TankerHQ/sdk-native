@@ -2,12 +2,12 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
@@ -109,7 +109,7 @@ void to_json(nlohmann::json& j, Block const& b)
   j["index"] = b.index;
   j["author"] = b.author;
   j["nature"] = b.nature;
-  j["payload"] = base64::encode(b.payload);
+  j["payload"] = cppcodec::base64_rfc4648::encode(b.payload);
   j["signature"] = b.signature;
   j["hash"] = b.hash();
 }

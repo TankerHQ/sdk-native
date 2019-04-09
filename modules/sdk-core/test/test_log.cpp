@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/JsonFormat.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
@@ -11,6 +10,7 @@
 
 #include <Helpers/Buffers.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <iostream>
@@ -110,7 +110,8 @@ TEST_CASE("print a formated log")
   SUBCASE("It format a Mac")
   {
     auto mac = Tanker::make<Tanker::Crypto::Mac>("awesome, isn't it?");
-    REQUIRE(fmt::format("my mac is {}", Tanker::base64::encode(mac)) ==
+    REQUIRE(fmt::format("my mac is {}",
+                        cppcodec::base64_rfc4648::encode(mac)) ==
             fmt::format("my mac is {}", mac));
   }
 }

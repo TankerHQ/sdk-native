@@ -3,6 +3,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -48,7 +49,7 @@ void to_json(nlohmann::json& j, PublicIdentity const& publicIdentity)
 
 std::string to_string(PublicIdentity const& identity)
 {
-  return base64::encode(nlohmann::json(identity).dump());
+  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
 }
 }
 }

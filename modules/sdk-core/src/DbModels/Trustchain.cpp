@@ -1,12 +1,12 @@
 #include <Tanker/DbModels/Trustchain.hpp>
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 
 #include <cassert>
@@ -48,9 +48,11 @@ void base64ToBinary(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const hash = base64::decode(extractBlob(row.hash));
-    auto const author = base64::decode(extractBlob(row.author));
-    auto const action = base64::decode(extractBlob(row.action));
+    auto const hash = cppcodec::base64_rfc4648::decode(extractBlob(row.hash));
+    auto const author =
+        cppcodec::base64_rfc4648::decode(extractBlob(row.author));
+    auto const action =
+        cppcodec::base64_rfc4648::decode(extractBlob(row.action));
 
     db(update(tab)
            .set(tab.hash = hash, tab.author = author, tab.action = action)
