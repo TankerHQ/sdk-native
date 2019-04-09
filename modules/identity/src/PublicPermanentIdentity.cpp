@@ -10,8 +10,13 @@ namespace Identity
 {
 void from_json(nlohmann::json const& j, PublicPermanentIdentity& identity)
 {
-  identity = PublicPermanentIdentity{j.at("trustchain_id").get<TrustchainId>(),
-                                     j.at("value").get<UserId>()};
+  auto const target = j.at("target").get<std::string>();
+  if (target != "user")
+    throw std::runtime_error("unsupported public permanent identity target: " +
+                             target);
+
+  j.at("trustchain_id").get_to(identity.trustchainId);
+  j.at("value").get_to(identity.userId);
 }
 
 void to_json(nlohmann::json& j, PublicPermanentIdentity const& identity)
