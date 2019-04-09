@@ -29,16 +29,16 @@ bool operator!=(TrustchainCreation const& l, TrustchainCreation const& r)
   return !(l == r);
 }
 
-std::size_t serialized_size(TrustchainCreation const& tc)
-{
-  return tc.publicSignatureKey.size();
-}
-
 void from_serialized(Serialization::SerializedSource& ss,
                      TrustchainCreation& tc)
 {
   tc.publicSignatureKey =
       Serialization::deserialize<Crypto::PublicSignatureKey>(ss);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, TrustchainCreation const& tc)
+{
+  return Serialization::serialize(it, tc.publicSignatureKey);
 }
 
 void to_json(nlohmann::json& j, TrustchainCreation const& tc)

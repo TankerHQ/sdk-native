@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>
@@ -24,16 +24,6 @@ struct Delegation;
 
 namespace detail
 {
-template <typename T, typename OutputIterator>
-void serializeCommonDeviceCreationFields(OutputIterator it, T const& dc)
-{
-  Serialization::serialize(it, dc.ephemeralPublicSignatureKey);
-  Serialization::serialize(it, dc.userId);
-  Serialization::serialize(it, dc.delegationSignature);
-  Serialization::serialize(it, dc.publicSignatureKey);
-  Serialization::serialize(it, dc.publicEncryptionKey);
-}
-
 template <typename T>
 constexpr std::size_t sizeOfCommonDeviceCreationFields(T const& dc)
 {
@@ -132,25 +122,9 @@ std::size_t serialized_size(DeviceCreation const& dc);
 void from_serialized(Serialization::SerializedSource& ss, DeviceCreation1&);
 void from_serialized(Serialization::SerializedSource& ss, DeviceCreation3&);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceCreation1 const& dc)
-{
-  detail::serializeCommonDeviceCreationFields(it, dc);
-}
-
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceCreation3 const& dc)
-{
-  detail::serializeCommonDeviceCreationFields(it, dc);
-  Serialization::serialize(it, dc.userKeyPair);
-  *it++ = static_cast<std::uint8_t>(dc.isGhostDevice);
-}
-
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceCreation const& dc)
-{
-  Serialization::serialize(it, dc.variant());
-}
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation1 const& dc);
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation3 const& dc);
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation const& dc);
 
 bool operator==(DeviceCreation1 const& l, DeviceCreation1 const& r);
 bool operator!=(DeviceCreation1 const& l, DeviceCreation1 const& r);

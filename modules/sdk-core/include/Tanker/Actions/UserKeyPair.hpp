@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -24,12 +24,8 @@ constexpr std::size_t serialized_size(UserKeyPair const& uk)
          uk.encryptedPrivateEncryptionKey.arraySize;
 }
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, UserKeyPair const& ukp)
-{
-  Serialization::serialize(it, ukp.publicEncryptionKey);
-  Serialization::serialize(it, ukp.encryptedPrivateEncryptionKey);
-}
+std::uint8_t* to_serialized(std::uint8_t* it, UserKeyPair const& ukp);
+
 void from_serialized(Serialization::SerializedSource& ss, UserKeyPair&);
 
 void to_json(nlohmann::json& j, UserKeyPair const& ukp);

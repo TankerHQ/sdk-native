@@ -37,9 +37,11 @@ bool operator!=(KeyPublishToUser const& l, KeyPublishToUser const& r)
   return !(l == r);
 }
 
-std::size_t serialized_size(KeyPublishToUser const& kp)
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUser const& kp)
 {
-  return kp.recipientPublicEncryptionKey.size() + kp.mac.size() + kp.key.size();
+  it = Serialization::serialize(it, kp.recipientPublicEncryptionKey);
+  it = Serialization::serialize(it, kp.mac);
+  return Serialization::serialize(it, kp.key);
 }
 
 KeyPublishToUser deserializeKeyPublishToUser(gsl::span<uint8_t const> data)

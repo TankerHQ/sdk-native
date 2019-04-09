@@ -6,7 +6,9 @@
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <array>
+#include <iterator>
 #include <stdexcept>
+#include <vector>
 
 #include <gsl-lite.hpp>
 
@@ -458,12 +460,11 @@ void from_serialized(Serialization::SerializedSource& ss, T& val)
   std::copy(sp.begin(), sp.end(), val.begin());
 }
 
-template <typename OutputIterator,
-          typename T,
+template <typename T,
           typename = std::enable_if_t<is_cryptographic_type<T>::value>>
-void to_serialized(OutputIterator it, T const& val)
+std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 {
-  std::copy(val.begin(), val.end(), it);
+  return std::copy(val.begin(), val.end(), it);
 }
 }
 }

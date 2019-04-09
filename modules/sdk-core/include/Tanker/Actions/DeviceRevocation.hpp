@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -16,8 +16,6 @@
 
 namespace Tanker
 {
-
-// Device Revocation1:
 struct DeviceRevocation1
 {
   DeviceId deviceId;
@@ -30,11 +28,7 @@ constexpr std::size_t serialized_size(DeviceRevocation1 const& dr)
   return DeviceId::arraySize;
 }
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceRevocation1 const& dr)
-{
-  Serialization::serialize(it, dr.deviceId);
-}
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation1 const& dr);
 
 void from_serialized(Serialization::SerializedSource& ss,
                      DeviceRevocation1& dr);
@@ -56,7 +50,11 @@ void to_json(nlohmann::json& j, EncryptedPrivateUserKey const& epuk);
 void from_serialized(Serialization::SerializedSource& ss,
                      EncryptedPrivateUserKey& key);
 
-std::size_t serialized_size(EncryptedPrivateUserKey const& key);
+constexpr std::size_t serialized_size(EncryptedPrivateUserKey const& key)
+{
+  return Serialization::serialized_size(key.deviceId) +
+         Serialization::serialized_size(key.privateEncryptionKey);
+}
 
 bool operator==(EncryptedPrivateUserKey const& lhs,
                 EncryptedPrivateUserKey const& rhs);
@@ -67,12 +65,8 @@ bool operator!=(EncryptedPrivateUserKey const& lhs,
 bool operator<(EncryptedPrivateUserKey const& lhs,
                EncryptedPrivateUserKey const& rhs);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, EncryptedPrivateUserKey const& key)
-{
-  Serialization::serialize(it, key.deviceId);
-  Serialization::serialize(it, key.privateEncryptionKey);
-}
+std::uint8_t* to_serialized(std::uint8_t* it,
+                            EncryptedPrivateUserKey const& key);
 
 // Device Revocation2:
 struct DeviceRevocation2
@@ -88,15 +82,7 @@ struct DeviceRevocation2
 
 std::size_t serialized_size(DeviceRevocation2 const& dr);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceRevocation2 const& dr)
-{
-  Serialization::serialize(it, dr.deviceId);
-  Serialization::serialize(it, dr.publicEncryptionKey);
-  Serialization::serialize(it, dr.previousPublicEncryptionKey);
-  Serialization::serialize(it, dr.encryptedKeyForPreviousUserKey);
-  Serialization::serialize(it, dr.userKeys);
-}
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation2 const& dr);
 
 void from_serialized(Serialization::SerializedSource& ss,
                      DeviceRevocation2& dr);
@@ -137,12 +123,7 @@ private:
 bool operator==(DeviceRevocation const& l, DeviceRevocation const& r);
 bool operator!=(DeviceRevocation const& l, DeviceRevocation const& r);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, DeviceRevocation const& dr)
-{
-  Serialization::serialize(it, dr.variant());
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation const& dr);
 std::size_t serialized_size(DeviceRevocation const&);
 
 void to_json(nlohmann::json& j, DeviceRevocation const& dc);

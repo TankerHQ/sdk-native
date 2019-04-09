@@ -56,12 +56,7 @@ private:
 bool operator==(Action const& l, Action const& r);
 bool operator!=(Action const& l, Action const& r);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, Action const& dr)
-{
-  Serialization::serialize(it, dr.variant());
-}
-
+std::uint8_t* to_serialized(std::uint8_t* it, Action const& dr);
 std::size_t serialized_size(Action const&);
 
 // we do not use from_serialized here, because the nature is not serialized in

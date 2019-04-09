@@ -28,6 +28,12 @@ void to_json(nlohmann::json& j, UserKeyPair const& uu)
   j["encryptedPrivateEncryptionKey"] = uu.encryptedPrivateEncryptionKey;
 }
 
+std::uint8_t* to_serialized(std::uint8_t* it, UserKeyPair const& ukp)
+{
+  it = Serialization::serialize(it, ukp.publicEncryptionKey);
+  return Serialization::serialize(it, ukp.encryptedPrivateEncryptionKey);
+}
+
 void from_serialized(Serialization::SerializedSource& ss, UserKeyPair& userKeys)
 {
   userKeys.publicEncryptionKey =

@@ -37,12 +37,6 @@ bool operator!=(KeyPublishToUserGroup const& l, KeyPublishToUserGroup const& r)
   return !(l == r);
 }
 
-std::size_t serialized_size(KeyPublishToUserGroup const& kp)
-{
-  return kp.recipientPublicEncryptionKey.size() + kp.resourceId.size() +
-         kp.key.size();
-}
-
 KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
     gsl::span<uint8_t const> data)
 {
@@ -59,6 +53,13 @@ KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
         "trailing garbage at end of KeyPublishToUserGroup");
 
   return out;
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUserGroup const& dc)
+{
+  it = Serialization::serialize(it, dc.recipientPublicEncryptionKey);
+  it = Serialization::serialize(it, dc.resourceId);
+  return Serialization::serialize(it, dc.key);
 }
 
 void to_json(nlohmann::json& j, KeyPublishToUserGroup const& kp)

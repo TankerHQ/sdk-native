@@ -45,19 +45,17 @@ std::size_t serialized_size(VecHolder const& vh)
   return Tanker::Serialization::serialized_size(vh.vec) + sizeof(vh.byte);
 }
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, Vec const& v)
+std::uint8_t* to_serialized(std::uint8_t* it, Vec const& v)
 {
   // don't try this at home
   *it++ = static_cast<std::uint8_t>(v.buffer.size());
-  std::copy(v.buffer.begin(), v.buffer.end(), it);
+  return std::copy(v.buffer.begin(), v.buffer.end(), it);
 }
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, VecHolder const& vh)
+std::uint8_t* to_serialized(std::uint8_t* it, VecHolder const& vh)
 {
   *it++ = vh.byte;
-  Tanker::Serialization::serialize(it, vh.vec);
+  return Tanker::Serialization::serialize(it, vh.vec);
 }
 
 void from_serialized(Tanker::Serialization::SerializedSource& ss, Vec& v)

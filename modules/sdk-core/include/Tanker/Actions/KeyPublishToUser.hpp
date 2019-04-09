@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -29,15 +28,12 @@ bool operator!=(KeyPublishToUser const& l, KeyPublishToUser const& r);
 
 KeyPublishToUser deserializeKeyPublishToUser(gsl::span<uint8_t const> data);
 
-template <typename OutputIterator>
-void to_serialized(OutputIterator it, KeyPublishToUser const& kp)
-{
-  Serialization::serialize(it, kp.recipientPublicEncryptionKey);
-  Serialization::serialize(it, kp.mac);
-  Serialization::serialize(it, kp.key);
-}
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUser const& kp);
 
-std::size_t serialized_size(KeyPublishToUser const& kp);
+constexpr std::size_t serialized_size(KeyPublishToUser const& kp)
+{
+  return kp.recipientPublicEncryptionKey.size() + kp.mac.size() + kp.key.size();
+}
 
 void to_json(nlohmann::json& j, KeyPublishToUser const& kp);
 }
