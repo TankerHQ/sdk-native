@@ -184,10 +184,9 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethod(
       [&] { return this->_core->hasRegisteredUnlockMethod(method); });
 }
 
-tc::future<SDeviceId> AsyncCore::deviceId() const
+expected<SDeviceId> AsyncCore::deviceId() const
 {
-  return tc::async(
-      [this]() { return SDeviceId(base64::encode(this->_core->deviceId())); });
+  return tc::sync([&] { return SDeviceId(base64::encode(_core->deviceId())); });
 }
 
 tc::future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)

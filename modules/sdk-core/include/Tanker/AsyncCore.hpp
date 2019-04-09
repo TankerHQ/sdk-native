@@ -50,8 +50,6 @@ enum class Event
 
 class AsyncCore
 {
-  std::unique_ptr<Core> _core;
-
 public:
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
   ~AsyncCore();
@@ -118,5 +116,8 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   static std::string const& version();
+
+private:
+  std::unique_ptr<Core> _core;
 };
 }
