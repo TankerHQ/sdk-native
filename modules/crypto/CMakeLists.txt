@@ -21,6 +21,7 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/Hash.hpp
     include/Tanker/Crypto/Mac.hpp
     include/Tanker/Crypto/Signature.hpp
+    include/Tanker/Crypto/SymmetricKey.hpp
     include/Tanker/Crypto/detail/CryptographicTypeImpl.hpp
     include/Tanker/Crypto/detail/CryptographicType.hpp
     include/Tanker/Crypto/detail/IsCryptographicType.hpp
