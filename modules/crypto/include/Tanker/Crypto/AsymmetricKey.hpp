@@ -24,7 +24,8 @@ struct IsCryptographicType<AsymmetricKey<Type, Usage, T>> : std::true_type
 
 namespace std
 {
-TANKER_CRYPTO_ARRAY_HELPERS_NON_TYPE_TPL_ARGS(::Tanker::Crypto::AsymmetricKey,
-                                              ::Tanker::Crypto::KeyType,
-                                              ::Tanker::Crypto::KeyUsage);
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_NON_TYPE_TPL_ARGS(
+    ::Tanker::Crypto::AsymmetricKey,
+    ::Tanker::Crypto::KeyType,
+    ::Tanker::Crypto::KeyUsage)
 }

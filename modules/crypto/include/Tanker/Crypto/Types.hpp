@@ -192,14 +192,16 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 
 namespace std
 {
-TANKER_CRYPTO_ARRAY_HELPERS_TPL_ARG(::Tanker::Crypto::BasicHash);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::Mac);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::Signature);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SymmetricKey);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SealedPrivateEncryptionKey);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SealedPrivateSignatureKey);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::EncryptedSymmetricKey);
-TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::SealedSymmetricKey);
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_TPL_ARG(::Tanker::Crypto::BasicHash)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::Mac)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::Signature)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SymmetricKey)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(
+    ::Tanker::Crypto::SealedPrivateEncryptionKey)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(
+    ::Tanker::Crypto::SealedPrivateSignatureKey)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::EncryptedSymmetricKey)
+TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SealedSymmetricKey)
 }
 
 namespace nlohmann
