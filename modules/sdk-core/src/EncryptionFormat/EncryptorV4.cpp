@@ -38,7 +38,7 @@ void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
   assert(dataVersionResult.first == version());
 
   if (dataVersionResult.second.size() < overheadSize)
-    throw Error::DecryptFailed("truncated encrypted buffer");
+    throw Error::InvalidArgument("truncated encrypted buffer");
 }
 }
 
@@ -61,7 +61,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
     auto const encryptedChunkSize = Serialization::deserialize<uint32_t>(
         versionResult.second.subspan(0, sizeOfChunkSize));
     if (versionResult.second.size() < sizeOfChunkSize + ResourceId::arraySize)
-      throw Error::DecryptFailed("truncated encrypted buffer");
+      throw Error::InvalidArgument("truncated encrypted buffer");
     auto const chunks = encryptedData.size() / encryptedChunkSize;
     auto const lastClearChunkSize =
         (encryptedData.size() % encryptedChunkSize) -
@@ -71,7 +71,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   }
   catch (std::out_of_range const&)
   {
-    throw Error::DecryptFailed("truncated encrypted buffer");
+    throw Error::InvalidArgument("truncated encrypted buffer");
   }
 }
 
@@ -153,7 +153,7 @@ void decrypt(uint8_t* decryptedData,
   }
   catch (std::out_of_range const&)
   {
-    throw Error::DecryptFailed("truncated encrypted buffer");
+    throw Error::InvalidArgument("truncated encrypted buffer");
   }
   catch (Crypto::DecryptFailed const& e)
   {
@@ -174,7 +174,7 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
   }
   catch (std::out_of_range const&)
   {
-    throw Error::DecryptFailed("truncated encrypted buffer");
+    throw Error::InvalidArgument("truncated encrypted buffer");
   }
 }
 }

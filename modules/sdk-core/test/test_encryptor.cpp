@@ -40,7 +40,7 @@ TEST_SUITE("EncryptorV2")
     auto const truncatedBuffer = make_buffer("\2");
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV2::decryptedSize(truncatedBuffer),
-        Error::DecryptFailed);
+        Error::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
@@ -173,7 +173,7 @@ TEST_SUITE("EncryptorV3")
     auto const truncatedBuffer = make_buffer("\3");
     CHECK_THROWS_AS(
         EncryptionFormat::EncryptorV3::decryptedSize(truncatedBuffer),
-        Error::DecryptFailed);
+        Error::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
