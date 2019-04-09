@@ -22,6 +22,7 @@ std::vector<std::uint8_t> serialize(T const& val)
   buffer.resize(size);
   auto const it = to_serialized(buffer.data(), val);
   assert(it == buffer.data() + size);
+  (void)it;
   return buffer;
 }
 
