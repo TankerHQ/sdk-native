@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Crypto/AsymmetricKey.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
@@ -34,8 +35,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(AeadIv,
-                                 crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedPrivateEncryptionKey,
                                  crypto_box_SECRETKEYBYTES +
                                      crypto_box_SEALBYTES)
