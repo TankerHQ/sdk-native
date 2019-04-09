@@ -84,6 +84,7 @@ public:
   Unlock::Methods registeredUnlockMethods() const;
 
   DeviceId const& deviceId() const;
+  tc::cotask<std::vector<Device>> getDeviceList() const;
 
   tc::cotask<void> syncTrustchain();
 

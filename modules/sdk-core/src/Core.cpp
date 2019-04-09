@@ -212,6 +212,14 @@ DeviceId const& Core::deviceId() const
     return _deviceId;
 }
 
+tc::cotask<std::vector<Device>> Core::getDeviceList() const
+{
+  auto const psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(getDeviceList);
+  return (*psession)->getDeviceList();
+}
+
 tc::cotask<UnlockKey> Core::generateAndRegisterUnlockKey()
 {
   auto psession = mpark::get_if<SessionType>(&_state);

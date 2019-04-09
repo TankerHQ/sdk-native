@@ -319,6 +319,11 @@ DeviceId const& Session::deviceId() const
   return _deviceKeyStore->deviceId();
 }
 
+tc::cotask<std::vector<Device>> Session::getDeviceList() const
+{
+    TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
+}
+
 tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
                                 std::vector<UserId> const& userIds,
                                 std::vector<GroupId> const& groupIds)

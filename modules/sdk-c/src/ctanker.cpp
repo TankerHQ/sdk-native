@@ -248,6 +248,27 @@ tanker_future_t* tanker_device_id(tanker_t* ctanker)
   return makeFuture(std::move(fut));
 }
 
+tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
+{
+  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->getDeviceList().and_then(
+      tc::get_synchronous_executor(),
+      [](std::vector<Device> const& deviceList) {
+        auto* cDeviceList = new tanker_device_list_t;
+        cDeviceList->count = deviceList.size();
+        cDeviceList->devices = new tanker_device_list_elem_t[deviceList.size()];
+        tanker_device_list_elem_t* cDevice = cDeviceList->devices;
+        for (auto const& device : deviceList)
+        {
+          cDevice->device_id =
+              duplicateString(cppcodec::base64_rfc4648::encode(device.id));
+          cDevice->is_revoked = device.revokedAtBlkIndex.has_value();
+          cDevice++;
+        }
+        return reinterpret_cast<void*>(cDeviceList);
+      }));
+}
+
 tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
@@ -395,4 +416,12 @@ tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
 void tanker_free_buffer(void* buffer)
 {
   free(buffer);
+}
+
+void tanker_free_device_list(tanker_device_list_t* list)
+{
+  for (size_t i = 0; i < list->count; ++i)
+    free(const_cast<b64char*>(list->devices[i].device_id));
+  delete[] list->devices;
+  delete list;
 }

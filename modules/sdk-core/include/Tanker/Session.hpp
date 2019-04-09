@@ -116,6 +116,7 @@ public:
   tc::cotask<void> catchUserKey(DeviceId const& id,
                                 DeviceCreation const& deviceCreation);
   DeviceId const& deviceId() const;
+  tc::cotask<std::vector<Device>> getDeviceList() const;
 
 private:
   tc::cotask<void> share(std::vector<Crypto::Mac> const& resourceId,
