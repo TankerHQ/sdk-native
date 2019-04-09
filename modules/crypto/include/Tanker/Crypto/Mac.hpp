@@ -10,8 +10,7 @@ namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac,
-                                 crypto_aead_xchacha20poly1305_ietf_ABYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac, crypto_aead_xchacha20poly1305_ietf_ABYTES)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Mac)
 }
 }
