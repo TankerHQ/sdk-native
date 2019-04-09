@@ -27,8 +27,8 @@ namespace Crypto
 {
 // using private inheritance here (UB as the standard says but it's ok TM)
 // see https://stackoverflow.com/a/4354072
-template <typename T>
-class AsymmetricKey<KeyType::Private, KeyUsage::Signature, T>
+template <>
+class AsymmetricKey<KeyType::Private, KeyUsage::Signature>
   : std::array<uint8_t, crypto_sign_SECRETKEYBYTES>
 {
   TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
@@ -36,8 +36,8 @@ class AsymmetricKey<KeyType::Private, KeyUsage::Signature, T>
                                         PrivateSignatureKey)
 };
 
-template <typename T>
-class AsymmetricKey<KeyType::Public, KeyUsage::Signature, T>
+template <>
+class AsymmetricKey<KeyType::Public, KeyUsage::Signature>
   : std::array<uint8_t, crypto_sign_PUBLICKEYBYTES>
 {
   TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
@@ -45,8 +45,8 @@ class AsymmetricKey<KeyType::Public, KeyUsage::Signature, T>
                                         PublicSignatureKey)
 };
 
-template <typename T>
-class AsymmetricKey<KeyType::Private, KeyUsage::Encryption, T>
+template <>
+class AsymmetricKey<KeyType::Private, KeyUsage::Encryption>
   : std::array<uint8_t, crypto_box_SECRETKEYBYTES>
 {
   TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
@@ -54,8 +54,8 @@ class AsymmetricKey<KeyType::Private, KeyUsage::Encryption, T>
                                         PrivateEncryptionKey)
 };
 
-template <typename T>
-class AsymmetricKey<KeyType::Public, KeyUsage::Encryption, T>
+template <>
+class AsymmetricKey<KeyType::Public, KeyUsage::Encryption>
   : std::array<uint8_t, crypto_box_PUBLICKEYBYTES>
 {
   TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
@@ -83,12 +83,7 @@ bool operator!=(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
   return !(a == b);
 }
 
-template <typename T>
-using PublicSignatureKeyBase =
-    AsymmetricKey<KeyType::Public, KeyUsage::Signature, T>;
-
-using PublicSignatureKey = PublicSignatureKeyBase<void>;
-
+using PublicSignatureKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
 using PrivateSignatureKey =
     AsymmetricKey<KeyType::Private, KeyUsage::Signature>;
 using PublicEncryptionKey =

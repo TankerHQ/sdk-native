@@ -16,18 +16,18 @@
   {                                                                  \
   };
 
-#define TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_NON_TYPE_TPL_ARGS(    \
-    Self, Arg1, Arg2)                                              \
-  template <Arg1 KT, Arg2 KU, typename Tag>                        \
-  class tuple_size<Self<KT, KU, Tag>>                              \
-    : public tuple_size<typename Self<KT, KU, Tag>::array_t>       \
-  {                                                                \
-  };                                                               \
-                                                                   \
-  template <size_t I, Arg1 KT, Arg2 KU, typename Tag>              \
-  class tuple_element<I, Self<KT, KU, Tag>>                        \
-    : public tuple_element<I, typename Self<KT, KU, Tag>::array_t> \
-  {                                                                \
+#define TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_NON_TYPE_TPL_ARGS( \
+    Self, Arg1, Arg2)                                           \
+  template <Arg1 KT, Arg2 KU>                                   \
+  class tuple_size<Self<KT, KU>>                                \
+    : public tuple_size<typename Self<KT, KU>::array_t>         \
+  {                                                             \
+  };                                                            \
+                                                                \
+  template <size_t I, Arg1 KT, Arg2 KU>                         \
+  class tuple_element<I, Self<KT, KU>>                          \
+    : public tuple_element<I, typename Self<KT, KU>::array_t>   \
+  {                                                             \
   };
 
 #define TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_TPL_ARG(Self)                 \

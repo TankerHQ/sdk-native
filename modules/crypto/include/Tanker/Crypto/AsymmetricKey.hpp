@@ -12,11 +12,11 @@ namespace Tanker
 {
 namespace Crypto
 {
-template <KeyType Type, KeyUsage Usage, typename = void>
+template <KeyType Type, KeyUsage Usage>
 class AsymmetricKey;
 
-template <KeyType Type, KeyUsage Usage, typename T>
-struct IsCryptographicType<AsymmetricKey<Type, Usage, T>> : std::true_type
+template <KeyType Type, KeyUsage Usage>
+struct IsCryptographicType<AsymmetricKey<Type, Usage>> : std::true_type
 {
 };
 }
