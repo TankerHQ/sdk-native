@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 
 #include <Tanker/Crypto/detail/ArrayHelpers.hpp>
 #include <Tanker/Crypto/detail/CryptographicType.hpp>
@@ -25,17 +26,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-// using private inheritance here (UB as the standard says but it's ok TM)
-// see https://stackoverflow.com/a/4354072
-template <>
-class AsymmetricKey<KeyType::Private, KeyUsage::Signature>
-  : std::array<uint8_t, crypto_sign_SECRETKEYBYTES>
-{
-  TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
-                                        crypto_sign_SECRETKEYBYTES,
-                                        PrivateSignatureKey)
-};
-
 template <>
 class AsymmetricKey<KeyType::Public, KeyUsage::Signature>
   : std::array<uint8_t, crypto_sign_PUBLICKEYBYTES>
@@ -84,8 +74,6 @@ bool operator!=(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
 }
 
 using PublicSignatureKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
-using PrivateSignatureKey =
-    AsymmetricKey<KeyType::Private, KeyUsage::Signature>;
 using PublicEncryptionKey =
     AsymmetricKey<KeyType::Public, KeyUsage::Encryption>;
 using PrivateEncryptionKey =
