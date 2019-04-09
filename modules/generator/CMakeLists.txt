@@ -26,7 +26,7 @@ target_include_directories(generator
     ${PROJECT_SOURCE_DIR}/include
 )
 
-target_link_libraries(generator tankercore)
+target_link_libraries(generator tankercore CONAN_PKG::cppcodec)
 
 target_link_libraries(tgen PRIVATE generator)
 
