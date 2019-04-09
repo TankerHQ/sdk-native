@@ -5,6 +5,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 
 TLOG_CATEGORY(ResourceKeyStore);
 
@@ -26,8 +27,7 @@ tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
 {
   auto const key = TC_AWAIT(findKey(mac));
   if (!key)
-    throw Error::formatEx<Error::ResourceKeyNotFound>(
-        "couldn't find key for {:s}", mac);
+    throw Error::ResourceKeyNotFound(mac);
   TC_RETURN(*key);
 }
 
