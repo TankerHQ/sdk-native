@@ -1,12 +1,15 @@
 #include "Tests.hpp"
-#include <Tanker/Compat/TrustchainFactory.hpp>
+#include <Tanker/Test/Functional/TrustchainFactory.hpp>
 
 #include <Tanker/Version.hpp>
 
 #include <memory>
 
 #include <docopt/docopt.h>
+
 using namespace std::string_literals;
+using Tanker::Test::Trustchain;
+using Tanker::Test::TrustchainFactory;
 
 static const char USAGE[] = R"(compat cli
   Usage:
@@ -20,18 +23,18 @@ static const char USAGE[] = R"(compat cli
 )";
 
 auto getRunner = [](std::string const& command,
-                    auto trustchain,
+                    auto& trustchain,
                     std::string tankerPath,
                     std::string statePath) -> std::unique_ptr<Command> {
   if (command == "encrypt")
     return std::make_unique<EncryptCompat>(
-        std::move(trustchain), std::move(tankerPath), std::move(statePath));
+        trustchain, std::move(tankerPath), std::move(statePath));
   else if (command == "group")
     return std::make_unique<GroupCompat>(
-        std::move(trustchain), std::move(tankerPath), std::move(statePath));
+        trustchain, std::move(tankerPath), std::move(statePath));
   else if (command == "unlock")
     return std::make_unique<UnlockCompat>(
-        std::move(trustchain), std::move(tankerPath), std::move(statePath));
+        trustchain, std::move(tankerPath), std::move(statePath));
   else
     throw std::runtime_error("not implemented");
 };
@@ -47,21 +50,21 @@ auto getCommand = [](auto args) {
     throw std::runtime_error("not implemented");
 };
 
-auto getTrustchain(TrustchainFactory& tf,
-                   std::string const& command,
-                   std::string path,
-                   bool create)
+using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
+
+tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
+    std::string const& command, std::string const& path, bool create)
 {
+  auto tf = TC_AWAIT(Tanker::Test::TrustchainFactory::create());
   if (create)
   {
-    auto trustchain =
-        tf.createTrustchain(
-              fmt::format("compat-{}-{}", command, TANKER_VERSION), true)
-            .get();
-    tf.saveTrustchainConfig(path, trustchain->toConfig());
-    return trustchain;
+    auto trustchain = TC_AWAIT(tf->createTrustchain(
+        fmt::format("compat-{}-{}", command, TANKER_VERSION), true));
+    tf->saveTrustchainConfig(path, trustchain->toConfig());
+    TC_RETURN(std::make_tuple(std::move(tf), std::move(trustchain)));
   }
-  return tf.useTrustchain(path).get();
+  TC_RETURN(std::make_tuple(std::move(tf),
+                            std::move(TC_AWAIT(tf->useTrustchain(path)))));
 }
 
 int main(int argc, char** argv)
@@ -73,16 +76,29 @@ int main(int argc, char** argv)
   auto const statePath = args.at("--state").asString();
   auto const command = getCommand(args);
 
-  auto trustchainFactory = TrustchainFactory::create().get();
-  auto trustchain = getTrustchain(trustchainFactory,
-                                  command,
-                                  args.at("--tc-temp-config").asString(),
-                                  args.at("--base").asBool());
+  auto compatFixture =
+      tc::async_resumable([&]() -> tc::cotask<std::tuple<TrustchainFactory::Ptr,
+                                                         Trustchain::Ptr>> {
+        TC_RETURN(TC_AWAIT(getTrustchain(command,
+                                         args.at("--tc-temp-config").asString(),
+                                         args.at("--base").asBool())));
+      })
+          .get();
 
-  auto runner =
-      getRunner(command, std::move(trustchain), tankerPath, statePath);
+  auto runner = getRunner(command,
+                          *std::get<Trustchain::Ptr>(compatFixture),
+                          tankerPath,
+                          statePath);
   if (args.at("--base").asBool())
     runner->base();
   else if (args.at("--next").asBool())
+  {
     runner->next();
+    tc::async_resumable([&]() -> tc::cotask<void> {
+      TC_AWAIT(
+          std::get<TrustchainFactory::Ptr>(compatFixture)
+              ->deleteTrustchain(std::get<Trustchain::Ptr>(compatFixture)->id));
+    })
+        .get();
+  }
 }
