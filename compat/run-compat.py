@@ -66,6 +66,8 @@ def main() -> None:
     if args.home_isolation:
         ci.cpp.set_home_isolation()
 
+    ci.cpp.update_conan_config()
+
     create_tanker_dev(args.profile)
     built_binary = build_all(profile=args.profile)
 
