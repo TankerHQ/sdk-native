@@ -1,9 +1,9 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 
 #include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -26,30 +26,20 @@ void from_json(nlohmann::json const& j, PublicIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target == "user")
-    identity = PublicPermanentIdentity{
-        j.at("trustchain_id").get<TrustchainId>(), j.at("value").get<UserId>()};
+    identity = j.get<PublicPermanentIdentity>();
   else
     throw std::runtime_error(
-        "PublicIdentity deserialization type not implemented");
+        "PublicIdentity deserialization type not implemented: " + target);
 }
 
-void to_json(nlohmann::json& j, PublicIdentity const& publicIdentity)
+void to_json(nlohmann::json& j, PublicIdentity const& identity)
 {
-  if (auto const identity =
-          mpark::get_if<PublicPermanentIdentity>(&publicIdentity))
-  {
-    j["value"] = identity->userId;
-    j["trustchain_id"] = identity->trustchainId;
-    j["target"] = "user";
-  }
-  else
-    throw std::runtime_error(
-        "PublicIdentity serialiation type not implemented");
+  mpark::visit([&](auto const& i) { nlohmann::to_json(j, i); }, identity);
 }
 
 std::string to_string(PublicIdentity const& identity)
 {
-  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
+  return mpark::visit([](auto const& i) { return to_string(i); }, identity);
 }
 }
 }
