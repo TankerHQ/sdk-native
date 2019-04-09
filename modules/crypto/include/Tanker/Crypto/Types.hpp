@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/AsymmetricKey.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyPair.hpp>
@@ -28,7 +29,6 @@ namespace Tanker
 namespace Crypto
 {
 using SignatureKeyPair = KeyPair<KeyUsage::Signature>;
-using EncryptionKeyPair = KeyPair<KeyUsage::Encryption>;
 
 template <typename>
 class BasicHash : std::array<uint8_t, crypto_generichash_BYTES>
