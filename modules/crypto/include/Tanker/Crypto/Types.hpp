@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/AsymmetricKey.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
@@ -24,9 +25,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-template <KeyType Type, KeyUsage Usage, typename = void>
-class AsymmetricKey;
-
 // using private inheritance here (UB as the standard says but it's ok TM)
 // see https://stackoverflow.com/a/4354072
 template <typename T>
@@ -155,11 +153,6 @@ TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
                                      crypto_box_SEALBYTES)
 
-template <KeyType Type, KeyUsage Usage, typename T>
-struct IsCryptographicType<AsymmetricKey<Type, Usage, T>> : std::true_type
-{
-};
-
 template <typename T>
 struct IsCryptographicType<BasicHash<T>> : std::true_type
 {
@@ -199,9 +192,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 
 namespace std
 {
-TANKER_CRYPTO_ARRAY_HELPERS_NON_TYPE_TPL_ARGS(::Tanker::Crypto::AsymmetricKey,
-                                              ::Tanker::Crypto::KeyType,
-                                              ::Tanker::Crypto::KeyUsage);
 TANKER_CRYPTO_ARRAY_HELPERS_TPL_ARG(::Tanker::Crypto::BasicHash);
 TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::Mac);
 TANKER_CRYPTO_ARRAY_HELPERS(::Tanker::Crypto::Signature);
