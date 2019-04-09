@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Crypto/Traits.hpp>
 #include <Tanker/Error.hpp>
 
 #include <fmt/format.h>

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
-#include <Tanker/Crypto/Traits.hpp>
 
 #include <Tanker/Crypto/detail/ArrayHelpers.hpp>
 #include <Tanker/Crypto/detail/CryptographicType.hpp>
@@ -156,12 +156,12 @@ TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
                                      crypto_box_SEALBYTES)
 
 template <KeyType Type, KeyUsage Usage, typename T>
-struct is_cryptographic_type<AsymmetricKey<Type, Usage, T>> : std::true_type
+struct IsCryptographicType<AsymmetricKey<Type, Usage, T>> : std::true_type
 {
 };
 
 template <typename T>
-struct is_cryptographic_type<BasicHash<T>> : std::true_type
+struct IsCryptographicType<BasicHash<T>> : std::true_type
 {
 };
 
@@ -174,14 +174,14 @@ TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey)
 
 template <typename T,
-          typename = std::enable_if_t<is_cryptographic_type<T>::value>>
+          typename = std::enable_if_t<IsCryptographicType<T>::value>>
 constexpr std::size_t serialized_size(T const& val)
 {
   return val.arraySize;
 }
 
 template <typename T,
-          typename = std::enable_if_t<is_cryptographic_type<T>::value>>
+          typename = std::enable_if_t<IsCryptographicType<T>::value>>
 void from_serialized(Serialization::SerializedSource& ss, T& val)
 {
   auto sp = ss.read(val.size());
@@ -189,7 +189,7 @@ void from_serialized(Serialization::SerializedSource& ss, T& val)
 }
 
 template <typename T,
-          typename = std::enable_if_t<is_cryptographic_type<T>::value>>
+          typename = std::enable_if_t<IsCryptographicType<T>::value>>
 std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 {
   return std::copy(val.begin(), val.end(), it);
@@ -217,7 +217,7 @@ namespace nlohmann
 template <typename CryptoType>
 struct adl_serializer<
     CryptoType,
-    std::enable_if_t<Tanker::Crypto::is_cryptographic_type<CryptoType>::value>>
+    std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
 {
   template <typename BasicJsonType>
   static void to_json(BasicJsonType& j, CryptoType const& value)
