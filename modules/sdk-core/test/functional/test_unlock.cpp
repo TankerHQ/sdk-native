@@ -1,9 +1,7 @@
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
-
-#include "TrustchainFixture.hpp"
 
 #include <doctest.h>
 
@@ -32,7 +30,7 @@ TEST_SUITE("Unlock")
 
       REQUIRE_EQ(
           TC_AWAIT(core2->signIn(
-              alice.identity(),
+              alice.identity,
               SignInOptions{unlockKey, nonstd::nullopt, nonstd::nullopt})),
           OpenResult::Ok);
     }
@@ -44,7 +42,7 @@ TEST_SUITE("Unlock")
 
       REQUIRE_EQ(
           TC_AWAIT(core2->signIn(
-              alice.identity(),
+              alice.identity,
               SignInOptions{nonstd::nullopt, nonstd::nullopt, password})),
           OpenResult::Ok);
     }
@@ -54,11 +52,10 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(TC_AWAIT(
           core1->registerUnlock(Unlock::RegistrationOptions{}.set(email))));
 
-      auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(email));
+      auto const code = TC_AWAIT(getVerificationCode(email));
 
       REQUIRE_EQ(TC_AWAIT(core2->signIn(
-                     alice.identity(),
+                     alice.identity,
                      SignInOptions{nonstd::nullopt, code, nonstd::nullopt})),
                  OpenResult::Ok);
     }
@@ -72,7 +69,7 @@ TEST_SUITE("Unlock")
 
       REQUIRE_EQ(
           TC_AWAIT(core2->signIn(
-              alice.identity(),
+              alice.identity,
               SignInOptions{nonstd::nullopt, nonstd::nullopt, newPassword})),
           OpenResult::Ok);
     }
@@ -84,7 +81,7 @@ TEST_SUITE("Unlock")
 
       CHECK_THROWS_AS(
           TC_AWAIT(core2->signIn(
-              alice.identity(),
+              alice.identity,
               SignInOptions{
                   nonstd::nullopt, nonstd::nullopt, Password{"wrong pass"}})),
           Tanker::Error::InvalidUnlockPassword);
@@ -96,7 +93,7 @@ TEST_SUITE("Unlock")
           core1->registerUnlock(Unlock::CreationOptions{}.set(email))));
 
       CHECK_THROWS_AS(
-          TC_AWAIT(core2->signIn(alice.identity(),
+          TC_AWAIT(core2->signIn(alice.identity,
                                  SignInOptions{nonstd::nullopt,
                                                VerificationCode{"d3JvbmcK"},
                                                nonstd::nullopt})),
@@ -110,19 +107,18 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(TC_AWAIT(
           core1->registerUnlock(Unlock::CreationOptions{}.set(email))));
 
-      auto const code =
-          TC_AWAIT(trustchain.getVerificationCode(email));
+      auto const code = TC_AWAIT(getVerificationCode(email));
 
       for (int i = 0; i < 3; ++i)
         CHECK_THROWS_AS(
-            TC_AWAIT(core2->signIn(alice.identity(),
+            TC_AWAIT(core2->signIn(alice.identity,
                                    SignInOptions{nonstd::nullopt,
                                                  VerificationCode{"d3JvbmcK"},
                                                  nonstd::nullopt})),
             Tanker::Error::InvalidVerificationCode);
       CHECK_THROWS_AS(
           TC_AWAIT(core2->signIn(
-              alice.identity(),
+              alice.identity,
               SignInOptions{nonstd::nullopt, code, nonstd::nullopt})),
           Tanker::Error::MaxVerificationAttemptsReached);
     }
@@ -132,7 +128,7 @@ TEST_SUITE("Unlock")
         "a password")
     {
       CHECK_THROWS(TC_AWAIT(core2->signIn(
-          alice.identity(),
+          alice.identity,
           SignInOptions{nonstd::nullopt, nonstd::nullopt, password})));
     }
 
@@ -141,7 +137,7 @@ TEST_SUITE("Unlock")
         "a verification code")
     {
       CHECK_THROWS(TC_AWAIT(core2->signIn(
-          alice.identity(),
+          alice.identity,
           SignInOptions{
               nonstd::nullopt, VerificationCode{"code"}, nonstd::nullopt})));
     }

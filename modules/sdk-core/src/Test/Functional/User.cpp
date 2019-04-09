@@ -9,19 +9,26 @@ namespace Tanker
 {
 namespace Test
 {
+namespace
+{
+auto createRandomUserId()
+{
+  auto rdm = std::array<std::uint8_t, 10>{};
+  Crypto::randomFill(rdm);
+  return Tanker::SUserId{cppcodec::base64_rfc4648::encode(rdm)};
+}
+}
 
 User::User(std::string trustchainUrl,
            std::string trustchainId,
            std::string trustchainPrivateSignatureKey)
-  : _trustchainUrl(std::move(trustchainUrl)),
-    _trustchainId(std::move(trustchainId))
+  : trustchainUrl(std::move(trustchainUrl)),
+    trustchainId(std::move(trustchainId)),
+    suserId(createRandomUserId()),
+    identity(Identity::createIdentity(
+        this->trustchainId, trustchainPrivateSignatureKey, suserId)),
+    userToken(nonstd::nullopt)
 {
-  Crypto::Hash buf;
-  Crypto::randomFill(buf);
-  _userId = SUserId{
-      cppcodec::base64_rfc4648::encode(gsl::make_span(buf).subspan(0, 8))};
-  _identity = Identity::createIdentity(
-      _trustchainId, trustchainPrivateSignatureKey, _userId);
 }
 
 void User::reuseCache()
@@ -32,11 +39,11 @@ void User::reuseCache()
 Device User::makeDevice(DeviceType type)
 {
   if (type == DeviceType::New)
-    return Device(_trustchainUrl, _trustchainId, _userId, _identity);
+    return Device(trustchainUrl, trustchainId, suserId, identity);
 
   if (_currentDevice == _cachedDevices->size())
     _cachedDevices->push_back(
-        Device(_trustchainUrl, _trustchainId, _userId, _identity));
+        Device(trustchainUrl, trustchainId, suserId, identity));
   return (*_cachedDevices)[_currentDevice++];
 }
 
@@ -54,7 +61,24 @@ tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
 
 SPublicIdentity User::spublicIdentity() const
 {
-  return SPublicIdentity{Identity::getPublicIdentity(_identity)};
+  return SPublicIdentity{Identity::getPublicIdentity(identity)};
+}
+
+void to_json(nlohmann::json& j, User const& user)
+{
+  j["suser_id"] = user.suserId;
+  j["identity"] = user.identity;
+}
+
+void from_json(nlohmann::json const& j, User& user)
+{
+  j.at("suser_id").get_to(user.suserId);
+  if (j.find("user_token") != j.end())
+    user.userToken = j.at("user_token").get<std::string>();
+  else if (j.find("identity") != j.end())
+    j.at("identity").get_to(user.identity);
+  else
+    throw std::runtime_error("missing User identity field");
 }
 }
 }

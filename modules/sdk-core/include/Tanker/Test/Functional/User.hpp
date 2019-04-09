@@ -7,6 +7,7 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
+#include <optional.hpp>
 #include <string>
 
 namespace Tanker
@@ -22,6 +23,14 @@ enum class DeviceType
 class User
 {
 public:
+  std::string trustchainUrl;
+  std::string trustchainId;
+  SUserId suserId;
+  std::string identity;
+  nonstd::optional<std::string> userToken;
+
+  User() = default;
+
   User(std::string trustchainUrl,
        std::string trustchainId,
        std::string trustchainPrivateSignatureKey);
@@ -32,27 +41,15 @@ public:
 
   tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
 
-  SUserId suserId() const
-  {
-    return _userId;
-  }
-
-  std::string identity() const
-  {
-    return _identity;
-  }
-
   SPublicIdentity spublicIdentity() const;
 
 private:
-  std::string _trustchainUrl;
-  std::string _trustchainId;
-  SUserId _userId;
-  std::string _identity;
-
   unsigned int _currentDevice = 0;
   std::shared_ptr<std::vector<Device>> _cachedDevices =
       std::make_shared<std::vector<Device>>();
 };
+
+void to_json(nlohmann::json& j, User const& state);
+void from_json(nlohmann::json const& j, User& state);
 }
 }

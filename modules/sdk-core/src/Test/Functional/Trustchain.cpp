@@ -1,9 +1,6 @@
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
-#include <Tanker/ConnectionFactory.hpp>
-
 #include <cppcodec/base64_rfc4648.hpp>
-#include <tconcurrent/coroutine.hpp>
 
 #include <Helpers/Config.hpp>
 
@@ -11,30 +8,39 @@
 #include <string>
 #include <utility>
 
+#include <nlohmann/json.hpp>
+
 namespace Tanker
 {
 namespace Test
 {
-Trustchain::Trustchain()
-  : _trustchainUrl(Tanker::TestConstants::trustchainUrl()),
-    _admin(ConnectionFactory::create(_trustchainUrl, nonstd::nullopt),
-           Tanker::TestConstants::idToken()),
-    _trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair())
+
+void to_json(nlohmann::json& j, TrustchainConfig const& config)
+{
+  j["trustchainId"] = config.id;
+  j["url"] = config.url;
+  j["trustchainPrivateKey"] = config.privateKey;
+}
+
+void from_json(nlohmann::json const& j, TrustchainConfig& config)
+{
+  j.at("trustchainId").get_to(config.id);
+  j.at("url").get_to(config.url);
+  j.at("trustchainPrivateKey").get_to(config.privateKey);
+}
+
+Trustchain::Trustchain(std::string url,
+                       Tanker::TrustchainId id,
+                       Tanker::Crypto::SignatureKeyPair keypair)
+  : url(std::move(url)), id(std::move(id)), keyPair(std::move(keypair))
 {
 }
 
-tc::cotask<void> Trustchain::init()
+Trustchain::Trustchain(TrustchainConfig const& config)
+  : Trustchain(config.url,
+               config.id,
+               Tanker::Crypto::makeSignatureKeyPair(config.privateKey))
 {
-  TC_AWAIT(_admin.start());
-  _trustchainId = TC_AWAIT(_admin.createTrustchain(
-      "functest-cpp", _trustchainSignatureKeyPair, true));
-}
-
-tc::cotask<void> Trustchain::destroy()
-{
-  TC_AWAIT(_admin.deleteTrustchain(_trustchainId));
-  _cachedUsers.clear();
-  _currentUser = 0;
 }
 
 void Trustchain::reuseCache()
@@ -46,31 +52,35 @@ void Trustchain::reuseCache()
 
 User Trustchain::makeUser(UserType type)
 {
-  auto const trustchainIdString =
-      cppcodec::base64_rfc4648::encode(_trustchainId);
+  auto const trustchainIdString = cppcodec::base64_rfc4648::encode(id);
   auto const trustchainPrivateKeyString =
-      cppcodec::base64_rfc4648::encode(_trustchainSignatureKeyPair.privateKey);
+      cppcodec::base64_rfc4648::encode(keyPair.privateKey);
 
   if (type == UserType::New)
-    return User(_trustchainUrl, trustchainIdString, trustchainPrivateKeyString);
+    return User(url, trustchainIdString, trustchainPrivateKeyString);
 
   if (_currentUser == _cachedUsers.size())
     _cachedUsers.push_back(
-        User(_trustchainUrl, trustchainIdString, trustchainPrivateKeyString));
+        User(url, trustchainIdString, trustchainPrivateKeyString));
   return _cachedUsers[_currentUser++];
 }
 
-tc::cotask<VerificationCode> Trustchain::getVerificationCode(Email const& email)
+TrustchainConfig Trustchain::toConfig() const
 {
-  TC_RETURN(TC_AWAIT(this->_admin.getVerificationCode(
-      this->id(), email)));
+  return {url, id, keyPair.privateKey};
 }
 
-Trustchain& Trustchain::getInstance()
+Trustchain::Ptr Trustchain::make(TrustchainConfig const& config)
 {
-  static Trustchain instance;
-  instance.reuseCache();
-  return instance;
+  return std::make_unique<Trustchain>(config);
+}
+
+Trustchain::Ptr Trustchain::make(std::string url,
+                                 Tanker::TrustchainId id,
+                                 Tanker::Crypto::SignatureKeyPair keypair)
+{
+  return std::make_unique<Trustchain>(
+      std::move(url), std::move(id), std::move(keypair));
 }
 }
 }

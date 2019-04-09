@@ -2,19 +2,29 @@
 
 #include <Tanker/Test/Functional/User.hpp>
 
-#include <Tanker/Admin.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
-#include <Helpers/Config.hpp>
+#include <nlohmann/json_fwd.hpp>
 
-#include <optional.hpp>
-
+#include <memory>
 #include <string>
 
 namespace Tanker
 {
 namespace Test
 {
+struct TrustchainConfig
+{
+  std::string url;
+  Tanker::TrustchainId id;
+  Tanker::Crypto::PrivateSignatureKey privateKey;
+};
+
+void to_json(nlohmann::json& j, TrustchainConfig const& state);
+void from_json(nlohmann::json const& j, TrustchainConfig& state);
+
+class TrustchainFactory;
+
 enum class UserType
 {
   Cached,
@@ -24,40 +34,33 @@ enum class UserType
 class Trustchain
 {
 public:
-  Trustchain();
+  using Ptr = std::unique_ptr<Trustchain>;
+  friend TrustchainFactory;
 
-  tc::cotask<void> init();
-  tc::cotask<void> destroy();
+  std::string url;
+  Tanker::TrustchainId id;
+  Tanker::Crypto::SignatureKeyPair keyPair;
+
+  static Ptr make(TrustchainConfig const& config);
+  static Ptr make(std::string url,
+                  Tanker::TrustchainId id,
+                  Tanker::Crypto::SignatureKeyPair keypair);
+
+  Trustchain(TrustchainConfig const& config);
+  Trustchain(std::string url,
+             Tanker::TrustchainId id,
+             Tanker::Crypto::SignatureKeyPair keypair);
+  Trustchain(Trustchain&&) = default;
+  Trustchain& operator=(Trustchain&&) = default;
 
   void reuseCache();
 
   User makeUser(UserType = UserType::Cached);
 
-  auto const& url() const
-  {
-    return this->_trustchainUrl;
-  }
-
-  auto const& id() const
-  {
-    return this->_trustchainId;
-  }
-
-  auto const& signatureKeys() const
-  {
-    return this->_trustchainSignatureKeyPair;
-  }
-
-  tc::cotask<VerificationCode> getVerificationCode(Email const& email);
-
-  static Trustchain& getInstance();
+  TrustchainConfig toConfig() const;
 
 private:
-  std::string _trustchainUrl;
-  std::string _trustchainName;
-  TrustchainId _trustchainId;
-  Admin _admin;
-  Crypto::SignatureKeyPair _trustchainSignatureKeyPair;
+  Trustchain();
 
   uint32_t _currentUser = 0;
   std::vector<User> _cachedUsers;

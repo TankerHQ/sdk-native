@@ -9,7 +9,7 @@
 #include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Init.hpp>
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 using namespace std::literals::chrono_literals;
 
@@ -31,11 +31,9 @@ int main(int argc, char* argv[])
     return tc::async_resumable("main_functional",
                                tc::executor(tp),
                                [&]() -> tc::cotask<int> {
-                                 auto& trustchain =
-                                     Tanker::Test::Trustchain::getInstance();
-                                 TC_AWAIT(trustchain.init());
+                                 TC_AWAIT(TrustchainFixture::setUp());
                                  auto const ret = TC_AWAIT(context.run());
-                                 TC_AWAIT(trustchain.destroy());
+                                 TC_AWAIT(TrustchainFixture::tearDown());
                                  TC_RETURN(ret);
                                })
         .get();

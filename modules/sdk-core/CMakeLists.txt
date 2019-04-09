@@ -250,10 +250,14 @@ install(TARGETS tankercore
 
 add_library(tankercore_test STATIC
   include/Tanker/Test/Functional/Trustchain.hpp
+  include/Tanker/Test/Functional/TrustchainFactory.hpp
   include/Tanker/Test/Functional/User.hpp
   include/Tanker/Test/Functional/Device.hpp
+  include/Tanker/Test/Functional/TrustchainFixture.hpp
 
   src/Test/Functional/Trustchain.cpp
+  src/Test/Functional/TrustchainFactory.cpp
+  src/Test/Functional/TrustchainFixture.cpp
   src/Test/Functional/User.cpp
   src/Test/Functional/Device.cpp
   )
