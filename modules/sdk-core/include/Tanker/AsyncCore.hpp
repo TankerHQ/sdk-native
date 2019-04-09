@@ -7,6 +7,7 @@
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/SDeviceId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
@@ -100,9 +101,9 @@ public:
   boost::signals2::signal<void()>& deviceCreated();
   boost::signals2::signal<void()>& deviceRevoked();
 
-  tc::future<DeviceId> deviceId() const;
+  tc::future<SDeviceId> deviceId() const;
 
-  tc::future<void> revokeDevice(DeviceId const& deviceId);
+  tc::future<void> revokeDevice(SDeviceId const& deviceId);
 
   tc::future<void> syncTrustchain();
 
