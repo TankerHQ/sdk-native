@@ -11,6 +11,7 @@
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 
 #include <Tanker/Crypto/detail/ArrayHelpers.hpp>
 #include <Tanker/Crypto/detail/CryptographicType.hpp>
@@ -28,8 +29,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-using SignatureKeyPair = KeyPair<KeyUsage::Signature>;
-
 template <typename>
 class BasicHash : std::array<uint8_t, crypto_generichash_BYTES>
 {
