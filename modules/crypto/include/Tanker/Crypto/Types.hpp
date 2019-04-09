@@ -18,6 +18,7 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
+#include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
@@ -38,12 +39,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
-                                 crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
-                                     crypto_box_SEALBYTES)
-
-TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey)
-
 template <typename T,
           typename = std::enable_if_t<IsCryptographicType<T>::value>>
 constexpr std::size_t serialized_size(T const& val)
@@ -66,11 +61,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
   return std::copy(val.begin(), val.end(), it);
 }
 }
-}
-
-namespace std
-{
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SealedSymmetricKey)
 }
 
 namespace nlohmann

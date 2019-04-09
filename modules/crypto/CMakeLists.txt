@@ -24,6 +24,7 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/SealedPrivateEncryptionKey.hpp
     include/Tanker/Crypto/SealedPrivateSignatureKey.hpp
     include/Tanker/Crypto/EncryptedSymmetricKey.hpp
+    include/Tanker/Crypto/SealedSymmetricKey.hpp
     include/Tanker/Crypto/SymmetricKey.hpp
     include/Tanker/Crypto/AeadIv.hpp
     include/Tanker/Crypto/detail/CryptographicTypeImpl.hpp
