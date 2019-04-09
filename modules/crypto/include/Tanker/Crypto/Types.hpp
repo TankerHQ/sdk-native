@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
+#include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 
@@ -27,15 +28,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-template <>
-class AsymmetricKey<KeyType::Private, KeyUsage::Encryption>
-  : std::array<uint8_t, crypto_box_SECRETKEYBYTES>
-{
-  TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(AsymmetricKey,
-                                        crypto_box_SECRETKEYBYTES,
-                                        PrivateEncryptionKey)
-};
-
 template <>
 class AsymmetricKey<KeyType::Public, KeyUsage::Encryption>
   : std::array<uint8_t, crypto_box_PUBLICKEYBYTES>
@@ -67,8 +59,6 @@ bool operator!=(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
 
 using PublicEncryptionKey =
     AsymmetricKey<KeyType::Public, KeyUsage::Encryption>;
-using PrivateEncryptionKey =
-    AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
 
 using SignatureKeyPair = KeyPair<KeyUsage::Signature>;
 using EncryptionKeyPair = KeyPair<KeyUsage::Encryption>;
