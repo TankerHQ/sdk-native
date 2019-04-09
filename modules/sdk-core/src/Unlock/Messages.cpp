@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
-#include <Tanker/Crypto/base64.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
@@ -11,6 +10,7 @@
 #include <Tanker/Unlock/Claims.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <cppcodec/base64_url_unpadded.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
@@ -72,7 +72,7 @@ Request::Request(TrustchainId const& trustchainId,
   }
   else if (auto rawcode = mpark::get_if<VerificationCode>(&locker))
   {
-    auto const code = safeBase64Unpadded::decode(*rawcode);
+    auto const code = cppcodec::base64_url_unpadded::decode(*rawcode);
     value.assign(code.begin(), code.end());
     type = Type::VerificationCode;
   }
