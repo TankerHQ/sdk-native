@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Crypto/KeyUsage.hpp>
 #include <Tanker/Crypto/Traits.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
@@ -270,12 +271,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-enum class KeyUsage
-{
-  Signature,
-  Encryption,
-};
-
 enum class KeyType
 {
   Private,
