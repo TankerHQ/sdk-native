@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
 #include <gsl-lite.hpp>

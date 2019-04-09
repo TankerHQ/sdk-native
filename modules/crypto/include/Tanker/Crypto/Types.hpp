@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/Traits.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
@@ -269,22 +270,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-class InvalidKeySize : public std::exception
-{
-public:
-  InvalidKeySize(std::string const& msg) : _msg(msg)
-  {
-  }
-
-  char const* what() const noexcept override
-  {
-    return _msg.c_str();
-  }
-
-private:
-  std::string _msg;
-};
-
 enum class KeyUsage
 {
   Signature,

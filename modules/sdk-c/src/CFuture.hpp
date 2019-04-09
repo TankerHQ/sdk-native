@@ -2,7 +2,7 @@
 
 #include <Tanker/Error.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 
 #include <ctanker/async.h>
 

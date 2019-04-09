@@ -7,6 +7,7 @@ add_library(tankercrypto STATIC
     src/JsonFormat.cpp
 
     include/Tanker/Crypto/Crypto.hpp
+    include/Tanker/Crypto/InvalidKeySize.hpp
     include/Tanker/Crypto/Types.hpp
     include/Tanker/Crypto/Traits.hpp
     include/Tanker/Crypto/KeyFormat.hpp
