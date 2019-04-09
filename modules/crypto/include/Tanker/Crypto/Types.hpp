@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/AsymmetricKey.hpp>
+#include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/IsCryptographicType.hpp>
@@ -29,14 +30,6 @@ namespace Tanker
 {
 namespace Crypto
 {
-template <typename>
-class BasicHash : std::array<uint8_t, crypto_generichash_BYTES>
-{
-  TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(BasicHash,
-                                        crypto_generichash_BYTES,
-                                        BasicHash)
-};
-
 using Hash = BasicHash<void>;
 
 template <typename T>
@@ -83,11 +76,6 @@ TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
                                      crypto_box_SEALBYTES)
 
-template <typename T>
-struct IsCryptographicType<BasicHash<T>> : std::true_type
-{
-};
-
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Signature)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Mac)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SymmetricKey)
@@ -122,7 +110,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_TPL_ARG(::Tanker::Crypto::BasicHash)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::Mac)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::Signature)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SymmetricKey)
