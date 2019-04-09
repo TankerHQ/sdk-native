@@ -2,9 +2,9 @@
 
 #include <Tanker/Crypto/Traits.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <cppcodec/base64_url.hpp>
 #include <fmt/format.h>
 
 #include <type_traits>
@@ -40,7 +40,7 @@ struct formatter<
 
   auto format_crypto_array(uint8_t const* beg, std::size_t size)
   {
-    return useSafe ? Tanker::safeBase64::encode<std::string>(beg, size) :
+    return useSafe ? cppcodec::base64_url::encode<std::string>(beg, size) :
                      cppcodec::base64_rfc4648::encode<std::string>(beg, size);
   }
 

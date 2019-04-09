@@ -2,11 +2,11 @@
 #include <Tanker/Crypto/JsonFormat.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
 #include <Tanker/Crypto/Types.hpp>
-#include <Tanker/Crypto/base64.hpp>
 
 #include <Helpers/Buffers.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <cppcodec/base64_url.hpp>
 #include <doctest.h>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -267,7 +267,7 @@ void test_format(T const& var)
   SUBCASE("be safely encoded")
   {
     auto formated = fmt::format("{:S}", var);
-    REQUIRE_EQ(formated, safeBase64::encode(var));
+    REQUIRE_EQ(formated, cppcodec::base64_url::encode(var));
   }
   SUBCASE("be explicitly encoded")
   {
