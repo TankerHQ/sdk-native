@@ -6,6 +6,7 @@
 #include <Tanker/Crypto/Traits.hpp>
 
 #include <Tanker/Crypto/detail/ArrayHelpers.hpp>
+#include <Tanker/Crypto/detail/CryptographicType.hpp>
 #include <Tanker/Crypto/detail/CryptographicTypeImpl.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
@@ -104,7 +105,7 @@ class BasicHash : std::array<uint8_t, crypto_generichash_BYTES>
 {
   TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(BasicHash,
                                         crypto_generichash_BYTES,
-                                        BasicHash);
+                                        BasicHash)
 };
 
 using Hash = BasicHash<void>;
@@ -133,27 +134,25 @@ bool operator!=(BasicHash<T> const& lhs, BasicHash<void> const& rhs) noexcept
   return !(lhs == rhs);
 }
 
-#define DEFINE_TYPE(name, size)                             \
-  class name : std::array<uint8_t, size>                    \
-  {                                                         \
-    TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(name, size, name) \
-  }
-
-DEFINE_TYPE(Signature, crypto_sign_BYTES);
-DEFINE_TYPE(Mac, crypto_aead_xchacha20poly1305_ietf_ABYTES);
-DEFINE_TYPE(SymmetricKey, crypto_aead_xchacha20poly1305_ietf_KEYBYTES);
-DEFINE_TYPE(AeadIv, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-DEFINE_TYPE(SealedPrivateEncryptionKey,
-            crypto_box_SECRETKEYBYTES + crypto_box_SEALBYTES);
-DEFINE_TYPE(SealedPrivateSignatureKey,
-            crypto_sign_SECRETKEYBYTES + crypto_box_SEALBYTES);
-DEFINE_TYPE(EncryptedSymmetricKey,
-            crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_MACBYTES +
-                crypto_box_NONCEBYTES);
-DEFINE_TYPE(SealedSymmetricKey,
-            crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_SEALBYTES);
-
-#undef DEFINE_TYPE
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Signature, crypto_sign_BYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac, crypto_aead_xchacha20poly1305_ietf_ABYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SymmetricKey,
+                                 crypto_aead_xchacha20poly1305_ietf_KEYBYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(AeadIv,
+                                 crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedPrivateEncryptionKey,
+                                 crypto_box_SECRETKEYBYTES +
+                                     crypto_box_SEALBYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey,
+                                 crypto_sign_SECRETKEYBYTES +
+                                     crypto_box_SEALBYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey,
+                                 crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
+                                     crypto_box_MACBYTES +
+                                     crypto_box_NONCEBYTES)
+TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
+                                 crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
+                                     crypto_box_SEALBYTES)
 
 template <KeyType Type, KeyUsage Usage, typename T>
 struct is_cryptographic_type<AsymmetricKey<Type, Usage, T>> : std::true_type
