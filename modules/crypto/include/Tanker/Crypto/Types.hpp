@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Crypto/AsymmetricKey.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
+#include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
@@ -37,15 +38,10 @@ namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey,
-                                 crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
-                                     crypto_box_MACBYTES +
-                                     crypto_box_NONCEBYTES)
 TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey,
                                  crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
                                      crypto_box_SEALBYTES)
 
-TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(EncryptedSymmetricKey)
 TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedSymmetricKey)
 
 template <typename T,
@@ -74,7 +70,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::EncryptedSymmetricKey)
 TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::SealedSymmetricKey)
 }
 
