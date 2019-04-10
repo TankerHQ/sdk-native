@@ -71,7 +71,7 @@ tc::cotask<TrustchainId> Admin::createTrustchain(
   block.nature = Nature::TrustchainCreation;
   block.payload =
       Serialization::serialize(TrustchainCreation{keyPair.publicKey});
-  block.trustchainId = gsl::make_span(block.hash());
+  block.trustchainId = TrustchainId(block.hash());
 
   auto const message = nlohmann::json{
       {"is_test", isTest},

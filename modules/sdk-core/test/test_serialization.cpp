@@ -198,7 +198,7 @@ TEST_CASE("it should serialize/deserialize a DeviceCreation v3")
 TEST_CASE("it should serialize/deserialize a KeyPublishToDevice")
 {
   KeyPublishToDevice before;
-  before.recipient = make<Crypto::Hash>("recipient device");
+  before.recipient = make<DeviceId>("recipient device");
   before.mac = make<Crypto::Mac>("resource mac");
   before.key = make<Crypto::EncryptedSymmetricKey>("encrypted key ..");
 
@@ -277,7 +277,7 @@ TEST_CASE("it should serialize/deserialize a KeyPublishToUserGroup")
 TEST_CASE("it should serialize/deserialize a Block")
 {
   Block before;
-  before.trustchainId = make<Crypto::Hash>("the trustchain ID !");
+  before.trustchainId = make<TrustchainId>("the trustchain ID !");
   before.index = 12345;
   before.author = make<Crypto::Hash>("block author");
   before.payload = std::vector<uint8_t>{10, 11, 12, 88, 191, 16};
@@ -506,8 +506,7 @@ TEST_CASE("it should serialize/deserialize a UserGroupAddition")
   UserGroupAddition ugc;
 
   ugc.groupId = make<GroupId>("group id");
-  ugc.previousGroupBlock =
-      make<Crypto::PublicEncryptionKey>("prev group block");
+  ugc.previousGroupBlock = make<Crypto::Hash>("prev group block");
   ugc.encryptedGroupPrivateEncryptionKeysForUsers = {
       {
           make<Crypto::PublicEncryptionKey>("pub user key"),

@@ -1,36 +1,51 @@
 #pragma once
 
-#include <Tanker/Crypto/IsCryptographicType.hpp>
-
-#include <Tanker/Crypto/detail/ArrayHelpers.hpp>
-#include <Tanker/Crypto/detail/CryptographicTypeImpl.hpp>
+#include <Tanker/Crypto/BasicCryptographicType.hpp>
 
 #include <sodium/crypto_generichash.h>
-
-#include <array>
-#include <cstdint>
-#include <type_traits>
 
 namespace Tanker
 {
 namespace Crypto
 {
-template <typename>
-class BasicHash : std::array<std::uint8_t, crypto_generichash_BYTES>
+template <typename Unused>
+class BasicHash;
+
+template <>
+class BasicHash<void>
+  : public BasicCryptographicType<BasicHash<void>, crypto_generichash_BYTES>
 {
-  TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE_IMPL(BasicHash,
-                                        crypto_generichash_BYTES,
-                                        BasicHash);
+  using base_t::base_t;
 };
 
-template <typename T>
-struct IsCryptographicType<BasicHash<T>> : std::true_type
+template <typename Unused>
+class BasicHash
+  : public BasicCryptographicType<BasicHash<Unused>, crypto_generichash_BYTES>
 {
+  using BasicHash::BasicCryptographicType::BasicCryptographicType;
+
+public:
+  BasicHash() = default;
+  explicit BasicHash(BasicHash<void> const& rhs)
+  {
+    this->base() = rhs.base();
+  }
 };
 }
 }
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_TPL_ARG(::Tanker::Crypto::BasicHash)
+template <typename Unused>
+class tuple_size<::Tanker::Crypto::BasicHash<Unused>>
+  : public tuple_size<typename ::Tanker::Crypto::BasicHash<Unused>::base_t>
+{
+};
+
+template <std::size_t I, typename Unused>
+class tuple_element<I, ::Tanker::Crypto::BasicHash<Unused>>
+  : public tuple_element<I,
+                         typename ::Tanker::Crypto::BasicHash<Unused>::base_t>
+{
+};
 }

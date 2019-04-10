@@ -261,7 +261,7 @@ Block BlockGenerator::makeBlock(
 
   Block ret;
   ret.trustchainId = _trustchainId;
-  ret.author = parentHash;
+  ret.author = Crypto::Hash{parentHash};
   ret.nature = nature;
   ret.payload = Serialization::serialize(action);
   ret.signature = Crypto::sign(ret.hash(), privateSignatureKey);

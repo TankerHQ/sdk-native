@@ -52,8 +52,8 @@ void from_json(nlohmann::json const& j, FetchAnswer& f)
 
 void from_json(nlohmann::json const& j, Message& m)
 {
-  m.trustchainId = j.at("trustchain_id").get<Crypto::Hash>();
-  m.deviceId = j.at("device_id").get<Crypto::Hash>();
+  m.trustchainId = j.at("trustchain_id").get<TrustchainId>();
+  m.deviceId = j.at("device_id").get<DeviceId>();
   m.claims = j.at("claims").get<Claims>();
   m.signature = j.at("signature").get<Crypto::Signature>();
 }

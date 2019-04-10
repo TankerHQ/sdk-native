@@ -149,7 +149,7 @@ TEST_CASE("unlockKey")
         blockToUnverifiedEntry(Serialization::deserialize<Block>(reg->block)));
     auto const dc =
         mpark::get<DeviceCreation>(ghostDeviceEntry.action.variant());
-    FAST_CHECK_EQ(gh.deviceId, ghostDeviceEntry.hash);
+    FAST_CHECK_EQ(gh.deviceId.base(), ghostDeviceEntry.hash.base());
     FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
                   dc.publicEncryptionKey());
     FAST_CHECK_EQ(ghostDeviceKeys.signatureKeyPair.publicKey,
@@ -205,7 +205,7 @@ TEST_CASE("unlockKey")
     REQUIRE_EQ(vdc.publicSignatureKey(),
                newDeviceKeys.signatureKeyPair.publicKey);
     REQUIRE_EQ(alice.userId, vdc.userId());
-    REQUIRE_EQ(gh.deviceId, validatedDeviceEntry.author);
+    REQUIRE_EQ(gh.deviceId.base(), validatedDeviceEntry.author.base());
     REQUIRE_EQ(false, vdc.isGhostDevice());
   }
 }

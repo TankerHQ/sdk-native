@@ -243,7 +243,7 @@ Device TrustchainVerifier::getDevice(User const& user,
 {
   auto const device = std::find_if(
       user.devices.begin(), user.devices.end(), [&](auto const& device) {
-        return device.id == deviceHash;
+        return device.id.base() == deviceHash.base();
       });
   assert(device != user.devices.end() && "device should belong to user");
   return *device;
