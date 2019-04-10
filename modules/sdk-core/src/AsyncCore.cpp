@@ -29,8 +29,7 @@ TLOG_CATEGORY(sdk);
 namespace Tanker
 {
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
-  : _core(std::make_unique<Core>(
-        std::move(url), std::move(info), std::move(writablePath)))
+  : _core(std::move(url), std::move(info), std::move(writablePath))
 {
 }
 
@@ -52,13 +51,13 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
       switch (event)
       {
       case Event::DeviceCreated:
-        return this->_core->deviceCreated.connect(
+        return this->_core.deviceCreated.connect(
             [cb, data] { tc::async([=] { cb(nullptr, data); }); });
       case Event::SessionClosed:
-        return this->_core->sessionClosed.connect(
+        return this->_core.sessionClosed.connect(
             [cb, data] { tc::async([=] { cb(nullptr, data); }); });
       case Event::DeviceRevoked:
-        return this->_core->deviceRevoked.connect(
+        return this->_core.deviceRevoked.connect(
             [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
       default:
         throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
@@ -78,7 +77,7 @@ tc::future<void> AsyncCore::signUp(std::string const& identity,
                                    AuthenticationMethods const& authMethods)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->signUp(identity, authMethods));
+    TC_AWAIT(this->_core.signUp(identity, authMethods));
   });
 }
 
@@ -86,18 +85,18 @@ tc::future<OpenResult> AsyncCore::signIn(std::string const& identity,
                                          SignInOptions const& signInOptions)
 {
   return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
-    TC_RETURN(TC_AWAIT(this->_core->signIn(identity, signInOptions)));
+    TC_RETURN(TC_AWAIT(this->_core.signIn(identity, signInOptions)));
   });
 }
 
 tc::future<void> AsyncCore::signOut()
 {
-  return tc::async([this] { this->_core->signOut(); });
+  return tc::async([this] { this->_core.signOut(); });
 }
 
 bool AsyncCore::isOpen() const
 {
-  return this->_core->isOpen();
+  return this->_core.isOpen();
 }
 
 tc::future<void> AsyncCore::encrypt(
@@ -107,7 +106,7 @@ tc::future<void> AsyncCore::encrypt(
     std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->encrypt(
+    TC_AWAIT(this->_core.encrypt(
         encryptedData, clearData, publicIdentities, groupIds));
   });
 }
@@ -116,7 +115,7 @@ tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
                                     gsl::span<uint8_t const> encryptedData)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->decrypt(decryptedData, encryptedData));
+    TC_AWAIT(this->_core.decrypt(decryptedData, encryptedData));
   });
 }
 
@@ -126,7 +125,7 @@ tc::future<void> AsyncCore::share(
     std::vector<SGroupId> const& groupIds)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->share(resourceId, publicIdentities, groupIds));
+    TC_AWAIT(this->_core.share(resourceId, publicIdentities, groupIds));
   });
 }
 
@@ -134,7 +133,7 @@ tc::future<SGroupId> AsyncCore::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
   return tc::async_resumable([=]() -> tc::cotask<SGroupId> {
-    TC_RETURN(TC_AWAIT(this->_core->createGroup(members)));
+    TC_RETURN(TC_AWAIT(this->_core.createGroup(members)));
   });
 }
 
@@ -142,14 +141,14 @@ tc::future<void> AsyncCore::updateGroupMembers(
     SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->updateGroupMembers(groupId, usersToAdd));
+    TC_AWAIT(this->_core.updateGroupMembers(groupId, usersToAdd));
   });
 }
 
 tc::future<UnlockKey> AsyncCore::generateAndRegisterUnlockKey()
 {
   return tc::async_resumable([this]() -> tc::cotask<UnlockKey> {
-    TC_RETURN(TC_AWAIT(this->_core->generateAndRegisterUnlockKey()));
+    TC_RETURN(TC_AWAIT(this->_core.generateAndRegisterUnlockKey()));
   });
 }
 
@@ -157,37 +156,37 @@ tc::future<void> AsyncCore::registerUnlock(
     Unlock::RegistrationOptions const& options)
 {
   return tc::async_resumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->registerUnlock(options));
+    TC_AWAIT(this->_core.registerUnlock(options));
   });
 }
 
 tc::future<bool> AsyncCore::isUnlockAlreadySetUp() const
 {
   return tc::async_resumable([this]() -> tc::cotask<bool> {
-    TC_RETURN(TC_AWAIT(this->_core->isUnlockAlreadySetUp()));
+    TC_RETURN(TC_AWAIT(this->_core.isUnlockAlreadySetUp()));
   });
 }
 
 expected<Unlock::Methods> AsyncCore::registeredUnlockMethods() const
 {
-  return tc::sync([&] { return this->_core->registeredUnlockMethods(); });
+  return tc::sync([&] { return this->_core.registeredUnlockMethods(); });
 }
 
 expected<bool> AsyncCore::hasRegisteredUnlockMethods() const
 {
-  return tc::sync([&] { return this->_core->hasRegisteredUnlockMethods(); });
+  return tc::sync([&] { return this->_core.hasRegisteredUnlockMethods(); });
 }
 
 expected<bool> AsyncCore::hasRegisteredUnlockMethod(Unlock::Method method) const
 {
   return tc::sync(
-      [&] { return this->_core->hasRegisteredUnlockMethod(method); });
+      [&] { return this->_core.hasRegisteredUnlockMethod(method); });
 }
 
 expected<SDeviceId> AsyncCore::deviceId() const
 {
   return tc::sync([&] {
-    return SDeviceId(cppcodec::base64_rfc4648::encode(_core->deviceId()));
+    return SDeviceId(cppcodec::base64_rfc4648::encode(_core.deviceId()));
   });
 }
 
@@ -195,8 +194,11 @@ tc::future<std::vector<Device>> AsyncCore::getDeviceList()
 {
   return tc::async_resumable([this]() -> tc::cotask<std::vector<Device>> {
     TC_AWAIT(syncTrustchain());
-    auto devices = TC_AWAIT(this->_core->getDeviceList());
-    devices.erase(std::remove_if(devices.begin(), devices.end(), [](auto const& device) { return device.isGhostDevice; }));
+    auto devices = TC_AWAIT(this->_core.getDeviceList());
+    devices.erase(
+        std::remove_if(devices.begin(), devices.end(), [](auto const& device) {
+          return device.isGhostDevice;
+        }));
     TC_RETURN(devices);
   });
 }
@@ -204,31 +206,30 @@ tc::future<std::vector<Device>> AsyncCore::getDeviceList()
 tc::future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
 {
   return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->revokeDevice(
+    TC_AWAIT(this->_core.revokeDevice(
         cppcodec::base64_rfc4648::decode<DeviceId>(deviceId.string())));
   });
 }
 
 tc::future<void> AsyncCore::syncTrustchain()
 {
-  return tc::async_resumable([this]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core->syncTrustchain());
-  });
+  return tc::async_resumable(
+      [this]() -> tc::cotask<void> { TC_AWAIT(this->_core.syncTrustchain()); });
 }
 
 boost::signals2::signal<void()>& AsyncCore::sessionClosed()
 {
-  return this->_core->sessionClosed;
+  return this->_core.sessionClosed;
 }
 
 boost::signals2::signal<void()>& AsyncCore::deviceCreated()
 {
-  return this->_core->deviceCreated;
+  return this->_core.deviceCreated;
 }
 
 boost::signals2::signal<void()>& AsyncCore::deviceRevoked()
 {
-  return this->_core->deviceRevoked;
+  return this->_core.deviceRevoked;
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)

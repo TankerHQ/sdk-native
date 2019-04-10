@@ -51,6 +51,11 @@ enum class Event
 class AsyncCore
 {
 public:
+  AsyncCore(AsyncCore const&) = delete;
+  AsyncCore(AsyncCore&&) = delete;
+  AsyncCore& operator=(AsyncCore const&) = delete;
+  AsyncCore& operator=(AsyncCore&&) = delete;
+
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
   ~AsyncCore();
 
@@ -119,6 +124,6 @@ public:
   static std::string const& version();
 
 private:
-  std::unique_ptr<Core> _core;
+  Core _core;
 };
 }
