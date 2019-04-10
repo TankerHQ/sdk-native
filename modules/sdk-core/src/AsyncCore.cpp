@@ -194,7 +194,9 @@ expected<SDeviceId> AsyncCore::deviceId() const
 tc::future<std::vector<Device>> AsyncCore::getDeviceList() const
 {
   return tc::async_resumable([this]() -> tc::cotask<std::vector<Device>> {
-    TC_RETURN(TC_AWAIT(this->_core->getDeviceList()));
+    auto devices = TC_AWAIT(this->_core->getDeviceList());
+    devices.erase(std::remove_if(devices.begin(), devices.end(), [](auto const& device) { return device.isGhostDevice; }));
+    TC_RETURN(devices);
   });
 }
 
