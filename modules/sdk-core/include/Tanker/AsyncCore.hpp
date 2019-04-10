@@ -100,6 +100,7 @@ public:
   boost::signals2::signal<void()>& deviceRevoked();
 
   tc::future<SDeviceId> deviceId() const;
+  tc::future<std::vector<Device>> getDeviceList() const;
 
   tc::future<void> revokeDevice(SDeviceId const& deviceId);
 

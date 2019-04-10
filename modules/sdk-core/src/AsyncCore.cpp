@@ -178,8 +178,7 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethods() const
   return tc::sync([&] { return this->_core->hasRegisteredUnlockMethods(); });
 }
 
-expected<bool> AsyncCore::hasRegisteredUnlockMethod(
-    Unlock::Method method) const
+expected<bool> AsyncCore::hasRegisteredUnlockMethod(Unlock::Method method) const
 {
   return tc::sync(
       [&] { return this->_core->hasRegisteredUnlockMethod(method); });
@@ -189,6 +188,13 @@ expected<SDeviceId> AsyncCore::deviceId() const
 {
   return tc::sync([&] {
     return SDeviceId(cppcodec::base64_rfc4648::encode(_core->deviceId()));
+  });
+}
+
+tc::future<std::vector<Device>> AsyncCore::getDeviceList() const
+{
+  return tc::async_resumable([this]() -> tc::cotask<std::vector<Device>> {
+    TC_RETURN(TC_AWAIT(this->_core->getDeviceList()));
   });
 }
 

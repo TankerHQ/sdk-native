@@ -59,6 +59,26 @@ typedef struct tanker_authentication_methods tanker_authentication_methods_t;
 typedef struct tanker_sign_in_options tanker_sign_in_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
+typedef struct tanker_device_list_elem tanker_device_list_elem_t;
+typedef struct tanker_device_list tanker_device_list_t;
+
+/*!
+ * \brief The list of a user's devices
+ */
+struct tanker_device_list
+{
+  uint64_t count;
+  tanker_device_list_elem_t* devices;
+};
+
+/*!
+ * \brief Describes one device belonging to the user
+ */
+struct tanker_device_list_elem
+{
+  b64char const* device_id;
+  bool is_revoked;
+};
 
 /*!
  * \brief a struct describing a log message
@@ -264,6 +284,15 @@ bool tanker_is_open(tanker_t* tanker);
 tanker_future_t* tanker_device_id(tanker_t* session);
 
 /*!
+ * Get the list of the user's devices.
+ * \param session A tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_OPEN
+ * \return a future of tanker_device_list_t* that must be freed with
+ * tanker_free_device_list.
+ */
+tanker_future_t* tanker_get_device_list(tanker_t* session);
+
+/*!
  * Generate an unlockKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_OPEN
@@ -435,6 +464,8 @@ tanker_future_t* tanker_revoke_device(tanker_t* session,
                                       b64char const* device_id);
 
 void tanker_free_buffer(void* buffer);
+
+void tanker_free_device_list(tanker_device_list_t* list);
 
 #ifdef __cplusplus
 }
