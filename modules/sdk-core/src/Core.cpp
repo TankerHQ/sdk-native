@@ -136,12 +136,7 @@ void Core::initSession(Opener::OpenResult&& openResult)
       mpark::get<Session::Config>(std::move(openResult))));
   auto const& session = mpark::get<SessionType>(_state);
   session->deviceCreated.connect(deviceCreated);
-  session->deviceRevoked.connect([&] {
-    _taskCanceler.add(tc::async([this] {
-      signOut();
-      deviceRevoked();
-    }));
-  });
+  session->deviceRevoked.connect(deviceRevoked);
   session->gotDeviceId.connect(
       [this](auto const& deviceId) { _deviceId = deviceId; });
 }

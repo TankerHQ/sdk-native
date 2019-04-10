@@ -125,5 +125,11 @@ public:
 
 private:
   Core _core;
+
+  // this signal is special compared to the other two because we need to do
+  // special work before forwarding it, so we redefine it
+  boost::signals2::signal<void()> _asyncDeviceRevoked;
+
+  tc::task_auto_canceler _taskCanceler;
 };
 }

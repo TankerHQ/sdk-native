@@ -31,6 +31,12 @@ namespace Tanker
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   : _core(std::move(url), std::move(info), std::move(writablePath))
 {
+  _core.deviceRevoked.connect([this] {
+    _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
+      TC_AWAIT(signOut());
+      _asyncDeviceRevoked();
+    }));
+  });
 }
 
 AsyncCore::~AsyncCore() = default;
@@ -57,7 +63,7 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
         return this->_core.sessionClosed.connect(
             [cb, data] { tc::async([=] { cb(nullptr, data); }); });
       case Event::DeviceRevoked:
-        return this->_core.deviceRevoked.connect(
+        return this->_asyncDeviceRevoked.connect(
             [cb, data]() { tc::async([=] { cb(nullptr, data); }); });
       default:
         throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
@@ -229,7 +235,7 @@ boost::signals2::signal<void()>& AsyncCore::deviceCreated()
 
 boost::signals2::signal<void()>& AsyncCore::deviceRevoked()
 {
-  return this->_core.deviceRevoked;
+  return this->_asyncDeviceRevoked;
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)
