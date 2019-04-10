@@ -304,8 +304,9 @@ TEST_CASE("it should serialize/deserialize a DeviceRevocation V2")
 {
   DeviceRevocation2 before;
   before.deviceId = make<DeviceId>("the device ID !");
-  before.publicEncryptionKey = make<DeviceId>("the new user key");
-  before.previousPublicEncryptionKey = make<DeviceId>("the previous user key");
+  before.publicEncryptionKey = make<Crypto::PublicEncryptionKey>("the new user key");
+  before.previousPublicEncryptionKey =
+      make<Crypto::PublicEncryptionKey>("the previous user key");
   before.encryptedKeyForPreviousUserKey =
       make<Crypto::SealedPrivateEncryptionKey>("enc for previous user");
   before.userKeys.push_back(

@@ -568,8 +568,10 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
   if (tankerUser.userKey)
   {
     oldPublicEncryptionKey = *tankerUser.userKey;
-    encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-        user.userKeys.back().keyPair.privateKey, newEncryptionKey.publicKey);
+    encryptedKeyForPreviousUserKey =
+        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
+            user.userKeys.back().keyPair.privateKey,
+            newEncryptionKey.publicKey);
   }
 
   std::vector<EncryptedPrivateUserKey> userKeys;

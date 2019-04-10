@@ -44,7 +44,7 @@ KeyPublishToUserGroup deserializeKeyPublishToUserGroup(
   Serialization::SerializedSource ss{data};
 
   out.recipientPublicEncryptionKey =
-      Serialization::deserialize<Crypto::Hash>(ss);
+      Serialization::deserialize<Crypto::PublicEncryptionKey>(ss);
   out.resourceId = Serialization::deserialize<Crypto::Mac>(ss);
   out.key = Serialization::deserialize<Crypto::SealedSymmetricKey>(ss);
 
