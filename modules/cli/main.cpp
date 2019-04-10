@@ -207,16 +207,18 @@ int main(int argc, char* argv[])
     {
       block.payload =
           cppcodec::hex_lower::decode(args.at("<payload>").asString());
-      block.author =
-          cppcodec::hex_lower::decode(args.at("<author>").asString());
-      block.signature =
-          cppcodec::hex_lower::decode(args.at("<signature>").asString());
+      block.author = Crypto::Hash(
+          cppcodec::hex_lower::decode(args.at("<author>").asString()));
+      block.signature = Crypto::Signature(
+          cppcodec::hex_lower::decode(args.at("<signature>").asString()));
     }
     else
     {
       block.payload = cppcodec::base64_rfc4648::decode(args.at("<payload>").asString());
-      block.author = cppcodec::base64_rfc4648::decode(args.at("<author>").asString());
-      block.signature = cppcodec::base64_rfc4648::decode(args.at("<signature>").asString());
+      block.author = Crypto::Hash(
+          cppcodec::base64_rfc4648::decode(args.at("<author>").asString()));
+      block.signature = Crypto::Signature(
+          cppcodec::base64_rfc4648::decode(args.at("<signature>").asString()));
     }
 
     auto const entry = blockToUnverifiedEntry(block);

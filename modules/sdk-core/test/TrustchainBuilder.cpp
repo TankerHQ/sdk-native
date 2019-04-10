@@ -23,7 +23,7 @@ TrustchainBuilder::TrustchainBuilder()
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
       Tanker::TrustchainCreation{_trustchainKeyPair.publicKey});
-  block.trustchainId = block.hash();
+  block.trustchainId = TrustchainId(block.hash());
   _trustchainId = block.trustchainId;
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
@@ -120,7 +120,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   _blocks.push_back(block);
 
   user.devices[0].delegation = delegation;
-  user.devices[0].keys.deviceId = block.hash();
+  user.devices[0].keys.deviceId = DeviceId(block.hash());
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
@@ -166,7 +166,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  user.devices[0].keys.deviceId = block.hash();
+  user.devices[0].keys.deviceId = DeviceId(block.hash());
   user.devices[0].delegation = delegation;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
@@ -215,7 +215,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = block.hash();
+  device.keys.deviceId = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);
@@ -265,7 +265,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = block.hash();
+  device.keys.deviceId = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);
@@ -568,8 +568,10 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
   if (tankerUser.userKey)
   {
     oldPublicEncryptionKey = *tankerUser.userKey;
-    encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-        user.userKeys.back().keyPair.privateKey, newEncryptionKey.publicKey);
+    encryptedKeyForPreviousUserKey =
+        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
+            user.userKeys.back().keyPair.privateKey,
+            newEncryptionKey.publicKey);
   }
 
   std::vector<EncryptedPrivateUserKey> userKeys;

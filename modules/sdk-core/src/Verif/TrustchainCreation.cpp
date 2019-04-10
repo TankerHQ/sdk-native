@@ -16,7 +16,7 @@ void verifyTrustchainCreation(Tanker::UnverifiedEntry const& rootEntry,
 {
   assert(rootEntry.nature == Nature::TrustchainCreation);
 
-  ensures(rootEntry.hash == currentTrustchainId,
+  ensures(rootEntry.hash.base() == currentTrustchainId.base(),
           Error::VerificationCode::InvalidHash,
           "root block hash must be the trustchain id");
   ensures(rootEntry.author.is_null(),

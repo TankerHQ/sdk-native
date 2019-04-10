@@ -1,21 +1,36 @@
 #pragma once
 
-#include <Tanker/Crypto/detail/CryptographicType.hpp>
-#include <Tanker/Crypto/detail/IsCryptographicType.hpp>
-#include <Tanker/Crypto/detail/ArrayHelpers.hpp>
+#include <Tanker/Crypto/BasicCryptographicType.hpp>
 
 #include <sodium/crypto_aead_xchacha20poly1305.h>
+
+#include <tuple>
+#include <type_traits>
 
 namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(Mac, crypto_aead_xchacha20poly1305_ietf_ABYTES)
-TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(Mac)
+class Mac
+  : public BasicCryptographicType<Mac,
+                                  crypto_aead_xchacha20poly1305_ietf_ABYTES>
+{
+  using base_t::base_t;
+};
 }
 }
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::Mac)
+template <>
+class tuple_size<::Tanker::Crypto::Mac>
+  : public integral_constant<size_t, crypto_aead_xchacha20poly1305_ietf_ABYTES>
+{
+};
+
+template <size_t I>
+class tuple_element<I, ::Tanker::Crypto::Mac>
+  : public tuple_element<I, ::Tanker::Crypto::Mac::base_t>
+{
+};
 }

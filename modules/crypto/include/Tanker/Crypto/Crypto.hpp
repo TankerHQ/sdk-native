@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <typeinfo>
 #include <vector>
 
 namespace Tanker
@@ -31,9 +32,10 @@ struct container_resizer<T, std::enable_if_t<IsCryptographicType<T>::value>>
 
     if (T::arraySize != size)
     {
-      throw InvalidKeySize(
-          "invalid size for "s + T::name + "while preparing container: got " +
-          std::to_string(size) + ", expected " + std::to_string(T::arraySize));
+      throw InvalidKeySize("invalid size for "s + typeid(T).name() +
+                           " while preparing container: got " +
+                           std::to_string(size) + ", expected " +
+                           std::to_string(T::arraySize));
     }
     return {};
   }

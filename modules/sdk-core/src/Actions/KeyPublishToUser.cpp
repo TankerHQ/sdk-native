@@ -50,7 +50,7 @@ KeyPublishToUser deserializeKeyPublishToUser(gsl::span<uint8_t const> data)
   Serialization::SerializedSource ss{data};
 
   out.recipientPublicEncryptionKey =
-      Serialization::deserialize<Crypto::Hash>(ss);
+      Serialization::deserialize<Crypto::PublicEncryptionKey>(ss);
   out.mac = Serialization::deserialize<Crypto::Mac>(ss);
   out.key = Serialization::deserialize<Crypto::SealedSymmetricKey>(ss);
 
