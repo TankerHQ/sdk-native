@@ -1,25 +1,39 @@
 #pragma once
 
-#include <Tanker/Crypto/detail/ArrayHelpers.hpp>
-#include <Tanker/Crypto/detail/CryptographicType.hpp>
-#include <Tanker/Crypto/detail/IsCryptographicType.hpp>
+#include <Tanker/Crypto/BasicCryptographicType.hpp>
 
 #include <sodium/crypto_box.h>
 #include <sodium/crypto_sign.h>
+
+#include <tuple>
+#include <type_traits>
 
 namespace Tanker
 {
 namespace Crypto
 {
-TANKER_CRYPTO_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey,
-                                 crypto_sign_SECRETKEYBYTES +
-                                     crypto_box_SEALBYTES)
-TANKER_CRYPTO_IS_CRYPTOGRAPHIC_TYPE(SealedPrivateSignatureKey)
+class SealedPrivateSignatureKey
+  : public BasicCryptographicType<SealedPrivateSignatureKey,
+                                  crypto_sign_SECRETKEYBYTES +
+                                      crypto_box_SEALBYTES>
+{
+  using base_t::base_t;
+};
 }
 }
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(
-    ::Tanker::Crypto::SealedPrivateSignatureKey)
+template <>
+class tuple_size<::Tanker::Crypto::SealedPrivateSignatureKey>
+  : public integral_constant<size_t,
+                             crypto_sign_SECRETKEYBYTES + crypto_box_SEALBYTES>
+{
+};
+
+template <size_t I>
+class tuple_element<I, ::Tanker::Crypto::SealedPrivateSignatureKey>
+  : public tuple_element<I, ::Tanker::Crypto::SealedPrivateSignatureKey::base_t>
+{
+};
 }
