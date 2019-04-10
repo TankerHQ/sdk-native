@@ -271,6 +271,13 @@ endif()
 
 target_link_libraries(tankercore_test tankercore tankertesthelpers)
 
+install(TARGETS tankercore_test
+  EXPORT tankertest
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
 if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
