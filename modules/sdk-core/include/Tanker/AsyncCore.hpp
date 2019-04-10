@@ -18,6 +18,8 @@
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
 
+#include <Tanker/task_canceler.hpp>
+
 #include <tconcurrent/future.hpp>
 
 #include <boost/signals2/connection.hpp>
@@ -130,6 +132,6 @@ private:
   // special work before forwarding it, so we redefine it
   boost::signals2::signal<void()> _asyncDeviceRevoked;
 
-  tc::task_auto_canceler _taskCanceler;
+  task_canceler _taskCanceler;
 };
 }

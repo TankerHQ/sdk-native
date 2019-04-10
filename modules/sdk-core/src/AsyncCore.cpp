@@ -32,10 +32,21 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   : _core(std::move(url), std::move(info), std::move(writablePath))
 {
   _core.deviceRevoked.connect([this] {
-    _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
-      TC_AWAIT(signOut());
-      _asyncDeviceRevoked();
-    }));
+    _taskCanceler.run([this] {
+      return tc::async_resumable([this]() -> tc::cotask<void> {
+        // - This device was revoked, we need to signOut so that Session gets
+        // destroyed.
+        // - There might be calls in progress on this session, so we must
+        // terminate() them before going on.
+        // - We can't call this->signOut() because the terminate() would cancel
+        // this coroutine too.
+        // - We must not wait on terminate() because that means waiting on
+        // ourselves and deadlocking.
+        _taskCanceler.terminate();
+        _core.signOut();
+        _asyncDeviceRevoked();
+      });
+    });
   });
 }
 
