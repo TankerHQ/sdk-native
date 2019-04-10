@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
 #include <gsl-lite.hpp>
@@ -22,7 +23,7 @@ template <typename T, typename = void>
 struct container_resizer;
 
 template <typename T>
-struct container_resizer<T, std::enable_if_t<is_cryptographic_type<T>::value>>
+struct container_resizer<T, std::enable_if_t<IsCryptographicType<T>::value>>
 {
   static T resize(typename T::size_type size)
   {

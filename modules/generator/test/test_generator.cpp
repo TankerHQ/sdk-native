@@ -2,6 +2,8 @@
 
 #include <Generator/Generator.hpp>
 #include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/KeyUsage.hpp>
+#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>

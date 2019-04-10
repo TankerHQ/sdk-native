@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Crypto/Traits.hpp>
+#include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -15,7 +15,7 @@ template <typename CryptoType>
 struct formatter<
     CryptoType,
     char,
-    std::enable_if_t<Tanker::Crypto::is_cryptographic_type<CryptoType>::value>>
+    std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
 {
   using base = formatter<typename CryptoType::array_t>;
 
