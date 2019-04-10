@@ -1,11 +1,9 @@
 #pragma once
 
-#include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
 
-#include <Tanker/Crypto/detail/ArrayHelpers.hpp>
-
+#include <tuple>
 #include <type_traits>
 
 namespace Tanker
@@ -14,18 +12,23 @@ namespace Crypto
 {
 template <KeyType Type, KeyUsage Usage>
 class AsymmetricKey;
-
-template <KeyType Type, KeyUsage Usage>
-struct IsCryptographicType<AsymmetricKey<Type, Usage>> : std::true_type
-{
-};
 }
 }
 
 namespace std
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT_NON_TYPE_TPL_ARGS(
-    ::Tanker::Crypto::AsymmetricKey,
-    ::Tanker::Crypto::KeyType,
-    ::Tanker::Crypto::KeyUsage)
+template <::Tanker::Crypto::KeyType KT, ::Tanker::Crypto::KeyUsage KU>
+class tuple_size<::Tanker::Crypto::AsymmetricKey<KT, KU>>
+  : public integral_constant<size_t,
+                             ::Tanker::Crypto::AsymmetricKey<KT, KU>::arraySize>
+{
+};
+
+template <size_t I, ::Tanker::Crypto::KeyType KT, ::Tanker::Crypto::KeyUsage KU>
+class tuple_element<I, ::Tanker::Crypto::AsymmetricKey<KT, KU>>
+  : public tuple_element<
+        I,
+        typename ::Tanker::Crypto::AsymmetricKey<KT, KU>::base_t>
+{
+};
 }

@@ -1,16 +1,17 @@
 #pragma once
 
 #include <Tanker/Crypto/AsymmetricKey.hpp>
+#include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
 
-#include <Tanker/Crypto/detail/ArrayHelpers.hpp>
 #include <Tanker/Crypto/detail/CryptographicTypeImpl.hpp>
 
 #include <sodium/crypto_sign.h>
 
 #include <array>
 #include <cstdint>
+#include <type_traits>
 
 namespace Tanker
 {
@@ -27,10 +28,10 @@ class AsymmetricKey<KeyType::Public, KeyUsage::Signature>
 
 using PublicSignatureKey =
     AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
-}
-}
 
-namespace std
+template <>
+struct IsCryptographicType<PublicSignatureKey> : std::true_type
 {
-TANKER_CRYPTO_STD_TUPLE_SIZE_ELEMENT(::Tanker::Crypto::PublicSignatureKey)
+};
+}
 }
