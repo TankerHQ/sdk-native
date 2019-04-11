@@ -67,8 +67,8 @@ typedef struct tanker_device_list tanker_device_list_t;
  */
 struct tanker_device_list
 {
-  uint32_t count;
   tanker_device_list_elem_t* devices;
+  uint32_t count;
 };
 
 /*!
