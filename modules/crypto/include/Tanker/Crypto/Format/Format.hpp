@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Tanker/Crypto/IsCryptographicType.hpp>
-#include <Tanker/Crypto/Types.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url.hpp>
 #include <fmt/format.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 namespace fmt
@@ -38,7 +39,7 @@ struct formatter<
     return end;
   }
 
-  auto format_crypto_array(uint8_t const* beg, std::size_t size)
+  auto format_crypto_array(std::uint8_t const* beg, std::size_t size)
   {
     return useSafe ? cppcodec::base64_url::encode<std::string>(beg, size) :
                      cppcodec::base64_rfc4648::encode<std::string>(beg, size);

@@ -1,7 +1,7 @@
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>

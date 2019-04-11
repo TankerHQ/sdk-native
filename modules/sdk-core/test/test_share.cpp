@@ -1,6 +1,6 @@
 #include <Tanker/Share.hpp>
 
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/Serialization/Serialization.hpp>

@@ -5,7 +5,7 @@
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/GroupStore.hpp>

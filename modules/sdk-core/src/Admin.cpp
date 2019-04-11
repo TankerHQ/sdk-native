@@ -4,7 +4,7 @@
 #include <Tanker/Action.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Block.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>

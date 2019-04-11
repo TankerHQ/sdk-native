@@ -2,7 +2,7 @@
 
 #include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>

@@ -32,8 +32,8 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/AsymmetricKey.hpp
     include/Tanker/Crypto/KeyUsage.hpp
     include/Tanker/Crypto/KeyType.hpp
-    include/Tanker/Crypto/KeyFormat.hpp
     include/Tanker/Crypto/JsonFormat.hpp
+    include/Tanker/Crypto/Format/Format.hpp
     include/Tanker/Crypto/Json/Json.hpp
     include/Tanker/Crypto/Serialization/Serialization.hpp
 )
