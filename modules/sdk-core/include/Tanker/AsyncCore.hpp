@@ -68,36 +68,39 @@ public:
 
   expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
 
-  tc::future<void> signUp(std::string const& identity,
-                          AuthenticationMethods const& authMethods = {});
-  tc::future<OpenResult> signIn(std::string const& identity,
-                                SignInOptions const& signInOptions = {});
+  tc::shared_future<void> signUp(std::string const& identity,
+                                 AuthenticationMethods const& authMethods = {});
+  tc::shared_future<OpenResult> signIn(std::string const& identity,
+                                       SignInOptions const& signInOptions = {});
 
-  tc::future<void> signOut();
+  tc::shared_future<void> signOut();
 
   bool isOpen() const;
 
-  tc::future<void> encrypt(
+  tc::shared_future<void> encrypt(
       uint8_t* encryptedData,
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
-  tc::future<void> decrypt(uint8_t* decryptedData,
-                           gsl::span<uint8_t const> encryptedData);
+  tc::shared_future<void> decrypt(uint8_t* decryptedData,
+                                  gsl::span<uint8_t const> encryptedData);
 
-  tc::future<void> share(std::vector<SResourceId> const& resourceId,
-                         std::vector<SPublicIdentity> const& publicIdentities,
-                         std::vector<SGroupId> const& groupIds);
+  tc::shared_future<void> share(
+      std::vector<SResourceId> const& resourceId,
+      std::vector<SPublicIdentity> const& publicIdentities,
+      std::vector<SGroupId> const& groupIds);
 
-  tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
-  tc::future<void> updateGroupMembers(
+  tc::shared_future<SGroupId> createGroup(
+      std::vector<SPublicIdentity> const& members);
+  tc::shared_future<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::future<UnlockKey> generateAndRegisterUnlockKey();
+  tc::shared_future<UnlockKey> generateAndRegisterUnlockKey();
 
-  tc::future<void> registerUnlock(Unlock::RegistrationOptions const& options);
+  tc::shared_future<void> registerUnlock(
+      Unlock::RegistrationOptions const& options);
 
-  tc::future<bool> isUnlockAlreadySetUp() const;
+  tc::shared_future<bool> isUnlockAlreadySetUp() const;
   expected<bool> hasRegisteredUnlockMethods() const;
   expected<bool> hasRegisteredUnlockMethod(Unlock::Method) const;
   expected<Unlock::Methods> registeredUnlockMethods() const;
@@ -106,12 +109,12 @@ public:
   boost::signals2::signal<void()>& deviceCreated();
   boost::signals2::signal<void()>& deviceRevoked();
 
-  tc::future<SDeviceId> deviceId() const;
-  tc::future<std::vector<Device>> getDeviceList();
+  expected<SDeviceId> deviceId() const;
+  tc::shared_future<std::vector<Device>> getDeviceList();
 
-  tc::future<void> revokeDevice(SDeviceId const& deviceId);
+  tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
 
-  tc::future<void> syncTrustchain();
+  tc::shared_future<void> syncTrustchain();
 
   static void setLogHandler(Log::LogHandler handler);
 
@@ -132,6 +135,6 @@ private:
   // special work before forwarding it, so we redefine it
   boost::signals2::signal<void()> _asyncDeviceRevoked;
 
-  task_canceler _taskCanceler;
+  mutable task_canceler _taskCanceler;
 };
 }
