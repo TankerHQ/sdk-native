@@ -3,6 +3,8 @@
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/GroupId.hpp>
 
+#include <optional.hpp>
+
 #include <cstdint>
 
 namespace Tanker

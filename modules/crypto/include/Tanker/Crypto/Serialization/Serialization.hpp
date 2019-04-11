@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
 
 #include <algorithm>
 #include <cstdint>

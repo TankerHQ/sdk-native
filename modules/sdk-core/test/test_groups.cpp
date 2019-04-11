@@ -1,6 +1,7 @@
 #include <Tanker/Groups/Manager.hpp>
 
 #include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserNotFound.hpp>

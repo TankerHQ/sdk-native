@@ -22,6 +22,7 @@
 #include <Tanker/Index.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Nature.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 

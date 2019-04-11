@@ -4,6 +4,8 @@
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
+#include <optional.hpp>
+
 #include <memory>
 #include <string>
 
