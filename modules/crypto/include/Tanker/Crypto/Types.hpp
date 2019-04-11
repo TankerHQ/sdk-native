@@ -23,31 +23,8 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 
+#include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/Serialization/Serialization.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <gsl-lite.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <sodium.h>
-
-namespace nlohmann
-{
-template <typename CryptoType>
-struct adl_serializer<
-    CryptoType,
-    std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
-{
-  template <typename BasicJsonType>
-  static void to_json(BasicJsonType& j, CryptoType const& value)
-  {
-    j = cppcodec::base64_rfc4648::encode(value);
-  }
-
-  template <typename BasicJsonType>
-  static void from_json(BasicJsonType const& j, CryptoType& value)
-  {
-    value = cppcodec::base64_rfc4648::decode<CryptoType>(
-        j.template get<std::string>());
-  }
-};
-}
