@@ -3,6 +3,8 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/UserId.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -350,7 +352,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
               copyToVector(jsEntry["action"]["userKeyPair"]
                                   ["encryptedPrivateEncryptionKey"])}};
       dc.isGhostDevice = jsEntry["action"]["isGhostDevice"].as<bool>();
-      dc.userId = Crypto::Hash{copyToVector(jsEntry["action"]["userId"])};
+      dc.userId = UserId(copyToVector(jsEntry["action"]["userId"]));
       entry.action = Action{DeviceCreation{dc}};
     }
     else
@@ -361,27 +363,30 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   else if (entry.nature == Nature::KeyPublishToDevice)
   {
     KeyPublishToDevice kp;
-    kp.recipient = copyToVector(jsEntry["action"]["recipient"]);
-    kp.mac = copyToVector(jsEntry["action"]["resourceId"]);
-    kp.key = copyToVector(jsEntry["action"]["resourceKey"]);
+    kp.recipient = DeviceId{copyToVector(jsEntry["action"]["recipient"])};
+    kp.mac = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
+    kp.key = Crypto::EncryptedSymmetricKey{
+        copyToVector(jsEntry["action"]["resourceKey"])};
     entry.action = kp;
   }
   else if (entry.nature == Nature::KeyPublishToUser)
   {
     KeyPublishToUser kp;
-    kp.recipientPublicEncryptionKey =
-        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]);
-    kp.mac = copyToVector(jsEntry["action"]["resourceId"]);
-    kp.key = copyToVector(jsEntry["action"]["resourceKey"]);
+    kp.recipientPublicEncryptionKey = Crypto::PublicEncryptionKey{
+        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"])};
+    kp.mac = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
+    kp.key = Crypto::SealedSymmetricKey{
+        copyToVector(jsEntry["action"]["resourceKey"])};
     entry.action = kp;
   }
   else if (entry.nature == Nature::KeyPublishToUserGroup)
   {
     KeyPublishToUserGroup kp;
-    kp.recipientPublicEncryptionKey =
-        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]);
-    kp.resourceId = copyToVector(jsEntry["action"]["resourceId"]);
-    kp.key = copyToVector(jsEntry["action"]["resourceKey"]);
+    kp.recipientPublicEncryptionKey = Crypto::PublicEncryptionKey{
+        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"])};
+    kp.resourceId = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
+    kp.key = Crypto::SealedSymmetricKey{
+        copyToVector(jsEntry["action"]["resourceKey"])};
     entry.action = kp;
   }
   else
