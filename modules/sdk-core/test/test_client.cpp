@@ -2,7 +2,7 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Types/Email.hpp>

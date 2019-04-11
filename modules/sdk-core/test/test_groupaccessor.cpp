@@ -1,4 +1,4 @@
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>

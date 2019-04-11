@@ -7,7 +7,7 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>

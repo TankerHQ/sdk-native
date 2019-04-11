@@ -1,7 +1,7 @@
 #include <doctest.h>
 
 #include <Generator/Generator.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>

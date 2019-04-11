@@ -1,7 +1,7 @@
 #include <Tanker/Revocation.hpp>
 
 #include <Tanker/ContactStore.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>

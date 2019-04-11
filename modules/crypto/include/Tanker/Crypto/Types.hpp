@@ -23,59 +23,8 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <gsl-lite.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <sodium.h>
-
-namespace Tanker
-{
-namespace Crypto
-{
-template <typename T,
-          typename = std::enable_if_t<IsCryptographicType<T>::value>>
-constexpr std::size_t serialized_size(T const& val)
-{
-  return val.arraySize;
-}
-
-template <typename T,
-          typename = std::enable_if_t<IsCryptographicType<T>::value>>
-void from_serialized(Serialization::SerializedSource& ss, T& val)
-{
-  auto sp = ss.read(val.size());
-  std::copy(sp.begin(), sp.end(), val.begin());
-}
-
-template <typename T,
-          typename = std::enable_if_t<IsCryptographicType<T>::value>>
-std::uint8_t* to_serialized(std::uint8_t* it, T const& val)
-{
-  return std::copy(val.begin(), val.end(), it);
-}
-}
-}
-
-namespace nlohmann
-{
-template <typename CryptoType>
-struct adl_serializer<
-    CryptoType,
-    std::enable_if_t<Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
-{
-  template <typename BasicJsonType>
-  static void to_json(BasicJsonType& j, CryptoType const& value)
-  {
-    j = cppcodec::base64_rfc4648::encode(value);
-  }
-
-  template <typename BasicJsonType>
-  static void from_json(BasicJsonType const& j, CryptoType& value)
-  {
-    value = cppcodec::base64_rfc4648::decode<CryptoType>(
-        j.template get<std::string>());
-  }
-};
-}

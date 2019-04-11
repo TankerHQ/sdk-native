@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain.hpp>
 
 #include <Tanker/Actions/DeviceCreation.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>

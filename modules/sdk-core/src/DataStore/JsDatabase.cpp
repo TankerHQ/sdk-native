@@ -1,4 +1,4 @@
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/JsDatabase.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>

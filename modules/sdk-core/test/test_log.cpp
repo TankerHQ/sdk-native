@@ -1,7 +1,8 @@
 #include <doctest.h>
 
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/JsonFormat.hpp>
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>

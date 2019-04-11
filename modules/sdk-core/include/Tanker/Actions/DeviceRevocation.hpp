@@ -4,9 +4,11 @@
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
+#include <Tanker/Serialization/serialized_size.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
+#include <mpark/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>

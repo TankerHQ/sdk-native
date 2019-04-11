@@ -1,6 +1,6 @@
 #include <Tanker/Groups/GroupStore.hpp>
 
-#include <Tanker/Crypto/KeyFormat.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
