@@ -1,5 +1,6 @@
 #include <Tanker/DbModels/UserKeys.hpp>
 
+#include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/Connection.hpp>

@@ -1,5 +1,6 @@
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 
+#include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
