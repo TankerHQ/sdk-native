@@ -4,6 +4,7 @@
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>

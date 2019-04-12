@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>

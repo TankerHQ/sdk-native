@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Types/DeviceId.hpp>

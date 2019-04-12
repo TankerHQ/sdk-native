@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/Types.hpp>
 

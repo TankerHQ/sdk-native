@@ -1,5 +1,6 @@
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
 
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
