@@ -1,3 +1,4 @@
+#include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV2.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV3.hpp>
 #include <Tanker/Error.hpp>
