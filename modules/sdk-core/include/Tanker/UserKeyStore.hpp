@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
 #include <optional.hpp>
