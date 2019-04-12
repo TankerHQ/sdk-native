@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/Mac.hpp>
