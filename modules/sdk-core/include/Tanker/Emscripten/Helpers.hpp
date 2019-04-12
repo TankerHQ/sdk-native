@@ -1,3 +1,5 @@
+#include <Tanker/Error.hpp>
+
 #include <functional>
 #include <optional.hpp>
 #include <string>
@@ -13,6 +15,12 @@ namespace Tanker
 {
 namespace Emscripten
 {
+struct EmError
+{
+  Error::Code code;
+  std::string message;
+};
+
 inline bool isNone(emscripten::val const& v)
 {
   return v.isNull() || v.isUndefined();
@@ -39,7 +47,20 @@ emscripten::val containerToJs(T const& cont)
       memory, reinterpret_cast<uintptr_t>(cont.data()), cont.size());
 }
 
-std::vector<uint8_t> copyToVector(const emscripten::val& typedArray);
+std::vector<uint8_t> copyToVector(emscripten::val const& typedArray);
+
+template <typename T>
+std::vector<T> copyToStringLikeVector(emscripten::val const& typedArray)
+{
+  using emscripten::val;
+
+  auto const length = typedArray["length"].as<unsigned int>();
+  std::vector<T> vec(length);
+
+  for (unsigned int i = 0; i < length; ++i)
+    vec[i] = T(typedArray[i].as<std::string>());
+  return vec;
+}
 
 template <typename Sig>
 emscripten::val toJsFunctionObject(std::function<Sig> functor)
@@ -65,6 +86,8 @@ inline void resolveJsPromise(emscripten::val resolve, tc::future<T> fut)
 }
 }
 
+emscripten::val currentExceptionToJs();
+
 template <typename T>
 emscripten::val tcFutureToJsPromise(tc::future<T> fut)
 {
@@ -84,17 +107,34 @@ emscripten::val tcFutureToJsPromise(tc::future<T> fut)
     {
       detail::resolveJsPromise(resolve, std::move(fut));
     }
-    catch (std::exception const& e)
-    {
-      reject(typeid(e).name() + std::string(e.what()));
-    }
     catch (...)
     {
-      reject(std::string("unknown error"));
+      reject(currentExceptionToJs());
     }
   });
 
   return promise;
+}
+
+template <typename T>
+emscripten::val tcExpectedToJsValue(tc::future<T> fut)
+{
+  assert(fut.is_ready());
+
+  if (!fut.has_exception())
+    return emscripten::val(fut.get());
+  else
+  {
+    try
+    {
+      fut.get();
+      throw std::runtime_error("unreachable code");
+    }
+    catch (...)
+    {
+      return currentExceptionToJs();
+    }
+  }
 }
 }
 }
