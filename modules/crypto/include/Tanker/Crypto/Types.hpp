@@ -8,4 +8,3 @@
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 #include <Tanker/Crypto/KeyPair.hpp>
-#include <Tanker/Crypto/KeyType.hpp>
