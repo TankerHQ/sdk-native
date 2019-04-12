@@ -8,7 +8,6 @@
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>

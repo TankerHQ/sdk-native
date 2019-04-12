@@ -3,7 +3,6 @@
 #include <string>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/UserId.hpp>
 

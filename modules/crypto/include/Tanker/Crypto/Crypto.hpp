@@ -11,7 +11,6 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 
 #include <gsl-lite.hpp>
 #include <sodium/crypto_box.h>

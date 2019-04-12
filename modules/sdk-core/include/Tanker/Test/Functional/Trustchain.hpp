@@ -3,7 +3,6 @@
 #include <Tanker/Test/Functional/User.hpp>
 
 #include <Tanker/Admin.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <Helpers/Config.hpp>

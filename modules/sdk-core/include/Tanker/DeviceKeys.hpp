@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 namespace Tanker

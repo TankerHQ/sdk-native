@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Action.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Nature.hpp>
 
 #include <nlohmann/json_fwd.hpp>

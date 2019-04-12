@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/User.hpp>
 

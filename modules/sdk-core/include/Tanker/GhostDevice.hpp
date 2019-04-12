@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <nlohmann/json_fwd.hpp>

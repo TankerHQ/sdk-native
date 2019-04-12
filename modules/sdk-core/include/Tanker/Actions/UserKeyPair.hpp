@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 
 #include <nlohmann/json_fwd.hpp>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/ContactStore.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>

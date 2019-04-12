@@ -1,4 +1,3 @@
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>

@@ -4,7 +4,6 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/GroupId.hpp>
 
 #include <optional.hpp>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Types/UserId.hpp>

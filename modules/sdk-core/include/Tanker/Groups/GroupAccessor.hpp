@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/BasicPullResult.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Groups/Group.hpp>
 
 #include <tconcurrent/coroutine.hpp>

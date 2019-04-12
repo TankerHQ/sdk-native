@@ -3,7 +3,6 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>

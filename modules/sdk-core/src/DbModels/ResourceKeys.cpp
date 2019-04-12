@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 

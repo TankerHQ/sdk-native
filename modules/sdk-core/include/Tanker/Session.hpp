@@ -3,7 +3,6 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>

@@ -2,7 +2,6 @@
 
 #include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Nature.hpp>

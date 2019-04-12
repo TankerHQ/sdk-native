@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/BasicCryptographicType.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Crypto/Types.hpp>
 
 #include <cstddef>
 #include <tuple>
