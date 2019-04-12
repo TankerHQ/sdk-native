@@ -95,7 +95,6 @@ add_subdirectory(modules/compat-helpers)
 
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
-  add_subdirectory(modules/generator)
 endif()
 
 if(WITH_COVERAGE)
