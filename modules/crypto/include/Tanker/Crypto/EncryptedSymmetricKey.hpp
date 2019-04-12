@@ -40,3 +40,6 @@ class tuple_element<I, ::Tanker::Crypto::EncryptedSymmetricKey>
 {
 };
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

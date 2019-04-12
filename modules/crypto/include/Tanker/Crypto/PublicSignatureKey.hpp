@@ -24,3 +24,6 @@ using PublicSignatureKey =
     AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
 }
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

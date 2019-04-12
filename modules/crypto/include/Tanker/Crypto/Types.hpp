@@ -22,6 +22,3 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-
-#include <Tanker/Crypto/Json/Json.hpp>
-#include <Tanker/Crypto/Serialization/Serialization.hpp>
