@@ -1,7 +1,6 @@
 #include <doctest.h>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Crypto/JsonFormat.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
@@ -12,7 +11,6 @@
 #include <Helpers/Buffers.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <nlohmann/json.hpp>
 
 #include <iostream>
 
@@ -93,19 +91,6 @@ TEST_CASE("print a formated log")
   {
     REQUIRE_THROWS(throw Tanker::Error::formatEx<std::runtime_error>(
         fmt("You lost, score {:d}/{:f}"), 42, 2.1));
-  }
-
-  SUBCASE("It format a json object")
-  {
-    auto const json = nlohmann::json{{"key", "value"}};
-    CHECK_EQ(fmt::format("my json {}", json), R"!(my json {"key":"value"})!");
-    CHECK_EQ(fmt::format("my json {:}", json), R"!(my json {"key":"value"})!");
-    CHECK_EQ(fmt::format("my json {:j}", json),
-             R"!(my json {"key":"value"})!");
-    CHECK_EQ(fmt::format("{:5j}", json),
-             R"!({
-     "key": "value"
-})!");
   }
 
   SUBCASE("It format a Mac")

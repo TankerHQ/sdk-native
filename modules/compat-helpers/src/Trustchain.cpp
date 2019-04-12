@@ -1,6 +1,6 @@
 #include <Tanker/Compat/Trustchain.hpp>
 
-#include <Tanker/Crypto/JsonFormat.hpp>
+#include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
