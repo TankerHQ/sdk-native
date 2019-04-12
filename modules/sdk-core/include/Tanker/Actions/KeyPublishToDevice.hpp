@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
