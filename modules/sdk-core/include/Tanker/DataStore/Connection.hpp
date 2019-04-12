@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
 #include <optional.hpp>
