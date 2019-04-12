@@ -12,5 +12,4 @@
 #include <Tanker/Crypto/KeyUsage.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
-#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
