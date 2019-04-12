@@ -10,4 +10,3 @@
 #include <Tanker/Crypto/KeyPair.hpp>
 #include <Tanker/Crypto/KeyType.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
-#include <Tanker/Crypto/Mac.hpp>
