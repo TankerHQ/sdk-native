@@ -25,6 +25,3 @@
 
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/Serialization/Serialization.hpp>
-
-#include <gsl-lite.hpp>
-#include <sodium.h>
