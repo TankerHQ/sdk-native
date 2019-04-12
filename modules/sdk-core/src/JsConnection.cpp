@@ -1,9 +1,7 @@
-#include <Tanker/Crypto/JsonFormat.hpp>
 #include <Tanker/JsConnection.hpp>
 #include <Tanker/Log.hpp>
 
 #include <fmt/format.h>
-#include <nlohmann/json.hpp>
 #include <tconcurrent/promise.hpp>
 
 #include <emscripten.h>

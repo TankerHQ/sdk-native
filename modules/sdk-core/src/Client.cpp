@@ -1,9 +1,10 @@
 #include <Tanker/Client.hpp>
 
 #include <Tanker/AConnection.hpp>
-#include <Tanker/Crypto/JsonFormat.hpp>
+#include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Json.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
