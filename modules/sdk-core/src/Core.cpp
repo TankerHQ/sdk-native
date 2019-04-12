@@ -58,30 +58,13 @@ bool Core::isOpen() const
   return this->status() == Status::Open;
 }
 
-tc::cotask<void> Core::signUp(std::string const& identity,
-                              AuthenticationMethods const& authMethods)
+template <typename F>
+decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
 {
-  SCOPE_TIMER("core_signup", Proc);
   std::exception_ptr exception;
   try
   {
-    auto pcore = mpark::get_if<Opener>(&_state);
-    if (!pcore)
-      throw INVALID_STATUS(signUp);
-    auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
-    assert(mpark::holds_alternative<Session::Config>(openResult));
-    initSession(std::move(openResult));
-    auto const& session = mpark::get<SessionType>(_state);
-    TC_AWAIT(session->startConnection());
-    if (authMethods.password || authMethods.email)
-    {
-      Unlock::RegistrationOptions options{};
-      if (authMethods.password)
-        options.set(*authMethods.password);
-      if (authMethods.email)
-        options.set(*authMethods.email);
-      TC_AWAIT(session->registerUnlock(options));
-    }
+    TC_RETURN(TC_AWAIT(f()));
   }
   catch (...)
   {
@@ -89,8 +72,44 @@ tc::cotask<void> Core::signUp(std::string const& identity,
   }
   if (exception)
   {
+    // reset() does context switches, but it is forbidden to do them in catch
+    // clauses, so we retain the exception and call reset() outside of the catch
+    // clause
     reset();
     std::rethrow_exception(exception);
+  }
+  throw std::runtime_error("unreachable code");
+}
+
+tc::cotask<void> Core::signUp(std::string const& identity,
+                              AuthenticationMethods const& authMethods)
+{
+  SCOPE_TIMER("core_signup", Proc);
+  TC_AWAIT(resetOnFailure([&]() -> tc::cotask<tc::tvoid> {
+    TC_AWAIT(signUpImpl(identity, authMethods));
+    TC_RETURN(tc::tvoid{});
+  }));
+}
+
+tc::cotask<void> Core::signUpImpl(std::string const& identity,
+                                  AuthenticationMethods const& authMethods)
+{
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(signUp);
+  auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
+  assert(mpark::holds_alternative<Session::Config>(openResult));
+  initSession(std::move(openResult));
+  auto const& session = mpark::get<SessionType>(_state);
+  TC_AWAIT(session->startConnection());
+  if (authMethods.password || authMethods.email)
+  {
+    Unlock::RegistrationOptions options{};
+    if (authMethods.password)
+      options.set(*authMethods.password);
+    if (authMethods.email)
+      options.set(*authMethods.email);
+    TC_AWAIT(session->registerUnlock(options));
   }
 }
 
@@ -98,41 +117,34 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
                                     SignInOptions const& signInOptions)
 {
   SCOPE_TIMER("core_signin", Proc);
-  std::exception_ptr exception;
-  try
-  {
-    auto pcore = mpark::get_if<Opener>(&_state);
-    if (!pcore)
-      throw INVALID_STATUS(signIn);
-    auto openResult =
-        TC_AWAIT(pcore->open(identity, signInOptions, OpenMode::SignIn));
-    if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(
-            openResult))
-    {
-      reset();
-      TC_RETURN(OpenResult::IdentityNotRegistered);
-    }
-    else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
-                 openResult))
-    {
-      reset();
-      TC_RETURN(OpenResult::IdentityVerificationNeeded);
-    }
-    initSession(std::move(openResult));
-    auto const& session = mpark::get<SessionType>(_state);
-    TC_AWAIT(session->startConnection());
-    TC_RETURN(OpenResult::Ok);
-  }
-  catch (...)
-  {
-    exception = std::current_exception();
-  }
-  if (exception)
+  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<OpenResult> {
+    TC_RETURN(TC_AWAIT(signInImpl(identity, signInOptions)));
+  })));
+}
+
+tc::cotask<OpenResult> Core::signInImpl(std::string const& identity,
+                                        SignInOptions const& signInOptions)
+{
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(signIn);
+  auto openResult =
+      TC_AWAIT(pcore->open(identity, signInOptions, OpenMode::SignIn));
+  if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(openResult))
   {
     reset();
-    std::rethrow_exception(exception);
+    TC_RETURN(OpenResult::IdentityNotRegistered);
   }
-  throw std::runtime_error("unreachable code");
+  else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
+               openResult))
+  {
+    reset();
+    TC_RETURN(OpenResult::IdentityVerificationNeeded);
+  }
+  initSession(std::move(openResult));
+  auto const& session = mpark::get<SessionType>(_state);
+  TC_AWAIT(session->startConnection());
+  TC_RETURN(OpenResult::Ok);
 }
 
 void Core::signOut()
