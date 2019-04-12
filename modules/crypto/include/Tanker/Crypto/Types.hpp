@@ -18,4 +18,3 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
-#include <Tanker/Crypto/SealedSymmetricKey.hpp>
