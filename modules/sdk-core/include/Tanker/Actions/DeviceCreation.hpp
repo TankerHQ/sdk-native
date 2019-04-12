@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Actions/UserKeyPair.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
