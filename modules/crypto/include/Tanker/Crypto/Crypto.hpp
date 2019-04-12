@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Crypto/Types.hpp>
 
