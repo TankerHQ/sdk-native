@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/KeyPair.hpp>
 #include <Tanker/Crypto/KeyUsage.hpp>
+#include <Tanker/Crypto/PrivateEncryptionKey.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 
 namespace Tanker
 {
