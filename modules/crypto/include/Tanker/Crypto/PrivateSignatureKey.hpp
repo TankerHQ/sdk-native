@@ -11,6 +11,10 @@ namespace Tanker
 {
 namespace Crypto
 {
+extern template class BasicCryptographicType<
+    AsymmetricKey<KeyType::Private, KeyUsage::Signature>,
+    crypto_sign_SECRETKEYBYTES>;
+
 template <>
 class AsymmetricKey<KeyType::Private, KeyUsage::Signature>
   : public BasicCryptographicType<
@@ -19,6 +23,8 @@ class AsymmetricKey<KeyType::Private, KeyUsage::Signature>
 {
   using base_t::base_t;
 };
+
+extern template class AsymmetricKey<KeyType::Private, KeyUsage::Signature>;
 
 using PrivateSignatureKey =
     AsymmetricKey<KeyType::Private, KeyUsage::Signature>;

@@ -11,6 +11,9 @@ namespace Crypto
 template <typename Unused>
 class BasicHash;
 
+extern template class BasicCryptographicType<BasicHash<void>,
+                                             crypto_generichash_BYTES>;
+
 template <>
 class BasicHash<void>
   : public BasicCryptographicType<BasicHash<void>, crypto_generichash_BYTES>
@@ -31,6 +34,8 @@ public:
     this->base() = rhs.base();
   }
 };
+
+extern template class BasicHash<void>;
 }
 }
 
