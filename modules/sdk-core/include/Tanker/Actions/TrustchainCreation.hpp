@@ -2,8 +2,8 @@
 
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -15,7 +15,7 @@ struct TrustchainCreation
 {
   Crypto::PublicSignatureKey publicSignatureKey;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
 };
 

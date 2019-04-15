@@ -7,7 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
@@ -22,6 +22,8 @@
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <cassert>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

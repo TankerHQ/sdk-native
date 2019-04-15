@@ -2,11 +2,11 @@
 
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Index.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -16,9 +16,10 @@
 #include <stdexcept>
 #include <tuple>
 
+using Tanker::Trustchain::Actions::Nature;
+
 namespace Tanker
 {
-
 Nature UserGroupCreation::nature() const
 {
   return Nature::UserGroupCreation;

@@ -15,6 +15,8 @@
 
 #include <stdexcept>
 
+using Tanker::Trustchain::Actions::Nature;
+
 namespace Tanker
 {
 BlockGenerator::BlockGenerator(

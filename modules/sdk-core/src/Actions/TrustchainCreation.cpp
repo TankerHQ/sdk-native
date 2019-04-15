@@ -6,6 +6,8 @@
 
 #include <tuple>
 
+using Tanker::Trustchain::Actions::Nature;
+
 namespace Tanker
 {
 Nature TrustchainCreation::nature() const

@@ -7,6 +7,8 @@
 
 #include <cassert>
 
+using Tanker::Trustchain::Actions::Nature;
+
 namespace Tanker
 {
 namespace Verif

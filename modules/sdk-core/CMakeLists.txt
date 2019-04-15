@@ -114,7 +114,6 @@ add_library(tankercore STATIC
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
-  include/Tanker/Nature.hpp
   include/Tanker/Device.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
@@ -153,7 +152,6 @@ add_library(tankercore STATIC
   src/Opener.cpp
   src/Core.cpp
   src/Status.cpp
-  src/Nature.cpp
   src/TrustchainStore.cpp
   src/TrustchainPuller.cpp
   src/TrustchainVerifier.cpp
@@ -219,6 +217,7 @@ target_link_libraries(tankercore
   tankerserialization
   tankeridentity
   tankertypes
+  tankertrustchain
   tankercrypto
   tankerformat
   ttracer

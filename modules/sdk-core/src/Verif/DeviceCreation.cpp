@@ -4,7 +4,7 @@
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -12,6 +12,8 @@
 #include <mpark/variant.hpp>
 
 #include <cassert>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

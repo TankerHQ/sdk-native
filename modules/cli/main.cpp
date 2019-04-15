@@ -21,6 +21,8 @@
 
 #include <tconcurrent/coroutine.hpp>
 
+using Tanker::Trustchain::Actions::Nature;
+
 using namespace Tanker;
 
 static constexpr auto TrustchainPrivateKeyOpt = "--trustchain-private-key";

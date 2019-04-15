@@ -9,6 +9,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+using Tanker::Trustchain::Actions::Nature;
+
 TLOG_CATEGORY(Database);
 
 using namespace Tanker::Emscripten;

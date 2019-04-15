@@ -1,9 +1,9 @@
 #include <Tanker/Block.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -17,6 +17,7 @@
 #include <string>
 #include <tuple>
 
+using Tanker::Trustchain::Actions::Nature;
 using namespace std::string_literals;
 
 using json = nlohmann::json;

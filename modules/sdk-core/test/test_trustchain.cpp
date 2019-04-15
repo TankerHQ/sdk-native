@@ -16,6 +16,8 @@
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
+using Tanker::Trustchain::Actions::Nature;
+
 using namespace Tanker;
 
 #ifndef EMSCRIPTEN

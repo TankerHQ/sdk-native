@@ -3,8 +3,8 @@
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>
@@ -35,7 +35,8 @@ constexpr std::size_t sizeOfCommonDeviceCreationFields(T const& dc)
 
 struct DeviceCreation1
 {
-  static constexpr Nature nature = Nature::DeviceCreation;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceCreation;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
   UserId userId;
@@ -46,7 +47,8 @@ struct DeviceCreation1
 
 struct DeviceCreation3
 {
-  static constexpr Nature nature = Nature::DeviceCreation3;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceCreation3;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
   UserId userId;
@@ -88,7 +90,7 @@ public:
 
   variant_type const& variant() const;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
   UserId const& userId() const;
   Crypto::Signature const& delegationSignature() const;

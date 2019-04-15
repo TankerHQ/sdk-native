@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstring>
 
+using Tanker::Trustchain::Actions::Nature;
 using namespace Tanker;
 
 TrustchainBuilder::TrustchainBuilder()

@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Types/UserId.hpp>
 
@@ -25,7 +25,7 @@ struct UserGroupAddition
   GroupEncryptedKeys encryptedGroupPrivateEncryptionKeysForUsers;
   Crypto::Signature selfSignatureWithCurrentKey;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
   std::vector<uint8_t> signatureData() const;
 };

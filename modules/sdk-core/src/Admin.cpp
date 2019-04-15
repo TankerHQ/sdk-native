@@ -7,8 +7,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <boost/signals2/connection.hpp>
@@ -23,6 +23,8 @@
 
 #include <algorithm>
 #include <iterator>
+
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Admin);
 

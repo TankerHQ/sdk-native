@@ -3,9 +3,9 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/serialized_size.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -23,7 +23,8 @@ struct DeviceRevocation1
 {
   DeviceId deviceId;
 
-  static constexpr Nature nature = Nature::DeviceRevocation;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceRevocation;
 };
 
 constexpr std::size_t serialized_size(DeviceRevocation1 const& dr)
@@ -80,7 +81,8 @@ struct DeviceRevocation2
   Crypto::SealedPrivateEncryptionKey encryptedKeyForPreviousUserKey;
   std::vector<EncryptedPrivateUserKey> userKeys;
 
-  static constexpr Nature nature = Nature::DeviceRevocation2;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceRevocation2;
 };
 
 std::size_t serialized_size(DeviceRevocation2 const& dr);
@@ -114,7 +116,7 @@ public:
 
   variant_type const& variant() const;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   DeviceId const& deviceId() const;
 
   std::vector<Index> makeIndexes() const;

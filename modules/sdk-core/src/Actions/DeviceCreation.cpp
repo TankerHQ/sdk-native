@@ -4,8 +4,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>
@@ -16,6 +16,8 @@
 #include <iterator>
 #include <stdexcept>
 #include <tuple>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

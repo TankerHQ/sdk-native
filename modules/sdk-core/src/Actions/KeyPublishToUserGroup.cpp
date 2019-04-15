@@ -1,7 +1,7 @@
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

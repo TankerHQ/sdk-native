@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Action.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -12,7 +12,7 @@ namespace Tanker
 struct Entry
 {
   uint64_t index;
-  Nature nature;
+  Trustchain::Actions::Nature nature;
   Crypto::Hash author;
   Action action;
   Crypto::Hash hash;

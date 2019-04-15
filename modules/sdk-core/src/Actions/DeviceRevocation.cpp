@@ -1,7 +1,7 @@
 #include <Tanker/Actions/DeviceRevocation.hpp>
 
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
@@ -12,6 +12,8 @@
 #include <stdexcept>
 #include <tuple>
 #include <vector>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

@@ -15,7 +15,7 @@
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
@@ -117,7 +117,7 @@ private:
   DeviceId _deviceId;
 
   template <typename T, typename U>
-  Block makeBlock(Nature nature,
+  Block makeBlock(Trustchain::Actions::Nature nature,
                   T const& action,
                   Crypto::BasicHash<U> const& parentHash,
                   Crypto::PrivateSignatureKey const& privateSignatureKey) const;

@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
@@ -20,7 +20,7 @@ struct Block
   TrustchainId trustchainId;
   uint64_t index;
   Crypto::Hash author;
-  Nature nature;
+  Trustchain::Actions::Nature nature;
   std::vector<uint8_t> payload;
   Crypto::Signature signature;
 
