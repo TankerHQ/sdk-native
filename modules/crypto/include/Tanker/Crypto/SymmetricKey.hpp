@@ -11,6 +11,10 @@ namespace Tanker
 {
 namespace Crypto
 {
+extern template class BasicCryptographicType<
+    class SymmetricKey,
+    crypto_aead_xchacha20poly1305_ietf_KEYBYTES>;
+
 class SymmetricKey
   : public BasicCryptographicType<SymmetricKey,
                                   crypto_aead_xchacha20poly1305_ietf_KEYBYTES>

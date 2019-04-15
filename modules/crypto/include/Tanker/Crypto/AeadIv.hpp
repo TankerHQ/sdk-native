@@ -11,6 +11,10 @@ namespace Tanker
 {
 namespace Crypto
 {
+extern template class BasicCryptographicType<
+    class AeadIv,
+    crypto_aead_xchacha20poly1305_ietf_NPUBBYTES>;
+
 class AeadIv
   : public BasicCryptographicType<AeadIv,
                                   crypto_aead_xchacha20poly1305_ietf_NPUBBYTES>

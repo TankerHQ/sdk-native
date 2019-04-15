@@ -11,6 +11,10 @@ namespace Tanker
 {
 namespace Crypto
 {
+extern template class BasicCryptographicType<class SealedPrivateEncryptionKey,
+                                             crypto_box_SECRETKEYBYTES +
+                                                 crypto_box_SEALBYTES>;
+
 class SealedPrivateEncryptionKey
   : public BasicCryptographicType<SealedPrivateEncryptionKey,
                                   crypto_box_SECRETKEYBYTES +

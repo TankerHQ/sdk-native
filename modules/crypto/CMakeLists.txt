@@ -4,6 +4,7 @@ project(tankercrypto)
 
 add_library(tankercrypto STATIC
     src/Crypto.cpp
+    src/ExternTemplates.cpp
 
     include/Tanker/Crypto/Crypto.hpp
     include/Tanker/Crypto/InvalidKeySize.hpp

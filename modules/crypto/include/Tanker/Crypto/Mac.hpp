@@ -11,6 +11,10 @@ namespace Tanker
 {
 namespace Crypto
 {
+extern template class BasicCryptographicType<
+    class Mac,
+    crypto_aead_xchacha20poly1305_ietf_ABYTES>;
+
 class Mac
   : public BasicCryptographicType<Mac,
                                   crypto_aead_xchacha20poly1305_ietf_ABYTES>
