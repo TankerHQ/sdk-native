@@ -33,7 +33,7 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
 {
   _core.deviceRevoked.connect([this] {
     _taskCanceler.run([&] {
-      return tc::async_resumable([this]() -> tc::cotask<void> {
+      return tc::async([this] {
         // - This device was revoked, we need to signOut so that Session gets
         // destroyed.
         // - There might be calls in progress on this session, so we must
@@ -238,7 +238,7 @@ tc::shared_future<std::vector<Device>> AsyncCore::getDeviceList()
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([this]() -> tc::cotask<std::vector<Device>> {
-    TC_AWAIT(syncTrustchain());
+      TC_AWAIT(syncTrustchain());
       auto devices = TC_AWAIT(this->_core.getDeviceList());
       devices.erase(std::remove_if(
           devices.begin(), devices.end(), [](auto const& device) {
