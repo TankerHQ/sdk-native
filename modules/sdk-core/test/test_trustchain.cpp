@@ -2,7 +2,7 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
@@ -109,12 +109,12 @@ TEST_CASE("trustchain")
 
   SUBCASE("it should open a new trustchain store")
   {
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
   }
 
   SUBCASE("it should add entries to the trustchain and update last index")
   {
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
     AWAIT_VOID(trustchain.addEntry(Entry{10,
                                          Nature::TrustchainCreation,
                                          Crypto::Hash{},
@@ -127,7 +127,7 @@ TEST_CASE("trustchain")
   SUBCASE("it should close and reopen a trustchain")
   {
     {
-      Trustchain trustchain(dbPtr.get());
+      TrustchainStore trustchain(dbPtr.get());
       AWAIT_VOID(trustchain.addEntry(Entry{10,
                                            Nature::TrustchainCreation,
                                            Crypto::Hash{},
@@ -135,7 +135,7 @@ TEST_CASE("trustchain")
                                            Crypto::Hash{}}));
     }
     {
-      Trustchain trustchain(dbPtr.get());
+      TrustchainStore trustchain(dbPtr.get());
       CHECK(10 == AWAIT(trustchain.getLastIndex()));
     }
   }
@@ -151,7 +151,7 @@ TEST_CASE("trustchain")
     auto const share =
         builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
 
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
           trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
@@ -172,7 +172,7 @@ TEST_CASE("trustchain")
     auto const share = builder.shareToUserGroup(
         alice.user.devices[0], group.group, resourceId, key);
 
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
           trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
@@ -193,7 +193,7 @@ TEST_CASE("trustchain")
     auto const share =
         builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
 
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
           trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
@@ -215,7 +215,7 @@ TEST_CASE("trustchain")
     auto const share2 =
         builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
 
-    Trustchain trustchain(dbPtr.get());
+    TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       CHECK_NOTHROW(AWAIT_VOID(
           trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block)))));

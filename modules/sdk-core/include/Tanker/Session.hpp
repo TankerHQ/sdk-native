@@ -8,7 +8,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
@@ -138,7 +138,7 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
   std::unique_ptr<Client> _client;
-  Trustchain _trustchain;
+  TrustchainStore _trustchain;
   UserKeyStore _userKeyStore;
   ContactStore _contactStore;
   GroupStore _groupStore;

@@ -24,14 +24,14 @@ namespace DataStore
 class ADatabase;
 }
 
-class Trustchain
+class TrustchainStore
 {
 public:
-  Trustchain(DataStore::ADatabase* dbConn);
-  Trustchain(Trustchain const&) = delete;
-  Trustchain(Trustchain&&) = delete;
-  Trustchain& operator=(Trustchain const&) = delete;
-  Trustchain& operator=(Trustchain&&) = delete;
+  TrustchainStore(DataStore::ADatabase* dbConn);
+  TrustchainStore(TrustchainStore const&) = delete;
+  TrustchainStore(TrustchainStore&&) = delete;
+  TrustchainStore& operator=(TrustchainStore const&) = delete;
+  TrustchainStore& operator=(TrustchainStore&&) = delete;
 
   tc::cotask<void> addEntry(Entry const& entry);
 

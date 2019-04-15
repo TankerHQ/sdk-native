@@ -62,7 +62,7 @@ add_library(tankercore STATIC
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
   include/Tanker/AConnection.hpp
-  include/Tanker/Trustchain.hpp
+  include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
   include/Tanker/BlockGenerator.hpp
@@ -154,7 +154,7 @@ add_library(tankercore STATIC
   src/Core.cpp
   src/Status.cpp
   src/Nature.cpp
-  src/Trustchain.cpp
+  src/TrustchainStore.cpp
   src/TrustchainPuller.cpp
   src/TrustchainVerifier.cpp
   src/DeviceKeyStore.cpp

@@ -24,7 +24,7 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>

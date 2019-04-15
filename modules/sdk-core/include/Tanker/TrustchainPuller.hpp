@@ -15,7 +15,7 @@
 namespace Tanker
 {
 class Client;
-class Trustchain;
+class TrustchainStore;
 class TrustchainVerifier;
 struct Entry;
 struct UnverifiedEntry;
@@ -28,7 +28,7 @@ public:
   TrustchainPuller& operator=(TrustchainPuller const&) = delete;
   TrustchainPuller& operator=(TrustchainPuller&&) = delete;
 
-  TrustchainPuller(Trustchain* trustchain,
+  TrustchainPuller(TrustchainStore* trustchain,
                    TrustchainVerifier* verifier,
                    DataStore::ADatabase* db,
                    ContactStore* contactStore,
@@ -52,7 +52,7 @@ public:
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
 
 private:
-  Trustchain* _trustchain;
+  TrustchainStore* _trustchain;
   TrustchainVerifier* _verifier;
   DataStore::ADatabase* _db;
   ContactStore* _contactStore;

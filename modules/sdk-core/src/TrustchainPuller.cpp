@@ -11,7 +11,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
@@ -35,7 +35,7 @@ TLOG_CATEGORY(TrustchainPuller);
 namespace Tanker
 {
 TrustchainPuller::TrustchainPuller(
-    Trustchain* trustchain,
+    TrustchainStore* trustchain,
     TrustchainVerifier* verifier,
     DataStore::ADatabase* db,
     ContactStore* contactStore,

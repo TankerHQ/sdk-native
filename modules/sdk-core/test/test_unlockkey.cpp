@@ -7,7 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>

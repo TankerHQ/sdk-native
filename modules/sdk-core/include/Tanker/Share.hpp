@@ -3,7 +3,7 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>
 
