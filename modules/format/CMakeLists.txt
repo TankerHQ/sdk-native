@@ -5,6 +5,7 @@ project(Format)
 add_library(tankerformat STATIC
 
   include/Tanker/Format/Json.hpp
+  include/Tanker/Format/Enum.hpp
   include/Tanker/Format/Width.hpp
 
   src/Json.cpp

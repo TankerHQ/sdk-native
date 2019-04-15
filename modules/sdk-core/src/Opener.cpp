@@ -5,7 +5,7 @@
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/EnumFormat.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>

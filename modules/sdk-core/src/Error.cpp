@@ -22,7 +22,7 @@
 
 #include <Tanker/Error.hpp>
 
-#include <Tanker/EnumFormat.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log.hpp>
 
 #include <boost/stacktrace/frame.hpp>

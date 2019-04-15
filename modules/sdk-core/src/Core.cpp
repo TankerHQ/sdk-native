@@ -1,7 +1,7 @@
 #include <Tanker/Core.hpp>
 
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/EnumFormat.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Opener.hpp>

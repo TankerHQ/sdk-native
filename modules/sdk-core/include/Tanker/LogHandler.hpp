@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Tanker/EnumTrait.hpp>
-
 #include <functional>
 #include <string>
 
@@ -37,9 +35,4 @@ namespace detail
 extern LogHandler currentHandler;
 }
 }
-
-template <>
-struct is_enum_type<Log::Level> : std::true_type
-{
-};
 }

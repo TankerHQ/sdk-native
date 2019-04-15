@@ -1,12 +1,9 @@
 #pragma once
 
-#include <Tanker/EnumTrait.hpp>
-
 #include <fmt/format.h>
 
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <utility>
 
 #ifdef __GNUC__
@@ -174,9 +171,4 @@ private:
   int _httpStatusCode;
 };
 }
-
-template <>
-struct is_enum_type<Error::VerificationCode> : std::true_type
-{
-};
 }
