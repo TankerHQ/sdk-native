@@ -51,7 +51,7 @@ inline void* translateExceptions(tc::future<void*> f)
   }
 }
 
-template <template <class> typename Future>
+template <template <typename> class Future>
 tanker_future_t* makeFuture(Future<void*> fut)
 {
   return new tanker_future{
@@ -60,7 +60,7 @@ tanker_future_t* makeFuture(Future<void*> fut)
       nullptr};
 }
 
-template <template <class> typename Future>
+template <template <typename> class Future>
 tanker_future_t* makeFuture(Future<void> fut)
 {
   return new tanker_future{
