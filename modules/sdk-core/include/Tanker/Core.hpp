@@ -114,5 +114,13 @@ private:
   void reset();
   void initSession(Opener::OpenResult&& openResult);
   Status status() const;
+
+  template <typename F>
+  decltype(std::declval<F>()()) resetOnFailure(F&& f);
+
+  tc::cotask<void> signUpImpl(std::string const& identity,
+                              AuthenticationMethods const& authMethods);
+  tc::cotask<OpenResult> signInImpl(std::string const& identity,
+                                    SignInOptions const& signInOptions);
 };
 }

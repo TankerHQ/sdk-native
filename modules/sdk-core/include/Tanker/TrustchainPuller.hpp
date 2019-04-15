@@ -47,8 +47,6 @@ public:
 
   std::function<tc::cotask<void>(DeviceId const&)> receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
-  std::function<void(Entry const&)> receivedKeyToUser;
-  std::function<void(Entry const&)> receivedKeyToUserGroup;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
   std::function<tc::cotask<void>(Entry const&)> userGroupActionReceived;
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
