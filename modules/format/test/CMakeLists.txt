@@ -1,6 +1,7 @@
 add_executable(test_format
   test_format.cpp
   test_format_json.cpp
+  test_format_enum.cpp
 
   main.cpp
 )

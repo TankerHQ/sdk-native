@@ -1,9 +1,6 @@
 #pragma once
 
-#include <Tanker/EnumTrait.hpp>
-
 #include <string>
-#include <type_traits>
 
 namespace Tanker
 {
@@ -25,9 +22,4 @@ enum class Nature
 };
 
 std::string to_string(Nature n);
-
-template <>
-struct is_enum_type<Nature> : std::true_type
-{
-};
 }

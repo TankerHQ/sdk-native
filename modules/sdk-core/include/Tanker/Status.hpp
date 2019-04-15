@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Tanker/EnumTrait.hpp>
-
 #include <string>
 #include <type_traits>
 
@@ -15,9 +13,4 @@ enum class Status
 };
 
 std::string to_string(Status s);
-
-template <>
-struct is_enum_type<Status> : std::true_type
-{
-};
 }

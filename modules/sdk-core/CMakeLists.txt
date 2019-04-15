@@ -115,7 +115,6 @@ add_library(tankercore STATIC
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
   include/Tanker/Nature.hpp
-  include/Tanker/EnumFormat.hpp
   include/Tanker/Device.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp

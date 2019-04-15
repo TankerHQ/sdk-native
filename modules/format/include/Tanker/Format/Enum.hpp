@@ -2,13 +2,40 @@
 
 #include <fmt/format.h>
 
-#include <Tanker/EnumTrait.hpp>
-
+#include <string>
 #include <type_traits>
+#include <utility>
 
 namespace Tanker
 {
-struct EnumParser
+namespace Format
+{
+namespace detail
+{
+template <typename T, typename = void>
+struct HasToString : std::false_type
+{
+};
+
+template <typename T>
+struct HasToString<
+    T,
+    std::enable_if_t<std::is_same<decltype(to_string(std::declval<T>())),
+                                  std::string>::value>> : std::true_type
+{
+};
+}
+}
+}
+
+namespace fmt
+{
+template <typename EnumType>
+struct formatter<
+    EnumType,
+    char,
+    std::enable_if_t<std::is_enum<EnumType>::value && ::Tanker::Format::detail::
+                         HasToString<EnumType>::value>>
 {
   int flag = 0;
 
@@ -34,7 +61,6 @@ struct EnumParser
     return end;
   }
 
-  template <typename EnumType>
   auto format(EnumType n, fmt::format_context& ctx) -> decltype(ctx.out())
   {
     auto out = ctx.out();
@@ -46,16 +72,5 @@ struct EnumParser
       out = fmt::format_to(out, "{:s}", to_string(n));
     return out;
   }
-};
-}
-
-namespace fmt
-{
-template <typename EnumType>
-struct formatter<EnumType,
-                 char,
-                 std::enable_if_t<Tanker::is_enum_type<EnumType>::value>>
-  : Tanker::EnumParser
-{
 };
 }

@@ -1,6 +1,6 @@
 #include <Tanker/Action.hpp>
 
-#include <Tanker/EnumFormat.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 

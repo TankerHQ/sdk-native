@@ -1,4 +1,4 @@
-#include <Tanker/EnumFormat.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/LogHandler.hpp>
 
 #include <fmt/format.h>
