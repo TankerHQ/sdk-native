@@ -4,7 +4,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>

@@ -32,3 +32,6 @@ class tuple_element<I, ::Tanker::Crypto::Signature>
 {
 };
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

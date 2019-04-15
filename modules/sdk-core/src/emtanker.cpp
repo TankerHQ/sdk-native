@@ -3,7 +3,6 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>

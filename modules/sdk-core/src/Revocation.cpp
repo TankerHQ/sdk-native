@@ -4,7 +4,6 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/DeviceId.hpp>

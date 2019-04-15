@@ -1,6 +1,5 @@
 #include <Tanker/DataStore/Connection.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 

@@ -8,7 +8,6 @@
 #include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
 
 #include <cstdint>
 #include <vector>

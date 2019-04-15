@@ -1,7 +1,6 @@
 #include <Tanker/Encryptor.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV2.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV3.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Types/ResourceId.hpp>
 
 namespace Tanker

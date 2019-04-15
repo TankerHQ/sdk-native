@@ -2,7 +2,6 @@
 
 #include <vector>
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GroupNotFound.hpp>
 #include <Tanker/UserNotFound.hpp>

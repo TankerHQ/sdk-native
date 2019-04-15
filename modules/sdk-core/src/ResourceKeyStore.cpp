@@ -1,7 +1,6 @@
 #include <Tanker/ResourceKeyStore.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>

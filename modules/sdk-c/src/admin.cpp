@@ -4,7 +4,6 @@
 #include <Tanker/Admin.hpp>
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 

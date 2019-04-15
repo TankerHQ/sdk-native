@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
 
 #include <optional.hpp>
 #include <sqlpp11/sqlite3/connection.h>

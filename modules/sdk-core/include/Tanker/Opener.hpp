@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Client.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/SdkInfo.hpp>

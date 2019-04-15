@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Types/TrustchainId.hpp>

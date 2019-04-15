@@ -1,6 +1,5 @@
 #include <Tanker/DbModels/ContactDevices.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/ContactUserKeys.hpp>

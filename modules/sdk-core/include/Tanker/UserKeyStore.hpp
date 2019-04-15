@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>

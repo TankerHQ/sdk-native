@@ -5,7 +5,6 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>

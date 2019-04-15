@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
+#include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 
 namespace Tanker
 {

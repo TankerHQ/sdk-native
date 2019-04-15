@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>

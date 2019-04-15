@@ -1,7 +1,6 @@
 #include <Tanker/GhostDevice.hpp>
 
 #include <Tanker/Crypto/Json/Json.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <nlohmann/json.hpp>

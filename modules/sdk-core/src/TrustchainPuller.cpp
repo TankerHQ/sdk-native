@@ -7,7 +7,6 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>

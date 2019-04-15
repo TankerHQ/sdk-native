@@ -49,3 +49,6 @@ class tuple_element<I, ::Tanker::Crypto::BasicHash<Unused>>
 {
 };
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

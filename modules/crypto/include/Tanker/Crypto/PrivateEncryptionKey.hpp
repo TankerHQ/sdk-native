@@ -24,3 +24,6 @@ using PrivateEncryptionKey =
     AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
 }
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

@@ -1,6 +1,5 @@
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>

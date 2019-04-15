@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
 namespace Tanker

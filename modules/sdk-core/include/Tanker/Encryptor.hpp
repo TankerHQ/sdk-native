@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/EncryptionFormat/EncryptionMetadata.hpp>
 #include <Tanker/Types/ResourceId.hpp>
 

@@ -1,6 +1,5 @@
 #include <Tanker/Actions/UserKeyPair.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 

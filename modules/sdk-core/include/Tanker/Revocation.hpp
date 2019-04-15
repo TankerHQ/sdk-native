@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Actions/DeviceRevocation.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UserId.hpp>

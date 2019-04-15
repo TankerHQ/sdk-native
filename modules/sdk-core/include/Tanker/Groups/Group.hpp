@@ -1,6 +1,9 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Types/GroupId.hpp>
 
 #include <optional.hpp>

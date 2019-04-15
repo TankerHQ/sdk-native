@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 namespace Tanker

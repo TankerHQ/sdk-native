@@ -1,6 +1,9 @@
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/PrivateEncryptionKey.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>

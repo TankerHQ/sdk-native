@@ -1,7 +1,6 @@
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
 #include <Tanker/ConnectionFactory.hpp>
-#include <Tanker/Crypto/Types.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/coroutine.hpp>

@@ -1,7 +1,6 @@
 #include <ctanker.h>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Unlock/Methods.hpp>

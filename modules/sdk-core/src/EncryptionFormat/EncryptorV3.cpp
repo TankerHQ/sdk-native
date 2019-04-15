@@ -1,7 +1,6 @@
 #include <Tanker/EncryptionFormat/EncryptorV3.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Types/ResourceId.hpp>

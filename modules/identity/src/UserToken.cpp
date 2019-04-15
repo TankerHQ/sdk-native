@@ -3,6 +3,9 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/Signature.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Types/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>

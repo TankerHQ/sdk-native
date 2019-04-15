@@ -35,3 +35,6 @@ class tuple_element<I, ::Tanker::Crypto::AeadIv>
 {
 };
 }
+
+#include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Crypto/Serialization/Serialization.hpp>

@@ -1,7 +1,6 @@
 #include <Tanker/Groups/GroupUpdater.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Crypto/Types.hpp>
 #include <Tanker/EnumFormat.hpp>
 #include <Tanker/Error.hpp>
 
