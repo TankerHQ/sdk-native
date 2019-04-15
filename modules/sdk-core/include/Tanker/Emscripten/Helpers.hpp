@@ -73,14 +73,15 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise);
 
 namespace detail
 {
-inline void resolveJsPromise(emscripten::val resolve, tc::future<void> fut)
+template <template <typename> class F>
+inline void resolveJsPromise(emscripten::val resolve, F<void> fut)
 {
   fut.get();
   resolve();
 }
 
-template <typename T>
-inline void resolveJsPromise(emscripten::val resolve, tc::future<T> fut)
+template <template <typename> class F, typename T>
+inline void resolveJsPromise(emscripten::val resolve, F<T> fut)
 {
   resolve(fut.get());
 }
@@ -88,8 +89,8 @@ inline void resolveJsPromise(emscripten::val resolve, tc::future<T> fut)
 
 emscripten::val currentExceptionToJs();
 
-template <typename T>
-emscripten::val tcFutureToJsPromise(tc::future<T> fut)
+template <typename F>
+emscripten::val tcFutureToJsPromise(F fut)
 {
   auto const Promise = emscripten::val::global("Promise");
 
@@ -116,8 +117,8 @@ emscripten::val tcFutureToJsPromise(tc::future<T> fut)
   return promise;
 }
 
-template <typename T>
-emscripten::val tcExpectedToJsValue(tc::future<T> fut)
+template <typename F>
+emscripten::val tcExpectedToJsValue(F fut)
 {
   assert(fut.is_ready());
 
