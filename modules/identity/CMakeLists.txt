@@ -11,6 +11,7 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/PublicPermanentIdentity.hpp
   include/Tanker/Identity/PublicProvisionalIdentity.hpp
   include/Tanker/Identity/PublicIdentity.hpp
+  include/Tanker/Identity/SecretIdentity.hpp
   include/Tanker/Identity/Extract.hpp
   include/Tanker/Identity/TargetType.hpp
 
@@ -23,6 +24,7 @@ add_library(tankeridentity STATIC
   src/PublicPermanentIdentity.cpp
   src/PublicProvisionalIdentity.cpp
   src/PublicIdentity.cpp
+  src/SecretIdentity.cpp
 )
 
 target_include_directories(tankeridentity
