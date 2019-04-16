@@ -1,7 +1,9 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 
-#include <Tanker/Crypto/Types.hpp>
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Error.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 using OneArgFunction = std::function<void(emscripten::val const&)>;
 using PromiseCallback = std::function<void(emscripten::val, emscripten::val)>;
