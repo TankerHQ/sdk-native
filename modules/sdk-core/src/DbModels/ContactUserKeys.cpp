@@ -82,6 +82,7 @@ void migrateTable(DataStore::Connection& db,
   case 0:
   case 1:
     migrate1To2(db);
+    // fallthrough
   case 2:
     migrate2To3(db);
     break;
