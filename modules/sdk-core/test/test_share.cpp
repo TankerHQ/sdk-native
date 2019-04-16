@@ -189,7 +189,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   CHECK_THROWS_AS(
       AWAIT(Share::generateRecipientList(
           userAccessor.get(), groupAccessor.get(), {newUser.userId}, {})),
-      Error::RecipientNotFound);
+      Error::RecipientNotFoundInternal);
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -219,7 +219,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
                                          groupAccessor.get(),
                                          {},
                                          {newGroup.group.tankerGroup.id})),
-      Error::RecipientNotFound);
+      Error::RecipientNotFoundInternal);
 }
 
 template <typename T>

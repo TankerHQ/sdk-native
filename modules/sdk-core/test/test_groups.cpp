@@ -102,7 +102,7 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   REQUIRE_THROWS_AS(
       AWAIT(Groups::Manager::getMemberKeys(userAccessor.get(), {unknownUid})),
-      Error::UserNotFound);
+      Error::UserNotFoundInternal);
 }
 
 TEST_CASE("Fails to add 0 users to a group")

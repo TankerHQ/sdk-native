@@ -4,23 +4,20 @@
 
 #include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 
 namespace Tanker
 {
 namespace Error
 {
 
-class UserNotFoundBase
+class UserNotFoundInternal
 {
 public:
-  UserNotFoundBase() = default;
-  UserNotFoundBase(std::vector<Trustchain::UserId> const& userIds)
-    : _userIds(userIds)
+  UserNotFoundInternal() = default;
+  UserNotFoundInternal(std::vector<Trustchain::UserId> userIds)
+    : _userIds(std::move(userIds))
   {
-  }
-  UserNotFoundBase(Trustchain::UserId const& userId)
-  {
-    _userIds.push_back(userId);
   }
 
   std::vector<Trustchain::UserId> const& userIds() const
@@ -32,6 +29,28 @@ private:
   std::vector<Trustchain::UserId> _userIds;
 };
 
+class UserNotFoundBase
+{
+public:
+  UserNotFoundBase() = default;
+  UserNotFoundBase(std::vector<SPublicIdentity> publicIdentities)
+    : _publicIdentities(std::move(publicIdentities))
+  {
+  }
+  UserNotFoundBase(SPublicIdentity publicIdentity)
+    : _publicIdentities({std::move(publicIdentity)})
+  {
+  }
+
+  std::vector<SPublicIdentity> const& publicIdentities() const
+  {
+    return _publicIdentities;
+  }
+
+private:
+  std::vector<SPublicIdentity> _publicIdentities;
+};
+
 class UserNotFound : public Exception, public UserNotFoundBase
 {
 public:
@@ -41,15 +60,15 @@ public:
   }
 
   UserNotFound(std::string message,
-               std::vector<Trustchain::UserId> const& userIds)
+               std::vector<SPublicIdentity> publicIdentities = {})
     : Exception(Code::UserNotFound, std::move(message)),
-      UserNotFoundBase(userIds)
+      UserNotFoundBase(std::move(publicIdentities))
   {
   }
 
-  UserNotFound(std::string message, Trustchain::UserId const& userId)
+  UserNotFound(std::string message, SPublicIdentity publicIdentity)
     : Exception(Code::UserNotFound, std::move(message)),
-      UserNotFoundBase(userId)
+      UserNotFoundBase(std::move(publicIdentity))
   {
   }
 };
