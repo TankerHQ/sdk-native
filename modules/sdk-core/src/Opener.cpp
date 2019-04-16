@@ -5,8 +5,8 @@
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -58,10 +58,13 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
   _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
   _client->start();
 
-  _db = TC_AWAIT(DataStore::createDatabase(
-      fmt::format(
-          "{}/tanker-{:S}.db", _writablePath, _identity->delegation.userId),
-      _identity->userSecret));
+  std::string dbPath;
+  if (_writablePath == ":memory:")
+    dbPath = _writablePath;
+  else
+    dbPath = fmt::format(
+        "{}/tanker-{:S}.db", _writablePath, _identity->delegation.userId);
+  _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
   auto const userStatusResult =
