@@ -9,7 +9,7 @@
 #include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Init.hpp>
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -23,10 +23,9 @@ void runTests(std::string const& config, std::string const& env)
   tc::async_resumable([=]() -> tc::cotask<int> {
     doctest::Context context;
 
-    auto& trustchain = Tanker::Test::Trustchain::getInstance();
-    TC_AWAIT(trustchain.init());
+    TC_AWAIT(TrustchainFixture::setUp());
     auto const ret = TC_AWAIT(context.run());
-    TC_AWAIT(trustchain.destroy());
+    TC_AWAIT(TrustchainFixture::tearDown());
     TC_RETURN(ret);
   })
       .then([](auto fut) {

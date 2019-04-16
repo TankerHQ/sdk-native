@@ -82,8 +82,8 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
     TC_RETURN(TC_AWAIT(createUser()));
   else if (mode == OpenMode::SignIn)
     TC_RETURN(StatusIdentityNotRegistered{});
-  else
-    throw std::runtime_error("assertion error: invalid open mode");
+  throw std::runtime_error(
+      "assertion error: invalid open mode, unreachable code");
 }
 
 tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
