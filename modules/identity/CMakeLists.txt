@@ -7,15 +7,18 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/Delegation.hpp
   include/Tanker/Identity/Utils.hpp
   include/Tanker/Identity/SecretPermanentIdentity.hpp
+  include/Tanker/Identity/SecretProvisionalIdentity.hpp
   include/Tanker/Identity/PublicPermanentIdentity.hpp
   include/Tanker/Identity/PublicIdentity.hpp
   include/Tanker/Identity/Extract.hpp
+  include/Tanker/Identity/TargetType.hpp
 
   src/UserToken.cpp
   src/Extract.cpp
   src/Delegation.cpp
   src/Utils.cpp
   src/SecretPermanentIdentity.cpp
+  src/SecretProvisionalIdentity.cpp
   src/PublicPermanentIdentity.cpp
   src/PublicIdentity.cpp
 )
