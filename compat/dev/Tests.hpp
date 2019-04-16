@@ -4,6 +4,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Version.hpp>
 
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
@@ -25,7 +26,7 @@ using Tanker::Test::User;
 namespace
 {
 CorePtr createCore(std::string const& url,
-                   Tanker::TrustchainId const& id,
+                   Tanker::Trustchain::TrustchainId const& id,
                    std::string const& tankerPath)
 {
   return std::make_unique<Tanker::AsyncCore>(
@@ -91,7 +92,8 @@ std::vector<uint8_t> encrypt(CorePtr& core,
   return encryptedData;
 }
 
-User upgradeToIdentity(Tanker::TrustchainId const& trustchainId, User user)
+User upgradeToIdentity(Tanker::Trustchain::TrustchainId const& trustchainId,
+                       User user)
 {
   if (user.userToken)
   {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <string>
 
@@ -9,7 +9,7 @@ namespace Tanker
 struct SdkInfo
 {
   std::string sdkType;
-  TrustchainId trustchainId;
+  Trustchain::TrustchainId trustchainId;
   std::string version;
 };
 }

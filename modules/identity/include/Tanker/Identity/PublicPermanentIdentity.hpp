@@ -2,8 +2,8 @@
 
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -13,7 +13,7 @@ namespace Identity
 {
 struct PublicPermanentIdentity
 {
-  TrustchainId trustchainId;
+  Trustchain::TrustchainId trustchainId;
   Trustchain::UserId userId;
 };
 

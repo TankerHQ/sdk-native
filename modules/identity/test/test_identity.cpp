@@ -4,6 +4,7 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -60,7 +61,7 @@ auto const trustchainPrivateKeyString =
     "CZC/e4ZI7+MQ=="s;
 
 auto const trustchainId =
-    cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdString);
+    cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(trustchainIdString);
 auto const trustchainPrivateKey =
     cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);

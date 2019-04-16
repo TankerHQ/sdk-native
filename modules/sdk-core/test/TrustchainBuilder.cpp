@@ -7,6 +7,7 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
 #include <Helpers/Await.hpp>
@@ -24,7 +25,7 @@ TrustchainBuilder::TrustchainBuilder()
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
       Tanker::TrustchainCreation{_trustchainKeyPair.publicKey});
-  block.trustchainId = TrustchainId(block.hash());
+  block.trustchainId = Trustchain::TrustchainId(block.hash());
   _trustchainId = block.trustchainId;
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
@@ -70,7 +71,7 @@ Tanker::ExternalGroup TrustchainBuilder::Group::asExternalGroup() const
   return extGroup;
 }
 
-TrustchainId const& TrustchainBuilder::trustchainId() const
+Trustchain::TrustchainId const& TrustchainBuilder::trustchainId() const
 {
   return _trustchainId;
 }

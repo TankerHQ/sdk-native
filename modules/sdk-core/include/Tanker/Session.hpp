@@ -8,6 +8,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -18,7 +19,6 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -54,7 +54,7 @@ public:
   struct Config
   {
     DataStore::DatabasePtr db;
-    TrustchainId trustchainId;
+    Trustchain::TrustchainId trustchainId;
     Trustchain::UserId userId;
     Crypto::SymmetricKey userSecret;
     std::unique_ptr<DeviceKeyStore> deviceKeyStore;
@@ -66,7 +66,7 @@ public:
   tc::cotask<void> startConnection();
 
   Trustchain::UserId const& userId() const;
-  TrustchainId const& trustchainId() const;
+  Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,
@@ -132,7 +132,7 @@ private:
   void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
 
 private:
-  TrustchainId _trustchainId;
+  Trustchain::TrustchainId _trustchainId;
   Trustchain::UserId _userId;
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;

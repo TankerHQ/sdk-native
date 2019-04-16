@@ -3,6 +3,7 @@
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
@@ -237,7 +238,7 @@ TEST_CASE("Verif TrustchainCreation")
   {
     SUBCASE("TrustchainId mismatch")
     {
-      TrustchainId trustchainId(rootEntry.hash);
+      Trustchain::TrustchainId trustchainId(rootEntry.hash);
       trustchainId[0]++;
 
       CHECK_VERIFICATION_FAILED_WITH(
@@ -247,7 +248,7 @@ TEST_CASE("Verif TrustchainCreation")
 
     SUBCASE("Valid TrustchainCreation block")
     {
-      TrustchainId trustchainId(rootEntry.hash);
+      Trustchain::TrustchainId trustchainId(rootEntry.hash);
 
       CHECK_NOTHROW(Verif::verifyTrustchainCreation(rootEntry, trustchainId));
     }

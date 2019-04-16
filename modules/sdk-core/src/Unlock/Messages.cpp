@@ -2,11 +2,11 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -54,13 +54,13 @@ void from_json(nlohmann::json const& j, FetchAnswer& f)
 
 void from_json(nlohmann::json const& j, Message& m)
 {
-  m.trustchainId = j.at("trustchain_id").get<TrustchainId>();
+  m.trustchainId = j.at("trustchain_id").get<Trustchain::TrustchainId>();
   m.deviceId = j.at("device_id").get<DeviceId>();
   m.claims = j.at("claims").get<Claims>();
   m.signature = j.at("signature").get<Crypto::Signature>();
 }
 
-Request::Request(TrustchainId const& trustchainId,
+Request::Request(Trustchain::TrustchainId const& trustchainId,
                  UserId const& userId,
                  DeviceLocker const& locker)
   : trustchainId(trustchainId), userId(userId)
@@ -107,7 +107,7 @@ UnlockKey FetchAnswer::getUnlockKey(Crypto::SymmetricKey const& key) const
   return {begin(binKey), end(binKey)};
 }
 
-Message::Message(TrustchainId const& trustchainId,
+Message::Message(Trustchain::TrustchainId const& trustchainId,
                  DeviceId const& deviceId,
                  UpdateOptions const& lockOptions,
                  Crypto::SymmetricKey const& userSecret,

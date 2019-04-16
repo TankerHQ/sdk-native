@@ -2,7 +2,7 @@
 
 #include <Tanker/Test/Functional/User.hpp>
 
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -16,7 +16,7 @@ namespace Test
 struct TrustchainConfig
 {
   std::string url;
-  Tanker::TrustchainId id;
+  Tanker::Trustchain::TrustchainId id;
   Tanker::Crypto::PrivateSignatureKey privateKey;
 };
 
@@ -38,17 +38,17 @@ public:
   friend TrustchainFactory;
 
   std::string url;
-  Tanker::TrustchainId id;
+  Tanker::Trustchain::TrustchainId id;
   Tanker::Crypto::SignatureKeyPair keyPair;
 
   static Ptr make(TrustchainConfig const& config);
   static Ptr make(std::string url,
-                  Tanker::TrustchainId id,
+                  Tanker::Trustchain::TrustchainId id,
                   Tanker::Crypto::SignatureKeyPair keypair);
 
   Trustchain(TrustchainConfig const& config);
   Trustchain(std::string url,
-             Tanker::TrustchainId id,
+             Tanker::Trustchain::TrustchainId id,
              Tanker::Crypto::SignatureKeyPair keypair);
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;

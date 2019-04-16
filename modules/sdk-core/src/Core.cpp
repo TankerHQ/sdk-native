@@ -1,15 +1,14 @@
 #include <Tanker/Core.hpp>
 
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 

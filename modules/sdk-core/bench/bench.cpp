@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/LogHandler.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
@@ -32,7 +33,7 @@ tc::cotask<std::vector<Tanker::SUserId>> createUsers(Trustchain& tr,
 }
 
 std::vector<Tanker::SPublicIdentity> userIdsToPublicIdentities(
-    Tanker::TrustchainId const& trustchainId,
+    Tanker::Trustchain::TrustchainId const& trustchainId,
     std::vector<Tanker::SUserId> const& suserIds)
 {
   auto res = std::vector<Tanker::SPublicIdentity>();

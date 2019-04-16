@@ -5,7 +5,7 @@
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Init.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -56,7 +56,8 @@ tanker_future_t* tanker_admin_delete_trustchain(tanker_admin_t* admin,
       [admin = reinterpret_cast<Admin*>(admin),
        trustchainId = std::string(trustchain_id)]() -> tc::cotask<void> {
         TC_AWAIT(admin->deleteTrustchain(
-            cppcodec::base64_rfc4648::decode<TrustchainId>({trustchainId})));
+            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+                {trustchainId})));
       }));
 }
 
@@ -83,8 +84,10 @@ tanker_future_t* tanker_admin_get_verification_code(
       [admin = reinterpret_cast<Admin*>(admin),
        trustchainId = std::string(trustchain_id),
        email = std::string(user_email)]() -> tc::cotask<void*> {
-         auto verifCode = TC_AWAIT(admin->getVerificationCode(cppcodec::base64_rfc4648::decode<TrustchainId>({trustchainId}), Email{email}));
-         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
-         }
-      ));
+        auto verifCode = TC_AWAIT(admin->getVerificationCode(
+            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+                {trustchainId}),
+            Email{email}));
+        TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
+      }));
 }

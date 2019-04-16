@@ -5,6 +5,7 @@ project(tankertrustchain)
 add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/Nature.hpp
   include/Tanker/Trustchain/UserId.hpp
+  include/Tanker/Trustchain/TrustchainId.hpp
 
   src/Actions/Nature.cpp
   src/ExternTemplates.cpp

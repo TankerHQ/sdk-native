@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -14,8 +14,9 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyTrustchainCreation(Tanker::UnverifiedEntry const& rootEntry,
-                              TrustchainId const& currentTrustchainId)
+void verifyTrustchainCreation(
+    Tanker::UnverifiedEntry const& rootEntry,
+    Trustchain::TrustchainId const& currentTrustchainId)
 {
   assert(rootEntry.nature == Nature::TrustchainCreation);
 

@@ -3,9 +3,9 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -17,7 +17,7 @@ namespace Tanker
 {
 struct Block
 {
-  TrustchainId trustchainId;
+  Trustchain::TrustchainId trustchainId;
   uint64_t index;
   Crypto::Hash author;
   Trustchain::Actions::Nature nature;

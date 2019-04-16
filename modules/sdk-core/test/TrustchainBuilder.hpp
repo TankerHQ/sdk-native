@@ -11,9 +11,9 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -137,7 +137,7 @@ public:
   std::vector<Group> groups() const;
   std::vector<User> const& users() const;
 
-  Tanker::TrustchainId const& trustchainId() const;
+  Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
 
 private:
@@ -150,7 +150,7 @@ private:
   };
 
   Tanker::Crypto::SignatureKeyPair _trustchainKeyPair;
-  Tanker::TrustchainId _trustchainId;
+  Tanker::Trustchain::TrustchainId _trustchainId;
 
   std::vector<User> _users;
   std::set<Group, GroupComparator> _groups;

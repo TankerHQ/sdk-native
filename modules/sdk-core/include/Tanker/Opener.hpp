@@ -7,7 +7,6 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>

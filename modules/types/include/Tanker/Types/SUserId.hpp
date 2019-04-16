@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/StringWrapper.hpp>
 
@@ -10,15 +11,14 @@ namespace Tanker
 {
 using SUserId = StringWrapper<struct UserIdTag>;
 
-template <typename T>
-Trustchain::UserId obfuscateUserId(SUserId const& s,
-                                   Crypto::BasicHash<T> const& hash)
+inline Trustchain::UserId obfuscateUserId(SUserId const& s,
+                                   Trustchain::TrustchainId const& trustchainId)
 {
   std::vector<std::uint8_t> toHash;
 
-  toHash.reserve(s.size() + hash.size());
+  toHash.reserve(s.size() + trustchainId.size());
   toHash.insert(toHash.end(), s.begin(), s.end());
-  toHash.insert(toHash.end(), hash.begin(), hash.end());
+  toHash.insert(toHash.end(), trustchainId.begin(), trustchainId.end());
   return Crypto::generichash<Trustchain::UserId>(toHash);
 }
 

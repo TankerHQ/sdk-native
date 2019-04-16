@@ -15,7 +15,6 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>

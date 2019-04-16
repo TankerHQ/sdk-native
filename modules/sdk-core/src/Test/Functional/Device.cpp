@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/core.h>
@@ -62,7 +63,8 @@ std::unique_ptr<AsyncCore> Device::createAsyncCore()
   return std::make_unique<AsyncCore>(
       _trustchainUrl,
       SdkInfo{"test",
-              cppcodec::base64_rfc4648::decode<TrustchainId>(_trustchainId),
+              cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+                  _trustchainId),
               "0.0.1"},
       _storage->path);
 }

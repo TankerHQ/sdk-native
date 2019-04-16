@@ -3,8 +3,8 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
@@ -15,13 +15,13 @@ namespace Identity
 {
 
 SecretPermanentIdentity::SecretPermanentIdentity(
-    UserToken const& userToken, TrustchainId const& trustchainId)
+    UserToken const& userToken, Trustchain::TrustchainId const& trustchainId)
   : UserToken(userToken), trustchainId(trustchainId)
 {
 }
 
 SecretPermanentIdentity createIdentity(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     Trustchain::UserId const& userId)
 {
@@ -41,7 +41,7 @@ std::string createIdentity(std::string const& trustchainIdParam,
     throw std::invalid_argument("Empty trustchainPrivateKey");
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdParam);
+      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(trustchainIdParam);
   return to_string(createIdentity(
       trustchainId,
       cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
@@ -49,9 +49,10 @@ std::string createIdentity(std::string const& trustchainIdParam,
       Tanker::obfuscateUserId(userId, trustchainId)));
 }
 
-SecretPermanentIdentity upgradeUserToken(TrustchainId const& trustchainId,
-                                         Trustchain::UserId const& userId,
-                                         UserToken const& userToken)
+SecretPermanentIdentity upgradeUserToken(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    UserToken const& userToken)
 {
   if (userToken.delegation.userId != userId)
     throw std::invalid_argument("Wrong userId provided");
@@ -63,7 +64,7 @@ std::string upgradeUserToken(std::string const& strustchainId,
                              std::string const& suserToken)
 {
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<TrustchainId>(strustchainId);
+      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(strustchainId);
   auto const userId = Tanker::obfuscateUserId(suserId, trustchainId);
   auto const userToken = extract<UserToken>(suserToken);
   return to_string(upgradeUserToken(trustchainId, userId, userToken));

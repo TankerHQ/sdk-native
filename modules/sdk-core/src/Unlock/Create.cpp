@@ -9,9 +9,9 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
@@ -67,7 +67,7 @@ catch (std::exception const& e)
 }
 
 std::vector<uint8_t> createValidatedDevice(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     UserId const& userId,
     GhostDevice const& ghostDevice,
     DeviceKeys const& deviceKeys,

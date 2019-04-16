@@ -2,8 +2,8 @@
 
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/GhostDevice.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 
 #include <cstdint>
@@ -30,7 +30,7 @@ std::unique_ptr<Registration> generate(
 GhostDevice extract(UnlockKey const& unlockKey);
 
 std::vector<uint8_t> createValidatedDevice(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
     GhostDevice const& ghostDevice,
     DeviceKeys const& deviceKeys,
