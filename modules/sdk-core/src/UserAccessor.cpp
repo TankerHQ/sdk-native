@@ -8,6 +8,8 @@
 #include <mockaron/mockaron.hpp>
 #include <tconcurrent/coroutine.hpp>
 
+using Tanker::Trustchain::UserId;
+
 namespace Tanker
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,

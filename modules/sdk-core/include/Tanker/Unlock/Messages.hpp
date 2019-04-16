@@ -1,9 +1,12 @@
 #pragma once
 
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -21,7 +24,7 @@ namespace Unlock
 struct Request
 {
   TrustchainId trustchainId;
-  UserId userId;
+  Trustchain::UserId userId;
   enum Type
   {
     Password,
@@ -32,7 +35,7 @@ struct Request
 
   Request() = default;
   Request(TrustchainId const& trustchainId,
-          UserId const& userId,
+          Trustchain::UserId const& userId,
           DeviceLocker const& locker);
 };
 

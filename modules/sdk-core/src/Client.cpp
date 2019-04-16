@@ -7,6 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -24,6 +25,8 @@
 #include <cstdint>
 #include <iterator>
 #include <utility>
+
+using Tanker::Trustchain::UserId;
 
 TLOG_CATEGORY(Client);
 

@@ -10,6 +10,7 @@
 #include <Tanker/Init.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Opener.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -31,12 +32,13 @@ AsyncCore* makeCore(std::string trustchainId,
 {
   try
   {
-    return new AsyncCore(std::move(url),
-                         SdkInfo{"client-emscripten",
-                                 cppcodec::base64_rfc4648::decode<TrustchainId>(
-                                     std::move(trustchainId)),
-                                 "0.0.1"},
-                         std::move(writablePath));
+    return new AsyncCore(
+        std::move(url),
+        SdkInfo{"client-emscripten",
+                cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+                    std::move(trustchainId)),
+                "0.0.1"},
+        std::move(writablePath));
   }
   catch (std::exception const& e)
   {

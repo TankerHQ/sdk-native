@@ -4,7 +4,7 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+using Tanker::Trustchain::UserId;
 using namespace std::string_literals;
 namespace Tanker
 {

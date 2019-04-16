@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 

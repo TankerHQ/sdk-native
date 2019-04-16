@@ -1,5 +1,6 @@
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>

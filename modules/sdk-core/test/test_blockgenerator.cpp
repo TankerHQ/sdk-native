@@ -7,12 +7,12 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -21,7 +21,7 @@ using namespace Tanker;
 TEST_CASE("BlockGenerator")
 {
   auto const trustchainId = make<TrustchainId>("trustchain");
-  auto const userId = make<UserId>("alice");
+  auto const userId = make<Trustchain::UserId>("alice");
   auto const deviceId = make<DeviceId>("alice dev 1");
   auto const trustchainKeyPair = Crypto::makeSignatureKeyPair();
   auto const mySignKeyPair = Crypto::makeSignatureKeyPair();

@@ -5,11 +5,12 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/DeviceKeys.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Helpers/Await.hpp>
@@ -192,8 +193,8 @@ TEST_CASE("Client getBlocks")
   }
   SUBCASE("It asks all the blocks since the 42th, with some extra users")
   {
-    auto extra_users =
-        std::vector<UserId>{make<UserId>("alice"), make<UserId>("bob")};
+    auto extra_users = std::vector<Trustchain::UserId>{
+        make<Trustchain::UserId>("alice"), make<Trustchain::UserId>("bob")};
     auto message = nlohmann::json{{"index", 42},
                                   {"extra_users", extra_users},
                                   {"extra_groups", std::vector<std::string>{}}};
@@ -206,8 +207,8 @@ TEST_CASE("Client getBlocks")
 
   SUBCASE("It asks all the blocks since the 42th, with some extras")
   {
-    auto extra_users =
-        std::vector<UserId>{make<UserId>("alice"), make<UserId>("bob")};
+    auto extra_users = std::vector<Trustchain::UserId>{
+        make<Trustchain::UserId>("alice"), make<Trustchain::UserId>("bob")};
     auto extra_groups =
         std::vector<GroupId>{make<GroupId>("party"), make<GroupId>("mode")};
     auto message = nlohmann::json{{"index", 42},
@@ -247,7 +248,7 @@ TEST_CASE("Client subscribe to creation")
 TEST_CASE("Client unlock api")
 {
   auto const trustchainId = make<TrustchainId>("my trustchainId");
-  auto const userId = make<UserId>("alice");
+  auto const userId = make<Trustchain::UserId>("alice");
   auto const password = Password{"some secret"};
   auto const email = Email{"alice@aol.com"};
 

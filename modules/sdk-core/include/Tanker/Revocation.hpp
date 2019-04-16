@@ -2,8 +2,8 @@
 
 #include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/User.hpp>
 
 #include <gsl-lite.hpp>
@@ -25,10 +25,10 @@ class Client;
 namespace Revocation
 {
 tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
-                                        UserId const& selfUserId,
+                                        Trustchain::UserId const& selfUserId,
                                         ContactStore const& contactStore);
 
-tc::cotask<User> getUserFromUserId(UserId const& selfUserId,
+tc::cotask<User> getUserFromUserId(Trustchain::UserId const& selfUserId,
                                    ContactStore const& contactStore);
 
 tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
@@ -42,7 +42,7 @@ tc::cotask<std::vector<EncryptedPrivateUserKey>> encryptPrivateKeyForDevices(
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
 tc::cotask<void> revokeDevice(DeviceId const& deviceId,
-                              UserId const& userId,
+                              Trustchain::UserId const& userId,
                               ContactStore const& contactStore,
                               UserKeyStore const& userKeyStore,
                               BlockGenerator const& blockGenerator,
@@ -55,7 +55,7 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
 tc::cotask<void> onOtherDeviceRevocation(
     DeviceRevocation const& deviceRevocation,
     Entry const& entry,
-    UserId const& selfUserId,
+    Trustchain::UserId const& selfUserId,
     DeviceId const& deviceId,
     ContactStore& contactStore,
     std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,

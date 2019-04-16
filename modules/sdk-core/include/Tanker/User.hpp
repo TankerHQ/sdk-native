@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Device.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <optional.hpp>
 
@@ -11,7 +11,7 @@ namespace Tanker
 {
 struct User
 {
-  UserId id;
+  Trustchain::UserId id;
   nonstd::optional<Crypto::PublicEncryptionKey> userKey;
   std::vector<Device> devices;
 };

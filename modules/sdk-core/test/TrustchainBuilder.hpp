@@ -10,12 +10,13 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 
 #include <optional.hpp>
 
@@ -44,7 +45,7 @@ public:
   struct User
   {
     Tanker::SUserId suserId;
-    Tanker::UserId userId;
+    Tanker::Trustchain::UserId userId;
     std::vector<Device> devices;
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;

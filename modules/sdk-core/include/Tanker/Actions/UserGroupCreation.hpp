@@ -1,10 +1,12 @@
 #pragma once
 
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>

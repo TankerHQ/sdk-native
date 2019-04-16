@@ -4,6 +4,8 @@
 
 TLOG_CATEGORY("ADatabase");
 
+using Tanker::Trustchain::UserId;
+
 namespace Tanker
 {
 namespace DataStore

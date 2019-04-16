@@ -4,10 +4,10 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
+#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 
 #include <Helpers/Await.hpp>
 

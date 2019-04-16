@@ -4,6 +4,7 @@
 
 #include <Tanker/Error.hpp>
 #include <Tanker/GroupNotFound.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 namespace Tanker
@@ -23,7 +24,7 @@ public:
   }
 
   RecipientNotFound(std::string message,
-                    std::vector<UserId> userIds,
+                    std::vector<Trustchain::UserId> userIds,
                     std::vector<GroupId> groupIds)
     : Exception(Code::RecipientNotFound, std::move(message)),
       UserNotFoundBase(std::move(userIds)),

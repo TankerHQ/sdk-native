@@ -6,8 +6,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -15,6 +15,8 @@
 
 #include <algorithm>
 #include <vector>
+
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

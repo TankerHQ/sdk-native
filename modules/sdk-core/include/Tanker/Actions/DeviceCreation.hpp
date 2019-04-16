@@ -1,11 +1,13 @@
 #pragma once
 
 #include <Tanker/Actions/UserKeyPair.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -39,7 +41,7 @@ struct DeviceCreation1
       Trustchain::Actions::Nature::DeviceCreation;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
-  UserId userId;
+  Trustchain::UserId userId;
   Crypto::Signature delegationSignature;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
@@ -51,7 +53,7 @@ struct DeviceCreation3
       Trustchain::Actions::Nature::DeviceCreation3;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
-  UserId userId;
+  Trustchain::UserId userId;
   Crypto::Signature delegationSignature;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
@@ -92,7 +94,7 @@ public:
 
   Trustchain::Actions::Nature nature() const;
   Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
-  UserId const& userId() const;
+  Trustchain::UserId const& userId() const;
   Crypto::Signature const& delegationSignature() const;
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;

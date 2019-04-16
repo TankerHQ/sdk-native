@@ -1,6 +1,7 @@
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <Tanker/Actions/UserGroupCreation.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/UnverifiedEntry.hpp>

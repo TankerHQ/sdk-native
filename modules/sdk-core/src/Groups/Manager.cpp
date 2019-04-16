@@ -10,6 +10,8 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
+using Tanker::Trustchain::UserId;
+
 namespace Tanker
 {
 namespace Groups

@@ -2,6 +2,7 @@
 
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -32,14 +33,14 @@ std::string to_string(SecretPermanentIdentity const& identity);
 SecretPermanentIdentity createIdentity(
     TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-    UserId const& userId);
+    Trustchain::UserId const& userId);
 
 std::string createIdentity(std::string const& trustchainId,
                            std::string const& trustchainPrivateKey,
                            SUserId const& userId);
 
 SecretPermanentIdentity upgradeUserToken(TrustchainId const& trustchainId,
-                                         UserId const& userId,
+                                         Trustchain::UserId const& userId,
                                          UserToken const& userToken);
 
 std::string upgradeUserToken(std::string const& trustchainId,

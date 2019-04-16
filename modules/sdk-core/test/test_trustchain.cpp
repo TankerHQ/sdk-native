@@ -4,7 +4,6 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <Helpers/Await.hpp>

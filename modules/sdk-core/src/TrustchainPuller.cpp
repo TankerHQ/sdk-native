@@ -14,7 +14,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -31,6 +31,8 @@
 #include <vector>
 
 TLOG_CATEGORY(TrustchainPuller);
+
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

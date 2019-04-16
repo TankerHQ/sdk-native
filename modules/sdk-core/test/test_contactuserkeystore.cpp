@@ -7,7 +7,7 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -36,7 +36,7 @@ OldContactUserKeys setupContactUserKeysMigration(DataStore::Connection& db)
 
   auto const b64PublicKey = cppcodec::base64_rfc4648::encode(keyPair.publicKey);
   auto const b64UserId =
-      cppcodec::base64_rfc4648::encode(make<UserId>("michel"));
+      cppcodec::base64_rfc4648::encode(make<Trustchain::UserId>("michel"));
 
   db.execute(R"(
     CREATE TABLE contact_user_keys (
@@ -68,7 +68,7 @@ TEST_CASE("contact user keys")
 
   SUBCASE("it should not find a non-existent key")
   {
-    auto const unexistentUserId = make<UserId>("unexistent");
+    auto const unexistentUserId = make<Trustchain::UserId>("unexistent");
 
     ContactUserKeyStore keys(dbPtr.get());
     CHECK(AWAIT(keys.getUserKey(unexistentUserId)) == nonstd::nullopt);
@@ -76,7 +76,7 @@ TEST_CASE("contact user keys")
 
   SUBCASE("it should find a key that was inserted")
   {
-    auto const userId = make<UserId>("userId");
+    auto const userId = make<Trustchain::UserId>("userId");
     auto const pubKey = make<Crypto::PublicEncryptionKey>("pub key...");
 
     ContactUserKeyStore keys(dbPtr.get());
@@ -87,7 +87,7 @@ TEST_CASE("contact user keys")
 
   SUBCASE("it should override an old key with a new one")
   {
-    auto const userId = make<UserId>("userId");
+    auto const userId = make<Trustchain::UserId>("userId");
     auto const pubKey1 = make<Crypto::PublicEncryptionKey>("pub key...");
     auto const pubKey2 = make<Crypto::PublicEncryptionKey>("pub key2...");
 
@@ -118,12 +118,14 @@ TEST_CASE("contact user keys migration")
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& contactUserKeys = keys.front();
 
-    auto const userId = DataStore::extractBlob<UserId>(contactUserKeys.user_id);
+    auto const userId =
+        DataStore::extractBlob<Trustchain::UserId>(contactUserKeys.user_id);
     auto const pubK = DataStore::extractBlob<Crypto::PublicEncryptionKey>(
         contactUserKeys.public_encryption_key);
 
     CHECK_EQ(userId,
-             cppcodec::base64_rfc4648::decode<UserId>(oldKeys.b64UserId));
+             cppcodec::base64_rfc4648::decode<Trustchain::UserId>(
+                 oldKeys.b64UserId));
     CHECK_EQ(pubK,
              cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
                  oldKeys.b64PublicEncryptionKey));
@@ -133,8 +135,8 @@ TEST_CASE("contact user keys migration")
   {
     ContactUserKeysTable tab{};
 
-    CHECK_NOTHROW(
-        db(insert_into(tab).set(tab.user_id = make<UserId>("unexistent").base(),
-                                tab.public_encryption_key = sqlpp::null)));
+    CHECK_NOTHROW(db(insert_into(tab).set(
+        tab.user_id = make<Trustchain::UserId>("unexistent").base(),
+        tab.public_encryption_key = sqlpp::null)));
   }
 }

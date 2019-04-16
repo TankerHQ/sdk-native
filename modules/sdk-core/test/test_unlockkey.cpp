@@ -9,7 +9,6 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Options.hpp>

@@ -1,11 +1,12 @@
 #pragma once
 
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -59,20 +60,20 @@ public:
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
       Crypto::Mac const& resourceId) = 0;
   virtual tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      UserId const& userId) = 0;
+      Trustchain::UserId const& userId) = 0;
   virtual tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) = 0;
 
   virtual tc::cotask<void> putContact(
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
 
   virtual tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-  findContactUserKey(UserId const& userId) = 0;
-  virtual tc::cotask<nonstd::optional<UserId>>
+  findContactUserKey(Trustchain::UserId const& userId) = 0;
+  virtual tc::cotask<nonstd::optional<Trustchain::UserId>>
   findContactUserIdByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& userPublicKey) = 0;
   virtual tc::cotask<void> setContactPublicEncryptionKey(
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) = 0;
 
   virtual tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
@@ -84,12 +85,13 @@ public:
   virtual tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) = 0;
   virtual tc::cotask<void> setDeviceId(DeviceId const& deviceId) = 0;
 
-  virtual tc::cotask<void> putDevice(UserId const& userId,
+  virtual tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                                      Device const& device) = 0;
   virtual tc::cotask<nonstd::optional<Device>> findDevice(
       DeviceId const& id) = 0;
-  virtual tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) = 0;
-  virtual tc::cotask<nonstd::optional<UserId>> findDeviceUserId(
+  virtual tc::cotask<std::vector<Device>> getDevicesOf(
+      Trustchain::UserId const& id) = 0;
+  virtual tc::cotask<nonstd::optional<Trustchain::UserId>> findDeviceUserId(
       DeviceId const& id) = 0;
   virtual tc::cotask<void> updateDeviceRevokedAt(
       DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;

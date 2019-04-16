@@ -3,8 +3,8 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
@@ -23,7 +23,7 @@ SecretPermanentIdentity::SecretPermanentIdentity(
 SecretPermanentIdentity createIdentity(
     TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-    UserId const& userId)
+    Trustchain::UserId const& userId)
 {
   return SecretPermanentIdentity(
       generateUserToken(trustchainPrivateKey, userId), std::move(trustchainId));
@@ -50,7 +50,7 @@ std::string createIdentity(std::string const& trustchainIdParam,
 }
 
 SecretPermanentIdentity upgradeUserToken(TrustchainId const& trustchainId,
-                                         UserId const& userId,
+                                         Trustchain::UserId const& userId,
                                          UserToken const& userToken)
 {
   if (userToken.delegation.userId != userId)

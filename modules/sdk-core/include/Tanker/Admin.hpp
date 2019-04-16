@@ -1,9 +1,10 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
 #include <boost/signals2/signal.hpp>

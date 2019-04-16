@@ -1,7 +1,7 @@
 #include <Tanker/ContactStore.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -25,7 +25,7 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should not find a non-existent user")
   {
-    auto const unexistentUserId = make<UserId>("unexistent");
+    auto const unexistentUserId = make<Trustchain::UserId>("unexistent");
 
     CHECK_EQ(AWAIT(contacts.findUser(unexistentUserId)), nonstd::nullopt);
   }
@@ -112,7 +112,7 @@ TEST_CASE("ContactStore")
   SUBCASE("it should return no devices when a given user does not exist")
   {
     auto const devices =
-        AWAIT(contacts.findUserDevices(make<UserId>("unexistent")));
+        AWAIT(contacts.findUserDevices(make<Trustchain::UserId>("unexistent")));
 
     CHECK_UNARY(devices.empty());
   }
@@ -120,7 +120,7 @@ TEST_CASE("ContactStore")
   SUBCASE("it should throw when inserting a device with an invalid user id")
   {
     CHECK_THROWS_AS(AWAIT_VOID(contacts.putUserDevice(
-                        make<UserId>("unexistent"), aliceDevice)),
+                        make<Trustchain::UserId>("unexistent"), aliceDevice)),
                     std::runtime_error);
   }
 

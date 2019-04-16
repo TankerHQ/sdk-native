@@ -8,8 +8,9 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/TrustchainStore.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -19,7 +20,6 @@
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -55,7 +55,7 @@ public:
   {
     DataStore::DatabasePtr db;
     TrustchainId trustchainId;
-    UserId userId;
+    Trustchain::UserId userId;
     Crypto::SymmetricKey userSecret;
     std::unique_ptr<DeviceKeyStore> deviceKeyStore;
     std::unique_ptr<Client> client;
@@ -65,7 +65,7 @@ public:
 
   tc::cotask<void> startConnection();
 
-  UserId const& userId() const;
+  Trustchain::UserId const& userId() const;
   TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
 
@@ -119,7 +119,7 @@ public:
 
 private:
   tc::cotask<void> share(std::vector<Crypto::Mac> const& resourceId,
-                         std::vector<UserId> const& userIds,
+                         std::vector<Trustchain::UserId> const& userIds,
                          std::vector<GroupId> const& groupIds);
 
   tc::cotask<void> setDeviceId(DeviceId const& deviceId);
@@ -133,7 +133,7 @@ private:
 
 private:
   TrustchainId _trustchainId;
-  UserId _userId;
+  Trustchain::UserId _userId;
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;

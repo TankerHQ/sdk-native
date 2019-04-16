@@ -6,7 +6,7 @@
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -16,6 +16,8 @@
 
 #include <iterator>
 #include <string>
+
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

@@ -1,7 +1,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
@@ -48,7 +48,7 @@ TEST_CASE("UserAccessor")
 
   SUBCASE("it should return user ids it did not find")
   {
-    std::vector<UserId> ids{bob.id, charlie.id};
+    std::vector<Trustchain::UserId> ids{bob.id, charlie.id};
     auto const result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.found.empty());
     CHECK_EQ(result.notFound, ids);
@@ -59,7 +59,7 @@ TEST_CASE("UserAccessor")
     AWAIT_VOID(contactStore.putUser(bob));
     AWAIT_VOID(contactStore.putUser(charlie));
 
-    std::vector<UserId> ids{bob.id, charlie.id};
+    std::vector<Trustchain::UserId> ids{bob.id, charlie.id};
     auto const result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.notFound.empty());
     CHECK_EQ(result.found, std::vector<User>{bob, charlie});

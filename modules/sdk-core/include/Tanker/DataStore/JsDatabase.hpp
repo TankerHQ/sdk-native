@@ -3,6 +3,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -38,19 +39,20 @@ public:
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
       Crypto::Mac const& resourceId) override;
   tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      UserId const& userId) override;
+      Trustchain::UserId const& userId) override;
   tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
 
   tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
-      UserId const& userId) override;
-  tc::cotask<nonstd::optional<UserId>> findContactUserIdByPublicEncryptionKey(
+      Trustchain::UserId const& userId) override;
+  tc::cotask<nonstd::optional<Trustchain::UserId>>
+  findContactUserIdByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& userPublicKey) override;
   tc::cotask<void> setContactPublicEncryptionKey(
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) override;
 
   tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
@@ -62,11 +64,12 @@ public:
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(DeviceId const& deviceId) override;
 
-  tc::cotask<void> putDevice(UserId const& userId,
+  tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                              Device const& device) override;
   tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) override;
-  tc::cotask<std::vector<Device>> getDevicesOf(UserId const& id) override;
-  tc::cotask<nonstd::optional<UserId>> findDeviceUserId(
+  tc::cotask<std::vector<Device>> getDevicesOf(
+      Trustchain::UserId const& id) override;
+  tc::cotask<nonstd::optional<Trustchain::UserId>> findDeviceUserId(
       DeviceId const& id) override;
   tc::cotask<void> updateDeviceRevokedAt(DeviceId const& id,
                                          uint64_t revokedAtBlkIndex) override;

@@ -24,6 +24,7 @@
 #include <cassert>
 
 using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

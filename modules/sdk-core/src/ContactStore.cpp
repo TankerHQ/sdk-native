@@ -4,8 +4,8 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/User.hpp>
 
 #include <fmt/format.h>
@@ -14,6 +14,8 @@
 
 #include <stdexcept>
 #include <utility>
+
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

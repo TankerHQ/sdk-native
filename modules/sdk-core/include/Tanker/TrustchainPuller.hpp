@@ -3,9 +3,9 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -37,12 +37,12 @@ public:
                    Client* client,
                    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
                    DeviceId const& deviceId,
-                   UserId const& userId);
+                   Trustchain::UserId const& userId);
 
   void setDeviceId(DeviceId const& deviceId);
 
   tc::shared_future<void> scheduleCatchUp(
-      std::vector<UserId> const& extraUsers = {},
+      std::vector<Trustchain::UserId> const& extraUsers = {},
       std::vector<GroupId> const& extraGroups = {});
 
   std::function<tc::cotask<void>(DeviceId const&)> receivedThisDeviceId;
@@ -62,9 +62,9 @@ private:
 
   Crypto::PublicSignatureKey _devicePublicSignatureKey;
   DeviceId _deviceId;
-  UserId _userId;
+  Trustchain::UserId _userId;
 
-  std::vector<UserId> _extraUsers;
+  std::vector<Trustchain::UserId> _extraUsers;
   std::vector<GroupId> _extraGroups;
   tc::job _pullJob;
 

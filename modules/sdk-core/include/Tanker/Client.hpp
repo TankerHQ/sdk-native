@@ -2,11 +2,13 @@
 
 #include <Tanker/AConnection.hpp>
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
 #include <boost/signals2/signal.hpp>
@@ -61,7 +63,7 @@ public:
 
   tc::cotask<UserStatusResult> userStatus(
       TrustchainId const& trustchainId,
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey);
 
   tc::cotask<void> createUnlockKey(Unlock::Message const& request);
@@ -79,7 +81,7 @@ public:
 
   tc::cotask<std::vector<std::string>> getBlocks(
       int index,
-      std::vector<UserId> const& extra_users,
+      std::vector<Trustchain::UserId> const& extra_users,
       std::vector<GroupId> const& extra_groups);
 
   std::string connectionId() const;

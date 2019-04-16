@@ -6,6 +6,7 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
