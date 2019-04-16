@@ -8,7 +8,7 @@ Tanker::Test::TrustchainFactory::Ptr _trustchainFactory;
 tc::cotask<void> deleteTrustchain()
 {
   assert(_trustchain);
-  _trustchainFactory->deleteTrustchain(_trustchain->id);
+  TC_AWAIT(_trustchainFactory->deleteTrustchain(_trustchain->id));
   _trustchain.reset();
 }
 
