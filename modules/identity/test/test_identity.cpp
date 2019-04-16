@@ -1,6 +1,7 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
@@ -116,6 +117,12 @@ auto const GOOD_SECRET_PROVISIONAL_IDENTITY =
     "dGVfc2lnbmF0dXJlX2tleSI6IlVtbll1dmRUYUxZRzBhK0phRHBZNm9qdzQvMkxsOHpzbXJhbV"
     "ZDNGZ1cVJidEFSQUc3MFZkeGNpazZDcnJhMC9BR0xJVUJ1bFBXc0N1NFBTSDgydE1BPT0ifQ="
     "="s;
+auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJlbWFpbCIsInZhbHVlIjoiYnJlbmRhbi5laWNoQHRhbmtlci5p"
+    "byIsInB1YmxpY19lbmNyeXB0aW9uX2tleSI6Ii8yajRkSTNyOFBsdkNOM3VXNEhoQTV3QnRNS0"
+    "9jQUNkMzhLNk4wcSttRlU9IiwicHVibGljX3NpZ25hdHVyZV9rZXkiOiJXN1FFUUJ1OUZYY1hJ"
+    "cE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSJ9Cg=="s;
 
 auto const userEmail = "brendan.eich@tanker.io";
 
@@ -202,6 +209,18 @@ TEST_SUITE("generate Identity")
     CHECK_EQ(identity.appSignatureKeyPair.privateKey, appSignaturePrivateKey);
     CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
     CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
+  }
+  TEST_CASE(
+      "We can deserialize a public provisional identity from a good string")
+  {
+    auto const identity =
+        extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, userEmail);
+    CHECK_EQ(identity.target, TargetType::Email);
+    CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
+    CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
   }
 }
 
