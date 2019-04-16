@@ -1,7 +1,8 @@
 #pragma once
 
 #include <Tanker/Entry.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -22,7 +23,7 @@ class ADatabase;
 class TrustchainVerifier
 {
 public:
-  TrustchainVerifier(TrustchainId const&,
+  TrustchainVerifier(Trustchain::TrustchainId const&,
                      DataStore::ADatabase*,
                      ContactStore*,
                      GroupStore*);
@@ -43,13 +44,13 @@ private:
   tc::cotask<Entry> handleUserGroupAddition(UnverifiedEntry const& ga) const;
   tc::cotask<Entry> handleUserGroupCreation(UnverifiedEntry const& gc) const;
   tc::cotask<Entry> getAuthor(Crypto::Hash const& authorHash) const;
-  tc::cotask<User> getUser(UserId const& userId) const;
+  tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
   Device getDevice(User const& user, Crypto::Hash const& deviceHash) const;
   tc::cotask<ExternalGroup> getGroupByEncryptionKey(
       Crypto::PublicEncryptionKey const& recipientPublicEncryprionKey) const;
   tc::cotask<ExternalGroup> getGroupById(GroupId const& groupId) const;
 
-  TrustchainId _trustchainId;
+  Trustchain::TrustchainId _trustchainId;
   DataStore::ADatabase* _db;
   ContactStore* _contacts;
   GroupStore* _groups;

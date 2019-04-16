@@ -54,12 +54,13 @@ flags = [
  '-I./modules/tracer/include',
  '-I./modules/identity/include',
  '-I./modules/compat-helpers/include',
- '-I./modules/generator/include',
  '-I./modules/crypto/include',
  '-I./modules/serialization/include',
  '-I./modules/crocket/include',
  '-I./modules/test-helpers/include',
- '-I./modules/types/include'
+ '-I./modules/types/include',
+ '-I./modules/trustchain/include',
+ '-I./modules/format/include',
 ]
 
 conan_flags = json.loads(open("conan_ycm_flags.json", "r").read())

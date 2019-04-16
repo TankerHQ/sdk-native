@@ -5,6 +5,8 @@
 #include <tuple>
 #include <vector>
 
+using Tanker::Trustchain::UserId;
+
 namespace Tanker
 {
 namespace Identity

@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <vector>
 
+using Tanker::Trustchain::Actions::Nature;
+
 namespace Tanker
 {
 std::uint8_t* to_serialized(std::uint8_t* it, Action const& dr)

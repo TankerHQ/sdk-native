@@ -10,9 +10,10 @@
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
-#include <Tanker/Types/UserId.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -64,7 +65,7 @@ TEST_CASE("it should deserialize a DeviceCreation v1")
   DeviceCreation1 expected{};
   expected.ephemeralPublicSignatureKey =
       make<Crypto::PublicSignatureKey>("eph pub key");
-  expected.userId = make<UserId>("user id");
+  expected.userId = make<Trustchain::UserId>("user id");
   expected.delegationSignature = make<Crypto::Signature>("delegation sig");
   expected.publicSignatureKey =
       make<Crypto::PublicSignatureKey>("public signature key");
@@ -114,7 +115,7 @@ TEST_CASE("it should deserialize a DeviceCreation v2 into a DeviceCreation v1")
   DeviceCreation1 expected{};
   expected.ephemeralPublicSignatureKey =
       make<Crypto::PublicSignatureKey>("eph pub key");
-  expected.userId = make<UserId>("user id");
+  expected.userId = make<Trustchain::UserId>("user id");
   expected.delegationSignature = make<Crypto::Signature>("delegation sig");
   expected.publicSignatureKey =
       make<Crypto::PublicSignatureKey>("public signature key");
@@ -174,7 +175,7 @@ TEST_CASE("it should serialize/deserialize a DeviceCreation v3")
   DeviceCreation3 expected{};
   expected.ephemeralPublicSignatureKey =
       make<Crypto::PublicSignatureKey>("eph pub key");
-  expected.userId = make<UserId>("user id");
+  expected.userId = make<Trustchain::UserId>("user id");
   expected.delegationSignature = make<Crypto::Signature>("delegation sig");
   expected.publicSignatureKey =
       make<Crypto::PublicSignatureKey>("public signature key");
@@ -277,7 +278,7 @@ TEST_CASE("it should serialize/deserialize a KeyPublishToUserGroup")
 TEST_CASE("it should serialize/deserialize a Block")
 {
   Block before;
-  before.trustchainId = make<TrustchainId>("the trustchain ID !");
+  before.trustchainId = make<Trustchain::TrustchainId>("the trustchain ID !");
   before.index = 12345;
   before.author = make<Crypto::Hash>("block author");
   before.payload = std::vector<uint8_t>{10, 11, 12, 88, 191, 16};

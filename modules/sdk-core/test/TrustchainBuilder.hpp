@@ -10,12 +10,13 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/SUserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 
 #include <optional.hpp>
 
@@ -44,7 +45,7 @@ public:
   struct User
   {
     Tanker::SUserId suserId;
-    Tanker::UserId userId;
+    Tanker::Trustchain::UserId userId;
     std::vector<Device> devices;
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;
@@ -136,7 +137,7 @@ public:
   std::vector<Group> groups() const;
   std::vector<User> const& users() const;
 
-  Tanker::TrustchainId const& trustchainId() const;
+  Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
 
 private:
@@ -149,7 +150,7 @@ private:
   };
 
   Tanker::Crypto::SignatureKeyPair _trustchainKeyPair;
-  Tanker::TrustchainId _trustchainId;
+  Tanker::Trustchain::TrustchainId _trustchainId;
 
   std::vector<User> _users;
   std::set<Group, GroupComparator> _groups;

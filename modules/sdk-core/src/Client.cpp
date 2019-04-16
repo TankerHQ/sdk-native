@@ -7,8 +7,9 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
@@ -24,6 +25,8 @@
 #include <cstdint>
 #include <iterator>
 #include <utility>
+
+using Tanker::Trustchain::UserId;
 
 TLOG_CATEGORY(Client);
 
@@ -84,7 +87,7 @@ tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
 }
 
 tc::cotask<UserStatusResult> Client::userStatus(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     UserId const& userId,
     Crypto::PublicSignatureKey const& publicSignatureKey)
 {
@@ -134,7 +137,7 @@ tc::cotask<Unlock::Methods> Client::authenticateDevice(
 }
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
-    TrustchainId const& trustchainId, DeviceId const& deviceId)
+    Trustchain::TrustchainId const& trustchainId, DeviceId const& deviceId)
 {
   auto const request = nlohmann::json{
       {"trustchain_id", trustchainId},
@@ -151,7 +154,7 @@ tc::cotask<EncryptedUserKey> Client::getLastUserKey(
 }
 
 tc::cotask<void> Client::subscribeToCreation(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& publicKey,
     Crypto::Signature const& signedPublicKey)
 {

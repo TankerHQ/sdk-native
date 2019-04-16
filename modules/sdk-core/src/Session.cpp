@@ -24,14 +24,14 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/ResourceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
@@ -57,6 +57,8 @@
 #include <iterator>
 #include <stdexcept>
 #include <utility>
+
+using Tanker::Trustchain::UserId;
 
 TLOG_CATEGORY(Session);
 
@@ -236,7 +238,7 @@ UserId const& Session::userId() const
   return this->_userId;
 }
 
-TrustchainId const& Session::trustchainId() const
+Trustchain::TrustchainId const& Session::trustchainId() const
 {
   return this->_trustchainId;
 }

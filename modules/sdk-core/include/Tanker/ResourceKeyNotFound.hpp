@@ -4,7 +4,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 namespace Tanker
 {

@@ -1,9 +1,10 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -11,6 +12,8 @@
 #include <exception>
 
 TLOG_CATEGORY(contact_user_keys);
+
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

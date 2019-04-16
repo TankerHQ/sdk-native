@@ -4,6 +4,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserAccessor.hpp>
 
@@ -22,7 +23,8 @@ namespace Manager
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
 tc::cotask<std::vector<Crypto::PublicEncryptionKey>> getMemberKeys(
-    UserAccessor& userAccessor, std::vector<UserId> const& memberUserIds);
+    UserAccessor& userAccessor,
+    std::vector<Trustchain::UserId> const& memberUserIds);
 
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
     std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
@@ -33,19 +35,20 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
 tc::cotask<SGroupId> create(UserAccessor& userAccessor,
                             BlockGenerator const& blockGenerator,
                             Client& client,
-                            std::vector<UserId> const& members);
+                            std::vector<Trustchain::UserId> const& members);
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
     std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
     BlockGenerator const& blockGenerator,
     Group const& group);
 
-tc::cotask<void> updateMembers(UserAccessor& userAccessor,
-                               BlockGenerator const& blockGenerator,
-                               Client& client,
-                               GroupStore const& groupStore,
-                               GroupId const& groupId,
-                               std::vector<UserId> const& usersToAdd);
+tc::cotask<void> updateMembers(
+    UserAccessor& userAccessor,
+    BlockGenerator const& blockGenerator,
+    Client& client,
+    GroupStore const& groupStore,
+    GroupId const& groupId,
+    std::vector<Trustchain::UserId> const& usersToAdd);
 }
 }
 }

@@ -7,9 +7,9 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -37,7 +37,7 @@ auto const someUnlockKey = UnlockKey{
 
 namespace
 {
-void checkUnlockMessage(TrustchainId const& tid,
+void checkUnlockMessage(Trustchain::TrustchainId const& tid,
                         Email const& email,
                         Password const& password,
                         Crypto::PublicSignatureKey const& key,

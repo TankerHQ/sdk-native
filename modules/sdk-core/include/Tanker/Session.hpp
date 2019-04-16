@@ -8,8 +8,10 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -17,9 +19,7 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -54,8 +54,8 @@ public:
   struct Config
   {
     DataStore::DatabasePtr db;
-    TrustchainId trustchainId;
-    UserId userId;
+    Trustchain::TrustchainId trustchainId;
+    Trustchain::UserId userId;
     Crypto::SymmetricKey userSecret;
     std::unique_ptr<DeviceKeyStore> deviceKeyStore;
     std::unique_ptr<Client> client;
@@ -65,8 +65,8 @@ public:
 
   tc::cotask<void> startConnection();
 
-  UserId const& userId() const;
-  TrustchainId const& trustchainId() const;
+  Trustchain::UserId const& userId() const;
+  Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,
@@ -119,7 +119,7 @@ public:
 
 private:
   tc::cotask<void> share(std::vector<Crypto::Mac> const& resourceId,
-                         std::vector<UserId> const& userIds,
+                         std::vector<Trustchain::UserId> const& userIds,
                          std::vector<GroupId> const& groupIds);
 
   tc::cotask<void> setDeviceId(DeviceId const& deviceId);
@@ -132,13 +132,13 @@ private:
   void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
 
 private:
-  TrustchainId _trustchainId;
-  UserId _userId;
+  Trustchain::TrustchainId _trustchainId;
+  Trustchain::UserId _userId;
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
   std::unique_ptr<Client> _client;
-  Trustchain _trustchain;
+  TrustchainStore _trustchain;
   UserKeyStore _userKeyStore;
   ContactStore _contactStore;
   GroupStore _groupStore;

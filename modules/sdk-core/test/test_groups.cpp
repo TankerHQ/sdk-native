@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserNotFound.hpp>
@@ -90,12 +91,13 @@ TEST_CASE("Can create a group with two users")
 
 TEST_CASE("throws when getting keys of an unknown member")
 {
-  auto const unknownUid = make<UserId>("unknown");
+  auto const unknownUid = make<Trustchain::UserId>("unknown");
 
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{unknownUid})))
+  REQUIRE_CALL(
+      userAccessor.get_mock_impl(),
+      pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{unknownUid})))
       .LR_RETURN((UserAccessor::PullResult{{}, {unknownUid}}));
 
   REQUIRE_THROWS_AS(

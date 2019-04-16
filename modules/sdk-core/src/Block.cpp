@@ -1,10 +1,10 @@
 #include <Tanker/Block.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <gsl-lite.hpp>
@@ -17,6 +17,7 @@
 #include <string>
 #include <tuple>
 
+using Tanker::Trustchain::Actions::Nature;
 using namespace std::string_literals;
 
 using json = nlohmann::json;
@@ -75,7 +76,7 @@ void from_serialized(Serialization::SerializedSource& ss, Block& b)
     throw std::runtime_error("unsupported block version: " +
                              std::to_string(version));
   b.index = ss.read_varint();
-  b.trustchainId = Serialization::deserialize<TrustchainId>(ss);
+  b.trustchainId = Serialization::deserialize<Trustchain::TrustchainId>(ss);
   b.nature = static_cast<Nature>(ss.read_varint());
 
   auto const payloadSize = ss.read_varint();

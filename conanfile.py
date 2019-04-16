@@ -122,7 +122,17 @@ class TankerConan(ConanFile):
             cmake.install()
 
     def package_info(self):
-        libs = ["ctanker", "tankercore_test", "tankertesthelpers", "tankercore", "tankeridentity", "tankercrypto", "tankerserialization", "tankerformat"]
+        libs = [
+            "ctanker",
+            "tankercore_test",
+            "tankertesthelpers",
+            "tankercore",
+            "tankertrustchain",
+            "tankeridentity",
+            "tankercrypto",
+            "tankerserialization",
+            "tankerformat",
+        ]
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]

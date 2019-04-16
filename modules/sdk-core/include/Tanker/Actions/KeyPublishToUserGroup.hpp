@@ -1,9 +1,11 @@
 #pragma once
 
+#include <Tanker/Crypto/Mac.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -20,7 +22,7 @@ struct KeyPublishToUserGroup
   Crypto::Mac resourceId;
   Crypto::SealedSymmetricKey key;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
 };
 

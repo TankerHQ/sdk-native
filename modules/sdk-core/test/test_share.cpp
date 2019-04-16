@@ -4,6 +4,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -111,7 +112,8 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
   REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{newUser.userId})))
+               pull(trompeloeil::eq(
+                   gsl::span<Trustchain::UserId const>{newUser.userId})))
       .LR_RETURN((UserAccessor::PullResult{{newUser.asTankerUser()}, {}}));
 
   REQUIRE_CALL(groupAccessor.get_mock_impl(),
@@ -141,7 +143,7 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
   REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{})))
+               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
 
   REQUIRE_CALL(groupAccessor.get_mock_impl(),
@@ -176,7 +178,8 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
   REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{newUser.userId})))
+               pull(trompeloeil::eq(
+                   gsl::span<Trustchain::UserId const>{newUser.userId})))
       .LR_RETURN((UserAccessor::PullResult{{}, {newUser.userId}}));
 
   REQUIRE_CALL(groupAccessor.get_mock_impl(),
@@ -202,7 +205,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
   REQUIRE_CALL(userAccessor.get_mock_impl(),
-               pull(trompeloeil::eq(gsl::span<UserId const>{})))
+               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
 
   REQUIRE_CALL(groupAccessor.get_mock_impl(),

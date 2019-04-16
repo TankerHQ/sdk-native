@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -21,7 +21,7 @@ struct KeyPublishToUser
   Crypto::Mac mac;
   Crypto::SealedSymmetricKey key;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
 };
 

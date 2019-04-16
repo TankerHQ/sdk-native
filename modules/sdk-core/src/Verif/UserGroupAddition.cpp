@@ -1,12 +1,15 @@
 #include <Tanker/Verif/UserGroupAddition.hpp>
 
 #include <Tanker/Actions/UserGroupAddition.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {

@@ -2,11 +2,13 @@
 
 #include <Tanker/AConnection.hpp>
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
 #include <boost/signals2/signal.hpp>
@@ -60,8 +62,8 @@ public:
   tc::cotask<void> pushKeys(gsl::span<std::vector<uint8_t> const> block);
 
   tc::cotask<UserStatusResult> userStatus(
-      TrustchainId const& trustchainId,
-      UserId const& userId,
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey);
 
   tc::cotask<void> createUnlockKey(Unlock::Message const& request);
@@ -70,16 +72,16 @@ public:
 
   tc::cotask<std::string> requestAuthChallenge();
   tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);
-  tc::cotask<EncryptedUserKey> getLastUserKey(TrustchainId const& trustchainId,
-                                              DeviceId const& deviceId);
+  tc::cotask<EncryptedUserKey> getLastUserKey(
+      Trustchain::TrustchainId const& trustchainId, DeviceId const& deviceId);
   tc::cotask<void> subscribeToCreation(
-      TrustchainId const& trustchainId,
+      Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& publicKey,
       Crypto::Signature const& signedPublicKey);
 
   tc::cotask<std::vector<std::string>> getBlocks(
       int index,
-      std::vector<UserId> const& extra_users,
+      std::vector<Trustchain::UserId> const& extra_users,
       std::vector<GroupId> const& extra_groups);
 
   std::string connectionId() const;

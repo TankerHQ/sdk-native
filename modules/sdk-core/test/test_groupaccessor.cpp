@@ -2,6 +2,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 
 #include <Helpers/Await.hpp>
@@ -26,7 +27,7 @@ public:
   }
 
   MAKE_MOCK2(scheduleCatchUp,
-             tc::shared_future<void>(std::vector<UserId>,
+             tc::shared_future<void>(std::vector<Trustchain::UserId>,
                                      std::vector<GroupId>));
 };
 

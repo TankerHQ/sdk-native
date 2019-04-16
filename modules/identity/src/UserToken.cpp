@@ -6,7 +6,8 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
@@ -30,7 +31,8 @@ std::string generateUserToken(std::string const& trustchainIdString,
     throw std::invalid_argument("Empty trustchainPrivateKey");
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdString);
+      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+          trustchainIdString);
   return cppcodec::base64_rfc4648::encode(
       nlohmann::json(
           generateUserToken(

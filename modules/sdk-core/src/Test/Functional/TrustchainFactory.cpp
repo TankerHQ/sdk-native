@@ -2,7 +2,7 @@
 
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Init.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Helpers/Config.hpp>
 
@@ -33,7 +33,7 @@ tc::cotask<TrustchainFactory::Ptr> TrustchainFactory::create()
 }
 
 tc::cotask<void> TrustchainFactory::deleteTrustchain(
-    Tanker::TrustchainId const& id)
+    Tanker::Trustchain::TrustchainId const& id)
 {
   TC_AWAIT(_admin->deleteTrustchain(id));
 }
@@ -42,7 +42,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
     nonstd::optional<std::string> trustchainName, bool isTest)
 {
   auto kp = Tanker::Crypto::makeSignatureKeyPair();
-  auto trustchainDefault = Tanker::TrustchainId{};
+  auto trustchainDefault = Tanker::Trustchain::TrustchainId{};
   Crypto::randomFill(trustchainDefault);
   auto trustchainId = TC_AWAIT(_admin->createTrustchain(
       trustchainName.value_or(
@@ -61,7 +61,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
 }
 
 tc::cotask<VerificationCode> TrustchainFactory::getVerificationCode(
-    TrustchainId id, Email const& email)
+    Tanker::Trustchain::TrustchainId id, Email const& email)
 {
   TC_RETURN(TC_AWAIT(this->_admin->getVerificationCode(id, email)));
 }

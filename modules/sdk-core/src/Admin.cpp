@@ -7,9 +7,9 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
@@ -23,6 +23,8 @@
 
 #include <algorithm>
 #include <iterator>
+
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Admin);
 
@@ -60,7 +62,7 @@ tc::cotask<void> Admin::authenticateCustomer(std::string const& idToken)
   TC_AWAIT(emit("authenticate customer", message));
 }
 
-tc::cotask<TrustchainId> Admin::createTrustchain(
+tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
     std::string const& name,
     Crypto::SignatureKeyPair const& keyPair,
     bool isTest)
@@ -70,7 +72,7 @@ tc::cotask<TrustchainId> Admin::createTrustchain(
   block.nature = Nature::TrustchainCreation;
   block.payload =
       Serialization::serialize(TrustchainCreation{keyPair.publicKey});
-  block.trustchainId = TrustchainId(block.hash());
+  block.trustchainId = Trustchain::TrustchainId(block.hash());
 
   auto const message = nlohmann::json{
       {"is_test", isTest},
@@ -83,7 +85,8 @@ tc::cotask<TrustchainId> Admin::createTrustchain(
   TC_RETURN(block.trustchainId);
 }
 
-tc::cotask<void> Admin::deleteTrustchain(TrustchainId const& trustchainId)
+tc::cotask<void> Admin::deleteTrustchain(
+    Trustchain::TrustchainId const& trustchainId)
 {
   auto const message = nlohmann::json{
       {"id", trustchainId},
@@ -110,7 +113,7 @@ tc::cotask<void> Admin::pushKeys(
 }
 
 tc::cotask<VerificationCode> Admin::getVerificationCode(
-    TrustchainId const& tcid, Email const& email)
+    Trustchain::TrustchainId const& tcid, Email const& email)
 {
   auto const msg = nlohmann::json(
       {{"email", email}, {"trustchain_id", tcid}});

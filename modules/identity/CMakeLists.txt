@@ -30,7 +30,7 @@ target_include_directories(tankeridentity
 
 install(DIRECTORY include DESTINATION .)
 
-target_link_libraries(tankeridentity tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite CONAN_PKG::cppcodec)
+target_link_libraries(tankeridentity tankertrustchain tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite CONAN_PKG::cppcodec)
 
 install(TARGETS tankeridentity
   EXPORT tankeridentity

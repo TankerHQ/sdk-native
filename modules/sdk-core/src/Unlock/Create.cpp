@@ -7,13 +7,13 @@
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
-#include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Unlock/Registration.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
@@ -23,6 +23,8 @@
 
 namespace Tanker
 {
+using Trustchain::UserId;
+
 namespace Unlock
 {
 UnlockKey ghostDeviceToUnlockKey(GhostDevice const& ghostDevice)
@@ -65,7 +67,7 @@ catch (std::exception const& e)
 }
 
 std::vector<uint8_t> createValidatedDevice(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     UserId const& userId,
     GhostDevice const& ghostDevice,
     DeviceKeys const& deviceKeys,

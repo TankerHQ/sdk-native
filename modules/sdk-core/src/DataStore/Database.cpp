@@ -20,10 +20,10 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -44,6 +44,9 @@
 #include <vector>
 
 TLOG_CATEGORY(Database);
+
+using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {

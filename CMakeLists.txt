@@ -90,6 +90,7 @@ add_subdirectory(modules/serialization)
 add_subdirectory(modules/format)
 add_subdirectory(modules/types)
 add_subdirectory(modules/identity)
+add_subdirectory(modules/trustchain)
 add_subdirectory(modules/test-helpers)
 
 if(${BUILD_TANKER_TOOLS})

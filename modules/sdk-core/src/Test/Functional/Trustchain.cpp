@@ -30,7 +30,7 @@ void from_json(nlohmann::json const& j, TrustchainConfig& config)
 }
 
 Trustchain::Trustchain(std::string url,
-                       Tanker::TrustchainId id,
+                       Tanker::Trustchain::TrustchainId id,
                        Tanker::Crypto::SignatureKeyPair keypair)
   : url(std::move(url)), id(std::move(id)), keyPair(std::move(keypair))
 {
@@ -76,7 +76,7 @@ Trustchain::Ptr Trustchain::make(TrustchainConfig const& config)
 }
 
 Trustchain::Ptr Trustchain::make(std::string url,
-                                 Tanker::TrustchainId id,
+                                 Tanker::Trustchain::TrustchainId id,
                                  Tanker::Crypto::SignatureKeyPair keypair)
 {
   return std::make_unique<Trustchain>(

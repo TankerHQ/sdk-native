@@ -1,9 +1,12 @@
 #pragma once
 
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
-#include <Tanker/Types/UserId.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -20,8 +23,8 @@ namespace Unlock
 
 struct Request
 {
-  TrustchainId trustchainId;
-  UserId userId;
+  Trustchain::TrustchainId trustchainId;
+  Trustchain::UserId userId;
   enum Type
   {
     Password,
@@ -31,8 +34,8 @@ struct Request
   std::vector<uint8_t> value;
 
   Request() = default;
-  Request(TrustchainId const& trustchainId,
-          UserId const& userId,
+  Request(Trustchain::TrustchainId const& trustchainId,
+          Trustchain::UserId const& userId,
           DeviceLocker const& locker);
 };
 
@@ -55,13 +58,13 @@ void to_json(nlohmann::json&, FetchAnswer const& m);
 
 struct Message
 {
-  TrustchainId trustchainId;
+  Trustchain::TrustchainId trustchainId;
   DeviceId deviceId;
   Claims claims;
   Crypto::Signature signature;
 
   Message() = default;
-  Message(TrustchainId const& trustchainId,
+  Message(Trustchain::TrustchainId const& trustchainId,
           DeviceId const& deviceId,
           UpdateOptions const& lockOptions,
           Crypto::SymmetricKey const& key,

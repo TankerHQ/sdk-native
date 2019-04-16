@@ -10,15 +10,17 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 
 #include <stdexcept>
+
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {
 BlockGenerator::BlockGenerator(
-    TrustchainId const& trustchainId,
+    Trustchain::TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& privateSignatureKey,
     DeviceId const& deviceId)
   : _trustchainId(trustchainId),
@@ -27,7 +29,7 @@ BlockGenerator::BlockGenerator(
 {
 }
 
-TrustchainId const& BlockGenerator::trustchainId() const noexcept
+Trustchain::TrustchainId const& BlockGenerator::trustchainId() const noexcept
 {
   return _trustchainId;
 }

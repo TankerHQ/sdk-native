@@ -4,10 +4,12 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
+
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Database);
 
@@ -352,7 +354,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
               copyToVector(jsEntry["action"]["userKeyPair"]
                                   ["encryptedPrivateEncryptionKey"])}};
       dc.isGhostDevice = jsEntry["action"]["isGhostDevice"].as<bool>();
-      dc.userId = UserId(copyToVector(jsEntry["action"]["userId"]));
+      dc.userId = Trustchain::UserId(copyToVector(jsEntry["action"]["userId"]));
       entry.action = Action{DeviceCreation{dc}};
     }
     else
@@ -421,7 +423,7 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
 }
 
 tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
-    UserId const& userId)
+    Trustchain::UserId const& userId)
 {
   auto const entries = TC_AWAIT(
       jsPromiseToFuture(_db->getTrustchainDevicesOf(containerToJs(userId))));
@@ -446,7 +448,7 @@ tc::cotask<Entry> JsDatabase::getTrustchainDevice(DeviceId const& deviceId)
 }
 
 tc::cotask<void> JsDatabase::putContact(
-    UserId const& userId,
+    Trustchain::UserId const& userId,
     nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->putContact(
@@ -455,7 +457,7 @@ tc::cotask<void> JsDatabase::putContact(
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-JsDatabase::findContactUserKey(UserId const& userId)
+JsDatabase::findContactUserKey(Trustchain::UserId const& userId)
 {
   auto const key = TC_AWAIT(
       jsPromiseToFuture(_db->findContactUserKey(containerToJs(userId))));
@@ -465,7 +467,7 @@ JsDatabase::findContactUserKey(UserId const& userId)
   TC_RETURN(Crypto::PublicEncryptionKey(copyToVector(key)));
 }
 
-tc::cotask<nonstd::optional<UserId>>
+tc::cotask<nonstd::optional<Trustchain::UserId>>
 JsDatabase::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
@@ -475,11 +477,12 @@ JsDatabase::findContactUserIdByPublicEncryptionKey(
   if (userId.isNull() || userId.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(UserId(copyToVector(userId)));
+  TC_RETURN(Trustchain::UserId(copyToVector(userId)));
 }
 
 tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
-    UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
+    Trustchain::UserId const& userId,
+    Crypto::PublicEncryptionKey const& userPublicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->setContactPublicEncryptionKey(
       containerToJs(userId), containerToJs(userPublicKey))));
@@ -537,7 +540,7 @@ tc::cotask<void> JsDatabase::setDeviceId(DeviceId const& deviceId)
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceId(containerToJs(deviceId))));
 }
 
-tc::cotask<void> JsDatabase::putDevice(UserId const& userId,
+tc::cotask<void> JsDatabase::putDevice(Trustchain::UserId const& userId,
                                        Device const& device)
 {
   auto jsdev = emscripten::val::object();
@@ -582,7 +585,7 @@ tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(DeviceId const& id)
   TC_RETURN(fromJsDevice(jsdev));
 }
 
-tc::cotask<nonstd::optional<UserId>> JsDatabase::findDeviceUserId(
+tc::cotask<nonstd::optional<Trustchain::UserId>> JsDatabase::findDeviceUserId(
     DeviceId const& id)
 {
   auto const jsdev =
@@ -590,7 +593,7 @@ tc::cotask<nonstd::optional<UserId>> JsDatabase::findDeviceUserId(
   if (jsdev.isNull() || jsdev.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(UserId{copyToVector(jsdev)});
+  TC_RETURN(Trustchain::UserId{copyToVector(jsdev)});
 }
 
 tc::cotask<void> JsDatabase::updateDeviceRevokedAt(DeviceId const& id,
@@ -601,7 +604,8 @@ tc::cotask<void> JsDatabase::updateDeviceRevokedAt(DeviceId const& id,
       emscripten::val(static_cast<double>(revokedAtBlkIndex)))));
 }
 
-tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
+tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(
+    Trustchain::UserId const& id)
 {
   auto const jsdevs =
       TC_AWAIT(jsPromiseToFuture(_db->getDevicesOf(containerToJs(id))));

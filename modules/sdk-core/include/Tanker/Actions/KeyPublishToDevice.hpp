@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -21,7 +21,7 @@ struct KeyPublishToDevice
   Crypto::Mac mac;
   Crypto::EncryptedSymmetricKey key;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
 };
 

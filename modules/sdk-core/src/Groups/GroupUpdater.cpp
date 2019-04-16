@@ -1,8 +1,9 @@
 #include <Tanker/Groups/GroupUpdater.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 
 #include <Tanker/Log.hpp>
 

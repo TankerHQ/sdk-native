@@ -10,7 +10,6 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>

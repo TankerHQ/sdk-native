@@ -3,9 +3,9 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -47,7 +47,7 @@ std::vector<uint8_t> makeKeyPublishToGroup(
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
-    std::vector<UserId> const& userIds,
+    std::vector<Trustchain::UserId> const& userIds,
     std::vector<GroupId> const& groupIds);
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
@@ -63,7 +63,7 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     ResourceKeys const& resourceKeys,
-    std::vector<UserId> const& userIds,
+    std::vector<Trustchain::UserId> const& userIds,
     std::vector<GroupId> const& groupIds);
 
 tc::cotask<void> share(
@@ -74,7 +74,7 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     std::vector<Crypto::Mac> const& resourceIds,
-    std::vector<UserId> const& recipientUserIds,
+    std::vector<Trustchain::UserId> const& recipientUserIds,
     std::vector<GroupId> const& groupIds);
 }
 }

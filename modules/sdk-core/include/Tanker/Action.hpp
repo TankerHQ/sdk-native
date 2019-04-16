@@ -8,7 +8,7 @@
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -45,7 +45,7 @@ public:
 
   variant_type const& variant() const;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
 
   std::vector<Index> makeIndexes() const;
 
@@ -61,7 +61,8 @@ std::size_t serialized_size(Action const&);
 
 // we do not use from_serialized here, because the nature is not serialized in
 // the payload.
-Action deserializeAction(Nature nature, gsl::span<uint8_t const> data);
+Action deserializeAction(Trustchain::Actions::Nature nature,
+                         gsl::span<uint8_t const> data);
 
 void to_json(nlohmann::json& j, Action const& dc);
 }

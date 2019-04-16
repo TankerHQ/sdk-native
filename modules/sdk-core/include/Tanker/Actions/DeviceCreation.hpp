@@ -1,11 +1,13 @@
 #pragma once
 
 #include <Tanker/Actions/UserKeyPair.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -35,10 +37,11 @@ constexpr std::size_t sizeOfCommonDeviceCreationFields(T const& dc)
 
 struct DeviceCreation1
 {
-  static constexpr Nature nature = Nature::DeviceCreation;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceCreation;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
-  UserId userId;
+  Trustchain::UserId userId;
   Crypto::Signature delegationSignature;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
@@ -46,10 +49,11 @@ struct DeviceCreation1
 
 struct DeviceCreation3
 {
-  static constexpr Nature nature = Nature::DeviceCreation3;
+  static constexpr auto const nature =
+      Trustchain::Actions::Nature::DeviceCreation3;
 
   Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
-  UserId userId;
+  Trustchain::UserId userId;
   Crypto::Signature delegationSignature;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
@@ -88,9 +92,9 @@ public:
 
   variant_type const& variant() const;
 
-  Nature nature() const;
+  Trustchain::Actions::Nature nature() const;
   Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
-  UserId const& userId() const;
+  Trustchain::UserId const& userId() const;
   Crypto::Signature const& delegationSignature() const;
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;

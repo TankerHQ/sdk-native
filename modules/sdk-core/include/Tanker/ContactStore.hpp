@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
 #include <optional.hpp>
@@ -28,22 +28,25 @@ public:
   ~ContactStore() = default;
 
   tc::cotask<void> putUser(User const& user);
-  tc::cotask<void> putUserKey(UserId const& id,
+  tc::cotask<void> putUserKey(Trustchain::UserId const& id,
                               Crypto::PublicEncryptionKey const& userKey);
-  tc::cotask<void> putUserDevice(UserId const& id, Device const& device);
+  tc::cotask<void> putUserDevice(Trustchain::UserId const& id,
+                                 Device const& device);
 
-  tc::cotask<nonstd::optional<User>> findUser(UserId const& id) const;
+  tc::cotask<nonstd::optional<User>> findUser(
+      Trustchain::UserId const& id) const;
   tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) const;
-  tc::cotask<std::vector<Device>> findUserDevices(UserId const& id) const;
-  tc::cotask<nonstd::optional<UserId>> findUserIdByUserPublicKey(
+  tc::cotask<std::vector<Device>> findUserDevices(
+      Trustchain::UserId const& id) const;
+  tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByUserPublicKey(
       Crypto::PublicEncryptionKey const& userKey) const;
-  tc::cotask<nonstd::optional<UserId>> findUserIdByDeviceId(
+  tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByDeviceId(
       DeviceId const& id) const;
 
   tc::cotask<void> revokeDevice(DeviceId const& id,
                                 uint64_t revokedAtBlkIndex) const;
   tc::cotask<void> rotateContactPublicEncryptionKey(
-      UserId const& userId,
+      Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) const;
 
 private:

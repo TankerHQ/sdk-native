@@ -7,8 +7,8 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Nature.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
@@ -22,6 +22,9 @@
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <cassert>
+
+using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {
@@ -39,7 +42,7 @@ bool isDeviceCreation(Nature nature)
 }
 }
 
-TrustchainVerifier::TrustchainVerifier(TrustchainId const& id,
+TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
                                        DataStore::ADatabase* db,
                                        ContactStore* contacts,
                                        GroupStore* groups)

@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain.hpp>
+#include <Tanker/TrustchainStore.hpp>
 
 #include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -7,7 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
 
@@ -15,11 +15,11 @@ TLOG_CATEGORY(Trustchain);
 
 namespace Tanker
 {
-Trustchain::Trustchain(DataStore::ADatabase* dbConn) : _db(dbConn)
+TrustchainStore::TrustchainStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 
-tc::cotask<void> Trustchain::addEntry(Entry const& entry)
+tc::cotask<void> TrustchainStore::addEntry(Entry const& entry)
 {
   TDEBUG("Adding block {}", entry.hash);
 
@@ -29,13 +29,13 @@ tc::cotask<void> Trustchain::addEntry(Entry const& entry)
     _lastIndex = entry.index;
 }
 
-tc::cotask<nonstd::optional<Entry>> Trustchain::findKeyPublish(
+tc::cotask<nonstd::optional<Entry>> TrustchainStore::findKeyPublish(
     Crypto::Mac const& resourceId) const
 {
   TC_RETURN(TC_AWAIT(_db->findTrustchainKeyPublish(resourceId)));
 }
 
-tc::cotask<uint64_t> Trustchain::getLastIndex()
+tc::cotask<uint64_t> TrustchainStore::getLastIndex()
 {
   if (!_lastIndex)
     _lastIndex = TC_AWAIT(_db->getTrustchainLastIndex());

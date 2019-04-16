@@ -6,6 +6,7 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
@@ -15,9 +16,9 @@
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Nature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -32,11 +33,11 @@ struct Delegation;
 class BlockGenerator
 {
 public:
-  BlockGenerator(TrustchainId const& trustchainId,
+  BlockGenerator(Trustchain::TrustchainId const& trustchainId,
                  Crypto::PrivateSignatureKey const& privateSignatureKey,
                  DeviceId const& deviceId);
 
-  TrustchainId const& trustchainId() const noexcept;
+  Trustchain::TrustchainId const& trustchainId() const noexcept;
   Crypto::PrivateSignatureKey const& signatureKey() const noexcept;
 
   void setDeviceId(DeviceId const& deviceId);
@@ -112,12 +113,12 @@ public:
           encryptedGroupPrivateEncryptionKeysForUsers) const;
 
 private:
-  TrustchainId _trustchainId;
+  Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;
   DeviceId _deviceId;
 
   template <typename T, typename U>
-  Block makeBlock(Nature nature,
+  Block makeBlock(Trustchain::Actions::Nature nature,
                   T const& action,
                   Crypto::BasicHash<U> const& parentHash,
                   Crypto::PrivateSignatureKey const& privateSignatureKey) const;

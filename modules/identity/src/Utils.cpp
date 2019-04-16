@@ -2,6 +2,8 @@
 
 #include <nlohmann/json.hpp>
 
+using Tanker::Trustchain::UserId;
+
 namespace Tanker
 {
 namespace Identity

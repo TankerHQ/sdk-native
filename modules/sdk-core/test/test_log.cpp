@@ -5,14 +5,16 @@
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Nature.hpp>
 #include <Tanker/Status.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <Helpers/Buffers.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
 #include <iostream>
+
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(test);
 
@@ -77,8 +79,7 @@ TEST_CASE("print a formated log")
 
   SUBCASE("Print a Nature")
   {
-    CHECK_EQ(fmt::format("this is is a Nature {:e}",
-                         Tanker::Nature::KeyPublishToUser),
+    CHECK_EQ(fmt::format("this is is a Nature {:e}", Nature::KeyPublishToUser),
              R"!(this is is a Nature 8 KeyPublishToUser)!");
   }
 

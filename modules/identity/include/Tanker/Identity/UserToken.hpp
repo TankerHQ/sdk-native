@@ -2,7 +2,6 @@
 
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 

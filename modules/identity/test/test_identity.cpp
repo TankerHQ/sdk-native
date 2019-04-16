@@ -4,7 +4,8 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
-#include <Tanker/Types/UserId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
@@ -18,6 +19,7 @@
 #include <string>
 #include <vector>
 
+using Tanker::Trustchain::UserId;
 using namespace std::string_literals;
 namespace Tanker
 {
@@ -59,7 +61,7 @@ auto const trustchainPrivateKeyString =
     "CZC/e4ZI7+MQ=="s;
 
 auto const trustchainId =
-    cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdString);
+    cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(trustchainIdString);
 auto const trustchainPrivateKey =
     cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);

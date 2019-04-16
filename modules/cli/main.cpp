@@ -12,6 +12,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
@@ -20,6 +21,8 @@
 #include <docopt/docopt.h>
 
 #include <tconcurrent/coroutine.hpp>
+
+using Tanker::Trustchain::Actions::Nature;
 
 using namespace Tanker;
 
@@ -130,7 +133,10 @@ AsyncCorePtr signUp(MainArgs const& args)
 
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
-      {sdkType, cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId), sdkVersion},
+      {sdkType,
+       cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
+           trustchainId),
+       sdkVersion},
       ".")};
 
   AuthenticationMethods authenticationMethods;
@@ -152,7 +158,10 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
-      {sdkType, cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainId), sdkVersion},
+      {sdkType,
+       cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
+           trustchainId),
+       sdkVersion},
       ".")};
 
   SignInOptions signInOptions;
@@ -239,7 +248,8 @@ int main(int argc, char* argv[])
   else if (args.at("encrypt").asBool())
   {
     auto const trustchainId =
-        cppcodec::base64_rfc4648::decode<TrustchainId>(args.at("<trustchainid>").asString());
+        cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
+            args.at("<trustchainid>").asString());
 
     auto const core = signIn(args);
 

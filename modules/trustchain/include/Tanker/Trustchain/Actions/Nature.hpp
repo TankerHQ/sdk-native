@@ -4,6 +4,10 @@
 
 namespace Tanker
 {
+namespace Trustchain
+{
+namespace Actions
+{
 enum class Nature
 {
   TrustchainCreation = 1,
@@ -21,5 +25,7 @@ enum class Nature
   Last = UserGroupAddition,
 };
 
-std::string to_string(Nature n);
+std::string to_string(Nature);
+}
+}
 }
