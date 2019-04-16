@@ -4,8 +4,9 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/LogHandler.hpp>
 
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+
 #include <Helpers/Await.hpp>
-#include <Tanker/Test/Functional/Trustchain.hpp>
 
 #include <fmt/core.h>
 
@@ -61,6 +62,12 @@ tc::cotask<Tanker::SGroupId> createGroup(
   TC_AWAIT(laptop->signOut());
   TC_RETURN(sgroupId);
 }
+
+Tanker::Test::Trustchain& getTrustchain()
+{
+  static auto& trustchain = TrustchainFixture{}.trustchain;
+  return trustchain;
+}
 }
 
 /// What: sign up
@@ -68,7 +75,7 @@ tc::cotask<Tanker::SGroupId> createGroup(
 /// PostCond: Session is still open
 static void signup(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
     {
@@ -92,7 +99,7 @@ BENCHMARK(signup)->Unit(benchmark::kMillisecond)->UseRealTime();
 /// PostCond: Session is closed, but not destroyed
 static void signup_signout(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
     {
@@ -117,7 +124,7 @@ BENCHMARK(signup_signout)->Unit(benchmark::kMillisecond)->UseRealTime();
 /// PostCond: String is encrpted, session is still open
 static void signin(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   auto alice = tr.makeUser(UserType::New);
   auto device = alice.makeDevice();
   auto core = device.createCore(SessionType::New);
@@ -142,7 +149,7 @@ BENCHMARK(signin)->Unit(benchmark::kMillisecond)->UseRealTime();
 /// PostCond: Everything is closed
 static void multi(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   auto alice = tr.makeUser(UserType::New);
   auto laptop = alice.makeDevice();
   auto core = laptop.createCore(SessionType::New);
@@ -170,7 +177,7 @@ BENCHMARK(multi)->Unit(benchmark::kMillisecond)->UseRealTime();
 /// PostCond: String is encrpted, session is still open
 static void encrypt(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   auto alice = tr.makeUser(UserType::New);
   auto laptop = alice.makeDevice();
   auto core = laptop.createCore(SessionType::New);
@@ -195,14 +202,14 @@ BENCHMARK(encrypt)
 /// PostCond: group is created
 static void create_group(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   auto alice = tr.makeUser(UserType::New);
   auto laptopDev = alice.makeDevice();
   auto laptop = laptopDev.createCore(SessionType::New);
   tc::async_resumable([&]() -> tc::cotask<void> {
     TC_AWAIT(laptop->signUp(laptopDev.identity()));
     auto users = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     // First hit to pull and verify the users
     TC_AWAIT(laptop->createGroup(users));
     for (auto _ : state)
@@ -222,10 +229,10 @@ BENCHMARK(create_group)
 /// PostCond: group is created
 static void pull_and_create_group(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto users = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     for (auto _ : state)
     {
       state.PauseTiming();
@@ -254,10 +261,10 @@ BENCHMARK(pull_and_create_group)
 /// PostCond: resource is shared to the users
 static void share_to_unverified_users(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto publicIdentities = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     for (auto _ : state)
     {
@@ -287,10 +294,10 @@ BENCHMARK(share_to_unverified_users)
 /// PostCond: resource is shared to the users
 static void share_to_users(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto publicIdentities = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     auto alice = tr.makeUser(UserType::New);
     auto laptopDev = alice.makeDevice();
@@ -316,10 +323,10 @@ BENCHMARK(share_to_users)
 /// PostCond: resource is shared to the group
 static void share_to_group(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto users = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     auto sgroupId = TC_AWAIT(createGroup(tr, users));
 
@@ -345,10 +352,10 @@ BENCHMARK(share_to_group)
 /// PostCond: resource is shared to the users
 static void share_to_unverified_group(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto users = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     auto p = create_encrypted("a");
     auto sgroupId = TC_AWAIT(createGroup(tr, users));
 
@@ -380,12 +387,12 @@ BENCHMARK(share_to_unverified_group)
 /// PostCond: resource is shared to the users
 static void add_to_group(benchmark::State& state)
 {
-  auto& tr = Trustchain::getInstance();
+  auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto p = create_encrypted("a");
 
     auto users = userIdsToPublicIdentities(
-        tr.id(), TC_AWAIT(createUsers(tr, state.range(0))));
+        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
 
     auto alice = tr.makeUser(UserType::New);
     auto laptopDev = alice.makeDevice();

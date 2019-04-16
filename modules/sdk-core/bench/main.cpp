@@ -1,12 +1,13 @@
 #include <Tanker/Init.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/LogHandler.hpp>
+
+#include <tconcurrent/thread_pool.hpp>
 
 #include <benchmark/benchmark.h>
 
 #include <Helpers/Await.hpp>
-
-#include <Tanker/Test/Functional/Trustchain.hpp>
 
 #include <cstdio>
 #include <string>
@@ -20,12 +21,23 @@ int main(int argc, char** argv)
 {
   Tanker::init();
   Tanker::Log::setLogHandler(&log_handler);
-  AWAIT_VOID(Tanker::Test::Trustchain::getInstance().init());
-  benchmark::Initialize(&argc, argv);
+  // We can't run the main coroutine on the default executor because each
+  // benchmark is blocking and it would deadlock
+  tc::thread_pool tp;
+  tp.start(1);
+
+  tc::async_resumable("main_functional",
+                      tc::executor(tp),
+                      [&] {
+                        TC_AWAIT(TrustchainFixture::setUp());
+                        benchmark::Initialize(&argc, argv);
 #ifdef TANKER_ENABLE_TRACER
-  fmt::print("Waiting for input...");
-  std::getchar();
+                        fmt::print("Waiting for input...");
+                        std::getchar();
 #endif
-  benchmark::RunSpecifiedBenchmarks();
+                        benchmark::RunSpecifiedBenchmarks();
+                        TC_AWAIT(TrustchainFixture::tearDown());
+                      })
+      .get();
   return 0;
 }

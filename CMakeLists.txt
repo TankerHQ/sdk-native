@@ -91,7 +91,6 @@ add_subdirectory(modules/format)
 add_subdirectory(modules/types)
 add_subdirectory(modules/identity)
 add_subdirectory(modules/test-helpers)
-add_subdirectory(modules/compat-helpers)
 
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)

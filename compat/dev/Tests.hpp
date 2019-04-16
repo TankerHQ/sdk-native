@@ -1,23 +1,27 @@
 #pragma once
-#include <Tanker/Compat/Command.hpp>
+
+#include "Command.hpp"
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Version.hpp>
 
+#include <Tanker/Test/Functional/TrustchainFactory.hpp>
+
 #include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <cppcodec/base64_rfc4648.hpp>
 
 using namespace std::string_literals;
 using CorePtr = std::unique_ptr<Tanker::AsyncCore>;
 
 using Tanker::Compat::Command;
-using Tanker::Compat::Trustchain;
-using Tanker::Compat::TrustchainFactory;
-using Tanker::Compat::User;
+using Tanker::Test::Trustchain;
+using Tanker::Test::TrustchainFactory;
+using Tanker::Test::User;
+
 namespace
 {
 CorePtr createCore(std::string const& url,
@@ -89,13 +93,13 @@ std::vector<uint8_t> encrypt(CorePtr& core,
 
 User upgradeToIdentity(Tanker::TrustchainId const& trustchainId, User user)
 {
-  if (user.user_token)
+  if (user.userToken)
   {
     user.identity = Tanker::Identity::upgradeUserToken(
         cppcodec::base64_rfc4648::encode(trustchainId),
         user.suserId,
-        user.user_token.value());
-    user.user_token.reset();
+        user.userToken.value());
+    user.userToken.reset();
   }
   return user;
 }
@@ -106,14 +110,13 @@ struct EncryptCompat : Command
 
   void base() override
   {
-    auto const alice = trustchain->createUser();
+    auto const alice = trustchain.makeUser();
 
-    auto aliceCore =
-        createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     aliceCore->signUp(alice.identity).get();
 
-    auto const bob = trustchain->createUser();
-    auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto const bob = trustchain.makeUser();
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
     bobCore->signUp(bob.identity).get();
     bobCore->signOut().get();
 
@@ -136,16 +139,15 @@ struct EncryptCompat : Command
   {
     EncryptState state = Tanker::loadJson(statePath);
 
-    auto alice = upgradeToIdentity(trustchain->id(), state.alice);
-    auto bob = upgradeToIdentity(trustchain->id(), state.bob);
+    auto alice = upgradeToIdentity(trustchain.id, state.alice);
+    auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
-    auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
     bobCore->signIn(bob.identity).get();
     decrypt(bobCore, state.encryptedData, state.clearData);
     bobCore->signOut().get();
 
-    auto aliceCore =
-        createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     aliceCore->signIn(alice.identity).get();
     decrypt(aliceCore, state.encryptedData, state.clearData);
     aliceCore->signOut().get();
@@ -158,13 +160,12 @@ struct GroupCompat : Command
 
   void base() override
   {
-    auto const alice = trustchain->createUser();
-    auto aliceCore =
-        createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto const alice = trustchain.makeUser();
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     aliceCore->signUp(alice.identity).get();
 
-    auto const bob = trustchain->createUser();
-    auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto const bob = trustchain.makeUser();
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
     bobCore->signUp(bob.identity).get();
     bobCore->signOut().get();
 
@@ -190,15 +191,14 @@ struct GroupCompat : Command
   {
     EncryptState state = Tanker::loadJson(statePath);
 
-    auto alice = upgradeToIdentity(trustchain->id(), state.alice);
-    auto bob = upgradeToIdentity(trustchain->id(), state.bob);
+    auto alice = upgradeToIdentity(trustchain.id, state.alice);
+    auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
-    auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
     bobCore->signIn(bob.identity).get();
     decrypt(bobCore, state.encryptedData, state.clearData);
 
-    auto aliceCore =
-        createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     aliceCore->signIn(alice.identity).get();
     decrypt(aliceCore, state.encryptedData, state.clearData);
 
@@ -215,14 +215,13 @@ struct UnlockCompat : Command
 
   void base() override
   {
-    auto const alice = trustchain->createUser();
-    auto aliceCore =
-        createCore(trustchain->url(), trustchain->id(), tankerPath);
+    auto const alice = trustchain.makeUser();
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     Tanker::AuthenticationMethods methods{Tanker::Password{"my password"}};
     aliceCore->signUp(alice.identity, methods).get();
     aliceCore->signOut().get();
     Tanker::saveJson(statePath,
-                     {{"trustchainId", trustchain->id()},
+                     {{"trustchainId", trustchain.id},
                       {"alice", alice},
                       {"password", "my password"}});
   }
@@ -231,13 +230,13 @@ struct UnlockCompat : Command
   {
     auto const json = Tanker::loadJson(statePath);
     auto const alice =
-        upgradeToIdentity(trustchain->id(), json.at("alice").get<User>());
+        upgradeToIdentity(trustchain.id, json.at("alice").get<User>());
     auto const password = json.at("password").get<Tanker::Password>();
 
     auto subDirForDevice = boost::filesystem::path(tankerPath) / "newDevice"s;
     boost::filesystem::create_directory(subDirForDevice);
-    auto aliceCore = createCore(
-        trustchain->url(), trustchain->id(), subDirForDevice.string());
+    auto aliceCore =
+        createCore(trustchain.url, trustchain.id, subDirForDevice.string());
     aliceCore->signIn(alice.identity, Tanker::SignInOptions{{}, {}, password})
         .get();
     fmt::print("is open!\n");

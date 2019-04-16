@@ -8,7 +8,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <doctest.h>
 
@@ -17,7 +17,6 @@
 #include <Helpers/UniquePath.hpp>
 
 #include "CheckDecrypt.hpp"
-#include "TrustchainFixture.hpp"
 
 #include <tconcurrent/async_wait.hpp>
 
@@ -89,7 +88,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->signOut());
   REQUIRE(!core->isOpen());
-  TC_AWAIT(core->signIn(alice.identity()));
+  TC_AWAIT(core->signIn(alice.identity));
   REQUIRE(core->isOpen());
 }
 
@@ -102,7 +101,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Test::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->signIn(alice.identity())));
+  REQUIRE_THROWS(TC_AWAIT(core2->signIn(alice.identity)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
@@ -126,7 +125,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
     auto session = TC_AWAIT(device1.open(Test::SessionType::New));
   }
   auto session = device1.createCore(Test::SessionType::New);
-  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity())),
+  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity)),
                     Error::IdentityAlreadyRegistered);
 }
 
@@ -138,7 +137,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto device2 = alice.makeDevice(Test::DeviceType::New);
   auto session = TC_AWAIT(device1.open());
   auto tanker2 = device2.createCore(Test::SessionType::New);
-  REQUIRE_EQ(TC_AWAIT(tanker2->signIn(alice.identity())),
+  REQUIRE_EQ(TC_AWAIT(tanker2->signIn(alice.identity)),
              OpenResult::IdentityVerificationNeeded);
 }
 

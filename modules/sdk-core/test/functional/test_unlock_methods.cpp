@@ -1,9 +1,7 @@
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
-
-#include "TrustchainFixture.hpp"
 
 #include <doctest.h>
 

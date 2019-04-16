@@ -1,3 +1,5 @@
+#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/UserNotFound.hpp>
 
@@ -6,7 +8,6 @@
 #include <doctest.h>
 
 #include "CheckDecrypt.hpp"
-#include "TrustchainFixture.hpp"
 
 namespace Tanker
 {

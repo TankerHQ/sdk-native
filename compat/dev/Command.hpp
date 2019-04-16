@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Trustchain.hpp"
+#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Test/Functional/TrustchainFactory.hpp>
 
 #include <string>
 
@@ -11,12 +12,10 @@ namespace Compat
 class Command
 {
 public:
-  Command(Compat::Trustchain::Ptr tc,
-          std::string tankerPath,
-          std::string statePath)
+  Command(Test::Trustchain& tc, std::string tankerPath, std::string statePath)
     : tankerPath(std::move(tankerPath)),
       statePath(std::move(statePath)),
-      trustchain(std::move(tc))
+      trustchain(tc)
   {
   }
   virtual void base() = 0;
@@ -26,7 +25,7 @@ public:
 protected:
   std::string tankerPath;
   std::string statePath;
-  Compat::Trustchain::Ptr trustchain;
+  Test::Trustchain& trustchain;
 };
 }
 }
