@@ -179,6 +179,29 @@ TEST_SUITE("generate Identity")
     CHECK_NOTHROW(createIdentity(
         trustchainIdString, trustchainPrivateKeyString, suserId));
   }
+}
+
+TEST_SUITE("generate provisional Identity")
+{
+  TEST_CASE("should throw given empty trustchainId")
+  {
+    CHECK_THROWS_AS(createProvisionalIdentity("", Email{userEmail}),
+                    std::invalid_argument);
+  }
+  TEST_CASE("should throw given empty email")
+  {
+    CHECK_THROWS_AS(createProvisionalIdentity("trustchainID", Email{""}),
+                    std::invalid_argument);
+  }
+  TEST_CASE("We can create a provisional identity from strings")
+  {
+    CHECK_NOTHROW(
+        createProvisionalIdentity(trustchainIdString, Email{userEmail}));
+  }
+}
+
+TEST_SUITE("serialization")
+{
   TEST_CASE("We can deserialize a secret permanent identity from a good string")
   {
     auto const identity =

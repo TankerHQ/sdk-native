@@ -3,6 +3,7 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Types/Email.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -24,9 +25,9 @@ void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity);
 std::string to_string(SecretProvisionalIdentity const& identity);
 
 SecretProvisionalIdentity createProvisionalIdentity(
-    Trustchain::TrustchainId const& trustchainId, std::string const& email);
+    Trustchain::TrustchainId const& trustchainId, Email const& email);
 
 std::string createProvisionalIdentity(std::string const& trustchainId,
-                                      std::string const& email);
+                                      Email const& email);
 }
 }

@@ -8,6 +8,32 @@ namespace Tanker
 {
 namespace Identity
 {
+SecretProvisionalIdentity createProvisionalIdentity(
+    Trustchain::TrustchainId const& trustchainId, Email const& email)
+{
+  return SecretProvisionalIdentity{
+      trustchainId,
+      TargetType::Email,
+      email.string(),
+      Crypto::makeSignatureKeyPair(),
+      Crypto::makeEncryptionKeyPair(),
+  };
+}
+
+std::string createProvisionalIdentity(std::string const& trustchainIdParam,
+                                      Email const& email)
+{
+  if (email.empty())
+    throw std::invalid_argument("Empty email");
+  if (trustchainIdParam.empty())
+    throw std::invalid_argument("Empty trustchainId");
+
+  auto const trustchainId =
+      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+          trustchainIdParam);
+  return to_string(createProvisionalIdentity(trustchainId, email));
+}
+
 void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
