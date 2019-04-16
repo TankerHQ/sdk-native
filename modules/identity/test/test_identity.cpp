@@ -242,17 +242,35 @@ TEST_SUITE("ugprade a user token to an identity")
   }
 }
 
-TEST_CASE("get a public identity from a secret permanent identity")
+TEST_SUITE("getPublicIdentity")
 {
-  auto const identityStr = createIdentity(
-      trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
-  auto const publicIdentityStr = getPublicIdentity(identityStr);
-  auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
-  auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-  auto* p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
-  CHECK_UNARY(p);
-  CHECK_EQ(p->trustchainId, trustchainId);
-  CHECK_EQ(p->userId, aliceO);
+  TEST_CASE("get a public identity from a secret permanent identity")
+  {
+    auto const identityStr = createIdentity(
+        trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
+    auto const publicIdentityStr = getPublicIdentity(identityStr);
+    auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
+    auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
+    auto const p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
+    REQUIRE_UNARY(p);
+    CHECK_EQ(p->trustchainId, trustchainId);
+    CHECK_EQ(p->userId, aliceO);
+  }
+
+  TEST_CASE("get a public identity from a secret provisional identity")
+  {
+    auto const b64PublicIdentity =
+        getPublicIdentity(GOOD_SECRET_PROVISIONAL_IDENTITY);
+    auto const publicIdentity = extract<PublicIdentity>(b64PublicIdentity);
+    auto const p = mpark::get_if<PublicProvisionalIdentity>(&publicIdentity);
+
+    REQUIRE_UNARY(p);
+    CHECK_EQ(p->trustchainId, trustchainId);
+    CHECK_EQ(p->target, TargetType::Email);
+    CHECK_EQ(p->value, userEmail);
+    CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
+    CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
+  }
 }
 
 TEST_SUITE("Generate user token")
