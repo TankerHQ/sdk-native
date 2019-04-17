@@ -25,11 +25,7 @@ tc::cotask<std::vector<Crypto::PublicEncryptionKey>> getMemberKeys(
   auto const result = TC_AWAIT(userAccessor.pull(memberUserIds));
   if (!result.notFound.empty())
   {
-    throw Error::UserNotFound(
-        fmt::format(
-            fmt("unknown users: '{:s}'"),
-            fmt::join(begin(result.notFound), end(result.notFound), ", ")),
-        result.notFound);
+    throw Error::UserNotFoundInternal(result.notFound);
   }
 
   std::vector<Crypto::PublicEncryptionKey> out;

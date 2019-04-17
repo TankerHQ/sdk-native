@@ -317,7 +317,7 @@ DeviceId const& Session::deviceId() const
 
 tc::cotask<std::vector<Device>> Session::getDeviceList() const
 {
-    TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
+  TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
 }
 
 tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
@@ -361,16 +361,20 @@ tc::cotask<void> Session::share(
     {
       TC_AWAIT(share(resourceIds, userIds, groupIds));
     }
-    catch (Error::RecipientNotFound const& e)
+    catch (Error::RecipientNotFoundInternal const& e)
     {
       auto const clearPublicIdentities =
           toClearId(e.userIds(), spublicIdentities, userIds);
       auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
-      throw Error::formatEx<Error::RecipientNotFound>(
-          fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
-          fmt::join(
-              clearPublicIdentities.begin(), clearPublicIdentities.end(), ", "),
-          fmt::join(clearGids.begin(), clearGids.end(), ", "));
+      throw Error::RecipientNotFound(
+          fmt::format(
+              fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+              fmt::join(clearPublicIdentities.begin(),
+                        clearPublicIdentities.end(),
+                        ", "),
+              fmt::join(clearGids.begin(), clearGids.end(), ", ")),
+          clearPublicIdentities,
+          e.groupIds());
     }
   }
 }
@@ -389,12 +393,15 @@ tc::cotask<SGroupId> Session::createGroup(
     TC_AWAIT(syncTrustchain());
     TC_RETURN(groupId);
   }
-  catch (Error::UserNotFound const& e)
+  catch (Error::UserNotFoundInternal const& e)
   {
-    auto const clearUids = toClearId(e.userIds(), spublicIdentities, userIds);
-    throw Error::formatEx<Error::UserNotFound>(
-        fmt("Unknown users: {:s}"),
-        fmt::join(clearUids.begin(), clearUids.end(), ", "));
+    auto const notFoundIdentities =
+        toClearId(e.userIds(), spublicIdentities, userIds);
+    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+                                          fmt::join(notFoundIdentities.begin(),
+                                                    notFoundIdentities.end(),
+                                                    ", ")),
+                              notFoundIdentities);
   }
   throw std::runtime_error("unreachable code");
 }
@@ -416,13 +423,15 @@ tc::cotask<void> Session::updateGroupMembers(
                                             groupId,
                                             usersToAdd));
   }
-  catch (Error::UserNotFound const& e)
+  catch (Error::UserNotFoundInternal const& e)
   {
-    auto const clearUids =
+    auto const notFoundIdentities =
         toClearId(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
-    throw Error::formatEx<Error::UserNotFound>(
-        fmt("Unknown users: {:s}"),
-        fmt::join(clearUids.begin(), clearUids.end(), ", "));
+    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+                                          fmt::join(notFoundIdentities.begin(),
+                                                    notFoundIdentities.end(),
+                                                    ", ")),
+                              notFoundIdentities);
   }
 
   // Make sure group's lastBlockHash updates before the next group operation

@@ -114,15 +114,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
 
   if (!groupResult.notFound.empty() || !userResult.notFound.empty())
   {
-    throw Error::RecipientNotFound(
-        fmt::format(
-            fmt("unknown users: [{:s}], groups [{:s}]"),
-            fmt::join(
-                begin(userResult.notFound), end(userResult.notFound), ", "),
-            fmt::join(
-                begin(groupResult.notFound), end(groupResult.notFound), ", ")),
-        userResult.notFound,
-        groupResult.notFound);
+    throw Error::RecipientNotFoundInternal(userResult.notFound,
+                                           groupResult.notFound);
   }
 
   KeyRecipients out;
