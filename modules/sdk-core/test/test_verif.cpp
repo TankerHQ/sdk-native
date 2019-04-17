@@ -1,8 +1,10 @@
 #include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
@@ -443,6 +445,52 @@ TEST_CASE("KeyPublishToUser")
   SUBCASE("should accept a valid KeyPublishToUser")
   {
     CHECK_NOTHROW(Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice));
+  }
+}
+
+TEST_CASE("KeyPublishToProvisionalUser")
+{
+  TrustchainBuilder builder;
+
+  auto const user = builder.makeUser3("alice");
+  auto const device = user.user.devices.front();
+
+  auto const appPublicSignatureKey = make<Crypto::PublicSignatureKey>("app sig key");
+  auto const tankerPublicSignatureKey = make<Crypto::PublicSignatureKey>("tanker sig key");
+  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const twoTimesSealedSymmetricKey =
+      make<Crypto::TwoTimesSealedSymmetricKey>(
+          "two times sealed symmetric key");
+  auto const blockGenerator = builder.makeBlockGenerator(device);
+  auto const block = Serialization::deserialize<Block>(
+      blockGenerator.keyPublishToProvisionalUser(appPublicSignatureKey,
+                                                 tankerPublicSignatureKey,
+                                                 resourceId,
+                                                 twoTimesSealedSymmetricKey));
+  auto authorDevice = device.asTankerDevice();
+
+  auto kp2puEntry = blockToUnverifiedEntry(block);
+  kp2puEntry.index = 3;
+
+  SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
+  {
+    kp2puEntry.signature[0]++;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a KeyPublishToUser from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice),
+        Error::VerificationCode::InvalidAuthor);
+  }
+
+  SUBCASE("should accept a valid KeyPublishToUser")
+  {
+    CHECK_NOTHROW(Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice));
   }
 }
 
