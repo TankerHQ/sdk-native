@@ -9,16 +9,26 @@ extern "C" {
 #endif
 
 /*!
- * Generate a new Identity
+ * Generate a new Tanker identity
  * \param trustchain_id the ID of the trustchain
  * \param trustchain_private_key the private key of the trustchain
- * \param user_id the user for whom the token is generated
+ * \param user_id the user for whom the identity is generated
  * \return an expected (ready future) of base64-encoded identity (b64char*)
  * \post the identity must be freed with tanker_free_buffer()
  */
 tanker_expected_t* tanker_create_identity(b64char const* trustchain_id,
                                           b64char const* trustchain_private_key,
                                           char const* user_id);
+
+/*!
+ * Generate a new Tanker provisional identity
+ * \param trustchain_id the ID of the trustchain
+ * \param email the email address for whom the identity is generated
+ * \return an expected (ready future) of base64-encoded identity (b64char*)
+ * \post the identity must be freed with tanker_free_buffer()
+ */
+tanker_expected_t* tanker_create_provisional_identity(
+    b64char const* trustchain_id, char const* email);
 
 /*!
  * Upgrade a UserToken to an Identity

@@ -79,30 +79,5 @@ std::string to_string(SecretProvisionalIdentity const& identity)
 {
   return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
 }
-
-SecretProvisionalIdentity createProvisionalIdentity(
-    Trustchain::TrustchainId const& trustchainId, std::string const& email)
-{
-  return SecretProvisionalIdentity{
-      trustchainId,
-      TargetType::Email,
-      email,
-      Crypto::makeSignatureKeyPair(),
-      Crypto::makeEncryptionKeyPair(),
-  };
-}
-
-std::string createProvisionalIdentity(std::string const& strustchainId,
-                                      std::string const& email)
-{
-  if (email.empty())
-    throw std::invalid_argument("Empty email");
-  if (strustchainId.empty())
-    throw std::invalid_argument("Empty trustchainId");
-
-  auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(strustchainId);
-  return to_string(createProvisionalIdentity(trustchainId, email));
-}
 }
 }
