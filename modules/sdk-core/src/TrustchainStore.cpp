@@ -1,6 +1,6 @@
 #include <Tanker/TrustchainStore.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>

@@ -1,10 +1,10 @@
-#include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
@@ -27,6 +27,7 @@
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
+using Tanker::Trustchain::Actions::DeviceCreation;
 using namespace Tanker;
 
 #define CHECK_VERIFICATION_FAILED_WITH(functionCall, errCode) \
@@ -52,7 +53,8 @@ namespace
 template <typename T>
 T extractDeviceCreation(Action const& action)
 {
-  return mpark::get<T>(mpark::get<DeviceCreation>(action.variant()).variant());
+  return mpark::get<Trustchain::Actions::DeviceCreation>(action.variant())
+      .get<T>();
 }
 
 DeviceRevocation2 extractDeviceRevocation2(Action const& action)
@@ -74,15 +76,47 @@ Crypto::Signature forgeDelegationSignature(
   return Crypto::sign(toSign, privateSignatureKey);
 }
 
+DeviceCreation::v1 forgeDeviceCreation(DeviceCreation::v1 const& old,
+                                       Trustchain::UserId const& newId,
+                                       Crypto::Signature const& signature)
+{
+
+  return DeviceCreation::v1(old.ephemeralPublicSignatureKey(),
+                            newId,
+                            signature,
+                            old.publicSignatureKey(),
+                            old.publicEncryptionKey());
+}
+
+DeviceCreation::v3 forgeDeviceCreation(DeviceCreation::v3 const& old,
+                                       Trustchain::UserId const& newId,
+                                       Crypto::Signature const& signature)
+{
+  return DeviceCreation::v3(
+      old.ephemeralPublicSignatureKey(),
+      newId,
+      signature,
+      old.publicSignatureKey(),
+      old.publicEncryptionKey(),
+      old.publicUserEncryptionKey(),
+      old.sealedPrivateUserEncryptionKey(),
+      (old.isGhostDevice() ? DeviceCreation::DeviceType::GhostDevice :
+                             DeviceCreation::DeviceType::Device));
+}
+
 template <typename T>
 void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
                                 TrustchainCreation const& trustchainCreation)
 {
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto forgedDeviceCreation = extractDeviceCreation<T>(user.entry.action);
-    forgedDeviceCreation.delegationSignature[0]++;
-    user.entry.action = DeviceCreation{forgedDeviceCreation};
+    auto const deviceCreation = extractDeviceCreation<T>(user.entry.action);
+    auto delegationSignature = deviceCreation.delegationSignature();
+    delegationSignature[0]++;
+    auto const forgedDeviceCreation = forgeDeviceCreation(
+        deviceCreation, deviceCreation.userId(), delegationSignature);
+    user.entry.action =
+        Trustchain::Actions::DeviceCreation{forgedDeviceCreation};
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(user.entry, trustchainCreation),
         Error::VerificationCode::InvalidDelegationSignature);
@@ -120,10 +154,14 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto forgedDeviceCreation =
+    auto const deviceCreation =
         extractDeviceCreation<T>(secondDevice.entry.action);
-    forgedDeviceCreation.delegationSignature[0]++;
-    secondDevice.entry.action = DeviceCreation{forgedDeviceCreation};
+    auto delegationSignature = deviceCreation.delegationSignature();
+    delegationSignature[0]++;
+    auto const forgedDeviceCreation = forgeDeviceCreation(
+        deviceCreation, deviceCreation.userId(), delegationSignature);
+    secondDevice.entry.action =
+        Trustchain::Actions::DeviceCreation{forgedDeviceCreation};
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
@@ -143,14 +181,19 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   {
     auto const authorPrivateSignatureKey =
         user.user.devices.front().keys.signatureKeyPair.privateKey;
-    auto forgedDeviceCreation =
+    auto const deviceCreation =
         extractDeviceCreation<T>(secondDevice.entry.action);
-    forgedDeviceCreation.userId[0]++;
-    forgedDeviceCreation.delegationSignature = forgeDelegationSignature(
+    auto userId = deviceCreation.userId();
+    userId[0]++;
+    auto const delegationSignature = forgeDelegationSignature(
         secondDevice.device.delegation.ephemeralKeyPair.publicKey,
-        forgedDeviceCreation.userId,
+        userId,
         authorPrivateSignatureKey);
-    secondDevice.entry.action = DeviceCreation{forgedDeviceCreation};
+    auto const forgedDeviceCreation =
+        forgeDeviceCreation(deviceCreation, userId, delegationSignature);
+
+    secondDevice.entry.action =
+        Trustchain::Actions::DeviceCreation{forgedDeviceCreation};
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
@@ -268,7 +311,8 @@ TEST_CASE("Verif DeviceCreation v3 - Trustchain author")
   auto const trustchainCreation =
       mpark::get<TrustchainCreation>(authorEntry.action.variant());
 
-  deviceCreationCommonChecks<DeviceCreation3>(user, trustchainCreation);
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v3>(
+      user, trustchainCreation);
 }
 
 TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
@@ -282,7 +326,7 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
   auto const trustchainCreation =
       mpark::get<TrustchainCreation>(authorEntry.action.variant());
 
-  deviceCreationCommonChecks<DeviceCreation1>(user, trustchainCreation);
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(user, trustchainCreation);
 }
 
 TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
@@ -294,13 +338,28 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
 
   auto const authorDevice = user.user.devices.front().asTankerDevice();
 
-  deviceCreationCommonChecks<DeviceCreation3>(user, authorDevice, secondDevice);
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v3>(
+      user, authorDevice, secondDevice);
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto forgedDeviceCreation =
-        extractDeviceCreation<DeviceCreation3>(secondDevice.entry.action);
-    forgedDeviceCreation.userKeyPair.publicEncryptionKey[0]++;
+    using Trustchain::Actions::DeviceCreation;
+    auto const dc3 =
+        extractDeviceCreation<DeviceCreation::v3>(secondDevice.entry.action);
+
+    auto publicUserEncryptionKey = dc3.publicUserEncryptionKey();
+    publicUserEncryptionKey[0]++;
+
+    DeviceCreation::v3 const forgedDeviceCreation(
+        secondDevice.device.delegation.ephemeralKeyPair.publicKey,
+        secondDevice.device.delegation.userId,
+        secondDevice.device.delegation.signature,
+        dc3.publicSignatureKey(),
+        dc3.publicEncryptionKey(),
+        publicUserEncryptionKey,
+        dc3.sealedPrivateUserEncryptionKey(),
+        DeviceCreation::DeviceType::Device);
+
     secondDevice.entry.action = DeviceCreation{forgedDeviceCreation};
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(
@@ -329,9 +388,22 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto forgedDeviceCreation =
-        extractDeviceCreation<DeviceCreation3>(secondDevice.entry.action);
-    forgedDeviceCreation.userKeyPair.publicEncryptionKey[0]++;
+    using Trustchain::Actions::DeviceCreation;
+    auto const dc3 =
+        extractDeviceCreation<DeviceCreation::v3>(secondDevice.entry.action);
+
+    auto publicUserEncryptionKey = dc3.publicUserEncryptionKey();
+    publicUserEncryptionKey[0]++;
+
+    DeviceCreation::v3 const forgedDeviceCreation(
+        secondDevice.device.delegation.ephemeralKeyPair.publicKey,
+        secondDevice.device.delegation.userId,
+        secondDevice.device.delegation.signature,
+        dc3.publicSignatureKey(),
+        dc3.publicEncryptionKey(),
+        publicUserEncryptionKey,
+        dc3.sealedPrivateUserEncryptionKey(),
+        DeviceCreation::DeviceType::Device);
     secondDevice.entry.action = DeviceCreation{forgedDeviceCreation};
 
     tankerUser.userKey = secondDevice.user.userKey;
@@ -351,7 +423,7 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
   auto secondDevice = builder.makeDevice1("alice");
   auto const authorDevice = alice.user.devices.front().asTankerDevice();
 
-  deviceCreationCommonChecks<DeviceCreation1>(
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(
       alice, authorDevice, secondDevice);
 
   SUBCASE("should reject a device creation v1 if the user has a userKey")

@@ -1,6 +1,6 @@
 #include <Tanker/Share.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>

@@ -1,6 +1,6 @@
 #include <Tanker/Session.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
@@ -550,17 +550,19 @@ bool Session::hasRegisteredUnlockMethod(Unlock::Method method) const
   return !!(_unlockMethods & method);
 }
 
-tc::cotask<void> Session::catchUserKey(DeviceId const& deviceId,
-                                       DeviceCreation const& deviceCreation)
+tc::cotask<void> Session::catchUserKey(
+    DeviceId const& deviceId,
+    Trustchain::Actions::DeviceCreation const& deviceCreation)
 
 {
+  using Trustchain::Actions::DeviceCreation;
   // no new user key (or old device < 3), no need to continue
-  auto const optUserKeyPair = deviceCreation.userKeyPair();
-  if (!optUserKeyPair)
-    TC_RETURN();
-  // you need this so that Share shares to self using the user key
-  TC_AWAIT(_contactStore.putUserKey(deviceCreation.userId(),
-                                    optUserKeyPair->publicEncryptionKey));
+  if (auto const dc3 = deviceCreation.get_if<DeviceCreation::v3>())
+  {
+    // you need this so that Share shares to self using the user key
+    TC_AWAIT(_contactStore.putUserKey(deviceCreation.userId(),
+                                      dc3->publicUserEncryptionKey()));
+  }
 }
 
 tc::cotask<void> Session::onKeyToDeviceReceived(Entry const& entry)
@@ -575,7 +577,7 @@ tc::cotask<void> Session::onKeyToDeviceReceived(Entry const& entry)
 tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 {
   auto const& deviceCreation =
-      mpark::get<DeviceCreation>(entry.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
   DeviceId const deviceId{entry.hash};
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
   Device createdDevice{deviceId,

@@ -2,7 +2,7 @@
 
 #include <mpark/variant.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -44,13 +44,16 @@ TEST_CASE("BlockGenerator")
     CHECK_EQ(block.author.base(), trustchainId.base());
     auto const entry = blockToUnverifiedEntry(block);
     auto const deviceCreation =
-        mpark::get_if<DeviceCreation>(&entry.action.variant());
+        mpark::get_if<Trustchain::Actions::DeviceCreation>(
+            &entry.action.variant());
     REQUIRE(deviceCreation != nullptr);
     CHECK(deviceCreation->userId() == userId);
     CHECK(deviceCreation->publicSignatureKey() == mySignKeyPair.publicKey);
     CHECK(deviceCreation->publicEncryptionKey() == encryptionKeyPair.publicKey);
     CHECK(block.verifySignature(deviceCreation->ephemeralPublicSignatureKey()));
-    CHECK(verifyDelegationSignature(*deviceCreation,
-                                    trustchainKeyPair.publicKey));
+    auto const toVerify = deviceCreation->signatureData();
+    CHECK(Crypto::verify(toVerify,
+                         deviceCreation->delegationSignature(),
+                         trustchainKeyPair.publicKey));
   }
 }

@@ -26,6 +26,7 @@
 
 using namespace std::string_literals;
 
+using Tanker::Trustchain::Actions::DeviceCreation;
 namespace Tanker
 {
 auto const someUnlockKey = UnlockKey{
@@ -178,9 +179,9 @@ TEST_CASE("unlockKey")
   {
     auto const gh = Unlock::extract(reg->unlockKey);
     auto const encryptedPrivateKey =
-        Crypto::SealedPrivateEncryptionKey{gsl::make_span(
-            Crypto::sealEncrypt(aliceKeys.keyPair.privateKey,
-                                ghostDeviceKeys.encryptionKeyPair.publicKey))};
+        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
+            aliceKeys.keyPair.privateKey,
+            ghostDeviceKeys.encryptionKeyPair.publicKey);
 
     EncryptedUserKey ec{aliceKeys.keyPair.publicKey, encryptedPrivateKey};
 
@@ -191,9 +192,9 @@ TEST_CASE("unlockKey")
         Serialization::deserialize<Block>(validatedDevice)));
     auto const vdc =
         mpark::get<DeviceCreation>(validatedDeviceEntry.action.variant());
-    REQUIRE(vdc.userKeyPair().has_value());
-    auto const userKey =
-        vdc.userKeyPair().value().encryptedPrivateEncryptionKey;
+    REQUIRE(vdc.holdsAlternative<DeviceCreation::v3>());
+    auto const& dc3 = vdc.get<DeviceCreation::v3>();
+    auto const userKey = dc3.sealedPrivateUserEncryptionKey();
     REQUIRE(!userKey.is_null());
 
     auto const privateEncryptionKey =
@@ -201,13 +202,13 @@ TEST_CASE("unlockKey")
             userKey, newDeviceKeys.encryptionKeyPair);
 
     REQUIRE_EQ(privateEncryptionKey, aliceKeys.keyPair.privateKey);
-    REQUIRE_EQ(vdc.publicEncryptionKey(),
+    REQUIRE_EQ(dc3.publicEncryptionKey(),
                newDeviceKeys.encryptionKeyPair.publicKey);
-    REQUIRE_EQ(vdc.publicSignatureKey(),
+    REQUIRE_EQ(dc3.publicSignatureKey(),
                newDeviceKeys.signatureKeyPair.publicKey);
-    REQUIRE_EQ(alice.userId, vdc.userId());
+    REQUIRE_EQ(alice.userId, dc3.userId());
     REQUIRE_EQ(gh.deviceId.base(), validatedDeviceEntry.author.base());
-    REQUIRE_EQ(false, vdc.isGhostDevice());
+    REQUIRE_EQ(false, dc3.isGhostDevice());
   }
 }
 }

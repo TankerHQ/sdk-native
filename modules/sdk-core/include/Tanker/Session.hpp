@@ -8,6 +8,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -111,8 +112,9 @@ public:
   boost::signals2::signal<void()> deviceRevoked;
   boost::signals2::signal<void(DeviceId const&)> gotDeviceId;
 
-  tc::cotask<void> catchUserKey(DeviceId const& id,
-                                DeviceCreation const& deviceCreation);
+  tc::cotask<void> catchUserKey(
+      DeviceId const& id,
+      Trustchain::Actions::DeviceCreation const& deviceCreation);
   DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
