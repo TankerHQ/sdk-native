@@ -72,13 +72,12 @@ static_assert(
 // Event
 
 STATIC_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
-STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_CREATED, Event::DeviceCreated);
 STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
 
 STATIC_ENUM_CHECK(TANKER_EVENT_LAST, Event::Last);
 
 static_assert(
-    TANKER_EVENT_LAST == 3,
+    TANKER_EVENT_LAST == 2,
     "Please update the event assertions above if you added a new event");
 
 #undef STATIC_ENUM_CHECK

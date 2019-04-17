@@ -31,7 +31,6 @@ enum tanker_sign_in_result
 enum tanker_event
 {
   TANKER_EVENT_SESSION_CLOSED,
-  TANKER_EVENT_DEVICE_CREATED,
   TANKER_EVENT_DEVICE_REVOKED,
 
   TANKER_EVENT_LAST,

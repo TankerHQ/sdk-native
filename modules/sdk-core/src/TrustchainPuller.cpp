@@ -11,10 +11,10 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/DeviceId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>

@@ -156,7 +156,6 @@ void Core::initSession(Opener::OpenResult&& openResult)
   _state.emplace<SessionType>(std::make_unique<Session>(
       mpark::get<Session::Config>(std::move(openResult))));
   auto const& session = mpark::get<SessionType>(_state);
-  session->deviceCreated.connect(deviceCreated);
   session->deviceRevoked.connect(deviceRevoked);
   session->gotDeviceId.connect(
       [this](auto const& deviceId) { _deviceId = deviceId; });
