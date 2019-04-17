@@ -317,7 +317,7 @@ DeviceId const& Session::deviceId() const
 
 tc::cotask<std::vector<Device>> Session::getDeviceList() const
 {
-    TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
+  TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
 }
 
 tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
@@ -576,8 +576,6 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
                        deviceCreation.publicEncryptionKey(),
                        deviceCreation.isGhostDevice()};
   TC_AWAIT(_contactStore.putUserDevice(deviceCreation.userId(), createdDevice));
-  if (deviceCreation.userId() == userId() && !deviceCreation.isGhostDevice())
-    deviceCreated();
 }
 
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)

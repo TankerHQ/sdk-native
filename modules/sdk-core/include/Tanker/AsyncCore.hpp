@@ -44,7 +44,6 @@ using expected = tc::future<T>;
 enum class Event
 {
   SessionClosed,
-  DeviceCreated,
   DeviceRevoked,
 
   Last
@@ -106,7 +105,6 @@ public:
   expected<Unlock::Methods> registeredUnlockMethods() const;
 
   boost::signals2::signal<void()>& sessionClosed();
-  boost::signals2::signal<void()>& deviceCreated();
   boost::signals2::signal<void()>& deviceRevoked();
 
   expected<SDeviceId> deviceId() const;

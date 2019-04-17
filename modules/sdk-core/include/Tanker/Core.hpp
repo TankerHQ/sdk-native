@@ -90,7 +90,6 @@ public:
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 
   boost::signals2::signal<void()> sessionClosed;
-  boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;
 
   static SResourceId getResourceId(gsl::span<uint8_t const> encryptedData);

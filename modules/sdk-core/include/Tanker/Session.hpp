@@ -108,7 +108,6 @@ public:
 
   tc::cotask<void> revokeDevice(DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> deviceCreated;
   boost::signals2::signal<void()> deviceRevoked;
   boost::signals2::signal<void(DeviceId const&)> gotDeviceId;
 

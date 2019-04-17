@@ -110,10 +110,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 
   auto device1 = alice.makeDevice();
   auto session = TC_AWAIT(device1.open());
-  SignalSpy<void> deviceCreatedSpy(session->deviceCreated());
   auto device2 = alice.makeDevice(Test::DeviceType::New);
   REQUIRE_NOTHROW(TC_AWAIT(device2.attachDevice(*session)));
-  CHECK(deviceCreatedSpy.receivedEvents.size() == 1);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

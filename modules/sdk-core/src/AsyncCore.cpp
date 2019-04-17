@@ -67,11 +67,6 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
     return boost::signals2::scoped_connection([&] {
       switch (event)
       {
-      case Event::DeviceCreated:
-        return this->_core.deviceCreated.connect([this, cb, data] {
-          _taskCanceler.run(
-              [&cb, &data] { return tc::async([=] { cb(nullptr, data); }); });
-        });
       case Event::SessionClosed:
         return this->_core.sessionClosed.connect([this, cb, data] {
           _taskCanceler.run(
@@ -271,11 +266,6 @@ tc::shared_future<void> AsyncCore::syncTrustchain()
 boost::signals2::signal<void()>& AsyncCore::sessionClosed()
 {
   return this->_core.sessionClosed;
-}
-
-boost::signals2::signal<void()>& AsyncCore::deviceCreated()
-{
-  return this->_core.deviceCreated;
 }
 
 boost::signals2::signal<void()>& AsyncCore::deviceRevoked()
