@@ -20,7 +20,8 @@ namespace Verif
 {
 void verifyKeyPublishToUser(UnverifiedEntry const& entry, Device const& author)
 {
-  assert(entry.nature == Nature::KeyPublishToUser);
+  assert(entry.nature == Nature::KeyPublishToUser ||
+         entry.nature == Nature::KeyPublishToProvisionalUser);
 
   ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
           Error::VerificationCode::InvalidAuthor,

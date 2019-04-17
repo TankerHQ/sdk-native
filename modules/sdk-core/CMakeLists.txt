@@ -96,6 +96,7 @@ add_library(tankercore STATIC
   include/Tanker/Actions/KeyPublishToDevice.hpp
   include/Tanker/Actions/KeyPublishToUser.hpp
   include/Tanker/Actions/KeyPublishToUserGroup.hpp
+  include/Tanker/Actions/KeyPublishToProvisionalUser.hpp
   include/Tanker/Actions/UserGroupAddition.hpp
   include/Tanker/Actions/UserGroupCreation.hpp
   include/Tanker/Groups/Group.hpp
@@ -172,6 +173,7 @@ add_library(tankercore STATIC
   src/Actions/KeyPublishToDevice.cpp
   src/Actions/KeyPublishToUser.cpp
   src/Actions/KeyPublishToUserGroup.cpp
+  src/Actions/KeyPublishToProvisionalUser.cpp
   src/Actions/UserKeyPair.cpp
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp

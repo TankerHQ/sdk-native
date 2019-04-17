@@ -42,6 +42,8 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
         DeviceCreation{Serialization::deserialize<DeviceCreation3>(payload)}};
   case Nature::KeyPublishToUser:
     return Action{deserializeKeyPublishToUser(payload)};
+  case Nature::KeyPublishToProvisionalUser:
+    return Action{deserializeKeyPublishToProvisionalUser(payload)};
   case Nature::DeviceRevocation:
     return Action{DeviceRevocation{
         Serialization::deserialize<DeviceRevocation1>(payload)}};

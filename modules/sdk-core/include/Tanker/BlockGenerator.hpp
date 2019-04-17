@@ -16,9 +16,11 @@
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/ResourceId.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -94,6 +96,12 @@ public:
       Crypto::SealedSymmetricKey const& symKey,
       Crypto::Mac const& mac,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
+
+  std::vector<uint8_t> keyPublishToProvisionalUser(
+      Crypto::PublicSignatureKey const& appPublicSignatureKey,
+      Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
+      ResourceId const& resourceId,
+      Crypto::TwoTimesSealedSymmetricKey const& symKey) const;
 
   std::vector<uint8_t> keyPublishToGroup(
       Crypto::SealedSymmetricKey const& symKey,

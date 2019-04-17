@@ -167,6 +167,19 @@ std::vector<uint8_t> BlockGenerator::keyPublishToUser(
                 _privateSignatureKey));
 }
 
+std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(
+    Crypto::PublicSignatureKey const& appPublicSignatureKey,
+    Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
+    ResourceId const& resourceId,
+    Crypto::TwoTimesSealedSymmetricKey const& symKey) const
+{
+  return Serialization::serialize(makeBlock(
+      KeyPublishToProvisionalUser{
+          appPublicSignatureKey, tankerPublicSignatureKey, resourceId, symKey},
+      _deviceId,
+      this->_privateSignatureKey));
+}
+
 std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
     Crypto::SealedSymmetricKey const& symKey,
     Crypto::Mac const& mac,

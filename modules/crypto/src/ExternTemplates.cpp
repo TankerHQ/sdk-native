@@ -11,6 +11,7 @@
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
 
 namespace Tanker
 {
@@ -54,6 +55,9 @@ template class BasicCryptographicType<SealedPrivateSignatureKey,
 template class BasicCryptographicType<
     SealedSymmetricKey,
     crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_SEALBYTES>;
+template class BasicCryptographicType<TwoTimesSealedSymmetricKey,
+                                      SealedSymmetricKey::arraySize +
+                                          crypto_box_SEALBYTES>;
 template class BasicCryptographicType<Signature, crypto_sign_BYTES>;
 template class BasicCryptographicType<
     SymmetricKey,
