@@ -1,10 +1,11 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -61,7 +62,8 @@ auto const trustchainPrivateKeyString =
     "CZC/e4ZI7+MQ=="s;
 
 auto const trustchainId =
-    cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(trustchainIdString);
+    cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+        trustchainIdString);
 auto const trustchainPrivateKey =
     cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);
@@ -85,11 +87,58 @@ auto const delegation_signature = cppcodec::base64_rfc4648::decode<
     "U9WQolCvRyjT8oR2PQmd1WXNCi0qmL12hNrtGabYREWiry52kWx1AgYzkLxH6gpo3MiA9r++"
     "zhnmoYdEJ0+JCw==");
 
+auto const appSignatureKeyPair = Crypto::SignatureKeyPair{
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
+        "W7QEQBu9FXcXIpOgq62tPwBiyFAbpT1rAruD0h/NrTA="),
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+        "UmnYuvdTaLYG0a+JaDpY6ojw4/2Ll8zsmramVC4fuqRbtARAG70Vdxcik6Crra0/"
+        "AGLIUBulPWsCu4PSH82tMA=="),
+};
+auto const appEncryptionKeyPair = Crypto::EncryptionKeyPair{
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicEncryptionKey>(
+        "4QB5TWmvcBrgeyDDLhULINU6tbqAOEQ8v9pjDkPcybA="),
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateEncryptionKey>(
+        "/2j4dI3r8PlvCN3uW4HhA5wBtMKOcACd38K6N0q+mFU="),
+};
+
 auto const ephemeralKeyPair =
     Crypto::SignatureKeyPair{publicEphemeralKey, privateEphemeralKey};
 
 auto const delegation =
     Delegation{ephemeralKeyPair, obfuscatedUserId, delegation_signature};
+
+auto const GOOD_SECRET_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJlbWFpbCIsInZhbHVlIjoiYnJlbmRhbi5laWNoQHRhbmtlci5p"
+    "byIsInB1YmxpY19lbmNyeXB0aW9uX2tleSI6Ii8yajRkSTNyOFBsdkNOM3VXNEhoQTV3QnRNS0"
+    "9jQUNkMzhLNk4wcSttRlU9IiwicHJpdmF0ZV9lbmNyeXB0aW9uX2tleSI6IjRRQjVUV212Y0Jy"
+    "Z2V5RERMaFVMSU5VNnRicUFPRVE4djlwakRrUGN5YkE9IiwicHVibGljX3NpZ25hdHVyZV9rZX"
+    "kiOiJXN1FFUUJ1OUZYY1hJcE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSIsInByaXZh"
+    "dGVfc2lnbmF0dXJlX2tleSI6IlVtbll1dmRUYUxZRzBhK0phRHBZNm9qdzQvMkxsOHpzbXJhbV"
+    "ZDNGZ1cVJidEFSQUc3MFZkeGNpazZDcnJhMC9BR0xJVUJ1bFBXc0N1NFBTSDgydE1BPT0ifQ="
+    "="s;
+auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJlbWFpbCIsInZhbHVlIjoiYnJlbmRhbi5laWNoQHRhbmtlci5p"
+    "byIsInB1YmxpY19lbmNyeXB0aW9uX2tleSI6Ii8yajRkSTNyOFBsdkNOM3VXNEhoQTV3QnRNS0"
+    "9jQUNkMzhLNk4wcSttRlU9IiwicHVibGljX3NpZ25hdHVyZV9rZXkiOiJXN1FFUUJ1OUZYY1hJ"
+    "cE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSJ9Cg=="s;
+
+auto const userEmail = "brendan.eich@tanker.io";
+
+auto const appSignaturePublicKey =
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
+        "W7QEQBu9FXcXIpOgq62tPwBiyFAbpT1rAruD0h/NrTA=");
+auto const appSignaturePrivateKey =
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+        "UmnYuvdTaLYG0a+JaDpY6ojw4/2Ll8zsmramVC4fuqRbtARAG70Vdxcik6Crra0/"
+        "AGLIUBulPWsCu4PSH82tMA==");
+auto const appEncryptionPublicKey =
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicEncryptionKey>(
+        "/2j4dI3r8PlvCN3uW4HhA5wBtMKOcACd38K6N0q+mFU=");
+auto const appEncryptionPrivateKey =
+    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateEncryptionKey>(
+        "4QB5TWmvcBrgeyDDLhULINU6tbqAOEQ8v9pjDkPcybA=");
 
 void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
                      UserId const& userId)
@@ -130,7 +179,30 @@ TEST_SUITE("generate Identity")
     CHECK_NOTHROW(createIdentity(
         trustchainIdString, trustchainPrivateKeyString, suserId));
   }
-  TEST_CASE("We can deserialize an identity from a good string")
+}
+
+TEST_SUITE("generate provisional Identity")
+{
+  TEST_CASE("should throw given empty trustchainId")
+  {
+    CHECK_THROWS_AS(createProvisionalIdentity("", Email{userEmail}),
+                    std::invalid_argument);
+  }
+  TEST_CASE("should throw given empty email")
+  {
+    CHECK_THROWS_AS(createProvisionalIdentity("trustchainID", Email{""}),
+                    std::invalid_argument);
+  }
+  TEST_CASE("We can create a provisional identity from strings")
+  {
+    CHECK_NOTHROW(
+        createProvisionalIdentity(trustchainIdString, Email{userEmail}));
+  }
+}
+
+TEST_SUITE("serialization")
+{
+  TEST_CASE("We can deserialize a secret permanent identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
@@ -138,7 +210,7 @@ TEST_SUITE("generate Identity")
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
   }
-  TEST_CASE("We can deserialize a public identity from a good string")
+  TEST_CASE("We can deserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
@@ -146,6 +218,32 @@ TEST_SUITE("generate Identity")
         mpark::get<PublicPermanentIdentity>(publicIdentity);
     CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
+  }
+  TEST_CASE(
+      "We can deserialize a secret provisional identity from a good string")
+  {
+    auto const identity =
+        extract<SecretProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY);
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, userEmail);
+    CHECK_EQ(identity.target, TargetType::Email);
+    CHECK_EQ(identity.appSignatureKeyPair.publicKey, appSignaturePublicKey);
+    CHECK_EQ(identity.appSignatureKeyPair.privateKey, appSignaturePrivateKey);
+    CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
+    CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
+  }
+  TEST_CASE(
+      "We can deserialize a public provisional identity from a good string")
+  {
+    auto const identity =
+        extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, userEmail);
+    CHECK_EQ(identity.target, TargetType::Email);
+    CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
+    CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
   }
 }
 
@@ -167,17 +265,35 @@ TEST_SUITE("ugprade a user token to an identity")
   }
 }
 
-TEST_CASE("get a public identity from a secret permanent identity")
+TEST_SUITE("getPublicIdentity")
 {
-  auto const identityStr = createIdentity(
-      trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
-  auto const publicIdentityStr = getPublicIdentity(identityStr);
-  auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
-  auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-  auto* p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
-  CHECK_UNARY(p);
-  CHECK_EQ(p->trustchainId, trustchainId);
-  CHECK_EQ(p->userId, aliceO);
+  TEST_CASE("get a public identity from a secret permanent identity")
+  {
+    auto const identityStr = createIdentity(
+        trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
+    auto const publicIdentityStr = getPublicIdentity(identityStr);
+    auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
+    auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
+    auto const p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
+    REQUIRE_UNARY(p);
+    CHECK_EQ(p->trustchainId, trustchainId);
+    CHECK_EQ(p->userId, aliceO);
+  }
+
+  TEST_CASE("get a public identity from a secret provisional identity")
+  {
+    auto const b64PublicIdentity =
+        getPublicIdentity(GOOD_SECRET_PROVISIONAL_IDENTITY);
+    auto const publicIdentity = extract<PublicIdentity>(b64PublicIdentity);
+    auto const p = mpark::get_if<PublicProvisionalIdentity>(&publicIdentity);
+
+    REQUIRE_UNARY(p);
+    CHECK_EQ(p->trustchainId, trustchainId);
+    CHECK_EQ(p->target, TargetType::Email);
+    CHECK_EQ(p->value, userEmail);
+    CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
+    CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
+  }
 }
 
 TEST_SUITE("Generate user token")

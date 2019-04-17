@@ -12,12 +12,6 @@ namespace Tanker
 namespace Identity
 {
 
-enum class TargetType
-{
-  None = 0,
-  Email = 1,
-};
-
 struct SecretPermanentIdentity : public UserToken
 {
   Trustchain::TrustchainId trustchainId;

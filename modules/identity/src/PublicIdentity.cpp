@@ -2,7 +2,8 @@
 
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
-#include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Identity/PublicProvisionalIdentity.hpp>
+#include <Tanker/Identity/SecretIdentity.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -16,10 +17,22 @@ PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity)
                                                 identity.delegation.userId});
 }
 
+PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
+{
+  return PublicIdentity(PublicProvisionalIdentity{
+      identity.trustchainId,
+      identity.target,
+      identity.value,
+      identity.appSignatureKeyPair.publicKey,
+      identity.appEncryptionKeyPair.publicKey,
+  });
+}
+
 std::string getPublicIdentity(std::string const& token)
 {
   return to_string(
-      getPublicIdentity(extract(token).get<SecretPermanentIdentity>()));
+      mpark::visit([](auto const& i) { return getPublicIdentity(i); },
+                   extract(token).get<SecretIdentity>()));
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)
@@ -28,8 +41,7 @@ void from_json(nlohmann::json const& j, PublicIdentity& identity)
   if (target == "user")
     identity = j.get<PublicPermanentIdentity>();
   else
-    throw std::runtime_error(
-        "PublicIdentity deserialization type not implemented: " + target);
+    identity = j.get<PublicProvisionalIdentity>();
 }
 
 void to_json(nlohmann::json& j, PublicIdentity const& identity)

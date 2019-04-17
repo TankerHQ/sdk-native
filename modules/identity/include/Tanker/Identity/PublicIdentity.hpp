@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
+#include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 
 #include <mpark/variant.hpp>
 
@@ -10,7 +11,8 @@ namespace Identity
 {
 struct SecretPermanentIdentity;
 
-using PublicIdentity = mpark::variant<PublicPermanentIdentity>;
+using PublicIdentity =
+    mpark::variant<PublicPermanentIdentity, PublicProvisionalIdentity>;
 
 PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity);
 
