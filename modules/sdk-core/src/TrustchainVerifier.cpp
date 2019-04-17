@@ -63,6 +63,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(UnverifiedEntry const& e) const
     TC_RETURN(TC_AWAIT(handleDeviceCreation(e)));
   case Nature::KeyPublishToDevice:
   case Nature::KeyPublishToUser:
+  case Nature::KeyPublishToProvisionalUser:
     TC_RETURN(TC_AWAIT(handleKeyPublish(e)));
   case Nature::KeyPublishToUserGroup:
     TC_RETURN(TC_AWAIT(handleKeyPublishToUserGroups(e)));
@@ -125,13 +126,14 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
   {
     Verif::verifyKeyPublishToDevice(kp, authorDevice, user);
   }
-  else if (kp.nature == Nature::KeyPublishToUser)
+  else if (kp.nature == Nature::KeyPublishToUser ||
+           kp.nature == Nature::KeyPublishToProvisionalUser)
   {
     Verif::verifyKeyPublishToUser(kp, authorDevice);
   }
   else
   {
-    assert(false && "nature must be keyPublishToDevice or keyPublishToUser");
+    assert(false && "nature must be KeyPublishToDevice/KeyPublishToUser/KeyPublishToProvisionalUser");
   }
   TC_RETURN(toEntry(kp));
 }

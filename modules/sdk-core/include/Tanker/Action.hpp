@@ -3,6 +3,7 @@
 #include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
@@ -27,6 +28,7 @@ public:
                                       KeyPublishToDevice,
                                       DeviceRevocation,
                                       KeyPublishToUser,
+                                      KeyPublishToProvisionalUser,
                                       UserGroupCreation,
                                       KeyPublishToUserGroup,
                                       UserGroupAddition>;
