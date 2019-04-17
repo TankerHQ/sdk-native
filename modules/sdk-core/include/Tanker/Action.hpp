@@ -6,6 +6,7 @@
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
+#include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
@@ -31,7 +32,8 @@ public:
                                       KeyPublishToProvisionalUser,
                                       UserGroupCreation,
                                       KeyPublishToUserGroup,
-                                      UserGroupAddition>;
+                                      UserGroupAddition,
+                                      ProvisionalIdentityClaim>;
 
   explicit Action(variant_type&&);
   explicit Action(variant_type const&);
