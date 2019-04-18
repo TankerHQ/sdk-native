@@ -176,6 +176,28 @@ TEST_CASE("Client authenticate")
   }
 }
 
+TEST_CASE("Client getPublicProvisionalIdentities")
+{
+  auto cl = initClient();
+
+  std::vector<Email> emails{Email{"alice@tanker.io"}, Email{"bob@tanker.io"}};
+
+  nlohmann::json result;
+  result[0]["SignaturePublicKey"] = Crypto::PublicSignatureKey{};
+  result[0]["EncryptionPublicKey"] = Crypto::PublicEncryptionKey{};
+  result[1]["SignaturePublicKey"] = Crypto::PublicSignatureKey{};
+  result[1]["EncryptionPublicKey"] = Crypto::PublicEncryptionKey{};
+
+  REQUIRE_CALL(
+      cl.mconn,
+      emit("get public provisional identities",
+           R"([{"email":"alice@tanker.io"},{"email":"bob@tanker.io"}])"_json
+               .dump()))
+      .RETURN(WRAP_COTASK(result.dump()));
+  auto res = AWAIT(cl.c->getPublicProvisionalIdentities(emails));
+  FAST_REQUIRE_EQ(res.size(), 2);
+}
+
 TEST_CASE("Client getBlocks")
 {
   auto cl = initClient();
