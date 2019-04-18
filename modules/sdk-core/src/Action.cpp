@@ -1,13 +1,12 @@
 #include <Tanker/Action.hpp>
 
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
-
 
 #include <cstdint>
 #include <vector>
@@ -56,6 +55,8 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
     return Action{deserializeKeyPublishToUserGroup(payload)};
   case Nature::UserGroupAddition:
     return Action{deserializeUserGroupAddition(payload)};
+  case Nature::ProvisionalIdentityClaim:
+    return Action{deserializeProvisionalIdentityClaim(payload)};
   }
   throw Error::formatEx<Error::UnexpectedBlock>(fmt("unknown nature: {:d}"),
                                                 nature);

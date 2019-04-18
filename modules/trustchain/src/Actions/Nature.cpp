@@ -26,6 +26,7 @@ std::string to_string(Nature n)
     NATURE_CASE(KeyPublishToUserGroup);
     NATURE_CASE(UserGroupAddition);
     NATURE_CASE(KeyPublishToProvisionalUser);
+    NATURE_CASE(ProvisionalIdentityClaim);
   }
   return "INVALID";
 }
