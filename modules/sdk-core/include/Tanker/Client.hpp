@@ -8,6 +8,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
@@ -83,6 +84,9 @@ public:
       int index,
       std::vector<Trustchain::UserId> const& extra_users,
       std::vector<GroupId> const& extra_groups);
+  tc::cotask<std::vector<
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(gsl::span<Email const>);
 
   std::string connectionId() const;
   boost::signals2::signal<void()> blockAvailable;
