@@ -312,6 +312,42 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
                 _privateSignatureKey));
 }
 
+std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
+    Trustchain::UserId const& userId,
+    ProvisionalUser const& provisionalUser,
+    Crypto::EncryptionKeyPair const& userKeyPair) const
+{
+  std::vector<uint8_t> keysToEncrypt;
+  keysToEncrypt.insert(keysToEncrypt.end(),
+                       provisionalUser.appEncryptionKeyPair.privateKey.begin(),
+                       provisionalUser.appEncryptionKeyPair.privateKey.end());
+  keysToEncrypt.insert(
+      keysToEncrypt.end(),
+      provisionalUser.tankerEncryptionKeyPair.privateKey.begin(),
+      provisionalUser.tankerEncryptionKeyPair.privateKey.end());
+
+  ProvisionalIdentityClaim claim{
+      userId,
+      provisionalUser.appSignatureKeyPair.publicKey,
+      provisionalUser.tankerSignatureKeyPair.publicKey,
+      {}, // filled later
+      {}, // filled later
+      userKeyPair.publicKey,
+      Crypto::sealEncrypt<
+          ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
+          keysToEncrypt, userKeyPair.publicKey),
+  };
+
+  auto const signatureData = claim.signatureData(_deviceId);
+  claim.authorSignatureByAppKey = Crypto::sign(
+      signatureData, provisionalUser.appSignatureKeyPair.privateKey);
+  claim.authorSignatureByTankerKey = Crypto::sign(
+      signatureData, provisionalUser.tankerSignatureKeyPair.privateKey);
+
+  return Serialization::serialize(
+      makeBlock(claim, _deviceId, _privateSignatureKey));
+}
+
 template <typename T, typename U>
 Block BlockGenerator::makeBlock(
     Nature nature,
