@@ -98,6 +98,12 @@ public:
                              Group group,
                              std::vector<User> const& users);
 
+  Tanker::ProvisionalUser makeProvisionalUser(std::string const& email);
+  Tanker::UnverifiedEntry claimProvisionalIdentity(
+      std::string const& userId,
+      Tanker::ProvisionalUser const& provisionalUser,
+      int authorDeviceIndex = 0);
+
   std::vector<Tanker::Block> shareToDevice(
       Device const& sender,
       User const& receiver,
