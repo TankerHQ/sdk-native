@@ -320,6 +320,11 @@ struct toVal
     ret.set("resourceKey", containerToJs(tc.key));
     return ret;
   }
+  emscripten::val operator()(ProvisionalIdentityClaim const& tc)
+  {
+    // TODO
+    return emscripten::val::object();
+  }
 };
 }
 
