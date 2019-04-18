@@ -43,6 +43,9 @@ private:
   tc::cotask<Entry> handleDeviceRevocation(UnverifiedEntry const& dr) const;
   tc::cotask<Entry> handleUserGroupAddition(UnverifiedEntry const& ga) const;
   tc::cotask<Entry> handleUserGroupCreation(UnverifiedEntry const& gc) const;
+  tc::cotask<Entry> handleProvisionalIdentityClaim(
+      UnverifiedEntry const& claim) const;
+
   tc::cotask<Entry> getAuthor(Crypto::Hash const& authorHash) const;
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
   Device getDevice(User const& user, Crypto::Hash const& deviceHash) const;

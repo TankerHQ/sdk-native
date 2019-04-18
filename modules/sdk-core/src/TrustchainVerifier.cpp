@@ -17,14 +17,15 @@
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 #include <Tanker/Verif/KeyPublishToUser.hpp>
 #include <Tanker/Verif/KeyPublishToUserGroup.hpp>
+#include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 #include <Tanker/Verif/UserGroupAddition.hpp>
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {
@@ -74,6 +75,8 @@ tc::cotask<Entry> TrustchainVerifier::verify(UnverifiedEntry const& e) const
     TC_RETURN(TC_AWAIT(handleUserGroupAddition(e)));
   case Nature::UserGroupCreation:
     TC_RETURN(TC_AWAIT(handleUserGroupCreation(e)));
+  case Nature::ProvisionalIdentityClaim:
+    TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));
   }
   throw std::runtime_error(
       "Assertion failed: Invalid nature for unverified entry");
@@ -134,7 +137,9 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
   }
   else
   {
-    assert(false && "nature must be KeyPublishToDevice/KeyPublishToUser/KeyPublishToProvisionalUser");
+    assert(false &&
+           "nature must be "
+           "KeyPublishToDevice/KeyPublishToUser/KeyPublishToProvisionalUser");
   }
   TC_RETURN(toEntry(kp));
 }
@@ -224,6 +229,23 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
   Verif::verifyUserGroupCreation(gc, authorDevice);
 
   TC_RETURN(toEntry(gc));
+}
+
+tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
+    UnverifiedEntry const& claim) const
+{
+  auto const author = TC_AWAIT(getAuthor(claim.author));
+
+  Verif::ensures(isDeviceCreation(author.nature),
+                 Error::VerificationCode::InvalidAuthor,
+                 "Invalid author nature for keyPublish");
+  auto const& authorDeviceCreation =
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
+  auto const authorUser = TC_AWAIT(getUser(authorDeviceCreation.userId()));
+  auto const authorDevice = getDevice(authorUser, author.hash);
+  Verif::verifyProvisionalIdentityClaim(claim, authorUser, authorDevice);
+
+  TC_RETURN(toEntry(claim));
 }
 
 tc::cotask<Entry> TrustchainVerifier::getAuthor(
