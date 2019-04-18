@@ -3,8 +3,8 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/DeviceId.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -310,6 +310,16 @@ struct toVal
     // TODO
     return emscripten::val::object();
   }
+  emscripten::val operator()(KeyPublishToProvisionalUser const& tc)
+  {
+    auto ret = emscripten::val::object();
+    ret.set("appPublicSignatureKey", containerToJs(tc.appPublicSignatureKey));
+    ret.set("tankerPublicSignatureKey",
+            containerToJs(tc.tankerPublicSignatureKey));
+    ret.set("resourceId", containerToJs(tc.resourceId));
+    ret.set("resourceKey", containerToJs(tc.key));
+    return ret;
+  }
 };
 }
 
@@ -388,6 +398,18 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"])};
     kp.resourceId = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
     kp.key = Crypto::SealedSymmetricKey{
+        copyToVector(jsEntry["action"]["resourceKey"])};
+    entry.action = kp;
+  }
+  else if (entry.nature == Nature::KeyPublishToProvisionalUser)
+  {
+    KeyPublishToProvisionalUser kp;
+    kp.appPublicSignatureKey = Crypto::PublicSignatureKey{
+        copyToVector(jsEntry["action"]["appPublicSignatureKey"])};
+    kp.tankerPublicSignatureKey = Crypto::PublicSignatureKey{
+        copyToVector(jsEntry["action"]["tankerPublicSignatureKey"])};
+    kp.resourceId = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
+    kp.key = Crypto::TwoTimesSealedSymmetricKey{
         copyToVector(jsEntry["action"]["resourceKey"])};
     entry.action = kp;
   }
