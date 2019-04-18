@@ -4,10 +4,34 @@ project(tankertrustchain)
 
 add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/Nature.hpp
+  include/Tanker/Trustchain/Actions/DeviceCreation.hpp
+  include/Tanker/Trustchain/Actions/DeviceCreation/v1.hpp
+  include/Tanker/Trustchain/Actions/DeviceCreation/v2.hpp
+  include/Tanker/Trustchain/Actions/DeviceCreation/v3.hpp
+  include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
+  include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
+  include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
+  include/Tanker/Trustchain/Serialization/DeviceCreation/v3.hpp
+  include/Tanker/Trustchain/Json/DeviceCreation.hpp
+  include/Tanker/Trustchain/Json/DeviceCreation/v1.hpp
+  include/Tanker/Trustchain/Json/DeviceCreation/v2.hpp
+  include/Tanker/Trustchain/Json/DeviceCreation/v3.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
 
   src/Actions/Nature.cpp
+  src/Actions/DeviceCreation.cpp
+  src/Actions/DeviceCreation/v1.cpp
+  src/Actions/DeviceCreation/v2.cpp
+  src/Actions/DeviceCreation/v3.cpp
+  src/Json/DeviceCreation.cpp
+  src/Json/DeviceCreation/v1.cpp
+  src/Json/DeviceCreation/v2.cpp
+  src/Json/DeviceCreation/v3.cpp
+  src/Serialization/DeviceCreation.cpp
+  src/Serialization/DeviceCreation/v1.cpp
+  src/Serialization/DeviceCreation/v2.cpp
+  src/Serialization/DeviceCreation/v3.cpp
   src/ExternTemplates.cpp
 )
 
@@ -26,4 +50,9 @@ install(TARGETS tankertrustchain
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertrustchain tankercrypto)
+target_link_libraries(tankertrustchain tankercrypto tankerserialization CONAN_PKG::variant CONAN_PKG::jsonformoderncpp)
+
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(test)
+endif()

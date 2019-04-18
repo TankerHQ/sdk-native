@@ -97,7 +97,8 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
   case Nature::DeviceCreation3:
   {
     auto const& authorDeviceCreation =
-        mpark::get<DeviceCreation>(author.action.variant());
+        mpark::get<Trustchain::Actions::DeviceCreation>(
+            author.action.variant());
     auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
     auto const authorDevice = getDevice(user, author.hash);
     Verif::verifyDeviceCreation(dc, authorDevice, user);
@@ -119,7 +120,7 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for keyPublish");
   auto const& authorDeviceCreation =
-      mpark::get<DeviceCreation>(author.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
   if (kp.nature == Nature::KeyPublishToDevice)
@@ -147,7 +148,7 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for keyPublish");
   auto const& authorDeviceCreation =
-      mpark::get<DeviceCreation>(author.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& keyPublishToUserGroup =
       mpark::get<KeyPublishToUserGroup>(kp.action.variant());
   auto const group = TC_AWAIT(getGroupByEncryptionKey(
@@ -168,7 +169,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for deviceRevocation");
   auto const& authorDeviceCreation =
-      mpark::get<DeviceCreation>(author.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& revocation = mpark::get<DeviceRevocation>(dr.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
@@ -188,7 +189,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for userGroupAddition");
   auto const& authorDeviceCreation =
-      mpark::get<DeviceCreation>(author.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& userGroupAddition =
       mpark::get<UserGroupAddition>(ga.action.variant());
   auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId));
@@ -208,7 +209,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for userGroupCreation");
   auto const& authorDeviceCreation =
-      mpark::get<DeviceCreation>(author.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& userGroupCreation =
       mpark::get<UserGroupCreation>(gc.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));

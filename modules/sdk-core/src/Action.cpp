@@ -3,6 +3,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
@@ -15,6 +16,28 @@ using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {
+namespace
+{
+struct MakeIndexesVisitor
+{
+  template <typename T>
+  auto operator()(T const& val) const
+  {
+    return val.makeIndexes();
+  }
+
+  auto operator()(Trustchain::Actions::DeviceCreation const& dc) const
+  {
+    auto const& id = dc.userId();
+    auto const& key = dc.publicSignatureKey();
+
+    return std::vector<Index>{
+        Index{IndexType::UserId, {id.begin(), id.end()}},
+        Index{IndexType::DevicePublicSignatureKey, {key.begin(), key.end()}}};
+  }
+};
+}
+
 std::uint8_t* to_serialized(std::uint8_t* it, Action const& dr)
 {
   return Serialization::serialize(it, dr.variant());
@@ -22,6 +45,8 @@ std::uint8_t* to_serialized(std::uint8_t* it, Action const& dr)
 
 Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
 {
+  using Trustchain::Actions::DeviceCreation;
+
   switch (nature)
   {
   case Nature::TrustchainCreation:
@@ -29,16 +54,16 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
   case Nature::KeyPublishToDevice:
     return Action{deserializeKeyPublishToDevice(payload)};
   case Nature::DeviceCreation:
-    return Action{
-        DeviceCreation{Serialization::deserialize<DeviceCreation1>(payload)}};
+    return Action{DeviceCreation{
+        Serialization::deserialize<DeviceCreation::v1>(payload)}};
   case Nature::DeviceCreation2:
-    // Deserialize DeviceCreation2 as DeviceCreation1 (skip the lastReset
-    // field):
-    return Action{DeviceCreation{Serialization::deserialize<DeviceCreation1>(
-        payload.subspan(Crypto::Hash::arraySize))}};
+    return Action{DeviceCreation{
+        Serialization::deserialize<Trustchain::Actions::DeviceCreation2>(
+            payload)
+            .asDeviceCreation1()}};
   case Nature::DeviceCreation3:
-    return Action{
-        DeviceCreation{Serialization::deserialize<DeviceCreation3>(payload)}};
+    return Action{DeviceCreation{
+        Serialization::deserialize<DeviceCreation::v3>(payload)}};
   case Nature::KeyPublishToUser:
     return Action{deserializeKeyPublishToUser(payload)};
   case Nature::KeyPublishToProvisionalUser:
@@ -94,7 +119,7 @@ Nature Action::nature() const
 
 std::vector<Index> Action::makeIndexes() const
 {
-  return mpark::visit([](auto const& v) { return v.makeIndexes(); }, _v);
+  return mpark::visit(MakeIndexesVisitor{}, _v);
 }
 
 void to_json(nlohmann::json& j, Action const& r)

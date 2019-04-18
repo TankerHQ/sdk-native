@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>

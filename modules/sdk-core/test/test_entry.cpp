@@ -2,7 +2,7 @@
 
 #include <mpark/variant.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -47,5 +47,6 @@ TEST_CASE("blockToUnverifiedEntry")
   CHECK(entry.nature == block.nature);
   CHECK(entry.author == block.author);
   CHECK(entry.signature == block.signature);
-  CHECK(mpark::holds_alternative<DeviceCreation>(entry.action.variant()));
+  CHECK(mpark::holds_alternative<Trustchain::Actions::DeviceCreation>(
+      entry.action.variant()));
 }

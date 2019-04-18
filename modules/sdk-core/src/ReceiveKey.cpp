@@ -1,6 +1,6 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/ContactStore.hpp>

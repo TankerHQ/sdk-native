@@ -1,6 +1,5 @@
 #include <Tanker/DataStore/Database.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Connection.hpp>
@@ -21,9 +20,10 @@
 #include <Tanker/Index.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/DeviceId.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -419,9 +419,12 @@ tc::cotask<Entry> Database::getTrustchainDevice(DeviceId const& deviceId)
 
   auto const entry = rowToEntry(row);
 
-  if (!mpark::get_if<DeviceCreation>(&entry.action.variant()))
+  if (!mpark::get_if<Trustchain::Actions::DeviceCreation>(
+          &entry.action.variant()))
+  {
     throw Error::formatEx<RecordNotFound>(
         fmt("the block {:s} is not a device creation"), entry.hash);
+  }
 
   TC_RETURN(entry);
 }

@@ -1,6 +1,5 @@
 #include <Tanker/TrustchainPuller.hpp>
 
-#include <Tanker/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
@@ -11,6 +10,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
@@ -139,29 +139,33 @@ tc::cotask<void> TrustchainPuller::catchUp()
               TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
               processed.insert(unverifiedEntry.hash);
             }
-            else if (auto const deviceCreation = mpark::get_if<DeviceCreation>(
-                         &unverifiedEntry.action.variant()))
+            else if (auto const deviceCreation =
+                         mpark::get_if<Trustchain::Actions::DeviceCreation>(
+                             &unverifiedEntry.action.variant()))
             {
               if (deviceCreation->userId() == _userId)
               {
                 TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
                 processed.insert(unverifiedEntry.hash);
-                if (!deviceCreation->userKeyPair().has_value())
+                if (auto dc3 =
+                        deviceCreation
+                            ->get_if<Trustchain::Actions::DeviceCreation::v3>())
+                {
+                  if (DeviceId{unverifiedEntry.hash} == _deviceId)
+                  {
+                    auto const lastPrivateEncryptionKey =
+                        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+                            dc3->sealedPrivateUserEncryptionKey(),
+                            _deviceKeyStore->encryptionKeyPair());
+                    userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
+                        dc3->publicUserEncryptionKey(),
+                        lastPrivateEncryptionKey});
+                  }
+                }
+                else
                 {
                   throw std::runtime_error(
                       "assertion failed: self device must have a user key");
-                }
-                if (DeviceId{unverifiedEntry.hash} == _deviceId)
-                {
-                  auto const lastPrivateEncryptionKey =
-                      Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-                          deviceCreation->userKeyPair()
-                              ->encryptedPrivateEncryptionKey,
-                          _deviceKeyStore->encryptionKeyPair());
-
-                  userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
-                      deviceCreation->userKeyPair()->publicEncryptionKey,
-                      lastPrivateEncryptionKey});
                 }
               }
             }
@@ -256,7 +260,8 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
 tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
 {
   if (auto const deviceCreation =
-          mpark::get_if<DeviceCreation>(&entry.action.variant()))
+          mpark::get_if<Trustchain::Actions::DeviceCreation>(
+              &entry.action.variant()))
   {
     if (deviceCreation->publicSignatureKey() == _devicePublicSignatureKey)
       TC_AWAIT(receivedThisDeviceId(DeviceId{entry.hash}));

@@ -47,7 +47,7 @@ TEST_CASE(
 
   auto const entry = toVerifiedEntry(alice.entry);
   auto const deviceCreation =
-      mpark::get<DeviceCreation>(entry.action.variant());
+      mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
 
   AWAIT_VOID(session.catchUserKey(DeviceId{entry.hash}, deviceCreation));
 
