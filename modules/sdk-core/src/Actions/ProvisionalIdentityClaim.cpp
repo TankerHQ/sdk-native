@@ -27,6 +27,22 @@ std::vector<Index> ProvisionalIdentityClaim::makeIndexes() const
   return {};
 }
 
+std::vector<uint8_t> ProvisionalIdentityClaim::signatureData(
+    DeviceId const& authorId) const
+{
+  std::vector<uint8_t> signatureData;
+  signatureData.reserve(authorId.size() + appSignaturePublicKey.size() +
+                        tankerSignaturePublicKey.size());
+  signatureData.insert(signatureData.end(), authorId.begin(), authorId.end());
+  signatureData.insert(signatureData.end(),
+                       appSignaturePublicKey.begin(),
+                       appSignaturePublicKey.end());
+  signatureData.insert(signatureData.end(),
+                       tankerSignaturePublicKey.begin(),
+                       tankerSignaturePublicKey.end());
+  return signatureData;
+}
+
 bool operator==(ProvisionalIdentityClaim const& l,
                 ProvisionalIdentityClaim const& r)
 {
