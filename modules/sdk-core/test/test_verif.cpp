@@ -13,6 +13,7 @@
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 #include <Tanker/Verif/KeyPublishToUser.hpp>
 #include <Tanker/Verif/KeyPublishToUserGroup.hpp>
+#include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 #include <Tanker/Verif/UserGroupAddition.hpp>
 #include <Tanker/Verif/UserGroupCreation.hpp>
@@ -527,8 +528,10 @@ TEST_CASE("KeyPublishToProvisionalUser")
   auto const user = builder.makeUser3("alice");
   auto const device = user.user.devices.front();
 
-  auto const appPublicSignatureKey = make<Crypto::PublicSignatureKey>("app sig key");
-  auto const tankerPublicSignatureKey = make<Crypto::PublicSignatureKey>("tanker sig key");
+  auto const appPublicSignatureKey =
+      make<Crypto::PublicSignatureKey>("app sig key");
+  auto const tankerPublicSignatureKey =
+      make<Crypto::PublicSignatureKey>("tanker sig key");
   auto const resourceId = make<Crypto::Mac>("mac");
   auto const twoTimesSealedSymmetricKey =
       make<Crypto::TwoTimesSealedSymmetricKey>(
@@ -904,5 +907,80 @@ TEST_CASE("Verif UserGroupAddition")
   SUBCASE("should accept a valid UserGroupAddition")
   {
     CHECK_NOTHROW(Verif::verifyUserGroupAddition(gaEntry, authorDevice, group));
+  }
+}
+
+TEST_CASE("Verif ProvisionalIdentityClaim")
+{
+  TrustchainBuilder builder;
+
+  auto const alice = builder.makeUser3("alice");
+  auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
+  auto picEntry = builder.claimProvisionalIdentity("alice", provisionalUser);
+
+  auto authorDevice = alice.user.devices[0].asTankerDevice();
+  auto authorUser = alice.user.asTankerUser();
+
+  SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidAuthor);
+  }
+
+  SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
+  {
+    picEntry.signature[0]++;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
+  {
+    auto provisionalIdentityClaim =
+        mpark::get<ProvisionalIdentityClaim>(picEntry.action.variant());
+    provisionalIdentityClaim.authorSignatureByAppKey[0]++;
+    picEntry.action = provisionalIdentityClaim;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE(
+      "should reject a ProvisionalIdentityClaim with invalid tanker signature")
+  {
+    auto provisionalIdentityClaim =
+        mpark::get<ProvisionalIdentityClaim>(picEntry.action.variant());
+    provisionalIdentityClaim.authorSignatureByTankerKey[0]++;
+    picEntry.action = provisionalIdentityClaim;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a ProvisionalIdentityClaim with an incorrect user ID")
+  {
+    authorUser.id[0]++;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidUserId);
+  }
+
+  SUBCASE(
+      "should reject a ProvisionalIdentityClaim with an incorrect user public "
+      "key")
+  {
+    authorUser.userKey.value()[0]++;
+    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
+                                       picEntry, authorUser, authorDevice),
+                                   Error::VerificationCode::InvalidUserKey);
+  }
+
+  SUBCASE("should accept a valid ProvisionalIdentityClaim")
+  {
+    CHECK_NOTHROW(Verif::verifyProvisionalIdentityClaim(
+        picEntry, authorUser, authorDevice));
   }
 }
