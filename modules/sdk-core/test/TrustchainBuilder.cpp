@@ -278,6 +278,42 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   return {device, tankerUser, entry};
 }
 
+Tanker::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
+    std::string const& email)
+{
+  return Tanker::ProvisionalUser{
+      _trustchainId,
+      Tanker::Identity::TargetType::Email,
+      email,
+      Crypto::makeEncryptionKeyPair(),
+      Crypto::makeEncryptionKeyPair(),
+      Crypto::makeSignatureKeyPair(),
+      Crypto::makeSignatureKeyPair(),
+  };
+}
+
+Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
+    std::string const& suserId,
+    Tanker::ProvisionalUser const& provisionalUser,
+    int authorDeviceIndex)
+{
+  auto const user = getUser(suserId).value();
+  auto const& authorDevice = user.devices.at(authorDeviceIndex);
+
+  auto const preserializedBlock =
+      BlockGenerator(_trustchainId,
+                     authorDevice.keys.signatureKeyPair.privateKey,
+                     authorDevice.keys.deviceId)
+          .provisionalIdentityClaim(
+              user.userId, provisionalUser, user.userKeys.back().keyPair);
+  auto block = Serialization::deserialize<Block>(preserializedBlock);
+  block.index = _blocks.size() + 1;
+  _blocks.push_back(block);
+
+  auto const entry = blockToUnverifiedEntry(block);
+  return entry;
+}
+
 namespace
 {
 Tanker::UserGroupCreation::GroupEncryptedKeys generateGroupKeysForUsers(

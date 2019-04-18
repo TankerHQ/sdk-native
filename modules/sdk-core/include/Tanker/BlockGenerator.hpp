@@ -17,8 +17,10 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
+#include <Tanker/ProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/ResourceId.hpp>
 
@@ -119,6 +121,11 @@ public:
       Crypto::Hash const& previousGroupBlock,
       UserGroupCreation::GroupEncryptedKeys const&
           encryptedGroupPrivateEncryptionKeysForUsers) const;
+
+  std::vector<uint8_t> provisionalIdentityClaim(
+      Trustchain::UserId const& userId,
+      ProvisionalUser const& provisionalUser,
+      Crypto::EncryptionKeyPair const& userKeyPair) const;
 
 private:
   Trustchain::TrustchainId _trustchainId;
