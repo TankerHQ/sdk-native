@@ -19,6 +19,7 @@
 #include <fmt/format.h>
 
 #include <nlohmann/json.hpp>
+#include <optional.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -200,6 +201,27 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
         elem.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>());
   }
   TC_RETURN(ret);
+}
+
+tc::cotask<nonstd::optional<
+    std::pair<Crypto::EncryptionKeyPair, Crypto::SignatureKeyPair>>>
+Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
+                                   VerificationCode const& verificationCode)
+{
+  auto const json = TC_AWAIT(emit(
+      "get provisional identity",
+      {{"email", provisonalIdentity}, {"verificationCode", verificationCode}}));
+
+  if (json.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto encPair = Crypto::EncryptionKeyPair{
+      json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
+      json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()};
+  auto sigPair = Crypto::SignatureKeyPair{
+      json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
+      json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()};
+  TC_RETURN(std::make_pair(encPair, sigPair));
 }
 
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
