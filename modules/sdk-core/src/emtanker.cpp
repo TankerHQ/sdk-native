@@ -1,4 +1,3 @@
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Admin.hpp>
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Block.hpp>

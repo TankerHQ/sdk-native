@@ -116,11 +116,12 @@ TEST_CASE("trustchain")
   SUBCASE("it should add entries to the trustchain and update last index")
   {
     TrustchainStore trustchain(dbPtr.get());
-    AWAIT_VOID(trustchain.addEntry(Entry{10,
-                                         Nature::TrustchainCreation,
-                                         Crypto::Hash{},
-                                         Action{TrustchainCreation{}},
-                                         Crypto::Hash{}}));
+    AWAIT_VOID(trustchain.addEntry(
+        Entry{10,
+              Nature::TrustchainCreation,
+              Crypto::Hash{},
+              Action{Trustchain::Actions::TrustchainCreation{}},
+              Crypto::Hash{}}));
 
     CHECK(10 == AWAIT(trustchain.getLastIndex()));
   }
@@ -129,11 +130,12 @@ TEST_CASE("trustchain")
   {
     {
       TrustchainStore trustchain(dbPtr.get());
-      AWAIT_VOID(trustchain.addEntry(Entry{10,
-                                           Nature::TrustchainCreation,
-                                           Crypto::Hash{},
-                                           Action{TrustchainCreation{}},
-                                           Crypto::Hash{}}));
+      AWAIT_VOID(trustchain.addEntry(
+          Entry{10,
+                Nature::TrustchainCreation,
+                Crypto::Hash{},
+                Action{Trustchain::Actions::TrustchainCreation{}},
+                Crypto::Hash{}}));
     }
     {
       TrustchainStore trustchain(dbPtr.get());

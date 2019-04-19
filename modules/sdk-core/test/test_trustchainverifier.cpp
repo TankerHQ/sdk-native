@@ -1,12 +1,10 @@
 #include <Tanker/TrustchainVerifier.hpp>
 
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
-#include <Tanker/Verif/TrustchainCreation.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>

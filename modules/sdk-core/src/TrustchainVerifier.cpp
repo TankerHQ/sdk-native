@@ -92,7 +92,9 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
   case Nature::TrustchainCreation:
   {
     Verif::verifyDeviceCreation(
-        dc, mpark::get<TrustchainCreation>(author.action.variant()));
+        dc,
+        mpark::get<Trustchain::Actions::TrustchainCreation>(
+            author.action.variant()));
     break;
   }
   case Nature::DeviceCreation:

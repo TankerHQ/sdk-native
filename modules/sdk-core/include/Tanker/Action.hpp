@@ -6,11 +6,11 @@
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -24,7 +24,7 @@ namespace Tanker
 class Action
 {
 public:
-  using variant_type = mpark::variant<TrustchainCreation,
+  using variant_type = mpark::variant<Trustchain::Actions::TrustchainCreation,
                                       Trustchain::Actions::DeviceCreation,
                                       KeyPublishToDevice,
                                       DeviceRevocation,
