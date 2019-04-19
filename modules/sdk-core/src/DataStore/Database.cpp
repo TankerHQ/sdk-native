@@ -9,6 +9,7 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
+#include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
@@ -45,8 +46,8 @@
 
 TLOG_CATEGORY(Database);
 
-using Tanker::Trustchain::Actions::Nature;
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::Actions::Nature;
 
 namespace Tanker
 {
@@ -132,6 +133,8 @@ using TrustchainResourceIdToKeyPublishTable =
     DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
+using ProvisionalUserKeys =
+    DbModels::provisional_user_keys::provisional_user_keys;
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
@@ -147,6 +150,7 @@ Database::Database(std::string const& dbPath,
   DataStore::createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(*_db);
   DataStore::createOrMigrateTable<ContactUserKeysTable>(*_db);
   DataStore::createOrMigrateTable<ResourceKeysTable>(*_db);
+  DataStore::createOrMigrateTable<ProvisionalUserKeys>(*_db);
   DataStore::createOrMigrateTable<DeviceKeysTable>(*_db);
   DataStore::createOrMigrateTable<ContactDevicesTable>(*_db);
   DataStore::createOrMigrateTable<GroupsTable>(*_db);
@@ -195,6 +199,7 @@ void Database::flushAllCaches()
   flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
+  flushTable(ProvisionalUserKeys{});
   flushTable(GroupsTable{});
 }
 
@@ -525,6 +530,51 @@ tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
   auto const& row = rows.front();
 
   TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
+}
+
+tc::cotask<void> Database::putProvisionalUserKeys(
+    Crypto::PublicSignatureKey const& appPublicSigKey,
+    Crypto::PublicSignatureKey const& tankerPublicSigKey,
+    Tanker::ProvisionalUserKeys const& provisionalUserKeys)
+{
+  FUNC_TIMER(DB);
+  ProvisionalUserKeys tab{};
+
+  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
+      tab.app_pub_sig_key = appPublicSigKey.base(),
+      tab.tanker_pub_sig_key = tankerPublicSigKey.base(),
+      tab.app_enc_priv = provisionalUserKeys.appKeys.privateKey.base(),
+      tab.app_enc_pub = provisionalUserKeys.appKeys.publicKey.base(),
+      tab.tanker_enc_priv = provisionalUserKeys.tankerKeys.privateKey.base(),
+      tab.tanker_enc_pub = provisionalUserKeys.tankerKeys.publicKey.base()));
+  TC_RETURN();
+}
+
+tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+Database::findProvisionalUserKeys(
+    Crypto::PublicSignatureKey const& appPublicSigKey,
+    Crypto::PublicSignatureKey const& tankerPublicSigKey)
+{
+  FUNC_TIMER(DB);
+  ProvisionalUserKeys tab{};
+  auto rows =
+      (*_db)(select(tab.app_enc_priv,
+                    tab.app_enc_pub,
+                    tab.tanker_enc_priv,
+                    tab.tanker_enc_pub)
+                 .from(tab)
+                 .where(tab.app_pub_sig_key == appPublicSigKey.base() and
+                        tab.tanker_pub_sig_key == tankerPublicSigKey.base()));
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = rows.front();
+  Tanker::ProvisionalUserKeys ret{
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(row.app_enc_priv)},
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.tanker_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+           row.tanker_enc_priv)}};
+  TC_RETURN(ret);
 }
 
 tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()

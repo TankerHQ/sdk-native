@@ -53,6 +53,14 @@ public:
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
       Crypto::Mac const& mac) override;
 
+  tc::cotask<void> putProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey,
+      ProvisionalUserKeys const& provisionalUserKeys) override;
+  tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(DeviceId const& deviceId) override;

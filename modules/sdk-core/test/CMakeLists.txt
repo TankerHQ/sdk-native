@@ -11,6 +11,7 @@ add_executable(test_tanker
   test_groupaccessor.cpp
   test_groupupdater.cpp
   test_resourcekeystore.cpp
+  test_provisionaluserkeysstore.cpp
   test_trustchain.cpp
   test_userkeystore.cpp
   test_blockgenerator.cpp

@@ -7,6 +7,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -80,6 +81,15 @@ public:
                                           Crypto::SymmetricKey const& key) = 0;
   virtual tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
       Crypto::Mac const& mac) = 0;
+
+  virtual tc::cotask<void> putProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey,
+      ProvisionalUserKeys const& provisionalUserKeys) = 0;
+  virtual tc::cotask<nonstd::optional<ProvisionalUserKeys>>
+  findProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey) = 0;
 
   virtual tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() = 0;
   virtual tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) = 0;
