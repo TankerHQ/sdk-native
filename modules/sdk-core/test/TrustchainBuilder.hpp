@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/ContactStore.hpp>

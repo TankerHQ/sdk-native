@@ -1,11 +1,11 @@
 #include <Tanker/Verif/DeviceCreation.hpp>
 
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -82,7 +82,7 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
 }
 
 void verifyDeviceCreation(UnverifiedEntry const& entry,
-                          TrustchainCreation const& author)
+                          Trustchain::Actions::TrustchainCreation const& author)
 {
   assert(entry.nature == Nature::DeviceCreation ||
          entry.nature == Nature::DeviceCreation3);
@@ -96,7 +96,7 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
           Error::VerificationCode::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
           "signature key");
-  ensures(verifySignature(deviceCreation, author.publicSignatureKey),
+  ensures(verifySignature(deviceCreation, author.publicSignatureKey()),
           Error::VerificationCode::InvalidDelegationSignature,
           "device creation's delegation signature must be signed by the "
           "author's private signature key");

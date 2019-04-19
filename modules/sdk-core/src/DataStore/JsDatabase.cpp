@@ -235,11 +235,12 @@ namespace
 struct toVal
 {
   using DeviceCreation = Trustchain::Actions::DeviceCreation;
+  using TrustchainCreation = Trustchain::Actions::TrustchainCreation;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {
     auto ret = emscripten::val::object();
-    ret.set("publicSignatureKey", containerToJs(tc.publicSignatureKey));
+    ret.set("publicSignatureKey", containerToJs(tc.publicSignatureKey()));
     return ret;
   }
   emscripten::val operator()(DeviceCreation const& dc)
@@ -347,8 +348,9 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
 
   if (entry.nature == Nature::TrustchainCreation)
   {
-    entry.action = Action{TrustchainCreation{Crypto::PublicSignatureKey{
-        copyToVector(jsEntry["action"]["publicSignatureKey"])}}};
+    entry.action = Action{
+        Trustchain::Actions::TrustchainCreation{Crypto::PublicSignatureKey{
+            copyToVector(jsEntry["action"]["publicSignatureKey"])}}};
   }
   else if (entry.nature == Nature::DeviceCreation ||
            entry.nature == Nature::DeviceCreation2 ||

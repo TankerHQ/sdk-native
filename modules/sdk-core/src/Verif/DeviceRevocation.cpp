@@ -1,11 +1,10 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/DeviceRevocation.hpp>
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>

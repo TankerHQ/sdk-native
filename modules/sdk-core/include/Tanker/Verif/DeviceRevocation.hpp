@@ -3,7 +3,6 @@
 namespace Tanker
 {
 struct UnverifiedEntry;
-struct TrustchainCreation;
 struct Device;
 struct User;
 

@@ -24,7 +24,7 @@ TrustchainBuilder::TrustchainBuilder()
   Block block{};
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
-      Tanker::TrustchainCreation{_trustchainKeyPair.publicKey});
+      Trustchain::Actions::TrustchainCreation{_trustchainKeyPair.publicKey});
   block.trustchainId = Trustchain::TrustchainId(block.hash());
   _trustchainId = block.trustchainId;
   block.index = _blocks.size() + 1;

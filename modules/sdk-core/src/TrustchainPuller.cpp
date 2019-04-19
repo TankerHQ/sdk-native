@@ -133,7 +133,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
         {
           try
           {
-            if (mpark::get_if<TrustchainCreation>(
+            if (mpark::get_if<Trustchain::Actions::TrustchainCreation>(
                     &unverifiedEntry.action.variant()))
             {
               TC_AWAIT(verifyAndAddEntry(unverifiedEntry));

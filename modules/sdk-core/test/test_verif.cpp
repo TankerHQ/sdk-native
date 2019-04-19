@@ -1,10 +1,10 @@
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
@@ -29,6 +29,7 @@
 #include "TrustchainBuilder.hpp"
 
 using Tanker::Trustchain::Actions::DeviceCreation;
+using Tanker::Trustchain::Actions::TrustchainCreation;
 using namespace Tanker;
 
 #define CHECK_VERIFICATION_FAILED_WITH(functionCall, errCode) \

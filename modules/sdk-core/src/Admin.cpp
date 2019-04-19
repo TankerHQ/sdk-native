@@ -2,13 +2,13 @@
 
 #include <Tanker/AConnection.hpp>
 #include <Tanker/Action.hpp>
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <boost/signals2/connection.hpp>
@@ -70,8 +70,8 @@ tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
   FUNC_TIMER(Net);
   Block block{};
   block.nature = Nature::TrustchainCreation;
-  block.payload =
-      Serialization::serialize(TrustchainCreation{keyPair.publicKey});
+  block.payload = Serialization::serialize(
+      Trustchain::Actions::TrustchainCreation{keyPair.publicKey});
   block.trustchainId = Trustchain::TrustchainId(block.hash());
 
   auto const message = nlohmann::json{

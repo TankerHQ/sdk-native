@@ -7,7 +7,6 @@
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Actions/TrustchainCreation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
@@ -20,19 +19,6 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
-
-TEST_CASE("it should serialize/deserialize a TrustchainCreation")
-{
-  TrustchainCreation before;
-  before.publicSignatureKey =
-      make<Crypto::PublicSignatureKey>("my signature key");
-
-  TrustchainCreation const after =
-      Serialization::deserialize<TrustchainCreation>(
-          Serialization::serialize(before));
-
-  CHECK(before == after);
-}
 
 TEST_CASE("it should serialize/deserialize a KeyPublishToDevice")
 {
