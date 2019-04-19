@@ -1,6 +1,5 @@
 #include <Tanker/Share.hpp>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -9,9 +8,9 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserNotFound.hpp>
 

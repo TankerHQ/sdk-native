@@ -6,7 +6,6 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <Helpers/Await.hpp>
 

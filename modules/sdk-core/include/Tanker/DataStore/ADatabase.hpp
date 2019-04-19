@@ -5,8 +5,8 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -62,7 +62,8 @@ public:
       Crypto::Mac const& resourceId) = 0;
   virtual tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
       Trustchain::UserId const& userId) = 0;
-  virtual tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) = 0;
+  virtual tc::cotask<Entry> getTrustchainDevice(
+      Trustchain::DeviceId const& deviceId) = 0;
 
   virtual tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
@@ -93,18 +94,19 @@ public:
 
   virtual tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() = 0;
   virtual tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) = 0;
-  virtual tc::cotask<void> setDeviceId(DeviceId const& deviceId) = 0;
+  virtual tc::cotask<void> setDeviceId(
+      Trustchain::DeviceId const& deviceId) = 0;
 
   virtual tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                                      Device const& device) = 0;
   virtual tc::cotask<nonstd::optional<Device>> findDevice(
-      DeviceId const& id) = 0;
+      Trustchain::DeviceId const& id) = 0;
   virtual tc::cotask<std::vector<Device>> getDevicesOf(
       Trustchain::UserId const& id) = 0;
   virtual tc::cotask<nonstd::optional<Trustchain::UserId>> findDeviceUserId(
-      DeviceId const& id) = 0;
+      Trustchain::DeviceId const& id) = 0;
   virtual tc::cotask<void> updateDeviceRevokedAt(
-      DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;
+      Trustchain::DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;
 
   virtual tc::cotask<void> putFullGroup(Group const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;

@@ -3,7 +3,6 @@
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/ContactUserKeys.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <fmt/format.h>
 

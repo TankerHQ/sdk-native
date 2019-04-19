@@ -62,7 +62,7 @@ void checkUnlockMessage(Trustchain::TrustchainId const& tid,
 TEST_CASE("it can convert a ghost device to unlock key")
 {
   auto const ghostDevice = GhostDevice{
-      make<DeviceId>("devid"),
+      make<Trustchain::DeviceId>("devid"),
       make<Crypto::PrivateSignatureKey>("sigkey"),
       make<Crypto::PrivateEncryptionKey>("enckey"),
   };

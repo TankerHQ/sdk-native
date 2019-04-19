@@ -7,9 +7,9 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
@@ -80,7 +80,8 @@ public:
   tc::cotask<std::string> requestAuthChallenge();
   tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);
   tc::cotask<EncryptedUserKey> getLastUserKey(
-      Trustchain::TrustchainId const& trustchainId, DeviceId const& deviceId);
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::DeviceId const& deviceId);
   tc::cotask<void> subscribeToCreation(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& publicKey,

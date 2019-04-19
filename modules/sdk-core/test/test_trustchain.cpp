@@ -3,7 +3,6 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <Helpers/Await.hpp>

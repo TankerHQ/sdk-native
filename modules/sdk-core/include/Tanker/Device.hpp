@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <optional.hpp>
 
@@ -12,7 +12,7 @@ namespace Tanker
 {
 struct Device
 {
-  DeviceId id;
+  Trustchain::DeviceId id;
   uint64_t createdAtBlkIndex;
   nonstd::optional<uint64_t> revokedAtBlkIndex;
   Crypto::PublicSignatureKey publicSignatureKey;

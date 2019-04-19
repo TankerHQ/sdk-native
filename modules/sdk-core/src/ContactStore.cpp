@@ -4,8 +4,8 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/User.hpp>
 
 #include <fmt/format.h>
@@ -62,7 +62,7 @@ tc::cotask<nonstd::optional<User>> ContactStore::findUser(
 }
 
 tc::cotask<nonstd::optional<Device>> ContactStore::findDevice(
-    DeviceId const& id) const
+    Trustchain::DeviceId const& id) const
 {
   TC_RETURN(TC_AWAIT(_db->findDevice(id)));
 }
@@ -80,12 +80,12 @@ tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByUserPublicKey(
 }
 
 tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByDeviceId(
-    DeviceId const& id) const
+    Trustchain::DeviceId const& id) const
 {
   TC_RETURN(TC_AWAIT(_db->findDeviceUserId(id)));
 }
 
-tc::cotask<void> ContactStore::revokeDevice(DeviceId const& id,
+tc::cotask<void> ContactStore::revokeDevice(Trustchain::DeviceId const& id,
                                             uint64_t revokedAtBlkIndex) const
 {
   TC_AWAIT(_db->updateDeviceRevokedAt(id, revokedAtBlkIndex));

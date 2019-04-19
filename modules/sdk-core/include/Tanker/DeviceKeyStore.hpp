@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -24,9 +24,9 @@ public:
 
   Crypto::SignatureKeyPair const& signatureKeyPair() const noexcept;
   Crypto::EncryptionKeyPair const& encryptionKeyPair() const noexcept;
-  DeviceId const& deviceId() const noexcept;
+  Trustchain::DeviceId const& deviceId() const noexcept;
 
-  tc::cotask<void> setDeviceId(DeviceId const& deviceId);
+  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   DeviceKeys const& deviceKeys() const;
 
   static tc::cotask<std::unique_ptr<DeviceKeyStore>> open(

@@ -9,12 +9,12 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -107,15 +107,15 @@ public:
 
   tc::cotask<void> syncTrustchain();
 
-  tc::cotask<void> revokeDevice(DeviceId const& deviceId);
+  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   boost::signals2::signal<void()> deviceRevoked;
-  boost::signals2::signal<void(DeviceId const&)> gotDeviceId;
+  boost::signals2::signal<void(Trustchain::DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(
-      DeviceId const& id,
+      Trustchain::DeviceId const& id,
       Trustchain::Actions::DeviceCreation const& deviceCreation);
-  DeviceId const& deviceId() const;
+  Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
 private:
@@ -123,7 +123,7 @@ private:
                          std::vector<Trustchain::UserId> const& userIds,
                          std::vector<GroupId> const& groupIds);
 
-  tc::cotask<void> setDeviceId(DeviceId const& deviceId);
+  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
   tc::cotask<void> onDeviceCreated(Entry const& entry);
   tc::cotask<void> onDeviceRevoked(Entry const& entry);

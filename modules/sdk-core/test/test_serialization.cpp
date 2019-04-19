@@ -1,6 +1,5 @@
 #include <doctest.h>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
@@ -11,9 +10,10 @@
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -23,7 +23,7 @@ using namespace Tanker;
 TEST_CASE("it should serialize/deserialize a KeyPublishToDevice")
 {
   KeyPublishToDevice before;
-  before.recipient = make<DeviceId>("recipient device");
+  before.recipient = make<Trustchain::DeviceId>("recipient device");
   before.mac = make<Crypto::Mac>("resource mac");
   before.key = make<Crypto::EncryptedSymmetricKey>("encrypted key ..");
 
@@ -160,7 +160,7 @@ TEST_CASE("it should serialize/deserialize a Block")
 TEST_CASE("it should serialize/deserialize a DeviceRevocation V1")
 {
   DeviceRevocation1 before{};
-  before.deviceId = make<DeviceId>("the device ID !");
+  before.deviceId = make<Trustchain::DeviceId>("the device ID !");
 
   auto const after = Serialization::deserialize<DeviceRevocation1>(
       Serialization::serialize(before));
@@ -171,7 +171,7 @@ TEST_CASE("it should serialize/deserialize a DeviceRevocation V1")
 TEST_CASE("it should serialize/deserialize a DeviceRevocation V2")
 {
   DeviceRevocation2 before;
-  before.deviceId = make<DeviceId>("the device ID !");
+  before.deviceId = make<Trustchain::DeviceId>("the device ID !");
   before.publicEncryptionKey =
       make<Crypto::PublicEncryptionKey>("the new user key");
   before.previousPublicEncryptionKey =
@@ -179,7 +179,7 @@ TEST_CASE("it should serialize/deserialize a DeviceRevocation V2")
   before.encryptedKeyForPreviousUserKey =
       make<Crypto::SealedPrivateEncryptionKey>("enc for previous user");
   before.userKeys.push_back(
-      EncryptedPrivateUserKey{make<DeviceId>("enc pub key recipient"),
+      EncryptedPrivateUserKey{make<Trustchain::DeviceId>("enc pub key recipient"),
                               make<Crypto::SealedPrivateEncryptionKey>(
                                   "encrypted magical private key")});
 
@@ -196,7 +196,7 @@ TEST_CASE("it should deserialize a device revocation v1")
       0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0};
 
   DeviceRevocation1 expected{};
-  expected.deviceId = make<DeviceId>("the device ID !");
+  expected.deviceId = make<Trustchain::DeviceId>("the device ID !");
 
   auto const actual = Serialization::deserialize<DeviceRevocation1>(payload);
 
@@ -244,7 +244,7 @@ TEST_CASE("it should deserialize a device revocation v2")
   };
 
   DeviceRevocation2 expected;
-  expected.deviceId = make<DeviceId>({
+  expected.deviceId = make<Trustchain::DeviceId>({
       0xe9, 0x0b, 0x0a, 0x13, 0x05, 0xb1, 0x82, 0x85, 0xab, 0x9d, 0xbe, 0x3f,
       0xdb, 0x57, 0x2b, 0x71, 0x6c, 0x0d, 0xa1, 0xa3, 0xad, 0xb8, 0x86, 0x9b,
       0x39, 0x58, 0xcb, 0x00, 0xfa, 0x31, 0x5d, 0x87});
@@ -265,7 +265,7 @@ TEST_CASE("it should deserialize a device revocation v2")
       0xc1, 0x1d, 0xda, 0x76, 0xaf, 0xc8, 0xfd, 0x70, 0x74, 0x5c, 0xbb, 0xd6,
       0xb8, 0x7f, 0x8f, 0x6b, 0x0e, 0xc0, 0x91, 0x63, 0xe7, 0xc2, 0x04, 0x69,
       0x0e, 0xc0, 0x91, 0x63, 0xe7, 0xc2, 0x04, 0x69});
-  expected.userKeys.push_back(EncryptedPrivateUserKey{make<DeviceId>({
+  expected.userKeys.push_back(EncryptedPrivateUserKey{make<Trustchain::DeviceId>({
       0xd0, 0xa8, 0x9e, 0xff, 0x7d, 0x59, 0x48, 0x3a, 0xee, 0x7c, 0xe4, 0x99,
       0x49, 0x4d, 0x1c, 0xd7, 0x87, 0x54, 0x41, 0xf5, 0xba, 0x51, 0xd7, 0x65,
       0xbf, 0x91, 0x45, 0x08, 0x03, 0xf1, 0xe9, 0xc7

@@ -1,5 +1,5 @@
 #include <Tanker/GhostDevice.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -12,7 +12,7 @@ using namespace Tanker;
 TEST_CASE("it can unserialize a GhostDevice")
 {
   GhostDevice gd{
-      make<DeviceId>("deviddeviddeviddeviddeviddevidde"),
+      make<Trustchain::DeviceId>("deviddeviddeviddeviddeviddevidde"),
       make<Crypto::PrivateSignatureKey>(
           "sig  keysig  keysig  keysig  keysig  keysig  keysig  keysig  key"),
       make<Crypto::PrivateEncryptionKey>("enc  keyenc  keyenc  keyenc  key"),
@@ -30,7 +30,7 @@ TEST_CASE("it can unserialize a GhostDevice")
 TEST_CASE("it can serialize and deserialize a GhostDevice")
 {
   GhostDevice gd{
-      make<DeviceId>("devid"),
+      make<Trustchain::DeviceId>("devid"),
       make<Crypto::PrivateSignatureKey>("sig key"),
       make<Crypto::PrivateEncryptionKey>("enc key"),
   };

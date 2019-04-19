@@ -5,7 +5,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -44,7 +44,7 @@ KeyPublishToDevice deserializeKeyPublishToDevice(gsl::span<uint8_t const> data)
   KeyPublishToDevice out;
   Serialization::SerializedSource ss{data};
 
-  out.recipient = Serialization::deserialize<DeviceId>(ss);
+  out.recipient = Serialization::deserialize<Trustchain::DeviceId>(ss);
   out.mac = Serialization::deserialize<Crypto::Mac>(ss);
   auto const keySize = ss.read_varint();
   if (keySize != out.key.size())

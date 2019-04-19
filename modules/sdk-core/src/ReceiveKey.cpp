@@ -1,6 +1,5 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/ContactStore.hpp>
@@ -10,7 +9,8 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -31,7 +31,7 @@ tc::cotask<void> onKeyToDeviceReceived(
 {
   auto const& keyPublish =
       mpark::get<KeyPublishToDevice>(entry.action.variant());
-  DeviceId senderId{entry.author.begin(), entry.author.end()};
+  Trustchain::DeviceId senderId{entry.author.begin(), entry.author.end()};
 
   auto const senderDevice = TC_AWAIT(contactStore.findDevice(senderId)).value();
 

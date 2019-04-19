@@ -5,7 +5,6 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>

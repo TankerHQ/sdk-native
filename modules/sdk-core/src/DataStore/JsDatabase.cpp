@@ -3,8 +3,8 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -400,7 +400,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   else if (entry.nature == Nature::KeyPublishToDevice)
   {
     KeyPublishToDevice kp;
-    kp.recipient = DeviceId{copyToVector(jsEntry["action"]["recipient"])};
+    kp.recipient =
+        Trustchain::DeviceId{copyToVector(jsEntry["action"]["recipient"])};
     kp.mac = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
     kp.key = Crypto::EncryptedSymmetricKey{
         copyToVector(jsEntry["action"]["resourceKey"])};
@@ -483,7 +484,8 @@ tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
   TC_RETURN(ret);
 }
 
-tc::cotask<Entry> JsDatabase::getTrustchainDevice(DeviceId const& deviceId)
+tc::cotask<Entry> JsDatabase::getTrustchainDevice(
+    Trustchain::DeviceId const& deviceId)
 {
   auto const jsEntry = TC_AWAIT(
       jsPromiseToFuture(_db->getTrustchainDevice(containerToJs(deviceId))));
@@ -564,7 +566,7 @@ tc::cotask<nonstd::optional<DeviceKeys>> JsDatabase::getDeviceKeys()
       {Crypto::PublicEncryptionKey(copyToVector(keys["publicEncryptionKey"])),
        Crypto::PrivateEncryptionKey(
            copyToVector(keys["privateEncryptionKey"]))},
-      DeviceId(copyToVector(keys["deviceId"]))}));
+      Trustchain::DeviceId(copyToVector(keys["deviceId"]))}));
 }
 
 tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -582,7 +584,7 @@ tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceKeys(jsDeviceKeys)));
 }
 
-tc::cotask<void> JsDatabase::setDeviceId(DeviceId const& deviceId)
+tc::cotask<void> JsDatabase::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceId(containerToJs(deviceId))));
 }
@@ -610,7 +612,7 @@ Device fromJsDevice(emscripten::val const& jsdev)
 {
   auto const jsRevokedAt = jsdev["revokedAtBlkIndex"];
   return Device{
-      DeviceId(copyToVector(jsdev["id"])),
+      Trustchain::DeviceId(copyToVector(jsdev["id"])),
       static_cast<uint64_t>(jsdev["createdAtBlkIndex"].as<double>()),
       jsRevokedAt.isNull() || jsRevokedAt.isUndefined() ?
           nonstd::optional<uint64_t>{} :
@@ -622,7 +624,8 @@ Device fromJsDevice(emscripten::val const& jsdev)
 }
 }
 
-tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(DeviceId const& id)
+tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(
+    Trustchain::DeviceId const& id)
 {
   auto const jsdev =
       TC_AWAIT(jsPromiseToFuture(_db->findDevice(containerToJs(id))));
@@ -633,7 +636,7 @@ tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(DeviceId const& id)
 }
 
 tc::cotask<nonstd::optional<Trustchain::UserId>> JsDatabase::findDeviceUserId(
-    DeviceId const& id)
+    Trustchain::DeviceId const& id)
 {
   auto const jsdev =
       TC_AWAIT(jsPromiseToFuture(_db->findDeviceUserId(containerToJs(id))));
@@ -643,8 +646,8 @@ tc::cotask<nonstd::optional<Trustchain::UserId>> JsDatabase::findDeviceUserId(
   TC_RETURN(Trustchain::UserId{copyToVector(jsdev)});
 }
 
-tc::cotask<void> JsDatabase::updateDeviceRevokedAt(DeviceId const& id,
-                                                   uint64_t revokedAtBlkIndex)
+tc::cotask<void> JsDatabase::updateDeviceRevokedAt(
+    Trustchain::DeviceId const& id, uint64_t revokedAtBlkIndex)
 {
   TC_AWAIT(jsPromiseToFuture(_db->updateDeviceRevokedAt(
       containerToJs(id),

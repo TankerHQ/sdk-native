@@ -23,11 +23,11 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/ResourceId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
@@ -301,7 +301,7 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   Encryptor::decrypt(decryptedData, *key, encryptedData);
 }
 
-tc::cotask<void> Session::setDeviceId(DeviceId const& deviceId)
+tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(_deviceKeyStore->setDeviceId(deviceId));
   _trustchainPuller.setDeviceId(deviceId);
@@ -309,7 +309,7 @@ tc::cotask<void> Session::setDeviceId(DeviceId const& deviceId)
   gotDeviceId(deviceId);
 }
 
-DeviceId const& Session::deviceId() const
+Trustchain::DeviceId const& Session::deviceId() const
 {
   return _deviceKeyStore->deviceId();
 }
@@ -550,7 +550,7 @@ bool Session::hasRegisteredUnlockMethod(Unlock::Method method) const
 }
 
 tc::cotask<void> Session::catchUserKey(
-    DeviceId const& deviceId,
+    Trustchain::DeviceId const& deviceId,
     Trustchain::Actions::DeviceCreation const& deviceCreation)
 
 {
@@ -577,7 +577,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 {
   auto const& deviceCreation =
       mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
-  DeviceId const deviceId{entry.hash};
+  Trustchain::DeviceId const deviceId{entry.hash};
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
   Device createdDevice{deviceId,
                        entry.index,
@@ -625,7 +625,7 @@ tc::cotask<void> Session::syncTrustchain()
   TC_AWAIT(_trustchainPuller.scheduleCatchUp());
 }
 
-tc::cotask<void> Session::revokeDevice(DeviceId const& deviceId)
+tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(syncTrustchain());
   TC_AWAIT(Revocation::revokeDevice(deviceId,

@@ -7,7 +7,7 @@
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
@@ -164,7 +164,7 @@ void Core::initSession(Opener::OpenResult&& openResult)
 void Core::reset()
 {
   _state.emplace<Opener>(_url, _info, _writablePath);
-  _deviceId = DeviceId{};
+  _deviceId = Trustchain::DeviceId{};
 }
 
 tc::cotask<void> Core::encrypt(
@@ -219,7 +219,7 @@ tc::cotask<void> Core::updateGroupMembers(
   return (*psession)->updateGroupMembers(groupIdString, usersToAdd);
 }
 
-DeviceId const& Core::deviceId() const
+Trustchain::DeviceId const& Core::deviceId() const
 {
   if (!isOpen())
     throw INVALID_STATUS(deviceId);
@@ -292,7 +292,7 @@ tc::cotask<void> Core::syncTrustchain()
   TC_AWAIT((*psession)->syncTrustchain());
 }
 
-tc::cotask<void> Core::revokeDevice(DeviceId const& deviceId)
+tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)

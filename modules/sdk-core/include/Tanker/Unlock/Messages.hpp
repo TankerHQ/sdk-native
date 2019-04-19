@@ -3,9 +3,9 @@
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
@@ -59,13 +59,13 @@ void to_json(nlohmann::json&, FetchAnswer const& m);
 struct Message
 {
   Trustchain::TrustchainId trustchainId;
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
   Claims claims;
   Crypto::Signature signature;
 
   Message() = default;
   Message(Trustchain::TrustchainId const& trustchainId,
-          DeviceId const& deviceId,
+          Trustchain::DeviceId const& deviceId,
           UpdateOptions const& lockOptions,
           Crypto::SymmetricKey const& key,
           Crypto::PrivateSignatureKey const& privateSignatureKey);

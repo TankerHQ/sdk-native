@@ -9,9 +9,9 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
@@ -46,7 +46,7 @@ std::unique_ptr<Registration> generate(
       userKeypair);
 
   auto const hash = Serialization::deserialize<Block>(ghostDeviceBlock).hash();
-  DeviceId deviceId{hash};
+  Trustchain::DeviceId deviceId{hash};
   auto const unlockKey = ghostDeviceToUnlockKey(
       GhostDevice{deviceId,
                   deviceKeys.signatureKeyPair.privateKey,

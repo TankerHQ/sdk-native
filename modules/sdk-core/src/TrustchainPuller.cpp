@@ -11,10 +11,10 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -45,7 +45,7 @@ TrustchainPuller::TrustchainPuller(
     DeviceKeyStore* deviceKeyStore,
     Client* client,
     Crypto::PublicSignatureKey const& deviceSignatureKey,
-    DeviceId const& deviceId,
+    Trustchain::DeviceId const& deviceId,
     UserId const& userId)
   : _trustchain(trustchain),
     _verifier(verifier),
@@ -64,7 +64,7 @@ TrustchainPuller::TrustchainPuller(
 {
 }
 
-void TrustchainPuller::setDeviceId(DeviceId const& deviceId)
+void TrustchainPuller::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   _deviceId = deviceId;
 }
@@ -151,7 +151,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
                         deviceCreation
                             ->get_if<Trustchain::Actions::DeviceCreation::v3>())
                 {
-                  if (DeviceId{unverifiedEntry.hash} == _deviceId)
+                  if (Trustchain::DeviceId{unverifiedEntry.hash} == _deviceId)
                   {
                     auto const lastPrivateEncryptionKey =
                         Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
@@ -264,7 +264,7 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
               &entry.action.variant()))
   {
     if (deviceCreation->publicSignatureKey() == _devicePublicSignatureKey)
-      TC_AWAIT(receivedThisDeviceId(DeviceId{entry.hash}));
+      TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
   if (auto const keyPublish =

@@ -6,7 +6,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/serialized_size.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -21,7 +21,7 @@ namespace Tanker
 {
 struct DeviceRevocation1
 {
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
 
   static constexpr auto const nature =
       Trustchain::Actions::Nature::DeviceRevocation;
@@ -29,7 +29,7 @@ struct DeviceRevocation1
 
 constexpr std::size_t serialized_size(DeviceRevocation1 const& dr)
 {
-  return DeviceId::arraySize;
+  return Trustchain::DeviceId::arraySize;
 }
 
 std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation1 const& dr);
@@ -45,7 +45,7 @@ bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs);
 // EncryptedPrivateUserKey for DeviceRevocation2:
 struct EncryptedPrivateUserKey
 {
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
   Crypto::SealedPrivateEncryptionKey privateEncryptionKey;
 };
 
@@ -75,7 +75,7 @@ std::uint8_t* to_serialized(std::uint8_t* it,
 // Device Revocation2:
 struct DeviceRevocation2
 {
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::PublicEncryptionKey previousPublicEncryptionKey;
   Crypto::SealedPrivateEncryptionKey encryptedKeyForPreviousUserKey;
@@ -117,7 +117,7 @@ public:
   variant_type const& variant() const;
 
   Trustchain::Actions::Nature nature() const;
-  DeviceId const& deviceId() const;
+  Trustchain::DeviceId const& deviceId() const;
 
   std::vector<Index> makeIndexes() const;
 

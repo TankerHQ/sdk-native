@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
@@ -55,7 +55,7 @@ void from_json(nlohmann::json const& j, FetchAnswer& f)
 void from_json(nlohmann::json const& j, Message& m)
 {
   m.trustchainId = j.at("trustchain_id").get<Trustchain::TrustchainId>();
-  m.deviceId = j.at("device_id").get<DeviceId>();
+  m.deviceId = j.at("device_id").get<Trustchain::DeviceId>();
   m.claims = j.at("claims").get<Claims>();
   m.signature = j.at("signature").get<Crypto::Signature>();
 }
@@ -108,7 +108,7 @@ UnlockKey FetchAnswer::getUnlockKey(Crypto::SymmetricKey const& key) const
 }
 
 Message::Message(Trustchain::TrustchainId const& trustchainId,
-                 DeviceId const& deviceId,
+                 Trustchain::DeviceId const& deviceId,
                  UpdateOptions const& lockOptions,
                  Crypto::SymmetricKey const& userSecret,
                  Crypto::PrivateSignatureKey const& privateSignatureKey)

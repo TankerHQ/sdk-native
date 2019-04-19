@@ -6,7 +6,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Version.hpp>
@@ -249,7 +249,8 @@ tc::shared_future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
   return _taskCanceler.run([&] {
     return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
       TC_AWAIT(this->_core.revokeDevice(
-          cppcodec::base64_rfc4648::decode<DeviceId>(deviceId.string())));
+          cppcodec::base64_rfc4648::decode<Trustchain::DeviceId>(
+              deviceId.string())));
     });
   });
 }

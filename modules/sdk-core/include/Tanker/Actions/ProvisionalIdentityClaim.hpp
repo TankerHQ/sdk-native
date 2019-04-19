@@ -7,8 +7,8 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -40,7 +40,8 @@ struct ProvisionalIdentityClaim
 
   Trustchain::Actions::Nature nature() const;
   std::vector<Index> makeIndexes() const;
-  std::vector<uint8_t> signatureData(DeviceId const& authorId) const;
+  std::vector<uint8_t> signatureData(
+      Trustchain::DeviceId const& authorId) const;
 };
 
 bool operator==(ProvisionalIdentityClaim const& l,

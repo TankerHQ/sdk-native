@@ -49,7 +49,8 @@ TEST_CASE(
   auto const deviceCreation =
       mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
 
-  AWAIT_VOID(session.catchUserKey(DeviceId{entry.hash}, deviceCreation));
+  AWAIT_VOID(
+      session.catchUserKey(Trustchain::DeviceId{entry.hash}, deviceCreation));
 
   CHECK_EQ(AWAIT(dbPtr->findContactUserKey(alice.user.userId)).value(),
            aliceUserKeyPair.keyPair.publicKey);

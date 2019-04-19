@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
