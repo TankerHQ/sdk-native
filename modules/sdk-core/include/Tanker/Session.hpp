@@ -7,6 +7,7 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -144,6 +145,7 @@ private:
   ContactStore _contactStore;
   GroupStore _groupStore;
   ResourceKeyStore _resourceKeyStore;
+  ProvisionalUserKeysStore _provisionalUserKeysStore;
 
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;

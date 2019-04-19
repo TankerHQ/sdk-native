@@ -23,7 +23,6 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -135,6 +134,7 @@ Session::Session(Config&& config)
     _contactStore(_db.get()),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
+    _provisionalUserKeysStore(_db.get()),
     _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
