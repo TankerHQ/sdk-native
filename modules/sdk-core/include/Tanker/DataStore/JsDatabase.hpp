@@ -89,6 +89,14 @@ public:
   tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
+  tc::cotask<void> putProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey,
+      ProvisionalUserKeys const& provisionalUserKeys) override;
+  tc::cotask<nonstd::optional<ProvisionalUserKeys>>
+  findProvisionalUserKeys(
+      Crypto::PublicSignatureKey const& appPublicSigKey,
+      Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
 
   tc::cotask<void> nuke() override;
 
