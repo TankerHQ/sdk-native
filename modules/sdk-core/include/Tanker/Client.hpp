@@ -1,22 +1,28 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/GroupId.hpp>
+#include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
 #include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
+#include <mpark/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
+
+#include <optional.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -87,6 +93,10 @@ public:
   tc::cotask<std::vector<
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
+  tc::cotask<nonstd::optional<
+      std::pair<Crypto::EncryptionKeyPair, Crypto::SignatureKeyPair>>>
+  getProvisionalIdentityKeys(Email const& provisionalIdentity,
+                             VerificationCode const& verificationCode);
 
   std::string connectionId() const;
   boost::signals2::signal<void()> blockAvailable;

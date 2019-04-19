@@ -1,11 +1,9 @@
 #include <Tanker/Session.hpp>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
@@ -24,6 +22,7 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
