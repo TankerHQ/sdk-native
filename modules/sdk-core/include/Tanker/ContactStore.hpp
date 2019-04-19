@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
@@ -35,15 +36,16 @@ public:
 
   tc::cotask<nonstd::optional<User>> findUser(
       Trustchain::UserId const& id) const;
-  tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) const;
+  tc::cotask<nonstd::optional<Device>> findDevice(
+      Trustchain::DeviceId const& id) const;
   tc::cotask<std::vector<Device>> findUserDevices(
       Trustchain::UserId const& id) const;
   tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByUserPublicKey(
       Crypto::PublicEncryptionKey const& userKey) const;
   tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByDeviceId(
-      DeviceId const& id) const;
+      Trustchain::DeviceId const& id) const;
 
-  tc::cotask<void> revokeDevice(DeviceId const& id,
+  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& id,
                                 uint64_t revokedAtBlkIndex) const;
   tc::cotask<void> rotateContactPublicEncryptionKey(
       Trustchain::UserId const& userId,

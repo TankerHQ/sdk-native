@@ -1,12 +1,11 @@
 #include <Tanker/TrustchainStore.hpp>
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>

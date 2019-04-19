@@ -19,9 +19,9 @@
 #include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
 #include <Tanker/ProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/ResourceId.hpp>
 
 #include <cstdint>
@@ -39,13 +39,13 @@ class BlockGenerator
 public:
   BlockGenerator(Trustchain::TrustchainId const& trustchainId,
                  Crypto::PrivateSignatureKey const& privateSignatureKey,
-                 DeviceId const& deviceId);
+                 Trustchain::DeviceId const& deviceId);
 
   Trustchain::TrustchainId const& trustchainId() const noexcept;
   Crypto::PrivateSignatureKey const& signatureKey() const noexcept;
 
-  void setDeviceId(DeviceId const& deviceId);
-  DeviceId const& deviceId() const;
+  void setDeviceId(Trustchain::DeviceId const& deviceId);
+  Trustchain::DeviceId const& deviceId() const;
 
   std::vector<uint8_t> addUser(
       Identity::Delegation const& delegation,
@@ -84,7 +84,7 @@ public:
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
   std::vector<uint8_t> revokeDevice2(
-      DeviceId const& deviceId,
+      Trustchain::DeviceId const& deviceId,
       Crypto::PublicEncryptionKey const& publicEncryptionKey,
       Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
       Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
@@ -92,7 +92,7 @@ public:
 
   std::vector<uint8_t> keyPublish(Crypto::EncryptedSymmetricKey const& symKey,
                                   Crypto::Mac const& mac,
-                                  DeviceId const& recipient) const;
+                                  Trustchain::DeviceId const& recipient) const;
 
   std::vector<uint8_t> keyPublishToUser(
       Crypto::SealedSymmetricKey const& symKey,
@@ -130,7 +130,7 @@ public:
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;
-  DeviceId _deviceId;
+  Trustchain::DeviceId _deviceId;
 
   template <typename T, typename U>
   Block makeBlock(Trustchain::Actions::Nature nature,

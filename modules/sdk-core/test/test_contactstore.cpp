@@ -81,7 +81,7 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should not find a non-existent device")
   {
-    auto const unexistentDeviceId = make<DeviceId>("unexistent");
+    auto const unexistentDeviceId = make<Trustchain::DeviceId>("unexistent");
 
     CHECK_EQ(AWAIT(contacts.findDevice(unexistentDeviceId)), nonstd::nullopt);
   }

@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -10,7 +10,7 @@ namespace Tanker
 {
 struct GhostDevice
 {
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
   Crypto::PrivateSignatureKey privateSignatureKey;
   Crypto::PrivateEncryptionKey privateEncryptionKey;
 };

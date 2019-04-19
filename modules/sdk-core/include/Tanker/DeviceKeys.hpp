@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 namespace Tanker
 {
@@ -10,7 +10,7 @@ struct DeviceKeys
 {
   Crypto::SignatureKeyPair signatureKeyPair;
   Crypto::EncryptionKeyPair encryptionKeyPair;
-  DeviceId deviceId;
+  Trustchain::DeviceId deviceId;
 
   static DeviceKeys create();
 };

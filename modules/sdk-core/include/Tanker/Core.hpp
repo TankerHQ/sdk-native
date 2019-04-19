@@ -4,7 +4,7 @@
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
@@ -82,12 +82,12 @@ public:
   bool hasRegisteredUnlockMethod(Unlock::Method) const;
   Unlock::Methods registeredUnlockMethods() const;
 
-  DeviceId const& deviceId() const;
+  Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
   tc::cotask<void> syncTrustchain();
 
-  tc::cotask<void> revokeDevice(DeviceId const& deviceId);
+  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   boost::signals2::signal<void()> sessionClosed;
   boost::signals2::signal<void()> deviceRevoked;
@@ -107,7 +107,7 @@ private:
 
   mpark::variant<Opener, SessionType> _state;
 
-  DeviceId _deviceId{};
+  Trustchain::DeviceId _deviceId{};
 
   void reset();
   void initSession(Opener::OpenResult&& openResult);

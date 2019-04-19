@@ -2,7 +2,7 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -92,7 +92,7 @@ TEST_CASE("device keystore")
   {
     Crypto::SignatureKeyPair previousSignatureKeyPair;
     Crypto::EncryptionKeyPair previousEncryptionKeyPair;
-    auto const deviceId = make<DeviceId>("bob's device");
+    auto const deviceId = make<Trustchain::DeviceId>("bob's device");
 
     {
       auto const store = AWAIT(DeviceKeyStore::open(dbPtr.get()));
@@ -112,10 +112,10 @@ TEST_CASE("device keystore")
   SUBCASE("re set the deviceId with a different value")
   {
     auto const store = AWAIT(DeviceKeyStore::open(dbPtr.get()));
-    REQUIRE_NOTHROW(
-        AWAIT_VOID(store->setDeviceId(make<DeviceId>("bob's device"))));
-    REQUIRE_THROWS(
-        AWAIT_VOID(store->setDeviceId(make<DeviceId>("new device id"))));
+    REQUIRE_NOTHROW(AWAIT_VOID(
+        store->setDeviceId(make<Trustchain::DeviceId>("bob's device"))));
+    REQUIRE_THROWS(AWAIT_VOID(
+        store->setDeviceId(make<Trustchain::DeviceId>("new device id"))));
   }
 }
 
@@ -149,7 +149,7 @@ TEST_CASE("device keystore migration")
     auto const pubEncK = DataStore::extractBlob<Crypto::PublicEncryptionKey>(
         deviceKeyStore.public_encryption_key);
     auto const deviceId =
-        DataStore::extractBlob<DeviceId>(deviceKeyStore.device_id);
+        DataStore::extractBlob<Trustchain::DeviceId>(deviceKeyStore.device_id);
 
     CHECK_EQ(privSigK,
              cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
@@ -163,9 +163,9 @@ TEST_CASE("device keystore migration")
     CHECK_EQ(pubEncK,
              cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
                  oldKeystore.b64PubEncK));
-    CHECK_EQ(
-        deviceId,
-        cppcodec::base64_rfc4648::decode<DeviceId>(oldKeystore.b64DeviceId));
+    CHECK_EQ(deviceId,
+             cppcodec::base64_rfc4648::decode<Trustchain::DeviceId>(
+                 oldKeystore.b64DeviceId));
   }
 }
 #endif

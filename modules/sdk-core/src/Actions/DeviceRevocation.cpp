@@ -1,9 +1,9 @@
 #include <Tanker/Actions/DeviceRevocation.hpp>
 
 #include <Tanker/Index.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -78,7 +78,8 @@ std::uint8_t* to_serialized(std::uint8_t* it,
 
 std::size_t serialized_size(DeviceRevocation2 const& dr)
 {
-  return DeviceId::arraySize + Crypto::PublicEncryptionKey::arraySize * 2 +
+  return Trustchain::DeviceId::arraySize +
+         Crypto::PublicEncryptionKey::arraySize * 2 +
          Crypto::SealedPrivateEncryptionKey::arraySize +
          Serialization::serialized_size(dr.userKeys);
 }
@@ -159,10 +160,11 @@ Nature DeviceRevocation::nature() const
   return mpark::visit([](auto const& a) { return a.nature; }, _v);
 }
 
-DeviceId const& DeviceRevocation::deviceId() const
+Trustchain::DeviceId const& DeviceRevocation::deviceId() const
 {
   return mpark::visit(
-      [](auto const& a) -> DeviceId const& { return a.deviceId; }, _v);
+      [](auto const& a) -> Trustchain::DeviceId const& { return a.deviceId; },
+      _v);
 }
 
 std::vector<Index> DeviceRevocation::makeIndexes() const

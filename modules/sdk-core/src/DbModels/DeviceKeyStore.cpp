@@ -6,7 +6,7 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -44,7 +44,8 @@ void migrate1To2(DataStore::Connection& db)
         cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
             extractBlob(row.public_encryption_key));
     auto const deviceId =
-        cppcodec::base64_rfc4648::decode<DeviceId>(extractBlob(row.device_id));
+        cppcodec::base64_rfc4648::decode<Trustchain::DeviceId>(
+            extractBlob(row.device_id));
 
     db(update(tab)
            .set(tab.private_signature_key = privSigK.base(),

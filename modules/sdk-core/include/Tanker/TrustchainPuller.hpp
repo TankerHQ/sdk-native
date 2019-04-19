@@ -4,8 +4,8 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/GroupId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -37,16 +37,16 @@ public:
                    DeviceKeyStore* deviceKeyStore,
                    Client* client,
                    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                   DeviceId const& deviceId,
+                   Trustchain::DeviceId const& deviceId,
                    Trustchain::UserId const& userId);
 
-  void setDeviceId(DeviceId const& deviceId);
+  void setDeviceId(Trustchain::DeviceId const& deviceId);
 
   tc::shared_future<void> scheduleCatchUp(
       std::vector<Trustchain::UserId> const& extraUsers = {},
       std::vector<GroupId> const& extraGroups = {});
 
-  std::function<tc::cotask<void>(DeviceId const&)> receivedThisDeviceId;
+  std::function<tc::cotask<void>(Trustchain::DeviceId const&)> receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
   std::function<tc::cotask<void>(Entry const&)> userGroupActionReceived;
@@ -62,7 +62,7 @@ private:
   Client* _client;
 
   Crypto::PublicSignatureKey _devicePublicSignatureKey;
-  DeviceId _deviceId;
+  Trustchain::DeviceId _deviceId;
   Trustchain::UserId _userId;
 
   std::vector<Trustchain::UserId> _extraUsers;

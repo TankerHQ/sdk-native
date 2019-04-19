@@ -28,7 +28,7 @@ std::vector<Index> ProvisionalIdentityClaim::makeIndexes() const
 }
 
 std::vector<uint8_t> ProvisionalIdentityClaim::signatureData(
-    DeviceId const& authorId) const
+    Trustchain::DeviceId const& authorId) const
 {
   std::vector<uint8_t> signatureData;
   signatureData.reserve(authorId.size() + appSignaturePublicKey.size() +

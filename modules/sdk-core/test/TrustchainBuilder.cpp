@@ -122,7 +122,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   _blocks.push_back(block);
 
   user.devices[0].delegation = delegation;
-  user.devices[0].keys.deviceId = DeviceId(block.hash());
+  user.devices[0].keys.deviceId = Trustchain::DeviceId(block.hash());
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
@@ -168,7 +168,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  user.devices[0].keys.deviceId = DeviceId(block.hash());
+  user.devices[0].keys.deviceId = Trustchain::DeviceId(block.hash());
   user.devices[0].delegation = delegation;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
@@ -217,7 +217,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = DeviceId(block.hash());
+  device.keys.deviceId = Trustchain::DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);
@@ -267,7 +267,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = DeviceId(block.hash());
+  device.keys.deviceId = Trustchain::DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);

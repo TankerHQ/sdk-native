@@ -7,9 +7,9 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
@@ -138,7 +138,8 @@ tc::cotask<Unlock::Methods> Client::authenticateDevice(
 }
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
-    Trustchain::TrustchainId const& trustchainId, DeviceId const& deviceId)
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId)
 {
   auto const request = nlohmann::json{
       {"trustchain_id", trustchainId},

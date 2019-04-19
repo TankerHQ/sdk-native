@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
@@ -33,7 +34,8 @@ public:
       Crypto::Mac const& resourceId) override;
   tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
       Trustchain::UserId const& userId) override;
-  tc::cotask<Entry> getTrustchainDevice(DeviceId const& deviceId) override;
+  tc::cotask<Entry> getTrustchainDevice(
+      Trustchain::DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
@@ -63,16 +65,17 @@ public:
 
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
-  tc::cotask<void> setDeviceId(DeviceId const& deviceId) override;
+  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
 
   tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                              Device const& device) override;
-  tc::cotask<nonstd::optional<Device>> findDevice(DeviceId const& id) override;
+  tc::cotask<nonstd::optional<Device>> findDevice(
+      Trustchain::DeviceId const& id) override;
   tc::cotask<std::vector<Device>> getDevicesOf(
       Trustchain::UserId const& id) override;
   tc::cotask<nonstd::optional<Trustchain::UserId>> findDeviceUserId(
-      DeviceId const& id) override;
-  tc::cotask<void> updateDeviceRevokedAt(DeviceId const& id,
+      Trustchain::DeviceId const& id) override;
+  tc::cotask<void> updateDeviceRevokedAt(Trustchain::DeviceId const& id,
                                          uint64_t revokedAtBlkIndex) override;
 
   tc::cotask<void> putFullGroup(Group const& group) override;

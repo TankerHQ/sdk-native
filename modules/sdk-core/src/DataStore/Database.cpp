@@ -23,8 +23,8 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -62,7 +62,7 @@ Device rowToDevice(Row const& row)
   if (!row.revoked_at_block_index.is_null())
     revokedAtBlockIndex = static_cast<uint64_t>(row.revoked_at_block_index);
 
-  return {DataStore::extractBlob<DeviceId>(row.id),
+  return {DataStore::extractBlob<Trustchain::DeviceId>(row.id),
           static_cast<uint64_t>(row.created_at_block_index),
           std::move(revokedAtBlockIndex),
           DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -406,7 +406,8 @@ tc::cotask<std::vector<Entry>> Database::getTrustchainDevicesOf(
   TC_RETURN(ret);
 }
 
-tc::cotask<Entry> Database::getTrustchainDevice(DeviceId const& deviceId)
+tc::cotask<Entry> Database::getTrustchainDevice(
+    Trustchain::DeviceId const& deviceId)
 {
   FUNC_TIMER(DB);
   TrustchainTable tab_trustchain;
@@ -592,15 +593,16 @@ tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
     TC_RETURN(nonstd::nullopt);
 
   auto const& row = rows.front();
-  TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                             row.public_signature_key),
-                         DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                             row.private_signature_key)},
-                        {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                             row.public_encryption_key),
-                         DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                             row.private_encryption_key)},
-                        DataStore::extractBlob<DeviceId>(row.device_id)}));
+  TC_RETURN((
+      DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
+                      row.public_signature_key),
+                  DataStore::extractBlob<Crypto::PrivateSignatureKey>(
+                      row.private_signature_key)},
+                 {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+                      row.public_encryption_key),
+                  DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+                      row.private_encryption_key)},
+                 DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)}));
 }
 
 tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -617,7 +619,7 @@ tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
   TC_RETURN();
 }
 
-tc::cotask<void> Database::setDeviceId(DeviceId const& deviceId)
+tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
@@ -642,7 +644,8 @@ tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Device>> Database::findDevice(DeviceId const& id)
+tc::cotask<nonstd::optional<Device>> Database::findDevice(
+    Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
@@ -671,7 +674,7 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
 }
 
 tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
-    DeviceId const& id)
+    Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
@@ -685,7 +688,7 @@ tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
   TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
 }
 
-tc::cotask<void> Database::updateDeviceRevokedAt(DeviceId const& id,
+tc::cotask<void> Database::updateDeviceRevokedAt(Trustchain::DeviceId const& id,
                                                  uint64_t revokedAtBlkIndex)
 {
   FUNC_TIMER(DB);

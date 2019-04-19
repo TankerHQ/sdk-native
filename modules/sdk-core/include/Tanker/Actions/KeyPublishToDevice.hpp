@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -17,7 +17,7 @@ namespace Tanker
 {
 struct KeyPublishToDevice
 {
-  DeviceId recipient;
+  Trustchain::DeviceId recipient;
   Crypto::Mac mac;
   Crypto::EncryptedSymmetricKey key;
 
@@ -36,7 +36,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp);
 
 constexpr std::size_t serialized_size(KeyPublishToDevice const& kp)
 {
-  return DeviceId::arraySize + kp.mac.size() + kp.key.size() +
+  return Trustchain::DeviceId::arraySize + kp.mac.size() + kp.key.size() +
          Serialization::varint_size(kp.key.size());
 }
 }

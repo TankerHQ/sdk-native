@@ -10,8 +10,8 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 
 #include <stdexcept>
 
@@ -22,7 +22,7 @@ namespace Tanker
 BlockGenerator::BlockGenerator(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& privateSignatureKey,
-    DeviceId const& deviceId)
+    Trustchain::DeviceId const& deviceId)
   : _trustchainId(trustchainId),
     _privateSignatureKey(privateSignatureKey),
     _deviceId(deviceId)
@@ -34,12 +34,12 @@ Trustchain::TrustchainId const& BlockGenerator::trustchainId() const noexcept
   return _trustchainId;
 }
 
-void BlockGenerator::setDeviceId(DeviceId const& deviceId)
+void BlockGenerator::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   _deviceId = deviceId;
 }
 
-DeviceId const& BlockGenerator::deviceId() const
+Trustchain::DeviceId const& BlockGenerator::deviceId() const
 {
   return _deviceId;
 }
@@ -178,7 +178,7 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
 }
 
 std::vector<uint8_t> BlockGenerator::revokeDevice2(
-    DeviceId const& deviceId,
+    Trustchain::DeviceId const& deviceId,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
     Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
@@ -197,7 +197,7 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
 std::vector<uint8_t> BlockGenerator::keyPublish(
     Crypto::EncryptedSymmetricKey const& symKey,
     Crypto::Mac const& mac,
-    DeviceId const& recipient) const
+    Trustchain::DeviceId const& recipient) const
 {
   return Serialization::serialize(
       makeBlock(KeyPublishToDevice{recipient, mac, symKey},

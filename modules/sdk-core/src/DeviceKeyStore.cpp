@@ -2,7 +2,7 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Types/DeviceId.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <memory>
 #include <stdexcept>
@@ -58,7 +58,7 @@ Crypto::EncryptionKeyPair const& DeviceKeyStore::encryptionKeyPair() const
   return _keys.encryptionKeyPair;
 }
 
-DeviceId const& DeviceKeyStore::deviceId() const noexcept
+Trustchain::DeviceId const& DeviceKeyStore::deviceId() const noexcept
 {
   return _keys.deviceId;
 }
@@ -68,7 +68,8 @@ DeviceKeys const& DeviceKeyStore::deviceKeys() const
   return _keys;
 }
 
-tc::cotask<void> DeviceKeyStore::setDeviceId(DeviceId const& deviceId)
+tc::cotask<void> DeviceKeyStore::setDeviceId(
+    Trustchain::DeviceId const& deviceId)
 {
   if (!this->_keys.deviceId.is_null() && deviceId != this->_keys.deviceId)
     throw std::runtime_error("deviceId already set");

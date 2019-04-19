@@ -4,7 +4,6 @@
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Types/DeviceId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
