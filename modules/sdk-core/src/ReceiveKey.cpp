@@ -1,6 +1,5 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -29,18 +29,18 @@ tc::cotask<void> onKeyToDeviceReceived(
     Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
     Entry const& entry)
 {
-  auto const& keyPublish =
-      mpark::get<KeyPublishToDevice>(entry.action.variant());
+  auto const& keyPublish = mpark::get<Trustchain::Actions::KeyPublishToDevice>(
+      entry.action.variant());
   Trustchain::DeviceId senderId{entry.author.begin(), entry.author.end()};
 
   auto const senderDevice = TC_AWAIT(contactStore.findDevice(senderId)).value();
 
   auto const key = Crypto::asymDecrypt<Crypto::SymmetricKey>(
-      keyPublish.key,
+      keyPublish.encryptedSymmetricKey(),
       senderDevice.publicEncryptionKey,
       selfDevicePrivateEncryptionKey);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublish.mac, key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublish.mac(), key));
 }
 
 namespace

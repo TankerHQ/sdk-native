@@ -1,8 +1,8 @@
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>

@@ -1,7 +1,6 @@
 #include <doctest.h>
 
 #include <Tanker/Actions/DeviceRevocation.hpp>
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
@@ -10,7 +9,6 @@
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -19,19 +17,6 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
-
-TEST_CASE("it should serialize/deserialize a KeyPublishToDevice")
-{
-  KeyPublishToDevice before;
-  before.recipient = make<Trustchain::DeviceId>("recipient device");
-  before.mac = make<Crypto::Mac>("resource mac");
-  before.key = make<Crypto::EncryptedSymmetricKey>("encrypted key ..");
-
-  KeyPublishToDevice const after =
-      deserializeKeyPublishToDevice(Serialization::serialize(before));
-
-  CHECK(before == after);
-}
 
 TEST_CASE("it should serialize/deserialize a KeyPublishToUser")
 {

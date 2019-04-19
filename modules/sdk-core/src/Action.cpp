@@ -36,6 +36,11 @@ struct MakeIndexesVisitor
         Index{IndexType::DevicePublicSignatureKey, {key.begin(), key.end()}}};
   }
 
+  auto operator()(Trustchain::Actions::KeyPublishToDevice const& kp) const
+  {
+    return std::vector<Index>{};
+  }
+
   auto operator()(Trustchain::Actions::TrustchainCreation const&) const
   {
     return std::vector<Index>{};
@@ -57,7 +62,7 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
   case Nature::TrustchainCreation:
     return Action{Serialization::deserialize<TrustchainCreation>(payload)};
   case Nature::KeyPublishToDevice:
-    return Action{deserializeKeyPublishToDevice(payload)};
+    return Action{Serialization::deserialize<KeyPublishToDevice>(payload)};
   case Nature::DeviceCreation:
     return Action{DeviceCreation{
         Serialization::deserialize<DeviceCreation::v1>(payload)}};
