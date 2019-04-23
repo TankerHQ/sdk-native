@@ -278,5 +278,8 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     TC_AWAIT(userGroupActionReceived(entry));
   if (mpark::holds_alternative<DeviceRevocation>(entry.action.variant()))
     TC_AWAIT(deviceRevoked(entry));
+  if (mpark::holds_alternative<ProvisionalIdentityClaim>(
+          entry.action.variant()))
+    TC_AWAIT(provisionalIdentityClaimReceived(entry));
 }
 }

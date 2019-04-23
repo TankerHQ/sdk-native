@@ -15,6 +15,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyNotFound.hpp>
@@ -22,7 +23,6 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -134,6 +134,7 @@ Session::Session(Config&& config)
     _contactStore(_db.get()),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
+    _provisionalUserKeysStore(_db.get()),
     _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
@@ -172,6 +173,10 @@ Session::Session(Config&& config)
   _trustchainPuller.userGroupActionReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onUserGroupEntry(entry));
+  };
+  _trustchainPuller.provisionalIdentityClaimReceived =
+      [this](auto const& entry) -> tc::cotask<void> {
+    TC_AWAIT(onProvisionalIdentityClaimEntry(entry));
   };
   _trustchainPuller.deviceRevoked =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -617,6 +622,12 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 {
   TC_AWAIT(GroupUpdater::applyEntry(_groupStore, _userKeyStore, entry));
+}
+
+tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
+{
+  TC_AWAIT(Preregistration::applyEntry(
+      _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::syncTrustchain()
