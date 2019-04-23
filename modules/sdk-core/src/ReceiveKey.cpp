@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
@@ -74,11 +75,10 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
 
   if (!group)
   {
-    TERROR(
+    throw Error::formatEx<Error::GroupKeyNotFound>(
         "Received a keypublish for a group we are not in (public encryption "
         "key: {})",
         recipientPublicKey);
-    TC_RETURN();
   }
 
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
@@ -99,12 +99,11 @@ tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
 
   if (!provisionalUserKeys)
   {
-    TERROR(
+    throw Error::formatEx<Error::ProvisionalUserKeysNotFound>(
         "Received a keypublish for a provisional user we didn't claim (public "
         "encryption keys: {} {})",
         keyPublishToProvisionalUser.appPublicSignatureKey,
         keyPublishToProvisionalUser.tankerPublicSignatureKey);
-    TC_RETURN();
   }
 
   auto const encryptedKey = Crypto::sealDecrypt(
