@@ -282,7 +282,6 @@ Tanker::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
     std::string const& email)
 {
   return Tanker::ProvisionalUser{
-      _trustchainId,
       Tanker::Identity::TargetType::Email,
       email,
       Crypto::makeEncryptionKeyPair(),
