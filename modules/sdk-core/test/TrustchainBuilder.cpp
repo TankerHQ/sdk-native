@@ -1,12 +1,12 @@
 #include "TrustchainBuilder.hpp"
 
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -561,7 +561,8 @@ Tanker::Block TrustchainBuilder::revokeDevice1(Device const& sender,
         "TrustchainBuilder: cannot revoke a device from another user");
   }
 
-  auto const revocation = DeviceRevocation1{target.keys.deviceId};
+  auto const revocation =
+      Trustchain::Actions::DeviceRevocation1{target.keys.deviceId};
 
   Block block;
   block.trustchainId = _trustchainId;
@@ -612,7 +613,7 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
             newEncryptionKey.publicKey);
   }
 
-  std::vector<EncryptedPrivateUserKey> userKeys;
+  Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices)
   {
     if (device.keys.deviceId != target.keys.deviceId)
@@ -620,16 +621,16 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{
           Crypto::sealEncrypt(newEncryptionKey.privateKey,
                               device.keys.encryptionKeyPair.publicKey)};
-      userKeys.push_back(
-          EncryptedPrivateUserKey{device.keys.deviceId, sealedEncryptedKey});
+      userKeys.emplace_back(device.keys.deviceId, sealedEncryptedKey);
     }
   }
 
-  auto const revocation = DeviceRevocation2{target.keys.deviceId,
-                                            newEncryptionKey.publicKey,
-                                            oldPublicEncryptionKey,
-                                            encryptedKeyForPreviousUserKey,
-                                            userKeys};
+  Trustchain::Actions::DeviceRevocation2 const revocation{
+      target.keys.deviceId,
+      newEncryptionKey.publicKey,
+      encryptedKeyForPreviousUserKey,
+      oldPublicEncryptionKey,
+      userKeys};
 
   Block block;
   block.trustchainId = _trustchainId;

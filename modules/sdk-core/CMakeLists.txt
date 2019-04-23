@@ -93,7 +93,6 @@ add_library(tankercore STATIC
   include/Tanker/ReceiveKey.hpp
   include/Tanker/Preregistration.hpp
   include/Tanker/Actions/UserKeyPair.hpp
-  include/Tanker/Actions/DeviceRevocation.hpp
   include/Tanker/Actions/KeyPublishToProvisionalUser.hpp
   include/Tanker/Actions/UserGroupAddition.hpp
   include/Tanker/Actions/UserGroupCreation.hpp
@@ -171,7 +170,6 @@ add_library(tankercore STATIC
   src/ContactStore.cpp
   src/Preregistration.cpp
   src/ProvisionalUserKeysStore.cpp
-  src/Actions/DeviceRevocation.cpp
   src/Actions/KeyPublishToUserGroup.cpp
   src/Actions/KeyPublishToProvisionalUser.cpp
   src/Actions/UserKeyPair.cpp

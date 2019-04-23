@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
@@ -36,7 +36,8 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
     User const& user,
     Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
-tc::cotask<std::vector<EncryptedPrivateUserKey>> encryptPrivateKeyForDevices(
+tc::cotask<Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices>
+encryptPrivateKeyForDevices(
     User const& user,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
@@ -53,7 +54,7 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
     Crypto::SealedPrivateEncryptionKey const& encryptedPrivateEncryptionKey);
 
 tc::cotask<void> onOtherDeviceRevocation(
-    DeviceRevocation const& deviceRevocation,
+    Trustchain::Actions::DeviceRevocation const& deviceRevocation,
     Entry const& entry,
     Trustchain::UserId const& selfUserId,
     Trustchain::DeviceId const& deviceId,

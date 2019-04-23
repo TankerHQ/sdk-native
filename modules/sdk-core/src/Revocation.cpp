@@ -17,6 +17,7 @@
 #include <vector>
 
 using Tanker::Trustchain::UserId;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -65,20 +66,20 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
   TC_RETURN(encryptedKeyForPreviousUserKey);
 }
 
-tc::cotask<std::vector<EncryptedPrivateUserKey>> encryptPrivateKeyForDevices(
+tc::cotask<DeviceRevocation::v2::SealedKeysForDevices>
+encryptPrivateKeyForDevices(
     User const& user,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey)
 {
-  std::vector<EncryptedPrivateUserKey> userKeys;
+  DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices)
   {
     if (device.id != deviceId && device.revokedAtBlkIndex == nonstd::nullopt)
     {
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{Crypto::sealEncrypt(
           encryptionPrivateKey, device.publicEncryptionKey)};
-      userKeys.push_back(
-          EncryptedPrivateUserKey{device.id, sealedEncryptedKey});
+      userKeys.emplace_back(device.id, sealedEncryptedKey);
     }
   }
 
@@ -137,33 +138,34 @@ tc::cotask<void> onOtherDeviceRevocation(
 {
   TC_AWAIT(contactStore.revokeDevice(deviceRevocation.deviceId(), entry.index));
 
-  if (auto const& deviceRevocation2 =
-          mpark::get_if<DeviceRevocation2>(&deviceRevocation.variant()))
+  if (auto const deviceRevocation2 =
+          deviceRevocation.get_if<DeviceRevocation2>())
   {
     auto const userId = TC_AWAIT(
-        contactStore.findUserIdByDeviceId(deviceRevocation2->deviceId));
+        contactStore.findUserIdByDeviceId(deviceRevocation2->deviceId()));
     TC_AWAIT(contactStore.rotateContactPublicEncryptionKey(
-        *userId, deviceRevocation2->publicEncryptionKey));
+        *userId, deviceRevocation2->publicEncryptionKey()));
     assert(userId.has_value() &&
            "Device revocation has been verified, userId should exists");
     // deviceId is null for the first pass where the device has not been created
     if (*userId == selfUserId && !deviceId.is_null())
     {
-      auto const encryptedPrivateUserKey =
-          std::find_if(deviceRevocation2->userKeys.begin(),
-                       deviceRevocation2->userKeys.end(),
+      auto const sealedUserKeysForDevices = deviceRevocation2->sealedUserKeysForDevices();
+      auto const sealedPrivateUserKey =
+          std::find_if(sealedUserKeysForDevices.begin(),
+                       sealedUserKeysForDevices.end(),
                        [deviceId](auto const& encryptedUserKey) {
-                         return encryptedUserKey.deviceId == deviceId;
+                         return encryptedUserKey.first == deviceId;
                        });
 
       assert(
-          encryptedPrivateUserKey != deviceRevocation2->userKeys.end() &&
+          sealedPrivateUserKey != sealedUserKeysForDevices.end() &&
           "Device revocation has been revoked deviceId should belong to user");
       auto const decryptedUserPrivateKey = decryptPrivateKeyForDevice(
-          deviceKeyStore, encryptedPrivateUserKey->privateEncryptionKey);
+          deviceKeyStore, sealedPrivateUserKey->second);
 
       TC_AWAIT(userKeyStore.putPrivateKey(
-          deviceRevocation2->publicEncryptionKey, decryptedUserPrivateKey));
+          deviceRevocation2->publicEncryptionKey(), decryptedUserPrivateKey));
     }
   }
 }

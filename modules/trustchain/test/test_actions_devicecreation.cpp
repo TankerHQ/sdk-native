@@ -3,7 +3,6 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v3.hpp>
 
-#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 

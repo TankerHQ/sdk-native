@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
@@ -18,6 +17,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
 #include <Tanker/ProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -88,7 +88,8 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey,
       Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
       Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-      std::vector<EncryptedPrivateUserKey> const& userKeys) const;
+      Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
+          userKeys) const;
 
   std::vector<uint8_t> keyPublish(Crypto::EncryptedSymmetricKey const& symKey,
                                   Crypto::Mac const& mac,

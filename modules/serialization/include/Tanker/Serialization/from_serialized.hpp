@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 #include <Tanker/Serialization/SerializedSource.hpp>
@@ -26,6 +27,13 @@ T deserialize_impl(SerializedSource&);
 
 template <typename T>
 void deserialize_impl(SerializedSource&, T&);
+
+template <typename T, typename U>
+void from_serialized(SerializedSource& ss, std::pair<T, U>& vals)
+{
+  deserialize_impl(ss, vals.first);
+  deserialize_impl(ss, vals.second);
+}
 
 template <typename T>
 void from_serialized(SerializedSource& ss, std::vector<T>& vals)

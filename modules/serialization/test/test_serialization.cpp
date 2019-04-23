@@ -10,6 +10,7 @@
 #include <memory>
 #include <stdexcept>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace
@@ -102,6 +103,12 @@ TEST_CASE("serialized_size")
     vhs.front().vec.buffer.resize(10);
     CHECK(Tanker::Serialization::serialized_size(vhs) == 17);
   }
+
+  SUBCASE("pair<Vec, VecHolder>")
+  {
+    std::pair<Vec, VecHolder> p;
+    CHECK(Tanker::Serialization::serialized_size(p) == 3);
+  }
 }
 
 TEST_CASE("serialize")
@@ -140,6 +147,17 @@ TEST_CASE("serialize")
 
     CHECK(serialized.capacity() == serialized.size());
     CHECK(serialized.size() == Tanker::Serialization::serialized_size(vhs));
+  }
+
+  SUBCASE("pair<Vec, VecHolder>")
+  {
+    Vec v{{0, 1, 2, 3, 4, 5, 6}};
+    VecHolder vh{42, v};
+    std::pair<Vec, VecHolder> p{v, vh};
+
+    auto const serialized = Tanker::Serialization::serialize(p);
+    CHECK(serialized.size() == serialized.capacity());
+    CHECK(serialized.size() == Tanker::Serialization::serialized_size(p));
   }
 }
 
@@ -180,10 +198,12 @@ TEST_CASE("deserialize")
   Vec v{{0, 1, 2, 3, 4, 5, 6}};
   VecHolder vh{42, v};
   std::vector<VecHolder> vhs{vh, vh, vh, vh};
+  std::pair<Vec, VecHolder> p{v, vh};
 
   auto const serializedVec = Tanker::Serialization::serialize(v);
   auto const serializedVecHolder = Tanker::Serialization::serialize(vh);
   auto const serializedVecHolders = Tanker::Serialization::serialize(vhs);
+  auto const serializedPair = Tanker::Serialization::serialize(p);
 
   SUBCASE("Vec")
   {
@@ -205,6 +225,14 @@ TEST_CASE("deserialize")
         Tanker::Serialization::deserialize<std::vector<VecHolder>>(
             serializedVecHolders);
     CHECK(deserializedVecHolders == vhs);
+  }
+
+  SUBCASE("pair<Vec, VecHolder>")
+  {
+    auto const deserializedPair =
+        Tanker::Serialization::deserialize<std::pair<Vec, VecHolder>>(
+            serializedPair);
+    CHECK(deserializedPair == p);
   }
 
   SUBCASE("should throw if eof not reached")

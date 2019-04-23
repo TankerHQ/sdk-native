@@ -28,8 +28,7 @@
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
-using Tanker::Trustchain::Actions::DeviceCreation;
-using Tanker::Trustchain::Actions::TrustchainCreation;
+using namespace Tanker::Trustchain::Actions;
 using namespace Tanker;
 
 #define CHECK_VERIFICATION_FAILED_WITH(functionCall, errCode) \
@@ -59,10 +58,10 @@ T extractDeviceCreation(Action const& action)
       .get<T>();
 }
 
-DeviceRevocation2 extractDeviceRevocation2(Action const& action)
+auto extractDeviceRevocation2(Action const& action)
 {
-  return mpark::get<DeviceRevocation2>(
-      mpark::get<DeviceRevocation>(action.variant()).variant());
+  return mpark::get<DeviceRevocation>(action.variant())
+      .get<DeviceRevocation::v2>();
 }
 
 Crypto::Signature forgeDelegationSignature(
@@ -82,7 +81,6 @@ DeviceCreation::v1 forgeDeviceCreation(DeviceCreation::v1 const& old,
                                        Trustchain::UserId const& newId,
                                        Crypto::Signature const& signature)
 {
-
   return DeviceCreation::v1(old.ephemeralPublicSignatureKey(),
                             newId,
                             signature,
@@ -104,6 +102,40 @@ DeviceCreation::v3 forgeDeviceCreation(DeviceCreation::v3 const& old,
       old.sealedPrivateUserEncryptionKey(),
       (old.isGhostDevice() ? DeviceCreation::DeviceType::GhostDevice :
                              DeviceCreation::DeviceType::Device));
+}
+
+DeviceRevocation::v2 forgeDeviceRevocation(
+    DeviceRevocation::v2 const& old,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey)
+{
+  return DeviceRevocation::v2{old.deviceId(),
+                              publicEncryptionKey,
+                              old.sealedKeyForPreviousUserKey(),
+                              previousPublicEncryptionKey,
+                              old.sealedUserKeysForDevices()};
+}
+
+DeviceRevocation::v2 forgeDeviceRevocation(
+    DeviceRevocation::v2 const& old,
+    Crypto::SealedPrivateEncryptionKey const& sealedKeyForPreviousUserKey)
+{
+  return DeviceRevocation::v2{old.deviceId(),
+                              old.publicEncryptionKey(),
+                              sealedKeyForPreviousUserKey,
+                              old.previousPublicEncryptionKey(),
+                              old.sealedUserKeysForDevices()};
+}
+
+DeviceRevocation::v2 forgeDeviceRevocation(
+    DeviceRevocation::v2 const& old,
+    DeviceRevocation::v2::SealedKeysForDevices const& sealedUserKeysForDevices)
+{
+  return DeviceRevocation::v2{old.deviceId(),
+                              old.publicEncryptionKey(),
+                              old.sealedKeyForPreviousUserKey(),
+                              old.previousPublicEncryptionKey(),
+                              sealedUserKeysForDevices};
 }
 
 template <typename T>
@@ -689,9 +721,13 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has no userKey when "
       "PreviousPublicEncryptionKey is not a zero array")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entryUserV1.action);
-    deviceRevocation.previousPublicEncryptionKey[0]++;
-    entryUserV1.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    auto const deviceRevocation = extractDeviceRevocation2(entryUserV1.action);
+    auto previousPublicEncryptionKey = deviceRevocation.previousPublicEncryptionKey();
+    previousPublicEncryptionKey[0]++;
+    entryUserV1.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation,
+                              deviceRevocation.publicEncryptionKey(),
+                              previousPublicEncryptionKey)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -703,9 +739,11 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has no userKey when the "
       "EncryptedKeyForPreviousUserKey is not a zero array")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entryUserV1.action);
-    deviceRevocation.encryptedKeyForPreviousUserKey[0]++;
-    entryUserV1.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    auto const deviceRevocation = extractDeviceRevocation2(entryUserV1.action);
+    auto sealedKeyForPreviousUserKey = deviceRevocation.sealedKeyForPreviousUserKey();
+    sealedKeyForPreviousUserKey[0]++;
+    entryUserV1.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation, sealedKeyForPreviousUserKey)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -729,10 +767,15 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has a userKey when the "
       "previousEncryptedKey does not match the userKey")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entry.action);
-    deviceRevocation.previousPublicEncryptionKey[0]++;
-    entry.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    auto const deviceRevocation = extractDeviceRevocation2(entry.action);
+    auto previousPublicEncryptionKey = deviceRevocation.previousPublicEncryptionKey();
+    previousPublicEncryptionKey[0]++;
+    entry.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation,
+                              deviceRevocation.publicEncryptionKey(),
+                              previousPublicEncryptionKey)};
 
+    REQUIRE_FALSE(authorDevice.revokedAtBlkIndex.has_value());
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
@@ -743,9 +786,11 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation2 whose userKeys field does not have "
       "exactly one element per device")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entry.action);
-    deviceRevocation.userKeys.erase(deviceRevocation.userKeys.begin());
-    entry.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    auto const deviceRevocation = extractDeviceRevocation2(entry.action);
+    auto sealedUserKeysForDevices = deviceRevocation.sealedUserKeysForDevices();
+    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
+    entry.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation, sealedUserKeysForDevices)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -757,13 +802,15 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceCreationV2 with a userKey fields that contains "
       "the target device of the revocation")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entry.action);
-    deviceRevocation.userKeys.erase(deviceRevocation.userKeys.begin());
-    auto sealedPrivateEncryptionKey =
+    auto const deviceRevocation = extractDeviceRevocation2(entry.action);
+    auto sealedUserKeysForDevices = deviceRevocation.sealedUserKeysForDevices();
+    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
+    auto const sealedPrivateEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    deviceRevocation.userKeys.push_back(EncryptedPrivateUserKey{
-        thirdDevice.device.keys.deviceId, sealedPrivateEncryptionKey});
-    entry.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    sealedUserKeysForDevices.emplace_back(thirdDevice.device.keys.deviceId,
+                                          sealedPrivateEncryptionKey);
+    entry.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation, sealedUserKeysForDevices)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -775,13 +822,16 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation whose userKeys fields has a device "
       "that does not belong to the author's devices")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entry.action);
-    deviceRevocation.userKeys.erase(deviceRevocation.userKeys.begin());
+    auto const deviceRevocation = extractDeviceRevocation2(entry.action);
+    auto sealedUserKeysForDevices = deviceRevocation.sealedUserKeysForDevices();
+    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
+
     auto const sealedPrivateEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    deviceRevocation.userKeys.push_back(EncryptedPrivateUserKey{
-        bobDevice.device.keys.deviceId, sealedPrivateEncryptionKey});
-    entry.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    sealedUserKeysForDevices.emplace_back(bobDevice.device.keys.deviceId,
+                                          sealedPrivateEncryptionKey);
+    entry.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation, sealedUserKeysForDevices)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -792,10 +842,12 @@ TEST_CASE("Verif DeviceRevocationV2")
   SUBCASE(
       "should reject a DeviceRevocation whose userKeys fields has a duplicates")
   {
-    auto deviceRevocation = extractDeviceRevocation2(entry.action);
-    deviceRevocation.userKeys.erase(deviceRevocation.userKeys.begin());
-    deviceRevocation.userKeys.push_back(*deviceRevocation.userKeys.begin());
-    entry.action = DeviceRevocation{DeviceRevocation2{deviceRevocation}};
+    auto const deviceRevocation = extractDeviceRevocation2(entry.action);
+    auto sealedUserKeysForDevices = deviceRevocation.sealedUserKeysForDevices();
+    sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
+    sealedUserKeysForDevices.push_back(*sealedUserKeysForDevices.begin());
+    entry.action = DeviceRevocation{
+        forgeDeviceRevocation(deviceRevocation, sealedUserKeysForDevices)};
 
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(

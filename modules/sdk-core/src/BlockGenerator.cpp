@@ -1,13 +1,13 @@
 #include <Tanker/BlockGenerator.hpp>
 
 #include <Tanker/Action.hpp>
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -182,13 +182,15 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
     Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-    std::vector<EncryptedPrivateUserKey> const& userKeys) const
+    Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
+        userKeys) const
 {
+  using namespace Trustchain::Actions;
   return Serialization::serialize(makeBlock(
       DeviceRevocation{DeviceRevocation2{deviceId,
                                          publicEncryptionKey,
-                                         previousPublicEncryptionKey,
                                          encryptedKeyForPreviousUserKey,
+                                         previousPublicEncryptionKey,
                                          userKeys}},
       _deviceId,
       _privateSignatureKey));

@@ -90,6 +90,7 @@ tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
 
 tc::cotask<void> TrustchainPuller::catchUp()
 {
+  using namespace Trustchain::Actions;
   try
   {
     TINFO("Catching up");
@@ -179,12 +180,11 @@ tc::cotask<void> TrustchainPuller::catchUp()
                 TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
                 processed.insert(unverifiedEntry.hash);
                 if (auto const deviceRevocation2 =
-                        mpark::get_if<DeviceRevocation2>(
-                            &deviceRevocation->variant()))
+                        deviceRevocation->get_if<DeviceRevocation2>())
                 {
                   encryptedUserKeys.push_back(UserKeyPair{
-                      deviceRevocation2->previousPublicEncryptionKey,
-                      deviceRevocation2->encryptedKeyForPreviousUserKey});
+                      deviceRevocation2->previousPublicEncryptionKey(),
+                      deviceRevocation2->sealedKeyForPreviousUserKey()});
                 }
               }
             }
@@ -276,7 +276,8 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
   if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()) ||
       mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
     TC_AWAIT(userGroupActionReceived(entry));
-  if (mpark::holds_alternative<DeviceRevocation>(entry.action.variant()))
+  if (mpark::holds_alternative<Trustchain::Actions::DeviceRevocation>(
+          entry.action.variant()))
     TC_AWAIT(deviceRevoked(entry));
   if (mpark::holds_alternative<ProvisionalIdentityClaim>(
           entry.action.variant()))

@@ -177,7 +177,8 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
                  "Invalid author nature for deviceRevocation");
   auto const& authorDeviceCreation =
       mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
-  auto const& revocation = mpark::get<DeviceRevocation>(dr.action.variant());
+  auto const& revocation =
+      mpark::get<Trustchain::Actions::DeviceRevocation>(dr.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
   auto const targetDevice =
