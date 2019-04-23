@@ -28,11 +28,11 @@ PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
   });
 }
 
-std::string getPublicIdentity(std::string const& token)
+std::string getPublicIdentity(std::string const& secretIdentity)
 {
   return to_string(
       mpark::visit([](auto const& i) { return getPublicIdentity(i); },
-                   extract(token).get<SecretIdentity>()));
+                   extract<SecretIdentity>(secretIdentity)));
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)

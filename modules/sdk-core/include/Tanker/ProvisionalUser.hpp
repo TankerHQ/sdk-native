@@ -9,7 +9,6 @@ namespace Tanker
 {
 struct ProvisionalUser
 {
-  Trustchain::TrustchainId trustchainId;
   Identity::TargetType target;
   std::string value;
   Crypto::EncryptionKeyPair appEncryptionKeyPair;

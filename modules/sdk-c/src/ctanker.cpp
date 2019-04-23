@@ -390,7 +390,7 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
                               b64char const* const* resource_ids,
-                              uint64_t nb_resource_ids) try
+                              uint64_t nb_resource_ids)
 {
   auto const spublicIdentities = to_vector<SPublicIdentity>(
       recipient_public_identities, nb_recipient_public_identities);
@@ -400,9 +400,16 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
 
   return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
 }
-catch (std::exception const& e)
+
+tanker_future_t* tanker_claim_provisional_identity(
+    tanker_t* ctanker,
+    char const* provisional_identity,
+    char const* verification_code)
 {
-  return makeFuture(tc::make_exceptional_future<void>(e));
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->claimProvisionalIdentity(
+      SSecretProvisionalIdentity{provisional_identity},
+      VerificationCode{verification_code}));
 }
 
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker,

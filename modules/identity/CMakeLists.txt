@@ -25,6 +25,7 @@ add_library(tankeridentity STATIC
   src/PublicProvisionalIdentity.cpp
   src/PublicIdentity.cpp
   src/SecretIdentity.cpp
+  src/TargetType.cpp
 )
 
 target_include_directories(tankeridentity

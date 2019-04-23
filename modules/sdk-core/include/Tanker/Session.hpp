@@ -21,6 +21,7 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
+#include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -103,6 +104,9 @@ public:
 
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   Unlock::Methods registeredUnlockMethods() const;
+  tc::cotask<void> claimProvisionalIdentity(
+      SSecretProvisionalIdentity const& identity,
+      VerificationCode const& verificationCode);
   bool hasRegisteredUnlockMethods() const;
   bool hasRegisteredUnlockMethod(Unlock::Method) const;
 
