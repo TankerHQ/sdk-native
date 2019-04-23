@@ -21,4 +21,3 @@ constexpr std::size_t serialized_size(TrustchainCreation const&)
 }
 }
 }
-

@@ -1,6 +1,5 @@
 #include <Tanker/TrustchainPuller.hpp>
 
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Block.hpp>
@@ -11,6 +10,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -268,9 +268,10 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     TC_AWAIT(deviceCreated(entry));
   }
   if (auto const keyPublish =
-          mpark::get_if<KeyPublishToDevice>(&entry.action.variant()))
+          mpark::get_if<Trustchain::Actions::KeyPublishToDevice>(
+              &entry.action.variant()))
   {
-    if (keyPublish->recipient == _deviceId)
+    if (keyPublish->recipient() == _deviceId)
       TC_AWAIT(receivedKeyToDevice(entry));
   }
   if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()) ||

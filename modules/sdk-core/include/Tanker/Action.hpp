@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Actions/DeviceRevocation.hpp>
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
@@ -9,6 +8,7 @@
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 
@@ -26,7 +26,7 @@ class Action
 public:
   using variant_type = mpark::variant<Trustchain::Actions::TrustchainCreation,
                                       Trustchain::Actions::DeviceCreation,
-                                      KeyPublishToDevice,
+                                      Trustchain::Actions::KeyPublishToDevice,
                                       DeviceRevocation,
                                       KeyPublishToUser,
                                       KeyPublishToProvisionalUser,

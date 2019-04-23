@@ -1,6 +1,5 @@
 #include <Tanker/Verif/KeyPublishToUser.hpp>
 
-#include <Tanker/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>

@@ -236,6 +236,7 @@ struct toVal
 {
   using DeviceCreation = Trustchain::Actions::DeviceCreation;
   using TrustchainCreation = Trustchain::Actions::TrustchainCreation;
+  using KeyPublishToDevice = Trustchain::Actions::KeyPublishToDevice;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {
@@ -265,12 +266,12 @@ struct toVal
     return ret;
   }
 
-  emscripten::val operator()(KeyPublishToDevice const& tc)
+  emscripten::val operator()(KeyPublishToDevice const& kp)
   {
     auto ret = emscripten::val::object();
-    ret.set("recipient", containerToJs(tc.recipient));
-    ret.set("resourceId", containerToJs(tc.mac));
-    ret.set("resourceKey", containerToJs(tc.key));
+    ret.set("recipient", containerToJs(kp.recipient()));
+    ret.set("resourceId", containerToJs(kp.mac()));
+    ret.set("resourceKey", containerToJs(kp.encryptedSymmetricKey()));
     return ret;
   }
   emscripten::val operator()(DeviceRevocation const& tc)
@@ -339,7 +340,7 @@ namespace
 {
 Entry jsEntryToEntry(emscripten::val const& jsEntry)
 {
-  using Trustchain::Actions::DeviceCreation;
+  using namespace Trustchain::Actions;
   Entry entry{};
   entry.index = static_cast<uint64_t>(jsEntry["index"].as<double>());
   entry.nature = static_cast<Nature>(jsEntry["nature"].as<int>());
@@ -399,12 +400,11 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   }
   else if (entry.nature == Nature::KeyPublishToDevice)
   {
-    KeyPublishToDevice kp;
-    kp.recipient =
-        Trustchain::DeviceId{copyToVector(jsEntry["action"]["recipient"])};
-    kp.mac = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
-    kp.key = Crypto::EncryptedSymmetricKey{
-        copyToVector(jsEntry["action"]["resourceKey"])};
+    KeyPublishToDevice kp(
+        Trustchain::DeviceId{copyToVector(jsEntry["action"]["recipient"])},
+        Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])},
+        Crypto::EncryptedSymmetricKey{
+            copyToVector(jsEntry["action"]["resourceKey"])});
     entry.action = kp;
   }
   else if (entry.nature == Nature::KeyPublishToUser)
