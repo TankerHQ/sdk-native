@@ -20,7 +20,7 @@ tc::cotask<void> ProvisionalUserKeysStore::putProvisionalUserKeys(
 tc::cotask<nonstd::optional<ProvisionalUserKeys>>
 ProvisionalUserKeysStore::findProvisionalUserKeys(
     Crypto::PublicSignatureKey const& appPublicSigKey,
-    Crypto::PublicSignatureKey const& tankerPublicSigKey)
+    Crypto::PublicSignatureKey const& tankerPublicSigKey) const
 {
   TC_RETURN(TC_AWAIT(
       _db->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
