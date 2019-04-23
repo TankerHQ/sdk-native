@@ -14,6 +14,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/TrustchainCreation.hpp
   include/Tanker/Trustchain/Actions/KeyPublishToDevice.hpp
   include/Tanker/Trustchain/Actions/KeyPublishToUser.hpp
+  include/Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
@@ -43,6 +44,7 @@ add_library(tankertrustchain STATIC
   src/Actions/DeviceRevocation/v2.cpp
   src/Actions/KeyPublishToDevice.cpp
   src/Actions/KeyPublishToUser.cpp
+  src/Actions/KeyPublishToUserGroup.cpp
   src/Actions/TrustchainCreation.cpp
   src/Json/DeviceCreation.cpp
   src/Json/DeviceCreation/v1.cpp
@@ -53,6 +55,7 @@ add_library(tankertrustchain STATIC
   src/Json/DeviceRevocation/v2.cpp
   src/Json/KeyPublishToDevice.cpp
   src/Json/KeyPublishToUser.cpp
+  src/Json/KeyPublishToUserGroup.cpp
   src/Json/TrustchainCreation.cpp
   src/Serialization/DeviceCreation.cpp
   src/Serialization/DeviceCreation/v1.cpp
@@ -63,6 +66,7 @@ add_library(tankertrustchain STATIC
   src/Serialization/DeviceRevocation/v2.cpp
   src/Serialization/KeyPublishToDevice.cpp
   src/Serialization/KeyPublishToUser.cpp
+  src/Serialization/KeyPublishToUserGroup.cpp
   src/Serialization/TrustchainCreation.cpp
   src/ExternTemplates.cpp
 )
