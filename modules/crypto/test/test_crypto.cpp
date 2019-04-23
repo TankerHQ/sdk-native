@@ -205,6 +205,18 @@ TEST_CASE("asymmetric")
       CHECK(verify(data, sig, kp.publicKey));
     }
   }
+
+  SUBCASE("it should derive public signature key from private key")
+  {
+    auto const keyPair = makeSignatureKeyPair();
+    CHECK(derivePublicKey(keyPair.privateKey) == keyPair.publicKey);
+  }
+
+  SUBCASE("it should derive public encryption key from private key")
+  {
+    auto const keyPair = makeEncryptionKeyPair();
+    CHECK(derivePublicKey(keyPair.privateKey) == keyPair.publicKey);
+  }
 }
 
 TEST_CASE("asymmetric seal")
