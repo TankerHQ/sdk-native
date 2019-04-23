@@ -538,7 +538,8 @@ tc::cotask<void> Session::claimProvisionalIdentity(
   auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
       Email{identity.value}, verificationCode));
   if (!tankerKeys)
-    throw std::runtime_error("nothing to claim");
+    throw Error::formatEx<Error::NothingToClaim>(fmt("nothing to claim {}"),
+                                                 identity.value);
   auto block = _blockGenerator.provisionalIdentityClaim(
       _userId,
       ProvisionalUser{identity.target,
