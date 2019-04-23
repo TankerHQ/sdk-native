@@ -142,15 +142,20 @@ private:
   VerificationCode _code;
 };
 
-// We expose this error as ResourceKeyNotFound (same error code)
-class UserKeyNotFound : public Exception
-{
-public:
-  UserKeyNotFound(std::string message)
-    : Exception(Code::ResourceKeyNotFound, std::move(message))
-  {
-  }
-};
+#define DECLARE_ERROR_AS(err, code)                                      \
+  class err : public Exception                                           \
+  {                                                                      \
+  public:                                                                \
+    err(std::string message) : Exception(Code::code, std::move(message)) \
+    {                                                                    \
+    }                                                                    \
+  };
+
+DECLARE_ERROR_AS(UserKeyNotFound, ResourceKeyNotFound);
+DECLARE_ERROR_AS(GroupKeyNotFound, ResourceKeyNotFound);
+DECLARE_ERROR_AS(ProvisionalUserKeysNotFound, ResourceKeyNotFound);
+
+#undef DECLARE_ERROR_AS
 
 class ServerError : public Exception
 {

@@ -296,8 +296,11 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
     }
     if (keyPublish) // do not use else!
     {
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(
-          _resourceKeyStore, _userKeyStore, _groupStore, *keyPublish));
+      TC_AWAIT(ReceiveKey::decryptAndStoreKey(_resourceKeyStore,
+                                              _userKeyStore,
+                                              _groupStore,
+                                              _provisionalUserKeysStore,
+                                              *keyPublish));
       key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
     }
   }

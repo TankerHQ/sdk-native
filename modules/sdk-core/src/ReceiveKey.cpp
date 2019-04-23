@@ -4,8 +4,10 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
@@ -74,11 +76,10 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
 
   if (!group)
   {
-    TERROR(
+    throw Error::formatEx<Error::GroupKeyNotFound>(
         "Received a keypublish for a group we are not in (public encryption "
         "key: {})",
         recipientPublicKey);
-    TC_RETURN();
   }
 
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
@@ -86,12 +87,42 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.mac(), key));
 }
+
+tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
+    ResourceKeyStore& resourceKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
+{
+  auto const provisionalUserKeys =
+      TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
+          keyPublishToProvisionalUser.appPublicSignatureKey,
+          keyPublishToProvisionalUser.tankerPublicSignatureKey));
+
+  if (!provisionalUserKeys)
+  {
+    throw Error::formatEx<Error::ProvisionalUserKeysNotFound>(
+        "Received a keypublish for a provisional user we didn't claim (public "
+        "encryption keys: {} {})",
+        keyPublishToProvisionalUser.appPublicSignatureKey,
+        keyPublishToProvisionalUser.tankerPublicSignatureKey);
+  }
+
+  auto const encryptedKey = Crypto::sealDecrypt(
+      keyPublishToProvisionalUser.key, provisionalUserKeys->tankerKeys);
+  auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
+      encryptedKey, provisionalUserKeys->appKeys);
+
+  TC_AWAIT(
+      resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId, key));
+}
 }
 
-tc::cotask<void> decryptAndStoreKey(ResourceKeyStore& resourceKeyStore,
-                                    UserKeyStore const& userKeyStore,
-                                    GroupStore const& groupStore,
-                                    Entry const& entry)
+tc::cotask<void> decryptAndStoreKey(
+    ResourceKeyStore& resourceKeyStore,
+    UserKeyStore const& userKeyStore,
+    GroupStore const& groupStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
 {
   if (auto const keyPublishToUser =
           mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
@@ -103,6 +134,13 @@ tc::cotask<void> decryptAndStoreKey(ResourceKeyStore& resourceKeyStore,
                    &entry.action.variant()))
     TC_AWAIT(decryptAndStoreKeyForGroup(
         resourceKeyStore, groupStore, *keyPublishToUserGroup));
+  else if (auto const keyPublishToProvisionalUser =
+               mpark::get_if<KeyPublishToProvisionalUser>(
+                   &entry.action.variant()))
+    TC_AWAIT(
+        decryptAndStoreKeyForProvisionalUser(resourceKeyStore,
+                                             provisionalUserKeysStore,
+                                             *keyPublishToProvisionalUser));
 }
 }
 }

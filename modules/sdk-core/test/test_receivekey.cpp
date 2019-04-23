@@ -74,12 +74,14 @@ TEST_CASE("decryptAndStoreKey")
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
-    auto const receiverGroupStore = builder.makeGroupStore(receiver, db.get());
+    GroupStore const receiverGroupStore(db.get());
+    ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
                                               *receiverKeyStore,
-                                              *receiverGroupStore,
+                                              receiverGroupStore,
+                                              receiverProvisionalUserKeysStore,
                                               keyPublishToUserEntry));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
@@ -97,12 +99,40 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     auto const receiverGroupStore = builder.makeGroupStore(receiver, db.get());
+    ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
                                               *receiverKeyStore,
                                               *receiverGroupStore,
+                                              receiverProvisionalUserKeysStore,
                                               keyPublishToUserGroupEntry));
+
+    CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
+  }
+
+  SUBCASE("should process a key publish to provisional user")
+  {
+    auto const provisionalUser = builder.makeProvisionalUser("bob@gmail.com");
+
+    auto const keyPublishBlock = builder.shareToProvisionalUser(
+        senderDevice, provisionalUser, resourceMac, resourceKey);
+    auto const keyPublishToProvisionalUserEntry =
+        toVerifiedEntry(blockToUnverifiedEntry(keyPublishBlock));
+
+    auto const db = AWAIT(DataStore::createDatabase(":memory:"));
+    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    GroupStore const receiverGroupStore(db.get());
+    auto const receiverProvisionalUserKeysStore =
+        builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
+    ResourceKeyStore resourceKeyStore(db.get());
+
+    AWAIT_VOID(
+        ReceiveKey::decryptAndStoreKey(resourceKeyStore,
+                                       *receiverKeyStore,
+                                       receiverGroupStore,
+                                       *receiverProvisionalUserKeysStore,
+                                       keyPublishToProvisionalUserEntry));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
   }

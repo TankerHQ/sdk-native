@@ -29,7 +29,7 @@ public:
       ProvisionalUserKeys const& provisionalUserKeys);
   tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey);
+      Crypto::PublicSignatureKey const& tankerPublicSigKey) const;
 
 private:
   DataStore::ADatabase* _db;
