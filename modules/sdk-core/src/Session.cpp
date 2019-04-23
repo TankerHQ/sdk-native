@@ -595,7 +595,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 {
   auto const& deviceRevocation =
-      mpark::get<DeviceRevocation>(entry.action.variant());
+      mpark::get<Trustchain::Actions::DeviceRevocation>(entry.action.variant());
 
   if (deviceRevocation.deviceId() == this->deviceId())
   {

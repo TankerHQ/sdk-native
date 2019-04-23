@@ -235,6 +235,7 @@ namespace
 struct toVal
 {
   using DeviceCreation = Trustchain::Actions::DeviceCreation;
+  using DeviceRevocation = Trustchain::Actions::DeviceRevocation;
   using TrustchainCreation = Trustchain::Actions::TrustchainCreation;
   using KeyPublishToDevice = Trustchain::Actions::KeyPublishToDevice;
   using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;

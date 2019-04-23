@@ -36,6 +36,11 @@ struct MakeIndexesVisitor
         Index{IndexType::DevicePublicSignatureKey, {key.begin(), key.end()}}};
   }
 
+  auto operator()(Trustchain::Actions::DeviceRevocation const& dr) const
+  {
+    return std::vector<Index>{};
+  }
+
   auto operator()(Trustchain::Actions::KeyPublishToDevice const& kp) const
   {
     return std::vector<Index>{};

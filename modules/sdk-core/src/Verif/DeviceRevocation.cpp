@@ -1,10 +1,10 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
@@ -14,7 +14,7 @@
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -44,20 +44,20 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 {
   if (!user.userKey)
   {
-    ensures(deviceRevocation.previousPublicEncryptionKey.is_null(),
+    ensures(deviceRevocation.previousPublicEncryptionKey().is_null(),
             Error::VerificationCode::InvalidEncryptionKey,
             "A revocation V2 should have an empty previousPublicEncryptionKey "
             "when its user has no userKey");
 
     ensures(
-        deviceRevocation.encryptedKeyForPreviousUserKey.is_null(),
+        deviceRevocation.sealedKeyForPreviousUserKey().is_null(),
         Error::VerificationCode::InvalidUserKey,
-        "A revocation V2 should have an empty encryptedKeyForPreviousUserKey "
+        "A revocation V2 should have an empty sealedKeyForPreviousUserKey "
         "when its user has no userKey");
   }
   else
   {
-    ensures(deviceRevocation.previousPublicEncryptionKey == *user.userKey,
+    ensures(deviceRevocation.previousPublicEncryptionKey() == *user.userKey,
             Error::VerificationCode::InvalidEncryptionKey,
             "A revocation V2 previousPublicEncryptionKey should be the same as "
             "its user userKey");
@@ -66,13 +66,13 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
       user.devices.begin(), user.devices.end(), [](auto const& device) {
         return device.revokedAtBlkIndex == nonstd::nullopt;
       });
-  ensures(deviceRevocation.userKeys.size() == nbrDevicesNotRevoked - 1,
+  ensures(deviceRevocation.sealedUserKeysForDevices().size() == nbrDevicesNotRevoked - 1,
           Error::VerificationCode::InvalidUserKeys,
           "A revocation V2 should have exactly one userKey per remaining "
           "device of the user");
-  for (auto userKey : deviceRevocation.userKeys)
+  for (auto userKey : deviceRevocation.sealedUserKeysForDevices())
   {
-    ensures(userKey.deviceId != target.id,
+    ensures(userKey.first != target.id,
             Error::VerificationCode::InvalidUserKeys,
             "A revocation V2 should not have the target deviceId in the "
             "userKeys field");
@@ -80,13 +80,13 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
     ensures(std::find_if(user.devices.begin(),
                          user.devices.end(),
                          [&](auto const& device) {
-                           return userKey.deviceId == device.id;
+                           return userKey.first == device.id;
                          }) != user.devices.end(),
             Error::VerificationCode::InvalidUserKeys,
             "A revocation V2 should not have a key for another user's device");
   }
 
-  ensures(!has_duplicates(deviceRevocation.userKeys),
+  ensures(!has_duplicates(deviceRevocation.sealedUserKeysForDevices()),
           Error::VerificationCode::InvalidUserKeys,
           "A revocation V2 should not have duplicates entries in the userKeys "
           "field");
@@ -125,9 +125,8 @@ void verifyDeviceRevocation(UnverifiedEntry const& entry,
   auto const& deviceRevocation =
       mpark::get<DeviceRevocation>(entry.action.variant());
 
-  mpark::visit(
-      [&](auto const& subAction) { verifySubAction(subAction, target, user); },
-      deviceRevocation.variant());
+  deviceRevocation.visit(
+      [&](auto const& subAction) { verifySubAction(subAction, target, user); });
 }
 }
 }

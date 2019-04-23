@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -27,7 +27,7 @@ public:
   using variant_type = mpark::variant<Trustchain::Actions::TrustchainCreation,
                                       Trustchain::Actions::DeviceCreation,
                                       Trustchain::Actions::KeyPublishToDevice,
-                                      DeviceRevocation,
+                                      Trustchain::Actions::DeviceRevocation,
                                       Trustchain::Actions::KeyPublishToUser,
                                       KeyPublishToProvisionalUser,
                                       UserGroupCreation,

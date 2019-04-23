@@ -87,7 +87,7 @@ TEST_CASE("Revocation namespace")
         AWAIT(DeviceKeyStore::open(db.get(), deviceResult.device.keys));
 
     auto const decryptedPrivateKey = Revocation::decryptPrivateKeyForDevice(
-        deviceKeyStore, encryptedPrivateKeys[0].privateEncryptionKey);
+        deviceKeyStore, encryptedPrivateKeys[0].second);
 
     CHECK(decryptedPrivateKey == encryptionKeyPair.privateKey);
   }
