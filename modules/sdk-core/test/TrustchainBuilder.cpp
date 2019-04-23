@@ -737,6 +737,26 @@ std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
   return contactStore;
 }
 
+std::unique_ptr<Tanker::ProvisionalUserKeysStore>
+TrustchainBuilder::makeProvisionalUserKeysStoreWith(
+    std::vector<Tanker::ProvisionalUser> const& provisionalUsers,
+    Tanker::DataStore::ADatabase* conn) const
+{
+  auto provisionalUserKeysStore =
+      std::make_unique<Tanker::ProvisionalUserKeysStore>(conn);
+  for (auto const& provisionalUser : provisionalUsers)
+  {
+    AWAIT_VOID(provisionalUserKeysStore->putProvisionalUserKeys(
+        provisionalUser.appSignatureKeyPair.publicKey,
+        provisionalUser.tankerSignatureKeyPair.publicKey,
+        {
+            provisionalUser.appEncryptionKeyPair,
+            provisionalUser.tankerEncryptionKeyPair,
+        }));
+  }
+  return provisionalUserKeysStore;
+}
+
 std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
     TrustchainBuilder::User const& user,
     Tanker::DataStore::ADatabase* conn) const
