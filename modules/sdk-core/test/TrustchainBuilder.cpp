@@ -535,6 +535,38 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
   return block;
 }
 
+Tanker::Block TrustchainBuilder::shareToProvisionalUser(
+    Device const& sender,
+    Tanker::ProvisionalUser const& receiver,
+    Tanker::Crypto::Mac const& resourceId,
+    Tanker::Crypto::SymmetricKey const& key)
+{
+  auto const encryptedKeyOnce =
+      Crypto::sealEncrypt(key, receiver.appEncryptionKeyPair.publicKey);
+  auto const encryptedKeyTwice =
+      Crypto::sealEncrypt<Crypto::TwoTimesSealedSymmetricKey>(
+          encryptedKeyOnce, receiver.tankerEncryptionKeyPair.publicKey);
+
+  KeyPublishToProvisionalUser keyPublish{
+      receiver.appSignatureKeyPair.publicKey,
+      receiver.tankerSignatureKeyPair.publicKey,
+      resourceId,
+      encryptedKeyTwice};
+
+  Block block;
+  block.trustchainId = _trustchainId;
+  block.author = Crypto::Hash{sender.keys.deviceId};
+  block.nature = Nature::KeyPublishToProvisionalUser;
+  block.payload = Serialization::serialize(keyPublish);
+  block.signature =
+      Crypto::sign(block.hash(), sender.keys.signatureKeyPair.privateKey);
+
+  block.index = _blocks.size() + 1;
+  _blocks.push_back(block);
+
+  return block;
+}
+
 Tanker::Block TrustchainBuilder::revokeDevice1(Device const& sender,
                                                Device const& target,
                                                bool unsafe)

@@ -116,6 +116,10 @@ public:
                                  Group const& receiver,
                                  Tanker::Crypto::Mac const& resourceId,
                                  Tanker::Crypto::SymmetricKey const& key);
+  Tanker::Block shareToProvisionalUser(Device const& sender,
+                                       Tanker::ProvisionalUser const& receiver,
+                                       Tanker::Crypto::Mac const& resourceId,
+                                       Tanker::Crypto::SymmetricKey const& key);
 
   Tanker::Block revokeDevice1(Device const& sender,
                               Device const& target,
