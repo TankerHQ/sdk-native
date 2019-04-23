@@ -405,6 +405,17 @@ catch (std::exception const& e)
   return makeFuture(tc::make_exceptional_future<void>(e));
 }
 
+tanker_future_t* tanker_claim_provisional_identity(
+    tanker_t* ctanker,
+    char const* provisional_identity,
+    char const* verification_code)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->claimProvisionalIdentity(
+      SSecretProvisionalIdentity{provisional_identity},
+      VerificationCode{verification_code}));
+}
+
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
                                       b64char const* device_id)
 {

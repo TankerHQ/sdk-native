@@ -447,6 +447,26 @@ tanker_future_t* tanker_share(tanker_t* session,
                               uint64_t nb_resource_ids);
 
 /*!
+ * Claim a provisional identity to the current user
+ *
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_OPEN
+ * \param provisional_identity provisional identity you want to claim.
+ * \param verification_code the verification code that verifies this provisional
+ * identity.
+ *
+ * \return An empty future.
+ * \throws TANKER_ERROR_NOTHING_TO_CLAIM there is nothing to claim for this
+ * identity
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
+ * the server returned an error
+ */
+tanker_future_t* tanker_claim_provisional_identity(
+    tanker_t* session,
+    char const* provisional_identity,
+    char const* verification_code);
+
+/*!
  * Revoke a device by device id.
  *
  * \param session A tanker tanker_t* instance.
