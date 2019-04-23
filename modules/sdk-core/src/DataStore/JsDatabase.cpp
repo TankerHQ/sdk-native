@@ -237,6 +237,7 @@ struct toVal
   using DeviceCreation = Trustchain::Actions::DeviceCreation;
   using TrustchainCreation = Trustchain::Actions::TrustchainCreation;
   using KeyPublishToDevice = Trustchain::Actions::KeyPublishToDevice;
+  using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {
@@ -279,13 +280,13 @@ struct toVal
     // TODO
     return emscripten::val::object();
   }
-  emscripten::val operator()(KeyPublishToUser const& tc)
+  emscripten::val operator()(KeyPublishToUser const& kp)
   {
     auto ret = emscripten::val::object();
     ret.set("recipientPublicEncryptionKey",
-            containerToJs(tc.recipientPublicEncryptionKey));
-    ret.set("resourceId", containerToJs(tc.mac));
-    ret.set("resourceKey", containerToJs(tc.key));
+            containerToJs(kp.recipientPublicEncryptionKey()));
+    ret.set("resourceId", containerToJs(kp.mac()));
+    ret.set("resourceKey", containerToJs(kp.sealedSymmetricKey()));
     return ret;
   }
   emscripten::val operator()(UserGroupCreation const& tc)
@@ -409,13 +410,13 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   }
   else if (entry.nature == Nature::KeyPublishToUser)
   {
-    KeyPublishToUser kp;
-    kp.recipientPublicEncryptionKey = Crypto::PublicEncryptionKey{
-        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"])};
-    kp.mac = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
-    kp.key = Crypto::SealedSymmetricKey{
-        copyToVector(jsEntry["action"]["resourceKey"])};
-    entry.action = kp;
+    Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
+        copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
+    Crypto::Mac const mac(copyToVector(jsEntry["action"]["resourceId"]));
+    Crypto::SealedSymmetricKey const sealedSymmetricKey(
+        copyToVector(jsEntry["action"]["resourceKey"]));
+    entry.action =
+        KeyPublishToUser(recipientPublicEncryptionKey, mac, sealedSymmetricKey);
   }
   else if (entry.nature == Nature::KeyPublishToUserGroup)
   {
