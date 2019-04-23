@@ -2,13 +2,13 @@
 
 #include <Tanker/Actions/DeviceRevocation.hpp>
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 
@@ -28,7 +28,7 @@ public:
                                       Trustchain::Actions::DeviceCreation,
                                       Trustchain::Actions::KeyPublishToDevice,
                                       DeviceRevocation,
-                                      KeyPublishToUser,
+                                      Trustchain::Actions::KeyPublishToUser,
                                       KeyPublishToProvisionalUser,
                                       UserGroupCreation,
                                       KeyPublishToUserGroup,

@@ -1,6 +1,5 @@
 #include <Tanker/DataStore/Database.hpp>
 
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
@@ -22,6 +21,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -318,8 +318,9 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
     TC_RETURN();
 
   if (auto const keyPublish =
-          mpark::get_if<KeyPublishToUser>(&entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac));
+          mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
+              &entry.action.variant()))
+    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
   if (auto const keyPublish =
           mpark::get_if<KeyPublishToUserGroup>(&entry.action.variant()))
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId));

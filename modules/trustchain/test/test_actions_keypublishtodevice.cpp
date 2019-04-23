@@ -1,6 +1,5 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 
-#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <Helpers/Buffers.hpp>

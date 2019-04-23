@@ -1,6 +1,5 @@
 #include <Tanker/TrustchainPuller.hpp>
 
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>

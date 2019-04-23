@@ -1,6 +1,5 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -48,17 +48,17 @@ namespace
 tc::cotask<void> decryptAndStoreKeyForUser(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    KeyPublishToUser const& keyPublishToUser)
+    Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
   auto const& recipientPublicKey =
-      keyPublishToUser.recipientPublicEncryptionKey;
+      keyPublishToUser.recipientPublicEncryptionKey();
   auto const userKeyPair =
       TC_AWAIT(userKeyStore.getKeyPair(recipientPublicKey));
 
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
-      keyPublishToUser.key, userKeyPair);
+      keyPublishToUser.sealedSymmetricKey(), userKeyPair);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.mac, key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.mac(), key));
 }
 
 tc::cotask<void> decryptAndStoreKeyForGroup(
@@ -93,7 +93,8 @@ tc::cotask<void> decryptAndStoreKey(ResourceKeyStore& resourceKeyStore,
                                     Entry const& entry)
 {
   if (auto const keyPublishToUser =
-          mpark::get_if<KeyPublishToUser>(&entry.action.variant()))
+          mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
+              &entry.action.variant()))
     TC_AWAIT(decryptAndStoreKeyForUser(
         resourceKeyStore, userKeyStore, *keyPublishToUser));
   else if (auto const keyPublishToUserGroup =

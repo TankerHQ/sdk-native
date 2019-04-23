@@ -2,7 +2,6 @@
 
 #include <Tanker/Action.hpp>
 #include <Tanker/Actions/DeviceRevocation.hpp>
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -210,10 +210,11 @@ std::vector<uint8_t> BlockGenerator::keyPublishToUser(
     Crypto::Mac const& mac,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
-  return Serialization::serialize(
-      makeBlock(KeyPublishToUser{recipientPublicEncryptionKey, mac, symKey},
-                _deviceId,
-                _privateSignatureKey));
+  return Serialization::serialize(makeBlock(
+      Trustchain::Actions::KeyPublishToUser{
+          recipientPublicEncryptionKey, mac, symKey},
+      _deviceId,
+      _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(

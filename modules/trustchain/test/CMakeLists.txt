@@ -2,6 +2,7 @@ add_executable(test_trustchain
   test_actions_devicecreation.cpp
   test_actions_trustchaincreation.cpp
   test_actions_keypublishtodevice.cpp
+  test_actions_keypublishtouser.cpp
 
   main.cpp
 )

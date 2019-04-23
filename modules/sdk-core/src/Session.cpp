@@ -1,6 +1,5 @@
 #include <Tanker/Session.hpp>
 
-#include <Tanker/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/BlockGenerator.hpp>
