@@ -157,9 +157,10 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
   auto const& authorDeviceCreation =
       mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& keyPublishToUserGroup =
-      mpark::get<KeyPublishToUserGroup>(kp.action.variant());
+      mpark::get<Trustchain::Actions::KeyPublishToUserGroup>(
+          kp.action.variant());
   auto const group = TC_AWAIT(getGroupByEncryptionKey(
-      keyPublishToUserGroup.recipientPublicEncryptionKey));
+      keyPublishToUserGroup.recipientPublicEncryptionKey()));
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
   Verif::verifyKeyPublishToUserGroup(kp, authorDevice, group);

@@ -1,9 +1,9 @@
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>

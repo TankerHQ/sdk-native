@@ -66,18 +66,18 @@ void assertKeyPublishToUsersTargetedAt(
 
 void assertKeyPublishToGroupTargetedAt(
     Share::ResourceKey const& resourceKey,
-    std::vector<KeyPublishToUserGroup> const& keyPublishes,
+    std::vector<Trustchain::Actions::KeyPublishToUserGroup> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
   REQUIRE(keyPublishes.size() == userKeyPairs.size());
 
   for (unsigned int i = 0; i < keyPublishes.size(); ++i)
   {
-    CHECK(keyPublishes[i].recipientPublicEncryptionKey ==
+    CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].resourceId == std::get<Crypto::Mac>(resourceKey));
-    CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(keyPublishes[i].key,
-                                                       userKeyPairs[i]),
+    CHECK(keyPublishes[i].mac() == std::get<Crypto::Mac>(resourceKey));
+    CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
+                 keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
   }
 }
@@ -295,7 +295,8 @@ TEST_CASE(
                                                  resourceKeys,
                                                  keyRecipients);
 
-  auto const keyPublishes = extract<KeyPublishToUserGroup>(blocks);
+  auto const keyPublishes =
+      extract<Trustchain::Actions::KeyPublishToUserGroup>(blocks);
   assertKeyPublishToGroupTargetedAt(
       resourceKeys[0],
       keyPublishes,

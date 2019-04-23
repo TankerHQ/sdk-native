@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Actions/KeyPublishToUserGroup.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Actions/UserGroupCreation.hpp>
@@ -24,16 +24,17 @@ namespace Tanker
 class Action
 {
 public:
-  using variant_type = mpark::variant<Trustchain::Actions::TrustchainCreation,
-                                      Trustchain::Actions::DeviceCreation,
-                                      Trustchain::Actions::KeyPublishToDevice,
-                                      Trustchain::Actions::DeviceRevocation,
-                                      Trustchain::Actions::KeyPublishToUser,
-                                      KeyPublishToProvisionalUser,
-                                      UserGroupCreation,
-                                      KeyPublishToUserGroup,
-                                      UserGroupAddition,
-                                      ProvisionalIdentityClaim>;
+  using variant_type =
+      mpark::variant<Trustchain::Actions::TrustchainCreation,
+                     Trustchain::Actions::DeviceCreation,
+                     Trustchain::Actions::KeyPublishToDevice,
+                     Trustchain::Actions::DeviceRevocation,
+                     Trustchain::Actions::KeyPublishToUser,
+                     KeyPublishToProvisionalUser,
+                     UserGroupCreation,
+                     Trustchain::Actions::KeyPublishToUserGroup,
+                     UserGroupAddition,
+                     ProvisionalIdentityClaim>;
 
   explicit Action(variant_type&&);
   explicit Action(variant_type const&);

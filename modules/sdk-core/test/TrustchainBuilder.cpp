@@ -519,7 +519,8 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
   auto const encryptedKey =
       Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(key, receiverPublicKey);
 
-  KeyPublishToUserGroup keyPublish{receiverPublicKey, resourceId, encryptedKey};
+  Trustchain::Actions::KeyPublishToUserGroup keyPublish{
+      receiverPublicKey, resourceId, encryptedKey};
 
   Block block;
   block.trustchainId = _trustchainId;
