@@ -9,6 +9,7 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
+#include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
@@ -81,6 +82,9 @@ public:
   bool hasRegisteredUnlockMethods() const;
   bool hasRegisteredUnlockMethod(Unlock::Method) const;
   Unlock::Methods registeredUnlockMethods() const;
+  tc::cotask<void> claimProvisionalIdentity(
+      SSecretProvisionalIdentity const& identity,
+      VerificationCode const& verificationCode);
 
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;

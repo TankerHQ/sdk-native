@@ -9,11 +9,13 @@
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
@@ -29,6 +31,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/ResourceId.hpp>
+#include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -521,6 +524,31 @@ tc::cotask<void> Session::registerUnlock(
   else
     TC_AWAIT(updateUnlock(Unlock::UpdateOptions{
         options.get<Email>(), options.get<Password>(), nonstd::nullopt}));
+}
+
+tc::cotask<void> Session::claimProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity,
+    VerificationCode const& verificationCode)
+{
+  auto const identity = Identity::extract<Identity::SecretProvisionalIdentity>(
+      sidentity.string());
+  if (identity.target != Identity::TargetType::Email)
+    throw Error::formatEx("unsupported provisional identity target {}",
+                          identity.target);
+  auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
+      Email{identity.value}, verificationCode));
+  if (!tankerKeys)
+    throw std::runtime_error("nothing to claim");
+  auto block = _blockGenerator.provisionalIdentityClaim(
+      _userId,
+      ProvisionalUser{identity.target,
+                      identity.value,
+                      identity.appEncryptionKeyPair,
+                      tankerKeys->first,
+                      identity.appSignatureKeyPair,
+                      tankerKeys->second},
+      TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+  TC_AWAIT(_client->pushBlock(block));
 }
 
 tc::cotask<UnlockKey> Session::generateAndRegisterUnlockKey()

@@ -2,6 +2,7 @@
 
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <mpark/variant.hpp>
 
@@ -15,6 +16,7 @@ using PublicIdentity =
     mpark::variant<PublicPermanentIdentity, PublicProvisionalIdentity>;
 
 PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity);
+PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity);
 
 std::string getPublicIdentity(std::string const& identity);
 

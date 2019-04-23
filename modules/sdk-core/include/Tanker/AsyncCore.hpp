@@ -10,7 +10,7 @@
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
-#include <Tanker/Types/SUserId.hpp>
+#include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
@@ -102,6 +102,10 @@ public:
   expected<bool> hasRegisteredUnlockMethods() const;
   expected<bool> hasRegisteredUnlockMethod(Unlock::Method) const;
   expected<Unlock::Methods> registeredUnlockMethods() const;
+
+  tc::shared_future<void> claimProvisionalIdentity(
+      SSecretProvisionalIdentity const& identity,
+      VerificationCode const& verificationCode);
 
   boost::signals2::signal<void()>& sessionClosed();
   boost::signals2::signal<void()>& deviceRevoked();

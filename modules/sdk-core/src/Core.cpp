@@ -268,6 +268,16 @@ Unlock::Methods Core::registeredUnlockMethods() const
   return (*psession)->registeredUnlockMethods();
 }
 
+tc::cotask<void> Core::claimProvisionalIdentity(
+    SSecretProvisionalIdentity const& identity,
+    VerificationCode const& verificationCode)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(registeredUnlockMethods);
+  TC_AWAIT((*psession)->claimProvisionalIdentity(identity, verificationCode));
+}
+
 bool Core::hasRegisteredUnlockMethods() const
 {
   auto psession = mpark::get_if<SessionType>(&_state);

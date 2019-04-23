@@ -222,6 +222,18 @@ expected<bool> AsyncCore::hasRegisteredUnlockMethod(Unlock::Method method) const
       [&] { return this->_core.hasRegisteredUnlockMethod(method); });
 }
 
+tc::shared_future<void> AsyncCore::claimProvisionalIdentity(
+    SSecretProvisionalIdentity const& identity,
+    VerificationCode const& verificationCode)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<void> {
+      TC_AWAIT(
+          this->_core.claimProvisionalIdentity(identity, verificationCode));
+    });
+  });
+}
+
 expected<SDeviceId> AsyncCore::deviceId() const
 {
   return tc::sync([&] {
