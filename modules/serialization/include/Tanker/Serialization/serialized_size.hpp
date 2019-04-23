@@ -18,6 +18,12 @@ namespace Serialization
 {
 namespace detail
 {
+template <typename T, typename U>
+std::size_t serialized_size(std::pair<T, U> const& val)
+{
+  return serialized_size(val.first) + serialized_size(val.second);
+}
+
 template <typename... Args>
 std::size_t serialized_size(mpark::variant<Args...> const& val)
 {

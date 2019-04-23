@@ -3,6 +3,7 @@
 #include <iterator>
 #include <map>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <Tanker/Serialization/Varint.hpp>
@@ -17,6 +18,13 @@ namespace Serialization
 {
 namespace detail
 {
+template <typename T, typename U>
+std::uint8_t* to_serialized(std::uint8_t* it, std::pair<T, U> const& vals)
+{
+  it = to_serialized(it, vals.first);
+  return to_serialized(it, vals.second);
+}
+
 template <typename T>
 std::uint8_t* to_serialized(std::uint8_t* it, std::vector<T> const& vals)
 {
