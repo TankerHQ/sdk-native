@@ -24,8 +24,9 @@ void verifyKeyPublishToUserGroup(UnverifiedEntry const& entry,
   assert(entry.nature == Nature::KeyPublishToUserGroup);
 
   assert(recipientGroup.publicEncryptionKey ==
-         mpark::get<KeyPublishToUserGroup>(entry.action.variant())
-             .recipientPublicEncryptionKey);
+         mpark::get<Trustchain::Actions::KeyPublishToUserGroup>(
+             entry.action.variant())
+             .recipientPublicEncryptionKey());
 
   ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
           Error::VerificationCode::InvalidAuthor,

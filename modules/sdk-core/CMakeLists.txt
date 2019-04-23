@@ -170,7 +170,6 @@ add_library(tankercore STATIC
   src/ContactStore.cpp
   src/Preregistration.cpp
   src/ProvisionalUserKeysStore.cpp
-  src/Actions/KeyPublishToUserGroup.cpp
   src/Actions/KeyPublishToProvisionalUser.cpp
   src/Actions/UserKeyPair.cpp
   src/Actions/UserGroupAddition.cpp

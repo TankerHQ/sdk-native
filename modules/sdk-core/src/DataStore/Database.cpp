@@ -322,8 +322,9 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
               &entry.action.variant()))
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
   if (auto const keyPublish =
-          mpark::get_if<KeyPublishToUserGroup>(&entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId));
+          mpark::get_if<Trustchain::Actions::KeyPublishToUserGroup>(
+              &entry.action.variant()))
+    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
 
   for (auto const& index : entry.action.makeIndexes())
   {
