@@ -1,9 +1,6 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 
-#include <Tanker/Crypto/Crypto.hpp>
-
 #include <algorithm>
-#include <tuple>
 
 namespace Tanker
 {
