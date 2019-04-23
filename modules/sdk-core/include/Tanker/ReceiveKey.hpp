@@ -10,6 +10,7 @@ class ContactStore;
 class ResourceKeyStore;
 class UserKeyStore;
 class GroupStore;
+class ProvisionalUserKeysStore;
 struct Entry;
 
 namespace ReceiveKey
@@ -20,9 +21,11 @@ tc::cotask<void> onKeyToDeviceReceived(
     Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
     Entry const& entry);
 
-tc::cotask<void> decryptAndStoreKey(ResourceKeyStore& resourceKeyStore,
-                                    UserKeyStore const& userKeyStore,
-                                    GroupStore const& groupStore,
-                                    Entry const& entry);
+tc::cotask<void> decryptAndStoreKey(
+    ResourceKeyStore& resourceKeyStore,
+    UserKeyStore const& userKeyStore,
+    GroupStore const& groupStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry);
 }
 }
