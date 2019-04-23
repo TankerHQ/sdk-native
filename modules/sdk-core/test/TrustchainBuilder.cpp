@@ -280,10 +280,10 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   return {device, tankerUser, entry};
 }
 
-Tanker::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
+Tanker::SecretProvisionalUser TrustchainBuilder::makeProvisionalUser(
     std::string const& email)
 {
-  return Tanker::ProvisionalUser{
+  return Tanker::SecretProvisionalUser{
       Tanker::Identity::TargetType::Email,
       email,
       Crypto::makeEncryptionKeyPair(),
@@ -295,7 +295,7 @@ Tanker::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
 
 Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
     std::string const& suserId,
-    Tanker::ProvisionalUser const& provisionalUser,
+    Tanker::SecretProvisionalUser const& provisionalUser,
     int authorDeviceIndex)
 {
   auto const user = getUser(suserId).value();
@@ -535,7 +535,7 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
 
 Tanker::Block TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
-    Tanker::ProvisionalUser const& receiver,
+    Tanker::SecretProvisionalUser const& receiver,
     Tanker::Trustchain::ResourceId const& resourceId,
     Tanker::Crypto::SymmetricKey const& key)
 {
@@ -738,7 +738,7 @@ std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
 
 std::unique_ptr<Tanker::ProvisionalUserKeysStore>
 TrustchainBuilder::makeProvisionalUserKeysStoreWith(
-    std::vector<Tanker::ProvisionalUser> const& provisionalUsers,
+    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers,
     Tanker::DataStore::ADatabase* conn) const
 {
   auto provisionalUserKeysStore =

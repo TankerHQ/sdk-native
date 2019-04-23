@@ -279,7 +279,7 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
 
 std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
     Trustchain::UserId const& userId,
-    ProvisionalUser const& provisionalUser,
+    SecretProvisionalUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair) const
 {
   std::vector<uint8_t> keysToEncrypt;

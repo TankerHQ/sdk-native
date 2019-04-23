@@ -7,7 +7,7 @@
 
 namespace Tanker
 {
-struct ProvisionalUser
+struct SecretProvisionalUser
 {
   Identity::TargetType target;
   std::string value;

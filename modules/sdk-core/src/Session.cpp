@@ -545,7 +545,7 @@ tc::cotask<void> Session::claimProvisionalIdentity(
                                                  identity.value);
   auto block = _blockGenerator.provisionalIdentityClaim(
       _userId,
-      ProvisionalUser{identity.target,
+      SecretProvisionalUser{identity.target,
                       identity.value,
                       identity.appEncryptionKeyPair,
                       tankerKeys->encryptionKeyPair,

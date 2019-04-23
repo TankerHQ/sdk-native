@@ -13,7 +13,7 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/TwoTimesSealedSymmetricKey.hpp>
-#include <Tanker/ProvisionalUser.hpp>
+#include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
@@ -126,7 +126,7 @@ public:
 
   std::vector<uint8_t> provisionalIdentityClaim(
       Trustchain::UserId const& userId,
-      ProvisionalUser const& provisionalUser,
+      SecretProvisionalUser const& provisionalUser,
       Crypto::EncryptionKeyPair const& userKeyPair) const;
 
 private:
