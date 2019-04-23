@@ -17,6 +17,7 @@ target_sources(tankertypes INTERFACE
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/VerificationCode.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SDeviceId.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/ProvisionalUserKeys.hpp
+  ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SSecretProvisionalIdentity.hpp
 )
 
 target_include_directories(tankertypes
