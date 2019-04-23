@@ -222,15 +222,15 @@ TEST_CASE("Client getProvisionalIdentityKeys")
       Email{"bob@tanker.io"}, VerificationCode{"verification_code"}));
   FAST_REQUIRE_UNARY(res.has_value());
   FAST_CHECK_EQ(
-      res->first.publicKey,
+      res->encryptionKeyPair.publicKey,
       result["EncryptionPublicKey"].get<Crypto::PublicEncryptionKey>());
   FAST_CHECK_EQ(
-      res->first.privateKey,
+      res->encryptionKeyPair.privateKey,
       result["EncryptionPrivateKey"].get<Crypto::PrivateEncryptionKey>());
-  FAST_CHECK_EQ(res->second.publicKey,
+  FAST_CHECK_EQ(res->signatureKeyPair.publicKey,
                 result["SignaturePublicKey"].get<Crypto::PublicSignatureKey>());
   FAST_CHECK_EQ(
-      res->second.privateKey,
+      res->signatureKeyPair.privateKey,
       result["SignaturePrivateKey"].get<Crypto::PrivateSignatureKey>());
 }
 
