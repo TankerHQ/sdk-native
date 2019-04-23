@@ -1,16 +1,16 @@
 #pragma once
 
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Actions/UserGroupAddition.hpp>
-#include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -31,7 +31,7 @@ public:
                      Trustchain::Actions::DeviceRevocation,
                      Trustchain::Actions::KeyPublishToUser,
                      KeyPublishToProvisionalUser,
-                     UserGroupCreation,
+                     Trustchain::Actions::UserGroupCreation,
                      Trustchain::Actions::KeyPublishToUserGroup,
                      UserGroupAddition,
                      ProvisionalIdentityClaim>;

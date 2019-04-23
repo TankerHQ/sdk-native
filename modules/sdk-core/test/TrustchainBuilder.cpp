@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <cstring>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 using namespace Tanker;
 
 TrustchainBuilder::TrustchainBuilder()
@@ -315,11 +315,30 @@ Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
 
 namespace
 {
-Tanker::UserGroupCreation::GroupEncryptedKeys generateGroupKeysForUsers(
+UserGroupCreation::SealedPrivateEncryptionKeysForUsers
+generateGroupKeysForNewUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<TrustchainBuilder::User> const& users)
 {
-  Tanker::UserGroupCreation::GroupEncryptedKeys keysForUsers;
+  UserGroupCreation::SealedPrivateEncryptionKeysForUsers keysForUsers;
+  for (auto const& user : users)
+  {
+    if (user.userKeys.empty())
+      throw std::runtime_error(
+          "TrustchainBuilder: can't add a user without user key to a group");
+    keysForUsers.emplace_back(
+        user.userKeys.back().keyPair.publicKey,
+        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
+            groupPrivateEncryptionKey, user.userKeys.back().keyPair.publicKey));
+  }
+  return keysForUsers;
+}
+
+std::vector<Tanker::GroupEncryptedKey> generateGroupKeysForUsers(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<TrustchainBuilder::User> const& users)
+{
+  std::vector<Tanker::GroupEncryptedKey> keysForUsers;
   for (auto const& user : users)
   {
     if (user.userKeys.empty())
@@ -363,7 +382,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const keysForUsers =
-      generateGroupKeysForUsers(encryptionKeyPair.privateKey, users);
+      generateGroupKeysForNewUsers(encryptionKeyPair.privateKey, users);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,
@@ -392,7 +411,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
 
   auto const encryptedPrivateSignatureKey =
       mpark::get<UserGroupCreation>(entry.action.variant())
-          .encryptedPrivateSignatureKey;
+          .sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 
   _groups.insert(group);

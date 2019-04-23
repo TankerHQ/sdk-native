@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Actions/UserGroupAddition.hpp>
-#include <Tanker/Actions/UserGroupCreation.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
@@ -114,13 +114,14 @@ public:
   std::vector<uint8_t> userGroupCreation(
       Crypto::SignatureKeyPair const& signatureKeyPair,
       Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      UserGroupCreation::GroupEncryptedKeys const&
-          encryptedGroupPrivateEncryptionKeysForUsers) const;
+      Trustchain::Actions::UserGroupCreation::
+          SealedPrivateEncryptionKeysForUsers const&
+              sealedPrivateEncryptionKeysForUsers) const;
 
   std::vector<uint8_t> userGroupAddition(
       Crypto::SignatureKeyPair const& signatureKeyPair,
       Crypto::Hash const& previousGroupBlock,
-      UserGroupCreation::GroupEncryptedKeys const&
+      std::vector<GroupEncryptedKey> const&
           encryptedGroupPrivateEncryptionKeysForUsers) const;
 
   std::vector<uint8_t> provisionalIdentityClaim(

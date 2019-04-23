@@ -22,6 +22,7 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("Can't create an empty group")
 {
@@ -70,23 +71,23 @@ TEST_CASE("Can create a group with two users")
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
 
-  CHECK(group.publicSignatureKey == groupSignatureKey.publicKey);
-  CHECK(group.publicEncryptionKey == groupEncryptionKey.publicKey);
+  CHECK(group.publicSignatureKey() == groupSignatureKey.publicKey);
+  CHECK(group.publicEncryptionKey() == groupEncryptionKey.publicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-            group.encryptedPrivateSignatureKey, groupEncryptionKey) ==
+            group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
         groupSignatureKey.privateKey);
-  REQUIRE(group.encryptedGroupPrivateEncryptionKeysForUsers.size() == 2);
+  REQUIRE(group.sealedPrivateEncryptionKeysForUsers().size() == 2);
   auto const groupEncryptedKey =
-      std::find_if(group.encryptedGroupPrivateEncryptionKeysForUsers.begin(),
-                   group.encryptedGroupPrivateEncryptionKeysForUsers.end(),
+      std::find_if(group.sealedPrivateEncryptionKeysForUsers().begin(),
+                   group.sealedPrivateEncryptionKeysForUsers().end(),
                    [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.publicUserEncryptionKey ==
+                     return groupEncryptedKey.first ==
                             user.userKeys.back().keyPair.publicKey;
                    });
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->encryptedGroupPrivateEncryptionKey,
-            user.userKeys.back().keyPair) == groupEncryptionKey.privateKey);
-  CHECK(selfSignature == group.selfSignature);
+            groupEncryptedKey->second, user.userKeys.back().keyPair) ==
+        groupEncryptionKey.privateKey);
+  CHECK(selfSignature == group.selfSignature());
 }
 
 TEST_CASE("throws when getting keys of an unknown member")
