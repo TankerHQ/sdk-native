@@ -241,6 +241,8 @@ struct toVal
   using KeyPublishToDevice = Trustchain::Actions::KeyPublishToDevice;
   using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;
   using KeyPublishToUserGroup = Trustchain::Actions::KeyPublishToUserGroup;
+  using KeyPublishToProvisionalUser =
+      Trustchain::Actions::KeyPublishToProvisionalUser;
   using UserGroupCreation = Trustchain::Actions::UserGroupCreation;
   using UserGroupAddition = Trustchain::Actions::UserGroupAddition;
 
@@ -313,14 +315,14 @@ struct toVal
     // TODO
     return emscripten::val::object();
   }
-  emscripten::val operator()(KeyPublishToProvisionalUser const& tc)
+  emscripten::val operator()(KeyPublishToProvisionalUser const& kp)
   {
     auto ret = emscripten::val::object();
-    ret.set("appPublicSignatureKey", containerToJs(tc.appPublicSignatureKey));
+    ret.set("appPublicSignatureKey", containerToJs(kp.appPublicSignatureKey()));
     ret.set("tankerPublicSignatureKey",
-            containerToJs(tc.tankerPublicSignatureKey));
-    ret.set("resourceId", containerToJs(tc.resourceId));
-    ret.set("resourceKey", containerToJs(tc.key));
+            containerToJs(kp.tankerPublicSignatureKey()));
+    ret.set("resourceId", containerToJs(kp.resourceId()));
+    ret.set("resourceKey", containerToJs(kp.twoTimesSealedSymmetricKey()));
     return ret;
   }
   emscripten::val operator()(ProvisionalIdentityClaim const& tc)
@@ -437,15 +439,16 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   }
   else if (entry.nature == Nature::KeyPublishToProvisionalUser)
   {
-    KeyPublishToProvisionalUser kp;
-    kp.appPublicSignatureKey = Crypto::PublicSignatureKey{
+    Crypto::PublicSignatureKey const appPublicSignatureKey{
         copyToVector(jsEntry["action"]["appPublicSignatureKey"])};
-    kp.tankerPublicSignatureKey = Crypto::PublicSignatureKey{
+    Crypto::PublicSignatureKey const tankerPublicSignatureKey{
         copyToVector(jsEntry["action"]["tankerPublicSignatureKey"])};
-    kp.resourceId = Trustchain::ResourceId{copyToVector(jsEntry["action"]["resourceId"])};
-    kp.key = Crypto::TwoTimesSealedSymmetricKey{
+    Trustchain::ResourceId const resourceId{
+        copyToVector(jsEntry["action"]["resourceId"])};
+    Crypto::TwoTimesSealedSymmetricKey const key{
         copyToVector(jsEntry["action"]["resourceKey"])};
-    entry.action = kp;
+    entry.action = KeyPublishToProvisionalUser{
+        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key};
   }
   else
     throw Error::formatEx<std::runtime_error>(

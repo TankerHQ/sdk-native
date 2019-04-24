@@ -228,7 +228,7 @@ std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(
 {
   return Serialization::serialize(makeBlock(
       KeyPublishToProvisionalUser{
-          appPublicSignatureKey, tankerPublicSignatureKey, resourceId, symKey},
+          appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey},
       _deviceId,
       this->_privateSignatureKey));
 }

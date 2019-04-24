@@ -548,8 +548,8 @@ Tanker::Block TrustchainBuilder::shareToProvisionalUser(
 
   KeyPublishToProvisionalUser keyPublish{
       receiver.appSignatureKeyPair.publicKey,
-      receiver.tankerSignatureKeyPair.publicKey,
       resourceId,
+      receiver.tankerSignatureKeyPair.publicKey,
       encryptedKeyTwice};
 
   Block block;
