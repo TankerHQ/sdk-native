@@ -6,6 +6,8 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
@@ -59,7 +61,7 @@ public:
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) = 0;
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Crypto::Mac const& resourceId) = 0;
+      Trustchain::ResourceId const& resourceId) = 0;
   virtual tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
       Trustchain::UserId const& userId) = 0;
   virtual tc::cotask<Entry> getTrustchainDevice(
@@ -78,10 +80,11 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) = 0;
 
-  virtual tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
-                                          Crypto::SymmetricKey const& key) = 0;
+  virtual tc::cotask<void> putResourceKey(
+      Trustchain::ResourceId const& resourceId,
+      Crypto::SymmetricKey const& key) = 0;
   virtual tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
-      Crypto::Mac const& mac) = 0;
+      Trustchain::ResourceId const& resourceId) = 0;
 
   virtual tc::cotask<void> putProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,

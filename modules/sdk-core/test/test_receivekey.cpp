@@ -28,7 +28,7 @@ TEST_CASE("onKeyToDeviceReceived should process a key publish block")
   auto const sender = *builder.getUser("sender");
   auto const senderDevice = sender.devices.front();
 
-  auto const resourceMac = make<Crypto::Mac>("resource mac");
+  auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
   auto const resourceKey = make<Crypto::SymmetricKey>("the KEY");
 
   auto const keyPublishBlocks =
@@ -62,7 +62,7 @@ TEST_CASE("decryptAndStoreKey")
   auto const sender = *builder.getUser("sender");
   auto const senderDevice = sender.devices.front();
 
-  auto const resourceMac = make<Crypto::Mac>("resource mac");
+  auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
   auto const resourceKey = make<Crypto::SymmetricKey>("the KEY");
 
   SUBCASE("should process a key publish to user block")

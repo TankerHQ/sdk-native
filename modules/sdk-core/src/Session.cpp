@@ -24,12 +24,12 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/ResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
@@ -59,6 +59,7 @@
 #include <utility>
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::GroupId;
 
 TLOG_CATEGORY(Session);

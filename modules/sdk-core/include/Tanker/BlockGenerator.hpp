@@ -5,7 +5,6 @@
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
-#include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
@@ -20,9 +19,9 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/ResourceId.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -92,23 +91,23 @@ public:
           userKeys) const;
 
   std::vector<uint8_t> keyPublish(Crypto::EncryptedSymmetricKey const& symKey,
-                                  Crypto::Mac const& mac,
+                                  Trustchain::ResourceId const& resourceId,
                                   Trustchain::DeviceId const& recipient) const;
 
   std::vector<uint8_t> keyPublishToUser(
       Crypto::SealedSymmetricKey const& symKey,
-      Crypto::Mac const& mac,
+      Trustchain::ResourceId const& resourceId,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
 
   std::vector<uint8_t> keyPublishToProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,
       Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
-      ResourceId const& resourceId,
+      Trustchain::ResourceId const& resourceId,
       Crypto::TwoTimesSealedSymmetricKey const& symKey) const;
 
   std::vector<uint8_t> keyPublishToGroup(
       Crypto::SealedSymmetricKey const& symKey,
-      Crypto::Mac const& mac,
+      Trustchain::ResourceId const& resourceId,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
 
   std::vector<uint8_t> userGroupCreation(

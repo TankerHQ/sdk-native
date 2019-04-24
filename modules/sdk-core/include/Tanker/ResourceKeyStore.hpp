@@ -8,9 +8,13 @@
 
 namespace Tanker
 {
+namespace Trustchain
+{
+class ResourceId;
+}
+
 namespace Crypto
 {
-class Mac;
 class SymmetricKey;
 }
 
@@ -29,11 +33,12 @@ public:
 
   ResourceKeyStore(DataStore::ADatabase* dbConn);
 
-  tc::cotask<void> putKey(Crypto::Mac const& mac,
+  tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findKey(
-      Crypto::Mac const& mac) const;
-  tc::cotask<Crypto::SymmetricKey> getKey(Crypto::Mac const& mac) const;
+      Trustchain::ResourceId const& resourceId) const;
+  tc::cotask<Crypto::SymmetricKey> getKey(
+      Trustchain::ResourceId const& resourceId) const;
 
 private:
   DataStore::ADatabase* _db;

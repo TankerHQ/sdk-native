@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 using namespace Tanker::Trustchain::Actions;
+using Tanker::Trustchain::ResourceId;
 
 namespace Tanker
 {
@@ -198,24 +199,23 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
 
 std::vector<uint8_t> BlockGenerator::keyPublish(
     Crypto::EncryptedSymmetricKey const& symKey,
-    Crypto::Mac const& mac,
+    Trustchain::ResourceId const& resourceId,
     Trustchain::DeviceId const& recipient) const
 {
   return Serialization::serialize(makeBlock(
-      Trustchain::Actions::KeyPublishToDevice{
-          recipient, Trustchain::ResourceId{mac}, symKey},
+      Trustchain::Actions::KeyPublishToDevice{recipient, resourceId, symKey},
       _deviceId,
       _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::keyPublishToUser(
     Crypto::SealedSymmetricKey const& symKey,
-    Crypto::Mac const& mac,
+    Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
   return Serialization::serialize(makeBlock(
       Trustchain::Actions::KeyPublishToUser{
-          recipientPublicEncryptionKey, Trustchain::ResourceId{mac}, symKey},
+          recipientPublicEncryptionKey, resourceId, symKey},
       _deviceId,
       _privateSignatureKey));
 }
@@ -235,12 +235,12 @@ std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(
 
 std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
     Crypto::SealedSymmetricKey const& symKey,
-    Crypto::Mac const& mac,
+    Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
   return Serialization::serialize(makeBlock(
       Trustchain::Actions::KeyPublishToUserGroup{
-          recipientPublicEncryptionKey, Trustchain::ResourceId{mac}, symKey},
+          recipientPublicEncryptionKey, resourceId, symKey},
       _deviceId,
       this->_privateSignatureKey));
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/EncryptionFormat/EncryptionMetadata.hpp>
-#include <Tanker/Types/ResourceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
 
@@ -37,7 +37,7 @@ void decrypt(uint8_t* decryptedData,
              Crypto::SymmetricKey const& key,
              gsl::span<uint8_t const> encryptedData);
 
-ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData);
+Trustchain::ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData);
 }
 }
 }

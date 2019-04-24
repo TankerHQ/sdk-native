@@ -35,7 +35,7 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
   auto const resourceKey = Crypto::makeSymmetricKey();
 
   auto const b64Mac =
-      cppcodec::base64_rfc4648::encode(make<Crypto::Mac>("michel"));
+      cppcodec::base64_rfc4648::encode(make<Trustchain::ResourceId>("michel"));
   auto const b64ResourceKey = cppcodec::base64_rfc4648::encode(resourceKey);
 
   db.execute(R"(
@@ -69,7 +69,7 @@ TEST_CASE("resource keys")
 
   SUBCASE("it should not find a non-existent key")
   {
-    auto const unexistentMac = make<Crypto::Mac>("unexistent");
+    auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
 
     ResourceKeyStore keys(dbPtr.get());
     CHECK_THROWS_AS(AWAIT(keys.getKey(unexistentMac)),
@@ -78,28 +78,28 @@ TEST_CASE("resource keys")
 
   SUBCASE("it should find a key that was inserted")
   {
-    auto const mac = make<Crypto::Mac>("mymac");
+    auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
 
     ResourceKeyStore keys(dbPtr.get());
 
-    AWAIT_VOID(keys.putKey(mac, key));
-    auto const key2 = AWAIT(keys.getKey(mac));
+    AWAIT_VOID(keys.putKey(resourceId, key));
+    auto const key2 = AWAIT(keys.getKey(resourceId));
 
     CHECK(key == key2);
   }
 
   SUBCASE("it should ignore a duplicate key and keep the first")
   {
-    auto const mac = make<Crypto::Mac>("mymac");
+    auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
     auto const key2 = make<Crypto::SymmetricKey>("mykey2");
 
     ResourceKeyStore keys(dbPtr.get());
 
-    AWAIT_VOID(keys.putKey(mac, key));
-    AWAIT_VOID(keys.putKey(mac, key2));
-    auto const gotKey = AWAIT(keys.getKey(mac));
+    AWAIT_VOID(keys.putKey(resourceId, key));
+    AWAIT_VOID(keys.putKey(resourceId, key2));
+    auto const gotKey = AWAIT(keys.getKey(resourceId));
 
     CHECK_EQ(key, gotKey);
   }
@@ -124,12 +124,13 @@ TEST_CASE("Migration")
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& resourceKeys = keys.front();
 
-    auto const mac = DataStore::extractBlob<Crypto::Mac>(resourceKeys.mac);
+    auto const resourceId =
+        DataStore::extractBlob<Trustchain::ResourceId>(resourceKeys.mac);
     auto const key =
         DataStore::extractBlob<Crypto::SymmetricKey>(resourceKeys.resource_key);
 
-    CHECK_EQ(mac,
-             cppcodec::base64_rfc4648::decode<Crypto::Mac>(oldKeys.b64Mac));
+    CHECK_EQ(resourceId,
+             cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(oldKeys.b64Mac));
     CHECK_EQ(key,
              cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
                  oldKeys.b64ResourceKey));

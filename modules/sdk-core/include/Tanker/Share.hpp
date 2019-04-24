@@ -22,7 +22,7 @@ class Client;
 
 namespace Share
 {
-using ResourceKey = std::tuple<Crypto::SymmetricKey, Crypto::Mac>;
+using ResourceKey = std::tuple<Crypto::SymmetricKey, Trustchain::ResourceId>;
 using ResourceKeys = std::vector<ResourceKey>;
 
 struct KeyRecipients
@@ -34,13 +34,13 @@ struct KeyRecipients
 std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
+    Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 std::vector<uint8_t> makeKeyPublishToGroup(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
+    Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 tc::cotask<KeyRecipients> generateRecipientList(
@@ -72,7 +72,7 @@ tc::cotask<void> share(
     GroupAccessor& groupAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    std::vector<Crypto::Mac> const& resourceIds,
+    std::vector<Trustchain::ResourceId> const& resourceIds,
     std::vector<Trustchain::UserId> const& recipientUserIds,
     std::vector<Trustchain::GroupId> const& groupIds);
 }

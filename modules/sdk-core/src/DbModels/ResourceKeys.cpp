@@ -1,9 +1,9 @@
 #include <Tanker/DbModels/ResourceKeys.hpp>
 
-#include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -28,14 +28,16 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const mac =
-        cppcodec::base64_rfc4648::decode<Crypto::Mac>(extractBlob(row.mac));
+    auto const resourceId =
+        cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+            extractBlob(row.mac));
     auto const resourceKey =
         cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
             extractBlob(row.resource_key));
 
     db(update(tab)
-           .set(tab.mac = mac.base(), tab.resource_key = resourceKey.base())
+           .set(tab.mac = resourceId.base(),
+                tab.resource_key = resourceKey.base())
            .where(tab.id == row.id));
   }
 }

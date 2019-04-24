@@ -21,6 +21,7 @@
 #include <iterator>
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::GroupId;
 
 namespace Tanker
@@ -30,7 +31,7 @@ namespace Share
 std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
+    ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
@@ -43,7 +44,7 @@ std::vector<uint8_t> makeKeyPublishToUser(
 std::vector<uint8_t> makeKeyPublishToGroup(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& resourceId,
+    ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
@@ -57,9 +58,9 @@ namespace
 {
 tc::cotask<ResourceKeys> getResourceKeys(
     ResourceKeyStore const& resourceKeyStore,
-    gsl::span<Crypto::Mac const> resourceIds)
+    gsl::span<ResourceId const> resourceIds)
 {
-  std::vector<std::tuple<Crypto::SymmetricKey, Crypto::Mac>> resourceKeys;
+  ResourceKeys resourceKeys;
   resourceKeys.reserve(resourceIds.size());
   for (auto const& resourceId : resourceIds)
     resourceKeys.emplace_back(std::make_tuple(
@@ -79,7 +80,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToUsers(
       out.push_back(
           makeKeyPublishToUser(blockGenerator,
                                recipientKey,
-                               std::get<Crypto::Mac>(keyResource),
+                               std::get<Trustchain::ResourceId>(keyResource),
                                std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
@@ -96,7 +97,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
       out.push_back(
           makeKeyPublishToGroup(blockGenerator,
                                 recipientKey,
-                                std::get<Crypto::Mac>(keyResource),
+                                std::get<Trustchain::ResourceId>(keyResource),
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
@@ -179,7 +180,7 @@ tc::cotask<void> share(
     GroupAccessor& groupAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    std::vector<Crypto::Mac> const& resourceIds,
+    std::vector<Trustchain::ResourceId> const& resourceIds,
     std::vector<UserId> const& userIds,
     std::vector<GroupId> const& groupIds)
 {

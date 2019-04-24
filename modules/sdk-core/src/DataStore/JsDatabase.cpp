@@ -48,9 +48,9 @@ public:
   virtual emscripten::val setContactPublicEncryptionKey(
       emscripten::val const& userId, emscripten::val const& userPublicKey) = 0;
 
-  virtual emscripten::val putResourceKey(emscripten::val const& mac,
+  virtual emscripten::val putResourceKey(emscripten::val const& resourceId,
                                          emscripten::val const& key) = 0;
-  virtual emscripten::val findResourceKey(emscripten::val const& mac) = 0;
+  virtual emscripten::val findResourceKey(emscripten::val const& resourceId) = 0;
 
   virtual emscripten::val getDeviceKeys() = 0;
   virtual emscripten::val setDeviceKeys(emscripten::val const& deviceKeys) = 0;
@@ -442,7 +442,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["appPublicSignatureKey"])};
     kp.tankerPublicSignatureKey = Crypto::PublicSignatureKey{
         copyToVector(jsEntry["action"]["tankerPublicSignatureKey"])};
-    kp.resourceId = Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])};
+    kp.resourceId = Trustchain::ResourceId{copyToVector(jsEntry["action"]["resourceId"])};
     kp.key = Crypto::TwoTimesSealedSymmetricKey{
         copyToVector(jsEntry["action"]["resourceKey"])};
     entry.action = kp;
@@ -468,7 +468,7 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainEntry(
 }
 
 tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
-    Crypto::Mac const& resourceId)
+    Trustchain::ResourceId const& resourceId)
 {
   auto const entry = TC_AWAIT(jsPromiseToFuture(
       _db->findTrustchainKeyPublish(containerToJs(resourceId))));
@@ -545,18 +545,18 @@ tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
       containerToJs(userId), containerToJs(userPublicKey))));
 }
 
-tc::cotask<void> JsDatabase::putResourceKey(Crypto::Mac const& mac,
+tc::cotask<void> JsDatabase::putResourceKey(Trustchain::ResourceId const& resourceId,
                                             Crypto::SymmetricKey const& key)
 {
   TC_AWAIT(jsPromiseToFuture(
-      _db->putResourceKey(containerToJs(mac), containerToJs(key))));
+      _db->putResourceKey(containerToJs(resourceId), containerToJs(key))));
 }
 
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> JsDatabase::findResourceKey(
-    Crypto::Mac const& mac)
+    Trustchain::ResourceId const& resourceId)
 {
   auto const key =
-      TC_AWAIT(jsPromiseToFuture(_db->findResourceKey(containerToJs(mac))));
+      TC_AWAIT(jsPromiseToFuture(_db->findResourceKey(containerToJs(resourceId))));
   if (key.isNull() || key.isUndefined())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(Crypto::SymmetricKey(copyToVector(key)));

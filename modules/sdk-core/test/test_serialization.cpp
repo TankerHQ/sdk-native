@@ -12,6 +12,7 @@
 #include <Helpers/Buffers.hpp>
 
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::ResourceId;
 using namespace Tanker;
 
 TEST_CASE(

@@ -1,12 +1,12 @@
 #include <doctest.h>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Crypto/Mac.hpp>
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -94,11 +94,12 @@ TEST_CASE("print a formated log")
         fmt("You lost, score {:d}/{:f}"), 42, 2.1));
   }
 
-  SUBCASE("It format a Mac")
+  SUBCASE("It format a ResourceId")
   {
-    auto mac = Tanker::make<Tanker::Crypto::Mac>("awesome, isn't it?");
-    REQUIRE(fmt::format("my mac is {}",
-                        cppcodec::base64_rfc4648::encode(mac)) ==
-            fmt::format("my mac is {}", mac));
+    auto resourceId =
+        Tanker::make<Tanker::Trustchain::ResourceId>("awesome, isn't it?");
+    REQUIRE(fmt::format("my resourceId is {}",
+                        cppcodec::base64_rfc4648::encode(resourceId)) ==
+            fmt::format("my resourceId is {}", resourceId));
   }
 }

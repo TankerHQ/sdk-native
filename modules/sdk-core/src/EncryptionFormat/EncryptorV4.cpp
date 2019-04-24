@@ -7,6 +7,8 @@
 
 #include <algorithm>
 
+using Tanker::Trustchain::ResourceId;
+
 namespace Tanker
 {
 namespace EncryptionFormat
@@ -22,7 +24,7 @@ auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
 uint32_t clearChunkSize(uint32_t const encryptedChunkSize)
 {
   return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
-         Crypto::Mac::arraySize;
+         Trustchain::ResourceId::arraySize;
 }
 
 // version 4 format layout:
@@ -33,7 +35,7 @@ void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
 {
   auto const dataVersionResult = Serialization::varint_read(encryptedData);
   auto const overheadSize = sizeOfChunkSize + ResourceId::arraySize +
-                            Crypto::AeadIv::arraySize + Crypto::Mac::arraySize;
+                            Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize;
 
   assert(dataVersionResult.first == version());
 
@@ -168,9 +170,9 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
     checkEncryptedFormat(encryptedData);
 
     auto const versionPair = Serialization::varint_read(encryptedData);
-    auto const mac =
+    auto const resourceId =
         versionPair.second.subspan(sizeof(uint32_t), ResourceId::arraySize);
-    return ResourceId{mac};
+    return ResourceId{resourceId};
   }
   catch (std::out_of_range const&)
   {

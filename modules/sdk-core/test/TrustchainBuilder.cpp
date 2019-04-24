@@ -449,7 +449,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
 std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
     Device const& sender,
     User const& receiver,
-    Tanker::Crypto::Mac const& mac,
+    Tanker::Trustchain::ResourceId const& resourceId,
     Tanker::Crypto::SymmetricKey const& key)
 {
   if (!receiver.userKeys.empty())
@@ -469,7 +469,7 @@ std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
         BlockGenerator(_trustchainId,
                        sender.keys.signatureKeyPair.privateKey,
                        sender.keys.deviceId)
-            .keyPublish(encryptedKey, mac, receiverDevice.keys.deviceId);
+            .keyPublish(encryptedKey, resourceId, receiverDevice.keys.deviceId);
 
     auto deserializedBlock = Serialization::deserialize<Block>(block);
     deserializedBlock.index = _blocks.size() + 1;
@@ -482,7 +482,7 @@ std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
 Tanker::Block TrustchainBuilder::shareToUser(
     Device const& sender,
     User const& receiver,
-    Tanker::Crypto::Mac const& mac,
+    Tanker::Trustchain::ResourceId const& resourceId,
     Tanker::Crypto::SymmetricKey const& key)
 {
   if (receiver.userKeys.empty())
@@ -495,7 +495,7 @@ Tanker::Block TrustchainBuilder::shareToUser(
                      sender.keys.signatureKeyPair.privateKey,
                      sender.keys.deviceId),
       receiverPublicKey,
-      mac,
+      resourceId,
       key);
 
   auto deserializedBlock = Serialization::deserialize<Block>(block);
@@ -508,7 +508,7 @@ Tanker::Block TrustchainBuilder::shareToUser(
 Tanker::Block TrustchainBuilder::shareToUserGroup(
     Device const& sender,
     Group const& receiver,
-    Tanker::Crypto::Mac const& resourceId,
+    Tanker::Trustchain::ResourceId const& resourceId,
     Tanker::Crypto::SymmetricKey const& key)
 {
   auto const receiverPublicKey =
@@ -537,7 +537,7 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
 Tanker::Block TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
     Tanker::ProvisionalUser const& receiver,
-    Tanker::Crypto::Mac const& resourceId,
+    Tanker::Trustchain::ResourceId const& resourceId,
     Tanker::Crypto::SymmetricKey const& key)
 {
   auto const encryptedKeyOnce =

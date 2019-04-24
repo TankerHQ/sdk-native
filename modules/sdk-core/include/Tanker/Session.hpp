@@ -125,7 +125,7 @@ public:
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
 private:
-  tc::cotask<void> share(std::vector<Crypto::Mac> const& resourceId,
+  tc::cotask<void> share(std::vector<Trustchain::ResourceId> const& resourceId,
                          std::vector<Trustchain::UserId> const& userIds,
                          std::vector<Trustchain::GroupId> const& groupIds);
 

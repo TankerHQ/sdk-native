@@ -65,8 +65,8 @@ class DeviceKeyStore {
   +EncryptionKeyPair const& encryptionKeyPair() const noexcept;
 }
 class ResourceKeyStore {
-  +void putKey(Mac const& mac, SymmetricKey const& key);
-  +SymmetricKey getKey(Mac const& mac) const;
+  +void putKey(Mac const& resourceId, SymmetricKey const& key);
+  +SymmetricKey getKey(Mac const& resourceId) const;
 }
 
 class Client {
@@ -135,7 +135,7 @@ class BlockGenerator {
 
   +std::vector<uint8_t> addUser(Delegation const& delegation, PublicSignatureKey const& signatureKey, PublicEncryptionKey const& encryptionKey) const
   +std::vector<uint8_t> addDevice(Hash const& author, Delegation const& delegation, PublicSignatureKey const& signatureKey, PublicEncryptionKey const& encryptionKey) const
-  +std::vector<uint8_t> keyPublish(Hash const& author, std::vector<uint8_t> symKey, Mac const &mac, Hash const &recipient) const
+  +std::vector<uint8_t> keyPublish(Hash const& author, std::vector<uint8_t> symKey, Mac const &resourceId, Hash const &recipient) const
 }
 note top of BlockGenerator
   Generate signed blocks to be sent to the Trustchain
