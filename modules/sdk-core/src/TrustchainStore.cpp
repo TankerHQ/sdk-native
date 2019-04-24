@@ -29,7 +29,7 @@ tc::cotask<void> TrustchainStore::addEntry(Entry const& entry)
 }
 
 tc::cotask<nonstd::optional<Entry>> TrustchainStore::findKeyPublish(
-    Crypto::Mac const& resourceId) const
+    Trustchain::ResourceId const& resourceId) const
 {
   TC_RETURN(TC_AWAIT(_db->findTrustchainKeyPublish(resourceId)));
 }

@@ -320,11 +320,11 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
   if (auto const keyPublish =
           mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
               &entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
+    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
   if (auto const keyPublish =
           mpark::get_if<Trustchain::Actions::KeyPublishToUserGroup>(
               &entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
+    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
 
   for (auto const& index : entry.action.makeIndexes())
   {
@@ -352,7 +352,7 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
 }
 
 tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
-                                           Crypto::Mac const& resourceId)
+                                           ResourceId const& resourceId)
 {
   TrustchainResourceIdToKeyPublishTable tab{};
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
@@ -361,7 +361,7 @@ tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
 }
 
 tc::cotask<nonstd::optional<Entry>> Database::findTrustchainKeyPublish(
-    Crypto::Mac const& resourceId)
+    ResourceId const& resourceId)
 {
   FUNC_TIMER(DB);
   TrustchainResourceIdToKeyPublishTable tab_index;
@@ -510,24 +510,24 @@ tc::cotask<void> Database::setContactPublicEncryptionKey(
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putResourceKey(Crypto::Mac const& mac,
+tc::cotask<void> Database::putResourceKey(ResourceId const& resourceId,
                                           Crypto::SymmetricKey const& key)
 {
   FUNC_TIMER(DB);
   ResourceKeysTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.mac = mac.base(), tab.resource_key = key.base()));
+      tab.mac = resourceId.base(), tab.resource_key = key.base()));
   TC_RETURN();
 }
 
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
-    Crypto::Mac const& mac)
+    ResourceId const& resourceId)
 {
   FUNC_TIMER(DB);
   ResourceKeysTable tab{};
-  auto rows =
-      (*_db)(select(tab.resource_key).from(tab).where(tab.mac == mac.base()));
+  auto rows = (*_db)(
+      select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
   if (rows.empty())
     TC_RETURN(nonstd::nullopt);
   auto const& row = rows.front();

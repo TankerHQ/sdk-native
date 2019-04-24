@@ -38,7 +38,7 @@ public:
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Crypto::Mac const& resourceId) override;
+      Trustchain::ResourceId const& resourceId) override;
   tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
       Trustchain::UserId const& userId) override;
   tc::cotask<Entry> getTrustchainDevice(
@@ -57,10 +57,10 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) override;
 
-  tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
+  tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
                                   Crypto::SymmetricKey const& key) override;
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
-      Crypto::Mac const& mac) override;
+      Trustchain::ResourceId const& resourceId) override;
 
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;

@@ -16,7 +16,7 @@ std::uint8_t* to_serialized(std::uint8_t*, KeyPublishToUser const&);
 
 constexpr std::size_t serialized_size(KeyPublishToUser const&)
 {
-  return Crypto::PublicEncryptionKey::arraySize + Crypto::Mac::arraySize +
+  return Crypto::PublicEncryptionKey::arraySize + ResourceId::arraySize +
          Crypto::SealedSymmetricKey::arraySize;
 }
 }

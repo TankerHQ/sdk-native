@@ -7,6 +7,8 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
+using Tanker::Trustchain::ResourceId;
+
 namespace Tanker
 {
 using namespace EncryptionFormat;

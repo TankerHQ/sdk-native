@@ -4,6 +4,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
@@ -32,7 +33,7 @@ public:
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Crypto::Mac const& resourceId) override;
+      Trustchain::ResourceId const& resourceId) override;
   tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
       Trustchain::UserId const& userId) override;
   tc::cotask<Entry> getTrustchainDevice(
@@ -51,10 +52,10 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) override;
 
-  tc::cotask<void> putResourceKey(Crypto::Mac const& mac,
+  tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
                                   Crypto::SymmetricKey const& key) override;
   tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findResourceKey(
-      Crypto::Mac const& mac) override;
+      Trustchain::ResourceId const& resourceId) override;
 
   tc::cotask<void> putProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
@@ -105,7 +106,7 @@ private:
   bool isMigrationNeeded();
   void flushAllCaches();
   tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
-                                   Crypto::Mac const& resourceId);
+                                   Trustchain::ResourceId const& resourceId);
 
   tc::cotask<void> startTransaction() override;
   tc::cotask<void> commitTransaction() override;

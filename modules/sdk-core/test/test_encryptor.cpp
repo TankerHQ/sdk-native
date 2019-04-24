@@ -48,7 +48,7 @@ TEST_SUITE("EncryptorV2")
   {
     auto const versionSize =
         Serialization::varint_size(EncryptionFormat::EncryptorV2::version());
-    constexpr auto MacSize = Crypto::Mac::arraySize;
+    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     CHECK(EncryptionFormat::EncryptorV2::encryptedSize(0) ==
           versionSize + 0 + MacSize + IvSize);
@@ -181,7 +181,7 @@ TEST_SUITE("EncryptorV3")
   {
     auto const versionSize =
         Serialization::varint_size(EncryptionFormat::EncryptorV3::version());
-    constexpr auto MacSize = Crypto::Mac::arraySize;
+    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
     CHECK(EncryptionFormat::EncryptorV3::encryptedSize(0) ==
           versionSize + 0 + MacSize);
     CHECK(EncryptionFormat::EncryptorV3::encryptedSize(1) ==

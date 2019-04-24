@@ -107,19 +107,19 @@ public:
   std::vector<Tanker::Block> shareToDevice(
       Device const& sender,
       User const& receiver,
-      Tanker::Crypto::Mac const& mac,
+      Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
   Tanker::Block shareToUser(Device const& sender,
                             User const& receiver,
-                            Tanker::Crypto::Mac const& mac,
+                            Tanker::Trustchain::ResourceId const& resourceId,
                             Tanker::Crypto::SymmetricKey const& key);
   Tanker::Block shareToUserGroup(Device const& sender,
                                  Group const& receiver,
-                                 Tanker::Crypto::Mac const& resourceId,
+                                 Tanker::Trustchain::ResourceId const& resourceId,
                                  Tanker::Crypto::SymmetricKey const& key);
   Tanker::Block shareToProvisionalUser(Device const& sender,
                                        Tanker::ProvisionalUser const& receiver,
-                                       Tanker::Crypto::Mac const& resourceId,
+                                       Tanker::Trustchain::ResourceId const& resourceId,
                                        Tanker::Crypto::SymmetricKey const& key);
 
   Tanker::Block revokeDevice1(Device const& sender,

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -30,7 +30,7 @@ public:
                      Trustchain::Actions::KeyPublishToDevice,
                      Trustchain::Actions::DeviceRevocation,
                      Trustchain::Actions::KeyPublishToUser,
-                     KeyPublishToProvisionalUser,
+                     Trustchain::Actions::KeyPublishToProvisionalUser,
                      Trustchain::Actions::UserGroupCreation,
                      Trustchain::Actions::KeyPublishToUserGroup,
                      Trustchain::Actions::UserGroupAddition,

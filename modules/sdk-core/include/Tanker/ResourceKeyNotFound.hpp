@@ -4,31 +4,30 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 namespace Tanker
 {
 namespace Error
 {
-
 class ResourceKeyNotFound : public Exception
 {
 public:
-  ResourceKeyNotFound(Crypto::Mac const& resourceId)
+  ResourceKeyNotFound(Trustchain::ResourceId const& resourceId)
     : Exception(Code::ResourceKeyNotFound,
                 fmt::format("couldn't find key for {:s}", resourceId)),
       _resourceId(resourceId)
   {
   }
 
-  Crypto::Mac const& resourceId()
+  Trustchain::ResourceId const& resourceId()
   {
     return _resourceId;
   }
 
 private:
-  Crypto::Mac const _resourceId;
+  Trustchain::ResourceId const _resourceId;
 };
 }
 }
-

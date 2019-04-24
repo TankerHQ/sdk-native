@@ -8,10 +8,10 @@ namespace Actions
 {
 KeyPublishToUserGroup::KeyPublishToUserGroup(
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Crypto::Mac const& mac,
+    ResourceId const& resourceId,
     Crypto::SealedSymmetricKey const& sealedSymmetricKey)
   : _recipientPublicEncryptionKey(recipientPublicEncryptionKey),
-    _mac(mac),
+    _resourceId(resourceId),
     _sealedSymmetricKey(sealedSymmetricKey)
 {
 }
@@ -22,9 +22,9 @@ KeyPublishToUserGroup::recipientPublicEncryptionKey() const
   return _recipientPublicEncryptionKey;
 }
 
-Crypto::Mac const& KeyPublishToUserGroup::mac() const
+ResourceId const& KeyPublishToUserGroup::resourceId() const
 {
-  return _mac;
+  return _resourceId;
 }
 
 Crypto::SealedSymmetricKey const& KeyPublishToUserGroup::sealedSymmetricKey()
@@ -37,10 +37,10 @@ bool operator==(KeyPublishToUserGroup const& lhs,
                 KeyPublishToUserGroup const& rhs)
 {
   return std::tie(lhs.recipientPublicEncryptionKey(),
-                  lhs.mac(),
+                  lhs.resourceId(),
                   lhs.sealedSymmetricKey()) ==
          std::tie(rhs.recipientPublicEncryptionKey(),
-                  rhs.mac(),
+                  rhs.resourceId(),
                   rhs.sealedSymmetricKey());
 }
 

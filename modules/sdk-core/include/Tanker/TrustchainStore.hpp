@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -35,7 +36,7 @@ public:
   tc::cotask<void> addEntry(Entry const& entry);
 
   tc::cotask<nonstd::optional<Entry>> findKeyPublish(
-      Crypto::Mac const& resourceId) const;
+      Trustchain::ResourceId const& resourceId) const;
 
   tc::cotask<uint64_t> getLastIndex();
 

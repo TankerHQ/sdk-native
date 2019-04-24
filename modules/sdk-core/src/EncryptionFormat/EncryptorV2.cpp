@@ -3,9 +3,11 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/Types/ResourceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
+
+using Tanker::Trustchain::ResourceId;
 
 namespace Tanker
 {
@@ -22,7 +24,7 @@ auto const versionSize = Serialization::varint_size(version());
 void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
 {
   auto const dataVersionResult = Serialization::varint_read(encryptedData);
-  auto const overheadSize = Crypto::AeadIv::arraySize + Crypto::Mac::arraySize;
+  auto const overheadSize = Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize;
 
   assert(dataVersionResult.first == version());
 
@@ -45,7 +47,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 
     auto const versionResult = Serialization::varint_read(encryptedData);
     if (versionResult.second.size() <
-        (Crypto::AeadIv::arraySize + Crypto::Mac::arraySize))
+        (Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize))
       throw Error::InvalidArgument("truncated encrypted buffer");
     return Crypto::decryptedSize(versionResult.second.size() -
                                  Crypto::AeadIv::arraySize);
@@ -63,13 +65,13 @@ EncryptionMetadata encrypt(uint8_t* encryptedData,
   auto const key = Crypto::makeSymmetricKey();
   auto const iv = encryptedData + versionSize;
   Crypto::randomFill(gsl::span<uint8_t>(iv, Crypto::AeadIv::arraySize));
-  auto const mac = Crypto::encryptAead(
+  auto const resourceId = Crypto::encryptAead(
       key,
       iv,
       encryptedData + versionSize + Crypto::AeadIv::arraySize,
       clearData,
       {});
-  return {ResourceId(mac), key};
+  return {ResourceId(resourceId), key};
 }
 
 void decrypt(uint8_t* decryptedData,

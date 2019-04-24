@@ -9,9 +9,9 @@ namespace Trustchain
 namespace Actions
 {
 KeyPublishToDevice::KeyPublishToDevice(DeviceId const& recipient,
-                                       Crypto::Mac const& mac,
+                                       ResourceId const& resourceId,
                                        Crypto::EncryptedSymmetricKey const& key)
-  : _recipient(recipient), _mac(mac), _key(key)
+  : _recipient(recipient), _resourceId(resourceId), _key(key)
 {
 }
 
@@ -20,9 +20,9 @@ DeviceId const& KeyPublishToDevice::recipient() const
   return _recipient;
 }
 
-Crypto::Mac const& KeyPublishToDevice::mac() const
+ResourceId const& KeyPublishToDevice::resourceId() const
 {
-  return _mac;
+  return _resourceId;
 }
 
 Crypto::EncryptedSymmetricKey const& KeyPublishToDevice::encryptedSymmetricKey()
@@ -33,8 +33,10 @@ Crypto::EncryptedSymmetricKey const& KeyPublishToDevice::encryptedSymmetricKey()
 
 bool operator==(KeyPublishToDevice const& lhs, KeyPublishToDevice const& rhs)
 {
-  return std::tie(lhs.recipient(), lhs.mac(), lhs.encryptedSymmetricKey()) ==
-         std::tie(rhs.recipient(), rhs.mac(), rhs.encryptedSymmetricKey());
+  return std::tie(
+             lhs.recipient(), lhs.resourceId(), lhs.encryptedSymmetricKey()) ==
+         std::tie(
+             rhs.recipient(), rhs.resourceId(), rhs.encryptedSymmetricKey());
 }
 
 bool operator!=(KeyPublishToDevice const& lhs, KeyPublishToDevice const& rhs)

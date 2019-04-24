@@ -13,9 +13,9 @@ using namespace Tanker::Trustchain::Actions;
 TEST_CASE("KeyPublishToUserGroup tests")
 {
   Crypto::PublicEncryptionKey const publicEncryptionKey{};
-  Crypto::Mac const mac{};
+  ResourceId const resourceId{};
   Crypto::SealedSymmetricKey const key{};
-  KeyPublishToUserGroup kp(publicEncryptionKey, mac, key);
+  KeyPublishToUserGroup kp(publicEncryptionKey, resourceId, key);
 
   CHECK(kp.nature() == Nature::KeyPublishToUserGroup);
 }
@@ -30,7 +30,7 @@ TEST_CASE("Serialization test vectors")
       0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x20, 0x75, 0x73,
       0x65, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      // mac
+      // resourceId
       0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x20, 0x6d, 0x61, 0x63,
       0x00, 0x00, 0x00, 0x00,
       // key
@@ -46,9 +46,9 @@ TEST_CASE("Serialization test vectors")
 
     auto const recipientPublicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("recipient user");
-    auto const mac = make<Crypto::Mac>("resource mac");
+    auto const resourceId = make<ResourceId>("resource mac");
     auto const key = make<Crypto::SealedSymmetricKey>("encrypted key...");
-    KeyPublishToUserGroup const kp(recipientPublicEncryptionKey, mac, key);
+    KeyPublishToUserGroup const kp(recipientPublicEncryptionKey, resourceId, key);
 
     CHECK(Serialization::serialize(kp) == serializedKeyPublishToUserGroup);
     CHECK(Serialization::deserialize<KeyPublishToUserGroup>(

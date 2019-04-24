@@ -1,8 +1,8 @@
-#include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -505,7 +505,7 @@ TEST_CASE("KeyPublishToDevice")
 
   auto const resultUser = builder.makeUser1("alice");
   auto const secondDevice = builder.makeDevice1("alice");
-  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
   auto const kp2d = builder.shareToDevice(
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
@@ -552,7 +552,7 @@ TEST_CASE("KeyPublishToUser")
 
   auto const resultUser = builder.makeUser3("alice");
   auto const secondDevice = builder.makeDevice3("alice");
-  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
   auto const kp2u = builder.shareToUser(
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
@@ -592,7 +592,7 @@ TEST_CASE("KeyPublishToProvisionalUser")
       make<Crypto::PublicSignatureKey>("app sig key");
   auto const tankerPublicSignatureKey =
       make<Crypto::PublicSignatureKey>("tanker sig key");
-  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const twoTimesSealedSymmetricKey =
       make<Crypto::TwoTimesSealedSymmetricKey>(
           "two times sealed symmetric key");
@@ -635,7 +635,7 @@ TEST_CASE("KeyPublishToUserGroups")
 
   auto const resultUser = builder.makeUser3("alice");
   auto const secondDevice = builder.makeDevice3("alice");
-  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
   auto const userBob = builder.makeUser3("bob");
   auto const resultGroup =

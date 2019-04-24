@@ -59,7 +59,8 @@ void assertKeyPublishToUsersTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].mac() == std::get<Crypto::Mac>(resourceKey));
+    CHECK(keyPublishes[i].resourceId() ==
+          std::get<Trustchain::ResourceId>(resourceKey));
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
@@ -77,7 +78,8 @@ void assertKeyPublishToGroupTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].mac() == std::get<Crypto::Mac>(resourceKey));
+    CHECK(keyPublishes[i].resourceId() ==
+          std::get<Trustchain::ResourceId>(resourceKey));
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
@@ -255,7 +257,7 @@ TEST_CASE(
       builder.makeBlockGenerator(keySenderDevice);
 
   Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Crypto::Mac>("resource mac")}};
+                                       make<Trustchain::ResourceId>("resource resourceId")}};
 
   auto const newUserKeyPair = newUser.userKeys.back();
 
@@ -288,7 +290,7 @@ TEST_CASE(
       builder.makeBlockGenerator(keySenderDevice);
 
   Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Crypto::Mac>("resource mac")}};
+                                       make<Trustchain::ResourceId>("resource resourceId")}};
 
   Share::KeyRecipients keyRecipients{
       {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};

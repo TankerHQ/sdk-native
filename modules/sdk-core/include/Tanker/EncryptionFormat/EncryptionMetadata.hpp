@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Types/ResourceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 namespace Tanker
 {
@@ -9,7 +9,7 @@ namespace EncryptionFormat
 {
 struct EncryptionMetadata
 {
-  ResourceId resourceId;
+  Trustchain::ResourceId resourceId;
   Crypto::SymmetricKey key;
 };
 }

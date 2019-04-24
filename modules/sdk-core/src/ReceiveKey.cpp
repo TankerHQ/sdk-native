@@ -22,6 +22,8 @@
 
 TLOG_CATEGORY("ReceiveKey");
 
+using namespace Tanker::Trustchain::Actions;
+
 namespace Tanker
 {
 namespace ReceiveKey
@@ -43,7 +45,7 @@ tc::cotask<void> onKeyToDeviceReceived(
       senderDevice.publicEncryptionKey,
       selfDevicePrivateEncryptionKey);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublish.mac(), key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublish.resourceId(), key));
 }
 
 namespace
@@ -61,7 +63,7 @@ tc::cotask<void> decryptAndStoreKeyForUser(
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
       keyPublishToUser.sealedSymmetricKey(), userKeyPair);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.mac(), key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
 }
 
 tc::cotask<void> decryptAndStoreKeyForGroup(
@@ -85,7 +87,7 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
       keyPublishToUserGroup.sealedSymmetricKey(), group->encryptionKeyPair);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.mac(), key));
+  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
 }
 
 tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
@@ -95,25 +97,26 @@ tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
 {
   auto const provisionalUserKeys =
       TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
-          keyPublishToProvisionalUser.appPublicSignatureKey,
-          keyPublishToProvisionalUser.tankerPublicSignatureKey));
+          keyPublishToProvisionalUser.appPublicSignatureKey(),
+          keyPublishToProvisionalUser.tankerPublicSignatureKey()));
 
   if (!provisionalUserKeys)
   {
     throw Error::formatEx<Error::ProvisionalUserKeysNotFound>(
         "Received a keypublish for a provisional user we didn't claim (public "
         "encryption keys: {} {})",
-        keyPublishToProvisionalUser.appPublicSignatureKey,
-        keyPublishToProvisionalUser.tankerPublicSignatureKey);
+        keyPublishToProvisionalUser.appPublicSignatureKey(),
+        keyPublishToProvisionalUser.tankerPublicSignatureKey());
   }
 
   auto const encryptedKey = Crypto::sealDecrypt(
-      keyPublishToProvisionalUser.key, provisionalUserKeys->tankerKeys);
+      keyPublishToProvisionalUser.twoTimesSealedSymmetricKey(),
+      provisionalUserKeys->tankerKeys);
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
       encryptedKey, provisionalUserKeys->appKeys);
 
   TC_AWAIT(
-      resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId, key));
+      resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
 }
 }
 

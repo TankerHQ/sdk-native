@@ -33,7 +33,7 @@ TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
 
 TEST_CASE("encryptedSize should return the right size")
 {
-  constexpr auto MacSize = Crypto::Mac::arraySize;
+  constexpr auto MacSize = Trustchain::ResourceId::arraySize;
   constexpr auto ResourceIdSize = MacSize;
   constexpr auto IvSize = Crypto::AeadIv::arraySize;
 
@@ -122,7 +122,7 @@ TEST_CASE("Should not be able to decrypt a buffer without the last chunk")
 
   std::vector<uint8_t> truncatedData(
       encryptedData.begin(),
-      encryptedData.end() - Crypto::AeadIv::arraySize - Crypto::Mac::arraySize);
+      encryptedData.end() - Crypto::AeadIv::arraySize - Trustchain::ResourceId::arraySize);
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(truncatedData));
 

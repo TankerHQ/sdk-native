@@ -28,7 +28,7 @@ TEST_CASE("TrustchainVerifier")
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(rootEntry)));
 
-  auto const resourceId = make<Crypto::Mac>("mac");
+  auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
 
   auto const groupStore = std::make_unique<GroupStore>(db.get());
