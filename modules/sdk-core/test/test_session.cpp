@@ -13,6 +13,7 @@
 #include "TrustchainBuilder.hpp"
 
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 namespace
 {
@@ -46,8 +47,7 @@ TEST_CASE(
                    std::move(client)});
 
   auto const entry = toVerifiedEntry(alice.entry);
-  auto const deviceCreation =
-      mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
+  auto const deviceCreation = entry.action.get<DeviceCreation>();
 
   AWAIT_VOID(
       session.catchUserKey(Trustchain::DeviceId{entry.hash}, deviceCreation));

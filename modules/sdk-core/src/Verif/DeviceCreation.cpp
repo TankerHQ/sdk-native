@@ -10,12 +10,9 @@
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
-#include <mpark/variant.hpp>
-
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
-using Tanker::Trustchain::Actions::DeviceCreation;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -59,8 +56,7 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
   assert(std::find(user.devices.begin(), user.devices.end(), author) !=
          user.devices.end());
 
-  auto const& deviceCreation =
-      mpark::get<DeviceCreation>(entry.action.variant());
+  auto const& deviceCreation = entry.action.get<DeviceCreation>();
 
   ensures(Crypto::verify(entry.hash,
                          entry.signature,
@@ -87,8 +83,7 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
   assert(entry.nature == Nature::DeviceCreation ||
          entry.nature == Nature::DeviceCreation3);
 
-  auto const& deviceCreation =
-      mpark::get<DeviceCreation>(entry.action.variant());
+  auto const& deviceCreation = entry.action.get<DeviceCreation>();
 
   ensures(Crypto::verify(entry.hash,
                          entry.signature,

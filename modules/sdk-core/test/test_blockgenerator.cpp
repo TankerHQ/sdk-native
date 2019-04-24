@@ -1,7 +1,5 @@
 #include <doctest.h>
 
-#include <mpark/variant.hpp>
-
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -17,6 +15,7 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("BlockGenerator")
 {
@@ -43,9 +42,7 @@ TEST_CASE("BlockGenerator")
     auto const block = Serialization::deserialize<Block>(sblock);
     CHECK_EQ(block.author.base(), trustchainId.base());
     auto const entry = blockToUnverifiedEntry(block);
-    auto const deviceCreation =
-        mpark::get_if<Trustchain::Actions::DeviceCreation>(
-            &entry.action.variant());
+    auto const deviceCreation = entry.action.get_if<DeviceCreation>();
     REQUIRE(deviceCreation != nullptr);
     CHECK(deviceCreation->userId() == userId);
     CHECK(deviceCreation->publicSignatureKey() == mySignKeyPair.publicKey);

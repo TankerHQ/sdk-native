@@ -1,7 +1,5 @@
 #include <doctest.h>
 
-#include <mpark/variant.hpp>
-
 #include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -17,6 +15,7 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("blockToUnverifiedEntry")
 {
@@ -47,6 +46,5 @@ TEST_CASE("blockToUnverifiedEntry")
   CHECK(entry.nature == block.nature);
   CHECK(entry.author == block.author);
   CHECK(entry.signature == block.signature);
-  CHECK(mpark::holds_alternative<Trustchain::Actions::DeviceCreation>(
-      entry.action.variant()));
+  CHECK(entry.action.holdsAlternative<DeviceCreation>());
 }

@@ -29,7 +29,6 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <fmt/format.h>
-#include <mpark/variant.hpp>
 #include <optional.hpp>
 #include <sqlite3.h>
 #include <sqlpp11/functions.h>
@@ -55,6 +54,25 @@ namespace DataStore
 {
 namespace
 {
+struct MakeIndexesVisitor
+{
+  std::vector<Index> operator()(DeviceCreation const& dc) const
+  {
+    auto const& id = dc.userId();
+    auto const& key = dc.publicSignatureKey();
+
+    return {
+        Index{IndexType::UserId, {id.begin(), id.end()}},
+        Index{IndexType::DevicePublicSignatureKey, {key.begin(), key.end()}}};
+  }
+
+  template <typename T>
+  std::vector<Index>  operator()(T) const
+  {
+    return {};
+  }
+};
+
 template <typename Row>
 Device rowToDevice(Row const& row)
 {
@@ -81,7 +99,7 @@ Entry rowToEntry(Row const& row)
       static_cast<uint64_t>(row.idx),
       static_cast<Nature>(static_cast<unsigned>(row.nature)),
       extractBlob<Crypto::Hash>(row.author),
-      deserializeAction(static_cast<Nature>(static_cast<unsigned>(row.nature)),
+      Action::deserialize(static_cast<Nature>(static_cast<unsigned>(row.nature)),
                         extractBlob(row.action)),
       extractBlob<Crypto::Hash>(row.hash),
   };
@@ -317,16 +335,12 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
   if (insertedCount == 0)
     TC_RETURN();
 
-  if (auto const keyPublish =
-          mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
-              &entry.action.variant()))
+  if (auto const keyPublish = entry.action.get_if<KeyPublishToUser>())
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
-  if (auto const keyPublish =
-          mpark::get_if<Trustchain::Actions::KeyPublishToUserGroup>(
-              &entry.action.variant()))
+  else if (auto const keyPublish = entry.action.get_if<KeyPublishToUserGroup>())
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
 
-  for (auto const& index : entry.action.makeIndexes())
+  for (auto const& index : entry.action.visit(MakeIndexesVisitor{}))
   {
     TrustchainIndexesTable indexTable;
 
@@ -427,8 +441,7 @@ tc::cotask<Entry> Database::getTrustchainDevice(
 
   auto const entry = rowToEntry(row);
 
-  if (!mpark::get_if<Trustchain::Actions::DeviceCreation>(
-          &entry.action.variant()))
+  if (!entry.action.holdsAlternative<DeviceCreation>())
   {
     throw Error::formatEx<RecordNotFound>(
         fmt("the block {:s} is not a device creation"), entry.hash);

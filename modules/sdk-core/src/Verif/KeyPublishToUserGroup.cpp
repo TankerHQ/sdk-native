@@ -11,7 +11,7 @@
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -23,10 +23,9 @@ void verifyKeyPublishToUserGroup(UnverifiedEntry const& entry,
 {
   assert(entry.nature == Nature::KeyPublishToUserGroup);
 
-  assert(recipientGroup.publicEncryptionKey ==
-         mpark::get<Trustchain::Actions::KeyPublishToUserGroup>(
-             entry.action.variant())
-             .recipientPublicEncryptionKey());
+  assert(
+      recipientGroup.publicEncryptionKey ==
+      entry.action.get<KeyPublishToUserGroup>().recipientPublicEncryptionKey());
 
   ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
           Error::VerificationCode::InvalidAuthor,

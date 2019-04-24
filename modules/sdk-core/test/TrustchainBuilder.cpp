@@ -393,8 +393,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     members.push_back(user.suserId);
 
   auto const encryptedPrivateSignatureKey =
-      mpark::get<UserGroupCreation>(entry.action.variant())
-          .sealedPrivateSignatureKey();
+      entry.action.get<UserGroupCreation>().sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 
   _groups.insert(group);

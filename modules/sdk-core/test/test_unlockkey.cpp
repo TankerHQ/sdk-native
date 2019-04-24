@@ -149,8 +149,7 @@ TEST_CASE("unlockKey")
                   ghostDeviceKeys.signatureKeyPair.privateKey);
     auto ghostDeviceEntry = toVerifiedEntry(
         blockToUnverifiedEntry(Serialization::deserialize<Block>(reg->block)));
-    auto const dc =
-        mpark::get<DeviceCreation>(ghostDeviceEntry.action.variant());
+    auto const dc = ghostDeviceEntry.action.get<DeviceCreation>();
     FAST_CHECK_EQ(gh.deviceId.base(), ghostDeviceEntry.hash.base());
     FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
                   dc.publicEncryptionKey());
@@ -190,8 +189,7 @@ TEST_CASE("unlockKey")
         builder.trustchainId(), alice.userId, gh, newDeviceKeys, ec);
     auto const validatedDeviceEntry = toVerifiedEntry(blockToUnverifiedEntry(
         Serialization::deserialize<Block>(validatedDevice)));
-    auto const vdc =
-        mpark::get<DeviceCreation>(validatedDeviceEntry.action.variant());
+    auto const vdc = validatedDeviceEntry.action.get<DeviceCreation>();
     REQUIRE(vdc.holdsAlternative<DeviceCreation::v3>());
     auto const& dc3 = vdc.get<DeviceCreation::v3>();
     auto const userKey = dc3.sealedPrivateUserEncryptionKey();

@@ -15,7 +15,7 @@ tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
                             Entry const& entry)
 {
   auto const& provisionalIdentityClaim =
-      mpark::get<ProvisionalIdentityClaim>(entry.action.variant());
+      entry.action.get<ProvisionalIdentityClaim>();
 
   auto const userKeyPair = TC_AWAIT(userKeyStore.findKeyPair(
       provisionalIdentityClaim.userPublicEncryptionKey()));

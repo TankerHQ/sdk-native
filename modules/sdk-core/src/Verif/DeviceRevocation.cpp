@@ -10,8 +10,6 @@
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
-#include <mpark/variant.hpp>
-
 #include <cassert>
 
 using namespace Tanker::Trustchain::Actions;
@@ -122,8 +120,7 @@ void verifyDeviceRevocation(UnverifiedEntry const& entry,
       "device revocation block must be signed by the public signature key of "
       "its author");
 
-  auto const& deviceRevocation =
-      mpark::get<DeviceRevocation>(entry.action.variant());
+  auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
 
   deviceRevocation.visit(
       [&](auto const& subAction) { verifySubAction(subAction, target, user); });

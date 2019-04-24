@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -28,9 +28,7 @@ void verifyUserGroupCreation(UnverifiedEntry const& entry, Device const& author)
       Error::VerificationCode::InvalidSignature,
       "UserGroupCreation block must be signed by the author device");
 
-  auto const& userGroupCreation =
-      mpark::get<Trustchain::Actions::UserGroupCreation>(
-          entry.action.variant());
+  auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
   ensures(Crypto::verify(userGroupCreation.signatureData(),
                          userGroupCreation.selfSignature(),

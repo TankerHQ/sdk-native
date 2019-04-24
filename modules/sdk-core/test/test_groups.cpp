@@ -66,7 +66,7 @@ TEST_CASE("Can create a group with two users")
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToUnverifiedEntry(block);
-  auto group = mpark::get<UserGroupCreation>(entry.action.variant());
+  auto group = entry.action.get<UserGroupCreation>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -145,7 +145,7 @@ TEST_CASE("Can add users to a group")
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToUnverifiedEntry(block);
-  auto groupAdd = mpark::get<UserGroupAddition>(entry.action.variant());
+  auto groupAdd = entry.action.get<UserGroupAddition>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);

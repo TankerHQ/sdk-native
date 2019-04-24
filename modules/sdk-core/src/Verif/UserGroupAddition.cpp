@@ -30,8 +30,7 @@ void verifyUserGroupAddition(UnverifiedEntry const& entry,
       Error::VerificationCode::InvalidSignature,
       "UserGroupAddition block must be signed by the author device");
 
-  auto const& userGroupAddition =
-      mpark::get<UserGroupAddition>(entry.action.variant());
+  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
   ensures(userGroupAddition.previousGroupBlockHash() == group.lastBlockHash,
           Error::VerificationCode::InvalidGroup,

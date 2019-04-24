@@ -17,7 +17,6 @@
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
-#include <mpark/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY("ReceiveKey");
@@ -34,8 +33,7 @@ tc::cotask<void> onKeyToDeviceReceived(
     Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
     Entry const& entry)
 {
-  auto const& keyPublish = mpark::get<Trustchain::Actions::KeyPublishToDevice>(
-      entry.action.variant());
+  auto const& keyPublish = entry.action.get<KeyPublishToDevice>();
   Trustchain::DeviceId senderId{entry.author.begin(), entry.author.end()};
 
   auto const senderDevice = TC_AWAIT(contactStore.findDevice(senderId)).value();
@@ -127,23 +125,25 @@ tc::cotask<void> decryptAndStoreKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
 {
-  if (auto const keyPublishToUser =
-          mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
-              &entry.action.variant()))
+  if (auto const keyPublishToUser = entry.action.get_if<KeyPublishToUser>())
+  {
     TC_AWAIT(decryptAndStoreKeyForUser(
         resourceKeyStore, userKeyStore, *keyPublishToUser));
+  }
   else if (auto const keyPublishToUserGroup =
-               mpark::get_if<Trustchain::Actions::KeyPublishToUserGroup>(
-                   &entry.action.variant()))
+               entry.action.get_if<KeyPublishToUserGroup>())
+  {
     TC_AWAIT(decryptAndStoreKeyForGroup(
         resourceKeyStore, groupStore, *keyPublishToUserGroup));
+  }
   else if (auto const keyPublishToProvisionalUser =
-               mpark::get_if<KeyPublishToProvisionalUser>(
-                   &entry.action.variant()))
+               entry.action.get_if<KeyPublishToProvisionalUser>())
+  {
     TC_AWAIT(
         decryptAndStoreKeyForProvisionalUser(resourceKeyStore,
                                              provisionalUserKeysStore,
                                              *keyPublishToProvisionalUser));
+  }
 }
 }
 }
