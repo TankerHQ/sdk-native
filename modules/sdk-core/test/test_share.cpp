@@ -123,8 +123,12 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  auto const recipients = AWAIT(Share::generateRecipientList(
-      userAccessor.get(), groupAccessor.get(), {newUser.userId}, {}));
+  auto const recipients = AWAIT(
+      Share::generateRecipientList(userAccessor.get(),
+                                   groupAccessor.get(),
+                                   {Identity::PublicPermanentIdentity{
+                                       builder.trustchainId(), newUser.userId}},
+                                   {}));
 
   // there should be only user keys
   CHECK(recipients.recipientGroupKeys.size() == 0);
@@ -189,10 +193,13 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  CHECK_THROWS_AS(
-      AWAIT(Share::generateRecipientList(
-          userAccessor.get(), groupAccessor.get(), {newUser.userId}, {})),
-      Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
+                      userAccessor.get(),
+                      groupAccessor.get(),
+                      {Identity::PublicPermanentIdentity{builder.trustchainId(),
+                                                         newUser.userId}},
+                      {})),
+                  Error::RecipientNotFoundInternal);
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -261,7 +268,8 @@ TEST_CASE(
 
   auto const newUserKeyPair = newUser.userKeys.back();
 
-  Share::KeyRecipients keyRecipients{{newUserKeyPair.keyPair.publicKey}, {}};
+  Share::KeyRecipients keyRecipients{
+      {newUserKeyPair.keyPair.publicKey}, {}, {}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,
@@ -293,7 +301,7 @@ TEST_CASE(
                                        make<Trustchain::ResourceId>("resource resourceId")}};
 
   Share::KeyRecipients keyRecipients{
-      {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
+      {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,

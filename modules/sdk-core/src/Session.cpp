@@ -56,9 +56,9 @@
 #include <stdexcept>
 #include <utility>
 
-using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::ResourceId;
+using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
 
 TLOG_CATEGORY(Session);
@@ -91,6 +91,15 @@ std::vector<UserId> publicIdentitiesToUserIds(
   });
 }
 
+std::vector<Identity::PublicIdentity> extractPublicIdentities(
+    std::vector<SPublicIdentity> const& spublicIdentities)
+{
+  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
+    return Identity::extract<Identity::PublicIdentity>(
+        spublicIdentity.string());
+  });
+}
+
 std::vector<GroupId> convertToGroupIds(std::vector<SGroupId> const& sgroupIds)
 {
   return convertList(sgroupIds, [](auto&& sgroupId) {
@@ -98,17 +107,29 @@ std::vector<GroupId> convertToGroupIds(std::vector<SGroupId> const& sgroupIds)
   });
 }
 
-template <typename S, typename T>
+struct IdentityFunc
+{
+  template <typename T>
+  T&& operator()(T&& t)
+  {
+    return std::forward<T>(t);
+  }
+};
+
+template <typename S, typename T, typename I, typename F = IdentityFunc>
 auto toClearId(std::vector<T> const& errorIds,
                std::vector<S> const& sIds,
-               std::vector<T> const& Ids)
+               std::vector<I> const& Ids,
+               F&& mapToT = IdentityFunc{})
 {
   std::vector<S> clearIds;
   clearIds.reserve(Ids.size());
 
   for (auto const& wrongId : errorIds)
   {
-    auto const badIt = std::find(Ids.begin(), Ids.end(), wrongId);
+    auto const badIt = std::find_if(Ids.begin(), Ids.end(), [&](auto const& e) {
+      return mapToT(e) == wrongId;
+    });
 
     assert(badIt != Ids.end() && "Wrong id not found");
 
@@ -261,9 +282,12 @@ tc::cotask<void> Session::encrypt(
     std::vector<SGroupId> const& sgroupIds)
 {
   auto const metadata = Encryptor::encrypt(encryptedData, clearData);
-  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
+  auto publicIdentities = extractPublicIdentities(spublicIdentities);
+  // add ourself
+  publicIdentities.insert(
+      publicIdentities.begin(),
+      Identity::PublicPermanentIdentity{_trustchainId, _userId});
   auto groupIds = convertToGroupIds(sgroupIds);
-  userIds.insert(userIds.begin(), this->_userId);
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
@@ -272,7 +296,7 @@ tc::cotask<void> Session::encrypt(
                         _blockGenerator,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
-                        userIds,
+                        publicIdentities,
                         groupIds));
 }
 
@@ -329,9 +353,10 @@ tc::cotask<std::vector<Device>> Session::getDeviceList() const
   TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
 }
 
-tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
-                                std::vector<UserId> const& userIds,
-                                std::vector<GroupId> const& groupIds)
+tc::cotask<void> Session::share(
+    std::vector<ResourceId> const& resourceIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    std::vector<GroupId> const& groupIds)
 {
   TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
                         _resourceKeyStore,
@@ -340,40 +365,55 @@ tc::cotask<void> Session::share(std::vector<ResourceId> const& resourceIds,
                         _blockGenerator,
                         *_client,
                         resourceIds,
-                        userIds,
+                        publicIdentities,
                         groupIds));
 }
 
 tc::cotask<void> Session::share(
     std::vector<SResourceId> const& sresourceIds,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SPublicIdentity> const& aspublicIdentities,
+    std::vector<SGroupId> const& asgroupIds)
 {
-  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
+  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
+  auto const sgroupIds = removeDuplicates(asgroupIds);
+
+  auto publicIdentities = extractPublicIdentities(spublicIdentities);
   auto groupIds = convertToGroupIds(sgroupIds);
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
     return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
   });
 
   // we remove ourselves from the recipients
-  userIds.erase(
-      std::remove_if(begin(userIds),
-                     end(userIds),
-                     [this](auto&& rec) { return rec == this->_userId; }),
-      end(userIds));
+  publicIdentities.erase(
+      std::remove_if(
+          begin(publicIdentities),
+          end(publicIdentities),
+          [this](auto&& rec) {
+            auto const permanentIdentity =
+                mpark::get_if<Identity::PublicPermanentIdentity>(&rec);
+            return permanentIdentity && permanentIdentity->userId == _userId;
+          }),
+      end(publicIdentities));
 
-  userIds = removeDuplicates(std::move(userIds));
-  groupIds = removeDuplicates(std::move(groupIds));
-  if (!userIds.empty() || !groupIds.empty())
+  if (!publicIdentities.empty() || !groupIds.empty())
   {
     try
     {
-      TC_AWAIT(share(resourceIds, userIds, groupIds));
+      TC_AWAIT(share(resourceIds, publicIdentities, groupIds));
     }
     catch (Error::RecipientNotFoundInternal const& e)
     {
-      auto const clearPublicIdentities =
-          toClearId(e.userIds(), spublicIdentities, userIds);
+      auto const clearPublicIdentities = toClearId(
+          e.userIds(),
+          spublicIdentities,
+          publicIdentities,
+          [](auto const& identity) {
+            auto const permanentIdentity =
+                mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
+            return permanentIdentity ?
+                       nonstd::make_optional(permanentIdentity->userId) :
+                       nonstd::nullopt;
+          });
       auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
       throw Error::RecipientNotFound(
           fmt::format(
@@ -546,11 +586,11 @@ tc::cotask<void> Session::claimProvisionalIdentity(
   auto block = _blockGenerator.provisionalIdentityClaim(
       _userId,
       SecretProvisionalUser{identity.target,
-                      identity.value,
-                      identity.appEncryptionKeyPair,
-                      tankerKeys->encryptionKeyPair,
-                      identity.appSignatureKeyPair,
-                      tankerKeys->signatureKeyPair},
+                            identity.value,
+                            identity.appEncryptionKeyPair,
+                            tankerKeys->encryptionKeyPair,
+                            identity.appSignatureKeyPair,
+                            tankerKeys->signatureKeyPair},
       TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
   TC_AWAIT(_client->pushBlock(block));
 }

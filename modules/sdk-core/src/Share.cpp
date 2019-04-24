@@ -20,9 +20,9 @@
 #include <algorithm>
 #include <iterator>
 
-using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::ResourceId;
+using Tanker::Trustchain::UserId;
 
 namespace Tanker
 {
@@ -56,6 +56,31 @@ std::vector<uint8_t> makeKeyPublishToGroup(
 
 namespace
 {
+struct PartitionedIdentities
+{
+  std::vector<UserId> userIds;
+  std::vector<Identity::PublicProvisionalIdentity> publicProvisionalIdentities;
+};
+
+PartitionedIdentities partitionIdentities(
+    std::vector<Identity::PublicIdentity> const& identities)
+{
+  PartitionedIdentities out;
+  for (auto const& identity : identities)
+  {
+    if (auto const i =
+            mpark::get_if<Identity::PublicPermanentIdentity>(&identity))
+      out.userIds.push_back(i->userId);
+    else if (auto const i =
+                 mpark::get_if<Identity::PublicProvisionalIdentity>(&identity))
+      out.publicProvisionalIdentities.push_back(*i);
+    else
+      throw std::runtime_error(
+          "assertion failure: unknown variant value in identity");
+  }
+  return out;
+}
+
 tc::cotask<ResourceKeys> getResourceKeys(
     ResourceKeyStore const& resourceKeyStore,
     gsl::span<ResourceId const> resourceIds)
@@ -106,10 +131,13 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
-    std::vector<UserId> const& userIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<GroupId> const& groupIds)
 {
-  auto const userResult = TC_AWAIT(userAccessor.pull(userIds));
+  auto const partitionedIdentities = partitionIdentities(publicIdentities);
+
+  auto const userResult =
+      TC_AWAIT(userAccessor.pull(partitionedIdentities.userIds));
 
   auto const groupResult = TC_AWAIT(groupAccessor.pull(groupIds));
 
@@ -160,11 +188,11 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     ResourceKeys const& resourceKeys,
-    std::vector<UserId> const& userIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<GroupId> const& groupIds)
 {
-  auto const keyRecipients = TC_AWAIT(
-      generateRecipientList(userAccessor, groupAccessor, userIds, groupIds));
+  auto const keyRecipients = TC_AWAIT(generateRecipientList(
+      userAccessor, groupAccessor, publicIdentities, groupIds));
 
   auto const ks = generateShareBlocks(
       selfPrivateEncryptionKey, blockGenerator, resourceKeys, keyRecipients);
@@ -181,7 +209,7 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     std::vector<Trustchain::ResourceId> const& resourceIds,
-    std::vector<UserId> const& userIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<GroupId> const& groupIds)
 {
   auto const resourceKeys =
@@ -193,7 +221,7 @@ tc::cotask<void> share(
                  blockGenerator,
                  client,
                  resourceKeys,
-                 userIds,
+                 publicIdentities,
                  groupIds));
 }
 }

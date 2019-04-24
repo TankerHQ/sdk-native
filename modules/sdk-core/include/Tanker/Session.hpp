@@ -7,6 +7,7 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
@@ -82,7 +83,7 @@ public:
                            gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
-                         std::vector<SPublicIdentity> const& userIds,
+                         std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
 
   tc::cotask<SGroupId> createGroup(
@@ -125,9 +126,10 @@ public:
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
 private:
-  tc::cotask<void> share(std::vector<Trustchain::ResourceId> const& resourceId,
-                         std::vector<Trustchain::UserId> const& userIds,
-                         std::vector<Trustchain::GroupId> const& groupIds);
+  tc::cotask<void> share(
+      std::vector<Trustchain::ResourceId> const& resourceId,
+      std::vector<Identity::PublicIdentity> const& publicIdentities,
+      std::vector<Trustchain::GroupId> const& groupIds);
 
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
