@@ -12,6 +12,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/GroupId.hpp>
+#include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
@@ -94,8 +95,7 @@ public:
   tc::cotask<std::vector<
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
-  tc::cotask<nonstd::optional<
-      std::pair<Crypto::EncryptionKeyPair, Crypto::SignatureKeyPair>>>
+  tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Email const& provisionalIdentity,
                              VerificationCode const& verificationCode);
 

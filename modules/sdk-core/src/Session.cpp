@@ -547,9 +547,9 @@ tc::cotask<void> Session::claimProvisionalIdentity(
       ProvisionalUser{identity.target,
                       identity.value,
                       identity.appEncryptionKeyPair,
-                      tankerKeys->first,
+                      tankerKeys->encryptionKeyPair,
                       identity.appSignatureKeyPair,
-                      tankerKeys->second},
+                      tankerKeys->signatureKeyPair},
       TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
   TC_AWAIT(_client->pushBlock(block));
 }

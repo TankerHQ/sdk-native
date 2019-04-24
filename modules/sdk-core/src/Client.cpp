@@ -10,6 +10,7 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
@@ -204,8 +205,7 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<
-    std::pair<Crypto::EncryptionKeyPair, Crypto::SignatureKeyPair>>>
+tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
 Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
                                    VerificationCode const& verificationCode)
 {
@@ -216,13 +216,11 @@ Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
   if (json.empty())
     TC_RETURN(nonstd::nullopt);
 
-  auto encPair = Crypto::EncryptionKeyPair{
-      json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
-      json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()};
-  auto sigPair = Crypto::SignatureKeyPair{
-      json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-      json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()};
-  TC_RETURN(std::make_pair(encPair, sigPair));
+  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
+       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
+      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
+       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
