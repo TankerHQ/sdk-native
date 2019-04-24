@@ -150,24 +150,22 @@ TEST_CASE("Can add users to a group")
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
 
-  CHECK(groupAdd.groupId ==
+  CHECK(groupAdd.groupId() ==
         Trustchain::GroupId{group.signatureKeyPair.publicKey});
-  CHECK(groupAdd.previousGroupBlock == group.lastBlockHash);
-  REQUIRE(groupAdd.encryptedGroupPrivateEncryptionKeysForUsers.size() == 2);
+  CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash);
+  REQUIRE(groupAdd.sealedPrivateEncryptionKeysForUsers().size() == 2);
 
-  auto const groupEncryptedKey =
-      std::find_if(groupAdd.encryptedGroupPrivateEncryptionKeysForUsers.begin(),
-                   groupAdd.encryptedGroupPrivateEncryptionKeysForUsers.end(),
-                   [&](auto const& encryptedKey) {
-                     return encryptedKey.publicUserEncryptionKey ==
-                            user.userKeys.back().keyPair.publicKey;
-                   });
+  auto const groupEncryptedKey = std::find_if(
+      groupAdd.sealedPrivateEncryptionKeysForUsers().begin(),
+      groupAdd.sealedPrivateEncryptionKeysForUsers().end(),
+      [&](auto const& encryptedKey) {
+        return encryptedKey.first == user.userKeys.back().keyPair.publicKey;
+      });
   REQUIRE(groupEncryptedKey !=
-          groupAdd.encryptedGroupPrivateEncryptionKeysForUsers.end());
+          groupAdd.sealedPrivateEncryptionKeysForUsers().end());
 
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->encryptedGroupPrivateEncryptionKey,
-            user.userKeys.back().keyPair) ==
+            groupEncryptedKey->second, user.userKeys.back().keyPair) ==
         group.encryptionKeyPair.privateKey);
-  CHECK(selfSignature == groupAdd.selfSignatureWithCurrentKey);
+  CHECK(selfSignature == groupAdd.selfSignature());
 }

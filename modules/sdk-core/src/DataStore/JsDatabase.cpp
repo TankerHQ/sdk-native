@@ -242,6 +242,7 @@ struct toVal
   using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;
   using KeyPublishToUserGroup = Trustchain::Actions::KeyPublishToUserGroup;
   using UserGroupCreation = Trustchain::Actions::UserGroupCreation;
+  using UserGroupAddition = Trustchain::Actions::UserGroupAddition;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {

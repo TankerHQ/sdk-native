@@ -11,7 +11,7 @@
 TLOG_CATEGORY(GroupUpdater);
 
 using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::Actions::UserGroupCreation;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -37,23 +37,6 @@ tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
       TC_RETURN((MyGroupKey{
           *matchingUserKeyPair,
           gek.second,
-      }));
-  }
-  TC_RETURN(nonstd::nullopt);
-}
-
-tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
-    UserKeyStore const& userKeyStore,
-    std::vector<GroupEncryptedKey> const& groupKeys)
-{
-  for (auto const& gek : groupKeys)
-  {
-    auto const matchingUserKeyPair =
-        TC_AWAIT(userKeyStore.findKeyPair(gek.publicUserEncryptionKey));
-    if (matchingUserKeyPair)
-      TC_RETURN((MyGroupKey{
-          *matchingUserKeyPair,
-          gek.encryptedGroupPrivateEncryptionKey,
       }));
   }
   TC_RETURN(nonstd::nullopt);
@@ -157,18 +140,17 @@ tc::cotask<void> applyUserGroupAddition(GroupStore& groupStore,
       mpark::get<UserGroupAddition>(entry.action.variant());
 
   auto const previousGroup =
-      TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId));
+      TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId()));
   if (!previousGroup)
     throw Error::formatEx<std::runtime_error>(
         "assertion error: can't find previous group block for {}",
-        userGroupAddition.groupId);
+        userGroupAddition.groupId());
 
   TC_AWAIT(groupStore.updateLastGroupBlock(
-      userGroupAddition.groupId, entry.hash, entry.index));
+      userGroupAddition.groupId(), entry.hash, entry.index));
 
   auto const myKeys = TC_AWAIT(findMyKeys(
-      userKeyStore,
-      userGroupAddition.encryptedGroupPrivateEncryptionKeysForUsers));
+      userKeyStore, userGroupAddition.sealedPrivateEncryptionKeysForUsers()));
   if (!myKeys)
     TC_RETURN();
   // I am already member of this group, ignore

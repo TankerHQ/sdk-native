@@ -2,7 +2,6 @@
 
 #include <Tanker/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <gsl-lite.hpp>
@@ -33,7 +33,7 @@ public:
                      KeyPublishToProvisionalUser,
                      Trustchain::Actions::UserGroupCreation,
                      Trustchain::Actions::KeyPublishToUserGroup,
-                     UserGroupAddition,
+                     Trustchain::Actions::UserGroupAddition,
                      ProvisionalIdentityClaim>;
 
   explicit Action(variant_type&&);

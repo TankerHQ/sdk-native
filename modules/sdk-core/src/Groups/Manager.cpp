@@ -13,6 +13,7 @@
 
 using Tanker::Trustchain::UserId;
 using Tanker::Trustchain::GroupId;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -104,12 +105,14 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
         memberUserKeys.size(),
         MAX_GROUP_SIZE);
 
-  UserGroupAddition::GroupEncryptedKeys sealedEncKeys;
+  UserGroupAddition::SealedPrivateEncryptionKeysForUsers sealedEncKeys;
   for (auto const& userKey : memberUserKeys)
-    sealedEncKeys.push_back(GroupEncryptedKey{
+  {
+    sealedEncKeys.emplace_back(
         userKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            group.encryptionKeyPair.privateKey, userKey)});
+            group.encryptionKeyPair.privateKey, userKey));
+  }
 
   TC_RETURN(blockGenerator.userGroupAddition(
       group.signatureKeyPair, group.lastBlockHash, sealedEncKeys));

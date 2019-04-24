@@ -25,7 +25,7 @@
 #include <cassert>
 
 using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -201,7 +201,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
       mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& userGroupAddition =
       mpark::get<UserGroupAddition>(ga.action.variant());
-  auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId));
+  auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId()));
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
   Verif::verifyUserGroupAddition(ga, authorDevice, group);
