@@ -8,7 +8,6 @@ target_sources(tankertypes INTERFACE
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SUserId.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SGroupId.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SResourceId.hpp
-  ${PROJECT_SOURCE_DIR}/include/Tanker/Types/GroupId.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/StringWrapper.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Email.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Password.hpp

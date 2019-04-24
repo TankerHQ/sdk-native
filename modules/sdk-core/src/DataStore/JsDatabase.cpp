@@ -10,6 +10,7 @@
 #include <emscripten/bind.h>
 
 using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::GroupId;
 
 TLOG_CATEGORY(Database);
 
@@ -241,6 +242,7 @@ struct toVal
   using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;
   using KeyPublishToUserGroup = Trustchain::Actions::KeyPublishToUserGroup;
   using UserGroupCreation = Trustchain::Actions::UserGroupCreation;
+  using UserGroupAddition = Trustchain::Actions::UserGroupAddition;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {

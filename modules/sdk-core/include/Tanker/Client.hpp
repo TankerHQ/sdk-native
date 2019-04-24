@@ -8,10 +8,10 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/GroupId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Methods.hpp>
@@ -91,7 +91,7 @@ public:
   tc::cotask<std::vector<std::string>> getBlocks(
       int index,
       std::vector<Trustchain::UserId> const& extra_users,
-      std::vector<GroupId> const& extra_groups);
+      std::vector<Trustchain::GroupId> const& extra_groups);
   tc::cotask<std::vector<
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);

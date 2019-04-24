@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/DeviceKeys.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -23,6 +24,7 @@
 
 using namespace std::string_literals;
 
+using Tanker::Trustchain::GroupId;
 using namespace Tanker;
 using namespace Tanker::type_literals;
 using trompeloeil::_;

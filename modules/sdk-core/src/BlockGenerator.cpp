@@ -15,7 +15,7 @@
 
 #include <stdexcept>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -268,34 +268,17 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
 
 std::vector<uint8_t> BlockGenerator::userGroupAddition(
     Crypto::SignatureKeyPair const& signatureKeyPair,
-    Crypto::Hash const& previousGroupBlock,
-    std::vector<GroupEncryptedKey> const& sealedPrivateEncryptionKeysForUsers)
-    const
+    Crypto::Hash const& previousGroupBlockHash,
+    UserGroupAddition::SealedPrivateEncryptionKeysForUsers const&
+        sealedPrivateEncryptionKeysForUsers) const
 {
-  std::vector<uint8_t> toSign;
-  toSign.insert(toSign.end(),
-                signatureKeyPair.publicKey.begin(),
-                signatureKeyPair.publicKey.end());
-  toSign.insert(
-      toSign.end(), previousGroupBlock.begin(), previousGroupBlock.end());
-  for (auto const& elem : sealedPrivateEncryptionKeysForUsers)
-  {
-    toSign.insert(toSign.end(),
-                  elem.publicUserEncryptionKey.begin(),
-                  elem.publicUserEncryptionKey.end());
-    toSign.insert(toSign.end(),
-                  elem.encryptedGroupPrivateEncryptionKey.begin(),
-                  elem.encryptedGroupPrivateEncryptionKey.end());
-  }
-  auto const selfSignature = Crypto::sign(toSign, signatureKeyPair.privateKey);
+  Trustchain::GroupId groupId{signatureKeyPair.publicKey.base()};
+  UserGroupAddition uga{
+      groupId, previousGroupBlockHash, sealedPrivateEncryptionKeysForUsers};
+  uga.selfSign(signatureKeyPair.privateKey);
 
   return Serialization::serialize(
-      makeBlock(UserGroupAddition{GroupId{signatureKeyPair.publicKey},
-                                  previousGroupBlock,
-                                  sealedPrivateEncryptionKeysForUsers,
-                                  selfSignature},
-                _deviceId,
-                _privateSignatureKey));
+      makeBlock(uga, _deviceId, _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(

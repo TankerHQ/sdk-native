@@ -46,8 +46,8 @@
 
 TLOG_CATEGORY(Database);
 
-using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {

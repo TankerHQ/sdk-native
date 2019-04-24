@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 
+#include <stdexcept>
+
 namespace Tanker
 {
 namespace Trustchain
@@ -91,12 +93,6 @@ std::vector<std::uint8_t> UserGroupCreation::signatureData() const
 Crypto::Signature const& UserGroupCreation::selfSign(
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  if (Crypto::derivePublicKey(privateSignatureKey) != _publicSignatureKey)
-  {
-    throw std::runtime_error{
-        "assertion failure: UserGroupCreation::selfSign: mismatching "
-        "private/public signature keys"};
-  }
   auto const toSign = signatureData();
 
   return _selfSignature = Crypto::sign(toSign, privateSignatureKey);

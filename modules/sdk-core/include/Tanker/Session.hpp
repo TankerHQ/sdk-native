@@ -11,6 +11,7 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -126,7 +127,7 @@ public:
 private:
   tc::cotask<void> share(std::vector<Crypto::Mac> const& resourceId,
                          std::vector<Trustchain::UserId> const& userIds,
-                         std::vector<GroupId> const& groupIds);
+                         std::vector<Trustchain::GroupId> const& groupIds);
 
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);

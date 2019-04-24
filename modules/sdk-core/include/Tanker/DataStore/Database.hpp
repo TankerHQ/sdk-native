@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
@@ -81,13 +82,13 @@ public:
   tc::cotask<void> putFullGroup(Group const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
   // Does nothing if the group does not exist
-  tc::cotask<void> updateLastGroupBlock(GroupId const& groupId,
+  tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
-      GroupId const& groupId) override;
+      Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
-      GroupId const& groupId) override;
+      Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<nonstd::optional<ExternalGroup>>

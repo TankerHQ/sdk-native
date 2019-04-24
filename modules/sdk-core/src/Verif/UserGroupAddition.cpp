@@ -1,15 +1,15 @@
 #include <Tanker/Verif/UserGroupAddition.hpp>
 
-#include <Tanker/Actions/UserGroupAddition.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
@@ -33,13 +33,13 @@ void verifyUserGroupAddition(UnverifiedEntry const& entry,
   auto const& userGroupAddition =
       mpark::get<UserGroupAddition>(entry.action.variant());
 
-  ensures(userGroupAddition.previousGroupBlock == group.lastBlockHash,
+  ensures(userGroupAddition.previousGroupBlockHash() == group.lastBlockHash,
           Error::VerificationCode::InvalidGroup,
           "UserGroupAddition - previous group block does not match for this "
           "group id");
 
   ensures(Crypto::verify(userGroupAddition.signatureData(),
-                         userGroupAddition.selfSignatureWithCurrentKey,
+                         userGroupAddition.selfSignature(),
                          group.publicSignatureKey),
           Error::VerificationCode::InvalidSignature,
           "UserGroupAddition signature data must be signed with the group "

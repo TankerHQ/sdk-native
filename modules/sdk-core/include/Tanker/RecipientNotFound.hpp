@@ -19,7 +19,7 @@ public:
   }
 
   RecipientNotFoundInternal(std::vector<Trustchain::UserId> userIds,
-                            std::vector<GroupId> groupIds)
+                            std::vector<Trustchain::GroupId> groupIds)
     : InternalError("RecipientNotFoundInternal"),
       _userIds(std::move(userIds)),
       _groupIds(std::move(groupIds))
@@ -30,14 +30,14 @@ public:
   {
     return _userIds;
   }
-  std::vector<GroupId> const& groupIds() const
+  std::vector<Trustchain::GroupId> const& groupIds() const
   {
     return _groupIds;
   }
 
 private:
   std::vector<Trustchain::UserId> _userIds;
-  std::vector<GroupId> _groupIds;
+  std::vector<Trustchain::GroupId> _groupIds;
 };
 
 class RecipientNotFound : public Exception,
@@ -54,7 +54,7 @@ public:
 
   RecipientNotFound(std::string message,
                     std::vector<SPublicIdentity> publicIdentities,
-                    std::vector<GroupId> groupIds)
+                    std::vector<Trustchain::GroupId> groupIds)
     : Exception(Code::RecipientNotFound, std::move(message)),
       UserNotFoundBase(std::move(publicIdentities)),
       GroupNotFoundBase(std::move(groupIds))

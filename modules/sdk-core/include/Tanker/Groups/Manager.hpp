@@ -4,6 +4,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -47,7 +48,7 @@ tc::cotask<void> updateMembers(
     BlockGenerator const& blockGenerator,
     Client& client,
     GroupStore const& groupStore,
-    GroupId const& groupId,
+    Trustchain::GroupId const& groupId,
     std::vector<Trustchain::UserId> const& usersToAdd);
 }
 }

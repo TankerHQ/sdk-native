@@ -10,6 +10,8 @@
 
 TLOG_CATEGORY(GroupStore);
 
+using Tanker::Trustchain::GroupId;
+
 namespace Tanker
 {
 GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)

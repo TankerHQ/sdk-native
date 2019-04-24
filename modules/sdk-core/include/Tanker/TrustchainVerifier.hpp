@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -51,7 +52,8 @@ private:
   Device getDevice(User const& user, Crypto::Hash const& deviceHash) const;
   tc::cotask<ExternalGroup> getGroupByEncryptionKey(
       Crypto::PublicEncryptionKey const& recipientPublicEncryprionKey) const;
-  tc::cotask<ExternalGroup> getGroupById(GroupId const& groupId) const;
+  tc::cotask<ExternalGroup> getGroupById(
+      Trustchain::GroupId const& groupId) const;
 
   Trustchain::TrustchainId _trustchainId;
   DataStore::ADatabase* _db;

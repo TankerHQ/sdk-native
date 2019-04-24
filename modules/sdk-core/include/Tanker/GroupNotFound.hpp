@@ -3,7 +3,7 @@
 #include <vector>
 
 #include <Tanker/Error.hpp>
-#include <Tanker/Types/GroupId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 namespace Tanker
 {
@@ -13,17 +13,18 @@ class GroupNotFoundBase
 {
 public:
   GroupNotFoundBase() = default;
-  GroupNotFoundBase(std::vector<GroupId> const& groupIds) : _groupIds(groupIds)
+  GroupNotFoundBase(std::vector<Trustchain::GroupId> const& groupIds)
+    : _groupIds(groupIds)
   {
   }
 
-  std::vector<GroupId> const& groupIds() const
+  std::vector<Trustchain::GroupId> const& groupIds() const
   {
     return _groupIds;
   }
 
 private:
-  std::vector<GroupId> _groupIds;
+  std::vector<Trustchain::GroupId> _groupIds;
 };
 
 class GroupNotFound : public Exception, public GroupNotFoundBase
@@ -34,7 +35,8 @@ public:
   {
   }
 
-  GroupNotFound(std::string message, std::vector<GroupId> const& groupIds)
+  GroupNotFound(std::string message,
+                std::vector<Trustchain::GroupId> const& groupIds)
     : Exception(Code::GroupNotFound, std::move(message)),
       GroupNotFoundBase(groupIds)
   {

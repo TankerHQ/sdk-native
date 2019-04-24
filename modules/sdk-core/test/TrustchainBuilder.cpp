@@ -7,6 +7,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <cstring>
 
+using Tanker::Trustchain::GroupId;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker;
 
@@ -316,7 +318,7 @@ Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
 namespace
 {
 UserGroupCreation::SealedPrivateEncryptionKeysForUsers
-generateGroupKeysForNewUsers(
+generateGroupKeysForUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<TrustchainBuilder::User> const& users)
 {
@@ -330,25 +332,6 @@ generateGroupKeysForNewUsers(
         user.userKeys.back().keyPair.publicKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
             groupPrivateEncryptionKey, user.userKeys.back().keyPair.publicKey));
-  }
-  return keysForUsers;
-}
-
-std::vector<Tanker::GroupEncryptedKey> generateGroupKeysForUsers(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<TrustchainBuilder::User> const& users)
-{
-  std::vector<Tanker::GroupEncryptedKey> keysForUsers;
-  for (auto const& user : users)
-  {
-    if (user.userKeys.empty())
-      throw std::runtime_error(
-          "TrustchainBuilder: can't add a user without user key to a group");
-    keysForUsers.push_back(GroupEncryptedKey{
-        user.userKeys.back().keyPair.publicKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupPrivateEncryptionKey,
-            user.userKeys.back().keyPair.publicKey)});
   }
   return keysForUsers;
 }
@@ -382,7 +365,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const keysForUsers =
-      generateGroupKeysForNewUsers(encryptionKeyPair.privateKey, users);
+      generateGroupKeysForUsers(encryptionKeyPair.privateKey, users);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,
@@ -431,12 +414,9 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
       group.tankerGroup.id,
       group.tankerGroup.lastBlockHash,
       keysForUsers,
-      Crypto::Signature{},
   };
 
-  userGroupAddition.selfSignatureWithCurrentKey =
-      Crypto::sign(userGroupAddition.signatureData(),
-                   group.tankerGroup.signatureKeyPair.privateKey);
+  userGroupAddition.selfSign(group.tankerGroup.signatureKeyPair.privateKey);
 
   Block block;
   block.trustchainId = _trustchainId;

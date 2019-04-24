@@ -2,6 +2,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 
@@ -12,6 +13,8 @@
 #include <doctest.h>
 #include <mockaron/mockaron.hpp>
 #include <trompeloeil.hpp>
+
+using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {
@@ -28,7 +31,7 @@ public:
 
   MAKE_MOCK2(scheduleCatchUp,
              tc::shared_future<void>(std::vector<Trustchain::UserId>,
-                                     std::vector<GroupId>));
+                                     std::vector<Trustchain::GroupId>));
 };
 
 template <typename T, typename U>

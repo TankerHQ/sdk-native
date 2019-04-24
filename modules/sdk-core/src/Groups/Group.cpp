@@ -1,5 +1,7 @@
 #include <Tanker/Groups/Group.hpp>
 
+using Tanker::Trustchain::GroupId;
+
 namespace Tanker
 {
 bool operator==(Group const& l, Group const& r)

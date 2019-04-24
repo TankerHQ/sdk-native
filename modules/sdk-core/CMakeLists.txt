@@ -94,7 +94,6 @@ add_library(tankercore STATIC
   include/Tanker/Preregistration.hpp
   include/Tanker/Actions/UserKeyPair.hpp
   include/Tanker/Actions/KeyPublishToProvisionalUser.hpp
-  include/Tanker/Actions/UserGroupAddition.hpp
   include/Tanker/Actions/ProvisionalIdentityClaim.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
@@ -171,7 +170,6 @@ add_library(tankercore STATIC
   src/ProvisionalUserKeysStore.cpp
   src/Actions/KeyPublishToProvisionalUser.cpp
   src/Actions/UserKeyPair.cpp
-  src/Actions/UserGroupAddition.cpp
   src/Actions/ProvisionalIdentityClaim.cpp
   src/Groups/Group.cpp
   src/Groups/GroupEncryptedKey.cpp

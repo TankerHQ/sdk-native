@@ -289,8 +289,24 @@ UserGroupCreation forgeUserGroupCreation(UserGroupCreation const& old,
                            old.sealedPrivateEncryptionKeysForUsers(),
                            newSignature};
 }
+
+UserGroupAddition forgeUserGroupAddition(UserGroupAddition const& old,
+                                         Crypto::Signature const& newSignature)
+{
+  return UserGroupAddition{old.groupId(),
+                           old.previousGroupBlockHash(),
+                           old.sealedPrivateEncryptionKeysForUsers(),
+                           newSignature};
 }
 
+UserGroupAddition forgeUserGroupAddition(
+    UserGroupAddition const& old, Crypto::Hash const& previousGroupBlockHash)
+{
+  return UserGroupAddition{old.groupId(),
+                           previousGroupBlockHash,
+                           old.sealedPrivateEncryptionKeysForUsers()};
+}
+}
 
 TEST_CASE("Verif TrustchainCreation")
 {
@@ -942,10 +958,15 @@ TEST_CASE("Verif UserGroupAddition")
       "should reject a UserGroupAddition where previousGroupBlock is not the "
       "hash of last modification")
   {
-    auto userGroupAddition =
+    auto const& userGroupAddition =
         mpark::get<UserGroupAddition>(gaEntry.action.variant());
-    userGroupAddition.previousGroupBlock[0]++;
-    gaEntry.action = userGroupAddition;
+    auto previousGroupBlockHash = userGroupAddition.previousGroupBlockHash();
+    previousGroupBlockHash[0]++;
+    auto forgedUserGroupAddition =
+        forgeUserGroupAddition(userGroupAddition, previousGroupBlockHash);
+    forgedUserGroupAddition.selfSign(
+        secondDevice.device.keys.signatureKeyPair.privateKey);
+    gaEntry.action = forgedUserGroupAddition;
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
         Error::VerificationCode::InvalidGroup);
@@ -953,10 +974,11 @@ TEST_CASE("Verif UserGroupAddition")
 
   SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
   {
-    auto userGroupAddition =
+    auto const& userGroupAddition =
         mpark::get<UserGroupAddition>(gaEntry.action.variant());
-    userGroupAddition.selfSignatureWithCurrentKey[0]++;
-    gaEntry.action = userGroupAddition;
+    auto selfSignature = userGroupAddition.selfSignature();
+    selfSignature[0]++;
+    gaEntry.action = forgeUserGroupAddition(userGroupAddition, selfSignature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
         Error::VerificationCode::InvalidSignature);

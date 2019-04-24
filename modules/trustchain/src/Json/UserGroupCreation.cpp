@@ -1,5 +1,7 @@
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
+#include <nlohmann/json.hpp>
+
 namespace Tanker
 {
 namespace Trustchain

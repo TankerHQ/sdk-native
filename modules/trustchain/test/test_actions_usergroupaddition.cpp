@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
@@ -13,44 +13,30 @@ using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("UserGroupCreation tests")
+TEST_CASE("UserGroupAddition tests")
 {
   SUBCASE("selfSign should return the selfSignature")
   {
     auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    UserGroupCreation ugc{
-        signatureKeyPair.publicKey, encryptionKeyPair.publicKey, {}, {}};
-    auto const& signature = ugc.selfSign(signatureKeyPair.privateKey);
-    CHECK(signature == ugc.selfSignature());
+    UserGroupAddition uga{};
+    auto const& signature = uga.selfSign(signatureKeyPair.privateKey);
+    CHECK(signature == uga.selfSignature());
   }
 }
 
 TEST_CASE("Serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupCreation")
+  SUBCASE("it should serialize/deserialize a UserGroupAddition")
   {
     // clang-format off
-    std::vector<std::uint8_t> const serializedUserGroupCreation = {
-      // public signature key
-      0x70, 0x75, 0x62, 0x20, 0x73, 0x69, 0x67, 0x20, 0x6b, 0x65, 0x79, 0x00,
+    std::vector<std::uint8_t> const serializedUserGroupAddition = {
+      // group id
+      0x67, 0x72, 0x6f, 0x75, 0x70, 0x20, 0x69, 0x64, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      // public encryption key
-      0x70, 0x75, 0x62, 0x20,
-      0x65, 0x6e, 0x63, 0x20, 0x6b, 0x65, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00,
-      // encrypted group private signature key
-      0x65, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65,
-      0x64, 0x20, 0x70, 0x72, 0x69, 0x76, 0x20, 0x73, 0x69, 0x67, 0x20, 0x6b,
-      0x65, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // previous group block hash
+      0x70, 0x72, 0x65, 0x76, 0x20, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x20, 0x62,
+      0x6c, 0x6f, 0x63, 0x6b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       // varint
       0x02,
@@ -91,13 +77,9 @@ TEST_CASE("Serialization test vectors")
     };
     // clang-format on
     
-    auto const publicSignatureKey =
-        make<Crypto::PublicSignatureKey>("pub sig key");
-    auto const publicEncryptionKey =
-        make<Crypto::PublicEncryptionKey>("pub enc key");
-    auto const sealedPrivateSignatureKey =
-        make<Crypto::SealedPrivateSignatureKey>("encrypted priv sig key");
-    UserGroupCreation::SealedPrivateEncryptionKeysForUsers const
+    auto const groupId = make<GroupId>("group id");
+    auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
+    UserGroupAddition::SealedPrivateEncryptionKeysForUsers const
         sealedPrivateEncryptionKeysForUsers{
             {make<Crypto::PublicEncryptionKey>("pub user key"),
              make<Crypto::SealedPrivateEncryptionKey>(
@@ -107,15 +89,13 @@ TEST_CASE("Serialization test vectors")
                  "second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
 
-    UserGroupCreation const ugc{publicSignatureKey,
-                                publicEncryptionKey,
-                                sealedPrivateSignatureKey,
+    UserGroupAddition const uga{groupId,
+                                previousGroupBlockHash,
                                 sealedPrivateEncryptionKeysForUsers,
                                 selfSignature};
 
-    CHECK(Serialization::serialize(ugc) == serializedUserGroupCreation);
-    CHECK(Serialization::deserialize<UserGroupCreation>(
-              serializedUserGroupCreation) == ugc);
+    CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
+    CHECK(Serialization::deserialize<UserGroupAddition>(
+              serializedUserGroupAddition) == uga);
   }
 }
-
