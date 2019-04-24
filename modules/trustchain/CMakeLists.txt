@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 project(tankertrustchain)
 
 add_library(tankertrustchain STATIC
+  include/Tanker/Trustchain/Action.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v2.hpp
@@ -22,6 +23,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
   include/Tanker/Trustchain/ResourceId.hpp
+  include/Tanker/Trustchain/Serialization/Action.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
@@ -37,6 +39,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/TrustchainCreation.hpp
   include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
   include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
+  include/Tanker/Trustchain/Json/Action.hpp
   include/Tanker/Trustchain/Json/DeviceCreation.hpp
   include/Tanker/Trustchain/Json/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Json/DeviceCreation/v2.hpp
@@ -55,6 +58,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
 
+  src/Action.cpp
   src/Actions/DeviceCreation.cpp
   src/Actions/DeviceCreation/v1.cpp
   src/Actions/DeviceCreation/v2.cpp
@@ -71,6 +75,7 @@ add_library(tankertrustchain STATIC
   src/Actions/TrustchainCreation.cpp
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp
+  src/Json/Action.cpp
   src/Json/DeviceCreation.cpp
   src/Json/DeviceCreation/v1.cpp
   src/Json/DeviceCreation/v2.cpp
@@ -86,6 +91,7 @@ add_library(tankertrustchain STATIC
   src/Json/TrustchainCreation.cpp
   src/Json/UserGroupAddition.cpp
   src/Json/UserGroupCreation.cpp
+  src/Serialization/Action.cpp
   src/Serialization/DeviceCreation.cpp
   src/Serialization/DeviceCreation/v1.cpp
   src/Serialization/DeviceCreation/v2.cpp
@@ -119,7 +125,7 @@ install(TARGETS tankertrustchain
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertrustchain tankercrypto tankerserialization CONAN_PKG::variant CONAN_PKG::jsonformoderncpp)
+target_link_libraries(tankertrustchain tankercrypto tankerserialization tankerformat CONAN_PKG::variant CONAN_PKG::jsonformoderncpp)
 
 if(BUILD_TESTS)
   enable_testing()
