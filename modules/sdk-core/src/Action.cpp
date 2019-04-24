@@ -20,12 +20,6 @@ namespace
 {
 struct MakeIndexesVisitor
 {
-  template <typename T>
-  auto operator()(T const& val) const
-  {
-    return val.makeIndexes();
-  }
-
   auto operator()(Trustchain::Actions::DeviceCreation const& dc) const
   {
     auto const& id = dc.userId();
@@ -63,6 +57,11 @@ struct MakeIndexesVisitor
   }
 
   auto operator()(Trustchain::Actions::UserGroupAddition const& uga) const
+  {
+    return std::vector<Index>{};
+  }
+
+  auto operator()(Trustchain::Actions::ProvisionalIdentityClaim const&) const
   {
     return std::vector<Index>{};
   }
@@ -122,7 +121,8 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
   case Nature::UserGroupAddition:
     return Action{Serialization::deserialize<UserGroupAddition>(payload)};
   case Nature::ProvisionalIdentityClaim:
-    return Action{deserializeProvisionalIdentityClaim(payload)};
+    return Action{
+        Serialization::deserialize<ProvisionalIdentityClaim>(payload)};
   }
   throw Error::formatEx<Error::UnexpectedBlock>(fmt("unknown nature: {:d}"),
                                                 nature);

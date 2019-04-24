@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Actions/ProvisionalIdentityClaim.hpp>
+#include <Tanker/Index.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
@@ -8,6 +8,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
@@ -34,7 +35,7 @@ public:
                      Trustchain::Actions::UserGroupCreation,
                      Trustchain::Actions::KeyPublishToUserGroup,
                      Trustchain::Actions::UserGroupAddition,
-                     ProvisionalIdentityClaim>;
+                     Trustchain::Actions::ProvisionalIdentityClaim>;
 
   explicit Action(variant_type&&);
   explicit Action(variant_type const&);

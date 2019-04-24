@@ -245,6 +245,8 @@ struct toVal
       Trustchain::Actions::KeyPublishToProvisionalUser;
   using UserGroupCreation = Trustchain::Actions::UserGroupCreation;
   using UserGroupAddition = Trustchain::Actions::UserGroupAddition;
+  using ProvisionalIdentityClaim =
+      Trustchain::Actions::ProvisionalIdentityClaim;
 
   emscripten::val operator()(TrustchainCreation const& tc)
   {
