@@ -149,7 +149,7 @@ private:
     err(std::string message) : Exception(Code::code, std::move(message)) \
     {                                                                    \
     }                                                                    \
-  };
+  }
 
 DECLARE_ERROR_AS(UserKeyNotFound, ResourceKeyNotFound);
 DECLARE_ERROR_AS(GroupKeyNotFound, ResourceKeyNotFound);
