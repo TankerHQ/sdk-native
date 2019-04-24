@@ -47,7 +47,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     std::vector<Trustchain::UserId> const& userIds,
-    std::vector<GroupId> const& groupIds);
+    std::vector<Trustchain::GroupId> const& groupIds);
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
     Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
@@ -63,7 +63,7 @@ tc::cotask<void> share(
     Client& client,
     ResourceKeys const& resourceKeys,
     std::vector<Trustchain::UserId> const& userIds,
-    std::vector<GroupId> const& groupIds);
+    std::vector<Trustchain::GroupId> const& groupIds);
 
 tc::cotask<void> share(
     Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
@@ -74,6 +74,6 @@ tc::cotask<void> share(
     Client& client,
     std::vector<Crypto::Mac> const& resourceIds,
     std::vector<Trustchain::UserId> const& recipientUserIds,
-    std::vector<GroupId> const& groupIds);
+    std::vector<Trustchain::GroupId> const& groupIds);
 }
 }

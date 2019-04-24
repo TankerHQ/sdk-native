@@ -32,6 +32,7 @@
 TLOG_CATEGORY(TrustchainPuller);
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {

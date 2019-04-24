@@ -289,13 +289,13 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
   }
   auto const selfSignature = Crypto::sign(toSign, signatureKeyPair.privateKey);
 
-  return Serialization::serialize(
-      makeBlock(UserGroupAddition{GroupId{signatureKeyPair.publicKey},
-                                  previousGroupBlock,
-                                  sealedPrivateEncryptionKeysForUsers,
-                                  selfSignature},
-                _deviceId,
-                _privateSignatureKey));
+  return Serialization::serialize(makeBlock(
+      UserGroupAddition{Trustchain::GroupId{signatureKeyPair.publicKey},
+                        previousGroupBlock,
+                        sealedPrivateEncryptionKeysForUsers,
+                        selfSignature},
+      _deviceId,
+      _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(

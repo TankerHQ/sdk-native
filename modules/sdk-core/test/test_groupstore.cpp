@@ -9,6 +9,7 @@
 #include <doctest.h>
 
 using namespace Tanker;
+using Tanker::Trustchain::GroupId;
 
 TEST_CASE("GroupStore")
 {

@@ -4,11 +4,13 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 #include <Tanker/Log.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 
+using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::Actions::UserGroupCreation;
 
 namespace Tanker

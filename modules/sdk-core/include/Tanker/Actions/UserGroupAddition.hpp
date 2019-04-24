@@ -5,8 +5,8 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/GroupId.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -21,7 +21,7 @@ struct UserGroupAddition
 {
   using GroupEncryptedKeys = std::vector<GroupEncryptedKey>;
 
-  GroupId groupId;
+  Trustchain::GroupId groupId;
   Crypto::Hash previousGroupBlock;
   GroupEncryptedKeys encryptedGroupPrivateEncryptionKeysForUsers;
   Crypto::Signature selfSignatureWithCurrentKey;

@@ -293,7 +293,7 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
 }
 
 tc::cotask<ExternalGroup> TrustchainVerifier::getGroupById(
-    GroupId const& groupId) const
+    Trustchain::GroupId const& groupId) const
 {
   auto const group = TC_AWAIT(_groups->findExternalById(groupId));
   Verif::ensures(group.has_value(),

@@ -5,6 +5,8 @@
 
 #include <mockaron/mockaron.hpp>
 
+using Tanker::Trustchain::GroupId;
+
 namespace Tanker
 {
 GroupAccessor::GroupAccessor(TrustchainPuller* trustchainPuller,

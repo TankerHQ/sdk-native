@@ -6,12 +6,13 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/GroupId.hpp>
 
 #include <Helpers/Buffers.hpp>
 
+using Tanker::Trustchain::GroupId;
 using namespace Tanker;
 
 TEST_CASE(

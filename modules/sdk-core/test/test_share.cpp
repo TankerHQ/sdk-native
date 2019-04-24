@@ -4,6 +4,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -22,6 +23,7 @@
 
 #include <Helpers/Buffers.hpp>
 
+using Tanker::Trustchain::GroupId;
 using namespace Tanker;
 
 namespace

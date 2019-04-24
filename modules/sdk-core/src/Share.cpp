@@ -21,6 +21,7 @@
 #include <iterator>
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {

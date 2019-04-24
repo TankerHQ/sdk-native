@@ -5,12 +5,14 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GroupNotFound.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {

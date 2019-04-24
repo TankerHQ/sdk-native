@@ -112,13 +112,13 @@ public:
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
   // Does nothing if the group does not exist
   virtual tc::cotask<void> updateLastGroupBlock(
-      GroupId const& groupId,
+      Trustchain::GroupId const& groupId,
       Crypto::Hash const& lastBlockHash,
       uint64_t lastBlockIndex) = 0;
   virtual tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
-      GroupId const& groupId) = 0;
+      Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupId(GroupId const& groupId) = 0;
+  findExternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<Group>>
   findFullGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;

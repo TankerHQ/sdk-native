@@ -2,6 +2,7 @@
 
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -25,10 +26,10 @@ public:
   GroupAccessor& operator=(GroupAccessor const&) = delete;
   GroupAccessor& operator=(GroupAccessor&&) = delete;
 
-  tc::cotask<PullResult> pull(gsl::span<GroupId const> groupIds);
+  tc::cotask<PullResult> pull(gsl::span<Trustchain::GroupId const> groupIds);
 
 private:
-  tc::cotask<void> fetch(gsl::span<GroupId const> groupIds);
+  tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
 
 private:
   TrustchainPuller* _trustchainPuller;

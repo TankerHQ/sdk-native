@@ -150,7 +150,8 @@ TEST_CASE("Can add users to a group")
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
 
-  CHECK(groupAdd.groupId == GroupId{group.signatureKeyPair.publicKey});
+  CHECK(groupAdd.groupId ==
+        Trustchain::GroupId{group.signatureKeyPair.publicKey});
   CHECK(groupAdd.previousGroupBlock == group.lastBlockHash);
   REQUIRE(groupAdd.encryptedGroupPrivateEncryptionKeysForUsers.size() == 2);
 

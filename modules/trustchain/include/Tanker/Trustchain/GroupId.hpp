@@ -9,6 +9,19 @@
 
 namespace Tanker
 {
+namespace Trustchain
+{
+class GroupId;
+}
+
+namespace Crypto
+{
+extern template class BasicCryptographicType<Trustchain::GroupId,
+                                             PublicSignatureKey::arraySize>;
+}
+
+namespace Trustchain
+{
 class GroupId
   : public Crypto::BasicCryptographicType<GroupId,
                                           Crypto::PublicSignatureKey::arraySize>
@@ -16,19 +29,21 @@ class GroupId
   using base_t::base_t;
 };
 }
+}
+
 
 // Required for cppcodec array-like types support
 namespace std
 {
 template <>
-class tuple_size<::Tanker::GroupId>
-  : public integral_constant<size_t, ::Tanker::GroupId::arraySize>
+class tuple_size<::Tanker::Trustchain::GroupId>
+  : public integral_constant<size_t, ::Tanker::Trustchain::GroupId::arraySize>
 {
 };
 
 template <size_t I>
-class tuple_element<I, ::Tanker::GroupId>
-  : public tuple_element<I, ::Tanker::GroupId::array_t>
+class tuple_element<I, ::Tanker::Trustchain::GroupId>
+  : public tuple_element<I, ::Tanker::Trustchain::GroupId::array_t>
 {
 };
 }

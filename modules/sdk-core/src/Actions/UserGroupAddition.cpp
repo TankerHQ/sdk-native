@@ -76,7 +76,7 @@ UserGroupAddition deserializeUserGroupAddition(gsl::span<uint8_t const> data)
 
   Serialization::SerializedSource ss{data};
 
-  out.groupId = Serialization::deserialize<GroupId>(ss);
+  out.groupId = Serialization::deserialize<Trustchain::GroupId>(ss);
   out.previousGroupBlock = Serialization::deserialize<Crypto::Hash>(ss);
   out.encryptedGroupPrivateEncryptionKeysForUsers =
       Serialization::deserialize<UserGroupAddition::GroupEncryptedKeys>(ss);

@@ -10,6 +10,7 @@
 #include <emscripten/bind.h>
 
 using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::GroupId;
 
 TLOG_CATEGORY(Database);
 

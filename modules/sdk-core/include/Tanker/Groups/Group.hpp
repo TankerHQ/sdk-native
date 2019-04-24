@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Types/GroupId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 #include <optional.hpp>
 
@@ -14,7 +14,7 @@ namespace Tanker
 {
 struct Group
 {
-  GroupId id;
+  Trustchain::GroupId id;
   Crypto::SignatureKeyPair signatureKeyPair;
   Crypto::EncryptionKeyPair encryptionKeyPair;
   Crypto::Hash lastBlockHash;
@@ -31,7 +31,7 @@ struct ExternalGroup
   ExternalGroup(ExternalGroup&&) = default;
   ExternalGroup& operator=(ExternalGroup const&) = default;
   ExternalGroup& operator=(ExternalGroup&&) = default;
-  ExternalGroup(GroupId const&,
+  ExternalGroup(Trustchain::GroupId const&,
                 Crypto::PublicSignatureKey const&,
                 nonstd::optional<Crypto::SealedPrivateSignatureKey> const&,
                 Crypto::PublicEncryptionKey const&,
@@ -39,7 +39,7 @@ struct ExternalGroup
                 uint64_t lastBlockIndex);
   ExternalGroup(Group const&);
 
-  GroupId id;
+  Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
   nonstd::optional<Crypto::SealedPrivateSignatureKey>
       encryptedPrivateSignatureKey;

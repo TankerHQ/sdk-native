@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Types/GroupId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -25,14 +25,14 @@ public:
 
   tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(ExternalGroup const& group);
-  tc::cotask<void> updateLastGroupBlock(GroupId const& groupId,
+  tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex);
 
   tc::cotask<nonstd::optional<Group>> findFullById(
-      GroupId const& groupId) const;
+      Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalById(
-      GroupId const& groupId) const;
+      Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<Group>> findFullByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalByPublicEncryptionKey(

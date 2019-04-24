@@ -29,6 +29,7 @@
 #include <utility>
 
 using Tanker::Trustchain::UserId;
+using Tanker::Trustchain::GroupId;
 
 TLOG_CATEGORY(Client);
 

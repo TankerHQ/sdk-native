@@ -7,6 +7,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -15,6 +16,7 @@
 #include <algorithm>
 #include <cstring>
 
+using Tanker::Trustchain::GroupId;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker;
 

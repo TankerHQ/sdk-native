@@ -5,8 +5,8 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/GroupId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -44,7 +44,7 @@ public:
 
   tc::shared_future<void> scheduleCatchUp(
       std::vector<Trustchain::UserId> const& extraUsers = {},
-      std::vector<GroupId> const& extraGroups = {});
+      std::vector<Trustchain::GroupId> const& extraGroups = {});
 
   std::function<tc::cotask<void>(Trustchain::DeviceId const&)> receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
@@ -68,7 +68,7 @@ private:
   Trustchain::UserId _userId;
 
   std::vector<Trustchain::UserId> _extraUsers;
-  std::vector<GroupId> _extraGroups;
+  std::vector<Trustchain::GroupId> _extraGroups;
   tc::job _pullJob;
 
   tc::cotask<void> catchUp();
