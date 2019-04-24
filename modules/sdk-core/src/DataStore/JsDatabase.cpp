@@ -276,7 +276,7 @@ struct toVal
   {
     auto ret = emscripten::val::object();
     ret.set("recipient", containerToJs(kp.recipient()));
-    ret.set("resourceId", containerToJs(kp.mac()));
+    ret.set("resourceId", containerToJs(kp.resourceId()));
     ret.set("resourceKey", containerToJs(kp.encryptedSymmetricKey()));
     return ret;
   }
@@ -290,7 +290,7 @@ struct toVal
     auto ret = emscripten::val::object();
     ret.set("recipientPublicEncryptionKey",
             containerToJs(kp.recipientPublicEncryptionKey()));
-    ret.set("resourceId", containerToJs(kp.mac()));
+    ret.set("resourceId", containerToJs(kp.resourceId()));
     ret.set("resourceKey", containerToJs(kp.sealedSymmetricKey()));
     return ret;
   }
@@ -304,7 +304,7 @@ struct toVal
     auto ret = emscripten::val::object();
     ret.set("recipientPublicEncryptionKey",
             containerToJs(tc.recipientPublicEncryptionKey()));
-    ret.set("resourceId", containerToJs(tc.mac()));
+    ret.set("resourceId", containerToJs(tc.resourceId()));
     ret.set("resourceKey", containerToJs(tc.sealedSymmetricKey()));
     return ret;
   }
@@ -408,7 +408,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   {
     KeyPublishToDevice kp(
         Trustchain::DeviceId{copyToVector(jsEntry["action"]["recipient"])},
-        Crypto::Mac{copyToVector(jsEntry["action"]["resourceId"])},
+        Trustchain::ResourceId{copyToVector(jsEntry["action"]["resourceId"])},
         Crypto::EncryptedSymmetricKey{
             copyToVector(jsEntry["action"]["resourceKey"])});
     entry.action = kp;
@@ -417,21 +417,23 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
-    Crypto::Mac const mac(copyToVector(jsEntry["action"]["resourceId"]));
+    Trustchain::ResourceId const resourceId(
+        copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action =
-        KeyPublishToUser(recipientPublicEncryptionKey, mac, sealedSymmetricKey);
+    entry.action = KeyPublishToUser(
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey);
   }
   else if (entry.nature == Nature::KeyPublishToUserGroup)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
-    Crypto::Mac const mac(copyToVector(jsEntry["action"]["resourceId"]));
+    Trustchain::ResourceId const resourceId(
+        copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action =
-        KeyPublishToUserGroup(recipientPublicEncryptionKey, mac, sealedSymmetricKey);
+    entry.action = KeyPublishToUserGroup(
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey);
   }
   else if (entry.nature == Nature::KeyPublishToProvisionalUser)
   {

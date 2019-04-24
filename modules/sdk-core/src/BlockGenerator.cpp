@@ -201,10 +201,11 @@ std::vector<uint8_t> BlockGenerator::keyPublish(
     Crypto::Mac const& mac,
     Trustchain::DeviceId const& recipient) const
 {
-  return Serialization::serialize(
-      makeBlock(Trustchain::Actions::KeyPublishToDevice{recipient, mac, symKey},
-                _deviceId,
-                _privateSignatureKey));
+  return Serialization::serialize(makeBlock(
+      Trustchain::Actions::KeyPublishToDevice{
+          recipient, Trustchain::ResourceId{mac}, symKey},
+      _deviceId,
+      _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::keyPublishToUser(
@@ -214,7 +215,7 @@ std::vector<uint8_t> BlockGenerator::keyPublishToUser(
 {
   return Serialization::serialize(makeBlock(
       Trustchain::Actions::KeyPublishToUser{
-          recipientPublicEncryptionKey, mac, symKey},
+          recipientPublicEncryptionKey, Trustchain::ResourceId{mac}, symKey},
       _deviceId,
       _privateSignatureKey));
 }
@@ -239,7 +240,7 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
 {
   return Serialization::serialize(makeBlock(
       Trustchain::Actions::KeyPublishToUserGroup{
-          recipientPublicEncryptionKey, mac, symKey},
+          recipientPublicEncryptionKey, Trustchain::ResourceId{mac}, symKey},
       _deviceId,
       this->_privateSignatureKey));
 }

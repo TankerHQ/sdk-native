@@ -59,7 +59,8 @@ void assertKeyPublishToUsersTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].mac() == std::get<Crypto::Mac>(resourceKey));
+    CHECK(Crypto::Mac{keyPublishes[i].resourceId()} ==
+          std::get<Crypto::Mac>(resourceKey));
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
@@ -77,7 +78,8 @@ void assertKeyPublishToGroupTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].mac() == std::get<Crypto::Mac>(resourceKey));
+    CHECK(Crypto::Mac{keyPublishes[i].resourceId()} ==
+          std::get<Crypto::Mac>(resourceKey));
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));

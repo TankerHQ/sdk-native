@@ -320,11 +320,13 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
   if (auto const keyPublish =
           mpark::get_if<Trustchain::Actions::KeyPublishToUser>(
               &entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
+    TC_AWAIT(
+        indexKeyPublish(entry.hash, Crypto::Mac{keyPublish->resourceId()}));
   if (auto const keyPublish =
           mpark::get_if<Trustchain::Actions::KeyPublishToUserGroup>(
               &entry.action.variant()))
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->mac()));
+    TC_AWAIT(
+        indexKeyPublish(entry.hash, Crypto::Mac{keyPublish->resourceId()}));
 
   for (auto const& index : entry.action.makeIndexes())
   {

@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
-#include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 
 namespace Tanker
 {
@@ -17,18 +17,18 @@ class KeyPublishToDevice
 public:
   KeyPublishToDevice() = default;
   KeyPublishToDevice(DeviceId const&,
-                     Crypto::Mac const&,
+                     ResourceId const&,
                      Crypto::EncryptedSymmetricKey const&);
 
   constexpr Nature nature() const;
 
   DeviceId const& recipient() const;
-  Crypto::Mac const& mac() const;
+  ResourceId const& resourceId() const;
   Crypto::EncryptedSymmetricKey const& encryptedSymmetricKey() const;
 
 private:
   DeviceId _recipient;
-  Crypto::Mac _mac;
+  ResourceId _resourceId;
   Crypto::EncryptedSymmetricKey _key;
 
   friend void from_serialized(Serialization::SerializedSource&,

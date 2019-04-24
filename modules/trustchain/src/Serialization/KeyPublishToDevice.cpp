@@ -15,7 +15,7 @@ void from_serialized(Serialization::SerializedSource& ss,
                      KeyPublishToDevice& kp)
 {
   Serialization::deserialize_to(ss, kp._recipient);
-  Serialization::deserialize_to(ss, kp._mac);
+  Serialization::deserialize_to(ss, kp._resourceId);
   auto const keySize = ss.read_varint();
   if (keySize != Crypto::EncryptedSymmetricKey::arraySize)
   {
@@ -28,7 +28,7 @@ void from_serialized(Serialization::SerializedSource& ss,
 std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp)
 {
   it = Serialization::serialize(it, kp.recipient());
-  it = Serialization::serialize(it, kp.mac());
+  it = Serialization::serialize(it, kp.resourceId());
   it = Serialization::varint_write(it, Crypto::EncryptedSymmetricKey::arraySize);
   return Serialization::serialize(it, kp.encryptedSymmetricKey());
 }

@@ -17,7 +17,7 @@ std::uint8_t* to_serialized(std::uint8_t*, KeyPublishToDevice const&);
 
 constexpr std::size_t serialized_size(KeyPublishToDevice const&)
 {
-  return DeviceId::arraySize + Crypto::Mac::arraySize +
+  return DeviceId::arraySize + ResourceId::arraySize +
          Serialization::varint_size(Crypto::EncryptedSymmetricKey::arraySize) +
          Crypto::EncryptedSymmetricKey::arraySize;
 }

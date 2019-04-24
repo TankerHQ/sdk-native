@@ -11,7 +11,7 @@ namespace Actions
 void to_json(nlohmann::json& j, KeyPublishToUserGroup const& kp)
 {
   j["recipientPublicEncryptionKey"] = kp.recipientPublicEncryptionKey();
-  j["mac"] = kp.mac();
+  j["resourceId"] = kp.resourceId();
   j["key"] = kp.sealedSymmetricKey();
 }
 }

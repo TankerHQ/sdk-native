@@ -43,7 +43,7 @@ tc::cotask<void> onKeyToDeviceReceived(
       senderDevice.publicEncryptionKey,
       selfDevicePrivateEncryptionKey);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublish.mac(), key));
+  TC_AWAIT(resourceKeyStore.putKey(Crypto::Mac{keyPublish.resourceId()}, key));
 }
 
 namespace
@@ -61,7 +61,8 @@ tc::cotask<void> decryptAndStoreKeyForUser(
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
       keyPublishToUser.sealedSymmetricKey(), userKeyPair);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.mac(), key));
+  TC_AWAIT(
+      resourceKeyStore.putKey(Crypto::Mac{keyPublishToUser.resourceId()}, key));
 }
 
 tc::cotask<void> decryptAndStoreKeyForGroup(
@@ -85,7 +86,8 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
   auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
       keyPublishToUserGroup.sealedSymmetricKey(), group->encryptionKeyPair);
 
-  TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.mac(), key));
+  TC_AWAIT(resourceKeyStore.putKey(
+      Crypto::Mac{keyPublishToUserGroup.resourceId()}, key));
 }
 
 tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
