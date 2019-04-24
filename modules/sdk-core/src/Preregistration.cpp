@@ -2,6 +2,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+
+using Tanker::Trustchain::Actions::ProvisionalIdentityClaim;
 
 namespace Tanker
 {
@@ -15,13 +18,13 @@ tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
       mpark::get<ProvisionalIdentityClaim>(entry.action.variant());
 
   auto const userKeyPair = TC_AWAIT(userKeyStore.findKeyPair(
-      provisionalIdentityClaim.userPublicEncryptionKey));
+      provisionalIdentityClaim.userPublicEncryptionKey()));
 
   if (!userKeyPair)
     throw Error::UserKeyNotFound("can't find user key for claim decryption");
 
   auto const provisionalIdentityKeys = Crypto::sealDecrypt(
-      provisionalIdentityClaim.encryptedPrivateKeys, *userKeyPair);
+      provisionalIdentityClaim.sealedPrivateEncryptionKeys(), *userKeyPair);
 
   // this size is ensured because the encrypted buffer has a fixed size
   assert(provisionalIdentityKeys.size() ==
@@ -37,8 +40,8 @@ tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
               .subspan(Crypto::PrivateEncryptionKey::arraySize)));
 
   TC_AWAIT(provisionalUserKeysStore.putProvisionalUserKeys(
-      provisionalIdentityClaim.appSignaturePublicKey,
-      provisionalIdentityClaim.tankerSignaturePublicKey,
+      provisionalIdentityClaim.appSignaturePublicKey(),
+      provisionalIdentityClaim.tankerSignaturePublicKey(),
       {appEncryptionKeyPair, tankerEncryptionKeyPair}));
 }
 }

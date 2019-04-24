@@ -10,6 +10,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -300,19 +301,16 @@ std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
       userId,
       provisionalUser.appSignatureKeyPair.publicKey,
       provisionalUser.tankerSignatureKeyPair.publicKey,
-      {}, // filled later
-      {}, // filled later
       userKeyPair.publicKey,
       Crypto::sealEncrypt<
           ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
           keysToEncrypt, userKeyPair.publicKey),
   };
 
-  auto const signatureData = claim.signatureData(_deviceId);
-  claim.authorSignatureByAppKey = Crypto::sign(
-      signatureData, provisionalUser.appSignatureKeyPair.privateKey);
-  claim.authorSignatureByTankerKey = Crypto::sign(
-      signatureData, provisionalUser.tankerSignatureKeyPair.privateKey);
+  claim.signWithAppKey(provisionalUser.appSignatureKeyPair.privateKey,
+                       _deviceId);
+  claim.signWithTankerKey(provisionalUser.tankerSignatureKeyPair.privateKey,
+                          _deviceId);
 
   return Serialization::serialize(
       makeBlock(claim, _deviceId, _privateSignatureKey));

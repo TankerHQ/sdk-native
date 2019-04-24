@@ -306,6 +306,20 @@ UserGroupAddition forgeUserGroupAddition(
                            previousGroupBlockHash,
                            old.sealedPrivateEncryptionKeysForUsers()};
 }
+
+ProvisionalIdentityClaim forgeProvisionalIdentityClaim(
+    ProvisionalIdentityClaim const& old,
+    Crypto::Signature const& appSignature,
+    Crypto::Signature const& tankerSignature)
+{
+  return {old.userId(),
+          old.appSignaturePublicKey(),
+          appSignature,
+          old.tankerSignaturePublicKey(),
+          tankerSignature,
+          old.userPublicEncryptionKey(),
+          old.sealedPrivateEncryptionKeys()};
+}
 }
 
 TEST_CASE("Verif TrustchainCreation")
@@ -1027,10 +1041,14 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
   {
-    auto provisionalIdentityClaim =
+    auto const& provisionalIdentityClaim =
         mpark::get<ProvisionalIdentityClaim>(picEntry.action.variant());
-    provisionalIdentityClaim.authorSignatureByAppKey[0]++;
-    picEntry.action = provisionalIdentityClaim;
+    auto appSignature = provisionalIdentityClaim.authorSignatureByAppKey();
+    appSignature[0]++;
+    picEntry.action = forgeProvisionalIdentityClaim(
+        provisionalIdentityClaim,
+        appSignature,
+        provisionalIdentityClaim.authorSignatureByTankerKey());
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
                                        picEntry, authorUser, authorDevice),
                                    Error::VerificationCode::InvalidSignature);
@@ -1039,10 +1057,17 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
   SUBCASE(
       "should reject a ProvisionalIdentityClaim with invalid tanker signature")
   {
-    auto provisionalIdentityClaim =
+    auto const& provisionalIdentityClaim =
         mpark::get<ProvisionalIdentityClaim>(picEntry.action.variant());
-    provisionalIdentityClaim.authorSignatureByTankerKey[0]++;
+    auto tankerSignature =
+        provisionalIdentityClaim.authorSignatureByTankerKey();
+    tankerSignature[0]++;
+    picEntry.action = forgeProvisionalIdentityClaim(
+        provisionalIdentityClaim,
+        provisionalIdentityClaim.authorSignatureByAppKey(),
+        tankerSignature);
     picEntry.action = provisionalIdentityClaim;
+
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
                                        picEntry, authorUser, authorDevice),
                                    Error::VerificationCode::InvalidSignature);
