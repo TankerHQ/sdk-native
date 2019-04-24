@@ -49,6 +49,7 @@ std::vector<uint8_t> makeKeyPublishToGroup(
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
+    Client& client,
     std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<Trustchain::GroupId> const& groupIds);
 

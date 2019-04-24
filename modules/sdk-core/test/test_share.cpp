@@ -1,5 +1,6 @@
 #include <Tanker/Share.hpp>
 
+#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
@@ -11,6 +12,7 @@
 
 #include <Helpers/Await.hpp>
 
+#include "MockConnection.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 #include "UserAccessorMock.hpp"
@@ -114,6 +116,10 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
@@ -126,11 +132,13 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   auto const recipients = AWAIT(
       Share::generateRecipientList(userAccessor.get(),
                                    groupAccessor.get(),
+                                   client,
                                    {Identity::PublicPermanentIdentity{
                                        builder.trustchainId(), newUser.userId}},
                                    {}));
 
   // there should be only user keys
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientUserKeys,
@@ -149,6 +157,10 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
@@ -162,14 +174,76 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   auto const recipients =
       AWAIT(Share::generateRecipientList(userAccessor.get(),
                                          groupAccessor.get(),
+                                         client,
                                          {},
                                          {newGroup.group.tankerGroup.id}));
 
   // there should be only group keys
   CHECK(recipients.recipientUserKeys.size() == 0);
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientGroupKeys,
       {newGroup.group.tankerGroup.encryptionKeyPair.publicKey});
+}
+
+TEST_CASE(
+    "generateRecipientList of a provisional user should return their group key")
+{
+  TrustchainBuilder builder;
+  auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
+  Identity::PublicProvisionalIdentity publicProvisionalIdentity{
+      builder.trustchainId(),
+      provisionalUser.target,
+      provisionalUser.value,
+      provisionalUser.appSignatureKeyPair.publicKey,
+      provisionalUser.appEncryptionKeyPair.publicKey,
+  };
+  auto const keySender = builder.makeUser3("keySender");
+
+  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
+  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+
+  auto upmockConnection = std::make_unique<MockConnection>();
+  auto const mockConnection = upmockConnection.get();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(upmockConnection));
+
+  REQUIRE_CALL(userAccessor.get_mock_impl(),
+               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
+      .LR_RETURN((UserAccessor::PullResult{{}, {}}));
+
+  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+               pull(trompeloeil::eq(gsl::span<GroupId const>{})))
+      .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
+
+  REQUIRE_CALL(*mockConnection,
+               emit("get public provisional identities", trompeloeil::_))
+      .LR_RETURN(WRAP_COTASK(
+          nlohmann::json(
+              {{{"SignaturePublicKey",
+                 provisionalUser.tankerSignatureKeyPair.publicKey},
+                {"EncryptionPublicKey",
+                 provisionalUser.tankerEncryptionKeyPair.publicKey}}})
+              .dump()));
+
+  auto const recipients =
+      AWAIT(Share::generateRecipientList(userAccessor.get(),
+                                         groupAccessor.get(),
+                                         client,
+                                         {publicProvisionalIdentity},
+                                         {}));
+
+  CHECK(recipients.recipientUserKeys.size() == 0);
+  CHECK(recipients.recipientGroupKeys.size() == 0);
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 1);
+  CHECK(recipients.recipientProvisionalUserKeys[0].appSignaturePublicKey ==
+        provisionalUser.appSignatureKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey ==
+        provisionalUser.appEncryptionKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey ==
+        provisionalUser.tankerSignatureKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey ==
+        provisionalUser.tankerEncryptionKeyPair.publicKey);
 }
 
 TEST_CASE("generateRecipientList of a not-found user should throw")
@@ -184,6 +258,10 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
@@ -196,6 +274,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
                       userAccessor.get(),
                       groupAccessor.get(),
+                      client,
                       {Identity::PublicPermanentIdentity{builder.trustchainId(),
                                                          newUser.userId}},
                       {})),
@@ -214,6 +293,10 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
@@ -227,6 +310,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   CHECK_THROWS_AS(
       AWAIT(Share::generateRecipientList(userAccessor.get(),
                                          groupAccessor.get(),
+                                         client,
                                          {},
                                          {newGroup.group.tankerGroup.id})),
       Error::RecipientNotFoundInternal);
