@@ -139,9 +139,12 @@ bool verify(gsl::span<uint8_t const> data,
             PublicSignatureKey const& publicSignatureKey);
 
 EncryptionKeyPair makeEncryptionKeyPair();
-EncryptionKeyPair makeEncryptionKeyPair(PrivateEncryptionKey);
+EncryptionKeyPair makeEncryptionKeyPair(PrivateEncryptionKey const&);
 SignatureKeyPair makeSignatureKeyPair();
-SignatureKeyPair makeSignatureKeyPair(PrivateSignatureKey);
+SignatureKeyPair makeSignatureKeyPair(PrivateSignatureKey const&);
+
+PublicEncryptionKey derivePublicKey(PrivateEncryptionKey const&);
+PublicSignatureKey derivePublicKey(PrivateSignatureKey const&);
 
 SymmetricKey makeSymmetricKey();
 size_t encryptedSize(size_t const clearSize);

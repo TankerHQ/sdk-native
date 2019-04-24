@@ -1,9 +1,9 @@
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
-#include <Tanker/Actions/UserGroupCreation.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -29,11 +29,12 @@ void verifyUserGroupCreation(UnverifiedEntry const& entry, Device const& author)
       "UserGroupCreation block must be signed by the author device");
 
   auto const& userGroupCreation =
-      mpark::get<UserGroupCreation>(entry.action.variant());
+      mpark::get<Trustchain::Actions::UserGroupCreation>(
+          entry.action.variant());
 
   ensures(Crypto::verify(userGroupCreation.signatureData(),
-                         userGroupCreation.selfSignature,
-                         userGroupCreation.publicSignatureKey),
+                         userGroupCreation.selfSignature(),
+                         userGroupCreation.publicSignatureKey()),
           Error::VerificationCode::InvalidSignature,
           "UserGroupCreation signature data must be signed with the group "
           "public key");

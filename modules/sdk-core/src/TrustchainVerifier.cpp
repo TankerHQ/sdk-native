@@ -220,12 +220,12 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
   auto const& authorDeviceCreation =
       mpark::get<Trustchain::Actions::DeviceCreation>(author.action.variant());
   auto const& userGroupCreation =
-      mpark::get<UserGroupCreation>(gc.action.variant());
+      mpark::get<Trustchain::Actions::UserGroupCreation>(gc.action.variant());
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
 
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
-      userGroupCreation.publicEncryptionKey));
+      userGroupCreation.publicEncryptionKey()));
   Verif::ensures(!group,
                  Error::VerificationCode::InvalidGroup,
                  "UserGroupCreation - group already exist");

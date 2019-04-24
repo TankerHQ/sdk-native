@@ -136,12 +136,9 @@ EncryptionKeyPair makeEncryptionKeyPair()
   return p;
 }
 
-EncryptionKeyPair makeEncryptionKeyPair(PrivateEncryptionKey privateKey)
+EncryptionKeyPair makeEncryptionKeyPair(PrivateEncryptionKey const& privateKey)
 {
-  EncryptionKeyPair p;
-  p.privateKey = privateKey;
-  crypto_scalarmult_base(p.publicKey.data(), p.privateKey.data());
-  return p;
+  return {derivePublicKey(privateKey), privateKey};
 }
 
 SignatureKeyPair makeSignatureKeyPair()
@@ -151,12 +148,9 @@ SignatureKeyPair makeSignatureKeyPair()
   return p;
 }
 
-SignatureKeyPair makeSignatureKeyPair(PrivateSignatureKey privateKey)
+SignatureKeyPair makeSignatureKeyPair(PrivateSignatureKey const& privateKey)
 {
-  SignatureKeyPair p;
-  p.privateKey = privateKey;
-  crypto_sign_ed25519_sk_to_pk(p.publicKey.data(), p.privateKey.data());
-  return p;
+  return {derivePublicKey(privateKey), privateKey};
 }
 
 SymmetricKey makeSymmetricKey()
@@ -164,6 +158,23 @@ SymmetricKey makeSymmetricKey()
   SymmetricKey key;
   randombytes_buf(key.data(), key.size());
   return key;
+}
+
+PublicEncryptionKey derivePublicKey(
+    PrivateEncryptionKey const& privateKey)
+{
+  PublicEncryptionKey publicKey;
+
+  crypto_scalarmult_base(publicKey.data(), privateKey.data());
+  return publicKey;
+}
+
+PublicSignatureKey derivePublicKey(PrivateSignatureKey const& privateKey)
+{
+  PublicSignatureKey publicKey;
+  
+  crypto_sign_ed25519_sk_to_pk(publicKey.data(), privateKey.data());
+  return publicKey;
 }
 
 static constexpr auto aeadOverhead = crypto_aead_xchacha20poly1305_ietf_ABYTES;

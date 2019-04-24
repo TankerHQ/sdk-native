@@ -51,6 +51,11 @@ struct MakeIndexesVisitor
     return std::vector<Index>{};
   }
 
+  auto operator()(Trustchain::Actions::UserGroupCreation const& ugc) const
+  {
+    return std::vector<Index>{};
+  }
+
   auto operator()(Trustchain::Actions::KeyPublishToUser const& kp) const
   {
     return std::vector<Index>{};
@@ -99,7 +104,7 @@ Action deserializeAction(Nature nature, gsl::span<uint8_t const> payload)
     return Action{DeviceRevocation{
         Serialization::deserialize<DeviceRevocation2>(payload)}};
   case Nature::UserGroupCreation:
-    return Action{deserializeUserGroupCreation(payload)};
+    return Action{Serialization::deserialize<UserGroupCreation>(payload)};
   case Nature::KeyPublishToUserGroup:
     return Action{Serialization::deserialize<KeyPublishToUserGroup>(payload)};
   case Nature::UserGroupAddition:

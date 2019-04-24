@@ -273,7 +273,8 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     if (keyPublish->recipient() == _deviceId)
       TC_AWAIT(receivedKeyToDevice(entry));
   }
-  if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()) ||
+  if (mpark::holds_alternative<Trustchain::Actions::UserGroupCreation>(
+          entry.action.variant()) ||
       mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
     TC_AWAIT(userGroupActionReceived(entry));
   if (mpark::holds_alternative<Trustchain::Actions::DeviceRevocation>(

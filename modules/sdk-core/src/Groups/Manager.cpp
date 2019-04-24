@@ -58,12 +58,15 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
         memberUserKeys.size(),
         MAX_GROUP_SIZE);
 
-  UserGroupCreation::GroupEncryptedKeys sealedEncKeys;
+  Trustchain::Actions::UserGroupCreation::SealedPrivateEncryptionKeysForUsers
+      sealedEncKeys;
   for (auto const& userKey : memberUserKeys)
-    sealedEncKeys.push_back(GroupEncryptedKey{
+  {
+    sealedEncKeys.emplace_back(
         userKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupEncryptionKey.privateKey, userKey)});
+            groupEncryptionKey.privateKey, userKey));
+  }
 
   TC_RETURN(blockGenerator.userGroupCreation(
       groupSignatureKey, groupEncryptionKey.publicKey, sealedEncKeys));

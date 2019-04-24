@@ -279,7 +279,18 @@ void deviceRevocationCommonChecks(UnverifiedEntry deviceRevocation,
         deviceRevocation, authorDevice, targetDevice, user));
   }
 }
+
+UserGroupCreation forgeUserGroupCreation(UserGroupCreation const& old,
+                                         Crypto::Signature const& newSignature)
+{
+  return UserGroupCreation{old.publicSignatureKey(),
+                           old.publicEncryptionKey(),
+                           old.sealedPrivateSignatureKey(),
+                           old.sealedPrivateEncryptionKeysForUsers(),
+                           newSignature};
 }
+}
+
 
 TEST_CASE("Verif TrustchainCreation")
 {
@@ -878,10 +889,12 @@ TEST_CASE("Verif UserGroupCreation")
 
   SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
   {
-    auto userGroupCreation =
+    auto const& userGroupCreation =
         mpark::get<UserGroupCreation>(gcEntry.action.variant());
-    userGroupCreation.selfSignature[0]++;
-    gcEntry.action = userGroupCreation;
+    auto selfSignature = userGroupCreation.selfSignature();
+    selfSignature[0]++;
+    gcEntry.action =
+        Action{forgeUserGroupCreation(userGroupCreation, selfSignature)};
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
         Error::VerificationCode::InvalidSignature);

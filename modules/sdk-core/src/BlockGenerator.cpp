@@ -247,48 +247,30 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
 std::vector<uint8_t> BlockGenerator::userGroupCreation(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    UserGroupCreation::GroupEncryptedKeys const&
-        encryptedGroupPrivateEncryptionKeysForUsers) const
+    Trustchain::Actions::UserGroupCreation::
+        SealedPrivateEncryptionKeysForUsers const&
+            sealedPrivateEncryptionKeysForUsers) const
 {
   auto const encryptedPrivateSignatureKey =
       Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
           signatureKeyPair.privateKey, publicEncryptionKey);
 
-  std::vector<uint8_t> toSign;
-  toSign.insert(toSign.end(),
-                signatureKeyPair.publicKey.begin(),
-                signatureKeyPair.publicKey.end());
-  toSign.insert(
-      toSign.end(), publicEncryptionKey.begin(), publicEncryptionKey.end());
-  toSign.insert(toSign.end(),
-                encryptedPrivateSignatureKey.begin(),
-                encryptedPrivateSignatureKey.end());
-  for (auto const& elem : encryptedGroupPrivateEncryptionKeysForUsers)
-  {
-    toSign.insert(toSign.end(),
-                  elem.publicUserEncryptionKey.begin(),
-                  elem.publicUserEncryptionKey.end());
-    toSign.insert(toSign.end(),
-                  elem.encryptedGroupPrivateEncryptionKey.begin(),
-                  elem.encryptedGroupPrivateEncryptionKey.end());
-  }
-  auto const selfSignature = Crypto::sign(toSign, signatureKeyPair.privateKey);
+  Trustchain::Actions::UserGroupCreation ugc{
+      signatureKeyPair.publicKey,
+      publicEncryptionKey,
+      encryptedPrivateSignatureKey,
+      sealedPrivateEncryptionKeysForUsers};
+  ugc.selfSign(signatureKeyPair.privateKey);
 
   return Serialization::serialize(
-      makeBlock(UserGroupCreation{signatureKeyPair.publicKey,
-                                  publicEncryptionKey,
-                                  encryptedPrivateSignatureKey,
-                                  encryptedGroupPrivateEncryptionKeysForUsers,
-                                  selfSignature},
-                _deviceId,
-                _privateSignatureKey));
+      makeBlock(ugc, _deviceId, _privateSignatureKey));
 }
 
 std::vector<uint8_t> BlockGenerator::userGroupAddition(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::Hash const& previousGroupBlock,
-    UserGroupCreation::GroupEncryptedKeys const&
-        encryptedGroupPrivateEncryptionKeysForUsers) const
+    std::vector<GroupEncryptedKey> const& sealedPrivateEncryptionKeysForUsers)
+    const
 {
   std::vector<uint8_t> toSign;
   toSign.insert(toSign.end(),
@@ -296,7 +278,7 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
                 signatureKeyPair.publicKey.end());
   toSign.insert(
       toSign.end(), previousGroupBlock.begin(), previousGroupBlock.end());
-  for (auto const& elem : encryptedGroupPrivateEncryptionKeysForUsers)
+  for (auto const& elem : sealedPrivateEncryptionKeysForUsers)
   {
     toSign.insert(toSign.end(),
                   elem.publicUserEncryptionKey.begin(),
@@ -310,7 +292,7 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
   return Serialization::serialize(
       makeBlock(UserGroupAddition{GroupId{signatureKeyPair.publicKey},
                                   previousGroupBlock,
-                                  encryptedGroupPrivateEncryptionKeysForUsers,
+                                  sealedPrivateEncryptionKeysForUsers,
                                   selfSignature},
                 _deviceId,
                 _privateSignatureKey));

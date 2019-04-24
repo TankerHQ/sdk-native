@@ -9,6 +9,8 @@
 
 TLOG_CATEGORY(GroupUpdater);
 
+using Tanker::Trustchain::Actions::UserGroupCreation;
+
 namespace Tanker
 {
 namespace GroupUpdater
@@ -23,7 +25,24 @@ struct MyGroupKey
 
 tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
     UserKeyStore const& userKeyStore,
-    UserGroupCreation::GroupEncryptedKeys const& groupKeys)
+    UserGroupCreation::SealedPrivateEncryptionKeysForUsers const& groupKeys)
+{
+  for (auto const& gek : groupKeys)
+  {
+    auto const matchingUserKeyPair =
+        TC_AWAIT(userKeyStore.findKeyPair(gek.first));
+    if (matchingUserKeyPair)
+      TC_RETURN((MyGroupKey{
+          *matchingUserKeyPair,
+          gek.second,
+      }));
+  }
+  TC_RETURN(nonstd::nullopt);
+}
+
+tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
+    UserKeyStore const& userKeyStore,
+    std::vector<GroupEncryptedKey> const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
@@ -43,10 +62,10 @@ tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   UserGroupCreation const& userGroupCreation)
 {
   TC_AWAIT(groupStore.put(ExternalGroup{
-      GroupId{userGroupCreation.publicSignatureKey},
-      userGroupCreation.publicSignatureKey,
-      userGroupCreation.encryptedPrivateSignatureKey,
-      userGroupCreation.publicEncryptionKey,
+      GroupId{userGroupCreation.publicSignatureKey()},
+      userGroupCreation.publicSignatureKey(),
+      userGroupCreation.sealedPrivateSignatureKey(),
+      userGroupCreation.publicEncryptionKey(),
       entry.hash,
       entry.index,
   }));
@@ -62,19 +81,19 @@ tc::cotask<void> putFullGroup(GroupStore& groupStore,
           myKeys.encryptedPrivateEncryptionKey, myKeys.userKeyPair);
   auto const groupPrivateSignatureKey =
       Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-          userGroupCreation.encryptedPrivateSignatureKey,
+          userGroupCreation.sealedPrivateSignatureKey(),
           Crypto::EncryptionKeyPair{
-              userGroupCreation.publicEncryptionKey,
+              userGroupCreation.publicEncryptionKey(),
               groupPrivateEncryptionKey,
           });
   TC_AWAIT(groupStore.put(Group{
-      GroupId{userGroupCreation.publicSignatureKey},
+      GroupId{userGroupCreation.publicSignatureKey()},
       Crypto::SignatureKeyPair{
-          userGroupCreation.publicSignatureKey,
+          userGroupCreation.publicSignatureKey(),
           groupPrivateSignatureKey,
       },
       Crypto::EncryptionKeyPair{
-          userGroupCreation.publicEncryptionKey,
+          userGroupCreation.publicEncryptionKey(),
           groupPrivateEncryptionKey,
       },
       entry.hash,
@@ -120,8 +139,7 @@ tc::cotask<void> applyUserGroupCreation(GroupStore& groupStore,
       mpark::get<UserGroupCreation>(entry.action.variant());
 
   auto const myKeys = TC_AWAIT(findMyKeys(
-      userKeyStore,
-      userGroupCreation.encryptedGroupPrivateEncryptionKeysForUsers));
+      userKeyStore, userGroupCreation.sealedPrivateEncryptionKeysForUsers()));
 
   if (!myKeys)
     TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));

@@ -118,9 +118,10 @@ EMSCRIPTEN_BINDINGS(jshelpers)
       .value("DeviceNotFound", Tanker::Error::Code::DeviceNotFound)
       .value("IdentityAlreadyRegistered",
              Tanker::Error::Code::IdentityAlreadyRegistered)
-      .value("OperationCanceled", Tanker::Error::Code::OperationCanceled);
+      .value("OperationCanceled", Tanker::Error::Code::OperationCanceled)
+      .value("NothingToClaim", Tanker::Error::Code::NothingToClaim);
 
-  static_assert(static_cast<int>(Tanker::Error::Code::Last) == 20,
+  static_assert(static_cast<int>(Tanker::Error::Code::Last) == 21,
                 "Error code not mapped to emscripten");
 
   emscripten::value_object<Tanker::Emscripten::EmError>("EmError")
