@@ -27,6 +27,7 @@
 
 using Tanker::Trustchain::GroupId;
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 namespace
 {
@@ -66,6 +67,30 @@ void assertKeyPublishToUsersTargetedAt(
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
+  }
+}
+
+void assertKeyPublishToUsersTargetedAt(
+    Share::ResourceKey const& resourceKey,
+    std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
+    std::vector<SecretProvisionalUser> const& provisionalUsers)
+{
+  REQUIRE(keyPublishes.size() == provisionalUsers.size());
+
+  for (unsigned int i = 0; i < keyPublishes.size(); ++i)
+  {
+    CHECK(keyPublishes[i].appPublicSignatureKey() ==
+          provisionalUsers[i].appSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
+          provisionalUsers[i].tankerSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].resourceId() ==
+          std::get<Trustchain::ResourceId>(resourceKey));
+    CHECK_EQ(
+        Crypto::sealDecrypt<Crypto::SymmetricKey>(
+            Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
+                                provisionalUsers[i].tankerEncryptionKeyPair),
+            provisionalUsers[i].appEncryptionKeyPair),
+        std::get<Crypto::SymmetricKey>(resourceKey));
   }
 }
 
@@ -347,8 +372,9 @@ TEST_CASE(
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
-  Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Trustchain::ResourceId>("resource resourceId")}};
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource resourceId")}};
 
   auto const newUserKeyPair = newUser.userKeys.back();
 
@@ -363,6 +389,44 @@ TEST_CASE(
       extract<Trustchain::Actions::KeyPublishToUser>(blocks);
   assertKeyPublishToUsersTargetedAt(
       resourceKeys[0], keyPublishes, {newUserKeyPair.keyPair});
+}
+
+TEST_CASE(
+    "generateShareBlocks of a new user should generate one "
+    "KeyPublishToProvisionalUser block")
+{
+  TrustchainBuilder builder;
+  auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
+  builder.makeUser3("keySender");
+
+  auto const keySender = *builder.getUser("keySender");
+  auto const keySenderDevice = keySender.devices.front();
+  auto const keySenderPrivateEncryptionKey =
+      keySenderDevice.keys.encryptionKeyPair.privateKey;
+  auto const keySenderBlockGenerator =
+      builder.makeBlockGenerator(keySenderDevice);
+
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource mac")}};
+
+  Share::KeyRecipients keyRecipients{
+      {},
+      {{
+          provisionalUser.appSignatureKeyPair.publicKey,
+          provisionalUser.appEncryptionKeyPair.publicKey,
+          provisionalUser.tankerSignatureKeyPair.publicKey,
+          provisionalUser.tankerEncryptionKeyPair.publicKey,
+      }},
+      {}};
+  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
+                                                 keySenderBlockGenerator,
+                                                 resourceKeys,
+                                                 keyRecipients);
+
+  auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
+  assertKeyPublishToUsersTargetedAt(
+      resourceKeys[0], keyPublishes, {provisionalUser});
 }
 
 TEST_CASE(
@@ -381,8 +445,9 @@ TEST_CASE(
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
-  Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Trustchain::ResourceId>("resource resourceId")}};
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource resourceId")}};
 
   Share::KeyRecipients keyRecipients{
       {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};

@@ -41,6 +41,25 @@ std::vector<uint8_t> makeKeyPublishToUser(
       encryptedKey, resourceId, recipientPublicEncryptionKey);
 }
 
+std::vector<uint8_t> makeKeyPublishToProvisionalUser(
+    BlockGenerator const& blockGenerator,
+    PublicProvisionalUser const& recipientProvisionalUser,
+    ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey)
+{
+  auto const encryptedKeyOnce = Crypto::sealEncrypt(
+      resourceKey, recipientProvisionalUser.appEncryptionPublicKey);
+  auto const encryptedKeyTwice =
+      Crypto::sealEncrypt<Crypto::TwoTimesSealedSymmetricKey>(
+          encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
+
+  return blockGenerator.keyPublishToProvisionalUser(
+      recipientProvisionalUser.appSignaturePublicKey,
+      recipientProvisionalUser.tankerSignaturePublicKey,
+      resourceId,
+      encryptedKeyTwice);
+}
+
 std::vector<uint8_t> makeKeyPublishToGroup(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
@@ -107,6 +126,23 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToUsers(
                                recipientKey,
                                std::get<Trustchain::ResourceId>(keyResource),
                                std::get<Crypto::SymmetricKey>(keyResource)));
+  return out;
+}
+
+std::vector<std::vector<uint8_t>> generateShareBlocksToProvisionalUsers(
+    BlockGenerator const& blockGenerator,
+    ResourceKeys const& resourceKeys,
+    std::vector<PublicProvisionalUser> const& recipientProvisionalUserKeys)
+{
+  std::vector<std::vector<uint8_t>> out;
+  out.reserve(recipientProvisionalUserKeys.size());
+  for (auto const& keyResource : resourceKeys)
+    for (auto const& recipientKey : recipientProvisionalUserKeys)
+      out.push_back(makeKeyPublishToProvisionalUser(
+          blockGenerator,
+          recipientKey,
+          std::get<ResourceId>(keyResource),
+          std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
 
@@ -202,10 +238,15 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
 {
   auto keyPublishesToUsers = generateShareBlocksToUsers(
       blockGenerator, resourceKeys, keyRecipients.recipientUserKeys);
+  auto keyPublishesToProvisionalUsers = generateShareBlocksToProvisionalUsers(
+      blockGenerator, resourceKeys, keyRecipients.recipientProvisionalUserKeys);
   auto keyPublishesToGroups = generateShareBlocksToGroups(
       blockGenerator, resourceKeys, keyRecipients.recipientGroupKeys);
 
   auto out = keyPublishesToUsers;
+  out.insert(out.end(),
+             keyPublishesToProvisionalUsers.begin(),
+             keyPublishesToProvisionalUsers.end());
   out.insert(
       out.end(), keyPublishesToGroups.begin(), keyPublishesToGroups.end());
   return out;
