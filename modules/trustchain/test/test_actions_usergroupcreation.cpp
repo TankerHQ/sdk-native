@@ -15,14 +15,6 @@ using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("UserGroupCreation tests")
 {
-  SUBCASE("selfSign should throw when called with an invalid private key")
-  {
-    UserGroupCreation ugc{};
-
-    auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    CHECK_THROWS(ugc.selfSign(signatureKeyPair.privateKey));
-  }
-
   SUBCASE("selfSign should return the selfSignature")
   {
     auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
