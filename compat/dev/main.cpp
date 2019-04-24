@@ -1,4 +1,5 @@
 #include "Tests.hpp"
+#include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
 
 #include <Tanker/Version.hpp>
@@ -8,6 +9,7 @@
 #include <docopt/docopt.h>
 
 using namespace std::string_literals;
+using namespace std::literals::chrono_literals;
 using Tanker::Test::Trustchain;
 using Tanker::Test::TrustchainFactory;
 
@@ -69,6 +71,7 @@ tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
 
 int main(int argc, char** argv)
 {
+  Tanker::TimeoutTerminate tt(5min);
   auto args =
       docopt::docopt(USAGE, {argv + 1, argv + argc}, true, TANKER_VERSION);
 

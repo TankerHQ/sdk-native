@@ -1,11 +1,13 @@
 #include "Tests.hpp"
 #include <Tanker/Compat/TrustchainFactory.hpp>
 
+#include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Version.hpp>
 
 #include <docopt/docopt.h>
 using namespace std::string_literals;
+using namespace std::literals::chrono_literals;
 
 static const char USAGE[] = R"(compat cli
   Usage:
@@ -65,6 +67,7 @@ auto getTrustchain(TrustchainFactory& tf,
 
 int main(int argc, char** argv)
 {
+  Tanker::TimeoutTerminate tt(5min);
   auto args =
       docopt::docopt(USAGE, {argv + 1, argv + argc}, true, TANKER_VERSION);
 
