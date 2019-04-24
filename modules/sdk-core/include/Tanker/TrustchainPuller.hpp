@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
@@ -12,6 +11,9 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/job.hpp>
+
+#include <utility>
+#include <vector>
 
 namespace Tanker
 {
@@ -75,7 +77,9 @@ private:
   tc::cotask<void> verifyAndAddEntry(UnverifiedEntry const& unverifiedEntry);
   tc::cotask<void> triggerSignals(Entry const& entry);
   tc::cotask<void> recoverUserKeys(
-      std::vector<UserKeyPair> const& encryptedUserKeys,
+      std::vector<std::pair<Crypto::PublicEncryptionKey,
+                            Crypto::SealedPrivateEncryptionKey>> const&
+          encryptedUserKeys,
       std::vector<Crypto::EncryptionKeyPair>& userEncryptionKeys);
 };
 }
