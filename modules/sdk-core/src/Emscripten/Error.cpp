@@ -3,6 +3,7 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 
 #include <Tanker/Error.hpp>
+#include <Tanker/ResourceKeyNotFound.hpp>
 
 #include <emscripten/bind.h>
 
@@ -15,6 +16,13 @@ emscripten::val currentExceptionToJs()
   try
   {
     throw;
+  }
+  catch (Tanker::Error::ResourceKeyNotFound const& e)
+  {
+    auto jerr =
+        emscripten::val(EmError{Error::Code::ResourceKeyNotFound, e.what()});
+    jerr.set("resourceId", containerToJs(e.resourceId()));
+    return jerr;
   }
   catch (Crypto::InvalidKeySize const& e)
   {
