@@ -33,7 +33,7 @@ void verifyProvisionalIdentityClaim(UnverifiedEntry const& entry,
       "ProvisionalIdentityClaim block must be signed by the author device");
 
   auto const& provisionalIdentityClaim =
-      mpark::get<ProvisionalIdentityClaim>(entry.action.variant());
+      entry.action.get<ProvisionalIdentityClaim>();
 
   ensures(provisionalIdentityClaim.userId() == authorUser.id,
           Error::VerificationCode::InvalidUserId,

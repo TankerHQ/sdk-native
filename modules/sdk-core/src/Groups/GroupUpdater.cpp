@@ -120,8 +120,7 @@ tc::cotask<void> applyUserGroupCreation(GroupStore& groupStore,
                                         UserKeyStore const& userKeyStore,
                                         Entry const& entry)
 {
-  auto const& userGroupCreation =
-      mpark::get<UserGroupCreation>(entry.action.variant());
+  auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
   auto const myKeys = TC_AWAIT(findMyKeys(
       userKeyStore, userGroupCreation.sealedPrivateEncryptionKeysForUsers()));
@@ -136,8 +135,7 @@ tc::cotask<void> applyUserGroupAddition(GroupStore& groupStore,
                                         UserKeyStore const& userKeyStore,
                                         Entry const& entry)
 {
-  auto const& userGroupAddition =
-      mpark::get<UserGroupAddition>(entry.action.variant());
+  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
   auto const previousGroup =
       TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId()));
@@ -165,9 +163,9 @@ tc::cotask<void> applyEntry(GroupStore& groupStore,
                             UserKeyStore const& userKeyStore,
                             Entry const& entry)
 {
-  if (mpark::holds_alternative<UserGroupCreation>(entry.action.variant()))
+  if (entry.action.holdsAlternative<UserGroupCreation>())
     TC_AWAIT(applyUserGroupCreation(groupStore, userKeyStore, entry));
-  else if (mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
+  else if (entry.action.holdsAlternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(groupStore, userKeyStore, entry));
   else
     throw Error::formatEx<std::runtime_error>(

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Action.hpp>
+#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -16,7 +16,7 @@ struct UnverifiedEntry
   uint64_t index;
   Trustchain::Actions::Nature nature;
   Crypto::Hash author;
-  Action action;
+  Trustchain::Action action;
   Crypto::Signature signature;
   Crypto::Hash hash;
 };

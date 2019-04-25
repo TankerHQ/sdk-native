@@ -11,6 +11,7 @@
 
 using Tanker::Trustchain::Actions::Nature;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::Action;
 
 TLOG_CATEGORY(Database);
 
@@ -341,7 +342,7 @@ tc::cotask<void> JsDatabase::addTrustchainEntry(Entry const& entry)
   val.set("index", emscripten::val(static_cast<double>(entry.index)));
   val.set("nature", emscripten::val(static_cast<int>(entry.nature)));
   val.set("author", emscripten::val(containerToJs(entry.author)));
-  val.set("action", mpark::visit(toVal{}, entry.action.variant()));
+  val.set("action", entry.action.visit(toVal{}));
   val.set("hash", emscripten::val(containerToJs(entry.hash)));
   TC_AWAIT(jsPromiseToFuture(_db->addTrustchainEntry(val)));
 }
@@ -415,7 +416,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         Trustchain::ResourceId{copyToVector(jsEntry["action"]["resourceId"])},
         Crypto::EncryptedSymmetricKey{
             copyToVector(jsEntry["action"]["resourceKey"])});
-    entry.action = kp;
+    entry.action = Action{kp};
   }
   else if (entry.nature == Nature::KeyPublishToUser)
   {
@@ -425,8 +426,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = KeyPublishToUser(
-        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey);
+    entry.action = Action{KeyPublishToUser(
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey)};
   }
   else if (entry.nature == Nature::KeyPublishToUserGroup)
   {
@@ -436,8 +437,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = KeyPublishToUserGroup(
-        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey);
+    entry.action = Action{KeyPublishToUserGroup(
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey)};
   }
   else if (entry.nature == Nature::KeyPublishToProvisionalUser)
   {
@@ -449,8 +450,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["resourceId"])};
     Crypto::TwoTimesSealedSymmetricKey const key{
         copyToVector(jsEntry["action"]["resourceKey"])};
-    entry.action = KeyPublishToProvisionalUser{
-        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key};
+    entry.action = Action{KeyPublishToProvisionalUser{
+        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key}};
   }
   else
     throw Error::formatEx<std::runtime_error>(

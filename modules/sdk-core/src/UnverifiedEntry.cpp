@@ -36,7 +36,7 @@ UnverifiedEntry blockToUnverifiedEntry(Block const& block)
   ret.index = block.index;
   ret.nature = block.nature;
   ret.author = block.author;
-  ret.action = deserializeAction(block.nature, block.payload);
+  ret.action = Trustchain::Action::deserialize(block.nature, block.payload);
   ret.signature = block.signature;
   ret.hash = block.hash();
   return ret;

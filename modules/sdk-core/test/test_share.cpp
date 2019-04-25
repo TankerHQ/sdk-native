@@ -233,7 +233,7 @@ std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
   {
     auto const entry =
         blockToUnverifiedEntry(Serialization::deserialize<Block>(block));
-    auto const keyPublish = mpark::get_if<T>(&entry.action.variant());
+    auto const keyPublish = entry.action.get_if<T>();
     REQUIRE(keyPublish);
     keyPublishes.push_back(*keyPublish);
   }

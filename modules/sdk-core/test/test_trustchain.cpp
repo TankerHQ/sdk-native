@@ -15,6 +15,7 @@
 #include "TrustchainBuilder.hpp"
 
 using Tanker::Trustchain::Actions::Nature;
+using Tanker::Trustchain::Action;
 
 using namespace Tanker;
 

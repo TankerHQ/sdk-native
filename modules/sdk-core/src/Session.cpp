@@ -42,7 +42,6 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
-#include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -60,6 +59,7 @@
 using Tanker::Trustchain::UserId;
 using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::GroupId;
+using namespace Tanker::Trustchain::Actions;
 
 TLOG_CATEGORY(Session);
 
@@ -611,8 +611,7 @@ tc::cotask<void> Session::onKeyToDeviceReceived(Entry const& entry)
 
 tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 {
-  auto const& deviceCreation =
-      mpark::get<Trustchain::Actions::DeviceCreation>(entry.action.variant());
+  auto const& deviceCreation = entry.action.get<DeviceCreation>();
   Trustchain::DeviceId const deviceId{entry.hash};
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
   Device createdDevice{deviceId,
@@ -626,8 +625,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 {
-  auto const& deviceRevocation =
-      mpark::get<Trustchain::Actions::DeviceRevocation>(entry.action.variant());
+  auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
 
   if (deviceRevocation.deviceId() == this->deviceId())
   {

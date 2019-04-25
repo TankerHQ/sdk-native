@@ -7,8 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -17,7 +16,6 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <mockaron/mockaron.hpp>
-#include <mpark/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>
@@ -91,7 +89,6 @@ tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
 
 tc::cotask<void> TrustchainPuller::catchUp()
 {
-  using namespace Trustchain::Actions;
   try
   {
     TINFO("Catching up");
@@ -136,23 +133,19 @@ tc::cotask<void> TrustchainPuller::catchUp()
         {
           try
           {
-            if (mpark::get_if<Trustchain::Actions::TrustchainCreation>(
-                    &unverifiedEntry.action.variant()))
+            if (unverifiedEntry.action.get_if<TrustchainCreation>())
             {
               TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
               processed.insert(unverifiedEntry.hash);
             }
             else if (auto const deviceCreation =
-                         mpark::get_if<Trustchain::Actions::DeviceCreation>(
-                             &unverifiedEntry.action.variant()))
+                         unverifiedEntry.action.get_if<DeviceCreation>())
             {
               if (deviceCreation->userId() == _userId)
               {
                 TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
                 processed.insert(unverifiedEntry.hash);
-                if (auto dc3 =
-                        deviceCreation
-                            ->get_if<Trustchain::Actions::DeviceCreation::v3>())
+                if (auto dc3 = deviceCreation->get_if<DeviceCreation::v3>())
                 {
                   if (Trustchain::DeviceId{unverifiedEntry.hash} == _deviceId)
                   {
@@ -173,8 +166,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
               }
             }
             else if (auto const deviceRevocation =
-                         mpark::get_if<DeviceRevocation>(
-                             &unverifiedEntry.action.variant()))
+                         unverifiedEntry.action.get_if<DeviceRevocation>())
             {
               auto const userId = TC_AWAIT(_contactStore->findUserIdByDeviceId(
                   deviceRevocation->deviceId()));
@@ -262,30 +254,25 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
 
 tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
 {
-  if (auto const deviceCreation =
-          mpark::get_if<Trustchain::Actions::DeviceCreation>(
-              &entry.action.variant()))
+  if (auto const deviceCreation = entry.action.get_if<DeviceCreation>())
   {
     if (deviceCreation->publicSignatureKey() == _devicePublicSignatureKey)
       TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
-  if (auto const keyPublish =
-          mpark::get_if<Trustchain::Actions::KeyPublishToDevice>(
-              &entry.action.variant()))
+  if (auto const keyPublish = entry.action.get_if<KeyPublishToDevice>())
   {
     if (keyPublish->recipient() == _deviceId)
       TC_AWAIT(receivedKeyToDevice(entry));
   }
-  if (mpark::holds_alternative<Trustchain::Actions::UserGroupCreation>(
-          entry.action.variant()) ||
-      mpark::holds_alternative<UserGroupAddition>(entry.action.variant()))
+  if (entry.action.holdsAlternative<UserGroupCreation>() ||
+      entry.action.holdsAlternative<UserGroupAddition>())
+  {
     TC_AWAIT(userGroupActionReceived(entry));
-  if (mpark::holds_alternative<Trustchain::Actions::DeviceRevocation>(
-          entry.action.variant()))
+  }
+  else if (entry.action.holdsAlternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));
-  if (mpark::holds_alternative<ProvisionalIdentityClaim>(
-          entry.action.variant()))
+  else if (entry.action.holdsAlternative<ProvisionalIdentityClaim>())
     TC_AWAIT(provisionalIdentityClaimReceived(entry));
 }
 }

@@ -142,6 +142,7 @@ check/compat:
 
 check/e2e:
   stage: check
+  when: manual
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home e2e
   tags:

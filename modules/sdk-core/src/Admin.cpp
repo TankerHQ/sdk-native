@@ -1,7 +1,7 @@
 #include <Tanker/Admin.hpp>
 
 #include <Tanker/AConnection.hpp>
-#include <Tanker/Action.hpp>
+#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
