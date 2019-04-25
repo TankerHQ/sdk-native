@@ -9,9 +9,9 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
-using Tanker::Trustchain::Actions::Nature;
-using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::Action;
+using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Database);
 
@@ -51,7 +51,8 @@ public:
 
   virtual emscripten::val putResourceKey(emscripten::val const& resourceId,
                                          emscripten::val const& key) = 0;
-  virtual emscripten::val findResourceKey(emscripten::val const& resourceId) = 0;
+  virtual emscripten::val findResourceKey(
+      emscripten::val const& resourceId) = 0;
 
   virtual emscripten::val getDeviceKeys() = 0;
   virtual emscripten::val setDeviceKeys(emscripten::val const& deviceKeys) = 0;
@@ -381,10 +382,11 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
     if (!jsEntry["action"]["userKeyPair"].isNull() &&
         !jsEntry["action"]["userKeyPair"].isUndefined())
     {
-      Crypto::PublicEncryptionKey publicUserEncryptionKey(
-          copyToVector(jsEntry["action"]["publicUserEncryptionKey"]));
+      Crypto::PublicEncryptionKey publicUserEncryptionKey(copyToVector(
+          jsEntry["action"]["userKeyPair"]["publicEncryptionKey"]));
       Crypto::SealedPrivateEncryptionKey sealedPrivateEncryptionKey(
-          copyToVector(jsEntry["action"]["sealedPrivateEncryptionKey"]));
+          copyToVector(jsEntry["action"]["userKeyPair"]
+                              ["encryptedPrivateEncryptionKey"]));
       auto isGhostDevice = jsEntry["action"]["isGhostDevice"].as<bool>();
 
       DeviceCreation::v3 dc(
@@ -551,8 +553,8 @@ tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
       containerToJs(userId), containerToJs(userPublicKey))));
 }
 
-tc::cotask<void> JsDatabase::putResourceKey(Trustchain::ResourceId const& resourceId,
-                                            Crypto::SymmetricKey const& key)
+tc::cotask<void> JsDatabase::putResourceKey(
+    Trustchain::ResourceId const& resourceId, Crypto::SymmetricKey const& key)
 {
   TC_AWAIT(jsPromiseToFuture(
       _db->putResourceKey(containerToJs(resourceId), containerToJs(key))));
@@ -561,8 +563,8 @@ tc::cotask<void> JsDatabase::putResourceKey(Trustchain::ResourceId const& resour
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> JsDatabase::findResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
-  auto const key =
-      TC_AWAIT(jsPromiseToFuture(_db->findResourceKey(containerToJs(resourceId))));
+  auto const key = TC_AWAIT(
+      jsPromiseToFuture(_db->findResourceKey(containerToJs(resourceId))));
   if (key.isNull() || key.isUndefined())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(Crypto::SymmetricKey(copyToVector(key)));
