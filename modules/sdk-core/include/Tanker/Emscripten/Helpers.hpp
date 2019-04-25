@@ -15,12 +15,6 @@ namespace Tanker
 {
 namespace Emscripten
 {
-struct EmError
-{
-  Error::Code code;
-  std::string message;
-};
-
 inline bool isNone(emscripten::val const& v)
 {
   return v.isNull() || v.isUndefined();

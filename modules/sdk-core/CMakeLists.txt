@@ -51,7 +51,9 @@ else()
     src/JsConnection.cpp
   )
   set(TANKER_CORE_EXTRA_SRC
+    include/Tanker/Emscripten/Error.hpp
     include/Tanker/Emscripten/Helpers.hpp
+    src/Emscripten/Error.cpp
     src/Emscripten/Helpers.cpp
   )
 endif()
