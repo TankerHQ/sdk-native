@@ -2,6 +2,8 @@
 
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -28,6 +30,7 @@ using ResourceKeys = std::vector<ResourceKey>;
 struct KeyRecipients
 {
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
+  std::vector<PublicProvisionalUser> recipientProvisionalUserKeys;
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
 };
 
@@ -35,6 +38,12 @@ std::vector<uint8_t> makeKeyPublishToUser(
     BlockGenerator const& blockGenerator,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey);
+
+std::vector<uint8_t> makeKeyPublishToProvisionalUser(
+    BlockGenerator const& blockGenerator,
+    PublicProvisionalUser const& recipientProvisionalUser,
+    Crypto::Mac const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
 std::vector<uint8_t> makeKeyPublishToGroup(
@@ -46,7 +55,8 @@ std::vector<uint8_t> makeKeyPublishToGroup(
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
-    std::vector<Trustchain::UserId> const& userIds,
+    Client& client,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<Trustchain::GroupId> const& groupIds);
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
@@ -62,7 +72,7 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     ResourceKeys const& resourceKeys,
-    std::vector<Trustchain::UserId> const& userIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<Trustchain::GroupId> const& groupIds);
 
 tc::cotask<void> share(
@@ -73,7 +83,7 @@ tc::cotask<void> share(
     BlockGenerator const& blockGenerator,
     Client& client,
     std::vector<Trustchain::ResourceId> const& resourceIds,
-    std::vector<Trustchain::UserId> const& recipientUserIds,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<Trustchain::GroupId> const& groupIds);
 }
 }

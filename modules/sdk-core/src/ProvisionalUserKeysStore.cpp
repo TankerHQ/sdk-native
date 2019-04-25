@@ -1,5 +1,9 @@
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+
+TLOG_CATEGORY(ResourceKeyStore);
 
 namespace Tanker
 {
@@ -13,6 +17,9 @@ tc::cotask<void> ProvisionalUserKeysStore::putProvisionalUserKeys(
     Crypto::PublicSignatureKey const& tankerPublicSigKey,
     ProvisionalUserKeys const& provisionalUserKeys)
 {
+  TINFO("Adding provisional user keys for {} {}",
+        appPublicSigKey,
+        tankerPublicSigKey);
   TC_AWAIT(_db->putProvisionalUserKeys(
       appPublicSigKey, tankerPublicSigKey, provisionalUserKeys));
 }

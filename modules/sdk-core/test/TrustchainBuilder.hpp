@@ -98,10 +98,10 @@ public:
                              Group group,
                              std::vector<User> const& users);
 
-  Tanker::ProvisionalUser makeProvisionalUser(std::string const& email);
+  Tanker::SecretProvisionalUser makeProvisionalUser(std::string const& email);
   Tanker::UnverifiedEntry claimProvisionalIdentity(
       std::string const& userId,
-      Tanker::ProvisionalUser const& provisionalUser,
+      Tanker::SecretProvisionalUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
   std::vector<Tanker::Block> shareToDevice(
@@ -113,14 +113,16 @@ public:
                             User const& receiver,
                             Tanker::Trustchain::ResourceId const& resourceId,
                             Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Block shareToUserGroup(Device const& sender,
-                                 Group const& receiver,
-                                 Tanker::Trustchain::ResourceId const& resourceId,
-                                 Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Block shareToProvisionalUser(Device const& sender,
-                                       Tanker::ProvisionalUser const& receiver,
-                                       Tanker::Trustchain::ResourceId const& resourceId,
-                                       Tanker::Crypto::SymmetricKey const& key);
+  Tanker::Block shareToUserGroup(
+      Device const& sender,
+      Group const& receiver,
+      Tanker::Trustchain::ResourceId const& resourceId,
+      Tanker::Crypto::SymmetricKey const& key);
+  Tanker::Block shareToProvisionalUser(
+      Device const& sender,
+      Tanker::SecretProvisionalUser const& receiver,
+      Tanker::Trustchain::ResourceId const& resourceId,
+      Tanker::Crypto::SymmetricKey const& key);
 
   Tanker::Block revokeDevice1(Device const& sender,
                               Device const& target,
@@ -144,7 +146,7 @@ public:
       Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::ProvisionalUserKeysStore>
   makeProvisionalUserKeysStoreWith(
-      std::vector<Tanker::ProvisionalUser> const& provisionalUsers,
+      std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers,
       Tanker::DataStore::ADatabase* conn) const;
 
   std::vector<Tanker::Block> const& blocks() const;

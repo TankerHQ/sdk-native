@@ -1,5 +1,6 @@
 #include <Tanker/Share.hpp>
 
+#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/RecipientNotFound.hpp>
@@ -11,6 +12,7 @@
 
 #include <Helpers/Await.hpp>
 
+#include "MockConnection.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 #include "UserAccessorMock.hpp"
@@ -25,6 +27,7 @@
 
 using Tanker::Trustchain::GroupId;
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 namespace
 {
@@ -64,6 +67,30 @@ void assertKeyPublishToUsersTargetedAt(
     CHECK_EQ(Crypto::sealDecrypt<Crypto::SymmetricKey>(
                  keyPublishes[i].sealedSymmetricKey(), userKeyPairs[i]),
              std::get<Crypto::SymmetricKey>(resourceKey));
+  }
+}
+
+void assertKeyPublishToUsersTargetedAt(
+    Share::ResourceKey const& resourceKey,
+    std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
+    std::vector<SecretProvisionalUser> const& provisionalUsers)
+{
+  REQUIRE(keyPublishes.size() == provisionalUsers.size());
+
+  for (unsigned int i = 0; i < keyPublishes.size(); ++i)
+  {
+    CHECK(keyPublishes[i].appPublicSignatureKey() ==
+          provisionalUsers[i].appSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
+          provisionalUsers[i].tankerSignatureKeyPair.publicKey);
+    CHECK(keyPublishes[i].resourceId() ==
+          std::get<Trustchain::ResourceId>(resourceKey));
+    CHECK_EQ(
+        Crypto::sealDecrypt<Crypto::SymmetricKey>(
+            Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
+                                provisionalUsers[i].tankerEncryptionKeyPair),
+            provisionalUsers[i].appEncryptionKeyPair),
+        std::get<Crypto::SymmetricKey>(resourceKey));
   }
 }
 
@@ -114,6 +141,10 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
@@ -123,10 +154,16 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  auto const recipients = AWAIT(Share::generateRecipientList(
-      userAccessor.get(), groupAccessor.get(), {newUser.userId}, {}));
+  auto const recipients = AWAIT(
+      Share::generateRecipientList(userAccessor.get(),
+                                   groupAccessor.get(),
+                                   client,
+                                   {Identity::PublicPermanentIdentity{
+                                       builder.trustchainId(), newUser.userId}},
+                                   {}));
 
   // there should be only user keys
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientUserKeys,
@@ -145,6 +182,10 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
@@ -158,14 +199,76 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   auto const recipients =
       AWAIT(Share::generateRecipientList(userAccessor.get(),
                                          groupAccessor.get(),
+                                         client,
                                          {},
                                          {newGroup.group.tankerGroup.id}));
 
   // there should be only group keys
   CHECK(recipients.recipientUserKeys.size() == 0);
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
   assertEqual<Crypto::PublicEncryptionKey>(
       recipients.recipientGroupKeys,
       {newGroup.group.tankerGroup.encryptionKeyPair.publicKey});
+}
+
+TEST_CASE(
+    "generateRecipientList of a provisional user should return their group key")
+{
+  TrustchainBuilder builder;
+  auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
+  Identity::PublicProvisionalIdentity publicProvisionalIdentity{
+      builder.trustchainId(),
+      provisionalUser.target,
+      provisionalUser.value,
+      provisionalUser.appSignatureKeyPair.publicKey,
+      provisionalUser.appEncryptionKeyPair.publicKey,
+  };
+  auto const keySender = builder.makeUser3("keySender");
+
+  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
+  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+
+  auto upmockConnection = std::make_unique<MockConnection>();
+  auto const mockConnection = upmockConnection.get();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(upmockConnection));
+
+  REQUIRE_CALL(userAccessor.get_mock_impl(),
+               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
+      .LR_RETURN((UserAccessor::PullResult{{}, {}}));
+
+  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+               pull(trompeloeil::eq(gsl::span<GroupId const>{})))
+      .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
+
+  REQUIRE_CALL(*mockConnection,
+               emit("get public provisional identities", trompeloeil::_))
+      .LR_RETURN(WRAP_COTASK(
+          nlohmann::json(
+              {{{"SignaturePublicKey",
+                 provisionalUser.tankerSignatureKeyPair.publicKey},
+                {"EncryptionPublicKey",
+                 provisionalUser.tankerEncryptionKeyPair.publicKey}}})
+              .dump()));
+
+  auto const recipients =
+      AWAIT(Share::generateRecipientList(userAccessor.get(),
+                                         groupAccessor.get(),
+                                         client,
+                                         {publicProvisionalIdentity},
+                                         {}));
+
+  CHECK(recipients.recipientUserKeys.size() == 0);
+  CHECK(recipients.recipientGroupKeys.size() == 0);
+  CHECK(recipients.recipientProvisionalUserKeys.size() == 1);
+  CHECK(recipients.recipientProvisionalUserKeys[0].appSignaturePublicKey ==
+        provisionalUser.appSignatureKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey ==
+        provisionalUser.appEncryptionKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey ==
+        provisionalUser.tankerSignatureKeyPair.publicKey);
+  CHECK(recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey ==
+        provisionalUser.tankerEncryptionKeyPair.publicKey);
 }
 
 TEST_CASE("generateRecipientList of a not-found user should throw")
@@ -180,6 +283,10 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
@@ -189,10 +296,14 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  CHECK_THROWS_AS(
-      AWAIT(Share::generateRecipientList(
-          userAccessor.get(), groupAccessor.get(), {newUser.userId}, {})),
-      Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
+                      userAccessor.get(),
+                      groupAccessor.get(),
+                      client,
+                      {Identity::PublicPermanentIdentity{builder.trustchainId(),
+                                                         newUser.userId}},
+                      {})),
+                  Error::RecipientNotFoundInternal);
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -207,6 +318,10 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
 
+  auto mockConnection = std::make_unique<MockConnection>();
+  ALLOW_CALL(*mockConnection, on("new relevant block", trompeloeil::_));
+  Client client(std::move(mockConnection));
+
   REQUIRE_CALL(userAccessor.get_mock_impl(),
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN((UserAccessor::PullResult{{}, {}}));
@@ -220,6 +335,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   CHECK_THROWS_AS(
       AWAIT(Share::generateRecipientList(userAccessor.get(),
                                          groupAccessor.get(),
+                                         client,
                                          {},
                                          {newGroup.group.tankerGroup.id})),
       Error::RecipientNotFoundInternal);
@@ -256,12 +372,14 @@ TEST_CASE(
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
-  Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Trustchain::ResourceId>("resource resourceId")}};
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource resourceId")}};
 
   auto const newUserKeyPair = newUser.userKeys.back();
 
-  Share::KeyRecipients keyRecipients{{newUserKeyPair.keyPair.publicKey}, {}};
+  Share::KeyRecipients keyRecipients{
+      {newUserKeyPair.keyPair.publicKey}, {}, {}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,
@@ -271,6 +389,44 @@ TEST_CASE(
       extract<Trustchain::Actions::KeyPublishToUser>(blocks);
   assertKeyPublishToUsersTargetedAt(
       resourceKeys[0], keyPublishes, {newUserKeyPair.keyPair});
+}
+
+TEST_CASE(
+    "generateShareBlocks of a new user should generate one "
+    "KeyPublishToProvisionalUser block")
+{
+  TrustchainBuilder builder;
+  auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
+  builder.makeUser3("keySender");
+
+  auto const keySender = *builder.getUser("keySender");
+  auto const keySenderDevice = keySender.devices.front();
+  auto const keySenderPrivateEncryptionKey =
+      keySenderDevice.keys.encryptionKeyPair.privateKey;
+  auto const keySenderBlockGenerator =
+      builder.makeBlockGenerator(keySenderDevice);
+
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource mac")}};
+
+  Share::KeyRecipients keyRecipients{
+      {},
+      {{
+          provisionalUser.appSignatureKeyPair.publicKey,
+          provisionalUser.appEncryptionKeyPair.publicKey,
+          provisionalUser.tankerSignatureKeyPair.publicKey,
+          provisionalUser.tankerEncryptionKeyPair.publicKey,
+      }},
+      {}};
+  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
+                                                 keySenderBlockGenerator,
+                                                 resourceKeys,
+                                                 keyRecipients);
+
+  auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
+  assertKeyPublishToUsersTargetedAt(
+      resourceKeys[0], keyPublishes, {provisionalUser});
 }
 
 TEST_CASE(
@@ -289,11 +445,12 @@ TEST_CASE(
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
-  Share::ResourceKeys resourceKeys = {{make<Crypto::SymmetricKey>("symmkey"),
-                                       make<Trustchain::ResourceId>("resource resourceId")}};
+  Share::ResourceKeys resourceKeys = {
+      {make<Crypto::SymmetricKey>("symmkey"),
+       make<Trustchain::ResourceId>("resource resourceId")}};
 
   Share::KeyRecipients keyRecipients{
-      {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
+      {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
   auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
                                                  keySenderBlockGenerator,
                                                  resourceKeys,

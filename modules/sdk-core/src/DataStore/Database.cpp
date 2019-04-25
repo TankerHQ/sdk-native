@@ -67,7 +67,7 @@ struct MakeIndexesVisitor
   }
 
   template <typename T>
-  std::vector<Index>  operator()(T) const
+  std::vector<Index> operator()(T) const
   {
     return {};
   }
@@ -99,8 +99,9 @@ Entry rowToEntry(Row const& row)
       static_cast<uint64_t>(row.idx),
       static_cast<Nature>(static_cast<unsigned>(row.nature)),
       extractBlob<Crypto::Hash>(row.author),
-      Action::deserialize(static_cast<Nature>(static_cast<unsigned>(row.nature)),
-                        extractBlob(row.action)),
+      Action::deserialize(
+          static_cast<Nature>(static_cast<unsigned>(row.nature)),
+          extractBlob(row.action)),
       extractBlob<Crypto::Hash>(row.hash),
   };
 }
@@ -336,6 +337,9 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
     TC_RETURN();
 
   if (auto const keyPublish = entry.action.get_if<KeyPublishToUser>())
+    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
+  else if (auto const keyPublish =
+               entry.action.get_if<KeyPublishToProvisionalUser>())
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
   else if (auto const keyPublish = entry.action.get_if<KeyPublishToUserGroup>())
     TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));

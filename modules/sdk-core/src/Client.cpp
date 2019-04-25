@@ -187,6 +187,10 @@ tc::cotask<std::vector<
     std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
 Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 {
+  if (emails.empty())
+    TC_RETURN((std::vector<std::pair<Crypto::PublicSignatureKey,
+                                     Crypto::PublicEncryptionKey>>{}));
+
   nlohmann::json message;
   for (auto const& email : emails)
     message.push_back({{"email", email}});

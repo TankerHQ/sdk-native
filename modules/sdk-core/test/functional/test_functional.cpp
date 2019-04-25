@@ -281,6 +281,41 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can encrypt and share to a provisional user")
+{
+  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(),
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+
+  TC_AWAIT(bobSession->claimProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity},
+      VerificationCode{bobVerificationCode}));
+
+  std::vector<uint8_t> decrypted(
+      bobSession->decryptedSize(encryptedData).get());
+  TC_AWAIT(bobSession->decrypt(decrypted.data(), encryptedData));
+  CHECK(decrypted == clearData);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 {
   auto alice = trustchain.makeUser(Test::UserType::New);
