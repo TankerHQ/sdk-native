@@ -8,7 +8,7 @@ import subprocess
 
 TESTS = {
     "v1.10.1": ["encrypt", "group", "unlock"],
-    "dev":["encrypt", "group", "unlock"],
+    "dev":["encrypt", "group", "unlock", "preshare-and-claim", "decrypt-old-claim"],
 }
 
 CURRENT = "dev"

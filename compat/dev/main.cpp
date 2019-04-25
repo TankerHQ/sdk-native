@@ -15,7 +15,14 @@ using Tanker::Test::TrustchainFactory;
 
 static const char USAGE[] = R"(compat cli
   Usage:
-    compat (encrypt|group|unlock) [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
+    compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
+
+  Commands:
+    encrypt               simple encrypt decrypt with a user
+    group                 simple encrypt decrypt with a group
+    unlock                signup then unlock
+    preshare-and-claim    encrypt then create a new user to claim and decrypt
+    decrypt-old-claim     claim and decrypt an old preshare resource
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
@@ -37,19 +44,18 @@ auto getRunner = [](std::string const& command,
   else if (command == "unlock")
     return std::make_unique<UnlockCompat>(
         trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "preshare-and-claim")
+    return std::make_unique<PreshareAndClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "decrypt-old-claim")
+    return std::make_unique<DecryptOldClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
   else
     throw std::runtime_error("not implemented");
 };
 
-auto getCommand = [](auto args) {
-  if (args.at("encrypt").asBool())
-    return "encrypt"s;
-  else if (args.at("group").asBool())
-    return "group"s;
-  else if (args.at("unlock").asBool())
-    return "unlock"s;
-  else
-    throw std::runtime_error("not implemented");
+auto getCommand = [](auto const& args) {
+  return args.at("<command>").asString();
 };
 
 using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
