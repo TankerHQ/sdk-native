@@ -21,7 +21,7 @@ public:
   {
   }
 
-  Trustchain::ResourceId const& resourceId()
+  Trustchain::ResourceId const& resourceId() const
   {
     return _resourceId;
   }
