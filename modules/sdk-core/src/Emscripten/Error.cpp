@@ -3,7 +3,9 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 
 #include <Tanker/Error.hpp>
+#include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyNotFound.hpp>
+#include <Tanker/UserNotFound.hpp>
 
 #include <emscripten/bind.h>
 
@@ -22,6 +24,27 @@ emscripten::val currentExceptionToJs()
     auto jerr =
         emscripten::val(EmError{Error::Code::ResourceKeyNotFound, e.what()});
     jerr.set("resourceId", containerToJs(e.resourceId()));
+    return jerr;
+  }
+  catch (Tanker::Error::RecipientNotFound const& e)
+  {
+    auto jerr =
+        emscripten::val(EmError{Error::Code::RecipientNotFound, e.what()});
+    auto jidentities = emscripten::val::array();
+    for (auto const& i : e.publicIdentities())
+      jidentities.call<void>("push", i.string());
+    for (auto const& i : e.groupIds())
+      jidentities.call<void>("push", cppcodec::base64_rfc4648::encode(i));
+    jerr.set("recipientIds", jidentities);
+    return jerr;
+  }
+  catch (Tanker::Error::UserNotFound const& e)
+  {
+    auto jerr = emscripten::val(EmError{Error::Code::UserNotFound, e.what()});
+    auto jidentities = emscripten::val::array();
+    for (auto const& i : e.publicIdentities())
+      jidentities.call<void>("push", i.string());
+    jerr.set("recipientIds", jidentities);
     return jerr;
   }
   catch (Crypto::InvalidKeySize const& e)
