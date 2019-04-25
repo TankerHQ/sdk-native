@@ -1,6 +1,5 @@
 #include <Tanker/Session.hpp>
 
-#include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>

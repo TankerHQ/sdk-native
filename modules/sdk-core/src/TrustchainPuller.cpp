@@ -1,6 +1,5 @@
 #include <Tanker/TrustchainPuller.hpp>
 
-#include <Tanker/Actions/UserKeyPair.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -115,7 +114,9 @@ tc::cotask<void> TrustchainPuller::catchUp()
       if (_deviceId.is_null())
       {
         TINFO("No device id, processing our devices first");
-        std::vector<UserKeyPair> encryptedUserKeys;
+        std::vector<std::pair<Crypto::PublicEncryptionKey,
+                              Crypto::SealedPrivateEncryptionKey>>
+            encryptedUserKeys;
         std::vector<Crypto::EncryptionKeyPair> userEncryptionKeys;
         // process our blocks first or here's what'll happen!
         // if you receive:
@@ -184,9 +185,9 @@ tc::cotask<void> TrustchainPuller::catchUp()
                 if (auto const deviceRevocation2 =
                         deviceRevocation->get_if<DeviceRevocation2>())
                 {
-                  encryptedUserKeys.push_back(UserKeyPair{
+                  encryptedUserKeys.emplace_back(
                       deviceRevocation2->previousPublicEncryptionKey(),
-                      deviceRevocation2->sealedKeyForPreviousUserKey()});
+                      deviceRevocation2->sealedKeyForPreviousUserKey());
                 }
               }
             }
@@ -229,7 +230,9 @@ tc::cotask<void> TrustchainPuller::catchUp()
 }
 
 tc::cotask<void> TrustchainPuller::recoverUserKeys(
-    std::vector<UserKeyPair> const& encryptedUserKeys,
+    std::vector<std::pair<Crypto::PublicEncryptionKey,
+                          Crypto::SealedPrivateEncryptionKey>> const&
+        encryptedUserKeys,
     std::vector<Crypto::EncryptionKeyPair>& userEncryptionKeys)
 {
   auto const user = TC_AWAIT(_contactStore->findUser(_userId));
@@ -239,10 +242,9 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
   {
     auto const encryptionPrivateKey =
         Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            userKeyIt->encryptedPrivateEncryptionKey.base(),
-            userEncryptionKeys.back());
-    userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
-        userKeyIt->publicEncryptionKey, encryptionPrivateKey});
+            userKeyIt->second, userEncryptionKeys.back());
+    userEncryptionKeys.push_back(
+        Crypto::EncryptionKeyPair{userKeyIt->first, encryptionPrivateKey});
   }
   if (userEncryptionKeys.empty())
   {
