@@ -40,18 +40,6 @@ std::vector<uint8_t> makeKeyPublishToUser(
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-std::vector<uint8_t> makeKeyPublishToProvisionalUser(
-    BlockGenerator const& blockGenerator,
-    PublicProvisionalUser const& recipientProvisionalUser,
-    Crypto::Mac const& resourceId,
-    Crypto::SymmetricKey const& resourceKey);
-
-std::vector<uint8_t> makeKeyPublishToGroup(
-    BlockGenerator const& blockGenerator,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    Trustchain::ResourceId const& resourceId,
-    Crypto::SymmetricKey const& resourceKey);
-
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,

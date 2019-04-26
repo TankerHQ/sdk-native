@@ -28,19 +28,8 @@ namespace Tanker
 {
 namespace Share
 {
-std::vector<uint8_t> makeKeyPublishToUser(
-    BlockGenerator const& blockGenerator,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
-    ResourceId const& resourceId,
-    Crypto::SymmetricKey const& resourceKey)
+namespace
 {
-  auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
-      resourceKey, recipientPublicEncryptionKey);
-
-  return blockGenerator.keyPublishToUser(
-      encryptedKey, resourceId, recipientPublicEncryptionKey);
-}
-
 std::vector<uint8_t> makeKeyPublishToProvisionalUser(
     BlockGenerator const& blockGenerator,
     PublicProvisionalUser const& recipientProvisionalUser,
@@ -73,8 +62,6 @@ std::vector<uint8_t> makeKeyPublishToGroup(
       encryptedKey, resourceId, recipientPublicEncryptionKey);
 }
 
-namespace
-{
 struct PartitionedIdentities
 {
   std::vector<UserId> userIds;
@@ -162,6 +149,19 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
+}
+
+std::vector<uint8_t> makeKeyPublishToUser(
+    BlockGenerator const& blockGenerator,
+    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey)
+{
+  auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
+      resourceKey, recipientPublicEncryptionKey);
+
+  return blockGenerator.keyPublishToUser(
+      encryptedKey, resourceId, recipientPublicEncryptionKey);
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
