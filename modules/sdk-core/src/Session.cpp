@@ -578,21 +578,39 @@ tc::cotask<void> Session::claimProvisionalIdentity(
   if (identity.target != Identity::TargetType::Email)
     throw Error::formatEx("unsupported provisional identity target {}",
                           identity.target);
-  auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-      Email{identity.value}, verificationCode));
-  if (!tankerKeys)
-    throw Error::formatEx<Error::NothingToClaim>(fmt("nothing to claim {}"),
-                                                 identity.value);
-  auto block = _blockGenerator.provisionalIdentityClaim(
-      _userId,
-      SecretProvisionalUser{identity.target,
-                            identity.value,
-                            identity.appEncryptionKeyPair,
-                            tankerKeys->encryptionKeyPair,
-                            identity.appSignatureKeyPair,
-                            tankerKeys->signatureKeyPair},
-      TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-  TC_AWAIT(_client->pushBlock(block));
+
+  try
+  {
+    auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
+        Email{identity.value}, verificationCode));
+    if (!tankerKeys)
+    {
+      throw Error::formatEx<Error::NothingToClaim>(fmt("nothing to claim {}"),
+                                                   identity.value);
+    }
+    auto block = _blockGenerator.provisionalIdentityClaim(
+        _userId,
+        SecretProvisionalUser{identity.target,
+                              identity.value,
+                              identity.appEncryptionKeyPair,
+                              tankerKeys->encryptionKeyPair,
+                              identity.appSignatureKeyPair,
+                              tankerKeys->signatureKeyPair},
+        TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+    TC_AWAIT(_client->pushBlock(block));
+  }
+  catch (Error::ServerError const& e)
+  {
+    if (e.serverCode() == "invalid_verification_code" ||
+        e.serverCode() == "authentication_failed")
+    {
+      throw Error::InvalidVerificationCode{e.what()};
+    }
+    else
+    {
+      throw e;
+    }
+  }
 }
 
 tc::cotask<UnlockKey> Session::generateAndRegisterUnlockKey()
