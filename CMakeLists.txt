@@ -19,6 +19,7 @@ option(WITH_COVERAGE "Enable coverage" OFF)
 option(BUILD_TANKER_TOOLS "Build Tanker Tools" ON)
 option(WITH_TRACER "Enable tracer library" OFF)
 option(TANKERLIB_SHARED "whether to build the main tanker library as a shared" OFF)
+option(WARN_AS_ERROR "Add -Werror during compilation" OFF)
 
 add_definitions("-DGSL_THROW_ON_CONTRACT_VIOLATION")
 
@@ -69,6 +70,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
   # warns about void foo(); (should be void foo(void);).
   tanker_add_flags(CMAKE_C_FLAGS "-Wstrict-prototypes")
   set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type -Wno-c++17-extensions")
+  if(WARN_AS_ERROR)
+    tanker_add_flags(CMAKE_CXX_FLAGS "-Werror")
+  endif()
 elseif(MSVC)
   set(COMMON_COMPILE_FLAGS "/MP /bigobj")
 endif()
