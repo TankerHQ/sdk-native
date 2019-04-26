@@ -149,6 +149,44 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
+
+KeyRecipients toKeyRecipients(
+    std::vector<User> const& users,
+    std::vector<Identity::PublicProvisionalIdentity> const&
+        appPublicProvisionalIdentities,
+    std::vector<std::pair<Crypto::PublicSignatureKey,
+                          Crypto::PublicEncryptionKey>> const&
+        tankerPublicProvisionalIdentities,
+    std::vector<ExternalGroup> const& groups)
+{
+  KeyRecipients out;
+  for (auto const& user : users)
+  {
+    if (!user.userKey)
+      throw std::runtime_error(
+          "sharing to users without user key is not supported anymore");
+    out.recipientUserKeys.push_back(*user.userKey);
+  }
+
+  std::transform(appPublicProvisionalIdentities.begin(),
+                 appPublicProvisionalIdentities.end(),
+                 tankerPublicProvisionalIdentities.begin(),
+                 std::back_inserter(out.recipientProvisionalUserKeys),
+                 [](auto const& appPublicProvisionalIdentity,
+                    auto const& tankerPublicProvisionalIdentity) {
+                   return PublicProvisionalUser{
+                       appPublicProvisionalIdentity.appSignaturePublicKey,
+                       appPublicProvisionalIdentity.appEncryptionPublicKey,
+                       tankerPublicProvisionalIdentity.first,
+                       tankerPublicProvisionalIdentity.second,
+                   };
+                 });
+
+  for (auto const& group : groups)
+    out.recipientGroupKeys.push_back(group.publicEncryptionKey);
+
+  return out;
+}
 }
 
 std::vector<uint8_t> makeKeyPublishToUser(
@@ -201,33 +239,10 @@ tc::cotask<KeyRecipients> generateRecipientList(
                                            groupResult.notFound);
   }
 
-  KeyRecipients out;
-  for (auto const& user : userResult.found)
-  {
-    if (!user.userKey)
-      throw std::runtime_error(
-          "sharing to users without user key is not supported anymore");
-    out.recipientUserKeys.push_back(*user.userKey);
-  }
-
-  std::transform(partitionedIdentities.publicProvisionalIdentities.begin(),
-                 partitionedIdentities.publicProvisionalIdentities.end(),
-                 tankerPublicProvisionalIdentityResult.begin(),
-                 std::back_inserter(out.recipientProvisionalUserKeys),
-                 [](auto const& appPublicProvisionalIdentity,
-                    auto const& tankerPublicProvisionalIdentity) {
-                   return PublicProvisionalUser{
-                       appPublicProvisionalIdentity.appSignaturePublicKey,
-                       appPublicProvisionalIdentity.appEncryptionPublicKey,
-                       tankerPublicProvisionalIdentity.first,
-                       tankerPublicProvisionalIdentity.second,
-                   };
-                 });
-
-  for (auto const& group : groupResult.found)
-    out.recipientGroupKeys.push_back(group.publicEncryptionKey);
-
-  TC_RETURN(out);
+  TC_RETURN(toKeyRecipients(userResult.found,
+                            partitionedIdentities.publicProvisionalIdentities,
+                            tankerPublicProvisionalIdentityResult,
+                            groupResult.found));
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
