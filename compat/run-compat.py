@@ -49,7 +49,7 @@ def create_tanker_dev(profile: str) -> None:
     # fmt: off
     ci.cpp.run_conan(
             "create", ".",
-            "compat/dev",
+            "ci/dev",
             "--profile", profile,
             "--update",
             "--build", "tanker"
@@ -57,9 +57,16 @@ def create_tanker_dev(profile: str) -> None:
     # fmt: on
 
 
+def use_packaged_tanker(profile: str) -> None:
+    src_path = Path.getcwd()
+    builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
+    builder.export_pkg("ci/dev")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
+    parser.add_argument("--create-tanker-dev", action="store_true", dest="create_tanker_dev", default=False)
     parser.add_argument("--profile", required=True)
 
     args = parser.parse_args()
@@ -68,7 +75,11 @@ def main() -> None:
 
     ci.cpp.update_conan_config()
 
-    create_tanker_dev(args.profile)
+    if args.create_tanker_dev:
+        create_tanker_dev(args.profile)
+    else:
+        use_packaged_tanker(args.profile)
+
     built_binary = build_all(profile=args.profile)
 
     old_tests = {k: v for k, v in TESTS.items() if k != CURRENT}
