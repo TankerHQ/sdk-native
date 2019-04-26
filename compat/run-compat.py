@@ -18,7 +18,7 @@ def build_all(profile):
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
         src_path = Path.getcwd() / "compat" / version
-        builder = ci.cpp.Builder(src_path, profile=profile, coverage=False)
+        builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
         builder.install_deps()
         builder.configure()
         builder.build()
