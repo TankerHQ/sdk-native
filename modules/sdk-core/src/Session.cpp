@@ -395,36 +395,36 @@ tc::cotask<void> Session::share(
           }),
       end(publicIdentities));
 
-  if (!publicIdentities.empty() || !groupIds.empty())
+  if (publicIdentities.empty() && groupIds.empty())
+    TC_RETURN();
+
+  try
   {
-    try
-    {
-      TC_AWAIT(share(resourceIds, publicIdentities, groupIds));
-    }
-    catch (Error::RecipientNotFoundInternal const& e)
-    {
-      auto const clearPublicIdentities = toClearId(
-          e.userIds(),
-          spublicIdentities,
-          publicIdentities,
-          [](auto const& identity) {
-            auto const permanentIdentity =
-                mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
-            return permanentIdentity ?
-                       nonstd::make_optional(permanentIdentity->userId) :
-                       nonstd::nullopt;
-          });
-      auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
-      throw Error::RecipientNotFound(
-          fmt::format(
-              fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
-              fmt::join(clearPublicIdentities.begin(),
-                        clearPublicIdentities.end(),
-                        ", "),
-              fmt::join(clearGids.begin(), clearGids.end(), ", ")),
-          clearPublicIdentities,
-          e.groupIds());
-    }
+    TC_AWAIT(share(resourceIds, publicIdentities, groupIds));
+  }
+  catch (Error::RecipientNotFoundInternal const& e)
+  {
+    auto const clearPublicIdentities = toClearId(
+        e.userIds(),
+        spublicIdentities,
+        publicIdentities,
+        [](auto const& identity) {
+          auto const permanentIdentity =
+              mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
+          return permanentIdentity ?
+                     nonstd::make_optional(permanentIdentity->userId) :
+                     nonstd::nullopt;
+        });
+    auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
+    throw Error::RecipientNotFound(
+        fmt::format(
+            fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+            fmt::join(clearPublicIdentities.begin(),
+                      clearPublicIdentities.end(),
+                      ", "),
+            fmt::join(clearGids.begin(), clearGids.end(), ", ")),
+        clearPublicIdentities,
+        e.groupIds());
   }
 }
 
