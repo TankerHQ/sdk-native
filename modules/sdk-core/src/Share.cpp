@@ -231,7 +231,6 @@ tc::cotask<KeyRecipients> generateRecipientList(
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
     BlockGenerator const& blockGenerator,
     ResourceKeys const& resourceKeys,
     KeyRecipients const& keyRecipients)
@@ -253,7 +252,6 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
 }
 
 tc::cotask<void> share(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     BlockGenerator const& blockGenerator,
@@ -265,15 +263,14 @@ tc::cotask<void> share(
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, client, publicIdentities, groupIds));
 
-  auto const ks = generateShareBlocks(
-      selfPrivateEncryptionKey, blockGenerator, resourceKeys, keyRecipients);
+  auto const ks =
+      generateShareBlocks(blockGenerator, resourceKeys, keyRecipients);
 
   if (!ks.empty())
     TC_AWAIT(client.pushKeys(ks));
 }
 
 tc::cotask<void> share(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
     ResourceKeyStore const& resourceKeyStore,
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
@@ -286,8 +283,7 @@ tc::cotask<void> share(
   auto const resourceKeys =
       TC_AWAIT(getResourceKeys(resourceKeyStore, resourceIds));
 
-  TC_AWAIT(share(selfPrivateEncryptionKey,
-                 userAccessor,
+  TC_AWAIT(share(userAccessor,
                  groupAccessor,
                  blockGenerator,
                  client,

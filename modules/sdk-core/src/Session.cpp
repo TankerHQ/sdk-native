@@ -290,8 +290,7 @@ tc::cotask<void> Session::encrypt(
   auto groupIds = convertToGroupIds(sgroupIds);
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
-  TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
-                        _userAccessor,
+  TC_AWAIT(Share::share(_userAccessor,
                         _groupAcessor,
                         _blockGenerator,
                         *_client,
@@ -358,8 +357,7 @@ tc::cotask<void> Session::share(
     std::vector<Identity::PublicIdentity> const& publicIdentities,
     std::vector<GroupId> const& groupIds)
 {
-  TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
-                        _resourceKeyStore,
+  TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
                         _groupAcessor,
                         _blockGenerator,
