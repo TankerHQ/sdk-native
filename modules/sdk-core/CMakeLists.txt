@@ -118,6 +118,7 @@ add_library(tankercore STATIC
   include/Tanker/UnverifiedEntry.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
+  include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/KeyPublishToDevice.hpp
