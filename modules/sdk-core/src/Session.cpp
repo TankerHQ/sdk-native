@@ -91,13 +91,6 @@ std::vector<Identity::PublicIdentity> extractPublicIdentities(
   });
 }
 
-std::vector<GroupId> convertToGroupIds(std::vector<SGroupId> const& sgroupIds)
-{
-  return convertList(sgroupIds, [](auto&& sgroupId) {
-    return cppcodec::base64_rfc4648::decode<GroupId>(sgroupId.string());
-  });
-}
-
 struct IdentityFunc
 {
   template <typename T>
