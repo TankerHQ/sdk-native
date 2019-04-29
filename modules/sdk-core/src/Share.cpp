@@ -160,6 +160,40 @@ std::vector<Identity::PublicIdentity> extractPublicIdentities(
   });
 }
 
+void handleNotFound(
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    std::vector<Trustchain::UserId> const& usersNotFound,
+    std::vector<SGroupId> const& sgroupIds,
+    std::vector<GroupId> const& groupIds,
+    std::vector<Trustchain::GroupId> const& groupsNotFound)
+{
+  if (!groupsNotFound.empty() || !usersNotFound.empty())
+  {
+    auto const clearPublicIdentities = toClearId(
+        usersNotFound,
+        spublicIdentities,
+        publicIdentities,
+        [](auto const& identity) {
+          auto const permanentIdentity =
+              mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
+          return permanentIdentity ?
+                     nonstd::make_optional(permanentIdentity->userId) :
+                     nonstd::nullopt;
+        });
+    auto const clearGids = toClearId(groupsNotFound, sgroupIds, groupIds);
+    throw Error::RecipientNotFound(
+        fmt::format(
+            fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+            fmt::join(clearPublicIdentities.begin(),
+                      clearPublicIdentities.end(),
+                      ", "),
+            fmt::join(clearGids.begin(), clearGids.end(), ", ")),
+        clearPublicIdentities,
+        groupsNotFound);
+  }
+}
+
 KeyRecipients toKeyRecipients(
     std::vector<User> const& users,
     std::vector<Identity::PublicProvisionalIdentity> const&
@@ -246,11 +280,12 @@ tc::cotask<KeyRecipients> generateRecipientList(
 
   auto const groupResult = TC_AWAIT(groupAccessor.pull(groupIds));
 
-  if (!groupResult.notFound.empty() || !userResult.notFound.empty())
-  {
-    throw Error::RecipientNotFoundInternal(userResult.notFound,
-                                           groupResult.notFound);
-  }
+  handleNotFound(spublicIdentities,
+                 publicIdentities,
+                 userResult.notFound,
+                 sgroupIds,
+                 groupIds,
+                 groupResult.notFound);
 
   TC_RETURN(toKeyRecipients(userResult.found,
                             partitionedIdentities.publicProvisionalIdentities,

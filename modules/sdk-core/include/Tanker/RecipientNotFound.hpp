@@ -11,35 +11,6 @@ namespace Tanker
 {
 namespace Error
 {
-class RecipientNotFoundInternal : public InternalError
-{
-public:
-  RecipientNotFoundInternal() : InternalError("RecipientNotFoundInternal")
-  {
-  }
-
-  RecipientNotFoundInternal(std::vector<Trustchain::UserId> userIds,
-                            std::vector<Trustchain::GroupId> groupIds)
-    : InternalError("RecipientNotFoundInternal"),
-      _userIds(std::move(userIds)),
-      _groupIds(std::move(groupIds))
-  {
-  }
-
-  std::vector<Trustchain::UserId> const& userIds() const
-  {
-    return _userIds;
-  }
-  std::vector<Trustchain::GroupId> const& groupIds() const
-  {
-    return _groupIds;
-  }
-
-private:
-  std::vector<Trustchain::UserId> _userIds;
-  std::vector<Trustchain::GroupId> _groupIds;
-};
-
 class RecipientNotFound : public Exception,
                           public UserNotFoundBase,
                           public GroupNotFoundBase
