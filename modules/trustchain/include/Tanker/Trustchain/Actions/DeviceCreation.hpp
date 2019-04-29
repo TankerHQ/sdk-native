@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
@@ -48,6 +49,7 @@ public:
   bool isGhostDevice() const;
 
   std::vector<std::uint8_t> signatureData() const;
+  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
   template <typename T>
   bool holdsAlternative() const;

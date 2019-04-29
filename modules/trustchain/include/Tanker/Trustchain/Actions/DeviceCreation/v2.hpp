@@ -31,6 +31,11 @@ public:
                   Crypto::PublicSignatureKey const& devicePublicSignatureKey,
                   Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
                   Crypto::Hash const& lastReset);
+  DeviceCreation2(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+                  UserId const& userId,
+                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
+                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
+                  Crypto::Hash const& lastReset);
 
   static constexpr auto const nature = Nature::DeviceCreation2;
 
@@ -39,6 +44,8 @@ public:
   using base_t::delegationSignature;
   using base_t::publicSignatureKey;
   using base_t::publicEncryptionKey;
+  using base_t::signatureData;
+  using base_t::sign;
 
   Crypto::Hash const& lastReset() const;
 

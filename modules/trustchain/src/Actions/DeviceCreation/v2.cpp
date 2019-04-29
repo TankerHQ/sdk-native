@@ -27,6 +27,20 @@ DeviceCreation2::DeviceCreation2(
 {
 }
 
+DeviceCreation2::DeviceCreation2(
+    Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+    UserId const& userId,
+    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
+    Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
+    Crypto::Hash const& lastReset)
+  : DeviceCreation1(ephemeralPublicSignatureKey,
+                    userId,
+                    devicePublicSignatureKey,
+                    devicePublicEncryptionKey),
+    _lastReset(lastReset)
+{
+}
+
 DeviceCreation1 const& DeviceCreation2::asDeviceCreation1() const
 {
   if (!_lastReset.is_null())

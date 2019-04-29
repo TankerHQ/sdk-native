@@ -40,6 +40,14 @@ public:
       Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
       Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey,
       DeviceType type);
+  DeviceCreation3(
+      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+      UserId const& userId,
+      Crypto::PublicSignatureKey const& devicePublicSignatureKey,
+      Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
+      Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
+      Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey,
+      DeviceType type);
 
   static constexpr auto const nature = Nature::DeviceCreation3;
 
@@ -48,6 +56,8 @@ public:
   using base_t::delegationSignature;
   using base_t::publicSignatureKey;
   using base_t::publicEncryptionKey;
+  using base_t::signatureData;
+  using base_t::sign;
 
   Crypto::PublicEncryptionKey const& publicUserEncryptionKey() const;
   Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey()

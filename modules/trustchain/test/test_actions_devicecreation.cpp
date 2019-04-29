@@ -3,6 +3,7 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v3.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -64,6 +65,14 @@ TEST_CASE("DeviceCreation tests")
 
       CHECK_THROWS(dc2.asDeviceCreation1());
     }
+  }
+
+  SUBCASE("sign should return the delegationSignature")
+  {
+    auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
+    DeviceCreation dc{};
+    auto const& signature = dc.sign(signatureKeyPair.privateKey);
+    CHECK(signature == dc.delegationSignature());
   }
 }
 
