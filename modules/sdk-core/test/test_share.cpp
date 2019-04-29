@@ -154,13 +154,13 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  auto const recipients = AWAIT(
-      Share::generateRecipientList(userAccessor.get(),
-                                   groupAccessor.get(),
-                                   client,
-                                   {Identity::PublicPermanentIdentity{
-                                       builder.trustchainId(), newUser.userId}},
-                                   {}));
+  auto const recipients = AWAIT(Share::generateRecipientList(
+      userAccessor.get(),
+      groupAccessor.get(),
+      client,
+      {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+          builder.trustchainId(), newUser.userId})}},
+      {}));
 
   // there should be only user keys
   CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
@@ -196,12 +196,13 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
       .LR_RETURN(
           (GroupAccessor::PullResult{{newGroup.group.asExternalGroup()}, {}}));
 
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {},
-                                         {newGroup.group.tankerGroup.id}));
+  auto const recipients = AWAIT(
+      Share::generateRecipientList(userAccessor.get(),
+                                   groupAccessor.get(),
+                                   client,
+                                   {},
+                                   {cppcodec::base64_rfc4648::encode<SGroupId>(
+                                       newGroup.group.tankerGroup.id)}));
 
   // there should be only group keys
   CHECK(recipients.recipientUserKeys.size() == 0);
@@ -251,12 +252,12 @@ TEST_CASE(
                  provisionalUser.tankerEncryptionKeyPair.publicKey}}})
               .dump()));
 
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {publicProvisionalIdentity},
-                                         {}));
+  auto const recipients = AWAIT(Share::generateRecipientList(
+      userAccessor.get(),
+      groupAccessor.get(),
+      client,
+      {SPublicIdentity{to_string(publicProvisionalIdentity)}},
+      {}));
 
   CHECK(recipients.recipientUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
@@ -296,14 +297,15 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
-                      userAccessor.get(),
-                      groupAccessor.get(),
-                      client,
-                      {Identity::PublicPermanentIdentity{builder.trustchainId(),
-                                                         newUser.userId}},
-                      {})),
-                  Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(
+      AWAIT(Share::generateRecipientList(
+          userAccessor.get(),
+          groupAccessor.get(),
+          client,
+          {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+              builder.trustchainId(), newUser.userId})}},
+          {})),
+      Error::RecipientNotFoundInternal);
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -332,13 +334,14 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
       .LR_RETURN(
           (GroupAccessor::PullResult{{}, {newGroup.group.tankerGroup.id}}));
 
-  CHECK_THROWS_AS(
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {},
-                                         {newGroup.group.tankerGroup.id})),
-      Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
+                      userAccessor.get(),
+                      groupAccessor.get(),
+                      client,
+                      {},
+                      {cppcodec::base64_rfc4648::encode<SGroupId>(
+                          newGroup.group.tankerGroup.id)})),
+                  Error::RecipientNotFoundInternal);
 }
 
 template <typename T>

@@ -13,6 +13,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserNotFound.hpp>
+#include <Tanker/Utils.hpp>
 
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
@@ -150,6 +151,15 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
   return out;
 }
 
+std::vector<Identity::PublicIdentity> extractPublicIdentities(
+    std::vector<SPublicIdentity> const& spublicIdentities)
+{
+  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
+    return Identity::extract<Identity::PublicIdentity>(
+        spublicIdentity.string());
+  });
+}
+
 KeyRecipients toKeyRecipients(
     std::vector<User> const& users,
     std::vector<Identity::PublicProvisionalIdentity> const&
@@ -206,9 +216,12 @@ tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     Client& client,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
+  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto const groupIds = convertToGroupIds(sgroupIds);
+
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 
   auto const userResult =
@@ -266,14 +279,13 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
   return out;
 }
 
-tc::cotask<void> share(
-    UserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
-    BlockGenerator const& blockGenerator,
-    Client& client,
-    ResourceKeys const& resourceKeys,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+tc::cotask<void> share(UserAccessor& userAccessor,
+                       GroupAccessor& groupAccessor,
+                       BlockGenerator const& blockGenerator,
+                       Client& client,
+                       ResourceKeys const& resourceKeys,
+                       std::vector<SPublicIdentity> const& publicIdentities,
+                       std::vector<SGroupId> const& groupIds)
 {
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, client, publicIdentities, groupIds));
@@ -285,15 +297,14 @@ tc::cotask<void> share(
     TC_AWAIT(client.pushKeys(ks));
 }
 
-tc::cotask<void> share(
-    ResourceKeyStore const& resourceKeyStore,
-    UserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
-    BlockGenerator const& blockGenerator,
-    Client& client,
-    std::vector<Trustchain::ResourceId> const& resourceIds,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
+                       UserAccessor& userAccessor,
+                       GroupAccessor& groupAccessor,
+                       BlockGenerator const& blockGenerator,
+                       Client& client,
+                       std::vector<Trustchain::ResourceId> const& resourceIds,
+                       std::vector<SPublicIdentity> const& publicIdentities,
+                       std::vector<SGroupId> const& groupIds)
 {
   auto const resourceKeys =
       TC_AWAIT(getResourceKeys(resourceKeyStore, resourceIds));

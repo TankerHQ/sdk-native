@@ -266,12 +266,9 @@ tc::cotask<void> Session::encrypt(
     std::vector<SGroupId> const& sgroupIds)
 {
   auto const metadata = Encryptor::encrypt(encryptedData, clearData);
-  auto publicIdentities = extractPublicIdentities(spublicIdentities);
-  // add ourself
-  publicIdentities.insert(
-      publicIdentities.begin(),
-      Identity::PublicPermanentIdentity{_trustchainId, _userId});
-  auto groupIds = convertToGroupIds(sgroupIds);
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(SPublicIdentity{
+      to_string(Identity::PublicPermanentIdentity{_trustchainId, _userId})});
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_userAccessor,
@@ -279,8 +276,8 @@ tc::cotask<void> Session::encrypt(
                         _blockGenerator,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
-                        publicIdentities,
-                        groupIds));
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
 }
 
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
@@ -338,8 +335,8 @@ tc::cotask<std::vector<Device>> Session::getDeviceList() const
 
 tc::cotask<void> Session::share(
     std::vector<ResourceId> const& resourceIds,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
 {
   TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
@@ -382,7 +379,7 @@ tc::cotask<void> Session::share(
 
   try
   {
-    TC_AWAIT(share(resourceIds, publicIdentities, groupIds));
+    TC_AWAIT(share(resourceIds, spublicIdentities, sgroupIds));
   }
   catch (Error::RecipientNotFoundInternal const& e)
   {
