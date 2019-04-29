@@ -20,10 +20,12 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/TrustchainCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
+  include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/Serialization/Action.hpp
+  include/Tanker/Trustchain/Serialization/ClientEntry.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
@@ -40,6 +42,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
   include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
   include/Tanker/Trustchain/Json/Action.hpp
+  include/Tanker/Trustchain/Json/ClientEntry.hpp
   include/Tanker/Trustchain/Json/DeviceCreation.hpp
   include/Tanker/Trustchain/Json/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Json/DeviceCreation/v2.hpp
@@ -75,7 +78,9 @@ add_library(tankertrustchain STATIC
   src/Actions/TrustchainCreation.cpp
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp
+  src/ClientEntry.cpp
   src/Json/Action.cpp
+  src/Json/ClientEntry.cpp
   src/Json/DeviceCreation.cpp
   src/Json/DeviceCreation/v1.cpp
   src/Json/DeviceCreation/v2.cpp
@@ -92,6 +97,7 @@ add_library(tankertrustchain STATIC
   src/Json/UserGroupAddition.cpp
   src/Json/UserGroupCreation.cpp
   src/Serialization/Action.cpp
+  src/Serialization/ClientEntry.cpp
   src/Serialization/DeviceCreation.cpp
   src/Serialization/DeviceCreation/v1.cpp
   src/Serialization/DeviceCreation/v2.cpp
