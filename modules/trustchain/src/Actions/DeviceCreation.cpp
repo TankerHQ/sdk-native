@@ -67,21 +67,15 @@ bool DeviceCreation::isGhostDevice() const
 
 std::vector<std::uint8_t> DeviceCreation::signatureData() const
 {
-  auto const& ephemeralPublicSignatureKey = this->ephemeralPublicSignatureKey();
-  auto const& userId = this->userId();
+  return mpark::visit([&](auto const& val) { return val.signatureData(); },
+                      _variant);
+}
 
+Crypto::Signature const& DeviceCreation::sign(
+    Crypto::PrivateSignatureKey const& key)
+{
   return mpark::visit(
-      [&](auto const& val) {
-        std::vector<std::uint8_t> buffer(Crypto::PublicSignatureKey::arraySize +
-                                         UserId::arraySize);
-        auto it = std::copy(ephemeralPublicSignatureKey.begin(),
-                            ephemeralPublicSignatureKey.end(),
-                            buffer.begin());
-
-        std::copy(userId.begin(), userId.end(), it);
-        return buffer;
-      },
-      _variant);
+      [&](auto& val) -> decltype(auto) { return val.sign(key); }, _variant);
 }
 
 bool operator==(DeviceCreation const& lhs, DeviceCreation const& rhs)

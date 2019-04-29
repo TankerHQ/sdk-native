@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
@@ -11,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 namespace Tanker
 {
@@ -27,6 +29,10 @@ public:
                   Crypto::Signature const& delegationSignature,
                   Crypto::PublicSignatureKey const& devicePublicSignatureKey,
                   Crypto::PublicEncryptionKey const& devicePublicEncryptionKey);
+  DeviceCreation1(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+                  UserId const& userId,
+                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
+                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey);
 
   static constexpr auto const nature = Nature::DeviceCreation;
 
@@ -35,6 +41,9 @@ public:
   Crypto::Signature const& delegationSignature() const;
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
+
+  std::vector<std::uint8_t> signatureData() const;
+  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 protected:
   Crypto::PublicSignatureKey _ephemeralPublicSignatureKey;
