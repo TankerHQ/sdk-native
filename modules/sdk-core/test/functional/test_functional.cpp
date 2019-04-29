@@ -316,6 +316,25 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(decrypted == clearData);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Handles incorrect verification codes when claiming")
+{
+  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const bobVerificationCode = VerificationCode{"invalid"};
+
+  CHECK_THROWS_AS(TC_AWAIT(bobSession->claimProvisionalIdentity(
+                      SSecretProvisionalIdentity{bobProvisionalIdentity},
+                      VerificationCode{bobVerificationCode})),
+                  Error::InvalidVerificationCode);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 {
   auto alice = trustchain.makeUser(Test::UserType::New);
