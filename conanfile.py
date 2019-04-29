@@ -18,6 +18,7 @@ class TankerConan(ConanFile):
     default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "warn_as_error=False", "sanitizer=None", "coverage=False", "coroutinests=False"
     exports_sources = "CMakeLists.txt", "modules/*"
     generators = "cmake", "json", "ycm"
+    cmake = None
 
     @property
     def cross_building(self):
@@ -94,34 +95,42 @@ class TankerConan(ConanFile):
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")
 
-    def build(self):
-        cmake = CMake(self)
+    def init_cmake(self):
+        if self.cmake:
+            return
 
-        if "CONAN_CXX_FLAGS" not in cmake.definitions:
-            cmake.definitions["CONAN_CXX_FLAGS"] = ""
-        if "CONAN_C_FLAGS" not in cmake.definitions:
-            cmake.definitions["CONAN_C_FLAGS"] = ""
+        self.cmake = CMake(self)
+
+        if "CONAN_CXX_FLAGS" not in self.cmake.definitions:
+            self.cmake.definitions["CONAN_CXX_FLAGS"] = ""
+        if "CONAN_C_FLAGS" not in self.cmake.definitions:
+            self.cmake.definitions["CONAN_C_FLAGS"] = ""
 
         if self.options.sanitizer:
-            cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
-            cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
+            self.cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
+            self.cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
         if self.options.coroutinests:
-            cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
-        cmake.definitions["BUILD_TESTS"] = self.should_build_tests
-        cmake.definitions["BUILD_BENCH"] = self.should_build_bench
-        cmake.definitions["WITH_TRACER"] = self.should_build_tracer
-        cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
-        cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
-        cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
-        cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
-        cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
-        cmake.definitions["WITH_COVERAGE"] = self.options.coverage
+            self.cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
+        self.cmake.definitions["BUILD_TESTS"] = self.should_build_tests
+        self.cmake.definitions["BUILD_BENCH"] = self.should_build_bench
+        self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer
+        self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
+        self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
+        self.cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
+        self.cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
+        self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
+        self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
+
+    def build(self):
+        self.init_cmake()
         if self.should_configure:
-            cmake.configure()
+            self.cmake.configure()
         if self.should_build:
-            cmake.build()
-        if self.should_install:
-            cmake.install()
+            self.cmake.build()
+
+    def package(self):
+        self.init_cmake()
+        self.cmake.install()
 
     def package_id(self):
         del self.info.options.warn_as_error
