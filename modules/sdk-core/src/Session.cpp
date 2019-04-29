@@ -91,36 +91,6 @@ std::vector<Identity::PublicIdentity> extractPublicIdentities(
   });
 }
 
-struct IdentityFunc
-{
-  template <typename T>
-  T&& operator()(T&& t)
-  {
-    return std::forward<T>(t);
-  }
-};
-
-template <typename S, typename T, typename I, typename F = IdentityFunc>
-auto toClearId(std::vector<T> const& errorIds,
-               std::vector<S> const& sIds,
-               std::vector<I> const& Ids,
-               F&& mapToT = IdentityFunc{})
-{
-  std::vector<S> clearIds;
-  clearIds.reserve(Ids.size());
-
-  for (auto const& wrongId : errorIds)
-  {
-    auto const badIt = std::find_if(Ids.begin(), Ids.end(), [&](auto const& e) {
-      return mapToT(e) == wrongId;
-    });
-
-    assert(badIt != Ids.end() && "Wrong id not found");
-
-    clearIds.push_back(sIds[std::distance(Ids.begin(), badIt)]);
-  }
-  return clearIds;
-}
 template <typename T>
 std::vector<T> removeDuplicates(std::vector<T> stuff)
 {
