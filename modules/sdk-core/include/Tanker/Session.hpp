@@ -126,10 +126,6 @@ public:
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
 private:
-  tc::cotask<void> share(std::vector<Trustchain::ResourceId> const& resourceId,
-                         std::vector<SPublicIdentity> const& publicIdentities,
-                         std::vector<SGroupId> const& groupIds);
-
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
   tc::cotask<void> onDeviceCreated(Entry const& entry);

@@ -287,21 +287,6 @@ tc::cotask<std::vector<Device>> Session::getDeviceList() const
 }
 
 tc::cotask<void> Session::share(
-    std::vector<ResourceId> const& resourceIds,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  TC_AWAIT(Share::share(_resourceKeyStore,
-                        _userAccessor,
-                        _groupAcessor,
-                        _blockGenerator,
-                        *_client,
-                        resourceIds,
-                        publicIdentities,
-                        groupIds));
-}
-
-tc::cotask<void> Session::share(
     std::vector<SResourceId> const& sresourceIds,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
@@ -313,7 +298,14 @@ tc::cotask<void> Session::share(
     return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
   });
 
-  TC_AWAIT(share(resourceIds, spublicIdentities, sgroupIds));
+  TC_AWAIT(Share::share(_resourceKeyStore,
+                        _userAccessor,
+                        _groupAcessor,
+                        _blockGenerator,
+                        *_client,
+                        resourceIds,
+                        spublicIdentities,
+                        sgroupIds));
 }
 
 tc::cotask<SGroupId> Session::createGroup(
