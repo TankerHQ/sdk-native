@@ -227,6 +227,22 @@ emscripten::val CoreDeviceId(AsyncCore& core)
       [](auto const& deviceId) { return deviceId.string(); }));
 }
 
+emscripten::val CoreGetDeviceList(AsyncCore& core)
+{
+  return Emscripten::tcFutureToJsPromise(
+      core.getDeviceList().and_then([&](auto const& devices) {
+        auto ret = emscripten::val::array();
+        for (auto const& device : devices)
+        {
+          auto jdevice = emscripten::val::object();
+          jdevice.set("id", cppcodec::base64_rfc4648::encode(device.id));
+          jdevice.set("isRevoked", device.revokedAtBlkIndex.has_value());
+          ret.call<void>("push", jdevice);
+        }
+        return ret;
+      }));
+}
+
 // There is no disconnect function because the JS just subscribes to this event
 // for the whole lifetime of the object. User connections are handled by
 // EventEmitter directly in JS.
@@ -311,6 +327,7 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("hasRegisteredUnlockMethod", &CoreHasRegisteredUnlockMethod)
       .function("registeredUnlockMethods", &CoreRegisteredUnlockMethods)
       .function("deviceId", &CoreDeviceId)
+      .function("getDeviceList", &CoreGetDeviceList)
       .function("revokeDevice", &CoreRevokeDevice)
       .function("connectDeviceRevoked", &CoreConnectDeviceRevoked)
       .function("syncTrustchain", &CoreSyncTrustchain);
