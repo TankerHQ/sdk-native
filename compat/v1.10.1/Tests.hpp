@@ -27,37 +27,52 @@ CorePtr createCore(std::string const& url,
   return std::make_unique<Tanker::AsyncCore>(
       url, Tanker::SdkInfo{"test", id, TANKER_VERSION}, tankerPath);
 }
-}
 
 struct EncryptState
 {
-  User alice;
-  User bob;
-  nonstd::optional<Tanker::SGroupId> groupId;
   std::string clearData;
   std::vector<uint8_t> encryptedData;
 };
 
 void to_json(nlohmann::json& j, EncryptState const& state)
 {
+  j["clear_data"] = state.clearData;
+  j["encrypted_data"] = cppcodec::base64_rfc4648::encode(state.encryptedData);
+}
+
+void from_json(nlohmann::json const& j, EncryptState& state)
+{
+  j.at("clear_data").get_to(state.clearData);
+  auto const str = j.at("encrypted_data").get<std::string>();
+  state.encryptedData =
+      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(str);
+}
+
+struct ShareState
+{
+  User alice;
+  User bob;
+  nonstd::optional<Tanker::SGroupId> groupId;
+  EncryptState encryptState;
+};
+
+void to_json(nlohmann::json& j, ShareState const& state)
+{
   j["alice"] = state.alice;
   j["bob"] = state.bob;
   if (state.groupId)
     j["group"] = state.groupId.value();
-  j["clear_data"] = state.clearData;
-  j["encrypted_data"] = Tanker::base64::encode(state.encryptedData);
+  j["encrypt_state"] = state.encryptState;
 }
 
-void from_json(nlohmann::json const& j, EncryptState& state)
+void from_json(nlohmann::json const& j, ShareState& state)
 {
   j.at("alice").get_to(state.alice);
   j.at("bob").get_to(state.bob);
   auto group = j.find("group");
   if (group != j.end())
     state.groupId = group->get<Tanker::SGroupId>();
-  j.at("clear_data").get_to(state.clearData);
-  auto const str = j.at("encrypted_data").get<std::string>();
-  state.encryptedData = Tanker::base64::decode<std::vector<uint8_t>>(str);
+  state.encryptState = j.at("encrypt_state").get<EncryptState>();
 }
 
 void decrypt(CorePtr const& core,
@@ -87,6 +102,7 @@ std::vector<uint8_t> encrypt(CorePtr& core,
   core->encrypt(encryptedData.data(), buffer, users, groups).get();
   return encryptedData;
 }
+}
 
 struct EncryptCompat : Command
 {
@@ -109,25 +125,31 @@ struct EncryptCompat : Command
 
     auto encryptedData = encrypt(aliceCore, clearData, {bob.suserId}, {});
 
-    Tanker::saveJson(
-        statePath,
-        EncryptState{alice, bob, nonstd::nullopt, clearData, encryptedData});
+    Tanker::saveJson(statePath,
+                     ShareState{alice,
+                                bob,
+                                nonstd::nullopt,
+                                EncryptState{clearData, encryptedData}});
     aliceCore->close().get();
   }
 
   void next() override
   {
-    EncryptState state = Tanker::loadJson(statePath);
+    auto const state = Tanker::loadJson(statePath).get<ShareState>();
 
     auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
     bobCore->open(state.bob.suserId, state.bob.user_token).get();
-    decrypt(bobCore, state.encryptedData, state.clearData);
+    decrypt(bobCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
     bobCore->close().get();
 
     auto aliceCore =
         createCore(trustchain->url(), trustchain->id(), tankerPath);
     aliceCore->open(state.alice.suserId, state.alice.user_token).get();
-    decrypt(aliceCore, state.encryptedData, state.clearData);
+    decrypt(aliceCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
     aliceCore->close().get();
   }
 };
@@ -155,22 +177,27 @@ struct GroupCompat : Command
 
     Tanker::saveJson(
         statePath,
-        EncryptState{alice, bob, sgroupId, clearData, encryptedData});
+        ShareState{
+            alice, bob, sgroupId, EncryptState{clearData, encryptedData}});
     aliceCore->close().get();
   }
 
   void next() override
   {
-    EncryptState state = Tanker::loadJson(statePath);
+    auto const state = Tanker::loadJson(statePath).get<ShareState>();
 
     auto bobCore = createCore(trustchain->url(), trustchain->id(), tankerPath);
     bobCore->open(state.bob.suserId, state.bob.user_token).get();
-    decrypt(bobCore, state.encryptedData, state.clearData);
+    decrypt(bobCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
 
     auto aliceCore =
         createCore(trustchain->url(), trustchain->id(), tankerPath);
     aliceCore->open(state.alice.suserId, state.alice.user_token).get();
-    decrypt(aliceCore, state.encryptedData, state.clearData);
+    decrypt(aliceCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
 
     auto clearData = "my updated speech"s;
     auto encryptedData =
