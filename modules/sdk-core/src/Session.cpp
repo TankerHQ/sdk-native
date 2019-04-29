@@ -81,23 +81,6 @@ std::vector<UserId> publicIdentitiesToUserIds(
         .userId;
   });
 }
-
-std::vector<Identity::PublicIdentity> extractPublicIdentities(
-    std::vector<SPublicIdentity> const& spublicIdentities)
-{
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return Identity::extract<Identity::PublicIdentity>(
-        spublicIdentity.string());
-  });
-}
-
-template <typename T>
-std::vector<T> removeDuplicates(std::vector<T> stuff)
-{
-  std::sort(begin(stuff), end(stuff));
-  stuff.erase(std::unique(begin(stuff), end(stuff)), end(stuff));
-  return stuff;
-}
 }
 
 Session::Session(Config&& config)
@@ -320,32 +303,15 @@ tc::cotask<void> Session::share(
 
 tc::cotask<void> Session::share(
     std::vector<SResourceId> const& sresourceIds,
-    std::vector<SPublicIdentity> const& aspublicIdentities,
-    std::vector<SGroupId> const& asgroupIds)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
-  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
-  auto const sgroupIds = removeDuplicates(asgroupIds);
+  if (spublicIdentities.empty() && sgroupIds.empty())
+    TC_RETURN();
 
-  auto publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto groupIds = convertToGroupIds(sgroupIds);
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
     return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
   });
-
-  // we remove ourselves from the recipients
-  publicIdentities.erase(
-      std::remove_if(
-          begin(publicIdentities),
-          end(publicIdentities),
-          [this](auto&& rec) {
-            auto const permanentIdentity =
-                mpark::get_if<Identity::PublicPermanentIdentity>(&rec);
-            return permanentIdentity && permanentIdentity->userId == _userId;
-          }),
-      end(publicIdentities));
-
-  if (publicIdentities.empty() && groupIds.empty())
-    TC_RETURN();
 
   TC_AWAIT(share(resourceIds, spublicIdentities, sgroupIds));
 }

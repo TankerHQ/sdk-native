@@ -56,4 +56,12 @@ auto toClearId(std::vector<T> const& errorIds,
   }
   return clearIds;
 }
+
+template <typename T>
+std::vector<T> removeDuplicates(std::vector<T> stuff)
+{
+  std::sort(begin(stuff), end(stuff));
+  stuff.erase(std::unique(begin(stuff), end(stuff)), end(stuff));
+  return stuff;
+}
 }

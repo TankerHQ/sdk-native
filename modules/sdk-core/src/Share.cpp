@@ -250,9 +250,12 @@ tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     Client& client,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SPublicIdentity> const& aspublicIdentities,
+    std::vector<SGroupId> const& asgroupIds)
 {
+  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
+  auto const sgroupIds = removeDuplicates(asgroupIds);
+
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);
   auto const groupIds = convertToGroupIds(sgroupIds);
 
