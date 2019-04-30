@@ -4,6 +4,7 @@ import sys
 from path import Path
 
 import ci
+import ci.conan
 import ci.cpp
 import ci.ios
 import cli_ui as ui
@@ -26,7 +27,7 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.home_isolation:
-        ci.cpp.set_home_isolation()
+        ci.conan.set_home_isolation()
     command = args.command
     if command == "update-conan-config":
         ci.cpp.update_conan_config()

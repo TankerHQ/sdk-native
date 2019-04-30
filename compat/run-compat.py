@@ -3,6 +3,7 @@ import cli_ui as ui
 from path import Path
 import tempfile
 import ci.cpp
+import ci.conan
 
 import subprocess
 
@@ -47,7 +48,7 @@ def run_test(base_path, next_path, version, command):
 
 def create_tanker_dev(profile: str) -> None:
     # fmt: off
-    ci.cpp.run_conan(
+    ci.conan.run(
             "create", ".",
             "ci/dev",
             "--profile", profile,
@@ -71,7 +72,7 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.home_isolation:
-        ci.cpp.set_home_isolation()
+        ci.conan.set_home_isolation()
 
     ci.cpp.update_conan_config()
 
