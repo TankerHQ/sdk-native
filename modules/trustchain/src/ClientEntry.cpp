@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <algorithm>
 #include <tuple>
@@ -32,22 +33,13 @@ ClientEntry ClientEntry::create(TrustchainId const& trustchainId,
                                 Crypto::PrivateSignatureKey const& key)
 {
   auto const serializedPayload = Serialization::serialize(action);
-
-  auto const natureInt = static_cast<unsigned>(action.nature());
-  std::vector<std::uint8_t> buffer(Serialization::varint_size(natureInt) +
-                                   parentHash.size() +
-                                   serializedPayload.size());
-  auto it = buffer.data();
-  it = Serialization::varint_write(it, natureInt);
-  it = Serialization::serialize(it, parentHash);
-  std::copy(serializedPayload.begin(), serializedPayload.end(), it);
-
-  auto const hash = Crypto::generichash(buffer);
+  auto const hash =
+      detail::computeHash(action.nature(), parentHash, serializedPayload);
   auto const signature = Crypto::sign(hash, key);
 
   return {trustchainId,
           parentHash,
-          static_cast<Actions::Nature>(natureInt),
+          action.nature(),
           serializedPayload,
           hash,
           signature};

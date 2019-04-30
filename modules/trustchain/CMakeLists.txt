@@ -61,6 +61,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Json/UserGroupCreation.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
+  include/Tanker/Trustchain/detail/ComputeHash.hpp
 
   src/Action.cpp
   src/Actions/DeviceCreation.cpp
@@ -115,6 +116,7 @@ add_library(tankertrustchain STATIC
   src/Serialization/UserGroupAddition.cpp
   src/Serialization/UserGroupCreation.cpp
   src/ExternTemplates.cpp
+  src/detail/ComputeHash.cpp
 )
 
 target_include_directories(tankertrustchain
