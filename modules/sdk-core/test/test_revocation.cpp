@@ -21,7 +21,7 @@ using namespace Tanker;
 TEST_CASE("Revocation namespace")
 {
   TrustchainBuilder builder;
-  auto const rootEntry = blockToUnverifiedEntry(builder.blocks().front());
+  auto const rootEntry = blockToServerEntry(builder.blocks().front());
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   auto const userResult = builder.makeUser("bob");

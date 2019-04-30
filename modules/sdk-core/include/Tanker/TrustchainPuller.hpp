@@ -5,6 +5,7 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -21,7 +22,6 @@ class Client;
 class TrustchainStore;
 class TrustchainVerifier;
 struct Entry;
-struct UnverifiedEntry;
 
 class TrustchainPuller
 {
@@ -74,7 +74,8 @@ private:
   tc::job _pullJob;
 
   tc::cotask<void> catchUp();
-  tc::cotask<void> verifyAndAddEntry(UnverifiedEntry const& unverifiedEntry);
+  tc::cotask<void> verifyAndAddEntry(
+      Trustchain::ServerEntry const& serverEntry);
   tc::cotask<void> triggerSignals(Entry const& entry);
   tc::cotask<void> recoverUserKeys(
       std::vector<std::pair<Crypto::PublicEncryptionKey,

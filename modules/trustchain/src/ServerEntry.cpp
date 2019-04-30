@@ -32,7 +32,7 @@ TrustchainId const& ServerEntry::trustchainId() const
   return _trustchainId;
 }
 
-std::uint64_t ServerEntry::index() const
+std::uint64_t const& ServerEntry::index() const
 {
   return _index;
 }

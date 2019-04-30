@@ -3,30 +3,29 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace Verif
 {
-void verifyTrustchainCreation(
-    Tanker::UnverifiedEntry const& rootEntry,
-    Trustchain::TrustchainId const& currentTrustchainId)
+void verifyTrustchainCreation(ServerEntry const& rootEntry,
+                              TrustchainId const& currentTrustchainId)
 {
-  assert(rootEntry.nature == Nature::TrustchainCreation);
+  assert(rootEntry.action().nature() == Nature::TrustchainCreation);
 
-  ensures(rootEntry.hash.base() == currentTrustchainId.base(),
+  ensures(rootEntry.hash().base() == currentTrustchainId.base(),
           Error::VerificationCode::InvalidHash,
           "root block hash must be the trustchain id");
-  ensures(rootEntry.author.is_null(),
+  ensures(rootEntry.parentHash().is_null(),
           Error::VerificationCode::InvalidAuthor,
           "author must be zero-filled");
-  ensures(rootEntry.signature.is_null(),
+  ensures(rootEntry.signature().is_null(),
           Error::VerificationCode::InvalidSignature,
           "signature must be zero-filled");
 }

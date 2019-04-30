@@ -8,7 +8,7 @@
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
@@ -28,8 +28,8 @@
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
-using Tanker::Trustchain::Action;
 using namespace Tanker;
 
 #define CHECK_VERIFICATION_FAILED_WITH(functionCall, errCode) \
@@ -55,17 +55,12 @@ namespace
 template <typename T, typename U>
 T& extract(U& action)
 {
-  static_assert(!std::is_const<T>::value,
-                "first template parameter must not be const");
-  static_assert(!std::is_const<U>::value, "action must not be const");
-
   return const_cast<T&>(action.template get<T>());
 }
 
 template <typename T, typename U, typename V>
 U& unconstify(T& action, U const& (V::*method)() const)
 {
-  static_assert(!std::is_const<T>::value, "action cannot be const");
   auto const& subAction = action.template get<V>();
   return const_cast<U&>((subAction.*method)());
 }
@@ -73,8 +68,13 @@ U& unconstify(T& action, U const& (V::*method)() const)
 template <typename T, typename U>
 U& unconstify(T& action, U const& (T::*method)() const)
 {
-  static_assert(!std::is_const<T>::value, "action cannot be const");
   return const_cast<U&>((action.*method)());
+}
+
+template <typename T>
+void alter(ServerEntry& entry, T const& (ServerEntry::*method)() const)
+{
+  ++unconstify(entry, method)[0];
 }
 
 template <typename T, typename U, typename V>
@@ -95,7 +95,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 {
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto& deviceCreation = extract<DeviceCreation>(user.entry.action);
+    auto& deviceCreation = extract<DeviceCreation>(user.entry.action());
     alter(deviceCreation, &DeviceCreation::delegationSignature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(user.entry, trustchainCreation),
@@ -104,7 +104,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
   SUBCASE("should reject an incorrectly signed device")
   {
-    user.entry.signature[0]++;
+    alter(user.entry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(user.entry, trustchainCreation),
         Error::VerificationCode::InvalidSignature);
@@ -134,7 +134,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action);
+    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
     alter(deviceCreation, &DeviceCreation::delegationSignature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(
@@ -144,7 +144,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
   SUBCASE("should reject an incorrectly signed device")
   {
-    secondDevice.entry.signature[0]++;
+    alter(secondDevice.entry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
@@ -153,7 +153,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
   SUBCASE("should reject an incorrect userId")
   {
-    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action);
+    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
     alter(deviceCreation, &DeviceCreation::userId);
     auto const& authorPrivateSignatureKey =
         user.user.devices.front().keys.signatureKeyPair.privateKey;
@@ -171,14 +171,14 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   }
 }
 
-void deviceRevocationCommonChecks(UnverifiedEntry deviceRevocation,
+void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
                                   Device authorDevice,
                                   Device targetDevice,
                                   User const& user)
 {
   SUBCASE("should reject an incorrectly signed DeviceRevocation")
   {
-    deviceRevocation.signature[0]++;
+    alter(deviceRevocation, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
             deviceRevocation, authorDevice, targetDevice, user),
@@ -214,13 +214,13 @@ void deviceRevocationCommonChecks(UnverifiedEntry deviceRevocation,
 TEST_CASE("Verif TrustchainCreation")
 {
   TrustchainBuilder builder;
-  auto rootEntry = blockToUnverifiedEntry(builder.blocks().front());
+  auto rootEntry = blockToServerEntry(builder.blocks().front());
 
   SUBCASE("Entry level")
   {
     SUBCASE("Invalid author")
     {
-      rootEntry.author[0]++;
+      alter(rootEntry, &ServerEntry::parentHash);
 
       CHECK_VERIFICATION_FAILED_WITH(
           Verif::verifyTrustchainCreation(rootEntry, builder.trustchainId()),
@@ -229,7 +229,7 @@ TEST_CASE("Verif TrustchainCreation")
 
     SUBCASE("Invalid signature")
     {
-      rootEntry.signature[0]++;
+      alter(rootEntry, &ServerEntry::signature);
 
       CHECK_VERIFICATION_FAILED_WITH(
           Verif::verifyTrustchainCreation(rootEntry, builder.trustchainId()),
@@ -247,7 +247,7 @@ TEST_CASE("Verif TrustchainCreation")
   {
     SUBCASE("TrustchainId mismatch")
     {
-      Trustchain::TrustchainId trustchainId(rootEntry.hash);
+      Trustchain::TrustchainId trustchainId(rootEntry.hash());
       trustchainId[0]++;
 
       CHECK_VERIFICATION_FAILED_WITH(
@@ -257,7 +257,7 @@ TEST_CASE("Verif TrustchainCreation")
 
     SUBCASE("Valid TrustchainCreation block")
     {
-      Trustchain::TrustchainId trustchainId(rootEntry.hash);
+      Trustchain::TrustchainId trustchainId(rootEntry.hash());
 
       CHECK_NOTHROW(Verif::verifyTrustchainCreation(rootEntry, trustchainId));
     }
@@ -271,7 +271,7 @@ TEST_CASE("Verif DeviceCreation v3 - Trustchain author")
   auto user = builder.makeUser3("alice");
 
   auto const authorEntry =
-      toVerifiedEntry(blockToUnverifiedEntry(builder.blocks()[0]));
+      toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
   deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v3>(
@@ -285,7 +285,7 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
   auto user = builder.makeUser1("alice");
 
   auto const authorEntry =
-      toVerifiedEntry(blockToUnverifiedEntry(builder.blocks()[0]));
+      toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
   deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(user, trustchainCreation);
@@ -305,7 +305,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action);
+    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
 
     alter(deviceCreation, &DeviceCreation::v3::publicUserEncryptionKey);
     deviceCreation.sign(
@@ -338,7 +338,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action);
+    auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
 
     alter(deviceCreation, &DeviceCreation::v3::publicUserEncryptionKey);
     deviceCreation.sign(
@@ -386,13 +386,13 @@ TEST_CASE("KeyPublishToDevice")
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
   auto const kp2d = builder.shareToDevice(
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
-  auto kp2dEntry = blockToUnverifiedEntry(kp2d.front());
+  auto kp2dEntry = blockToServerEntry(kp2d.front());
   auto const targetUser = secondDevice.user;
   auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrectly signed KeyPublishToDevice")
   {
-    kp2dEntry.signature[0]++;
+    alter(kp2dEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyKeyPublishToDevice(kp2dEntry, authorDevice, targetUser),
         Error::VerificationCode::InvalidSignature);
@@ -433,12 +433,12 @@ TEST_CASE("KeyPublishToUser")
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
   auto const kp2u = builder.shareToUser(
       secondDevice.device, resultUser.user, resourceId, symmetricKey);
-  auto kp2uEntry = blockToUnverifiedEntry(kp2u);
+  auto kp2uEntry = blockToServerEntry(kp2u);
   auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
   {
-    kp2uEntry.signature[0]++;
+    alter(kp2uEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice),
         Error::VerificationCode::InvalidSignature);
@@ -481,12 +481,12 @@ TEST_CASE("KeyPublishToProvisionalUser")
                                                  twoTimesSealedSymmetricKey));
   auto authorDevice = device.asTankerDevice();
 
-  auto kp2puEntry = blockToUnverifiedEntry(block);
-  kp2puEntry.index = 3;
+  auto kp2puEntry = blockToServerEntry(block);
+  unconstify(kp2puEntry, &ServerEntry::index) = 3;
 
   SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
   {
-    kp2puEntry.signature[0]++;
+    alter(kp2puEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice),
         Error::VerificationCode::InvalidSignature);
@@ -520,13 +520,13 @@ TEST_CASE("KeyPublishToUserGroups")
 
   auto const kp2g = builder.shareToUserGroup(
       secondDevice.device, resultGroup.group, resourceId, symmetricKey);
-  auto kp2gEntry = blockToUnverifiedEntry(kp2g);
+  auto kp2gEntry = blockToServerEntry(kp2g);
   auto const targetGroup = resultGroup.group.tankerGroup;
   auto authorDevice = secondDevice.device.asTankerDevice();
 
   SUBCASE("should reject an incorrecly signed KeyPublishToUserGroups")
   {
-    kp2gEntry.signature[0]++;
+    alter(kp2gEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyKeyPublishToUserGroup(
                                        kp2gEntry, authorDevice, targetGroup),
                                    Error::VerificationCode::InvalidSignature);
@@ -560,7 +560,7 @@ TEST_CASE("Verif DeviceRevocationV1")
   auto const revokeBlock =
       builder.revokeDevice1(secondDevice.device, thirdDevice.device);
 
-  deviceRevocationCommonChecks(blockToUnverifiedEntry(revokeBlock),
+  deviceRevocationCommonChecks(blockToServerEntry(revokeBlock),
                                authorDevice,
                                targetDevice,
                                thirdDevice.user);
@@ -573,7 +573,7 @@ TEST_CASE("Verif DeviceRevocationV1")
     auto const revokeBobBlock =
         builder.revokeDevice1(secondDevice.device, bobDevice.device, true);
     CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyDeviceRevocation(blockToUnverifiedEntry(revokeBobBlock),
+        Verif::verifyDeviceRevocation(blockToServerEntry(revokeBobBlock),
                                       authorDevice,
                                       bobDevice.device.asTankerDevice(),
                                       secondDevice.user),
@@ -584,7 +584,7 @@ TEST_CASE("Verif DeviceRevocationV1")
   {
     auto fourthDevice = builder.makeDevice3("alice");
     CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyDeviceRevocation(blockToUnverifiedEntry(revokeBlock),
+        Verif::verifyDeviceRevocation(blockToServerEntry(revokeBlock),
                                       authorDevice,
                                       targetDevice,
                                       fourthDevice.user),
@@ -604,7 +604,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto aliceUser = builder.getUser("alice");
   auto const revokeBlock = builder.revokeDevice2(
       secondDevice.device, thirdDevice.device, *aliceUser);
-  auto entry = blockToUnverifiedEntry(revokeBlock);
+  auto entry = blockToServerEntry(revokeBlock);
 
   auto bob = builder.makeUser1("bob");
   auto bobDevice = builder.makeDevice1("bob");
@@ -614,9 +614,9 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto bobUser = builder.getUser("bob");
   auto const revokeBlockUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
-  auto entryUserV1 = blockToUnverifiedEntry(revokeBlockUserV1);
+  auto entryUserV1 = blockToServerEntry(revokeBlockUserV1);
 
-  deviceRevocationCommonChecks(blockToUnverifiedEntry(revokeBlock),
+  deviceRevocationCommonChecks(blockToServerEntry(revokeBlock),
                                authorDevice,
                                targetDevice,
                                thirdDevice.user);
@@ -625,7 +625,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has no userKey when "
       "PreviousPublicEncryptionKey is not a zero array")
   {
-    auto& dr = extract<DeviceRevocation>(entryUserV1.action);
+    auto& dr = extract<DeviceRevocation>(entryUserV1.action());
     alter(dr, &DeviceRevocation2::previousPublicEncryptionKey);
 
     CHECK_VERIFICATION_FAILED_WITH(
@@ -638,7 +638,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has no userKey when the "
       "EncryptedKeyForPreviousUserKey is not a zero array")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entryUserV1.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entryUserV1.action());
     alter(deviceRevocation, &DeviceRevocation2::sealedKeyForPreviousUserKey);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyDeviceRevocation(
@@ -651,7 +651,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto const revokeBlock = builder.revokeDevice2(
         secondDevice.device, bobOtherDevice.device, user.user, true);
     CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyDeviceRevocation(blockToUnverifiedEntry(revokeBlock),
+        Verif::verifyDeviceRevocation(blockToServerEntry(revokeBlock),
                                       authorDevice,
                                       targetDeviceV1,
                                       secondDevice.user),
@@ -662,7 +662,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has a userKey when the "
       "previousEncryptedKey does not match the userKey")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     alter(deviceRevocation, &DeviceRevocation2::previousPublicEncryptionKey);
 
     REQUIRE_FALSE(authorDevice.revokedAtBlkIndex.has_value());
@@ -676,7 +676,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation2 whose userKeys field does not have "
       "exactly one element per device")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     auto& sealedUserKeysForDevices = unconstify(
         deviceRevocation, &DeviceRevocation2::sealedUserKeysForDevices);
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
@@ -691,7 +691,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceCreationV2 with a userKey fields that contains "
       "the target device of the revocation")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     auto& sealedUserKeysForDevices = unconstify(
         deviceRevocation, &DeviceRevocation2::sealedUserKeysForDevices);
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
@@ -710,7 +710,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation whose userKeys fields has a device "
       "that does not belong to the author's devices")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     auto& sealedUserKeysForDevices = unconstify(
         deviceRevocation, &DeviceRevocation2::sealedUserKeysForDevices);
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
@@ -729,7 +729,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   SUBCASE(
       "should reject a DeviceRevocation whose userKeys fields has a duplicates")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action);
+    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     auto& sealedUserKeysForDevices = unconstify(
         deviceRevocation, &DeviceRevocation2::sealedUserKeysForDevices);
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
@@ -756,7 +756,7 @@ TEST_CASE("Verif UserGroupCreation")
 
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
-    gcEntry.signature[0]++;
+    alter(gcEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
         Error::VerificationCode::InvalidSignature);
@@ -764,7 +764,7 @@ TEST_CASE("Verif UserGroupCreation")
 
   SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
   {
-    auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action);
+    auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
     alter(userGroupCreation, &UserGroupCreation::selfSignature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
@@ -803,7 +803,7 @@ TEST_CASE("Verif UserGroupAddition")
 
   SUBCASE("should reject an incorrectly signed UserGroupAddition")
   {
-    gaEntry.signature[0]++;
+    alter(gaEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
         Error::VerificationCode::InvalidSignature);
@@ -813,7 +813,7 @@ TEST_CASE("Verif UserGroupAddition")
       "should reject a UserGroupAddition where previousGroupBlock is not the "
       "hash of last modification")
   {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action);
+    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     alter(userGroupAddition, &UserGroupAddition::previousGroupBlockHash);
     userGroupAddition.selfSign(
         secondDevice.device.keys.signatureKeyPair.privateKey);
@@ -824,7 +824,7 @@ TEST_CASE("Verif UserGroupAddition")
 
   SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
   {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action);
+    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     alter(userGroupAddition, &UserGroupAddition::selfSignature);
     CHECK_VERIFICATION_FAILED_WITH(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
@@ -866,7 +866,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
   {
-    picEntry.signature[0]++;
+    alter(picEntry, &ServerEntry::signature);
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
                                        picEntry, authorUser, authorDevice),
                                    Error::VerificationCode::InvalidSignature);
@@ -875,7 +875,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
   SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
   {
     auto& provisionalIdentityClaim =
-        extract<ProvisionalIdentityClaim>(picEntry.action);
+        extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByAppKey);
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
@@ -887,7 +887,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
       "should reject a ProvisionalIdentityClaim with invalid tanker signature")
   {
     auto& provisionalIdentityClaim =
-        extract<ProvisionalIdentityClaim>(picEntry.action);
+        extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByTankerKey);
     CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(

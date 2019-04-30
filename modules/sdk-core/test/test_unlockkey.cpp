@@ -14,7 +14,7 @@
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Options.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -26,7 +26,9 @@
 
 using namespace std::string_literals;
 
-using Tanker::Trustchain::Actions::DeviceCreation;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
+
 namespace Tanker
 {
 auto const someUnlockKey = UnlockKey{
@@ -148,7 +150,7 @@ TEST_CASE("unlockKey")
     FAST_CHECK_EQ(gh.privateSignatureKey,
                   ghostDeviceKeys.signatureKeyPair.privateKey);
     auto ghostDeviceEntry = toVerifiedEntry(
-        blockToUnverifiedEntry(Serialization::deserialize<Block>(reg->block)));
+        blockToServerEntry(Serialization::deserialize<Block>(reg->block)));
     auto const dc = ghostDeviceEntry.action.get<DeviceCreation>();
     FAST_CHECK_EQ(gh.deviceId.base(), ghostDeviceEntry.hash.base());
     FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
@@ -187,7 +189,7 @@ TEST_CASE("unlockKey")
     auto newDeviceKeys = DeviceKeys::create();
     auto const validatedDevice = Unlock::createValidatedDevice(
         builder.trustchainId(), alice.userId, gh, newDeviceKeys, ec);
-    auto const validatedDeviceEntry = toVerifiedEntry(blockToUnverifiedEntry(
+    auto const validatedDeviceEntry = toVerifiedEntry(blockToServerEntry(
         Serialization::deserialize<Block>(validatedDevice)));
     auto const vdc = validatedDeviceEntry.action.get<DeviceCreation>();
     REQUIRE(vdc.holdsAlternative<DeviceCreation::v3>());

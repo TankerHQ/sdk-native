@@ -17,7 +17,8 @@
 #include <string>
 #include <tuple>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 using namespace std::string_literals;
 
 using json = nlohmann::json;
@@ -112,5 +113,15 @@ void to_json(nlohmann::json& j, Block const& b)
   j["payload"] = cppcodec::base64_rfc4648::encode(b.payload);
   j["signature"] = b.signature;
   j["hash"] = b.hash();
+}
+
+ServerEntry blockToServerEntry(Block const& b)
+{
+  return {b.trustchainId,
+          b.index,
+          b.author,
+          Action::deserialize(b.nature, b.payload),
+          b.hash(),
+          b.signature};
 }
 }

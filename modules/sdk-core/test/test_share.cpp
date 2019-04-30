@@ -7,7 +7,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
@@ -27,6 +27,7 @@
 
 using Tanker::Trustchain::GroupId;
 using namespace Tanker;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace
@@ -351,8 +352,8 @@ std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
   for (auto const& block : blocks)
   {
     auto const entry =
-        blockToUnverifiedEntry(Serialization::deserialize<Block>(block));
-    auto const keyPublish = entry.action.get_if<T>();
+        blockToServerEntry(Serialization::deserialize<Block>(block));
+    auto const keyPublish = entry.action().get_if<T>();
     REQUIRE(keyPublish);
     keyPublishes.push_back(*keyPublish);
   }

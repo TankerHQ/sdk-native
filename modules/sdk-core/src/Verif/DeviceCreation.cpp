@@ -6,12 +6,12 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
@@ -42,24 +42,26 @@ void verifySubAction(DeviceCreation::v3 const& deviceCreation, User const& user)
 }
 }
 
-void verifyDeviceCreation(UnverifiedEntry const& entry,
+void verifyDeviceCreation(ServerEntry const& serverEntry,
                           Device const& author,
                           User const& user)
 {
-  assert(entry.nature == Nature::DeviceCreation ||
-         entry.nature == Nature::DeviceCreation3);
+  auto const nature = serverEntry.action().nature();
+  (void)nature;
+  assert(nature == Nature::DeviceCreation || nature == Nature::DeviceCreation3);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "author device must not be revoked");
 
   assert(std::find(user.devices.begin(), user.devices.end(), author) !=
          user.devices.end());
 
-  auto const& deviceCreation = entry.action.get<DeviceCreation>();
+  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
 
-  ensures(Crypto::verify(entry.hash,
-                         entry.signature,
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
                          deviceCreation.ephemeralPublicSignatureKey()),
           Error::VerificationCode::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
@@ -77,16 +79,16 @@ void verifyDeviceCreation(UnverifiedEntry const& entry,
       [&user](auto const& val) { verifySubAction(val, user); });
 }
 
-void verifyDeviceCreation(UnverifiedEntry const& entry,
-                          Trustchain::Actions::TrustchainCreation const& author)
+void verifyDeviceCreation(ServerEntry const& serverEntry,
+                          TrustchainCreation const& author)
 {
-  assert(entry.nature == Nature::DeviceCreation ||
-         entry.nature == Nature::DeviceCreation3);
+  assert(serverEntry.action().nature() == Nature::DeviceCreation ||
+         serverEntry.action().nature() == Nature::DeviceCreation3);
 
-  auto const& deviceCreation = entry.action.get<DeviceCreation>();
+  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
 
-  ensures(Crypto::verify(entry.hash,
-                         entry.signature,
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
                          deviceCreation.ephemeralPublicSignatureKey()),
           Error::VerificationCode::InvalidSignature,
           "device creation block must be signed by the ephemeral private "

@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -37,4 +38,6 @@ void from_serialized(Serialization::SerializedSource& ss, Block&);
 std::uint8_t* to_serialized(std::uint8_t* it, Block const& b);
 
 void to_json(nlohmann::json& j, Block const& b);
+
+Trustchain::ServerEntry blockToServerEntry(Block const& b);
 }

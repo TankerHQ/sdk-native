@@ -13,7 +13,7 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -22,9 +22,9 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-using Tanker::Trustchain::Actions::Nature;
-
 using namespace Tanker;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 
 static constexpr auto TrustchainPrivateKeyOpt = "--trustchain-private-key";
 static constexpr auto IdentityOpt = "--identity";
@@ -53,7 +53,7 @@ using MainArgs = std::map<std::string, docopt::value>;
 
 namespace
 {
-std::string formatEntry(Block const& block, UnverifiedEntry const& entry)
+std::string formatEntry(Block const& block, ServerEntry const& entry)
 {
   nlohmann::json jblock(block);
   nlohmann::json jentry(entry);
@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
       block = Serialization::deserialize<Block>(
           cppcodec::base64_rfc4648::decode(args.at("<block>").asString()));
 
-    auto const entry = blockToUnverifiedEntry(block);
+    auto const entry = blockToServerEntry(block);
     std::cout << formatEntry(block, entry) << std::endl;
   }
   else if (args.at("deserializesplitblock").asBool())
@@ -230,7 +230,7 @@ int main(int argc, char* argv[])
           cppcodec::base64_rfc4648::decode(args.at("<signature>").asString()));
     }
 
-    auto const entry = blockToUnverifiedEntry(block);
+    auto const entry = blockToServerEntry(block);
     std::cout << formatEntry(block, entry) << std::endl;
   }
   else if (args.at("signup").asBool())

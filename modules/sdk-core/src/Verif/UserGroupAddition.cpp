@@ -4,33 +4,35 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupAddition(UnverifiedEntry const& entry,
+void verifyUserGroupAddition(ServerEntry const& serverEntry,
                              Device const& author,
                              ExternalGroup const& group)
 {
-  assert(entry.nature == Nature::UserGroupAddition);
+  assert(serverEntry.action().nature() == Nature::UserGroupAddition);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "A revoked device must not be the author of a UserGroupAddition");
 
-  ensures(
-      Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
-      Error::VerificationCode::InvalidSignature,
-      "UserGroupAddition block must be signed by the author device");
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
+                         author.publicSignatureKey),
+          Error::VerificationCode::InvalidSignature,
+          "UserGroupAddition block must be signed by the author device");
 
-  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
+  auto const& userGroupAddition = serverEntry.action().get<UserGroupAddition>();
 
   ensures(userGroupAddition.previousGroupBlockHash() == group.lastBlockHash,
           Error::VerificationCode::InvalidGroup,

@@ -24,7 +24,7 @@ public:
               Crypto::Signature const& signature);
 
   TrustchainId const& trustchainId() const;
-  std::uint64_t index() const;
+  std::uint64_t const& index() const;
   Crypto::Hash const& parentHash() const;
   Action const& action() const;
   Crypto::Hash const& hash() const;

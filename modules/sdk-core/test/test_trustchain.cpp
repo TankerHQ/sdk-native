@@ -3,7 +3,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -157,11 +157,11 @@ TEST_CASE("trustchain")
     TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
+          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
 
     auto const entry = AWAIT(trustchain.findKeyPublish(resourceId));
 
-    CHECK(entry.value() == toVerifiedEntry(blockToUnverifiedEntry(share)));
+    CHECK(entry.value() == toVerifiedEntry(blockToServerEntry(share)));
   }
 
   SUBCASE("it should find a key publish to user group by resource id")
@@ -178,11 +178,11 @@ TEST_CASE("trustchain")
     TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
+          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
 
     auto const entry = AWAIT(trustchain.findKeyPublish(resourceId));
 
-    CHECK(entry.value() == toVerifiedEntry(blockToUnverifiedEntry(share)));
+    CHECK(entry.value() == toVerifiedEntry(blockToServerEntry(share)));
   }
 
   SUBCASE("it should not throw when inserting the same block twice")
@@ -199,10 +199,10 @@ TEST_CASE("trustchain")
     TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block))));
+          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
 
     CHECK_NOTHROW(AWAIT_VOID(trustchain.addEntry(
-        toVerifiedEntry(blockToUnverifiedEntry(builder.blocks().back())))));
+        toVerifiedEntry(blockToServerEntry(builder.blocks().back())))));
   }
 
   SUBCASE("it should not throw when sharing the same resource twice")
@@ -221,7 +221,7 @@ TEST_CASE("trustchain")
     TrustchainStore trustchain(dbPtr.get());
     for (auto const& block : builder.blocks())
       CHECK_NOTHROW(AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToUnverifiedEntry(block)))));
+          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block)))));
   }
 }
 

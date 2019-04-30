@@ -8,13 +8,14 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("BlockGenerator")
@@ -41,8 +42,8 @@ TEST_CASE("BlockGenerator")
 
     auto const block = Serialization::deserialize<Block>(sblock);
     CHECK_EQ(block.author.base(), trustchainId.base());
-    auto const entry = blockToUnverifiedEntry(block);
-    auto const deviceCreation = entry.action.get_if<DeviceCreation>();
+    auto const entry = blockToServerEntry(block);
+    auto const deviceCreation = entry.action().get_if<DeviceCreation>();
     REQUIRE(deviceCreation != nullptr);
     CHECK(deviceCreation->userId() == userId);
     CHECK(deviceCreation->publicSignatureKey() == mySignKeyPair.publicKey);

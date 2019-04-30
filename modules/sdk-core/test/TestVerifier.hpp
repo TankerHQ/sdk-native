@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Entry.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
-Tanker::Entry toVerifiedEntry(Tanker::UnverifiedEntry const& entry);
+Tanker::Entry toVerifiedEntry(
+    Tanker::Trustchain::ServerEntry const& serverEntry);
