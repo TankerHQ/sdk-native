@@ -23,11 +23,8 @@ public:
               Crypto::Hash const& parentHash,
               Actions::Nature nature,
               std::vector<std::uint8_t> serializedPayload,
+              Crypto::Hash const& hash,
               Crypto::Signature const& signature);
-  ClientEntry(TrustchainId const& trustchainId,
-              Crypto::Hash const& parentHash,
-              Actions::Nature nature,
-              std::vector<std::uint8_t> serializedPayload);
 
   static ClientEntry create(TrustchainId const&,
                             Crypto::Hash const&,
@@ -38,16 +35,15 @@ public:
   Crypto::Hash const& parentHash() const;
   Actions::Nature nature() const;
   std::vector<std::uint8_t> const& serializedPayload() const;
+  Crypto::Hash const& hash() const;
   Crypto::Signature const& signature() const;
-
-  Crypto::Hash hash() const;
-  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 private:
   TrustchainId _trustchainId;
   Crypto::Hash _parentHash;
   Actions::Nature _nature;
   std::vector<std::uint8_t> _serializedPayload;
+  Crypto::Hash _hash;
   Crypto::Signature _signature;
 };
 

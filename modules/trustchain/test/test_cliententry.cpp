@@ -11,17 +11,6 @@
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 
-TEST_CASE("ClientEntry tests")
-{
-  SUBCASE("sign should return the signature")
-  {
-    auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    ClientEntry ce{};
-    auto const& signature = ce.sign(signatureKeyPair.privateKey);
-    CHECK(signature == ce.signature());
-  }
-}
-
 TEST_CASE("Serialization test vectors")
 {
   SUBCASE("it should serialize a ClientEntry")
@@ -70,7 +59,7 @@ TEST_CASE("Serialization test vectors")
     auto const signature = make<Crypto::Signature>("sig");
 
     ClientEntry const clientEntry{
-        trustchainId, parentHash, nature, serializedPayload, signature};
+        trustchainId, parentHash, nature, serializedPayload, {}, signature};
 
     auto const payload = Serialization::serialize(clientEntry);
     CHECK(Serialization::serialize(clientEntry) == serializedClientEntry);
