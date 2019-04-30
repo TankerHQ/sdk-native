@@ -36,10 +36,11 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        ci.cpp.check(args.profile, coverage=args.coverage, run_tests=True)
+        built_path = ci.cpp.build(args.profile, coverage=args.coverage)
+        ci.cpp.check(built_path, coverage=args.coverage)
     elif args.command == "nightly-build-emscripten":
         with ci.mail.notify_failure("sdk-native"):
-            ci.cpp.check("emscripten", run_tests=False)
+            ci.cpp.build("emscripten")
     elif args.command == "deploy":
         git_tag = os.environ["CI_COMMIT_TAG"]
         version = ci.version_from_git_tag(git_tag)
@@ -53,9 +54,9 @@ def main() -> None:
         platform = sys.platform
         with ci.mail.notify_failure("sdk-native"):
             if platform == "linux":
-                ci.android.check(native_from_sources=True)
+                ci.android.check(native_from_source=True)
             elif platform == "darwin":
-                ci.ios.check(native_from_sources=True)
+                ci.ios.check()
             else:
                 sys.exit(f"Unknown platform: {platform}")
     elif args.command == "mirror":
