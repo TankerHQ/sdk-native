@@ -60,25 +60,6 @@ deploy/windows:
   script:
     - dmenv run -- python run-ci.py deploy
 
-nightly/android:
-  image: tanker.local:5000/ci-android:latest
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly
-  tags:
-    - linux
-
-nightly/ios:
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly
-  tags:
-    - macos
-
 nightly/emscripten:
   stage: build
   only:

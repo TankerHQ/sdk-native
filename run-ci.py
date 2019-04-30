@@ -24,7 +24,6 @@ def main() -> None:
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
     subparsers.add_parser("deploy")
-    subparsers.add_parser("nightly")
     subparsers.add_parser("mirror")
     subparsers.add_parser("nightly-build-emscripten")
     subparsers.add_parser("e2e")
@@ -50,15 +49,6 @@ def main() -> None:
             conan_reference=f"tanker/{version}@tanker/stable",
             upload=True,
         )
-    elif args.command == "nightly":
-        platform = sys.platform
-        with ci.mail.notify_failure("sdk-native"):
-            if platform == "linux":
-                ci.android.check(native_from_source=True)
-            elif platform == "darwin":
-                ci.ios.check()
-            else:
-                sys.exit(f"Unknown platform: {platform}")
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
     elif args.command == "e2e":
