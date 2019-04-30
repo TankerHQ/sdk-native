@@ -24,7 +24,6 @@ def main() -> None:
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
     subparsers.add_parser("deploy")
-    subparsers.add_parser("nightly")
     subparsers.add_parser("mirror")
     subparsers.add_parser("nightly-build-emscripten")
     subparsers.add_parser("e2e")
@@ -36,10 +35,11 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        ci.cpp.check(args.profile, coverage=args.coverage, run_tests=True)
+        built_path = ci.cpp.build(args.profile, coverage=args.coverage)
+        ci.cpp.check(built_path, coverage=args.coverage)
     elif args.command == "nightly-build-emscripten":
         with ci.mail.notify_failure("sdk-native"):
-            ci.cpp.check("emscripten", run_tests=False)
+            ci.cpp.build("emscripten")
     elif args.command == "deploy":
         git_tag = os.environ["CI_COMMIT_TAG"]
         version = ci.version_from_git_tag(git_tag)
@@ -49,15 +49,6 @@ def main() -> None:
             conan_reference=f"tanker/{version}@tanker/stable",
             upload=True,
         )
-    elif args.command == "nightly":
-        platform = sys.platform
-        with ci.mail.notify_failure("sdk-native"):
-            if platform == "linux":
-                ci.android.check(native_from_sources=True)
-            elif platform == "darwin":
-                ci.ios.check(native_from_sources=True)
-            else:
-                sys.exit(f"Unknown platform: {platform}")
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
     elif args.command == "e2e":
