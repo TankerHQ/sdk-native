@@ -12,6 +12,7 @@ add_executable(test_trustchain
   test_actions_usergroupaddition.cpp
   test_cliententry.cpp
   test_preprocessor_actions.cpp
+  test_serverentry.cpp
 
   main.cpp
 )
