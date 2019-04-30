@@ -29,8 +29,8 @@ public:
   using v2 = DeviceRevocation2;
 
   DeviceRevocation() = default;
-  explicit DeviceRevocation(v1 const&);
-  explicit DeviceRevocation(v2 const&);
+  DeviceRevocation(v1 const&);
+  DeviceRevocation(v2 const&);
 
   Nature nature() const;
   DeviceId const& deviceId() const;

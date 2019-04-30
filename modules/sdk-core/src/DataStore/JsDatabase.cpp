@@ -9,9 +9,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
-using Tanker::Trustchain::Action;
-using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 
 TLOG_CATEGORY(Database);
 
@@ -237,19 +236,6 @@ namespace
 {
 struct toVal
 {
-  using DeviceCreation = Trustchain::Actions::DeviceCreation;
-  using DeviceRevocation = Trustchain::Actions::DeviceRevocation;
-  using TrustchainCreation = Trustchain::Actions::TrustchainCreation;
-  using KeyPublishToDevice = Trustchain::Actions::KeyPublishToDevice;
-  using KeyPublishToUser = Trustchain::Actions::KeyPublishToUser;
-  using KeyPublishToUserGroup = Trustchain::Actions::KeyPublishToUserGroup;
-  using KeyPublishToProvisionalUser =
-      Trustchain::Actions::KeyPublishToProvisionalUser;
-  using UserGroupCreation = Trustchain::Actions::UserGroupCreation;
-  using UserGroupAddition = Trustchain::Actions::UserGroupAddition;
-  using ProvisionalIdentityClaim =
-      Trustchain::Actions::ProvisionalIdentityClaim;
-
   emscripten::val operator()(TrustchainCreation const& tc)
   {
     auto ret = emscripten::val::object();
@@ -352,7 +338,6 @@ namespace
 {
 Entry jsEntryToEntry(emscripten::val const& jsEntry)
 {
-  using namespace Trustchain::Actions;
   Entry entry{};
   entry.index = static_cast<uint64_t>(jsEntry["index"].as<double>());
   entry.nature = static_cast<Nature>(jsEntry["nature"].as<int>());
@@ -361,9 +346,8 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
 
   if (entry.nature == Nature::TrustchainCreation)
   {
-    entry.action = Action{
-        Trustchain::Actions::TrustchainCreation{Crypto::PublicSignatureKey{
-            copyToVector(jsEntry["action"]["publicSignatureKey"])}}};
+    entry.action = TrustchainCreation{Crypto::PublicSignatureKey{
+        copyToVector(jsEntry["action"]["publicSignatureKey"])}};
   }
   else if (entry.nature == Nature::DeviceCreation ||
            entry.nature == Nature::DeviceCreation2 ||
@@ -371,7 +355,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
   {
     Crypto::PublicSignatureKey ephemeralPublicSignatureKey(
         copyToVector(jsEntry["action"]["ephemeralPublicSignatureKey"]));
-    Trustchain::UserId userId(copyToVector(jsEntry["action"]["userId"]));
+    UserId userId(copyToVector(jsEntry["action"]["userId"]));
     Crypto::Signature delegationSignature(
         copyToVector(jsEntry["action"]["delegationSignature"]));
     Crypto::PublicSignatureKey publicSignatureKey(
@@ -399,7 +383,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
           sealedPrivateEncryptionKey,
           (isGhostDevice ? DeviceCreation::DeviceType::GhostDevice :
                            DeviceCreation::DeviceType::Device));
-      entry.action = Action{DeviceCreation{dc}};
+      entry.action = dc;
     }
     else
     {
@@ -408,39 +392,37 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
                             delegationSignature,
                             publicSignatureKey,
                             publicEncryptionKey);
-      entry.action = Action{DeviceCreation{dc}};
+      entry.action = dc;
     }
   }
   else if (entry.nature == Nature::KeyPublishToDevice)
   {
     KeyPublishToDevice kp(
-        Trustchain::DeviceId{copyToVector(jsEntry["action"]["recipient"])},
-        Trustchain::ResourceId{copyToVector(jsEntry["action"]["resourceId"])},
+        DeviceId{copyToVector(jsEntry["action"]["recipient"])},
+        ResourceId{copyToVector(jsEntry["action"]["resourceId"])},
         Crypto::EncryptedSymmetricKey{
             copyToVector(jsEntry["action"]["resourceKey"])});
-    entry.action = Action{kp};
+    entry.action = kp;
   }
   else if (entry.nature == Nature::KeyPublishToUser)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
-    Trustchain::ResourceId const resourceId(
-        copyToVector(jsEntry["action"]["resourceId"]));
+    ResourceId const resourceId(copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = Action{KeyPublishToUser(
-        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey)};
+    entry.action = KeyPublishToUser{
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey};
   }
   else if (entry.nature == Nature::KeyPublishToUserGroup)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
-    Trustchain::ResourceId const resourceId(
-        copyToVector(jsEntry["action"]["resourceId"]));
+    ResourceId const resourceId(copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = Action{KeyPublishToUserGroup(
-        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey)};
+    entry.action = KeyPublishToUserGroup{
+        recipientPublicEncryptionKey, resourceId, sealedSymmetricKey};
   }
   else if (entry.nature == Nature::KeyPublishToProvisionalUser)
   {
@@ -448,12 +430,11 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
         copyToVector(jsEntry["action"]["appPublicSignatureKey"])};
     Crypto::PublicSignatureKey const tankerPublicSignatureKey{
         copyToVector(jsEntry["action"]["tankerPublicSignatureKey"])};
-    Trustchain::ResourceId const resourceId{
-        copyToVector(jsEntry["action"]["resourceId"])};
+    ResourceId const resourceId{copyToVector(jsEntry["action"]["resourceId"])};
     Crypto::TwoTimesSealedSymmetricKey const key{
         copyToVector(jsEntry["action"]["resourceKey"])};
-    entry.action = Action{KeyPublishToProvisionalUser{
-        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key}};
+    entry.action = KeyPublishToProvisionalUser{
+        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key};
   }
   else
     throw Error::formatEx<std::runtime_error>(
@@ -476,7 +457,7 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainEntry(
 }
 
 tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
-    Trustchain::ResourceId const& resourceId)
+    ResourceId const& resourceId)
 {
   auto const entry = TC_AWAIT(jsPromiseToFuture(
       _db->findTrustchainKeyPublish(containerToJs(resourceId))));
@@ -487,7 +468,7 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
 }
 
 tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
-    Trustchain::UserId const& userId)
+    UserId const& userId)
 {
   auto const entries = TC_AWAIT(
       jsPromiseToFuture(_db->getTrustchainDevicesOf(containerToJs(userId))));
@@ -501,7 +482,7 @@ tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
 }
 
 tc::cotask<Entry> JsDatabase::getTrustchainDevice(
-    Trustchain::DeviceId const& deviceId)
+    DeviceId const& deviceId)
 {
   auto const jsEntry = TC_AWAIT(
       jsPromiseToFuture(_db->getTrustchainDevice(containerToJs(deviceId))));
@@ -513,7 +494,7 @@ tc::cotask<Entry> JsDatabase::getTrustchainDevice(
 }
 
 tc::cotask<void> JsDatabase::putContact(
-    Trustchain::UserId const& userId,
+    UserId const& userId,
     nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->putContact(
@@ -522,7 +503,7 @@ tc::cotask<void> JsDatabase::putContact(
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
-JsDatabase::findContactUserKey(Trustchain::UserId const& userId)
+JsDatabase::findContactUserKey(UserId const& userId)
 {
   auto const key = TC_AWAIT(
       jsPromiseToFuture(_db->findContactUserKey(containerToJs(userId))));
@@ -532,7 +513,7 @@ JsDatabase::findContactUserKey(Trustchain::UserId const& userId)
   TC_RETURN(Crypto::PublicEncryptionKey(copyToVector(key)));
 }
 
-tc::cotask<nonstd::optional<Trustchain::UserId>>
+tc::cotask<nonstd::optional<UserId>>
 JsDatabase::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
@@ -542,26 +523,25 @@ JsDatabase::findContactUserIdByPublicEncryptionKey(
   if (userId.isNull() || userId.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(Trustchain::UserId(copyToVector(userId)));
+  TC_RETURN(UserId(copyToVector(userId)));
 }
 
 tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
-    Trustchain::UserId const& userId,
-    Crypto::PublicEncryptionKey const& userPublicKey)
+    UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
 {
   TC_AWAIT(jsPromiseToFuture(_db->setContactPublicEncryptionKey(
       containerToJs(userId), containerToJs(userPublicKey))));
 }
 
-tc::cotask<void> JsDatabase::putResourceKey(
-    Trustchain::ResourceId const& resourceId, Crypto::SymmetricKey const& key)
+tc::cotask<void> JsDatabase::putResourceKey(ResourceId const& resourceId,
+                                            Crypto::SymmetricKey const& key)
 {
   TC_AWAIT(jsPromiseToFuture(
       _db->putResourceKey(containerToJs(resourceId), containerToJs(key))));
 }
 
 tc::cotask<nonstd::optional<Crypto::SymmetricKey>> JsDatabase::findResourceKey(
-    Trustchain::ResourceId const& resourceId)
+    ResourceId const& resourceId)
 {
   auto const key = TC_AWAIT(
       jsPromiseToFuture(_db->findResourceKey(containerToJs(resourceId))));
@@ -582,7 +562,7 @@ tc::cotask<nonstd::optional<DeviceKeys>> JsDatabase::getDeviceKeys()
       {Crypto::PublicEncryptionKey(copyToVector(keys["publicEncryptionKey"])),
        Crypto::PrivateEncryptionKey(
            copyToVector(keys["privateEncryptionKey"]))},
-      Trustchain::DeviceId(copyToVector(keys["deviceId"]))}));
+      DeviceId(copyToVector(keys["deviceId"]))}));
 }
 
 tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -600,12 +580,12 @@ tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceKeys(jsDeviceKeys)));
 }
 
-tc::cotask<void> JsDatabase::setDeviceId(Trustchain::DeviceId const& deviceId)
+tc::cotask<void> JsDatabase::setDeviceId(DeviceId const& deviceId)
 {
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceId(containerToJs(deviceId))));
 }
 
-tc::cotask<void> JsDatabase::putDevice(Trustchain::UserId const& userId,
+tc::cotask<void> JsDatabase::putDevice(UserId const& userId,
                                        Device const& device)
 {
   auto jsdev = emscripten::val::object();
@@ -628,7 +608,7 @@ Device fromJsDevice(emscripten::val const& jsdev)
 {
   auto const jsRevokedAt = jsdev["revokedAtBlkIndex"];
   return Device{
-      Trustchain::DeviceId(copyToVector(jsdev["id"])),
+      DeviceId(copyToVector(jsdev["id"])),
       static_cast<uint64_t>(jsdev["createdAtBlkIndex"].as<double>()),
       jsRevokedAt.isNull() || jsRevokedAt.isUndefined() ?
           nonstd::optional<uint64_t>{} :
@@ -640,8 +620,7 @@ Device fromJsDevice(emscripten::val const& jsdev)
 }
 }
 
-tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(
-    Trustchain::DeviceId const& id)
+tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(DeviceId const& id)
 {
   auto const jsdev =
       TC_AWAIT(jsPromiseToFuture(_db->findDevice(containerToJs(id))));
@@ -651,27 +630,26 @@ tc::cotask<nonstd::optional<Device>> JsDatabase::findDevice(
   TC_RETURN(fromJsDevice(jsdev));
 }
 
-tc::cotask<nonstd::optional<Trustchain::UserId>> JsDatabase::findDeviceUserId(
-    Trustchain::DeviceId const& id)
+tc::cotask<nonstd::optional<UserId>> JsDatabase::findDeviceUserId(
+    DeviceId const& id)
 {
   auto const jsdev =
       TC_AWAIT(jsPromiseToFuture(_db->findDeviceUserId(containerToJs(id))));
   if (jsdev.isNull() || jsdev.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(Trustchain::UserId{copyToVector(jsdev)});
+  TC_RETURN(UserId{copyToVector(jsdev)});
 }
 
-tc::cotask<void> JsDatabase::updateDeviceRevokedAt(
-    Trustchain::DeviceId const& id, uint64_t revokedAtBlkIndex)
+tc::cotask<void> JsDatabase::updateDeviceRevokedAt(DeviceId const& id,
+                                                   uint64_t revokedAtBlkIndex)
 {
   TC_AWAIT(jsPromiseToFuture(_db->updateDeviceRevokedAt(
       containerToJs(id),
       emscripten::val(static_cast<double>(revokedAtBlkIndex)))));
 }
 
-tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(
-    Trustchain::UserId const& id)
+tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
 {
   auto const jsdevs =
       TC_AWAIT(jsPromiseToFuture(_db->getDevicesOf(containerToJs(id))));

@@ -60,16 +60,15 @@ std::vector<uint8_t> BlockGenerator::addUser1(
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
-  Action const action{
-      DeviceCreation{DeviceCreation::v1{delegation.ephemeralKeyPair.publicKey,
-                                        delegation.userId,
-                                        delegation.signature,
-                                        signatureKey,
-                                        encryptionKey}}};
+  DeviceCreation::v1 dc1{delegation.ephemeralKeyPair.publicKey,
+                         delegation.userId,
+                         delegation.signature,
+                         signatureKey,
+                         encryptionKey};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_trustchainId),
-                          action,
+                          dc1,
                           delegation.ephemeralKeyPair.privateKey);
   return Serialization::serialize(entry);
 }
@@ -84,19 +83,18 @@ std::vector<uint8_t> BlockGenerator::addUser3(
       Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
           userEncryptionKeys.privateKey, encryptionKey);
 
-  Action const action{
-      DeviceCreation{DeviceCreation::v3{delegation.ephemeralKeyPair.publicKey,
-                                        delegation.userId,
-                                        delegation.signature,
-                                        signatureKey,
-                                        encryptionKey,
-                                        userEncryptionKeys.publicKey,
-                                        sealedPrivateEncryptionKey,
-                                        DeviceCreation::DeviceType::Device}}};
+  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
+                         delegation.userId,
+                         delegation.signature,
+                         signatureKey,
+                         encryptionKey,
+                         userEncryptionKeys.publicKey,
+                         sealedPrivateEncryptionKey,
+                         DeviceCreation::DeviceType::Device};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_trustchainId),
-                          action,
+                          dc3,
                           delegation.ephemeralKeyPair.privateKey);
   return Serialization::serialize(entry);
 }
@@ -120,19 +118,18 @@ std::vector<uint8_t> BlockGenerator::addGhostDevice(
       Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
           userEncryptionKeys.privateKey, encryptionKey);
 
-  Action const action{DeviceCreation{
-      DeviceCreation::v3{delegation.ephemeralKeyPair.publicKey,
+  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
                          delegation.userId,
                          delegation.signature,
                          signatureKey,
                          encryptionKey,
                          userEncryptionKeys.publicKey,
                          sealedPrivateEncryptionKey,
-                         DeviceCreation::DeviceType::GhostDevice}}};
+                         DeviceCreation::DeviceType::GhostDevice};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_deviceId),
-                          action,
+                          dc3,
                           delegation.ephemeralKeyPair.privateKey);
   return Serialization::serialize(entry);
 }
@@ -142,16 +139,15 @@ std::vector<uint8_t> BlockGenerator::addDevice1(
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
-  Action const action{
-      DeviceCreation{DeviceCreation::v1{delegation.ephemeralKeyPair.publicKey,
-                                        delegation.userId,
-                                        delegation.signature,
-                                        signatureKey,
-                                        encryptionKey}}};
+  DeviceCreation::v1 dc1{delegation.ephemeralKeyPair.publicKey,
+                         delegation.userId,
+                         delegation.signature,
+                         signatureKey,
+                         encryptionKey};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_deviceId),
-                          action,
+                          dc1,
                           delegation.ephemeralKeyPair.privateKey);
   return Serialization::serialize(entry);
 }
@@ -166,19 +162,18 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
       Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
           userEncryptionKeys.privateKey, encryptionKey);
 
-  Action const action{
-      DeviceCreation{DeviceCreation::v3{delegation.ephemeralKeyPair.publicKey,
-                                        delegation.userId,
-                                        delegation.signature,
-                                        signatureKey,
-                                        encryptionKey,
-                                        userEncryptionKeys.publicKey,
-                                        sealedPrivateEncryptionKey,
-                                        DeviceCreation::DeviceType::Device}}};
+  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
+                         delegation.userId,
+                         delegation.signature,
+                         signatureKey,
+                         encryptionKey,
+                         userEncryptionKeys.publicKey,
+                         sealedPrivateEncryptionKey,
+                         DeviceCreation::DeviceType::Device};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_deviceId),
-                          action,
+                          dc3,
                           delegation.ephemeralKeyPair.privateKey);
   return Serialization::serialize(entry);
 }
@@ -190,15 +185,14 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
     Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
     DeviceRevocation::v2::SealedKeysForDevices const& userKeys) const
 {
-  Action const action{
-      DeviceRevocation{DeviceRevocation2{deviceId,
-                                         publicEncryptionKey,
-                                         encryptedKeyForPreviousUserKey,
-                                         previousPublicEncryptionKey,
-                                         userKeys}}};
+  DeviceRevocation2 dr2{deviceId,
+                        publicEncryptionKey,
+                        encryptedKeyForPreviousUserKey,
+                        previousPublicEncryptionKey,
+                        userKeys};
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         action,
+                                         dr2,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -208,11 +202,11 @@ std::vector<uint8_t> BlockGenerator::keyPublish(
     Trustchain::ResourceId const& resourceId,
     Trustchain::DeviceId const& recipient) const
 {
-  Action const action{KeyPublishToDevice{recipient, resourceId, symKey}};
+  KeyPublishToDevice kp{recipient, resourceId, symKey};
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         action,
+                                         kp,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -222,12 +216,11 @@ std::vector<uint8_t> BlockGenerator::keyPublishToUser(
     Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
-  Action const action{
-      KeyPublishToUser{recipientPublicEncryptionKey, resourceId, symKey}};
+  KeyPublishToUser kp{recipientPublicEncryptionKey, resourceId, symKey};
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         action,
+                                         kp,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -238,12 +231,12 @@ std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(
     ResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey) const
 {
-  Action const action{KeyPublishToProvisionalUser{
-      appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey}};
+  KeyPublishToProvisionalUser kp{
+      appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey};
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         action,
+                                         kp,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -253,12 +246,11 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
     Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
-  Action const action{
-      KeyPublishToUserGroup{recipientPublicEncryptionKey, resourceId, symKey}};
+  KeyPublishToUserGroup kp{recipientPublicEncryptionKey, resourceId, symKey};
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         action,
+                                         kp,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -280,7 +272,7 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
   ugc.selfSign(signatureKeyPair.privateKey);
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         Action{ugc},
+                                         ugc,
                                          _privateSignatureKey);
 
   return Serialization::serialize(entry);
@@ -299,7 +291,7 @@ std::vector<uint8_t> BlockGenerator::userGroupAddition(
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         Action{uga},
+                                         uga,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
@@ -335,7 +327,7 @@ std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
 
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
-                                         Action{claim},
+                                         claim,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }

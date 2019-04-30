@@ -43,7 +43,7 @@ public:
   template <typename Alternative,
             typename = std::enable_if_t<
                 std::is_constructible<variant_t, Alternative>::value>>
-  explicit Action(Alternative&&);
+  Action(Alternative&&);
 
   static Action deserialize(Actions::Nature, gsl::span<std::uint8_t const>);
 

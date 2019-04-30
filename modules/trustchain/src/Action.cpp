@@ -17,39 +17,35 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   switch (nature)
   {
   case Nature::TrustchainCreation:
-    return Action{Serialization::deserialize<TrustchainCreation>(payload)};
+    return Serialization::deserialize<TrustchainCreation>(payload);
   case Nature::KeyPublishToDevice:
-    return Action{Serialization::deserialize<KeyPublishToDevice>(payload)};
+    return Serialization::deserialize<KeyPublishToDevice>(payload);
+  // how does this compile and work since there is a double implicit conversion
+  // which cannot compile!? you might ask. Because variant is tricky, look at
+  // constructor 4: https://en.cppreference.com/w/cpp/utility/variant/variant
   case Nature::DeviceCreation:
-    return Action{DeviceCreation{
-        Serialization::deserialize<DeviceCreation::v1>(payload)}};
+    return Serialization::deserialize<DeviceCreation::v1>(payload);
   case Nature::DeviceCreation2:
-    return Action{
-        DeviceCreation{Serialization::deserialize<DeviceCreation2>(payload)
-                           .asDeviceCreation1()}};
+    return Serialization::deserialize<DeviceCreation2>(payload)
+        .asDeviceCreation1();
   case Nature::DeviceCreation3:
-    return Action{DeviceCreation{
-        Serialization::deserialize<DeviceCreation::v3>(payload)}};
+    return Serialization::deserialize<DeviceCreation::v3>(payload);
   case Nature::KeyPublishToUser:
-    return Action{Serialization::deserialize<KeyPublishToUser>(payload)};
+    return Serialization::deserialize<KeyPublishToUser>(payload);
   case Nature::KeyPublishToProvisionalUser:
-    return Action{
-        Serialization::deserialize<KeyPublishToProvisionalUser>(payload)};
+    return Serialization::deserialize<KeyPublishToProvisionalUser>(payload);
   case Nature::DeviceRevocation:
-    return Action{DeviceRevocation{
-        Serialization::deserialize<DeviceRevocation1>(payload)}};
+    return Serialization::deserialize<DeviceRevocation1>(payload);
   case Nature::DeviceRevocation2:
-    return Action{DeviceRevocation{
-        Serialization::deserialize<DeviceRevocation2>(payload)}};
+    return Serialization::deserialize<DeviceRevocation2>(payload);
   case Nature::UserGroupCreation:
-    return Action{Serialization::deserialize<UserGroupCreation>(payload)};
+    return Serialization::deserialize<UserGroupCreation>(payload);
   case Nature::KeyPublishToUserGroup:
-    return Action{Serialization::deserialize<KeyPublishToUserGroup>(payload)};
+    return Serialization::deserialize<KeyPublishToUserGroup>(payload);
   case Nature::UserGroupAddition:
-    return Action{Serialization::deserialize<UserGroupAddition>(payload)};
+    return Serialization::deserialize<UserGroupAddition>(payload);
   case Nature::ProvisionalIdentityClaim:
-    return Action{
-        Serialization::deserialize<ProvisionalIdentityClaim>(payload)};
+    return Serialization::deserialize<ProvisionalIdentityClaim>(payload);
   }
   throw std::runtime_error{fmt::format(fmt("unknown nature: {:d}"), nature)};
 }
