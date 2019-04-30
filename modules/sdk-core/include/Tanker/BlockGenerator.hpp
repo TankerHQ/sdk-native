@@ -133,15 +133,5 @@ private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;
   Trustchain::DeviceId _deviceId;
-
-  template <typename T, typename U>
-  Block makeBlock(Trustchain::Actions::Nature nature,
-                  T const& action,
-                  Crypto::BasicHash<U> const& parentHash,
-                  Crypto::PrivateSignatureKey const& privateSignatureKey) const;
-  template <typename T, typename U>
-  Block makeBlock(T const& action,
-                  Crypto::BasicHash<U> const& parentHash,
-                  Crypto::PrivateSignatureKey const& privateSignatureKey) const;
 };
 }

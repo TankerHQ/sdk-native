@@ -37,8 +37,8 @@ public:
   using DeviceType = v3::DeviceType;
 
   DeviceCreation() = default;
-  explicit DeviceCreation(v1 const&);
-  explicit DeviceCreation(v3 const&);
+  DeviceCreation(v1 const&);
+  DeviceCreation(v3 const&);
 
   Nature nature() const;
   Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
