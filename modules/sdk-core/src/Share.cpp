@@ -170,7 +170,7 @@ void handleNotFound(
 {
   if (!groupsNotFound.empty() || !usersNotFound.empty())
   {
-    auto const clearPublicIdentities = toClearId(
+    auto const clearPublicIdentities = mapIdsToStrings(
         usersNotFound,
         spublicIdentities,
         publicIdentities,
@@ -181,7 +181,7 @@ void handleNotFound(
                      nonstd::make_optional(permanentIdentity->userId) :
                      nonstd::nullopt;
         });
-    auto const clearGids = toClearId(groupsNotFound, sgroupIds, groupIds);
+    auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
     throw Error::RecipientNotFound(
         fmt::format(
             fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),

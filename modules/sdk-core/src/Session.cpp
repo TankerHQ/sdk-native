@@ -325,7 +325,7 @@ tc::cotask<SGroupId> Session::createGroup(
   catch (Error::UserNotFoundInternal const& e)
   {
     auto const notFoundIdentities =
-        toClearId(e.userIds(), spublicIdentities, userIds);
+        mapIdsToStrings(e.userIds(), spublicIdentities, userIds);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),
@@ -355,7 +355,7 @@ tc::cotask<void> Session::updateGroupMembers(
   catch (Error::UserNotFoundInternal const& e)
   {
     auto const notFoundIdentities =
-        toClearId(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
+        mapIdsToStrings(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),

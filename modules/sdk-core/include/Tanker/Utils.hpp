@@ -36,23 +36,23 @@ struct IdentityFunc
 };
 
 template <typename S, typename T, typename I, typename F = IdentityFunc>
-auto toClearId(std::vector<T> const& errorIds,
+auto mapIdsToStrings(std::vector<T> const& errorIds,
                std::vector<S> const& sIds,
-               std::vector<I> const& Ids,
+               std::vector<I> const& ids,
                F&& mapToT = IdentityFunc{})
 {
   std::vector<S> clearIds;
-  clearIds.reserve(Ids.size());
+  clearIds.reserve(ids.size());
 
-  for (auto const& wrongId : errorIds)
+  for (auto const& errorId : errorIds)
   {
-    auto const badIt = std::find_if(Ids.begin(), Ids.end(), [&](auto const& e) {
-      return mapToT(e) == wrongId;
+    auto const idsIt = std::find_if(ids.begin(), ids.end(), [&](auto const& e) {
+      return mapToT(e) == errorId;
     });
 
-    assert(badIt != Ids.end() && "Wrong id not found");
+    assert(idsIt != ids.end() && "Wrong id not found");
 
-    clearIds.push_back(sIds[std::distance(Ids.begin(), badIt)]);
+    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
   }
   return clearIds;
 }
