@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Trustchain/Preprocessor/detail/Common.hpp>
+
 #include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/comparison/less.hpp>
 #include <boost/preprocessor/empty.hpp>
@@ -7,28 +9,9 @@
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/seq/for_each_i.hpp>
 #include <boost/preprocessor/seq/size.hpp>
-#include <boost/preprocessor/tuple/elem.hpp>
 #include <boost/preprocessor/variadic/to_seq.hpp>
 
 #include <tuple>
-
-#define TANKER_DETAIL_ATTRIBUTE_NAME(elem) \
-  BOOST_PP_CAT(_, BOOST_PP_TUPLE_ELEM(0, elem))
-
-#define TANKER_DETAIL_TYPE_NAME(elem) BOOST_PP_TUPLE_ELEM(1, elem)
-#define TANKER_DETAIL_PARAMETER_NAME(elem) BOOST_PP_TUPLE_ELEM(0, elem)
-
-#define TANKER_DETAIL_FULL_PARAMETER(elem) \
-  TANKER_DETAIL_TYPE_NAME(elem) const& TANKER_DETAIL_PARAMETER_NAME(elem)
-
-#define TANKER_DETAIL_DEFINE_ATTRIBUTE(unused1, unused2, elem) \
-  TANKER_DETAIL_TYPE_NAME(elem) TANKER_DETAIL_ATTRIBUTE_NAME(elem);
-
-#define TANKER_DETAIL_DEFINE_METHOD(unused1, unused2, elem) \
-  TANKER_DETAIL_FULL_PARAMETER(elem)() const                \
-  {                                                         \
-    return TANKER_DETAIL_ATTRIBUTE_NAME(elem);              \
-  }
 
 #define TANKER_DETAIL_CONSTRUCTOR_ARGS(unused, size, idx, elem) \
   TANKER_DETAIL_FULL_PARAMETER(elem)                            \
@@ -67,7 +50,7 @@
 public:                                                                      \
   name() = default;                                                          \
   TANKER_DETAIL_DEFINE_CONSTRUCTOR(name, list)                               \
-  BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_DEFINE_METHOD, BOOST_PP_EMPTY(), list) \
+  BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_DEFINE_GETTER, BOOST_PP_EMPTY(), list) \
 protected:                                                                   \
   BOOST_PP_SEQ_FOR_EACH(                                                     \
       TANKER_DETAIL_DEFINE_ATTRIBUTE, BOOST_PP_EMPTY(), list)                \
