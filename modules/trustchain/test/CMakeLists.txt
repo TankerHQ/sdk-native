@@ -11,6 +11,7 @@ add_executable(test_trustchain
   test_actions_usergroupcreation.cpp
   test_actions_usergroupaddition.cpp
   test_cliententry.cpp
+  test_preprocessor_actions.cpp
 
   main.cpp
 )
