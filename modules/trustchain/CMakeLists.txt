@@ -20,6 +20,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/TrustchainCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
+  include/Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
@@ -44,6 +45,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/TrustchainCreation.hpp
   include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
   include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
+  include/Tanker/Trustchain/Serialization/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/Json/Action.hpp
   include/Tanker/Trustchain/Json/ClientEntry.hpp
   include/Tanker/Trustchain/Json/DeviceCreation.hpp
@@ -62,6 +64,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Json/TrustchainCreation.hpp
   include/Tanker/Trustchain/Json/UserGroupAddition.hpp
   include/Tanker/Trustchain/Json/UserGroupCreation.hpp
+  include/Tanker/Trustchain/Json/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/detail/ComputeHash.hpp
@@ -83,6 +86,7 @@ add_library(tankertrustchain STATIC
   src/Actions/TrustchainCreation.cpp
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp
+  src/Actions/UserGroupCreation/v1.cpp
   src/ClientEntry.cpp
   src/ServerEntry.cpp
   src/Json/Action.cpp
@@ -103,6 +107,7 @@ add_library(tankertrustchain STATIC
   src/Json/TrustchainCreation.cpp
   src/Json/UserGroupAddition.cpp
   src/Json/UserGroupCreation.cpp
+  src/Json/UserGroupCreation/v1.cpp
   src/Serialization/Action.cpp
   src/Serialization/ClientEntry.cpp
   src/Serialization/ServerEntry.cpp
@@ -121,6 +126,7 @@ add_library(tankertrustchain STATIC
   src/Serialization/TrustchainCreation.cpp
   src/Serialization/UserGroupAddition.cpp
   src/Serialization/UserGroupCreation.cpp
+  src/Serialization/UserGroupCreation/v1.cpp
   src/ExternTemplates.cpp
   src/detail/ComputeHash.cpp
 )

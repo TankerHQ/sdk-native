@@ -11,8 +11,8 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
-using Tanker::Trustchain::UserId;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
@@ -61,7 +61,7 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
         memberUserKeys.size(),
         MAX_GROUP_SIZE);
 
-  Trustchain::Actions::UserGroupCreation::SealedPrivateEncryptionKeysForUsers
+  Trustchain::Actions::UserGroupCreation1::SealedPrivateEncryptionKeysForUsers
       sealedEncKeys;
   for (auto const& userKey : memberUserKeys)
   {

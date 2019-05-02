@@ -27,7 +27,7 @@ struct MyGroupKey
 
 tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
     UserKeyStore const& userKeyStore,
-    UserGroupCreation::SealedPrivateEncryptionKeysForUsers const& groupKeys)
+    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
@@ -122,8 +122,10 @@ tc::cotask<void> applyUserGroupCreation(GroupStore& groupStore,
 {
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
-  auto const myKeys = TC_AWAIT(findMyKeys(
-      userKeyStore, userGroupCreation.sealedPrivateEncryptionKeysForUsers()));
+  auto const myKeys =
+      TC_AWAIT(findMyKeys(userKeyStore,
+                          userGroupCreation.get<UserGroupCreation1>()
+                              .sealedPrivateEncryptionKeysForUsers()));
 
   if (!myKeys)
     TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));

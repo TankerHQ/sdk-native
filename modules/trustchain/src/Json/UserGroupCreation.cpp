@@ -8,14 +8,9 @@ namespace Trustchain
 {
 namespace Actions
 {
-void to_json(nlohmann::json& j, UserGroupCreation const& ugc)
+void to_json(nlohmann::json& j, UserGroupCreation const& dc)
 {
-  j["publicSignatureKey"] = ugc.publicSignatureKey();
-  j["publicEncryptionKey"] = ugc.publicEncryptionKey();
-  j["sealedPrivateSignatureKey"] = ugc.sealedPrivateSignatureKey();
-  j["sealedPrivateEncryptionKeysForUsers"] =
-      ugc.sealedPrivateEncryptionKeysForUsers();
-  j["selfSignature"] = ugc.selfSignature();
+  mpark::visit([&j](auto const& val) { j = val; }, dc._variant);
 }
 }
 }
