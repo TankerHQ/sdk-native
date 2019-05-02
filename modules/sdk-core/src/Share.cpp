@@ -208,7 +208,8 @@ KeyRecipients toKeyRecipients(
   {
     if (!user.userKey)
       throw std::runtime_error(
-          "sharing to users without user key is not supported anymore");
+          "assertion error: sharing to users without user key is not supported "
+          "anymore");
     out.recipientUserKeys.push_back(*user.userKey);
   }
 
