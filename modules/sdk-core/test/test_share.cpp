@@ -154,13 +154,13 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  auto const recipients = AWAIT(
-      Share::generateRecipientList(userAccessor.get(),
-                                   groupAccessor.get(),
-                                   client,
-                                   {Identity::PublicPermanentIdentity{
-                                       builder.trustchainId(), newUser.userId}},
-                                   {}));
+  auto const recipients = AWAIT(Share::generateRecipientList(
+      userAccessor.get(),
+      groupAccessor.get(),
+      client,
+      {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+          builder.trustchainId(), newUser.userId})}},
+      {}));
 
   // there should be only user keys
   CHECK(recipients.recipientProvisionalUserKeys.size() == 0);
@@ -196,12 +196,13 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
       .LR_RETURN(
           (GroupAccessor::PullResult{{newGroup.group.asExternalGroup()}, {}}));
 
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {},
-                                         {newGroup.group.tankerGroup.id}));
+  auto const recipients = AWAIT(
+      Share::generateRecipientList(userAccessor.get(),
+                                   groupAccessor.get(),
+                                   client,
+                                   {},
+                                   {cppcodec::base64_rfc4648::encode<SGroupId>(
+                                       newGroup.group.tankerGroup.id)}));
 
   // there should be only group keys
   CHECK(recipients.recipientUserKeys.size() == 0);
@@ -251,12 +252,12 @@ TEST_CASE(
                  provisionalUser.tankerEncryptionKeyPair.publicKey}}})
               .dump()));
 
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {publicProvisionalIdentity},
-                                         {}));
+  auto const recipients = AWAIT(Share::generateRecipientList(
+      userAccessor.get(),
+      groupAccessor.get(),
+      client,
+      {SPublicIdentity{to_string(publicProvisionalIdentity)}},
+      {}));
 
   CHECK(recipients.recipientUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
@@ -296,14 +297,15 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
-                      userAccessor.get(),
-                      groupAccessor.get(),
-                      client,
-                      {Identity::PublicPermanentIdentity{builder.trustchainId(),
-                                                         newUser.userId}},
-                      {})),
-                  Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(
+      AWAIT(Share::generateRecipientList(
+          userAccessor.get(),
+          groupAccessor.get(),
+          client,
+          {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+              builder.trustchainId(), newUser.userId})}},
+          {})),
+      Error::RecipientNotFound);
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -332,13 +334,14 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
       .LR_RETURN(
           (GroupAccessor::PullResult{{}, {newGroup.group.tankerGroup.id}}));
 
-  CHECK_THROWS_AS(
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         client,
-                                         {},
-                                         {newGroup.group.tankerGroup.id})),
-      Error::RecipientNotFoundInternal);
+  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
+                      userAccessor.get(),
+                      groupAccessor.get(),
+                      client,
+                      {},
+                      {cppcodec::base64_rfc4648::encode<SGroupId>(
+                          newGroup.group.tankerGroup.id)})),
+                  Error::RecipientNotFound);
 }
 
 template <typename T>
@@ -367,8 +370,6 @@ TEST_CASE(
   auto const newUser = *builder.getUser("newUser");
   auto const keySender = *builder.getUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
-  auto const keySenderPrivateEncryptionKey =
-      keySenderDevice.keys.encryptionKeyPair.privateKey;
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
@@ -380,10 +381,8 @@ TEST_CASE(
 
   Share::KeyRecipients keyRecipients{
       {newUserKeyPair.keyPair.publicKey}, {}, {}};
-  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
-                                                 keySenderBlockGenerator,
-                                                 resourceKeys,
-                                                 keyRecipients);
+  auto const blocks = Share::generateShareBlocks(
+      keySenderBlockGenerator, resourceKeys, keyRecipients);
 
   auto const keyPublishes =
       extract<Trustchain::Actions::KeyPublishToUser>(blocks);
@@ -401,8 +400,6 @@ TEST_CASE(
 
   auto const keySender = *builder.getUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
-  auto const keySenderPrivateEncryptionKey =
-      keySenderDevice.keys.encryptionKeyPair.privateKey;
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
@@ -419,10 +416,8 @@ TEST_CASE(
           provisionalUser.tankerEncryptionKeyPair.publicKey,
       }},
       {}};
-  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
-                                                 keySenderBlockGenerator,
-                                                 resourceKeys,
-                                                 keyRecipients);
+  auto const blocks = Share::generateShareBlocks(
+      keySenderBlockGenerator, resourceKeys, keyRecipients);
 
   auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
   assertKeyPublishToUsersTargetedAt(
@@ -440,8 +435,6 @@ TEST_CASE(
       builder.makeGroup(keySender.user.devices.at(0), {newUser.user});
 
   auto const keySenderDevice = keySender.user.devices.front();
-  auto const keySenderPrivateEncryptionKey =
-      keySenderDevice.keys.encryptionKeyPair.privateKey;
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
 
@@ -451,10 +444,8 @@ TEST_CASE(
 
   Share::KeyRecipients keyRecipients{
       {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
-  auto const blocks = Share::generateShareBlocks(keySenderPrivateEncryptionKey,
-                                                 keySenderBlockGenerator,
-                                                 resourceKeys,
-                                                 keyRecipients);
+  auto const blocks = Share::generateShareBlocks(
+      keySenderBlockGenerator, resourceKeys, keyRecipients);
 
   auto const keyPublishes =
       extract<Trustchain::Actions::KeyPublishToUserGroup>(blocks);

@@ -37,6 +37,7 @@
 #include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/UserNotFound.hpp>
+#include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -68,16 +69,6 @@ namespace Tanker
 namespace
 {
 
-template <typename T, typename F>
-auto convertList(std::vector<T> const& source, F&& f)
-{
-  std::vector<std::result_of_t<F(T)>> ret;
-  ret.reserve(source.size());
-
-  std::transform(begin(source), end(source), std::back_inserter(ret), f);
-  return ret;
-}
-
 // this function can exist because for the moment, a public identity can only
 // contain a user id
 std::vector<UserId> publicIdentitiesToUserIds(
@@ -89,60 +80,6 @@ std::vector<UserId> publicIdentitiesToUserIds(
                    spublicIdentity.string()))
         .userId;
   });
-}
-
-std::vector<Identity::PublicIdentity> extractPublicIdentities(
-    std::vector<SPublicIdentity> const& spublicIdentities)
-{
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return Identity::extract<Identity::PublicIdentity>(
-        spublicIdentity.string());
-  });
-}
-
-std::vector<GroupId> convertToGroupIds(std::vector<SGroupId> const& sgroupIds)
-{
-  return convertList(sgroupIds, [](auto&& sgroupId) {
-    return cppcodec::base64_rfc4648::decode<GroupId>(sgroupId.string());
-  });
-}
-
-struct IdentityFunc
-{
-  template <typename T>
-  T&& operator()(T&& t)
-  {
-    return std::forward<T>(t);
-  }
-};
-
-template <typename S, typename T, typename I, typename F = IdentityFunc>
-auto toClearId(std::vector<T> const& errorIds,
-               std::vector<S> const& sIds,
-               std::vector<I> const& Ids,
-               F&& mapToT = IdentityFunc{})
-{
-  std::vector<S> clearIds;
-  clearIds.reserve(Ids.size());
-
-  for (auto const& wrongId : errorIds)
-  {
-    auto const badIt = std::find_if(Ids.begin(), Ids.end(), [&](auto const& e) {
-      return mapToT(e) == wrongId;
-    });
-
-    assert(badIt != Ids.end() && "Wrong id not found");
-
-    clearIds.push_back(sIds[std::distance(Ids.begin(), badIt)]);
-  }
-  return clearIds;
-}
-template <typename T>
-std::vector<T> removeDuplicates(std::vector<T> stuff)
-{
-  std::sort(begin(stuff), end(stuff));
-  stuff.erase(std::unique(begin(stuff), end(stuff)), end(stuff));
-  return stuff;
 }
 }
 
@@ -282,22 +219,18 @@ tc::cotask<void> Session::encrypt(
     std::vector<SGroupId> const& sgroupIds)
 {
   auto const metadata = Encryptor::encrypt(encryptedData, clearData);
-  auto publicIdentities = extractPublicIdentities(spublicIdentities);
-  // add ourself
-  publicIdentities.insert(
-      publicIdentities.begin(),
-      Identity::PublicPermanentIdentity{_trustchainId, _userId});
-  auto groupIds = convertToGroupIds(sgroupIds);
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(SPublicIdentity{
+      to_string(Identity::PublicPermanentIdentity{_trustchainId, _userId})});
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
-  TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
-                        _userAccessor,
+  TC_AWAIT(Share::share(_userAccessor,
                         _groupAcessor,
                         _blockGenerator,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
-                        publicIdentities,
-                        groupIds));
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
 }
 
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
@@ -354,78 +287,25 @@ tc::cotask<std::vector<Device>> Session::getDeviceList() const
 }
 
 tc::cotask<void> Session::share(
-    std::vector<ResourceId> const& resourceIds,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+    std::vector<SResourceId> const& sresourceIds,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
-  TC_AWAIT(Share::share(_deviceKeyStore->encryptionKeyPair().privateKey,
-                        _resourceKeyStore,
+  if (spublicIdentities.empty() && sgroupIds.empty())
+    TC_RETURN();
+
+  auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
+    return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
+  });
+
+  TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
                         _groupAcessor,
                         _blockGenerator,
                         *_client,
                         resourceIds,
-                        publicIdentities,
-                        groupIds));
-}
-
-tc::cotask<void> Session::share(
-    std::vector<SResourceId> const& sresourceIds,
-    std::vector<SPublicIdentity> const& aspublicIdentities,
-    std::vector<SGroupId> const& asgroupIds)
-{
-  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
-  auto const sgroupIds = removeDuplicates(asgroupIds);
-
-  auto publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto groupIds = convertToGroupIds(sgroupIds);
-  auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
-  });
-
-  // we remove ourselves from the recipients
-  publicIdentities.erase(
-      std::remove_if(
-          begin(publicIdentities),
-          end(publicIdentities),
-          [this](auto&& rec) {
-            auto const permanentIdentity =
-                mpark::get_if<Identity::PublicPermanentIdentity>(&rec);
-            return permanentIdentity && permanentIdentity->userId == _userId;
-          }),
-      end(publicIdentities));
-
-  if (!publicIdentities.empty() || !groupIds.empty())
-  {
-    try
-    {
-      TC_AWAIT(share(resourceIds, publicIdentities, groupIds));
-    }
-    catch (Error::RecipientNotFoundInternal const& e)
-    {
-      auto const clearPublicIdentities = toClearId(
-          e.userIds(),
-          spublicIdentities,
-          publicIdentities,
-          [](auto const& identity) {
-            auto const permanentIdentity =
-                mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
-            return permanentIdentity ?
-                       nonstd::make_optional(permanentIdentity->userId) :
-                       nonstd::nullopt;
-          });
-      auto const clearGids = toClearId(e.groupIds(), sgroupIds, groupIds);
-      throw Error::RecipientNotFound(
-          fmt::format(
-              fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
-              fmt::join(clearPublicIdentities.begin(),
-                        clearPublicIdentities.end(),
-                        ", "),
-              fmt::join(clearGids.begin(), clearGids.end(), ", ")),
-          clearPublicIdentities,
-          e.groupIds());
-    }
-  }
+                        spublicIdentities,
+                        sgroupIds));
 }
 
 tc::cotask<SGroupId> Session::createGroup(
@@ -445,7 +325,7 @@ tc::cotask<SGroupId> Session::createGroup(
   catch (Error::UserNotFoundInternal const& e)
   {
     auto const notFoundIdentities =
-        toClearId(e.userIds(), spublicIdentities, userIds);
+        mapIdsToStrings(e.userIds(), spublicIdentities, userIds);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),
@@ -475,7 +355,7 @@ tc::cotask<void> Session::updateGroupMembers(
   catch (Error::UserNotFoundInternal const& e)
   {
     auto const notFoundIdentities =
-        toClearId(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
+        mapIdsToStrings(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),

@@ -13,6 +13,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserNotFound.hpp>
+#include <Tanker/Utils.hpp>
 
 #include <fmt/format.h>
 #include <mpark/variant.hpp>
@@ -149,6 +150,88 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
 }
+
+std::vector<Identity::PublicIdentity> extractPublicIdentities(
+    std::vector<SPublicIdentity> const& spublicIdentities)
+{
+  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
+    return Identity::extract<Identity::PublicIdentity>(
+        spublicIdentity.string());
+  });
+}
+
+void handleNotFound(
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    std::vector<Trustchain::UserId> const& usersNotFound,
+    std::vector<SGroupId> const& sgroupIds,
+    std::vector<GroupId> const& groupIds,
+    std::vector<Trustchain::GroupId> const& groupsNotFound)
+{
+  if (!groupsNotFound.empty() || !usersNotFound.empty())
+  {
+    auto const clearPublicIdentities = mapIdsToStrings(
+        usersNotFound,
+        spublicIdentities,
+        publicIdentities,
+        [](auto const& identity) {
+          auto const permanentIdentity =
+              mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
+          return permanentIdentity ?
+                     nonstd::make_optional(permanentIdentity->userId) :
+                     nonstd::nullopt;
+        });
+    auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
+    throw Error::RecipientNotFound(
+        fmt::format(
+            fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+            fmt::join(clearPublicIdentities.begin(),
+                      clearPublicIdentities.end(),
+                      ", "),
+            fmt::join(clearGids.begin(), clearGids.end(), ", ")),
+        clearPublicIdentities,
+        groupsNotFound);
+  }
+}
+
+KeyRecipients toKeyRecipients(
+    std::vector<User> const& users,
+    std::vector<Identity::PublicProvisionalIdentity> const&
+        appPublicProvisionalIdentities,
+    std::vector<std::pair<Crypto::PublicSignatureKey,
+                          Crypto::PublicEncryptionKey>> const&
+        tankerPublicProvisionalIdentities,
+    std::vector<ExternalGroup> const& groups)
+{
+  KeyRecipients out;
+  for (auto const& user : users)
+  {
+    if (!user.userKey)
+      throw std::runtime_error(
+          "assertion error: sharing to users without user key is not supported "
+          "anymore");
+    out.recipientUserKeys.push_back(*user.userKey);
+  }
+
+  std::transform(appPublicProvisionalIdentities.begin(),
+                 appPublicProvisionalIdentities.end(),
+                 tankerPublicProvisionalIdentities.begin(),
+                 std::back_inserter(out.recipientProvisionalUserKeys),
+                 [](auto const& appPublicProvisionalIdentity,
+                    auto const& tankerPublicProvisionalIdentity) {
+                   return PublicProvisionalUser{
+                       appPublicProvisionalIdentity.appSignaturePublicKey,
+                       appPublicProvisionalIdentity.appEncryptionPublicKey,
+                       tankerPublicProvisionalIdentity.first,
+                       tankerPublicProvisionalIdentity.second,
+                   };
+                 });
+
+  for (auto const& group : groups)
+    out.recipientGroupKeys.push_back(group.publicEncryptionKey);
+
+  return out;
+}
 }
 
 std::vector<uint8_t> makeKeyPublishToUser(
@@ -168,9 +251,15 @@ tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     Client& client,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+    std::vector<SPublicIdentity> const& aspublicIdentities,
+    std::vector<SGroupId> const& asgroupIds)
 {
+  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
+  auto const sgroupIds = removeDuplicates(asgroupIds);
+
+  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto const groupIds = convertToGroupIds(sgroupIds);
+
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 
   auto const userResult =
@@ -195,43 +284,20 @@ tc::cotask<KeyRecipients> generateRecipientList(
 
   auto const groupResult = TC_AWAIT(groupAccessor.pull(groupIds));
 
-  if (!groupResult.notFound.empty() || !userResult.notFound.empty())
-  {
-    throw Error::RecipientNotFoundInternal(userResult.notFound,
-                                           groupResult.notFound);
-  }
+  handleNotFound(spublicIdentities,
+                 publicIdentities,
+                 userResult.notFound,
+                 sgroupIds,
+                 groupIds,
+                 groupResult.notFound);
 
-  KeyRecipients out;
-  for (auto const& user : userResult.found)
-  {
-    if (!user.userKey)
-      throw std::runtime_error(
-          "sharing to users without user key is not supported anymore");
-    out.recipientUserKeys.push_back(*user.userKey);
-  }
-
-  std::transform(partitionedIdentities.publicProvisionalIdentities.begin(),
-                 partitionedIdentities.publicProvisionalIdentities.end(),
-                 tankerPublicProvisionalIdentityResult.begin(),
-                 std::back_inserter(out.recipientProvisionalUserKeys),
-                 [](auto const& appPublicProvisionalIdentity,
-                    auto const& tankerPublicProvisionalIdentity) {
-                   return PublicProvisionalUser{
-                       appPublicProvisionalIdentity.appSignaturePublicKey,
-                       appPublicProvisionalIdentity.appEncryptionPublicKey,
-                       tankerPublicProvisionalIdentity.first,
-                       tankerPublicProvisionalIdentity.second,
-                   };
-                 });
-
-  for (auto const& group : groupResult.found)
-    out.recipientGroupKeys.push_back(group.publicEncryptionKey);
-
-  TC_RETURN(out);
+  TC_RETURN(toKeyRecipients(userResult.found,
+                            partitionedIdentities.publicProvisionalIdentities,
+                            tankerPublicProvisionalIdentityResult,
+                            groupResult.found));
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
     BlockGenerator const& blockGenerator,
     ResourceKeys const& resourceKeys,
     KeyRecipients const& keyRecipients)
@@ -252,42 +318,37 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
   return out;
 }
 
-tc::cotask<void> share(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
-    UserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
-    BlockGenerator const& blockGenerator,
-    Client& client,
-    ResourceKeys const& resourceKeys,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+tc::cotask<void> share(UserAccessor& userAccessor,
+                       GroupAccessor& groupAccessor,
+                       BlockGenerator const& blockGenerator,
+                       Client& client,
+                       ResourceKeys const& resourceKeys,
+                       std::vector<SPublicIdentity> const& publicIdentities,
+                       std::vector<SGroupId> const& groupIds)
 {
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, client, publicIdentities, groupIds));
 
-  auto const ks = generateShareBlocks(
-      selfPrivateEncryptionKey, blockGenerator, resourceKeys, keyRecipients);
+  auto const ks =
+      generateShareBlocks(blockGenerator, resourceKeys, keyRecipients);
 
   if (!ks.empty())
     TC_AWAIT(client.pushKeys(ks));
 }
 
-tc::cotask<void> share(
-    Crypto::PrivateEncryptionKey const& selfPrivateEncryptionKey,
-    ResourceKeyStore const& resourceKeyStore,
-    UserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
-    BlockGenerator const& blockGenerator,
-    Client& client,
-    std::vector<Trustchain::ResourceId> const& resourceIds,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    std::vector<GroupId> const& groupIds)
+tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
+                       UserAccessor& userAccessor,
+                       GroupAccessor& groupAccessor,
+                       BlockGenerator const& blockGenerator,
+                       Client& client,
+                       std::vector<Trustchain::ResourceId> const& resourceIds,
+                       std::vector<SPublicIdentity> const& publicIdentities,
+                       std::vector<SGroupId> const& groupIds)
 {
   auto const resourceKeys =
       TC_AWAIT(getResourceKeys(resourceKeyStore, resourceIds));
 
-  TC_AWAIT(share(selfPrivateEncryptionKey,
-                 userAccessor,
+  TC_AWAIT(share(userAccessor,
                  groupAccessor,
                  blockGenerator,
                  client,
