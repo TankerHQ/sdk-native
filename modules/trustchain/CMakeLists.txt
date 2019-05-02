@@ -23,6 +23,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
+  include/Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/Serialization/Action.hpp
   include/Tanker/Trustchain/Serialization/ClientEntry.hpp
@@ -131,7 +132,7 @@ install(TARGETS tankertrustchain
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertrustchain tankercrypto tankerserialization tankerformat CONAN_PKG::variant CONAN_PKG::jsonformoderncpp)
+target_link_libraries(tankertrustchain tankercrypto tankerserialization tankerformat CONAN_PKG::variant CONAN_PKG::jsonformoderncpp CONAN_PKG::Boost)
 
 if(BUILD_TESTS)
   enable_testing()
