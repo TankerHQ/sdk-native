@@ -4,7 +4,6 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -12,28 +11,30 @@
 
 #include <cassert>
 
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace Verif
 {
-void verifyProvisionalIdentityClaim(UnverifiedEntry const& entry,
+void verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
                                     User const& authorUser,
                                     Device const& author)
 {
-  assert(entry.nature == Nature::ProvisionalIdentityClaim);
+  assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "author device must not be revoked");
-  ensures(
-      Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
-      Error::VerificationCode::InvalidSignature,
-      "ProvisionalIdentityClaim block must be signed by the author device");
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
+                         author.publicSignatureKey),
+          Error::VerificationCode::InvalidSignature,
+          "ProvisionalIdentityClaim block must be signed by the author device");
 
   auto const& provisionalIdentityClaim =
-      entry.action.get<ProvisionalIdentityClaim>();
+      serverEntry.action().get<ProvisionalIdentityClaim>();
 
   ensures(provisionalIdentityClaim.userId() == authorUser.id,
           Error::VerificationCode::InvalidUserId,

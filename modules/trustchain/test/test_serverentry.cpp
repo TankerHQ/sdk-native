@@ -1,26 +1,28 @@
-#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <Helpers/Buffers.hpp>
 
 #include <doctest.h>
+#include <gsl-lite.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 
 TEST_CASE("Serialization test vectors")
 {
-  SUBCASE("it should serialize a ClientEntry")
+  SUBCASE("it should deserialize a ServerEntry")
   {
     // clang-format off
-    std::vector<std::uint8_t> const serializedClientEntry = {
+    std::vector<std::uint8_t> const serializedServerEntry = {
       // varint version
       0x01,
       // varint index
-      0x00,
+      0x02,
       // trustchain id
       0x74, 0x72, 0x75, 0x73, 0x74, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x20, 0x69,
       0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -58,10 +60,15 @@ TEST_CASE("Serialization test vectors")
     Crypto::Hash const author{};
     auto const signature = make<Crypto::Signature>("sig");
 
-    ClientEntry const clientEntry{
-        trustchainId, author, nature, serializedPayload, {}, signature};
+    ServerEntry const serverEntry{
+        trustchainId,
+        2,
+        author,
+        Action::deserialize(nature, serializedPayload),
+        detail::computeHash(nature, author, serializedPayload),
+        signature};
 
-    auto const payload = Serialization::serialize(clientEntry);
-    CHECK(Serialization::serialize(clientEntry) == serializedClientEntry);
+    CHECK(Serialization::deserialize<ServerEntry>(serializedServerEntry) ==
+          serverEntry);
   }
 }

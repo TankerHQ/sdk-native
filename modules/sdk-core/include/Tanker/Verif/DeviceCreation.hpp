@@ -1,20 +1,20 @@
 #pragma once
 
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 namespace Tanker
 {
-struct UnverifiedEntry;
 struct Device;
 struct User;
 
 namespace Verif
 {
 void verifyDeviceCreation(
-    UnverifiedEntry const& entry,
+    Trustchain::ServerEntry const& serverEntry,
     Trustchain::Actions::TrustchainCreation const& author);
 
-void verifyDeviceCreation(UnverifiedEntry const& entry,
+void verifyDeviceCreation(Trustchain::ServerEntry const& serverEntry,
                           Device const& author,
                           User const& user);
 }

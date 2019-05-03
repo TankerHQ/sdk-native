@@ -11,10 +11,10 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -56,14 +56,14 @@ public:
   struct ResultUser
   {
     User user;
-    Tanker::UnverifiedEntry entry;
+    Tanker::Trustchain::ServerEntry entry;
   };
 
   struct ResultDevice
   {
     Device device;
     Tanker::User user;
-    Tanker::UnverifiedEntry entry;
+    Tanker::Trustchain::ServerEntry entry;
   };
 
   struct Group
@@ -78,7 +78,7 @@ public:
   struct ResultGroup
   {
     Group group;
-    Tanker::UnverifiedEntry entry;
+    Tanker::Trustchain::ServerEntry entry;
   };
 
   TrustchainBuilder();
@@ -99,7 +99,7 @@ public:
                              std::vector<User> const& users);
 
   Tanker::SecretProvisionalUser makeProvisionalUser(std::string const& email);
-  Tanker::UnverifiedEntry claimProvisionalIdentity(
+  Tanker::Trustchain::ServerEntry claimProvisionalIdentity(
       std::string const& userId,
       Tanker::SecretProvisionalUser const& provisionalUser,
       int authorDeviceIndex = 0);

@@ -16,8 +16,8 @@
 #include <algorithm>
 #include <cstring>
 
-using Tanker::Trustchain::GroupId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Trustchain;
 using namespace Tanker;
 
 TrustchainBuilder::TrustchainBuilder()
@@ -26,8 +26,8 @@ TrustchainBuilder::TrustchainBuilder()
   Block block{};
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
-      Trustchain::Actions::TrustchainCreation{_trustchainKeyPair.publicKey});
-  block.trustchainId = Trustchain::TrustchainId(block.hash());
+      TrustchainCreation{_trustchainKeyPair.publicKey});
+  block.trustchainId = TrustchainId(block.hash());
   _trustchainId = block.trustchainId;
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
@@ -73,7 +73,7 @@ Tanker::ExternalGroup TrustchainBuilder::Group::asExternalGroup() const
   return extGroup;
 }
 
-Trustchain::TrustchainId const& TrustchainBuilder::trustchainId() const
+TrustchainId const& TrustchainBuilder::trustchainId() const
 {
   return _trustchainId;
 }
@@ -124,11 +124,11 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   _blocks.push_back(block);
 
   user.devices[0].delegation = delegation;
-  user.devices[0].keys.deviceId = Trustchain::DeviceId(block.hash());
+  user.devices[0].keys.deviceId = DeviceId(block.hash());
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
   return {user, entry};
 }
@@ -170,12 +170,12 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  user.devices[0].keys.deviceId = Trustchain::DeviceId(block.hash());
+  user.devices[0].keys.deviceId = DeviceId(block.hash());
   user.devices[0].delegation = delegation;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
   return {user, entry};
 }
@@ -219,13 +219,13 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = Trustchain::DeviceId(block.hash());
+  device.keys.deviceId = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);
 
   auto const tankerUser = user.asTankerUser();
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
   return {device, tankerUser, entry};
 }
@@ -269,13 +269,13 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = Trustchain::DeviceId(block.hash());
+  device.keys.deviceId = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
   user.devices.push_back(device);
 
   auto const tankerUser = user.asTankerUser();
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
   return {device, tankerUser, entry};
 }
@@ -293,7 +293,7 @@ Tanker::SecretProvisionalUser TrustchainBuilder::makeProvisionalUser(
   };
 }
 
-Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
+ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     std::string const& suserId,
     Tanker::SecretProvisionalUser const& provisionalUser,
     int authorDeviceIndex)
@@ -311,7 +311,7 @@ Tanker::UnverifiedEntry TrustchainBuilder::claimProvisionalIdentity(
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
   return entry;
 }
 
@@ -378,13 +378,13 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
   Tanker::Group tgroup{
       GroupId{signatureKeyPair.publicKey},
       signatureKeyPair,
       encryptionKeyPair,
-      entry.hash,
+      entry.hash(),
       block.index,
   };
 
@@ -393,7 +393,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     members.push_back(user.suserId);
 
   auto const encryptedPrivateSignatureKey =
-      entry.action.get<UserGroupCreation>().sealedPrivateSignatureKey();
+      entry.action().get<UserGroupCreation>().sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 
   _groups.insert(group);
@@ -428,10 +428,10 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  auto const entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
-  group.tankerGroup.lastBlockHash = entry.hash;
-  group.tankerGroup.lastBlockIndex = entry.index;
+  group.tankerGroup.lastBlockHash = entry.hash();
+  group.tankerGroup.lastBlockIndex = entry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -448,8 +448,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
 std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
     Device const& sender,
     User const& receiver,
-    Tanker::Trustchain::ResourceId const& resourceId,
-    Tanker::Crypto::SymmetricKey const& key)
+    ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key)
 {
   if (!receiver.userKeys.empty())
     throw std::runtime_error("can't shareToDevice if the user has a user key");
@@ -478,11 +478,10 @@ std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
   return result;
 }
 
-Tanker::Block TrustchainBuilder::shareToUser(
-    Device const& sender,
-    User const& receiver,
-    Tanker::Trustchain::ResourceId const& resourceId,
-    Tanker::Crypto::SymmetricKey const& key)
+Tanker::Block TrustchainBuilder::shareToUser(Device const& sender,
+                                             User const& receiver,
+                                             ResourceId const& resourceId,
+                                             Crypto::SymmetricKey const& key)
 {
   if (receiver.userKeys.empty())
     throw std::runtime_error("can't shareToUser if the user has no user key");
@@ -507,8 +506,8 @@ Tanker::Block TrustchainBuilder::shareToUser(
 Tanker::Block TrustchainBuilder::shareToUserGroup(
     Device const& sender,
     Group const& receiver,
-    Tanker::Trustchain::ResourceId const& resourceId,
-    Tanker::Crypto::SymmetricKey const& key)
+    ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key)
 {
   auto const receiverPublicKey =
       receiver.tankerGroup.encryptionKeyPair.publicKey;
@@ -516,8 +515,7 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
   auto const encryptedKey =
       Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(key, receiverPublicKey);
 
-  Trustchain::Actions::KeyPublishToUserGroup keyPublish{
-      receiverPublicKey, Trustchain::ResourceId{resourceId}, encryptedKey};
+  KeyPublishToUserGroup keyPublish{receiverPublicKey, resourceId, encryptedKey};
 
   Block block;
   block.trustchainId = _trustchainId;
@@ -533,11 +531,11 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
   return block;
 }
 
-Tanker::Block TrustchainBuilder::shareToProvisionalUser(
+Block TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
-    Tanker::SecretProvisionalUser const& receiver,
-    Tanker::Trustchain::ResourceId const& resourceId,
-    Tanker::Crypto::SymmetricKey const& key)
+    SecretProvisionalUser const& receiver,
+    ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key)
 {
   auto const encryptedKeyOnce =
       Crypto::sealEncrypt(key, receiver.appEncryptionKeyPair.publicKey);
@@ -591,8 +589,7 @@ Tanker::Block TrustchainBuilder::revokeDevice1(Device const& sender,
         "TrustchainBuilder: cannot revoke a device from another user");
   }
 
-  auto const revocation =
-      Trustchain::Actions::DeviceRevocation1{target.keys.deviceId};
+  auto const revocation = DeviceRevocation1{target.keys.deviceId};
 
   Block block;
   block.trustchainId = _trustchainId;
@@ -643,7 +640,7 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
             newEncryptionKey.publicKey);
   }
 
-  Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices userKeys;
+  DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices)
   {
     if (device.keys.deviceId != target.keys.deviceId)
@@ -655,12 +652,11 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
     }
   }
 
-  Trustchain::Actions::DeviceRevocation2 const revocation{
-      target.keys.deviceId,
-      newEncryptionKey.publicKey,
-      encryptedKeyForPreviousUserKey,
-      oldPublicEncryptionKey,
-      userKeys};
+  DeviceRevocation2 const revocation{target.keys.deviceId,
+                                     newEncryptionKey.publicKey,
+                                     encryptedKeyForPreviousUserKey,
+                                     oldPublicEncryptionKey,
+                                     userKeys};
 
   Block block;
   block.trustchainId = _trustchainId;

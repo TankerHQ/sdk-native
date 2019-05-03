@@ -115,7 +115,6 @@ add_library(tankercore STATIC
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
   include/Tanker/UserAccessor.hpp
-  include/Tanker/UnverifiedEntry.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/Utils.hpp
@@ -178,7 +177,6 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Revocation.cpp
-  src/UnverifiedEntry.cpp
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/KeyPublishToDevice.cpp

@@ -9,7 +9,6 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
@@ -24,16 +23,20 @@
 
 #include <cassert>
 
-using Tanker::Trustchain::UserId;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace
 {
-Entry toEntry(UnverifiedEntry const& e)
+Entry toEntry(Trustchain::ServerEntry const& se)
 {
-  return {e.index, e.nature, e.author, e.action, e.hash};
+  return {se.index(),
+          se.action().nature(),
+          se.author(),
+          se.action(),
+          se.hash()};
 }
 
 bool isDeviceCreation(Nature nature)
@@ -51,9 +54,9 @@ TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
 {
 }
 
-tc::cotask<Entry> TrustchainVerifier::verify(UnverifiedEntry const& e) const
+tc::cotask<Entry> TrustchainVerifier::verify(Trustchain::ServerEntry const& e) const
 {
-  switch (e.nature)
+  switch (e.action().nature())
   {
   case Nature::TrustchainCreation:
     Verif::verifyTrustchainCreation(e, _trustchainId);
@@ -83,9 +86,9 @@ tc::cotask<Entry> TrustchainVerifier::verify(UnverifiedEntry const& e) const
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
-    UnverifiedEntry const& dc) const
+    Trustchain::ServerEntry const& dc) const
 {
-  auto const author = TC_AWAIT(getAuthor(dc.author));
+  auto const author = TC_AWAIT(getAuthor(dc.author()));
 
   switch (author.nature)
   {
@@ -112,9 +115,9 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
-    UnverifiedEntry const& kp) const
+    Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.author));
+  auto const author = TC_AWAIT(getAuthor(kp.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -122,12 +125,13 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
   auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
-  if (kp.nature == Nature::KeyPublishToDevice)
+  auto const nature = kp.action().nature();
+  if (nature == Nature::KeyPublishToDevice)
   {
     Verif::verifyKeyPublishToDevice(kp, authorDevice, user);
   }
-  else if (kp.nature == Nature::KeyPublishToUser ||
-           kp.nature == Nature::KeyPublishToProvisionalUser)
+  else if (nature == Nature::KeyPublishToUser ||
+           nature == Nature::KeyPublishToProvisionalUser)
   {
     Verif::verifyKeyPublishToUser(kp, authorDevice);
   }
@@ -141,15 +145,15 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
-    UnverifiedEntry const& kp) const
+    Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.author));
+  auto const author = TC_AWAIT(getAuthor(kp.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for keyPublish");
   auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const& keyPublishToUserGroup = kp.action.get<KeyPublishToUserGroup>();
+  auto const& keyPublishToUserGroup = kp.action().get<KeyPublishToUserGroup>();
   auto const group = TC_AWAIT(getGroupByEncryptionKey(
       keyPublishToUserGroup.recipientPublicEncryptionKey()));
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
@@ -160,15 +164,15 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
-    UnverifiedEntry const& dr) const
+    Trustchain::ServerEntry const& dr) const
 {
-  auto const author = TC_AWAIT(getAuthor(dr.author));
+  auto const author = TC_AWAIT(getAuthor(dr.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for deviceRevocation");
   auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const& revocation = dr.action.get<DeviceRevocation>();
+  auto const& revocation = dr.action().get<DeviceRevocation>();
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
   auto const targetDevice =
@@ -179,15 +183,15 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
-    UnverifiedEntry const& ga) const
+    Trustchain::ServerEntry const& ga) const
 {
-  auto const author = TC_AWAIT(getAuthor(ga.author));
+  auto const author = TC_AWAIT(getAuthor(ga.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for userGroupAddition");
   auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const& userGroupAddition = ga.action.get<UserGroupAddition>();
+  auto const& userGroupAddition = ga.action().get<UserGroupAddition>();
   auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId()));
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
@@ -197,15 +201,15 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
-    UnverifiedEntry const& gc) const
+    Trustchain::ServerEntry const& gc) const
 {
-  auto const author = TC_AWAIT(getAuthor(gc.author));
+  auto const author = TC_AWAIT(getAuthor(gc.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
                  "Invalid author nature for userGroupCreation");
   auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const& userGroupCreation = gc.action.get<UserGroupCreation>();
+  auto const& userGroupCreation = gc.action().get<UserGroupCreation>();
   auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
   auto const authorDevice = getDevice(user, author.hash);
 
@@ -221,9 +225,9 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
-    UnverifiedEntry const& claim) const
+    Trustchain::ServerEntry const& claim) const
 {
-  auto const author = TC_AWAIT(getAuthor(claim.author));
+  auto const author = TC_AWAIT(getAuthor(claim.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,

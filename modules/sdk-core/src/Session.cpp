@@ -34,7 +34,7 @@
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>

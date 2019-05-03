@@ -8,16 +8,16 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("blockToUnverifiedEntry")
+TEST_CASE("blockToServerEntry")
 {
   auto const trustchainId = make<Trustchain::TrustchainId>("trustchain");
   auto const userId = make<Trustchain::UserId>("alice");
@@ -40,11 +40,11 @@ TEST_CASE("blockToUnverifiedEntry")
 
   auto const block = Serialization::deserialize<Block>(sblock);
 
-  UnverifiedEntry entry = blockToUnverifiedEntry(block);
+  auto const entry = blockToServerEntry(block);
 
-  CHECK(entry.index == block.index);
-  CHECK(entry.nature == block.nature);
-  CHECK(entry.author == block.author);
-  CHECK(entry.signature == block.signature);
-  CHECK(entry.action.holdsAlternative<DeviceCreation>());
+  CHECK(entry.index() == block.index);
+  CHECK(entry.action().nature() == block.nature);
+  CHECK(entry.author() == block.author);
+  CHECK(entry.signature() == block.signature);
+  CHECK(entry.action().holdsAlternative<DeviceCreation>());
 }

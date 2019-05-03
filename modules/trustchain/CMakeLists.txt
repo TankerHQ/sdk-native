@@ -21,6 +21,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
   include/Tanker/Trustchain/ClientEntry.hpp
+  include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp
@@ -39,6 +40,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/KeyPublishToUser.hpp
   include/Tanker/Trustchain/Serialization/KeyPublishToUserGroup.hpp
   include/Tanker/Trustchain/Serialization/ProvisionalIdentityClaim.hpp
+  include/Tanker/Trustchain/Serialization/ServerEntry.hpp
   include/Tanker/Trustchain/Serialization/TrustchainCreation.hpp
   include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
   include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
@@ -56,11 +58,13 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Json/KeyPublishToUser.hpp
   include/Tanker/Trustchain/Json/KeyPublishToUserGroup.hpp
   include/Tanker/Trustchain/Json/ProvisionalIdentityClaim.hpp
+  include/Tanker/Trustchain/Json/ServerEntry.hpp
   include/Tanker/Trustchain/Json/TrustchainCreation.hpp
   include/Tanker/Trustchain/Json/UserGroupAddition.hpp
   include/Tanker/Trustchain/Json/UserGroupCreation.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
+  include/Tanker/Trustchain/detail/ComputeHash.hpp
 
   src/Action.cpp
   src/Actions/DeviceCreation.cpp
@@ -80,8 +84,10 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp
   src/ClientEntry.cpp
+  src/ServerEntry.cpp
   src/Json/Action.cpp
   src/Json/ClientEntry.cpp
+  src/Json/ServerEntry.cpp
   src/Json/DeviceCreation.cpp
   src/Json/DeviceCreation/v1.cpp
   src/Json/DeviceCreation/v2.cpp
@@ -99,6 +105,7 @@ add_library(tankertrustchain STATIC
   src/Json/UserGroupCreation.cpp
   src/Serialization/Action.cpp
   src/Serialization/ClientEntry.cpp
+  src/Serialization/ServerEntry.cpp
   src/Serialization/DeviceCreation.cpp
   src/Serialization/DeviceCreation/v1.cpp
   src/Serialization/DeviceCreation/v2.cpp
@@ -115,6 +122,7 @@ add_library(tankertrustchain STATIC
   src/Serialization/UserGroupAddition.cpp
   src/Serialization/UserGroupCreation.cpp
   src/ExternTemplates.cpp
+  src/detail/ComputeHash.cpp
 )
 
 target_include_directories(tankertrustchain

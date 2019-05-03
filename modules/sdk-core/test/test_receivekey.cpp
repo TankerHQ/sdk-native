@@ -35,7 +35,7 @@ TEST_CASE("onKeyToDeviceReceived should process a key publish block")
       builder.shareToDevice(senderDevice, receiver, resourceMac, resourceKey);
   assert(keyPublishBlocks.size() == 1);
   auto const keyPublishToDeviceEntry =
-      toVerifiedEntry(blockToUnverifiedEntry(keyPublishBlocks[0]));
+      toVerifiedEntry(blockToServerEntry(keyPublishBlocks[0]));
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   ResourceKeyStore resourceKeyStore(db.get());
@@ -70,7 +70,7 @@ TEST_CASE("decryptAndStoreKey")
     auto const keyPublishBlock =
         builder.shareToUser(senderDevice, receiver, resourceMac, resourceKey);
     auto const keyPublishToUserEntry =
-        toVerifiedEntry(blockToUnverifiedEntry(keyPublishBlock));
+        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
@@ -94,7 +94,7 @@ TEST_CASE("decryptAndStoreKey")
     auto const keyPublishBlock = builder.shareToUserGroup(
         senderDevice, group.group, resourceMac, resourceKey);
     auto const keyPublishToUserGroupEntry =
-        toVerifiedEntry(blockToUnverifiedEntry(keyPublishBlock));
+        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
@@ -118,7 +118,7 @@ TEST_CASE("decryptAndStoreKey")
     auto const keyPublishBlock = builder.shareToProvisionalUser(
         senderDevice, provisionalUser, resourceMac, resourceKey);
     auto const keyPublishToProvisionalUserEntry =
-        toVerifiedEntry(blockToUnverifiedEntry(keyPublishBlock));
+        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());

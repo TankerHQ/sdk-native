@@ -2,6 +2,7 @@
 
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -9,7 +10,6 @@
 
 namespace Tanker
 {
-struct UnverifiedEntry;
 class ContactStore;
 class GroupStore;
 struct ExternalGroup;
@@ -34,18 +34,22 @@ public:
   TrustchainVerifier& operator=(TrustchainVerifier const&) = delete;
   TrustchainVerifier& operator=(TrustchainVerifier&&) = delete;
 
-  tc::cotask<Entry> verify(UnverifiedEntry const&) const;
+  tc::cotask<Entry> verify(Trustchain::ServerEntry const&) const;
 
 private:
-  tc::cotask<Entry> handleDeviceCreation(UnverifiedEntry const& dc) const;
-  tc::cotask<Entry> handleKeyPublish(UnverifiedEntry const& dc) const;
+  tc::cotask<Entry> handleDeviceCreation(
+      Trustchain::ServerEntry const& dc) const;
+  tc::cotask<Entry> handleKeyPublish(Trustchain::ServerEntry const& dc) const;
   tc::cotask<Entry> handleKeyPublishToUserGroups(
-      UnverifiedEntry const& kp) const;
-  tc::cotask<Entry> handleDeviceRevocation(UnverifiedEntry const& dr) const;
-  tc::cotask<Entry> handleUserGroupAddition(UnverifiedEntry const& ga) const;
-  tc::cotask<Entry> handleUserGroupCreation(UnverifiedEntry const& gc) const;
+      Trustchain::ServerEntry const& kp) const;
+  tc::cotask<Entry> handleDeviceRevocation(
+      Trustchain::ServerEntry const& dr) const;
+  tc::cotask<Entry> handleUserGroupAddition(
+      Trustchain::ServerEntry const& ga) const;
+  tc::cotask<Entry> handleUserGroupCreation(
+      Trustchain::ServerEntry const& gc) const;
   tc::cotask<Entry> handleProvisionalIdentityClaim(
-      UnverifiedEntry const& claim) const;
+      Trustchain::ServerEntry const& claim) const;
 
   tc::cotask<Entry> getAuthor(Crypto::Hash const& authorHash) const;
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;

@@ -1,14 +1,15 @@
 #pragma once
 
+#include <Tanker/Trustchain/ServerEntry.hpp>
+
 namespace Tanker
 {
-struct UnverifiedEntry;
 struct Device;
 struct ExternalGroup;
 
 namespace Verif
 {
-void verifyUserGroupAddition(UnverifiedEntry const& entry,
+void verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
                              Device const& author,
                              ExternalGroup const& group);
 }

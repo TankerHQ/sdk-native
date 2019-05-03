@@ -2,7 +2,11 @@
 
 using namespace Tanker;
 
-Entry toVerifiedEntry(UnverifiedEntry const& entry)
+Entry toVerifiedEntry(Trustchain::ServerEntry const& se)
 {
-  return {entry.index, entry.nature, entry.author, entry.action, entry.hash};
+  return {se.index(),
+          se.action().nature(),
+          se.author(),
+          se.action(),
+          se.hash()};
 }

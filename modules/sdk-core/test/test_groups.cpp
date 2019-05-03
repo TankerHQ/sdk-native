@@ -4,7 +4,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 #include <Helpers/Await.hpp>
@@ -65,8 +65,8 @@ TEST_CASE("Can create a group with two users")
           groupEncryptionKey));
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
-  auto entry = blockToUnverifiedEntry(block);
-  auto group = entry.action.get<UserGroupCreation>();
+  auto entry = blockToServerEntry(block);
+  auto group = entry.action().get<UserGroupCreation>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -144,8 +144,8 @@ TEST_CASE("Can add users to a group")
           group));
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
-  auto entry = blockToUnverifiedEntry(block);
-  auto groupAdd = entry.action.get<UserGroupAddition>();
+  auto entry = blockToServerEntry(block);
+  auto groupAdd = entry.action().get<UserGroupAddition>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);

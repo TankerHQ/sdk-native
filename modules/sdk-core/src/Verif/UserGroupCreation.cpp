@@ -4,31 +4,33 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupCreation(UnverifiedEntry const& entry, Device const& author)
+void verifyUserGroupCreation(ServerEntry const& serverEntry, Device const& author)
 {
-  assert(entry.nature == Nature::UserGroupCreation);
+  assert(serverEntry.action().nature() == Nature::UserGroupCreation);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "A revoked device must not be the author of UserGroupCreation");
 
-  ensures(
-      Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
-      Error::VerificationCode::InvalidSignature,
-      "UserGroupCreation block must be signed by the author device");
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
+                         author.publicSignatureKey),
+          Error::VerificationCode::InvalidSignature,
+          "UserGroupCreation block must be signed by the author device");
 
-  auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
+  auto const& userGroupCreation = serverEntry.action().get<UserGroupCreation>();
 
   ensures(Crypto::verify(userGroupCreation.signatureData(),
                          userGroupCreation.selfSignature(),

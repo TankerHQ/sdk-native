@@ -5,7 +5,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 

@@ -12,7 +12,6 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <mockaron/mockaron.hpp>
@@ -28,8 +27,7 @@
 
 TLOG_CATEGORY(TrustchainPuller);
 
-using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::GroupId;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
@@ -80,9 +78,9 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
 }
 
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
-    UnverifiedEntry const& unverifiedEntry)
+    ServerEntry const& serverEntry)
 {
-  auto const entry = TC_AWAIT(_verifier->verify(unverifiedEntry));
+  auto const entry = TC_AWAIT(_verifier->verify(serverEntry));
   TC_AWAIT(_trustchain->addEntry(entry));
   TC_AWAIT(triggerSignals(entry));
 }
@@ -96,13 +94,13 @@ tc::cotask<void> TrustchainPuller::catchUp()
     auto const extraGroups = std::exchange(_extraGroups, {});
     auto const blocks = TC_AWAIT(_client->getBlocks(
         TC_AWAIT(_trustchain->getLastIndex()), extraUsers, extraGroups));
-    std::vector<UnverifiedEntry> entries;
+    std::vector<ServerEntry> entries;
     std::transform(
         std::begin(blocks),
         std::end(blocks),
         std::back_inserter(entries),
         [](auto const& block) {
-          return blockToUnverifiedEntry(Serialization::deserialize<Block>(
+          return blockToServerEntry(Serialization::deserialize<Block>(
               cppcodec::base64_rfc4648::decode(block)));
         });
 
@@ -129,25 +127,25 @@ tc::cotask<void> TrustchainPuller::catchUp()
         // private user keys and decrypt them one by one in reverse order. If we
         // don't do that It will not be possible for the new device to decrypt
         // old ressources.
-        for (auto const& unverifiedEntry : entries)
+        for (auto const& serverEntry : entries)
         {
           try
           {
-            if (unverifiedEntry.action.get_if<TrustchainCreation>())
+            if (serverEntry.action().get_if<TrustchainCreation>())
             {
-              TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
-              processed.insert(unverifiedEntry.hash);
+              TC_AWAIT(verifyAndAddEntry(serverEntry));
+              processed.insert(serverEntry.hash());
             }
             else if (auto const deviceCreation =
-                         unverifiedEntry.action.get_if<DeviceCreation>())
+                         serverEntry.action().get_if<DeviceCreation>())
             {
               if (deviceCreation->userId() == _userId)
               {
-                TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
-                processed.insert(unverifiedEntry.hash);
+                TC_AWAIT(verifyAndAddEntry(serverEntry));
+                processed.insert(serverEntry.hash());
                 if (auto dc3 = deviceCreation->get_if<DeviceCreation::v3>())
                 {
-                  if (Trustchain::DeviceId{unverifiedEntry.hash} == _deviceId)
+                  if (Trustchain::DeviceId{serverEntry.hash()} == _deviceId)
                   {
                     auto const lastPrivateEncryptionKey =
                         Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
@@ -166,14 +164,14 @@ tc::cotask<void> TrustchainPuller::catchUp()
               }
             }
             else if (auto const deviceRevocation =
-                         unverifiedEntry.action.get_if<DeviceRevocation>())
+                         serverEntry.action().get_if<DeviceRevocation>())
             {
               auto const userId = TC_AWAIT(_contactStore->findUserIdByDeviceId(
                   deviceRevocation->deviceId()));
               if (userId == _userId)
               {
-                TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
-                processed.insert(unverifiedEntry.hash);
+                TC_AWAIT(verifyAndAddEntry(serverEntry));
+                processed.insert(serverEntry.hash());
                 if (auto const deviceRevocation2 =
                         deviceRevocation->get_if<DeviceRevocation2>())
                 {
@@ -192,18 +190,18 @@ tc::cotask<void> TrustchainPuller::catchUp()
         TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
       }
 
-      for (auto const& unverifiedEntry : entries)
+      for (auto const& serverEntry : entries)
       {
         try
         {
-          if (processed.count(unverifiedEntry.hash))
+          if (processed.count(serverEntry.hash()))
             continue;
 
           auto const existingEntry =
-              TC_AWAIT(_db->findTrustchainEntry(unverifiedEntry.hash));
+              TC_AWAIT(_db->findTrustchainEntry(serverEntry.hash()));
           if (!existingEntry)
           {
-            TC_AWAIT(verifyAndAddEntry(unverifiedEntry));
+            TC_AWAIT(verifyAndAddEntry(serverEntry));
           }
         }
         catch (Error::VerificationFailed const& err)

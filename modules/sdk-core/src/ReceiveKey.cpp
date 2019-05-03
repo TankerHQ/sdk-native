@@ -14,7 +14,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>

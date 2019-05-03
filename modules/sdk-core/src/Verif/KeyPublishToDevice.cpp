@@ -4,7 +4,6 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -12,25 +11,28 @@
 
 #include <cassert>
 
-using Tanker::Trustchain::Actions::Nature;
+using namespace Tanker::Trustchain;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
 namespace Verif
 {
-void verifyKeyPublishToDevice(UnverifiedEntry const& entry,
+void verifyKeyPublishToDevice(ServerEntry const& serverEntry,
                               Device const& author,
                               User const& recipientUser)
 {
-  assert(entry.nature == Nature::KeyPublishToDevice);
+  assert(serverEntry.action().nature() == Nature::KeyPublishToDevice);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "author device must not be revoked");
-  ensures(
-      Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
-      Error::VerificationCode::InvalidSignature,
-      "keyPublishToDevice block must be signed by the author device");
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
+                         author.publicSignatureKey),
+          Error::VerificationCode::InvalidSignature,
+          "keyPublishToDevice block must be signed by the author device");
 
   ensures(!recipientUser.userKey.has_value(),
           Error::VerificationCode::InvalidUserKey,

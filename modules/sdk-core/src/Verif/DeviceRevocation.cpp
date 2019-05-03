@@ -6,13 +6,14 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
 
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Trustchain;
 
 namespace Tanker
 {
@@ -91,15 +92,16 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 }
 
-void verifyDeviceRevocation(UnverifiedEntry const& entry,
+void verifyDeviceRevocation(ServerEntry const& serverEntry,
                             Device const& author,
                             Device const& target,
                             User const& user)
 {
-  assert(entry.nature == Nature::DeviceRevocation ||
-         entry.nature == Nature::DeviceRevocation2);
+  assert(serverEntry.action().nature() == Nature::DeviceRevocation ||
+         serverEntry.action().nature() == Nature::DeviceRevocation2);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > entry.index,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
           Error::VerificationCode::InvalidAuthor,
           "Author device of revocation must not be revoked");
 
@@ -115,12 +117,14 @@ void verifyDeviceRevocation(UnverifiedEntry const& entry,
           "A device can only be revoked by another device of its user");
 
   ensures(
-      Crypto::verify(entry.hash, entry.signature, author.publicSignatureKey),
+      Crypto::verify(serverEntry.hash(),
+                     serverEntry.signature(),
+                     author.publicSignatureKey),
       Error::VerificationCode::InvalidSignature,
       "device revocation block must be signed by the public signature key of "
       "its author");
 
-  auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
+  auto const& deviceRevocation = serverEntry.action().get<DeviceRevocation>();
 
   deviceRevocation.visit(
       [&](auto const& subAction) { verifySubAction(subAction, target, user); });

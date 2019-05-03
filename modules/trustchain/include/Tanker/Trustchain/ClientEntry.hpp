@@ -20,14 +20,11 @@ class ClientEntry
 public:
   ClientEntry() = default;
   ClientEntry(TrustchainId const& trustchainId,
-              Crypto::Hash const& parentHash,
+              Crypto::Hash const& author,
               Actions::Nature nature,
               std::vector<std::uint8_t> serializedPayload,
+              Crypto::Hash const& hash,
               Crypto::Signature const& signature);
-  ClientEntry(TrustchainId const& trustchainId,
-              Crypto::Hash const& parentHash,
-              Actions::Nature nature,
-              std::vector<std::uint8_t> serializedPayload);
 
   static ClientEntry create(TrustchainId const&,
                             Crypto::Hash const&,
@@ -35,19 +32,18 @@ public:
                             Crypto::PrivateSignatureKey const&);
 
   TrustchainId const& trustchainId() const;
-  Crypto::Hash const& parentHash() const;
+  Crypto::Hash const& author() const;
   Actions::Nature nature() const;
   std::vector<std::uint8_t> const& serializedPayload() const;
+  Crypto::Hash const& hash() const;
   Crypto::Signature const& signature() const;
-
-  Crypto::Hash hash() const;
-  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 private:
   TrustchainId _trustchainId;
-  Crypto::Hash _parentHash;
+  Crypto::Hash _author;
   Actions::Nature _nature;
   std::vector<std::uint8_t> _serializedPayload;
+  Crypto::Hash _hash;
   Crypto::Signature _signature;
 };
 

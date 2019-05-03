@@ -10,7 +10,7 @@ namespace Trustchain
 void to_json(nlohmann::json& j, ClientEntry const& ce)
 {
   j["trustchainId"] = ce.trustchainId();
-  j["parentHash"] = ce.parentHash();
+  j["author"] = ce.author();
   j["nature"] = ce.nature();
   j["serializedPayload"] =
       cppcodec::base64_rfc4648::encode(ce.serializedPayload());

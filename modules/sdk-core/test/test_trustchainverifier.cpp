@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 
 #include <Helpers/Await.hpp>
@@ -23,7 +23,7 @@ using namespace Tanker;
 TEST_CASE("TrustchainVerifier")
 {
   TrustchainBuilder builder;
-  auto const rootEntry = blockToUnverifiedEntry(builder.blocks().front());
+  auto const rootEntry = blockToServerEntry(builder.blocks().front());
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(rootEntry)));
@@ -67,7 +67,7 @@ TEST_CASE("TrustchainVerifier")
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
     CHECK_NOTHROW(
-        AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(blocksKp2d[0]))));
+        AWAIT_VOID(verifier.verify(blockToServerEntry(blocksKp2d[0]))));
   }
 
   SUBCASE("verifies a valid keyPublishToUser")
@@ -87,7 +87,7 @@ TEST_CASE("TrustchainVerifier")
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
     CHECK_NOTHROW(
-        AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(blockKp2u))));
+        AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2u))));
   }
 
   SUBCASE("verifies a valid keyPublishToUserGroup")
@@ -114,7 +114,7 @@ TEST_CASE("TrustchainVerifier")
                                       updatedGroupStore.get());
 
     CHECK_NOTHROW(
-        AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(blockKp2g))));
+        AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2g))));
   }
 
   SUBCASE("verifies a valid deviceRevocation")
@@ -136,7 +136,7 @@ TEST_CASE("TrustchainVerifier")
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
     CHECK_NOTHROW(
-        AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(revokeBlock))));
+        AWAIT_VOID(verifier.verify(blockToServerEntry(revokeBlock))));
   }
 
   SUBCASE("verifies a valid userGroupAddition")
@@ -269,7 +269,7 @@ TEST_CASE("TrustchainVerifier")
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
     CHECK_THROWS_AS(
-        AWAIT_VOID(verifier.verify(blockToUnverifiedEntry(blockKp2g))),
+        AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2g))),
         Error::VerificationFailed);
   }
 }

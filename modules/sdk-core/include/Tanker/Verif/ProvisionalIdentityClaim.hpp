@@ -1,17 +1,16 @@
 #pragma once
 
 #include <Tanker/Device.hpp>
-#include <Tanker/UnverifiedEntry.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/User.hpp>
 
 namespace Tanker
 {
-struct UnverifiedEntry;
 struct Device;
 
 namespace Verif
 {
-void verifyProvisionalIdentityClaim(UnverifiedEntry const& entry,
+void verifyProvisionalIdentityClaim(Trustchain::ServerEntry const& serverEntry,
                                     User const& authorUser,
                                     Device const& author);
 }
