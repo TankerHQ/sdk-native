@@ -220,7 +220,7 @@ TEST_CASE("Verif TrustchainCreation")
   {
     SUBCASE("Invalid author")
     {
-      alter(rootEntry, &ServerEntry::parentHash);
+      alter(rootEntry, &ServerEntry::author);
 
       CHECK_VERIFICATION_FAILED_WITH(
           Verif::verifyTrustchainCreation(rootEntry, builder.trustchainId()),

@@ -13,13 +13,13 @@ namespace Tanker
 namespace Trustchain
 {
 ClientEntry::ClientEntry(TrustchainId const& trustchainId,
-                         Crypto::Hash const& parentHash,
+                         Crypto::Hash const& author,
                          Actions::Nature nature,
                          std::vector<std::uint8_t> serializedPayload,
                          Crypto::Hash const& hash,
                          Crypto::Signature const& signature)
   : _trustchainId(trustchainId),
-    _parentHash(parentHash),
+    _author(author),
     _nature(nature),
     _serializedPayload(serializedPayload),
     _hash(hash),
@@ -28,17 +28,17 @@ ClientEntry::ClientEntry(TrustchainId const& trustchainId,
 }
 
 ClientEntry ClientEntry::create(TrustchainId const& trustchainId,
-                                Crypto::Hash const& parentHash,
+                                Crypto::Hash const& author,
                                 Action const& action,
                                 Crypto::PrivateSignatureKey const& key)
 {
   auto const serializedPayload = Serialization::serialize(action);
   auto const hash =
-      detail::computeHash(action.nature(), parentHash, serializedPayload);
+      detail::computeHash(action.nature(), author, serializedPayload);
   auto const signature = Crypto::sign(hash, key);
 
   return {trustchainId,
-          parentHash,
+          author,
           action.nature(),
           serializedPayload,
           hash,
@@ -50,9 +50,9 @@ TrustchainId const& ClientEntry::trustchainId() const
   return _trustchainId;
 }
 
-Crypto::Hash const& ClientEntry::parentHash() const
+Crypto::Hash const& ClientEntry::author() const
 {
-  return _parentHash;
+  return _author;
 }
 
 Actions::Nature ClientEntry::nature() const
@@ -79,11 +79,11 @@ bool operator==(ClientEntry const& lhs, ClientEntry const& rhs)
 {
   return lhs.nature() == rhs.nature() &&
          std::tie(lhs.trustchainId(),
-                  lhs.parentHash(),
+                  lhs.author(),
                   lhs.serializedPayload(),
                   lhs.hash(),
                   lhs.signature()) == std::tie(rhs.trustchainId(),
-                                               rhs.parentHash(),
+                                               rhs.author(),
                                                rhs.serializedPayload(),
                                                rhs.hash(),
                                                rhs.signature());

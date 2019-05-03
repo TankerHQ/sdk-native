@@ -34,7 +34,7 @@ Entry toEntry(Trustchain::ServerEntry const& se)
 {
   return {se.index(),
           se.action().nature(),
-          se.parentHash(),
+          se.author(),
           se.action(),
           se.hash()};
 }
@@ -88,7 +88,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(Trustchain::ServerEntry const& e) c
 tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
     Trustchain::ServerEntry const& dc) const
 {
-  auto const author = TC_AWAIT(getAuthor(dc.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(dc.author()));
 
   switch (author.nature)
   {
@@ -117,7 +117,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(kp.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -147,7 +147,7 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(kp.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -166,7 +166,7 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
     Trustchain::ServerEntry const& dr) const
 {
-  auto const author = TC_AWAIT(getAuthor(dr.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(dr.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -185,7 +185,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
     Trustchain::ServerEntry const& ga) const
 {
-  auto const author = TC_AWAIT(getAuthor(ga.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(ga.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -203,7 +203,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
     Trustchain::ServerEntry const& gc) const
 {
-  auto const author = TC_AWAIT(getAuthor(gc.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(gc.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,
@@ -227,7 +227,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
     Trustchain::ServerEntry const& claim) const
 {
-  auto const author = TC_AWAIT(getAuthor(claim.parentHash()));
+  auto const author = TC_AWAIT(getAuthor(claim.author()));
 
   Verif::ensures(isDeviceCreation(author.nature),
                  Error::VerificationCode::InvalidAuthor,

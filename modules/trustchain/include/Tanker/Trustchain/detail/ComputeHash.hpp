@@ -14,7 +14,7 @@ namespace Trustchain
 namespace detail
 {
 Crypto::Hash computeHash(Actions::Nature,
-                         Crypto::Hash const& parentHash,
+                         Crypto::Hash const& author,
                          gsl::span<std::uint8_t const> serializedPayload);
 }
 }

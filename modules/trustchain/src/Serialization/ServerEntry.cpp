@@ -25,9 +25,9 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
   auto const payloadSpan = ss.read(payloadSize);
 
   se._action = Action::deserialize(nature, payloadSpan);
-  Serialization::deserialize_to(ss, se._parentHash);
+  Serialization::deserialize_to(ss, se._author);
   Serialization::deserialize_to(ss, se._signature);
-  se._hash = detail::computeHash(nature, se._parentHash, payloadSpan);
+  se._hash = detail::computeHash(nature, se._author, payloadSpan);
 }
 }
 }

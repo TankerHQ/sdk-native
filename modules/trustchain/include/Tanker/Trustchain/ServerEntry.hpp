@@ -18,14 +18,14 @@ public:
   ServerEntry() = default;
   ServerEntry(TrustchainId const& trustchainId,
               std::uint64_t index,
-              Crypto::Hash const& parentHash,
+              Crypto::Hash const& author,
               Action const& action,
               Crypto::Hash const& hash,
               Crypto::Signature const& signature);
 
   TrustchainId const& trustchainId() const;
   std::uint64_t const& index() const;
-  Crypto::Hash const& parentHash() const;
+  Crypto::Hash const& author() const;
   Action const& action() const;
   Crypto::Hash const& hash() const;
   Crypto::Signature const& signature() const;
@@ -33,7 +33,7 @@ public:
 private:
   TrustchainId _trustchainId;
   std::uint64_t _index;
-  Crypto::Hash _parentHash;
+  Crypto::Hash _author;
   Action _action;
   Crypto::Hash _hash;
   Crypto::Signature _signature;

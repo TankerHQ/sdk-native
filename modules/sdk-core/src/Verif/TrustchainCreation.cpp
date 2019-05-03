@@ -22,7 +22,7 @@ void verifyTrustchainCreation(ServerEntry const& rootEntry,
   ensures(rootEntry.hash().base() == currentTrustchainId.base(),
           Error::VerificationCode::InvalidHash,
           "root block hash must be the trustchain id");
-  ensures(rootEntry.parentHash().is_null(),
+  ensures(rootEntry.author().is_null(),
           Error::VerificationCode::InvalidAuthor,
           "author must be zero-filled");
   ensures(rootEntry.signature().is_null(),

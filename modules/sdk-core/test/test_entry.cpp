@@ -44,7 +44,7 @@ TEST_CASE("blockToServerEntry")
 
   CHECK(entry.index() == block.index);
   CHECK(entry.action().nature() == block.nature);
-  CHECK(entry.parentHash() == block.author);
+  CHECK(entry.author() == block.author);
   CHECK(entry.signature() == block.signature);
   CHECK(entry.action().holdsAlternative<DeviceCreation>());
 }

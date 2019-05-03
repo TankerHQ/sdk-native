@@ -57,15 +57,15 @@ TEST_CASE("Serialization test vectors")
 
     auto const trustchainId = make<TrustchainId>("trustchain id");
     auto const nature = Actions::Nature::TrustchainCreation;
-    Crypto::Hash const parentHash{};
+    Crypto::Hash const author{};
     auto const signature = make<Crypto::Signature>("sig");
 
     ServerEntry const serverEntry{
         trustchainId,
         2,
-        parentHash,
+        author,
         Action::deserialize(nature, serializedPayload),
-        detail::computeHash(nature, parentHash, serializedPayload),
+        detail::computeHash(nature, author, serializedPayload),
         signature};
 
     CHECK(Serialization::deserialize<ServerEntry>(serializedServerEntry) ==

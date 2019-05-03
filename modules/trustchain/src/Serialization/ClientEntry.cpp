@@ -22,7 +22,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, ClientEntry const& ce)
   auto const& serializedPayload = ce.serializedPayload();
   it = Serialization::varint_write(it, serializedPayload.size());
   it = std::copy(serializedPayload.begin(), serializedPayload.end(), it);
-  it = Serialization::serialize(it, ce.parentHash());
+  it = Serialization::serialize(it, ce.author());
   return Serialization::serialize(it, ce.signature());
 }
 
