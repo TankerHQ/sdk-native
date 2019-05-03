@@ -8,6 +8,7 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 
 #include <cstdint>
 #include <utility>
@@ -26,14 +27,18 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
+  TANKER_TRUSTCHAIN_ACTION_IMPLEMENTATION(
+      UserGroupCreation1,
+      (publicSignatureKey, Crypto::PublicSignatureKey),
+      (publicEncryptionKey, Crypto::PublicEncryptionKey),
+      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),
+      (sealedPrivateEncryptionKeysForUsers,
+       SealedPrivateEncryptionKeysForUsers),
+      (selfSignature, Crypto::Signature))
+
+public:
   constexpr Nature nature() const;
 
-  UserGroupCreation1() = default;
-  UserGroupCreation1(Crypto::PublicSignatureKey const&,
-                     Crypto::PublicEncryptionKey const&,
-                     Crypto::SealedPrivateSignatureKey const&,
-                     SealedPrivateEncryptionKeysForUsers const&,
-                     Crypto::Signature const&);
   UserGroupCreation1(Crypto::PublicSignatureKey const&,
                      Crypto::PublicEncryptionKey const&,
                      Crypto::SealedPrivateSignatureKey const&,
@@ -43,26 +48,10 @@ public:
 
   Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
-  Crypto::PublicSignatureKey const& publicSignatureKey() const;
-  Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
-  Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey() const;
-  SealedPrivateEncryptionKeysForUsers const&
-  sealedPrivateEncryptionKeysForUsers() const;
-  Crypto::Signature const& selfSignature() const;
-
 private:
-  Crypto::PublicSignatureKey _publicSignatureKey;
-  Crypto::PublicEncryptionKey _publicEncryptionKey;
-  Crypto::SealedPrivateSignatureKey _sealedPrivateSignatureKey;
-  SealedPrivateEncryptionKeysForUsers _sealedPrivateEncryptionKeysForUsers;
-  Crypto::Signature _selfSignature;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               UserGroupCreation1&);
 };
-
-bool operator==(UserGroupCreation1 const& lhs, UserGroupCreation1 const& rhs);
-bool operator!=(UserGroupCreation1 const& lhs, UserGroupCreation1 const& rhs);
 
 constexpr Nature UserGroupCreation1::nature() const
 {

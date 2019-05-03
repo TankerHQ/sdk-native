@@ -15,21 +15,6 @@ UserGroupCreation1::UserGroupCreation1(
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
     SealedPrivateEncryptionKeysForUsers const&
-        sealedPrivateEncryptionKeysForUsers,
-    Crypto::Signature const& selfSignature)
-  : _publicSignatureKey(publicSignatureKey),
-    _publicEncryptionKey(publicEncryptionKey),
-    _sealedPrivateSignatureKey(sealedPrivateSignatureKey),
-    _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers),
-    _selfSignature(selfSignature)
-{
-}
-
-UserGroupCreation1::UserGroupCreation1(
-    Crypto::PublicSignatureKey const& publicSignatureKey,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
-    SealedPrivateEncryptionKeysForUsers const&
         sealedPrivateEncryptionKeysForUsers)
   : _publicSignatureKey(publicSignatureKey),
     _publicEncryptionKey(publicEncryptionKey),
@@ -37,34 +22,6 @@ UserGroupCreation1::UserGroupCreation1(
     _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers),
     _selfSignature{}
 {
-}
-
-Crypto::PublicSignatureKey const& UserGroupCreation1::publicSignatureKey() const
-{
-  return _publicSignatureKey;
-}
-
-Crypto::PublicEncryptionKey const& UserGroupCreation1::publicEncryptionKey()
-    const
-{
-  return _publicEncryptionKey;
-}
-
-Crypto::SealedPrivateSignatureKey const&
-UserGroupCreation1::sealedPrivateSignatureKey() const
-{
-  return _sealedPrivateSignatureKey;
-}
-
-auto UserGroupCreation1::sealedPrivateEncryptionKeysForUsers() const
-    -> SealedPrivateEncryptionKeysForUsers const&
-{
-  return _sealedPrivateEncryptionKeysForUsers;
-}
-
-Crypto::Signature const& UserGroupCreation1::selfSignature() const
-{
-  return _selfSignature;
 }
 
 std::vector<std::uint8_t> UserGroupCreation1::signatureData() const
@@ -96,25 +53,6 @@ Crypto::Signature const& UserGroupCreation1::selfSign(
   auto const toSign = signatureData();
 
   return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
-}
-
-bool operator==(UserGroupCreation1 const& lhs, UserGroupCreation1 const& rhs)
-{
-  return std::tie(lhs.publicSignatureKey(),
-                  lhs.publicEncryptionKey(),
-                  lhs.sealedPrivateSignatureKey(),
-                  lhs.sealedPrivateEncryptionKeysForUsers(),
-                  lhs.selfSignature()) ==
-         std::tie(rhs.publicSignatureKey(),
-                  rhs.publicEncryptionKey(),
-                  rhs.sealedPrivateSignatureKey(),
-                  rhs.sealedPrivateEncryptionKeysForUsers(),
-                  rhs.selfSignature());
-}
-
-bool operator!=(UserGroupCreation1 const& lhs, UserGroupCreation1 const& rhs)
-{
-  return !(lhs == rhs);
 }
 }
 }
