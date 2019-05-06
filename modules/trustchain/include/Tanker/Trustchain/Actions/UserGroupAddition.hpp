@@ -9,6 +9,9 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -60,6 +63,14 @@ private:
 bool operator==(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
 bool operator!=(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
 
+void from_serialized(Serialization::SerializedSource&, UserGroupAddition&);
+
+std::uint8_t* to_serialized(std::uint8_t*, UserGroupAddition const&);
+
+std::size_t serialized_size(UserGroupAddition const&);
+
+void to_json(nlohmann::json&, UserGroupAddition const&);
+
 constexpr Nature UserGroupAddition::nature()
 {
   return Nature::UserGroupAddition;
@@ -67,6 +78,3 @@ constexpr Nature UserGroupAddition::nature()
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/UserGroupAddition.hpp>
-#include <Tanker/Trustchain/Serialization/UserGroupAddition.hpp>
