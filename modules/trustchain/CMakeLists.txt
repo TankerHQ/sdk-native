@@ -29,10 +29,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/Serialization/Action.hpp
   include/Tanker/Trustchain/Serialization/ClientEntry.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v3.hpp
   include/Tanker/Trustchain/Serialization/DeviceRevocation.hpp
   include/Tanker/Trustchain/Serialization/DeviceRevocation/v1.hpp
   include/Tanker/Trustchain/Serialization/DeviceRevocation/v2.hpp
@@ -48,10 +44,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/Json/Action.hpp
   include/Tanker/Trustchain/Json/ClientEntry.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v1.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v2.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v3.hpp
   include/Tanker/Trustchain/Json/DeviceRevocation.hpp
   include/Tanker/Trustchain/Json/DeviceRevocation/v1.hpp
   include/Tanker/Trustchain/Json/DeviceRevocation/v2.hpp
@@ -92,10 +84,6 @@ add_library(tankertrustchain STATIC
   src/Json/Action.cpp
   src/Json/ClientEntry.cpp
   src/Json/ServerEntry.cpp
-  src/Json/DeviceCreation.cpp
-  src/Json/DeviceCreation/v1.cpp
-  src/Json/DeviceCreation/v2.cpp
-  src/Json/DeviceCreation/v3.cpp
   src/Json/DeviceRevocation.cpp
   src/Json/DeviceRevocation/v1.cpp
   src/Json/DeviceRevocation/v2.cpp
@@ -111,10 +99,6 @@ add_library(tankertrustchain STATIC
   src/Serialization/Action.cpp
   src/Serialization/ClientEntry.cpp
   src/Serialization/ServerEntry.cpp
-  src/Serialization/DeviceCreation.cpp
-  src/Serialization/DeviceCreation/v1.cpp
-  src/Serialization/DeviceCreation/v2.cpp
-  src/Serialization/DeviceCreation/v3.cpp
   src/Serialization/DeviceRevocation.cpp
   src/Serialization/DeviceRevocation/v1.cpp
   src/Serialization/DeviceRevocation/v2.cpp

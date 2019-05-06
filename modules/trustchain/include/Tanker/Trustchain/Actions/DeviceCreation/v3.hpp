@@ -82,6 +82,20 @@ private:
 bool operator==(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
 bool operator!=(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
 
+void from_serialized(Serialization::SerializedSource&, DeviceCreation3&);
+
+std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation3 const&);
+
+constexpr std::size_t serialized_size(DeviceCreation3 const&)
+{
+  return (Crypto::PublicSignatureKey::arraySize * 2) + UserId::arraySize +
+         Crypto::Signature::arraySize +
+         (Crypto::PublicEncryptionKey::arraySize * 2) +
+         Crypto::SealedPrivateEncryptionKey::arraySize + sizeof(bool);
+}
+
+void to_json(nlohmann::json&, DeviceCreation3 const&);
+
 constexpr Nature DeviceCreation3::nature()
 {
   return Nature::DeviceCreation3;
@@ -89,6 +103,3 @@ constexpr Nature DeviceCreation3::nature()
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/DeviceCreation/v3.hpp>
-#include <Tanker/Trustchain/Serialization/DeviceCreation/v3.hpp>
