@@ -37,7 +37,7 @@ public:
                   Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
                   Crypto::Hash const& lastReset);
 
-  static constexpr auto const nature = Nature::DeviceCreation2;
+  static constexpr Nature nature();
 
   using base_t::ephemeralPublicSignatureKey;
   using base_t::userId;
@@ -65,6 +65,11 @@ private:
 
 bool operator==(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
 bool operator!=(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
+
+constexpr Nature DeviceCreation2::nature()
+{
+  return Nature::DeviceCreation2;
+}
 }
 }
 }

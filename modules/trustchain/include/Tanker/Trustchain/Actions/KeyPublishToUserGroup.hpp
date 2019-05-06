@@ -20,7 +20,7 @@ public:
                         ResourceId const&,
                         Crypto::SealedSymmetricKey const&);
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey() const;
   ResourceId const& resourceId() const;
@@ -38,7 +38,7 @@ private:
 bool operator==(KeyPublishToUserGroup const&, KeyPublishToUserGroup const&);
 bool operator!=(KeyPublishToUserGroup const&, KeyPublishToUserGroup const&);
 
-constexpr Nature KeyPublishToUserGroup::nature() const
+constexpr Nature KeyPublishToUserGroup::nature()
 {
   return Nature::KeyPublishToUserGroup;
 }

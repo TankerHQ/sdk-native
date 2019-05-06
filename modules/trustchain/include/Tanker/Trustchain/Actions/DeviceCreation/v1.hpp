@@ -34,7 +34,7 @@ public:
                   Crypto::PublicSignatureKey const& devicePublicSignatureKey,
                   Crypto::PublicEncryptionKey const& devicePublicEncryptionKey);
 
-  static constexpr auto const nature = Nature::DeviceCreation;
+  static constexpr Nature nature();
 
   Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
   UserId const& userId() const;
@@ -58,6 +58,11 @@ protected:
 
 bool operator==(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs);
 bool operator!=(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs);
+
+constexpr Nature DeviceCreation1::nature()
+{
+  return Nature::DeviceCreation;
+}
 }
 }
 }

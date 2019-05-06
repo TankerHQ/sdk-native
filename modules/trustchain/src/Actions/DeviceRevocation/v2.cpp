@@ -6,8 +6,6 @@ namespace Trustchain
 {
 namespace Actions
 {
-constexpr Nature DeviceRevocation2::nature;
-
 DeviceRevocation2::DeviceRevocation2(
     DeviceId const& deviceId,
     // avoid having both PublicEncryptionKey side by side

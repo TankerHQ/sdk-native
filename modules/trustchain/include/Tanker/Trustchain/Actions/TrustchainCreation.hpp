@@ -16,7 +16,7 @@ public:
   TrustchainCreation() = default;
   explicit TrustchainCreation(Crypto::PublicSignatureKey const&);
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
 
 private:
@@ -29,7 +29,7 @@ private:
 bool operator==(TrustchainCreation const& lhs, TrustchainCreation const& rhs);
 bool operator!=(TrustchainCreation const& lhs, TrustchainCreation const& rhs);
 
-constexpr Nature TrustchainCreation::nature() const
+constexpr Nature TrustchainCreation::nature()
 {
   return Nature::TrustchainCreation;
 }

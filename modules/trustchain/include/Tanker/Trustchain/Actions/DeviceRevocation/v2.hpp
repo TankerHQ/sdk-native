@@ -21,7 +21,7 @@ public:
   using SealedKeysForDevices =
       std::vector<std::pair<DeviceId, Crypto::SealedPrivateEncryptionKey>>;
 
-  static constexpr auto const nature = Nature::DeviceRevocation2;
+  static constexpr Nature nature();
 
   DeviceRevocation2() = default;
   DeviceRevocation2(DeviceId const&,
@@ -49,6 +49,11 @@ private:
 
 bool operator==(DeviceRevocation2 const& lhs, DeviceRevocation2 const& rhs);
 bool operator!=(DeviceRevocation2 const& lhs, DeviceRevocation2 const& rhs);
+
+constexpr Nature DeviceRevocation2::nature()
+{
+  return Nature::DeviceRevocation2;
+}
 }
 }
 }

@@ -6,8 +6,6 @@ namespace Trustchain
 {
 namespace Actions
 {
-constexpr Nature DeviceRevocation1::nature;
-
 DeviceRevocation1::DeviceRevocation1(DeviceId const& deviceId)
   : _deviceId(deviceId)
 {

@@ -22,7 +22,7 @@ public:
       Crypto::PublicSignatureKey const& tankerPublicSignatureKey,
       Crypto::TwoTimesSealedSymmetricKey const& twoTimesSealedSymmetricKey);
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   Crypto::PublicSignatureKey const& appPublicSignatureKey() const;
   Crypto::PublicSignatureKey const& tankerPublicSignatureKey() const;
@@ -44,7 +44,7 @@ bool operator==(KeyPublishToProvisionalUser const&,
 bool operator!=(KeyPublishToProvisionalUser const&,
                 KeyPublishToProvisionalUser const&);
 
-constexpr Nature KeyPublishToProvisionalUser::nature() const
+constexpr Nature KeyPublishToProvisionalUser::nature()
 {
   return Nature::KeyPublishToProvisionalUser;
 }
