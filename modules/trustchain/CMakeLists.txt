@@ -37,8 +37,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization/ServerEntry.hpp
   include/Tanker/Trustchain/Serialization/TrustchainCreation.hpp
   include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
-  include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
-  include/Tanker/Trustchain/Serialization/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/Json/Action.hpp
   include/Tanker/Trustchain/Json/ClientEntry.hpp
   include/Tanker/Trustchain/Json/KeyPublishToDevice.hpp
@@ -49,8 +47,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Json/ServerEntry.hpp
   include/Tanker/Trustchain/Json/TrustchainCreation.hpp
   include/Tanker/Trustchain/Json/UserGroupAddition.hpp
-  include/Tanker/Trustchain/Json/UserGroupCreation.hpp
-  include/Tanker/Trustchain/Json/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/detail/ComputeHash.hpp
@@ -85,8 +81,6 @@ add_library(tankertrustchain STATIC
   src/Json/ProvisionalIdentityClaim.cpp
   src/Json/TrustchainCreation.cpp
   src/Json/UserGroupAddition.cpp
-  src/Json/UserGroupCreation.cpp
-  src/Json/UserGroupCreation/v1.cpp
   src/Serialization/Action.cpp
   src/Serialization/ClientEntry.cpp
   src/Serialization/ServerEntry.cpp
@@ -97,8 +91,6 @@ add_library(tankertrustchain STATIC
   src/Serialization/ProvisionalIdentityClaim.cpp
   src/Serialization/TrustchainCreation.cpp
   src/Serialization/UserGroupAddition.cpp
-  src/Serialization/UserGroupCreation.cpp
-  src/Serialization/UserGroupCreation/v1.cpp
   src/ExternTemplates.cpp
   src/detail/ComputeHash.cpp
 )

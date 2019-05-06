@@ -10,6 +10,9 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -37,7 +40,7 @@ public:
       (selfSignature, Crypto::Signature))
 
 public:
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   UserGroupCreation1(Crypto::PublicSignatureKey const&,
                      Crypto::PublicEncryptionKey const&,
@@ -53,13 +56,16 @@ private:
                               UserGroupCreation1&);
 };
 
-constexpr Nature UserGroupCreation1::nature() const
+void from_serialized(Serialization::SerializedSource&, UserGroupCreation1&);
+std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation1 const&);
+std::size_t serialized_size(UserGroupCreation1 const&);
+
+void to_json(nlohmann::json&, UserGroupCreation1 const&);
+
+constexpr Nature UserGroupCreation1::nature()
 {
   return Nature::UserGroupCreation;
 }
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/UserGroupCreation/v1.hpp>
-#include <Tanker/Trustchain/Serialization/UserGroupCreation/v1.hpp>

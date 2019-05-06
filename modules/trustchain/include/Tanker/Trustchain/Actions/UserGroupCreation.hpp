@@ -46,9 +46,13 @@ private:
   friend std::size_t serialized_size(UserGroupCreation const&);
   friend void to_json(nlohmann::json&, UserGroupCreation const&);
 };
-}
-}
-}
 
-#include <Tanker/Trustchain/Json/UserGroupCreation.hpp>
-#include <Tanker/Trustchain/Serialization/UserGroupCreation.hpp>
+// The nature is not present in the wired payload.
+// Therefore there is no from_serialized overload for UserGroupCreation.
+std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation const&);
+std::size_t serialized_size(UserGroupCreation const&);
+
+void to_json(nlohmann::json&, UserGroupCreation const&);
+}
+}
+}
