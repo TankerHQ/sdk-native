@@ -258,17 +258,17 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
 std::vector<uint8_t> BlockGenerator::userGroupCreation(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    UserGroupCreation::SealedPrivateEncryptionKeysForUsers const&
+    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const&
         sealedPrivateEncryptionKeysForUsers) const
 {
   auto const encryptedPrivateSignatureKey =
       Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
           signatureKeyPair.privateKey, publicEncryptionKey);
 
-  UserGroupCreation ugc{signatureKeyPair.publicKey,
-                        publicEncryptionKey,
-                        encryptedPrivateSignatureKey,
-                        sealedPrivateEncryptionKeysForUsers};
+  UserGroupCreation1 ugc{signatureKeyPair.publicKey,
+                         publicEncryptionKey,
+                         encryptedPrivateSignatureKey,
+                         sealedPrivateEncryptionKeysForUsers};
   ugc.selfSign(signatureKeyPair.privateKey);
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
@@ -301,7 +301,8 @@ std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
     SecretProvisionalUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair) const
 {
-  std::vector<std::uint8_t> keysToEncrypt(Crypto::PrivateEncryptionKey::arraySize * 2);
+  std::vector<std::uint8_t> keysToEncrypt(
+      Crypto::PrivateEncryptionKey::arraySize * 2);
 
   auto it = std::copy(provisionalUser.appEncryptionKeyPair.privateKey.begin(),
                       provisionalUser.appEncryptionKeyPair.privateKey.end(),

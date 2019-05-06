@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Trustchain/Serialization/UserGroupCreation.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
 
@@ -8,34 +8,14 @@ namespace Trustchain
 {
 namespace Actions
 {
-void from_serialized(Serialization::SerializedSource& ss,
-                     UserGroupCreation& ugc)
+std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation const& dc)
 {
-  Serialization::deserialize_to(ss, ugc._publicSignatureKey);
-  Serialization::deserialize_to(ss, ugc._publicEncryptionKey);
-  Serialization::deserialize_to(ss, ugc._sealedPrivateSignatureKey);
-  Serialization::deserialize_to(ss, ugc._sealedPrivateEncryptionKeysForUsers);
-  Serialization::deserialize_to(ss, ugc._selfSignature);
+  return Serialization::serialize(it, dc._variant);
 }
 
-std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation const& ugc)
+std::size_t serialized_size(UserGroupCreation const& dc)
 {
-  it = Serialization::serialize(it, ugc.publicSignatureKey());
-  it = Serialization::serialize(it, ugc.publicEncryptionKey());
-  it = Serialization::serialize(it, ugc.sealedPrivateSignatureKey());
-  it = Serialization::serialize(it,
-                                ugc.sealedPrivateEncryptionKeysForUsers());
-  return Serialization::serialize(it, ugc.selfSignature());
-}
-
-std::size_t serialized_size(UserGroupCreation const& ugc)
-{
-  return Crypto::PublicSignatureKey::arraySize +
-         Crypto::PublicEncryptionKey::arraySize +
-         Crypto::SealedPrivateSignatureKey::arraySize +
-         Serialization::serialized_size(
-             ugc.sealedPrivateEncryptionKeysForUsers()) +
-         Crypto::Signature::arraySize;
+  return Serialization::serialized_size(dc._variant);
 }
 }
 }

@@ -19,7 +19,7 @@ TEST_CASE("UserGroupCreation tests")
   {
     auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    UserGroupCreation ugc{
+    UserGroupCreation1 ugc{
         signatureKeyPair.publicKey, encryptionKeyPair.publicKey, {}, {}};
     auto const& signature = ugc.selfSign(signatureKeyPair.privateKey);
     CHECK(signature == ugc.selfSignature());
@@ -28,7 +28,7 @@ TEST_CASE("UserGroupCreation tests")
 
 TEST_CASE("Serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupCreation")
+  SUBCASE("it should serialize/deserialize a UserGroupCreation1")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupCreation = {
@@ -90,14 +90,14 @@ TEST_CASE("Serialization test vectors")
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
     // clang-format on
-    
+
     auto const publicSignatureKey =
         make<Crypto::PublicSignatureKey>("pub sig key");
     auto const publicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("pub enc key");
     auto const sealedPrivateSignatureKey =
         make<Crypto::SealedPrivateSignatureKey>("encrypted priv sig key");
-    UserGroupCreation::SealedPrivateEncryptionKeysForUsers const
+    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const
         sealedPrivateEncryptionKeysForUsers{
             {make<Crypto::PublicEncryptionKey>("pub user key"),
              make<Crypto::SealedPrivateEncryptionKey>(
@@ -107,14 +107,14 @@ TEST_CASE("Serialization test vectors")
                  "second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
 
-    UserGroupCreation const ugc{publicSignatureKey,
-                                publicEncryptionKey,
-                                sealedPrivateSignatureKey,
-                                sealedPrivateEncryptionKeysForUsers,
-                                selfSignature};
+    UserGroupCreation1 const ugc{publicSignatureKey,
+                                 publicEncryptionKey,
+                                 sealedPrivateSignatureKey,
+                                 sealedPrivateEncryptionKeysForUsers,
+                                 selfSignature};
 
     CHECK(Serialization::serialize(ugc) == serializedUserGroupCreation);
-    CHECK(Serialization::deserialize<UserGroupCreation>(
+    CHECK(Serialization::deserialize<UserGroupCreation1>(
               serializedUserGroupCreation) == ugc);
   }
 }

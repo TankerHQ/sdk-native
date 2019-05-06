@@ -317,12 +317,12 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
 
 namespace
 {
-UserGroupCreation::SealedPrivateEncryptionKeysForUsers
+UserGroupCreation1::SealedPrivateEncryptionKeysForUsers
 generateGroupKeysForUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<TrustchainBuilder::User> const& users)
 {
-  UserGroupCreation::SealedPrivateEncryptionKeysForUsers keysForUsers;
+  UserGroupCreation1::SealedPrivateEncryptionKeysForUsers keysForUsers;
   for (auto const& user : users)
   {
     if (user.userKeys.empty())
@@ -392,8 +392,10 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
   for (auto const& user : users)
     members.push_back(user.suserId);
 
-  auto const encryptedPrivateSignatureKey =
-      entry.action().get<UserGroupCreation>().sealedPrivateSignatureKey();
+  auto const encryptedPrivateSignatureKey = entry.action()
+                                                .get<UserGroupCreation>()
+                                                .get<UserGroupCreation1>()
+                                                .sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 
   _groups.insert(group);

@@ -39,7 +39,7 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   case Nature::DeviceRevocation2:
     return Serialization::deserialize<DeviceRevocation2>(payload);
   case Nature::UserGroupCreation:
-    return Serialization::deserialize<UserGroupCreation>(payload);
+    return Serialization::deserialize<UserGroupCreation1>(payload);
   case Nature::KeyPublishToUserGroup:
     return Serialization::deserialize<KeyPublishToUserGroup>(payload);
   case Nature::UserGroupAddition:

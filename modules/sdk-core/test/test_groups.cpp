@@ -3,8 +3,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 #include <Helpers/Await.hpp>
@@ -66,7 +66,8 @@ TEST_CASE("Can create a group with two users")
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
-  auto group = entry.action().get<UserGroupCreation>();
+  auto group =
+      entry.action().get<UserGroupCreation>().get<UserGroupCreation1>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);

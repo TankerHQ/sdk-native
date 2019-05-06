@@ -1,14 +1,21 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
-#include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
+#include <mpark/variant.hpp>
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -21,53 +28,24 @@ namespace Actions
 {
 class UserGroupCreation
 {
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
+      UserGroupCreation,
+      (UserGroupCreation1),
+      (publicSignatureKey, Crypto::PublicSignatureKey),
+      (publicEncryptionKey, Crypto::PublicEncryptionKey),
+      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),
+      (selfSignature, Crypto::Signature))
+
 public:
-  using SealedPrivateEncryptionKeysForUsers =
-      std::vector<std::pair<Crypto::PublicEncryptionKey,
-                            Crypto::SealedPrivateEncryptionKey>>;
-
-  constexpr Nature nature() const;
-
-  UserGroupCreation() = default;
-  UserGroupCreation(Crypto::PublicSignatureKey const&,
-                    Crypto::PublicEncryptionKey const&,
-                    Crypto::SealedPrivateSignatureKey const&,
-                    SealedPrivateEncryptionKeysForUsers const&,
-                    Crypto::Signature const&);
-  UserGroupCreation(Crypto::PublicSignatureKey const&,
-                    Crypto::PublicEncryptionKey const&,
-                    Crypto::SealedPrivateSignatureKey const&,
-                    SealedPrivateEncryptionKeysForUsers const&);
-
+  Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;
-
   Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
-  Crypto::PublicSignatureKey const& publicSignatureKey() const;
-  Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
-  Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey() const;
-  SealedPrivateEncryptionKeysForUsers const&
-  sealedPrivateEncryptionKeysForUsers() const;
-  Crypto::Signature const& selfSignature() const;
-
 private:
-  Crypto::PublicSignatureKey _publicSignatureKey;
-  Crypto::PublicEncryptionKey _publicEncryptionKey;
-  Crypto::SealedPrivateSignatureKey _sealedPrivateSignatureKey;
-  SealedPrivateEncryptionKeysForUsers _sealedPrivateEncryptionKeysForUsers;
-  Crypto::Signature _selfSignature;
-
-  friend void from_serialized(Serialization::SerializedSource&,
-                              UserGroupCreation&);
+  friend std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation const&);
+  friend std::size_t serialized_size(UserGroupCreation const&);
+  friend void to_json(nlohmann::json&, UserGroupCreation const&);
 };
-
-bool operator==(UserGroupCreation const& lhs, UserGroupCreation const& rhs);
-bool operator!=(UserGroupCreation const& lhs, UserGroupCreation const& rhs);
-
-constexpr Nature UserGroupCreation::nature() const
-{
-  return Nature::UserGroupCreation;
-}
 }
 }
 }

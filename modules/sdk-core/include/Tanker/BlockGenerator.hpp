@@ -113,7 +113,7 @@ public:
   std::vector<uint8_t> userGroupCreation(
       Crypto::SignatureKeyPair const& signatureKeyPair,
       Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Trustchain::Actions::UserGroupCreation::
+      Trustchain::Actions::UserGroupCreation1::
           SealedPrivateEncryptionKeysForUsers const&
               sealedPrivateEncryptionKeysForUsers) const;
 
