@@ -128,7 +128,7 @@ public:
   std::vector<uint8_t> userGroupAddition(
       Crypto::SignatureKeyPair const& signatureKeyPair,
       Crypto::Hash const& previousGroupBlockHash,
-      Trustchain::Actions::UserGroupAddition::
+      Trustchain::Actions::UserGroupAddition::v1::
           SealedPrivateEncryptionKeysForUsers const&
               sealedPrivateEncryptionKeysForUsers) const;
 

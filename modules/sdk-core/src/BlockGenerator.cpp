@@ -306,11 +306,11 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation2(
 std::vector<uint8_t> BlockGenerator::userGroupAddition(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
-    UserGroupAddition::SealedPrivateEncryptionKeysForUsers const&
+    UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const&
         sealedPrivateEncryptionKeysForUsers) const
 {
   Trustchain::GroupId const groupId{signatureKeyPair.publicKey.base()};
-  UserGroupAddition uga{
+  UserGroupAddition::v1 uga{
       groupId, previousGroupBlockHash, sealedPrivateEncryptionKeysForUsers};
   uga.selfSign(signatureKeyPair.privateKey);
 

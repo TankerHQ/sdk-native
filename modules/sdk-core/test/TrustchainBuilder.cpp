@@ -510,7 +510,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   auto const keysForUsers = generateGroupKeysForUsers(
       group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
 
-  UserGroupAddition userGroupAddition{
+  UserGroupAddition::v1 userGroupAddition{
       group.tankerGroup.id,
       group.tankerGroup.lastBlockHash,
       keysForUsers,

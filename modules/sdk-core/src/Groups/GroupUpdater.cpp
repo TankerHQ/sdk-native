@@ -149,8 +149,10 @@ tc::cotask<void> applyUserGroupAddition(GroupStore& groupStore,
   TC_AWAIT(groupStore.updateLastGroupBlock(
       userGroupAddition.groupId(), entry.hash, entry.index));
 
-  auto const myKeys = TC_AWAIT(findMyKeys(
-      userKeyStore, userGroupAddition.sealedPrivateEncryptionKeysForUsers()));
+  auto const myKeys =
+      TC_AWAIT(findMyKeys(userKeyStore,
+                          userGroupAddition.get<UserGroupAddition::v1>()
+                              .sealedPrivateEncryptionKeysForUsers()));
   if (!myKeys)
     TC_RETURN();
   // I am already member of this group, ignore

@@ -1,6 +1,5 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 
-#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
@@ -11,48 +10,39 @@ namespace Trustchain
 {
 namespace Actions
 {
-UserGroupAddition::UserGroupAddition(GroupId const& groupId,
-                                     Crypto::Hash const& previousGroupBlockHash,
-                                     SealedPrivateEncryptionKeysForUsers const&
-                                         sealedPrivateEncryptionKeysForUsers)
-  : _groupId(groupId),
-    _previousGroupBlockHash(previousGroupBlockHash),
-    _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers)
+Nature UserGroupAddition::nature() const
 {
+  return visit([](auto const& val) { return val.nature(); });
 }
 
 std::vector<std::uint8_t> UserGroupAddition::signatureData() const
 {
-  std::vector<std::uint8_t> signatureData(
-      Crypto::Hash::arraySize + GroupId::arraySize +
-      (_sealedPrivateEncryptionKeysForUsers.size() *
-       (Crypto::PublicEncryptionKey::arraySize +
-        Crypto::SealedPrivateEncryptionKey::arraySize)));
-
-  auto it = std::copy(_groupId.begin(), _groupId.end(), signatureData.begin());
-  it = std::copy(
-      _previousGroupBlockHash.begin(), _previousGroupBlockHash.end(), it);
-  for (auto const& elem : _sealedPrivateEncryptionKeysForUsers)
-  {
-    it = std::copy(elem.first.begin(), elem.first.end(), it);
-    it = std::copy(elem.second.begin(), elem.second.end(), it);
-  }
-  return signatureData;
+  return visit([](auto const& val) { return val.signatureData(); });
 }
 
 Crypto::Signature const& UserGroupAddition::selfSign(
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
+    Crypto::PrivateSignatureKey const& key)
 {
-  auto const toSign = signatureData();
-
-  return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
+  return mpark::visit(
+      [&](auto& val) -> decltype(auto) { return val.selfSign(key); }, _variant);
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
-    UserGroupAddition, TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
+std::uint8_t* to_serialized(std::uint8_t* it, UserGroupAddition const& uga)
+{
+  return uga.visit(
+      [it](auto const& val) { return Serialization::to_serialized(it, val); });
+}
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
-    UserGroupAddition, TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
+std::size_t serialized_size(UserGroupAddition const& uga)
+{
+  return uga.visit(
+      [](auto const& val) { return Serialization::serialized_size(val); });
+}
+
+void to_json(nlohmann::json& j, UserGroupAddition const& uga)
+{
+  return uga.visit([&j](auto const& val) { j = val; });
+}
 }
 }
 }

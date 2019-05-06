@@ -13,12 +13,12 @@ using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("UserGroupAddition tests")
+TEST_CASE("UserGroupAddition1 tests")
 {
   SUBCASE("selfSign should return the selfSignature")
   {
     auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    UserGroupAddition uga{};
+    UserGroupAddition::v1 uga{};
     auto const& signature = uga.selfSign(signatureKeyPair.privateKey);
     CHECK(signature == uga.selfSignature());
   }
@@ -26,7 +26,7 @@ TEST_CASE("UserGroupAddition tests")
 
 TEST_CASE("Serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupAddition")
+  SUBCASE("it should serialize/deserialize a UserGroupAddition1")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupAddition = {
@@ -79,7 +79,7 @@ TEST_CASE("Serialization test vectors")
     
     auto const groupId = make<GroupId>("group id");
     auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
-    UserGroupAddition::SealedPrivateEncryptionKeysForUsers const
+    UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const
         sealedPrivateEncryptionKeysForUsers{
             {make<Crypto::PublicEncryptionKey>("pub user key"),
              make<Crypto::SealedPrivateEncryptionKey>(
@@ -89,13 +89,13 @@ TEST_CASE("Serialization test vectors")
                  "second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
 
-    UserGroupAddition const uga{groupId,
-                                previousGroupBlockHash,
-                                sealedPrivateEncryptionKeysForUsers,
-                                selfSignature};
+    UserGroupAddition::v1 const uga{groupId,
+                                    previousGroupBlockHash,
+                                    sealedPrivateEncryptionKeysForUsers,
+                                    selfSignature};
 
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
-    CHECK(Serialization::deserialize<UserGroupAddition>(
+    CHECK(Serialization::deserialize<UserGroupAddition::v1>(
               serializedUserGroupAddition) == uga);
   }
 }
