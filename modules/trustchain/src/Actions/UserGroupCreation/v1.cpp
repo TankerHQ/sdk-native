@@ -1,6 +1,9 @@
 #include <Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <stdexcept>
 
@@ -53,6 +56,45 @@ Crypto::Signature const& UserGroupCreation1::selfSign(
   auto const toSign = signatureData();
 
   return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
+}
+
+void from_serialized(Serialization::SerializedSource& ss,
+                     UserGroupCreation1& ugc)
+{
+  Serialization::deserialize_to(ss, ugc._publicSignatureKey);
+  Serialization::deserialize_to(ss, ugc._publicEncryptionKey);
+  Serialization::deserialize_to(ss, ugc._sealedPrivateSignatureKey);
+  Serialization::deserialize_to(ss, ugc._sealedPrivateEncryptionKeysForUsers);
+  Serialization::deserialize_to(ss, ugc._selfSignature);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation1 const& ugc)
+{
+  it = Serialization::serialize(it, ugc.publicSignatureKey());
+  it = Serialization::serialize(it, ugc.publicEncryptionKey());
+  it = Serialization::serialize(it, ugc.sealedPrivateSignatureKey());
+  it = Serialization::serialize(it, ugc.sealedPrivateEncryptionKeysForUsers());
+  return Serialization::serialize(it, ugc.selfSignature());
+}
+
+std::size_t serialized_size(UserGroupCreation1 const& ugc)
+{
+  return Crypto::PublicSignatureKey::arraySize +
+         Crypto::PublicEncryptionKey::arraySize +
+         Crypto::SealedPrivateSignatureKey::arraySize +
+         Serialization::serialized_size(
+             ugc.sealedPrivateEncryptionKeysForUsers()) +
+         Crypto::Signature::arraySize;
+}
+
+void to_json(nlohmann::json& j, UserGroupCreation1 const& ugc)
+{
+  j["publicSignatureKey"] = ugc.publicSignatureKey();
+  j["publicEncryptionKey"] = ugc.publicEncryptionKey();
+  j["sealedPrivateSignatureKey"] = ugc.sealedPrivateSignatureKey();
+  j["sealedPrivateEncryptionKeysForUsers"] =
+      ugc.sealedPrivateEncryptionKeysForUsers();
+  j["selfSignature"] = ugc.selfSignature();
 }
 }
 }

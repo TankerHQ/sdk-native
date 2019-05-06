@@ -6,6 +6,8 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
 #include <cstdint>
 
 namespace Tanker
@@ -43,8 +45,9 @@ private:
 
 bool operator==(ServerEntry const& lhs, ServerEntry const& rhs);
 bool operator!=(ServerEntry const& lhs, ServerEntry const& rhs);
-}
-}
 
-#include <Tanker/Trustchain/Serialization/ServerEntry.hpp>
-#include <Tanker/Trustchain/Json/ServerEntry.hpp>
+void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se);
+
+void to_json(nlohmann::json& j, ServerEntry const& se);
+}
+}

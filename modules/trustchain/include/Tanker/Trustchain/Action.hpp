@@ -14,6 +14,7 @@
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -98,8 +99,10 @@ decltype(auto) Action::visit(Callable&& c) const
 
 bool operator==(Action const& lhs, Action const& rhs);
 bool operator!=(Action const& lhs, Action const& rhs);
-}
-}
 
-#include <Tanker/Trustchain/Json/Action.hpp>
-#include <Tanker/Trustchain/Serialization/Action.hpp>
+std::uint8_t* to_serialized(std::uint8_t* it, Action const& a);
+std::size_t serialized_size(Action const& a);
+
+void to_json(nlohmann::json& j, Action const& a);
+}
+}

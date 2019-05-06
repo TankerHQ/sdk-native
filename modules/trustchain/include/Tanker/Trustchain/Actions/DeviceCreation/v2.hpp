@@ -11,6 +11,7 @@
 
 #include <nlohmann/json_fwd.hpp>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace Tanker
@@ -66,6 +67,18 @@ private:
 bool operator==(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
 bool operator!=(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
 
+void to_json(nlohmann::json&, DeviceCreation2 const&);
+
+void from_serialized(Serialization::SerializedSource&, DeviceCreation2&);
+std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation2 const&);
+
+constexpr std::size_t serialized_size(DeviceCreation2 const&)
+{
+  return (Crypto::PublicSignatureKey::arraySize * 2) + UserId::arraySize +
+         Crypto::Signature::arraySize + Crypto::PublicEncryptionKey::arraySize +
+         Crypto::Hash::arraySize;
+}
+
 constexpr Nature DeviceCreation2::nature()
 {
   return Nature::DeviceCreation2;
@@ -73,6 +86,3 @@ constexpr Nature DeviceCreation2::nature()
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/DeviceCreation/v2.hpp>
-#include <Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp>

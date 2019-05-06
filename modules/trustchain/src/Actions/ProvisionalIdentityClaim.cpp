@@ -1,6 +1,9 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 
@@ -136,6 +139,42 @@ bool operator!=(ProvisionalIdentityClaim const& lhs,
                 ProvisionalIdentityClaim const& rhs)
 {
   return !(lhs == rhs);
+}
+
+void from_serialized(Serialization::SerializedSource& ss,
+                     ProvisionalIdentityClaim& pic)
+{
+  Serialization::deserialize_to(ss, pic._userId);
+  Serialization::deserialize_to(ss, pic._appSignaturePublicKey);
+  Serialization::deserialize_to(ss, pic._tankerSignaturePublicKey);
+  Serialization::deserialize_to(ss, pic._authorSignatureByAppKey);
+  Serialization::deserialize_to(ss, pic._authorSignatureByTankerKey);
+  Serialization::deserialize_to(ss, pic._userPublicEncryptionKey);
+  Serialization::deserialize_to(ss, pic._sealedPrivateEncryptionKeys);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it,
+                            ProvisionalIdentityClaim const& pic)
+{
+  it = Serialization::serialize(it, pic.userId());
+  it = Serialization::serialize(it, pic.appSignaturePublicKey());
+  it = Serialization::serialize(it, pic.tankerSignaturePublicKey());
+  it = Serialization::serialize(it, pic.authorSignatureByAppKey());
+  it = Serialization::serialize(it, pic.authorSignatureByTankerKey());
+  it = Serialization::serialize(it, pic.userPublicEncryptionKey());
+  it = Serialization::serialize(it, pic.sealedPrivateEncryptionKeys());
+  return it;
+}
+
+void to_json(nlohmann::json& j, ProvisionalIdentityClaim const& pic)
+{
+  j["userId"] = pic.userId();
+  j["appSignaturePublicKey"] = pic.appSignaturePublicKey();
+  j["tankerSignaturePublicKey"] = pic.tankerSignaturePublicKey();
+  j["authorSignatureByAppKey"] = pic.authorSignatureByAppKey();
+  j["authorSignatureByTankerKey"] = pic.authorSignatureByTankerKey();
+  j["userPublicEncryptionKey"] = pic.userPublicEncryptionKey();
+  j["sealedPrivateEncryptionKeys"] = pic.sealedPrivateEncryptionKeys();
 }
 }
 }

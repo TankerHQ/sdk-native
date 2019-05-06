@@ -75,6 +75,11 @@ private:
 bool operator==(DeviceCreation const&, DeviceCreation const&);
 bool operator!=(DeviceCreation const&, DeviceCreation const&);
 
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation const& dc);
+std::size_t serialized_size(DeviceCreation const& dc);
+
+void to_json(nlohmann::json& j, DeviceCreation const& dc);
+
 template <typename T>
 bool DeviceCreation::holdsAlternative() const
 {
@@ -101,6 +106,3 @@ decltype(auto) DeviceCreation::visit(Callable&& c) const
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Serialization/DeviceCreation.hpp>

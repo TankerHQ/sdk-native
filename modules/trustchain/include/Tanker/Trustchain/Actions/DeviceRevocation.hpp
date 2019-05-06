@@ -59,6 +59,13 @@ private:
 bool operator==(DeviceRevocation const&, DeviceRevocation const&);
 bool operator!=(DeviceRevocation const&, DeviceRevocation const&);
 
+// The nature is not present in the wired payload.
+// Therefore there is no from_serialized overload for DeviceRevocation.
+std::uint8_t* to_serialized(std::uint8_t*, DeviceRevocation const&);
+std::size_t serialized_size(DeviceRevocation const&);
+
+void to_json(nlohmann::json&, DeviceRevocation const&);
+
 template <typename T>
 bool DeviceRevocation::holdsAlternative() const
 {
@@ -85,6 +92,3 @@ decltype(auto) DeviceRevocation::visit(Callable&& c) const
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/DeviceRevocation.hpp>
-#include <Tanker/Trustchain/Serialization/DeviceRevocation.hpp>

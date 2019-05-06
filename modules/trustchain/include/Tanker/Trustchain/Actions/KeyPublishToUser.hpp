@@ -6,6 +6,11 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
+#include <cstdint>
+
 namespace Tanker
 {
 namespace Trustchain
@@ -38,6 +43,17 @@ private:
 bool operator==(KeyPublishToUser const&, KeyPublishToUser const&);
 bool operator!=(KeyPublishToUser const&, KeyPublishToUser const&);
 
+void from_serialized(Serialization::SerializedSource&, KeyPublishToUser&);
+std::uint8_t* to_serialized(std::uint8_t*, KeyPublishToUser const&);
+
+constexpr std::size_t serialized_size(KeyPublishToUser const&)
+{
+  return Crypto::PublicEncryptionKey::arraySize + ResourceId::arraySize +
+         Crypto::SealedSymmetricKey::arraySize;
+}
+
+void to_json(nlohmann::json&, KeyPublishToUser const&);
+
 constexpr Nature KeyPublishToUser::nature()
 {
   return Nature::KeyPublishToUser;
@@ -45,6 +61,3 @@ constexpr Nature KeyPublishToUser::nature()
 }
 }
 }
-
-#include <Tanker/Trustchain/Json/KeyPublishToUser.hpp>
-#include <Tanker/Trustchain/Serialization/KeyPublishToUser.hpp>

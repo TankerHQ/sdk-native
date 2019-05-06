@@ -1,6 +1,9 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v1.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <tuple>
@@ -99,6 +102,33 @@ bool operator==(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs)
 bool operator!=(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs)
 {
   return !(lhs == rhs);
+}
+
+void from_serialized(Serialization::SerializedSource& ss, DeviceCreation1& dc)
+{
+  Serialization::deserialize_to(ss, dc._ephemeralPublicSignatureKey);
+  Serialization::deserialize_to(ss, dc._userId);
+  Serialization::deserialize_to(ss, dc._delegationSignature);
+  Serialization::deserialize_to(ss, dc._publicSignatureKey);
+  Serialization::deserialize_to(ss, dc._publicEncryptionKey);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation1 const& dc)
+{
+  it = Serialization::serialize(it, dc.ephemeralPublicSignatureKey());
+  it = Serialization::serialize(it, dc.userId());
+  it = Serialization::serialize(it, dc.delegationSignature());
+  it = Serialization::serialize(it, dc.publicSignatureKey());
+  return Serialization::serialize(it, dc.publicEncryptionKey());
+}
+
+void to_json(nlohmann::json& j, DeviceCreation1 const& dc)
+{
+  j["ephemeralPublicSignatureKey"] = dc.ephemeralPublicSignatureKey();
+  j["userId"] = dc.userId();
+  j["delegationSignature"] = dc.delegationSignature();
+  j["publicSignatureKey"] = dc.publicSignatureKey();
+  j["publicEncryptionKey"] = dc.publicEncryptionKey();
 }
 }
 }

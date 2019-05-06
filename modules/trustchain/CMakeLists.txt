@@ -27,44 +27,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/GroupId.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp
   include/Tanker/Trustchain/ResourceId.hpp
-  include/Tanker/Trustchain/Serialization/Action.hpp
-  include/Tanker/Trustchain/Serialization/ClientEntry.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v1.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v2.hpp
-  include/Tanker/Trustchain/Serialization/DeviceCreation/v3.hpp
-  include/Tanker/Trustchain/Serialization/DeviceRevocation.hpp
-  include/Tanker/Trustchain/Serialization/DeviceRevocation/v1.hpp
-  include/Tanker/Trustchain/Serialization/DeviceRevocation/v2.hpp
-  include/Tanker/Trustchain/Serialization/KeyPublishToDevice.hpp
-  include/Tanker/Trustchain/Serialization/KeyPublishToProvisionalUser.hpp
-  include/Tanker/Trustchain/Serialization/KeyPublishToUser.hpp
-  include/Tanker/Trustchain/Serialization/KeyPublishToUserGroup.hpp
-  include/Tanker/Trustchain/Serialization/ProvisionalIdentityClaim.hpp
-  include/Tanker/Trustchain/Serialization/ServerEntry.hpp
-  include/Tanker/Trustchain/Serialization/TrustchainCreation.hpp
-  include/Tanker/Trustchain/Serialization/UserGroupAddition.hpp
-  include/Tanker/Trustchain/Serialization/UserGroupCreation.hpp
-  include/Tanker/Trustchain/Serialization/UserGroupCreation/v1.hpp
-  include/Tanker/Trustchain/Json/Action.hpp
-  include/Tanker/Trustchain/Json/ClientEntry.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v1.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v2.hpp
-  include/Tanker/Trustchain/Json/DeviceCreation/v3.hpp
-  include/Tanker/Trustchain/Json/DeviceRevocation.hpp
-  include/Tanker/Trustchain/Json/DeviceRevocation/v1.hpp
-  include/Tanker/Trustchain/Json/DeviceRevocation/v2.hpp
-  include/Tanker/Trustchain/Json/KeyPublishToDevice.hpp
-  include/Tanker/Trustchain/Json/KeyPublishToProvisionalUser.hpp
-  include/Tanker/Trustchain/Json/KeyPublishToUser.hpp
-  include/Tanker/Trustchain/Json/KeyPublishToUserGroup.hpp
-  include/Tanker/Trustchain/Json/ProvisionalIdentityClaim.hpp
-  include/Tanker/Trustchain/Json/ServerEntry.hpp
-  include/Tanker/Trustchain/Json/TrustchainCreation.hpp
-  include/Tanker/Trustchain/Json/UserGroupAddition.hpp
-  include/Tanker/Trustchain/Json/UserGroupCreation.hpp
-  include/Tanker/Trustchain/Json/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/detail/ComputeHash.hpp
@@ -89,44 +51,6 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupCreation/v1.cpp
   src/ClientEntry.cpp
   src/ServerEntry.cpp
-  src/Json/Action.cpp
-  src/Json/ClientEntry.cpp
-  src/Json/ServerEntry.cpp
-  src/Json/DeviceCreation.cpp
-  src/Json/DeviceCreation/v1.cpp
-  src/Json/DeviceCreation/v2.cpp
-  src/Json/DeviceCreation/v3.cpp
-  src/Json/DeviceRevocation.cpp
-  src/Json/DeviceRevocation/v1.cpp
-  src/Json/DeviceRevocation/v2.cpp
-  src/Json/KeyPublishToDevice.cpp
-  src/Json/KeyPublishToProvisionalUser.cpp
-  src/Json/KeyPublishToUser.cpp
-  src/Json/KeyPublishToUserGroup.cpp
-  src/Json/ProvisionalIdentityClaim.cpp
-  src/Json/TrustchainCreation.cpp
-  src/Json/UserGroupAddition.cpp
-  src/Json/UserGroupCreation.cpp
-  src/Json/UserGroupCreation/v1.cpp
-  src/Serialization/Action.cpp
-  src/Serialization/ClientEntry.cpp
-  src/Serialization/ServerEntry.cpp
-  src/Serialization/DeviceCreation.cpp
-  src/Serialization/DeviceCreation/v1.cpp
-  src/Serialization/DeviceCreation/v2.cpp
-  src/Serialization/DeviceCreation/v3.cpp
-  src/Serialization/DeviceRevocation.cpp
-  src/Serialization/DeviceRevocation/v1.cpp
-  src/Serialization/DeviceRevocation/v2.cpp
-  src/Serialization/KeyPublishToDevice.cpp
-  src/Serialization/KeyPublishToProvisionalUser.cpp
-  src/Serialization/KeyPublishToUser.cpp
-  src/Serialization/KeyPublishToUserGroup.cpp
-  src/Serialization/ProvisionalIdentityClaim.cpp
-  src/Serialization/TrustchainCreation.cpp
-  src/Serialization/UserGroupAddition.cpp
-  src/Serialization/UserGroupCreation.cpp
-  src/Serialization/UserGroupCreation/v1.cpp
   src/ExternTemplates.cpp
   src/detail/ComputeHash.cpp
 )

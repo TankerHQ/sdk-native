@@ -1,5 +1,9 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 
+#include <Tanker/Serialization/Serialization.hpp>
+
+#include <nlohmann/json.hpp>
+
 #include <stdexcept>
 #include <tuple>
 
@@ -64,6 +68,24 @@ bool operator==(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs)
 bool operator!=(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs)
 {
   return !(lhs == rhs);
+}
+
+void from_serialized(Serialization::SerializedSource& ss, DeviceCreation2& dc)
+{
+  Serialization::deserialize_to(ss, dc._lastReset);
+  Serialization::deserialize_to(ss, static_cast<DeviceCreation1&>(dc));
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation2 const& dc)
+{
+  it = Serialization::serialize(it, dc.lastReset());
+  return Serialization::serialize(it, static_cast<DeviceCreation1 const&>(dc));
+}
+
+void to_json(nlohmann::json& j, DeviceCreation2 const& dc)
+{
+  j = static_cast<DeviceCreation1 const&>(dc);
+  j["lastReset"] = dc.lastReset();
 }
 }
 }

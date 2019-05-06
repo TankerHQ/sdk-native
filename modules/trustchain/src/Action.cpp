@@ -5,6 +5,9 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 
 #include <fmt/format.h>
+#include <nlohmann/json.hpp>
+
+#include <stdexcept>
 
 using namespace Tanker::Trustchain::Actions;
 
@@ -63,6 +66,23 @@ bool operator==(Action const& lhs, Action const& rhs)
 bool operator!=(Action const& lhs, Action const& rhs)
 {
   return !(lhs == rhs);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, Action const& a)
+{
+  return a.visit(
+      [it](auto const& val) { return Serialization::serialize(it, val); });
+}
+
+std::size_t serialized_size(Action const& a)
+{
+  return a.visit(
+      [](auto const& val) { return Serialization::serialized_size(val); });
+}
+
+void to_json(nlohmann::json& j, Action const& a)
+{
+  a.visit([&](auto const& val) { j = val; });
 }
 }
 }

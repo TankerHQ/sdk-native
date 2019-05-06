@@ -1,5 +1,11 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
 
+#include <Tanker/Serialization/Serialization.hpp>
+
+#include <nlohmann/json.hpp>
+
+#include <stdexcept>
+#include <string>
 #include <tuple>
 
 namespace Tanker
@@ -42,6 +48,35 @@ bool operator==(KeyPublishToDevice const& lhs, KeyPublishToDevice const& rhs)
 bool operator!=(KeyPublishToDevice const& lhs, KeyPublishToDevice const& rhs)
 {
   return !(lhs == rhs);
+}
+
+void from_serialized(Serialization::SerializedSource& ss,
+                     KeyPublishToDevice& kp)
+{
+  Serialization::deserialize_to(ss, kp._recipient);
+  Serialization::deserialize_to(ss, kp._resourceId);
+  auto const keySize = ss.read_varint();
+  if (keySize != Crypto::EncryptedSymmetricKey::arraySize)
+  {
+    throw std::runtime_error("invalid size for encrypted key: " +
+                             std::to_string(keySize));
+  }
+  Serialization::deserialize_to(ss, kp._key);
+}
+
+std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToDevice const& kp)
+{
+  it = Serialization::serialize(it, kp.recipient());
+  it = Serialization::serialize(it, kp.resourceId());
+  it = Serialization::varint_write(it, Crypto::EncryptedSymmetricKey::arraySize);
+  return Serialization::serialize(it, kp.encryptedSymmetricKey());
+}
+
+void to_json(nlohmann::json& j, KeyPublishToDevice const& kp)
+{
+  j["recipient"] = kp.recipient();
+  j["resourceId"] = kp.resourceId();
+  j["key"] = kp.encryptedSymmetricKey();
 }
 }
 }
