@@ -32,11 +32,8 @@ namespace
 {
 Entry toEntry(Trustchain::ServerEntry const& se)
 {
-  return {se.index(),
-          se.action().nature(),
-          se.author(),
-          se.action(),
-          se.hash()};
+  return {
+      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
 }
 
 bool isDeviceCreation(Nature nature)
@@ -54,7 +51,8 @@ TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
 {
 }
 
-tc::cotask<Entry> TrustchainVerifier::verify(Trustchain::ServerEntry const& e) const
+tc::cotask<Entry> TrustchainVerifier::verify(
+    Trustchain::ServerEntry const& e) const
 {
   switch (e.action().nature())
   {

@@ -6,9 +6,9 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
@@ -288,7 +288,8 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
       toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
-  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(user, trustchainCreation);
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(
+      user, trustchainCreation);
 }
 
 TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
