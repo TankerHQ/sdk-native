@@ -6,6 +6,9 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -49,8 +52,10 @@ private:
 
 bool operator==(ClientEntry const& lhs, ClientEntry const& rhs);
 bool operator!=(ClientEntry const& lhs, ClientEntry const& rhs);
-}
-}
 
-#include <Tanker/Trustchain/Json/ClientEntry.hpp>
-#include <Tanker/Trustchain/Serialization/ClientEntry.hpp>
+std::uint8_t* to_serialized(std::uint8_t*, ClientEntry const&);
+std::size_t serialized_size(ClientEntry const&);
+
+void to_json(nlohmann::json&, ClientEntry const&);
+}
+}
