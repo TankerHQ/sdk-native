@@ -482,7 +482,7 @@ tanker_future_t* tanker_claim_provisional_identity(
 tanker_future_t* tanker_revoke_device(tanker_t* session,
                                       b64char const* device_id);
 
-void tanker_free_buffer(void* buffer);
+void tanker_free_buffer(void const* buffer);
 
 void tanker_free_device_list(tanker_device_list_t* list);
 

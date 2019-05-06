@@ -55,6 +55,7 @@ static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
   future_get(tanker_sign_in(tanker, identity, NULL));
   future_get(tanker_sign_out(tanker));
 
+  tanker_free_buffer(identity);
   future_get(tanker_destroy(tanker));
 }
 
