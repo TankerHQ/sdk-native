@@ -26,7 +26,7 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   UserGroupAddition() = default;
   UserGroupAddition(GroupId const&,
@@ -60,7 +60,7 @@ private:
 bool operator==(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
 bool operator!=(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
 
-constexpr Nature UserGroupAddition::nature() const
+constexpr Nature UserGroupAddition::nature()
 {
   return Nature::UserGroupAddition;
 }

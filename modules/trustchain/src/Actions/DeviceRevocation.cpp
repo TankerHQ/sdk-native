@@ -18,7 +18,7 @@ DeviceRevocation::DeviceRevocation(v2 const& dr2) : _variant(dr2)
 
 Nature DeviceRevocation::nature() const
 {
-  return mpark::visit([](auto const& a) { return a.nature; }, _variant);
+  return mpark::visit([](auto const& a) { return a.nature(); }, _variant);
 }
 
 DeviceId const& DeviceRevocation::deviceId() const

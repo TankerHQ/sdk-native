@@ -49,7 +49,7 @@ public:
       Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey,
       DeviceType type);
 
-  static constexpr auto const nature = Nature::DeviceCreation3;
+  static constexpr Nature nature();
 
   using base_t::ephemeralPublicSignatureKey;
   using base_t::userId;
@@ -81,6 +81,11 @@ private:
 
 bool operator==(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
 bool operator!=(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
+
+constexpr Nature DeviceCreation3::nature()
+{
+  return Nature::DeviceCreation3;
+}
 }
 }
 }

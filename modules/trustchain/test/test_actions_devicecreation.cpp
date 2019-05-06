@@ -26,7 +26,7 @@ TEST_CASE("DeviceCreation tests")
     CHECK(dc.get_if<DeviceCreation::v3>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation::v1>());
     CHECK_THROWS_AS(dc.get<DeviceCreation::v3>(), mpark::bad_variant_access);
-    CHECK(dc.visit([](auto const& val) { return val.nature; }) ==
+    CHECK(dc.visit([](auto const& val) { return val.nature(); }) ==
           Nature::DeviceCreation);
   }
 

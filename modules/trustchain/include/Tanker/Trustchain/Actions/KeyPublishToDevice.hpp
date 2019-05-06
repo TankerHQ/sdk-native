@@ -20,7 +20,7 @@ public:
                      ResourceId const&,
                      Crypto::EncryptedSymmetricKey const&);
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   DeviceId const& recipient() const;
   ResourceId const& resourceId() const;
@@ -38,7 +38,7 @@ private:
 bool operator==(KeyPublishToDevice const&, KeyPublishToDevice const&);
 bool operator!=(KeyPublishToDevice const&, KeyPublishToDevice const&);
 
-constexpr Nature KeyPublishToDevice::nature() const
+constexpr Nature KeyPublishToDevice::nature()
 {
   return Nature::KeyPublishToDevice;
 }

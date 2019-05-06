@@ -18,7 +18,7 @@ DeviceCreation::DeviceCreation(v3 const& dc3) : _variant(dc3)
 
 Nature DeviceCreation::nature() const
 {
-  return mpark::visit([](auto const& a) { return a.nature; }, _variant);
+  return mpark::visit([](auto const& a) { return a.nature(); }, _variant);
 }
 
 Crypto::PublicSignatureKey const& DeviceCreation::ephemeralPublicSignatureKey()

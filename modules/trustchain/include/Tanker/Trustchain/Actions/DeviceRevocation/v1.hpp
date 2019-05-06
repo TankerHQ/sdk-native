@@ -13,8 +13,7 @@ namespace Actions
 class DeviceRevocation1
 {
 public:
-  static constexpr auto const nature =
-      Trustchain::Actions::Nature::DeviceRevocation;
+  static constexpr Nature nature();
 
   DeviceRevocation1() = default;
   explicit DeviceRevocation1(DeviceId const&);
@@ -30,6 +29,11 @@ private:
 
 bool operator==(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs);
 bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs);
+
+constexpr Nature DeviceRevocation1::nature()
+{
+  return Nature::DeviceRevocation;
+}
 }
 }
 }

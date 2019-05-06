@@ -35,7 +35,7 @@ public:
     using base_t::base_t;
   };
 
-  constexpr Nature nature() const;
+  static constexpr Nature nature();
 
   ProvisionalIdentityClaim() = default;
   ProvisionalIdentityClaim(
@@ -81,16 +81,16 @@ private:
                               ProvisionalIdentityClaim&);
 };
 
-constexpr Nature ProvisionalIdentityClaim::nature() const
-{
-  return Nature::ProvisionalIdentityClaim;
-}
-
 bool operator==(ProvisionalIdentityClaim const& lhs,
                 ProvisionalIdentityClaim const& rhs);
 
 bool operator!=(ProvisionalIdentityClaim const& lhs,
                 ProvisionalIdentityClaim const& rhs);
+
+constexpr Nature ProvisionalIdentityClaim::nature()
+{
+  return Nature::ProvisionalIdentityClaim;
+}
 }
 }
 }

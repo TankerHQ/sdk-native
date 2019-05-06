@@ -11,8 +11,6 @@ namespace Trustchain
 {
 namespace Actions
 {
-constexpr Nature DeviceCreation1::nature;
-
 DeviceCreation1::DeviceCreation1(
     Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
     UserId const& userId,
