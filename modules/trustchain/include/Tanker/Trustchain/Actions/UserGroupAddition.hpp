@@ -8,6 +8,9 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -22,6 +25,12 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES \
+  (groupId, GroupId), (previousGroupBlockHash, Crypto::Hash),    \
+      (sealedPrivateEncryptionKeysForUsers,                      \
+       SealedPrivateEncryptionKeysForUsers),                     \
+      (selfSignature, Crypto::Signature)
+
 class UserGroupAddition
 {
 public:
@@ -29,47 +38,27 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
-  static constexpr Nature nature();
+  TANKER_TRUSTCHAIN_ACTION_IMPLEMENTATION(
+      UserGroupAddition,
+      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
 
-  UserGroupAddition() = default;
-  UserGroupAddition(GroupId const&,
-                    Crypto::Hash const&,
-                    SealedPrivateEncryptionKeysForUsers const&,
-                    Crypto::Signature const&);
+public:
   UserGroupAddition(GroupId const&,
                     Crypto::Hash const&,
                     SealedPrivateEncryptionKeysForUsers const&);
+
+  static constexpr Nature nature();
 
   std::vector<std::uint8_t> signatureData() const;
 
   Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
-  GroupId const& groupId() const;
-  Crypto::Hash const& previousGroupBlockHash() const;
-  SealedPrivateEncryptionKeysForUsers const&
-  sealedPrivateEncryptionKeysForUsers() const;
-  Crypto::Signature const& selfSignature() const;
-
-private:
-  GroupId _groupId;
-  Crypto::Hash _previousGroupBlockHash;
-  SealedPrivateEncryptionKeysForUsers _sealedPrivateEncryptionKeysForUsers;
-  Crypto::Signature _selfSignature;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               UserGroupAddition&);
 };
 
-bool operator==(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
-bool operator!=(UserGroupAddition const& lhs, UserGroupAddition const& rhs);
-
-void from_serialized(Serialization::SerializedSource&, UserGroupAddition&);
-
-std::uint8_t* to_serialized(std::uint8_t*, UserGroupAddition const&);
-
-std::size_t serialized_size(UserGroupAddition const&);
-
-void to_json(nlohmann::json&, UserGroupAddition const&);
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupAddition)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupAddition)
 
 constexpr Nature UserGroupAddition::nature()
 {
