@@ -93,7 +93,15 @@ public:
   ResultDevice makeDevice3(std::string const& suserId,
                            int validatorDeviceIndex = 0);
 
-  ResultGroup makeGroup(Device const& author, std::vector<User> const& users);
+  ResultGroup makeGroup(
+      Device const& author,
+      std::vector<User> const& users,
+      std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers = {});
+  ResultGroup makeGroup1(Device const& author, std::vector<User> const& users);
+  ResultGroup makeGroup2(
+      Device const& author,
+      std::vector<User> const& users,
+      std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers);
   ResultGroup addUserToGroup(Device const& author,
                              Group group,
                              std::vector<User> const& users);
