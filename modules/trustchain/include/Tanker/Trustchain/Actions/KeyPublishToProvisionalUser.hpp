@@ -6,6 +6,11 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+
+#include <cstddef>
+#include <cstdint>
+
 namespace Tanker
 {
 namespace Trustchain
@@ -48,9 +53,18 @@ constexpr Nature KeyPublishToProvisionalUser::nature()
 {
   return Nature::KeyPublishToProvisionalUser;
 }
-}
-}
+
+void from_serialized(Serialization::SerializedSource&,
+                     KeyPublishToProvisionalUser&);
+std::uint8_t* to_serialized(std::uint8_t*, KeyPublishToProvisionalUser const&);
+
+constexpr std::size_t serialized_size(KeyPublishToProvisionalUser const&)
+{
+  return (Crypto::PublicSignatureKey::arraySize * 2) + ResourceId::arraySize +
+         Crypto::TwoTimesSealedSymmetricKey::arraySize;
 }
 
-#include <Tanker/Trustchain/Json/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Serialization/KeyPublishToProvisionalUser.hpp>
+void to_json(nlohmann::json&, KeyPublishToProvisionalUser const&);
+}
+}
+}
