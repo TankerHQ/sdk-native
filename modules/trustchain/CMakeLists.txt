@@ -21,11 +21,16 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp
+  include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
+  include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
   include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
+  include/Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp
+  include/Tanker/Trustchain/Preprocessor/Actions/Json.hpp
+  include/Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
@@ -49,6 +54,8 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupCreation.cpp
   src/Actions/UserGroupCreation/v1.cpp
+  src/Actions/UserGroupMember2.cpp
+  src/Actions/UserGroupProvisionalMember2.cpp
   src/ClientEntry.cpp
   src/ServerEntry.cpp
   src/ExternTemplates.cpp
