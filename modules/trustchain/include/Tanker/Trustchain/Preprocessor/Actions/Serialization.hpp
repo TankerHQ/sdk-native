@@ -54,5 +54,4 @@
 #define TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(name)          \
   void from_serialized(Serialization::SerializedSource& ss, name& k); \
   std::uint8_t* to_serialized(std::uint8_t* it, name const& k);       \
-  std::size_t serialized_size(name const& k);                         \
-  \
+  std::size_t serialized_size(name const& k);
