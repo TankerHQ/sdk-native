@@ -13,6 +13,7 @@
 
 // TODO remove it once Crypto::Sealed<> is added
 #include <sodium/crypto_box.h>
+#include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -87,6 +88,20 @@ bool operator==(ProvisionalIdentityClaim const& lhs,
 bool operator!=(ProvisionalIdentityClaim const& lhs,
                 ProvisionalIdentityClaim const& rhs);
 
+void from_serialized(Serialization::SerializedSource&,
+                     ProvisionalIdentityClaim&);
+std::uint8_t* to_serialized(std::uint8_t*, ProvisionalIdentityClaim const&);
+
+constexpr std::size_t serialized_size(ProvisionalIdentityClaim const&)
+{
+  return UserId::arraySize + (Crypto::PublicSignatureKey::arraySize * 2) +
+         (Crypto::Signature::arraySize * 2) +
+         Crypto::PublicEncryptionKey::arraySize +
+         ProvisionalIdentityClaim::SealedPrivateEncryptionKeys::arraySize;
+}
+
+void to_json(nlohmann::json&, ProvisionalIdentityClaim const&);
+
 constexpr Nature ProvisionalIdentityClaim::nature()
 {
   return Nature::ProvisionalIdentityClaim;
@@ -118,6 +133,3 @@ class tuple_element<I,
 {
 };
 }
-
-#include <Tanker/Trustchain/Json/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Trustchain/Serialization/ProvisionalIdentityClaim.hpp>
