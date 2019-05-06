@@ -23,8 +23,10 @@ class Admin
 {
 public:
   Admin(ConnectionPtr cx, std::string idToken);
-  Admin(Admin&&) = default;
-  Admin& operator=(Admin&&) = default;
+  Admin(Admin const&) = delete;
+  Admin& operator=(Admin const&) = delete;
+  Admin(Admin&&) = delete;
+  Admin& operator=(Admin&&) = delete;
 
   tc::cotask<void> start();
 
