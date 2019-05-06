@@ -75,6 +75,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::UserGroupAddition:
     TC_RETURN(TC_AWAIT(handleUserGroupAddition(e)));
   case Nature::UserGroupCreation:
+  case Nature::UserGroupCreation2:
     TC_RETURN(TC_AWAIT(handleUserGroupCreation(e)));
   case Nature::ProvisionalIdentityClaim:
     TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));

@@ -180,6 +180,23 @@ TEST_CASE("TrustchainVerifier")
     CHECK_NOTHROW(AWAIT_VOID(verifier.verify(resultGroup.entry)));
   }
 
+  SUBCASE("verifies a valid userGroupCreation2")
+  {
+    auto const userResult = builder.makeUser3("bob");
+    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(userResult.entry)));
+    auto const deviceResult = builder.makeDevice3("bob");
+    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(deviceResult.entry)));
+    auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
+    auto const resultGroup = builder.makeGroup2(
+        deviceResult.device, {userResult.user}, {provisionalUser});
+
+    auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
+    TrustchainVerifier const verifier(
+        builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
+
+    CHECK_NOTHROW(AWAIT_VOID(verifier.verify(resultGroup.entry)));
+  }
+
   SUBCASE("verifies a valid ProvisionalIdentityClaim")
   {
     auto const userResult = builder.makeUser3("alice");

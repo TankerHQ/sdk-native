@@ -15,9 +15,11 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupCreation(ServerEntry const& serverEntry, Device const& author)
+void verifyUserGroupCreation(ServerEntry const& serverEntry,
+                             Device const& author)
 {
-  assert(serverEntry.action().nature() == Nature::UserGroupCreation);
+  assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
+         serverEntry.action().nature() == Nature::UserGroupCreation2);
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),
