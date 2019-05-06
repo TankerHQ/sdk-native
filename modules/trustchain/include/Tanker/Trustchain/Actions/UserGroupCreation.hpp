@@ -9,6 +9,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation/v2.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -30,7 +31,7 @@ class UserGroupCreation
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
       UserGroupCreation,
-      (UserGroupCreation1),
+      (UserGroupCreation1, UserGroupCreation2),
       (publicSignatureKey, Crypto::PublicSignatureKey),
       (publicEncryptionKey, Crypto::PublicEncryptionKey),
       (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),

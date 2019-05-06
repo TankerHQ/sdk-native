@@ -23,6 +23,7 @@ enum class Nature
   UserGroupAddition = 12,
   KeyPublishToProvisionalUser = 13,
   ProvisionalIdentityClaim = 14,
+  UserGroupCreation2 = 15,
 };
 
 std::string to_string(Nature);
