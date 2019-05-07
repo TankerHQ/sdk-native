@@ -132,6 +132,15 @@ public:
           SealedPrivateEncryptionKeysForUsers const&
               sealedPrivateEncryptionKeysForUsers) const;
 
+  std::vector<uint8_t> userGroupAddition2(
+      Crypto::SignatureKeyPair const& signatureKeyPair,
+      Crypto::Hash const& previousGroupBlockHash,
+      std::vector<Trustchain::Actions::UserGroupAddition::v2::Member> const&
+          members,
+      std::vector<
+          Trustchain::Actions::UserGroupAddition::v2::ProvisionalMember> const&
+          provisionalMembers) const;
+
   std::vector<uint8_t> provisionalIdentityClaim(
       Trustchain::UserId const& userId,
       SecretProvisionalUser const& provisionalUser,
