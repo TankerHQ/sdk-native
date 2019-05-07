@@ -29,6 +29,8 @@ void testUserGroupCreationCommon(
   auto const alice = builder.makeUser3("alice");
   auto const aliceKeyStore =
       builder.makeUserKeyStore(alice.user, aliceDb.get());
+  auto const aliceProvisionalUserKeysStore =
+      builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
 
   SUBCASE("handles creation of a group I am part of")
   {
@@ -36,6 +38,7 @@ void testUserGroupCreationCommon(
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         groupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(group.entry)));
     CHECK_EQ(AWAIT(groupStore.findFullById(group.group.tankerGroup.id)).value(),
              group.group.tankerGroup);
@@ -49,6 +52,7 @@ void testUserGroupCreationCommon(
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         groupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(group.entry)));
 
     CHECK_EQ(
@@ -70,12 +74,50 @@ TEST_CASE("GroupUpdater UserGroupCreation1")
 
 TEST_CASE("GroupUpdater UserGroupCreation2")
 {
-  testUserGroupCreationCommon(
-      [](TrustchainBuilder& builder,
-         TrustchainBuilder::Device const& authorDevice,
-         std::vector<TrustchainBuilder::User> const& members) {
-        return builder.makeGroup2(authorDevice, members, {});
-      });
+  SUBCASE("Common checks")
+  {
+    testUserGroupCreationCommon(
+        [](TrustchainBuilder& builder,
+           TrustchainBuilder::Device const& authorDevice,
+           std::vector<TrustchainBuilder::User> const& members) {
+          return builder.makeGroup2(authorDevice, members, {});
+        });
+  }
+
+  SUBCASE("Specific checks")
+  {
+    auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
+    GroupStore groupStore(aliceDb.get());
+
+    TrustchainBuilder builder;
+    auto const alice = builder.makeUser3("alice");
+    auto const aliceKeyStore =
+        builder.makeUserKeyStore(alice.user, aliceDb.get());
+    auto const aliceProvisionalUser =
+        builder.makeProvisionalUser("alice@tanker");
+    auto const aliceProvisionalUserKeysStore =
+        builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
+                                                 aliceDb.get());
+
+    SUBCASE(
+        "handles creation of a group I am part of through a provisional "
+        "identity")
+    {
+      auto const bob = builder.makeUser3("bob");
+
+      auto const group =
+          builder.makeGroup2(bob.user.devices[0], {}, {aliceProvisionalUser});
+      AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
+                                          groupStore,
+                                          *aliceKeyStore,
+                                          *aliceProvisionalUserKeysStore,
+                                          toVerifiedEntry(group.entry)));
+
+      CHECK_EQ(
+          AWAIT(groupStore.findFullById(group.group.tankerGroup.id)).value(),
+          group.group.tankerGroup);
+    }
+  }
 }
 
 TEST_CASE("GroupUpdater UserGroupAddition")
@@ -88,6 +130,8 @@ TEST_CASE("GroupUpdater UserGroupAddition")
   auto const bob = builder.makeUser3("bob");
   auto const aliceKeyStore =
       builder.makeUserKeyStore(alice.user, aliceDb.get());
+  auto const aliceProvisionalUserKeysStore =
+      builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
 
   SUBCASE("Alice sees Bob being added to her group")
   {
@@ -96,6 +140,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(aliceGroup.entry)));
 
     auto const updatedGroup = builder.addUserToGroup(
@@ -103,6 +148,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
     CHECK_EQ(
         AWAIT(aliceGroupStore.findFullById(aliceGroup.group.tankerGroup.id))
@@ -116,6 +162,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(bobGroup.entry)));
 
     auto const updatedGroup = builder.addUserToGroup(
@@ -123,6 +170,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
     CHECK_EQ(AWAIT(aliceGroupStore.findFullById(bobGroup.group.tankerGroup.id))
                  .value(),
@@ -135,6 +183,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(bobGroup.entry)));
 
     auto const charly = builder.makeUser3("charly");
@@ -144,6 +193,7 @@ TEST_CASE("GroupUpdater UserGroupAddition")
     AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                         aliceGroupStore,
                                         *aliceKeyStore,
+                                        *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
 
     CHECK_EQ(

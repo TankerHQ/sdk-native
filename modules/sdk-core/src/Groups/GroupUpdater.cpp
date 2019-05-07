@@ -62,6 +62,28 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
   TC_RETURN(groupPrivateEncryptionKey);
 }
 
+tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>>
+decryptMyProvisionalKey(
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    UserGroupCreation2::UserGroupProvisionalMembers const& groupKeys)
+{
+  for (auto const& gek : groupKeys)
+  {
+    if (auto const matchingProvisionalUserKeys =
+            TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
+                gek.appPublicSignatureKey(), gek.tankerPublicSignatureKey())))
+    {
+      auto const groupPrivateEncryptionKey =
+          Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+              Crypto::sealDecrypt(gek.encryptedPrivateEncryptionKey(),
+                                  matchingProvisionalUserKeys->tankerKeys),
+              matchingProvisionalUserKeys->appKeys);
+      TC_RETURN(groupPrivateEncryptionKey);
+    }
+  }
+  TC_RETURN(nonstd::nullopt);
+}
+
 tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   Entry const& entry,
                                   UserGroupCreation const& userGroupCreation)
@@ -132,10 +154,12 @@ tc::cotask<void> putFullGroup(
   }));
 }
 
-tc::cotask<void> applyUserGroupCreation(Trustchain::UserId const& myUserId,
-                                        GroupStore& groupStore,
-                                        UserKeyStore const& userKeyStore,
-                                        Entry const& entry)
+tc::cotask<void> applyUserGroupCreation(
+    Trustchain::UserId const& myUserId,
+    GroupStore& groupStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
 {
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
@@ -144,8 +168,13 @@ tc::cotask<void> applyUserGroupCreation(Trustchain::UserId const& myUserId,
     groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
         userKeyStore, ugc1->sealedPrivateEncryptionKeysForUsers()));
   else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation2>())
+  {
     groupPrivateEncryptionKey = TC_AWAIT(
         decryptMyKey(myUserId, userKeyStore, ugc2->userGroupMembers()));
+    if (!groupPrivateEncryptionKey)
+      groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+          provisionalUserKeysStore, ugc2->userGroupProvisionalMembers()));
+  }
 
   if (groupPrivateEncryptionKey)
     TC_AWAIT(putFullGroup(
@@ -185,13 +214,16 @@ tc::cotask<void> applyUserGroupAddition(GroupStore& groupStore,
 }
 }
 
-tc::cotask<void> applyEntry(Trustchain::UserId const& myUserId,
-                            GroupStore& groupStore,
-                            UserKeyStore const& userKeyStore,
-                            Entry const& entry)
+tc::cotask<void> applyEntry(
+    Trustchain::UserId const& myUserId,
+    GroupStore& groupStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
 {
   if (entry.action.holdsAlternative<UserGroupCreation>())
-    TC_AWAIT(applyUserGroupCreation(myUserId, groupStore, userKeyStore, entry));
+    TC_AWAIT(applyUserGroupCreation(
+        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else if (entry.action.holdsAlternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(groupStore, userKeyStore, entry));
   else

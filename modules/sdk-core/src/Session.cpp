@@ -589,8 +589,8 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 
 tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 {
-  TC_AWAIT(
-      GroupUpdater::applyEntry(_userId, _groupStore, _userKeyStore, entry));
+  TC_AWAIT(GroupUpdater::applyEntry(
+      _userId, _groupStore, _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
