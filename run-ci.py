@@ -35,7 +35,7 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        built_path = ci.cpp.build(args.profile, coverage=args.coverage)
+        built_path = ci.cpp.build(args.profile, coverage=args.coverage, warn_as_error=True)
         ci.cpp.check(built_path, coverage=args.coverage)
     elif args.command == "nightly-build-emscripten":
         with ci.mail.notify_failure("sdk-native"):
