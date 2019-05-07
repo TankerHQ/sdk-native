@@ -785,12 +785,11 @@ TEST_CASE("Verif UserGroupCreation")
   TrustchainBuilder builder;
 
   auto const resultUser = builder.makeUser3("alice");
-  auto const secondDevice = builder.makeDevice3("alice");
-  auto const resultGroup =
-      builder.makeGroup(secondDevice.device, {resultUser.user});
+  auto const firstDevice = resultUser.user.devices.at(0);
+  auto const resultGroup = builder.makeGroup(firstDevice, {resultUser.user});
 
   auto gcEntry = resultGroup.entry;
-  auto authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = firstDevice.asTankerDevice();
 
   testUserGroupCreationCommon(authorDevice, gcEntry);
 }
@@ -800,13 +799,13 @@ TEST_CASE("Verif UserGroupCreation2")
   TrustchainBuilder builder;
 
   auto const resultUser = builder.makeUser3("alice");
-  auto const secondDevice = builder.makeDevice3("alice");
+  auto const firstDevice = resultUser.user.devices.at(0);
   auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
-  auto const resultGroup = builder.makeGroup2(
-      secondDevice.device, {resultUser.user}, {provisionalUser});
+  auto const resultGroup =
+      builder.makeGroup2(firstDevice, {resultUser.user}, {provisionalUser});
 
   auto gcEntry = resultGroup.entry;
-  auto authorDevice = secondDevice.device.asTankerDevice();
+  auto authorDevice = firstDevice.asTankerDevice();
 
   testUserGroupCreationCommon(authorDevice, gcEntry);
 }
