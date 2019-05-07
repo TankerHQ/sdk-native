@@ -1,6 +1,8 @@
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 

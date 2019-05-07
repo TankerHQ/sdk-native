@@ -6,9 +6,9 @@
 #include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
@@ -288,7 +288,8 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
       toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
-  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(user, trustchainCreation);
+  deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(
+      user, trustchainCreation);
 }
 
 TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
@@ -742,18 +743,11 @@ TEST_CASE("Verif DeviceRevocationV2")
   }
 }
 
-TEST_CASE("Verif UserGroupCreation")
+namespace
 {
-  TrustchainBuilder builder;
-
-  auto const resultUser = builder.makeUser3("alice");
-  auto const secondDevice = builder.makeDevice3("alice");
-  auto const resultGroup =
-      builder.makeGroup(secondDevice.device, {resultUser.user});
-
-  auto gcEntry = resultGroup.entry;
-  auto authorDevice = secondDevice.device.asTankerDevice();
-
+void testUserGroupCreationCommon(Tanker::Device& authorDevice,
+                                 ServerEntry& gcEntry)
+{
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
     alter(gcEntry, &ServerEntry::signature);
@@ -783,6 +777,37 @@ TEST_CASE("Verif UserGroupCreation")
   {
     CHECK_NOTHROW(Verif::verifyUserGroupCreation(gcEntry, authorDevice));
   }
+}
+}
+
+TEST_CASE("Verif UserGroupCreation")
+{
+  TrustchainBuilder builder;
+
+  auto const resultUser = builder.makeUser3("alice");
+  auto const firstDevice = resultUser.user.devices.at(0);
+  auto const resultGroup = builder.makeGroup(firstDevice, {resultUser.user});
+
+  auto gcEntry = resultGroup.entry;
+  auto authorDevice = firstDevice.asTankerDevice();
+
+  testUserGroupCreationCommon(authorDevice, gcEntry);
+}
+
+TEST_CASE("Verif UserGroupCreation2")
+{
+  TrustchainBuilder builder;
+
+  auto const resultUser = builder.makeUser3("alice");
+  auto const firstDevice = resultUser.user.devices.at(0);
+  auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
+  auto const resultGroup =
+      builder.makeGroup2(firstDevice, {resultUser.user}, {provisionalUser});
+
+  auto gcEntry = resultGroup.entry;
+  auto authorDevice = firstDevice.asTankerDevice();
+
+  testUserGroupCreationCommon(authorDevice, gcEntry);
 }
 
 TEST_CASE("Verif UserGroupAddition")

@@ -278,6 +278,31 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
   return Serialization::serialize(entry);
 }
 
+std::vector<uint8_t> BlockGenerator::userGroupCreation2(
+    Crypto::SignatureKeyPair const& signatureKeyPair,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    UserGroupCreation2::UserGroupMembers const& groupMembers,
+    UserGroupCreation2::UserGroupProvisionalMembers const&
+        groupProvisionalMembers) const
+{
+  auto const encryptedPrivateSignatureKey =
+      Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
+          signatureKeyPair.privateKey, publicEncryptionKey);
+
+  UserGroupCreation2 ugc{signatureKeyPair.publicKey,
+                         publicEncryptionKey,
+                         encryptedPrivateSignatureKey,
+                         groupMembers,
+                         groupProvisionalMembers};
+  ugc.selfSign(signatureKeyPair.privateKey);
+  auto const entry = ClientEntry::create(_trustchainId,
+                                         static_cast<Crypto::Hash>(_deviceId),
+                                         ugc,
+                                         _privateSignatureKey);
+
+  return Serialization::serialize(entry);
+}
+
 std::vector<uint8_t> BlockGenerator::userGroupAddition(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
