@@ -419,9 +419,9 @@ tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
   return makeFuture(tanker->revokeDevice(SDeviceId(device_id)));
 }
 
-void tanker_free_buffer(void* buffer)
+void tanker_free_buffer(void const* buffer)
 {
-  free(buffer);
+  free(const_cast<void*>(buffer));
 }
 
 void tanker_free_device_list(tanker_device_list_t* list)
