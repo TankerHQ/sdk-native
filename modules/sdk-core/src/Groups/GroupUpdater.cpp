@@ -42,6 +42,31 @@ tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
   TC_RETURN(nonstd::nullopt);
 }
 
+tc::cotask<nonstd::optional<MyGroupKey>> findMyKeys(
+    Trustchain::UserId const& myUserId,
+    UserKeyStore const& userKeyStore,
+    UserGroupCreation2::UserGroupMembers const& groupKeys)
+{
+  auto const myKeysIt =
+      std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
+        return k.userId() == myUserId;
+      });
+  if (myKeysIt == groupKeys.end())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const userKeyPair =
+      TC_AWAIT(userKeyStore.findKeyPair(myKeysIt->userPublicKey()));
+  if (!userKeyPair)
+    throw std::runtime_error(
+        "assertion error: group block does contains my user id but not my user "
+        "key");
+
+  TC_RETURN((MyGroupKey{
+      *userKeyPair,
+      myKeysIt->encryptedPrivateEncryptionKey(),
+  }));
+}
+
 tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   Entry const& entry,
                                   UserGroupCreation const& userGroupCreation)
@@ -116,16 +141,20 @@ tc::cotask<void> putFullGroup(GroupStore& groupStore,
   }));
 }
 
-tc::cotask<void> applyUserGroupCreation(GroupStore& groupStore,
+tc::cotask<void> applyUserGroupCreation(Trustchain::UserId const& myUserId,
+                                        GroupStore& groupStore,
                                         UserKeyStore const& userKeyStore,
                                         Entry const& entry)
 {
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
-  auto const myKeys =
-      TC_AWAIT(findMyKeys(userKeyStore,
-                          userGroupCreation.get<UserGroupCreation1>()
-                              .sealedPrivateEncryptionKeysForUsers()));
+  nonstd::optional<MyGroupKey> myKeys;
+  if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation1>())
+    myKeys = TC_AWAIT(
+        findMyKeys(userKeyStore, ugc1->sealedPrivateEncryptionKeysForUsers()));
+  else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation2>())
+    myKeys =
+        TC_AWAIT(findMyKeys(myUserId, userKeyStore, ugc2->userGroupMembers()));
 
   if (!myKeys)
     TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));
@@ -163,12 +192,13 @@ tc::cotask<void> applyUserGroupAddition(GroupStore& groupStore,
 }
 }
 
-tc::cotask<void> applyEntry(GroupStore& groupStore,
+tc::cotask<void> applyEntry(Trustchain::UserId const& myUserId,
+                            GroupStore& groupStore,
                             UserKeyStore const& userKeyStore,
                             Entry const& entry)
 {
   if (entry.action.holdsAlternative<UserGroupCreation>())
-    TC_AWAIT(applyUserGroupCreation(groupStore, userKeyStore, entry));
+    TC_AWAIT(applyUserGroupCreation(myUserId, groupStore, userKeyStore, entry));
   else if (entry.action.holdsAlternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(groupStore, userKeyStore, entry));
   else
