@@ -105,6 +105,11 @@ public:
   ResultGroup addUserToGroup(Device const& author,
                              Group group,
                              std::vector<User> const& users);
+  ResultGroup addUserToGroup2(
+      Device const& author,
+      Group group,
+      std::vector<User> const& users,
+      std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers);
 
   Tanker::SecretProvisionalUser makeProvisionalUser(std::string const& email);
   Tanker::Trustchain::ServerEntry claimProvisionalIdentity(
