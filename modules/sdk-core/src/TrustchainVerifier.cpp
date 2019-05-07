@@ -79,6 +79,8 @@ tc::cotask<Entry> TrustchainVerifier::verify(
     TC_RETURN(TC_AWAIT(handleUserGroupCreation(e)));
   case Nature::ProvisionalIdentityClaim:
     TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));
+  default:
+    break;
   }
   throw std::runtime_error(
       "Assertion failed: Invalid nature for unverified entry");

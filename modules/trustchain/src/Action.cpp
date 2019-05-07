@@ -51,6 +51,8 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
     return Serialization::deserialize<ProvisionalIdentityClaim>(payload);
   case Nature::UserGroupCreation2:
     return Serialization::deserialize<UserGroupCreation2>(payload);
+  default:
+    break;
   }
   throw std::runtime_error{fmt::format(fmt("unknown nature: {:d}"), nature)};
 }
