@@ -2,9 +2,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/UnlockKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
@@ -29,7 +29,10 @@ void to_json(nlohmann::json& j, Request const& m)
   j["trustchain_id"] = m.trustchainId;
   j["user_id"] = m.userId;
   j["type"] = to_string(m.type);
-  j["value"] = cppcodec::base64_rfc4648::encode(m.value);
+  if (m.type == Request::Type::VerificationCode)
+    j["value"] = std::string(m.value.begin(), m.value.end());
+  else
+    j["value"] = cppcodec::base64_rfc4648::encode(m.value);
 }
 
 void to_json(nlohmann::json& j, FetchAnswer const& m)
@@ -74,8 +77,7 @@ Request::Request(Trustchain::TrustchainId const& trustchainId,
   }
   else if (auto rawcode = mpark::get_if<VerificationCode>(&locker))
   {
-    auto const code = cppcodec::base64_url_unpadded::decode(*rawcode);
-    value.assign(code.begin(), code.end());
+    value.assign(rawcode->begin(), rawcode->end());
     type = Type::VerificationCode;
   }
 }
