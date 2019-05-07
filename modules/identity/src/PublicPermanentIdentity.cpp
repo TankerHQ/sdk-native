@@ -15,6 +15,13 @@ void from_json(nlohmann::json const& j, PublicPermanentIdentity& identity)
     throw std::runtime_error("unsupported public permanent identity target: " +
                              target);
 
+  if (j.find("user_secret") != j.end())
+  {
+    throw std::invalid_argument(
+        "Cannot deserialize SecretPermanentIdentity in "
+        "PublicPermanentIdentity");
+  }
+
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("value").get_to(identity.userId);
 }

@@ -220,6 +220,14 @@ TEST_SUITE("serialization")
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
   }
   TEST_CASE(
+      "We cannot deserialize a secret permanent identity as a public permanent "
+      "identity")
+  {
+    CHECK_THROWS_AS(
+        extract<PublicPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY),
+        std::invalid_argument);
+  }
+  TEST_CASE(
       "We can deserialize a secret provisional identity from a good string")
   {
     auto const identity =
@@ -244,6 +252,14 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.target, TargetType::Email);
     CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
+  }
+  TEST_CASE(
+      "We cannot deserialize a secret provisional identity as a public "
+      "provisional identity")
+  {
+    CHECK_THROWS_AS(
+        extract<PublicProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY),
+        std::invalid_argument);
   }
 }
 

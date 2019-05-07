@@ -15,6 +15,13 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
     throw std::runtime_error("unsupported provisional identity target: " +
                              target);
 
+  if (j.find("private_signature_key") != j.end())
+  {
+    throw std::invalid_argument(
+        "Cannot deserialize SecretProvisionalIdentity in "
+        "PublicProvisionalIdentity");
+  }
+
   identity = PublicProvisionalIdentity{
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
       TargetType::Email,
