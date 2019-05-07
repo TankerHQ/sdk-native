@@ -1,7 +1,5 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 
-#include <Tanker/Trustchain/Actions/UserGroupAddition/v2.hpp>
-
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -201,7 +199,7 @@ TEST_CASE("Serialization test vectors")
     
     auto const groupId = make<GroupId>("group id");
     auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
-    std::vector<UserGroupAddition2::Member> const members{
+    std::vector<UserGroupAddition::v2::Member> const members{
         {make<UserId>("user id"),
          make<Crypto::PublicEncryptionKey>("pub user key"),
          make<Crypto::SealedPrivateEncryptionKey>("encrypted group priv key")},
@@ -209,7 +207,7 @@ TEST_CASE("Serialization test vectors")
          make<Crypto::PublicEncryptionKey>("second pub user key"),
          make<Crypto::SealedPrivateEncryptionKey>(
              "second encrypted group priv key")}};
-    std::vector<UserGroupAddition2::ProvisionalMember> const
+    std::vector<UserGroupAddition::v2::ProvisionalMember> const
         provisionalMembers{
             {make<Crypto::PublicSignatureKey>("app provisional user key"),
              make<Crypto::PublicSignatureKey>("tanker provisional user key"),
@@ -222,14 +220,14 @@ TEST_CASE("Serialization test vectors")
                  "2nd provisional encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
 
-    UserGroupAddition2 const uga{groupId,
+    UserGroupAddition::v2 const uga{groupId,
                                     previousGroupBlockHash,
                                     members,
                                     provisionalMembers,
                                     selfSignature};
 
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
-    CHECK(Serialization::deserialize<UserGroupAddition2>(
+    CHECK(Serialization::deserialize<UserGroupAddition::v2>(
               serializedUserGroupAddition) == uga);
   }
 }
