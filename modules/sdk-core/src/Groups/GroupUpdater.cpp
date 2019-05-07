@@ -183,10 +183,12 @@ tc::cotask<void> applyUserGroupCreation(
     TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));
 }
 
-tc::cotask<void> applyUserGroupAddition(Trustchain::UserId const& myUserId,
-                                        GroupStore& groupStore,
-                                        UserKeyStore const& userKeyStore,
-                                        Entry const& entry)
+tc::cotask<void> applyUserGroupAddition(
+    Trustchain::UserId const& myUserId,
+    GroupStore& groupStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
 {
   auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
@@ -205,8 +207,13 @@ tc::cotask<void> applyUserGroupAddition(Trustchain::UserId const& myUserId,
     groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
         userKeyStore, uga1->sealedPrivateEncryptionKeysForUsers()));
   else if (auto const uga2 = userGroupAddition.get_if<UserGroupAddition::v2>())
+  {
     groupPrivateEncryptionKey =
         TC_AWAIT(decryptMyKey(myUserId, userKeyStore, uga2->members()));
+    if (!groupPrivateEncryptionKey)
+      groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+          provisionalUserKeysStore, uga2->provisionalMembers()));
+  }
 
   if (!groupPrivateEncryptionKey)
     TC_RETURN();
@@ -230,7 +237,8 @@ tc::cotask<void> applyEntry(
     TC_AWAIT(applyUserGroupCreation(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else if (entry.action.holdsAlternative<UserGroupAddition>())
-    TC_AWAIT(applyUserGroupAddition(myUserId, groupStore, userKeyStore, entry));
+    TC_AWAIT(applyUserGroupAddition(
+        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else
     throw Error::formatEx<std::runtime_error>(
         "GroupUpdater can't handle this block (nature: {})", entry.nature);

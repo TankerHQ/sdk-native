@@ -223,11 +223,56 @@ TEST_CASE("GroupUpdater UserGroupAddition1")
 
 TEST_CASE("GroupUpdater UserGroupAddition2")
 {
-  testUserGroupAdditionCommon(
-      [](TrustchainBuilder& builder,
-         TrustchainBuilder::Device const& authorDevice,
-         TrustchainBuilder::Group const& group,
-         std::vector<TrustchainBuilder::User> const& members) {
-        return builder.addUserToGroup2(authorDevice, group, members, {});
-      });
+  SUBCASE("Common checks")
+  {
+    testUserGroupAdditionCommon(
+        [](TrustchainBuilder& builder,
+           TrustchainBuilder::Device const& authorDevice,
+           TrustchainBuilder::Group const& group,
+           std::vector<TrustchainBuilder::User> const& members) {
+          return builder.addUserToGroup2(authorDevice, group, members, {});
+        });
+  }
+
+  SUBCASE("Specific checks")
+  {
+    auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
+    GroupStore aliceGroupStore(aliceDb.get());
+
+    TrustchainBuilder builder;
+    auto const alice = builder.makeUser3("alice");
+    auto const bob = builder.makeUser3("bob");
+    auto const aliceKeyStore =
+        builder.makeUserKeyStore(alice.user, aliceDb.get());
+    auto const aliceProvisionalUser =
+        builder.makeProvisionalUser("alice@tanker");
+    auto const aliceProvisionalUserKeysStore =
+        builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
+                                                 aliceDb.get());
+
+    SUBCASE(
+        "Alice sees herself being added to Bob's group as a provisional user")
+    {
+      auto const bobGroup =
+          builder.makeGroup2(bob.user.devices[0], {bob.user}, {});
+      AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
+                                          aliceGroupStore,
+                                          *aliceKeyStore,
+                                          *aliceProvisionalUserKeysStore,
+                                          toVerifiedEntry(bobGroup.entry)));
+
+      auto const updatedGroup = builder.addUserToGroup2(
+          bob.user.devices[0], bobGroup.group, {}, {aliceProvisionalUser});
+      AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
+                                          aliceGroupStore,
+                                          *aliceKeyStore,
+                                          *aliceProvisionalUserKeysStore,
+                                          toVerifiedEntry(updatedGroup.entry)));
+
+      CHECK_EQ(
+          AWAIT(aliceGroupStore.findFullById(bobGroup.group.tankerGroup.id))
+              .value(),
+          updatedGroup.group.tankerGroup);
+    }
+  }
 }
