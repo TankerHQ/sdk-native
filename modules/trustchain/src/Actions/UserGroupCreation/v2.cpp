@@ -46,9 +46,9 @@ std::vector<std::uint8_t> UserGroupCreation2::signatureData() const
       _sealedPrivateSignatureKey.begin(), _sealedPrivateSignatureKey.end(), it);
   for (auto const& elem : _userGroupMembers)
   {
+    it = std::copy(elem.userId().begin(), elem.userId().end(), it);
     it =
         std::copy(elem.userPublicKey().begin(), elem.userPublicKey().end(), it);
-    it = std::copy(elem.userId().begin(), elem.userId().end(), it);
     it = std::copy(elem.encryptedPrivateEncryptionKey().begin(),
                    elem.encryptedPrivateEncryptionKey().end(),
                    it);
