@@ -142,21 +142,12 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
         memberUsers.size(),
         MAX_GROUP_SIZE);
 
-  UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers sealedEncKeys;
-  for (auto const& user : memberUsers)
-  {
-    if (!user.userKey)
-      throw std::runtime_error(
-          "Cannot create group for users without a user key");
-
-    sealedEncKeys.emplace_back(
-        *user.userKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            group.encryptionKeyPair.privateKey, *user.userKey));
-  }
-
-  TC_RETURN(blockGenerator.userGroupAddition(
-      group.signatureKeyPair, group.lastBlockHash, sealedEncKeys));
+  TC_RETURN(blockGenerator.userGroupAddition2(
+      group.signatureKeyPair,
+      group.lastBlockHash,
+      generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
+                                 memberUsers),
+      {}));
 }
 
 tc::cotask<void> updateMembers(

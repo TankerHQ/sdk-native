@@ -147,7 +147,7 @@ TEST_CASE("Can add users to a group")
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
   auto groupAdd =
-      entry.action().get<UserGroupAddition>().get<UserGroupAddition::v1>();
+      entry.action().get<UserGroupAddition>().get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
@@ -155,19 +155,21 @@ TEST_CASE("Can add users to a group")
   CHECK(groupAdd.groupId() ==
         Trustchain::GroupId{group.signatureKeyPair.publicKey});
   CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash);
-  REQUIRE(groupAdd.sealedPrivateEncryptionKeysForUsers().size() == 2);
+  REQUIRE(groupAdd.members().size() == 2);
+  REQUIRE(groupAdd.provisionalMembers().size() == 0);
 
-  auto const groupEncryptedKey = std::find_if(
-      groupAdd.sealedPrivateEncryptionKeysForUsers().begin(),
-      groupAdd.sealedPrivateEncryptionKeysForUsers().end(),
-      [&](auto const& encryptedKey) {
-        return encryptedKey.first == user.userKeys.back().keyPair.publicKey;
-      });
-  REQUIRE(groupEncryptedKey !=
-          groupAdd.sealedPrivateEncryptionKeysForUsers().end());
-
+  auto const groupEncryptedKey =
+      std::find_if(groupAdd.members().begin(),
+                   groupAdd.members().end(),
+                   [&](auto const& groupEncryptedKey) {
+                     return groupEncryptedKey.userId() == user.userId;
+                   });
+  REQUIRE(groupEncryptedKey != groupAdd.members().end());
+  CHECK(groupEncryptedKey->userPublicKey() ==
+        user.userKeys.back().keyPair.publicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->second, user.userKeys.back().keyPair) ==
+            groupEncryptedKey->encryptedPrivateEncryptionKey(),
+            user.userKeys.back().keyPair) ==
         group.encryptionKeyPair.privateKey);
   CHECK(selfSignature == groupAdd.selfSignature());
 }
