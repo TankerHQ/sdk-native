@@ -6,6 +6,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
@@ -61,31 +62,6 @@ std::vector<uint8_t> makeKeyPublishToGroup(
 
   return blockGenerator.keyPublishToGroup(
       encryptedKey, resourceId, recipientPublicEncryptionKey);
-}
-
-struct PartitionedIdentities
-{
-  std::vector<UserId> userIds;
-  std::vector<Identity::PublicProvisionalIdentity> publicProvisionalIdentities;
-};
-
-PartitionedIdentities partitionIdentities(
-    std::vector<Identity::PublicIdentity> const& identities)
-{
-  PartitionedIdentities out;
-  for (auto const& identity : identities)
-  {
-    if (auto const i =
-            mpark::get_if<Identity::PublicPermanentIdentity>(&identity))
-      out.userIds.push_back(i->userId);
-    else if (auto const i =
-                 mpark::get_if<Identity::PublicProvisionalIdentity>(&identity))
-      out.publicProvisionalIdentities.push_back(*i);
-    else
-      throw std::runtime_error(
-          "assertion failure: unknown variant value in identity");
-  }
-  return out;
 }
 
 tc::cotask<ResourceKeys> getResourceKeys(
@@ -149,15 +125,6 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
                                 std::get<Trustchain::ResourceId>(keyResource),
                                 std::get<Crypto::SymmetricKey>(keyResource)));
   return out;
-}
-
-std::vector<Identity::PublicIdentity> extractPublicIdentities(
-    std::vector<SPublicIdentity> const& spublicIdentities)
-{
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return Identity::extract<Identity::PublicIdentity>(
-        spublicIdentity.string());
-  });
 }
 
 void handleNotFound(

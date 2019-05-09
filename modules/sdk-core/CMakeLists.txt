@@ -117,6 +117,7 @@ add_library(tankercore STATIC
   include/Tanker/UserAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
+  include/Tanker/IdentityUtils.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
@@ -163,6 +164,7 @@ add_library(tankercore STATIC
   src/LogHandler.cpp
   src/Error.cpp
   src/Share.cpp
+  src/IdentityUtils.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
   src/Preregistration.cpp
