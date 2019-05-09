@@ -15,6 +15,7 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/DeviceKeyStore.hpp
     include/Tanker/DbModels/Groups.hpp
     include/Tanker/DbModels/KeyPublishes.hpp
+    include/Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp
     include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
@@ -32,6 +33,7 @@ if (NOT EMSCRIPTEN)
     src/DbModels/DeviceKeyStore.cpp
     src/DbModels/Groups.cpp
     src/DbModels/KeyPublishes.cpp
+    src/DbModels/GroupsProvisionalEncryptionKeys.cpp
     src/DbModels/ResourceIdToKeyPublish.cpp
     src/DbModels/ResourceKeys.cpp
     src/DbModels/ProvisionalUserKeys.cpp
@@ -100,6 +102,7 @@ add_library(tankercore STATIC
   include/Tanker/ReceiveKey.hpp
   include/Tanker/Preregistration.hpp
   include/Tanker/Groups/Group.hpp
+  include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
   include/Tanker/Groups/GroupStore.hpp
   include/Tanker/Groups/GroupUpdater.hpp

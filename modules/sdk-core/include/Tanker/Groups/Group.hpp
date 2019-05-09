@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Groups/GroupProvisionalUser.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
 #include <optional.hpp>
@@ -36,7 +37,8 @@ struct ExternalGroup
                 nonstd::optional<Crypto::SealedPrivateSignatureKey> const&,
                 Crypto::PublicEncryptionKey const&,
                 Crypto::Hash const&,
-                uint64_t lastBlockIndex);
+                uint64_t lastBlockIndex,
+                std::vector<GroupProvisionalUser> const& = {});
   ExternalGroup(Group const&);
 
   Trustchain::GroupId id;
@@ -46,6 +48,7 @@ struct ExternalGroup
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
   uint64_t lastBlockIndex;
+  std::vector<GroupProvisionalUser> provisionalUsers;
 };
 
 bool operator==(ExternalGroup const& l, ExternalGroup const& r);
