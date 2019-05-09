@@ -3,6 +3,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/Types/Email.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 #include <mockaron/mockaron.hpp>
@@ -13,9 +14,11 @@ using Tanker::Trustchain::UserId;
 namespace Tanker
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,
+                           Client* client,
                            TrustchainPuller* trustchainPuller,
                            ContactStore const* contactStore)
   : _selfUserId(selfUserId),
+    _client(client),
     _trustchainPuller(trustchainPuller),
     _contactStore(contactStore)
 {
@@ -46,6 +49,57 @@ auto UserAccessor::pull(gsl::span<UserId const> userIds)
   }
 
   TC_RETURN(ret);
+}
+
+tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
+    gsl::span<Identity::PublicProvisionalIdentity const>
+        appProvisionalIdentities)
+{
+  MOCKARON_HOOK_CUSTOM(
+      tc::cotask<std::vector<PublicProvisionalUser>>(
+          gsl::span<Identity::PublicProvisionalIdentity const>),
+      std::vector<PublicProvisionalUser>,
+      UserAccessor,
+      pullProvisional,
+      TC_RETURN,
+      MOCKARON_ADD_COMMA(appProvisionalIdentities));
+
+  if (appProvisionalIdentities.empty())
+    TC_RETURN(std::vector<PublicProvisionalUser>{});
+
+  std::vector<Email> provisionalUserEmails;
+  for (auto const& appProvisionalIdentity : appProvisionalIdentities)
+  {
+    if (appProvisionalIdentity.target != Identity::TargetType::Email)
+      throw Error::formatEx("unsupported target type: {}",
+                            static_cast<int>(appProvisionalIdentity.target));
+    provisionalUserEmails.push_back(Email{appProvisionalIdentity.value});
+  }
+
+  auto const tankerProvisionalIdentities =
+      TC_AWAIT(_client->getPublicProvisionalIdentities(provisionalUserEmails));
+
+  if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
+    throw Error::InternalError(
+        "getPublicProvisionalIdentities returned a list of different size");
+
+  std::vector<PublicProvisionalUser> provisionalUsers;
+  provisionalUsers.reserve(appProvisionalIdentities.size());
+  std::transform(appProvisionalIdentities.begin(),
+                 appProvisionalIdentities.end(),
+                 tankerProvisionalIdentities.begin(),
+                 std::back_inserter(provisionalUsers),
+                 [](auto const& appProvisionalIdentity,
+                    auto const& tankerProvisionalIdentity) {
+                   return PublicProvisionalUser{
+                       appProvisionalIdentity.appSignaturePublicKey,
+                       appProvisionalIdentity.appEncryptionPublicKey,
+                       tankerProvisionalIdentity.first,
+                       tankerProvisionalIdentity.second,
+                   };
+                 });
+
+  TC_RETURN(provisionalUsers);
 }
 
 tc::cotask<void> UserAccessor::fetch(gsl::span<UserId const> userIds)

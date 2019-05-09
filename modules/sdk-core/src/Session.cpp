@@ -107,7 +107,7 @@ Session::Session(Config&& config)
                       _deviceKeyStore->signatureKeyPair().publicKey,
                       _deviceKeyStore->deviceId(),
                       _userId),
-    _userAccessor(_userId, &_trustchainPuller, &_contactStore),
+    _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
     _groupAcessor(&_trustchainPuller, &_groupStore),
     _blockGenerator(_trustchainId,
                     _deviceKeyStore->signatureKeyPair().privateKey,

@@ -163,11 +163,7 @@ void handleNotFound(
 
 KeyRecipients toKeyRecipients(
     std::vector<User> const& users,
-    std::vector<Identity::PublicProvisionalIdentity> const&
-        appPublicProvisionalIdentities,
-    std::vector<std::pair<Crypto::PublicSignatureKey,
-                          Crypto::PublicEncryptionKey>> const&
-        tankerPublicProvisionalIdentities,
+    std::vector<PublicProvisionalUser> const& publicProvisionalUsers,
     std::vector<ExternalGroup> const& groups)
 {
   KeyRecipients out;
@@ -180,19 +176,7 @@ KeyRecipients toKeyRecipients(
     out.recipientUserKeys.push_back(*user.userKey);
   }
 
-  std::transform(appPublicProvisionalIdentities.begin(),
-                 appPublicProvisionalIdentities.end(),
-                 tankerPublicProvisionalIdentities.begin(),
-                 std::back_inserter(out.recipientProvisionalUserKeys),
-                 [](auto const& appPublicProvisionalIdentity,
-                    auto const& tankerPublicProvisionalIdentity) {
-                   return PublicProvisionalUser{
-                       appPublicProvisionalIdentity.appSignaturePublicKey,
-                       appPublicProvisionalIdentity.appEncryptionPublicKey,
-                       tankerPublicProvisionalIdentity.first,
-                       tankerPublicProvisionalIdentity.second,
-                   };
-                 });
+  out.recipientProvisionalUserKeys = publicProvisionalUsers;
 
   for (auto const& group : groups)
     out.recipientGroupKeys.push_back(group.publicEncryptionKey);
@@ -217,7 +201,6 @@ std::vector<uint8_t> makeKeyPublishToUser(
 tc::cotask<KeyRecipients> generateRecipientList(
     UserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
-    Client& client,
     std::vector<SPublicIdentity> const& aspublicIdentities,
     std::vector<SGroupId> const& asgroupIds)
 {
@@ -232,22 +215,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
   auto const userResult =
       TC_AWAIT(userAccessor.pull(partitionedIdentities.userIds));
 
-  std::vector<Email> provisionalUserEmails;
-  for (auto const& provisionalIdentity :
-       partitionedIdentities.publicProvisionalIdentities)
-  {
-    if (provisionalIdentity.target != Identity::TargetType::Email)
-      throw Error::formatEx("unsupported target type: {}",
-                            static_cast<int>(provisionalIdentity.target));
-    provisionalUserEmails.push_back(Email{provisionalIdentity.value});
-  }
-  auto const tankerPublicProvisionalIdentityResult =
-      TC_AWAIT(client.getPublicProvisionalIdentities(provisionalUserEmails));
-
-  if (partitionedIdentities.publicProvisionalIdentities.size() !=
-      tankerPublicProvisionalIdentityResult.size())
-    throw Error::InternalError(
-        "getPublicProvisionalIdentities returned a list of different size");
+  auto const provisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
+      partitionedIdentities.publicProvisionalIdentities));
 
   auto const groupResult = TC_AWAIT(groupAccessor.pull(groupIds));
 
@@ -258,10 +227,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
                  groupIds,
                  groupResult.notFound);
 
-  TC_RETURN(toKeyRecipients(userResult.found,
-                            partitionedIdentities.publicProvisionalIdentities,
-                            tankerPublicProvisionalIdentityResult,
-                            groupResult.found));
+  TC_RETURN(
+      toKeyRecipients(userResult.found, provisionalUsers, groupResult.found));
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
@@ -294,7 +261,7 @@ tc::cotask<void> share(UserAccessor& userAccessor,
                        std::vector<SGroupId> const& groupIds)
 {
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
-      userAccessor, groupAccessor, client, publicIdentities, groupIds));
+      userAccessor, groupAccessor, publicIdentities, groupIds));
 
   auto const ks =
       generateShareBlocks(blockGenerator, resourceKeys, keyRecipients);

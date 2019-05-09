@@ -44,7 +44,8 @@ TEST_CASE("UserAccessor")
   auto const charlie = builder.makeUser3("charlie").user.asTankerUser();
 
   mockaron::mock<TrustchainPuller, TrustchainPullerStub> trustchainPuller;
-  UserAccessor userAccessor(alice.id, &trustchainPuller.get(), &contactStore);
+  UserAccessor userAccessor(
+      alice.id, nullptr, &trustchainPuller.get(), &contactStore);
 
   SUBCASE("it should return user ids it did not find")
   {

@@ -11,6 +11,8 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -112,6 +114,8 @@ public:
       std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers);
 
   Tanker::SecretProvisionalUser makeProvisionalUser(std::string const& email);
+  Tanker::PublicProvisionalUser toPublicProvisionalUser(
+      Tanker::SecretProvisionalUser const& u) const;
   Tanker::Trustchain::ServerEntry claimProvisionalIdentity(
       std::string const& userId,
       Tanker::SecretProvisionalUser const& provisionalUser,
