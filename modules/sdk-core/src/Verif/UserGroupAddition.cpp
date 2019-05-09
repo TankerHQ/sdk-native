@@ -19,7 +19,8 @@ void verifyUserGroupAddition(ServerEntry const& serverEntry,
                              Device const& author,
                              ExternalGroup const& group)
 {
-  assert(serverEntry.action().nature() == Nature::UserGroupAddition);
+  assert(serverEntry.action().nature() == Nature::UserGroupAddition ||
+         serverEntry.action().nature() == Nature::UserGroupAddition2);
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),

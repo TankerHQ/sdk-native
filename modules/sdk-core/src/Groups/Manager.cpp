@@ -105,7 +105,7 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
         memberUserKeys.size(),
         MAX_GROUP_SIZE);
 
-  UserGroupAddition::SealedPrivateEncryptionKeysForUsers sealedEncKeys;
+  UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers sealedEncKeys;
   for (auto const& userKey : memberUserKeys)
   {
     sealedEncKeys.emplace_back(

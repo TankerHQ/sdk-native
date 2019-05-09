@@ -46,11 +46,13 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   case Nature::KeyPublishToUserGroup:
     return Serialization::deserialize<KeyPublishToUserGroup>(payload);
   case Nature::UserGroupAddition:
-    return Serialization::deserialize<UserGroupAddition>(payload);
+    return Serialization::deserialize<UserGroupAddition1>(payload);
   case Nature::ProvisionalIdentityClaim:
     return Serialization::deserialize<ProvisionalIdentityClaim>(payload);
   case Nature::UserGroupCreation2:
     return Serialization::deserialize<UserGroupCreation2>(payload);
+  case Nature::UserGroupAddition2:
+    return Serialization::deserialize<UserGroupAddition2>(payload);
   }
   throw std::runtime_error{fmt::format(fmt("unknown nature: {:d}"), nature)};
 }

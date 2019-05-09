@@ -73,6 +73,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::DeviceRevocation2:
     TC_RETURN(TC_AWAIT(handleDeviceRevocation(e)));
   case Nature::UserGroupAddition:
+  case Nature::UserGroupAddition2:
     TC_RETURN(TC_AWAIT(handleUserGroupAddition(e)));
   case Nature::UserGroupCreation:
   case Nature::UserGroupCreation2:

@@ -510,25 +510,60 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   auto const keysForUsers = generateGroupKeysForUsers(
       group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
 
-  UserGroupAddition userGroupAddition{
-      group.tankerGroup.id,
-      group.tankerGroup.lastBlockHash,
-      keysForUsers,
-  };
+  auto const preserializedBlock =
+      BlockGenerator(_trustchainId,
+                     author.keys.signatureKeyPair.privateKey,
+                     author.keys.deviceId)
+          .userGroupAddition(group.tankerGroup.signatureKeyPair,
+                             group.tankerGroup.lastBlockHash,
+                             keysForUsers);
 
-  userGroupAddition.selfSign(group.tankerGroup.signatureKeyPair.privateKey);
-
-  Block block;
-  block.trustchainId = _trustchainId;
-  block.author = Crypto::Hash{author.keys.deviceId};
-  block.nature = Nature::UserGroupAddition;
-  block.payload = Serialization::serialize(userGroupAddition);
-  block.signature =
-      Crypto::sign(block.hash(), author.keys.signatureKeyPair.privateKey);
-
+  auto block = Serialization::deserialize<Block>(preserializedBlock);
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
+  auto const entry = blockToServerEntry(block);
 
+  group.tankerGroup.lastBlockHash = entry.hash();
+  group.tankerGroup.lastBlockIndex = entry.index();
+
+  std::transform(newUsers.begin(),
+                 newUsers.end(),
+                 std::back_inserter(group.members),
+                 [](auto const& user) { return user.suserId; });
+
+  // replace group in _groups
+  _groups.erase(group);
+  _groups.insert(group);
+
+  return {group, entry};
+}
+
+TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
+    Device const& author,
+    Group group,
+    std::vector<User> const& users,
+    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers)
+{
+  auto const newUsers = getOnlyNewMembers(group.members, users);
+
+  auto const keysForUsers = generateGroupKeysForUsers2(
+      group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
+
+  auto const keysForProvisionalUsers = generateGroupKeysForProvisionalUsers(
+      group.tankerGroup.encryptionKeyPair.privateKey, provisionalUsers);
+
+  auto const preserializedBlock =
+      BlockGenerator(_trustchainId,
+                     author.keys.signatureKeyPair.privateKey,
+                     author.keys.deviceId)
+          .userGroupAddition2(group.tankerGroup.signatureKeyPair,
+                              group.tankerGroup.lastBlockHash,
+                              keysForUsers,
+                              keysForProvisionalUsers);
+
+  auto block = Serialization::deserialize<Block>(preserializedBlock);
+  block.index = _blocks.size() + 1;
+  _blocks.push_back(block);
   auto const entry = blockToServerEntry(block);
 
   group.tankerGroup.lastBlockHash = entry.hash();

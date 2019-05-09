@@ -209,6 +209,89 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
         deviceRevocation, authorDevice, targetDevice, user));
   }
 }
+
+void testUserGroupCreationCommon(Tanker::Device& authorDevice,
+                                 ServerEntry& gcEntry)
+{
+  SUBCASE("should reject an incorrectly signed UserGroupCreation")
+  {
+    alter(gcEntry, &ServerEntry::signature);
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
+  {
+    auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
+    alter(userGroupCreation, &UserGroupCreation::selfSignature);
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a UserGroupCreation from a revoked device")
+  {
+    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Error::VerificationCode::InvalidAuthor);
+  }
+
+  SUBCASE("should accept a valid UserGroupCreation")
+  {
+    CHECK_NOTHROW(Verif::verifyUserGroupCreation(gcEntry, authorDevice));
+  }
+}
+
+void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
+                                 ServerEntry& gaEntry,
+                                 ExternalGroup const& group)
+{
+  auto tankerDevice = authorDevice.asTankerDevice();
+
+  SUBCASE("should reject an incorrectly signed UserGroupAddition")
+  {
+    alter(gaEntry, &ServerEntry::signature);
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE(
+      "should reject a UserGroupAddition where previousGroupBlock is not the "
+      "hash of last modification")
+  {
+    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
+    alter(userGroupAddition, &UserGroupAddition::previousGroupBlockHash);
+    userGroupAddition.selfSign(authorDevice.keys.signatureKeyPair.privateKey);
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
+        Error::VerificationCode::InvalidGroup);
+  }
+
+  SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
+  {
+    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
+    alter(userGroupAddition, &UserGroupAddition::selfSignature);
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
+        Error::VerificationCode::InvalidSignature);
+  }
+
+  SUBCASE("should reject a UserGroupAddition from a revoked device")
+  {
+    tankerDevice.revokedAtBlkIndex = tankerDevice.createdAtBlkIndex + 1;
+    CHECK_VERIFICATION_FAILED_WITH(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
+        Error::VerificationCode::InvalidAuthor);
+  }
+
+  SUBCASE("should accept a valid UserGroupAddition")
+  {
+    CHECK_NOTHROW(Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group));
+  }
+}
 }
 
 TEST_CASE("Verif TrustchainCreation")
@@ -743,43 +826,6 @@ TEST_CASE("Verif DeviceRevocationV2")
   }
 }
 
-namespace
-{
-void testUserGroupCreationCommon(Tanker::Device& authorDevice,
-                                 ServerEntry& gcEntry)
-{
-  SUBCASE("should reject an incorrectly signed UserGroupCreation")
-  {
-    alter(gcEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
-  {
-    auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
-    alter(userGroupCreation, &UserGroupCreation::selfSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupCreation from a revoked device")
-  {
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidAuthor);
-  }
-
-  SUBCASE("should accept a valid UserGroupCreation")
-  {
-    CHECK_NOTHROW(Verif::verifyUserGroupCreation(gcEntry, authorDevice));
-  }
-}
-}
-
 TEST_CASE("Verif UserGroupCreation")
 {
   TrustchainBuilder builder;
@@ -824,50 +870,27 @@ TEST_CASE("Verif UserGroupAddition")
 
   auto gaEntry = resultUserGroupAddition.entry;
   auto const& group = resultGroup.group.tankerGroup;
-  auto authorDevice = secondDevice.device.asTankerDevice();
 
-  SUBCASE("should reject an incorrectly signed UserGroupAddition")
-  {
-    alter(gaEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
-        Error::VerificationCode::InvalidSignature);
-  }
+  testUserGroupAdditionCommon(secondDevice.device, gaEntry, group);
+}
 
-  SUBCASE(
-      "should reject a UserGroupAddition where previousGroupBlock is not the "
-      "hash of last modification")
-  {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
-    alter(userGroupAddition, &UserGroupAddition::previousGroupBlockHash);
-    userGroupAddition.selfSign(
-        secondDevice.device.keys.signatureKeyPair.privateKey);
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
-        Error::VerificationCode::InvalidGroup);
-  }
+TEST_CASE("Verif UserGroupAddition2")
+{
+  TrustchainBuilder builder;
 
-  SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
-  {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
-    alter(userGroupAddition, &UserGroupAddition::selfSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
-        Error::VerificationCode::InvalidSignature);
-  }
+  auto const resultUser = builder.makeUser3("alice");
+  auto const secondDevice = builder.makeDevice3("alice");
+  auto const bobUser = builder.makeUser3("bob");
+  auto const provUser = builder.makeProvisionalUser("charlie@tanker.io");
+  auto const resultGroup =
+      builder.makeGroup(secondDevice.device, {resultUser.user});
+  auto const resultUserGroupAddition = builder.addUserToGroup2(
+      secondDevice.device, resultGroup.group, {bobUser.user}, {provUser});
 
-  SUBCASE("should reject a UserGroupAddition from a revoked device")
-  {
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
-        Error::VerificationCode::InvalidAuthor);
-  }
+  auto gaEntry = resultUserGroupAddition.entry;
+  auto const& group = resultGroup.group.tankerGroup;
 
-  SUBCASE("should accept a valid UserGroupAddition")
-  {
-    CHECK_NOTHROW(Verif::verifyUserGroupAddition(gaEntry, authorDevice, group));
-  }
+  testUserGroupAdditionCommon(secondDevice.device, gaEntry, group);
 }
 
 TEST_CASE("Verif ProvisionalIdentityClaim")

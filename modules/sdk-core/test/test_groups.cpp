@@ -146,7 +146,8 @@ TEST_CASE("Can add users to a group")
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
-  auto groupAdd = entry.action().get<UserGroupAddition>();
+  auto groupAdd =
+      entry.action().get<UserGroupAddition>().get<UserGroupAddition::v1>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
