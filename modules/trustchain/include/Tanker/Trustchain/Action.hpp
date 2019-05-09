@@ -2,10 +2,10 @@
 
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>

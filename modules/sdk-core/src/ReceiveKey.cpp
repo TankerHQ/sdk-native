@@ -10,9 +10,9 @@
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>

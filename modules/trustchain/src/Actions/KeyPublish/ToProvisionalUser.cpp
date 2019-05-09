@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
 
