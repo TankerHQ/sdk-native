@@ -38,7 +38,7 @@ TEST_CASE("Can't create an empty group")
 
   CHECK_THROWS_AS(
       AWAIT(Groups::Manager::generateCreateGroupBlock(
-          {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey)),
+          {}, {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey)),
       Error::InvalidGroupSize);
 }
 
@@ -59,6 +59,7 @@ TEST_CASE("Can create a group with two users")
   auto const preserializedBlock =
       AWAIT(Groups::Manager::generateCreateGroupBlock(
           {user.asTankerUser(), user2.asTankerUser()},
+          {},
           userBlockGenerator,
           groupSignatureKey,
           groupEncryptionKey));
@@ -77,6 +78,7 @@ TEST_CASE("Can create a group with two users")
             group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
         groupSignatureKey.privateKey);
   REQUIRE(group.userGroupMembers().size() == 2);
+  REQUIRE(group.userGroupProvisionalMembers().size() == 0);
   auto const groupEncryptedKey =
       std::find_if(group.userGroupMembers().begin(),
                    group.userGroupMembers().end(),
@@ -89,6 +91,63 @@ TEST_CASE("Can create a group with two users")
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
             groupEncryptedKey->encryptedPrivateEncryptionKey(),
             user.userKeys.back().keyPair) == groupEncryptionKey.privateKey);
+  CHECK(selfSignature == group.selfSignature());
+}
+
+TEST_CASE("Can create a group with two provisional users")
+{
+  TrustchainBuilder builder;
+  builder.makeUser3("user");
+  auto const user = *builder.getUser("user");
+  auto const userDevice = user.devices.front();
+  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
+
+  auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
+  auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
+
+  auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
+  auto groupSignatureKey = Crypto::makeSignatureKeyPair();
+
+  auto const preserializedBlock =
+      AWAIT(Groups::Manager::generateCreateGroupBlock(
+          {},
+          {builder.toPublicProvisionalUser(provisionalUser),
+           builder.toPublicProvisionalUser(provisionalUser2)},
+          userBlockGenerator,
+          groupSignatureKey,
+          groupEncryptionKey));
+
+  auto block = Serialization::deserialize<Block>(preserializedBlock);
+  auto entry = blockToServerEntry(block);
+  auto group =
+      entry.action().get<UserGroupCreation>().get<UserGroupCreation2>();
+
+  auto const selfSignature =
+      Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
+
+  CHECK(group.publicSignatureKey() == groupSignatureKey.publicKey);
+  CHECK(group.publicEncryptionKey() == groupEncryptionKey.publicKey);
+  CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
+            group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
+        groupSignatureKey.privateKey);
+  REQUIRE(group.userGroupMembers().size() == 0);
+  REQUIRE(group.userGroupProvisionalMembers().size() == 2);
+  auto const groupEncryptedKey =
+      std::find_if(group.userGroupProvisionalMembers().begin(),
+                   group.userGroupProvisionalMembers().end(),
+                   [&](auto const& groupEncryptedKey) {
+                     return groupEncryptedKey.appPublicSignatureKey() ==
+                            provisionalUser.appSignatureKeyPair.publicKey;
+                   });
+  REQUIRE(groupEncryptedKey != group.userGroupProvisionalMembers().end());
+  CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
+        provisionalUser.tankerSignatureKeyPair.publicKey);
+  CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+            Crypto::sealDecrypt(
+                groupEncryptedKey->encryptedPrivateEncryptionKey(),
+                provisionalUser.tankerEncryptionKeyPair),
+            provisionalUser.appEncryptionKeyPair) ==
+        groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
 

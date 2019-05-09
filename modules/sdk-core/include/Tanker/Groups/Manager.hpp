@@ -30,6 +30,7 @@ tc::cotask<std::vector<User>> getMemberKeys(
 
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,
+    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey);

@@ -7,6 +7,7 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserNotFound.hpp>
@@ -72,27 +73,50 @@ UserGroupCreation2::UserGroupMembers generateGroupKeysForUsers2(
   }
   return keysForUsers;
 }
+
+UserGroupCreation2::UserGroupProvisionalMembers
+generateGroupKeysForProvisionalUsers(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<PublicProvisionalUser> const& users)
+{
+  UserGroupCreation2::UserGroupProvisionalMembers keysForUsers;
+  for (auto const& user : users)
+  {
+    auto const encryptedKeyOnce = Crypto::sealEncrypt(
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
+    auto const encryptedKeyTwice =
+        Crypto::sealEncrypt<Crypto::TwoTimesSealedPrivateEncryptionKey>(
+            encryptedKeyOnce, user.tankerEncryptionPublicKey);
+
+    keysForUsers.emplace_back(user.appSignaturePublicKey,
+                              user.tankerSignaturePublicKey,
+                              encryptedKeyTwice);
+  }
+  return keysForUsers;
+}
 }
 
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,
+    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey)
 {
-  if (memberUsers.size() == 0)
+  if (memberUsers.size() + memberProvisionalUsers.size() == 0)
     throw Error::InvalidGroupSize("Cannot create an empty group");
-  else if (memberUsers.size() > MAX_GROUP_SIZE)
+  else if (memberUsers.size() + memberProvisionalUsers.size() > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot create group with {:d} members, max is {:d}"),
-        memberUsers.size(),
+        memberUsers.size() + memberProvisionalUsers.size(),
         MAX_GROUP_SIZE);
 
   TC_RETURN(blockGenerator.userGroupCreation2(
       groupSignatureKey,
       groupEncryptionKey.publicKey,
       generateGroupKeysForUsers2(groupEncryptionKey.privateKey, memberUsers),
-      {}));
+      generateGroupKeysForProvisionalUsers(groupEncryptionKey.privateKey,
+                                           memberProvisionalUsers)));
 }
 
 tc::cotask<SGroupId> create(UserAccessor& userAccessor,
@@ -101,17 +125,27 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
                             std::vector<SPublicIdentity> spublicIdentities)
 {
   spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto members = publicIdentitiesToUserIds(spublicIdentities);
+  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto const members = partitionIdentities(publicIdentities);
 
   try
   {
-    auto memberUsers = TC_AWAIT(getMemberKeys(userAccessor, members));
+    auto const memberUsers = TC_AWAIT(userAccessor.pull(members.userIds));
+    if (!memberUsers.notFound.empty())
+      throw Error::UserNotFoundInternal(memberUsers.notFound);
+
+    auto const memberProvisionalUsers = TC_AWAIT(
+        userAccessor.pullProvisional(members.publicProvisionalIdentities));
 
     auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
     auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-    auto const groupBlock = TC_AWAIT(generateCreateGroupBlock(
-        memberUsers, blockGenerator, groupSignatureKey, groupEncryptionKey));
+    auto const groupBlock =
+        TC_AWAIT(generateCreateGroupBlock(memberUsers.found,
+                                          memberProvisionalUsers,
+                                          blockGenerator,
+                                          groupSignatureKey,
+                                          groupEncryptionKey));
     TC_AWAIT(client.pushBlock(groupBlock));
 
     TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
@@ -119,7 +153,7 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
   catch (Error::UserNotFoundInternal const& e)
   {
     auto const notFoundIdentities =
-        mapIdsToStrings(e.userIds(), spublicIdentities, members);
+        mapIdsToStrings(e.userIds(), spublicIdentities, members.userIds);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),
