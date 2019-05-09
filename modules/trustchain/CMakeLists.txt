@@ -12,6 +12,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/DeviceRevocation/v1.hpp
   include/Tanker/Trustchain/Actions/DeviceRevocation/v2.hpp
   include/Tanker/Trustchain/Actions/Nature.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp
@@ -48,6 +49,7 @@ add_library(tankertrustchain STATIC
   src/Actions/DeviceRevocation/v1.cpp
   src/Actions/DeviceRevocation/v2.cpp
   src/Actions/Nature.cpp
+  src/Actions/KeyPublish.cpp
   src/Actions/KeyPublish/ToDevice.cpp
   src/Actions/KeyPublish/ToProvisionalUser.cpp
   src/Actions/KeyPublish/ToUser.cpp
