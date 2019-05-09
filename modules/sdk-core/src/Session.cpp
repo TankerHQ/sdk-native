@@ -66,23 +66,6 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
-namespace
-{
-
-// this function can exist because for the moment, a public identity can only
-// contain a user id
-std::vector<UserId> publicIdentitiesToUserIds(
-    std::vector<SPublicIdentity> const& spublicIdentities)
-{
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return mpark::get<Identity::PublicPermanentIdentity>(
-               Identity::extract<Identity::PublicIdentity>(
-                   spublicIdentity.string()))
-        .userId;
-  });
-}
-}
-
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -314,59 +297,27 @@ tc::cotask<void> Session::share(
 }
 
 tc::cotask<SGroupId> Session::createGroup(
-    std::vector<SPublicIdentity> spublicIdentities)
+    std::vector<SPublicIdentity> const& spublicIdentities)
 {
-  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto userIds = publicIdentitiesToUserIds(spublicIdentities);
-
-  try
-  {
-    auto const groupId = TC_AWAIT(Groups::Manager::create(
-        _userAccessor, _blockGenerator, *_client, userIds));
-    // Make sure group's lastBlockHash updates before the next group operation
-    TC_AWAIT(syncTrustchain());
-    TC_RETURN(groupId);
-  }
-  catch (Error::UserNotFoundInternal const& e)
-  {
-    auto const notFoundIdentities =
-        mapIdsToStrings(e.userIds(), spublicIdentities, userIds);
-    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
-                                          fmt::join(notFoundIdentities.begin(),
-                                                    notFoundIdentities.end(),
-                                                    ", ")),
-                              notFoundIdentities);
-  }
-  throw std::runtime_error("unreachable code");
+  auto const groupId = TC_AWAIT(Groups::Manager::create(
+      _userAccessor, _blockGenerator, *_client, spublicIdentities));
+  // Make sure group's lastBlockHash updates before the next group operation
+  TC_AWAIT(syncTrustchain());
+  TC_RETURN(groupId);
 }
 
 tc::cotask<void> Session::updateGroupMembers(
     SGroupId const& groupIdString,
-    std::vector<SPublicIdentity> spublicIdentitiesToAdd)
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
   auto const groupId = cppcodec::base64_rfc4648::decode<GroupId>(groupIdString);
-  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
-  auto const usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
 
-  try
-  {
-    TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
-                                            _blockGenerator,
-                                            *_client,
-                                            _groupStore,
-                                            groupId,
-                                            usersToAdd));
-  }
-  catch (Error::UserNotFoundInternal const& e)
-  {
-    auto const notFoundIdentities =
-        mapIdsToStrings(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
-    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
-                                          fmt::join(notFoundIdentities.begin(),
-                                                    notFoundIdentities.end(),
-                                                    ", ")),
-                              notFoundIdentities);
-  }
+  TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
+                                          _blockGenerator,
+                                          *_client,
+                                          _groupStore,
+                                          groupId,
+                                          spublicIdentitiesToAdd));
 
   // Make sure group's lastBlockHash updates before the next group operation
   TC_AWAIT(syncTrustchain());

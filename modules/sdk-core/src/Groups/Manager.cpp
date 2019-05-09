@@ -5,9 +5,12 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GroupNotFound.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
+#include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/UserNotFound.hpp>
+#include <Tanker/Utils.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -21,6 +24,22 @@ namespace Groups
 {
 namespace Manager
 {
+namespace
+{
+
+// this function can exist because for the moment, a public identity can only
+// contain a user id
+std::vector<UserId> publicIdentitiesToUserIds(
+    std::vector<SPublicIdentity> const& spublicIdentities)
+{
+  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
+    return mpark::get<Identity::PublicPermanentIdentity>(
+               Identity::extract<Identity::PublicIdentity>(
+                   spublicIdentity.string()))
+        .userId;
+  });
+}
+}
 
 tc::cotask<std::vector<Crypto::PublicEncryptionKey>> getMemberKeys(
     UserAccessor& userAccessor, std::vector<UserId> const& memberUserIds)
@@ -78,18 +97,35 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
 tc::cotask<SGroupId> create(UserAccessor& userAccessor,
                             BlockGenerator const& blockGenerator,
                             Client& client,
-                            std::vector<UserId> const& members)
+                            std::vector<SPublicIdentity> spublicIdentities)
 {
-  auto memberUserKeys = TC_AWAIT(getMemberKeys(userAccessor, members));
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto members = publicIdentitiesToUserIds(spublicIdentities);
 
-  auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
-  auto groupSignatureKey = Crypto::makeSignatureKeyPair();
+  try
+  {
+    auto memberUserKeys = TC_AWAIT(getMemberKeys(userAccessor, members));
 
-  auto const groupBlock = TC_AWAIT(generateCreateGroupBlock(
-      memberUserKeys, blockGenerator, groupSignatureKey, groupEncryptionKey));
-  TC_AWAIT(client.pushBlock(groupBlock));
+    auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
+    auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
+    auto const groupBlock = TC_AWAIT(generateCreateGroupBlock(
+        memberUserKeys, blockGenerator, groupSignatureKey, groupEncryptionKey));
+    TC_AWAIT(client.pushBlock(groupBlock));
+
+    TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
+  }
+  catch (Error::UserNotFoundInternal const& e)
+  {
+    auto const notFoundIdentities =
+        mapIdsToStrings(e.userIds(), spublicIdentities, members);
+    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+                                          fmt::join(notFoundIdentities.begin(),
+                                                    notFoundIdentities.end(),
+                                                    ", ")),
+                              notFoundIdentities);
+  }
+  throw std::runtime_error("unreachable code");
 }
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
@@ -118,22 +154,40 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
       group.signatureKeyPair, group.lastBlockHash, sealedEncKeys));
 }
 
-tc::cotask<void> updateMembers(UserAccessor& userAccessor,
-                               BlockGenerator const& blockGenerator,
-                               Client& client,
-                               GroupStore const& groupStore,
-                               GroupId const& groupId,
-                               std::vector<UserId> const& usersToAdd)
+tc::cotask<void> updateMembers(
+    UserAccessor& userAccessor,
+    BlockGenerator const& blockGenerator,
+    Client& client,
+    GroupStore const& groupStore,
+    GroupId const& groupId,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd)
 {
-  auto const memberUserKeys = TC_AWAIT(getMemberKeys(userAccessor, usersToAdd));
-  auto const group = TC_AWAIT(groupStore.findFullById(groupId));
-  if (!group)
-    throw Error::GroupNotFound(
-        "Cannot update members of a group we aren't part of");
+  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
+  auto usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
 
-  auto const groupBlock = TC_AWAIT(
-      generateAddUserToGroupBlock(memberUserKeys, blockGenerator, *group));
-  TC_AWAIT(client.pushBlock(groupBlock));
+  try
+  {
+    auto const memberUserKeys =
+        TC_AWAIT(getMemberKeys(userAccessor, usersToAdd));
+    auto const group = TC_AWAIT(groupStore.findFullById(groupId));
+    if (!group)
+      throw Error::GroupNotFound(
+          "Cannot update members of a group we aren't part of");
+
+    auto const groupBlock = TC_AWAIT(
+        generateAddUserToGroupBlock(memberUserKeys, blockGenerator, *group));
+    TC_AWAIT(client.pushBlock(groupBlock));
+  }
+  catch (Error::UserNotFoundInternal const& e)
+  {
+    auto const notFoundIdentities =
+        mapIdsToStrings(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
+    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+                                          fmt::join(notFoundIdentities.begin(),
+                                                    notFoundIdentities.end(),
+                                                    ", ")),
+                              notFoundIdentities);
+  }
 }
 }
 }

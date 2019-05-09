@@ -7,6 +7,7 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -36,7 +37,7 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
 tc::cotask<SGroupId> create(UserAccessor& userAccessor,
                             BlockGenerator const& blockGenerator,
                             Client& client,
-                            std::vector<Trustchain::UserId> const& members);
+                            std::vector<SPublicIdentity> spublicIdentities);
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
     std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
@@ -49,7 +50,7 @@ tc::cotask<void> updateMembers(
     Client& client,
     GroupStore const& groupStore,
     Trustchain::GroupId const& groupId,
-    std::vector<Trustchain::UserId> const& usersToAdd);
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd);
 }
 }
 }
