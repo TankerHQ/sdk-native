@@ -26,7 +26,6 @@ def main() -> None:
     subparsers.add_parser("deploy")
     subparsers.add_parser("mirror")
     subparsers.add_parser("nightly-build-emscripten")
-    subparsers.add_parser("e2e")
 
     args = parser.parse_args()
     if args.home_isolation:
@@ -51,8 +50,6 @@ def main() -> None:
         )
     elif args.command == "mirror":
         ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
-    elif args.command == "e2e":
-        ci.endtoend.test(env="dev")
     else:
         parser.print_help()
         sys.exit(1)
