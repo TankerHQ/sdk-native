@@ -66,7 +66,7 @@ TEST_CASE("Can create a group with two users")
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
   auto group =
-      entry.action().get<UserGroupCreation>().get<UserGroupCreation1>();
+      entry.action().get<UserGroupCreation>().get<UserGroupCreation2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -76,17 +76,19 @@ TEST_CASE("Can create a group with two users")
   CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
             group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
         groupSignatureKey.privateKey);
-  REQUIRE(group.sealedPrivateEncryptionKeysForUsers().size() == 2);
+  REQUIRE(group.userGroupMembers().size() == 2);
   auto const groupEncryptedKey =
-      std::find_if(group.sealedPrivateEncryptionKeysForUsers().begin(),
-                   group.sealedPrivateEncryptionKeysForUsers().end(),
+      std::find_if(group.userGroupMembers().begin(),
+                   group.userGroupMembers().end(),
                    [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.first ==
-                            user.userKeys.back().keyPair.publicKey;
+                     return groupEncryptedKey.userId() == user.userId;
                    });
+  REQUIRE(groupEncryptedKey != group.userGroupMembers().end());
+  CHECK(groupEncryptedKey->userPublicKey() ==
+        user.userKeys.back().keyPair.publicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->second, user.userKeys.back().keyPair) ==
-        groupEncryptionKey.privateKey);
+            groupEncryptedKey->encryptedPrivateEncryptionKey(),
+            user.userKeys.back().keyPair) == groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
 

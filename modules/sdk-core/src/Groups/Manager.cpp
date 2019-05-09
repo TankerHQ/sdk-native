@@ -51,6 +51,29 @@ tc::cotask<std::vector<User>> getMemberKeys(
   TC_RETURN(result.found);
 }
 
+namespace
+{
+UserGroupCreation2::UserGroupMembers generateGroupKeysForUsers2(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<User> const& users)
+{
+  UserGroupCreation2::UserGroupMembers keysForUsers;
+  for (auto const& user : users)
+  {
+    if (!user.userKey)
+      throw std::runtime_error(
+          "Cannot create group for users without a user key");
+
+    keysForUsers.emplace_back(
+        user.id,
+        *user.userKey,
+        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
+            groupPrivateEncryptionKey, *user.userKey));
+  }
+  return keysForUsers;
+}
+}
+
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,
     BlockGenerator const& blockGenerator,
@@ -65,22 +88,11 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
         memberUsers.size(),
         MAX_GROUP_SIZE);
 
-  Trustchain::Actions::UserGroupCreation1::SealedPrivateEncryptionKeysForUsers
-      sealedEncKeys;
-  for (auto const& user : memberUsers)
-  {
-    if (!user.userKey)
-      throw std::runtime_error(
-          "Cannot create group for users without a user key");
-
-    sealedEncKeys.emplace_back(
-        *user.userKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupEncryptionKey.privateKey, *user.userKey));
-  }
-
-  TC_RETURN(blockGenerator.userGroupCreation(
-      groupSignatureKey, groupEncryptionKey.publicKey, sealedEncKeys));
+  TC_RETURN(blockGenerator.userGroupCreation2(
+      groupSignatureKey,
+      groupEncryptionKey.publicKey,
+      generateGroupKeysForUsers2(groupEncryptionKey.privateKey, memberUsers),
+      {}));
 }
 
 tc::cotask<SGroupId> create(UserAccessor& userAccessor,
