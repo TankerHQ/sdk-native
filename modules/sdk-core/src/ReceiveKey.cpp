@@ -33,7 +33,8 @@ tc::cotask<void> onKeyToDeviceReceived(
     Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
     Entry const& entry)
 {
-  auto const& keyPublish = entry.action.get<KeyPublishToDevice>();
+  auto const& keyPublish =
+      entry.action.get<KeyPublish>().get<KeyPublishToDevice>();
   Trustchain::DeviceId senderId{entry.author.begin(), entry.author.end()};
 
   auto const senderDevice = TC_AWAIT(contactStore.findDevice(senderId)).value();
@@ -48,9 +49,11 @@ tc::cotask<void> onKeyToDeviceReceived(
 
 namespace
 {
-tc::cotask<void> decryptAndStoreKeyForUser(
+tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
+    GroupStore const& groupStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
   auto const& recipientPublicKey =
@@ -64,9 +67,11 @@ tc::cotask<void> decryptAndStoreKeyForUser(
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
 }
 
-tc::cotask<void> decryptAndStoreKeyForGroup(
+tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
+    UserKeyStore const& userKeyStore,
     GroupStore const& groupStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
 {
   auto const& recipientPublicKey =
@@ -88,8 +93,10 @@ tc::cotask<void> decryptAndStoreKeyForGroup(
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
 }
 
-tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
+tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
+    UserKeyStore const& userKeyStore,
+    GroupStore const& groupStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
 {
@@ -116,6 +123,16 @@ tc::cotask<void> decryptAndStoreKeyForProvisionalUser(
   TC_AWAIT(
       resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
 }
+
+tc::cotask<void> decryptAndStoreKey(
+    ResourceKeyStore& resourceKeyStore,
+    UserKeyStore const& userKeyStore,
+    GroupStore const& groupStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
+{
+  throw std::runtime_error("Assertion failure: Invalid nature in decryptAndStoreKey");
+}
 }
 
 tc::cotask<void> decryptAndStoreKey(
@@ -125,25 +142,13 @@ tc::cotask<void> decryptAndStoreKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
 {
-  if (auto const keyPublishToUser = entry.action.get_if<KeyPublishToUser>())
-  {
-    TC_AWAIT(decryptAndStoreKeyForUser(
-        resourceKeyStore, userKeyStore, *keyPublishToUser));
-  }
-  else if (auto const keyPublishToUserGroup =
-               entry.action.get_if<KeyPublishToUserGroup>())
-  {
-    TC_AWAIT(decryptAndStoreKeyForGroup(
-        resourceKeyStore, groupStore, *keyPublishToUserGroup));
-  }
-  else if (auto const keyPublishToProvisionalUser =
-               entry.action.get_if<KeyPublishToProvisionalUser>())
-  {
-    TC_AWAIT(
-        decryptAndStoreKeyForProvisionalUser(resourceKeyStore,
-                                             provisionalUserKeysStore,
-                                             *keyPublishToProvisionalUser));
-  }
+  entry.action.get<KeyPublish>().visit([&](auto const& val) {
+    decryptAndStoreKey(resourceKeyStore,
+                       userKeyStore,
+                       groupStore,
+                       provisionalUserKeysStore,
+                       val);
+  });
 }
 }
 }

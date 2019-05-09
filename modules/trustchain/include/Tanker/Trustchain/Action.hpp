@@ -2,10 +2,7 @@
 
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
@@ -28,10 +25,7 @@ class Action
 {
   using variant_t = mpark::variant<Actions::DeviceCreation,
                                    Actions::DeviceRevocation,
-                                   Actions::KeyPublishToDevice,
-                                   Actions::KeyPublishToProvisionalUser,
-                                   Actions::KeyPublishToUser,
-                                   Actions::KeyPublishToUserGroup,
+                                   Actions::KeyPublish,
                                    Actions::ProvisionalIdentityClaim,
                                    Actions::TrustchainCreation,
                                    Actions::UserGroupAddition,
