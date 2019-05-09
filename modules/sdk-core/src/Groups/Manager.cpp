@@ -41,53 +41,42 @@ std::vector<UserId> publicIdentitiesToUserIds(
 }
 }
 
-tc::cotask<std::vector<Crypto::PublicEncryptionKey>> getMemberKeys(
+tc::cotask<std::vector<User>> getMemberKeys(
     UserAccessor& userAccessor, std::vector<UserId> const& memberUserIds)
 {
   auto const result = TC_AWAIT(userAccessor.pull(memberUserIds));
   if (!result.notFound.empty())
-  {
     throw Error::UserNotFoundInternal(result.notFound);
-  }
 
-  std::vector<Crypto::PublicEncryptionKey> out;
-  out.reserve(result.found.size());
-  std::transform(result.found.begin(),
-                 result.found.end(),
-                 std::back_inserter(out),
-                 [](auto const& user) {
-                   if (!user.userKey)
-                     throw std::runtime_error(
-                         "Cannot create group for users without a user key");
-
-                   return *user.userKey;
-                 });
-
-  TC_RETURN(out);
+  TC_RETURN(result.found);
 }
 
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
-    std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
+    std::vector<User> const& memberUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey)
 {
-  if (memberUserKeys.size() == 0)
+  if (memberUsers.size() == 0)
     throw Error::InvalidGroupSize("Cannot create an empty group");
-  else if (memberUserKeys.size() > MAX_GROUP_SIZE)
+  else if (memberUsers.size() > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot create group with {:d} members, max is {:d}"),
-        memberUserKeys.size(),
+        memberUsers.size(),
         MAX_GROUP_SIZE);
 
   Trustchain::Actions::UserGroupCreation1::SealedPrivateEncryptionKeysForUsers
       sealedEncKeys;
-  for (auto const& userKey : memberUserKeys)
+  for (auto const& user : memberUsers)
   {
+    if (!user.userKey)
+      throw std::runtime_error(
+          "Cannot create group for users without a user key");
+
     sealedEncKeys.emplace_back(
-        userKey,
+        *user.userKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupEncryptionKey.privateKey, userKey));
+            groupEncryptionKey.privateKey, *user.userKey));
   }
 
   TC_RETURN(blockGenerator.userGroupCreation(
@@ -104,13 +93,13 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
 
   try
   {
-    auto memberUserKeys = TC_AWAIT(getMemberKeys(userAccessor, members));
+    auto memberUsers = TC_AWAIT(getMemberKeys(userAccessor, members));
 
     auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
     auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
     auto const groupBlock = TC_AWAIT(generateCreateGroupBlock(
-        memberUserKeys, blockGenerator, groupSignatureKey, groupEncryptionKey));
+        memberUsers, blockGenerator, groupSignatureKey, groupEncryptionKey));
     TC_AWAIT(client.pushBlock(groupBlock));
 
     TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
@@ -129,25 +118,29 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
 }
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
-    std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
+    std::vector<User> const& memberUsers,
     BlockGenerator const& blockGenerator,
     Group const& group)
 {
-  if (memberUserKeys.size() == 0)
+  if (memberUsers.size() == 0)
     throw Error::InvalidGroupSize("Adding 0 members to a group is an error");
-  else if (memberUserKeys.size() > MAX_GROUP_SIZE)
+  else if (memberUsers.size() > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot add {:d} members to a group, max is {:d}"),
-        memberUserKeys.size(),
+        memberUsers.size(),
         MAX_GROUP_SIZE);
 
   UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers sealedEncKeys;
-  for (auto const& userKey : memberUserKeys)
+  for (auto const& user : memberUsers)
   {
+    if (!user.userKey)
+      throw std::runtime_error(
+          "Cannot create group for users without a user key");
+
     sealedEncKeys.emplace_back(
-        userKey,
+        *user.userKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            group.encryptionKeyPair.privateKey, userKey));
+            group.encryptionKeyPair.privateKey, *user.userKey));
   }
 
   TC_RETURN(blockGenerator.userGroupAddition(
@@ -167,15 +160,14 @@ tc::cotask<void> updateMembers(
 
   try
   {
-    auto const memberUserKeys =
-        TC_AWAIT(getMemberKeys(userAccessor, usersToAdd));
+    auto const memberUsers = TC_AWAIT(getMemberKeys(userAccessor, usersToAdd));
     auto const group = TC_AWAIT(groupStore.findFullById(groupId));
     if (!group)
       throw Error::GroupNotFound(
           "Cannot update members of a group we aren't part of");
 
     auto const groupBlock = TC_AWAIT(
-        generateAddUserToGroupBlock(memberUserKeys, blockGenerator, *group));
+        generateAddUserToGroupBlock(memberUsers, blockGenerator, *group));
     TC_AWAIT(client.pushBlock(groupBlock));
   }
   catch (Error::UserNotFoundInternal const& e)

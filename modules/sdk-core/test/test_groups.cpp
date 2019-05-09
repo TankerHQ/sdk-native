@@ -58,8 +58,7 @@ TEST_CASE("Can create a group with two users")
 
   auto const preserializedBlock =
       AWAIT(Groups::Manager::generateCreateGroupBlock(
-          {user.userKeys.back().keyPair.publicKey,
-           user2.userKeys.back().keyPair.publicKey},
+          {user.asTankerUser(), user2.asTankerUser()},
           userBlockGenerator,
           groupSignatureKey,
           groupEncryptionKey));
@@ -139,8 +138,7 @@ TEST_CASE("Can add users to a group")
 
   auto const preserializedBlock =
       AWAIT(Groups::Manager::generateAddUserToGroupBlock(
-          {user.userKeys.back().keyPair.publicKey,
-           user2.userKeys.back().keyPair.publicKey},
+          {user.asTankerUser(), user2.asTankerUser()},
           userBlockGenerator,
           group));
 

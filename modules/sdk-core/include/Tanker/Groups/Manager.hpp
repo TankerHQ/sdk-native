@@ -24,12 +24,12 @@ namespace Manager
 {
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
-tc::cotask<std::vector<Crypto::PublicEncryptionKey>> getMemberKeys(
+tc::cotask<std::vector<User>> getMemberKeys(
     UserAccessor& userAccessor,
     std::vector<Trustchain::UserId> const& memberUserIds);
 
 tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
-    std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
+    std::vector<User> const& memberUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey);
@@ -40,7 +40,7 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
                             std::vector<SPublicIdentity> spublicIdentities);
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
-    std::vector<Crypto::PublicEncryptionKey> const& memberUserKeys,
+    std::vector<User> const& memberUsers,
     BlockGenerator const& blockGenerator,
     Group const& group);
 
