@@ -118,8 +118,11 @@ TEST_CASE("decryptAndStoreKey")
   {
     auto const provisionalUser = builder.makeProvisionalUser("bob@gmail.com");
 
-    auto const keyPublishBlock = builder.shareToProvisionalUser(
-        senderDevice, provisionalUser, resourceMac, resourceKey);
+    auto const keyPublishBlock =
+        builder.shareToProvisionalUser(senderDevice,
+                                       provisionalUser.publicProvisionalUser,
+                                       resourceMac,
+                                       resourceKey);
     auto const keyPublishToProvisionalUserEntry =
         toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 

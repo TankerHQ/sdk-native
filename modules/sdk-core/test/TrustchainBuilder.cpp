@@ -280,10 +280,10 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   return {device, tankerUser, entry};
 }
 
-Tanker::SecretProvisionalUser TrustchainBuilder::makeProvisionalUser(
+TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
     std::string const& email)
 {
-  return Tanker::SecretProvisionalUser{
+  auto const secretProvisionalUser = SecretProvisionalUser{
       Tanker::Identity::TargetType::Email,
       email,
       Crypto::makeEncryptionKeyPair(),
@@ -291,16 +291,23 @@ Tanker::SecretProvisionalUser TrustchainBuilder::makeProvisionalUser(
       Crypto::makeSignatureKeyPair(),
       Crypto::makeSignatureKeyPair(),
   };
-}
-
-Tanker::PublicProvisionalUser TrustchainBuilder::toPublicProvisionalUser(
-    Tanker::SecretProvisionalUser const& u) const
-{
-  return Tanker::PublicProvisionalUser{
-      u.appSignatureKeyPair.publicKey,
-      u.appEncryptionKeyPair.publicKey,
-      u.tankerSignatureKeyPair.publicKey,
-      u.tankerEncryptionKeyPair.publicKey,
+  auto const publicProvisionalUser = PublicProvisionalUser{
+      secretProvisionalUser.appSignatureKeyPair.publicKey,
+      secretProvisionalUser.appEncryptionKeyPair.publicKey,
+      secretProvisionalUser.tankerSignatureKeyPair.publicKey,
+      secretProvisionalUser.tankerEncryptionKeyPair.publicKey,
+  };
+  auto const publicProvisionalIdentity = Identity::PublicProvisionalIdentity{
+      _trustchainId,
+      secretProvisionalUser.target,
+      secretProvisionalUser.value,
+      secretProvisionalUser.appSignatureKeyPair.publicKey,
+      secretProvisionalUser.appEncryptionKeyPair.publicKey,
+  };
+  return ProvisionalUser{
+      secretProvisionalUser,
+      publicProvisionalUser,
+      SPublicIdentity(to_string(publicProvisionalIdentity)),
   };
 }
 
@@ -329,7 +336,7 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
 {
   // TODO use makeGroup2
   return makeGroup1(author, users);
@@ -378,19 +385,19 @@ UserGroupCreation2::UserGroupMembers generateGroupKeysForUsers2(
 UserGroupCreation2::UserGroupProvisionalMembers
 generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<Tanker::SecretProvisionalUser> const& users)
+    std::vector<Tanker::PublicProvisionalUser> const& users)
 {
   UserGroupCreation2::UserGroupProvisionalMembers keysForUsers;
   for (auto const& user : users)
   {
     auto const encryptedKeyOnce = Crypto::sealEncrypt(
-        groupPrivateEncryptionKey, user.appEncryptionKeyPair.publicKey);
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
     auto const encryptedKeyTwice =
         Crypto::sealEncrypt<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-            encryptedKeyOnce, user.tankerEncryptionKeyPair.publicKey);
+            encryptedKeyOnce, user.tankerEncryptionPublicKey);
 
-    keysForUsers.emplace_back(user.appSignatureKeyPair.publicKey,
-                              user.tankerSignatureKeyPair.publicKey,
+    keysForUsers.emplace_back(user.appSignaturePublicKey,
+                              user.tankerSignaturePublicKey,
                               encryptedKeyTwice);
   }
   return keysForUsers;
@@ -466,7 +473,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
@@ -553,7 +560,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
     Device const& author,
     Group group,
     std::vector<User> const& users,
-    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
@@ -680,21 +687,20 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
 
 Block TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
-    SecretProvisionalUser const& receiver,
+    PublicProvisionalUser const& receiver,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
   auto const encryptedKeyOnce =
-      Crypto::sealEncrypt(key, receiver.appEncryptionKeyPair.publicKey);
+      Crypto::sealEncrypt(key, receiver.appEncryptionPublicKey);
   auto const encryptedKeyTwice =
       Crypto::sealEncrypt<Crypto::TwoTimesSealedSymmetricKey>(
-          encryptedKeyOnce, receiver.tankerEncryptionKeyPair.publicKey);
+          encryptedKeyOnce, receiver.tankerEncryptionPublicKey);
 
-  KeyPublishToProvisionalUser keyPublish{
-      receiver.appSignatureKeyPair.publicKey,
-      resourceId,
-      receiver.tankerSignatureKeyPair.publicKey,
-      encryptedKeyTwice};
+  KeyPublishToProvisionalUser keyPublish{receiver.appSignaturePublicKey,
+                                         resourceId,
+                                         receiver.tankerSignaturePublicKey,
+                                         encryptedKeyTwice};
 
   Block block;
   block.trustchainId = _trustchainId;
@@ -881,7 +887,7 @@ std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
 
 std::unique_ptr<Tanker::ProvisionalUserKeysStore>
 TrustchainBuilder::makeProvisionalUserKeysStoreWith(
-    std::vector<Tanker::SecretProvisionalUser> const& provisionalUsers,
+    std::vector<ProvisionalUser> const& provisionalUsers,
     Tanker::DataStore::ADatabase* conn) const
 {
   auto provisionalUserKeysStore =
@@ -889,11 +895,11 @@ TrustchainBuilder::makeProvisionalUserKeysStoreWith(
   for (auto const& provisionalUser : provisionalUsers)
   {
     AWAIT_VOID(provisionalUserKeysStore->putProvisionalUserKeys(
-        provisionalUser.appSignatureKeyPair.publicKey,
-        provisionalUser.tankerSignatureKeyPair.publicKey,
+        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,
+        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair.publicKey,
         {
-            provisionalUser.appEncryptionKeyPair,
-            provisionalUser.tankerEncryptionKeyPair,
+            provisionalUser.secretProvisionalUser.appEncryptionKeyPair,
+            provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair,
         }));
   }
   return provisionalUserKeysStore;

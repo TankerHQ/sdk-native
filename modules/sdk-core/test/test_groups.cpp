@@ -112,8 +112,8 @@ TEST_CASE("Can create a group with two provisional users")
   auto const preserializedBlock =
       AWAIT(Groups::Manager::generateCreateGroupBlock(
           {},
-          {builder.toPublicProvisionalUser(provisionalUser),
-           builder.toPublicProvisionalUser(provisionalUser2)},
+          {provisionalUser.publicProvisionalUser,
+           provisionalUser2.publicProvisionalUser},
           userBlockGenerator,
           groupSignatureKey,
           groupEncryptionKey));
@@ -133,21 +133,21 @@ TEST_CASE("Can create a group with two provisional users")
         groupSignatureKey.privateKey);
   REQUIRE(group.userGroupMembers().size() == 0);
   REQUIRE(group.userGroupProvisionalMembers().size() == 2);
-  auto const groupEncryptedKey =
-      std::find_if(group.userGroupProvisionalMembers().begin(),
-                   group.userGroupProvisionalMembers().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.appPublicSignatureKey() ==
-                            provisionalUser.appSignatureKeyPair.publicKey;
-                   });
+  auto const groupEncryptedKey = std::find_if(
+      group.userGroupProvisionalMembers().begin(),
+      group.userGroupProvisionalMembers().end(),
+      [&](auto const& groupEncryptedKey) {
+        return groupEncryptedKey.appPublicSignatureKey() ==
+               provisionalUser.publicProvisionalUser.appSignaturePublicKey;
+      });
   REQUIRE(groupEncryptedKey != group.userGroupProvisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
-        provisionalUser.tankerSignatureKeyPair.publicKey);
+        provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                provisionalUser.tankerEncryptionKeyPair),
-            provisionalUser.appEncryptionKeyPair) ==
+                provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),
+            provisionalUser.secretProvisionalUser.appEncryptionKeyPair) ==
         groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
@@ -254,8 +254,8 @@ TEST_CASE("Can add provisional users to a group")
   auto const preserializedBlock =
       AWAIT(Groups::Manager::generateAddUserToGroupBlock(
           {},
-          {builder.toPublicProvisionalUser(provisionalUser),
-           builder.toPublicProvisionalUser(provisionalUser2)},
+          {provisionalUser.publicProvisionalUser,
+           provisionalUser2.publicProvisionalUser},
           userBlockGenerator,
           group));
 
@@ -273,21 +273,21 @@ TEST_CASE("Can add provisional users to a group")
   REQUIRE(groupAdd.members().size() == 0);
   REQUIRE(groupAdd.provisionalMembers().size() == 2);
 
-  auto const groupEncryptedKey =
-      std::find_if(groupAdd.provisionalMembers().begin(),
-                   groupAdd.provisionalMembers().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.appPublicSignatureKey() ==
-                            provisionalUser.appSignatureKeyPair.publicKey;
-                   });
+  auto const groupEncryptedKey = std::find_if(
+      groupAdd.provisionalMembers().begin(),
+      groupAdd.provisionalMembers().end(),
+      [&](auto const& groupEncryptedKey) {
+        return groupEncryptedKey.appPublicSignatureKey() ==
+               provisionalUser.publicProvisionalUser.appSignaturePublicKey;
+      });
   REQUIRE(groupEncryptedKey != groupAdd.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
-        provisionalUser.tankerSignatureKeyPair.publicKey);
+        provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                provisionalUser.tankerEncryptionKeyPair),
-            provisionalUser.appEncryptionKeyPair) ==
+                provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),
+            provisionalUser.secretProvisionalUser.appEncryptionKeyPair) ==
         group.encryptionKeyPair.privateKey);
   CHECK(selfSignature == groupAdd.selfSignature());
 }
