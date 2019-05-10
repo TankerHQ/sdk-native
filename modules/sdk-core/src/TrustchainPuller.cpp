@@ -316,5 +316,7 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     TC_AWAIT(deviceRevoked(entry));
   else if (entry.action.holdsAlternative<ProvisionalIdentityClaim>())
     TC_AWAIT(provisionalIdentityClaimReceived(entry));
+  else if (entry.action.holdsAlternative<TrustchainCreation>())
+    TC_AWAIT(trustchainCreationReceived(entry));
 }
 }

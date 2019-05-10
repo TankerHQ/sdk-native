@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -12,10 +13,6 @@
 
 namespace Tanker
 {
-namespace Crypto
-{
-class Mac;
-}
 
 struct Entry;
 
@@ -34,6 +31,9 @@ public:
   TrustchainStore& operator=(TrustchainStore&&) = delete;
 
   tc::cotask<void> addEntry(Entry const& entry);
+  tc::cotask<void> setPublicSignatureKey(Crypto::PublicSignatureKey const&);
+  tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+  findPublicSignatureKey();
 
   tc::cotask<uint64_t> getLastIndex();
   tc::cotask<void> setLastIndex(uint64_t);

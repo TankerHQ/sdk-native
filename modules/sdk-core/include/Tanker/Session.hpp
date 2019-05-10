@@ -136,6 +136,7 @@ private:
   tc::cotask<void> onUserGroupEntry(Entry const& entry);
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
+  tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
   void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
 
 private:

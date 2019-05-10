@@ -11,22 +11,23 @@ namespace DbModels
 {
 // clang-format off
 SQLPP_DECLARE_TABLE(
-  (trustchain_last_index)
+  (trustchain_info)
   ,
   (last_index, int, SQLPP_NOT_NULL)
+  (trustchain_public_signature_key, blob, SQLPP_NULL)
 )
 // clang-format on
 
 // namespace created by sqlpp, must place createTable here in order for ADL to
 // work.
-namespace trustchain_last_index
+namespace trustchain_info
 {
-void createTable(DataStore::Connection&, trustchain_last_index const& = {});
+void createTable(DataStore::Connection&, trustchain_info const& = {});
 void migrateTable(DataStore::Connection&,
                   int dbVersion,
-                  trustchain_last_index const& = {});
+                  trustchain_info const& = {});
 
-constexpr int currentTableVersion(trustchain_last_index const& = {})
+constexpr int currentTableVersion(trustchain_info const& = {})
 {
   return 1;
 }

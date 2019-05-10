@@ -15,7 +15,7 @@
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
-#include <Tanker/DbModels/TrustchainLastIndex.hpp>
+#include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
@@ -256,8 +256,7 @@ GroupProvisionalUser rowToGroupProvisionalUser(T const& row)
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainTable = DbModels::trustchain::trustchain;
 using TrustchainIndexesTable = DbModels::trustchain_indexes::trustchain_indexes;
-using TrustchainLastIndexTable =
-    DbModels::trustchain_last_index::trustchain_last_index;
+using TrustchainInfoTable = DbModels::trustchain_info::trustchain_info;
 using TrustchainResourceIdToKeyPublishTable =
     DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
@@ -287,7 +286,7 @@ Database::Database(std::string const& dbPath,
   DataStore::createOrMigrateTable<ContactDevicesTable>(*_db);
   DataStore::createOrMigrateTable<GroupsTable>(*_db);
   DataStore::createOrMigrateTable<KeyPublishesTable>(*_db);
-  DataStore::createOrMigrateTable<TrustchainLastIndexTable>(*_db);
+  DataStore::createOrMigrateTable<TrustchainInfoTable>(*_db);
   DataStore::createOrMigrateTable<GroupsProvisionalUsersTable>(*_db);
 
   if (isMigrationNeeded())
@@ -330,7 +329,6 @@ void Database::flushAllCaches()
   flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
   flushTable(TrustchainIndexesTable{});
-  flushTable(TrustchainLastIndexTable{});
   flushTable(TrustchainResourceIdToKeyPublishTable{});
   flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
@@ -338,6 +336,12 @@ void Database::flushAllCaches()
   flushTable(ProvisionalUserKeys{});
   flushTable(GroupsTable{});
   flushTable(KeyPublishesTable{});
+
+  TrustchainInfoTable tab{};
+  (*_db)(update(tab)
+             .set(tab.last_index = 0,
+                  tab.trustchain_public_signature_key = sqlpp::null)
+             .unconditionally());
 }
 
 tc::cotask<void> Database::nuke()
@@ -432,20 +436,45 @@ Database::getUserOptLastKeyPair()
 tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
 {
   FUNC_TIMER(DB);
-  TrustchainLastIndexTable tab{};
+  TrustchainInfoTable tab{};
 
   auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
   if (rows.empty())
+    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  if (rows.front().last_index.is_null())
     TC_RETURN(nonstd::nullopt);
-  TC_RETURN(rows.front().last_index);
+  TC_RETURN(static_cast<uint64_t>(rows.front().last_index));
+}
+
+tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+Database::findTrustchainPublicSignatureKey()
+{
+  FUNC_TIMER(DB);
+  TrustchainInfoTable tab{};
+  auto rows = (*_db)(
+      select(tab.trustchain_public_signature_key).from(tab).unconditionally());
+  if (rows.empty())
+    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  if (rows.front().trustchain_public_signature_key.is_null())
+    TC_RETURN(nonstd::nullopt);
+  TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
+      rows.front().trustchain_public_signature_key));
 }
 
 tc::cotask<void> Database::setTrustchainLastIndex(uint64_t index)
 {
   FUNC_TIMER(DB);
-  TrustchainLastIndexTable tab{};
-  (*_db)(
-      sqlpp::sqlite3::insert_or_replace_into(tab).set(tab.last_index = index));
+  TrustchainInfoTable tab{};
+  (*_db)(update(tab).set(tab.last_index = index).unconditionally());
+  TC_RETURN();
+}
+
+tc::cotask<void> Database::setTrustchainPublicSignatureKey(
+    Crypto::PublicSignatureKey const& key)
+{
+  FUNC_TIMER(DB);
+  TrustchainInfoTable tab{};
+  (*_db)(update(tab).set(tab.trustchain_public_signature_key = key.base()).unconditionally());
   TC_RETURN();
 }
 

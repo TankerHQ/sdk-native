@@ -127,6 +127,10 @@ Session::Session(Config&& config)
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onKeyPublishReceived(entry));
   };
+  _trustchainPuller.trustchainCreationReceived =
+      [this](auto const& entry) -> tc::cotask<void> {
+    TC_AWAIT(onTrustchainCreationReceived(entry));
+  };
   _trustchainPuller.deviceRevoked =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceRevoked(entry));
@@ -558,6 +562,12 @@ tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 tc::cotask<void> Session::onKeyPublishReceived(Entry const& entry)
 {
   TC_AWAIT(_keyPublishStore.put(entry.action.get<KeyPublish>()));
+}
+
+tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)
+{
+  TC_AWAIT(_trustchain.setPublicSignatureKey(
+      entry.action.get<TrustchainCreation>().publicSignatureKey()));
 }
 
 tc::cotask<void> Session::syncTrustchain()
