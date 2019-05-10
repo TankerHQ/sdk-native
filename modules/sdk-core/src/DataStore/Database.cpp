@@ -21,7 +21,7 @@
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -336,13 +336,8 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
   if (insertedCount == 0)
     TC_RETURN();
 
-  if (auto const keyPublish = entry.action.get_if<KeyPublishToUser>())
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
-  else if (auto const keyPublish =
-               entry.action.get_if<KeyPublishToProvisionalUser>())
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
-  else if (auto const keyPublish = entry.action.get_if<KeyPublishToUserGroup>())
-    TC_AWAIT(indexKeyPublish(entry.hash, keyPublish->resourceId()));
+  if (auto const kp = entry.action.get_if<KeyPublish>())
+    TC_AWAIT(indexKeyPublish(entry.hash, kp->resourceId()));
 
   for (auto const& index : entry.action.visit(MakeIndexesVisitor{}))
   {

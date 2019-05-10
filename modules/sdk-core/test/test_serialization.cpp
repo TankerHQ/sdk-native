@@ -1,6 +1,6 @@
 #include <doctest.h>
 
-#include <Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>

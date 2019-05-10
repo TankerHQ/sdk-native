@@ -12,10 +12,11 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/DeviceRevocation/v1.hpp
   include/Tanker/Trustchain/Actions/DeviceRevocation/v2.hpp
   include/Tanker/Trustchain/Actions/Nature.hpp
-  include/Tanker/Trustchain/Actions/KeyPublishToDevice.hpp
-  include/Tanker/Trustchain/Actions/KeyPublishToProvisionalUser.hpp
-  include/Tanker/Trustchain/Actions/KeyPublishToUser.hpp
-  include/Tanker/Trustchain/Actions/KeyPublishToUserGroup.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp
+  include/Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp
   include/Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp
   include/Tanker/Trustchain/Actions/TrustchainCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
@@ -48,10 +49,11 @@ add_library(tankertrustchain STATIC
   src/Actions/DeviceRevocation/v1.cpp
   src/Actions/DeviceRevocation/v2.cpp
   src/Actions/Nature.cpp
-  src/Actions/KeyPublishToDevice.cpp
-  src/Actions/KeyPublishToProvisionalUser.cpp
-  src/Actions/KeyPublishToUser.cpp
-  src/Actions/KeyPublishToUserGroup.cpp
+  src/Actions/KeyPublish.cpp
+  src/Actions/KeyPublish/ToDevice.cpp
+  src/Actions/KeyPublish/ToProvisionalUser.cpp
+  src/Actions/KeyPublish/ToUser.cpp
+  src/Actions/KeyPublish/ToUserGroup.cpp
   src/Actions/ProvisionalIdentityClaim.cpp
   src/Actions/TrustchainCreation.cpp
   src/Actions/UserGroupAddition.cpp

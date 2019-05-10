@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/Helpers.hpp>

@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain/Actions/KeyPublishToDevice.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
 

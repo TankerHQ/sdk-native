@@ -50,7 +50,7 @@ public:                                                                \
   template <typename T>                                                \
   T const* get_if() const                                              \
   {                                                                    \
-    return mpark::get_if<T>(_variant);                                 \
+    return mpark::get_if<T>(&_variant);                                \
   }                                                                    \
                                                                        \
   template <typename Callable>                                         \

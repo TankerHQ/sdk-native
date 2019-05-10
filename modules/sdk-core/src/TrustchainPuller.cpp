@@ -258,10 +258,13 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
-  if (auto const keyPublish = entry.action.get_if<KeyPublishToDevice>())
+  if (auto const keyPublish = entry.action.get_if<KeyPublish>())
   {
-    if (keyPublish->recipient() == _deviceId)
-      TC_AWAIT(receivedKeyToDevice(entry));
+    if (auto const kpd = keyPublish->get_if<KeyPublish::ToDevice>())
+    {
+      if (kpd->recipient() == _deviceId)
+        TC_AWAIT(receivedKeyToDevice(entry));
+    }
   }
   if (entry.action.holdsAlternative<UserGroupCreation>() ||
       entry.action.holdsAlternative<UserGroupAddition>())

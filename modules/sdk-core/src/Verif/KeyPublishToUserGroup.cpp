@@ -25,7 +25,8 @@ void verifyKeyPublishToUserGroup(ServerEntry const& serverEntry,
 
   assert(recipientGroup.publicEncryptionKey ==
          serverEntry.action()
-             .get<KeyPublishToUserGroup>()
+             .get<KeyPublish>()
+             .get<KeyPublish::ToUserGroup>()
              .recipientPublicEncryptionKey());
 
   ensures(!author.revokedAtBlkIndex ||
