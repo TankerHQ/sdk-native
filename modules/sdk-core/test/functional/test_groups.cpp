@@ -9,12 +9,10 @@
 
 #include "CheckDecrypt.hpp"
 
-namespace Tanker
-{
+using namespace Tanker;
 
 TEST_SUITE("Groups")
 {
-
   TEST_CASE_FIXTURE(TrustchainFixture, "Alice can create a group with Bob")
   {
     auto alice = trustchain.makeUser();
@@ -126,5 +124,4 @@ TEST_SUITE("Groups")
     REQUIRE(TC_AWAIT(checkDecrypt(
         {AliceDevice}, {std::make_tuple(clearData, encryptedData)})));
   }
-}
 }

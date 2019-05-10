@@ -5,8 +5,8 @@
 
 #include <doctest.h>
 
-namespace Tanker
-{
+using namespace Tanker;
+
 TEST_SUITE("Unlock")
 {
   TEST_CASE_FIXTURE(TrustchainFixture, "Unlock Methods")
@@ -65,5 +65,4 @@ TEST_SUITE("Unlock")
                     (Unlock::Method::Email | Unlock::Method::Password));
     }
   }
-}
 }

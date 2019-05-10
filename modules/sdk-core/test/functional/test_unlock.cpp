@@ -5,8 +5,7 @@
 
 #include <doctest.h>
 
-namespace Tanker
-{
+using namespace Tanker;
 
 TEST_SUITE("Unlock")
 {
@@ -142,5 +141,4 @@ TEST_SUITE("Unlock")
               nonstd::nullopt, VerificationCode{"code"}, nonstd::nullopt})));
     }
   }
-}
 }

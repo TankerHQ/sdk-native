@@ -22,8 +22,7 @@
 
 using namespace std::string_literals;
 
-namespace Tanker
-{
+using namespace Tanker;
 using namespace type_literals;
 
 namespace
@@ -484,5 +483,4 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
            OpenResult::IdentityVerificationNeeded);
-}
 }
