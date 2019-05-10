@@ -25,14 +25,32 @@ namespace Groups
 {
 namespace Manager
 {
-tc::cotask<std::vector<User>> getMemberKeys(
-    UserAccessor& userAccessor, std::vector<UserId> const& memberUserIds)
+tc::cotask<MembersToAdd> fetchFutureMembers(
+    UserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities)
 {
-  auto const result = TC_AWAIT(userAccessor.pull(memberUserIds));
-  if (!result.notFound.empty())
-    throw Error::UserNotFoundInternal(result.notFound);
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto const members = partitionIdentities(publicIdentities);
 
-  TC_RETURN(result.found);
+  auto const memberUsers = TC_AWAIT(userAccessor.pull(members.userIds));
+  if (!memberUsers.notFound.empty())
+  {
+    auto const notFoundIdentities = mapIdsToStrings(
+        memberUsers.notFound, spublicIdentities, members.userIds);
+    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+                                          fmt::join(notFoundIdentities.begin(),
+                                                    notFoundIdentities.end(),
+                                                    ", ")),
+                              notFoundIdentities);
+  }
+
+  auto const memberProvisionalUsers = TC_AWAIT(
+      userAccessor.pullProvisional(members.publicProvisionalIdentities));
+
+  TC_RETURN((MembersToAdd{
+      memberUsers.found,
+      memberProvisionalUsers,
+  }));
 }
 
 namespace
@@ -102,48 +120,27 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
                                            memberProvisionalUsers)));
 }
 
-tc::cotask<SGroupId> create(UserAccessor& userAccessor,
-                            BlockGenerator const& blockGenerator,
-                            Client& client,
-                            std::vector<SPublicIdentity> spublicIdentities)
+tc::cotask<SGroupId> create(
+    UserAccessor& userAccessor,
+    BlockGenerator const& blockGenerator,
+    Client& client,
+    std::vector<SPublicIdentity> const& spublicIdentities)
 {
-  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto const members = partitionIdentities(publicIdentities);
+  auto const members =
+      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentities));
 
-  try
-  {
-    auto const memberUsers = TC_AWAIT(userAccessor.pull(members.userIds));
-    if (!memberUsers.notFound.empty())
-      throw Error::UserNotFoundInternal(memberUsers.notFound);
+  auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
+  auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-    auto const memberProvisionalUsers = TC_AWAIT(
-        userAccessor.pullProvisional(members.publicProvisionalIdentities));
+  auto const groupBlock =
+      TC_AWAIT(generateCreateGroupBlock(members.users,
+                                        members.provisionalUsers,
+                                        blockGenerator,
+                                        groupSignatureKey,
+                                        groupEncryptionKey));
+  TC_AWAIT(client.pushBlock(groupBlock));
 
-    auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
-    auto groupSignatureKey = Crypto::makeSignatureKeyPair();
-
-    auto const groupBlock =
-        TC_AWAIT(generateCreateGroupBlock(memberUsers.found,
-                                          memberProvisionalUsers,
-                                          blockGenerator,
-                                          groupSignatureKey,
-                                          groupEncryptionKey));
-    TC_AWAIT(client.pushBlock(groupBlock));
-
-    TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
-  }
-  catch (Error::UserNotFoundInternal const& e)
-  {
-    auto const notFoundIdentities =
-        mapIdsToStrings(e.userIds(), spublicIdentities, members.userIds);
-    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
-                                          fmt::join(notFoundIdentities.begin(),
-                                                    notFoundIdentities.end(),
-                                                    ", ")),
-                              notFoundIdentities);
-  }
-  throw std::runtime_error("unreachable code");
+  TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
 }
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
@@ -175,41 +172,19 @@ tc::cotask<void> updateMembers(
     Client& client,
     GroupStore const& groupStore,
     GroupId const& groupId,
-    std::vector<SPublicIdentity> spublicIdentitiesToAdd)
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
-  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
-  auto const publicIdentitiesToAdd =
-      extractPublicIdentities(spublicIdentitiesToAdd);
-  auto const membersToAdd = partitionIdentities(publicIdentitiesToAdd);
+  auto const members =
+      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  try
-  {
-    auto const memberUsers = TC_AWAIT(userAccessor.pull(membersToAdd.userIds));
-    if (!memberUsers.notFound.empty())
-      throw Error::UserNotFoundInternal(memberUsers.notFound);
+  auto const group = TC_AWAIT(groupStore.findFullById(groupId));
+  if (!group)
+    throw Error::GroupNotFound(
+        "Cannot update members of a group we aren't part of");
 
-    auto const memberProvisionalUsers = TC_AWAIT(
-        userAccessor.pullProvisional(membersToAdd.publicProvisionalIdentities));
-
-    auto const group = TC_AWAIT(groupStore.findFullById(groupId));
-    if (!group)
-      throw Error::GroupNotFound(
-          "Cannot update members of a group we aren't part of");
-
-    auto const groupBlock = TC_AWAIT(generateAddUserToGroupBlock(
-        memberUsers.found, memberProvisionalUsers, blockGenerator, *group));
-    TC_AWAIT(client.pushBlock(groupBlock));
-  }
-  catch (Error::UserNotFoundInternal const& e)
-  {
-    auto const notFoundIdentities = mapIdsToStrings(
-        e.userIds(), spublicIdentitiesToAdd, membersToAdd.userIds);
-    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
-                                          fmt::join(notFoundIdentities.begin(),
-                                                    notFoundIdentities.end(),
-                                                    ", ")),
-                              notFoundIdentities);
-  }
+  auto const groupBlock = TC_AWAIT(generateAddUserToGroupBlock(
+      members.users, members.provisionalUsers, blockGenerator, *group));
+  TC_AWAIT(client.pushBlock(groupBlock));
 }
 }
 }

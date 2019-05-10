@@ -1,6 +1,7 @@
 #include <Tanker/Groups/Manager.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -153,18 +154,20 @@ TEST_CASE("Can create a group with two provisional users")
 
 TEST_CASE("throws when getting keys of an unknown member")
 {
-  auto const unknownUid = make<Trustchain::UserId>("unknown");
+  auto const unknownIdentity = Identity::PublicPermanentIdentity{
+      make<Trustchain::TrustchainId>("unknown"),
+      make<Trustchain::UserId>("unknown"),
+  };
 
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
 
-  REQUIRE_CALL(
-      userAccessor.get_mock_impl(),
-      pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{unknownUid})))
-      .LR_RETURN((UserAccessor::PullResult{{}, {unknownUid}}));
+  REQUIRE_CALL(userAccessor.get_mock_impl(), pull(trompeloeil::_))
+      .LR_RETURN((UserAccessor::PullResult{{}, {unknownIdentity.userId}}));
 
   REQUIRE_THROWS_AS(
-      AWAIT(Groups::Manager::getMemberKeys(userAccessor.get(), {unknownUid})),
-      Error::UserNotFoundInternal);
+      AWAIT(Groups::Manager::fetchFutureMembers(
+          userAccessor.get(), {SPublicIdentity{to_string(unknownIdentity)}})),
+      Error::UserNotFound);
 }
 
 TEST_CASE("Fails to add 0 users to a group")
