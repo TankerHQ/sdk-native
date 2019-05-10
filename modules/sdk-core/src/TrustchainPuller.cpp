@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-#include <set>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -109,85 +108,8 @@ tc::cotask<void> TrustchainPuller::catchUp()
       if (_deviceId.is_null())
       {
         TINFO("No device id, processing our devices first");
-        std::vector<std::pair<Crypto::PublicEncryptionKey,
-                              Crypto::SealedPrivateEncryptionKey>>
-            encryptedUserKeys;
-        std::vector<Crypto::EncryptionKeyPair> userEncryptionKeys;
-        // process our blocks first or here's what'll happen!
-        // if you receive:
-        // - Device Creation
-        // - Group Creation (with a key encrypted for my user key)
-        // - My Device Creation (with my user key that I can decrypt)
-        // If I process the Group Creation, I won't be able to decrypt it. More
-        // generally, I can't process stuff if I don't have my user keys and
-        // device id, so we do not process other blocks before we have those.
-        // - Device revocation
-        // I need to get all the previous userKeys in order of creation to fill
-        // the userKeyStore. To do that we have to store all previous sealed
-        // private user keys and decrypt them one by one in reverse order. If we
-        // don't do that It will not be possible for the new device to decrypt
-        // old ressources.
-        for (auto const& serverEntry : entries)
-        {
-          try
-          {
-            if (serverEntry.action().get_if<TrustchainCreation>())
-            {
-              TC_AWAIT(verifyAndAddEntry(serverEntry));
-              processed.insert(serverEntry.hash());
-            }
-            else if (auto const deviceCreation =
-                         serverEntry.action().get_if<DeviceCreation>())
-            {
-              if (deviceCreation->userId() == _userId)
-              {
-                TC_AWAIT(verifyAndAddEntry(serverEntry));
-                processed.insert(serverEntry.hash());
-                if (auto dc3 = deviceCreation->get_if<DeviceCreation::v3>())
-                {
-                  if (Trustchain::DeviceId{serverEntry.hash()} == _deviceId)
-                  {
-                    auto const lastPrivateEncryptionKey =
-                        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-                            dc3->sealedPrivateUserEncryptionKey(),
-                            _deviceKeyStore->encryptionKeyPair());
-                    userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
-                        dc3->publicUserEncryptionKey(),
-                        lastPrivateEncryptionKey});
-                  }
-                }
-                else
-                {
-                  throw std::runtime_error(
-                      "assertion failed: self device must have a user key");
-                }
-              }
-            }
-            else if (auto const deviceRevocation =
-                         serverEntry.action().get_if<DeviceRevocation>())
-            {
-              auto const userId = TC_AWAIT(_contactStore->findUserIdByDeviceId(
-                  deviceRevocation->deviceId()));
-              if (userId == _userId)
-              {
-                TC_AWAIT(verifyAndAddEntry(serverEntry));
-                processed.insert(serverEntry.hash());
-                if (auto const deviceRevocation2 =
-                        deviceRevocation->get_if<DeviceRevocation2>())
-                {
-                  encryptedUserKeys.emplace_back(
-                      deviceRevocation2->previousPublicEncryptionKey(),
-                      deviceRevocation2->sealedKeyForPreviousUserKey());
-                }
-              }
-            }
-          }
-          catch (Error::VerificationFailed const& err)
-          {
-            TERROR("Verification failed: {}", err.what());
-          }
-        }
-        TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
+        auto const initiallyProcessed = TC_AWAIT(doInitialProcess(entries));
+        processed.insert(initiallyProcessed.begin(), initiallyProcessed.end());
       }
 
       for (auto const& serverEntry : entries)
@@ -217,6 +139,91 @@ tc::cotask<void> TrustchainPuller::catchUp()
     TERROR("Failed to catch up: {}", e.what());
     throw;
   }
+}
+
+tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
+    std::vector<ServerEntry> const& entries)
+{
+  std::set<Crypto::Hash> processed;
+  std::vector<std::pair<Crypto::PublicEncryptionKey,
+                        Crypto::SealedPrivateEncryptionKey>>
+      encryptedUserKeys;
+  std::vector<Crypto::EncryptionKeyPair> userEncryptionKeys;
+  // process our blocks first or here's what'll happen!
+  // if you receive:
+  // - Device Creation
+  // - Group Creation (with a key encrypted for my user key)
+  // - My Device Creation (with my user key that I can decrypt)
+  // If I process the Group Creation, I won't be able to decrypt it. More
+  // generally, I can't process stuff if I don't have my user keys and
+  // device id, so we do not process other blocks before we have those.
+  // - Device revocation
+  // I need to get all the previous userKeys in order of creation to fill
+  // the userKeyStore. To do that we have to store all previous sealed
+  // private user keys and decrypt them one by one in reverse order. If we
+  // don't do that It will not be possible for the new device to decrypt
+  // old ressources.
+  for (auto const& serverEntry : entries)
+  {
+    try
+    {
+      if (serverEntry.action().get_if<TrustchainCreation>())
+      {
+        TC_AWAIT(verifyAndAddEntry(serverEntry));
+        processed.insert(serverEntry.hash());
+      }
+      else if (auto const deviceCreation =
+                   serverEntry.action().get_if<DeviceCreation>())
+      {
+        if (deviceCreation->userId() == _userId)
+        {
+          TC_AWAIT(verifyAndAddEntry(serverEntry));
+          processed.insert(serverEntry.hash());
+          if (auto dc3 = deviceCreation->get_if<DeviceCreation::v3>())
+          {
+            if (Trustchain::DeviceId{serverEntry.hash()} == _deviceId)
+            {
+              auto const lastPrivateEncryptionKey =
+                  Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+                      dc3->sealedPrivateUserEncryptionKey(),
+                      _deviceKeyStore->encryptionKeyPair());
+              userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
+                  dc3->publicUserEncryptionKey(), lastPrivateEncryptionKey});
+            }
+          }
+          else
+          {
+            throw std::runtime_error(
+                "assertion failed: self device must have a user key");
+          }
+        }
+      }
+      else if (auto const deviceRevocation =
+                   serverEntry.action().get_if<DeviceRevocation>())
+      {
+        auto const userId = TC_AWAIT(
+            _contactStore->findUserIdByDeviceId(deviceRevocation->deviceId()));
+        if (userId == _userId)
+        {
+          TC_AWAIT(verifyAndAddEntry(serverEntry));
+          processed.insert(serverEntry.hash());
+          if (auto const deviceRevocation2 =
+                  deviceRevocation->get_if<DeviceRevocation2>())
+          {
+            encryptedUserKeys.emplace_back(
+                deviceRevocation2->previousPublicEncryptionKey(),
+                deviceRevocation2->sealedKeyForPreviousUserKey());
+          }
+        }
+      }
+    }
+    catch (Error::VerificationFailed const& err)
+    {
+      TERROR("Verification failed: {}", err.what());
+    }
+  }
+  TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
+  TC_RETURN(processed);
 }
 
 tc::cotask<void> TrustchainPuller::recoverUserKeys(
