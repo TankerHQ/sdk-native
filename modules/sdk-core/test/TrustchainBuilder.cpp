@@ -3,6 +3,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
+#include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
@@ -338,8 +339,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     std::vector<User> const& users,
     std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
 {
-  // TODO use makeGroup2
-  return makeGroup1(author, users);
+  return makeGroup2(author, users, provisionalUsers);
 }
 
 namespace
@@ -359,46 +359,6 @@ generateGroupKeysForUsers(
         user.userKeys.back().keyPair.publicKey,
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
             groupPrivateEncryptionKey, user.userKeys.back().keyPair.publicKey));
-  }
-  return keysForUsers;
-}
-
-UserGroupCreation2::UserGroupMembers generateGroupKeysForUsers2(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<TrustchainBuilder::User> const& users)
-{
-  UserGroupCreation2::UserGroupMembers keysForUsers;
-  for (auto const& user : users)
-  {
-    if (user.userKeys.empty())
-      throw std::runtime_error(
-          "TrustchainBuilder: can't add a user without user key to a group");
-    keysForUsers.emplace_back(
-        user.userId,
-        user.userKeys.back().keyPair.publicKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupPrivateEncryptionKey, user.userKeys.back().keyPair.publicKey));
-  }
-  return keysForUsers;
-}
-
-UserGroupCreation2::UserGroupProvisionalMembers
-generateGroupKeysForProvisionalUsers(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<Tanker::PublicProvisionalUser> const& users)
-{
-  UserGroupCreation2::UserGroupProvisionalMembers keysForUsers;
-  for (auto const& user : users)
-  {
-    auto const encryptedKeyOnce = Crypto::sealEncrypt(
-        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
-    auto const encryptedKeyTwice =
-        Crypto::sealEncrypt<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-            encryptedKeyOnce, user.tankerEncryptionPublicKey);
-
-    keysForUsers.emplace_back(user.appSignaturePublicKey,
-                              user.tankerSignaturePublicKey,
-                              encryptedKeyTwice);
   }
   return keysForUsers;
 }
@@ -477,19 +437,22 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-  auto const keysForUsers =
-      generateGroupKeysForUsers2(encryptionKeyPair.privateKey, users);
-  auto const keysForProvisionalUsers = generateGroupKeysForProvisionalUsers(
-      encryptionKeyPair.privateKey, provisionalUsers);
 
-  auto const preserializedBlock =
+  auto const blockGenerator =
       BlockGenerator(_trustchainId,
                      author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId)
-          .userGroupCreation2(signatureKeyPair,
-                              encryptionKeyPair.publicKey,
-                              keysForUsers,
-                              keysForProvisionalUsers);
+                     author.keys.deviceId);
+
+  std::vector<Tanker::User> tusers;
+  for (auto const& user : users)
+    tusers.push_back(user.asTankerUser());
+
+  auto const preserializedBlock =
+      Groups::Manager::generateCreateGroupBlock(tusers,
+                                                provisionalUsers,
+                                                blockGenerator,
+                                                signatureKeyPair,
+                                                encryptionKeyPair);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   block.index = _blocks.size() + 1;
@@ -564,20 +527,17 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
-  auto const keysForUsers = generateGroupKeysForUsers2(
-      group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
+  std::vector<Tanker::User> tusers;
+  for (auto const& user : newUsers)
+    tusers.push_back(user.asTankerUser());
 
-  auto const keysForProvisionalUsers = generateGroupKeysForProvisionalUsers(
-      group.tankerGroup.encryptionKeyPair.privateKey, provisionalUsers);
-
-  auto const preserializedBlock =
+  auto const blockGenerator =
       BlockGenerator(_trustchainId,
                      author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId)
-          .userGroupAddition2(group.tankerGroup.signatureKeyPair,
-                              group.tankerGroup.lastBlockHash,
-                              keysForUsers,
-                              keysForProvisionalUsers);
+                     author.keys.deviceId);
+
+  auto const preserializedBlock = Groups::Manager::generateAddUserToGroupBlock(
+      tusers, provisionalUsers, blockGenerator, group.tankerGroup);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   block.index = _blocks.size() + 1;
