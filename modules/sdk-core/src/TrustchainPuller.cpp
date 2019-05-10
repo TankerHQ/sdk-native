@@ -103,6 +103,10 @@ tc::cotask<void> TrustchainPuller::catchUp()
           return blockToServerEntry(Serialization::deserialize<Block>(
               cppcodec::base64_rfc4648::decode(block)));
         });
+    std::sort(
+        entries.begin(), entries.end(), [](auto const& lhs, auto const& rhs) {
+          return lhs.index() < rhs.index();
+        });
 
     TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
       std::set<Crypto::Hash> processed;

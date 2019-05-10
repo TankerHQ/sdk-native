@@ -28,7 +28,8 @@ public:
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
   getUserOptLastKeyPair() override;
 
-  tc::cotask<uint64_t> getTrustchainLastIndex() override;
+  tc::cotask<nonstd::optional<uint64_t>> findTrustchainLastIndex() override;
+  tc::cotask<void> setTrustchainLastIndex(uint64_t) override;
   tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;

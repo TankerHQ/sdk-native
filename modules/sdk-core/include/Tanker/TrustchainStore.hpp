@@ -39,10 +39,10 @@ public:
       Trustchain::ResourceId const& resourceId) const;
 
   tc::cotask<uint64_t> getLastIndex();
+  tc::cotask<void> setLastIndex(uint64_t);
 
 private:
   DataStore::ADatabase* _db;
-
-  uint64_t _lastIndex = 0;
+  uint64_t _lastIndex;
 };
 }

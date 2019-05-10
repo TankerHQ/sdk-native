@@ -14,6 +14,7 @@
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
+#include <Tanker/DbModels/TrustchainLastIndex.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
@@ -243,6 +244,8 @@ KeyPublish rowToKeyPublish(T const& row)
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainTable = DbModels::trustchain::trustchain;
 using TrustchainIndexesTable = DbModels::trustchain_indexes::trustchain_indexes;
+using TrustchainLastIndexTable =
+    DbModels::trustchain_last_index::trustchain_last_index;
 using TrustchainResourceIdToKeyPublishTable =
     DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
@@ -270,6 +273,7 @@ Database::Database(std::string const& dbPath,
   DataStore::createOrMigrateTable<ContactDevicesTable>(*_db);
   DataStore::createOrMigrateTable<GroupsTable>(*_db);
   DataStore::createOrMigrateTable<KeyPublishesTable>(*_db);
+  DataStore::createOrMigrateTable<TrustchainLastIndexTable>(*_db);
 
   if (isMigrationNeeded())
   {
@@ -311,6 +315,7 @@ void Database::flushAllCaches()
   flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
   flushTable(TrustchainIndexesTable{});
+  flushTable(TrustchainLastIndexTable{});
   flushTable(TrustchainResourceIdToKeyPublishTable{});
   flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
@@ -409,12 +414,24 @@ Database::getUserOptLastKeyPair()
            row.private_encryption_key)}}));
 }
 
-tc::cotask<uint64_t> Database::getTrustchainLastIndex()
+tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
 {
   FUNC_TIMER(DB);
-  TrustchainTable tab{};
-  TC_RETURN(
-      (*_db)(select(max(tab.idx)).from(tab).unconditionally()).front().max);
+  TrustchainLastIndexTable tab{};
+
+  auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  TC_RETURN(rows.front().last_index);
+}
+
+tc::cotask<void> Database::setTrustchainLastIndex(uint64_t index)
+{
+  FUNC_TIMER(DB);
+  TrustchainLastIndexTable tab{};
+  (*_db)(
+      sqlpp::sqlite3::insert_or_replace_into(tab).set(tab.last_index = index));
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)

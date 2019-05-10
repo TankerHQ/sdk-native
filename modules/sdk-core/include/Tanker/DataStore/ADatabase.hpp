@@ -57,7 +57,8 @@ public:
   virtual tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
   getUserOptLastKeyPair() = 0;
 
-  virtual tc::cotask<uint64_t> getTrustchainLastIndex() = 0;
+  virtual tc::cotask<nonstd::optional<uint64_t>> findTrustchainLastIndex() = 0;
+  virtual tc::cotask<void> setTrustchainLastIndex(uint64_t) = 0;
   virtual tc::cotask<void> addTrustchainEntry(Entry const& Entry) = 0;
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) = 0;
