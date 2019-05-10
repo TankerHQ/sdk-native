@@ -25,23 +25,6 @@ namespace Groups
 {
 namespace Manager
 {
-namespace
-{
-
-// this function can exist because for the moment, a public identity can only
-// contain a user id
-std::vector<UserId> publicIdentitiesToUserIds(
-    std::vector<SPublicIdentity> const& spublicIdentities)
-{
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return mpark::get<Identity::PublicPermanentIdentity>(
-               Identity::extract<Identity::PublicIdentity>(
-                   spublicIdentity.string()))
-        .userId;
-  });
-}
-}
-
 tc::cotask<std::vector<User>> getMemberKeys(
     UserAccessor& userAccessor, std::vector<UserId> const& memberUserIds)
 {
