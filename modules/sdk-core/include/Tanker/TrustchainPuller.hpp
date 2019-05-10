@@ -78,6 +78,8 @@ private:
   tc::cotask<void> catchUp();
   tc::cotask<std::set<Crypto::Hash>> doInitialProcess(
       std::vector<Trustchain::ServerEntry> const& entries);
+  tc::cotask<std::set<Crypto::Hash>> doClaimProcess(
+      std::vector<Trustchain::ServerEntry> const& entries);
   tc::cotask<void> verifyAndAddEntry(
       Trustchain::ServerEntry const& serverEntry);
   tc::cotask<void> triggerSignals(Entry const& entry);

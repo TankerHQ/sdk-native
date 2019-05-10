@@ -111,6 +111,10 @@ tc::cotask<void> TrustchainPuller::catchUp()
         auto const initiallyProcessed = TC_AWAIT(doInitialProcess(entries));
         processed.insert(initiallyProcessed.begin(), initiallyProcessed.end());
       }
+      {
+        auto const processedClaims = TC_AWAIT(doClaimProcess(entries));
+        processed.insert(processedClaims.begin(), processedClaims.end());
+      }
 
       for (auto const& serverEntry : entries)
       {
@@ -223,6 +227,30 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
     }
   }
   TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
+  TC_RETURN(processed);
+}
+
+tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doClaimProcess(
+    std::vector<ServerEntry> const& entries)
+{
+  std::set<Crypto::Hash> processed;
+  // We must process our claims first because we might have group blocks later
+  // that are addressed to our provisional identities
+  for (auto const& serverEntry : entries)
+  {
+    try
+    {
+      if (serverEntry.action().get_if<ProvisionalIdentityClaim>())
+      {
+        TC_AWAIT(verifyAndAddEntry(serverEntry));
+        processed.insert(serverEntry.hash());
+      }
+    }
+    catch (Error::VerificationFailed const& err)
+    {
+      TERROR("Verification failed: {}", err.what());
+    }
+  }
   TC_RETURN(processed);
 }
 
