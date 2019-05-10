@@ -14,6 +14,7 @@
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("onKeyToDeviceReceived should process a key publish block")
 {
@@ -78,11 +79,12 @@ TEST_CASE("decryptAndStoreKey")
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
-    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
-                                              *receiverKeyStore,
-                                              receiverGroupStore,
-                                              receiverProvisionalUserKeysStore,
-                                              keyPublishToUserEntry));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
+        resourceKeyStore,
+        *receiverKeyStore,
+        receiverGroupStore,
+        receiverProvisionalUserKeysStore,
+        keyPublishToUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
   }
@@ -102,11 +104,12 @@ TEST_CASE("decryptAndStoreKey")
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
-    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
-                                              *receiverKeyStore,
-                                              *receiverGroupStore,
-                                              receiverProvisionalUserKeysStore,
-                                              keyPublishToUserGroupEntry));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
+        resourceKeyStore,
+        *receiverKeyStore,
+        *receiverGroupStore,
+        receiverProvisionalUserKeysStore,
+        keyPublishToUserGroupEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
   }
@@ -127,12 +130,12 @@ TEST_CASE("decryptAndStoreKey")
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
-    AWAIT_VOID(
-        ReceiveKey::decryptAndStoreKey(resourceKeyStore,
-                                       *receiverKeyStore,
-                                       receiverGroupStore,
-                                       *receiverProvisionalUserKeysStore,
-                                       keyPublishToProvisionalUserEntry));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
+        resourceKeyStore,
+        *receiverKeyStore,
+        receiverGroupStore,
+        *receiverProvisionalUserKeysStore,
+        keyPublishToProvisionalUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
   }

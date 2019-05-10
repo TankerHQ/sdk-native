@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -26,6 +27,6 @@ tc::cotask<void> decryptAndStoreKey(
     UserKeyStore const& userKeyStore,
     GroupStore const& groupStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry);
+    Trustchain::Actions::KeyPublish const& kp);
 }
 }

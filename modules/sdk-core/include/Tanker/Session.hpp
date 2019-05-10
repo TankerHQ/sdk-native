@@ -8,6 +8,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
@@ -134,6 +135,7 @@ private:
   void onKeyToUserGroupReceived(Entry const& entry);
   tc::cotask<void> onUserGroupEntry(Entry const& entry);
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
+  tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
 
 private:
@@ -149,6 +151,7 @@ private:
   GroupStore _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
+  KeyPublishStore _keyPublishStore;
 
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;

@@ -96,6 +96,7 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
+    _keyPublishStore(_db.get()),
     _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
@@ -138,6 +139,10 @@ Session::Session(Config&& config)
   _trustchainPuller.provisionalIdentityClaimReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onProvisionalIdentityClaimEntry(entry));
+  };
+  _trustchainPuller.keyPublishReceived =
+      [this](auto const& entry) -> tc::cotask<void> {
+    TC_AWAIT(onKeyPublishReceived(entry));
   };
   _trustchainPuller.deviceRevoked =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -246,11 +251,11 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
   if (!key)
   {
-    auto keyPublish = TC_AWAIT(_trustchain.findKeyPublish(resourceId));
+    auto keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
     if (!keyPublish)
     {
       TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-      keyPublish = TC_AWAIT(_trustchain.findKeyPublish(resourceId));
+      keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
     }
     if (keyPublish) // do not use else!
     {
@@ -597,6 +602,11 @@ tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 {
   TC_AWAIT(Preregistration::applyEntry(
       _userKeyStore, _provisionalUserKeysStore, entry));
+}
+
+tc::cotask<void> Session::onKeyPublishReceived(Entry const& entry)
+{
+  TC_AWAIT(_keyPublishStore.put(entry.action.get<KeyPublish>()));
 }
 
 tc::cotask<void> Session::syncTrustchain()
