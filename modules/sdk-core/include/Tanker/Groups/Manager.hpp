@@ -34,7 +34,7 @@ struct MembersToAdd
 tc::cotask<MembersToAdd> fetchFutureMembers(
     UserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities);
 
-tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
+std::vector<uint8_t> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
@@ -47,7 +47,7 @@ tc::cotask<SGroupId> create(
     Client& client,
     std::vector<SPublicIdentity> const& spublicIdentities);
 
-tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
+std::vector<uint8_t> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,

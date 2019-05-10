@@ -97,7 +97,7 @@ generateGroupKeysForProvisionalUsers(
 }
 }
 
-tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
+std::vector<uint8_t> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
@@ -112,12 +112,12 @@ tc::cotask<std::vector<uint8_t>> generateCreateGroupBlock(
         memberUsers.size() + memberProvisionalUsers.size(),
         MAX_GROUP_SIZE);
 
-  TC_RETURN(blockGenerator.userGroupCreation2(
+  return blockGenerator.userGroupCreation2(
       groupSignatureKey,
       groupEncryptionKey.publicKey,
       generateGroupKeysForUsers2(groupEncryptionKey.privateKey, memberUsers),
       generateGroupKeysForProvisionalUsers(groupEncryptionKey.privateKey,
-                                           memberProvisionalUsers)));
+                                           memberProvisionalUsers));
 }
 
 tc::cotask<SGroupId> create(
@@ -132,18 +132,17 @@ tc::cotask<SGroupId> create(
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const groupBlock =
-      TC_AWAIT(generateCreateGroupBlock(members.users,
-                                        members.provisionalUsers,
-                                        blockGenerator,
-                                        groupSignatureKey,
-                                        groupEncryptionKey));
+  auto const groupBlock = generateCreateGroupBlock(members.users,
+                                                   members.provisionalUsers,
+                                                   blockGenerator,
+                                                   groupSignatureKey,
+                                                   groupEncryptionKey);
   TC_AWAIT(client.pushBlock(groupBlock));
 
   TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKey.publicKey));
 }
 
-tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
+std::vector<uint8_t> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
@@ -157,13 +156,13 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
         memberUsers.size() + memberProvisionalUsers.size(),
         MAX_GROUP_SIZE);
 
-  TC_RETURN(blockGenerator.userGroupAddition2(
+  return blockGenerator.userGroupAddition2(
       group.signatureKeyPair,
       group.lastBlockHash,
       generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
                                  memberUsers),
       generateGroupKeysForProvisionalUsers(group.encryptionKeyPair.privateKey,
-                                           memberProvisionalUsers)));
+                                           memberProvisionalUsers));
 }
 
 tc::cotask<void> updateMembers(
@@ -182,8 +181,8 @@ tc::cotask<void> updateMembers(
     throw Error::GroupNotFound(
         "Cannot update members of a group we aren't part of");
 
-  auto const groupBlock = TC_AWAIT(generateAddUserToGroupBlock(
-      members.users, members.provisionalUsers, blockGenerator, *group));
+  auto const groupBlock = generateAddUserToGroupBlock(
+      members.users, members.provisionalUsers, blockGenerator, *group);
   TC_AWAIT(client.pushBlock(groupBlock));
 }
 }

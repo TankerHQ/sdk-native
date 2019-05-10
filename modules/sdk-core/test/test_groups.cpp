@@ -38,8 +38,8 @@ TEST_CASE("Can't create an empty group")
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
   CHECK_THROWS_AS(
-      AWAIT(Groups::Manager::generateCreateGroupBlock(
-          {}, {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey)),
+      Groups::Manager::generateCreateGroupBlock(
+          {}, {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey),
       Error::InvalidGroupSize);
 }
 
@@ -57,13 +57,12 @@ TEST_CASE("Can create a group with two users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const preserializedBlock =
-      AWAIT(Groups::Manager::generateCreateGroupBlock(
-          {user.asTankerUser(), user2.asTankerUser()},
-          {},
-          userBlockGenerator,
-          groupSignatureKey,
-          groupEncryptionKey));
+  auto const preserializedBlock = Groups::Manager::generateCreateGroupBlock(
+      {user.asTankerUser(), user2.asTankerUser()},
+      {},
+      userBlockGenerator,
+      groupSignatureKey,
+      groupEncryptionKey);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
@@ -109,14 +108,13 @@ TEST_CASE("Can create a group with two provisional users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const preserializedBlock =
-      AWAIT(Groups::Manager::generateCreateGroupBlock(
-          {},
-          {provisionalUser.publicProvisionalUser,
-           provisionalUser2.publicProvisionalUser},
-          userBlockGenerator,
-          groupSignatureKey,
-          groupEncryptionKey));
+  auto const preserializedBlock = Groups::Manager::generateCreateGroupBlock(
+      {},
+      {provisionalUser.publicProvisionalUser,
+       provisionalUser2.publicProvisionalUser},
+      userBlockGenerator,
+      groupSignatureKey,
+      groupEncryptionKey);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
@@ -181,8 +179,8 @@ TEST_CASE("Fails to add 0 users to a group")
 
   Group const group{};
 
-  CHECK_THROWS_AS(AWAIT(Groups::Manager::generateAddUserToGroupBlock(
-                      {}, {}, userBlockGenerator, group)),
+  CHECK_THROWS_AS(Groups::Manager::generateAddUserToGroupBlock(
+                      {}, {}, userBlockGenerator, group),
                   Error::InvalidGroupSize);
 }
 
@@ -200,12 +198,11 @@ TEST_CASE("Can add users to a group")
   auto const groupResult = builder.makeGroup(userDevice, {user, user2});
   auto group = groupResult.group.tankerGroup;
 
-  auto const preserializedBlock =
-      AWAIT(Groups::Manager::generateAddUserToGroupBlock(
-          {user.asTankerUser(), user2.asTankerUser()},
-          {},
-          userBlockGenerator,
-          group));
+  auto const preserializedBlock = Groups::Manager::generateAddUserToGroupBlock(
+      {user.asTankerUser(), user2.asTankerUser()},
+      {},
+      userBlockGenerator,
+      group);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
@@ -251,13 +248,12 @@ TEST_CASE("Can add provisional users to a group")
   auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
 
-  auto const preserializedBlock =
-      AWAIT(Groups::Manager::generateAddUserToGroupBlock(
-          {},
-          {provisionalUser.publicProvisionalUser,
-           provisionalUser2.publicProvisionalUser},
-          userBlockGenerator,
-          group));
+  auto const preserializedBlock = Groups::Manager::generateAddUserToGroupBlock(
+      {},
+      {provisionalUser.publicProvisionalUser,
+       provisionalUser2.publicProvisionalUser},
+      userBlockGenerator,
+      group);
 
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
