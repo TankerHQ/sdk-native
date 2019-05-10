@@ -165,15 +165,16 @@ tc::cotask<SGroupId> create(UserAccessor& userAccessor,
 
 tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
+    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     Group const& group)
 {
-  if (memberUsers.size() == 0)
+  if (memberUsers.size() + memberProvisionalUsers.size() == 0)
     throw Error::InvalidGroupSize("Adding 0 members to a group is an error");
-  else if (memberUsers.size() > MAX_GROUP_SIZE)
+  else if (memberUsers.size() + memberProvisionalUsers.size() > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot add {:d} members to a group, max is {:d}"),
-        memberUsers.size(),
+        memberUsers.size() + memberProvisionalUsers.size(),
         MAX_GROUP_SIZE);
 
   TC_RETURN(blockGenerator.userGroupAddition2(
@@ -181,7 +182,8 @@ tc::cotask<std::vector<uint8_t>> generateAddUserToGroupBlock(
       group.lastBlockHash,
       generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
                                  memberUsers),
-      {}));
+      generateGroupKeysForProvisionalUsers(group.encryptionKeyPair.privateKey,
+                                           memberProvisionalUsers)));
 }
 
 tc::cotask<void> updateMembers(
@@ -193,24 +195,32 @@ tc::cotask<void> updateMembers(
     std::vector<SPublicIdentity> spublicIdentitiesToAdd)
 {
   spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
-  auto usersToAdd = publicIdentitiesToUserIds(spublicIdentitiesToAdd);
+  auto const publicIdentitiesToAdd =
+      extractPublicIdentities(spublicIdentitiesToAdd);
+  auto const membersToAdd = partitionIdentities(publicIdentitiesToAdd);
 
   try
   {
-    auto const memberUsers = TC_AWAIT(getMemberKeys(userAccessor, usersToAdd));
+    auto const memberUsers = TC_AWAIT(userAccessor.pull(membersToAdd.userIds));
+    if (!memberUsers.notFound.empty())
+      throw Error::UserNotFoundInternal(memberUsers.notFound);
+
+    auto const memberProvisionalUsers = TC_AWAIT(
+        userAccessor.pullProvisional(membersToAdd.publicProvisionalIdentities));
+
     auto const group = TC_AWAIT(groupStore.findFullById(groupId));
     if (!group)
       throw Error::GroupNotFound(
           "Cannot update members of a group we aren't part of");
 
-    auto const groupBlock = TC_AWAIT(
-        generateAddUserToGroupBlock(memberUsers, blockGenerator, *group));
+    auto const groupBlock = TC_AWAIT(generateAddUserToGroupBlock(
+        memberUsers.found, memberProvisionalUsers, blockGenerator, *group));
     TC_AWAIT(client.pushBlock(groupBlock));
   }
   catch (Error::UserNotFoundInternal const& e)
   {
-    auto const notFoundIdentities =
-        mapIdsToStrings(e.userIds(), spublicIdentitiesToAdd, usersToAdd);
+    auto const notFoundIdentities = mapIdsToStrings(
+        e.userIds(), spublicIdentitiesToAdd, membersToAdd.userIds);
     throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),
