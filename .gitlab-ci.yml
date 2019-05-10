@@ -22,13 +22,13 @@ build/linux:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 build/macos:
-  extends: .build
+  stage: build
   tags: [macos]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
 build/windows:
-  extends: .build
+  stage: build
   tags: [windows]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile vs2017-release
@@ -123,9 +123,11 @@ check/compat:
 
 check/e2e:
   stage: check
+  dependencies:
+    - build/linux
   when: manual
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home e2e
+    - dmenv run -- python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
   except:

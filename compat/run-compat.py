@@ -46,22 +46,25 @@ def run_test(base_path, next_path, version, command):
         ui.info(ui.green, ui.check, ui.green, "compat", command, version, "->", CURRENT, "success")
 
 
-def create_tanker_dev(profile: str) -> None:
-    # fmt: off
-    ci.conan.run(
-            "create", ".",
-            "ci/dev",
-            "--profile", profile,
-            "--update",
-            "--build", "tanker"
-            )
-    # fmt: on
+def compat(profile: str) -> None:
+    built_binary = build_all(profile=profile)
+
+    old_tests = {k: v for k, v in TESTS.items() if k != CURRENT}
+    ci.cpp.set_test_env()
+    for version, commands in old_tests.items():
+        for command in commands:
+            if command not in TESTS[CURRENT]:
+                continue
+            run_test(built_binary[version], built_binary[CURRENT], version, command)
 
 
-def use_packaged_tanker(profile: str) -> None:
-    src_path = Path.getcwd()
+def create_tanker_dev(src_path: Path, profile: str) -> None:
+    ci.conan.export(src_path=src_path, ref_or_channel="tanker/dev")
+
+
+def use_packaged_tanker(src_path: Path, profile: str) -> None:
     builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
-    builder.export_pkg("ci/dev")
+    builder.export_pkg("tanker/dev")
 
 
 def main() -> None:
@@ -77,19 +80,12 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.create_tanker_dev:
-        create_tanker_dev(args.profile)
+        create_tanker_dev(Path.getcwd(), args.profile)
     else:
-        use_packaged_tanker(args.profile)
+        use_packaged_tanker(Path.getcwd(), args.profile)
 
-    built_binary = build_all(profile=args.profile)
+    compat(args.profile)
 
-    old_tests = {k: v for k, v in TESTS.items() if k != CURRENT}
-    ci.cpp.set_test_env()
-    for version, commands in old_tests.items():
-        for command in commands:
-            if command not in TESTS[CURRENT]:
-                continue
-            run_test(built_binary[version], built_binary[CURRENT], version, command)
 
 if __name__ == "__main__":
     main()
