@@ -24,6 +24,7 @@
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
@@ -34,7 +35,6 @@
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
@@ -589,7 +589,8 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 
 tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 {
-  TC_AWAIT(GroupUpdater::applyEntry(_groupStore, _userKeyStore, entry));
+  TC_AWAIT(GroupUpdater::applyEntry(
+      _userId, _groupStore, _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
