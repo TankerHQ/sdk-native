@@ -28,7 +28,8 @@ TEST_SUITE("Groups")
         {bob.spublicIdentity(), alice.spublicIdentity()})));
   }
 
-  TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share to a group")
+  TEST_CASE_FIXTURE(TrustchainFixture,
+                    "Alice uses encrypt to share with a group")
   {
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();
@@ -51,7 +52,7 @@ TEST_SUITE("Groups")
         checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
   }
 
-  TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares to a group")
+  TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
   {
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();

@@ -159,7 +159,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   REQUIRE_EQ(decryptedData, clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share to Bob")
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -180,7 +180,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share to Bob")
       checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares to all her devices")
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevices = TC_AWAIT(alice.makeDevices(3));
@@ -247,7 +247,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Error::ResourceKeyNotFound);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -281,7 +281,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources to Bob")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt and share to a provisional user")
+                  "Alice can encrypt and share with a provisional user")
 {
   auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
