@@ -5,15 +5,16 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
-#include <tconcurrent/coroutine.hpp>
-
+#include <gsl-lite.hpp>
 #include <optional.hpp>
+#include <tconcurrent/coroutine.hpp>
 
 #include <functional>
 #include <memory>
@@ -70,6 +71,11 @@ public:
   virtual tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
+
+  virtual tc::cotask<void> putKeyPublishes(
+      gsl::span<Trustchain::Actions::KeyPublish const>) = 0;
+  virtual tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>>
+  findKeyPublish(Trustchain::ResourceId const&) = 0;
 
   virtual tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
   findContactUserKey(Trustchain::UserId const& userId) = 0;
