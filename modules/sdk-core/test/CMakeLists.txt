@@ -6,6 +6,7 @@ add_executable(test_tanker
   test_serialization.cpp
   test_client.cpp
   test_contactstore.cpp
+  test_keypublishstore.cpp
   test_devicekeystore.cpp
   test_groupstore.cpp
   test_groupaccessor.cpp

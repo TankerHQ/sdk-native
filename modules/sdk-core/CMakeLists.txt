@@ -94,6 +94,7 @@ add_library(tankercore STATIC
   include/Tanker/RecipientNotFound.hpp
   include/Tanker/GroupNotFound.hpp
   include/Tanker/Index.hpp
+  include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/Preregistration.hpp
   include/Tanker/Groups/Group.hpp
@@ -167,6 +168,7 @@ add_library(tankercore STATIC
   src/Share.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
+  src/KeyPublishStore.cpp
   src/Preregistration.cpp
   src/ProvisionalUserKeysStore.cpp
   src/Groups/Group.cpp
