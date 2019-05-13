@@ -33,12 +33,6 @@ public:
   tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;
-  tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Trustchain::ResourceId const& resourceId) override;
-  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      Trustchain::UserId const& userId) override;
-  tc::cotask<Entry> getTrustchainDevice(
-      Trustchain::DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
       Trustchain::UserId const& userId,

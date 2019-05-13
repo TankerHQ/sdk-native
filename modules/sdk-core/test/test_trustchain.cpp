@@ -143,48 +143,6 @@ TEST_CASE("trustchain")
     }
   }
 
-  SUBCASE("it should find a key publish to user by resource id")
-  {
-    TrustchainBuilder builder;
-    auto const alice = builder.makeUser("alice");
-    auto const bob = builder.makeUser("bob");
-
-    auto const resourceId = make<Trustchain::ResourceId>("the resourceId");
-    auto const key = make<Crypto::SymmetricKey>("the key");
-    auto const share =
-        builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
-
-    TrustchainStore trustchain(dbPtr.get());
-    for (auto const& block : builder.blocks())
-      AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
-
-    auto const entry = AWAIT(trustchain.findKeyPublish(resourceId));
-
-    CHECK(entry.value() == toVerifiedEntry(blockToServerEntry(share)));
-  }
-
-  SUBCASE("it should find a key publish to user group by resource id")
-  {
-    TrustchainBuilder builder;
-    auto const alice = builder.makeUser("alice");
-    auto const group = builder.makeGroup(alice.user.devices[0], {alice.user});
-
-    auto const resourceId = make<Trustchain::ResourceId>("the resourceId");
-    auto const key = make<Crypto::SymmetricKey>("the key");
-    auto const share = builder.shareToUserGroup(
-        alice.user.devices[0], group.group, resourceId, key);
-
-    TrustchainStore trustchain(dbPtr.get());
-    for (auto const& block : builder.blocks())
-      AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
-
-    auto const entry = AWAIT(trustchain.findKeyPublish(resourceId));
-
-    CHECK(entry.value() == toVerifiedEntry(blockToServerEntry(share)));
-  }
-
   SUBCASE("it should not throw when inserting the same block twice")
   {
     TrustchainBuilder builder;

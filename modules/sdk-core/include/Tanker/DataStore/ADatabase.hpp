@@ -62,12 +62,6 @@ public:
   virtual tc::cotask<void> addTrustchainEntry(Entry const& Entry) = 0;
   virtual tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) = 0;
-  virtual tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Trustchain::ResourceId const& resourceId) = 0;
-  virtual tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      Trustchain::UserId const& userId) = 0;
-  virtual tc::cotask<Entry> getTrustchainDevice(
-      Trustchain::DeviceId const& deviceId) = 0;
 
   virtual tc::cotask<void> putContact(
       Trustchain::UserId const& userId,

@@ -27,12 +27,6 @@ tc::cotask<void> TrustchainStore::addEntry(Entry const& entry)
   TC_AWAIT(_db->setTrustchainLastIndex(entry.index));
 }
 
-tc::cotask<nonstd::optional<Entry>> TrustchainStore::findKeyPublish(
-    Trustchain::ResourceId const& resourceId) const
-{
-  TC_RETURN(TC_AWAIT(_db->findTrustchainKeyPublish(resourceId)));
-}
-
 tc::cotask<uint64_t> TrustchainStore::getLastIndex()
 {
   if (!_lastIndex)
