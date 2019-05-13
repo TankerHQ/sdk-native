@@ -210,15 +210,10 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
     Trustchain::ServerEntry const& claim) const
 {
-  auto const author = TC_AWAIT(getAuthor(claim.author()));
-
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for keyPublish");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const authorUser = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(authorUser, author.hash);
-  Verif::verifyProvisionalIdentityClaim(claim, authorUser, authorDevice);
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
+  auto const authorDevice = getDevice(user, claim.author());
+  Verif::verifyProvisionalIdentityClaim(claim, user, authorDevice);
 
   TC_RETURN(toEntry(claim));
 }
