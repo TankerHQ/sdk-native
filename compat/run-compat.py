@@ -19,7 +19,8 @@ def build_all(profile):
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
         src_path = Path.getcwd() / "compat" / version
-        builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
+        builder = ci.cpp.Builder(src_path, profile=profile, coverage=False,
+                                 make_package=False, warn_as_error=False)
         builder.install_deps()
         builder.configure()
         builder.build()
@@ -63,7 +64,8 @@ def create_tanker_dev(src_path: Path, profile: str) -> None:
 
 
 def use_packaged_tanker(src_path: Path, profile: str) -> None:
-    builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
+    builder = ci.cpp.Builder(src_path, profile=profile, coverage=False,
+                             make_package=False, warn_as_error=False)
     builder.export_pkg("tanker/dev")
 
 

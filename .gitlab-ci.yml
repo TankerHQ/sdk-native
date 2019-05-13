@@ -13,7 +13,7 @@ stages:
   artifacts:
     expire_in: 1 day
     paths:
-      - build/
+      - package/
 
 build/linux:
   extends: .build
