@@ -55,6 +55,10 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }
+  catch (std::logic_error const&)
+  {
+    throw Error::InvalidArgument("truncated encrypted buffer");
+  }
 }
 
 EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
@@ -90,6 +94,10 @@ void decrypt(uint8_t* decryptedData,
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }
+  catch (std::logic_error const&)
+  {
+    throw Error::InvalidArgument("truncated encrypted buffer");
+  }
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
@@ -112,6 +120,10 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
     }
   }
   catch (std::out_of_range const&)
+  {
+    throw Error::InvalidArgument("truncated encrypted buffer");
+  }
+  catch (std::logic_error const&)
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }

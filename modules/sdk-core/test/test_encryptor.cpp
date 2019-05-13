@@ -1,6 +1,7 @@
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV2.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV3.hpp>
+#include <Tanker/Encryptor.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
@@ -274,5 +275,13 @@ TEST_SUITE("EncryptorV3")
     CHECK_THROWS_AS(EncryptionFormat::EncryptorV3::decrypt(
                         decryptedData.data(), keyVector, encryptedTestVector),
                     Error::DecryptFailed);
+  }
+
+  TEST_CASE("extractResourceId should throw on a truncated buffer")
+  {
+    auto encryptedData = make_buffer("");
+
+    CHECK_THROWS_AS(Encryptor::extractResourceId(encryptedData),
+                    Error::InvalidArgument);
   }
 }
