@@ -26,7 +26,10 @@ TEST_CASE("TrustchainVerifier")
   auto const rootEntry = blockToServerEntry(builder.blocks().front());
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-  AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(rootEntry)));
+  AWAIT_VOID(db->setTrustchainPublicSignatureKey(
+      rootEntry.action()
+          .get<Trustchain::Actions::TrustchainCreation>()
+          .publicSignatureKey()));
 
   auto const resourceId = make<Trustchain::ResourceId>("resourceId");
   auto const symmetricKey = make<Crypto::SymmetricKey>("symmetric key");
@@ -241,7 +244,8 @@ TEST_CASE("TrustchainVerifier")
   SUBCASE("throws if the author does not exist")
   {
     builder.makeUser3("bob");
-    auto const deviceResult = builder.makeDevice3("bob");
+    auto deviceResult = builder.makeDevice3("bob");
+    ++const_cast<Crypto::Hash&>(deviceResult.entry.author())[0];
 
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
     TrustchainVerifier const verifier(

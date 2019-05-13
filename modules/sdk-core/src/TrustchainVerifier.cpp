@@ -82,28 +82,18 @@ tc::cotask<Entry> TrustchainVerifier::verify(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
     Trustchain::ServerEntry const& dc) const
 {
-  auto const author = TC_AWAIT(getAuthor(dc.author()));
-
-  switch (author.nature)
+  if (dc.author().base() == _trustchainId.base())
   {
-  case Nature::TrustchainCreation:
-  {
-    Verif::verifyDeviceCreation(dc, author.action.get<TrustchainCreation>());
-    break;
+    auto const trustchainCreation = TrustchainCreation{
+        TC_AWAIT(_db->findTrustchainPublicSignatureKey()).value()};
+    Verif::verifyDeviceCreation(dc, trustchainCreation);
   }
-  case Nature::DeviceCreation:
-  case Nature::DeviceCreation2:
-  case Nature::DeviceCreation3:
+  else
   {
-    auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-    auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-    auto const authorDevice = getDevice(user, author.hash);
+    auto const user =
+        TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dc.author())));
+    auto const authorDevice = getDevice(user, dc.author());
     Verif::verifyDeviceCreation(dc, authorDevice, user);
-    break;
-  }
-  default:
-    throw Error::VerificationFailed(Error::VerificationCode::InvalidAuthor,
-                                    "Invalid author nature for deviceCreation");
   }
   TC_RETURN(toEntry(dc));
 }
@@ -206,16 +196,6 @@ tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
   Verif::verifyProvisionalIdentityClaim(claim, user, authorDevice);
 
   TC_RETURN(toEntry(claim));
-}
-
-tc::cotask<Entry> TrustchainVerifier::getAuthor(
-    Crypto::Hash const& authorHash) const
-{
-  auto const authorOpt = TC_AWAIT(_db->findTrustchainEntry(authorHash));
-  Verif::ensures(authorOpt.has_value(),
-                 Error::VerificationCode::InvalidAuthor,
-                 "author not found");
-  TC_RETURN(*authorOpt);
 }
 
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const

@@ -51,7 +51,6 @@ private:
   tc::cotask<Entry> handleProvisionalIdentityClaim(
       Trustchain::ServerEntry const& claim) const;
 
-  tc::cotask<Entry> getAuthor(Crypto::Hash const& authorHash) const;
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
   tc::cotask<User> getUserByDeviceId(
       Trustchain::DeviceId const& deviceId) const;
