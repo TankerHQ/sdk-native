@@ -144,18 +144,13 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.author()));
-
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for keyPublish");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
   auto const& keyPublishToUserGroup =
       kp.action().get<KeyPublish>().get<KeyPublish::ToUserGroup>();
   auto const group = TC_AWAIT(getGroupByEncryptionKey(
       keyPublishToUserGroup.recipientPublicEncryptionKey()));
-  auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(user, author.hash);
+  auto const authorDevice = getDevice(user, kp.author());
   Verif::verifyKeyPublishToUserGroup(kp, authorDevice, group);
 
   TC_RETURN(toEntry(kp));
