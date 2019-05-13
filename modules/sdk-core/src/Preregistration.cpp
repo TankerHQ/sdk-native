@@ -10,9 +10,18 @@ namespace Tanker
 {
 namespace Preregistration
 {
-tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
-                            ProvisionalUserKeysStore& provisionalUserKeysStore,
-                            Entry const& entry)
+namespace
+{
+struct SecretProvisionalUserToStore
+{
+  Crypto::PublicSignatureKey appSignaturePublicKey;
+  Crypto::PublicSignatureKey tankerSignaturePublicKey;
+  Crypto::EncryptionKeyPair appEncryptionKeyPair;
+  Crypto::EncryptionKeyPair tankerEncryptionKeyPair;
+};
+
+tc::cotask<SecretProvisionalUserToStore> extractKeysToStore(
+    UserKeyStore& userKeyStore, Entry const& entry)
 {
   auto const& provisionalIdentityClaim =
       entry.action.get<ProvisionalIdentityClaim>();
@@ -39,10 +48,24 @@ tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
           gsl::make_span(provisionalIdentityKeys)
               .subspan(Crypto::PrivateEncryptionKey::arraySize)));
 
-  TC_AWAIT(provisionalUserKeysStore.putProvisionalUserKeys(
+  TC_RETURN((SecretProvisionalUserToStore{
       provisionalIdentityClaim.appSignaturePublicKey(),
       provisionalIdentityClaim.tankerSignaturePublicKey(),
-      {appEncryptionKeyPair, tankerEncryptionKeyPair}));
+      appEncryptionKeyPair,
+      tankerEncryptionKeyPair}));
+}
+}
+
+tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
+                            ProvisionalUserKeysStore& provisionalUserKeysStore,
+                            Entry const& entry)
+{
+  auto const toStore = TC_AWAIT(extractKeysToStore(userKeyStore, entry));
+
+  TC_AWAIT(provisionalUserKeysStore.putProvisionalUserKeys(
+      toStore.appSignaturePublicKey,
+      toStore.tankerSignaturePublicKey,
+      {toStore.appEncryptionKeyPair, toStore.tankerEncryptionKeyPair}));
 }
 }
 }
