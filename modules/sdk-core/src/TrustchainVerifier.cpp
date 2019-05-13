@@ -117,14 +117,10 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const author = TC_AWAIT(getAuthor(kp.author()));
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
 
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for keyPublish");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
-  auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(user, author.hash);
+  auto const authorDevice = getDevice(user, kp.author());
   auto const nature = kp.action().nature();
 
   if (nature == Nature::KeyPublishToDevice)
@@ -258,6 +254,18 @@ tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
   Verif::ensures(
       user.has_value(), Error::VerificationCode::InvalidUser, "user not found");
   TC_RETURN(*user);
+}
+
+tc::cotask<User> TrustchainVerifier::getUserByDeviceId(
+    Trustchain::DeviceId const& deviceId) const
+{
+  auto const optUserId = TC_AWAIT(_contacts->findUserIdByDeviceId(deviceId));
+
+  Verif::ensures(optUserId.has_value(),
+                 Error::VerificationCode::InvalidAuthor,
+                 "user id not found");
+
+  return getUser(*optUserId);
 }
 
 Device TrustchainVerifier::getDevice(User const& user,

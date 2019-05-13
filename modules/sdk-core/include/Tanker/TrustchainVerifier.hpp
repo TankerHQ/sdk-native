@@ -53,6 +53,8 @@ private:
 
   tc::cotask<Entry> getAuthor(Crypto::Hash const& authorHash) const;
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
+  tc::cotask<User> getUserByDeviceId(
+      Trustchain::DeviceId const& deviceId) const;
   Device getDevice(User const& user, Crypto::Hash const& deviceHash) const;
   tc::cotask<ExternalGroup> getGroupByEncryptionKey(
       Crypto::PublicEncryptionKey const& recipientPublicEncryprionKey) const;
