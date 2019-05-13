@@ -178,16 +178,11 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
     Trustchain::ServerEntry const& ga) const
 {
-  auto const author = TC_AWAIT(getAuthor(ga.author()));
-
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for userGroupAddition");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(ga.author())));
   auto const& userGroupAddition = ga.action().get<UserGroupAddition>();
   auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId()));
-  auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(user, author.hash);
+  auto const authorDevice = getDevice(user, ga.author());
   Verif::verifyUserGroupAddition(ga, authorDevice, group);
 
   TC_RETURN(toEntry(ga));
