@@ -35,12 +35,6 @@ Entry toEntry(Trustchain::ServerEntry const& se)
   return {
       se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
 }
-
-bool isDeviceCreation(Nature nature)
-{
-  return nature == Nature::DeviceCreation ||
-         nature == Nature::DeviceCreation2 || nature == Nature::DeviceCreation3;
-}
 }
 
 TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
@@ -159,15 +153,11 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
     Trustchain::ServerEntry const& dr) const
 {
-  auto const author = TC_AWAIT(getAuthor(dr.author()));
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dr.author())));
 
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for deviceRevocation");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
   auto const& revocation = dr.action().get<DeviceRevocation>();
-  auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(user, author.hash);
+  auto const authorDevice = getDevice(user, dr.author());
   auto const targetDevice =
       getDevice(user, static_cast<Crypto::Hash>(revocation.deviceId()));
   Verif::verifyDeviceRevocation(dr, authorDevice, targetDevice, user);
