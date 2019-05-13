@@ -14,10 +14,8 @@
 #include <mockaron/mockaron.hpp>
 #include <trompeloeil.hpp>
 
+using namespace Tanker;
 using Tanker::Trustchain::GroupId;
-
-namespace Tanker
-{
 
 namespace
 {
@@ -121,5 +119,4 @@ TEST_CASE("GroupAccessor")
     auto const result = AWAIT(GroupAccessor.pull(groups));
     auto const dexternal = dalton.group.asExternalGroup();
   }
-}
 }

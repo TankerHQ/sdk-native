@@ -7,6 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -14,7 +15,6 @@
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Options.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -26,10 +26,11 @@
 
 using namespace std::string_literals;
 
+using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-namespace Tanker
+namespace
 {
 auto const someUnlockKey = UnlockKey{
     "eyJkZXZpY2VJZCI6IlFySHhqNk9qSURBUmJRVWdBenRmUHZyNFJVZUNRWDRhb1ZTWXJiSzNEa2"
@@ -38,8 +39,6 @@ auto const someUnlockKey = UnlockKey{
     "dMVHZjTkFYQ2FrbFRWcE54Y1ByRjdycStKelhuZ2dleUo1YnR2YUlrWDlURmxMQjdKaU5ObmVo"
     "dXJjZEhRU05xMEgzQlJidz09In0="};
 
-namespace
-{
 void checkUnlockMessage(Trustchain::TrustchainId const& tid,
                         Email const& email,
                         Password const& password,
@@ -189,8 +188,8 @@ TEST_CASE("unlockKey")
     auto newDeviceKeys = DeviceKeys::create();
     auto const validatedDevice = Unlock::createValidatedDevice(
         builder.trustchainId(), alice.userId, gh, newDeviceKeys, ec);
-    auto const validatedDeviceEntry = toVerifiedEntry(blockToServerEntry(
-        Serialization::deserialize<Block>(validatedDevice)));
+    auto const validatedDeviceEntry = toVerifiedEntry(
+        blockToServerEntry(Serialization::deserialize<Block>(validatedDevice)));
     auto const vdc = validatedDeviceEntry.action.get<DeviceCreation>();
     REQUIRE(vdc.holdsAlternative<DeviceCreation::v3>());
     auto const& dc3 = vdc.get<DeviceCreation::v3>();
@@ -210,5 +209,4 @@ TEST_CASE("unlockKey")
     REQUIRE_EQ(gh.deviceId.base(), validatedDeviceEntry.author.base());
     REQUIRE_EQ(false, dc3.isGhostDevice());
   }
-}
 }

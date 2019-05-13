@@ -13,6 +13,7 @@
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/job.hpp>
 
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -48,7 +49,8 @@ public:
       std::vector<Trustchain::UserId> const& extraUsers = {},
       std::vector<Trustchain::GroupId> const& extraGroups = {});
 
-  std::function<tc::cotask<void>(Trustchain::DeviceId const&)> receivedThisDeviceId;
+  std::function<tc::cotask<void>(Trustchain::DeviceId const&)>
+      receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
   std::function<tc::cotask<void>(Entry const&)> userGroupActionReceived;
@@ -74,6 +76,10 @@ private:
   tc::job _pullJob;
 
   tc::cotask<void> catchUp();
+  tc::cotask<std::set<Crypto::Hash>> doInitialProcess(
+      std::vector<Trustchain::ServerEntry> const& entries);
+  tc::cotask<std::set<Crypto::Hash>> doClaimProcess(
+      std::vector<Trustchain::ServerEntry> const& entries);
   tc::cotask<void> verifyAndAddEntry(
       Trustchain::ServerEntry const& serverEntry);
   tc::cotask<void> triggerSignals(Entry const& entry);

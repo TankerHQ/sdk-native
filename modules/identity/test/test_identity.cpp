@@ -20,13 +20,12 @@
 #include <string>
 #include <vector>
 
+using namespace Tanker;
+using namespace Tanker::Identity;
 using Tanker::Trustchain::UserId;
 using namespace std::string_literals;
-namespace Tanker
-{
 using namespace type_literals;
-namespace Identity
-{
+
 namespace
 {
 auto const GOOD_USER_TOKEN =
@@ -375,6 +374,4 @@ TEST_SUITE("userSecretHash")
                                    obfuscatedUserId),
                     std::invalid_argument);
   }
-}
-}
 }

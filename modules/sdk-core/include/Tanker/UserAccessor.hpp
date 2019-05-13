@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Tanker/BasicPullResult.hpp>
+#include <Tanker/Client.hpp>
+#include <Tanker/Identity/PublicProvisionalIdentity.hpp>
+#include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
@@ -21,6 +24,7 @@ public:
   using PullResult = BasicPullResult<User>;
 
   UserAccessor(Trustchain::UserId const& selfUserId,
+               Client* client,
                TrustchainPuller* trustchainPuller,
                ContactStore const* contactStore);
 
@@ -31,6 +35,9 @@ public:
   UserAccessor& operator=(UserAccessor&&) = delete;
 
   tc::cotask<PullResult> pull(gsl::span<Trustchain::UserId const> userIds);
+  tc::cotask<std::vector<PublicProvisionalUser>> pullProvisional(
+      gsl::span<Identity::PublicProvisionalIdentity const>
+          appProvisionalIdentities);
 
 private:
   tc::cotask<void> fetch(gsl::span<Trustchain::UserId const> userIds);
@@ -38,6 +45,7 @@ private:
 private:
   Trustchain::UserId _selfUserId;
 
+  Client* _client;
   TrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
 };

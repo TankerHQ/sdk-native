@@ -16,12 +16,7 @@ namespace Tanker
 namespace Test
 {
 static auto const STRONG_PASSWORD_DO_NOT_LEAK = Password("********");
-#ifdef __linux__
-// mount a tmpfs there and you will go 10s faster
-static auto const TMP_PATH = "/tmp/tankertest";
-#else
-static auto const TMP_PATH = "tmptest";
-#endif
+static auto const TMP_PATH = "testtmp";
 
 namespace
 {

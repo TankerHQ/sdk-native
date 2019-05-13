@@ -293,6 +293,17 @@ Tanker::SecretProvisionalUser TrustchainBuilder::makeProvisionalUser(
   };
 }
 
+Tanker::PublicProvisionalUser TrustchainBuilder::toPublicProvisionalUser(
+    Tanker::SecretProvisionalUser const& u) const
+{
+  return Tanker::PublicProvisionalUser{
+      u.appSignatureKeyPair.publicKey,
+      u.appEncryptionKeyPair.publicKey,
+      u.tankerSignatureKeyPair.publicKey,
+      u.tankerEncryptionKeyPair.publicKey,
+  };
+}
+
 ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     std::string const& suserId,
     Tanker::SecretProvisionalUser const& provisionalUser,
