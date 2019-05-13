@@ -191,15 +191,10 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
     Trustchain::ServerEntry const& gc) const
 {
-  auto const author = TC_AWAIT(getAuthor(gc.author()));
-
-  Verif::ensures(isDeviceCreation(author.nature),
-                 Error::VerificationCode::InvalidAuthor,
-                 "Invalid author nature for userGroupCreation");
-  auto const& authorDeviceCreation = author.action.get<DeviceCreation>();
+  auto const user =
+      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(gc.author())));
   auto const& userGroupCreation = gc.action().get<UserGroupCreation>();
-  auto const user = TC_AWAIT(getUser(authorDeviceCreation.userId()));
-  auto const authorDevice = getDevice(user, author.hash);
+  auto const authorDevice = getDevice(user, gc.author());
 
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
       userGroupCreation.publicEncryptionKey()));
