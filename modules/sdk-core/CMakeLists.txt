@@ -14,11 +14,13 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
     include/Tanker/DbModels/Groups.hpp
+    include/Tanker/DbModels/KeyPublishes.hpp
     include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
     include/Tanker/DbModels/Trustchain.hpp
     include/Tanker/DbModels/TrustchainIndexes.hpp
+    include/Tanker/DbModels/TrustchainLastIndex.hpp
     include/Tanker/DbModels/UserKeys.hpp
     include/Tanker/DbModels/Versions.hpp
 
@@ -29,11 +31,13 @@ if (NOT EMSCRIPTEN)
     src/DbModels/ContactUserKeys.cpp
     src/DbModels/DeviceKeyStore.cpp
     src/DbModels/Groups.cpp
+    src/DbModels/KeyPublishes.cpp
     src/DbModels/ResourceIdToKeyPublish.cpp
     src/DbModels/ResourceKeys.cpp
     src/DbModels/ProvisionalUserKeys.cpp
     src/DbModels/Trustchain.cpp
     src/DbModels/TrustchainIndexes.cpp
+    src/DbModels/TrustchainLastIndex.cpp
     src/DbModels/UserKeys.cpp
     src/DbModels/Versions.cpp
   )
@@ -92,6 +96,7 @@ add_library(tankercore STATIC
   include/Tanker/RecipientNotFound.hpp
   include/Tanker/GroupNotFound.hpp
   include/Tanker/Index.hpp
+  include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/Preregistration.hpp
   include/Tanker/Groups/Group.hpp
@@ -167,6 +172,7 @@ add_library(tankercore STATIC
   src/IdentityUtils.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
+  src/KeyPublishStore.cpp
   src/Preregistration.cpp
   src/ProvisionalUserKeysStore.cpp
   src/Groups/Group.cpp

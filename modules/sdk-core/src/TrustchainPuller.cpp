@@ -102,6 +102,10 @@ tc::cotask<void> TrustchainPuller::catchUp()
           return blockToServerEntry(Serialization::deserialize<Block>(
               cppcodec::base64_rfc4648::decode(block)));
         });
+    std::sort(
+        entries.begin(), entries.end(), [](auto const& lhs, auto const& rhs) {
+          return lhs.index() < rhs.index();
+        });
 
     TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
       std::set<Crypto::Hash> processed;
@@ -300,6 +304,8 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       if (kpd->recipient() == _deviceId)
         TC_AWAIT(receivedKeyToDevice(entry));
     }
+    else
+      TC_AWAIT(keyPublishReceived(entry));
   }
   if (entry.action.holdsAlternative<UserGroupCreation>() ||
       entry.action.holdsAlternative<UserGroupAddition>())

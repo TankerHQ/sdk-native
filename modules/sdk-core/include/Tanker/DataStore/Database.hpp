@@ -28,20 +28,20 @@ public:
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
   getUserOptLastKeyPair() override;
 
-  tc::cotask<uint64_t> getTrustchainLastIndex() override;
+  tc::cotask<nonstd::optional<uint64_t>> findTrustchainLastIndex() override;
+  tc::cotask<void> setTrustchainLastIndex(uint64_t) override;
   tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;
-  tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Trustchain::ResourceId const& resourceId) override;
-  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      Trustchain::UserId const& userId) override;
-  tc::cotask<Entry> getTrustchainDevice(
-      Trustchain::DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
+
+  tc::cotask<void> putKeyPublishes(
+      gsl::span<Trustchain::Actions::KeyPublish const>) override;
+  tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>> findKeyPublish(
+      Trustchain::ResourceId const&) override;
 
   tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
       Trustchain::UserId const& userId) override;

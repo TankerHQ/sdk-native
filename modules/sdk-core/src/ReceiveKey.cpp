@@ -140,9 +140,9 @@ tc::cotask<void> decryptAndStoreKey(
     UserKeyStore const& userKeyStore,
     GroupStore const& groupStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry)
+    KeyPublish const& kp)
 {
-  entry.action.get<KeyPublish>().visit([&](auto const& val) {
+  kp.visit([&](auto const& val) {
     decryptAndStoreKey(resourceKeyStore,
                        userKeyStore,
                        groupStore,

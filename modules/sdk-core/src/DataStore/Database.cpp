@@ -8,11 +8,13 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
+#include <Tanker/DbModels/KeyPublishes.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
+#include <Tanker/DbModels/TrustchainLastIndex.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
@@ -37,6 +39,7 @@
 #include <sqlpp11/sqlite3/insert_or.h>
 #include <sqlpp11/verbatim.h>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <memory>
@@ -70,6 +73,60 @@ struct MakeIndexesVisitor
   std::vector<Index> operator()(T) const
   {
     return {};
+  }
+};
+
+struct KeyPublishKeyVisitor
+{
+  template <typename T>
+  std::vector<std::uint8_t> operator()(T const& kp) const
+  {
+    auto const& key = kp.sealedSymmetricKey();
+    return {key.begin(), key.end()};
+  }
+
+  std::vector<std::uint8_t> operator()(
+      KeyPublish::ToProvisionalUser const& kp) const
+  {
+    auto const& key = kp.twoTimesSealedSymmetricKey();
+    return {key.begin(), key.end()};
+  }
+
+  std::vector<std::uint8_t> operator()(KeyPublish::ToDevice const& kp) const
+  {
+    auto const& key = kp.encryptedSymmetricKey();
+    return {key.begin(), key.end()};
+  }
+};
+
+struct KeyPublishRecipientVisitor
+{
+  template <typename T>
+  std::vector<std::uint8_t> operator()(T const& kp) const
+  {
+    auto const& recipient = kp.recipientPublicEncryptionKey();
+    return {recipient.begin(), recipient.end()};
+  }
+
+  std::vector<std::uint8_t> operator()(
+      KeyPublish::ToProvisionalUser const& kp) const
+  {
+    std::vector<std::uint8_t> buffer(Crypto::PublicSignatureKey::arraySize * 2);
+
+    auto const& appPublicSignatureKey = kp.appPublicSignatureKey();
+    auto const& tankerPublicSignatureKey = kp.tankerPublicSignatureKey();
+    auto it = std::copy(appPublicSignatureKey.begin(),
+                        appPublicSignatureKey.end(),
+                        buffer.data());
+    std::copy(
+        tankerPublicSignatureKey.begin(), tankerPublicSignatureKey.end(), it);
+    return buffer;
+  }
+
+  std::vector<std::uint8_t> operator()(KeyPublish::ToDevice const& kp) const
+  {
+    auto const& recipient = kp.recipient();
+    return {recipient.begin(), recipient.end()};
   }
 };
 
@@ -143,11 +200,52 @@ ExternalGroup rowToExternalGroup(T const& row)
       // sqlpp uses int64_t
       static_cast<uint64_t>(row.last_group_block_index)};
 }
+
+template <typename T>
+KeyPublish rowToKeyPublish(T const& row)
+{
+  auto const resourceId = DataStore::extractBlob<ResourceId>(row.resource_id);
+  switch (static_cast<Nature>(static_cast<unsigned>(row.nature)))
+  {
+    case Nature::KeyPublishToUser:
+      return KeyPublish::ToUser{
+          DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
+          resourceId,
+          DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
+    case Nature::KeyPublishToUserGroup:
+      return KeyPublish::ToUserGroup{
+          DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
+          resourceId,
+          DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
+    case Nature::KeyPublishToDevice:
+      return KeyPublish::ToDevice{
+          DataStore::extractBlob<DeviceId>(row.recipient),
+          resourceId,
+          DataStore::extractBlob<Crypto::EncryptedSymmetricKey>(row.key)};
+    case Nature::KeyPublishToProvisionalUser:
+    {
+      auto const sp = DataStore::extractBlob(row.recipient);
+      return KeyPublish::ToProvisionalUser{
+          Crypto::PublicSignatureKey{
+              sp.subspan(0, Crypto::PublicSignatureKey::arraySize)},
+          resourceId,
+          Crypto::PublicSignatureKey{
+              sp.subspan(Crypto::PublicSignatureKey::arraySize)},
+          DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
+    }
+    default:
+      assert(false && "Unreachable code. Invalid nature for KeyPublish");
+      throw std::runtime_error{
+          "Unreachable code. Invalid nature for KeyPublish"};
+  }
+}
 }
 
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainTable = DbModels::trustchain::trustchain;
 using TrustchainIndexesTable = DbModels::trustchain_indexes::trustchain_indexes;
+using TrustchainLastIndexTable =
+    DbModels::trustchain_last_index::trustchain_last_index;
 using TrustchainResourceIdToKeyPublishTable =
     DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
@@ -157,6 +255,7 @@ using ProvisionalUserKeys =
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
+using KeyPublishesTable = DbModels::key_publishes::key_publishes;
 
 Database::Database(std::string const& dbPath,
                    nonstd::optional<Crypto::SymmetricKey> const& userSecret,
@@ -173,6 +272,8 @@ Database::Database(std::string const& dbPath,
   DataStore::createOrMigrateTable<DeviceKeysTable>(*_db);
   DataStore::createOrMigrateTable<ContactDevicesTable>(*_db);
   DataStore::createOrMigrateTable<GroupsTable>(*_db);
+  DataStore::createOrMigrateTable<KeyPublishesTable>(*_db);
+  DataStore::createOrMigrateTable<TrustchainLastIndexTable>(*_db);
 
   if (isMigrationNeeded())
   {
@@ -214,12 +315,14 @@ void Database::flushAllCaches()
   flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
   flushTable(TrustchainIndexesTable{});
+  flushTable(TrustchainLastIndexTable{});
   flushTable(TrustchainResourceIdToKeyPublishTable{});
   flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeys{});
   flushTable(GroupsTable{});
+  flushTable(KeyPublishesTable{});
 }
 
 tc::cotask<void> Database::nuke()
@@ -311,12 +414,24 @@ Database::getUserOptLastKeyPair()
            row.private_encryption_key)}}));
 }
 
-tc::cotask<uint64_t> Database::getTrustchainLastIndex()
+tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
 {
   FUNC_TIMER(DB);
-  TrustchainTable tab{};
-  TC_RETURN(
-      (*_db)(select(max(tab.idx)).from(tab).unconditionally()).front().max);
+  TrustchainLastIndexTable tab{};
+
+  auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  TC_RETURN(rows.front().last_index);
+}
+
+tc::cotask<void> Database::setTrustchainLastIndex(uint64_t index)
+{
+  FUNC_TIMER(DB);
+  TrustchainLastIndexTable tab{};
+  (*_db)(
+      sqlpp::sqlite3::insert_or_replace_into(tab).set(tab.last_index = index));
+  TC_RETURN();
 }
 
 tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
@@ -373,82 +488,6 @@ tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Entry>> Database::findTrustchainKeyPublish(
-    ResourceId const& resourceId)
-{
-  FUNC_TIMER(DB);
-  TrustchainResourceIdToKeyPublishTable tab_index;
-  TrustchainTable tab_trustchain{};
-  auto rows = (*_db)(select(tab_trustchain.idx,
-                            tab_trustchain.author,
-                            tab_trustchain.nature,
-                            tab_trustchain.action,
-                            tab_trustchain.hash)
-                         .from(tab_index.join(tab_trustchain)
-                                   .on(tab_index.hash == tab_trustchain.hash))
-                         .where(tab_index.resource_id == resourceId.base()));
-
-  if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(rowToEntry(rows.front()));
-}
-
-tc::cotask<std::vector<Entry>> Database::getTrustchainDevicesOf(
-    UserId const& userId)
-{
-  FUNC_TIMER(DB);
-  TrustchainIndexesTable tab_index;
-  TrustchainTable tab_trustchain;
-  auto rows = (*_db)(
-      select(tab_trustchain.idx,
-             tab_trustchain.author,
-             tab_trustchain.nature,
-             tab_trustchain.action,
-             tab_trustchain.hash)
-          .from(tab_index.join(tab_trustchain)
-                    .on(tab_index.hash == tab_trustchain.hash))
-          .where(tab_index.type == static_cast<unsigned>(IndexType::UserId) and
-                 tab_index.value == userId.base())
-          .order_by(tab_trustchain.idx.asc()));
-
-  std::vector<Entry> ret;
-  if (rows.empty())
-    TC_RETURN(ret);
-
-  for (auto const& row : rows)
-    ret.push_back(rowToEntry(row));
-  TC_RETURN(ret);
-}
-
-tc::cotask<Entry> Database::getTrustchainDevice(
-    Trustchain::DeviceId const& deviceId)
-{
-  FUNC_TIMER(DB);
-  TrustchainTable tab_trustchain;
-  auto rows = (*_db)(select(tab_trustchain.idx,
-                            tab_trustchain.author,
-                            tab_trustchain.nature,
-                            tab_trustchain.action,
-                            tab_trustchain.hash)
-                         .from(tab_trustchain)
-                         .where(tab_trustchain.hash == deviceId.base()));
-  if (rows.empty())
-    throw Error::formatEx<RecordNotFound>(
-        fmt("couldn't find block with hash {:s}"), deviceId);
-  auto const& row = *rows.begin();
-
-  auto const entry = rowToEntry(row);
-
-  if (!entry.action.holdsAlternative<DeviceCreation>())
-  {
-    throw Error::formatEx<RecordNotFound>(
-        fmt("the block {:s} is not a device creation"), entry.hash);
-  }
-
-  TC_RETURN(entry);
-}
-
 tc::cotask<void> Database::putContact(
     UserId const& userId,
     nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
@@ -470,6 +509,38 @@ tc::cotask<void> Database::putContact(
                                 tab.public_encryption_key = sqlpp::null));
   }
   TC_RETURN();
+}
+
+tc::cotask<void> Database::putKeyPublishes(
+    gsl::span<Trustchain::Actions::KeyPublish const> kps)
+{
+  FUNC_TIMER(DB);
+  KeyPublishesTable tab{};
+  for (auto const& elem : kps)
+  {
+    (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
+        tab.nature = static_cast<int>(elem.nature()),
+        tab.resource_id = elem.resourceId().base(),
+        tab.recipient = elem.visit(KeyPublishRecipientVisitor{}),
+        tab.key = elem.visit(KeyPublishKeyVisitor{})));
+  }
+  TC_RETURN();
+}
+
+tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>>
+Database::findKeyPublish(Trustchain::ResourceId const& resourceId)
+{
+  FUNC_TIMER(DB);
+  KeyPublishesTable tab{};
+
+  auto rows = (*_db)(select(all_of(tab))
+                         .from(tab)
+                         .where(tab.resource_id == resourceId.base()));
+
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = *rows.begin();
+  TC_RETURN(rowToKeyPublish(row));
 }
 
 tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
