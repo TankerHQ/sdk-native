@@ -311,10 +311,17 @@ bool Database::isMigrationNeeded()
     auto const& row = *rows.begin();
     return int(row.count);
   }();
+  auto const isTrustchainKeySet = [&] {
+    TrustchainInfoTable tab{};
+    auto rows = (*_db)(select(tab.trustchain_public_signature_key)
+                           .from(tab)
+                           .unconditionally());
+    return !rows.front().trustchain_public_signature_key.is_null();
+  }();
 
   // if there are blocks in the trustchain table but there are no devices (even
   // ours), it means that we must migrate
-  return deviceCount == 0 && blockCount > 0;
+  return (!isTrustchainKeySet || deviceCount == 0) && blockCount > 0;
 }
 
 void Database::flushAllCaches()
@@ -336,12 +343,21 @@ void Database::flushAllCaches()
   flushTable(ProvisionalUserKeys{});
   flushTable(GroupsTable{});
   flushTable(KeyPublishesTable{});
+  flushTable(GroupsProvisionalUsersTable{});
 
-  TrustchainInfoTable tab{};
-  (*_db)(update(tab)
-             .set(tab.last_index = 0,
-                  tab.trustchain_public_signature_key = sqlpp::null)
-             .unconditionally());
+  {
+    TrustchainInfoTable tab{};
+    (*_db)(update(tab)
+               .set(tab.last_index = 0,
+                    tab.trustchain_public_signature_key = sqlpp::null)
+               .unconditionally());
+  }
+
+  {
+    DeviceKeysTable tab{};
+    (*_db)(
+        update(tab).set(tab.device_id = DeviceId{}.base()).unconditionally());
+  }
 }
 
 tc::cotask<void> Database::nuke()
@@ -474,7 +490,9 @@ tc::cotask<void> Database::setTrustchainPublicSignatureKey(
 {
   FUNC_TIMER(DB);
   TrustchainInfoTable tab{};
-  (*_db)(update(tab).set(tab.trustchain_public_signature_key = key.base()).unconditionally());
+  (*_db)(update(tab)
+             .set(tab.trustchain_public_signature_key = key.base())
+             .unconditionally());
   TC_RETURN();
 }
 
