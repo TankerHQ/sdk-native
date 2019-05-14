@@ -344,12 +344,12 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
 
 namespace
 {
-UserGroupCreation1::SealedPrivateEncryptionKeysForUsers
+UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers
 generateGroupKeysForUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<TrustchainBuilder::User> const& users)
 {
-  UserGroupCreation1::SealedPrivateEncryptionKeysForUsers keysForUsers;
+  UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers keysForUsers;
   for (auto const& user : users)
   {
     if (user.userKeys.empty())
@@ -421,7 +421,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 
   auto const encryptedPrivateSignatureKey = entry.action()
                                                 .get<UserGroupCreation>()
-                                                .get<UserGroupCreation1>()
+                                                .get<UserGroupCreation::v1>()
                                                 .sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 
@@ -474,7 +474,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
 
   auto const encryptedPrivateSignatureKey = entry.action()
                                                 .get<UserGroupCreation>()
-                                                .get<UserGroupCreation2>()
+                                                .get<UserGroupCreation::v2>()
                                                 .sealedPrivateSignatureKey();
   Group group{tgroup, encryptedPrivateSignatureKey, members};
 

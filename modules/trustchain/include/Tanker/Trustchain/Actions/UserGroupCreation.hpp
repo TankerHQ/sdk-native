@@ -38,6 +38,9 @@ class UserGroupCreation
       (selfSignature, Crypto::Signature))
 
 public:
+  using v1 = UserGroupCreation1;
+  using v2 = UserGroupCreation2;
+
   Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;
   Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);

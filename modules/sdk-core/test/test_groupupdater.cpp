@@ -152,7 +152,7 @@ void testUserGroupAdditionCommon(
 }
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation1")
+TEST_CASE("GroupUpdater UserGroupCreation::v1")
 {
   testUserGroupCreationCommon(
       [](TrustchainBuilder& builder,
@@ -162,7 +162,7 @@ TEST_CASE("GroupUpdater UserGroupCreation1")
       });
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation2")
+TEST_CASE("GroupUpdater UserGroupCreation::v2")
 {
   SUBCASE("Common checks")
   {

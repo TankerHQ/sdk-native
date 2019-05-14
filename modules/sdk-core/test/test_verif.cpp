@@ -840,7 +840,7 @@ TEST_CASE("Verif UserGroupCreation")
   testUserGroupCreationCommon(authorDevice, gcEntry);
 }
 
-TEST_CASE("Verif UserGroupCreation2")
+TEST_CASE("Verif UserGroupCreation::v2")
 {
   TrustchainBuilder builder;
 

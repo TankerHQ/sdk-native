@@ -55,11 +55,11 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
 
 namespace
 {
-UserGroupCreation2::Members generateGroupKeysForUsers2(
+UserGroupCreation::v2::Members generateGroupKeysForUsers2(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<User> const& users)
 {
-  UserGroupCreation2::Members keysForUsers;
+  UserGroupCreation::v2::Members keysForUsers;
   for (auto const& user : users)
   {
     if (!user.userKey)
@@ -75,12 +75,12 @@ UserGroupCreation2::Members generateGroupKeysForUsers2(
   return keysForUsers;
 }
 
-UserGroupCreation2::ProvisionalMembers
+UserGroupCreation::v2::ProvisionalMembers
 generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<PublicProvisionalUser> const& users)
 {
-  UserGroupCreation2::ProvisionalMembers keysForUsers;
+  UserGroupCreation::v2::ProvisionalMembers keysForUsers;
   for (auto const& user : users)
   {
     auto const encryptedKeyOnce = Crypto::sealEncrypt(

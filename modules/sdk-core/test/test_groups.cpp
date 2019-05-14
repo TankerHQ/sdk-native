@@ -67,7 +67,7 @@ TEST_CASE("Can create a group with two users")
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
   auto group =
-      entry.action().get<UserGroupCreation>().get<UserGroupCreation2>();
+      entry.action().get<UserGroupCreation>().get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -119,7 +119,7 @@ TEST_CASE("Can create a group with two provisional users")
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   auto entry = blockToServerEntry(block);
   auto group =
-      entry.action().get<UserGroupCreation>().get<UserGroupCreation2>();
+      entry.action().get<UserGroupCreation>().get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);

@@ -21,7 +21,7 @@ namespace
 {
 tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     UserKeyStore const& userKeyStore,
-    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
+    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
@@ -40,7 +40,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
 tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    UserGroupCreation2::Members const& groupKeys)
+    UserGroupCreation::v2::Members const& groupKeys)
 {
   auto const myKeysIt =
       std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
@@ -65,7 +65,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
 tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>>
 decryptMyProvisionalKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    UserGroupCreation2::ProvisionalMembers const& groupKeys)
+    UserGroupCreation::v2::ProvisionalMembers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
@@ -164,10 +164,10 @@ tc::cotask<void> applyUserGroupCreation(
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
   nonstd::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation1>())
+  if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation::v1>())
     groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
         userKeyStore, ugc1->sealedPrivateEncryptionKeysForUsers()));
-  else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation2>())
+  else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation::v2>())
   {
     groupPrivateEncryptionKey = TC_AWAIT(
         decryptMyKey(myUserId, userKeyStore, ugc2->userGroupMembers()));

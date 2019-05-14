@@ -258,14 +258,14 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
 std::vector<uint8_t> BlockGenerator::userGroupCreation(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    UserGroupCreation1::SealedPrivateEncryptionKeysForUsers const&
+    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const&
         sealedPrivateEncryptionKeysForUsers) const
 {
   auto const encryptedPrivateSignatureKey =
       Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
           signatureKeyPair.privateKey, publicEncryptionKey);
 
-  UserGroupCreation1 ugc{signatureKeyPair.publicKey,
+  UserGroupCreation::v1 ugc{signatureKeyPair.publicKey,
                          publicEncryptionKey,
                          encryptedPrivateSignatureKey,
                          sealedPrivateEncryptionKeysForUsers};
@@ -281,15 +281,15 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
 std::vector<uint8_t> BlockGenerator::userGroupCreation2(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    UserGroupCreation2::Members const& groupMembers,
-    UserGroupCreation2::ProvisionalMembers const&
+    UserGroupCreation::v2::Members const& groupMembers,
+    UserGroupCreation::v2::ProvisionalMembers const&
         groupProvisionalMembers) const
 {
   auto const encryptedPrivateSignatureKey =
       Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
           signatureKeyPair.privateKey, publicEncryptionKey);
 
-  UserGroupCreation2 ugc{signatureKeyPair.publicKey,
+  UserGroupCreation::v2 ugc{signatureKeyPair.publicKey,
                          publicEncryptionKey,
                          encryptedPrivateSignatureKey,
                          groupMembers,
