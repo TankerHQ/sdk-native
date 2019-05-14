@@ -18,12 +18,13 @@ static const char USAGE[] = R"(compat cli
     compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
 
   Commands:
-    encrypt                         simple encrypt decrypt with a user
-    group                           simple encrypt decrypt with a group
-    unlock                          signup then unlock
-    preshare-and-claim              encrypt then create a new user to claim and decrypt
-    decrypt-old-claim               claim and decrypt an old preshare resource
-    provisional-user-group-claim     share to a group with provisional user and claim and decrypt
+    encrypt                   simple encrypt decrypt with a user
+    group                     simple encrypt decrypt with a group
+    unlock                    signup then unlock
+    preshare-and-claim        encrypt then create a new user to claim and decrypt
+    decrypt-old-claim         claim and decrypt an old preshare resource
+    provisional-user-group-claim         share to a group with provisional user and claim and decrypt
+    provisional-user-group-old-claim     share to a group with provisional user and decrypt an old preshare resource
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
@@ -53,6 +54,9 @@ auto getRunner = [](std::string const& command,
         trustchain, std::move(tankerPath), std::move(statePath));
   else if (command == "provisional-user-group-claim")
     return std::make_unique<ProvisionalUserGroupClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "provisional-user-group-old-claim")
+    return std::make_unique<ProvisionalUserGroupOldClaim>(
         trustchain, std::move(tankerPath), std::move(statePath));
   else
     throw std::runtime_error("not implemented");

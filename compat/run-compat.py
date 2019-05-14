@@ -16,6 +16,7 @@ TESTS = {
         "preshare-and-claim",
         "decrypt-old-claim",
         "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
     ],
 }
 
