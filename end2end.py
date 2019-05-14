@@ -22,7 +22,7 @@ def use_packaged_tanker(src_path: Path,  profile: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
-    parser.add_argument("--create-tanker-dev", action="store_true", dest="create_tanker_dev", default=False)
+    parser.add_argument("--export-tanker-dev", action="store_true", dest="export_tanker_dev", default=False)
     parser.add_argument("--profile", required=True)
     parser.add_argument("--use-local-sources", action="store_true", default=False)
 
@@ -32,7 +32,7 @@ def main() -> None:
 
     ci.cpp.update_conan_config()
 
-    if args.create_tanker_dev:
+    if args.export_tanker_dev:
         export_tanker_dev(Path.getcwd())
     else:
         use_packaged_tanker(Path.getcwd(), args.profile)

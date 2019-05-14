@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Command.hpp"
+#include "States.hpp"
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -52,53 +53,6 @@ tc::future<Tanker::VerificationCode> getVerificationCode(
     auto tf = TC_AWAIT(TrustchainFactory::create());
     TC_RETURN(TC_AWAIT(tf->getVerificationCode(id, email)));
   });
-}
-
-struct EncryptState
-{
-  std::string clearData;
-  std::vector<uint8_t> encryptedData;
-};
-
-void to_json(nlohmann::json& j, EncryptState const& state)
-{
-  j["clear_data"] = state.clearData;
-  j["encrypted_data"] = cppcodec::base64_rfc4648::encode(state.encryptedData);
-}
-
-void from_json(nlohmann::json const& j, EncryptState& state)
-{
-  j.at("clear_data").get_to(state.clearData);
-  auto const str = j.at("encrypted_data").get<std::string>();
-  state.encryptedData =
-      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(str);
-}
-
-struct ShareState
-{
-  User alice;
-  User bob;
-  nonstd::optional<Tanker::SGroupId> groupId;
-  EncryptState encryptState;
-};
-
-void to_json(nlohmann::json& j, ShareState const& state)
-{
-  j["alice"] = state.alice;
-  j["bob"] = state.bob;
-  if (state.groupId)
-    j["group"] = state.groupId.value();
-  j["encrypt_state"] = state.encryptState;
-}
-
-void from_json(nlohmann::json const& j, ShareState& state)
-{
-  j.at("alice").get_to(state.alice);
-  j.at("bob").get_to(state.bob);
-  auto group = j.find("group");
-  if (group != j.end())
-    state.groupId = group->get<Tanker::SGroupId>();
-  state.encryptState = j.at("encrypt_state").get<EncryptState>();
 }
 
 void decrypt(CorePtr const& core,
@@ -176,7 +130,7 @@ struct EncryptCompat : Command
 
   void next() override
   {
-    ShareState state = Tanker::loadJson(statePath).get<ShareState>();
+    auto const state = Tanker::loadJson(statePath).get<ShareState>();
 
     auto alice = upgradeToIdentity(trustchain.id, state.alice);
     auto bob = upgradeToIdentity(trustchain.id, state.bob);
