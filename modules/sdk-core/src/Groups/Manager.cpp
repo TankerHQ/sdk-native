@@ -104,12 +104,13 @@ std::vector<uint8_t> generateCreateGroupBlock(
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey)
 {
-  if (memberUsers.size() + memberProvisionalUsers.size() == 0)
+  auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
+  if (groupSize == 0)
     throw Error::InvalidGroupSize("Cannot create an empty group");
-  else if (memberUsers.size() + memberProvisionalUsers.size() > MAX_GROUP_SIZE)
+  else if (groupSize > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot create group with {:d} members, max is {:d}"),
-        memberUsers.size() + memberProvisionalUsers.size(),
+        groupSize,
         MAX_GROUP_SIZE);
 
   return blockGenerator.userGroupCreation2(
@@ -148,12 +149,13 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
     BlockGenerator const& blockGenerator,
     Group const& group)
 {
-  if (memberUsers.size() + memberProvisionalUsers.size() == 0)
+  auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
+  if (groupSize == 0)
     throw Error::InvalidGroupSize("Adding 0 members to a group is an error");
-  else if (memberUsers.size() + memberProvisionalUsers.size() > MAX_GROUP_SIZE)
+  else if (groupSize > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
         fmt("Cannot add {:d} members to a group, max is {:d}"),
-        memberUsers.size() + memberProvisionalUsers.size(),
+        groupSize,
         MAX_GROUP_SIZE);
 
   return blockGenerator.userGroupAddition2(
