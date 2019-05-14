@@ -104,6 +104,14 @@ std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
   return {};
 }
 
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    UserGroupAddition const& g)
+{
+  if (auto const g2 = g.get_if<UserGroupAddition::v2>())
+    return extractGroupProvisionalUsers(g2->provisionalMembers());
+  return {};
+}
+
 tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   Entry const& entry,
                                   UserGroupCreation const& userGroupCreation)
@@ -236,11 +244,18 @@ tc::cotask<void> applyUserGroupAddition(
           provisionalUserKeysStore, uga2->provisionalMembers()));
   }
 
-  if (!groupPrivateEncryptionKey)
-    TC_RETURN();
   // I am already member of this group, ignore
   if (!previousGroup->encryptedPrivateSignatureKey)
     TC_RETURN();
+  // I am still not part of this group, store provisional members for maybe
+  // future use
+  if (!groupPrivateEncryptionKey)
+  {
+    TC_AWAIT(groupStore.putGroupProvisionalEncryptionKeys(
+        userGroupAddition.groupId(),
+        extractGroupProvisionalUsers(userGroupAddition)));
+    TC_RETURN();
+  }
 
   TC_AWAIT(putFullGroup(
       groupStore, *previousGroup, *groupPrivateEncryptionKey, entry));

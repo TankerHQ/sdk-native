@@ -279,6 +279,41 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
         builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
                                                  aliceDb.get());
 
+    SUBCASE("keeps the provisional members of a group addition without me")
+    {
+      auto const aliceTempDb = AWAIT(DataStore::createDatabase(":memory:"));
+      auto const emptyProvisionalKeyStore =
+          builder.makeProvisionalUserKeysStoreWith({}, aliceTempDb.get());
+
+      auto const bobGroup =
+          builder.makeGroup2(bob.user.devices[0], {bob.user}, {});
+      AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
+                                          aliceGroupStore,
+                                          *aliceKeyStore,
+                                          *emptyProvisionalKeyStore,
+                                          toVerifiedEntry(bobGroup.entry)));
+
+      auto const updatedGroup =
+          builder.addUserToGroup2(bob.user.devices[0],
+                                  bobGroup.group,
+                                  {},
+                                  {aliceProvisionalUser.publicProvisionalUser});
+      AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
+                                          aliceGroupStore,
+                                          *aliceKeyStore,
+                                          *emptyProvisionalKeyStore,
+                                          toVerifiedEntry(updatedGroup.entry)));
+
+      auto const externalGroup =
+          AWAIT(aliceGroupStore.findExternalById(bobGroup.group.tankerGroup.id))
+              .value();
+
+      REQUIRE_EQ(externalGroup.provisionalUsers.size(), 1);
+      CHECK_EQ(
+          externalGroup.provisionalUsers[0].appPublicSignatureKey(),
+          aliceProvisionalUser.publicProvisionalUser.appSignaturePublicKey);
+    }
+
     SUBCASE(
         "Alice sees herself being added to Bob's group as a provisional user")
     {
