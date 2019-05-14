@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Entry.hpp>
+#include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -12,6 +13,7 @@ namespace Preregistration
 {
 tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
                             ProvisionalUserKeysStore& provisionalUserKeysStore,
+                            GroupStore& groupStore,
                             Entry const& entry);
 }
 }

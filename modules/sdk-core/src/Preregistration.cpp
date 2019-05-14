@@ -1,8 +1,13 @@
 #include <Tanker/Preregistration.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Groups/GroupUpdater.hpp>
+#include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+
+TLOG_CATEGORY("Preregistration");
 
 using Tanker::Trustchain::Actions::ProvisionalIdentityClaim;
 
@@ -54,13 +59,47 @@ tc::cotask<SecretProvisionalUserToStore> extractKeysToStore(
       appEncryptionKeyPair,
       tankerEncryptionKeyPair}));
 }
+
+tc::cotask<void> decryptPendingGroups(
+    GroupStore& groupStore, SecretProvisionalUserToStore const& toStore)
+{
+  auto const pendingGroups =
+      TC_AWAIT(groupStore.findExternalGroupsByProvisionalUser(
+          toStore.appSignaturePublicKey, toStore.tankerSignaturePublicKey));
+
+  for (auto const& pendingGroup : pendingGroups)
+  {
+    if (pendingGroup.provisionalUsers.size() != 1)
+      throw std::runtime_error(
+          "assertion failure: the group returned by "
+          "findExternalGroupsByProvisionalUser should "
+          "only contain the provisional user it was requested with");
+
+    TINFO("Decrypting group key for group {} with claim {} {}",
+          pendingGroup.id,
+          toStore.appSignaturePublicKey,
+          toStore.tankerSignaturePublicKey);
+
+    auto const groupPrivateEncryptionKey =
+        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+            Crypto::sealDecrypt(pendingGroup.provisionalUsers.front()
+                                    .encryptedPrivateEncryptionKey(),
+                                toStore.tankerEncryptionKeyPair),
+            toStore.appEncryptionKeyPair);
+    TC_AWAIT(GroupUpdater::applyGroupPrivateKey(
+        groupStore, pendingGroup, groupPrivateEncryptionKey));
+  }
+}
 }
 
 tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
                             ProvisionalUserKeysStore& provisionalUserKeysStore,
+                            GroupStore& groupStore,
                             Entry const& entry)
 {
   auto const toStore = TC_AWAIT(extractKeysToStore(userKeyStore, entry));
+
+  TC_AWAIT(decryptPendingGroups(groupStore, toStore));
 
   TC_AWAIT(provisionalUserKeysStore.putProvisionalUserKeys(
       toStore.appSignaturePublicKey,

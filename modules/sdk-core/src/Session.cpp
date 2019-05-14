@@ -552,7 +552,7 @@ tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 {
   TC_AWAIT(Preregistration::applyEntry(
-      _userKeyStore, _provisionalUserKeysStore, entry));
+      _userKeyStore, _provisionalUserKeysStore, _groupStore, entry));
 }
 
 tc::cotask<void> Session::onKeyPublishReceived(Entry const& entry)
