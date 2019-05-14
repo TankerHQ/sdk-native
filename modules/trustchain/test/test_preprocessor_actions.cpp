@@ -32,7 +32,7 @@ bool operator==(CustomType const& lhs, CustomType const& rhs)
 
 class PreprocessorTest
 {
-  TANKER_TRUSTCHAIN_ACTION_IMPLEMENTATION(PreprocessorTest,
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(PreprocessorTest,
                                           (string, std::string),
                                           (vector, std::vector<char>),
                                           (custom, CustomType))

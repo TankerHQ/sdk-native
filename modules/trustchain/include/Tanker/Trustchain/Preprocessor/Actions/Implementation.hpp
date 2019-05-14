@@ -60,5 +60,5 @@ protected:                                                                   \
     return !(lhs == rhs);                                                    \
   }
 
-#define TANKER_TRUSTCHAIN_ACTION_IMPLEMENTATION(name, ...) \
+#define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(name, ...) \
   TANKER_DETAIL_DEFINE_ACTION(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))

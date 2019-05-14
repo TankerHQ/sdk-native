@@ -30,7 +30,7 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
-  TANKER_TRUSTCHAIN_ACTION_IMPLEMENTATION(
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
       UserGroupCreation1,
       (publicSignatureKey, Crypto::PublicSignatureKey),
       (publicEncryptionKey, Crypto::PublicEncryptionKey),
