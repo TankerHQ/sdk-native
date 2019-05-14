@@ -8,6 +8,9 @@
 
 #include <tconcurrent/coroutine.hpp>
 
+#include <cstddef>
+#include <utility>
+
 namespace Tanker
 {
 class ContactStore;
@@ -52,9 +55,10 @@ private:
       Trustchain::ServerEntry const& claim) const;
 
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
-  tc::cotask<User> getUserByDeviceId(
+  tc::cotask<std::pair<User, std::size_t>> getUserByDeviceId(
       Trustchain::DeviceId const& deviceId) const;
-  Device getDevice(User const& user, Crypto::Hash const& deviceHash) const;
+  Device getDevice(User const& user,
+                   Trustchain::DeviceId const& deviceHash) const;
   tc::cotask<ExternalGroup> getGroupByEncryptionKey(
       Crypto::PublicEncryptionKey const& recipientPublicEncryprionKey) const;
   tc::cotask<ExternalGroup> getGroupById(

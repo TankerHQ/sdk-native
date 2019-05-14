@@ -90,10 +90,12 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
   }
   else
   {
-    auto const user =
+    User user;
+    std::size_t idx;
+
+    std::tie(user, idx) =
         TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dc.author())));
-    auto const authorDevice = getDevice(user, dc.author());
-    Verif::verifyDeviceCreation(dc, authorDevice, user);
+    Verif::verifyDeviceCreation(dc, user.devices[idx], user);
   }
   TC_RETURN(toEntry(dc));
 }
@@ -101,20 +103,22 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
 
-  auto const authorDevice = getDevice(user, kp.author());
   auto const nature = kp.action().nature();
 
   if (nature == Nature::KeyPublishToDevice)
   {
-    Verif::verifyKeyPublishToDevice(kp, authorDevice, user);
+    Verif::verifyKeyPublishToDevice(kp, user.devices[idx], user);
   }
   else if (nature == Nature::KeyPublishToUser ||
            nature == Nature::KeyPublishToProvisionalUser)
   {
-    Verif::verifyKeyPublishToUser(kp, authorDevice);
+    Verif::verifyKeyPublishToUser(kp, user.devices[idx]);
   }
   else
   {
@@ -128,14 +132,16 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
 tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
     Trustchain::ServerEntry const& kp) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
   auto const& keyPublishToUserGroup =
       kp.action().get<KeyPublish>().get<KeyPublish::ToUserGroup>();
   auto const group = TC_AWAIT(getGroupByEncryptionKey(
       keyPublishToUserGroup.recipientPublicEncryptionKey()));
-  auto const authorDevice = getDevice(user, kp.author());
-  Verif::verifyKeyPublishToUserGroup(kp, authorDevice, group);
+  Verif::verifyKeyPublishToUserGroup(kp, user.devices[idx], group);
 
   TC_RETURN(toEntry(kp));
 }
@@ -143,14 +149,15 @@ tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
     Trustchain::ServerEntry const& dr) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dr.author())));
 
   auto const& revocation = dr.action().get<DeviceRevocation>();
-  auto const authorDevice = getDevice(user, dr.author());
-  auto const targetDevice =
-      getDevice(user, static_cast<Crypto::Hash>(revocation.deviceId()));
-  Verif::verifyDeviceRevocation(dr, authorDevice, targetDevice, user);
+  auto const targetDevice = getDevice(user, revocation.deviceId());
+  Verif::verifyDeviceRevocation(dr, user.devices[idx], targetDevice, user);
 
   TC_RETURN(toEntry(dr));
 }
@@ -158,12 +165,14 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
     Trustchain::ServerEntry const& ga) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(ga.author())));
   auto const& userGroupAddition = ga.action().get<UserGroupAddition>();
   auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId()));
-  auto const authorDevice = getDevice(user, ga.author());
-  Verif::verifyUserGroupAddition(ga, authorDevice, group);
+  Verif::verifyUserGroupAddition(ga, user.devices[idx], group);
 
   TC_RETURN(toEntry(ga));
 }
@@ -171,10 +180,12 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
 tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
     Trustchain::ServerEntry const& gc) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(gc.author())));
   auto const& userGroupCreation = gc.action().get<UserGroupCreation>();
-  auto const authorDevice = getDevice(user, gc.author());
 
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
       userGroupCreation.publicEncryptionKey()));
@@ -182,7 +193,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
                  Error::VerificationCode::InvalidGroup,
                  "UserGroupCreation - group already exist");
 
-  Verif::verifyUserGroupCreation(gc, authorDevice);
+  Verif::verifyUserGroupCreation(gc, user.devices[idx]);
 
   TC_RETURN(toEntry(gc));
 }
@@ -190,10 +201,12 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
     Trustchain::ServerEntry const& claim) const
 {
-  auto const user =
+  User user;
+  std::size_t idx;
+
+  std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
-  auto const authorDevice = getDevice(user, claim.author());
-  Verif::verifyProvisionalIdentityClaim(claim, user, authorDevice);
+  Verif::verifyProvisionalIdentityClaim(claim, user, user.devices[idx]);
 
   TC_RETURN(toEntry(claim));
 }
@@ -206,7 +219,7 @@ tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
   TC_RETURN(*user);
 }
 
-tc::cotask<User> TrustchainVerifier::getUserByDeviceId(
+tc::cotask<std::pair<User, std::size_t>> TrustchainVerifier::getUserByDeviceId(
     Trustchain::DeviceId const& deviceId) const
 {
   auto const optUserId = TC_AWAIT(_contacts->findUserIdByDeviceId(deviceId));
@@ -215,15 +228,22 @@ tc::cotask<User> TrustchainVerifier::getUserByDeviceId(
                  Error::VerificationCode::InvalidAuthor,
                  "user id not found");
 
-  return getUser(*optUserId);
+  auto const user = TC_AWAIT(getUser(*optUserId));
+  auto const deviceIt = std::find_if(
+      user.devices.begin(), user.devices.end(), [&](auto const& device) {
+        return device.id == deviceId;
+      });
+  assert(deviceIt != user.devices.end() && "device should belong to user");
+  TC_RETURN(std::make_pair(
+      user, static_cast<std::size_t>(deviceIt - user.devices.begin())));
 }
 
 Device TrustchainVerifier::getDevice(User const& user,
-                                     Crypto::Hash const& deviceHash) const
+                                     DeviceId const& deviceId) const
 {
   auto const device = std::find_if(
       user.devices.begin(), user.devices.end(), [&](auto const& device) {
-        return device.id.base() == deviceHash.base();
+        return device.id == deviceId;
       });
   assert(device != user.devices.end() && "device should belong to user");
   return *device;
