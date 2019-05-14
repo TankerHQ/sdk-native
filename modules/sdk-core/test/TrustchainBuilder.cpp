@@ -63,6 +63,15 @@ Tanker::User TrustchainBuilder::User::asTankerUser() const
 
 Tanker::ExternalGroup TrustchainBuilder::Group::asExternalGroup() const
 {
+  std::vector<GroupProvisionalUser> provisionalUsers;
+  provisionalUsers.reserve(provisionalMembers.size());
+  for (auto const& provisionalMember : provisionalMembers)
+    provisionalUsers.push_back({
+        provisionalMember.appPublicSignatureKey(),
+        provisionalMember.tankerPublicSignatureKey(),
+        provisionalMember.encryptedPrivateEncryptionKey(),
+    });
+
   Tanker::ExternalGroup extGroup{
       tankerGroup.id,
       tankerGroup.signatureKeyPair.publicKey,
@@ -70,6 +79,7 @@ Tanker::ExternalGroup TrustchainBuilder::Group::asExternalGroup() const
       tankerGroup.encryptionKeyPair.publicKey,
       tankerGroup.lastBlockHash,
       tankerGroup.lastBlockIndex,
+      provisionalUsers,
   };
   return extGroup;
 }
@@ -423,7 +433,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
                                                 .get<UserGroupCreation>()
                                                 .get<UserGroupCreation::v1>()
                                                 .sealedPrivateSignatureKey();
-  Group group{tgroup, encryptedPrivateSignatureKey, members};
+  Group group{tgroup, encryptedPrivateSignatureKey, members, {}};
 
   _groups.insert(group);
 
@@ -476,7 +486,13 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
                                                 .get<UserGroupCreation>()
                                                 .get<UserGroupCreation::v2>()
                                                 .sealedPrivateSignatureKey();
-  Group group{tgroup, encryptedPrivateSignatureKey, members};
+  auto const provisionalMembers = entry.action()
+                                      .get<UserGroupCreation>()
+                                      .get<UserGroupCreation::v2>()
+                                      .userGroupProvisionalMembers();
+
+  Group group{
+      tgroup, encryptedPrivateSignatureKey, members, provisionalMembers};
 
   _groups.insert(group);
 
@@ -544,6 +560,14 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   _blocks.push_back(block);
   auto const entry = blockToServerEntry(block);
 
+  auto const newProvisionalMembers = entry.action()
+                                         .get<UserGroupAddition>()
+                                         .get<UserGroupAddition::v2>()
+                                         .provisionalMembers();
+
+  group.provisionalMembers.insert(group.provisionalMembers.end(),
+                                  newProvisionalMembers.begin(),
+                                  newProvisionalMembers.end());
   group.tankerGroup.lastBlockHash = entry.hash();
   group.tankerGroup.lastBlockIndex = entry.index();
 
@@ -877,6 +901,27 @@ std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
       AWAIT_VOID(result->put(group.tankerGroup));
     else
       AWAIT_VOID(result->put(group.asExternalGroup()));
+  }
+  return result;
+}
+
+std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
+    std::vector<Trustchain::GroupId> const& groups,
+    Tanker::DataStore::ADatabase* conn) const
+{
+  auto result = std::make_unique<Tanker::GroupStore>(conn);
+  for (auto const& groupId : groups)
+  {
+    auto const groupIt =
+        std::find_if(_groups.begin(), _groups.end(), [&](auto const& g) {
+          return g.tankerGroup.id == groupId;
+        });
+
+    if (groupIt == _groups.end())
+      throw std::runtime_error(
+          "TrustchainBuilder: unknown group in makeGroupStore");
+
+    AWAIT_VOID(result->put(groupIt->asExternalGroup()));
   }
   return result;
 }

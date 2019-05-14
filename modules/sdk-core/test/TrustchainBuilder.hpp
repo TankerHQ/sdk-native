@@ -13,6 +13,7 @@
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -81,6 +82,8 @@ public:
     Tanker::Group tankerGroup;
     Tanker::Crypto::SealedPrivateSignatureKey encryptedPrivateSignatureKey;
     std::vector<Tanker::SUserId> members;
+    std::vector<Tanker::Trustchain::Actions::UserGroupProvisionalMember2>
+        provisionalMembers;
 
     Tanker::ExternalGroup asExternalGroup() const;
   };
@@ -168,6 +171,9 @@ public:
       Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::GroupStore> makeGroupStore(
       TrustchainBuilder::User const& user,
+      Tanker::DataStore::ADatabase* conn) const;
+  std::unique_ptr<Tanker::GroupStore> makeGroupStore(
+      std::vector<Tanker::Trustchain::GroupId> const& groups,
       Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::ProvisionalUserKeysStore>
   makeProvisionalUserKeysStoreWith(
