@@ -281,8 +281,8 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
 std::vector<uint8_t> BlockGenerator::userGroupCreation2(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    UserGroupCreation2::UserGroupMembers const& groupMembers,
-    UserGroupCreation2::UserGroupProvisionalMembers const&
+    UserGroupCreation2::Members const& groupMembers,
+    UserGroupCreation2::ProvisionalMembers const&
         groupProvisionalMembers) const
 {
   auto const encryptedPrivateSignatureKey =

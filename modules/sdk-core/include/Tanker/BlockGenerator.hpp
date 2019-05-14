@@ -120,10 +120,10 @@ public:
   std::vector<uint8_t> userGroupCreation2(
       Crypto::SignatureKeyPair const& signatureKeyPair,
       Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Trustchain::Actions::UserGroupCreation2::UserGroupMembers const&
+      Trustchain::Actions::UserGroupCreation2::Members const&
           groupMembers,
       Trustchain::Actions::UserGroupCreation2::
-          UserGroupProvisionalMembers const& groupProvisionalMembers) const;
+          ProvisionalMembers const& groupProvisionalMembers) const;
 
   std::vector<uint8_t> userGroupAddition(
       Crypto::SignatureKeyPair const& signatureKeyPair,

@@ -40,7 +40,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
 tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    UserGroupCreation2::UserGroupMembers const& groupKeys)
+    UserGroupCreation2::Members const& groupKeys)
 {
   auto const myKeysIt =
       std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
@@ -65,7 +65,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
 tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>>
 decryptMyProvisionalKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    UserGroupCreation2::UserGroupProvisionalMembers const& groupKeys)
+    UserGroupCreation2::ProvisionalMembers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
