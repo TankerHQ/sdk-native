@@ -88,10 +88,10 @@ public:
                          std::vector<SGroupId> const& groupIds);
 
   tc::cotask<SGroupId> createGroup(
-      std::vector<SPublicIdentity> spublicIdentities);
+      std::vector<SPublicIdentity> const& spublicIdentities);
   tc::cotask<void> updateGroupMembers(
       SGroupId const& groupIdString,
-      std::vector<SPublicIdentity> spublicIdentitiesToAdd);
+      std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
   tc::cotask<std::unique_ptr<Unlock::Registration>> generateUnlockKey();
 

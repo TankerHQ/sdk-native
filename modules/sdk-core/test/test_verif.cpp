@@ -840,15 +840,15 @@ TEST_CASE("Verif UserGroupCreation")
   testUserGroupCreationCommon(authorDevice, gcEntry);
 }
 
-TEST_CASE("Verif UserGroupCreation2")
+TEST_CASE("Verif UserGroupCreation::v2")
 {
   TrustchainBuilder builder;
 
   auto const resultUser = builder.makeUser3("alice");
   auto const firstDevice = resultUser.user.devices.at(0);
   auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
-  auto const resultGroup =
-      builder.makeGroup2(firstDevice, {resultUser.user}, {provisionalUser});
+  auto const resultGroup = builder.makeGroup2(
+      firstDevice, {resultUser.user}, {provisionalUser.publicProvisionalUser});
 
   auto gcEntry = resultGroup.entry;
   auto authorDevice = firstDevice.asTankerDevice();
@@ -884,8 +884,11 @@ TEST_CASE("Verif UserGroupAddition2")
   auto const provUser = builder.makeProvisionalUser("charlie@tanker.io");
   auto const resultGroup =
       builder.makeGroup(secondDevice.device, {resultUser.user});
-  auto const resultUserGroupAddition = builder.addUserToGroup2(
-      secondDevice.device, resultGroup.group, {bobUser.user}, {provUser});
+  auto const resultUserGroupAddition =
+      builder.addUserToGroup2(secondDevice.device,
+                              resultGroup.group,
+                              {bobUser.user},
+                              {provUser.publicProvisionalUser});
 
   auto gaEntry = resultUserGroupAddition.entry;
   auto const& group = resultGroup.group.tankerGroup;
@@ -899,7 +902,8 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   auto const alice = builder.makeUser3("alice");
   auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
-  auto picEntry = builder.claimProvisionalIdentity("alice", provisionalUser);
+  auto picEntry = builder.claimProvisionalIdentity(
+      "alice", provisionalUser.secretProvisionalUser);
 
   auto authorDevice = alice.user.devices[0].asTankerDevice();
   auto authorUser = alice.user.asTankerUser();

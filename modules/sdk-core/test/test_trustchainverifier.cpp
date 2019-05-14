@@ -187,8 +187,10 @@ TEST_CASE("TrustchainVerifier")
     auto const deviceResult = builder.makeDevice3("bob");
     AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(deviceResult.entry)));
     auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
-    auto const resultGroup = builder.makeGroup2(
-        deviceResult.device, {userResult.user}, {provisionalUser});
+    auto const resultGroup =
+        builder.makeGroup2(deviceResult.device,
+                           {userResult.user},
+                           {provisionalUser.publicProvisionalUser});
 
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
     TrustchainVerifier const verifier(
@@ -203,7 +205,8 @@ TEST_CASE("TrustchainVerifier")
     AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(userResult.entry)));
 
     auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
-    auto picEntry = builder.claimProvisionalIdentity("alice", provisionalUser);
+    auto picEntry = builder.claimProvisionalIdentity(
+        "alice", provisionalUser.secretProvisionalUser);
 
     auto const contactStore = builder.makeContactStoreWith({"alice"}, db.get());
     TrustchainVerifier const verifier(

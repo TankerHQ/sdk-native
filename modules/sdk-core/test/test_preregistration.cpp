@@ -19,8 +19,8 @@ TEST_CASE("Preregistration")
   TrustchainBuilder builder;
   auto const userResult = builder.makeUser3("alice");
   auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
-  auto picEntry = toVerifiedEntry(
-      builder.claimProvisionalIdentity("alice", provisionalUser));
+  auto picEntry = toVerifiedEntry(builder.claimProvisionalIdentity(
+      "alice", provisionalUser.secretProvisionalUser));
 
   SUBCASE("throws if the user key is not found")
   {
@@ -41,10 +41,13 @@ TEST_CASE("Preregistration")
     CHECK_NOTHROW(AWAIT_VOID(Preregistration::applyEntry(
         *userKeyStore, provisionalUserKeysStore, picEntry)));
     auto const gotKeys = AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
-        provisionalUser.appSignatureKeyPair.publicKey,
-        provisionalUser.tankerSignatureKeyPair.publicKey));
+        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,
+        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair
+            .publicKey));
     REQUIRE_UNARY(gotKeys);
-    CHECK_EQ(gotKeys->appKeys, provisionalUser.appEncryptionKeyPair);
-    CHECK_EQ(gotKeys->tankerKeys, provisionalUser.tankerEncryptionKeyPair);
+    CHECK_EQ(gotKeys->appKeys,
+             provisionalUser.secretProvisionalUser.appEncryptionKeyPair);
+    CHECK_EQ(gotKeys->tankerKeys,
+             provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair);
   }
 }

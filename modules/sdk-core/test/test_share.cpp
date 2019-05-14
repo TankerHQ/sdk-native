@@ -213,13 +213,6 @@ TEST_CASE(
 {
   TrustchainBuilder builder;
   auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
-  Identity::PublicProvisionalIdentity publicProvisionalIdentity{
-      builder.trustchainId(),
-      provisionalUser.target,
-      provisionalUser.value,
-      provisionalUser.appSignatureKeyPair.publicKey,
-      provisionalUser.appEncryptionKeyPair.publicKey,
-  };
   auto const keySender = builder.makeUser3("keySender");
 
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
@@ -231,29 +224,30 @@ TEST_CASE(
 
   REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
       .LR_RETURN((std::vector<PublicProvisionalUser>{
-          builder.toPublicProvisionalUser(provisionalUser)}));
+          provisionalUser.publicProvisionalUser}));
 
   REQUIRE_CALL(groupAccessor.get_mock_impl(),
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  auto const recipients = AWAIT(Share::generateRecipientList(
-      userAccessor.get(),
-      groupAccessor.get(),
-      {SPublicIdentity{to_string(publicProvisionalIdentity)}},
-      {}));
+  auto const recipients =
+      AWAIT(Share::generateRecipientList(userAccessor.get(),
+                                         groupAccessor.get(),
+                                         {provisionalUser.spublicIdentity},
+                                         {}));
 
   CHECK(recipients.recipientUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
   CHECK(recipients.recipientProvisionalUserKeys.size() == 1);
   CHECK(recipients.recipientProvisionalUserKeys[0].appSignaturePublicKey ==
-        provisionalUser.appSignatureKeyPair.publicKey);
+        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey);
   CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey ==
-        provisionalUser.appEncryptionKeyPair.publicKey);
+        provisionalUser.secretProvisionalUser.appEncryptionKeyPair.publicKey);
   CHECK(recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey ==
-        provisionalUser.tankerSignatureKeyPair.publicKey);
-  CHECK(recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey ==
-        provisionalUser.tankerEncryptionKeyPair.publicKey);
+        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair.publicKey);
+  CHECK(
+      recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey ==
+      provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair.publicKey);
 }
 
 TEST_CASE("generateRecipientList of a not-found user should throw")
@@ -389,20 +383,13 @@ TEST_CASE(
        make<Trustchain::ResourceId>("resource mac")}};
 
   Share::KeyRecipients keyRecipients{
-      {},
-      {{
-          provisionalUser.appSignatureKeyPair.publicKey,
-          provisionalUser.appEncryptionKeyPair.publicKey,
-          provisionalUser.tankerSignatureKeyPair.publicKey,
-          provisionalUser.tankerEncryptionKeyPair.publicKey,
-      }},
-      {}};
+      {}, {provisionalUser.publicProvisionalUser}, {}};
   auto const blocks = Share::generateShareBlocks(
       keySenderBlockGenerator, resourceKeys, keyRecipients);
 
   auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
   assertKeyPublishToUsersTargetedAt(
-      resourceKeys[0], keyPublishes, {provisionalUser});
+      resourceKeys[0], keyPublishes, {provisionalUser.secretProvisionalUser});
 }
 
 TEST_CASE(

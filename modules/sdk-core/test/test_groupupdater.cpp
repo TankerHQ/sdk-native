@@ -152,7 +152,7 @@ void testUserGroupAdditionCommon(
 }
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation1")
+TEST_CASE("GroupUpdater UserGroupCreation::v1")
 {
   testUserGroupCreationCommon(
       [](TrustchainBuilder& builder,
@@ -162,7 +162,7 @@ TEST_CASE("GroupUpdater UserGroupCreation1")
       });
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation2")
+TEST_CASE("GroupUpdater UserGroupCreation::v2")
 {
   SUBCASE("Common checks")
   {
@@ -196,7 +196,9 @@ TEST_CASE("GroupUpdater UserGroupCreation2")
       auto const bob = builder.makeUser3("bob");
 
       auto const group =
-          builder.makeGroup2(bob.user.devices[0], {}, {aliceProvisionalUser});
+          builder.makeGroup2(bob.user.devices[0],
+                             {},
+                             {aliceProvisionalUser.publicProvisionalUser});
       AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                           groupStore,
                                           *aliceKeyStore,
@@ -261,8 +263,11 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
                                           *aliceProvisionalUserKeysStore,
                                           toVerifiedEntry(bobGroup.entry)));
 
-      auto const updatedGroup = builder.addUserToGroup2(
-          bob.user.devices[0], bobGroup.group, {}, {aliceProvisionalUser});
+      auto const updatedGroup =
+          builder.addUserToGroup2(bob.user.devices[0],
+                                  bobGroup.group,
+                                  {},
+                                  {aliceProvisionalUser.publicProvisionalUser});
       AWAIT_VOID(GroupUpdater::applyEntry(alice.user.userId,
                                           aliceGroupStore,
                                           *aliceKeyStore,

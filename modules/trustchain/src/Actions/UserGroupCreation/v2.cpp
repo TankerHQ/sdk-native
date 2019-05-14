@@ -15,8 +15,8 @@ UserGroupCreation2::UserGroupCreation2(
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
-    UserGroupMembers const& userGroupMembers,
-    UserGroupProvisionalMembers const& userGroupProvisionalMembers)
+    Members const& userGroupMembers,
+    ProvisionalMembers const& userGroupProvisionalMembers)
   : _publicSignatureKey(publicSignatureKey),
     _publicEncryptionKey(publicEncryptionKey),
     _sealedPrivateSignatureKey(sealedPrivateSignatureKey),

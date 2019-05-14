@@ -30,15 +30,15 @@ namespace Actions
   (publicSignatureKey, Crypto::PublicSignatureKey),                   \
       (publicEncryptionKey, Crypto::PublicEncryptionKey),             \
       (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey), \
-      (userGroupMembers, UserGroupMembers),                           \
-      (userGroupProvisionalMembers, UserGroupProvisionalMembers),     \
+      (userGroupMembers, Members),                           \
+      (userGroupProvisionalMembers, ProvisionalMembers),     \
       (selfSignature, Crypto::Signature)
 
 class UserGroupCreation2
 {
 public:
-  using UserGroupMembers = std::vector<UserGroupMember2>;
-  using UserGroupProvisionalMembers = std::vector<UserGroupProvisionalMember2>;
+  using Members = std::vector<UserGroupMember2>;
+  using ProvisionalMembers = std::vector<UserGroupProvisionalMember2>;
 
   TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
       UserGroupCreation2,
@@ -50,8 +50,8 @@ public:
   UserGroupCreation2(Crypto::PublicSignatureKey const&,
                      Crypto::PublicEncryptionKey const&,
                      Crypto::SealedPrivateSignatureKey const&,
-                     UserGroupMembers const&,
-                     UserGroupProvisionalMembers const&);
+                     Members const&,
+                     ProvisionalMembers const&);
 
   std::vector<std::uint8_t> signatureData() const;
 
