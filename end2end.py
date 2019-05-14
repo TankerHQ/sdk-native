@@ -14,7 +14,8 @@ def export_tanker_dev(src_path: Path) -> None:
 
 
 def use_packaged_tanker(src_path: Path,  profile: str) -> None:
-    builder = ci.cpp.Builder(src_path, profile=profile, coverage=False, warn_as_error=False)
+    builder = ci.cpp.Builder(src_path, profile=profile,
+                             make_package=False, coverage=False, warn_as_error=False)
     builder.export_pkg("tanker/dev")
 
 

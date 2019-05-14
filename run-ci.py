@@ -14,6 +14,16 @@ import ci.ios
 import ci.mail
 
 
+def build_and_check(profile: str, coverage: bool) -> None:
+    built_path = ci.cpp.build(
+        profile,
+        make_package=True,
+        coverage=coverage,
+        warn_as_error=True
+    )
+    ci.cpp.check(built_path, coverage=coverage)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
@@ -34,8 +44,7 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        built_path = ci.cpp.build(args.profile, coverage=args.coverage, warn_as_error=True)
-        ci.cpp.check(built_path, coverage=args.coverage)
+        build_and_check(args.profile, args.coverage)
     elif args.command == "nightly-build-emscripten":
         with ci.mail.notify_failure("sdk-native"):
             ci.cpp.build("emscripten")
