@@ -84,6 +84,26 @@ decryptMyProvisionalKey(
   TC_RETURN(nonstd::nullopt);
 }
 
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    std::vector<UserGroupProvisionalMember2> const& members)
+{
+  std::vector<GroupProvisionalUser> out;
+  out.reserve(members.size());
+  for (auto const& member : members)
+    out.push_back({member.appPublicSignatureKey(),
+                   member.tankerPublicSignatureKey(),
+                   member.encryptedPrivateEncryptionKey()});
+  return out;
+}
+
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    UserGroupCreation const& g)
+{
+  if (auto const g2 = g.get_if<UserGroupCreation::v2>())
+    return extractGroupProvisionalUsers(g2->userGroupProvisionalMembers());
+  return {};
+}
+
 tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   Entry const& entry,
                                   UserGroupCreation const& userGroupCreation)
@@ -95,6 +115,7 @@ tc::cotask<void> putExternalGroup(GroupStore& groupStore,
       userGroupCreation.publicEncryptionKey(),
       entry.hash,
       entry.index,
+      extractGroupProvisionalUsers(userGroupCreation),
   }));
 }
 
