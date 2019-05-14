@@ -10,8 +10,10 @@ std::string to_string(Status s)
 
   switch (s)
   {
-    CASE(Closed);
-    CASE(Open);
+    CASE(Stopped);
+    CASE(Ready);
+    CASE(IdentityRegistrationNeeded);
+    CASE(IdentityVerificationNeeded);
   default:
     return "INVALID";
   }

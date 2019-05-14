@@ -44,16 +44,11 @@ Status Core::status() const
   assert(!_state.valueless_by_exception() &&
          "_state variant must not be valueless");
   if (mpark::get_if<Opener>(&_state))
-    return Status::Closed;
+    return Status::Stopped;
   else if (mpark::get_if<SessionType>(&_state))
-    return Status::Open;
+    return Status::Ready;
   TERROR("unreachable code, invalid tanker status");
   std::terminate();
-}
-
-bool Core::isOpen() const
-{
-  return this->status() == Status::Open;
 }
 
 template <typename F>
@@ -221,7 +216,7 @@ tc::cotask<void> Core::updateGroupMembers(
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
-  if (!isOpen())
+  if (status() != Status::Ready)
     throw INVALID_STATUS(deviceId);
   else
     return _deviceId;

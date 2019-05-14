@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -76,13 +77,13 @@ std::string const& Device::identity() const
 
 tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
 {
-  assert(parentSession.isOpen());
+  assert(parentSession.status() == Status::Ready);
   auto const core = TC_AWAIT(this->open(parentSession));
 }
 
 tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 {
-  assert(session.isOpen());
+  assert(session.status() == Status::Ready);
   TC_AWAIT(session.registerUnlock(
       Unlock::RegistrationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
 }
@@ -90,7 +91,7 @@ tc::cotask<void> Device::registerUnlock(AsyncCore& session)
 tc::cotask<AsyncCorePtr> Device::open(SessionType type)
 {
   auto tanker = createCore(type);
-  if (tanker->isOpen())
+  if (tanker->status() == Status::Ready)
     TC_RETURN(std::move(tanker));
 
   auto const openResult = TC_AWAIT(tanker->signIn(_identity));

@@ -46,13 +46,17 @@ static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
 
 // Status
 
-STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
-STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
+STATIC_ENUM_CHECK(TANKER_STATUS_STOPPED, Status::Stopped);
+STATIC_ENUM_CHECK(TANKER_STATUS_READY, Status::Ready);
+STATIC_ENUM_CHECK(TANKER_STATUS_IDENTITY_REGISTRATION_NEEDED,
+                  Status::IdentityRegistrationNeeded);
+STATIC_ENUM_CHECK(TANKER_STATUS_IDENTITY_VERIFICATION_NEEDED,
+                  Status::IdentityVerificationNeeded);
 
 STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
 
 static_assert(
-    TANKER_STATUS_LAST == 2,
+    TANKER_STATUS_LAST == 4,
     "Please update the status assertions above if you added a new status");
 
 // OpenResult
@@ -232,10 +236,10 @@ tanker_future_t* tanker_stop(tanker_t* ctanker)
   return makeFuture(tanker->stop());
 }
 
-bool tanker_is_open(tanker_t* ctanker)
+enum tanker_status tanker_status(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return tanker->isOpen();
+  return static_cast<enum tanker_status>(tanker->status());
 }
 
 tanker_future_t* tanker_device_id(tanker_t* ctanker)

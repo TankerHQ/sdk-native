@@ -73,7 +73,7 @@ public:
 
   tc::shared_future<void> stop();
 
-  bool isOpen() const;
+  Tanker::Status status() const;
 
   tc::shared_future<void> encrypt(
       uint8_t* encryptedData,

@@ -13,8 +13,10 @@ extern "C" {
 
 enum tanker_status
 {
-  TANKER_STATUS_CLOSED,
-  TANKER_STATUS_OPEN,
+  TANKER_STATUS_STOPPED,
+  TANKER_STATUS_READY,
+  TANKER_STATUS_IDENTITY_REGISTRATION_NEEDED,
+  TANKER_STATUS_IDENTITY_VERIFICATION_NEEDED,
 
   TANKER_STATUS_LAST
 };
@@ -267,17 +269,17 @@ tanker_future_t* tanker_sign_in(
 tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
- * Is tanker currently opened.
+ * The current Tanker status.
  * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
- * \return true if tanker is open, false otherwise.
+ * \return the current Tanker status.
  */
-bool tanker_is_open(tanker_t* tanker);
+enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
  * Get the current device id.
  * \param session A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer.
  */
 tanker_future_t* tanker_device_id(tanker_t* session);
@@ -285,7 +287,7 @@ tanker_future_t* tanker_device_id(tanker_t* session);
 /*!
  * Get the list of the user's devices.
  * \param session A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of tanker_device_list_t* that must be freed with
  * tanker_free_device_list.
  */
@@ -294,7 +296,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* session);
 /*!
  * Generate an unlockKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
@@ -307,7 +309,7 @@ tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
  * \param session a tanker tanker_t* instance
  * \param new_email the new desired email
  * \param new_password the new desired password
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future to void
  */
 tanker_future_t* tanker_register_unlock(tanker_t* session,
@@ -317,7 +319,7 @@ tanker_future_t* tanker_register_unlock(tanker_t* session,
 /*!
  * Check if unlock mechanism has been set up for the current user.
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return true if an unlock mechanism is already set up, false otherwise
  */
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* session);
@@ -325,7 +327,7 @@ tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* session);
 /*!
  * Return all registered unlock methods for the current user.
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a tanker_unlock_method with its bit set to the registered methods
  */
 tanker_expected_t* tanker_registered_unlock_methods(tanker_t* session);
@@ -333,7 +335,7 @@ tanker_expected_t* tanker_registered_unlock_methods(tanker_t* session);
 /*!
  * Check if any unlock methods has been registered for the current user.
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return true if an unlock method is registered, false otherwise
  */
 tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* session);
@@ -342,7 +344,7 @@ tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* session);
  * Check if a specific unlock method has been registered for the current user.
  * \param session A tanker tanker_t* instance.
  * \param method the unlock method we want to test.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return true if an unlock method is registered, false otherwise
  */
 tanker_expected_t* tanker_has_registered_unlock_method(
@@ -377,7 +379,7 @@ tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypted_data,
 /*!
  * Encrypt data.
  * \param tanker A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param encrypted_data The container for the encrypted data.
  * \pre encrypted_data must be allocated with a call to
  *      tanker_encrypted_size() in order to get the size beforehand.
@@ -400,7 +402,7 @@ tanker_future_t* tanker_encrypt(tanker_t* tanker,
  * Decrypt an encrypted data.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param decrypted_data Decrypted array of bytes.
  * \pre decrypted_data must be allocated with a call to
  *      tanker_decrypted_size() in order to get the size beforehand.
@@ -420,7 +422,7 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * Share a symetric key of an encrypted data with other users.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param recipient_public_identities Array containing the recipients' public
  * identities.
  * \param nb_recipient_public_identities The number of recipients in
@@ -450,7 +452,7 @@ tanker_future_t* tanker_share(tanker_t* session,
  * Claim a provisional identity to the current user
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param provisional_identity provisional identity you want to claim.
  * \param verification_code the verification code that verifies this provisional
  * identity.
@@ -470,7 +472,7 @@ tanker_future_t* tanker_claim_provisional_identity(
  * Revoke a device by device id.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param device_id the device identifier as returned by tanker_device_id().
  *
  * \return An empty future.

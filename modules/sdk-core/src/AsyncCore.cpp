@@ -117,9 +117,9 @@ tc::shared_future<void> AsyncCore::stop()
       [&] { return tc::async([this] { this->_core.stop(); }); });
 }
 
-bool AsyncCore::isOpen() const
+Tanker::Status AsyncCore::status() const
 {
-  return this->_core.isOpen();
+  return this->_core.status();
 }
 
 tc::shared_future<void> AsyncCore::encrypt(

@@ -71,10 +71,10 @@ TEST_CASE("print a formated log")
 
   SUBCASE("Print a status")
   {
-    CHECK_EQ(fmt::format("this is is a Status {:e}", Tanker::Status::Open),
-             R"!(this is is a Status 1 Open)!");
-    CHECK_EQ(fmt::format("this is is a Status {}", Tanker::Status::Open),
-             R"!(this is is a Status 1 Open)!");
+    CHECK_EQ(fmt::format("this is is a Status {:e}", Tanker::Status::Ready),
+             R"!(this is is a Status 1 Ready)!");
+    CHECK_EQ(fmt::format("this is is a Status {}", Tanker::Status::Ready),
+             R"!(this is is a Status 1 Ready)!");
   }
 
   SUBCASE("Print a Nature")

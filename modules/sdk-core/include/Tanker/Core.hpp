@@ -48,14 +48,13 @@ class Core
 {
 public:
   Core(std::string url, SdkInfo infos, std::string writablePath);
+  Tanker::Status status() const;
 
   tc::cotask<void> signUp(std::string const& identity,
                           AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signIn(std::string const& identity,
                                 SignInOptions const& signInOptions);
   void stop();
-
-  bool isOpen() const;
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
@@ -115,7 +114,6 @@ private:
 
   void reset();
   void initSession(Opener::OpenResult&& openResult);
-  Status status() const;
 
   template <typename F>
   decltype(std::declval<F>()()) resetOnFailure(F&& f);
