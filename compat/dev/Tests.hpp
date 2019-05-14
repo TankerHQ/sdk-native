@@ -335,3 +335,52 @@ struct DecryptOldClaim : Command
     bobCore->signOut().get();
   }
 };
+
+struct ProvisionalUserGroupClaim : Command
+{
+  using Command::Command;
+
+  void base() override
+  {
+    auto const alice = trustchain.makeUser();
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
+    aliceCore->signUp(alice.identity).get();
+
+    auto const bobProvisionalIdentity =
+        Tanker::Identity::createProvisionalIdentity(
+            cppcodec::base64_rfc4648::encode(trustchain.id),
+            Tanker::Email{"bob@tanker.io"});
+    auto const sgroupId =
+        aliceCore
+            ->createGroup(
+                {Tanker::SPublicIdentity{
+                     Tanker::Identity::getPublicIdentity(alice.identity)},
+                 Tanker::SPublicIdentity{Tanker::Identity::getPublicIdentity(
+                     bobProvisionalIdentity)}})
+            .get();
+    auto const clearData = "My allocution to the world";
+    auto const encryptedData = encrypt(aliceCore, clearData, {}, {sgroupId});
+
+    Tanker::saveJson(
+        statePath,
+        {{"bob_provisional_identity", bobProvisionalIdentity},
+         {"encrypt_state", EncryptState{clearData, encryptedData}}});
+  }
+
+  void next() override
+  {
+    auto const json = Tanker::loadJson(statePath);
+    auto const bob = trustchain.makeUser();
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
+    bobCore->signUp(bob.identity).get();
+    auto const verifCode =
+        getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"})
+            .get();
+    bobCore
+        ->claimProvisionalIdentity(json.at("bob_provisional_identity"),
+                                   verifCode)
+        .get();
+    auto const encryptState = json.at("encrypt_state").get<EncryptState>();
+    decrypt(bobCore, encryptState.encryptedData, encryptState.clearData);
+  }
+};
