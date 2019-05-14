@@ -57,7 +57,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto const core = TC_AWAIT(device.open());
   REQUIRE(core->isOpen());
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->signOut());
+  TC_AWAIT(core->stop());
   REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
@@ -69,12 +69,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto core = TC_AWAIT(device.open());
   REQUIRE(core->isOpen());
   SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->signOut());
+  TC_AWAIT(core->stop());
   REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 1);
   core = TC_AWAIT(device.open());
   REQUIRE(core->isOpen());
-  TC_AWAIT(core->signOut());
+  TC_AWAIT(core->stop());
   REQUIRE(!core->isOpen());
   REQUIRE(spyClose.receivedEvents.size() == 2);
 }
@@ -85,7 +85,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto device = alice.makeDevice();
 
   auto const core = TC_AWAIT(device.open());
-  TC_AWAIT(core->signOut());
+  TC_AWAIT(core->stop());
   REQUIRE(!core->isOpen());
   TC_AWAIT(core->signIn(alice.identity));
   REQUIRE(core->isOpen());
@@ -193,7 +193,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
       AsyncCore::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
-  TC_AWAIT(aliceSession->signOut());
+  TC_AWAIT(aliceSession->stop());
   REQUIRE(TC_AWAIT(
       checkDecrypt(aliceDevices, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -215,7 +215,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceSecondSession =
       TC_AWAIT(aliceSecondDevice.open(*aliceFirstSession));
 
-  TC_AWAIT(aliceSecondSession->signOut());
+  TC_AWAIT(aliceSecondSession->stop());
 
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
@@ -368,7 +368,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceDevice2 = alice.makeDevice();
   auto const aliceSession2 = TC_AWAIT(aliceDevice2.open(*aliceSession));
 
-  TC_AWAIT(aliceSession->signOut());
+  TC_AWAIT(aliceSession->stop());
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession2->revokeDevice(deviceId)));
 
@@ -390,7 +390,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
     auto const aliceSession = TC_AWAIT(aliceDevice.open());
     auto const deviceId = TC_AWAIT(aliceSession->deviceId());
     REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
-    TC_AWAIT(aliceSession->signOut());
+    TC_AWAIT(aliceSession->stop());
   }
 
   try

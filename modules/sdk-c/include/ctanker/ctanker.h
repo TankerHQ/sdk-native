@@ -264,7 +264,7 @@ tanker_future_t* tanker_sign_in(
  * \pre tanker must be allocated with tanker_create().
  * \pre tanker must be opened with tanker_open().
  */
-tanker_future_t* tanker_sign_out(tanker_t* tanker);
+tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
  * Is tanker currently opened.

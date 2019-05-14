@@ -71,7 +71,7 @@ public:
   tc::shared_future<OpenResult> signIn(std::string const& identity,
                                        SignInOptions const& signInOptions = {});
 
-  tc::shared_future<void> signOut();
+  tc::shared_future<void> stop();
 
   bool isOpen() const;
 

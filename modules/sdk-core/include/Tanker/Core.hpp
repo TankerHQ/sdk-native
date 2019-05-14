@@ -53,7 +53,7 @@ public:
                           AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signIn(std::string const& identity,
                                 SignInOptions const& signInOptions);
-  void signOut();
+  void stop();
 
   bool isOpen() const;
 

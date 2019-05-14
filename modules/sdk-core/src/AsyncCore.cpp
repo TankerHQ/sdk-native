@@ -34,16 +34,16 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   _core.deviceRevoked.connect([this] {
     _taskCanceler.run([&] {
       return tc::async([this] {
-        // - This device was revoked, we need to signOut so that Session gets
+        // - This device was revoked, we need to stop so that Session gets
         // destroyed.
         // - There might be calls in progress on this session, so we must
         // terminate() them before going on.
-        // - We can't call this->signOut() because the terminate() would cancel
+        // - We can't call this->stop() because the terminate() would cancel
         // this coroutine too.
         // - We must not wait on terminate() because that means waiting on
         // ourselves and deadlocking.
         _taskCanceler.terminate();
-        _core.signOut();
+        _core.stop();
         _asyncDeviceRevoked();
       });
     });
@@ -111,10 +111,10 @@ tc::shared_future<OpenResult> AsyncCore::signIn(
   });
 }
 
-tc::shared_future<void> AsyncCore::signOut()
+tc::shared_future<void> AsyncCore::stop()
 {
   return _taskCanceler.run(
-      [&] { return tc::async([this] { this->_core.signOut(); }); });
+      [&] { return tc::async([this] { this->_core.stop(); }); });
 }
 
 bool AsyncCore::isOpen() const

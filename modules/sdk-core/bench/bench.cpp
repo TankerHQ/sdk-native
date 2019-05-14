@@ -26,7 +26,7 @@ tc::cotask<std::vector<Tanker::SUserId>> createUsers(Trustchain& tr,
     auto user = tr.makeUser(UserType::New);
     auto device = user.makeDevice();
     auto core = TC_AWAIT(device.open());
-    TC_AWAIT(core->signOut());
+    TC_AWAIT(core->stop());
     res[i] = device.suserId();
   }
   TC_RETURN(res);
@@ -60,7 +60,7 @@ tc::cotask<Tanker::SGroupId> createGroup(
   auto laptopDev = alice.makeDevice();
   auto laptop = TC_AWAIT(laptopDev.open());
   auto sgroupId = TC_AWAIT(laptop->createGroup(susers));
-  TC_AWAIT(laptop->signOut());
+  TC_AWAIT(laptop->stop());
   TC_RETURN(sgroupId);
 }
 
@@ -110,7 +110,7 @@ static void signup_signout(benchmark::State& state)
       auto core = device.createAsyncCore();
       state.ResumeTiming();
       TC_AWAIT(core->signUp(device.identity()));
-      TC_AWAIT(core->signOut());
+      TC_AWAIT(core->stop());
       state.PauseTiming();
       core.reset();
       state.ResumeTiming();
@@ -130,14 +130,14 @@ static void signin(benchmark::State& state)
   auto device = alice.makeDevice();
   auto core = device.createCore(SessionType::New);
   AWAIT_VOID(core->signUp(device.identity()));
-  AWAIT_VOID(core->signOut());
+  AWAIT_VOID(core->stop());
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
     {
       auto core = device.createCore(SessionType::New);
       TC_AWAIT(core->signIn(device.identity()));
       state.PauseTiming();
-      TC_AWAIT(core->signOut());
+      TC_AWAIT(core->stop());
       state.ResumeTiming();
     }
   })
@@ -163,9 +163,9 @@ static void multi(benchmark::State& state)
       auto phone = alice.makeDevice();
       state.ResumeTiming();
       auto newcore = TC_AWAIT(phone.open(SessionType::New));
-      TC_AWAIT(newcore->signOut());
+      TC_AWAIT(newcore->stop());
       state.PauseTiming();
-      TC_AWAIT(core->signOut());
+      TC_AWAIT(core->stop());
       state.ResumeTiming();
     }
   })
@@ -190,7 +190,7 @@ static void encrypt(benchmark::State& state)
         TC_AWAIT(core->encrypt(&p.second[0], p.first));
   })
       .get();
-  AWAIT_VOID(core->signOut());
+  AWAIT_VOID(core->stop());
 }
 BENCHMARK(encrypt)
     ->Arg(1)
@@ -217,7 +217,7 @@ static void create_group(benchmark::State& state)
       TC_AWAIT(laptop->createGroup(users));
   })
       .get();
-  AWAIT_VOID(laptop->signOut());
+  AWAIT_VOID(laptop->stop());
 }
 BENCHMARK(create_group)
     ->Arg(1)
@@ -244,7 +244,7 @@ static void pull_and_create_group(benchmark::State& state)
       TC_AWAIT(laptop->signUp(laptopDev.identity()));
       TC_AWAIT(laptop->createGroup(users));
       state.PauseTiming();
-      TC_AWAIT(laptop->signOut());
+      TC_AWAIT(laptop->stop());
       laptop.reset();
       state.ResumeTiming();
     }
@@ -277,7 +277,7 @@ static void share_to_unverified_users(benchmark::State& state)
       state.ResumeTiming();
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
       state.PauseTiming();
-      TC_AWAIT(laptop->signOut());
+      TC_AWAIT(laptop->stop());
       laptop.reset();
       state.ResumeTiming();
     }
@@ -309,7 +309,7 @@ static void share_to_users(benchmark::State& state)
     TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
     for (auto _ : state)
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
-    TC_AWAIT(laptop->signOut());
+    TC_AWAIT(laptop->stop());
   })
       .get();
 }
@@ -370,7 +370,7 @@ static void share_to_unverified_group(benchmark::State& state)
       state.ResumeTiming();
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, {}, {sgroupId}));
       state.PauseTiming();
-      TC_AWAIT(laptop->signOut());
+      TC_AWAIT(laptop->stop());
       laptop.reset();
       state.ResumeTiming();
     }

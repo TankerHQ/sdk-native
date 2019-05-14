@@ -50,10 +50,10 @@ static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
   authentication_methods.password = "password";
 
   future_get(tanker_sign_up(tanker, identity, &authentication_methods));
-  future_get(tanker_sign_out(tanker));
+  future_get(tanker_stop(tanker));
 
   future_get(tanker_sign_in(tanker, identity, NULL));
-  future_get(tanker_sign_out(tanker));
+  future_get(tanker_stop(tanker));
 
   tanker_free_buffer(identity);
   future_get(tanker_destroy(tanker));

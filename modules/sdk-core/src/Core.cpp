@@ -145,7 +145,7 @@ tc::cotask<OpenResult> Core::signInImpl(std::string const& identity,
   TC_RETURN(OpenResult::Ok);
 }
 
-void Core::signOut()
+void Core::stop()
 {
   reset();
   sessionClosed();
