@@ -36,6 +36,16 @@ using CorePtr = std::unique_ptr<Tanker::AsyncCore, AsyncCoreDeleter>;
 
 namespace
 {
+
+tc::future<Tanker::VerificationCode> getVerificationCode(
+    TrustchainId const& id, Tanker::Email const& email)
+{
+  return tc::async_resumable([=]() -> tc::cotask<Tanker::VerificationCode> {
+    auto tf = TC_AWAIT(TrustchainFactory::create());
+    TC_RETURN(TC_AWAIT(tf->getVerificationCode(id, email)));
+  });
+}
+
 CorePtr createCore(std::string const& url,
                    Tanker::Trustchain::TrustchainId const& id,
                    std::string const& tankerPath)
@@ -46,13 +56,21 @@ CorePtr createCore(std::string const& url,
       AsyncCoreDeleter{});
 }
 
-tc::future<Tanker::VerificationCode> getVerificationCode(
-    TrustchainId const& id, Tanker::Email const& email)
+std::pair<CorePtr, std::string> signUpProvisionalUser(
+    Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
+    std::string const& email,
+    Tanker::Test::Trustchain& trustchain,
+    std::string const& tankerPath)
 {
-  return tc::async_resumable([=]() -> tc::cotask<Tanker::VerificationCode> {
-    auto tf = TC_AWAIT(TrustchainFactory::create());
-    TC_RETURN(TC_AWAIT(tf->getVerificationCode(id, email)));
-  });
+  auto user = trustchain.makeUser();
+  auto core = createCore(trustchain.url, trustchain.id, tankerPath);
+  core->signUp(user.identity).get();
+  auto const verifCode =
+      getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"}).get();
+  core->claimProvisionalIdentity(
+          Tanker::SSecretProvisionalIdentity{provisionalIdentity}, verifCode)
+      .get();
+  return std::make_pair(std::move(core), user.identity);
 }
 
 void decrypt(CorePtr const& core,
@@ -303,23 +321,17 @@ struct DecryptOldClaim : Command
     auto const encryptedData =
         encrypt(aliceCore, clearData, {bobPublicProvisionalIdentity}, {});
 
-    auto const bob = trustchain.makeUser();
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signUp(bob.identity).get();
-    auto const verifCode =
-        getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"})
-            .get();
-    bobCore
-        ->claimProvisionalIdentity(
-            Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
-            verifCode)
-        .get();
-    bobCore->signOut().get();
+    auto res = signUpProvisionalUser(
+        Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
+        "bob@tanker.io",
+        trustchain,
+        tankerPath);
+    std::get<CorePtr>(res)->signOut().get();
 
     Tanker::saveJson(
         statePath,
         {
-            {"bob", bob},
+            {"bob_identity", std::get<std::string>(res)},
             {"encrypt_state", EncryptState{clearData, encryptedData}},
         });
   }
@@ -327,10 +339,10 @@ struct DecryptOldClaim : Command
   void next() override
   {
     auto const json = Tanker::loadJson(statePath);
-    auto const bob = json.at("bob").get<User>();
+    auto const bobIdentity = json.at("bob_identity").get<std::string>();
     auto const state = json.at("encrypt_state").get<EncryptState>();
     auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bob.identity).get();
+    bobCore->signIn(bobIdentity).get();
     decrypt(bobCore, state.encryptedData, state.clearData);
     bobCore->signOut().get();
   }
