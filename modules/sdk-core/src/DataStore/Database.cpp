@@ -8,6 +8,7 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
+#include <Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp>
 #include <Tanker/DbModels/KeyPublishes.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
@@ -207,37 +208,48 @@ KeyPublish rowToKeyPublish(T const& row)
   auto const resourceId = DataStore::extractBlob<ResourceId>(row.resource_id);
   switch (static_cast<Nature>(static_cast<unsigned>(row.nature)))
   {
-    case Nature::KeyPublishToUser:
-      return KeyPublish::ToUser{
-          DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
-          resourceId,
-          DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
-    case Nature::KeyPublishToUserGroup:
-      return KeyPublish::ToUserGroup{
-          DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
-          resourceId,
-          DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
-    case Nature::KeyPublishToDevice:
-      return KeyPublish::ToDevice{
-          DataStore::extractBlob<DeviceId>(row.recipient),
-          resourceId,
-          DataStore::extractBlob<Crypto::EncryptedSymmetricKey>(row.key)};
-    case Nature::KeyPublishToProvisionalUser:
-    {
-      auto const sp = DataStore::extractBlob(row.recipient);
-      return KeyPublish::ToProvisionalUser{
-          Crypto::PublicSignatureKey{
-              sp.subspan(0, Crypto::PublicSignatureKey::arraySize)},
-          resourceId,
-          Crypto::PublicSignatureKey{
-              sp.subspan(Crypto::PublicSignatureKey::arraySize)},
-          DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
-    }
-    default:
-      assert(false && "Unreachable code. Invalid nature for KeyPublish");
-      throw std::runtime_error{
-          "Unreachable code. Invalid nature for KeyPublish"};
+  case Nature::KeyPublishToUser:
+    return KeyPublish::ToUser{
+        DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
+        resourceId,
+        DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
+  case Nature::KeyPublishToUserGroup:
+    return KeyPublish::ToUserGroup{
+        DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
+        resourceId,
+        DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
+  case Nature::KeyPublishToDevice:
+    return KeyPublish::ToDevice{
+        DataStore::extractBlob<DeviceId>(row.recipient),
+        resourceId,
+        DataStore::extractBlob<Crypto::EncryptedSymmetricKey>(row.key)};
+  case Nature::KeyPublishToProvisionalUser:
+  {
+    auto const sp = DataStore::extractBlob(row.recipient);
+    return KeyPublish::ToProvisionalUser{
+        Crypto::PublicSignatureKey{
+            sp.subspan(0, Crypto::PublicSignatureKey::arraySize)},
+        resourceId,
+        Crypto::PublicSignatureKey{
+            sp.subspan(Crypto::PublicSignatureKey::arraySize)},
+        DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
   }
+  default:
+    assert(false && "Unreachable code. Invalid nature for KeyPublish");
+    throw std::runtime_error{"Unreachable code. Invalid nature for KeyPublish"};
+  }
+}
+
+template <typename T>
+GroupProvisionalUser rowToGroupProvisionalUser(T const& row)
+{
+  return GroupProvisionalUser{
+      DataStore::extractBlob<Crypto::PublicSignatureKey>(
+          row.app_public_signature_key),
+      DataStore::extractBlob<Crypto::PublicSignatureKey>(
+          row.tanker_public_signature_key),
+      DataStore::extractBlob<Crypto::TwoTimesSealedPrivateEncryptionKey>(
+          row.encrypted_private_encryption_key)};
 }
 }
 
@@ -256,6 +268,8 @@ using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
 using KeyPublishesTable = DbModels::key_publishes::key_publishes;
+using GroupsProvisionalUsersTable = DbModels::
+    group_provisional_encryption_keys::group_provisional_encryption_keys;
 
 Database::Database(std::string const& dbPath,
                    nonstd::optional<Crypto::SymmetricKey> const& userSecret,
@@ -274,6 +288,7 @@ Database::Database(std::string const& dbPath,
   DataStore::createOrMigrateTable<GroupsTable>(*_db);
   DataStore::createOrMigrateTable<KeyPublishesTable>(*_db);
   DataStore::createOrMigrateTable<TrustchainLastIndexTable>(*_db);
+  DataStore::createOrMigrateTable<GroupsProvisionalUsersTable>(*_db);
 
   if (isMigrationNeeded())
   {
@@ -823,6 +838,32 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
       groups.private_encryption_key = sqlpp::null,
       groups.last_group_block_hash = group.lastBlockHash.base(),
       groups.last_group_block_index = group.lastBlockIndex));
+
+  TC_AWAIT(this->putGroupProvisionalEncryptionKeys(group.id,
+                                                   group.provisionalUsers));
+
+  TC_RETURN();
+}
+
+tc::cotask<void> Database::putGroupProvisionalEncryptionKeys(
+    Trustchain::GroupId const& groupId,
+    std::vector<GroupProvisionalUser> const& provisionalUsers)
+{
+  FUNC_TIMER(DB);
+  GroupsProvisionalUsersTable groupsProvisionalUsers;
+
+  for (auto const provisionalUser : provisionalUsers)
+  {
+    (*_db)(
+        sqlpp::sqlite3::insert_or_ignore_into(groupsProvisionalUsers)
+            .set(groupsProvisionalUsers.group_id = groupId.base(),
+                 groupsProvisionalUsers.app_public_signature_key =
+                     provisionalUser.appPublicSignatureKey().base(),
+                 groupsProvisionalUsers.tanker_public_signature_key =
+                     provisionalUser.tankerPublicSignatureKey().base(),
+                 groupsProvisionalUsers.encrypted_private_encryption_key =
+                     provisionalUser.encryptedPrivateEncryptionKey().base()));
+  }
   TC_RETURN();
 }
 
@@ -878,7 +919,66 @@ Database::findExternalGroupByGroupId(GroupId const& groupId)
 
   auto const& row = *rows.begin();
 
-  TC_RETURN(rowToExternalGroup(row));
+  auto externalGroup = rowToExternalGroup(row);
+
+  externalGroup.provisionalUsers =
+      TC_AWAIT(this->findProvisionalUsersByGroupId(groupId));
+
+  TC_RETURN(externalGroup);
+}
+
+tc::cotask<std::vector<GroupProvisionalUser>>
+Database::findProvisionalUsersByGroupId(Trustchain::GroupId const& groupId)
+{
+  FUNC_TIMER(DB);
+  GroupsProvisionalUsersTable groups{};
+
+  auto rows = (*_db)(select(all_of(groups))
+                         .from(groups)
+                         .where(groups.group_id == groupId.base()));
+
+  std::vector<GroupProvisionalUser> groupProvisionalUsers;
+
+  for (auto const& row : rows)
+  {
+    groupProvisionalUsers.push_back(rowToGroupProvisionalUser(row));
+  }
+
+  TC_RETURN(groupProvisionalUsers);
+}
+
+tc::cotask<std::vector<ExternalGroup>>
+Database::findExternalGroupsByProvisionalUser(
+    Crypto::PublicSignatureKey const& appPublicSignatureKey,
+    Crypto::PublicSignatureKey const& tankerPublicSignatureKey)
+{
+  FUNC_TIMER(DB);
+  GroupsProvisionalUsersTable tab_groups_provisional_users{};
+  GroupsTable tab_groups{};
+
+  auto rows = (*_db)(
+      select(all_of(tab_groups),
+             tab_groups_provisional_users.app_public_signature_key,
+             tab_groups_provisional_users.tanker_public_signature_key,
+             tab_groups_provisional_users.encrypted_private_encryption_key)
+          .from(tab_groups.join(tab_groups_provisional_users)
+                    .on(tab_groups.group_id ==
+                        tab_groups_provisional_users.group_id))
+          .where(tab_groups_provisional_users.app_public_signature_key ==
+                     appPublicSignatureKey.base() &&
+                 tab_groups_provisional_users.tanker_public_signature_key ==
+                     tankerPublicSignatureKey.base()));
+
+  std::vector<ExternalGroup> groups;
+
+  for (auto const& row : rows)
+  {
+    auto group = rowToExternalGroup(row);
+    group.provisionalUsers = {rowToGroupProvisionalUser(row)};
+    groups.push_back(group);
+  }
+
+  TC_RETURN(groups);
 }
 
 tc::cotask<nonstd::optional<Group>>

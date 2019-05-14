@@ -5,6 +5,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Groups/GroupProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -114,6 +115,9 @@ public:
 
   virtual tc::cotask<void> putFullGroup(Group const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
+  virtual tc::cotask<void> putGroupProvisionalEncryptionKeys(
+      Trustchain::GroupId const& groupId,
+      std::vector<GroupProvisionalUser> const& provisionalUsers) = 0;
   // Does nothing if the group does not exist
   virtual tc::cotask<void> updateLastGroupBlock(
       Trustchain::GroupId const& groupId,
@@ -123,6 +127,10 @@ public:
       Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
+  virtual tc::cotask<std::vector<ExternalGroup>>
+  findExternalGroupsByProvisionalUser(
+      Crypto::PublicSignatureKey const& appPublicSignatureKey,
+      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) = 0;
   virtual tc::cotask<nonstd::optional<Group>>
   findFullGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
