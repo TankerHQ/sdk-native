@@ -131,7 +131,8 @@ tc::cotask<void> decryptAndStoreKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
 {
-  throw std::runtime_error("Assertion failure: Invalid nature in decryptAndStoreKey");
+  throw std::runtime_error(
+      "Assertion failure: Invalid nature in decryptAndStoreKey");
 }
 }
 
@@ -142,13 +143,13 @@ tc::cotask<void> decryptAndStoreKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublish const& kp)
 {
-  kp.visit([&](auto const& val) {
-    decryptAndStoreKey(resourceKeyStore,
-                       userKeyStore,
-                       groupStore,
-                       provisionalUserKeysStore,
-                       val);
-  });
+  TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<void> {
+    TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
+                                userKeyStore,
+                                groupStore,
+                                provisionalUserKeysStore,
+                                val));
+  }));
 }
 }
 }
