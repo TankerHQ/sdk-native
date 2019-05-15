@@ -8,7 +8,6 @@ import ci.conan
 import subprocess
 
 TESTS = {
-    "v1.10.1": ["encrypt", "group", "unlock"],
     "dev": [
         "encrypt",
         "group",
@@ -18,6 +17,7 @@ TESTS = {
         "provisional-user-group-claim",
         "provisional-user-group-old-claim",
     ],
+    "v1.10.1": ["encrypt", "group", "unlock"],
 }
 
 CURRENT = "dev"
@@ -74,9 +74,8 @@ def run_test(base_path, next_path, version, command):
 def compat(profile: str) -> None:
     built_binary = build_all(profile=profile)
 
-    old_tests = {k: v for k, v in TESTS.items() if k != CURRENT}
     ci.cpp.set_test_env()
-    for version, commands in old_tests.items():
+    for version, commands in TESTS.items():
         for command in commands:
             if command not in TESTS[CURRENT]:
                 continue
