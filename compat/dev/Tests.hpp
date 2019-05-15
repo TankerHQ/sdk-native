@@ -71,6 +71,16 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
   return {std::move(core), std::move(user)};
 }
 
+void claim(CorePtr& core,
+           Tanker::Test::Trustchain& trustchain,
+           Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
+           std::string const& email)
+{
+  auto const verifCode =
+      getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"}).get();
+  core->claimProvisionalIdentity(provisionalIdentity, verifCode).get();
+}
+
 UserSession signUpProvisionalUser(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
@@ -78,12 +88,7 @@ UserSession signUpProvisionalUser(
     std::string const& tankerPath)
 {
   auto session = signUpUser(trustchain, tankerPath);
-  auto const verifCode =
-      getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"}).get();
-  session.core
-      ->claimProvisionalIdentity(
-          Tanker::SSecretProvisionalIdentity{provisionalIdentity}, verifCode)
-      .get();
+  claim(session.core, trustchain, provisionalIdentity, email);
   return session;
 }
 
@@ -473,15 +478,11 @@ struct ClaimProvisionalSelf : Command
     auto const json = Tanker::loadJson(statePath);
     auto const bobIdentity = json.at("bob_identity").get<std::string>();
     auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
-    auto const verifCode =
-        getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"})
-            .get();
-    bobCore
-        ->claimProvisionalIdentity(
-            json.at("bob_provisional_identity")
-                .get<Tanker::SSecretProvisionalIdentity>(),
-            verifCode)
-        .get();
+    claim(bobCore,
+          trustchain,
+          json.at("bob_provisional_identity")
+              .get<Tanker::SSecretProvisionalIdentity>(),
+          "bob@tanker.io");
     auto const state = json.at("encrypt_state").get<EncryptState>();
     decrypt(bobCore, state.encryptedData, state.clearData);
   }
