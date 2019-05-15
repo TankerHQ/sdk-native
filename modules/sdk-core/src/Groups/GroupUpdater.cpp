@@ -100,7 +100,7 @@ std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
     UserGroupCreation const& g)
 {
   if (auto const g2 = g.get_if<UserGroupCreation::v2>())
-    return extractGroupProvisionalUsers(g2->userGroupProvisionalMembers());
+    return extractGroupProvisionalUsers(g2->provisionalMembers());
   return {};
 }
 
@@ -199,10 +199,10 @@ tc::cotask<void> applyUserGroupCreation(
   else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation::v2>())
   {
     groupPrivateEncryptionKey = TC_AWAIT(
-        decryptMyKey(myUserId, userKeyStore, ugc2->userGroupMembers()));
+        decryptMyKey(myUserId, userKeyStore, ugc2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUserKeysStore, ugc2->userGroupProvisionalMembers()));
+          provisionalUserKeysStore, ugc2->provisionalMembers()));
   }
 
   if (groupPrivateEncryptionKey)

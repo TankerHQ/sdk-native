@@ -77,15 +77,15 @@ TEST_CASE("Can create a group with two users")
   CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
             group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
         groupSignatureKey.privateKey);
-  REQUIRE(group.userGroupMembers().size() == 2);
-  REQUIRE(group.userGroupProvisionalMembers().size() == 0);
+  REQUIRE(group.members().size() == 2);
+  REQUIRE(group.provisionalMembers().size() == 0);
   auto const groupEncryptedKey =
-      std::find_if(group.userGroupMembers().begin(),
-                   group.userGroupMembers().end(),
+      std::find_if(group.members().begin(),
+                   group.members().end(),
                    [&](auto const& groupEncryptedKey) {
                      return groupEncryptedKey.userId() == user.userId;
                    });
-  REQUIRE(groupEncryptedKey != group.userGroupMembers().end());
+  REQUIRE(groupEncryptedKey != group.members().end());
   CHECK(groupEncryptedKey->userPublicKey() ==
         user.userKeys.back().keyPair.publicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
@@ -129,16 +129,16 @@ TEST_CASE("Can create a group with two provisional users")
   CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
             group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
         groupSignatureKey.privateKey);
-  REQUIRE(group.userGroupMembers().size() == 0);
-  REQUIRE(group.userGroupProvisionalMembers().size() == 2);
+  REQUIRE(group.members().size() == 0);
+  REQUIRE(group.provisionalMembers().size() == 2);
   auto const groupEncryptedKey = std::find_if(
-      group.userGroupProvisionalMembers().begin(),
-      group.userGroupProvisionalMembers().end(),
+      group.provisionalMembers().begin(),
+      group.provisionalMembers().end(),
       [&](auto const& groupEncryptedKey) {
         return groupEncryptedKey.appPublicSignatureKey() ==
                provisionalUser.publicProvisionalUser.appSignaturePublicKey;
       });
-  REQUIRE(groupEncryptedKey != group.userGroupProvisionalMembers().end());
+  REQUIRE(groupEncryptedKey != group.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
         provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
   CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(

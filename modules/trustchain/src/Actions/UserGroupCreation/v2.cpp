@@ -15,13 +15,13 @@ UserGroupCreation2::UserGroupCreation2(
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
-    Members const& userGroupMembers,
-    ProvisionalMembers const& userGroupProvisionalMembers)
+    Members const& members,
+    ProvisionalMembers const& provisionalMembers)
   : _publicSignatureKey(publicSignatureKey),
     _publicEncryptionKey(publicEncryptionKey),
     _sealedPrivateSignatureKey(sealedPrivateSignatureKey),
-    _userGroupMembers(userGroupMembers),
-    _userGroupProvisionalMembers(userGroupProvisionalMembers),
+    _members(members),
+    _provisionalMembers(provisionalMembers),
     _selfSignature{}
 {
 }
@@ -32,10 +32,10 @@ std::vector<std::uint8_t> UserGroupCreation2::signatureData() const
       Crypto::PublicSignatureKey::arraySize +
       Crypto::PublicEncryptionKey::arraySize +
       Crypto::SealedPrivateSignatureKey::arraySize +
-      (_userGroupMembers.size() *
+      (_members.size() *
        (Crypto::PublicEncryptionKey::arraySize + UserId::arraySize +
         Crypto::SealedPrivateEncryptionKey::arraySize)) +
-      (_userGroupProvisionalMembers.size() *
+      (_provisionalMembers.size() *
        (Crypto::PublicSignatureKey::arraySize * 2 +
         Crypto::TwoTimesSealedPrivateEncryptionKey::arraySize)));
   auto it = std::copy(_publicSignatureKey.begin(),
@@ -44,7 +44,7 @@ std::vector<std::uint8_t> UserGroupCreation2::signatureData() const
   it = std::copy(_publicEncryptionKey.begin(), _publicEncryptionKey.end(), it);
   it = std::copy(
       _sealedPrivateSignatureKey.begin(), _sealedPrivateSignatureKey.end(), it);
-  for (auto const& elem : _userGroupMembers)
+  for (auto const& elem : _members)
   {
     it = std::copy(elem.userId().begin(), elem.userId().end(), it);
     it =
@@ -53,7 +53,7 @@ std::vector<std::uint8_t> UserGroupCreation2::signatureData() const
                    elem.encryptedPrivateEncryptionKey().end(),
                    it);
   }
-  for (auto const& elem : _userGroupProvisionalMembers)
+  for (auto const& elem : _provisionalMembers)
   {
     it = std::copy(elem.appPublicSignatureKey().begin(),
                    elem.appPublicSignatureKey().end(),

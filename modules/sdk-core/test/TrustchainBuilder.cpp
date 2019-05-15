@@ -489,7 +489,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   auto const provisionalMembers = entry.action()
                                       .get<UserGroupCreation>()
                                       .get<UserGroupCreation::v2>()
-                                      .userGroupProvisionalMembers();
+                                      .provisionalMembers();
 
   Group group{
       tgroup, encryptedPrivateSignatureKey, members, provisionalMembers};
