@@ -65,7 +65,8 @@ emscripten::val CoreSignIn(AsyncCore& core,
 {
   SignInOptions signInOptions;
   signInOptions.verificationKey =
-      Emscripten::optionalFromValue<VerificationKey>(jsignInOptions, "verificationKey");
+      Emscripten::optionalFromValue<VerificationKey>(jsignInOptions,
+                                                     "verificationKey");
   signInOptions.verificationCode =
       Emscripten::optionalFromValue<VerificationCode>(jsignInOptions,
                                                       "verificationCode");
@@ -144,11 +145,23 @@ emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
       SGroupId(jgroupId.as<std::string>()), usersToAdd));
 }
 
+emscripten::val CoreClaimProvisionalIdentity(
+    AsyncCore& core,
+    emscripten::val const& secretProvisionalIdentity,
+    emscripten::val const& verificationCode)
+{
+  return Emscripten::tcFutureToJsPromise(core.claimProvisionalIdentity(
+      SSecretProvisionalIdentity(secretProvisionalIdentity.as<std::string>()),
+      VerificationCode{verificationCode.as<std::string>()}));
+}
+
 emscripten::val CoreGenerateAndRegisterVerificationKey(AsyncCore& core)
 {
   return Emscripten::tcFutureToJsPromise(
       core.generateAndRegisterVerificationKey().and_then(
-          [](auto const& verificationKey) { return verificationKey.string(); }));
+          [](auto const& verificationKey) {
+            return verificationKey.string();
+          }));
 }
 
 emscripten::val CoreRegisterUnlock(AsyncCore& core,
@@ -319,6 +332,7 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("share", &CoreShare)
       .function("createGroup", &CoreCreateGroup)
       .function("updateGroupMembers", &CoreUpdateGroupMembers)
+      .function("claimProvisionalIdentity", &CoreClaimProvisionalIdentity)
       .function("generateAndRegisterVerificationKey",
                 &CoreGenerateAndRegisterVerificationKey)
       .function("registerUnlock", &CoreRegisterUnlock)
