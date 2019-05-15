@@ -73,6 +73,15 @@ std::pair<CorePtr, std::string> signUpProvisionalUser(
   return std::make_pair(std::move(core), user.identity);
 }
 
+CorePtr signInUser(std::string const& identity,
+                   Tanker::Test::Trustchain& trustchain,
+                   std::string const& tankerPath)
+{
+  auto core = createCore(trustchain.url, trustchain.id, tankerPath);
+  core->signIn(identity).get();
+  return core;
+}
+
 void decrypt(CorePtr const& core,
              std::vector<uint8_t> const& encryptedData,
              std::string const& expectedData)
@@ -153,14 +162,12 @@ struct EncryptCompat : Command
     auto alice = upgradeToIdentity(trustchain.id, state.alice);
     auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bob.identity).get();
+    auto bobCore = signInUser(bob.identity, trustchain, tankerPath);
     decrypt(bobCore,
             state.encryptState.encryptedData,
             state.encryptState.clearData);
 
-    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    aliceCore->signIn(alice.identity).get();
+    auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
     decrypt(aliceCore,
             state.encryptState.encryptedData,
             state.encryptState.clearData);
@@ -207,14 +214,12 @@ struct GroupCompat : Command
     auto alice = upgradeToIdentity(trustchain.id, state.alice);
     auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bob.identity).get();
+    auto bobCore = signInUser(bob.identity, trustchain, tankerPath);
     decrypt(bobCore,
             state.encryptState.encryptedData,
             state.encryptState.clearData);
 
-    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    aliceCore->signIn(alice.identity).get();
+    auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
     decrypt(aliceCore,
             state.encryptState.encryptedData,
             state.encryptState.clearData);
@@ -341,8 +346,7 @@ struct DecryptOldClaim : Command
     auto const json = Tanker::loadJson(statePath);
     auto const bobIdentity = json.at("bob_identity").get<std::string>();
     auto const state = json.at("encrypt_state").get<EncryptState>();
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bobIdentity).get();
+    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
     decrypt(bobCore, state.encryptedData, state.clearData);
     bobCore->signOut().get();
   }
@@ -440,11 +444,9 @@ struct ProvisionalUserGroupOldClaim : Command
   {
     auto const json = Tanker::loadJson(statePath);
     auto const bobIdentity = json.at("bob_identity").get<std::string>();
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bobIdentity).get();
+    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
     auto const state = json.at("encrypt_state").get<EncryptState>();
     decrypt(bobCore, state.encryptedData, state.clearData);
-    bobCore->signOut().get();
   }
 };
 
@@ -491,8 +493,7 @@ struct ClaimProvisionalSelf : Command
   {
     auto const json = Tanker::loadJson(statePath);
     auto const bobIdentity = json.at("bob_identity").get<std::string>();
-    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    bobCore->signIn(bobIdentity);
+    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
     auto const verifCode =
         getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"})
             .get();
