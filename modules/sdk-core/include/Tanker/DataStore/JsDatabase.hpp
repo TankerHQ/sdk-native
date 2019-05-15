@@ -4,8 +4,8 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -33,16 +33,15 @@ public:
   tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
   getUserOptLastKeyPair() override;
 
-  tc::cotask<uint64_t> getTrustchainLastIndex() override;
+  tc::cotask<nonstd::optional<uint64_t>> findTrustchainLastIndex() override;
+  tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+  findTrustchainPublicSignatureKey() override;
+  tc::cotask<void> setTrustchainLastIndex(uint64_t) override;
+  tc::cotask<void> setTrustchainPublicSignatureKey(
+      Crypto::PublicSignatureKey const&) override;
   tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
   tc::cotask<nonstd::optional<Entry>> findTrustchainEntry(
       Crypto::Hash const& hash) override;
-  tc::cotask<nonstd::optional<Entry>> findTrustchainKeyPublish(
-      Trustchain::ResourceId const& resourceId) override;
-  tc::cotask<std::vector<Entry>> getTrustchainDevicesOf(
-      Trustchain::UserId const& userId) override;
-  tc::cotask<Entry> getTrustchainDevice(
-      Trustchain::DeviceId const& deviceId) override;
 
   tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
@@ -56,6 +55,11 @@ public:
   tc::cotask<void> setContactPublicEncryptionKey(
       Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) override;
+
+  tc::cotask<void> putKeyPublishes(
+      gsl::span<Trustchain::Actions::KeyPublish const>) override;
+  tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>> findKeyPublish(
+      Trustchain::ResourceId const&) override;
 
   tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
                                   Crypto::SymmetricKey const& key) override;
@@ -79,6 +83,9 @@ public:
 
   tc::cotask<void> putFullGroup(Group const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
+  tc::cotask<void> putGroupProvisionalEncryptionKeys(
+      Trustchain::GroupId const& groupId,
+      std::vector<GroupProvisionalUser> const& provisionalUsers) override;
   // Does nothing if the group does not exist
   tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
                                         Crypto::Hash const& lastBlockHash,
@@ -87,6 +94,9 @@ public:
       Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
+  tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
+      Crypto::PublicSignatureKey const& appPublicSignatureKey,
+      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) override;
   tc::cotask<nonstd::optional<Group>> findFullGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<nonstd::optional<ExternalGroup>>
@@ -96,8 +106,7 @@ public:
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey,
       ProvisionalUserKeys const& provisionalUserKeys) override;
-  tc::cotask<nonstd::optional<ProvisionalUserKeys>>
-  findProvisionalUserKeys(
+  tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
 

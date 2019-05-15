@@ -31,6 +31,16 @@ nonstd::optional<T> optionalStringFromValue(emscripten::val const& val,
 }
 
 template <typename T>
+nonstd::optional<T> optionalFromValue(emscripten::val const& val,
+                                      std::string const& key)
+{
+  if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
+    return nonstd::nullopt;
+  else
+    return val[key].as<T>();
+}
+
+template <typename T>
 emscripten::val containerToJs(T const& cont)
 {
   using emscripten::val;
