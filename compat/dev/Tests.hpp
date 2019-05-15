@@ -125,9 +125,7 @@ struct UnlockCompat : Command
     Tanker::AuthenticationMethods methods{Tanker::Password{"my password"}};
     aliceCore->signUp(alice.identity, methods).get();
     Tanker::saveJson(statePath,
-                     {{"trustchainId", trustchain.id},
-                      {"alice", alice},
-                      {"password", "my password"}});
+                     {{"alice", alice}, {"password", "my password"}});
   }
 
   void next() override
