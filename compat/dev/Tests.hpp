@@ -137,7 +137,6 @@ struct EncryptCompat : Command
     auto const bob = trustchain.makeUser();
     auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
     bobCore->signUp(bob.identity).get();
-    bobCore->signOut().get();
 
     auto clearData = "my confession to bob"s;
 
@@ -331,7 +330,6 @@ struct DecryptOldClaim : Command
         "bob@tanker.io",
         trustchain,
         tankerPath);
-    std::get<CorePtr>(res)->signOut().get();
 
     Tanker::saveJson(
         statePath,
@@ -348,7 +346,6 @@ struct DecryptOldClaim : Command
     auto const state = json.at("encrypt_state").get<EncryptState>();
     auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
     decrypt(bobCore, state.encryptedData, state.clearData);
-    bobCore->signOut().get();
   }
 };
 
@@ -432,8 +429,6 @@ struct ProvisionalUserGroupOldClaim : Command
         trustchain,
         tankerPath);
 
-    std::get<CorePtr>(res)->signOut().get();
-
     Tanker::saveJson(
         statePath,
         {{"bob_identity", std::get<std::string>(res)},
@@ -505,6 +500,5 @@ struct ClaimProvisionalSelf : Command
         .get();
     auto const state = json.at("encrypt_state").get<EncryptState>();
     decrypt(bobCore, state.encryptedData, state.clearData);
-    bobCore->signOut().get();
   }
 };
