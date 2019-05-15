@@ -43,8 +43,8 @@ Status Core::status() const
 {
   assert(!_state.valueless_by_exception() &&
          "_state variant must not be valueless");
-  if (mpark::get_if<Opener>(&_state))
-    return Status::Stopped;
+  if (auto core = mpark::get_if<Opener>(&_state))
+    return core->status();
   else if (mpark::get_if<SessionType>(&_state))
     return Status::Ready;
   TERROR("unreachable code, invalid tanker status");

@@ -13,6 +13,7 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Session.hpp>
+#include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -39,6 +40,11 @@ Opener::Opener(std::string url, SdkInfo info, std::string writablePath)
     _info(std::move(info)),
     _writablePath(std::move(writablePath))
 {
+}
+
+Status Opener::status() const
+{
+  return _status;
 }
 
 tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
