@@ -447,3 +447,63 @@ struct ProvisionalUserGroupOldClaim : Command
     bobCore->signOut().get();
   }
 };
+
+struct ClaimProvisionalSelf : Command
+{
+  using Command::Command;
+
+  void base() override
+  {
+    auto const alice = trustchain.makeUser();
+    auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
+    aliceCore->signUp(alice.identity).get();
+
+    auto const bobProvisionalIdentity =
+        Tanker::Identity::createProvisionalIdentity(
+            cppcodec::base64_rfc4648::encode(trustchain.id),
+            Tanker::Email{"bob@tanker.io"});
+
+    auto const sgroupId =
+        aliceCore
+            ->createGroup(
+                {Tanker::SPublicIdentity{
+                     Tanker::Identity::getPublicIdentity(alice.identity)},
+                 Tanker::SPublicIdentity{Tanker::Identity::getPublicIdentity(
+                     bobProvisionalIdentity)}})
+            .get();
+
+    auto const bob = trustchain.makeUser();
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
+    bobCore->signUp(bob.identity).get();
+
+    auto const clearData = "My statement to the world";
+    auto const encryptedData = encrypt(aliceCore, clearData, {}, {sgroupId});
+
+    encrypt(bobCore, "", {}, {sgroupId});
+    Tanker::saveJson(
+        statePath,
+        {{"bob_identity", bob.identity},
+         {"bob_provisional_identity", bobProvisionalIdentity},
+         {"encrypt_state", EncryptState{clearData, encryptedData}}});
+  }
+
+  void next() override
+  {
+    auto const json = Tanker::loadJson(statePath);
+    auto const bobIdentity = json.at("bob_identity").get<std::string>();
+    auto bobCore = createCore(trustchain.url, trustchain.id, tankerPath);
+    bobCore->signIn(bobIdentity);
+    auto const verifCode =
+        getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"})
+            .get();
+    bobCore
+        ->claimProvisionalIdentity(
+            json.at("bob_provisional_identity")
+                .get<Tanker::SSecretProvisionalIdentity>(),
+            verifCode)
+        .get();
+    auto const state = json.at("encrypt_state").get<EncryptState>();
+    decrypt(bobCore, state.encryptedData, state.clearData);
+    bobCore->signOut().get();
+  }
+};

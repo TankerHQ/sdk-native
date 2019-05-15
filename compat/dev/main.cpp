@@ -25,6 +25,7 @@ static const char USAGE[] = R"(compat cli
     decrypt-old-claim         claim and decrypt an old preshare resource
     provisional-user-group-claim         share to a group with provisional user and claim and decrypt
     provisional-user-group-old-claim     share to a group with provisional user and decrypt an old preshare resource
+    claim-provisional-self               share to a group with provisional user which we later claim
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
@@ -57,6 +58,9 @@ auto getRunner = [](std::string const& command,
         trustchain, std::move(tankerPath), std::move(statePath));
   else if (command == "provisional-user-group-old-claim")
     return std::make_unique<ProvisionalUserGroupOldClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "claim-provisional-self")
+    return std::make_unique<ClaimProvisionalSelf>(
         trustchain, std::move(tankerPath), std::move(statePath));
   else
     throw std::runtime_error("not implemented");
