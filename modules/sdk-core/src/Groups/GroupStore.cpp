@@ -34,6 +34,9 @@ tc::cotask<void> GroupStore::putGroupProvisionalEncryptionKeys(
     Trustchain::GroupId const& groupId,
     std::vector<GroupProvisionalUser> const& provisionalUsers)
 {
+  if (provisionalUsers.empty())
+    TC_RETURN();
+
   TINFO("Adding group provisional encryption keys {}", groupId);
   TC_AWAIT(_db->putGroupProvisionalEncryptionKeys(groupId, provisionalUsers));
 }

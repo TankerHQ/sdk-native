@@ -18,5 +18,10 @@ tc::cotask<void> applyEntry(
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry);
+
+tc::cotask<void> applyGroupPrivateKey(
+    GroupStore& groupStore,
+    ExternalGroup const& group,
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey);
 }
 }

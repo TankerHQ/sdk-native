@@ -84,6 +84,34 @@ decryptMyProvisionalKey(
   TC_RETURN(nonstd::nullopt);
 }
 
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    std::vector<UserGroupProvisionalMember2> const& members)
+{
+  std::vector<GroupProvisionalUser> out;
+  out.reserve(members.size());
+  for (auto const& member : members)
+    out.push_back({member.appPublicSignatureKey(),
+                   member.tankerPublicSignatureKey(),
+                   member.encryptedPrivateEncryptionKey()});
+  return out;
+}
+
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    UserGroupCreation const& g)
+{
+  if (auto const g2 = g.get_if<UserGroupCreation::v2>())
+    return extractGroupProvisionalUsers(g2->provisionalMembers());
+  return {};
+}
+
+std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
+    UserGroupAddition const& g)
+{
+  if (auto const g2 = g.get_if<UserGroupAddition::v2>())
+    return extractGroupProvisionalUsers(g2->provisionalMembers());
+  return {};
+}
+
 tc::cotask<void> putExternalGroup(GroupStore& groupStore,
                                   Entry const& entry,
                                   UserGroupCreation const& userGroupCreation)
@@ -95,6 +123,7 @@ tc::cotask<void> putExternalGroup(GroupStore& groupStore,
       userGroupCreation.publicEncryptionKey(),
       entry.hash,
       entry.index,
+      extractGroupProvisionalUsers(userGroupCreation),
   }));
 }
 
@@ -170,10 +199,10 @@ tc::cotask<void> applyUserGroupCreation(
   else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation::v2>())
   {
     groupPrivateEncryptionKey = TC_AWAIT(
-        decryptMyKey(myUserId, userKeyStore, ugc2->userGroupMembers()));
+        decryptMyKey(myUserId, userKeyStore, ugc2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUserKeysStore, ugc2->userGroupProvisionalMembers()));
+          provisionalUserKeysStore, ugc2->provisionalMembers()));
   }
 
   if (groupPrivateEncryptionKey)
@@ -215,11 +244,18 @@ tc::cotask<void> applyUserGroupAddition(
           provisionalUserKeysStore, uga2->provisionalMembers()));
   }
 
-  if (!groupPrivateEncryptionKey)
-    TC_RETURN();
   // I am already member of this group, ignore
   if (!previousGroup->encryptedPrivateSignatureKey)
     TC_RETURN();
+  // I am still not part of this group, store provisional members for maybe
+  // future use
+  if (!groupPrivateEncryptionKey)
+  {
+    TC_AWAIT(groupStore.putGroupProvisionalEncryptionKeys(
+        userGroupAddition.groupId(),
+        extractGroupProvisionalUsers(userGroupAddition)));
+    TC_RETURN();
+  }
 
   TC_AWAIT(putFullGroup(
       groupStore, *previousGroup, *groupPrivateEncryptionKey, entry));
@@ -242,6 +278,37 @@ tc::cotask<void> applyEntry(
   else
     throw Error::formatEx<std::runtime_error>(
         "GroupUpdater can't handle this block (nature: {})", entry.nature);
+}
+
+tc::cotask<void> applyGroupPrivateKey(
+    GroupStore& groupStore,
+    ExternalGroup const& group,
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey)
+{
+  if (!group.encryptedPrivateSignatureKey)
+    // we are already in the group, nothing more to decrypt
+    TC_RETURN();
+
+  auto const groupPrivateSignatureKey =
+      Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
+          *group.encryptedPrivateSignatureKey,
+          Crypto::EncryptionKeyPair{
+              group.publicEncryptionKey,
+              groupPrivateEncryptionKey,
+          });
+  TC_AWAIT(groupStore.put(Group{
+      group.id,
+      Crypto::SignatureKeyPair{
+          group.publicSignatureKey,
+          groupPrivateSignatureKey,
+      },
+      Crypto::EncryptionKeyPair{
+          group.publicEncryptionKey,
+          groupPrivateEncryptionKey,
+      },
+      group.lastBlockHash,
+      group.lastBlockIndex,
+  }));
 }
 }
 }

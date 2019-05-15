@@ -26,10 +26,12 @@ TEST_CASE("Preregistration")
   {
     UserKeyStore userKeyStore(db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    GroupStore groupStore(db.get());
 
-    CHECK_THROWS_AS(AWAIT_VOID(Preregistration::applyEntry(
-                        userKeyStore, provisionalUserKeysStore, picEntry)),
-                    Error::UserKeyNotFound);
+    CHECK_THROWS_AS(
+        AWAIT_VOID(Preregistration::applyEntry(
+            userKeyStore, provisionalUserKeysStore, groupStore, picEntry)),
+        Error::UserKeyNotFound);
   }
 
   SUBCASE("can decrypt a preregistration claim")
@@ -37,9 +39,10 @@ TEST_CASE("Preregistration")
     auto const userKeyStore =
         builder.makeUserKeyStore(userResult.user, db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    GroupStore groupStore(db.get());
 
     CHECK_NOTHROW(AWAIT_VOID(Preregistration::applyEntry(
-        *userKeyStore, provisionalUserKeysStore, picEntry)));
+        *userKeyStore, provisionalUserKeysStore, groupStore, picEntry)));
     auto const gotKeys = AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
         provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,
         provisionalUser.secretProvisionalUser.tankerSignatureKeyPair
@@ -49,5 +52,26 @@ TEST_CASE("Preregistration")
              provisionalUser.secretProvisionalUser.appEncryptionKeyPair);
     CHECK_EQ(gotKeys->tankerKeys,
              provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair);
+  }
+
+  SUBCASE("can decrypt a group key with a claim")
+  {
+    auto const group =
+        builder.makeGroup(userResult.user.devices[0],
+                          {},
+                          {provisionalUser.publicProvisionalUser});
+
+    auto const userKeyStore =
+        builder.makeUserKeyStore(userResult.user, db.get());
+    ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    auto const groupStore =
+        builder.makeGroupStore({group.group.tankerGroup.id}, db.get());
+
+    CHECK_NOTHROW(AWAIT_VOID(Preregistration::applyEntry(
+        *userKeyStore, provisionalUserKeysStore, *groupStore, picEntry)));
+
+    CHECK_EQ(
+        AWAIT(groupStore->findFullById(group.group.tankerGroup.id)).value(),
+        group.group.tankerGroup);
   }
 }
