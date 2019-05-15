@@ -29,3 +29,12 @@ struct ShareState
 
 void to_json(nlohmann::json& j, ShareState const& state);
 void from_json(nlohmann::json const& j, ShareState& state);
+
+struct IdentityShareState
+{
+  std::string identity;
+  EncryptState encryptState;
+};
+
+void to_json(nlohmann::json& j, IdentityShareState const& state);
+void from_json(nlohmann::json const& j, IdentityShareState& state);

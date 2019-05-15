@@ -35,3 +35,15 @@ void from_json(nlohmann::json const& j, ShareState& state)
     state.groupId = group->get<Tanker::SGroupId>();
   state.encryptState = j.at("encrypt_state").get<EncryptState>();
 }
+
+void to_json(nlohmann::json& j, IdentityShareState const& state)
+{
+  j["identity"] = state.identity;
+  j["encrypt_state"] = state.encryptState;
+}
+
+void from_json(nlohmann::json const& j, IdentityShareState& state)
+{
+  j.at("identity").get_to(state.identity);
+  j.at("encrypt_state").get_to(state.encryptState);
+}

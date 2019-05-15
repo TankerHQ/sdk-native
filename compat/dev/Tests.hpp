@@ -209,19 +209,17 @@ struct DecryptOldClaim : Command
 
     Tanker::saveJson(
         statePath,
-        {
-            {"bob_identity", bob.user.identity},
-            {"encrypt_state", EncryptState{clearData, encryptedData}},
-        });
+        IdentityShareState{bob.user.identity,
+                           EncryptState{clearData, encryptedData}});
   }
 
   void next() override
   {
-    auto const json = Tanker::loadJson(statePath);
-    auto const bobIdentity = json.at("bob_identity").get<std::string>();
-    auto const state = json.at("encrypt_state").get<EncryptState>();
-    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
-    decrypt(bobCore, state.encryptedData, state.clearData);
+    auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
+    auto bobCore = signInUser(state.identity, trustchain, tankerPath);
+    decrypt(bobCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
   }
 };
 
@@ -250,19 +248,21 @@ struct ProvisionalUserGroupClaim : Command
 
     Tanker::saveJson(
         statePath,
-        {{"bob_provisional_identity", bobProvisionalIdentity},
-         {"encrypt_state", EncryptState{clearData, encryptedData}}});
+        IdentityShareState{bobProvisionalIdentity,
+                           EncryptState{clearData, encryptedData}});
   }
 
   void next() override
   {
-    auto const json = Tanker::loadJson(statePath);
-    auto bob = signUpProvisionalUser(json.at("bob_provisional_identity"),
-                                     "bob@tanker.io",
-                                     trustchain,
-                                     tankerPath);
-    auto const encryptState = json.at("encrypt_state").get<EncryptState>();
-    decrypt(bob.core, encryptState.encryptedData, encryptState.clearData);
+    auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
+    auto bob = signUpProvisionalUser(
+        Tanker::SSecretProvisionalIdentity{state.identity},
+        "bob@tanker.io",
+        trustchain,
+        tankerPath);
+    decrypt(bob.core,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
   }
 };
 
@@ -297,17 +297,17 @@ struct ProvisionalUserGroupOldClaim : Command
 
     Tanker::saveJson(
         statePath,
-        {{"bob_identity", bob.user.identity},
-         {"encrypt_state", EncryptState{clearData, encryptedData}}});
+        IdentityShareState{bob.user.identity,
+                           EncryptState{clearData, encryptedData}});
   }
 
   void next() override
   {
-    auto const json = Tanker::loadJson(statePath);
-    auto const bobIdentity = json.at("bob_identity").get<std::string>();
-    auto const state = json.at("encrypt_state").get<EncryptState>();
-    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
-    decrypt(bobCore, state.encryptedData, state.clearData);
+    auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
+    auto bobCore = signInUser(state.identity, trustchain, tankerPath);
+    decrypt(bobCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
   }
 };
 
@@ -341,22 +341,25 @@ struct ClaimProvisionalSelf : Command
     encrypt(bob.core, "", {}, {sgroupId});
     Tanker::saveJson(
         statePath,
-        {{"bob_identity", bob.user.identity},
-         {"bob_provisional_identity", bobProvisionalIdentity},
-         {"encrypt_state", EncryptState{clearData, encryptedData}}});
+        {
+            {"share_state",
+             IdentityShareState{bob.user.identity,
+                                EncryptState{clearData, encryptedData}}},
+            {"provisional_identity", bobProvisionalIdentity},
+        });
   }
 
   void next() override
   {
     auto const json = Tanker::loadJson(statePath);
-    auto const bobIdentity = json.at("bob_identity").get<std::string>();
-    auto bobCore = signInUser(bobIdentity, trustchain, tankerPath);
-    claim(bobCore,
-          trustchain,
-          json.at("bob_provisional_identity")
-              .get<Tanker::SSecretProvisionalIdentity>(),
-          "bob@tanker.io");
-    auto const state = json.at("encrypt_state").get<EncryptState>();
-    decrypt(bobCore, state.encryptedData, state.clearData);
+    auto const state = json.at("share_state").get<IdentityShareState>();
+    auto const provisionalIdentity =
+        json.at("provisional_identity")
+            .get<Tanker::SSecretProvisionalIdentity>();
+    auto bobCore = signInUser(state.identity, trustchain, tankerPath);
+    claim(bobCore, trustchain, provisionalIdentity, "bob@tanker.io");
+    decrypt(bobCore,
+            state.encryptState.encryptedData,
+            state.encryptState.clearData);
   }
 };
