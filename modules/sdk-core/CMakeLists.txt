@@ -21,7 +21,7 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
     include/Tanker/DbModels/Trustchain.hpp
     include/Tanker/DbModels/TrustchainIndexes.hpp
-    include/Tanker/DbModels/TrustchainLastIndex.hpp
+    include/Tanker/DbModels/TrustchainInfo.hpp
     include/Tanker/DbModels/UserKeys.hpp
     include/Tanker/DbModels/Versions.hpp
 
@@ -39,7 +39,7 @@ if (NOT EMSCRIPTEN)
     src/DbModels/ProvisionalUserKeys.cpp
     src/DbModels/Trustchain.cpp
     src/DbModels/TrustchainIndexes.cpp
-    src/DbModels/TrustchainLastIndex.cpp
+    src/DbModels/TrustchainInfo.cpp
     src/DbModels/UserKeys.cpp
     src/DbModels/Versions.cpp
   )

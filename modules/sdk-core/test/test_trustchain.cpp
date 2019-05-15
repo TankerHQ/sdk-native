@@ -113,6 +113,13 @@ TEST_CASE("trustchain")
     TrustchainStore trustchain(dbPtr.get());
   }
 
+  SUBCASE("it should return nullopt when there is no signature key")
+  {
+    TrustchainStore trustchain(dbPtr.get());
+
+    CHECK_EQ(TC_AWAIT(trustchain.findPublicSignatureKey()), nonstd::nullopt);
+  }
+
   SUBCASE("it should add entries to the trustchain and update last index")
   {
     TrustchainStore trustchain(dbPtr.get());

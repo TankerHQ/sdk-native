@@ -24,8 +24,21 @@ tc::cotask<void> TrustchainStore::addEntry(Entry const& entry)
   TDEBUG("Adding block {}", entry.hash);
 
   TC_AWAIT(_db->addTrustchainEntry(entry));
-  TC_AWAIT(_db->setTrustchainLastIndex(entry.index));
+  TC_AWAIT(setLastIndex(entry.index));
 }
+
+tc::cotask<void> TrustchainStore::setPublicSignatureKey(
+    Crypto::PublicSignatureKey const& key)
+{
+  TC_AWAIT(_db->setTrustchainPublicSignatureKey(key));
+}
+
+tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+TrustchainStore::findPublicSignatureKey()
+{
+  TC_RETURN(TC_AWAIT(_db->findTrustchainPublicSignatureKey()));
+}
+
 
 tc::cotask<uint64_t> TrustchainStore::getLastIndex()
 {
