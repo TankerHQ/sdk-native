@@ -6,7 +6,7 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -45,12 +45,12 @@ void to_json(nlohmann::json&, Request const& m);
 
 struct FetchAnswer
 {
-  std::vector<uint8_t> encryptedUnlockKey;
+  std::vector<uint8_t> encryptedVerificationKey;
 
   FetchAnswer() = default;
-  FetchAnswer(Crypto::SymmetricKey const& key, UnlockKey const& unlockKey);
+  FetchAnswer(Crypto::SymmetricKey const& key, VerificationKey const& verificationKey);
 
-  UnlockKey getUnlockKey(Crypto::SymmetricKey const& key) const;
+  VerificationKey getVerificationKey(Crypto::SymmetricKey const& key) const;
 };
 void from_json(nlohmann::json const& j, FetchAnswer& m);
 

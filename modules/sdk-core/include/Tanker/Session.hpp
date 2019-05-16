@@ -25,7 +25,7 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
 #include <Tanker/UserAccessor.hpp>
@@ -93,17 +93,17 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<std::unique_ptr<Unlock::Registration>> generateUnlockKey();
+  tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey();
 
-  tc::cotask<void> registerUnlockKey(Unlock::Registration const& registration);
+  tc::cotask<void> registerVerificationKey(Unlock::Registration const& registration);
 
-  tc::cotask<void> createUnlockKey(Unlock::CreationOptions const& options);
+  tc::cotask<void> createVerificationKey(Unlock::CreationOptions const& options);
 
   tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
 
   tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
 
-  tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
+  tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
 
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   Unlock::Methods registeredUnlockMethods() const;

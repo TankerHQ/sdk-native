@@ -32,7 +32,7 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace
 {
-auto const someUnlockKey = UnlockKey{
+auto const someVerificationKey = VerificationKey{
     "eyJkZXZpY2VJZCI6IlFySHhqNk9qSURBUmJRVWdBenRmUHZyNFJVZUNRWDRhb1ZTWXJiSzNEa2"
     "s9IiwicHJpdmF0ZUVuY3J5cHRpb25LZXkiOiJQTnRjNEFXMWZ5NnBnbVd2SlA5RTN0ZytxMFJ0"
     "emkxdlcvSEFqQnBMRmdnPSIsInByaXZhdGVTaWduYXR1cmVLZXkiOiJxbXBNZmlHRHYweEZyVD"
@@ -68,7 +68,7 @@ TEST_CASE("it can convert a ghost device to unlock key")
       make<Crypto::PrivateEncryptionKey>("enckey"),
   };
   auto const gotGhostDevice = Unlock::extract(
-      UnlockKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
+      VerificationKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
                 "BQUFBQUFBQUFBQUFBQUFBQU"
                 "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
                 "lY1QUFBQUFBQUFBQUFBQUFB"
@@ -87,14 +87,14 @@ TEST_CASE("UpdateOptions")
   {
     FAST_REQUIRE_EQ(locker.get<Password>().value().string(), "keep it secret");
     FAST_REQUIRE_UNARY_FALSE(locker.get<Email>());
-    FAST_REQUIRE_UNARY_FALSE(locker.get<UnlockKey>());
+    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
   }
   SUBCASE("set Email too")
   {
     locker.set(Email{"germaine@yahou.fr"});
     FAST_REQUIRE_EQ(locker.get<Password>().value().string(), "keep it secret");
     FAST_REQUIRE_EQ(locker.get<Email>().value().string(), "germaine@yahou.fr");
-    FAST_REQUIRE_UNARY_FALSE(locker.get<UnlockKey>());
+    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
   }
   SUBCASE("unset password")
   {
@@ -102,16 +102,16 @@ TEST_CASE("UpdateOptions")
     locker.reset<Password>();
     FAST_REQUIRE_UNARY_FALSE(locker.get<Password>());
     FAST_REQUIRE_EQ(locker.get<Email>().value().string(), "germaine@yahou.fr");
-    FAST_REQUIRE_UNARY_FALSE(locker.get<UnlockKey>());
+    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
   }
 }
 
-TEST_CASE("unlockKey")
+TEST_CASE("verificationKey")
 {
   SUBCASE("extract")
   {
-    REQUIRE_THROWS_AS(Unlock::extract(UnlockKey{"plop"}),
-                      Error::InvalidUnlockKey);
+    REQUIRE_THROWS_AS(Unlock::extract(VerificationKey{"plop"}),
+                      Error::InvalidVerificationKey);
   }
 
   TrustchainBuilder builder;
@@ -135,15 +135,15 @@ TEST_CASE("unlockKey")
   auto const message =
       Unlock::Message(builder.trustchainId(),
                       firstDev.keys.deviceId,
-                      Unlock::UpdateOptions{email, password, someUnlockKey},
+                      Unlock::UpdateOptions{email, password, someVerificationKey},
                       aliceUserSecret,
                       firstDev.keys.signatureKeyPair.privateKey);
   FAST_REQUIRE_UNARY(reg);
-  FAST_REQUIRE_UNARY_FALSE(reg->unlockKey.empty());
+  FAST_REQUIRE_UNARY_FALSE(reg->verificationKey.empty());
   SUBCASE("generate")
   {
-    REQUIRE_NOTHROW(Unlock::extract(reg->unlockKey));
-    auto const gh = Unlock::extract(reg->unlockKey);
+    REQUIRE_NOTHROW(Unlock::extract(reg->verificationKey));
+    auto const gh = Unlock::extract(reg->verificationKey);
     FAST_CHECK_EQ(gh.privateEncryptionKey,
                   ghostDeviceKeys.encryptionKeyPair.privateKey);
     FAST_CHECK_EQ(gh.privateSignatureKey,
@@ -171,13 +171,13 @@ TEST_CASE("unlockKey")
 
   SUBCASE("extact unlock message")
   {
-    auto const unlockKeyRes = message.claims.getUnlockKey(aliceUserSecret);
-    CHECK_EQ(unlockKeyRes, someUnlockKey);
+    auto const verificationKeyRes = message.claims.getVerificationKey(aliceUserSecret);
+    CHECK_EQ(verificationKeyRes, someVerificationKey);
   }
 
   SUBCASE("createValidatedDevice")
   {
-    auto const gh = Unlock::extract(reg->unlockKey);
+    auto const gh = Unlock::extract(reg->verificationKey);
     auto const encryptedPrivateKey =
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
             aliceKeys.keyPair.privateKey,

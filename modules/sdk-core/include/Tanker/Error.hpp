@@ -26,11 +26,11 @@ enum class Code
   ResourceKeyNotFound,
   UserNotFound,
   DecryptFailed,
-  InvalidUnlockKey,
+  InvalidVerificationKey,
   InternalError,
   InvalidUnlockPassword,
   InvalidVerificationCode,
-  UnlockKeyAlreadyExists,
+  VerificationKeyAlreadyExists,
   MaxVerificationAttemptsReached,
   InvalidGroupSize,
   RecipientNotFound,
@@ -85,11 +85,11 @@ DECLARE_ERROR(InvalidArgument);
 // ResourceKeyNotFound has its own header
 // UserNotFound has its own header
 DECLARE_ERROR(DecryptFailed);
-DECLARE_ERROR(InvalidUnlockKey);
+DECLARE_ERROR(InvalidVerificationKey);
 DECLARE_ERROR(InternalError);
 DECLARE_ERROR(InvalidUnlockPassword);
 DECLARE_ERROR(InvalidVerificationCode);
-DECLARE_ERROR(UnlockKeyAlreadyExists);
+DECLARE_ERROR(VerificationKeyAlreadyExists);
 DECLARE_ERROR(MaxVerificationAttemptsReached);
 DECLARE_ERROR(InvalidGroupSize);
 // RecipientNotFound has its own header

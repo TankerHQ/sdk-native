@@ -91,14 +91,14 @@ EMSCRIPTEN_BINDINGS(jserrors)
       .value("ResourceKeyNotFound", Tanker::Error::Code::ResourceKeyNotFound)
       .value("UserNotFound", Tanker::Error::Code::UserNotFound)
       .value("DecryptFailed", Tanker::Error::Code::DecryptFailed)
-      .value("InvalidUnlockKey", Tanker::Error::Code::InvalidUnlockKey)
+      .value("InvalidVerificationKey", Tanker::Error::Code::InvalidVerificationKey)
       .value("InternalError", Tanker::Error::Code::InternalError)
       .value("InvalidUnlockPassword",
              Tanker::Error::Code::InvalidUnlockPassword)
       .value("InvalidVerificationCode",
              Tanker::Error::Code::InvalidVerificationCode)
-      .value("UnlockKeyAlreadyExists",
-             Tanker::Error::Code::UnlockKeyAlreadyExists)
+      .value("VerificationKeyAlreadyExists",
+             Tanker::Error::Code::VerificationKeyAlreadyExists)
       .value("MaxVerificationAttemptsReached",
              Tanker::Error::Code::MaxVerificationAttemptsReached)
       .value("InvalidGroupSize", Tanker::Error::Code::InvalidGroupSize)

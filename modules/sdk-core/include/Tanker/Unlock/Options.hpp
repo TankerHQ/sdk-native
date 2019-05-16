@@ -2,7 +2,7 @@
 
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 
 #include <optional.hpp>
 
@@ -50,7 +50,7 @@ struct OptionsBase : private Base
 }
 
 using UpdateOptions =
-    detail::OptionsBase<detail::OptTuple<Email, Password, UnlockKey>>;
+    detail::OptionsBase<detail::OptTuple<Email, Password, VerificationKey>>;
 using CreationOptions = detail::OptionsBase<detail::OptTuple<Email, Password>>;
 using RegistrationOptions =
     detail::OptionsBase<detail::OptTuple<Email, Password>>;

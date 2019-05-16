@@ -19,9 +19,10 @@ Claims::Claims(UpdateOptions const& lockOptions,
   if (auto const opt_password = lockOptions.get<Password>())
     password = Crypto::generichash(
         gsl::make_span(*opt_password).as_span<uint8_t const>());
-  if (auto const opt_unlockKey = lockOptions.get<UnlockKey>())
-    this->unlockKey = Crypto::encryptAead(
-        userSecret, gsl::make_span(*opt_unlockKey).as_span<uint8_t const>());
+  if (auto const opt_verificationKey = lockOptions.get<VerificationKey>())
+    this->verificationKey = Crypto::encryptAead(
+        userSecret,
+        gsl::make_span(*opt_verificationKey).as_span<uint8_t const>());
 }
 
 void from_json(nlohmann::json const& j, Claims& c)
@@ -35,7 +36,7 @@ void from_json(nlohmann::json const& j, Claims& c)
     c.password = j.at("password").get<Crypto::Hash>();
   if (j.count("unlock_key"))
   {
-    c.unlockKey =
+    c.verificationKey =
         cppcodec::base64_rfc4648::decode(j.at("unlock_key").get<std::string>());
   }
 }
@@ -46,8 +47,9 @@ void to_json(nlohmann::json& j, Claims const& c)
     j["email"] = cppcodec::base64_rfc4648::encode(c.email.value());
   if (c.password.has_value())
     j["password"] = c.password.value();
-  if (c.unlockKey.has_value())
-    j["unlock_key"] = cppcodec::base64_rfc4648::encode(c.unlockKey.value());
+  if (c.verificationKey.has_value())
+    j["unlock_key"] =
+        cppcodec::base64_rfc4648::encode(c.verificationKey.value());
 }
 
 std::size_t Claims::size() const
@@ -58,7 +60,7 @@ std::size_t Claims::size() const
       ret = p->size();
     return ret;
   };
-  return giveMeSize(email) + giveMeSize(password) + giveMeSize(unlockKey);
+  return giveMeSize(email) + giveMeSize(password) + giveMeSize(verificationKey);
 }
 
 std::vector<uint8_t> Claims::signData() const
@@ -75,13 +77,14 @@ std::vector<uint8_t> Claims::signData() const
   toSign.reserve(size());
   appendMe(email, std::back_inserter(toSign));
   appendMe(password, std::back_inserter(toSign));
-  appendMe(unlockKey, std::back_inserter(toSign));
+  appendMe(verificationKey, std::back_inserter(toSign));
   return toSign;
 }
 
-UnlockKey Claims::getUnlockKey(Crypto::SymmetricKey const& key) const
+VerificationKey Claims::getVerificationKey(
+    Crypto::SymmetricKey const& key) const
 {
-  auto const binKey = Crypto::decryptAead(key, unlockKey.value());
+  auto const binKey = Crypto::decryptAead(key, verificationKey.value());
   return {begin(binKey), end(binKey)};
 }
 }

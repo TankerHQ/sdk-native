@@ -6,7 +6,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -38,7 +38,7 @@ void to_json(nlohmann::json& j, Request const& m)
 void to_json(nlohmann::json& j, FetchAnswer const& m)
 {
   j["encrypted_unlock_key"] =
-      cppcodec::base64_rfc4648::encode(m.encryptedUnlockKey);
+      cppcodec::base64_rfc4648::encode(m.encryptedVerificationKey);
 }
 
 void to_json(nlohmann::json& j, Message const& m)
@@ -51,8 +51,9 @@ void to_json(nlohmann::json& j, Message const& m)
 
 void from_json(nlohmann::json const& j, FetchAnswer& f)
 {
-  f.encryptedUnlockKey = cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
-      j.at("encrypted_unlock_key").get<std::string>());
+  f.encryptedVerificationKey =
+      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
+          j.at("encrypted_unlock_key").get<std::string>());
 }
 
 void from_json(nlohmann::json const& j, Message& m)
@@ -97,15 +98,16 @@ std::string to_string(Request::Type type)
 }
 
 FetchAnswer::FetchAnswer(Crypto::SymmetricKey const& userSecret,
-                         UnlockKey const& unlockKey)
-  : encryptedUnlockKey(Crypto::encryptAead(
-        userSecret, gsl::make_span(unlockKey).as_span<uint8_t const>()))
+                         VerificationKey const& verificationKey)
+  : encryptedVerificationKey(Crypto::encryptAead(
+        userSecret, gsl::make_span(verificationKey).as_span<uint8_t const>()))
 {
 }
 
-UnlockKey FetchAnswer::getUnlockKey(Crypto::SymmetricKey const& key) const
+VerificationKey FetchAnswer::getVerificationKey(
+    Crypto::SymmetricKey const& key) const
 {
-  auto const binKey = Crypto::decryptAead(key, this->encryptedUnlockKey);
+  auto const binKey = Crypto::decryptAead(key, this->encryptedVerificationKey);
   return {begin(binKey), end(binKey)};
 }
 

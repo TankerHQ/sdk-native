@@ -11,7 +11,7 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Methods.hpp>
@@ -93,7 +93,7 @@ public:
   tc::shared_future<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::shared_future<UnlockKey> generateAndRegisterUnlockKey();
+  tc::shared_future<VerificationKey> generateAndRegisterVerificationKey();
 
   tc::shared_future<void> registerUnlock(
       Unlock::RegistrationOptions const& options);

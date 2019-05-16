@@ -106,17 +106,17 @@ tc::cotask<UserStatusResult> Client::userStatus(
   TC_RETURN(reply.get<UserStatusResult>());
 }
 
-tc::cotask<void> Client::createUnlockKey(Unlock::Message const& message)
+tc::cotask<void> Client::createVerificationKey(Unlock::Message const& message)
 {
   TC_AWAIT(emit("create unlock key", message));
 }
 
-tc::cotask<void> Client::updateUnlockKey(Unlock::Message const& message)
+tc::cotask<void> Client::updateVerificationKey(Unlock::Message const& message)
 {
   TC_AWAIT(emit("update unlock key", message));
 }
 
-tc::cotask<Unlock::FetchAnswer> Client::fetchUnlockKey(
+tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
     Unlock::Request const& req)
 {
   TC_RETURN(TC_AWAIT(emit("get unlock key", req)));

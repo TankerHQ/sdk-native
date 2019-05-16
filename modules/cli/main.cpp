@@ -12,11 +12,11 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
-#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
 #include <docopt/docopt.h>
 
@@ -166,7 +166,8 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   SignInOptions signInOptions;
   if (args.at(UnlockKeyOpt))
-    signInOptions.unlockKey = UnlockKey{args.at(UnlockKeyOpt).asString()};
+    signInOptions.verificationKey =
+        VerificationKey{args.at(UnlockKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
     signInOptions.password = Password{args.at(UnlockPasswordOpt).asString()};
 
@@ -223,7 +224,8 @@ int main(int argc, char* argv[])
     }
     else
     {
-      block.payload = cppcodec::base64_rfc4648::decode(args.at("<payload>").asString());
+      block.payload =
+          cppcodec::base64_rfc4648::decode(args.at("<payload>").asString());
       block.author = Crypto::Hash(
           cppcodec::base64_rfc4648::decode(args.at("<author>").asString()));
       block.signature = Crypto::Signature(

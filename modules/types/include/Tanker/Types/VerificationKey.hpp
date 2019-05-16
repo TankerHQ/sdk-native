@@ -4,5 +4,5 @@
 
 namespace Tanker
 {
-using UnlockKey = StringWrapper<struct UnlockKeyTag>;
+using VerificationKey = StringWrapper<struct VerificationKeyTag>;
 }
