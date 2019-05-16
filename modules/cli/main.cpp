@@ -28,7 +28,7 @@ using namespace Tanker::Trustchain::Actions;
 
 static constexpr auto TrustchainPrivateKeyOpt = "--trustchain-private-key";
 static constexpr auto IdentityOpt = "--identity";
-static constexpr auto UnlockKeyOpt = "--unlock-key";
+static constexpr auto VerificationKeyOpt = "--verification-key";
 static constexpr auto UnlockPasswordOpt = "--unlock-password";
 
 static const char USAGE[] =
@@ -39,7 +39,7 @@ static const char USAGE[] =
       tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
-      tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-key=<unlockkey>] [--unlock-password=<unlockpassword>] <userid>
+      tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli --help
@@ -165,9 +165,9 @@ AsyncCorePtr signIn(MainArgs const& args)
       ".")};
 
   Verification verification;
-  if (args.at(UnlockKeyOpt))
+  if (args.at(VerificationKeyOpt))
     verification.verificationKey =
-        VerificationKey{args.at(UnlockKeyOpt).asString()};
+        VerificationKey{args.at(VerificationKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
     verification.password = Password{args.at(UnlockPasswordOpt).asString()};
 

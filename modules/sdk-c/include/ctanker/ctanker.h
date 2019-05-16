@@ -150,7 +150,7 @@ struct tanker_email_verification
 struct tanker_verification
 {
   uint8_t version;
-  char const* unlock_key;
+  char const* verification_key;
   tanker_email_verification_t* email_verification;
   char const* password;
 };
@@ -261,7 +261,7 @@ tanker_future_t* tanker_sign_up(
  * not registered, or NULL.
  * \return a future of tanker_sign_in_result
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
- * \throws TANKER_ERROR_INVALID_UNLOCK_KEY unlock key is incorrect
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
@@ -306,14 +306,15 @@ tanker_future_t* tanker_device_id(tanker_t* session);
 tanker_future_t* tanker_get_device_list(tanker_t* session);
 
 /*!
- * Generate an unlockKey that can be used to accept a device
+ * Generate an verificationKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
+tanker_future_t* tanker_generate_and_register_verification_key(
+    tanker_t* session);
 
 /*!
  * Registers, or updates, the user's unlock claims,

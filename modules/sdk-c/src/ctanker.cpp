@@ -213,8 +213,9 @@ tanker_future_t* tanker_sign_in(tanker_t* ctanker,
   auto verification = Verification{};
   if (cverification)
   {
-    if (cverification->unlock_key)
-      verification.verificationKey = VerificationKey{cverification->unlock_key};
+    if (cverification->verification_key)
+      verification.verificationKey =
+          VerificationKey{cverification->verification_key};
     if (cverification->email_verification)
       verification.emailVerification = EmailVerification{
           Email{cverification->email_verification->email},
@@ -274,7 +275,8 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
+tanker_future_t* tanker_generate_and_register_verification_key(
+    tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->generateAndRegisterVerificationKey().and_then(
