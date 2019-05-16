@@ -1,4 +1,5 @@
-#include "Tests.hpp"
+#include <Compat/Command.hpp>
+
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
 
@@ -18,15 +19,7 @@ static const char USAGE[] = R"(compat cli
     compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
 
   Commands:
-    encrypt                   simple encrypt then decrypt with a user
-    group                     simple encrypt then decrypt with a group
-    unlock                    signup then unlock
-    preshare-and-claim        encrypt then create a new user to claim and decrypt
-    decrypt-old-claim         signup, claim and share with this user then decrypt
-    provisional-user-group-claim         share with a group with provisional user then claim and decrypt
-    provisional-user-group-old-claim     share with a group with provisional user and claim then decrypt
-    claim-provisional-self               share with a group with provisional user,
-                                          a user shares with the group then this user claims and decrypts
+{}
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
@@ -35,41 +28,15 @@ static const char USAGE[] = R"(compat cli
 
 )";
 
-auto getRunner = [](std::string const& command,
-                    auto& trustchain,
-                    std::string tankerPath,
-                    std::string statePath) -> std::unique_ptr<Command> {
-  if (command == "encrypt")
-    return std::make_unique<EncryptCompat>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "group")
-    return std::make_unique<GroupCompat>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "unlock")
-    return std::make_unique<UnlockCompat>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "preshare-and-claim")
-    return std::make_unique<PreshareAndClaim>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "decrypt-old-claim")
-    return std::make_unique<DecryptOldClaim>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "provisional-user-group-claim")
-    return std::make_unique<ProvisionalUserGroupClaim>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "provisional-user-group-old-claim")
-    return std::make_unique<ProvisionalUserGroupOldClaim>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else if (command == "claim-provisional-self")
-    return std::make_unique<ClaimProvisionalSelf>(
-        trustchain, std::move(tankerPath), std::move(statePath));
-  else
-    throw std::runtime_error("not implemented");
-};
-
-auto getCommand = [](auto const& args) {
-  return args.at("<command>").asString();
-};
+auto getRunner(std::string const& command,
+               Trustchain& trustchain,
+               std::string tankerPath,
+               std::string statePath)
+{
+  auto runner = Tanker::Compat::getCommand(command);
+  return runner.creator(
+      trustchain, std::move(tankerPath), std::move(statePath));
+}
 
 using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
 
@@ -91,12 +58,17 @@ tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
 int main(int argc, char** argv)
 {
   Tanker::TimeoutTerminate tt(5min);
+  std::vector<std::string> commands;
+  for (auto const& info : Tanker::Compat::getAllCommands())
+    commands.push_back(
+        fmt::format("{}{}\t\t{}", "    ", info.name, info.description));
+  auto usage = fmt::format(USAGE, fmt::join(commands, "\n"));
   auto args =
-      docopt::docopt(USAGE, {argv + 1, argv + argc}, true, TANKER_VERSION);
+      docopt::docopt(usage, {argv + 1, argv + argc}, true, TANKER_VERSION);
 
   auto const tankerPath = args.at("--path").asString();
   auto const statePath = args.at("--state").asString();
-  auto const command = getCommand(args);
+  auto const command = args.at("<command>").asString();
 
   auto compatFixture =
       tc::async_resumable([&]() -> tc::cotask<std::tuple<TrustchainFactory::Ptr,
