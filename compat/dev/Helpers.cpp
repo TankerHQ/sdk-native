@@ -49,7 +49,7 @@ void claim(CorePtr& core,
   core->claimProvisionalIdentity(provisionalIdentity, verifCode).get();
 }
 
-UserSession signUpProvisionalUser(
+UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
     Tanker::Test::Trustchain& trustchain,

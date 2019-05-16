@@ -174,10 +174,10 @@ struct PreshareAndClaim : Command
   void next() override
   {
     auto const json = Tanker::loadJson(statePath);
-    auto bob = signUpProvisionalUser(json.at("bob_provisional_identity"),
-                                     "bob@tanker.io",
-                                     trustchain,
-                                     tankerPath);
+    auto bob = signUpAndClaim(json.at("bob_provisional_identity"),
+                              "bob@tanker.io",
+                              trustchain,
+                              tankerPath);
     auto const encryptState = json.at("encrypt_state").get<EncryptState>();
     decrypt(bob.core, encryptState.encryptedData, encryptState.clearData);
   }
@@ -201,7 +201,7 @@ struct DecryptOldClaim : Command
     auto const encryptedData =
         encrypt(alice.core, clearData, {bobPublicProvisionalIdentity}, {});
 
-    auto bob = signUpProvisionalUser(
+    auto bob = signUpAndClaim(
         Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
         "bob@tanker.io",
         trustchain,
@@ -255,11 +255,11 @@ struct ProvisionalUserGroupClaim : Command
   void next() override
   {
     auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
-    auto bob = signUpProvisionalUser(
-        Tanker::SSecretProvisionalIdentity{state.identity},
-        "bob@tanker.io",
-        trustchain,
-        tankerPath);
+    auto bob =
+        signUpAndClaim(Tanker::SSecretProvisionalIdentity{state.identity},
+                       "bob@tanker.io",
+                       trustchain,
+                       tankerPath);
     decrypt(bob.core,
             state.encryptState.encryptedData,
             state.encryptState.clearData);
@@ -289,7 +289,7 @@ struct ProvisionalUserGroupOldClaim : Command
     auto const clearData = "My old allocution to the world";
     auto const encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
 
-    auto bob = signUpProvisionalUser(
+    auto bob = signUpAndClaim(
         Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
         "bob@tanker.io",
         trustchain,
@@ -338,7 +338,9 @@ struct ClaimProvisionalSelf : Command
     auto const clearData = "My statement to the world";
     auto const encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
 
+    // Force group verification
     encrypt(bob.core, "", {}, {sgroupId});
+
     Tanker::saveJson(
         statePath,
         {

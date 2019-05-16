@@ -33,7 +33,7 @@ void claim(CorePtr& core,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
            std::string const& email);
 
-UserSession signUpProvisionalUser(
+UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
     Tanker::Test::Trustchain& trustchain,
