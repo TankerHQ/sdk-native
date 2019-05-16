@@ -29,13 +29,8 @@ namespace contact_devices
 {
 void createTable(DataStore::Connection&, contact_devices const& = {});
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   contact_devices const& = {});
-
-constexpr int currentTableVersion(contact_devices const& = {})
-{
-  return 1;
-}
 }
 }
 }

@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
@@ -73,13 +74,15 @@ void createTable(DataStore::Connection& db, device_key_store const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   device_key_store const&)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
-  switch (dbVersion)
+  TINFO("Migrating from version {} to {}",
+        currentVersion,
+        DataStore::latestVersion());
+  switch (currentVersion)
   {
   case 0:
   case 1:

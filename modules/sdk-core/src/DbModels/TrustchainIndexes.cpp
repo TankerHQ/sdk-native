@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -55,17 +56,21 @@ void createTable(DataStore::Connection& db, trustchain_indexes const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   trustchain_indexes const&)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
-  switch (dbVersion)
+  TINFO("Migrating from version {} to {}",
+        currentVersion,
+        DataStore::latestVersion());
+  switch (currentVersion)
   {
   case 0:
   case 1:
     migrate1To2(db);
+    // fallthrough
+  case 2:
     break;
   default:
     assert(false && "Unreachable code");

@@ -1,14 +1,13 @@
 #pragma once
 
 #include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DbModels/Versions.hpp>
+#include <Tanker/DataStore/Version.hpp>
+#include <Tanker/DbModels/Version.hpp>
 #include <Tanker/Error.hpp>
 
 #include <fmt/format.h>
 #include <optional.hpp>
 #include <sqlpp11/char_sequence.h>
-#include <sqlpp11/sqlite3/insert_or.h>
-#include <sqlpp11/transaction.h>
 #include <sqlpp11/type_traits.h>
 
 #include <string>
@@ -31,23 +30,7 @@ struct tableName<sqlpp::char_sequence<Cs...>>
   }
 };
 
-template <typename Table>
-void updateVersion(Connection& db)
-{
-  using VersionsTable = DbModels::versions::versions;
-
-  VersionsTable tab{};
-
-  auto const name = tableName<sqlpp::name_of<Table>>::get();
-  auto const version = currentTableVersion(Table{});
-
-  db(sqlpp::sqlite3::insert_or_replace_into(tab).set(tab.name = name,
-                                                     tab.version = version));
-}
-
 bool tableExists(Connection&, std::string const&);
-nonstd::optional<int> tableVersion(Connection&, std::string const&);
-void createOrMigrateTableVersions(Connection&);
 }
 
 template <typename Table>
@@ -64,47 +47,19 @@ bool tableExists(Connection& db)
 }
 
 template <typename Table>
-nonstd::optional<int> tableVersion(Connection& db)
-{
-  auto const name = tableName<Table>();
-  return detail::tableVersion(db, name);
-}
-
-template <typename Table>
-void createOrMigrateTable(Connection& db);
-
-template <>
-void createOrMigrateTable<DbModels::versions::versions>(Connection& db) =
-    delete;
-
-template <typename Table>
-void createOrMigrateTable(Connection& db)
+void createTable(Connection& db)
 {
   Table const tab{};
 
-  auto tr = sqlpp::start_transaction(db);
+  createTable(db, tab);
+}
 
-  detail::createOrMigrateTableVersions(db);
+template <typename Table>
+void migrateTable(Connection& db, int currentVersion)
+{
+  Table const tab{};
 
-  if (!tableExists<Table>(db))
-    createTable(db, tab);
-  else
-  {
-    // Some tables were created before versions were implemented
-    // Default to value 0
-    auto const dbVersion = tableVersion<Table>(db).value_or(0);
-    if (dbVersion < currentTableVersion(tab))
-      migrateTable(db, dbVersion, tab);
-    else if (dbVersion > currentTableVersion(tab))
-    {
-      throw Error::formatEx<Error::MigrationFailed>(
-          fmt("database version too recent: {:s}: {:d}"),
-          tableName<Table>(),
-          dbVersion);
-    }
-  }
-  detail::updateVersion<Table>(db);
-  tr.commit();
+  migrateTable(db, currentVersion, tab);
 }
 }
 }

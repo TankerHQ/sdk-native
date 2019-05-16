@@ -4,6 +4,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/DbModels/ContactDevices.hpp>
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
@@ -17,6 +18,8 @@
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
 #include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
+#include <Tanker/DbModels/Version.hpp>
+#include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
@@ -261,7 +264,7 @@ using TrustchainResourceIdToKeyPublishTable =
     DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
-using ProvisionalUserKeys =
+using ProvisionalUserKeysTable =
     DbModels::provisional_user_keys::provisional_user_keys;
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
@@ -269,59 +272,136 @@ using GroupsTable = DbModels::groups::groups;
 using KeyPublishesTable = DbModels::key_publishes::key_publishes;
 using GroupsProvisionalUsersTable = DbModels::
     group_provisional_encryption_keys::group_provisional_encryption_keys;
+using VersionTable = DbModels::version::version;
+using OldVersionsTable = DbModels::versions::versions;
 
 Database::Database(std::string const& dbPath,
                    nonstd::optional<Crypto::SymmetricKey> const& userSecret,
                    bool exclusive)
   : _db(createConnection(dbPath, userSecret, exclusive))
 {
-  DataStore::createOrMigrateTable<UserKeysTable>(*_db);
-  DataStore::createOrMigrateTable<TrustchainTable>(*_db);
-  DataStore::createOrMigrateTable<TrustchainIndexesTable>(*_db);
-  DataStore::createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(*_db);
-  DataStore::createOrMigrateTable<ContactUserKeysTable>(*_db);
-  DataStore::createOrMigrateTable<ResourceKeysTable>(*_db);
-  DataStore::createOrMigrateTable<ProvisionalUserKeys>(*_db);
-  DataStore::createOrMigrateTable<DeviceKeysTable>(*_db);
-  DataStore::createOrMigrateTable<ContactDevicesTable>(*_db);
-  DataStore::createOrMigrateTable<GroupsTable>(*_db);
-  DataStore::createOrMigrateTable<KeyPublishesTable>(*_db);
-  DataStore::createOrMigrateTable<TrustchainInfoTable>(*_db);
-  DataStore::createOrMigrateTable<GroupsProvisionalUsersTable>(*_db);
+  migrate();
+}
 
-  if (isMigrationNeeded())
+template <typename Table>
+int Database::currentTableVersion()
+{
+  OldVersionsTable const versions{};
+  auto const rows =
+      (*_db)(select(versions.version)
+                 .from(versions)
+                 .where(versions.name == DataStore::tableName<Table>()));
+  if (rows.empty())
+    return 0;
+  return static_cast<int>(rows.front().version);
+}
+
+int Database::currentDatabaseVersion()
+{
+  if (!tableExists<VersionTable>(*_db))
+    return 0;
+  VersionTable const tab{};
+  auto const rows = (*_db)(select(tab.db_version).from(tab).unconditionally());
+  if (rows.empty())
+    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  return static_cast<int>(rows.front().db_version);
+}
+
+template <typename Table>
+void Database::createOrMigrateTable(int currentVersion)
+{
+  if (tableExists<Table>(*_db))
   {
-    TINFO("Migration is needed, flushing caches");
-    flushAllCaches();
+    TINFO("Migrating table {}", tableName<Table>());
+    migrateTable<Table>(*_db, currentVersion);
+  }
+  else
+  {
+    TINFO("Creating table {}", tableName<Table>());
+    createTable<Table>(*_db);
   }
 }
 
-bool Database::isMigrationNeeded()
+void Database::performUnifiedMigration()
 {
-  FUNC_TIMER(DB);
-  auto const deviceCount = [&] {
-    ContactDevicesTable tab{};
-    auto rows = (*_db)(select(count(tab.id)).from(tab).unconditionally());
-    auto const& row = *rows.begin();
-    return int(row.count);
-  }();
-  auto const blockCount = [&] {
-    TrustchainTable tab{};
-    auto rows = (*_db)(select(count(tab.hash)).from(tab).unconditionally());
-    auto const& row = *rows.begin();
-    return int(row.count);
-  }();
-  auto const isTrustchainKeySet = [&] {
-    TrustchainInfoTable tab{};
-    auto rows = (*_db)(select(tab.trustchain_public_signature_key)
-                           .from(tab)
-                           .unconditionally());
-    return !rows.front().trustchain_public_signature_key.is_null();
-  }();
+  auto const currentVersion = currentDatabaseVersion();
 
-  // if there are blocks in the trustchain table but there are no devices (even
-  // ours), it means that we must migrate
-  return (!isTrustchainKeySet || deviceCount == 0) && blockCount > 0;
+  if (currentVersion < DataStore::latestVersion())
+  {
+    TINFO("Performing unified migration, from version {}", currentVersion);
+
+    switch (currentVersion)
+    {
+    // 0 denotes that there is no table at all
+    case 0:
+      createTable<GroupsTable>(*_db);
+      createTable<ResourceKeysTable>(*_db);
+      createTable<TrustchainTable>(*_db);
+      createTable<TrustchainResourceIdToKeyPublishTable>(*_db);
+      createTable<TrustchainIndexesTable>(*_db);
+      createTable<UserKeysTable>(*_db);
+      createTable<ContactDevicesTable>(*_db);
+      createTable<ContactUserKeysTable>(*_db);
+      createTable<DeviceKeysTable>(*_db);
+      createTable<VersionTable>(*_db);
+      // fallthrough
+    case 3:
+      createTable<GroupsProvisionalUsersTable>(*_db);
+      createTable<TrustchainInfoTable>(*_db);
+      createTable<KeyPublishesTable>(*_db);
+      createTable<ProvisionalUserKeysTable>(*_db);
+      flushAllCaches();
+      break;
+    default:
+      throw std::runtime_error{"Invalid database version: " +
+                               std::to_string(currentVersion)};
+    }
+
+    setDatabaseVersion(DataStore::latestVersion());
+  }
+}
+
+void Database::performOldMigration()
+{
+  TINFO("Performing migration from old version...");
+  // retrieve each table version, and perform migration
+  createOrMigrateTable<GroupsTable>(currentTableVersion<GroupsTable>());
+  createOrMigrateTable<ResourceKeysTable>(
+      currentTableVersion<ResourceKeysTable>());
+  createOrMigrateTable<TrustchainTable>(currentTableVersion<TrustchainTable>());
+  createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(
+      currentTableVersion<TrustchainResourceIdToKeyPublishTable>());
+  createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
+  createOrMigrateTable<ContactDevicesTable>(
+      currentTableVersion<ContactDevicesTable>());
+  createOrMigrateTable<ContactUserKeysTable>(
+      currentTableVersion<ContactUserKeysTable>());
+  createTable<VersionTable>(*_db);
+
+  setDatabaseVersion(3);
+  dropTable<OldVersionsTable>();
+}
+
+void Database::migrate()
+{
+  TC_AWAIT(inTransaction([&] {
+    // We used to have a version per table.
+    // We now have a unique version for the db.
+    // To migrate from the old system, we first create/migrate tables that
+    // existed in previous versions.
+    // Then we drop the old multiple-versions table, and set the global version
+    // to 3, which was the maximum version before.
+    // Finally, calling performUnifiedMigration will create new tables.
+    if (!tableExists<VersionTable>(*_db) && tableExists<OldVersionsTable>(*_db))
+      performOldMigration();
+    performUnifiedMigration();
+  }));
+}
+
+void Database::setDatabaseVersion(int version)
+{
+  VersionTable const tab{};
+  (*_db)(update(tab).set(tab.db_version = version).unconditionally());
 }
 
 void Database::flushAllCaches()
@@ -335,12 +415,10 @@ void Database::flushAllCaches()
   // Order matter for foreign key constraints
   flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
-  flushTable(TrustchainIndexesTable{});
-  flushTable(TrustchainResourceIdToKeyPublishTable{});
   flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
-  flushTable(ProvisionalUserKeys{});
+  flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
   flushTable(KeyPublishesTable{});
   flushTable(GroupsProvisionalUsersTable{});
@@ -360,12 +438,20 @@ void Database::flushAllCaches()
   }
 }
 
+template <typename Table>
+void Database::dropTable()
+{
+  _db->execute(fmt::format("DROP TABLE {}", tableName<Table>()));
+}
+
 tc::cotask<void> Database::nuke()
 {
   FUNC_TIMER(DB);
   flushAllCaches();
-  DeviceKeysTable tab{};
-  (*_db)(remove_from(tab).unconditionally());
+  {
+    DeviceKeysTable tab{};
+    (*_db)(remove_from(tab).unconditionally());
+  }
   TC_RETURN();
 }
 
@@ -686,7 +772,7 @@ tc::cotask<void> Database::putProvisionalUserKeys(
     Tanker::ProvisionalUserKeys const& provisionalUserKeys)
 {
   FUNC_TIMER(DB);
-  ProvisionalUserKeys tab{};
+  ProvisionalUserKeysTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.app_pub_sig_key = appPublicSigKey.base(),
@@ -704,7 +790,7 @@ Database::findProvisionalUserKeys(
     Crypto::PublicSignatureKey const& tankerPublicSigKey)
 {
   FUNC_TIMER(DB);
-  ProvisionalUserKeys tab{};
+  ProvisionalUserKeysTable tab{};
   auto rows =
       (*_db)(select(tab.app_enc_priv,
                     tab.app_enc_pub,

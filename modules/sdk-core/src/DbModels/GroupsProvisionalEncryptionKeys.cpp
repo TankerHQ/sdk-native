@@ -25,24 +25,6 @@ void createTable(DataStore::Connection& db,
     );
   )");
 }
-
-void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
-                  group_provisional_encryption_keys const&)
-{
-  assert(dbVersion < currentTableVersion());
-
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
-  switch (dbVersion)
-  {
-  case 0:
-  case 1:
-    break;
-  default:
-    assert(false && "Unreachable code");
-    std::terminate();
-  }
-}
 }
 }
 }

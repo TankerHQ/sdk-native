@@ -32,8 +32,6 @@ struct OldDeviceKeyStore
 
 OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
 {
-  using VersionsTable = Tanker::DbModels::versions::versions;
-
   auto const deviceKeys = DeviceKeys::create();
 
   auto const b64PrivSigK =
@@ -65,9 +63,6 @@ OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
       b64PrivEncK,
       b64PubEncK,
       b64DeviceId));
-
-  db.execute(fmt::format("INSERT INTO {} VALUES ('device_key_store', 1)",
-                         DataStore::tableName<VersionsTable>()));
 
   return {b64PrivSigK, b64PubSigK, b64PrivEncK, b64PubEncK, b64DeviceId};
 }
@@ -125,8 +120,6 @@ TEST_CASE("device keystore migration")
   auto const dbPtr = DataStore::createConnection(":memory:");
   auto& db = *dbPtr;
 
-  DataStore::detail::createOrMigrateTableVersions(db);
-
   SUBCASE("Migration from version 1 should convert from base64")
   {
     using DeviceKeyStoreTable =
@@ -135,7 +128,8 @@ TEST_CASE("device keystore migration")
 
     auto const oldKeystore = setupDeviceKeyStoreMigration(db);
 
-    DataStore::createOrMigrateTable<DeviceKeyStoreTable>(db);
+    DataStore::createTable<DeviceKeyStoreTable>(db);
+    DataStore::migrateTable<DeviceKeyStoreTable>(db, 1);
 
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& deviceKeyStore = keys.front();

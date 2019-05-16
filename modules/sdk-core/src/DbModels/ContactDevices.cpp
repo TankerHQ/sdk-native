@@ -2,6 +2,7 @@
 
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 
 #include <fmt/format.h>
@@ -33,10 +34,10 @@ void createTable(DataStore::Connection& db, contact_devices const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   contact_devices const&)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 }
 }
 }

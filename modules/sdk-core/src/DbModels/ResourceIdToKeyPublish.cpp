@@ -3,6 +3,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log.hpp>
 
 #include <cassert>
@@ -27,15 +28,18 @@ void createTable(DataStore::Connection& db, resource_id_to_key_publish const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   resource_id_to_key_publish const& tab)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
-  switch (dbVersion)
+  TINFO("Migrating from version {} to {}",
+        currentVersion,
+        DataStore::latestVersion());
+  switch (currentVersion)
   {
   case 0:
+  case 1:
     break;
   default:
     assert(false && "Unreachable code");

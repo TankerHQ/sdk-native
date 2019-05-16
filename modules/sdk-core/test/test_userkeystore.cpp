@@ -18,7 +18,6 @@ using namespace Tanker;
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
-#include <Tanker/DbModels/Versions.hpp>
 
 namespace
 {
@@ -30,8 +29,6 @@ struct OldUserKeys
 
 OldUserKeys setupUserKeysMigration(DataStore::Connection& db)
 {
-  using VersionsTable = Tanker::DbModels::versions::versions;
-
   auto const keyPair = Crypto::makeEncryptionKeyPair();
 
   auto const b64PublicKey = cppcodec::base64_rfc4648::encode(keyPair.publicKey);
@@ -49,8 +46,6 @@ OldUserKeys setupUserKeysMigration(DataStore::Connection& db)
   db.execute(fmt::format("INSERT INTO user_keys VALUES(1, '{}', '{}')",
                          b64PublicKey,
                          b64PrivateKey));
-  db.execute(fmt::format("INSERT INTO {} VALUES ('user_keys', 1)",
-                         DataStore::tableName<VersionsTable>()));
 
   return {b64PrivateKey, b64PublicKey};
 }
@@ -140,7 +135,6 @@ TEST_CASE("user keys migration")
 
   auto const dbPtr = DataStore::createConnection(":memory:");
   auto& db = *dbPtr;
-  DataStore::detail::createOrMigrateTableVersions(db);
 
   SUBCASE("Migration from version 1 should convert from base64")
   {
@@ -148,7 +142,8 @@ TEST_CASE("user keys migration")
 
     UserKeysTable tab{};
 
-    DataStore::createOrMigrateTable<UserKeysTable>(db);
+    DataStore::createTable<UserKeysTable>(db);
+    DataStore::migrateTable<UserKeysTable>(db, 1);
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& userKeys = keys.front();
 

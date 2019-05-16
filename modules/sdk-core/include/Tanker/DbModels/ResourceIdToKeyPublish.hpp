@@ -25,13 +25,8 @@ namespace resource_id_to_key_publish
 void createTable(DataStore::Connection&,
                  resource_id_to_key_publish const& = {});
 void migrateTable(DataStore::Connection&,
-                  int dbVersion,
+                  int currentVersion,
                   resource_id_to_key_publish const& = {});
-
-constexpr int currentTableVersion(resource_id_to_key_publish const& = {})
-{
-  return 1;
-}
 }
 }
 }

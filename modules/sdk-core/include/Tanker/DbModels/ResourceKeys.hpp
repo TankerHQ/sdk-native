@@ -25,13 +25,8 @@ namespace resource_keys
 {
 void createTable(DataStore::Connection&, resource_keys const& = {});
 void migrateTable(DataStore::Connection&,
-                  int dbVersion,
+                  int currentVersion,
                   resource_keys const& = {});
-
-constexpr int currentTableVersion(resource_keys const& = {})
-{
-  return 2;
-}
 }
 }
 }

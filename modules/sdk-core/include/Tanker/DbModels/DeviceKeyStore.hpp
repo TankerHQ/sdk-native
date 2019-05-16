@@ -28,13 +28,8 @@ namespace device_key_store
 {
 void createTable(DataStore::Connection&, device_key_store const& = {});
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   device_key_store const& = {});
-
-constexpr int currentTableVersion(device_key_store const& = {})
-{
-  return 2;
-}
 }
 }
 }
