@@ -121,8 +121,8 @@ tc::cotask<VerificationCode> Admin::getVerificationCode(
   auto const answer = TC_AWAIT(emit("get verification code", msg));
   auto it = answer.find("verification_code");
   if (it == answer.end())
-    throw Error::formatEx<Error::InvalidUnlockKey>(
-        "could not find unlockKey key for {}", email);
+    throw Error::formatEx<Error::InvalidVerificationKey>(
+        "could not find verificationKey key for {}", email);
   TC_RETURN(it->get<std::string>());
 }
 

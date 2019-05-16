@@ -12,7 +12,7 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -27,9 +27,9 @@ using Trustchain::UserId;
 
 namespace Unlock
 {
-UnlockKey ghostDeviceToUnlockKey(GhostDevice const& ghostDevice)
+VerificationKey ghostDeviceToVerificationKey(GhostDevice const& ghostDevice)
 {
-  return UnlockKey{
+  return VerificationKey{
       cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
 }
 
@@ -47,23 +47,23 @@ std::unique_ptr<Registration> generate(
 
   auto const hash = Serialization::deserialize<Block>(ghostDeviceBlock).hash();
   Trustchain::DeviceId deviceId{hash};
-  auto const unlockKey = ghostDeviceToUnlockKey(
+  auto const verificationKey = ghostDeviceToVerificationKey(
       GhostDevice{deviceId,
                   deviceKeys.signatureKeyPair.privateKey,
                   deviceKeys.encryptionKeyPair.privateKey});
 
   return std::make_unique<Registration>(
-      Registration{ghostDeviceBlock, unlockKey});
+      Registration{ghostDeviceBlock, verificationKey});
 }
 
-GhostDevice extract(UnlockKey const& unlockKey) try
+GhostDevice extract(VerificationKey const& verificationKey) try
 {
-  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(unlockKey))
+  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
       .get<GhostDevice>();
 }
 catch (std::exception const& e)
 {
-  throw Error::InvalidUnlockKey(e.what());
+  throw Error::InvalidVerificationKey(e.what());
 }
 
 std::vector<uint8_t> createValidatedDevice(

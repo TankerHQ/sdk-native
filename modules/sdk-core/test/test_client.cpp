@@ -11,7 +11,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
 #include <Helpers/Await.hpp>
@@ -32,7 +32,7 @@ using trompeloeil::eq;
 
 namespace
 {
-auto const someUnlockKey = UnlockKey{
+auto const someVerificationKey = VerificationKey{
     "eyJkZXZpY2VJZCI6IlFySHhqNk9qSURBUmJRVWdBenRmUHZyNFJVZUNRWDRhb1ZTWXJiSzNEa2"
     "s9IiwicHJpdmF0ZUVuY3J5cHRpb25LZXkiOiJQTnRjNEFXMWZ5NnBnbVd2SlA5RTN0ZytxMFJ0"
     "emkxdlcvSEFqQnBMRmdnPSIsInByaXZhdGVTaWduYXR1cmVLZXkiOiJxbXBNZmlHRHYweEZyVD"
@@ -319,29 +319,29 @@ TEST_CASE("Client unlock api")
   auto const message =
       Unlock::Message(trustchainId,
                       deviceKeys.deviceId,
-                      Unlock::UpdateOptions(email, password, someUnlockKey),
+                      Unlock::UpdateOptions(email, password, someVerificationKey),
                       aliceUserSecret,
                       deviceKeys.signatureKeyPair.privateKey);
 
-  SUBCASE("createUnlockKey()")
+  SUBCASE("createVerificationKey()")
   {
     auto cl = initClient();
     REQUIRE_CALL(cl.mconn,
                  emit("create unlock key", eq(nlohmann::json(message).dump())))
         .LR_RETURN(WRAP_COTASK(nlohmann::json{}.dump()));
-    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->createUnlockKey(message)));
+    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->createVerificationKey(message)));
   }
 
-  SUBCASE("uploadUnlockKey()")
+  SUBCASE("uploadVerificationKey()")
   {
     auto cl = initClient();
     REQUIRE_CALL(cl.mconn,
                  emit("update unlock key", eq(nlohmann::json(message).dump())))
         .LR_RETURN(WRAP_COTASK(nlohmann::json{}.dump()));
-    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->updateUnlockKey(message)));
+    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->updateVerificationKey(message)));
   }
 
-  SUBCASE("fetchUnlockKey()")
+  SUBCASE("fetchVerificationKey()")
   {
     auto cl = initClient();
     auto const request = Unlock::Request(trustchainId, userId, password);
@@ -349,10 +349,10 @@ TEST_CASE("Client unlock api")
     REQUIRE_CALL(cl.mconn,
                  emit("get unlock key", eq(nlohmann::json(request).dump())))
         .LR_RETURN(WRAP_COTASK(
-            nlohmann::json(Unlock::FetchAnswer(aliceUserSecret, someUnlockKey))
+            nlohmann::json(Unlock::FetchAnswer(aliceUserSecret, someVerificationKey))
                 .dump()));
-    auto const fetchAnswer = AWAIT(cl.c->fetchUnlockKey(request));
-    auto const unlockKey = fetchAnswer.getUnlockKey(aliceUserSecret);
-    FAST_REQUIRE_EQ(someUnlockKey, unlockKey);
+    auto const fetchAnswer = AWAIT(cl.c->fetchVerificationKey(request));
+    auto const verificationKey = fetchAnswer.getVerificationKey(aliceUserSecret);
+    FAST_REQUIRE_EQ(someVerificationKey, verificationKey);
   }
 }

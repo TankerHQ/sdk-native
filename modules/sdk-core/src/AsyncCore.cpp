@@ -8,7 +8,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Version.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -178,11 +178,11 @@ tc::shared_future<void> AsyncCore::updateGroupMembers(
   });
 }
 
-tc::shared_future<UnlockKey> AsyncCore::generateAndRegisterUnlockKey()
+tc::shared_future<VerificationKey> AsyncCore::generateAndRegisterVerificationKey()
 {
   return _taskCanceler.run([&] {
-    return tc::async_resumable([this]() -> tc::cotask<UnlockKey> {
-      TC_RETURN(TC_AWAIT(this->_core.generateAndRegisterUnlockKey()));
+    return tc::async_resumable([this]() -> tc::cotask<VerificationKey> {
+      TC_RETURN(TC_AWAIT(this->_core.generateAndRegisterVerificationKey()));
     });
   });
 }

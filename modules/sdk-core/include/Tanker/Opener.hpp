@@ -7,7 +7,7 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 
@@ -33,7 +33,7 @@ enum class OpenMode
 
 struct SignInOptions
 {
-  nonstd::optional<UnlockKey> unlockKey;
+  nonstd::optional<VerificationKey> verificationKey;
   nonstd::optional<VerificationCode> verificationCode;
   nonstd::optional<Password> password;
 };
@@ -58,7 +58,7 @@ public:
                               SignInOptions const& signInOptions,
                               OpenMode mode);
 
-  tc::cotask<UnlockKey> fetchUnlockKey(Unlock::DeviceLocker const& pass);
+  tc::cotask<VerificationKey> fetchVerificationKey(Unlock::DeviceLocker const& pass);
 
 private:
   std::string _url;
@@ -70,7 +70,7 @@ private:
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
 
-  tc::cotask<void> unlockCurrentDevice(UnlockKey const& unlockKey);
+  tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   Session::Config makeConfig();
   tc::cotask<OpenResult> createUser();
   tc::cotask<OpenResult> createDevice(SignInOptions const& signInOptions);

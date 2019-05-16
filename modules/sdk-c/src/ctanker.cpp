@@ -210,7 +210,8 @@ tanker_future_t* tanker_sign_in(tanker_t* ctanker,
   if (sign_in_options)
   {
     if (sign_in_options->unlock_key)
-      signInOptions.unlockKey = UnlockKey{sign_in_options->unlock_key};
+      signInOptions.verificationKey =
+          VerificationKey{sign_in_options->unlock_key};
     if (sign_in_options->verification_code)
       signInOptions.verificationCode =
           VerificationCode{sign_in_options->verification_code};
@@ -271,7 +272,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
 tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->generateAndRegisterUnlockKey().and_then(
+  return makeFuture(tanker->generateAndRegisterVerificationKey().and_then(
       tc::get_synchronous_executor(), [](auto uk) {
         return static_cast<void*>(duplicateString(uk.string()));
       }));

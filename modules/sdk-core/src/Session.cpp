@@ -31,7 +31,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
@@ -327,33 +327,34 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(syncTrustchain());
 }
 
-tc::cotask<std::unique_ptr<Unlock::Registration>> Session::generateUnlockKey()
+tc::cotask<std::unique_ptr<Unlock::Registration>>
+Session::generateVerificationKey()
 {
   TC_RETURN(Unlock::generate(
       _userId, TC_AWAIT(_userKeyStore.getLastKeyPair()), _blockGenerator));
 }
 
-tc::cotask<void> Session::registerUnlockKey(
+tc::cotask<void> Session::registerVerificationKey(
     Unlock::Registration const& registration)
 {
   TC_AWAIT(_client->pushBlock(registration.block));
 }
 
-tc::cotask<void> Session::createUnlockKey(
+tc::cotask<void> Session::createVerificationKey(
     Unlock::CreationOptions const& options)
 {
-  auto const reg = TC_AWAIT(generateUnlockKey());
+  auto const reg = TC_AWAIT(generateVerificationKey());
   auto const msg = Unlock::Message(
       trustchainId(),
       deviceId(),
       Unlock::UpdateOptions(
-          options.get<Email>(), options.get<Password>(), reg->unlockKey),
+          options.get<Email>(), options.get<Password>(), reg->verificationKey),
       userSecret(),
       _deviceKeyStore->signatureKeyPair().privateKey);
   try
   {
     TC_AWAIT(_client->pushBlock(reg->block));
-    TC_AWAIT(_client->createUnlockKey(msg));
+    TC_AWAIT(_client->createVerificationKey(msg));
     updateLocalUnlockMethods(options);
   }
   catch (Error::ServerError const& e)
@@ -361,8 +362,8 @@ tc::cotask<void> Session::createUnlockKey(
     if (e.httpStatusCode() == 500)
       throw Error::InternalError(e.what());
     else if (e.httpStatusCode() == 409)
-      throw Error::UnlockKeyAlreadyExists(
-          "An unlock key has already been registered");
+      throw Error::VerificationKeyAlreadyExists(
+          "A verification key has already been registered");
     else
       throw;
   }
@@ -387,14 +388,14 @@ tc::cotask<void> Session::updateUnlock(Unlock::UpdateOptions const& options)
                       _deviceKeyStore->signatureKeyPair().privateKey);
   try
   {
-    TC_AWAIT(_client->updateUnlockKey(msg));
+    TC_AWAIT(_client->updateVerificationKey(msg));
     updateLocalUnlockMethods(
         std::forward_as_tuple(options.get<Email>(), options.get<Password>()));
   }
   catch (Error::ServerError const& e)
   {
     if (e.httpStatusCode() == 400)
-      throw Error::InvalidUnlockKey{e.what()};
+      throw Error::InvalidVerificationKey{e.what()};
     throw;
   }
 }
@@ -403,7 +404,7 @@ tc::cotask<void> Session::registerUnlock(
     Unlock::RegistrationOptions const& options)
 {
   if (!this->_unlockMethods)
-    TC_AWAIT(createUnlockKey(options));
+    TC_AWAIT(createVerificationKey(options));
   else
     TC_AWAIT(updateUnlock(Unlock::UpdateOptions{
         options.get<Email>(), options.get<Password>(), nonstd::nullopt}));
@@ -453,11 +454,11 @@ tc::cotask<void> Session::claimProvisionalIdentity(
   }
 }
 
-tc::cotask<UnlockKey> Session::generateAndRegisterUnlockKey()
+tc::cotask<VerificationKey> Session::generateAndRegisterVerificationKey()
 {
-  auto const reg = TC_AWAIT(generateUnlockKey());
-  TC_AWAIT(registerUnlockKey(*reg));
-  TC_RETURN(reg->unlockKey);
+  auto const reg = TC_AWAIT(generateVerificationKey());
+  TC_AWAIT(registerVerificationKey(*reg));
+  TC_RETURN(reg->verificationKey);
 }
 
 tc::cotask<bool> Session::isUnlockAlreadySetUp() const

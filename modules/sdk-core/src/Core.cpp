@@ -9,7 +9,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -235,12 +235,12 @@ tc::cotask<std::vector<Device>> Core::getDeviceList() const
   return (*psession)->getDeviceList();
 }
 
-tc::cotask<UnlockKey> Core::generateAndRegisterUnlockKey()
+tc::cotask<VerificationKey> Core::generateAndRegisterVerificationKey()
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(generateAndRegisterUnlockKey);
-  TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterUnlockKey()));
+    throw INVALID_STATUS(generateAndRegisterVerificationKey);
+  TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterVerificationKey()));
 }
 
 tc::cotask<void> Core::registerUnlock(

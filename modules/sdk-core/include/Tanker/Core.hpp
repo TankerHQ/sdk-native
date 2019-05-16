@@ -11,7 +11,7 @@
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -74,7 +74,7 @@ public:
   tc::cotask<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::cotask<UnlockKey> generateAndRegisterUnlockKey();
+  tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
 
   tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);

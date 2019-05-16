@@ -23,14 +23,14 @@ TEST_SUITE("Unlock")
     auto const email = Email{"kirby@dreamland.nes"};
     auto const newEmail = Email{"bowser@dreamland.net"};
 
-    SUBCASE("it creates an unlockKey and use it to add a third device")
+    SUBCASE("it creates an verificationKey and use it to add a third device")
     {
-      auto unlockKey = TC_AWAIT(core1->generateAndRegisterUnlockKey());
+      auto verificationKey = TC_AWAIT(core1->generateAndRegisterVerificationKey());
 
       REQUIRE_EQ(
           TC_AWAIT(core2->signIn(
               alice.identity,
-              SignInOptions{unlockKey, nonstd::nullopt, nonstd::nullopt})),
+              SignInOptions{verificationKey, nonstd::nullopt, nonstd::nullopt})),
           OpenResult::Ok);
     }
 

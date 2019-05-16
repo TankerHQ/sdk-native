@@ -74,9 +74,9 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey);
 
-  tc::cotask<void> createUnlockKey(Unlock::Message const& request);
-  tc::cotask<void> updateUnlockKey(Unlock::Message const& request);
-  tc::cotask<Unlock::FetchAnswer> fetchUnlockKey(Unlock::Request const& req);
+  tc::cotask<void> createVerificationKey(Unlock::Message const& request);
+  tc::cotask<void> updateVerificationKey(Unlock::Message const& request);
+  tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(Unlock::Request const& req);
 
   tc::cotask<std::string> requestAuthChallenge();
   tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);

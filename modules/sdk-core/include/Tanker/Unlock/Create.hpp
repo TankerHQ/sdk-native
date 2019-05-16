@@ -4,7 +4,7 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -19,7 +19,7 @@ namespace Unlock
 {
 struct Registration;
 
-UnlockKey ghostDeviceToUnlockKey(GhostDevice const& ghostDevice);
+VerificationKey ghostDeviceToVerificationKey(GhostDevice const& ghostDevice);
 
 std::unique_ptr<Registration> generate(
     Trustchain::UserId const& userId,
@@ -27,7 +27,7 @@ std::unique_ptr<Registration> generate(
     BlockGenerator const& blockGen,
     DeviceKeys const& deviceKeys = DeviceKeys::create());
 
-GhostDevice extract(UnlockKey const& unlockKey);
+GhostDevice extract(VerificationKey const& verificationKey);
 
 std::vector<uint8_t> createValidatedDevice(
     Trustchain::TrustchainId const& trustchainId,

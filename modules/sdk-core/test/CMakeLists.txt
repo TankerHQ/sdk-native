@@ -23,7 +23,7 @@ add_executable(test_tanker
   test_session.cpp
   test_share.cpp
   test_ghostdevice.cpp
-  test_unlockkey.cpp
+  test_verificationkey.cpp
   test_useraccessor.cpp
   test_entry.cpp
   test_groups.cpp

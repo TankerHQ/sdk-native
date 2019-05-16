@@ -64,8 +64,8 @@ emscripten::val CoreSignIn(AsyncCore& core,
                            emscripten::val const& jsignInOptions)
 {
   SignInOptions signInOptions;
-  signInOptions.unlockKey =
-      Emscripten::optionalFromValue<UnlockKey>(jsignInOptions, "unlockKey");
+  signInOptions.verificationKey =
+      Emscripten::optionalFromValue<VerificationKey>(jsignInOptions, "verificationKey");
   signInOptions.verificationCode =
       Emscripten::optionalFromValue<VerificationCode>(jsignInOptions,
                                                       "verificationCode");
@@ -144,11 +144,11 @@ emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
       SGroupId(jgroupId.as<std::string>()), usersToAdd));
 }
 
-emscripten::val CoreGenerateAndRegisterUnlockKey(AsyncCore& core)
+emscripten::val CoreGenerateAndRegisterVerificationKey(AsyncCore& core)
 {
   return Emscripten::tcFutureToJsPromise(
-      core.generateAndRegisterUnlockKey().and_then(
-          [](auto const& unlockKey) { return unlockKey.string(); }));
+      core.generateAndRegisterVerificationKey().and_then(
+          [](auto const& verificationKey) { return verificationKey.string(); }));
 }
 
 emscripten::val CoreRegisterUnlock(AsyncCore& core,
@@ -319,8 +319,8 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("share", &CoreShare)
       .function("createGroup", &CoreCreateGroup)
       .function("updateGroupMembers", &CoreUpdateGroupMembers)
-      .function("generateAndRegisterUnlockKey",
-                &CoreGenerateAndRegisterUnlockKey)
+      .function("generateAndRegisterVerificationKey",
+                &CoreGenerateAndRegisterVerificationKey)
       .function("registerUnlock", &CoreRegisterUnlock)
       .function("isUnlockAlreadySetUp", &CoreIsUnlockAlreadySetUp)
       .function("hasRegisteredUnlockMethods", &CoreHasRegisteredUnlockMethods)

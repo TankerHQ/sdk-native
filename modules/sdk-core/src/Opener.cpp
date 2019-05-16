@@ -15,7 +15,7 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/UnlockKey.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 
@@ -85,14 +85,14 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
       "assertion error: invalid open mode, unreachable code");
 }
 
-tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
+tc::cotask<VerificationKey> Opener::fetchVerificationKey(Unlock::DeviceLocker const& locker)
 {
   auto const req =
       Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
   try
   {
-    auto const fetchAnswer = TC_AWAIT(_client->fetchUnlockKey(req));
-    TC_RETURN(fetchAnswer.getUnlockKey(_identity->userSecret));
+    auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
+    TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
   }
   catch (Error::ServerError const& err)
   {
@@ -104,7 +104,7 @@ tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
         throw Error::InvalidVerificationCode{err.what()};
     }
     else if (err.httpStatusCode() == 404)
-      throw Error::InvalidUnlockKey{err.what()};
+      throw Error::InvalidVerificationKey{err.what()};
     else if (err.httpStatusCode() == 429)
       throw Error::MaxVerificationAttemptsReached(err.what());
     throw;
@@ -112,9 +112,9 @@ tc::cotask<UnlockKey> Opener::fetchUnlockKey(Unlock::DeviceLocker const& locker)
   throw std::runtime_error("unreachable code");
 }
 
-tc::cotask<void> Opener::unlockCurrentDevice(UnlockKey const& unlockKey)
+tc::cotask<void> Opener::unlockCurrentDevice(VerificationKey const& verificationKey)
 {
-  auto const ghostDevice = Unlock::extract(unlockKey);
+  auto const ghostDevice = Unlock::extract(verificationKey);
 
   auto const encryptedUserKey = TC_AWAIT(
       _client->getLastUserKey(_info.trustchainId, ghostDevice.deviceId));
@@ -160,14 +160,14 @@ tc::cotask<Opener::OpenResult> Opener::createDevice(
   TINFO("createDevice");
   FUNC_TIMER(Proc);
 
-  if (signInOptions.unlockKey)
-    TC_AWAIT(unlockCurrentDevice(*signInOptions.unlockKey));
+  if (signInOptions.verificationKey)
+    TC_AWAIT(unlockCurrentDevice(*signInOptions.verificationKey));
   else if (signInOptions.verificationCode)
     TC_AWAIT(unlockCurrentDevice(
-        TC_AWAIT(fetchUnlockKey(*signInOptions.verificationCode))));
+        TC_AWAIT(fetchVerificationKey(*signInOptions.verificationCode))));
   else if (signInOptions.password)
     TC_AWAIT(
-        unlockCurrentDevice(TC_AWAIT(fetchUnlockKey(*signInOptions.password))));
+        unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(*signInOptions.password))));
   else
     TC_RETURN(StatusIdentityVerificationNeeded{});
 
