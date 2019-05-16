@@ -29,12 +29,7 @@ SQLPP_DECLARE_TABLE(
 namespace groups
 {
 void createTable(DataStore::Connection&, groups const& = {});
-void migrateTable(DataStore::Connection&, int dbVersion, groups const& = {});
-
-constexpr int currentTableVersion(groups const& = {})
-{
-  return 1;
-}
+void migrateTable(DataStore::Connection&, int currentVersion, groups const& = {});
 }
 }
 }

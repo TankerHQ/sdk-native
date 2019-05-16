@@ -26,13 +26,8 @@ namespace contact_user_keys
 {
 void createTable(DataStore::Connection&, contact_user_keys const& = {});
 void migrateTable(DataStore::Connection&,
-                  int dbVersion,
+                  int currentVersion,
                   contact_user_keys const& = {});
-
-constexpr int currentTableVersion(contact_user_keys const& = {})
-{
-  return 3;
-}
 }
 }
 }

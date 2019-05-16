@@ -27,13 +27,8 @@ namespace trustchain
 {
 void createTable(DataStore::Connection&, trustchain const& = {});
 void migrateTable(DataStore::Connection&,
-                  int dbVersion,
+                  int currentVersion,
                   trustchain const& = {});
-
-constexpr int currentTableVersion(trustchain const& = {})
-{
-  return 2;
-}
 }
 }
 }

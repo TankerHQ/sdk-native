@@ -11,18 +11,17 @@ namespace DbModels
 {
 // clang-format off
 SQLPP_DECLARE_TABLE(
-  (trustchain_info)
+  (version)
   ,
-  (last_index, int, SQLPP_NOT_NULL)
-  (trustchain_public_signature_key, blob, SQLPP_NULL)
+  (db_version, int, SQLPP_NOT_NULL)
 )
 // clang-format on
 
 // namespace created by sqlpp, must place createTable here in order for ADL to
 // work.
-namespace trustchain_info
+namespace version
 {
-void createTable(DataStore::Connection&, trustchain_info const& = {});
+void createTable(DataStore::Connection&, version const& = {});
 }
 }
 }

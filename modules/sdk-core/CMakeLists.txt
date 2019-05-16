@@ -10,6 +10,7 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DataStore/Database.hpp
     include/Tanker/DataStore/Table.hpp
     include/Tanker/DataStore/Utils.hpp
+    include/Tanker/DataStore/Version.hpp
     include/Tanker/DbModels/ContactDevices.hpp
     include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
@@ -24,6 +25,7 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/TrustchainInfo.hpp
     include/Tanker/DbModels/UserKeys.hpp
     include/Tanker/DbModels/Versions.hpp
+    include/Tanker/DbModels/Version.hpp
 
     src/DataStore/Connection.cpp
     src/DataStore/Database.cpp
@@ -42,6 +44,7 @@ if (NOT EMSCRIPTEN)
     src/DbModels/TrustchainInfo.cpp
     src/DbModels/UserKeys.cpp
     src/DbModels/Versions.cpp
+    src/DbModels/Version.cpp
   )
   set(TANKER_CORE_CONNECTION_SRC
     include/Tanker/Connection.hpp

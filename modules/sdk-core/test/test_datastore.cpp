@@ -9,7 +9,6 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/ssl.hpp>
 
@@ -28,14 +27,10 @@ SQLPP_DECLARE_TABLE(
     (id, int, SQLPP_PRIMARY_KEY)
     (value, int)
 )
+
 // clang-format on
 namespace dummy
 {
-constexpr int currentTableVersion(dummy const& = {})
-{
-  return 2;
-}
-
 void createTable(Connection& db, dummy const& = {})
 {
   db.execute(R"(
@@ -52,18 +47,19 @@ void migrateTable(Connection& db, int dbVersion, dummy const& tab = {})
   db(update(tab).set(tab.value = tab.value * 2).unconditionally());
 }
 }
+
 void setupDummyMigration(Connection& db)
 {
-  using VersionsTable = Tanker::DbModels::versions::versions;
-  VersionsTable tab{};
+  using VersionTable = Tanker::DbModels::version::version;
+  VersionTable tab{};
 
   dummy::dummy dummy;
 
   dummy::createTable(db);
   db(insert_into(dummy).set(dummy.id = 1, dummy.value = 42));
 
-  Tanker::DataStore::detail::createOrMigrateTableVersions(db);
-  db(insert_into(tab).set(tab.name = "dummy", tab.version = 1));
+  Tanker::DbModels::version::createTable(db);
+  db(insert_into(tab).set(tab.db_version = 1));
 }
 }
 
@@ -140,7 +136,6 @@ TEST_CASE("Connection encrypted" * doctest::test_suite("DataStore") *
 
 TEST_CASE("Table" * doctest::test_suite("DataStore"))
 {
-  using VersionsTable = Tanker::DbModels::versions::versions;
   Tanker::UniquePath testtmp("testtmp");
 
   auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
@@ -149,45 +144,12 @@ TEST_CASE("Table" * doctest::test_suite("DataStore"))
   auto dbPtr = createConnection(dbfile);
   auto& db = *dbPtr;
 
-  REQUIRE_FALSE(tableExists<VersionsTable>(db));
   REQUIRE_FALSE(tableExists<TrustchainTable>(db));
 
   SUBCASE("Creating a table")
   {
-    createOrMigrateTable<TrustchainTable>(db);
+    createTable<TrustchainTable>(db);
     CHECK(tableExists<TrustchainTable>(db));
-  }
-
-  SUBCASE("Creating a table will also create the versions table")
-  {
-    createOrMigrateTable<TrustchainTable>(db);
-    REQUIRE(tableExists<TrustchainTable>(db));
-    CHECK(tableExists<VersionsTable>(db));
-  }
-
-  SUBCASE("Creating any table will update its version")
-  {
-    createOrMigrateTable<TrustchainTable>(db);
-    REQUIRE(tableExists<TrustchainTable>(db));
-
-    auto const optVersion = tableVersion<TrustchainTable>(db);
-    REQUIRE(optVersion != nonstd::nullopt);
-
-    auto const currentVersion = currentTableVersion(TrustchainTable{});
-    CHECK_EQ(*optVersion, currentVersion);
-  }
-
-  SUBCASE("Creating any table will also update the versions table's version")
-  {
-    createOrMigrateTable<TrustchainTable>(db);
-    CHECK(tableExists<TrustchainTable>(db));
-    CHECK(tableExists<VersionsTable>(db));
-
-    auto const optVersion = tableVersion<VersionsTable>(db);
-    REQUIRE(optVersion != nonstd::nullopt);
-
-    auto const currentVersion = currentTableVersion(VersionsTable{});
-    CHECK_EQ(*optVersion, currentVersion);
   }
 }
 
@@ -202,25 +164,12 @@ TEST_CASE("Migration" * doctest::test_suite("DataStore"))
 
   setupDummyMigration(db);
 
-  SUBCASE("Trying to create an existing table will result in its migration")
+  SUBCASE("Migrate an existing table")
   {
-    REQUIRE_NOTHROW(createOrMigrateTable<dummy::dummy>(db));
+    REQUIRE_NOTHROW(migrateTable<dummy::dummy>(db, 1));
 
     auto const value = static_cast<int>(
         db(select(tab.value).from(tab).unconditionally()).front().value);
     CHECK_EQ(value, 84);
-  }
-
-  SUBCASE("Throw when a database version is too high")
-  {
-    using VersionsTable = Tanker::DbModels::versions::versions;
-
-    VersionsTable tab{};
-    db(update(tab)
-           .set(tab.version = dummy::currentTableVersion() + 1)
-           .where(tab.name == tableName<dummy::dummy>()));
-
-    CHECK_THROWS_AS(createOrMigrateTable<dummy::dummy>(db),
-                    Tanker::Error::MigrationFailed);
   }
 }

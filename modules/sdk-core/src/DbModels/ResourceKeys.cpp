@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -55,17 +56,21 @@ void createTable(DataStore::Connection& db, resource_keys const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   resource_keys const&)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
-  switch (dbVersion)
+  TINFO("Migrating from version {} to {}",
+        currentVersion,
+        DataStore::latestVersion());
+  switch (currentVersion)
   {
   case 0:
   case 1:
     migrate1To2(db);
+    // fallthrough
+  case 2:
     break;
   default:
     assert(false && "Unreachable code");

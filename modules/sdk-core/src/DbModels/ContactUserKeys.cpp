@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -13,7 +14,7 @@
 
 TLOG_CATEGORY(contact_user_keys);
 
-using Tanker::Trustchain::UserId;
+using namespace Tanker::Trustchain;
 
 namespace Tanker
 {
@@ -73,14 +74,16 @@ void createTable(DataStore::Connection& db, contact_user_keys const&)
 }
 
 void migrateTable(DataStore::Connection& db,
-                  int dbVersion,
+                  int currentVersion,
                   contact_user_keys const&)
 {
-  assert(dbVersion < currentTableVersion());
+  assert(currentVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}", dbVersion, currentTableVersion());
+  TINFO("Migrating from version {} to {}",
+        currentVersion,
+        DataStore::latestVersion());
 
-  switch (dbVersion)
+  switch (currentVersion)
   {
   case 0:
   case 1:
@@ -88,6 +91,8 @@ void migrateTable(DataStore::Connection& db,
     // fallthrough
   case 2:
     migrate2To3(db);
+    // fallthrough
+  case 3:
     break;
   default:
     assert(false && "Unreachable code");

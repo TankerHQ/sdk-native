@@ -19,11 +19,6 @@ void createTable(DataStore::Connection& db, versions const&)
     );
   )");
 }
-
-void migrateTable(DataStore::Connection&, int dbVersion, versions const&)
-{
-  assert(dbVersion < currentTableVersion());
-}
 }
 }
 }

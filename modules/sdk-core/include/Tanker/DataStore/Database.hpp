@@ -113,7 +113,21 @@ private:
 
   std::vector<sqlpp::transaction_t<sqlpp::sqlite3::connection>> _transactions;
 
-  bool isMigrationNeeded();
+  template <typename Table>
+  int currentTableVersion();
+  template <typename Table>
+  void createOrMigrateTable(int currentVersion);
+  template <typename Table>
+  void dropTable();
+
+  void setDatabaseVersion(int version);
+
+  void performUnifiedMigration();
+  void performOldMigration();
+
+  int currentDatabaseVersion();
+
+  void migrate();
   void flushAllCaches();
   tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
                                    Trustchain::ResourceId const& resourceId);

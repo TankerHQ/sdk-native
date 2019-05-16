@@ -18,7 +18,6 @@ using namespace Tanker;
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
-#include <Tanker/DbModels/Versions.hpp>
 
 namespace
 {
@@ -30,8 +29,6 @@ struct OldResourceKeys
 
 OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
 {
-  using VersionsTable = Tanker::DbModels::versions::versions;
-
   auto const resourceKey = Crypto::makeSymmetricKey();
 
   auto const b64Mac =
@@ -49,9 +46,6 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
   db.execute(fmt::format("INSERT INTO resource_keys VALUES (1, '{}', '{}')",
                          b64Mac,
                          b64ResourceKey));
-
-  db.execute(fmt::format("INSERT INTO {} VALUES ('resource_keys', 1)",
-                         DataStore::tableName<VersionsTable>()));
 
   return {b64Mac, b64ResourceKey};
 }
@@ -111,8 +105,6 @@ TEST_CASE("Migration")
   auto const dbPtr = DataStore::createConnection(":memory:");
   auto& db = *dbPtr;
 
-  DataStore::detail::createOrMigrateTableVersions(db);
-
   SUBCASE("Migration from version 1 should convert from base64")
   {
     using ResourceKeysTable = Tanker::DbModels::resource_keys::resource_keys;
@@ -120,7 +112,8 @@ TEST_CASE("Migration")
 
     auto const oldKeys = setupResourceKeysMigration(db);
 
-    DataStore::createOrMigrateTable<ResourceKeysTable>(db);
+    DataStore::createTable<ResourceKeysTable>(db);
+    DataStore::migrateTable<ResourceKeysTable>(db, 1);
     auto const keys = db(select(all_of(tab)).from(tab).unconditionally());
     auto const& resourceKeys = keys.front();
 

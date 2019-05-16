@@ -23,12 +23,6 @@ SQLPP_DECLARE_TABLE(
 namespace versions
 {
 void createTable(DataStore::Connection&, versions const& = {});
-void migrateTable(DataStore::Connection&, int dbVersion, versions const& = {});
-
-constexpr int currentTableVersion(versions const& = {})
-{
-  return 1;
-}
 }
 }
 }

@@ -28,13 +28,8 @@ namespace trustchain_indexes
 {
 void createTable(DataStore::Connection&, trustchain_indexes const& = {});
 void migrateTable(DataStore::Connection&,
-                  int dbVersion,
+                  int currentVersion,
                   trustchain_indexes const& = {});
-
-constexpr int currentTableVersion(trustchain_indexes const& = {})
-{
-  return 2;
-}
 }
 }
 }

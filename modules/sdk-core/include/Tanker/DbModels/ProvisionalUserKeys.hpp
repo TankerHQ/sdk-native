@@ -25,14 +25,6 @@ SQLPP_DECLARE_TABLE(
 namespace provisional_user_keys
 {
 void createTable(DataStore::Connection&, provisional_user_keys const& = {});
-void migrateTable(DataStore::Connection&,
-                  int dbVersion,
-                  provisional_user_keys const& = {});
-
-constexpr int currentTableVersion(provisional_user_keys const& = {})
-{
-  return 1;
-}
 }
 }
 }

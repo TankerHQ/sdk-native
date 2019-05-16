@@ -26,15 +26,6 @@ namespace group_provisional_encryption_keys
 {
 void createTable(DataStore::Connection&,
                  group_provisional_encryption_keys const& = {});
-void migrateTable(DataStore::Connection&,
-                  int dbVersion,
-                  group_provisional_encryption_keys const& = {});
-
-constexpr int currentTableVersion(
-    group_provisional_encryption_keys const& = {})
-{
-  return 1;
-}
 }
 }
 }

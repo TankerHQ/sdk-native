@@ -24,7 +24,6 @@ using namespace Tanker;
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/DbModels/TrustchainIndexes.hpp>
-#include <Tanker/DbModels/Versions.hpp>
 
 #include <sqlpp11/sqlpp11.h>
 
@@ -45,8 +44,6 @@ struct OldIndex
 
 OldBlock setupTrustchainMigration(DataStore::Connection& db)
 {
-  using VersionsTable = DbModels::versions::versions;
-
   auto const b64Hash =
       cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("hash"));
   auto const b64Author =
@@ -68,16 +65,12 @@ OldBlock setupTrustchainMigration(DataStore::Connection& db)
                   b64Author,
                   b64Record,
                   b64Hash));
-  db.execute(fmt::format("INSERT INTO {} VALUES ('trustchain', 1)",
-                         DataStore::tableName<VersionsTable>()));
 
   return {b64Hash, b64Author, b64Record};
 }
 
 OldIndex setupTrustchainIndexesMigration(DataStore::Connection& db)
 {
-  using VersionsTable = DbModels::versions::versions;
-
   auto const b64Hash =
       cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("hash"));
   auto const b64Value = cppcodec::base64_rfc4648::encode("value");
@@ -96,8 +89,6 @@ OldIndex setupTrustchainIndexesMigration(DataStore::Connection& db)
       fmt::format("INSERT INTO trustchain_indexes VALUES(1, '{}', 1, '{}')",
                   b64Hash,
                   b64Value));
-  db.execute(fmt::format("INSERT INTO {} VALUES ('trustchain_indexes', 1)",
-                         DataStore::tableName<VersionsTable>()));
 
   return {b64Hash, b64Value};
 }
@@ -196,8 +187,6 @@ TEST_CASE("trustchain migration")
   auto const dbPtr = DataStore::createConnection(":memory:");
   auto& db = *dbPtr;
 
-  DataStore::detail::createOrMigrateTableVersions(db);
-
   SUBCASE("Migration from version 1 should convert from base64")
   {
     using DataStore::extractBlob;
@@ -208,7 +197,8 @@ TEST_CASE("trustchain migration")
 
       auto const oldRootBlock = setupTrustchainMigration(db);
 
-      DataStore::createOrMigrateTable<TrustchainTable>(db);
+      DataStore::createTable<TrustchainTable>(db);
+      DataStore::migrateTable<TrustchainTable>(db, 1);
 
       TrustchainTable tab{};
 
@@ -236,7 +226,8 @@ TEST_CASE("trustchain migration")
 
       auto const oldIndex = setupTrustchainIndexesMigration(db);
 
-      DataStore::createOrMigrateTable<TrustchainIndexesTable>(db);
+      DataStore::createTable<TrustchainIndexesTable>(db);
+      DataStore::migrateTable<TrustchainIndexesTable>(db, 1);
 
       TrustchainIndexesTable tab{};
 
