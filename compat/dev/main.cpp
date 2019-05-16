@@ -18,14 +18,15 @@ static const char USAGE[] = R"(compat cli
     compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
 
   Commands:
-    encrypt                   simple encrypt decrypt with a user
-    group                     simple encrypt decrypt with a group
+    encrypt                   simple encrypt then decrypt with a user
+    group                     simple encrypt then decrypt with a group
     unlock                    signup then unlock
     preshare-and-claim        encrypt then create a new user to claim and decrypt
-    decrypt-old-claim         claim and decrypt an old preshare resource
-    provisional-user-group-claim         share to a group with provisional user and claim and decrypt
-    provisional-user-group-old-claim     share to a group with provisional user and decrypt an old preshare resource
-    claim-provisional-self               share to a group with provisional user which we later claim
+    decrypt-old-claim         signup, claim and share with this user then decrypt
+    provisional-user-group-claim         share with a group with provisional user then claim and decrypt
+    provisional-user-group-old-claim     share with a group with provisional user and claim then decrypt
+    claim-provisional-self               share with a group with provisional user,
+                                          a user shares with the group then this user claims and decrypts
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
