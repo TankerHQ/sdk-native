@@ -18,11 +18,15 @@ static const char USAGE[] = R"(compat cli
     compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
 
   Commands:
-    encrypt               simple encrypt decrypt with a user
-    group                 simple encrypt decrypt with a group
-    unlock                signup then unlock
-    preshare-and-claim    encrypt then create a new user to claim and decrypt
-    decrypt-old-claim     claim and decrypt an old preshare resource
+    encrypt                   simple encrypt then decrypt with a user
+    group                     simple encrypt then decrypt with a group
+    unlock                    signup then unlock
+    preshare-and-claim        encrypt then create a new user to claim and decrypt
+    decrypt-old-claim         signup, claim and share with this user then decrypt
+    provisional-user-group-claim         share with a group with provisional user then claim and decrypt
+    provisional-user-group-old-claim     share with a group with provisional user and claim then decrypt
+    claim-provisional-self               share with a group with provisional user,
+                                          a user shares with the group then this user claims and decrypts
 
   Options:
     --path=<filePath>   directory path to store devices [default: /tmp]
@@ -49,6 +53,15 @@ auto getRunner = [](std::string const& command,
         trustchain, std::move(tankerPath), std::move(statePath));
   else if (command == "decrypt-old-claim")
     return std::make_unique<DecryptOldClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "provisional-user-group-claim")
+    return std::make_unique<ProvisionalUserGroupClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "provisional-user-group-old-claim")
+    return std::make_unique<ProvisionalUserGroupOldClaim>(
+        trustchain, std::move(tankerPath), std::move(statePath));
+  else if (command == "claim-provisional-self")
+    return std::make_unique<ClaimProvisionalSelf>(
         trustchain, std::move(tankerPath), std::move(statePath));
   else
     throw std::runtime_error("not implemented");
