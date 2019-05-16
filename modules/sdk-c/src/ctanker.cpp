@@ -200,32 +200,33 @@ tanker_future_t* tanker_sign_up(
 
 tanker_future_t* tanker_sign_in(tanker_t* ctanker,
                                 char const* identity,
-                                tanker_sign_in_options_t const* sign_in_options)
+                                tanker_verification_t const* cverification)
 {
   if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void*>(
         Error::formatEx<Error::InvalidArgument>("identity is null")));
-  if (sign_in_options && sign_in_options->version != 1)
+  if (cverification && cverification->version != 1)
     return makeFuture(tc::make_exceptional_future<void*>(
         Error::formatEx<Error::InvalidArgument>(
             "unsupported tanker_authentication_methods struct version")));
 
-  auto signInOptions = SignInOptions{};
-  if (sign_in_options)
+  auto verification = Verification{};
+  if (cverification)
   {
-    if (sign_in_options->unlock_key)
-      signInOptions.verificationKey =
-          VerificationKey{sign_in_options->unlock_key};
-    if (sign_in_options->verification_code)
-      signInOptions.verificationCode =
-          VerificationCode{sign_in_options->verification_code};
-    if (sign_in_options->password)
-      signInOptions.password = Password{sign_in_options->password};
+    if (cverification->unlock_key)
+      verification.verificationKey = VerificationKey{cverification->unlock_key};
+    if (cverification->email_verification)
+      verification.emailVerification = EmailVerification{
+          Email{cverification->email_verification->email},
+          VerificationCode{
+              cverification->email_verification->verification_code}};
+    if (cverification->password)
+      verification.password = Password{cverification->password};
   }
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->signIn(std::string(identity), signInOptions)
+      tanker->signIn(std::string(identity), verification)
           .and_then(tc::get_synchronous_executor(),
                     [](OpenResult r) { return reinterpret_cast<void*>(r); }));
 }

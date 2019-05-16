@@ -164,14 +164,14 @@ AsyncCorePtr signIn(MainArgs const& args)
        sdkVersion},
       ".")};
 
-  SignInOptions signInOptions;
+  Verification verification;
   if (args.at(UnlockKeyOpt))
-    signInOptions.verificationKey =
+    verification.verificationKey =
         VerificationKey{args.at(UnlockKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
-    signInOptions.password = Password{args.at(UnlockPasswordOpt).asString()};
+    verification.password = Password{args.at(UnlockPasswordOpt).asString()};
 
-  auto const status = core->signIn(identity, signInOptions).get();
+  auto const status = core->signIn(identity, verification).get();
   if (status != OpenResult::Ok)
   {
     std::cout << "Failed to sign in: "

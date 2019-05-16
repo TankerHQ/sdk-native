@@ -48,7 +48,7 @@ Status Opener::status() const
 }
 
 tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
-                                            SignInOptions const& signInOptions,
+                                            Verification const& verification,
                                             OpenMode mode)
 {
   SCOPE_TIMER("opener_signup", Proc);
@@ -82,7 +82,7 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
   if (userStatusResult.deviceExists)
     TC_RETURN(TC_AWAIT(openDevice()));
   else if (userStatusResult.userExists)
-    TC_RETURN(TC_AWAIT(createDevice(signInOptions)));
+    TC_RETURN(TC_AWAIT(createDevice(verification)));
   else if (mode == OpenMode::SignUp)
     TC_RETURN(TC_AWAIT(createUser()));
   else if (mode == OpenMode::SignIn)
@@ -91,7 +91,8 @@ tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
       "assertion error: invalid open mode, unreachable code");
 }
 
-tc::cotask<VerificationKey> Opener::fetchVerificationKey(Unlock::DeviceLocker const& locker)
+tc::cotask<VerificationKey> Opener::fetchVerificationKey(
+    Unlock::DeviceLocker const& locker)
 {
   auto const req =
       Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
@@ -118,7 +119,8 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(Unlock::DeviceLocker co
   throw std::runtime_error("unreachable code");
 }
 
-tc::cotask<void> Opener::unlockCurrentDevice(VerificationKey const& verificationKey)
+tc::cotask<void> Opener::unlockCurrentDevice(
+    VerificationKey const& verificationKey)
 {
   auto const ghostDevice = Unlock::extract(verificationKey);
 
@@ -161,19 +163,19 @@ tc::cotask<Opener::OpenResult> Opener::createUser()
 }
 
 tc::cotask<Opener::OpenResult> Opener::createDevice(
-    SignInOptions const& signInOptions)
+    Verification const& verification)
 {
   TINFO("createDevice");
   FUNC_TIMER(Proc);
 
-  if (signInOptions.verificationKey)
-    TC_AWAIT(unlockCurrentDevice(*signInOptions.verificationKey));
-  else if (signInOptions.verificationCode)
+  if (verification.verificationKey)
+    TC_AWAIT(unlockCurrentDevice(*verification.verificationKey));
+  else if (verification.emailVerification)
+    TC_AWAIT(unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(
+        (*verification.emailVerification).verificationCode))));
+  else if (verification.password)
     TC_AWAIT(unlockCurrentDevice(
-        TC_AWAIT(fetchVerificationKey(*signInOptions.verificationCode))));
-  else if (signInOptions.password)
-    TC_AWAIT(
-        unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(*signInOptions.password))));
+        TC_AWAIT(fetchVerificationKey(*verification.password))));
   else
     TC_RETURN(StatusIdentityVerificationNeeded{});
 

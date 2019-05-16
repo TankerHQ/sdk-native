@@ -57,7 +57,8 @@ enum tanker_log_level
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
 typedef struct tanker_authentication_methods tanker_authentication_methods_t;
-typedef struct tanker_sign_in_options tanker_sign_in_options_t;
+typedef struct tanker_email_verification tanker_email_verification_t;
+typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
 typedef struct tanker_device_list_elem tanker_device_list_elem_t;
@@ -134,17 +135,29 @@ struct tanker_authentication_methods
     1, NULL, NULL                          \
   }
 
-struct tanker_sign_in_options
+struct tanker_email_verification
+{
+  uint8_t version;
+  char const* email;
+  char const* verification_code;
+};
+
+#define TANKER_EMAIL_VERIFICATION_INIT \
+  {                                    \
+    1, NULL, NULL                      \
+  }
+
+struct tanker_verification
 {
   uint8_t version;
   char const* unlock_key;
-  char const* verification_code;
+  tanker_email_verification_t* email_verification;
   char const* password;
 };
 
-#define TANKER_SIGN_IN_OPTIONS_INIT \
-  {                                 \
-    1, NULL, NULL, NULL             \
+#define TANKER_VERIFICATION_INIT \
+  {                              \
+    1, NULL, NULL, NULL          \
   }
 
 struct tanker_encrypt_options
@@ -244,7 +257,7 @@ tanker_future_t* tanker_sign_up(
  *
  * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
- * \param sign_in_options the authentication options to use when this device is
+ * \param verification the authentication options to use when this device is
  * not registered, or NULL.
  * \return a future of tanker_sign_in_result
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
@@ -255,10 +268,9 @@ tanker_future_t* tanker_sign_up(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_sign_in(
-    tanker_t* tanker,
-    char const* identity,
-    tanker_sign_in_options_t const* sign_in_options);
+tanker_future_t* tanker_sign_in(tanker_t* tanker,
+                                char const* identity,
+                                tanker_verification_t const* verification);
 
 /*!
  * Close a tanker session.

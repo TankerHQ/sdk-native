@@ -53,7 +53,7 @@ public:
   tc::cotask<void> signUp(std::string const& identity,
                           AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signIn(std::string const& identity,
-                                SignInOptions const& signInOptions);
+                                Verification const& verification);
   void stop();
 
   tc::cotask<void> encrypt(
@@ -121,6 +121,6 @@ private:
   tc::cotask<void> signUpImpl(std::string const& identity,
                               AuthenticationMethods const& authMethods);
   tc::cotask<OpenResult> signInImpl(std::string const& identity,
-                                    SignInOptions const& signInOptions);
+                                    Verification const& verification);
 };
 }

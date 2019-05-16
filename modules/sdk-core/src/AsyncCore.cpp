@@ -102,11 +102,11 @@ tc::shared_future<void> AsyncCore::signUp(
 }
 
 tc::shared_future<OpenResult> AsyncCore::signIn(
-    std::string const& identity, SignInOptions const& signInOptions)
+    std::string const& identity, Verification const& verification)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
-      TC_RETURN(TC_AWAIT(this->_core.signIn(identity, signInOptions)));
+      TC_RETURN(TC_AWAIT(this->_core.signIn(identity, verification)));
     });
   });
 }

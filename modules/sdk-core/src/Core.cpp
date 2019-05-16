@@ -107,22 +107,22 @@ tc::cotask<void> Core::signUpImpl(std::string const& identity,
 }
 
 tc::cotask<OpenResult> Core::signIn(std::string const& identity,
-                                    SignInOptions const& signInOptions)
+                                    Verification const& verification)
 {
   SCOPE_TIMER("core_signin", Proc);
   TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<OpenResult> {
-    TC_RETURN(TC_AWAIT(signInImpl(identity, signInOptions)));
+    TC_RETURN(TC_AWAIT(signInImpl(identity, verification)));
   })));
 }
 
 tc::cotask<OpenResult> Core::signInImpl(std::string const& identity,
-                                        SignInOptions const& signInOptions)
+                                        Verification const& verification)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
     throw INVALID_STATUS(signIn);
   auto openResult =
-      TC_AWAIT(pcore->open(identity, signInOptions, OpenMode::SignIn));
+      TC_AWAIT(pcore->open(identity, verification, OpenMode::SignIn));
   if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(openResult))
   {
     reset();

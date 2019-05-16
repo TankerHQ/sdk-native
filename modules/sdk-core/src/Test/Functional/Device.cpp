@@ -101,7 +101,7 @@ tc::cotask<AsyncCorePtr> Device::open(SessionType type)
   {
     auto const openResult2 =
         TC_AWAIT(tanker->signIn(_identity,
-                                SignInOptions{
+                                Verification{
                                     nonstd::nullopt,
                                     nonstd::nullopt,
                                     STRONG_PASSWORD_DO_NOT_LEAK,

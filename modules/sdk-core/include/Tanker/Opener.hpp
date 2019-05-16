@@ -7,6 +7,7 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -32,10 +33,16 @@ enum class OpenMode
   SignIn,
 };
 
-struct SignInOptions
+struct EmailVerification
+{
+  Email email;
+  VerificationCode verificationCode;
+};
+
+struct Verification
 {
   nonstd::optional<VerificationKey> verificationKey;
-  nonstd::optional<VerificationCode> verificationCode;
+  nonstd::optional<EmailVerification> emailVerification;
   nonstd::optional<Password> password;
 };
 
@@ -58,7 +65,7 @@ public:
   Status status() const;
 
   tc::cotask<OpenResult> open(std::string const& b64Identity,
-                              SignInOptions const& signInOptions,
+                              Verification const& verification,
                               OpenMode mode);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
@@ -79,7 +86,7 @@ private:
 
   Session::Config makeConfig();
   tc::cotask<OpenResult> createUser();
-  tc::cotask<OpenResult> createDevice(SignInOptions const& signInOptions);
+  tc::cotask<OpenResult> createDevice(Verification const& verification);
   tc::cotask<OpenResult> openDevice();
 };
 }

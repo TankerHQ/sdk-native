@@ -69,7 +69,7 @@ public:
   tc::shared_future<void> signUp(std::string const& identity,
                                  AuthenticationMethods const& authMethods = {});
   tc::shared_future<OpenResult> signIn(std::string const& identity,
-                                       SignInOptions const& signInOptions = {});
+                                       Verification const& verification = {});
 
   tc::shared_future<void> stop();
 
