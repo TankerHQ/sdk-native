@@ -80,8 +80,7 @@ std::vector<uint8_t> BlockGenerator::addUser3(
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
   auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-          userEncryptionKeys.privateKey, encryptionKey);
+      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
 
   DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
                          delegation.userId,
@@ -115,8 +114,7 @@ std::vector<uint8_t> BlockGenerator::addGhostDevice(
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
   auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-          userEncryptionKeys.privateKey, encryptionKey);
+      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
 
   DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
                          delegation.userId,
@@ -159,8 +157,7 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
   auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-          userEncryptionKeys.privateKey, encryptionKey);
+      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
 
   DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
                          delegation.userId,
@@ -262,8 +259,7 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
         sealedPrivateEncryptionKeysForUsers) const
 {
   auto const encryptedPrivateSignatureKey =
-      Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
-          signatureKeyPair.privateKey, publicEncryptionKey);
+      Crypto::sealEncrypt(signatureKeyPair.privateKey, publicEncryptionKey);
 
   UserGroupCreation::v1 ugc{signatureKeyPair.publicKey,
                          publicEncryptionKey,
@@ -286,8 +282,7 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation2(
         groupProvisionalMembers) const
 {
   auto const encryptedPrivateSignatureKey =
-      Crypto::sealEncrypt<Crypto::SealedPrivateSignatureKey>(
-          signatureKeyPair.privateKey, publicEncryptionKey);
+      Crypto::sealEncrypt(signatureKeyPair.privateKey, publicEncryptionKey);
 
   UserGroupCreation::v2 ugc{signatureKeyPair.publicKey,
                          publicEncryptionKey,

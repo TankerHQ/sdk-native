@@ -74,8 +74,8 @@ TEST_CASE("Can create a group with two users")
 
   CHECK(group.publicSignatureKey() == groupSignatureKey.publicKey);
   CHECK(group.publicEncryptionKey() == groupEncryptionKey.publicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-            group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
+  CHECK(Crypto::sealDecrypt(group.sealedPrivateSignatureKey(),
+                            groupEncryptionKey) ==
         groupSignatureKey.privateKey);
   REQUIRE(group.members().size() == 2);
   REQUIRE(group.provisionalMembers().size() == 0);
@@ -88,9 +88,9 @@ TEST_CASE("Can create a group with two users")
   REQUIRE(groupEncryptedKey != group.members().end());
   CHECK(groupEncryptedKey->userPublicKey() ==
         user.userKeys.back().keyPair.publicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->encryptedPrivateEncryptionKey(),
-            user.userKeys.back().keyPair) == groupEncryptionKey.privateKey);
+  CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
+                            user.userKeys.back().keyPair) ==
+        groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
 
@@ -126,8 +126,8 @@ TEST_CASE("Can create a group with two provisional users")
 
   CHECK(group.publicSignatureKey() == groupSignatureKey.publicKey);
   CHECK(group.publicEncryptionKey() == groupEncryptionKey.publicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-            group.sealedPrivateSignatureKey(), groupEncryptionKey) ==
+  CHECK(Crypto::sealDecrypt(group.sealedPrivateSignatureKey(),
+                            groupEncryptionKey) ==
         groupSignatureKey.privateKey);
   REQUIRE(group.members().size() == 0);
   REQUIRE(group.provisionalMembers().size() == 2);
@@ -141,7 +141,7 @@ TEST_CASE("Can create a group with two provisional users")
   REQUIRE(groupEncryptedKey != group.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
         provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+  CHECK(Crypto::sealDecrypt(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
                 provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),
@@ -227,9 +227,8 @@ TEST_CASE("Can add users to a group")
   REQUIRE(groupEncryptedKey != groupAdd.members().end());
   CHECK(groupEncryptedKey->userPublicKey() ==
         user.userKeys.back().keyPair.publicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            groupEncryptedKey->encryptedPrivateEncryptionKey(),
-            user.userKeys.back().keyPair) ==
+  CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
+                            user.userKeys.back().keyPair) ==
         group.encryptionKeyPair.privateKey);
   CHECK(selfSignature == groupAdd.selfSignature());
 }
@@ -279,7 +278,7 @@ TEST_CASE("Can add provisional users to a group")
   REQUIRE(groupEncryptedKey != groupAdd.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
         provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
-  CHECK(Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
+  CHECK(Crypto::sealDecrypt(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
                 provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),

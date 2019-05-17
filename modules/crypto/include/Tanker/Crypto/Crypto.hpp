@@ -8,6 +8,7 @@
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/Sealed.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
@@ -216,6 +217,16 @@ OutputContainer sealEncrypt(gsl::span<uint8_t const> clearData,
   return res;
 }
 
+template <typename T,
+          typename = std::enable_if_t<IsCryptographicType<T>::value>>
+Sealed<T> sealEncrypt(T const& clearData,
+                      PublicEncryptionKey const& recipientKey)
+{
+  Sealed<T> res;
+  detail::sealEncryptImpl(clearData, res, recipientKey);
+  return res;
+}
+
 template <typename OutputContainer = std::vector<uint8_t>>
 OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData,
                             EncryptionKeyPair const& recipientKeyPair)
@@ -226,6 +237,15 @@ OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData,
     throw DecryptFailed("sealed buffer too small");
 
   auto res = ContainerResizer::resize(cipherData.size() - crypto_box_SEALBYTES);
+  detail::sealDecryptImpl(cipherData, res, recipientKeyPair);
+  return res;
+}
+
+template <typename T>
+T sealDecrypt(Sealed<T> const& cipherData,
+              EncryptionKeyPair const& recipientKeyPair)
+{
+  T res;
   detail::sealDecryptImpl(cipherData, res, recipientKeyPair);
   return res;
 }

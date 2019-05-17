@@ -69,8 +69,7 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
     keysForUsers.emplace_back(
         user.id,
         *user.userKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupPrivateEncryptionKey, *user.userKey));
+        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey));
   }
   return keysForUsers;
 }
@@ -86,8 +85,7 @@ generateGroupKeysForProvisionalUsers(
     auto const encryptedKeyOnce = Crypto::sealEncrypt(
         groupPrivateEncryptionKey, user.appEncryptionPublicKey);
     auto const encryptedKeyTwice =
-        Crypto::sealEncrypt<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-            encryptedKeyOnce, user.tankerEncryptionPublicKey);
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
 
     keysForUsers.emplace_back(user.appSignaturePublicKey,
                               user.tankerSignaturePublicKey,

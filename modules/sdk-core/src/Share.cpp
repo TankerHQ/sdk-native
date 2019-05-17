@@ -22,9 +22,7 @@
 #include <algorithm>
 #include <iterator>
 
-using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::ResourceId;
-using Tanker::Trustchain::UserId;
+using namespace Tanker::Trustchain;
 
 namespace Tanker
 {
@@ -40,9 +38,8 @@ std::vector<uint8_t> makeKeyPublishToProvisionalUser(
 {
   auto const encryptedKeyOnce = Crypto::sealEncrypt(
       resourceKey, recipientProvisionalUser.appEncryptionPublicKey);
-  auto const encryptedKeyTwice =
-      Crypto::sealEncrypt<Crypto::TwoTimesSealedSymmetricKey>(
-          encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
+  auto const encryptedKeyTwice = Crypto::sealEncrypt(
+      encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
 
   return blockGenerator.keyPublishToProvisionalUser(
       recipientProvisionalUser.appSignaturePublicKey,
@@ -191,8 +188,8 @@ std::vector<uint8_t> makeKeyPublishToUser(
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
-  auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
-      resourceKey, recipientPublicEncryptionKey);
+  auto const encryptedKey =
+      Crypto::sealEncrypt(resourceKey, recipientPublicEncryptionKey);
 
   return blockGenerator.keyPublishToUser(
       encryptedKey, resourceId, recipientPublicEncryptionKey);

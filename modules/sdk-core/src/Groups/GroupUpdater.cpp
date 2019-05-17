@@ -29,8 +29,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
             TC_AWAIT(userKeyStore.findKeyPair(gek.first)))
     {
       auto const groupPrivateEncryptionKey =
-          Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-              gek.second, *matchingUserKeyPair);
+          Crypto::sealDecrypt(gek.second, *matchingUserKeyPair);
       TC_RETURN(groupPrivateEncryptionKey);
     }
   }
@@ -56,9 +55,8 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
         "assertion error: group block does contains my user id but not my user "
         "key");
 
-  auto const groupPrivateEncryptionKey =
-      Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-          myKeysIt->encryptedPrivateEncryptionKey(), *userKeyPair);
+  auto const groupPrivateEncryptionKey = Crypto::sealDecrypt(
+      myKeysIt->encryptedPrivateEncryptionKey(), *userKeyPair);
   TC_RETURN(groupPrivateEncryptionKey);
 }
 
@@ -73,11 +71,10 @@ decryptMyProvisionalKey(
             TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
                 gek.appPublicSignatureKey(), gek.tankerPublicSignatureKey())))
     {
-      auto const groupPrivateEncryptionKey =
-          Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-              Crypto::sealDecrypt(gek.encryptedPrivateEncryptionKey(),
-                                  matchingProvisionalUserKeys->tankerKeys),
-              matchingProvisionalUserKeys->appKeys);
+      auto const groupPrivateEncryptionKey = Crypto::sealDecrypt(
+          Crypto::sealDecrypt(gek.encryptedPrivateEncryptionKey(),
+                              matchingProvisionalUserKeys->tankerKeys),
+          matchingProvisionalUserKeys->appKeys);
       TC_RETURN(groupPrivateEncryptionKey);
     }
   }
@@ -134,12 +131,11 @@ tc::cotask<void> putFullGroup(
     UserGroupCreation const& userGroupCreation)
 {
   auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-          userGroupCreation.sealedPrivateSignatureKey(),
-          Crypto::EncryptionKeyPair{
-              userGroupCreation.publicEncryptionKey(),
-              groupPrivateEncryptionKey,
-          });
+      Crypto::sealDecrypt(userGroupCreation.sealedPrivateSignatureKey(),
+                          Crypto::EncryptionKeyPair{
+                              userGroupCreation.publicEncryptionKey(),
+                              groupPrivateEncryptionKey,
+                          });
   TC_AWAIT(groupStore.put(Group{
       GroupId{userGroupCreation.publicSignatureKey()},
       Crypto::SignatureKeyPair{
@@ -162,12 +158,11 @@ tc::cotask<void> putFullGroup(
     Entry const& entry)
 {
   auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-          *previousGroup.encryptedPrivateSignatureKey,
-          Crypto::EncryptionKeyPair{
-              previousGroup.publicEncryptionKey,
-              groupPrivateEncryptionKey,
-          });
+      Crypto::sealDecrypt(*previousGroup.encryptedPrivateSignatureKey,
+                          Crypto::EncryptionKeyPair{
+                              previousGroup.publicEncryptionKey,
+                              groupPrivateEncryptionKey,
+                          });
   TC_AWAIT(groupStore.put(Group{
       GroupId{previousGroup.publicSignatureKey},
       Crypto::SignatureKeyPair{
@@ -290,12 +285,11 @@ tc::cotask<void> applyGroupPrivateKey(
     TC_RETURN();
 
   auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt<Crypto::PrivateSignatureKey>(
-          *group.encryptedPrivateSignatureKey,
-          Crypto::EncryptionKeyPair{
-              group.publicEncryptionKey,
-              groupPrivateEncryptionKey,
-          });
+      Crypto::sealDecrypt(*group.encryptedPrivateSignatureKey,
+                          Crypto::EncryptionKeyPair{
+                              group.publicEncryptionKey,
+                              groupPrivateEncryptionKey,
+                          });
   TC_AWAIT(groupStore.put(Group{
       group.id,
       Crypto::SignatureKeyPair{

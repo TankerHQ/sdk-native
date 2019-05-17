@@ -61,8 +61,8 @@ tc::cotask<void> decryptAndStoreKey(
   auto const userKeyPair =
       TC_AWAIT(userKeyStore.getKeyPair(recipientPublicKey));
 
-  auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
-      keyPublishToUser.sealedSymmetricKey(), userKeyPair);
+  auto const key =
+      Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), userKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
 }
@@ -87,7 +87,7 @@ tc::cotask<void> decryptAndStoreKey(
         recipientPublicKey);
   }
 
-  auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
+  auto const key = Crypto::sealDecrypt(
       keyPublishToUserGroup.sealedSymmetricKey(), group->encryptionKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
@@ -117,8 +117,8 @@ tc::cotask<void> decryptAndStoreKey(
   auto const encryptedKey = Crypto::sealDecrypt(
       keyPublishToProvisionalUser.twoTimesSealedSymmetricKey(),
       provisionalUserKeys->tankerKeys);
-  auto const key = Crypto::sealDecrypt<Crypto::SymmetricKey>(
-      encryptedKey, provisionalUserKeys->appKeys);
+  auto const key =
+      Crypto::sealDecrypt(encryptedKey, provisionalUserKeys->appKeys);
 
   TC_AWAIT(
       resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
