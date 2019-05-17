@@ -3,6 +3,7 @@
 #include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
@@ -79,9 +80,14 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
     ServerEntry const& serverEntry)
 {
-  auto const entry = TC_AWAIT(_verifier->verify(serverEntry));
-  TC_AWAIT(_trustchain->addEntry(entry));
-  TC_AWAIT(triggerSignals(entry));
+  auto const existingEntry =
+      TC_AWAIT(_db->findTrustchainEntry(serverEntry.hash()));
+  if (!existingEntry)
+  {
+    auto const entry = TC_AWAIT(_verifier->verify(serverEntry));
+    TC_AWAIT(_trustchain->addEntry(entry));
+    TC_AWAIT(triggerSignals(entry));
+  }
 }
 
 tc::cotask<void> TrustchainPuller::catchUp()
@@ -127,12 +133,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
           if (processed.count(serverEntry.hash()))
             continue;
 
-          auto const existingEntry =
-              TC_AWAIT(_db->findTrustchainEntry(serverEntry.hash()));
-          if (!existingEntry)
-          {
-            TC_AWAIT(verifyAndAddEntry(serverEntry));
-          }
+          TC_AWAIT(verifyAndAddEntry(serverEntry));
         }
         catch (Error::VerificationFailed const& err)
         {
