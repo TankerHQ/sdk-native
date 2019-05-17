@@ -18,53 +18,41 @@ namespace Tanker
 {
 namespace Crypto
 {
-template class BasicCryptographicType<
-    AeadIv,
-    crypto_aead_xchacha20poly1305_ietf_NPUBBYTES>;
+template class BasicCryptographicType<AeadIv, AeadIv::arraySize>;
 template class BasicCryptographicType<BasicHash<void>,
-                                      crypto_generichash_BYTES>;
+                                      BasicHash<void>::arraySize>;
 template class BasicHash<void>;
-template class BasicCryptographicType<
-    EncryptedSymmetricKey,
-    crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_MACBYTES +
-        crypto_box_NONCEBYTES>;
-template class BasicCryptographicType<
-    Mac,
-    crypto_aead_xchacha20poly1305_ietf_ABYTES>;
+template class BasicCryptographicType<EncryptedSymmetricKey,
+                                      EncryptedSymmetricKey::arraySize>;
+template class BasicCryptographicType<Mac, Mac::arraySize>;
 template class BasicCryptographicType<
     AsymmetricKey<KeyType::Private, KeyUsage::Encryption>,
-    crypto_box_SECRETKEYBYTES>;
+    AsymmetricKey<KeyType::Private, KeyUsage::Encryption>::arraySize>;
 template class AsymmetricKey<KeyType::Private, KeyUsage::Encryption>;
 template class BasicCryptographicType<
     AsymmetricKey<KeyType::Private, KeyUsage::Signature>,
-    crypto_sign_SECRETKEYBYTES>;
+    AsymmetricKey<KeyType::Private, KeyUsage::Signature>::arraySize>;
 template class AsymmetricKey<KeyType::Private, KeyUsage::Signature>;
 template class BasicCryptographicType<
     AsymmetricKey<KeyType::Public, KeyUsage::Encryption>,
-    crypto_box_PUBLICKEYBYTES>;
+    AsymmetricKey<KeyType::Public, KeyUsage::Encryption>::arraySize>;
 template class AsymmetricKey<KeyType::Public, KeyUsage::Encryption>;
 template class BasicCryptographicType<
     AsymmetricKey<KeyType::Public, KeyUsage::Signature>,
-    crypto_sign_PUBLICKEYBYTES>;
+    AsymmetricKey<KeyType::Public, KeyUsage::Signature>::arraySize>;
 template class AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
 template class BasicCryptographicType<SealedPrivateEncryptionKey,
-                                      crypto_box_SECRETKEYBYTES +
-                                          crypto_box_SEALBYTES>;
+                                      SealedPrivateEncryptionKey::arraySize>;
 template class BasicCryptographicType<SealedPrivateSignatureKey,
-                                      crypto_sign_SECRETKEYBYTES +
-                                          crypto_box_SEALBYTES>;
-template class BasicCryptographicType<
-    SealedSymmetricKey,
-    crypto_aead_xchacha20poly1305_ietf_KEYBYTES + crypto_box_SEALBYTES>;
+                                      SealedPrivateSignatureKey::arraySize>;
+template class BasicCryptographicType<SealedSymmetricKey,
+                                      SealedSymmetricKey::arraySize>;
 template class BasicCryptographicType<TwoTimesSealedSymmetricKey,
-                                      SealedSymmetricKey::arraySize +
-                                          crypto_box_SEALBYTES>;
-template class BasicCryptographicType<TwoTimesSealedPrivateEncryptionKey,
-                                      crypto_box_SEALBYTES * 2 +
-                                          PrivateEncryptionKey::arraySize>;
-template class BasicCryptographicType<Signature, crypto_sign_BYTES>;
+                                      TwoTimesSealedSymmetricKey::arraySize>;
 template class BasicCryptographicType<
-    SymmetricKey,
-    crypto_aead_xchacha20poly1305_ietf_KEYBYTES>;
+    TwoTimesSealedPrivateEncryptionKey,
+    TwoTimesSealedPrivateEncryptionKey::arraySize>;
+template class BasicCryptographicType<Signature, Signature::arraySize>;
+template class BasicCryptographicType<SymmetricKey, SymmetricKey::arraySize>;
 }
 }
