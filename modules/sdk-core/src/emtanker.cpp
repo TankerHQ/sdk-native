@@ -66,7 +66,7 @@ emscripten::val CoreSignIn(AsyncCore& core,
   SignInOptions signInOptions;
   signInOptions.verificationKey =
       Emscripten::optionalFromValue<VerificationKey>(jsignInOptions,
-                                                     "verificationKey");
+                                                     "unlockKey");
   signInOptions.verificationCode =
       Emscripten::optionalFromValue<VerificationCode>(jsignInOptions,
                                                       "verificationCode");
