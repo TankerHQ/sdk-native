@@ -16,6 +16,7 @@ TESTS = {
         "decrypt-old-claim",
         "provisional-user-group-claim",
         "provisional-user-group-old-claim",
+        "claim-provisional-self",
     ],
     "v1.10.1": ["encrypt", "group", "unlock"],
 }

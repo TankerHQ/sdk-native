@@ -1,4 +1,4 @@
-#include "Helpers.hpp"
+#include <Compat/Helpers.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
