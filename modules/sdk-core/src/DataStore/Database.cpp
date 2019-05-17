@@ -61,25 +61,6 @@ namespace DataStore
 {
 namespace
 {
-struct MakeIndexesVisitor
-{
-  std::vector<Index> operator()(DeviceCreation const& dc) const
-  {
-    auto const& id = dc.userId();
-    auto const& key = dc.publicSignatureKey();
-
-    return {
-        Index{IndexType::UserId, {id.begin(), id.end()}},
-        Index{IndexType::DevicePublicSignatureKey, {key.begin(), key.end()}}};
-  }
-
-  template <typename T>
-  std::vector<Index> operator()(T) const
-  {
-    return {};
-  }
-};
-
 struct KeyPublishKeyVisitor
 {
   template <typename T>
@@ -350,6 +331,8 @@ void Database::performUnifiedMigration()
       createTable<TrustchainInfoTable>(*_db);
       createTable<KeyPublishesTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
+      dropTable<TrustchainResourceIdToKeyPublishTable>();
+      dropTable<TrustchainIndexesTable>();
       flushAllCaches();
       break;
     default:
@@ -371,6 +354,8 @@ void Database::performOldMigration()
   createOrMigrateTable<TrustchainTable>(currentTableVersion<TrustchainTable>());
   createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(
       currentTableVersion<TrustchainResourceIdToKeyPublishTable>());
+  createOrMigrateTable<TrustchainIndexesTable>(
+      currentTableVersion<TrustchainIndexesTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
   createOrMigrateTable<ContactDevicesTable>(
       currentTableVersion<ContactDevicesTable>());
@@ -586,31 +571,12 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
 {
   FUNC_TIMER(DB);
   TrustchainTable tab{};
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
+  (*_db)(insert_into(tab).set(
       tab.idx = entry.index,
       tab.nature = static_cast<unsigned>(entry.action.nature()),
       tab.author = entry.author.base(),
       tab.action = Serialization::serialize(entry.action),
       tab.hash = entry.hash.base()));
-
-  auto const insertedCount = sqlite3_changes(_db->native_handle());
-
-  // if row was already there, we are done
-  if (insertedCount == 0)
-    TC_RETURN();
-
-  if (auto const kp = entry.action.get_if<KeyPublish>())
-    TC_AWAIT(indexKeyPublish(entry.hash, kp->resourceId()));
-
-  for (auto const& index : entry.action.visit(MakeIndexesVisitor{}))
-  {
-    TrustchainIndexesTable indexTable;
-
-    (*_db)(sqlpp::sqlite3::insert_or_ignore_into(indexTable)
-               .set(indexTable.hash = entry.hash.base(),
-                    indexTable.type = static_cast<unsigned>(index.type),
-                    indexTable.value = index.value));
-  }
 }
 
 tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
@@ -625,15 +591,6 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
   if (rows.empty())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(rowToEntry(*rows.begin()));
-}
-
-tc::cotask<void> Database::indexKeyPublish(Crypto::Hash const& hash,
-                                           ResourceId const& resourceId)
-{
-  TrustchainResourceIdToKeyPublishTable tab{};
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.resource_id = resourceId.base(), tab.hash = hash.base()));
-  TC_RETURN();
 }
 
 tc::cotask<void> Database::putContact(
