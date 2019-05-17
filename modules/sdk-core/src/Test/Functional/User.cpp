@@ -56,7 +56,7 @@ tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
       std::back_inserter(devices), nb, [&] { return makeDevice(); });
   auto session = TC_AWAIT(devices.front().open());
   for (auto device = ++devices.begin(); device != devices.end(); ++device)
-    TC_AWAIT(device->attachDevice(*session));
+    TC_AWAIT(device->open());
   TC_RETURN(devices);
 }
 

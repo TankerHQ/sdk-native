@@ -17,8 +17,9 @@ TEST_SUITE("Unlock")
 
     SUBCASE("It can test if some unlock method are registered")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
-          Unlock::CreationOptions{}.set(Email{"alice@yahou.com"}))));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
+          Unlock::Verification{Unlock::EmailVerification{
+              Email{"alice@yahou.com"}, VerificationCode{}}})));
       auto const method = TC_AWAIT(core1->hasRegisteredUnlockMethods());
 
       FAST_CHECK_UNARY(method);
@@ -26,8 +27,10 @@ TEST_SUITE("Unlock")
 
     SUBCASE("It can test if email unlock method is registered")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
-          Unlock::CreationOptions{}.set(Email{"alice@yahou.com"}))));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
+          Unlock::Verification{Unlock::EmailVerification{
+              Email{"alice@yahou.com"}, VerificationCode{}}})));
+
       auto const method =
           TC_AWAIT(core1->hasRegisteredUnlockMethod(Unlock::Method::Email));
       FAST_CHECK_UNARY(method);
@@ -35,8 +38,8 @@ TEST_SUITE("Unlock")
 
     SUBCASE("It can test if password unlock method is registered")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
-          Unlock::CreationOptions{}.set(Password{"my password"}))));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
+          Unlock::Verification{Password{"my password"}})));
       auto const method =
           TC_AWAIT(core1->hasRegisteredUnlockMethod(Unlock::Method::Password));
       FAST_CHECK_UNARY(method);
@@ -44,10 +47,11 @@ TEST_SUITE("Unlock")
 
     SUBCASE("It can list all unlock methods registered")
     {
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->registerUnlock(Unlock::CreationOptions{}
-                                             .set(Password{"my password"})
-                                             .set(Email{"alice@yahou.com"}))));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
+          Unlock::Verification{Password{"my password"}})));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
+          Unlock::Verification{Unlock::EmailVerification{
+              Email{"alice@yahou.com"}, VerificationCode{}}})));
       auto const methods = TC_AWAIT(core1->registeredUnlockMethods());
 
       FAST_CHECK_UNARY(methods & Unlock::Method::Password);

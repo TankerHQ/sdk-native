@@ -110,15 +110,6 @@ tc::cotask<void> Core::registerIdentity(
   initSession(std::move(openResult));
   auto const& session = mpark::get<SessionType>(_state);
   TC_AWAIT(session->startConnection());
-
-  // FIXME remove me when createUser is fixed
-  Unlock::RegistrationOptions options{};
-  if (auto const emailVerif =
-          mpark::get_if<Unlock::EmailVerification>(&verification))
-    options.set<Email>(emailVerif->email);
-  else if (auto const password = mpark::get_if<Password>(&verification))
-    options.set<Password>(*password);
-  registerUnlock(options);
 }
 
 tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
@@ -243,13 +234,12 @@ tc::cotask<VerificationKey> Core::generateAndRegisterVerificationKey()
   TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterVerificationKey()));
 }
 
-tc::cotask<void> Core::registerUnlock(
-    Unlock::RegistrationOptions const& options)
+tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registerUnlock);
-  TC_AWAIT((*psession)->registerUnlock(options));
+    throw INVALID_STATUS(setVerificationMethod);
+  TC_AWAIT((*psession)->setVerificationMethod(method));
 }
 
 tc::cotask<bool> Core::isUnlockAlreadySetUp() const

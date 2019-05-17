@@ -340,22 +340,20 @@ tc::cotask<void> Session::registerVerificationKey(
   TC_AWAIT(_client->pushBlock(registration.block));
 }
 
-tc::cotask<void> Session::createVerificationKey(
-    Unlock::CreationOptions const& options)
+tc::cotask<void> Session::createVerificationKey()
 {
   auto const reg = TC_AWAIT(generateVerificationKey());
+
   auto const msg = Unlock::Message(
       trustchainId(),
       deviceId(),
-      Unlock::UpdateOptions(
-          options.get<Email>(), options.get<Password>(), reg->verificationKey),
+      Unlock::UpdateOptions{}.set<VerificationKey>(reg->verificationKey),
       userSecret(),
       _deviceKeyStore->signatureKeyPair().privateKey);
   try
   {
     TC_AWAIT(_client->pushBlock(reg->block));
     TC_AWAIT(_client->createVerificationKey(msg));
-    updateLocalUnlockMethods(options);
   }
   catch (Error::ServerError const& e)
   {
@@ -369,12 +367,11 @@ tc::cotask<void> Session::createVerificationKey(
   }
 }
 
-void Session::updateLocalUnlockMethods(
-    Unlock::RegistrationOptions const& options)
+void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
 {
-  if (options.get<Email>().has_value())
+  if (mpark::holds_alternative<Unlock::EmailVerification>(method))
     _unlockMethods |= Unlock::Method::Email;
-  if (options.get<Password>().has_value())
+  if (mpark::holds_alternative<Password>(method))
     _unlockMethods |= Unlock::Method::Password;
 }
 
@@ -389,8 +386,11 @@ tc::cotask<void> Session::updateUnlock(Unlock::UpdateOptions const& options)
   try
   {
     TC_AWAIT(_client->updateVerificationKey(msg));
-    updateLocalUnlockMethods(
-        std::forward_as_tuple(options.get<Email>(), options.get<Password>()));
+    if (auto const email = options.get<Email>())
+      updateLocalUnlockMethods(Unlock::Verification{
+          Unlock::EmailVerification{*email, VerificationCode{}}});
+    if (auto const password = options.get<Password>())
+      updateLocalUnlockMethods(Unlock::Verification{*password});
   }
   catch (Error::ServerError const& e)
   {
@@ -400,14 +400,30 @@ tc::cotask<void> Session::updateUnlock(Unlock::UpdateOptions const& options)
   }
 }
 
-tc::cotask<void> Session::registerUnlock(
-    Unlock::RegistrationOptions const& options)
+tc::cotask<void> Session::setVerificationMethod(
+    Unlock::Verification const& method)
 {
   if (!this->_unlockMethods)
-    TC_AWAIT(createVerificationKey(options));
+    throw Error::OperationCanceled(
+        "Cannot call setVerificationMethod() after a verification key has been "
+        "used");
+  else if (mpark::holds_alternative<VerificationKey>(method))
+    throw Error::InvalidArgument(
+        "Cannot call setVerificationMethod with a verification key");
   else
-    TC_AWAIT(updateUnlock(Unlock::UpdateOptions{
-        options.get<Email>(), options.get<Password>(), nonstd::nullopt}));
+  {
+    // Temporary, will be deleted in next commit
+    Unlock::UpdateOptions options{};
+    if (auto const verificationKey = mpark::get_if<VerificationKey>(&method))
+      options.set<VerificationKey>(*verificationKey);
+    else if (auto const emailVerification =
+                 mpark::get_if<Unlock::EmailVerification>(&method))
+      options.set<Email>(emailVerification->email);
+    else if (auto const password = mpark::get_if<Password>(&method))
+      options.set<Password>(*password);
+
+    TC_AWAIT(updateUnlock(options));
+  }
 }
 
 tc::cotask<void> Session::claimProvisionalIdentity(

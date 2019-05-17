@@ -41,9 +41,10 @@ enum tanker_event
 enum tanker_unlock_method
 {
   TANKER_UNLOCK_METHOD_EMAIL = 0x1,
-  TANKER_UNLOCK_METHOD_PASSWORD = 0x2,
+  TANKER_UNLOCK_METHOD_PASSWORD,
+  TANKER_UNLOCK_METHOD_VERIFICATION_KEY,
 
-  TANKER_UNLOCK_METHOD_LAST = TANKER_UNLOCK_METHOD_PASSWORD
+  TANKER_UNLOCK_METHOD_LAST = TANKER_UNLOCK_METHOD_VERIFICATION_KEY
 };
 
 enum tanker_log_level
@@ -137,14 +138,21 @@ struct tanker_email_verification
 struct tanker_verification
 {
   uint8_t version;
-  char const* verification_key;
-  tanker_email_verification_t* email_verification;
-  char const* password;
+  enum tanker_unlock_method method;
+  union
+  {
+    char const* verification_key;
+    tanker_email_verification_t email_verification;
+    char const* password;
+  };
 };
 
 #define TANKER_VERIFICATION_INIT \
   {                              \
-    1, NULL, NULL, NULL          \
+    1, 0,                        \
+    {                            \
+      NULL                       \
+    }                            \
   }
 
 struct tanker_encrypt_options
@@ -316,14 +324,12 @@ tanker_future_t* tanker_generate_and_register_verification_key(
  * Registers, or updates, the user's unlock claims,
  * creates an unlock key if necessary
  * \param session a tanker tanker_t* instance
- * \param new_email the new desired email
- * \param new_password the new desired password
+ * \param verification a instance of tanker_verification_t
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future to void
  */
-tanker_future_t* tanker_register_unlock(tanker_t* session,
-                                        char const* new_email,
-                                        char const* new_password);
+tanker_future_t* tanker_set_verification_method(
+    tanker_t* session, tanker_verification_t const* verification);
 
 /*!
  * Check if unlock mechanism has been set up for the current user.

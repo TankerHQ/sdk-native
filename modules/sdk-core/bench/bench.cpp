@@ -160,7 +160,6 @@ static void multi(benchmark::State& state)
   tc::async_resumable([&]() -> tc::cotask<void> {
     TC_AWAIT(core->start(laptop.identity()));
     TC_AWAIT(core->registerIdentity(Tanker::Password{"strong password"}));
-    TC_AWAIT(laptop.registerUnlock(*core));
     for (auto _ : state)
     {
       state.PauseTiming();

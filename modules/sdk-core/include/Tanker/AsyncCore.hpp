@@ -81,8 +81,8 @@ public:
 
   tc::shared_future<VerificationKey> generateAndRegisterVerificationKey();
 
-  tc::shared_future<void> registerUnlock(
-      Unlock::RegistrationOptions const& options);
+  tc::shared_future<void> setVerificationMethod(
+      Unlock::Verification const& method);
 
   tc::shared_future<bool> isUnlockAlreadySetUp() const;
   expected<bool> hasRegisteredUnlockMethods() const;

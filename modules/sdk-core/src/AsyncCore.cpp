@@ -172,12 +172,12 @@ AsyncCore::generateAndRegisterVerificationKey()
   });
 }
 
-tc::shared_future<void> AsyncCore::registerUnlock(
-    Unlock::RegistrationOptions const& options)
+tc::shared_future<void> AsyncCore::setVerificationMethod(
+    Unlock::Verification const& method)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<void> {
-      TC_AWAIT(this->_core.registerUnlock(options));
+      TC_AWAIT(this->_core.setVerificationMethod(method));
     });
   });
 }

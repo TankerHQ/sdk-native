@@ -67,7 +67,7 @@ public:
 
   tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
 
-  tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
+  tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   bool hasRegisteredUnlockMethods() const;

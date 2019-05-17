@@ -137,7 +137,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   auto device1 = alice.makeDevice();
   auto session = TC_AWAIT(device1.open());
   auto device2 = alice.makeDevice(Test::DeviceType::New);
-  REQUIRE_NOTHROW(TC_AWAIT(device2.attachDevice(*session)));
+  REQUIRE_NOTHROW(TC_AWAIT(device2.open()));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
@@ -214,8 +214,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceFirstSession->encrypt(encryptedData.data(), clearData)));
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto const aliceSecondSession =
-      TC_AWAIT(aliceSecondDevice.open(*aliceFirstSession));
+  auto const aliceSecondSession = TC_AWAIT(aliceSecondDevice.open());
 
   TC_AWAIT(aliceSecondSession->stop());
 
@@ -368,7 +367,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const deviceId = TC_AWAIT(aliceSession->deviceId());
 
   auto aliceDevice2 = alice.makeDevice();
-  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open(*aliceSession));
+  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open());
 
   TC_AWAIT(aliceSession->stop());
 
@@ -419,7 +418,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  auto otherSession = TC_AWAIT(aliceSecondDevice.open());
 
   auto const deviceId = otherSession->deviceId().get();
 
@@ -440,7 +439,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE(otherSession->status() == Status::Stopped);
 
-  TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -455,7 +454,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const deviceId = aliceSession->deviceId().get();
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto const otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  auto const otherSession = TC_AWAIT(aliceSecondDevice.open());
   auto const otherDeviceId = otherSession->deviceId().get();
 
   tc::promise<void> prom;

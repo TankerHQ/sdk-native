@@ -28,6 +28,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -98,12 +99,11 @@ public:
   tc::cotask<void> registerVerificationKey(
       Unlock::Registration const& registration);
 
-  tc::cotask<void> createVerificationKey(
-      Unlock::CreationOptions const& options);
+  tc::cotask<void> createVerificationKey();
 
   tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
 
-  tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
+  tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
 
   tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
 
@@ -139,7 +139,7 @@ private:
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
-  void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
+  void updateLocalUnlockMethods(Unlock::Verification const& method);
 
 private:
   Trustchain::TrustchainId _trustchainId;

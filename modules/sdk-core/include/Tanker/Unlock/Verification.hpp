@@ -6,7 +6,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 
 #include <mpark/variant.hpp>
-#include <optional.hpp>
 
 namespace Tanker
 {

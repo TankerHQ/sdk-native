@@ -34,25 +34,47 @@ Unlock::Verification cverificationToVerification(
     tanker_verification_t const* cverification)
 {
   if (!cverification)
-    throw Error::formatEx<Error::InvalidArgument>("no verification method");
-  if (cverification->verification_key)
-    return VerificationKey{cverification->verification_key};
-  else if (cverification->email_verification)
   {
-    auto const email = (cverification->email_verification->email) ?
-                           Email{cverification->email_verification->email} :
-                           Email{};
-    auto const verificationCode =
-        (cverification->email_verification->verification_code) ?
-            VerificationCode{
-                cverification->email_verification->verification_code} :
-            VerificationCode{};
-    return Unlock::EmailVerification{email, verificationCode};
+    throw Error::formatEx<Error::InvalidArgument>(
+        "No verification method specified in the tanker_verification_t struct");
   }
-  else if (cverification->password)
-    return Password{cverification->password};
-  else
-    throw Error::formatEx<Error::InvalidArgument>("no verification method");
+  if (cverification->version != 1)
+    throw Error::formatEx<Error::InvalidArgument>(
+        "Unsupported tanker_verification_t struct version");
+
+  Unlock::Verification verification;
+  switch (cverification->method)
+  {
+  case TANKER_UNLOCK_METHOD_EMAIL:
+  {
+    if (!cverification->email_verification.email ||
+        !cverification->email_verification.verification_code)
+      throw Error::formatEx<Error::InvalidArgument>(
+          "null field in email_verication");
+    verification = Unlock::EmailVerification{
+        Email{cverification->email_verification.email},
+        VerificationCode{cverification->email_verification.verification_code}};
+    break;
+  }
+  case TANKER_UNLOCK_METHOD_PASSWORD:
+  {
+    if (!cverification->password)
+      throw Error::formatEx<Error::InvalidArgument>("password field is null");
+    verification = Password{cverification->password};
+    break;
+  }
+  case TANKER_UNLOCK_METHOD_VERIFICATION_KEY:
+  {
+    if (!cverification->verification_key)
+      throw Error::formatEx<Error::InvalidArgument>(
+          "Mismatch between verification method and type");
+    verification = VerificationKey{cverification->verification_key};
+    break;
+  }
+  default:
+    throw Error::formatEx<Error::InvalidArgument>("Unknown verification type");
+  }
+  return verification;
 }
 
 #define STATIC_ENUM_CHECK(cval, cppval)           \
@@ -63,10 +85,12 @@ Unlock::Verification cverificationToVerification(
 
 STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
 STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_VERIFICATION_KEY,
+                  Unlock::Method::VerificationKey);
 
 STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
 
-static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
+static_assert(TANKER_UNLOCK_METHOD_LAST == 3,
               "Please update the event assertions above if you added a new "
               "unlock methods");
 
@@ -213,29 +237,26 @@ tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 tanker_future_t* tanker_register_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  if (cverification && cverification->version != 1)
-    return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(
-            "unsupported tanker_authentication_methods struct version")));
-
-  auto verification = cverificationToVerification(cverification);
-
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->registerIdentity(verification));
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+                      return tanker->registerIdentity(verification);
+                    })
+                        .unwrap());
 }
 
 tanker_future_t* tanker_verify_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  if (cverification && cverification->version != 1)
-    return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(
-            "unsupported tanker_authentication_methods struct version")));
-
-  auto verification = cverificationToVerification(cverification);
-
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->verifyIdentity(verification));
+  Unlock::Verification verification;
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+                      return tanker->verifyIdentity(verification);
+                    })
+                        .unwrap());
 }
 
 tanker_future_t* tanker_stop(tanker_t* ctanker)
@@ -291,13 +312,16 @@ tanker_future_t* tanker_generate_and_register_verification_key(
       }));
 }
 
-tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
-                                        char const* new_email,
-                                        char const* new_password)
+tanker_future_t* tanker_set_verification_method(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->registerUnlock(Unlock::CreationOptions{
-      nullableToOpt<Email>(new_email), nullableToOpt<Password>(new_password)}));
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+                      return tanker->setVerificationMethod(verification);
+                    })
+                        .unwrap());
 }
 
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)

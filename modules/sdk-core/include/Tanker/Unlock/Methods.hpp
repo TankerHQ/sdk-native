@@ -12,9 +12,10 @@ namespace Unlock
 enum class Method
 {
   Email = 0x1,
-  Password = 0x2,
+  Password,
+  VerificationKey,
 
-  Last = Password,
+  Last = VerificationKey,
 };
 
 using Methods = ::flags::flags<Method>;
