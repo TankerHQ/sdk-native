@@ -19,6 +19,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <fmt/format.h>
@@ -47,9 +48,10 @@ Status Opener::status() const
   return _status;
 }
 
-tc::cotask<Opener::OpenResult> Opener::open(std::string const& b64Identity,
-                                            Verification const& verification,
-                                            OpenMode mode)
+tc::cotask<Opener::OpenResult> Opener::open(
+    std::string const& b64Identity,
+    nonstd::optional<Unlock::Verification> const& verification,
+    OpenMode mode)
 {
   SCOPE_TIMER("opener_signup", Proc);
   _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
@@ -163,21 +165,25 @@ tc::cotask<Opener::OpenResult> Opener::createUser()
 }
 
 tc::cotask<Opener::OpenResult> Opener::createDevice(
-    Verification const& verification)
+    nonstd::optional<Unlock::Verification> const& verification)
 {
   TINFO("createDevice");
   FUNC_TIMER(Proc);
 
-  if (verification.verificationKey)
-    TC_AWAIT(unlockCurrentDevice(*verification.verificationKey));
-  else if (verification.emailVerification)
-    TC_AWAIT(unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(
-        (*verification.emailVerification).verificationCode))));
-  else if (verification.password)
-    TC_AWAIT(unlockCurrentDevice(
-        TC_AWAIT(fetchVerificationKey(*verification.password))));
-  else
+  if (!verification)
     TC_RETURN(StatusIdentityVerificationNeeded{});
+  else if (auto const verificationKey =
+               mpark::get_if<VerificationKey>(&*verification))
+    TC_AWAIT(unlockCurrentDevice(*verificationKey));
+  else if (auto const emailVerification =
+               mpark::get_if<Unlock::EmailVerification>(&*verification))
+    TC_AWAIT(unlockCurrentDevice(
+        TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode))));
+  else if (auto const password = mpark::get_if<Password>(&*verification))
+    TC_AWAIT(unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(*password))));
+  else
+    throw std::runtime_error(
+        "assertion error: invalid open mode, unreachable code");
 
   TC_RETURN(makeConfig());
 }

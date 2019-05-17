@@ -102,7 +102,8 @@ tc::shared_future<void> AsyncCore::signUp(
 }
 
 tc::shared_future<OpenResult> AsyncCore::signIn(
-    std::string const& identity, Verification const& verification)
+    std::string const& identity,
+    nonstd::optional<Unlock::Verification> const& verification)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
@@ -178,7 +179,8 @@ tc::shared_future<void> AsyncCore::updateGroupMembers(
   });
 }
 
-tc::shared_future<VerificationKey> AsyncCore::generateAndRegisterVerificationKey()
+tc::shared_future<VerificationKey>
+AsyncCore::generateAndRegisterVerificationKey()
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([this]() -> tc::cotask<VerificationKey> {

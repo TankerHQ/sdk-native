@@ -164,12 +164,11 @@ AsyncCorePtr signIn(MainArgs const& args)
        sdkVersion},
       ".")};
 
-  Verification verification;
+  Unlock::Verification verification;
   if (args.at(VerificationKeyOpt))
-    verification.verificationKey =
-        VerificationKey{args.at(VerificationKeyOpt).asString()};
+    verification = VerificationKey{args.at(VerificationKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
-    verification.password = Password{args.at(UnlockPasswordOpt).asString()};
+    verification = Password{args.at(UnlockPasswordOpt).asString()};
 
   auto const status = core->signIn(identity, verification).get();
   if (status != OpenResult::Ok)

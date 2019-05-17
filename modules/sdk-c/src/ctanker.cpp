@@ -210,19 +210,18 @@ tanker_future_t* tanker_sign_in(tanker_t* ctanker,
         Error::formatEx<Error::InvalidArgument>(
             "unsupported tanker_authentication_methods struct version")));
 
-  auto verification = Verification{};
+  nonstd::optional<Unlock::Verification> verification = nonstd::nullopt;
   if (cverification)
   {
     if (cverification->verification_key)
-      verification.verificationKey =
-          VerificationKey{cverification->verification_key};
+      verification = VerificationKey{cverification->verification_key};
     if (cverification->email_verification)
-      verification.emailVerification = EmailVerification{
+      verification = Unlock::EmailVerification{
           Email{cverification->email_verification->email},
           VerificationCode{
               cverification->email_verification->verification_code}};
     if (cverification->password)
-      verification.password = Password{cverification->password};
+      verification = Password{cverification->password};
   }
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);

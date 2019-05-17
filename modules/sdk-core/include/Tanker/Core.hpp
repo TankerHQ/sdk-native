@@ -11,8 +11,8 @@
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
 
@@ -52,8 +52,11 @@ public:
 
   tc::cotask<void> signUp(std::string const& identity,
                           AuthenticationMethods const& authMethods);
-  tc::cotask<OpenResult> signIn(std::string const& identity,
-                                Verification const& verification);
+
+  tc::cotask<OpenResult> signIn(
+      std::string const& identity,
+      nonstd::optional<Unlock::Verification> const& verification);
+
   void stop();
 
   tc::cotask<void> encrypt(
@@ -120,7 +123,8 @@ private:
 
   tc::cotask<void> signUpImpl(std::string const& identity,
                               AuthenticationMethods const& authMethods);
-  tc::cotask<OpenResult> signInImpl(std::string const& identity,
-                                    Verification const& verification);
+  tc::cotask<OpenResult> signInImpl(
+      std::string const& identity,
+      nonstd::optional<Unlock::Verification> const& verification);
 };
 }

@@ -4,6 +4,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/core.h>
@@ -99,13 +100,8 @@ tc::cotask<AsyncCorePtr> Device::open(SessionType type)
     TC_AWAIT(tanker->signUp(_identity));
   else if (openResult == OpenResult::IdentityVerificationNeeded)
   {
-    auto const openResult2 =
-        TC_AWAIT(tanker->signIn(_identity,
-                                Verification{
-                                    nonstd::nullopt,
-                                    nonstd::nullopt,
-                                    STRONG_PASSWORD_DO_NOT_LEAK,
-                                }));
+    auto const openResult2 = TC_AWAIT(tanker->signIn(
+        _identity, Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
     if (openResult2 != OpenResult::Ok)
       throw std::runtime_error("could not open functional test session");
   }

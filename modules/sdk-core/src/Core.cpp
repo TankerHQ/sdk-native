@@ -106,8 +106,9 @@ tc::cotask<void> Core::signUpImpl(std::string const& identity,
   }
 }
 
-tc::cotask<OpenResult> Core::signIn(std::string const& identity,
-                                    Verification const& verification)
+tc::cotask<OpenResult> Core::signIn(
+    std::string const& identity,
+    nonstd::optional<Unlock::Verification> const& verification)
 {
   SCOPE_TIMER("core_signin", Proc);
   TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<OpenResult> {
@@ -115,8 +116,9 @@ tc::cotask<OpenResult> Core::signIn(std::string const& identity,
   })));
 }
 
-tc::cotask<OpenResult> Core::signInImpl(std::string const& identity,
-                                        Verification const& verification)
+tc::cotask<OpenResult> Core::signInImpl(
+    std::string const& identity,
+    nonstd::optional<Unlock::Verification> const& verification)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)

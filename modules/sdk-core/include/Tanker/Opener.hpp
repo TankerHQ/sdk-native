@@ -7,11 +7,9 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
-#include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <boost/signals2/signal.hpp>
 #include <optional.hpp>
@@ -33,19 +31,6 @@ enum class OpenMode
   SignIn,
 };
 
-struct EmailVerification
-{
-  Email email;
-  VerificationCode verificationCode;
-};
-
-struct Verification
-{
-  nonstd::optional<VerificationKey> verificationKey;
-  nonstd::optional<EmailVerification> emailVerification;
-  nonstd::optional<Password> password;
-};
-
 class Opener
 {
 public:
@@ -64,9 +49,10 @@ public:
 
   Status status() const;
 
-  tc::cotask<OpenResult> open(std::string const& b64Identity,
-                              Verification const& verification,
-                              OpenMode mode);
+  tc::cotask<OpenResult> open(
+      std::string const& b64Identity,
+      nonstd::optional<Unlock::Verification> const& verification,
+      OpenMode mode);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::DeviceLocker const& pass);
@@ -86,7 +72,8 @@ private:
 
   Session::Config makeConfig();
   tc::cotask<OpenResult> createUser();
-  tc::cotask<OpenResult> createDevice(Verification const& verification);
+  tc::cotask<OpenResult> createDevice(
+      nonstd::optional<Unlock::Verification> const& verification);
   tc::cotask<OpenResult> openDevice();
 };
 }

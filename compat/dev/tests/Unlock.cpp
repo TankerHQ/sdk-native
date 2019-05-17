@@ -35,10 +35,7 @@ struct UnlockCompat : Tanker::Compat::Command
     boost::filesystem::create_directory(subDirForDevice);
     auto aliceCore =
         createCore(trustchain.url, trustchain.id, subDirForDevice.string());
-    aliceCore
-        ->signIn(
-            alice.identity,
-            Tanker::Verification{nonstd::nullopt, nonstd::nullopt, password})
+    aliceCore->signIn(alice.identity, Tanker::Unlock::Verification{password})
         .get();
     fmt::print("is open!\n");
   }

@@ -11,8 +11,8 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Options.hpp>
@@ -68,8 +68,10 @@ public:
 
   tc::shared_future<void> signUp(std::string const& identity,
                                  AuthenticationMethods const& authMethods = {});
-  tc::shared_future<OpenResult> signIn(std::string const& identity,
-                                       Verification const& verification = {});
+  tc::shared_future<OpenResult> signIn(
+      std::string const& identity,
+      nonstd::optional<Unlock::Verification> const& verification =
+          nonstd::nullopt);
 
   tc::shared_future<void> stop();
 
