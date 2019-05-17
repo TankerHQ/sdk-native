@@ -141,7 +141,7 @@ TEST_CASE("trustchain")
     }
   }
 
-  SUBCASE("it should not throw when inserting the same block twice")
+  SUBCASE("it should throw when inserting the same block twice")
   {
     TrustchainBuilder builder;
     auto const alice = builder.makeUser("alice");
@@ -157,7 +157,7 @@ TEST_CASE("trustchain")
       AWAIT_VOID(
           trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
 
-    CHECK_NOTHROW(AWAIT_VOID(trustchain.addEntry(
+    CHECK_THROWS(AWAIT_VOID(trustchain.addEntry(
         toVerifiedEntry(blockToServerEntry(builder.blocks().back())))));
   }
 

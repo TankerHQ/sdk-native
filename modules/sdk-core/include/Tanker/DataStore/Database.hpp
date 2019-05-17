@@ -129,8 +129,6 @@ private:
 
   void migrate();
   void flushAllCaches();
-  tc::cotask<void> indexKeyPublish(Crypto::Hash const& hash,
-                                   Trustchain::ResourceId const& resourceId);
   tc::cotask<std::vector<GroupProvisionalUser>> findProvisionalUsersByGroupId(
       Trustchain::GroupId const& groupId);
 
