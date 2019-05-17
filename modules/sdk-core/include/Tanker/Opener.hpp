@@ -9,6 +9,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
+#include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <optional.hpp>
@@ -37,6 +38,8 @@ public:
       Unlock::Verification const& verification);
   tc::cotask<Session::Config> createDevice(
       Unlock::Verification const& verification);
+  tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey()
+      const;
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::DeviceLocker const& pass);
@@ -50,6 +53,7 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
+  Trustchain::UserId _userId;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   Status _status = Status::Stopped;

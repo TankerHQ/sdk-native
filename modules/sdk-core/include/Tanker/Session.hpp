@@ -45,11 +45,6 @@
 
 namespace Tanker
 {
-namespace Unlock
-{
-struct Registration;
-}
-
 struct Entry;
 struct UnverifiedEntry;
 
@@ -93,18 +88,9 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey();
-
-  tc::cotask<void> registerVerificationKey(
-      Unlock::Registration const& registration);
-
-  tc::cotask<void> createVerificationKey();
-
   tc::cotask<void> updateUnlock(Unlock::Verification const& method);
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
-
-  tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
 
   tc::cotask<bool> isUnlockAlreadySetUp() const;
   Unlock::Methods registeredUnlockMethods() const;

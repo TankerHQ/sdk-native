@@ -327,46 +327,6 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(syncTrustchain());
 }
 
-tc::cotask<std::unique_ptr<Unlock::Registration>>
-Session::generateVerificationKey()
-{
-  TC_RETURN(Unlock::generate(
-      _userId, TC_AWAIT(_userKeyStore.getLastKeyPair()), _blockGenerator));
-}
-
-tc::cotask<void> Session::registerVerificationKey(
-    Unlock::Registration const& registration)
-{
-  TC_AWAIT(_client->pushBlock(registration.block));
-}
-
-tc::cotask<void> Session::createVerificationKey()
-{
-  auto const reg = TC_AWAIT(generateVerificationKey());
-
-  auto const msg =
-      Unlock::Message(trustchainId(),
-                      deviceId(),
-                      Unlock::Verification{reg->verificationKey},
-                      userSecret(),
-                      _deviceKeyStore->signatureKeyPair().privateKey);
-  try
-  {
-    TC_AWAIT(_client->pushBlock(reg->block));
-    TC_AWAIT(_client->createVerificationKey(msg));
-  }
-  catch (Error::ServerError const& e)
-  {
-    if (e.httpStatusCode() == 500)
-      throw Error::InternalError(e.what());
-    else if (e.httpStatusCode() == 409)
-      throw Error::VerificationKeyAlreadyExists(
-          "A verification key has already been registered");
-    else
-      throw;
-  }
-}
-
 void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
 {
   if (mpark::holds_alternative<Unlock::EmailVerification>(method))
@@ -454,13 +414,6 @@ tc::cotask<void> Session::claimProvisionalIdentity(
       throw e;
     }
   }
-}
-
-tc::cotask<VerificationKey> Session::generateAndRegisterVerificationKey()
-{
-  auto const reg = TC_AWAIT(generateVerificationKey());
-  TC_AWAIT(registerVerificationKey(*reg));
-  TC_RETURN(reg->verificationKey);
 }
 
 tc::cotask<bool> Session::isUnlockAlreadySetUp() const

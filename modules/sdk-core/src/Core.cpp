@@ -226,12 +226,13 @@ tc::cotask<std::vector<Device>> Core::getDeviceList() const
   return (*psession)->getDeviceList();
 }
 
-tc::cotask<VerificationKey> Core::generateAndRegisterVerificationKey()
+tc::cotask<VerificationKey> Core::generateVerificationKey()
 {
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(generateAndRegisterVerificationKey);
-  TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterVerificationKey()));
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(generateVerificationKey);
+  auto const reg = TC_AWAIT(pcore->generateVerificationKey());
+  TC_RETURN(reg->verificationKey);
 }
 
 tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)

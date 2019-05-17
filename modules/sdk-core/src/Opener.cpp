@@ -58,6 +58,7 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 
   // FIXME: check for bad identity format
   _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+  _userId = _identity->delegation.userId;
 
   if (_identity->trustchainId != _info.trustchainId)
     throw Error::formatEx<Error::InvalidArgument>(
@@ -77,10 +78,8 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
-  auto const userStatusResult =
-      TC_AWAIT(_client->userStatus(_info.trustchainId,
-                                   _identity->delegation.userId,
-                                   _keyStore->signatureKeyPair().publicKey));
+  auto const userStatusResult = TC_AWAIT(_client->userStatus(
+      _info.trustchainId, _userId, _keyStore->signatureKeyPair().publicKey));
   if (userStatusResult.deviceExists)
     _status = Status::Ready;
   else if (userStatusResult.userExists)
@@ -211,6 +210,14 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
     TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
   throw std::runtime_error(
       "assertion error: invalid Verification, unreachable code");
+}
+
+tc::cotask<std::unique_ptr<Unlock::Registration>>
+Opener::generateVerificationKey() const
+{
+  TC_RETURN(Unlock::generate(_userId,
+                             _keyStore->encryptionKeyPair(),
+                             BlockGenerator(_info.trustchainId, {}, {})));
 }
 
 tc::cotask<Session::Config> Opener::createDevice(

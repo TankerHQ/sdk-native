@@ -162,12 +162,11 @@ tc::shared_future<void> AsyncCore::updateGroupMembers(
   });
 }
 
-tc::shared_future<VerificationKey>
-AsyncCore::generateAndRegisterVerificationKey()
+tc::shared_future<VerificationKey> AsyncCore::generateVerificationKey()
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([this]() -> tc::cotask<VerificationKey> {
-      TC_RETURN(TC_AWAIT(this->_core.generateAndRegisterVerificationKey()));
+      TC_RETURN(TC_AWAIT(this->_core.generateVerificationKey()));
     });
   });
 }

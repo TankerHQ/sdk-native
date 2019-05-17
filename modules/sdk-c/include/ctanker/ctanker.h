@@ -317,8 +317,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* session);
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_generate_and_register_verification_key(
-    tanker_t* session);
+tanker_future_t* tanker_generate_verification_key(tanker_t* session);
 
 /*!
  * Registers, or updates, the user's unlock claims,

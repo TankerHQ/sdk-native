@@ -302,11 +302,10 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_generate_and_register_verification_key(
-    tanker_t* ctanker)
+tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->generateAndRegisterVerificationKey().and_then(
+  return makeFuture(tanker->generateVerificationKey().and_then(
       tc::get_synchronous_executor(), [](auto uk) {
         return static_cast<void*>(duplicateString(uk.string()));
       }));

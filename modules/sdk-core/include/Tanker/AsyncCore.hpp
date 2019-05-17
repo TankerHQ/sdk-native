@@ -78,7 +78,7 @@ public:
   tc::shared_future<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::shared_future<VerificationKey> generateAndRegisterVerificationKey();
+  tc::shared_future<VerificationKey> generateVerificationKey();
 
   tc::shared_future<void> setVerificationMethod(
       Unlock::Verification const& method);

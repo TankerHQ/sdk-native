@@ -64,7 +64,7 @@ public:
   tc::cotask<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
+  tc::cotask<VerificationKey> generateVerificationKey();
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);

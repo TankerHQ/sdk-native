@@ -13,7 +13,9 @@ TEST_SUITE("Unlock")
   {
     auto alice = trustchain.makeUser(Test::UserType::New);
     auto device1 = alice.makeDevice();
-    auto core1 = TC_AWAIT(device1.open());
+    auto core1 = device1.createCore(Test::SessionType::New);
+    REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
+               Status::IdentityRegistrationNeeded);
 
     auto device2 = alice.makeDevice();
     auto core2 = device2.createCore(Test::SessionType::New);
@@ -21,12 +23,14 @@ TEST_SUITE("Unlock")
     auto const password = Password{"my password"};
     auto const newPassword = Password{"new password"};
     auto const email = Email{"kirby@dreamland.nes"};
+    auto const verificationCode = TC_AWAIT(getVerificationCode(email));
     auto const newEmail = Email{"bowser@dreamland.net"};
 
     SUBCASE("it creates an verificationKey and use it to add a third device")
     {
-      auto verificationKey =
-          TC_AWAIT(core1->generateAndRegisterVerificationKey());
+      auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+      TC_AWAIT(core1->registerIdentity(verificationKey));
+
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(verificationKey)));
@@ -34,8 +38,8 @@ TEST_SUITE("Unlock")
 
     SUBCASE("it sets a validation password and unlocks a new device")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(
-          core1->setVerificationMethod(Unlock::Verification{password})));
+      REQUIRE_NOTHROW(
+          TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(core2->verifyIdentity(password));
@@ -43,9 +47,8 @@ TEST_SUITE("Unlock")
 
     SUBCASE("it sets a validation email and unlocks a new device")
     {
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
-              Unlock::EmailVerification{email, VerificationCode{}}})));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+          Unlock::EmailVerification{email, verificationCode}})));
 
       auto const code = TC_AWAIT(getVerificationCode(email));
 
@@ -57,8 +60,8 @@ TEST_SUITE("Unlock")
 
     SUBCASE("it sets a validation password then re-registers a new one")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(
-          core1->setVerificationMethod(Unlock::Verification{password})));
+      REQUIRE_NOTHROW(
+          TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
       REQUIRE_NOTHROW(TC_AWAIT(
           core1->setVerificationMethod(Unlock::Verification{newPassword})));
 
@@ -69,20 +72,21 @@ TEST_SUITE("Unlock")
 
     SUBCASE("it throws when trying to unlock with an invalid password")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(
-          core1->setVerificationMethod(Unlock::Verification{password})));
+      REQUIRE_NOTHROW(
+          TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
 
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
-      CHECK_THROWS_AS(TC_AWAIT(core2->verifyIdentity(Password{"wrong pass"})),
+      CHECK_THROWS_AS(TC_AWAIT(core2->verifyIdentity(Password{"wrongPass"})),
                       Tanker::Error::InvalidUnlockPassword);
     }
 
-    SUBCASE("it throws when trying to unlock with an invalid verification code")
+    SUBCASE(
+        "it throws when trying to unlock with an invalid verification "
+        "code")
     {
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
-              Unlock::EmailVerification{email, VerificationCode{}}})));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+          Unlock::EmailVerification{email, verificationCode}})));
 
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
@@ -95,9 +99,8 @@ TEST_SUITE("Unlock")
         "it fails to unlock after trying too many times with an invalid "
         "verification code")
     {
-      REQUIRE_NOTHROW(
-          TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
-              Unlock::EmailVerification{email, VerificationCode{}}})));
+      REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+          Unlock::EmailVerification{email, verificationCode}})));
 
       auto const code = TC_AWAIT(getVerificationCode(email));
 
@@ -114,22 +117,22 @@ TEST_SUITE("Unlock")
     }
 
     SUBCASE(
-        "it throws when trying to unlock when register has not been done, with "
-        "a password")
+        "it throws when trying to unlock when register has not been done, "
+        "with a password")
     {
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-                 Status::IdentityVerificationNeeded);
+                 Status::IdentityRegistrationNeeded);
       CHECK_THROWS(TC_AWAIT(core2->verifyIdentity(password)));
     }
 
     SUBCASE(
-        "it throws when trying to unlock when register has not been done, with "
-        "a verification code")
+        "it throws when trying to unlock when register has not been done, "
+        "with a verification code")
     {
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-                 Status::IdentityVerificationNeeded);
+                 Status::IdentityRegistrationNeeded);
       CHECK_THROWS(TC_AWAIT(core2->verifyIdentity(
-          Unlock::EmailVerification{email, VerificationCode{"code"}})));
+          Unlock::EmailVerification{email, verificationCode})));
     }
   }
 }
