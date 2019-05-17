@@ -197,8 +197,7 @@ TEST_CASE("verificationKey")
     REQUIRE(!userKey.is_null());
 
     auto const privateEncryptionKey =
-        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            userKey, newDeviceKeys.encryptionKeyPair);
+        Crypto::sealDecrypt(userKey, newDeviceKeys.encryptionKeyPair);
 
     REQUIRE_EQ(privateEncryptionKey, aliceKeys.keyPair.privateKey);
     REQUIRE_EQ(dc3.publicEncryptionKey(),

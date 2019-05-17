@@ -192,9 +192,8 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
             if (Trustchain::DeviceId{serverEntry.hash()} == _deviceId)
             {
               auto const lastPrivateEncryptionKey =
-                  Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-                      dc3->sealedPrivateUserEncryptionKey(),
-                      _deviceKeyStore->encryptionKeyPair());
+                  Crypto::sealDecrypt(dc3->sealedPrivateUserEncryptionKey(),
+                                      _deviceKeyStore->encryptionKeyPair());
               userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
                   dc3->publicUserEncryptionKey(), lastPrivateEncryptionKey});
             }
@@ -270,8 +269,7 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
        ++userKeyIt)
   {
     auto const encryptionPrivateKey =
-        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            userKeyIt->second, userEncryptionKeys.back());
+        Crypto::sealDecrypt(userKeyIt->second, userEncryptionKeys.back());
     userEncryptionKeys.push_back(
         Crypto::EncryptionKeyPair{userKeyIt->first, encryptionPrivateKey});
   }

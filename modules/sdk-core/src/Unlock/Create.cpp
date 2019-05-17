@@ -75,9 +75,8 @@ std::vector<uint8_t> createValidatedDevice(
 {
   auto const ghostEncryptionKeyPair =
       makeEncryptionKeyPair(ghostDevice.privateEncryptionKey);
-  auto const privateUserEncryptionKey =
-      Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-          encryptedUserKey.encryptedPrivateKey, ghostEncryptionKeyPair);
+  auto const privateUserEncryptionKey = Crypto::sealDecrypt(
+      encryptedUserKey.encryptedPrivateKey, ghostEncryptionKeyPair);
   return BlockGenerator(trustchainId,
                         ghostDevice.privateSignatureKey,
                         ghostDevice.deviceId)

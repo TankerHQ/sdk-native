@@ -367,8 +367,8 @@ generateGroupKeysForUsers(
           "TrustchainBuilder: can't add a user without user key to a group");
     keysForUsers.emplace_back(
         user.userKeys.back().keyPair.publicKey,
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            groupPrivateEncryptionKey, user.userKeys.back().keyPair.publicKey));
+        Crypto::sealEncrypt(groupPrivateEncryptionKey,
+                            user.userKeys.back().keyPair.publicKey));
   }
   return keysForUsers;
 }
@@ -650,8 +650,7 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
   auto const receiverPublicKey =
       receiver.tankerGroup.encryptionKeyPair.publicKey;
 
-  auto const encryptedKey =
-      Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(key, receiverPublicKey);
+  auto const encryptedKey = Crypto::sealEncrypt(key, receiverPublicKey);
 
   KeyPublishToUserGroup keyPublish{receiverPublicKey, resourceId, encryptedKey};
 
@@ -678,8 +677,7 @@ Block TrustchainBuilder::shareToProvisionalUser(
   auto const encryptedKeyOnce =
       Crypto::sealEncrypt(key, receiver.appEncryptionPublicKey);
   auto const encryptedKeyTwice =
-      Crypto::sealEncrypt<Crypto::TwoTimesSealedSymmetricKey>(
-          encryptedKeyOnce, receiver.tankerEncryptionPublicKey);
+      Crypto::sealEncrypt(encryptedKeyOnce, receiver.tankerEncryptionPublicKey);
 
   KeyPublishToProvisionalUser keyPublish{receiver.appSignaturePublicKey,
                                          resourceId,
@@ -771,10 +769,8 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
   if (tankerUser.userKey)
   {
     oldPublicEncryptionKey = *tankerUser.userKey;
-    encryptedKeyForPreviousUserKey =
-        Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
-            user.userKeys.back().keyPair.privateKey,
-            newEncryptionKey.publicKey);
+    encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
+        user.userKeys.back().keyPair.privateKey, newEncryptionKey.publicKey);
   }
 
   DeviceRevocation::v2::SealedKeysForDevices userKeys;

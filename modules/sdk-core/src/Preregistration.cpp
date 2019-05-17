@@ -80,12 +80,11 @@ tc::cotask<void> decryptPendingGroups(
           toStore.appSignaturePublicKey,
           toStore.tankerSignaturePublicKey);
 
-    auto const groupPrivateEncryptionKey =
-        Crypto::sealDecrypt<Crypto::PrivateEncryptionKey>(
-            Crypto::sealDecrypt(pendingGroup.provisionalUsers.front()
-                                    .encryptedPrivateEncryptionKey(),
-                                toStore.tankerEncryptionKeyPair),
-            toStore.appEncryptionKeyPair);
+    auto const groupPrivateEncryptionKey = Crypto::sealDecrypt(
+        Crypto::sealDecrypt(pendingGroup.provisionalUsers.front()
+                                .encryptedPrivateEncryptionKey(),
+                            toStore.tankerEncryptionKeyPair),
+        toStore.appEncryptionKeyPair);
     TC_AWAIT(GroupUpdater::applyGroupPrivateKey(
         groupStore, pendingGroup, groupPrivateEncryptionKey));
   }
