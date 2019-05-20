@@ -34,6 +34,22 @@ TrustchainBuilder::TrustchainBuilder()
   _blocks.push_back(block);
 }
 
+namespace
+{
+TrustchainBuilder::Device createDevice()
+{
+  return TrustchainBuilder::Device{
+      {
+          Tanker::Crypto::makeSignatureKeyPair(),
+          Tanker::Crypto::makeEncryptionKeyPair(),
+          {} // deviceId will be filled in later in this function
+      },
+      {}, // delegation will be filled in later
+      {}  // blockIndex will be filled in later
+  };
+}
+}
+
 Tanker::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Device{keys.deviceId,
@@ -105,15 +121,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   if (getUser(suserId))
     throw Error::formatEx("{} already exists", suserId);
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {}, // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
   auto const daUserId = SUserId{suserId};
   User user{
       daUserId,
@@ -149,15 +157,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   if (getUser(suserId))
     throw Error::formatEx("{} already exists", suserId);
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {} // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
   auto const daUserId = SUserId{suserId};
   User user{
       daUserId,
@@ -203,15 +203,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   auto const suserId = SUserId{p};
   auto& user = getMutableUser(suserId);
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {} // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
 
   // the device that will validate this device
   auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
@@ -253,15 +245,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
         {Tanker::Crypto::makeEncryptionKeyPair(), _blocks.size() + 1});
   }
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {}, // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
 
   // the device that will validate this device
   auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
