@@ -14,6 +14,7 @@
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -34,6 +35,7 @@ public:
   struct Device
   {
     Tanker::DeviceKeys keys;
+    Tanker::Trustchain::DeviceId id;
     Tanker::Identity::Delegation delegation;
     uint64_t blockIndex;
 

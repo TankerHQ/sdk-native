@@ -6,7 +6,7 @@ namespace Tanker
 {
 DeviceKeys DeviceKeys::create()
 {
-  return DeviceKeys{
-      Crypto::makeSignatureKeyPair(), Crypto::makeEncryptionKeyPair(), {}};
+  return DeviceKeys{Crypto::makeSignatureKeyPair(),
+                    Crypto::makeEncryptionKeyPair()};
 }
 }

@@ -781,7 +781,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
     auto const sealedPrivateEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    sealedUserKeysForDevices.emplace_back(thirdDevice.device.keys.deviceId,
+    sealedUserKeysForDevices.emplace_back(thirdDevice.device.id,
                                           sealedPrivateEncryptionKey);
 
     CHECK_VERIFICATION_FAILED_WITH(
@@ -801,7 +801,7 @@ TEST_CASE("Verif DeviceRevocationV2")
 
     auto const sealedPrivateEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
-    sealedUserKeysForDevices.emplace_back(bobDevice.device.keys.deviceId,
+    sealedUserKeysForDevices.emplace_back(bobDevice.device.id,
                                           sealedPrivateEncryptionKey);
 
     CHECK_VERIFICATION_FAILED_WITH(

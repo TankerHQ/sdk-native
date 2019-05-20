@@ -20,6 +20,8 @@ tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
   if (keys)
   {
     deviceKeyStore->_keys = *keys;
+    deviceKeyStore->_deviceId =
+        TC_AWAIT(dbConn->getDeviceId()).value_or(Trustchain::DeviceId{});
   }
   else
   {
@@ -42,7 +44,8 @@ tc::cotask<std::unique_ptr<DeviceKeyStore>> DeviceKeyStore::open(
   TC_RETURN(std::move(deviceKeyStore));
 }
 
-DeviceKeyStore::DeviceKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
+DeviceKeyStore::DeviceKeyStore(DataStore::ADatabase* dbConn)
+  : _db(dbConn), _deviceId()
 {
 }
 
@@ -60,7 +63,7 @@ Crypto::EncryptionKeyPair const& DeviceKeyStore::encryptionKeyPair() const
 
 Trustchain::DeviceId const& DeviceKeyStore::deviceId() const noexcept
 {
-  return _keys.deviceId;
+  return _deviceId;
 }
 
 DeviceKeys const& DeviceKeyStore::deviceKeys() const
@@ -71,9 +74,9 @@ DeviceKeys const& DeviceKeyStore::deviceKeys() const
 tc::cotask<void> DeviceKeyStore::setDeviceId(
     Trustchain::DeviceId const& deviceId)
 {
-  if (!this->_keys.deviceId.is_null() && deviceId != this->_keys.deviceId)
+  if (!this->_deviceId.is_null() && deviceId != this->_deviceId)
     throw std::runtime_error("deviceId already set");
   TC_AWAIT(_db->setDeviceId(deviceId));
-  _keys.deviceId = deviceId;
+  _deviceId = deviceId;
 }
 }

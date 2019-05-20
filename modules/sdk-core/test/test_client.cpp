@@ -318,7 +318,7 @@ TEST_CASE("Client unlock api")
       make<Crypto::SymmetricKey>("this is alice's userSecret");
   auto const message = Unlock::Message(
       trustchainId,
-      deviceKeys.deviceId,
+      Trustchain::DeviceId{},
       Unlock::UpdateOptions(email, password, someVerificationKey),
       aliceUserSecret,
       deviceKeys.signatureKeyPair.privateKey);

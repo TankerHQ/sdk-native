@@ -69,14 +69,14 @@ TEST_CASE("it can convert a ghost device to unlock key")
   };
   auto const gotGhostDevice = Unlock::extract(
       VerificationKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
-                "BQUFBQUFBQUFBQUFBQUFBQU"
-                "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
-                "lY1QUFBQUFBQUFBQUFBQUFB"
-                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUF"
-                "BQUFBQUFBQUFBQUFBQUFBQU"
-                "FBQUFBQUFBQUFBPT0iLCJwcml2YXRlRW5jcnlwdGlvbktle"
-                "SI6IlpXNWphMlY1QUFBQUFB"
-                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9In0="});
+                      "BQUFBQUFBQUFBQUFBQUFBQU"
+                      "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
+                      "lY1QUFBQUFBQUFBQUFBQUFB"
+                      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUF"
+                      "BQUFBQUFBQUFBQUFBQUFBQU"
+                      "FBQUFBQUFBQUFBPT0iLCJwcml2YXRlRW5jcnlwdGlvbktle"
+                      "SI6IlpXNWphMlY1QUFBQUFB"
+                      "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9In0="});
   CHECK(ghostDevice == gotGhostDevice);
 }
 
@@ -128,16 +128,16 @@ TEST_CASE("verificationKey")
                        aliceKeys.keyPair,
                        BlockGenerator(builder.trustchainId(),
                                       firstDev.keys.signatureKeyPair.privateKey,
-                                      firstDev.keys.deviceId),
+                                      firstDev.id),
                        ghostDeviceKeys);
   auto const password = Password{"some secret"};
   auto const email = Email{"alice@aol.com"};
-  auto const message =
-      Unlock::Message(builder.trustchainId(),
-                      firstDev.keys.deviceId,
-                      Unlock::UpdateOptions{email, password, someVerificationKey},
-                      aliceUserSecret,
-                      firstDev.keys.signatureKeyPair.privateKey);
+  auto const message = Unlock::Message(
+      builder.trustchainId(),
+      firstDev.id,
+      Unlock::UpdateOptions{email, password, someVerificationKey},
+      aliceUserSecret,
+      firstDev.keys.signatureKeyPair.privateKey);
   FAST_REQUIRE_UNARY(reg);
   FAST_REQUIRE_UNARY_FALSE(reg->verificationKey.empty());
   SUBCASE("generate")
@@ -171,7 +171,8 @@ TEST_CASE("verificationKey")
 
   SUBCASE("extact unlock message")
   {
-    auto const verificationKeyRes = message.claims.getVerificationKey(aliceUserSecret);
+    auto const verificationKeyRes =
+        message.claims.getVerificationKey(aliceUserSecret);
     CHECK_EQ(verificationKeyRes, someVerificationKey);
   }
 

@@ -43,7 +43,7 @@ OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
   auto const b64PubEncK =
       cppcodec::base64_rfc4648::encode(deviceKeys.encryptionKeyPair.publicKey);
   auto const b64DeviceId =
-      cppcodec::base64_rfc4648::encode(deviceKeys.deviceId);
+      cppcodec::base64_rfc4648::encode(Trustchain::DeviceId{});
 
   db.execute(R"(
     CREATE TABLE device_key_store (

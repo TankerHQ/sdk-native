@@ -34,7 +34,7 @@ TEST_CASE("Revocation namespace")
   SUBCASE("EnsureDeviceIsFromUser throws if given a bad deviceId")
   {
     CHECK_THROWS_AS(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
-                        aliceResult.user.devices[0].keys.deviceId,
+                        aliceResult.user.devices[0].id,
                         userResult.user.userId,
                         *contactStore.get())),
                     Error::DeviceNotFound);
@@ -43,10 +43,8 @@ TEST_CASE("Revocation namespace")
   SUBCASE(
       "EnsureDeviceIsFromUser does not throws if deviceId belongs to userId")
   {
-    CHECK_NOTHROW(AWAIT_VOID(
-        Revocation::ensureDeviceIsFromUser(deviceResult.device.keys.deviceId,
-                                           userResult.user.userId,
-                                           *contactStore.get())));
+    CHECK_NOTHROW(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
+        deviceResult.device.id, userResult.user.userId, *contactStore.get())));
   }
 
   SUBCASE("getUserFromUserId throws if userId is invalid")
@@ -75,11 +73,10 @@ TEST_CASE("Revocation namespace")
   SUBCASE("devicePrivateKey can be encrypted & decrypted")
   {
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const encryptedPrivateKeys =
-        AWAIT(Revocation::encryptPrivateKeyForDevices(
-            deviceResult.user,
-            userResult.user.devices[0].keys.deviceId,
-            encryptionKeyPair.privateKey));
+    auto const encryptedPrivateKeys = AWAIT(
+        Revocation::encryptPrivateKeyForDevices(deviceResult.user,
+                                                userResult.user.devices[0].id,
+                                                encryptionKeyPair.privateKey));
 
     REQUIRE(encryptedPrivateKeys.size() == 1);
 

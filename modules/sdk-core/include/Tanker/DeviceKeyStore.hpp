@@ -38,6 +38,7 @@ public:
 private:
   DataStore::ADatabase* _db;
   DeviceKeys _keys;
+  Trustchain::DeviceId _deviceId;
 
   DeviceKeyStore(DataStore::ADatabase* dbConn);
 };

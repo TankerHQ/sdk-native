@@ -783,16 +783,14 @@ tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
     TC_RETURN(nonstd::nullopt);
 
   auto const& row = rows.front();
-  TC_RETURN((
-      DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                      row.public_signature_key),
-                  DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                      row.private_signature_key)},
-                 {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                      row.public_encryption_key),
-                  DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                      row.private_encryption_key)},
-                 DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)}));
+  TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
+                             row.public_signature_key),
+                         DataStore::extractBlob<Crypto::PrivateSignatureKey>(
+                             row.private_signature_key)},
+                        {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+                             row.public_encryption_key),
+                         DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+                             row.private_encryption_key)}}));
 }
 
 tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -804,8 +802,8 @@ tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
       tab.private_encryption_key =
           deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key = deviceKeys.encryptionKeyPair.publicKey.base(),
-      tab.device_id = deviceKeys.deviceId.base()));
+      tab.public_encryption_key =
+          deviceKeys.encryptionKeyPair.publicKey.base()));
   TC_RETURN();
 }
 
@@ -815,6 +813,19 @@ tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)
   DeviceKeysTable tab{};
   (*_db)(update(tab).set(tab.device_id = deviceId.base()).unconditionally());
   TC_RETURN();
+}
+
+tc::cotask<nonstd::optional<Trustchain::DeviceId>> Database::getDeviceId()
+{
+  FUNC_TIMER(DB);
+  DeviceKeysTable tab{};
+  auto rows = (*_db)(select(tab.device_id).from(tab).unconditionally());
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = rows.front();
+  if (row.device_id.len == 0)
+    TC_RETURN(nonstd::nullopt);
+  TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
 tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
