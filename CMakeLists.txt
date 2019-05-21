@@ -86,6 +86,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   tanker_add_flags(CMAKE_CXX_FLAGS "-Wno-mismatched-tags")
 endif()
 
+add_subdirectory(modules/config)
 add_subdirectory(modules/crypto)
 add_subdirectory(modules/sdk-core)
 add_subdirectory(modules/sdk-c)
