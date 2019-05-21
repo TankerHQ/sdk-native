@@ -15,7 +15,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Methods.hpp>
-#include <Tanker/Unlock/Options.hpp>
 
 #include <Tanker/task_canceler.hpp>
 

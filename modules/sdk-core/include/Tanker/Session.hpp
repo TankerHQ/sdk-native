@@ -27,7 +27,6 @@
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
-#include <Tanker/Unlock/Options.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -101,7 +100,7 @@ public:
 
   tc::cotask<void> createVerificationKey();
 
-  tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
+  tc::cotask<void> updateUnlock(Unlock::Verification const& method);
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
 

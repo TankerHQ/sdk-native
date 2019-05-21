@@ -293,12 +293,11 @@ TEST_CASE("Client unlock api")
   auto deviceKeys = DeviceKeys::create();
   auto const aliceUserSecret =
       make<Crypto::SymmetricKey>("this is alice's userSecret");
-  auto const message = Unlock::Message(
-      trustchainId,
-      Trustchain::DeviceId{},
-      Unlock::UpdateOptions(email, password, someVerificationKey),
-      aliceUserSecret,
-      deviceKeys.signatureKeyPair.privateKey);
+  auto const message = Unlock::Message(trustchainId,
+                                       Trustchain::DeviceId{},
+                                       Unlock::Verification(password),
+                                       aliceUserSecret,
+                                       deviceKeys.signatureKeyPair.privateKey);
 
   SUBCASE("createVerificationKey()")
   {

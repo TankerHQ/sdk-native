@@ -12,17 +12,18 @@ namespace Tanker
 namespace Unlock
 {
 
-Claims::Claims(UpdateOptions const& lockOptions,
+Claims::Claims(Verification const& method,
                Crypto::SymmetricKey const& userSecret)
 {
-  this->email = lockOptions.get<Email>();
-  if (auto const opt_password = lockOptions.get<Password>())
-    password = Crypto::generichash(
-        gsl::make_span(*opt_password).as_span<uint8_t const>());
-  if (auto const opt_verificationKey = lockOptions.get<VerificationKey>())
-    this->verificationKey = Crypto::encryptAead(
-        userSecret,
-        gsl::make_span(*opt_verificationKey).as_span<uint8_t const>());
+  if (auto const emailVerification =
+          mpark::get_if<Unlock::EmailVerification>(&method))
+    this->email = emailVerification->email;
+  else if (auto const password = mpark::get_if<Password>(&method))
+    this->password =
+        Crypto::generichash(gsl::make_span(*password).as_span<uint8_t const>());
+  else if (auto const verificationKey = mpark::get_if<VerificationKey>(&method))
+    throw std::runtime_error(
+        "assertion failure, not supposed to have a verificationKey");
 }
 
 void from_json(nlohmann::json const& j, Claims& c)

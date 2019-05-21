@@ -86,7 +86,6 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Claims.hpp
   include/Tanker/Unlock/Messages.hpp
   include/Tanker/Unlock/DeviceLocker.hpp
-  include/Tanker/Unlock/Options.hpp
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/VerificationRequest.hpp
   include/Tanker/Unlock/Methods.hpp

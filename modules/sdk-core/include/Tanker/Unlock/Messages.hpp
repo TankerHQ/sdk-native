@@ -9,7 +9,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
-#include <Tanker/Unlock/Options.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -68,7 +67,7 @@ struct Message
   Message() = default;
   Message(Trustchain::TrustchainId const& trustchainId,
           Trustchain::DeviceId const& deviceId,
-          UpdateOptions const& lockOptions,
+          Verification const& verificationMethod,
           Crypto::SymmetricKey const& key,
           Crypto::PrivateSignatureKey const& privateSignatureKey);
 
@@ -79,6 +78,5 @@ struct Message
 };
 
 void to_json(nlohmann::json&, Message const& m);
-
 }
 }

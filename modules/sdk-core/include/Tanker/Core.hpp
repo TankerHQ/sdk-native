@@ -14,7 +14,6 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
-#include <Tanker/Unlock/Options.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>

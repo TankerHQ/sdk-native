@@ -13,7 +13,6 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
-#include <Tanker/Unlock/Options.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -32,16 +31,7 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace
 {
-auto const someVerificationKey = VerificationKey{
-    "eyJkZXZpY2VJZCI6IlFySHhqNk9qSURBUmJRVWdBenRmUHZyNFJVZUNRWDRhb1ZTWXJiSzNEa2"
-    "s9IiwicHJpdmF0ZUVuY3J5cHRpb25LZXkiOiJQTnRjNEFXMWZ5NnBnbVd2SlA5RTN0ZytxMFJ0"
-    "emkxdlcvSEFqQnBMRmdnPSIsInByaXZhdGVTaWduYXR1cmVLZXkiOiJxbXBNZmlHRHYweEZyVD"
-    "dMVHZjTkFYQ2FrbFRWcE54Y1ByRjdycStKelhuZ2dleUo1YnR2YUlrWDlURmxMQjdKaU5ObmVo"
-    "dXJjZEhRU05xMEgzQlJidz09In0="};
-
 void checkUnlockMessage(Trustchain::TrustchainId const& tid,
-                        Email const& email,
-                        Password const& password,
                         Crypto::PublicSignatureKey const& key,
                         Unlock::Message const& message)
 {
@@ -51,10 +41,6 @@ void checkUnlockMessage(Trustchain::TrustchainId const& tid,
   FAST_CHECK_EQ(message2.trustchainId, message.trustchainId);
   FAST_CHECK_EQ(message2.deviceId, message.deviceId);
   FAST_CHECK_EQ(tid, message.trustchainId);
-  FAST_CHECK_EQ(email, message.claims.email);
-  FAST_CHECK_EQ(
-      Crypto::generichash(gsl::make_span(password).as_span<uint8_t const>()),
-      message.claims.password);
   FAST_CHECK_UNARY(
       Crypto::verify(message2.signData(), message2.signature, key));
 }
@@ -77,32 +63,6 @@ TEST_CASE("it can convert a ghost device to unlock key")
                       "SI6IlpXNWphMlY1QUFBQUFB"
                       "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE9In0="});
   CHECK(ghostDevice == gotGhostDevice);
-}
-
-TEST_CASE("UpdateOptions")
-{
-  auto locker = Unlock::UpdateOptions{}.set(Password{"keep it secret"});
-  SUBCASE("only set password")
-  {
-    FAST_REQUIRE_EQ(locker.get<Password>().value().string(), "keep it secret");
-    FAST_REQUIRE_UNARY_FALSE(locker.get<Email>());
-    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
-  }
-  SUBCASE("set Email too")
-  {
-    locker.set(Email{"germaine@yahou.fr"});
-    FAST_REQUIRE_EQ(locker.get<Password>().value().string(), "keep it secret");
-    FAST_REQUIRE_EQ(locker.get<Email>().value().string(), "germaine@yahou.fr");
-    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
-  }
-  SUBCASE("unset password")
-  {
-    locker.set(Email{"germaine@yahou.fr"});
-    locker.reset<Password>();
-    FAST_REQUIRE_UNARY_FALSE(locker.get<Password>());
-    FAST_REQUIRE_EQ(locker.get<Email>().value().string(), "germaine@yahou.fr");
-    FAST_REQUIRE_UNARY_FALSE(locker.get<VerificationKey>());
-  }
 }
 
 TEST_CASE("verificationKey")
@@ -131,12 +91,12 @@ TEST_CASE("verificationKey")
                        ghostDeviceKeys);
   auto const password = Password{"some secret"};
   auto const email = Email{"alice@aol.com"};
-  auto const message = Unlock::Message(
-      builder.trustchainId(),
-      firstDev.id,
-      Unlock::UpdateOptions{email, password, someVerificationKey},
-      aliceUserSecret,
-      firstDev.keys.signatureKeyPair.privateKey);
+  auto const message =
+      Unlock::Message(builder.trustchainId(),
+                      firstDev.id,
+                      Unlock::Verification{password},
+                      aliceUserSecret,
+                      firstDev.keys.signatureKeyPair.privateKey);
   FAST_REQUIRE_UNARY(reg);
   FAST_REQUIRE_UNARY_FALSE(reg->verificationKey.empty());
   SUBCASE("generate")
@@ -161,17 +121,8 @@ TEST_CASE("verificationKey")
   SUBCASE("serialization/unserialization of message")
   {
     checkUnlockMessage(builder.trustchainId(),
-                       email,
-                       password,
                        firstDev.keys.signatureKeyPair.publicKey,
                        message);
-  }
-
-  SUBCASE("extact unlock message")
-  {
-    auto const verificationKeyRes =
-        message.claims.getVerificationKey(aliceUserSecret);
-    CHECK_EQ(verificationKeyRes, someVerificationKey);
   }
 
   SUBCASE("createValidatedDevice")

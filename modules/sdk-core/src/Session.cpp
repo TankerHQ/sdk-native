@@ -344,12 +344,12 @@ tc::cotask<void> Session::createVerificationKey()
 {
   auto const reg = TC_AWAIT(generateVerificationKey());
 
-  auto const msg = Unlock::Message(
-      trustchainId(),
-      deviceId(),
-      Unlock::UpdateOptions{}.set<VerificationKey>(reg->verificationKey),
-      userSecret(),
-      _deviceKeyStore->signatureKeyPair().privateKey);
+  auto const msg =
+      Unlock::Message(trustchainId(),
+                      deviceId(),
+                      Unlock::Verification{reg->verificationKey},
+                      userSecret(),
+                      _deviceKeyStore->signatureKeyPair().privateKey);
   try
   {
     TC_AWAIT(_client->pushBlock(reg->block));
@@ -375,22 +375,18 @@ void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
     _unlockMethods |= Unlock::Method::Password;
 }
 
-tc::cotask<void> Session::updateUnlock(Unlock::UpdateOptions const& options)
+tc::cotask<void> Session::updateUnlock(Unlock::Verification const& method)
 {
   auto const msg =
       Unlock::Message(trustchainId(),
                       deviceId(),
-                      options,
+                      method,
                       userSecret(),
                       _deviceKeyStore->signatureKeyPair().privateKey);
   try
   {
     TC_AWAIT(_client->updateVerificationKey(msg));
-    if (auto const email = options.get<Email>())
-      updateLocalUnlockMethods(Unlock::Verification{
-          Unlock::EmailVerification{*email, VerificationCode{}}});
-    if (auto const password = options.get<Password>())
-      updateLocalUnlockMethods(Unlock::Verification{*password});
+    updateLocalUnlockMethods(method);
   }
   catch (Error::ServerError const& e)
   {
@@ -412,17 +408,7 @@ tc::cotask<void> Session::setVerificationMethod(
         "Cannot call setVerificationMethod with a verification key");
   else
   {
-    // Temporary, will be deleted in next commit
-    Unlock::UpdateOptions options{};
-    if (auto const verificationKey = mpark::get_if<VerificationKey>(&method))
-      options.set<VerificationKey>(*verificationKey);
-    else if (auto const emailVerification =
-                 mpark::get_if<Unlock::EmailVerification>(&method))
-      options.set<Email>(emailVerification->email);
-    else if (auto const password = mpark::get_if<Password>(&method))
-      options.set<Password>(*password);
-
-    TC_AWAIT(updateUnlock(options));
+    TC_AWAIT(updateUnlock(method));
   }
 }
 

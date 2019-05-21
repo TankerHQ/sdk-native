@@ -5,7 +5,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Options.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -28,8 +28,7 @@ public:
   Claims& operator=(Claims const&) = default;
   Claims& operator=(Claims&&) = default;
 
-  Claims(UpdateOptions const& lockOptions,
-         Crypto::SymmetricKey const& userSecret);
+  Claims(Verification const& method, Crypto::SymmetricKey const& userSecret);
 
   std::size_t size() const;
   std::vector<uint8_t> signData() const;

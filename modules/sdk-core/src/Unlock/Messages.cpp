@@ -113,12 +113,12 @@ VerificationKey FetchAnswer::getVerificationKey(
 
 Message::Message(Trustchain::TrustchainId const& trustchainId,
                  Trustchain::DeviceId const& deviceId,
-                 UpdateOptions const& lockOptions,
+                 Verification const& verificationMethod,
                  Crypto::SymmetricKey const& userSecret,
                  Crypto::PrivateSignatureKey const& privateSignatureKey)
   : trustchainId(trustchainId),
     deviceId(deviceId),
-    claims{lockOptions, userSecret}
+    claims{verificationMethod, userSecret}
 {
   sign(privateSignatureKey);
 }
