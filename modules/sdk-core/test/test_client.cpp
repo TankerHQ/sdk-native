@@ -316,12 +316,12 @@ TEST_CASE("Client unlock api")
   auto deviceKeys = DeviceKeys::create();
   auto const aliceUserSecret =
       make<Crypto::SymmetricKey>("this is alice's userSecret");
-  auto const message =
-      Unlock::Message(trustchainId,
-                      deviceKeys.deviceId,
-                      Unlock::UpdateOptions(email, password, someVerificationKey),
-                      aliceUserSecret,
-                      deviceKeys.signatureKeyPair.privateKey);
+  auto const message = Unlock::Message(
+      trustchainId,
+      deviceKeys.deviceId,
+      Unlock::UpdateOptions(email, password, someVerificationKey),
+      aliceUserSecret,
+      deviceKeys.signatureKeyPair.privateKey);
 
   SUBCASE("createVerificationKey()")
   {
@@ -348,11 +348,13 @@ TEST_CASE("Client unlock api")
 
     REQUIRE_CALL(cl.mconn,
                  emit("get unlock key", eq(nlohmann::json(request).dump())))
-        .LR_RETURN(WRAP_COTASK(
-            nlohmann::json(Unlock::FetchAnswer(aliceUserSecret, someVerificationKey))
-                .dump()));
+        .LR_RETURN(
+            WRAP_COTASK(nlohmann::json(Unlock::FetchAnswer(aliceUserSecret,
+                                                           someVerificationKey))
+                            .dump()));
     auto const fetchAnswer = AWAIT(cl.c->fetchVerificationKey(request));
-    auto const verificationKey = fetchAnswer.getVerificationKey(aliceUserSecret);
+    auto const verificationKey =
+        fetchAnswer.getVerificationKey(aliceUserSecret);
     FAST_REQUIRE_EQ(someVerificationKey, verificationKey);
   }
 }

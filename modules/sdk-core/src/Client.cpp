@@ -28,8 +28,8 @@
 #include <iterator>
 #include <utility>
 
-using Tanker::Trustchain::UserId;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::UserId;
 
 TLOG_CATEGORY(Client);
 
