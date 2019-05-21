@@ -216,7 +216,7 @@ TEST_CASE("Client getProvisionalIdentityKeys")
   result["EncryptionPrivateKey"] = enckp.privateKey;
 
   auto const json = nlohmann::json(
-      {{"email", "bob@tanker.io"}, {"verificationCode", "verification_code"}});
+      {{"email", "bob@tanker.io"}, {"verification_code", "verification_code"}});
 
   REQUIRE_CALL(cl.mconn, emit("get provisional identity", json.dump()))
       .RETURN(WRAP_COTASK(result.dump()));
