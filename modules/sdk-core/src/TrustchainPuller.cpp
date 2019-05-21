@@ -6,7 +6,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>

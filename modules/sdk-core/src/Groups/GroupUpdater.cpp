@@ -6,7 +6,7 @@
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 

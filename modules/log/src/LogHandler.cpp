@@ -1,5 +1,6 @@
+#include <Tanker/Log/LogHandler.hpp>
+
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/LogHandler.hpp>
 
 #include <fmt/core.h>
 

@@ -5,6 +5,8 @@
 
 #include <fmt/core.h>
 
+#include <cstdint>
+
 #define TLOG_CATEGORY(name) \
   static constexpr auto TANKER_LOG_CATEGORY TANKER_MAYBE_UNUSED = #name
 

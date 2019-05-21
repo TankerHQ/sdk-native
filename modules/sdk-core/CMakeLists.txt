@@ -113,8 +113,6 @@ add_library(tankercore STATIC
   include/Tanker/Groups/GroupUpdater.hpp
   include/Tanker/Groups/GroupAccessor.hpp
   include/Tanker/Groups/Manager.hpp
-  include/Tanker/Log.hpp
-  include/Tanker/LogHandler.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -176,7 +174,6 @@ add_library(tankercore STATIC
   src/ResourceKeyStore.cpp
   src/Block.cpp
   src/Entry.cpp
-  src/LogHandler.cpp
   src/Error.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
@@ -229,6 +226,7 @@ target_link_libraries(tankercore
   tankertrustchain
   tankercrypto
   tankerformat
+  tankerlog
   tankerconfig
   ttracer
   CONAN_PKG::Boost

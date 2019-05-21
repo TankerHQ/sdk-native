@@ -2,7 +2,7 @@
 
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <boost/algorithm/hex.hpp>
 #include <boost/filesystem/operations.hpp>

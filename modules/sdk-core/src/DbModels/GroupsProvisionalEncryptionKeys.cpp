@@ -1,6 +1,6 @@
 #include <Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp>
 
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cassert>
 

@@ -25,7 +25,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>

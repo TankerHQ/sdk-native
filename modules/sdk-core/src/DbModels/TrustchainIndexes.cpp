@@ -4,7 +4,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <sqlpp11/sqlpp11.h>

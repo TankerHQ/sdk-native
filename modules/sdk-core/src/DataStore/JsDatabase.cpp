@@ -3,7 +3,7 @@
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 

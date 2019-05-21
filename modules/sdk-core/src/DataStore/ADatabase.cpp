@@ -1,6 +1,6 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 TLOG_CATEGORY("ADatabase");
 

@@ -9,7 +9,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/ssl.hpp>
 
 #include <Helpers/UniquePath.hpp>

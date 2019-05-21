@@ -6,7 +6,7 @@
 #include <Tanker/DataStore/JsDatabase.hpp>
 #endif
 
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 

@@ -5,7 +5,7 @@
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Json.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>

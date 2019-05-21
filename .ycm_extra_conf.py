@@ -62,6 +62,7 @@ flags = [
  '-I./modules/trustchain/include',
  '-I./modules/format/include',
  '-I./modules/config/include',
+ '-I./modules/log/include',
 ]
 
 conan_flags = json.loads(open("conan_ycm_flags.json", "r").read())
