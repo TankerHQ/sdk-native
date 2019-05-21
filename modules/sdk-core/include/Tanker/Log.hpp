@@ -1,13 +1,9 @@
 #pragma once
-#include <fmt/core.h>
 
+#include <Tanker/Config/Config.hpp>
 #include <Tanker/LogHandler.hpp>
 
-#ifdef __GNUC__
-#define TANKER_MAYBE_UNUSED __attribute__((unused))
-#else
-#define TANKER_MAYBE_UNUSED
-#endif
+#include <fmt/core.h>
 
 #define TLOG_CATEGORY(name) \
   static constexpr auto TANKER_LOG_CATEGORY TANKER_MAYBE_UNUSED = #name

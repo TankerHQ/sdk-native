@@ -1,16 +1,12 @@
 #pragma once
 
+#include <Tanker/Config/Config.hpp>
+
 #include <fmt/core.h>
 
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-#ifdef __GNUC__
-#define TANKER_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
-#else
-#define TANKER_WARN_UNUSED_RESULT
-#endif
 
 namespace Tanker
 {

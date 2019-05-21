@@ -229,6 +229,7 @@ target_link_libraries(tankercore
   tankertrustchain
   tankercrypto
   tankerformat
+  tankerconfig
   ttracer
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent

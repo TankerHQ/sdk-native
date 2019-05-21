@@ -5,7 +5,7 @@ project(Config)
 add_library(tankerconfig INTERFACE)
 
 target_include_directories(tankerconfig
-  PUBLIC
+  INTERFACE
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
