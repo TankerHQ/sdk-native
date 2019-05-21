@@ -28,8 +28,8 @@
 #include <iterator>
 #include <utility>
 
-using Tanker::Trustchain::UserId;
 using Tanker::Trustchain::GroupId;
+using Tanker::Trustchain::UserId;
 
 TLOG_CATEGORY(Client);
 
@@ -214,9 +214,9 @@ tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
 Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
                                    VerificationCode const& verificationCode)
 {
-  auto const json = TC_AWAIT(emit(
-      "get provisional identity",
-      {{"email", provisonalIdentity}, {"verificationCode", verificationCode}}));
+  auto const json = TC_AWAIT(emit("get provisional identity",
+                                  {{"email", provisonalIdentity},
+                                   {"verification_code", verificationCode}}));
 
   if (json.empty())
     TC_RETURN(nonstd::nullopt);
