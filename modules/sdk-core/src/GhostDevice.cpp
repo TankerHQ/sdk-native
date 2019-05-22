@@ -1,3 +1,4 @@
+#include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
 
 #include <nlohmann/json.hpp>
@@ -6,24 +7,44 @@
 
 namespace Tanker
 {
+GhostDevice GhostDevice::create(VerificationKey const& key) try
+{
+  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(key))
+      .get<GhostDevice>();
+}
+catch (std::exception const& e)
+{
+  throw Error::InvalidVerificationKey(e.what());
+}
+
+GhostDevice GhostDevice::create(DeviceKeys const& keys)
+{
+  return GhostDevice{keys.signatureKeyPair.privateKey,
+                     keys.encryptionKeyPair.privateKey};
+}
+
+DeviceKeys GhostDevice::toDeviceKeys()
+{
+  return DeviceKeys::create(this->privateSignatureKey,
+                            this->privateEncryptionKey);
+}
+
 void from_json(nlohmann::json const& j, GhostDevice& d)
 {
-  j.at("deviceId").get_to(d.deviceId);
   j.at("privateSignatureKey").get_to(d.privateSignatureKey);
   j.at("privateEncryptionKey").get_to(d.privateEncryptionKey);
 }
 
 void to_json(nlohmann::json& j, GhostDevice const& d)
 {
-  j["deviceId"] = d.deviceId;
   j["privateSignatureKey"] = d.privateSignatureKey;
   j["privateEncryptionKey"] = d.privateEncryptionKey;
 }
 
 bool operator==(GhostDevice const& l, GhostDevice const& r)
 {
-  return std::tie(l.deviceId, l.privateSignatureKey, l.privateEncryptionKey) ==
-         std::tie(r.deviceId, r.privateSignatureKey, r.privateEncryptionKey);
+  return std::tie(l.privateSignatureKey, l.privateEncryptionKey) ==
+         std::tie(r.privateSignatureKey, r.privateEncryptionKey);
 }
 
 bool operator!=(GhostDevice const& l, GhostDevice const& r)

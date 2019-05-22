@@ -48,22 +48,11 @@ std::unique_ptr<Registration> generate(
   auto const hash = Serialization::deserialize<Block>(ghostDeviceBlock).hash();
   Trustchain::DeviceId deviceId{hash};
   auto const verificationKey = ghostDeviceToVerificationKey(
-      GhostDevice{deviceId,
-                  deviceKeys.signatureKeyPair.privateKey,
+      GhostDevice{deviceKeys.signatureKeyPair.privateKey,
                   deviceKeys.encryptionKeyPair.privateKey});
 
   return std::make_unique<Registration>(
       Registration{ghostDeviceBlock, verificationKey});
-}
-
-GhostDevice extract(VerificationKey const& verificationKey) try
-{
-  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
-      .get<GhostDevice>();
-}
-catch (std::exception const& e)
-{
-  throw Error::InvalidVerificationKey(e.what());
 }
 
 std::vector<uint8_t> createValidatedDevice(
@@ -79,13 +68,12 @@ std::vector<uint8_t> createValidatedDevice(
       encryptedUserKey.encryptedPrivateKey, ghostEncryptionKeyPair);
   return BlockGenerator(trustchainId,
                         ghostDevice.privateSignatureKey,
-                        ghostDevice.deviceId)
+                        encryptedUserKey.deviceId)
       .addDevice(
           Identity::makeDelegation(userId, ghostDevice.privateSignatureKey),
           deviceKeys.signatureKeyPair.publicKey,
           deviceKeys.encryptionKeyPair.publicKey,
-          Crypto::EncryptionKeyPair{encryptedUserKey.publicKey,
-                                    privateUserEncryptionKey});
+          Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
 }
 }
 }

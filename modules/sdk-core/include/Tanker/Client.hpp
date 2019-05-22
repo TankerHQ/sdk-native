@@ -76,13 +76,14 @@ public:
 
   tc::cotask<void> createVerificationKey(Unlock::Message const& request);
   tc::cotask<void> updateVerificationKey(Unlock::Message const& request);
-  tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(Unlock::Request const& req);
+  tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(
+      Unlock::Request const& req);
 
   tc::cotask<std::string> requestAuthChallenge();
   tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
-      Trustchain::DeviceId const& deviceId);
+      Crypto::PublicSignatureKey const& devicePublicUserKey);
   tc::cotask<void> subscribeToCreation(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& publicKey,

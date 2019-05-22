@@ -124,10 +124,11 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
 tc::cotask<void> Opener::unlockCurrentDevice(
     VerificationKey const& verificationKey)
 {
-  auto const ghostDevice = Unlock::extract(verificationKey);
 
-  auto const encryptedUserKey = TC_AWAIT(
-      _client->getLastUserKey(_info.trustchainId, ghostDevice.deviceId));
+  auto const ghostDevice = GhostDevice::create(verificationKey);
+  auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
+      _info.trustchainId,
+      Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey).publicKey));
 
   auto const block = Unlock::createValidatedDevice(_info.trustchainId,
                                                    _identity->delegation.userId,

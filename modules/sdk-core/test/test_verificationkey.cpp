@@ -63,11 +63,10 @@ void checkUnlockMessage(Trustchain::TrustchainId const& tid,
 TEST_CASE("it can convert a ghost device to unlock key")
 {
   auto const ghostDevice = GhostDevice{
-      make<Trustchain::DeviceId>("devid"),
       make<Crypto::PrivateSignatureKey>("sigkey"),
       make<Crypto::PrivateEncryptionKey>("enckey"),
   };
-  auto const gotGhostDevice = Unlock::extract(
+  auto const gotGhostDevice = GhostDevice::create(
       VerificationKey{"eyJkZXZpY2VJZCI6IlpHVjJhV1FBQUFBQUFBQUFBQUFBQUF"
                       "BQUFBQUFBQUFBQUFBQUFBQU"
                       "FBQUE9IiwicHJpdmF0ZVNpZ25hdHVyZUtleSI6ImMybG5hM"
@@ -110,7 +109,7 @@ TEST_CASE("verificationKey")
 {
   SUBCASE("extract")
   {
-    REQUIRE_THROWS_AS(Unlock::extract(VerificationKey{"plop"}),
+    REQUIRE_THROWS_AS(GhostDevice::create(VerificationKey{"plop"}),
                       Error::InvalidVerificationKey);
   }
 
@@ -142,8 +141,8 @@ TEST_CASE("verificationKey")
   FAST_REQUIRE_UNARY_FALSE(reg->verificationKey.empty());
   SUBCASE("generate")
   {
-    REQUIRE_NOTHROW(Unlock::extract(reg->verificationKey));
-    auto const gh = Unlock::extract(reg->verificationKey);
+    REQUIRE_NOTHROW(GhostDevice::create(reg->verificationKey));
+    auto const gh = GhostDevice::create(reg->verificationKey);
     FAST_CHECK_EQ(gh.privateEncryptionKey,
                   ghostDeviceKeys.encryptionKeyPair.privateKey);
     FAST_CHECK_EQ(gh.privateSignatureKey,
@@ -151,7 +150,6 @@ TEST_CASE("verificationKey")
     auto ghostDeviceEntry = toVerifiedEntry(
         blockToServerEntry(Serialization::deserialize<Block>(reg->block)));
     auto const dc = ghostDeviceEntry.action.get<DeviceCreation>();
-    FAST_CHECK_EQ(gh.deviceId.base(), ghostDeviceEntry.hash.base());
     FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
                   dc.publicEncryptionKey());
     FAST_CHECK_EQ(ghostDeviceKeys.signatureKeyPair.publicKey,
@@ -178,13 +176,14 @@ TEST_CASE("verificationKey")
 
   SUBCASE("createValidatedDevice")
   {
-    auto const gh = Unlock::extract(reg->verificationKey);
+    auto const gh = GhostDevice::create(reg->verificationKey);
     auto const encryptedPrivateKey =
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
             aliceKeys.keyPair.privateKey,
             ghostDeviceKeys.encryptionKeyPair.publicKey);
 
-    EncryptedUserKey ec{aliceKeys.keyPair.publicKey, encryptedPrivateKey};
+    EncryptedUserKey ec{make<Trustchain::DeviceId>("devid"),
+                        encryptedPrivateKey};
 
     auto newDeviceKeys = DeviceKeys::create();
     auto const validatedDevice = Unlock::createValidatedDevice(
@@ -206,7 +205,6 @@ TEST_CASE("verificationKey")
     REQUIRE_EQ(dc3.publicSignatureKey(),
                newDeviceKeys.signatureKeyPair.publicKey);
     REQUIRE_EQ(alice.userId, dc3.userId());
-    REQUIRE_EQ(gh.deviceId.base(), validatedDeviceEntry.author.base());
     REQUIRE_EQ(false, dc3.isGhostDevice());
   }
 }

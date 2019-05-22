@@ -27,8 +27,6 @@ std::unique_ptr<Registration> generate(
     BlockGenerator const& blockGen,
     DeviceKeys const& deviceKeys = DeviceKeys::create());
 
-GhostDevice extract(VerificationKey const& verificationKey);
-
 std::vector<uint8_t> createValidatedDevice(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,

@@ -141,20 +141,21 @@ tc::cotask<Unlock::Methods> Client::authenticateDevice(
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
     Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId)
+    Crypto::PublicSignatureKey const& devicePublicSignatureKey)
 {
   auto const request = nlohmann::json{
       {"trustchain_id", trustchainId},
-      {"device_id", deviceId},
+      {"device_public_signature_key", devicePublicSignatureKey},
   };
 
   auto const reply = TC_AWAIT(emit("last user key", request));
 
-  TC_RETURN((EncryptedUserKey{
-      reply.at("public_user_key").get<Crypto::PublicEncryptionKey>(),
-      reply.at("encrypted_private_user_key")
-          .get<Crypto::SealedPrivateEncryptionKey>(),
-  }));
+  EncryptedUserKey encryptedUserKey{};
+  reply.at("encrypted_private_user_key")
+      .get_to(encryptedUserKey.encryptedPrivateKey);
+  reply.at("device_id").get_to(encryptedUserKey.deviceId);
+
+  TC_RETURN(encryptedUserKey);
 }
 
 tc::cotask<void> Client::subscribeToCreation(

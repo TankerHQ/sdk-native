@@ -2,7 +2,9 @@
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -10,9 +12,11 @@ namespace Tanker
 {
 struct GhostDevice
 {
-  Trustchain::DeviceId deviceId;
   Crypto::PrivateSignatureKey privateSignatureKey;
   Crypto::PrivateEncryptionKey privateEncryptionKey;
+  static GhostDevice create(VerificationKey const& key);
+  static GhostDevice create(DeviceKeys const&);
+  DeviceKeys toDeviceKeys();
 };
 
 void from_json(nlohmann::json const& j, GhostDevice& d);

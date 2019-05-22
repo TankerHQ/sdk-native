@@ -1,13 +1,13 @@
 #pragma once
 
-#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 namespace Tanker
 {
 struct EncryptedUserKey
 {
-  Crypto::PublicEncryptionKey publicKey;
+  Trustchain::DeviceId deviceId;
   Crypto::SealedPrivateEncryptionKey encryptedPrivateKey;
 };
 }

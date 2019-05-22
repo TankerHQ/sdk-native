@@ -12,14 +12,12 @@ using namespace Tanker;
 TEST_CASE("it can unserialize a GhostDevice")
 {
   GhostDevice gd{
-      make<Trustchain::DeviceId>("deviddeviddeviddeviddeviddevidde"),
       make<Crypto::PrivateSignatureKey>(
           "sig  keysig  keysig  keysig  keysig  keysig  keysig  keysig  key"),
       make<Crypto::PrivateEncryptionKey>("enc  keyenc  keyenc  keyenc  key"),
   };
 
   auto const jsonGd = R"({
-    "deviceId":"ZGV2aWRkZXZpZGRldmlkZGV2aWRkZXZpZGRldmlkZGU=",
     "privateSignatureKey":"c2lnICBrZXlzaWcgIGtleXNpZyAga2V5c2lnICBrZXlzaWcgIGtleXNpZyAga2V5c2lnICBrZXlzaWcgIGtleQ==",
     "privateEncryptionKey":"ZW5jICBrZXllbmMgIGtleWVuYyAga2V5ZW5jICBrZXk="
   })";
@@ -30,7 +28,6 @@ TEST_CASE("it can unserialize a GhostDevice")
 TEST_CASE("it can serialize and deserialize a GhostDevice")
 {
   GhostDevice gd{
-      make<Trustchain::DeviceId>("devid"),
       make<Crypto::PrivateSignatureKey>("sig key"),
       make<Crypto::PrivateEncryptionKey>("enc key"),
   };
