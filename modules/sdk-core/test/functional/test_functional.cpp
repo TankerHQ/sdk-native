@@ -87,8 +87,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  TC_AWAIT(core->signIn(alice.identity));
-  REQUIRE(core->status() == Status::Ready);
+  CHECK_EQ(TC_AWAIT(core->start(alice.identity)), Status::Ready);
+  CHECK_EQ(core->status(), Status::Ready);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -100,7 +100,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Test::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->signIn(alice.identity)));
+  REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
@@ -111,31 +111,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   auto session = TC_AWAIT(device1.open());
   auto device2 = alice.makeDevice(Test::DeviceType::New);
   REQUIRE_NOTHROW(TC_AWAIT(device2.attachDevice(*session)));
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it fails to signUp if the user already exists")
-{
-  auto alice = trustchain.makeUser(Test::UserType::New);
-  auto device1 = alice.makeDevice();
-  {
-    auto session = TC_AWAIT(device1.open(Test::SessionType::New));
-  }
-  auto session = device1.createCore(Test::SessionType::New);
-  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity)),
-                    Error::IdentityAlreadyRegistered);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it fails to open if no sign in options are provided")
-{
-  auto alice = trustchain.makeUser();
-  auto device1 = alice.makeDevice();
-  auto device2 = alice.makeDevice(Test::DeviceType::New);
-  auto session = TC_AWAIT(device1.open());
-  auto tanker2 = device2.createCore(Test::SessionType::New);
-  REQUIRE_EQ(TC_AWAIT(tanker2->signIn(alice.identity)),
-             OpenResult::IdentityVerificationNeeded);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
@@ -352,8 +327,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   REQUIRE(aliceSession->status() == Status::Stopped);
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
-           OpenResult::IdentityVerificationNeeded);
+  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
+           Status::IdentityVerificationNeeded);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -375,12 +350,14 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   tc::promise<void> prom;
   aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceSession->signIn(aliceDevice.identity())),
+  CHECK_THROWS_AS(TC_AWAIT(aliceSession->start(aliceDevice.identity())),
                   Error::OperationCanceled);
 
   TC_AWAIT(waitForPromise(prom));
 }
 
+// FIXME: Bad tests Bad! You either test one path or the other, but do not leave
+// it to a race condition!
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
 {
   auto alice = trustchain.makeUser(Test::UserType::New);
@@ -396,9 +373,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
   try
   {
     auto const aliceSession = aliceDevice.createCore(Test::SessionType::New);
-    auto const result = TC_AWAIT(aliceSession->signIn(aliceDevice.identity()));
+    auto const status = TC_AWAIT(aliceSession->start(aliceDevice.identity()));
     // the revocation was handled before the session was closed
-    CHECK(result == OpenResult::IdentityVerificationNeeded);
+    CHECK(status == Status::IdentityVerificationNeeded);
   }
   catch (Error::OperationCanceled const&)
   {
@@ -466,8 +443,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   {
     auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
 
-    CHECK_EQ(TC_AWAIT(core->signIn(aliceSecondDevice.identity())),
-             OpenResult::IdentityVerificationNeeded);
+    CHECK_EQ(TC_AWAIT(core->start(aliceSecondDevice.identity())),
+             Status::IdentityVerificationNeeded);
   }
 
   tc::promise<void> prom2;
@@ -481,6 +458,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
-           OpenResult::IdentityVerificationNeeded);
+  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
+           Status::IdentityVerificationNeeded);
 }

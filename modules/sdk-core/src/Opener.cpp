@@ -12,6 +12,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -48,12 +49,14 @@ Status Opener::status() const
   return _status;
 }
 
-tc::cotask<Opener::OpenResult> Opener::open(
-    std::string const& b64Identity,
-    nonstd::optional<Unlock::Verification> const& verification,
-    OpenMode mode)
+tc::cotask<Status> Opener::open(std::string const& b64Identity)
 {
-  SCOPE_TIMER("opener_signup", Proc);
+  SCOPE_TIMER("opener_open", Proc);
+  if (_identity.has_value())
+    throw Error::formatEx<Error::InvalidTankerStatus>(
+        "start() has already been called");
+
+  // FIXME: check for bad identity format
   _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
   if (_identity->trustchainId != _info.trustchainId)
@@ -78,19 +81,13 @@ tc::cotask<Opener::OpenResult> Opener::open(
       TC_AWAIT(_client->userStatus(_info.trustchainId,
                                    _identity->delegation.userId,
                                    _keyStore->signatureKeyPair().publicKey));
-  if (userStatusResult.userExists && mode == OpenMode::SignUp)
-    throw Error::IdentityAlreadyRegistered(
-        "signUp failed: user already exists");
   if (userStatusResult.deviceExists)
-    TC_RETURN(TC_AWAIT(openDevice()));
+    _status = Status::Ready;
   else if (userStatusResult.userExists)
-    TC_RETURN(TC_AWAIT(createDevice(verification)));
-  else if (mode == OpenMode::SignUp)
-    TC_RETURN(TC_AWAIT(createUser()));
-  else if (mode == OpenMode::SignIn)
-    TC_RETURN(StatusIdentityNotRegistered{});
-  throw std::runtime_error(
-      "assertion error: invalid open mode, unreachable code");
+    _status = Status::IdentityVerificationNeeded;
+  else
+    _status = Status::IdentityRegistrationNeeded;
+  TC_RETURN(status());
 }
 
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
@@ -124,8 +121,11 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
 tc::cotask<void> Opener::unlockCurrentDevice(
     VerificationKey const& verificationKey)
 {
+  TINFO("unlockCurrentDevice");
+  FUNC_TIMER(Proc);
 
   auto const ghostDevice = GhostDevice::create(verificationKey);
+  // FIXME: Handle this error (invalid verification key)
   auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
       _info.trustchainId,
       Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey).publicKey));
@@ -148,50 +148,84 @@ Session::Config Opener::makeConfig()
           std::move(_client)};
 }
 
-tc::cotask<Opener::OpenResult> Opener::createUser()
+tc::cotask<Session::Config> Opener::createUser(
+    Unlock::Verification const& verification)
 {
   TINFO("createUser");
   FUNC_TIMER(Proc);
+  if (status() != Status::IdentityRegistrationNeeded)
+    throw Error::formatEx<Error::InvalidTankerStatus>(
+        "invalid status {}, should be {}",
+        status(),
+        Status::IdentityRegistrationNeeded);
 
-  auto const block =
-      BlockGenerator(
-          _info.trustchainId, _keyStore->signatureKeyPair().privateKey, {})
+  auto const verificationKey = mpark::get_if<VerificationKey>(&verification);
+  auto const ghostDeviceKeys =
+      verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
+                        DeviceKeys::create();
+
+  auto const userCreation =
+      BlockGenerator(_info.trustchainId, {}, {})
           .addUser(_identity->delegation,
-                   _keyStore->signatureKeyPair().publicKey,
-                   _keyStore->encryptionKeyPair().publicKey,
+                   ghostDeviceKeys.signatureKeyPair.publicKey,
+                   ghostDeviceKeys.encryptionKeyPair.publicKey,
                    Crypto::makeEncryptionKeyPair());
+  auto const entry = Serialization::deserialize<Block>(userCreation);
+  auto const action =
+      Serialization::deserialize<Trustchain::Actions::DeviceCreation::v3>(
+          entry.payload);
 
-  TC_AWAIT(_client->pushBlock(block));
+  auto const firstDevice = Unlock::createValidatedDevice(
+      _info.trustchainId,
+      _identity->delegation.userId,
+      GhostDevice::create(ghostDeviceKeys),
+      _keyStore->deviceKeys(),
+      EncryptedUserKey{Trustchain::DeviceId{entry.hash()},
+                       action.sealedPrivateUserEncryptionKey()});
+
+  TC_AWAIT(_client->pushBlock(userCreation));
+  TC_AWAIT(_client->pushBlock(firstDevice));
   TC_RETURN(makeConfig());
 }
 
-tc::cotask<Opener::OpenResult> Opener::createDevice(
-    nonstd::optional<Unlock::Verification> const& verification)
+tc::cotask<VerificationKey> Opener::getVerificationKey(
+    Unlock::Verification const& verification)
+{
+  if (auto const verificationKey =
+          mpark::get_if<VerificationKey>(&verification))
+    TC_RETURN(*verificationKey);
+  else if (auto const emailVerification =
+               mpark::get_if<Unlock::EmailVerification>(&verification))
+    TC_RETURN(
+        TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode)));
+  else if (auto const password = mpark::get_if<Password>(&verification))
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
+  throw std::runtime_error(
+      "assertion error: invalid Verification, unreachable code");
+}
+
+tc::cotask<Session::Config> Opener::createDevice(
+    Unlock::Verification const& verification)
 {
   TINFO("createDevice");
   FUNC_TIMER(Proc);
+  if (status() != Status::IdentityVerificationNeeded)
+    throw Error::formatEx<Error::InvalidTankerStatus>(
+        "invalid status {}, should be {}",
+        status(),
+        Status::IdentityVerificationNeeded);
 
-  if (!verification)
-    TC_RETURN(StatusIdentityVerificationNeeded{});
-  else if (auto const verificationKey =
-               mpark::get_if<VerificationKey>(&*verification))
-    TC_AWAIT(unlockCurrentDevice(*verificationKey));
-  else if (auto const emailVerification =
-               mpark::get_if<Unlock::EmailVerification>(&*verification))
-    TC_AWAIT(unlockCurrentDevice(
-        TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode))));
-  else if (auto const password = mpark::get_if<Password>(&*verification))
-    TC_AWAIT(unlockCurrentDevice(TC_AWAIT(fetchVerificationKey(*password))));
-  else
-    throw std::runtime_error(
-        "assertion error: invalid open mode, unreachable code");
-
+  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
+  TC_AWAIT(unlockCurrentDevice(verificationKey));
   TC_RETURN(makeConfig());
 }
 
-tc::cotask<Opener::OpenResult> Opener::openDevice()
+tc::cotask<Session::Config> Opener::openDevice()
 {
   TINFO("openDevice");
+  if (status() != Status::Ready)
+    throw Error::formatEx<Error::InvalidTankerStatus>(
+        "invalid status {}, should be {}", status(), Status::Ready);
   TC_RETURN(makeConfig());
 }
 }

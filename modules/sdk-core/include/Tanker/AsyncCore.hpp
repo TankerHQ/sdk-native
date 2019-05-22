@@ -66,14 +66,13 @@ public:
 
   expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
 
-  tc::shared_future<void> signUp(std::string const& identity,
-                                 AuthenticationMethods const& authMethods = {});
-  tc::shared_future<OpenResult> signIn(
-      std::string const& identity,
-      nonstd::optional<Unlock::Verification> const& verification =
-          nonstd::nullopt);
-
+  tc::shared_future<Status> start(std::string const& identity);
   tc::shared_future<void> stop();
+
+  tc::shared_future<void> registerIdentity(
+      Unlock::Verification const& verification);
+  tc::shared_future<void> verifyIdentity(
+      Unlock::Verification const& verification);
 
   Tanker::Status status() const;
 

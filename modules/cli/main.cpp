@@ -144,7 +144,12 @@ AsyncCorePtr signUp(MainArgs const& args)
     authenticationMethods.password =
         Password{args.at(UnlockPasswordOpt).asString()};
 
-  core->signUp(identity, authenticationMethods).get();
+  auto const status = core->start(identity).get();
+  if (status != Tanker::Status::Ready && !args.at(UnlockPasswordOpt))
+    throw std::runtime_error("Please provide a password");
+  core->registerIdentity(
+          Tanker::Password{args.at(UnlockPasswordOpt).asString()})
+      .get();
 
   return core;
 }
@@ -170,15 +175,12 @@ AsyncCorePtr signIn(MainArgs const& args)
   else if (args.at(UnlockPasswordOpt))
     verification = Password{args.at(UnlockPasswordOpt).asString()};
 
-  auto const status = core->signIn(identity, verification).get();
-  if (status != OpenResult::Ok)
-  {
-    std::cout << "Failed to sign in: "
-              << (status == OpenResult::IdentityNotRegistered ?
-                      "identity not registered" :
-                      "identity verification needed")
-              << std::endl;
-  }
+  auto const status = core->start(identity).get();
+  if (status != Tanker::Status::IdentityVerificationNeeded)
+    throw std::runtime_error(
+        "Failed to sign in: "
+        "identity not registered");
+  core->verifyIdentity(verification).get();
 
   return core;
 }

@@ -74,72 +74,55 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   throw std::runtime_error("unreachable code");
 }
 
-tc::cotask<void> Core::signUp(std::string const& identity,
-                              AuthenticationMethods const& authMethods)
-{
-  SCOPE_TIMER("core_signup", Proc);
-  TC_AWAIT(resetOnFailure([&]() -> tc::cotask<tc::tvoid> {
-    TC_AWAIT(signUpImpl(identity, authMethods));
-    TC_RETURN(tc::tvoid{});
-  }));
-}
-
-tc::cotask<void> Core::signUpImpl(std::string const& identity,
-                                  AuthenticationMethods const& authMethods)
+tc::cotask<Status> Core::startImpl(std::string const& identity)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
-    throw INVALID_STATUS(signUp);
-  auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
-  assert(mpark::holds_alternative<Session::Config>(openResult));
-  initSession(std::move(openResult));
-  auto const& session = mpark::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
-  if (authMethods.password || authMethods.email)
+    throw INVALID_STATUS(start);
+
+  auto status = TC_AWAIT(pcore->open(identity));
+  if (status == Status::Ready)
   {
-    Unlock::RegistrationOptions options{};
-    if (authMethods.password)
-      options.set(*authMethods.password);
-    if (authMethods.email)
-      options.set(*authMethods.email);
-    TC_AWAIT(session->registerUnlock(options));
+    initSession(TC_AWAIT(pcore->openDevice()));
+    auto const& session = mpark::get<SessionType>(_state);
+    TC_AWAIT(session->startConnection());
+    TC_RETURN(Status::Ready);
   }
+  TC_RETURN(status);
 }
 
-tc::cotask<OpenResult> Core::signIn(
-    std::string const& identity,
-    nonstd::optional<Unlock::Verification> const& verification)
+tc::cotask<Status> Core::start(std::string const& identity)
 {
-  SCOPE_TIMER("core_signin", Proc);
-  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<OpenResult> {
-    TC_RETURN(TC_AWAIT(signInImpl(identity, verification)));
+  SCOPE_TIMER("core_start", Proc);
+  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
+    TC_RETURN(TC_AWAIT(startImpl(identity)));
   })));
 }
 
-tc::cotask<OpenResult> Core::signInImpl(
-    std::string const& identity,
-    nonstd::optional<Unlock::Verification> const& verification)
+tc::cotask<void> Core::registerIdentity(
+    Unlock::Verification const& verification)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
-    throw INVALID_STATUS(signIn);
-  auto openResult =
-      TC_AWAIT(pcore->open(identity, verification, OpenMode::SignIn));
-  if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(openResult))
-  {
-    reset();
-    TC_RETURN(OpenResult::IdentityNotRegistered);
-  }
-  else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
-               openResult))
-  {
-    reset();
-    TC_RETURN(OpenResult::IdentityVerificationNeeded);
-  }
+    throw INVALID_STATUS(start);
+
+  auto openResult = TC_AWAIT(pcore->createUser(verification));
   initSession(std::move(openResult));
   auto const& session = mpark::get<SessionType>(_state);
   TC_AWAIT(session->startConnection());
-  TC_RETURN(OpenResult::Ok);
+}
+
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+{
+  SCOPE_TIMER("verify_identity", Proc);
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(verifyIdentity);
+
+  auto openResult = TC_AWAIT(pcore->createDevice(verification));
+  initSession(std::move(openResult));
+  auto const& session = mpark::get<SessionType>(_state);
+  TC_AWAIT(session->startConnection());
 }
 
 void Core::stop()
@@ -148,10 +131,9 @@ void Core::stop()
   sessionClosed();
 }
 
-void Core::initSession(Opener::OpenResult&& openResult)
+void Core::initSession(Session::Config config)
 {
-  _state.emplace<SessionType>(std::make_unique<Session>(
-      mpark::get<Session::Config>(std::move(openResult))));
+  _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
   auto const& session = mpark::get<SessionType>(_state);
   session->deviceRevoked.connect(deviceRevoked);
   session->gotDeviceId.connect(

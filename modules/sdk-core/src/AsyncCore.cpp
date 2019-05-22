@@ -91,23 +91,31 @@ expected<void> AsyncCore::disconnectEvent(
   return tc::make_ready_future();
 }
 
-tc::shared_future<void> AsyncCore::signUp(
-    std::string const& identity, AuthenticationMethods const& authMethods)
+tc::shared_future<Status> AsyncCore::start(std::string const& identity)
 {
   return _taskCanceler.run([&] {
-    return tc::async_resumable([=]() -> tc::cotask<void> {
-      TC_AWAIT(this->_core.signUp(identity, authMethods));
+    return tc::async_resumable([=]() -> tc::cotask<Status> {
+      TC_RETURN(TC_AWAIT(this->_core.start(identity)));
     });
   });
 }
 
-tc::shared_future<OpenResult> AsyncCore::signIn(
-    std::string const& identity,
-    nonstd::optional<Unlock::Verification> const& verification)
+tc::shared_future<void> AsyncCore::registerIdentity(
+    Unlock::Verification const& verification)
 {
   return _taskCanceler.run([&] {
-    return tc::async_resumable([=]() -> tc::cotask<OpenResult> {
-      TC_RETURN(TC_AWAIT(this->_core.signIn(identity, verification)));
+    return tc::async_resumable([=]() -> tc::cotask<void> {
+      this->_core.registerIdentity(verification);
+    });
+  });
+}
+
+tc::shared_future<void> AsyncCore::verifyIdentity(
+    Unlock::Verification const& verification)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<void> {
+      this->_core.verifyIdentity(verification);
     });
   });
 }

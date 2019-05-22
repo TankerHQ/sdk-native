@@ -15,15 +15,6 @@ TEST_SUITE("Unlock")
     auto device1 = alice.makeDevice();
     auto core1 = TC_AWAIT(device1.open());
 
-    SUBCASE("It can test if unlock is set up")
-    {
-      CHECK_UNARY_FALSE(TC_AWAIT(core1->isUnlockAlreadySetUp()));
-      REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(
-          Unlock::CreationOptions{}.set(Password{"my password"}))));
-      TC_AWAIT(core1->syncTrustchain());
-      CHECK_UNARY(TC_AWAIT(core1->isUnlockAlreadySetUp()));
-    }
-
     SUBCASE("It can test if some unlock method are registered")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerUnlock(

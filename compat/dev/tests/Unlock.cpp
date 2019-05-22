@@ -18,8 +18,8 @@ struct UnlockCompat : Tanker::Compat::Command
   {
     auto const alice = trustchain.makeUser();
     auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
-    Tanker::AuthenticationMethods methods{Tanker::Password{"my password"}};
-    aliceCore->signUp(alice.identity, methods).get();
+    aliceCore->start(alice.identity).get();
+    aliceCore->registerIdentity(Tanker::Password{"my password"}).get();
     Tanker::saveJson(statePath,
                      {{"alice", alice}, {"password", "my password"}});
   }
@@ -35,8 +35,8 @@ struct UnlockCompat : Tanker::Compat::Command
     boost::filesystem::create_directory(subDirForDevice);
     auto aliceCore =
         createCore(trustchain.url, trustchain.id, subDirForDevice.string());
-    aliceCore->signIn(alice.identity, Tanker::Unlock::Verification{password})
-        .get();
+    aliceCore->start(alice.identity).get();
+    aliceCore->verifyIdentity(Tanker::Unlock::Verification{password}).get();
     fmt::print("is open!\n");
   }
 };

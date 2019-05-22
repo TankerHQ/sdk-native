@@ -95,16 +95,11 @@ tc::cotask<AsyncCorePtr> Device::open(SessionType type)
   if (tanker->status() == Status::Ready)
     TC_RETURN(std::move(tanker));
 
-  auto const openResult = TC_AWAIT(tanker->signIn(_identity));
-  if (openResult == OpenResult::IdentityNotRegistered)
-    TC_AWAIT(tanker->signUp(_identity));
-  else if (openResult == OpenResult::IdentityVerificationNeeded)
-  {
-    auto const openResult2 = TC_AWAIT(tanker->signIn(
-        _identity, Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
-    if (openResult2 != OpenResult::Ok)
-      throw std::runtime_error("could not open functional test session");
-  }
+  auto const status = TC_AWAIT(tanker->start(_identity));
+  if (status == Status::IdentityRegistrationNeeded)
+    TC_AWAIT(tanker->registerIdentity(STRONG_PASSWORD_DO_NOT_LEAK));
+  else if (status == Status::IdentityVerificationNeeded)
+    TC_AWAIT(tanker->verifyIdentity(STRONG_PASSWORD_DO_NOT_LEAK));
   TC_RETURN(std::move(tanker));
 }
 

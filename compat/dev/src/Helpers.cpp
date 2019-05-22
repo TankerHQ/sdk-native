@@ -2,6 +2,7 @@
 
 #include <Helpers/Buffers.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
+#include <Tanker/Types/Password.hpp>
 #include <Tanker/Version.hpp>
 
 using Tanker::Test::TrustchainFactory;
@@ -35,7 +36,8 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
 {
   auto user = trustchain.makeUser();
   auto core = createCore(trustchain.url, trustchain.id, tankerPath);
-  core->signUp(user.identity).get();
+  core->start(user.identity).get();
+  core->registerIdentity(Tanker::Password{"my password"}).get();
   return {std::move(core), std::move(user)};
 }
 
@@ -65,7 +67,7 @@ CorePtr signInUser(std::string const& identity,
                    std::string const& tankerPath)
 {
   auto core = createCore(trustchain.url, trustchain.id, tankerPath);
-  core->signIn(identity).get();
+  core->start(identity).get();
   return core;
 }
 

@@ -35,28 +35,16 @@ struct AuthenticationMethods
   nonstd::optional<Email> email;
 };
 
-enum OpenResult
-{
-  Ok,
-  IdentityNotRegistered,
-  IdentityVerificationNeeded,
-
-  Last,
-};
-
 class Core
 {
 public:
   Core(std::string url, SdkInfo infos, std::string writablePath);
   Tanker::Status status() const;
 
-  tc::cotask<void> signUp(std::string const& identity,
-                          AuthenticationMethods const& authMethods);
+  tc::cotask<Status> start(std::string const& identity);
 
-  tc::cotask<OpenResult> signIn(
-      std::string const& identity,
-      nonstd::optional<Unlock::Verification> const& verification);
-
+  tc::cotask<void> registerIdentity(Unlock::Verification const& verification);
+  tc::cotask<void> verifyIdentity(Unlock::Verification const& verification);
   void stop();
 
   tc::cotask<void> encrypt(
@@ -116,15 +104,11 @@ private:
   Trustchain::DeviceId _deviceId{};
 
   void reset();
-  void initSession(Opener::OpenResult&& openResult);
+  void initSession(Session::Config openResult);
 
   template <typename F>
   decltype(std::declval<F>()()) resetOnFailure(F&& f);
 
-  tc::cotask<void> signUpImpl(std::string const& identity,
-                              AuthenticationMethods const& authMethods);
-  tc::cotask<OpenResult> signInImpl(
-      std::string const& identity,
-      nonstd::optional<Unlock::Verification> const& verification);
+  tc::cotask<Status> startImpl(std::string const& identity);
 };
 }

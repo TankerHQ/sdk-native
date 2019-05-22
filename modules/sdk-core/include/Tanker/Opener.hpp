@@ -25,34 +25,19 @@ namespace Tanker
 {
 class DeviceKeyStore;
 
-enum class OpenMode
-{
-  SignUp,
-  SignIn,
-};
-
 class Opener
 {
 public:
-  struct StatusIdentityNotRegistered
-  {
-  };
-  struct StatusIdentityVerificationNeeded
-  {
-  };
-
-  using OpenResult = mpark::variant<Session::Config,
-                                    StatusIdentityNotRegistered,
-                                    StatusIdentityVerificationNeeded>;
-
   Opener(std::string url, SdkInfo info, std::string writablePath);
 
   Status status() const;
 
-  tc::cotask<OpenResult> open(
-      std::string const& b64Identity,
-      nonstd::optional<Unlock::Verification> const& verification,
-      OpenMode mode);
+  tc::cotask<Status> open(std::string const& b64Identity);
+  tc::cotask<Session::Config> openDevice();
+  tc::cotask<Session::Config> createUser(
+      Unlock::Verification const& verification);
+  tc::cotask<Session::Config> createDevice(
+      Unlock::Verification const& verification);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::DeviceLocker const& pass);
@@ -70,10 +55,7 @@ private:
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   Status _status = Status::Stopped;
 
+  tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
   Session::Config makeConfig();
-  tc::cotask<OpenResult> createUser();
-  tc::cotask<OpenResult> createDevice(
-      nonstd::optional<Unlock::Verification> const& verification);
-  tc::cotask<OpenResult> openDevice();
 };
 }
