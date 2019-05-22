@@ -1,14 +1,16 @@
 #pragma once
 
-#include <cassert>
-#include <cstdint>
-#include <type_traits>
-#include <vector>
-
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Serialization/Errors/Errc.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/from_serialized.hpp>
 #include <Tanker/Serialization/serialized_size.hpp>
 #include <Tanker/Serialization/to_serialized.hpp>
+
+#include <cassert>
+#include <cstdint>
+#include <type_traits>
+#include <vector>
 
 namespace Tanker
 {
@@ -53,7 +55,10 @@ void deserialize_to(gsl::span<std::uint8_t const> serialized, T& val)
 
   deserialize_to(ss, val);
   if (!ss.eof())
-    throw std::runtime_error("deserialize: some input left");
+  {
+    throw Errors::formatEx(
+        Errc::TrailingInput, "{} trailing bytes", ss.remaining_size());
+  }
 }
 
 template <typename T>
