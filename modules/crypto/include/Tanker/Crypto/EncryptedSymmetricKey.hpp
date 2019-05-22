@@ -1,10 +1,14 @@
 #pragma once
 
 #include <Tanker/Crypto/BasicCryptographicType.hpp>
+#include <Tanker/Serialization/SerializedSource.hpp>
+#include <Tanker/Serialization/Varint.hpp>
 
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 #include <sodium/crypto_box.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <tuple>
 #include <type_traits>
 
@@ -25,6 +29,15 @@ class EncryptedSymmetricKey
 {
   using base_t::base_t;
 };
+
+std::uint8_t* to_serialized(std::uint8_t*, EncryptedSymmetricKey const&);
+void from_serialized(Serialization::SerializedSource&, EncryptedSymmetricKey&);
+
+constexpr std::size_t serialized_size(EncryptedSymmetricKey const&)
+{
+  return Serialization::varint_size(EncryptedSymmetricKey::arraySize) +
+         EncryptedSymmetricKey::arraySize;
+}
 }
 }
 
