@@ -91,14 +91,12 @@ public:
   tc::cotask<void> updateUnlock(Unlock::Verification const& method);
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
+  std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
   tc::cotask<bool> isUnlockAlreadySetUp() const;
-  Unlock::Methods registeredUnlockMethods() const;
   tc::cotask<void> claimProvisionalIdentity(
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);
-  bool hasRegisteredUnlockMethods() const;
-  bool hasRegisteredUnlockMethod(Unlock::Method) const;
 
   tc::cotask<void> syncTrustchain();
 
@@ -146,7 +144,7 @@ private:
   UserAccessor _userAccessor;
   GroupAccessor _groupAcessor;
   BlockGenerator _blockGenerator;
-  Unlock::Methods _unlockMethods;
+  std::map<Unlock::Method, Unlock::VerificationMethod> _verificationMethods;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;

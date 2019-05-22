@@ -43,9 +43,9 @@ Unlock::Verification cverificationToVerification(
         "Unsupported tanker_verification_t struct version");
 
   Unlock::Verification verification;
-  switch (cverification->method)
+  switch (cverification->verification_method_type)
   {
-  case TANKER_UNLOCK_METHOD_EMAIL:
+  case TANKER_VERIFICATION_METHOD_EMAIL:
   {
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
@@ -56,14 +56,14 @@ Unlock::Verification cverificationToVerification(
         VerificationCode{cverification->email_verification.verification_code}};
     break;
   }
-  case TANKER_UNLOCK_METHOD_PASSWORD:
+  case TANKER_VERIFICATION_METHOD_PASSWORD:
   {
     if (!cverification->password)
       throw Error::formatEx<Error::InvalidArgument>("password field is null");
     verification = Password{cverification->password};
     break;
   }
-  case TANKER_UNLOCK_METHOD_VERIFICATION_KEY:
+  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
   {
     if (!cverification->verification_key)
       throw Error::formatEx<Error::InvalidArgument>(
@@ -83,14 +83,16 @@ Unlock::Verification cverificationToVerification(
 
 // Unlock
 
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_VERIFICATION_KEY,
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL, Unlock::Method::Email);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSWORD,
+                  Unlock::Method::Password);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
-static_assert(TANKER_UNLOCK_METHOD_LAST == 3,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 3,
               "Please update the event assertions above if you added a new "
               "unlock methods");
 
@@ -323,39 +325,45 @@ tanker_future_t* tanker_set_verification_method(
                         .unwrap());
 }
 
+tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
+{
+  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->getVerificationMethods().and_then(
+      tc::get_synchronous_executor(),
+      [](std::vector<Unlock::VerificationMethod> methods) {
+        auto verifMethods = new tanker_verification_method_t[methods.size()];
+        for (size_t i = 0; i < methods.size(); ++i)
+        {
+          auto& verifMethod = verifMethods[i];
+          verifMethod = TANKER_VERIFICATION_METHOD_INIT;
+          if (methods[i].holds_alternative<Password>())
+            verifMethod.verification_method_type =
+                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSWORD);
+          else if (methods[i].holds_alternative<VerificationKey>())
+            verifMethod.verification_method_type = static_cast<uint8_t>(
+                TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
+          else if (auto const email = methods[i].get_if<Email>())
+          {
+            verifMethod.verification_method_type =
+                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
+            verifMethod.email = duplicateString(email->c_str());
+          }
+          else
+            throw std::runtime_error("assertion failure");
+        }
+        auto verifMethodList = new tanker_verification_method_list;
+        verifMethodList->count = methods.size();
+        verifMethodList->methods = verifMethods;
+        return reinterpret_cast<void*>(verifMethodList);
+      }));
+}
+
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->isUnlockAlreadySetUp().and_then(
       tc::get_synchronous_executor(),
       [](bool value) { return reinterpret_cast<void*>(value); }));
-}
-
-tanker_expected_t* tanker_registered_unlock_methods(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->registeredUnlockMethods().and_then(
-      tc::get_synchronous_executor(), [](Unlock::Methods m) {
-        return reinterpret_cast<void*>(m.underlying_value());
-      }));
-}
-
-tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->hasRegisteredUnlockMethods().and_then(
-      tc::get_synchronous_executor(),
-      [](bool b) { return reinterpret_cast<void*>(b); }));
-}
-
-tanker_expected_t* tanker_has_registered_unlock_method(
-    tanker_t* ctanker, enum tanker_unlock_method method)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->hasRegisteredUnlockMethod(static_cast<Unlock::Method>(method))
-          .and_then(tc::get_synchronous_executor(),
-                    [](bool b) { return reinterpret_cast<void*>(b); }));
 }
 
 uint64_t tanker_encrypted_size(uint64_t clear_size)
@@ -467,4 +475,17 @@ void tanker_free_device_list(tanker_device_list_t* list)
     free(const_cast<b64char*>(list->devices[i].device_id));
   delete[] list->devices;
   delete list;
+}
+
+void tanker_free_verification_method_list(
+    tanker_verification_method_list_t* methodList)
+{
+  for (size_t i = 0; i < methodList->count; ++i)
+  {
+    if (methodList->methods[i].verification_method_type ==
+        TANKER_VERIFICATION_METHOD_EMAIL)
+      free(const_cast<char*>(methodList->methods[i].email));
+  }
+  delete[] methodList->methods;
+  delete methodList;
 }

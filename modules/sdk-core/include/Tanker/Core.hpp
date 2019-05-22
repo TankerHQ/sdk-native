@@ -14,6 +14,7 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -67,11 +68,10 @@ public:
   tc::cotask<VerificationKey> generateVerificationKey();
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
+  std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
+
   tc::cotask<void> unlockCurrentDevice(Unlock::DeviceLocker const& pass);
   tc::cotask<bool> isUnlockAlreadySetUp() const;
-  bool hasRegisteredUnlockMethods() const;
-  bool hasRegisteredUnlockMethod(Unlock::Method) const;
-  Unlock::Methods registeredUnlockMethods() const;
   tc::cotask<void> claimProvisionalIdentity(
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);

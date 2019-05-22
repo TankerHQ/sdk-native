@@ -38,13 +38,13 @@ enum tanker_event
   TANKER_EVENT_LAST,
 };
 
-enum tanker_unlock_method
+enum tanker_verification_method_type
 {
-  TANKER_UNLOCK_METHOD_EMAIL = 0x1,
-  TANKER_UNLOCK_METHOD_PASSWORD,
-  TANKER_UNLOCK_METHOD_VERIFICATION_KEY,
+  TANKER_VERIFICATION_METHOD_EMAIL = 0x1,
+  TANKER_VERIFICATION_METHOD_PASSWORD,
+  TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
 
-  TANKER_UNLOCK_METHOD_LAST = TANKER_UNLOCK_METHOD_VERIFICATION_KEY
+  TANKER_VERIFICATION_METHOD_LAST = TANKER_VERIFICATION_METHOD_VERIFICATION_KEY
 };
 
 enum tanker_log_level
@@ -59,10 +59,13 @@ typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_verification tanker_verification_t;
+typedef struct tanker_verification_method tanker_verification_method_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
 typedef struct tanker_device_list_elem tanker_device_list_elem_t;
 typedef struct tanker_device_list tanker_device_list_t;
+typedef struct tanker_verification_method_list
+    tanker_verification_method_list_t;
 
 /*!
  * \brief The list of a user's devices
@@ -80,6 +83,15 @@ struct tanker_device_list_elem
 {
   b64char const* device_id;
   bool is_revoked;
+};
+
+/*!
+ * \brief The list of a user verification methods
+ */
+struct tanker_verification_method_list
+{
+  tanker_verification_method_t* methods;
+  uint32_t count;
 };
 
 /*!
@@ -138,7 +150,9 @@ struct tanker_email_verification
 struct tanker_verification
 {
   uint8_t version;
-  enum tanker_unlock_method method;
+  // enum cannot be binded to java as they do not have a fixed size.
+  // It takes a value from tanker_verification_method_type:
+  uint8_t verification_method_type;
   union
   {
     char const* verification_key;
@@ -153,6 +167,26 @@ struct tanker_verification
     {                            \
       NULL                       \
     }                            \
+  }
+
+struct tanker_verification_method
+{
+  uint8_t version;
+  // enum cannot be binded to java as they do not have a fixed size.
+  // It takes a value from tanker_verification_method_type:
+  uint8_t verification_method_type;
+  union
+  {
+    char const* email;
+  };
+};
+
+#define TANKER_VERIFICATION_METHOD_INIT \
+  {                                     \
+    1, 0,                               \
+    {                                   \
+      NULL                              \
+    }                                   \
   }
 
 struct tanker_encrypt_options
@@ -331,38 +365,20 @@ tanker_future_t* tanker_set_verification_method(
     tanker_t* session, tanker_verification_t const* verification);
 
 /*!
+ * Return all registered verification methods for the current user.
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_READY
+ * \return a tanker_verification_method_list_t*
+ */
+tanker_future_t* tanker_get_verification_methods(tanker_t* session);
+
+/*!
  * Check if unlock mechanism has been set up for the current user.
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \return true if an unlock mechanism is already set up, false otherwise
  */
 tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* session);
-
-/*!
- * Return all registered unlock methods for the current user.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return a tanker_unlock_method with its bit set to the registered methods
- */
-tanker_expected_t* tanker_registered_unlock_methods(tanker_t* session);
-
-/*!
- * Check if any unlock methods has been registered for the current user.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return true if an unlock method is registered, false otherwise
- */
-tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* session);
-
-/*!
- * Check if a specific unlock method has been registered for the current user.
- * \param session A tanker tanker_t* instance.
- * \param method the unlock method we want to test.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return true if an unlock method is registered, false otherwise
- */
-tanker_expected_t* tanker_has_registered_unlock_method(
-    tanker_t* session, enum tanker_unlock_method method);
 
 /*!
  * Get the encrypted size from the clear size.
@@ -501,6 +517,9 @@ tanker_future_t* tanker_revoke_device(tanker_t* session,
 void tanker_free_buffer(void const* buffer);
 
 void tanker_free_device_list(tanker_device_list_t* list);
+
+void tanker_free_verification_method_list(
+    tanker_verification_method_list_t* list);
 
 #ifdef __cplusplus
 }

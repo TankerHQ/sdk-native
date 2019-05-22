@@ -79,10 +79,9 @@ TEST_CASE("verificationKey")
   auto const aliceUserSecret =
       make<Crypto::SymmetricKey>("this is alice's userSecret");
   auto const firstDev = alice.devices.front();
-  std::unique_ptr<Unlock::Registration> reg{nullptr};
   auto const& aliceKeys = alice.userKeys.back();
   auto ghostDeviceKeys = DeviceKeys::create();
-  reg =
+  auto const verificationKey =
       Unlock::generate(alice.userId,
                        aliceKeys.keyPair,
                        BlockGenerator(builder.trustchainId(),
@@ -97,25 +96,15 @@ TEST_CASE("verificationKey")
                       Unlock::Verification{password},
                       aliceUserSecret,
                       firstDev.keys.signatureKeyPair.privateKey);
-  FAST_REQUIRE_UNARY(reg);
-  FAST_REQUIRE_UNARY_FALSE(reg->verificationKey.empty());
+  FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
   SUBCASE("generate")
   {
-    REQUIRE_NOTHROW(GhostDevice::create(reg->verificationKey));
-    auto const gh = GhostDevice::create(reg->verificationKey);
+    REQUIRE_NOTHROW(GhostDevice::create(verificationKey));
+    auto const gh = GhostDevice::create(verificationKey);
     FAST_CHECK_EQ(gh.privateEncryptionKey,
                   ghostDeviceKeys.encryptionKeyPair.privateKey);
     FAST_CHECK_EQ(gh.privateSignatureKey,
                   ghostDeviceKeys.signatureKeyPair.privateKey);
-    auto ghostDeviceEntry = toVerifiedEntry(
-        blockToServerEntry(Serialization::deserialize<Block>(reg->block)));
-    auto const dc = ghostDeviceEntry.action.get<DeviceCreation>();
-    FAST_CHECK_EQ(ghostDeviceKeys.encryptionKeyPair.publicKey,
-                  dc.publicEncryptionKey());
-    FAST_CHECK_EQ(ghostDeviceKeys.signatureKeyPair.publicKey,
-                  dc.publicSignatureKey());
-    FAST_CHECK_UNARY(dc.isGhostDevice());
-    FAST_CHECK_EQ(alice.userId, dc.userId());
   }
 
   SUBCASE("serialization/unserialization of message")
@@ -127,7 +116,7 @@ TEST_CASE("verificationKey")
 
   SUBCASE("createValidatedDevice")
   {
-    auto const gh = GhostDevice::create(reg->verificationKey);
+    auto const gh = GhostDevice::create(verificationKey);
     auto const encryptedPrivateKey =
         Crypto::sealEncrypt<Crypto::SealedPrivateEncryptionKey>(
             aliceKeys.keyPair.privateKey,

@@ -43,6 +43,8 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <fmt/format.h>
+#include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -66,6 +68,33 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
+namespace
+{
+std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
+    std::vector<Unlock::VerificationMethod> const& verificationMethods,
+    Crypto::SymmetricKey userSecret)
+{
+  std::map<Unlock::Method, Unlock::VerificationMethod> mappedMethods;
+  for (auto const method : verificationMethods)
+  {
+    if (auto const encryptedEmail = method.get_if<Email>())
+    {
+      auto const decryptedEmail = Crypto::decryptAead(
+          userSecret, gsl::make_span(*encryptedEmail).as_span<uint8_t const>());
+      mappedMethods[Unlock::Method::Email] =
+          Email{decryptedEmail.begin(), decryptedEmail.end()};
+    }
+    else if (method.holds_alternative<Password>())
+      mappedMethods[Unlock::Method::Password] = method;
+    else if (method.holds_alternative<VerificationKey>())
+      mappedMethods[Unlock::Method::VerificationKey] = method;
+    else
+      throw Error::InvalidArgument("Unknown verification method type");
+  }
+  return mappedMethods;
+}
+}
+
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -157,7 +186,8 @@ tc::cotask<void> Session::connectionHandler()
         {"public_signature_key", _deviceKeyStore->signatureKeyPair().publicKey},
         {"trustchain_id", _trustchainId},
         {"user_id", _userId}};
-    _unlockMethods = TC_AWAIT(_client->authenticateDevice(request));
+    _verificationMethods = verificationMethodsToMap(
+        TC_AWAIT(_client->authenticateDevice(request)), this->_userSecret);
   }
   catch (std::exception const& e)
   {
@@ -329,10 +359,11 @@ tc::cotask<void> Session::updateGroupMembers(
 
 void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
 {
-  if (mpark::holds_alternative<Unlock::EmailVerification>(method))
-    _unlockMethods |= Unlock::Method::Email;
-  if (mpark::holds_alternative<Password>(method))
-    _unlockMethods |= Unlock::Method::Password;
+  if (auto const emailVerification =
+          mpark::get_if<Unlock::EmailVerification>(&method))
+    _verificationMethods[Unlock::Method::Email] = emailVerification->email;
+  else if (mpark::holds_alternative<Password>(method))
+    _verificationMethods[Unlock::Method::Password] = Password{};
 }
 
 tc::cotask<void> Session::updateUnlock(Unlock::Verification const& method)
@@ -359,7 +390,7 @@ tc::cotask<void> Session::updateUnlock(Unlock::Verification const& method)
 tc::cotask<void> Session::setVerificationMethod(
     Unlock::Verification const& method)
 {
-  if (!this->_unlockMethods)
+  if (this->_verificationMethods.empty())
     throw Error::OperationCanceled(
         "Cannot call setVerificationMethod() after a verification key has been "
         "used");
@@ -424,19 +455,12 @@ tc::cotask<bool> Session::isUnlockAlreadySetUp() const
   }));
 }
 
-Unlock::Methods Session::registeredUnlockMethods() const
+std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const
 {
-  return _unlockMethods;
-}
-
-bool Session::hasRegisteredUnlockMethods() const
-{
-  return !!_unlockMethods;
-}
-
-bool Session::hasRegisteredUnlockMethod(Unlock::Method method) const
-{
-  return !!(_unlockMethods & method);
+  std::vector<Unlock::VerificationMethod> methods;
+  for (auto const method : _verificationMethods)
+    methods.push_back(method.second);
+  return methods;
 }
 
 tc::cotask<void> Session::catchUserKey(

@@ -159,8 +159,8 @@ add_library(tankercore STATIC
   src/Unlock/Create.cpp
   src/Unlock/Claims.cpp
   src/Unlock/Messages.cpp
-  src/Unlock/Methods.cpp
   src/Unlock/VerificationRequest.cpp
+  src/Unlock/Verification.cpp
   src/Session.cpp
   src/Opener.cpp
   src/Core.cpp

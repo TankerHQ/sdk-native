@@ -231,8 +231,7 @@ tc::cotask<VerificationKey> Core::generateVerificationKey()
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
     throw INVALID_STATUS(generateVerificationKey);
-  auto const reg = TC_AWAIT(pcore->generateVerificationKey());
-  TC_RETURN(reg->verificationKey);
+  TC_RETURN(TC_AWAIT(pcore->generateVerificationKey()));
 }
 
 tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
@@ -251,12 +250,12 @@ tc::cotask<bool> Core::isUnlockAlreadySetUp() const
   TC_RETURN(TC_AWAIT((*psession)->isUnlockAlreadySetUp()));
 }
 
-Unlock::Methods Core::registeredUnlockMethods() const
+std::vector<Unlock::VerificationMethod> Core::getVerificationMethods() const
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
     throw INVALID_STATUS(registeredUnlockMethods);
-  return (*psession)->registeredUnlockMethods();
+  return (*psession)->getVerificationMethods();
 }
 
 tc::cotask<void> Core::claimProvisionalIdentity(
@@ -267,22 +266,6 @@ tc::cotask<void> Core::claimProvisionalIdentity(
   if (!psession)
     throw INVALID_STATUS(registeredUnlockMethods);
   TC_AWAIT((*psession)->claimProvisionalIdentity(identity, verificationCode));
-}
-
-bool Core::hasRegisteredUnlockMethods() const
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(hasRegisteredUnlockMethods);
-  return (*psession)->hasRegisteredUnlockMethods();
-}
-
-bool Core::hasRegisteredUnlockMethod(Unlock::Method method) const
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(hasRegisteredUnlockMethod);
-  return (*psession)->hasRegisteredUnlockMethod(method);
 }
 
 tc::cotask<void> Core::syncTrustchain()

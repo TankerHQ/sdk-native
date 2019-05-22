@@ -212,8 +212,7 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
       "assertion error: invalid Verification, unreachable code");
 }
 
-tc::cotask<std::unique_ptr<Unlock::Registration>>
-Opener::generateVerificationKey() const
+tc::cotask<VerificationKey> Opener::generateVerificationKey() const
 {
   TC_RETURN(Unlock::generate(_userId,
                              _keyStore->encryptionKeyPair(),

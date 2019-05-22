@@ -33,11 +33,10 @@ VerificationKey ghostDeviceToVerificationKey(GhostDevice const& ghostDevice)
       cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
 }
 
-std::unique_ptr<Registration> generate(
-    UserId const& userId,
-    Crypto::EncryptionKeyPair const& userKeypair,
-    BlockGenerator const& blockGen,
-    DeviceKeys const& deviceKeys)
+VerificationKey generate(UserId const& userId,
+                         Crypto::EncryptionKeyPair const& userKeypair,
+                         BlockGenerator const& blockGen,
+                         DeviceKeys const& deviceKeys)
 {
   auto const ghostDeviceBlock = blockGen.addGhostDevice(
       Identity::makeDelegation(userId, blockGen.signatureKey()),
@@ -47,12 +46,9 @@ std::unique_ptr<Registration> generate(
 
   auto const hash = Serialization::deserialize<Block>(ghostDeviceBlock).hash();
   Trustchain::DeviceId deviceId{hash};
-  auto const verificationKey = ghostDeviceToVerificationKey(
+  return ghostDeviceToVerificationKey(
       GhostDevice{deviceKeys.signatureKeyPair.privateKey,
                   deviceKeys.encryptionKeyPair.privateKey});
-
-  return std::make_unique<Registration>(
-      Registration{ghostDeviceBlock, verificationKey});
 }
 
 Block createValidatedDevice(Trustchain::TrustchainId const& trustchainId,

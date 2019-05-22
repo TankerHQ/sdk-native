@@ -14,7 +14,7 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
-#include <Tanker/Unlock/Methods.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/task_canceler.hpp>
 
@@ -82,11 +82,10 @@ public:
 
   tc::shared_future<void> setVerificationMethod(
       Unlock::Verification const& method);
+  tc::shared_future<std::vector<Unlock::VerificationMethod>>
+  getVerificationMethods() const;
 
   tc::shared_future<bool> isUnlockAlreadySetUp() const;
-  expected<bool> hasRegisteredUnlockMethods() const;
-  expected<bool> hasRegisteredUnlockMethod(Unlock::Method) const;
-  expected<Unlock::Methods> registeredUnlockMethods() const;
 
   tc::shared_future<void> claimProvisionalIdentity(
       SSecretProvisionalIdentity const& identity,

@@ -38,8 +38,7 @@ public:
       Unlock::Verification const& verification);
   tc::cotask<Session::Config> createDevice(
       Unlock::Verification const& verification);
-  tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey()
-      const;
+  tc::cotask<VerificationKey> generateVerificationKey() const;
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::DeviceLocker const& pass);

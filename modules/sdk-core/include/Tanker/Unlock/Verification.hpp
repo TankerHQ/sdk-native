@@ -1,11 +1,13 @@
 #pragma once
 
+#include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
 #include <mpark/variant.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace Tanker
 {
@@ -19,6 +21,17 @@ struct EmailVerification
 
 using Verification =
     mpark::variant<VerificationKey, EmailVerification, Password>;
-using VerificationMethod = mpark::variant<VerificationKey, Email, Password>;
+class VerificationMethod
+{
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
+      VerificationMethod, (VerificationKey, Email, Password))
+
+private:
+  friend void from_json(nlohmann::json const&, VerificationMethod&);
+};
+
+void to_json(nlohmann::json&, VerificationMethod const&);
+void from_json(nlohmann::json const&, VerificationMethod&);
 }
 }
+

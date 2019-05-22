@@ -11,6 +11,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Messages.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -149,14 +150,14 @@ tc::cotask<std::string> Client::requestAuthChallenge()
                 .get<std::string>());
 }
 
-tc::cotask<Unlock::Methods> Client::authenticateDevice(
+tc::cotask<std::vector<Unlock::VerificationMethod>> Client::authenticateDevice(
     nlohmann::json const& request)
 {
   auto const response = TC_AWAIT(emit("authenticate device", request));
   auto const it = response.find("unlock_methods");
   if (it == response.end())
-    TC_RETURN(Unlock::Method{});
-  TC_RETURN(it.value().get<Unlock::Methods>());
+    TC_RETURN(std::vector<Unlock::VerificationMethod>{});
+  TC_RETURN(it.value().get<std::vector<Unlock::VerificationMethod>>());
 }
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(

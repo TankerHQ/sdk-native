@@ -17,7 +17,6 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
@@ -90,7 +89,8 @@ public:
       Unlock::Request const& req);
 
   tc::cotask<std::string> requestAuthChallenge();
-  tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);
+  tc::cotask<std::vector<Unlock::VerificationMethod>> authenticateDevice(
+      nlohmann::json const& request);
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);

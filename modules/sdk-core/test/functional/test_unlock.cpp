@@ -45,7 +45,7 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(core2->verifyIdentity(password));
     }
 
-    SUBCASE("it sets a validation email and unlocks a new device")
+    SUBCASE("it sets a validation email and unlock a new device")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
           Unlock::EmailVerification{email, verificationCode}})));
@@ -70,7 +70,7 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(core2->verifyIdentity(newPassword));
     }
 
-    SUBCASE("it throws when trying to unlock with an invalid password")
+    SUBCASE("it throws when trying to verify with an invalid password")
     {
       REQUIRE_NOTHROW(
           TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
@@ -82,7 +82,7 @@ TEST_SUITE("Unlock")
     }
 
     SUBCASE(
-        "it throws when trying to unlock with an invalid verification "
+        "it throws when trying to verify with an invalid verification "
         "code")
     {
       REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{

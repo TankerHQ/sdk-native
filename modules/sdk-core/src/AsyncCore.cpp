@@ -181,6 +181,14 @@ tc::shared_future<void> AsyncCore::setVerificationMethod(
   });
 }
 
+tc::shared_future<std::vector<Unlock::VerificationMethod>>
+AsyncCore::getVerificationMethods() const
+{
+  return _taskCanceler.run([&] {
+    return tc::async([=] { return this->_core.getVerificationMethods(); });
+  });
+}
+
 tc::shared_future<bool> AsyncCore::isUnlockAlreadySetUp() const
 {
   return _taskCanceler.run([&] {
@@ -188,22 +196,6 @@ tc::shared_future<bool> AsyncCore::isUnlockAlreadySetUp() const
       TC_RETURN(TC_AWAIT(this->_core.isUnlockAlreadySetUp()));
     });
   });
-}
-
-expected<Unlock::Methods> AsyncCore::registeredUnlockMethods() const
-{
-  return tc::sync([&] { return this->_core.registeredUnlockMethods(); });
-}
-
-expected<bool> AsyncCore::hasRegisteredUnlockMethods() const
-{
-  return tc::sync([&] { return this->_core.hasRegisteredUnlockMethods(); });
-}
-
-expected<bool> AsyncCore::hasRegisteredUnlockMethod(Unlock::Method method) const
-{
-  return tc::sync(
-      [&] { return this->_core.hasRegisteredUnlockMethod(method); });
 }
 
 tc::shared_future<void> AsyncCore::claimProvisionalIdentity(

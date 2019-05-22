@@ -22,11 +22,10 @@ struct Registration;
 
 VerificationKey ghostDeviceToVerificationKey(GhostDevice const& ghostDevice);
 
-std::unique_ptr<Registration> generate(
-    Trustchain::UserId const& userId,
-    Crypto::EncryptionKeyPair const& userKeypair,
-    BlockGenerator const& blockGen,
-    DeviceKeys const& deviceKeys = DeviceKeys::create());
+VerificationKey generate(Trustchain::UserId const& userId,
+                         Crypto::EncryptionKeyPair const& userKeypair,
+                         BlockGenerator const& blockGen,
+                         DeviceKeys const& deviceKeys = DeviceKeys::create());
 
 Block createValidatedDevice(Trustchain::TrustchainId const& trustchainId,
                             Trustchain::UserId const& userId,
