@@ -56,7 +56,6 @@ enum tanker_log_level
 
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
-typedef struct tanker_authentication_methods tanker_authentication_methods_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
@@ -121,18 +120,6 @@ struct tanker_options
 #define TANKER_OPTIONS_INIT         \
   {                                 \
     2, NULL, NULL, NULL, NULL, NULL \
-  }
-
-struct tanker_authentication_methods
-{
-  uint8_t version;
-  char const* password;
-  char const* email;
-};
-
-#define TANKER_AUTHENTICATION_METHODS_INIT \
-  {                                        \
-    1, NULL, NULL                          \
   }
 
 struct tanker_email_verification
@@ -239,28 +226,21 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
  *
  * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
- * \param authentication_methods the authentication methods to set up for the
- * user, or NULL.
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_sign_up(
-    tanker_t* tanker,
-    char const* identity,
-    tanker_authentication_methods_t const* authentication_methods);
+tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
 
 /*!
- * Sign in to Tanker.
+ * Register a verification method associated with an identity.
  *
  * \param tanker a tanker tanker_t* instance.
- * \param identity the user identity.
- * \param verification the authentication options to use when this device is
- * not registered, or NULL.
- * \return a future of tanker_sign_in_result
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
+ * \param verification the verification methods to set up for the
+ * user, or NULL.
+ * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
@@ -268,9 +248,25 @@ tanker_future_t* tanker_sign_up(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_sign_in(tanker_t* tanker,
-                                char const* identity,
-                                tanker_verification_t const* verification);
+tanker_future_t* tanker_register_identity(
+    tanker_t* tanker, tanker_verification_t const* verification);
+
+/*!
+ * Verify an identity with provided verification.
+ *
+ * \param tanker a tanker tanker_t* instance.
+ * \param verification the verification methods to set up for the
+ * user, or NULL.
+ * \return a future of NULL
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
+ * or the server returned an error
+ * \throws TANKER_ERROR_OTHER could not open the local storage
+ */
+tanker_future_t* tanker_verify_identity(
+    tanker_t* tanker, tanker_verification_t const* verification);
 
 /*!
  * Close a tanker session.

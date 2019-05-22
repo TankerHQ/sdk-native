@@ -29,6 +29,31 @@ nonstd::optional<T> nullableToOpt(char const* str)
     return nonstd::nullopt;
 }
 
+Unlock::Verification cverificationToVerification(
+    tanker_verification_t const* cverification)
+{
+  if (!cverification)
+    throw Error::formatEx<Error::InvalidArgument>("no verification method");
+  if (cverification->verification_key)
+    return VerificationKey{cverification->verification_key};
+  else if (cverification->email_verification)
+  {
+    auto const email = (cverification->email_verification->email) ?
+                           Email{cverification->email_verification->email} :
+                           Email{};
+    auto const verificationCode =
+        (cverification->email_verification->verification_code) ?
+            VerificationCode{
+                cverification->email_verification->verification_code} :
+            VerificationCode{};
+    return Unlock::EmailVerification{email, verificationCode};
+  }
+  else if (cverification->password)
+    return Password{cverification->password};
+  else
+    throw Error::formatEx<Error::InvalidArgument>("no verification method");
+}
+
 #define STATIC_ENUM_CHECK(cval, cppval)           \
   static_assert(cval == static_cast<int>(cppval), \
                 "enum values not in sync: " #cval " and " #cppval)
@@ -58,20 +83,6 @@ STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
 static_assert(
     TANKER_STATUS_LAST == 4,
     "Please update the status assertions above if you added a new status");
-
-// OpenResult
-
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_OK, OpenResult::Ok);
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
-                  OpenResult::IdentityVerificationNeeded);
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
-                  OpenResult::IdentityNotRegistered);
-
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_LAST, OpenResult::Last);
-
-static_assert(
-    TANKER_SIGN_IN_RESULT_LAST == 3,
-    "Please update the result assertions above if you added a new result");
 
 // Event
 
@@ -170,65 +181,46 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
       *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection))));
 }
 
-tanker_future_t* tanker_sign_up(
-    tanker_t* ctanker,
-    char const* identity,
-    tanker_authentication_methods_t const* authentication_methods)
+tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 {
   if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void>(
         Error::formatEx<Error::InvalidArgument>("identity is null")));
-  if (authentication_methods && authentication_methods->version != 1)
-    return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(
-            "unsupported tanker_authentication_methods struct version")));
-
-  auto authenticationMethods = AuthenticationMethods{};
-  if (authentication_methods)
-  {
-    if (authentication_methods->password)
-      authenticationMethods.password =
-          Password{authentication_methods->password};
-    if (authentication_methods->email)
-      authenticationMethods.email = Email{authentication_methods->email};
-  }
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->signUp(std::string(identity), authenticationMethods));
+      tanker->start(std::string(identity))
+          .and_then(tc::get_synchronous_executor(), [](auto status) {
+            return reinterpret_cast<void*>(status);
+          }));
 }
 
-tanker_future_t* tanker_sign_in(tanker_t* ctanker,
-                                char const* identity,
-                                tanker_verification_t const* cverification)
+tanker_future_t* tanker_register_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  if (identity == nullptr)
-    return makeFuture(tc::make_exceptional_future<void*>(
-        Error::formatEx<Error::InvalidArgument>("identity is null")));
   if (cverification && cverification->version != 1)
-    return makeFuture(tc::make_exceptional_future<void*>(
+    return makeFuture(tc::make_exceptional_future<void>(
         Error::formatEx<Error::InvalidArgument>(
             "unsupported tanker_authentication_methods struct version")));
 
-  nonstd::optional<Unlock::Verification> verification = nonstd::nullopt;
-  if (cverification)
-  {
-    if (cverification->verification_key)
-      verification = VerificationKey{cverification->verification_key};
-    if (cverification->email_verification)
-      verification = Unlock::EmailVerification{
-          Email{cverification->email_verification->email},
-          VerificationCode{
-              cverification->email_verification->verification_code}};
-    if (cverification->password)
-      verification = Password{cverification->password};
-  }
+  auto verification = cverificationToVerification(cverification);
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->signIn(std::string(identity), verification)
-          .and_then(tc::get_synchronous_executor(),
-                    [](OpenResult r) { return reinterpret_cast<void*>(r); }));
+  return makeFuture(tanker->registerIdentity(verification));
+}
+
+tanker_future_t* tanker_verify_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
+{
+  if (cverification && cverification->version != 1)
+    return makeFuture(tc::make_exceptional_future<void>(
+        Error::formatEx<Error::InvalidArgument>(
+            "unsupported tanker_authentication_methods struct version")));
+
+  auto verification = cverificationToVerification(cverification);
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->verifyIdentity(verification));
 }
 
 tanker_future_t* tanker_stop(tanker_t* ctanker)

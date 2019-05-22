@@ -45,14 +45,11 @@ static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
   char const* identity = future_get(
       tanker_create_identity(trustchain->id, trustchain->private_key, userId));
 
-  tanker_authentication_methods_t authentication_methods =
-      TANKER_AUTHENTICATION_METHODS_INIT;
-  authentication_methods.password = "password";
+  tanker_verification_t verification = TANKER_VERIFICATION_INIT;
+  verification.password = "password";
 
-  future_get(tanker_sign_up(tanker, identity, &authentication_methods));
-  future_get(tanker_stop(tanker));
-
-  future_get(tanker_sign_in(tanker, identity, NULL));
+  future_get(tanker_start(tanker, identity));
+  future_get(tanker_register_identity(tanker, &verification));
   future_get(tanker_stop(tanker));
 
   tanker_free_buffer(identity);
