@@ -1,5 +1,5 @@
 add_executable(test_errors
-  test_errc.cpp
+  test_errors.cpp
 
   main.cpp
 )
