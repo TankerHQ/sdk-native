@@ -1,9 +1,11 @@
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Errors/Errc.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url.hpp>
@@ -25,7 +27,8 @@ TEST_CASE("encryptedSize and decryptedSize are correct")
 {
   CHECK((10 + 16) == encryptedSize(10));
   CHECK(10 == decryptedSize(10 + 16));
-  CHECK_THROWS(decryptedSize(2));
+  TANKER_CHECK_THROWS_WITH_CODE(decryptedSize(2),
+                                Errc::InvalidEncryptedDataSize);
 }
 
 TEST_CASE("makeSymmetricKey should generate a key")
@@ -88,8 +91,10 @@ TEST_CASE("aead")
     ++encryptedBuffer[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    CHECK_THROWS(decryptAead(
-        key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {}));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        decryptAead(
+            key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {}),
+        Errc::AeadDecryptionFailed);
   }
 
   SUBCASE("it should encrypt/decrypt a buffer and verify additional data")
@@ -122,8 +127,12 @@ TEST_CASE("aead")
     ++additionals[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    CHECK_THROWS(decryptAead(
-        key, iv.data(), decryptedBuffer.data(), encryptedBuffer, additional));
+    TANKER_CHECK_THROWS_WITH_CODE(decryptAead(key,
+                                              iv.data(),
+                                              decryptedBuffer.data(),
+                                              encryptedBuffer,
+                                              additional),
+                                  Errc::AeadDecryptionFailed);
   }
 
   SUBCASE("it should be able to derive an IV")
@@ -161,17 +170,17 @@ TEST_CASE("asymmetric")
   {
     auto enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
     ++enc[8];
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
-        DecryptFailed);
+        Errc::AsymmetricDecryptionFailed);
   }
 
   SUBCASE("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         asymDecrypt(enc, aliceKeyPair.publicKey, bobKeyPair.privateKey),
-        DecryptFailed);
+        Errc::InvalidEncryptedDataSize);
   }
 
   SUBCASE("it should fail to decrypt with the wrong key")
@@ -179,9 +188,9 @@ TEST_CASE("asymmetric")
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
     auto enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         asymDecrypt(enc, aliceKeyPair.publicKey, charlieKeyPair.privateKey),
-        DecryptFailed);
+        Errc::AsymmetricDecryptionFailed);
   }
 
   SUBCASE("it should make encryption keypair from private encryption key")
@@ -245,13 +254,15 @@ TEST_CASE("asymmetric seal")
   {
     auto enc = sealEncrypt(buf, bobKeyPair.publicKey);
     ++enc[8];
-    CHECK_THROWS_AS(sealDecrypt(enc, bobKeyPair), DecryptFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair),
+                                  Errc::SealedDecryptionFailed);
   }
 
   SUBCASE("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
-    CHECK_THROWS_AS(sealDecrypt(enc, bobKeyPair), DecryptFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair),
+                                  Errc::InvalidSealedDataSize);
   }
 
   SUBCASE("it should fail to decrypt with the wrong key")
@@ -259,7 +270,8 @@ TEST_CASE("asymmetric seal")
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
     auto enc = sealEncrypt(buf, bobKeyPair.publicKey);
-    CHECK_THROWS_AS(sealDecrypt(enc, charlieKeyPair), DecryptFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, charlieKeyPair),
+                                  Errc::SealedDecryptionFailed);
   }
 }
 

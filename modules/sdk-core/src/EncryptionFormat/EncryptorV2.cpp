@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -88,13 +90,15 @@ void decrypt(uint8_t* decryptedData,
     auto const cipherText = versionRemoved.subspan(Crypto::AeadIv::arraySize);
     Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
   }
-  catch (std::out_of_range const&)
+  catch (gsl::fail_fast const&)
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }
-  catch (Crypto::DecryptFailed const& e)
+  catch (Errors::Exception const& e)
   {
-    throw Error::DecryptFailed(e.what());
+    if (e.errorCode() == Errors::Errc::DecryptionFailed)
+      throw Error::DecryptFailed(e.what());
+    throw Error::InvalidArgument(e.what());
   }
 }
 

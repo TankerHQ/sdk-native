@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -49,7 +50,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
       throw Error::InvalidArgument("truncated encrypted buffer");
     return Crypto::decryptedSize(versionResult.second.size());
   }
-  catch (std::out_of_range const&)
+  catch (gsl::fail_fast const&)
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }
@@ -83,7 +84,7 @@ void decrypt(uint8_t* decryptedData,
   {
     throw Error::InvalidArgument("truncated encrypted buffer");
   }
-  catch (Crypto::DecryptFailed const& e)
+  catch (Errors::Exception const& e)
   {
     throw Error::DecryptFailed(e.what());
   }

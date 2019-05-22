@@ -5,9 +5,8 @@ project(tankercrypto)
 add_library(tankercrypto STATIC
     src/Crypto.cpp
     src/ExternTemplates.cpp
-
-    include/Tanker/Crypto/Crypto.hpp
-    include/Tanker/Crypto/InvalidKeySize.hpp
+    src/Errors/Errc.cpp
+    src/Errors/ErrcCategory.cpp
     include/Tanker/Crypto/IsCryptographicType.hpp
     include/Tanker/Crypto/PublicSignatureKey.hpp
     include/Tanker/Crypto/PrivateSignatureKey.hpp
@@ -34,6 +33,8 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/AsymmetricKey.hpp
     include/Tanker/Crypto/KeyUsage.hpp
     include/Tanker/Crypto/KeyType.hpp
+    include/Tanker/Crypto/Errors/Errc.hpp
+    include/Tanker/Crypto/Errors/ErrcCategory.hpp
     include/Tanker/Crypto/Format/Format.hpp
     include/Tanker/Crypto/Json/Json.hpp
     include/Tanker/Crypto/Serialization/Serialization.hpp
@@ -47,7 +48,17 @@ target_include_directories(tankercrypto
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankercrypto tankerserialization CONAN_PKG::libsodium CONAN_PKG::cppcodec CONAN_PKG::gsl-lite CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt)
+target_link_libraries(
+  tankercrypto
+  tankerserialization
+  tankererrors
+
+  CONAN_PKG::libsodium
+  CONAN_PKG::cppcodec
+  CONAN_PKG::gsl-lite
+  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::fmt
+)
 
 install(TARGETS tankercrypto
   EXPORT tankercrypto
