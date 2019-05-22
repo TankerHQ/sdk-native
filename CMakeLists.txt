@@ -88,6 +88,7 @@ endif()
 
 add_subdirectory(modules/config)
 add_subdirectory(modules/crypto)
+add_subdirectory(modules/errors)
 add_subdirectory(modules/format)
 add_subdirectory(modules/identity)
 add_subdirectory(modules/log)
