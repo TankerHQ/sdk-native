@@ -1,8 +1,10 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 #include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <nlohmann/json.hpp>
@@ -85,8 +87,10 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
   auto const version = ss.read_varint();
 
   if (version != 1)
-    throw std::runtime_error("unsupported block version: " +
-                             std::to_string(version));
+  {
+    throw Errors::formatEx(
+        Errc::InvalidBlockVersion, "unsupported block version: {}", version);
+  }
   se._index = ss.read_varint();
   Serialization::deserialize_to(ss, se._trustchainId);
   auto const nature = static_cast<Actions::Nature>(ss.read_varint());
