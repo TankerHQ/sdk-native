@@ -36,7 +36,7 @@ public:
   DeviceId const& deviceId() const;
 
   template <typename T>
-  bool holdsAlternative() const;
+  bool holds_alternative() const;
 
   template <typename T>
   T const& get() const;
@@ -67,7 +67,7 @@ std::size_t serialized_size(DeviceRevocation const&);
 void to_json(nlohmann::json&, DeviceRevocation const&);
 
 template <typename T>
-bool DeviceRevocation::holdsAlternative() const
+bool DeviceRevocation::holds_alternative() const
 {
   return mpark::holds_alternative<T>(_variant);
 }

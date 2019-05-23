@@ -264,10 +264,10 @@ tc::cotask<void> applyEntry(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
 {
-  if (entry.action.holdsAlternative<UserGroupCreation>())
+  if (entry.action.holds_alternative<UserGroupCreation>())
     TC_AWAIT(applyUserGroupCreation(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else if (entry.action.holdsAlternative<UserGroupAddition>())
+  else if (entry.action.holds_alternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else

@@ -16,7 +16,7 @@ TEST_CASE("Action tests")
 
   SUBCASE("Action variant functions")
   {
-    CHECK(dc.holdsAlternative<DeviceCreation>());
+    CHECK(dc.holds_alternative<DeviceCreation>());
     CHECK(dc.get_if<DeviceCreation>() != nullptr);
     CHECK(dc.get_if<DeviceRevocation>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation>());

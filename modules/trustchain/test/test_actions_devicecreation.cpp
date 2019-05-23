@@ -21,7 +21,7 @@ TEST_CASE("DeviceCreation tests")
   {
     DeviceCreation dc;
 
-    CHECK(dc.holdsAlternative<DeviceCreation::v1>());
+    CHECK(dc.holds_alternative<DeviceCreation::v1>());
     CHECK(dc.get_if<DeviceCreation::v1>() != nullptr);
     CHECK(dc.get_if<DeviceCreation::v3>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation::v1>());

@@ -306,16 +306,16 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     else
       TC_AWAIT(keyPublishReceived(entry));
   }
-  if (entry.action.holdsAlternative<UserGroupCreation>() ||
-      entry.action.holdsAlternative<UserGroupAddition>())
+  if (entry.action.holds_alternative<UserGroupCreation>() ||
+      entry.action.holds_alternative<UserGroupAddition>())
   {
     TC_AWAIT(userGroupActionReceived(entry));
   }
-  else if (entry.action.holdsAlternative<DeviceRevocation>())
+  else if (entry.action.holds_alternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));
-  else if (entry.action.holdsAlternative<ProvisionalIdentityClaim>())
+  else if (entry.action.holds_alternative<ProvisionalIdentityClaim>())
     TC_AWAIT(provisionalIdentityClaimReceived(entry));
-  else if (entry.action.holdsAlternative<TrustchainCreation>())
+  else if (entry.action.holds_alternative<TrustchainCreation>())
     TC_AWAIT(trustchainCreationReceived(entry));
 }
 }

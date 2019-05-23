@@ -142,7 +142,7 @@ TEST_CASE("verificationKey")
     auto const validatedDeviceEntry =
         toVerifiedEntry(blockToServerEntry(validatedDevice));
     auto const vdc = validatedDeviceEntry.action.get<DeviceCreation>();
-    REQUIRE(vdc.holdsAlternative<DeviceCreation::v3>());
+    REQUIRE(vdc.holds_alternative<DeviceCreation::v3>());
     auto const& dc3 = vdc.get<DeviceCreation::v3>();
     auto const userKey = dc3.sealedPrivateUserEncryptionKey();
     REQUIRE(!userKey.is_null());

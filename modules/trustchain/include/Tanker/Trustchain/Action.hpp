@@ -45,7 +45,7 @@ public:
   Actions::Nature nature() const;
 
   template <typename T>
-  bool holdsAlternative() const;
+  bool holds_alternative() const;
 
   template <typename T>
   T const& get() const;
@@ -68,7 +68,7 @@ Action::Action(Alternative&& val) : _variant(std::forward<Alternative>(val))
 }
 
 template <typename T>
-bool Action::holdsAlternative() const
+bool Action::holds_alternative() const
 {
   return mpark::holds_alternative<T>(_variant);
 }

@@ -69,7 +69,7 @@ TEST_CASE("Preprocessor tests")
     VariantTest vt2{std::vector<char>{42}};
 
     CHECK(vt.front() == 42);
-    CHECK(vt.holdsAlternative<CustomType>());
+    CHECK(vt.holds_alternative<CustomType>());
     CHECK(vt2.front() == 42);
     CHECK(vt != vt2);
   }
