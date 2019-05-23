@@ -21,6 +21,7 @@
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <boost/signals2/connection.hpp>
 #include <fmt/format.h>
@@ -135,7 +136,7 @@ tc::cotask<void> Opener::unlockCurrentDevice(
                                                    ghostDevice,
                                                    _keyStore->deviceKeys(),
                                                    encryptedUserKey);
-  TC_AWAIT(_client->pushBlock(block));
+  TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
 }
 
 Session::Config Opener::makeConfig()
@@ -163,28 +164,37 @@ tc::cotask<Session::Config> Opener::createUser(
   auto const ghostDeviceKeys =
       verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
                         DeviceKeys::create();
+  auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
 
-  auto const userCreation =
+  auto const userCreation = Serialization::deserialize<Block>(
       BlockGenerator(_info.trustchainId, {}, {})
           .addUser(_identity->delegation,
                    ghostDeviceKeys.signatureKeyPair.publicKey,
                    ghostDeviceKeys.encryptionKeyPair.publicKey,
-                   Crypto::makeEncryptionKeyPair());
-  auto const entry = Serialization::deserialize<Block>(userCreation);
+                   Crypto::makeEncryptionKeyPair()));
   auto const action =
       Serialization::deserialize<Trustchain::Actions::DeviceCreation::v3>(
-          entry.payload);
+          userCreation.payload);
 
   auto const firstDevice = Unlock::createValidatedDevice(
       _info.trustchainId,
       _identity->delegation.userId,
-      GhostDevice::create(ghostDeviceKeys),
+      ghostDevice,
       _keyStore->deviceKeys(),
-      EncryptedUserKey{Trustchain::DeviceId{entry.hash()},
+      EncryptedUserKey{Trustchain::DeviceId{userCreation.hash()},
                        action.sealedPrivateUserEncryptionKey()});
 
-  TC_AWAIT(_client->pushBlock(userCreation));
-  TC_AWAIT(_client->pushBlock(firstDevice));
+  auto const encryptVerificationKey = Crypto::encryptAead(
+      _identity->userSecret,
+      gsl::make_span(Unlock::ghostDeviceToVerificationKey(ghostDevice))
+          .as_span<uint8_t const>());
+
+  TC_AWAIT(_client->createUser(
+      *_identity,
+      userCreation,
+      firstDevice,
+      makeVerificationRequest(verification, _identity->userSecret),
+      encryptVerificationKey));
   TC_RETURN(makeConfig());
 }
 

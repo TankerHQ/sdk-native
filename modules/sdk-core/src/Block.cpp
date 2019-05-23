@@ -45,7 +45,7 @@ Crypto::Hash Block::hash() const
                        payload.size());
   auto it = hashedPayload.data();
   it = Serialization::varint_write(it, natureInt);
-  it = Serialization::serialize(it , author);
+  it = Serialization::serialize(it, author);
   std::copy(payload.begin(), payload.end(), it);
 
   return Crypto::generichash(hashedPayload);
@@ -106,7 +106,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, Block const& b)
 
 void to_json(nlohmann::json& j, Block const& b)
 {
-  j["trustchainId"] = b.trustchainId;
+  j["trustchain_id"] = b.trustchainId;
   j["index"] = b.index;
   j["author"] = b.author;
   j["nature"] = b.nature;

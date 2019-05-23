@@ -55,12 +55,11 @@ std::unique_ptr<Registration> generate(
       Registration{ghostDeviceBlock, verificationKey});
 }
 
-std::vector<uint8_t> createValidatedDevice(
-    Trustchain::TrustchainId const& trustchainId,
-    UserId const& userId,
-    GhostDevice const& ghostDevice,
-    DeviceKeys const& deviceKeys,
-    EncryptedUserKey const& encryptedUserKey)
+Block createValidatedDevice(Trustchain::TrustchainId const& trustchainId,
+                            UserId const& userId,
+                            GhostDevice const& ghostDevice,
+                            DeviceKeys const& deviceKeys,
+                            EncryptedUserKey const& encryptedUserKey)
 {
   auto const ghostEncryptionKeyPair =
       makeEncryptionKeyPair(ghostDevice.privateEncryptionKey);
@@ -68,14 +67,15 @@ std::vector<uint8_t> createValidatedDevice(
   auto const privateUserEncryptionKey = Crypto::sealDecrypt(
       encryptedUserKey.encryptedPrivateKey, ghostEncryptionKeyPair);
 
-  return BlockGenerator(trustchainId,
-                        ghostDevice.privateSignatureKey,
-                        encryptedUserKey.deviceId)
-      .addDevice(
-          Identity::makeDelegation(userId, ghostDevice.privateSignatureKey),
-          deviceKeys.signatureKeyPair.publicKey,
-          deviceKeys.encryptionKeyPair.publicKey,
-          Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
+  return Serialization::deserialize<Block>(
+      BlockGenerator(trustchainId,
+                     ghostDevice.privateSignatureKey,
+                     encryptedUserKey.deviceId)
+          .addDevice(
+              Identity::makeDelegation(userId, ghostDevice.privateSignatureKey),
+              deviceKeys.signatureKeyPair.publicKey,
+              deviceKeys.encryptionKeyPair.publicKey,
+              Crypto::makeEncryptionKeyPair(privateUserEncryptionKey)));
 }
 }
 }

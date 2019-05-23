@@ -1,12 +1,15 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/GhostDevice.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -15,6 +18,8 @@
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Methods.hpp>
+#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
@@ -68,6 +73,13 @@ public:
 
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
   tc::cotask<void> pushKeys(gsl::span<std::vector<uint8_t> const> block);
+
+  tc::cotask<void> createUser(
+      Identity::SecretPermanentIdentity const& identity,
+      Block const& userCreation,
+      Block const& firstDevice,
+      Unlock::VerificationRequest const& request,
+      gsl::span<uint8_t const> encryptedVerificationKey);
 
   tc::cotask<UserStatusResult> userStatus(
       Trustchain::TrustchainId const& trustchainId,

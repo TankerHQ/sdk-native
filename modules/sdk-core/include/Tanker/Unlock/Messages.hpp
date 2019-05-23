@@ -10,6 +10,7 @@
 #include <Tanker/Unlock/Claims.hpp>
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -48,7 +49,8 @@ struct FetchAnswer
   std::vector<uint8_t> encryptedVerificationKey;
 
   FetchAnswer() = default;
-  FetchAnswer(Crypto::SymmetricKey const& key, VerificationKey const& verificationKey);
+  FetchAnswer(Crypto::SymmetricKey const& key,
+              VerificationKey const& verificationKey);
 
   VerificationKey getVerificationKey(Crypto::SymmetricKey const& key) const;
 };
@@ -77,5 +79,6 @@ struct Message
 };
 
 void to_json(nlohmann::json&, Message const& m);
+
 }
 }

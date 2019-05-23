@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Block.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -27,11 +28,10 @@ std::unique_ptr<Registration> generate(
     BlockGenerator const& blockGen,
     DeviceKeys const& deviceKeys = DeviceKeys::create());
 
-std::vector<uint8_t> createValidatedDevice(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    GhostDevice const& ghostDevice,
-    DeviceKeys const& deviceKeys,
-    EncryptedUserKey const& encryptedUserKey);
+Block createValidatedDevice(Trustchain::TrustchainId const& trustchainId,
+                            Trustchain::UserId const& userId,
+                            GhostDevice const& ghostDevice,
+                            DeviceKeys const& deviceKeys,
+                            EncryptedUserKey const& encryptedUserKey);
 }
 }
