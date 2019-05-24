@@ -2,6 +2,7 @@
 #include <Tanker/DataStore/JsDatabase.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -29,16 +30,15 @@ public:
   virtual emscripten::val getUserKeyPair(emscripten::val const& publicKey) = 0;
   virtual emscripten::val getUserOptLastKeyPair() = 0;
 
-  virtual emscripten::val getTrustchainLastIndex() = 0;
+  virtual emscripten::val findTrustchainLastIndex() = 0;
+  virtual emscripten::val findTrustchainPublicSignatureKey() = 0;
+  virtual emscripten::val setTrustchainLastIndex(
+      emscripten::val const& idx) = 0;
+  virtual emscripten::val setTrustchainPublicSignatureKey(
+      emscripten::val const& idx) = 0;
   virtual emscripten::val addTrustchainEntry(emscripten::val const& entry) = 0;
   virtual emscripten::val findTrustchainEntry(
       emscripten::val const& resourceId) = 0;
-  virtual emscripten::val findTrustchainKeyPublish(
-      emscripten::val const& resourceId) = 0;
-  virtual emscripten::val getTrustchainDevicesOf(
-      emscripten::val const& userId) = 0;
-  virtual emscripten::val getTrustchainDevice(
-      emscripten::val const& deviceId) = 0;
 
   virtual emscripten::val putContact(emscripten::val const& userId,
                                      emscripten::val const& publicKey) = 0;
@@ -47,6 +47,9 @@ public:
       emscripten::val const& publicEncryptionKey) = 0;
   virtual emscripten::val setContactPublicEncryptionKey(
       emscripten::val const& userId, emscripten::val const& userPublicKey) = 0;
+
+  virtual emscripten::val putKeyPublishes(emscripten::val const& kps) = 0;
+  virtual emscripten::val findKeyPublish(emscripten::val const& kp) = 0;
 
   virtual emscripten::val putResourceKey(emscripten::val const& resourceId,
                                          emscripten::val const& key) = 0;
@@ -68,6 +71,8 @@ public:
 
   virtual emscripten::val putFullGroup(emscripten::val const& group) = 0;
   virtual emscripten::val putExternalGroup(emscripten::val const& group) = 0;
+  virtual emscripten::val putGroupProvisionalEncryptionKeys(
+      emscripten::val const& groupid, emscripten::val const& keys) = 0;
   virtual emscripten::val putProvisionalUserKeys(
       emscripten::val const& provisionalUserKeys) = 0;
   virtual emscripten::val updateLastGroupBlock(
@@ -78,6 +83,9 @@ public:
       emscripten::val const& groupId) = 0;
   virtual emscripten::val findExternalGroupByGroupId(
       emscripten::val const& groupId) = 0;
+  virtual emscripten::val findExternalGroupsByProvisionalUser(
+      emscripten::val const& appSignaturePublicKey,
+      emscripten::val const& tankerSignaturePublicKey) = 0;
   virtual emscripten::val findFullGroupByGroupPublicEncryptionKey(
       emscripten::val const& publicEncryptionKey) = 0;
   virtual emscripten::val findExternalGroupByGroupPublicEncryptionKey(
@@ -128,16 +136,18 @@ public:
   FORWARD_CALL2(putUserPrivateKey)
   FORWARD_CALL1(getUserKeyPair)
   FORWARD_CALL0(getUserOptLastKeyPair)
-  FORWARD_CALL0(getTrustchainLastIndex)
+  FORWARD_CALL0(findTrustchainLastIndex)
+  FORWARD_CALL0(findTrustchainPublicSignatureKey)
+  FORWARD_CALL1(setTrustchainLastIndex)
+  FORWARD_CALL1(setTrustchainPublicSignatureKey)
   FORWARD_CALL1(addTrustchainEntry)
   FORWARD_CALL1(findTrustchainEntry)
-  FORWARD_CALL1(findTrustchainKeyPublish)
-  FORWARD_CALL1(getTrustchainDevicesOf)
-  FORWARD_CALL1(getTrustchainDevice)
   FORWARD_CALL2(putContact)
   FORWARD_CALL1(findContactUserKey)
   FORWARD_CALL1(findContactUserIdByPublicEncryptionKey)
   FORWARD_CALL2(setContactPublicEncryptionKey)
+  FORWARD_CALL1(putKeyPublishes)
+  FORWARD_CALL1(findKeyPublish)
   FORWARD_CALL2(putResourceKey)
   FORWARD_CALL1(findResourceKey)
   FORWARD_CALL0(getDeviceKeys)
@@ -150,9 +160,11 @@ public:
   FORWARD_CALL2(updateDeviceRevokedAt)
   FORWARD_CALL1(putFullGroup)
   FORWARD_CALL1(putExternalGroup)
+  FORWARD_CALL2(putGroupProvisionalEncryptionKeys)
   FORWARD_CALL3(updateLastGroupBlock)
   FORWARD_CALL1(findFullGroupByGroupId)
   FORWARD_CALL1(findExternalGroupByGroupId)
+  FORWARD_CALL2(findExternalGroupsByProvisionalUser)
   FORWARD_CALL1(findFullGroupByGroupPublicEncryptionKey)
   FORWARD_CALL1(findExternalGroupByGroupPublicEncryptionKey)
   FORWARD_CALL1(putProvisionalUserKeys)
@@ -226,10 +238,40 @@ JsDatabase::getUserOptLastKeyPair()
       Crypto::PrivateEncryptionKey{copyToVector(keys[1])}}));
 }
 
-tc::cotask<uint64_t> JsDatabase::getTrustchainLastIndex()
+tc::cotask<nonstd::optional<uint64_t>> JsDatabase::findTrustchainLastIndex()
 {
-  TC_RETURN(static_cast<uint64_t>(
-      TC_AWAIT(jsPromiseToFuture(_db->getTrustchainLastIndex())).as<double>()));
+  auto const optIndex =
+      TC_AWAIT(jsPromiseToFuture(_db->findTrustchainLastIndex()));
+
+  if (optIndex.isNull() || optIndex.isUndefined())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(static_cast<uint64_t>(optIndex.as<double>()));
+}
+
+tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+JsDatabase::findTrustchainPublicSignatureKey()
+{
+  auto const optSignatureKey =
+      TC_AWAIT(jsPromiseToFuture(_db->findTrustchainPublicSignatureKey()));
+
+  if (optSignatureKey.isNull() || optSignatureKey.isUndefined())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(Crypto::PublicSignatureKey{copyToVector(optSignatureKey)});
+}
+
+tc::cotask<void> JsDatabase::setTrustchainLastIndex(uint64_t idx)
+{
+  TC_AWAIT(jsPromiseToFuture(
+      _db->setTrustchainLastIndex(emscripten::val{static_cast<double>(idx)})));
+}
+
+tc::cotask<void> JsDatabase::setTrustchainPublicSignatureKey(
+    Crypto::PublicSignatureKey const& key)
+{
+  TC_AWAIT(jsPromiseToFuture(
+      _db->setTrustchainLastIndex(emscripten::val{containerToJs(key)})));
 }
 
 namespace
@@ -262,6 +304,11 @@ struct toVal
       ret.set("isGhostDevice", emscripten::val(dc3->isGhostDevice()));
     }
     return ret;
+  }
+
+  emscripten::val operator()(KeyPublish const& kp)
+  {
+    return kp.visit([this](auto const& val) { return (*this)(val); });
   }
 
   emscripten::val operator()(KeyPublishToDevice const& kp)
@@ -436,10 +483,6 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
     entry.action = KeyPublishToProvisionalUser{
         appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key};
   }
-  else
-    throw Error::formatEx<std::runtime_error>(
-        "TODO: unsupported database entry type: {}",
-        static_cast<int>(entry.nature));
 
   return entry;
 }
@@ -454,43 +497,6 @@ tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainEntry(
     TC_RETURN(nonstd::nullopt);
 
   TC_RETURN(jsEntryToEntry(entry));
-}
-
-tc::cotask<nonstd::optional<Entry>> JsDatabase::findTrustchainKeyPublish(
-    ResourceId const& resourceId)
-{
-  auto const entry = TC_AWAIT(jsPromiseToFuture(
-      _db->findTrustchainKeyPublish(containerToJs(resourceId))));
-  if (entry.isNull() || entry.isUndefined())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(jsEntryToEntry(entry));
-}
-
-tc::cotask<std::vector<Entry>> JsDatabase::getTrustchainDevicesOf(
-    UserId const& userId)
-{
-  auto const entries = TC_AWAIT(
-      jsPromiseToFuture(_db->getTrustchainDevicesOf(containerToJs(userId))));
-
-  auto const length = entries["length"].as<unsigned int>();
-  std::vector<Entry> ret;
-  for (auto i = 0u; i < length; ++i)
-    ret.push_back(jsEntryToEntry(entries[i]));
-
-  TC_RETURN(ret);
-}
-
-tc::cotask<Entry> JsDatabase::getTrustchainDevice(
-    DeviceId const& deviceId)
-{
-  auto const jsEntry = TC_AWAIT(
-      jsPromiseToFuture(_db->getTrustchainDevice(containerToJs(deviceId))));
-  if (jsEntry.isNull() || jsEntry.isUndefined())
-    throw Error::formatEx<RecordNotFound>("couldn't find block with hash {}",
-                                          deviceId);
-
-  TC_RETURN(jsEntryToEntry(jsEntry));
 }
 
 tc::cotask<void> JsDatabase::putContact(
@@ -531,6 +537,101 @@ tc::cotask<void> JsDatabase::setContactPublicEncryptionKey(
 {
   TC_AWAIT(jsPromiseToFuture(_db->setContactPublicEncryptionKey(
       containerToJs(userId), containerToJs(userPublicKey))));
+}
+
+namespace
+{
+emscripten::val toJsKeyPublish(KeyPublish const& kp)
+{
+  auto val = emscripten::val::object();
+  val.set("resourceId", containerToJs(kp.resourceId()));
+  val.set("nature", static_cast<int>(kp.nature()));
+  if (auto const kp2 = kp.get_if<KeyPublishToDevice>())
+  {
+    val.set("recipient", containerToJs(kp2->recipient()));
+    val.set("encryptedSymmetricKey",
+            containerToJs(kp2->encryptedSymmetricKey()));
+  }
+  else if (auto const kp2 = kp.get_if<KeyPublishToUser>())
+  {
+    val.set("recipient", containerToJs(kp2->recipientPublicEncryptionKey()));
+    val.set("encryptedSymmetricKey", containerToJs(kp2->sealedSymmetricKey()));
+  }
+  else if (auto const kp2 = kp.get_if<KeyPublishToUserGroup>())
+  {
+    val.set("recipient", containerToJs(kp2->recipientPublicEncryptionKey()));
+    val.set("encryptedSymmetricKey", containerToJs(kp2->sealedSymmetricKey()));
+  }
+  else if (auto const kp2 = kp.get_if<KeyPublishToProvisionalUser>())
+  {
+    val.set("appSignaturePublicKey",
+            containerToJs(kp2->appPublicSignatureKey()));
+    val.set("tankerSignaturePublicKey",
+            containerToJs(kp2->tankerPublicSignatureKey()));
+    val.set("encryptedSymmetricKey",
+            containerToJs(kp2->twoTimesSealedSymmetricKey()));
+  }
+  return val;
+}
+
+KeyPublish fromJsKeyPublish(emscripten::val const& jkp)
+{
+  auto const resourceId =
+      Trustchain::ResourceId{copyToVector(jkp["resourceId"])};
+  auto const encryptedSymmetricKey = copyToVector(jkp["encryptedSymmetricKey"]);
+  auto const nature = static_cast<Nature>(jkp["nature"].as<int>());
+
+  switch (nature)
+  {
+  case Nature::KeyPublishToDevice:
+    return KeyPublishToDevice{
+        Trustchain::DeviceId{copyToVector(jkp["recipient"])},
+        resourceId,
+        Crypto::EncryptedSymmetricKey{encryptedSymmetricKey},
+    };
+  case Nature::KeyPublishToUser:
+    return KeyPublishToUser{
+        Crypto::PublicEncryptionKey{copyToVector(jkp["recipient"])},
+        resourceId,
+        Crypto::SealedSymmetricKey{encryptedSymmetricKey},
+    };
+  case Nature::KeyPublishToUserGroup:
+    return KeyPublishToUserGroup{
+        Crypto::PublicEncryptionKey{copyToVector(jkp["recipient"])},
+        resourceId,
+        Crypto::SealedSymmetricKey{encryptedSymmetricKey},
+    };
+  case Nature::KeyPublishToProvisionalUser:
+    return KeyPublishToProvisionalUser{
+        Crypto::PublicSignatureKey{copyToVector(jkp["appSignaturePublicKey"])},
+        resourceId,
+        Crypto::PublicSignatureKey{
+            copyToVector(jkp["tankerSignaturePublicKey"])},
+        Crypto::TwoTimesSealedSymmetricKey{encryptedSymmetricKey},
+    };
+  default:
+    throw Error::formatEx("invalid nature for key publish: {}", nature);
+  }
+}
+}
+
+tc::cotask<void> JsDatabase::putKeyPublishes(gsl::span<KeyPublish const> kps)
+{
+  auto jkps = emscripten::val::array();
+  for (auto const& kp : kps)
+    jkps.call<void>("push", toJsKeyPublish(kp));
+  TC_AWAIT(jsPromiseToFuture(_db->putKeyPublishes(jkps)));
+}
+
+tc::cotask<nonstd::optional<KeyPublish>> JsDatabase::findKeyPublish(
+    ResourceId const& resourceId)
+{
+  auto const optKp = TC_AWAIT(
+      jsPromiseToFuture(_db->findKeyPublish(containerToJs(resourceId))));
+  if (optKp.isNull() || optKp.isUndefined())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(fromJsKeyPublish(optKp));
 }
 
 tc::cotask<void> JsDatabase::putResourceKey(ResourceId const& resourceId,
@@ -691,7 +792,48 @@ tc::cotask<void> JsDatabase::putExternalGroup(ExternalGroup const& group)
   jsgroup.set("publicEncryptionKey", containerToJs(group.publicEncryptionKey));
   jsgroup.set("lastBlockHash", containerToJs(group.lastBlockHash));
   jsgroup.set("lastBlockIndex", static_cast<double>(group.lastBlockIndex));
+
+  auto jsprovisionalUsers = emscripten::val::array();
+  for (auto const& provisionalUser : group.provisionalUsers)
+  {
+    auto jsprovisionalUser = emscripten::val::object();
+    jsprovisionalUser.set(
+        "appSignaturePublicKey",
+        containerToJs(provisionalUser.appPublicSignatureKey()));
+    jsprovisionalUser.set(
+        "tankerSignaturePublicKey",
+        containerToJs(provisionalUser.tankerPublicSignatureKey()));
+    jsprovisionalUser.set(
+        "encryptedPrivateEncryptionKey",
+        containerToJs(provisionalUser.encryptedPrivateEncryptionKey()));
+    jsprovisionalUsers.call<void>("push", jsprovisionalUser);
+  }
+  jsgroup.set("provisionalMembers", jsprovisionalUsers);
+
   TC_AWAIT(jsPromiseToFuture(_db->putExternalGroup(jsgroup)));
+}
+
+tc::cotask<void> JsDatabase::putGroupProvisionalEncryptionKeys(
+    Trustchain::GroupId const& groupId,
+    std::vector<GroupProvisionalUser> const& provisionalUsers)
+{
+  auto jsprovisionalUsers = emscripten::val::array();
+  for (auto const& provisionalUser : provisionalUsers)
+  {
+    auto jsprovisionalUser = emscripten::val::object();
+    jsprovisionalUser.set(
+        "appSignaturePublicKey",
+        containerToJs(provisionalUser.appPublicSignatureKey()));
+    jsprovisionalUser.set(
+        "tankerSignaturePublicKey",
+        containerToJs(provisionalUser.tankerPublicSignatureKey()));
+    jsprovisionalUser.set(
+        "encryptedPrivateEncryptionKey",
+        containerToJs(provisionalUser.encryptedPrivateEncryptionKey()));
+    jsprovisionalUsers.call<void>("push", jsprovisionalUser);
+  }
+  TC_AWAIT(jsPromiseToFuture(_db->putGroupProvisionalEncryptionKeys(
+      containerToJs(groupId), jsprovisionalUsers)));
 }
 
 tc::cotask<void> JsDatabase::updateLastGroupBlock(
@@ -725,6 +867,19 @@ ExternalGroup fromJsExternalGroup(emscripten::val const& group)
 {
   auto const encryptedPrivateSignatureKey =
       group["encryptedPrivateSignatureKey"];
+  std::vector<GroupProvisionalUser> provisionalMembers;
+  auto const jsprovisionalMembers = group["provisionalMembers"];
+  auto const provisionalMembersLen =
+      optionalFromValue<int>(jsprovisionalMembers, "length").value_or(0);
+  for (int i = 0; i < provisionalMembersLen; ++i)
+    provisionalMembers.push_back(GroupProvisionalUser{
+        Crypto::PublicSignatureKey(
+            copyToVector(jsprovisionalMembers[i]["appSignaturePublicKey"])),
+        Crypto::PublicSignatureKey(
+            copyToVector(jsprovisionalMembers[i]["tankerSignaturePublicKey"])),
+        Crypto::TwoTimesSealedPrivateEncryptionKey(copyToVector(
+            jsprovisionalMembers[i]["encryptedPrivateEncryptionKey"])),
+    });
   return ExternalGroup{
       GroupId(copyToVector(group["id"])),
       Crypto::PublicSignatureKey(copyToVector(group["publicSignatureKey"])),
@@ -736,6 +891,7 @@ ExternalGroup fromJsExternalGroup(emscripten::val const& group)
       Crypto::PublicEncryptionKey(copyToVector(group["publicEncryptionKey"])),
       Crypto::Hash(copyToVector(group["lastBlockHash"])),
       static_cast<uint64_t>(group["lastBlockIndex"].as<double>()),
+      provisionalMembers,
   };
 }
 }
@@ -760,6 +916,23 @@ JsDatabase::findExternalGroupByGroupId(GroupId const& id)
     TC_RETURN(nonstd::nullopt);
 
   TC_RETURN(fromJsExternalGroup(jsgroup));
+}
+
+tc::cotask<std::vector<ExternalGroup>>
+JsDatabase::findExternalGroupsByProvisionalUser(
+    Crypto::PublicSignatureKey const& appPublicSignatureKey,
+    Crypto::PublicSignatureKey const& tankerPublicSignatureKey)
+{
+  auto const jsgroups =
+      TC_AWAIT(jsPromiseToFuture(_db->findExternalGroupsByProvisionalUser(
+          containerToJs(appPublicSignatureKey),
+          containerToJs(tankerPublicSignatureKey))));
+
+  std::vector<ExternalGroup> out;
+  auto const nbGroups = jsgroups["length"].as<int>();
+  for (int i = 0; i < nbGroups; ++i)
+    out.push_back(fromJsExternalGroup(jsgroups[i]));
+  TC_RETURN(out);
 }
 
 tc::cotask<nonstd::optional<Group>>
@@ -811,7 +984,7 @@ tc::cotask<void> JsDatabase::putProvisionalUserKeys(
 {
   auto jskeys = emscripten::val::object();
   jskeys.set("appPublicSignatureKey", containerToJs(appPublicSigKey));
-  jskeys.set("tankerPublicSignatureKey", containerToJs(appPublicSigKey));
+  jskeys.set("tankerPublicSignatureKey", containerToJs(tankerPublicSigKey));
 
   auto provisional = emscripten::val::object();
   provisional.set("appPublicEncryptionKey",
@@ -874,23 +1047,23 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("getUserOptLastKeyPair",
                 &JsDatabaseInterface::getUserOptLastKeyPair,
                 emscripten::pure_virtual())
-      .function("getTrustchainLastIndex",
-                &JsDatabaseInterface::getTrustchainLastIndex,
+      .function("findTrustchainLastIndex",
+                &JsDatabaseInterface::findTrustchainLastIndex,
+                emscripten::pure_virtual())
+      .function("findTrustchainPublicSignatureKey",
+                &JsDatabaseInterface::findTrustchainPublicSignatureKey,
+                emscripten::pure_virtual())
+      .function("setTrustchainLastIndex",
+                &JsDatabaseInterface::setTrustchainLastIndex,
+                emscripten::pure_virtual())
+      .function("setTrustchainPublicSignatureKey",
+                &JsDatabaseInterface::setTrustchainPublicSignatureKey,
                 emscripten::pure_virtual())
       .function("addTrustchainEntry",
                 &JsDatabaseInterface::addTrustchainEntry,
                 emscripten::pure_virtual())
       .function("findTrustchainEntry",
                 &JsDatabaseInterface::findTrustchainEntry,
-                emscripten::pure_virtual())
-      .function("findTrustchainKeyPublish",
-                &JsDatabaseInterface::findTrustchainKeyPublish,
-                emscripten::pure_virtual())
-      .function("getTrustchainDevicesOf",
-                &JsDatabaseInterface::getTrustchainDevicesOf,
-                emscripten::pure_virtual())
-      .function("getTrustchainDevice",
-                &JsDatabaseInterface::getTrustchainDevice,
                 emscripten::pure_virtual())
       .function("putContact",
                 &JsDatabaseInterface::putContact,
@@ -903,6 +1076,12 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
                 emscripten::pure_virtual())
       .function("setContactPublicEncryptionKey",
                 &JsDatabaseInterface::setContactPublicEncryptionKey,
+                emscripten::pure_virtual())
+      .function("putKeyPublishes",
+                &JsDatabaseInterface::putKeyPublishes,
+                emscripten::pure_virtual())
+      .function("findKeyPublish",
+                &JsDatabaseInterface::findKeyPublish,
                 emscripten::pure_virtual())
       .function("putResourceKey",
                 &JsDatabaseInterface::putResourceKey,

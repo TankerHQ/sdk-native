@@ -51,10 +51,10 @@ emscripten::val CoreSignUp(AsyncCore& core,
                            emscripten::val const& jauthenticationMethods)
 {
   AuthenticationMethods authenticationMethods;
-  authenticationMethods.password = Emscripten::optionalFromValue<Password>(
+  authenticationMethods.password = Emscripten::optionalStringFromValue<Password>(
       jauthenticationMethods, "password");
   authenticationMethods.email =
-      Emscripten::optionalFromValue<Email>(jauthenticationMethods, "email");
+      Emscripten::optionalStringFromValue<Email>(jauthenticationMethods, "email");
   return Emscripten::tcFutureToJsPromise(
       core.signUp(identity, authenticationMethods));
 }
@@ -65,12 +65,13 @@ emscripten::val CoreSignIn(AsyncCore& core,
 {
   SignInOptions signInOptions;
   signInOptions.verificationKey =
-      Emscripten::optionalFromValue<VerificationKey>(jsignInOptions, "verificationKey");
+      Emscripten::optionalStringFromValue<VerificationKey>(jsignInOptions,
+                                                     "unlockKey");
   signInOptions.verificationCode =
-      Emscripten::optionalFromValue<VerificationCode>(jsignInOptions,
+      Emscripten::optionalStringFromValue<VerificationCode>(jsignInOptions,
                                                       "verificationCode");
   signInOptions.password =
-      Emscripten::optionalFromValue<Password>(jsignInOptions, "password");
+      Emscripten::optionalStringFromValue<Password>(jsignInOptions, "password");
   return Emscripten::tcFutureToJsPromise(core.signIn(identity, signInOptions));
 }
 
@@ -144,11 +145,23 @@ emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
       SGroupId(jgroupId.as<std::string>()), usersToAdd));
 }
 
+emscripten::val CoreClaimProvisionalIdentity(
+    AsyncCore& core,
+    emscripten::val const& secretProvisionalIdentity,
+    emscripten::val const& verificationCode)
+{
+  return Emscripten::tcFutureToJsPromise(core.claimProvisionalIdentity(
+      SSecretProvisionalIdentity(secretProvisionalIdentity.as<std::string>()),
+      VerificationCode{verificationCode.as<std::string>()}));
+}
+
 emscripten::val CoreGenerateAndRegisterVerificationKey(AsyncCore& core)
 {
   return Emscripten::tcFutureToJsPromise(
       core.generateAndRegisterVerificationKey().and_then(
-          [](auto const& verificationKey) { return verificationKey.string(); }));
+          [](auto const& verificationKey) {
+            return verificationKey.string();
+          }));
 }
 
 emscripten::val CoreRegisterUnlock(AsyncCore& core,
@@ -156,10 +169,10 @@ emscripten::val CoreRegisterUnlock(AsyncCore& core,
 {
   Unlock::RegistrationOptions o;
   if (auto const email =
-          Emscripten::optionalFromValue<Email>(unlockMethods, "email"))
+          Emscripten::optionalStringFromValue<Email>(unlockMethods, "email"))
     o.set(*email);
   if (auto const password =
-          Emscripten::optionalFromValue<Password>(unlockMethods, "password"))
+          Emscripten::optionalStringFromValue<Password>(unlockMethods, "password"))
     o.set(*password);
   return Emscripten::tcFutureToJsPromise(core.registerUnlock(o));
 }
@@ -319,6 +332,7 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("share", &CoreShare)
       .function("createGroup", &CoreCreateGroup)
       .function("updateGroupMembers", &CoreUpdateGroupMembers)
+      .function("claimProvisionalIdentity", &CoreClaimProvisionalIdentity)
       .function("generateAndRegisterVerificationKey",
                 &CoreGenerateAndRegisterVerificationKey)
       .function("registerUnlock", &CoreRegisterUnlock)

@@ -67,6 +67,12 @@ emscripten::val currentExceptionToJs()
   {
     return emscripten::val(EmError{e.code(), e.message()});
   }
+  catch (std::invalid_argument const& e)
+  {
+    return emscripten::val(
+        EmError{Error::Code::InvalidArgument,
+                std::string(typeid(e).name()) + ": " + e.what()});
+  }
   catch (std::exception const& e)
   {
     return emscripten::val(EmError{

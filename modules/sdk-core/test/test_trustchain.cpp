@@ -2,8 +2,8 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/TrustchainStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -14,8 +14,8 @@
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
-using Tanker::Trustchain::Actions::Nature;
 using Tanker::Trustchain::Action;
+using Tanker::Trustchain::Actions::Nature;
 
 using namespace Tanker;
 
@@ -108,7 +108,7 @@ TEST_CASE("trustchain")
   {
     TrustchainStore trustchain(dbPtr.get());
 
-    CHECK_EQ(TC_AWAIT(trustchain.findPublicSignatureKey()), nonstd::nullopt);
+    CHECK_EQ(AWAIT(trustchain.findPublicSignatureKey()), nonstd::nullopt);
   }
 
   SUBCASE("it should add entries to the trustchain and update last index")
