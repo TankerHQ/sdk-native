@@ -21,8 +21,8 @@ inline bool isNone(emscripten::val const& v)
 }
 
 template <typename T>
-nonstd::optional<T> optionalFromValue(emscripten::val const& val,
-                                      std::string const& key)
+nonstd::optional<T> optionalStringFromValue(emscripten::val const& val,
+                                            std::string const& key)
 {
   if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
     return nonstd::nullopt;
