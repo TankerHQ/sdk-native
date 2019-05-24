@@ -1,4 +1,5 @@
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
@@ -7,6 +8,8 @@
 #include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+
+#include <Helpers/Errors.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
@@ -159,19 +162,25 @@ TEST_SUITE("generate Identity")
 {
   TEST_CASE("should throw given empty userId")
   {
-    CHECK_THROWS_AS(createIdentity("trustchainID", "privateKey", ""_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        createIdentity("trustchainID", "privateKey", ""_uid),
+        Errc::InvalidUserId);
   }
+
   TEST_CASE("should throw given empty trustchainId")
   {
-    CHECK_THROWS_AS(createIdentity("", "privateKey", "userId"_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        createIdentity("", "privateKey", "userId"_uid),
+        Errc::InvalidTrustchainId);
   }
+
   TEST_CASE("should throw given empty privateKey")
   {
-    CHECK_THROWS_AS(createIdentity("trustchainID", "", "userId"_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        createIdentity("trustchainId", "", "userId"_uid),
+        Errc::InvalidTrustchainPrivateKey);
   }
+
   TEST_CASE("We can create an identity from strings")
   {
     CHECK_NOTHROW(createIdentity(
@@ -183,14 +192,18 @@ TEST_SUITE("generate provisional Identity")
 {
   TEST_CASE("should throw given empty trustchainId")
   {
-    CHECK_THROWS_AS(createProvisionalIdentity("", Email{userEmail}),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        createProvisionalIdentity("", Email{userEmail}),
+        Errc::InvalidTrustchainId);
   }
+
   TEST_CASE("should throw given empty email")
   {
-    CHECK_THROWS_AS(createProvisionalIdentity("trustchainID", Email{""}),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        createProvisionalIdentity("trustchainId", Email{""}),
+        Errc::InvalidEmail);
   }
+
   TEST_CASE("We can create a provisional identity from strings")
   {
     CHECK_NOTHROW(
@@ -208,6 +221,7 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
   }
+
   TEST_CASE("We can deserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
@@ -217,14 +231,16 @@ TEST_SUITE("serialization")
     CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
   }
+
   TEST_CASE(
       "We cannot deserialize a secret permanent identity as a public permanent "
       "identity")
   {
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         extract<PublicPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY),
-        std::invalid_argument);
+        Errc::InvalidType);
   }
+
   TEST_CASE(
       "We can deserialize a secret provisional identity from a good string")
   {
@@ -239,6 +255,7 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
     CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
   }
+
   TEST_CASE(
       "We can deserialize a public provisional identity from a good string")
   {
@@ -251,13 +268,14 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
   }
+
   TEST_CASE(
       "We cannot deserialize a secret provisional identity as a public "
       "provisional identity")
   {
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         extract<PublicProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY),
-        std::invalid_argument);
+        Errc::InvalidType);
   }
 }
 
@@ -271,11 +289,12 @@ TEST_SUITE("ugprade a user token to an identity")
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
   }
+
   TEST_CASE("should throw when upgrading the wrong userId")
   {
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         upgradeUserToken(trustchainIdString, "herbert"_uid, GOOD_USER_TOKEN),
-        std::invalid_argument);
+        Errc::InvalidUserId);
   }
 }
 
@@ -314,24 +333,31 @@ TEST_SUITE("Generate user token")
 {
   TEST_CASE("should throw given empty userId")
   {
-    CHECK_THROWS_AS(generateUserToken("trustchainID", "privateKey", ""_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        generateUserToken("trustchainID", "privateKey", ""_uid),
+        Errc::InvalidUserId);
   }
+
   TEST_CASE("should throw given empty trustchainId")
   {
-    CHECK_THROWS_AS(generateUserToken("", "privateKey", "userId"_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        generateUserToken("", "privateKey", "userId"_uid),
+        Errc::InvalidTrustchainId);
   }
+
   TEST_CASE("should throw given empty privateKey")
   {
-    CHECK_THROWS_AS(generateUserToken("trustchainID", "", "userId"_uid),
-                    std::invalid_argument);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        generateUserToken("trustchainId", "", "userId"_uid),
+        Errc::InvalidTrustchainPrivateKey);
   }
+
   TEST_CASE("should generate a UserToken")
   {
     CHECK_NOTHROW(generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, "alice"_uid));
   }
+
   TEST_CASE("should be able to be deserialize a user token")
   {
     auto const userTokenString = generateUserToken(
@@ -339,6 +365,7 @@ TEST_SUITE("Generate user token")
     auto const clearStr = cppcodec::base64_rfc4648::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
   }
+
   TEST_CASE("user secret have good format")
   {
     auto const userTokenString = generateUserToken(
@@ -348,6 +375,22 @@ TEST_SUITE("Generate user token")
     CHECK_NOTHROW(checkUserSecret(userToken2.userSecret,
                                   obfuscateUserId("alice"_uid, trustchainId)));
   }
+
+  TEST_CASE("extract should throw when identity has invalid format")
+  {
+    SUBCASE("json")
+    {
+      auto const invalidIdentity = cppcodec::base64_rfc4648::encode("}");
+      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>(invalidIdentity),
+                                    Errc::InvalidFormat);
+    }
+
+    SUBCASE("base64")
+    {
+      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>("?"), Errc::InvalidFormat);
+    }
+  }
+
   TEST_CASE("We can construct one user token from a good string")
   {
     auto const userToken = extract<UserToken>(GOOD_USER_TOKEN);
@@ -363,14 +406,4 @@ TEST_CASE("generateUserSecret can be checked")
 {
   CHECK_NOTHROW(
       checkUserSecret(generateUserSecret(obfuscatedUserId), obfuscatedUserId));
-}
-
-TEST_SUITE("userSecretHash")
-{
-  TEST_CASE("crash when bad args")
-  {
-    CHECK_THROWS_AS(userSecretHash(gsl::make_span(std::vector<uint8_t>()),
-                                   obfuscatedUserId),
-                    std::invalid_argument);
-  }
 }
