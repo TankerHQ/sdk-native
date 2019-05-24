@@ -7,11 +7,13 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ssl.hpp>
 
+#include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>
 
 TLOG_CATEGORY(DataStoreTest);
@@ -67,6 +69,7 @@ TEST_CASE("Connection" * doctest::test_suite("DataStore"))
 {
   Tanker::UniquePath testtmp("testtmp");
   auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
+
   SUBCASE("I can create a connection")
   {
     REQUIRE_NOTHROW(createConnection(dbfile));
@@ -75,7 +78,8 @@ TEST_CASE("Connection" * doctest::test_suite("DataStore"))
   SUBCASE("I cannot have two connections on the same exclusive database")
   {
     auto dbPtr = createConnection(dbfile);
-    REQUIRE_THROWS(createConnection(dbfile));
+    TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile),
+                                  Errc::DatabaseError);
   }
 
   SUBCASE("I can have multiple connections on a non-exclusive database")
@@ -129,8 +133,8 @@ TEST_CASE("Connection encrypted" * doctest::test_suite("DataStore") *
       auto dbPtr = createConnection(dbfile, key, true);
     }
     Tanker::Crypto::randomFill(key);
-    CHECK_THROWS_AS(createConnection(dbfile, key, true),
-                    Tanker::Error::InternalError);
+    TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile, key, true),
+                                  Errc::DatabaseError);
   }
 }
 

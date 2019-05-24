@@ -11,6 +11,8 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DataStore/Table.hpp
     include/Tanker/DataStore/Utils.hpp
     include/Tanker/DataStore/Version.hpp
+    include/Tanker/DataStore/Errors/Errc.hpp
+    include/Tanker/DataStore/Errors/ErrcCategory.hpp
     include/Tanker/DbModels/ContactDevices.hpp
     include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
@@ -73,6 +75,7 @@ add_library(tankercore STATIC
   include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
   include/Tanker/DataStore/ADatabase.hpp
+  include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
   include/Tanker/AConnection.hpp
@@ -151,6 +154,8 @@ add_library(tankercore STATIC
   src/Admin.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
+  src/DataStore/Errors/Errc.cpp
+  src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp

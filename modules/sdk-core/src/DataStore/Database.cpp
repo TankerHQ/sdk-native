@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
@@ -23,6 +24,8 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -219,8 +222,8 @@ KeyPublish rowToKeyPublish(T const& row)
         DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
   }
   default:
-    assert(false && "Unreachable code. Invalid nature for KeyPublish");
-    throw std::runtime_error{"Unreachable code. Invalid nature for KeyPublish"};
+    throw Errors::AssertionError(
+        "Unreachable code. Invalid nature for KeyPublish");
   }
 }
 
@@ -284,7 +287,7 @@ int Database::currentDatabaseVersion()
   VersionTable const tab{};
   auto const rows = (*_db)(select(tab.db_version).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+    throw Errors::AssertionError("version table must have a single row");
   return static_cast<int>(rows.front().db_version);
 }
 
@@ -336,8 +339,9 @@ void Database::performUnifiedMigration()
       flushAllCaches();
       break;
     default:
-      throw std::runtime_error{"Invalid database version: " +
-                               std::to_string(currentVersion)};
+      throw Errors::Exception(
+          Errc::InvalidDatabaseVersion,
+          "Invalid database version: " + std::to_string(currentVersion));
     }
 
     setDatabaseVersion(DataStore::latestVersion());
@@ -527,7 +531,10 @@ tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
 
   auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  {
+    throw Errors::AssertionError(
+        "trustchain_info table must have a single row");
+  }
   if (rows.front().last_index.is_null())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(static_cast<uint64_t>(rows.front().last_index));
@@ -541,7 +548,10 @@ Database::findTrustchainPublicSignatureKey()
   auto rows = (*_db)(
       select(tab.trustchain_public_signature_key).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  {
+    throw Errors::AssertionError(
+        "trustchain_info table must have a single row");
+  }
   if (rows.front().trustchain_public_signature_key.is_null())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -948,9 +958,11 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
 {
   FUNC_TIMER(DB);
   if (!group.encryptedPrivateSignatureKey)
-    throw std::runtime_error(
-        "Assertion failed: external groups must be inserted with encrypted "
-        "private signature key");
+  {
+    throw Errors::AssertionError(
+        "External groups must be inserted with their sealed private signature "
+        "key");
+  }
 
   GroupsTable groups;
 
