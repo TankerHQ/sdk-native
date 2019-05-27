@@ -143,6 +143,8 @@ add_library(tankercore STATIC
   include/Tanker/Verif/UserGroupCreation.hpp
   include/Tanker/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
+  include/Tanker/Verif/Errors/Errc.hpp
+  include/Tanker/Verif/Errors/ErrcCategory.hpp
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
   include/Tanker/EncryptionFormat/EncryptorV4.hpp
@@ -197,6 +199,8 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Revocation.cpp
+  src/Verif/Errors/Errc.cpp
+  src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/KeyPublishToDevice.cpp

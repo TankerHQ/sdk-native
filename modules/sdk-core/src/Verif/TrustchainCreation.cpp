@@ -1,8 +1,8 @@
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
@@ -20,13 +20,13 @@ void verifyTrustchainCreation(ServerEntry const& rootEntry,
   assert(rootEntry.action().nature() == Nature::TrustchainCreation);
 
   ensures(rootEntry.hash().base() == currentTrustchainId.base(),
-          Error::VerificationCode::InvalidHash,
+          Errc::InvalidHash,
           "root block hash must be the trustchain id");
   ensures(rootEntry.author().is_null(),
-          Error::VerificationCode::InvalidAuthor,
+          Errc::InvalidAuthor,
           "author must be zero-filled");
   ensures(rootEntry.signature().is_null(),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "signature must be zero-filled");
 }
 }

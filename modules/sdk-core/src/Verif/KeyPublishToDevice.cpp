@@ -5,6 +5,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/User.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <mpark/variant.hpp>
@@ -26,16 +27,16 @@ void verifyKeyPublishToDevice(ServerEntry const& serverEntry,
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),
-          Error::VerificationCode::InvalidAuthor,
+          Errc::InvalidAuthor,
           "author device must not be revoked");
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
                          author.publicSignatureKey),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "keyPublishToDevice block must be signed by the author device");
 
   ensures(!recipientUser.userKey.has_value(),
-          Error::VerificationCode::InvalidUserKey,
+          Errc::InvalidUserKey,
           "cannot KeyPublishToDevice to a device belonging to a user that has "
           "a userKey");
 }

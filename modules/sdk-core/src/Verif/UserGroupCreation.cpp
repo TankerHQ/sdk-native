@@ -4,6 +4,7 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <cassert>
@@ -23,13 +24,13 @@ void verifyUserGroupCreation(ServerEntry const& serverEntry,
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),
-          Error::VerificationCode::InvalidAuthor,
+          Errc::InvalidAuthor,
           "A revoked device must not be the author of UserGroupCreation");
 
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
                          author.publicSignatureKey),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "UserGroupCreation block must be signed by the author device");
 
   auto const& userGroupCreation = serverEntry.action().get<UserGroupCreation>();
@@ -37,7 +38,7 @@ void verifyUserGroupCreation(ServerEntry const& serverEntry,
   ensures(Crypto::verify(userGroupCreation.signatureData(),
                          userGroupCreation.selfSignature(),
                          userGroupCreation.publicSignatureKey()),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "UserGroupCreation signature data must be signed with the group "
           "public key");
 }

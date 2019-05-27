@@ -2,12 +2,13 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 #include <mpark/variant.hpp>
@@ -237,8 +238,9 @@ TEST_CASE("TrustchainVerifier")
                                       contactStore.get(),
                                       updatedGroupStore.get());
 
-    CHECK_THROWS_AS(AWAIT_VOID(verifier.verify(resultGroup.entry)),
-                    Error::VerificationFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT_VOID(verifier.verify(resultGroup.entry)),
+        Verif::Errc::InvalidGroup);
   }
 
   SUBCASE("throws if the author does not exist")
@@ -251,8 +253,9 @@ TEST_CASE("TrustchainVerifier")
     TrustchainVerifier const verifier(
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
-    CHECK_THROWS_AS(AWAIT_VOID(verifier.verify(deviceResult.entry)),
-                    Error::VerificationFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT_VOID(verifier.verify(deviceResult.entry)),
+        Verif::Errc::InvalidAuthor);
   }
 
   SUBCASE("second device creation throws if user does not exist")
@@ -266,8 +269,9 @@ TEST_CASE("TrustchainVerifier")
     TrustchainVerifier const verifier(
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
-    CHECK_THROWS_AS(AWAIT_VOID(verifier.verify(deviceResult.entry)),
-                    Error::VerificationFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT_VOID(verifier.verify(deviceResult.entry)),
+        Verif::Errc::InvalidAuthor);
   }
 
   SUBCASE("verif kp2g throws if group does not exists")
@@ -289,7 +293,8 @@ TEST_CASE("TrustchainVerifier")
     TrustchainVerifier const verifier(
         builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
 
-    CHECK_THROWS_AS(AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2g))),
-                    Error::VerificationFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2g))),
+        Verif::Errc::InvalidGroup);
   }
 }

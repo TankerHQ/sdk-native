@@ -12,6 +12,7 @@
 #include <Tanker/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 #include <Tanker/Verif/KeyPublishToUser.hpp>
@@ -190,7 +191,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
       userGroupCreation.publicEncryptionKey()));
   Verif::ensures(!group,
-                 Error::VerificationCode::InvalidGroup,
+                 Verif::Errc::InvalidGroup,
                  "UserGroupCreation - group already exist");
 
   Verif::verifyUserGroupCreation(gc, user.devices[idx]);
@@ -214,8 +215,7 @@ tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
 {
   auto const user = TC_AWAIT(_contacts->findUser(userId));
-  Verif::ensures(
-      user.has_value(), Error::VerificationCode::InvalidUser, "user not found");
+  Verif::ensures(user.has_value(), Verif::Errc::InvalidUser, "user not found");
   TC_RETURN(*user);
 }
 
@@ -224,9 +224,8 @@ tc::cotask<std::pair<User, std::size_t>> TrustchainVerifier::getUserByDeviceId(
 {
   auto const optUserId = TC_AWAIT(_contacts->findUserIdByDeviceId(deviceId));
 
-  Verif::ensures(optUserId.has_value(),
-                 Error::VerificationCode::InvalidAuthor,
-                 "user id not found");
+  Verif::ensures(
+      optUserId.has_value(), Verif::Errc::InvalidAuthor, "user id not found");
 
   auto const user = TC_AWAIT(getUser(*optUserId));
   auto const deviceIt = std::find_if(
@@ -254,9 +253,8 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
 {
   auto const group = TC_AWAIT(
       _groups->findExternalByPublicEncryptionKey(recipientPublicEncryptionKey));
-  Verif::ensures(group.has_value(),
-                 Error::VerificationCode::InvalidGroup,
-                 "group not found");
+  Verif::ensures(
+      group.has_value(), Verif::Errc::InvalidGroup, "group not found");
   TC_RETURN(*group);
 }
 
@@ -264,9 +262,8 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupById(
     Trustchain::GroupId const& groupId) const
 {
   auto const group = TC_AWAIT(_groups->findExternalById(groupId));
-  Verif::ensures(group.has_value(),
-                 Error::VerificationCode::InvalidGroup,
-                 "group not found");
+  Verif::ensures(
+      group.has_value(), Verif::Errc::InvalidGroup, "group not found");
   TC_RETURN(*group);
 }
 }
