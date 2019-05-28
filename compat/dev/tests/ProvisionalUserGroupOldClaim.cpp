@@ -6,6 +6,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Helpers/JsonFile.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
 

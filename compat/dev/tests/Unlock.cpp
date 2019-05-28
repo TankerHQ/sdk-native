@@ -7,6 +7,7 @@
 #include <Helpers/JsonFile.hpp>
 
 #include <boost/filesystem/operations.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
 

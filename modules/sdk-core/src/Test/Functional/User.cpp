@@ -4,6 +4,7 @@
 #include <Tanker/Test/Functional/User.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <nlohmann/json.hpp>
 
 namespace Tanker
 {
