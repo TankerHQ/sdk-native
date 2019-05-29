@@ -84,17 +84,6 @@ static_assert(
     TANKER_STATUS_LAST == 4,
     "Please update the status assertions above if you added a new status");
 
-// Event
-
-STATIC_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
-STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
-
-STATIC_ENUM_CHECK(TANKER_EVENT_LAST, Event::Last);
-
-static_assert(
-    TANKER_EVENT_LAST == 2,
-    "Please update the event assertions above if you added a new event");
-
 #undef STATIC_ENUM_CHECK
 }
 
@@ -167,7 +156,20 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->connectEvent(static_cast<Event>(event), cb, data)
+      tc::sync([&] {
+        switch (event)
+        {
+        case TANKER_EVENT_SESSION_CLOSED:
+          return tanker->connectSessionClosed(
+              [=, cb = std::move(cb)] { cb(nullptr, data); });
+        case TANKER_EVENT_DEVICE_REVOKED:
+          return tanker->connectDeviceRevoked(
+              [=, cb = std::move(cb)] { cb(nullptr, data); });
+        default:
+          throw Error::formatEx<Error::InvalidArgument>(
+              fmt("unknown event {:d}"), static_cast<int>(event));
+        }
+      })
           .and_then(tc::get_synchronous_executor(), [](auto conn) {
             return reinterpret_cast<void*>(new auto(std::move(conn)));
           }));
@@ -176,9 +178,9 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
 tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
                                            tanker_connection_t* cconnection)
 {
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->disconnectEvent(std::move(
-      *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection))));
+  auto con = std::move(
+      *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection));
+  return makeFuture(tc::make_ready_future());
 }
 
 tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)

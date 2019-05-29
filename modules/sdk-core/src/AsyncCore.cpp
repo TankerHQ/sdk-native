@@ -71,31 +71,6 @@ tc::future<void> AsyncCore::destroy()
     return tc::async([this] { delete this; });
 }
 
-expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
-    Event event, std::function<void(void*, void*)> cb, void* data)
-{
-  return tc::sync([&] {
-    switch (event)
-    {
-    case Event::SessionClosed:
-      return connectSessionClosed(
-          [=, cb = std::move(cb)] { cb(nullptr, data); });
-    case Event::DeviceRevoked:
-      return connectDeviceRevoked(
-          [=, cb = std::move(cb)] { cb(nullptr, data); });
-    default:
-      throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
-                                                    static_cast<int>(event));
-    }
-  });
-}
-
-expected<void> AsyncCore::disconnectEvent(
-    boost::signals2::scoped_connection conn)
-{
-  return tc::make_ready_future();
-}
-
 tc::shared_future<Status> AsyncCore::start(std::string const& identity)
 {
   return _taskCanceler.run([&] {

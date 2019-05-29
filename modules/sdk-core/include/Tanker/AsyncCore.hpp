@@ -40,14 +40,6 @@ namespace Tanker
 template <typename T>
 using expected = tc::future<T>;
 
-enum class Event
-{
-  SessionClosed,
-  DeviceRevoked,
-
-  Last
-};
-
 class AsyncCore
 {
 public:
@@ -60,11 +52,6 @@ public:
   ~AsyncCore();
 
   tc::future<void> destroy();
-
-  expected<boost::signals2::scoped_connection> connectEvent(
-      Event event, std::function<void(void*, void*)> cb, void* data = nullptr);
-
-  expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
 
   tc::shared_future<Status> start(std::string const& identity);
   tc::shared_future<void> stop();
