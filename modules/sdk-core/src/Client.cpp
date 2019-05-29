@@ -90,10 +90,13 @@ tc::cotask<void> Client::createUser(
     Identity::SecretPermanentIdentity const& identity,
     Block const& userCreation,
     Block const& firstDevice,
-    Unlock::VerificationRequest const& verificationRequest,
+    nonstd::optional<Unlock::VerificationRequest> const& verificationRequest,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   FUNC_TIMER(Proc);
+  nlohmann::json verification;
+  if (verificationRequest)
+    verification = *verificationRequest;
   nlohmann::json request{
       {"trustchain_id", identity.trustchainId},
       {"user_id", identity.delegation.userId},
@@ -101,7 +104,7 @@ tc::cotask<void> Client::createUser(
       {"first_device_block", firstDevice},
       {"encrypted_unlock_key",
        cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
-      {"verification", verificationRequest},
+      {"verification", verification},
   };
   auto const reply = TC_AWAIT(emit("create user", request));
 }

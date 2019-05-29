@@ -1,13 +1,13 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
-#include <nlohmann/json.hpp>
+#include <optional.hpp>
 
 namespace Tanker
 {
 namespace Unlock
 {
-VerificationRequest makeVerificationRequest(
+nonstd::optional<VerificationRequest> makeVerificationRequest(
     Verification const& verification, Crypto::SymmetricKey const& userSecret)
 {
   if (auto const verif = mpark::get_if<EmailVerification>(&verification))
@@ -18,6 +18,8 @@ VerificationRequest makeVerificationRequest(
         verif->verificationCode};
   else if (auto const pass = mpark::get_if<Password>(&verification))
     return Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>());
+  else if (mpark::holds_alternative<VerificationKey>(verification))
+    return nonstd::nullopt;
   throw std::runtime_error("assertion error: not implemented");
 }
 

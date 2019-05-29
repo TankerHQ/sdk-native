@@ -76,7 +76,7 @@ public:
       Identity::SecretPermanentIdentity const& identity,
       Block const& userCreation,
       Block const& firstDevice,
-      Unlock::VerificationRequest const& request,
+      nonstd::optional<Unlock::VerificationRequest> const& request,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
   tc::cotask<UserStatusResult> userStatus(

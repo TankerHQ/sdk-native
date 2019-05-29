@@ -7,7 +7,9 @@
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <mpark/variant.hpp>
+#include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <optional.hpp>
 
 #include <vector>
 
@@ -26,7 +28,7 @@ struct EncryptedEmailVerification
 using VerificationRequest =
     mpark::variant<EncryptedEmailVerification, Crypto::Hash>;
 
-VerificationRequest makeVerificationRequest(
+nonstd::optional<VerificationRequest> makeVerificationRequest(
     Verification const& verification, Crypto::SymmetricKey const& userSecret);
 
 void to_json(nlohmann::json& j, VerificationRequest const& c);
