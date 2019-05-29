@@ -28,6 +28,19 @@ TLOG_CATEGORY(sdk);
 
 namespace Tanker
 {
+namespace
+{
+auto makeEventHandler(task_canceler& tc,
+                      std::function<void(void*, void*)> cb,
+                      void* data)
+
+{
+  return [&tc, cb = std::move(cb), data] {
+    tc.run([&cb, data] { return tc::async([=] { cb(nullptr, data); }); });
+  };
+}
+}
+
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   : _core(std::move(url), std::move(info), std::move(writablePath))
 {
@@ -68,15 +81,11 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
       switch (event)
       {
       case Event::SessionClosed:
-        return this->_core.sessionClosed.connect([this, cb, data] {
-          _taskCanceler.run(
-              [&cb, &data] { return tc::async([=] { cb(nullptr, data); }); });
-        });
+        return this->_core.sessionClosed.connect(
+            makeEventHandler(this->_taskCanceler, cb, data));
       case Event::DeviceRevoked:
-        return this->_asyncDeviceRevoked.connect([this, cb, data]() {
-          _taskCanceler.run(
-              [&cb, &data] { return tc::async([=] { cb(nullptr, data); }); });
-        });
+        return this->_asyncDeviceRevoked.connect(
+            makeEventHandler(this->_taskCanceler, cb, data));
       default:
         throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
                                                       static_cast<int>(event));
