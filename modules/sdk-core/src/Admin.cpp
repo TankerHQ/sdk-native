@@ -1,12 +1,12 @@
 #include <Tanker/Admin.hpp>
 
 #include <Tanker/AConnection.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -115,8 +115,7 @@ tc::cotask<void> Admin::pushKeys(
 tc::cotask<VerificationCode> Admin::getVerificationCode(
     Trustchain::TrustchainId const& tcid, Email const& email)
 {
-  auto const msg = nlohmann::json(
-      {{"email", email}, {"trustchain_id", tcid}});
+  auto const msg = nlohmann::json({{"email", email}, {"trustchain_id", tcid}});
 
   auto const answer = TC_AWAIT(emit("get verification code", msg));
   auto it = answer.find("verification_code");

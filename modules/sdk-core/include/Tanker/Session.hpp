@@ -95,9 +95,11 @@ public:
 
   tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey();
 
-  tc::cotask<void> registerVerificationKey(Unlock::Registration const& registration);
+  tc::cotask<void> registerVerificationKey(
+      Unlock::Registration const& registration);
 
-  tc::cotask<void> createVerificationKey(Unlock::CreationOptions const& options);
+  tc::cotask<void> createVerificationKey(
+      Unlock::CreationOptions const& options);
 
   tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
 
