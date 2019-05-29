@@ -419,8 +419,8 @@ tc::cotask<void> Session::claimProvisionalIdentity(
         Email{identity.value}, verificationCode));
     if (!tankerKeys)
     {
-      throw Error::formatEx<Error::NothingToClaim>(TFMT("nothing to claim {}"),
-                                                   identity.value);
+      TINFO("Nothing to claim");
+      return;
     }
     auto block = _blockGenerator.provisionalIdentityClaim(
         _userId,
