@@ -30,13 +30,11 @@ namespace Tanker
 {
 namespace
 {
-auto makeEventHandler(task_canceler& tc,
-                      std::function<void(void*, void*)> cb,
-                      void* data)
+auto makeEventHandler(task_canceler& tc, std::function<void()> cb)
 
 {
-  return [&tc, cb = std::move(cb), data] {
-    tc.run([&cb, data] { return tc::async([=] { cb(nullptr, data); }); });
+  return [&tc, cb = std::move(cb)] {
+    tc.run([&cb] { return tc::async([cb = std::move(cb)] { cb(); }); });
   };
 }
 }
@@ -77,20 +75,18 @@ expected<boost::signals2::scoped_connection> AsyncCore::connectEvent(
     Event event, std::function<void(void*, void*)> cb, void* data)
 {
   return tc::sync([&] {
-    return boost::signals2::scoped_connection([&] {
-      switch (event)
-      {
-      case Event::SessionClosed:
-        return this->_core.sessionClosed.connect(
-            makeEventHandler(this->_taskCanceler, cb, data));
-      case Event::DeviceRevoked:
-        return this->_asyncDeviceRevoked.connect(
-            makeEventHandler(this->_taskCanceler, cb, data));
-      default:
-        throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
-                                                      static_cast<int>(event));
-      }
-    }());
+    switch (event)
+    {
+    case Event::SessionClosed:
+      return connectSessionClosed(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    case Event::DeviceRevoked:
+      return connectDeviceRevoked(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    default:
+      throw Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
+                                                    static_cast<int>(event));
+    }
   });
 }
 
@@ -295,14 +291,18 @@ tc::shared_future<void> AsyncCore::syncTrustchain()
   });
 }
 
-boost::signals2::signal<void()>& AsyncCore::sessionClosed()
+boost::signals2::scoped_connection AsyncCore::connectSessionClosed(
+    std::function<void()> cb)
 {
-  return this->_core.sessionClosed;
+  return this->_core.sessionClosed.connect(
+      makeEventHandler(this->_taskCanceler, std::move(cb)));
 }
 
-boost::signals2::signal<void()>& AsyncCore::deviceRevoked()
+boost::signals2::scoped_connection AsyncCore::connectDeviceRevoked(
+    std::function<void()> cb)
 {
-  return this->_asyncDeviceRevoked;
+  return this->_asyncDeviceRevoked.connect(
+      makeEventHandler(this->_taskCanceler, std::move(cb)));
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)

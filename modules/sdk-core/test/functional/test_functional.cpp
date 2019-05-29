@@ -13,7 +13,6 @@
 #include <doctest.h>
 
 #include <Helpers/Buffers.hpp>
-#include <Helpers/SignalSpy.hpp>
 #include <Helpers/UniquePath.hpp>
 
 #include "CheckDecrypt.hpp"
@@ -37,7 +36,7 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
   return clearDatas;
 }
 
-tc::cotask<void> waitForPromise(tc::promise<void> prom)
+tc::cotask<bool> waitFor(tc::promise<void> prom)
 {
   std::vector<tc::future<void>> futures;
   futures.push_back(prom.get_future());
@@ -46,8 +45,26 @@ tc::cotask<void> waitForPromise(tc::promise<void> prom)
       TC_AWAIT(tc::when_any(std::make_move_iterator(futures.begin()),
                             std::make_move_iterator(futures.end()),
                             tc::when_any_options::auto_cancel));
-  CHECK(result.index == 0);
+  TC_RETURN(result.index == 0);
 }
+
+template <typename T /*, typename ...Args */>
+class SpyEvent
+{
+  using ConnectHandler =
+      boost::signals2::scoped_connection (T::*)(std::function<void()>);
+
+public:
+  SpyEvent(T* target, ConnectHandler connect) : target(target), connect(connect)
+  {
+    _conn = (target->*connect)([this]() { receivedEvents.emplace_back(0); });
+  }
+
+  T* target;
+  ConnectHandler connect;
+  std::vector<int> receivedEvents;
+  boost::signals2::scoped_connection _conn;
+};
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
@@ -56,7 +73,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto device = alice.makeDevice();
   auto const core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Ready);
-  SignalSpy<void> spyClose(core->sessionClosed());
+  SpyEvent<AsyncCore> spyClose(core.get(), &AsyncCore::connectSessionClosed);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
   REQUIRE(spyClose.receivedEvents.size() == 1);
@@ -68,7 +85,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto device = alice.makeDevice();
   auto core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Ready);
-  SignalSpy<void> spyClose(core->sessionClosed());
+  SpyEvent<AsyncCore> spyClose(core.get(), &AsyncCore::connectSessionClosed);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
   REQUIRE(spyClose.receivedEvents.size() == 1);
@@ -318,11 +335,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   auto const deviceId = aliceSession->deviceId().get();
 
   tc::promise<void> prom;
-  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  auto conn = aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(aliceSession->status() == Status::Stopped);
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
@@ -348,12 +365,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession2->revokeDevice(deviceId)));
 
   tc::promise<void> prom;
-  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  auto con = aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   CHECK_THROWS_AS(TC_AWAIT(aliceSession->start(aliceDevice.identity())),
                   Error::OperationCanceled);
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 }
 
 // FIXME: Bad tests Bad! You either test one path or the other, but do not leave
@@ -405,11 +422,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   decryptedData.resize(clearData.size());
 
   tc::promise<void> prom;
-  otherSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  auto con = otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(otherSession->status() == Status::Stopped);
 
@@ -432,11 +449,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const otherDeviceId = otherSession->deviceId().get();
 
   tc::promise<void> prom;
-  otherSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  auto con1 = otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(otherDeviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(otherSession->status() == Status::Stopped);
 
@@ -448,11 +465,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   }
 
   tc::promise<void> prom2;
-  aliceSession->deviceRevoked().connect([&] { prom2.set_value({}); });
+  auto con2 = aliceSession->connectDeviceRevoked([&] { prom2.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom2));
+  CHECK(TC_AWAIT(waitFor(prom2)));
 
   REQUIRE(aliceSession->status() == Status::Stopped);
 

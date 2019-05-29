@@ -108,8 +108,10 @@ public:
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);
 
-  boost::signals2::signal<void()>& sessionClosed();
-  boost::signals2::signal<void()>& deviceRevoked();
+  boost::signals2::scoped_connection connectSessionClosed(
+      std::function<void()> cb);
+  boost::signals2::scoped_connection connectDeviceRevoked(
+      std::function<void()> cb);
 
   expected<SDeviceId> deviceId() const;
   tc::shared_future<std::vector<Device>> getDeviceList();
