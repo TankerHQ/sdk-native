@@ -1,11 +1,14 @@
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 TEST_SUITE("Unlock")
 {
@@ -77,8 +80,9 @@ TEST_SUITE("Unlock")
 
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
-      CHECK_THROWS_AS(TC_AWAIT(core2->verifyIdentity(Password{"wrongPass"})),
-                      Tanker::Error::InvalidUnlockPassword);
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(core2->verifyIdentity(Password{"wrongPass"})),
+          Errc::InvalidCredentials);
     }
 
     SUBCASE(
@@ -90,9 +94,10 @@ TEST_SUITE("Unlock")
 
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
-      CHECK_THROWS_AS(TC_AWAIT(core2->verifyIdentity(Unlock::EmailVerification{
-                          email, VerificationCode{"d3JvbmcK"}})),
-                      Tanker::Error::InvalidVerificationCode);
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(core2->verifyIdentity(
+              Unlock::EmailVerification{email, VerificationCode{"d3JvbmcK"}})),
+          Errc::InvalidCredentials);
     }
 
     SUBCASE(
@@ -107,13 +112,16 @@ TEST_SUITE("Unlock")
       REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                  Status::IdentityVerificationNeeded);
       for (int i = 0; i < 3; ++i)
-        CHECK_THROWS_AS(
+      {
+        TANKER_CHECK_THROWS_WITH_CODE(
             TC_AWAIT(core2->verifyIdentity(Unlock::EmailVerification{
                 email, VerificationCode{"d3JvbmcK"}})),
-            Tanker::Error::InvalidVerificationCode);
-      CHECK_THROWS_AS(TC_AWAIT(core2->verifyIdentity(Unlock::Verification{
-                          Unlock::EmailVerification{email, code}})),
-                      Tanker::Error::MaxVerificationAttemptsReached);
+            Errc::InvalidCredentials);
+      }
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(core2->verifyIdentity(
+              Unlock::Verification{Unlock::EmailVerification{email, code}})),
+          Errc::TooManyAttempts);
     }
 
     SUBCASE(

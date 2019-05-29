@@ -1,13 +1,15 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 using namespace EncryptionFormat;
 
 namespace
@@ -71,9 +73,9 @@ TEST_CASE("should not be able to decrypt a corrupted empty buffer")
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       EncryptorV4::decrypt(decryptedData.data(), metadata.key, encryptedData),
-      Error::DecryptFailed);
+      Errc::DecryptionFailed);
 }
 
 TEST_CASE("encrypt/decrypt should work with a normal buffer")
@@ -126,9 +128,9 @@ TEST_CASE("Should not be able to decrypt a buffer without the last chunk")
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(truncatedData));
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       EncryptorV4::decrypt(decryptedData.data(), metadata.key, truncatedData),
-      Error::DecryptFailed);
+      Errc::DecryptionFailed);
 }
 
 TEST_CASE("encrypt should never give the same result twice")

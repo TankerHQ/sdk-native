@@ -3,9 +3,11 @@
 #include <Tanker/AConnection.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/ServerError.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
@@ -118,8 +120,11 @@ tc::cotask<VerificationCode> Admin::getVerificationCode(
   auto const answer = TC_AWAIT(emit("get verification code", msg));
   auto it = answer.find("verification_code");
   if (it == answer.end())
-    throw Error::formatEx<Error::InvalidVerificationKey>(
-        "could not find verificationKey key for {}", email);
+  {
+    throw Errors::formatEx(Errors::Errc::InvalidCredentials,
+                           "could not find verification code for {}",
+                           email);
+  }
   TC_RETURN(it->get<std::string>());
 }
 
@@ -135,7 +140,7 @@ tc::cotask<nlohmann::json> Admin::emit(std::string const& eventName,
     auto const statusCode = error_it->at("status").get<int>();
     auto const code = error_it->at("code").get<std::string>();
     auto const message = error_it->at("message").get<std::string>();
-    throw Error::ServerError{eventName, statusCode, code, message};
+    throw ServerError{eventName, statusCode, code, message};
   }
   TC_RETURN(message);
 }

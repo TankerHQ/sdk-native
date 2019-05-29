@@ -3,9 +3,9 @@
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ServerError.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -239,7 +239,7 @@ Client::getProvisionalIdentityKeys(
         {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
          json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
   }
-  catch (Error::ServerError const& e)
+  catch (ServerError const& e)
   {
     if (e.serverCode() == "verification_needed")
     {
@@ -266,7 +266,7 @@ tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
     auto const statusCode = error_it->at("status").get<int>();
     auto const code = error_it->at("code").get<std::string>();
     auto const message = error_it->at("message").get<std::string>();
-    throw Error::ServerError{eventName, statusCode, code, message};
+    throw ServerError{eventName, statusCode, code, message};
   }
   TC_RETURN(message);
 }

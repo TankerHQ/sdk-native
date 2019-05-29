@@ -2,10 +2,12 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
 
+#include <fmt/format.h>
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
 
@@ -32,9 +34,11 @@ UserKeyStore::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
   {
     TC_RETURN(TC_AWAIT(_db->getUserKeyPair(publicKey)));
   }
-  catch (DataStore::RecordNotFound const&)
+  catch (Errors::Exception const& e)
   {
-    TC_RETURN(nonstd::nullopt);
+    if (e.errorCode() == DataStore::Errc::RecordNotFound)
+      TC_RETURN(nonstd::nullopt);
+    throw;
   }
 }
 
@@ -43,8 +47,11 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getKeyPair(
 {
   auto const optKeyPair = TC_AWAIT(findKeyPair(publicKey));
   if (!optKeyPair)
-    throw Error::formatEx<Error::UserKeyNotFound>(
-        "can't find user key for public key {}", publicKey);
+  {
+    throw Errors::formatEx(Errors::Errc::NotFound,
+                           "cannot find user key for public key: {}",
+                           publicKey);
+  }
   TC_RETURN(*optKeyPair);
 }
 
@@ -58,7 +65,10 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getLastKeyPair() const
 {
   auto const keyPair = TC_AWAIT(getOptLastKeyPair());
   if (!keyPair)
-    throw Error::formatEx<Error::UserKeyNotFound>("user has no user key yet");
+  {
+    throw Errors::formatEx(Errors::Errc::NotFound,
+                           "user does not have a user key yet");
+  }
   TC_RETURN(*keyPair);
 }
 

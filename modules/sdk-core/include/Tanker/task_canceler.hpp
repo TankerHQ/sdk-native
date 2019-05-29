@@ -1,10 +1,13 @@
 #pragma once
 
-#include <cassert>
-#include <vector>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/when.hpp>
+
+#include <cassert>
+#include <vector>
 
 namespace Tanker
 {
@@ -28,8 +31,10 @@ public:
     lock_guard _(_mutex);
 
     if (_terminating)
-      throw std::runtime_error(
-          "adding a future to terminating task_canceler");
+    {
+      throw Errors::formatEx(Errors::Errc::InternalError,
+                             "adding a future to terminating task_canceler");
+    }
 
     auto future = func().to_shared();
 

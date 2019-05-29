@@ -3,7 +3,9 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -29,8 +31,9 @@ tc::cotask<void> ContactStore::putUser(User const& user)
 
   if (!TC_AWAIT(_db->getDevicesOf(user.id)).empty())
   {
-    throw Error::formatEx<std::runtime_error>(
-        TFMT("User {:s} is already stored"), user.id);
+    throw Errors::formatEx(Errors::Errc::AlreadyExists,
+                           TFMT("user {:s} is already stored"),
+                           user.id);
   }
 
   TC_AWAIT(_db->putContact(user.id, user.userKey));

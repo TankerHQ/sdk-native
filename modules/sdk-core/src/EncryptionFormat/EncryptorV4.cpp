@@ -1,7 +1,7 @@
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
@@ -9,6 +9,8 @@
 #include <algorithm>
 
 using Tanker::Trustchain::ResourceId;
+
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -41,7 +43,7 @@ void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
   assert(dataVersionResult.first == version());
 
   if (dataVersionResult.second.size() < overheadSize)
-    throw Error::InvalidArgument("truncated encrypted buffer");
+    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
 }
 }
 
@@ -64,7 +66,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
     auto const encryptedChunkSize = Serialization::deserialize<uint32_t>(
         versionResult.second.subspan(0, sizeOfChunkSize));
     if (versionResult.second.size() < sizeOfChunkSize + ResourceId::arraySize)
-      throw Error::InvalidArgument("truncated encrypted buffer");
+      throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
     auto const chunks = encryptedData.size() / encryptedChunkSize;
     auto const lastClearChunkSize =
         (encryptedData.size() % encryptedChunkSize) -
@@ -72,9 +74,9 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
     return chunks * clearChunkSize(encryptedChunkSize) +
            Crypto::decryptedSize(lastClearChunkSize);
   }
-  catch (std::out_of_range const&)
+  catch (gsl::fail_fast const&)
   {
-    throw Error::InvalidArgument("truncated encrypted buffer");
+    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   }
 }
 
@@ -137,8 +139,11 @@ void decrypt(uint8_t* decryptedData,
       // Header
       auto const versionResult = Serialization::varint_read(chunk);
       if (versionResult.first != version())
-        throw Error::formatEx<Error::DecryptFailed>("unsupported version: {:d}",
-                                                    versionResult.first);
+      {
+        throw formatEx(Errc::DecryptionFailed,
+                       "unsupported version: {}",
+                       versionResult.first);
+      }
       auto const headerRemoved =
           versionResult.second.subspan(ResourceId::arraySize + sizeOfChunkSize);
 
@@ -156,11 +161,7 @@ void decrypt(uint8_t* decryptedData,
   }
   catch (gsl::fail_fast const&)
   {
-    throw Error::InvalidArgument("truncated encrypted buffer");
-  }
-  catch (Errors::Exception const& e)
-  {
-    throw Error::DecryptFailed(e.what());
+    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   }
 }
 
@@ -175,9 +176,9 @@ ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
         versionPair.second.subspan(sizeof(uint32_t), ResourceId::arraySize);
     return ResourceId{resourceId};
   }
-  catch (std::out_of_range const&)
+  catch (gsl::fail_fast const&)
   {
-    throw Error::InvalidArgument("truncated encrypted buffer");
+    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   }
 }
 }

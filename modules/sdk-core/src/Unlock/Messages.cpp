@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -94,7 +95,8 @@ std::string to_string(Request::Type type)
   case Request::Type::Last:
     break;
   }
-  throw std::runtime_error("assertion failure: unhandled method type");
+  throw Errors::AssertionError(
+      fmt::format("unhandled method type: {}", static_cast<int>(type)));
 }
 
 FetchAnswer::FetchAnswer(Crypto::SymmetricKey const& userSecret,

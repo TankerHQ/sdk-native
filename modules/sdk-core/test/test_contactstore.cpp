@@ -1,10 +1,12 @@
 #include <Tanker/ContactStore.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include "TrustchainBuilder.hpp"
 
@@ -33,7 +35,8 @@ TEST_CASE("ContactStore")
   SUBCASE("it should throw when adding a user twice")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_THROWS_AS(AWAIT_VOID(contacts.putUser(alice)), std::runtime_error);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(contacts.putUser(alice)),
+                                  Errors::Errc::AlreadyExists);
   }
 
   SUBCASE("it should find a user that was inserted")

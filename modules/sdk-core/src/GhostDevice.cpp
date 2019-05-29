@@ -1,5 +1,7 @@
-#include <Tanker/Error.hpp>
 #include <Tanker/GhostDevice.hpp>
+
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -14,7 +16,7 @@ GhostDevice GhostDevice::create(VerificationKey const& key) try
 }
 catch (std::exception const& e)
 {
-  throw Error::InvalidVerificationKey(e.what());
+  throw formatEx(Errors::Errc::InvalidArgument, e.what());
 }
 
 GhostDevice GhostDevice::create(DeviceKeys const& keys)

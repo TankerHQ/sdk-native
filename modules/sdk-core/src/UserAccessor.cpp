@@ -2,14 +2,18 @@
 
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/UserNotFound.hpp>
 
 #include <mockaron/mockaron.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 using Tanker::Trustchain::UserId;
+
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -71,8 +75,11 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
   {
     if (appProvisionalIdentity.target != Identity::TargetType::Email)
-      throw Error::formatEx("unsupported target type: {}",
-                            static_cast<int>(appProvisionalIdentity.target));
+    {
+      throw AssertionError(
+          fmt::format("unsupported target type: {}",
+                      static_cast<int>(appProvisionalIdentity.target)));
+    }
     provisionalUserEmails.push_back(Email{appProvisionalIdentity.value});
   }
 
@@ -80,8 +87,11 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
       TC_AWAIT(_client->getPublicProvisionalIdentities(provisionalUserEmails));
 
   if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
-    throw Error::InternalError(
+  {
+    throw formatEx(
+        Errc::InternalError,
         "getPublicProvisionalIdentities returned a list of different size");
+  }
 
   std::vector<PublicProvisionalUser> provisionalUsers;
   provisionalUsers.reserve(appProvisionalIdentities.size());

@@ -1,7 +1,9 @@
 #include <ctanker.h>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -18,6 +20,7 @@
 #include <utility>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 namespace
 {
@@ -35,12 +38,16 @@ Unlock::Verification cverificationToVerification(
 {
   if (!cverification)
   {
-    throw Error::formatEx<Error::InvalidArgument>(
-        "No verification method specified in the tanker_verification_t struct");
+    throw formatEx(
+        Errc::InvalidArgument,
+        "no verification method specified in the tanker_verification_t struct");
   }
   if (cverification->version != 1)
-    throw Error::formatEx<Error::InvalidArgument>(
-        "Unsupported tanker_verification_t struct version");
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "unsupported tanker_verification_t struct version: {}",
+                   cverification->version);
+  }
 
   Unlock::Verification verification;
   switch (cverification->verification_method_type)
@@ -49,8 +56,7 @@ Unlock::Verification cverificationToVerification(
   {
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
-      throw Error::formatEx<Error::InvalidArgument>(
-          "null field in email_verication");
+      throw formatEx(Errc::InvalidArgument, "null field in email verification");
     verification = Unlock::EmailVerification{
         Email{cverification->email_verification.email},
         VerificationCode{cverification->email_verification.verification_code}};
@@ -59,19 +65,19 @@ Unlock::Verification cverificationToVerification(
   case TANKER_VERIFICATION_METHOD_PASSPHRASE:
   {
     if (!cverification->passphrase)
-      throw Error::formatEx<Error::InvalidArgument>("passphrase field is null");
+      throw formatEx(Errc::InvalidArgument, "passphrase field is null");
     verification = Password{cverification->passphrase};
     break;
   }
   case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
   {
     if (!cverification->verification_key)
-      throw Error::formatEx<Error::InvalidArgument>("verification key is null");
+      throw formatEx(Errc::InvalidArgument, "verification key is null");
     verification = VerificationKey{cverification->verification_key};
     break;
   }
   default:
-    throw Error::formatEx<Error::InvalidArgument>("Unknown verification type");
+    throw formatEx(Errc::InvalidArgument, "unknown verification type");
   }
   return verification;
 }
@@ -94,7 +100,7 @@ void cVerificationMethodFromVerificationMethod(
     c_verif_method.email = duplicateString(email->c_str());
   }
   else
-    throw std::runtime_error("assertion failure");
+    throw AssertionError("unknown verification type");
 }
 
 #define STATIC_ENUM_CHECK(cval, cppval)           \
@@ -108,8 +114,6 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
                   Unlock::Method::Password);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
-STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
-
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
 static_assert(TANKER_VERIFICATION_METHOD_LAST == 3,
@@ -148,23 +152,43 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
 {
   return makeFuture(tc::sync([&] {
     if (options == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("options is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "options is null");
+    }
     if (options->version != 2)
-      throw Error::formatEx<Error::InvalidArgument>(
-          "options version is {:d} should be {:d}", options->version, 2);
+    {
+      throw Exception(
+          make_error_code(Errc::InvalidArgument),
+          fmt::format("Options version should be {:d} instead of {:d}",
+                      options->version,
+                      2));
+    }
     if (options->trustchain_id == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("trustchain_id is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "trustchain_id is null");
+    }
     if (options->sdk_type == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("sdk_type is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "sdk_type is null");
+    }
     if (options->sdk_version == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("sdk_version is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "sdk_version is null");
+    }
 
     char const* url = options->trustchain_url;
     if (url == nullptr)
       url = "https://api.tanker.io";
 
     if (options->writable_path == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("writable_path is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "writable_path is null");
+    }
 
     return static_cast<void*>(new AsyncCore(
         url,
@@ -213,8 +237,9 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
           return tanker->connectDeviceRevoked(
               [=, cb = std::move(cb)] { cb(nullptr, data); });
         default:
-          throw Error::formatEx<Error::InvalidArgument>(
-              TFMT("unknown event {:d}"), static_cast<int>(event));
+          throw formatEx(Errc::InvalidArgument,
+                         TFMT("unknown event: {:d}"),
+                         static_cast<int>(event));
         }
       })
           .and_then(tc::get_synchronous_executor(), [](auto conn) {
@@ -235,9 +260,10 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
     tanker->disconnectDeviceRevoked();
     break;
   default:
-    return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(TFMT("unknown event {:d}"),
-                                                static_cast<int>(event))));
+    return makeFuture(
+        tc::make_exceptional_future<void>(formatEx(Errc::InvalidArgument,
+                                                   TFMT("unknown event: {:d}"),
+                                                   static_cast<int>(event))));
   }
   return makeFuture(tc::make_ready_future());
 }
@@ -246,7 +272,7 @@ tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 {
   if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("identity is null")));
+        Exception(make_error_code(Errc::InvalidArgument), "identity is null")));
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
@@ -271,7 +297,6 @@ tanker_future_t* tanker_register_identity(
 tanker_future_t* tanker_verify_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  Unlock::Verification verification;
   return makeFuture(tc::sync([&] {
                       auto const verification =
                           cverificationToVerification(cverification);
@@ -401,9 +426,11 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
   if (options)
   {
     if (options->version != 2)
+    {
       return makeFuture(tc::make_exceptional_future<void>(
-          Error::formatEx<Error::InvalidArgument>(
-              "unsupported tanker_encrypt_options struct version")));
+          formatEx(Errc::InvalidArgument,
+                   "unsupported tanker_encrypt_options struct version")));
+    }
     spublicIdentities =
         to_vector<SPublicIdentity>(options->recipient_public_identities,
                                    options->nb_recipient_public_identities);

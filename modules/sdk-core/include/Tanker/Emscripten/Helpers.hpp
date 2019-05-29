@@ -1,4 +1,4 @@
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 
 #include <functional>
 #include <optional.hpp>
@@ -133,7 +133,7 @@ emscripten::val tcExpectedToJsValue(F fut)
     try
     {
       fut.get();
-      throw std::runtime_error("unreachable code");
+      throw Errors::AssertionError("unreachable code");
     }
     catch (...)
     {

@@ -44,16 +44,9 @@ public:
 
   std::size_t read_varint()
   {
-    try
-    {
-      auto const p = varint_read(_sp);
-      _sp = p.second;
-      return p.first;
-    }
-    catch (gsl::fail_fast const&)
-    {
-      throw Errors::Exception(Errc::TruncatedInput, "could not read varint");
-    }
+    auto const p = varint_read(_sp);
+    _sp = p.second;
+    return p.first;
   }
 
   bool eof() const

@@ -1,4 +1,3 @@
-#include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -670,7 +669,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto thirdDevice = builder.makeDevice3("alice");
   auto authorDevice = secondDevice.device.asTankerDevice();
   auto targetDevice = thirdDevice.device.asTankerDevice();
-  auto aliceUser = builder.getUser("alice");
+  auto aliceUser = builder.findUser("alice");
   auto const revokeBlock = builder.revokeDevice2(
       secondDevice.device, thirdDevice.device, *aliceUser);
   auto entry = blockToServerEntry(revokeBlock);
@@ -680,7 +679,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto bobOtherDevice = builder.makeDevice1("bob");
   auto const authorDeviceV1 = bobDevice.device.asTankerDevice();
   auto const targetDeviceV1 = bobOtherDevice.device.asTankerDevice();
-  auto bobUser = builder.getUser("bob");
+  auto bobUser = builder.findUser("bob");
   auto const revokeBlockUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
   auto entryUserV1 = blockToServerEntry(revokeBlockUserV1);

@@ -2,16 +2,16 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/GroupNotFound.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
-#include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -19,6 +19,7 @@
 using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -38,11 +39,10 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   {
     auto const notFoundIdentities = mapIdsToStrings(
         memberUsers.notFound, spublicIdentities, members.userIds);
-    throw Error::UserNotFound(fmt::format(TFMT("Unknown users: {:s}"),
-                                          fmt::join(notFoundIdentities.begin(),
-                                                    notFoundIdentities.end(),
-                                                    ", ")),
-                              notFoundIdentities);
+    throw formatEx(
+        Errc::NotFound,
+        TFMT("unknown users: {:s}"),
+        fmt::join(notFoundIdentities.begin(), notFoundIdentities.end(), ", "));
   }
 
   auto const memberProvisionalUsers = TC_AWAIT(
@@ -64,8 +64,7 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
   for (auto const& user : users)
   {
     if (!user.userKey)
-      throw std::runtime_error(
-          "Cannot create group for users without a user key");
+      throw AssertionError("cannot create group for users without a user key");
 
     keysForUsers.emplace_back(
         user.id,
@@ -104,12 +103,14 @@ std::vector<uint8_t> generateCreateGroupBlock(
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
-    throw Error::InvalidGroupSize("Cannot create an empty group");
+    throw formatEx(Errc::InvalidGroupSize, "cannot create an empty group");
   else if (groupSize > MAX_GROUP_SIZE)
-    throw Error::formatEx<Error::InvalidGroupSize>(
-        TFMT("Cannot create group with {:d} members, max is {:d}"),
-        groupSize,
-        MAX_GROUP_SIZE);
+  {
+    throw formatEx(Errc::InvalidGroupSize,
+                   TFMT("cannot create a group with {:d} members, max is {:d}"),
+                   groupSize,
+                   MAX_GROUP_SIZE);
+  }
 
   return blockGenerator.userGroupCreation2(
       groupSignatureKey,
@@ -149,12 +150,17 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
-    throw Error::InvalidGroupSize("Adding 0 members to a group is an error");
+  {
+    throw Exception(make_error_code(Errc::InvalidGroupSize),
+                    "must add at least one member to a group");
+  }
   else if (groupSize > MAX_GROUP_SIZE)
-    throw Error::formatEx<Error::InvalidGroupSize>(
-        TFMT("Cannot add {:d} members to a group, max is {:d}"),
-        groupSize,
-        MAX_GROUP_SIZE);
+  {
+    throw formatEx(Errc::InvalidGroupSize,
+                   TFMT("cannot add {:d} members to a group, max is {:d}"),
+                   groupSize,
+                   MAX_GROUP_SIZE);
+  }
 
   return blockGenerator.userGroupAddition2(
       group.signatureKeyPair,
@@ -178,8 +184,7 @@ tc::cotask<void> updateMembers(
 
   auto const group = TC_AWAIT(groupStore.findFullById(groupId));
   if (!group)
-    throw Error::GroupNotFound(
-        "Cannot update members of a group we aren't part of");
+    throw formatEx(Errc::NotFound, TFMT("no such group: {:s}"), groupId);
 
   auto const groupBlock = generateAddUserToGroupBlock(
       members.users, members.provisionalUsers, blockGenerator, *group);

@@ -23,6 +23,8 @@ enum class Errc
   TooManyAttempts,
   Expired,
   DeviceRevoked,
+
+  Last,
 };
 
 std::error_condition make_error_condition(Errc c) noexcept;

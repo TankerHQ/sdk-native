@@ -2,7 +2,8 @@
 
 #include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>

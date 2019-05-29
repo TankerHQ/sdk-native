@@ -2,7 +2,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
@@ -10,6 +12,7 @@
 TLOG_CATEGORY("Preregistration");
 
 using Tanker::Trustchain::Actions::ProvisionalIdentityClaim;
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -35,7 +38,10 @@ tc::cotask<SecretProvisionalUserToStore> extractKeysToStore(
       provisionalIdentityClaim.userPublicEncryptionKey()));
 
   if (!userKeyPair)
-    throw Error::UserKeyNotFound("can't find user key for claim decryption");
+  {
+    throw formatEx(Errc::NotFound,
+                   "cannot find user key for claim decryption");
+  }
 
   auto const provisionalIdentityKeys = Crypto::sealDecrypt(
       provisionalIdentityClaim.sealedPrivateEncryptionKeys(), *userKeyPair);
@@ -70,10 +76,12 @@ tc::cotask<void> decryptPendingGroups(
   for (auto const& pendingGroup : pendingGroups)
   {
     if (pendingGroup.provisionalUsers.size() != 1)
-      throw std::runtime_error(
-          "assertion failure: the group returned by "
+    {
+      throw AssertionError(
+          "the group returned by "
           "findExternalGroupsByProvisionalUser should "
           "only contain the provisional user it was requested with");
+    }
 
     TINFO("Decrypting group key for group {} with claim {} {}",
           pendingGroup.id,

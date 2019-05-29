@@ -1,7 +1,9 @@
 #include <Tanker/Core.hpp>
 
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -23,9 +25,10 @@
 #include <exception>
 #include <iterator>
 
-#define INVALID_STATUS(action)                 \
-  Error::formatEx<Error::InvalidTankerStatus>( \
-      TFMT("invalid status {:e} for " #action), status())
+#define INVALID_STATUS(action)                               \
+  Errors::formatEx(Errors::Errc::PreconditionFailed,         \
+                   TFMT("invalid status {:e} for " #action), \
+                   status())
 
 TLOG_CATEGORY(Core);
 
@@ -47,8 +50,7 @@ Status Core::status() const
     return core->status();
   else if (mpark::get_if<SessionType>(&_state))
     return Status::Ready;
-  TERROR("unreachable code, invalid tanker status");
-  std::terminate();
+  throw Errors::AssertionError("unreachable code: invalid Tanker status");
 }
 
 template <typename F>
@@ -71,7 +73,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
     reset();
     std::rethrow_exception(exception);
   }
-  throw std::runtime_error("unreachable code");
+  throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
 tc::cotask<Status> Core::startImpl(std::string const& identity)

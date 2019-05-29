@@ -2,16 +2,18 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 #ifndef EMSCRIPTEN
 #include <Tanker/DataStore/Connection.hpp>
@@ -67,8 +69,8 @@ TEST_CASE("user keys")
         make<Crypto::PublicEncryptionKey>("unexistent");
 
     UserKeyStore keys(dbPtr.get());
-    CHECK_THROWS_AS(AWAIT(keys.getKeyPair(unexistentPubKey)),
-                    Error::UserKeyNotFound);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKeyPair(unexistentPubKey)),
+                                  Errc::NotFound);
   }
 
   SUBCASE("it should discard a second user key with the same public key")
@@ -101,7 +103,8 @@ TEST_CASE("user keys")
   SUBCASE("getLastKeyPair should throw if there are no key")
   {
     UserKeyStore keys(dbPtr.get());
-    CHECK_THROWS_AS(AWAIT(keys.getLastKeyPair()), Error::UserKeyNotFound);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getLastKeyPair()),
+                                  Errc::NotFound);
   }
 
   SUBCASE("getLastKeyPair should get the last inserted key")

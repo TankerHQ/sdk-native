@@ -100,11 +100,7 @@ add_library(tankercore STATIC
   include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
-  include/Tanker/Error.hpp
-  include/Tanker/UserNotFound.hpp
-  include/Tanker/ResourceKeyNotFound.hpp
-  include/Tanker/RecipientNotFound.hpp
-  include/Tanker/GroupNotFound.hpp
+  include/Tanker/ServerError.hpp
   include/Tanker/Index.hpp
   include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
@@ -160,6 +156,7 @@ add_library(tankercore STATIC
   src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
+  src/ServerError.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp
@@ -181,7 +178,6 @@ add_library(tankercore STATIC
   src/ResourceKeyStore.cpp
   src/Block.cpp
   src/Entry.cpp
-  src/Error.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
   src/UserKeyStore.cpp

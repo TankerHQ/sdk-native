@@ -128,7 +128,7 @@ TEST_CASE("TrustchainVerifier")
     auto const targetResult = builder.makeDevice3("bob");
     AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(targetResult.entry)));
 
-    auto bobUser = builder.getUser("bob");
+    auto bobUser = builder.findUser("bob");
 
     auto const revokeBlock = builder.revokeDevice2(
         deviceResult.device, targetResult.device, *bobUser);

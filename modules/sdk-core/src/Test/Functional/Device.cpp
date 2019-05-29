@@ -1,7 +1,6 @@
 #include <Tanker/Test/Functional/Device.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 

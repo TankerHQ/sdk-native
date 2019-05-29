@@ -1,7 +1,6 @@
 #include <Tanker/DataStore/Connection.hpp>
 
 #include <Tanker/DataStore/Errors/Errc.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
@@ -92,11 +91,10 @@ ConnPtr createConnection(std::string const& dbPath,
   auto const isEncrypted = isEncryptedDb(dbPath);
   if (isEncrypted && !hasCipher())
   {
-    throw Errors::Exception(
+    throw Errors::formatEx(
         Errc::DatabaseError,
-        fmt::format(
-            "Database {:s} is encrypted but OpenSSL support is not enabled",
-            dbPath));
+        "database {} is encrypted but OpenSSL support is not enabled",
+        dbPath);
   }
   auto const shouldEncrypt = hasCipher() && isEncrypted;
   auto const shouldMigrate = hasCipher() && !isEncrypted && userSecret;
@@ -146,10 +144,10 @@ ConnPtr createConnection(std::string const& dbPath,
   }
   catch (std::exception const& e)
   {
-    throw formatEx(Errors::Errc::InternalError,
-                   TFMT("could not open database: {:s}: {:s}"),
-                   dbPath,
-                   e.what());
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           TFMT("could not open database: {:s}: {:s}"),
+                           dbPath,
+                           e.what());
   }
 }
 }

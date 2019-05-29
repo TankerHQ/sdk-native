@@ -4,7 +4,8 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -76,8 +77,8 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::ProvisionalIdentityClaim:
     TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));
   }
-  throw std::runtime_error(
-      "Assertion failed: Invalid nature for unverified entry");
+  throw Errors::AssertionError(fmt::format(
+      "invalid nature for unverified entry: {}", e.action().nature()));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(

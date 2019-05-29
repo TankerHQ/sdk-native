@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Log/Log.hpp>
 
 #include <optional.hpp>

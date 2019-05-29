@@ -5,7 +5,9 @@
 #include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/GhostDevice.hpp>
@@ -14,6 +16,7 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/ServerError.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -32,6 +35,8 @@
 
 #include <memory>
 #include <utility>
+
+using namespace Tanker::Errors;
 
 TLOG_CATEGORY(Core);
 
@@ -53,17 +58,21 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 {
   SCOPE_TIMER("opener_open", Proc);
   if (_identity.has_value())
-    throw Error::formatEx<Error::InvalidTankerStatus>(
-        "start() has already been called");
+  {
+    throw Exception(make_error_code(Errc::PreconditionFailed),
+                    "start() has already been called");
+  }
 
   _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
   _userId = _identity->delegation.userId;
 
   if (_identity->trustchainId != _info.trustchainId)
-    throw Error::formatEx<Error::InvalidArgument>(
-        TFMT("Identity's trustchain is {:s}, expected {:s}"),
-        _identity->trustchainId,
-        _info.trustchainId);
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   TFMT("identity's trustchain is {:s}, expected {:s}"),
+                   _identity->trustchainId,
+                   _info.trustchainId);
+  }
 
   _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
   _client->start();
@@ -72,8 +81,9 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
   if (_writablePath == ":memory:")
     dbPath = _writablePath;
   else
-    dbPath = fmt::format(
-        "{}/tanker-{:S}.db", _writablePath, _identity->delegation.userId);
+    dbPath = fmt::format(TFMT("{:s}/tanker-{:S}.db"),
+                         _writablePath,
+                         _identity->delegation.userId);
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _keyStore = TC_AWAIT(DeviceKeyStore::open(_db.get()));
 
@@ -98,22 +108,22 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
     TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
   }
-  catch (Error::ServerError const& err)
+  catch (ServerError const& err)
   {
     if (err.httpStatusCode() == 401)
     {
       if (mpark::holds_alternative<Password>(locker))
-        throw Error::InvalidUnlockPassword{err.what()};
+        throw formatEx(Errc::InvalidCredentials, "{}", err.what());
       else if (mpark::holds_alternative<VerificationCode>(locker))
-        throw Error::InvalidVerificationCode{err.what()};
+        throw formatEx(Errc::InvalidCredentials, "{}", err.what());
     }
     else if (err.httpStatusCode() == 404)
-      throw Error::InvalidVerificationKey{err.what()};
+      throw formatEx(Errc::InvalidCredentials, "{}", err.what());
     else if (err.httpStatusCode() == 429)
-      throw Error::MaxVerificationAttemptsReached(err.what());
+      throw formatEx(Errc::TooManyAttempts, "{}", err.what());
     throw;
   }
-  throw std::runtime_error("unreachable code");
+  throw AssertionError("fetchVerificationKey: unreachable code");
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(
@@ -152,10 +162,12 @@ tc::cotask<Session::Config> Opener::createUser(
   TINFO("createUser");
   FUNC_TIMER(Proc);
   if (status() != Status::IdentityRegistrationNeeded)
-    throw Error::formatEx<Error::InvalidTankerStatus>(
-        "invalid status {}, should be {}",
-        status(),
-        Status::IdentityRegistrationNeeded);
+  {
+    throw formatEx(Errc::PreconditionFailed,
+                   TFMT("invalid status {:e}, should be {:e}"),
+                   status(),
+                   Status::IdentityRegistrationNeeded);
+  }
 
   auto const verificationKey = mpark::get_if<VerificationKey>(&verification);
   auto const ghostDeviceKeys =
@@ -207,8 +219,7 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
         TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode)));
   else if (auto const password = mpark::get_if<Password>(&verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
-  throw std::runtime_error(
-      "assertion error: invalid Verification, unreachable code");
+  throw AssertionError("invalid verification, unreachable code");
 }
 
 tc::cotask<VerificationKey> Opener::generateVerificationKey() const
@@ -224,10 +235,12 @@ tc::cotask<Session::Config> Opener::createDevice(
   TINFO("createDevice");
   FUNC_TIMER(Proc);
   if (status() != Status::IdentityVerificationNeeded)
-    throw Error::formatEx<Error::InvalidTankerStatus>(
-        "invalid status {}, should be {}",
-        status(),
-        Status::IdentityVerificationNeeded);
+  {
+    throw formatEx(Errc::PreconditionFailed,
+                   TFMT("invalid status {:e}, should be {:e}"),
+                   status(),
+                   Status::IdentityVerificationNeeded);
+  }
 
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   TC_AWAIT(unlockCurrentDevice(verificationKey));
@@ -238,8 +251,12 @@ tc::cotask<Session::Config> Opener::openDevice()
 {
   TINFO("openDevice");
   if (status() != Status::Ready)
-    throw Error::formatEx<Error::InvalidTankerStatus>(
-        "invalid status {}, should be {}", status(), Status::Ready);
+  {
+    throw formatEx(Errc::PreconditionFailed,
+                   TFMT("invalid status {:e}, should be {:e}"),
+                   status(),
+                   Status::Ready);
+  }
   TC_RETURN(makeConfig());
 }
 }

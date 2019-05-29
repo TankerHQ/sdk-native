@@ -196,8 +196,15 @@ size_t decryptedSize(size_t const encryptedSize)
 
 gsl::span<uint8_t const> extractMac(gsl::span<uint8_t const> encryptedData)
 {
-  return encryptedData.subspan(encryptedData.size() - aeadOverhead,
-                               crypto_aead_xchacha20poly1305_ietf_ABYTES);
+  try
+  {
+    return encryptedData.subspan(encryptedData.size() - aeadOverhead,
+                                 crypto_aead_xchacha20poly1305_ietf_ABYTES);
+  }
+  catch (gsl::fail_fast const&)
+  {
+    throw Exception(Errc::InvalidEncryptedDataSize);
+  }
 }
 
 gsl::span<uint8_t const> encryptAead(SymmetricKey const& key,

@@ -9,7 +9,7 @@ namespace Verif
 {
 enum class Errc
 {
-  InvalidSignature,
+  InvalidSignature = 1,
   InvalidAuthor,
   InvalidHash,
   InvalidUserKey,

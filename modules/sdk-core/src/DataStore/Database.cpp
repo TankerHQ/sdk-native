@@ -23,7 +23,6 @@
 #include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
@@ -223,7 +222,7 @@ KeyPublish rowToKeyPublish(T const& row)
   }
   default:
     throw Errors::AssertionError(
-        "Unreachable code. Invalid nature for KeyPublish");
+        "unreachable code. Invalid nature for KeyPublish");
   }
 }
 
@@ -339,9 +338,9 @@ void Database::performUnifiedMigration()
       flushAllCaches();
       break;
     default:
-      throw Errors::Exception(
-          Errc::InvalidDatabaseVersion,
-          "Invalid database version: " + std::to_string(currentVersion));
+      throw Errors::formatEx(Errc::InvalidDatabaseVersion,
+                             "invalid database version: {}",
+                             currentVersion);
     }
 
     setDatabaseVersion(DataStore::latestVersion());
@@ -491,8 +490,11 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
                          .from(tab)
                          .where(tab.public_encryption_key == publicKey.base()));
   if (rows.empty())
-    throw Error::formatEx<RecordNotFound>(
-        TFMT("couldn't find user key for {:s}"), publicKey);
+  {
+    throw Errors::formatEx(Errc::RecordNotFound,
+                           TFMT("could not find user key for {:s}"),
+                           publicKey);
+  }
   auto const& row = *rows.begin();
 
   TC_RETURN((Crypto::EncryptionKeyPair{
@@ -960,7 +962,7 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
   if (!group.encryptedPrivateSignatureKey)
   {
     throw Errors::AssertionError(
-        "External groups must be inserted with their sealed private signature "
+        "external groups must be inserted with their sealed private signature "
         "key");
   }
 
