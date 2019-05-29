@@ -535,7 +535,8 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
           Error::OperationCanceled("this device was revoked")));
     }
     TC_AWAIT(nukeDatabase());
-    deviceRevoked();
+    if (deviceRevoked)
+      deviceRevoked();
     TC_RETURN();
   }
 

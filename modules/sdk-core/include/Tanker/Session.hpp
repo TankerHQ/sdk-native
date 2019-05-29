@@ -66,6 +66,7 @@ public:
     std::unique_ptr<DeviceKeyStore> deviceKeyStore;
     std::unique_ptr<Client> client;
   };
+  using DeviceRevokedHandler = std::function<void()>;
 
   Session(Config&&);
 
@@ -119,7 +120,7 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> deviceRevoked;
+  DeviceRevokedHandler deviceRevoked;
   boost::signals2::signal<void(Trustchain::DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(

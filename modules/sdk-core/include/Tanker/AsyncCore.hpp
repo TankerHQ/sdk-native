@@ -21,8 +21,6 @@
 
 #include <tconcurrent/future.hpp>
 
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 
 #include <cstdint>
@@ -95,10 +93,10 @@ public:
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);
 
-  boost::signals2::scoped_connection connectSessionClosed(
-      std::function<void()> cb);
-  boost::signals2::scoped_connection connectDeviceRevoked(
-      std::function<void()> cb);
+  void connectSessionClosed(std::function<void()> cb);
+  void disconnectSessionClosed();
+  void connectDeviceRevoked(std::function<void()> cb);
+  void disconnectDeviceRevoked();
 
   expected<SDeviceId> deviceId() const;
   tc::shared_future<std::vector<Device>> getDeviceList();
@@ -124,7 +122,7 @@ private:
 
   // this signal is special compared to the other two because we need to do
   // special work before forwarding it, so we redefine it
-  boost::signals2::signal<void()> _asyncDeviceRevoked;
+  std::function<void()> _asyncDeviceRevoked;
 
   mutable task_canceler _taskCanceler;
 };

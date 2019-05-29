@@ -215,11 +215,11 @@ tanker_expected_t* tanker_event_connect(tanker_t* tanker,
 /*!
  * Disconnect from an event.
  * \param tanker is not yet used.
- * \param connection a tanker_connection_t* to disconnect from.
+ * \param event The event to disconnect.
  * \return an expected of NULL.
  */
 tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
-                                           tanker_connection_t* connection);
+                                           enum tanker_event event);
 
 /*!
  * Sign up to Tanker.

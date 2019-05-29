@@ -23,7 +23,6 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
-#include <boost/signals2/connection.hpp>
 #include <fmt/format.h>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>

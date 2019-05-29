@@ -176,10 +176,22 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
 }
 
 tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
-                                           tanker_connection_t* cconnection)
+                                           enum tanker_event event)
 {
-  auto con = std::move(
-      *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection));
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  switch (event)
+  {
+  case TANKER_EVENT_SESSION_CLOSED:
+    tanker->disconnectSessionClosed();
+    break;
+  case TANKER_EVENT_DEVICE_REVOKED:
+    tanker->disconnectDeviceRevoked();
+    break;
+  default:
+    return makeFuture(tc::make_exceptional_future<void>(
+        Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
+                                                static_cast<int>(event))));
+  }
   return makeFuture(tc::make_ready_future());
 }
 

@@ -137,16 +137,29 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 void Core::stop()
 {
   reset();
-  sessionClosed();
+  if (_sessionClosed)
+    _sessionClosed();
 }
 
 void Core::initSession(Session::Config config)
 {
   _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
   auto const& session = mpark::get<SessionType>(_state);
-  session->deviceRevoked.connect(deviceRevoked);
+  session->deviceRevoked = _deviceRevoked;
   session->gotDeviceId.connect(
       [this](auto const& deviceId) { _deviceId = deviceId; });
+}
+
+void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
+{
+  _deviceRevoked = std::move(handler);
+  if (auto const session = mpark::get_if<SessionType>(&_state))
+    (*session)->deviceRevoked = _deviceRevoked; // we need the copy here
+}
+
+void Core::setSessionClosedHandler(SessionClosedHandler handler)
+{
+  _sessionClosed = std::move(handler);
 }
 
 void Core::reset()

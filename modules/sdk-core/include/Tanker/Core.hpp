@@ -16,7 +16,6 @@
 #include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Options.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -38,6 +37,8 @@ struct AuthenticationMethods
 class Core
 {
 public:
+  using SessionClosedHandler = std::function<void()>;
+
   Core(std::string url, SdkInfo infos, std::string writablePath);
   Tanker::Status status() const;
 
@@ -83,8 +84,8 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> sessionClosed;
-  boost::signals2::signal<void()> deviceRevoked;
+  void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
+  void setSessionClosedHandler(SessionClosedHandler);
 
   static SResourceId getResourceId(gsl::span<uint8_t const> encryptedData);
 
@@ -102,6 +103,8 @@ private:
   mpark::variant<Opener, SessionType> _state;
 
   Trustchain::DeviceId _deviceId{};
+  Session::DeviceRevokedHandler _deviceRevoked;
+  SessionClosedHandler _sessionClosed;
 
   void reset();
   void initSession(Session::Config openResult);

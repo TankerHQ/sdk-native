@@ -42,7 +42,7 @@ auto makeEventHandler(task_canceler& tc, std::function<void()> cb)
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   : _core(std::move(url), std::move(info), std::move(writablePath))
 {
-  _core.deviceRevoked.connect([this] {
+  _core.setDeviceRevokedHandler([this] {
     _taskCanceler.run([&] {
       return tc::async([this] {
         // - This device was revoked, we need to stop so that Session gets
@@ -266,18 +266,26 @@ tc::shared_future<void> AsyncCore::syncTrustchain()
   });
 }
 
-boost::signals2::scoped_connection AsyncCore::connectSessionClosed(
-    std::function<void()> cb)
+void AsyncCore::connectSessionClosed(std::function<void()> cb)
 {
-  return this->_core.sessionClosed.connect(
+  this->_core.setSessionClosedHandler(
       makeEventHandler(this->_taskCanceler, std::move(cb)));
 }
 
-boost::signals2::scoped_connection AsyncCore::connectDeviceRevoked(
-    std::function<void()> cb)
+void AsyncCore::disconnectSessionClosed()
 {
-  return this->_asyncDeviceRevoked.connect(
-      makeEventHandler(this->_taskCanceler, std::move(cb)));
+  this->_core.setSessionClosedHandler(nullptr);
+}
+
+void AsyncCore::connectDeviceRevoked(std::function<void()> cb)
+{
+  this->_asyncDeviceRevoked =
+      makeEventHandler(this->_taskCanceler, std::move(cb));
+}
+
+void AsyncCore::disconnectDeviceRevoked()
+{
+  this->_asyncDeviceRevoked = nullptr;
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)
