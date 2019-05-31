@@ -21,7 +21,6 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -64,8 +63,7 @@ public:
 
   using ConnectionHandler = std::function<tc::cotask<void>()>;
 
-  Client(std::unique_ptr<AConnection> conn,
-         ConnectionHandler connectionHandler = {});
+  Client(ConnectionPtr conn, ConnectionHandler connectionHandler = {});
 
   void start();
   void setConnectionHandler(ConnectionHandler handler);
@@ -109,7 +107,7 @@ public:
                              VerificationCode const& verificationCode);
 
   std::string connectionId() const;
-  boost::signals2::signal<void()> blockAvailable;
+  std::function<void()> blockAvailable;
 
 private:
   std::unique_ptr<AConnection> _cx;

@@ -100,8 +100,7 @@ Session::Session(Config&& config)
   _client->setConnectionHandler(
       [this]() -> tc::cotask<void> { TC_AWAIT(connectionHandler()); });
 
-  _client->blockAvailable.connect(
-      [this] { _trustchainPuller.scheduleCatchUp(); });
+  _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
   _trustchainPuller.receivedThisDeviceId =
       [this](auto const& deviceId) -> tc::cotask<void> {

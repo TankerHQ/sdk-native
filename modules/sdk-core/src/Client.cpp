@@ -1,6 +1,5 @@
 #include <Tanker/Client.hpp>
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
@@ -36,8 +35,7 @@ TLOG_CATEGORY(Client);
 namespace Tanker
 {
 
-Client::Client(std::unique_ptr<AConnection> cx,
-               ConnectionHandler connectionHandler)
+Client::Client(ConnectionPtr cx, ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
   _cx->on("new relevant block", [this](auto const& e) { blockAvailable(); });
