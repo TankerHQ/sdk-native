@@ -31,7 +31,6 @@
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -121,7 +120,7 @@ public:
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   DeviceRevokedHandler deviceRevoked;
-  boost::signals2::signal<void(Trustchain::DeviceId const&)> gotDeviceId;
+  std::function<void(Trustchain::DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(
       Trustchain::DeviceId const& id,

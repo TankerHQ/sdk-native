@@ -146,8 +146,7 @@ void Core::initSession(Session::Config config)
   _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
   auto const& session = mpark::get<SessionType>(_state);
   session->deviceRevoked = _deviceRevoked;
-  session->gotDeviceId.connect(
-      [this](auto const& deviceId) { _deviceId = deviceId; });
+  session->gotDeviceId = [this](auto const& deviceId) { _deviceId = deviceId; };
 }
 
 void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)

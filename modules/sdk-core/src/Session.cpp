@@ -170,7 +170,7 @@ tc::cotask<void> Session::startConnection()
 {
   FUNC_TIMER(Net);
   auto const deviceId = _deviceKeyStore->deviceId();
-  if (!deviceId.is_null())
+  if (!deviceId.is_null() && gotDeviceId)
     gotDeviceId(deviceId);
 
   TC_AWAIT(_client->handleConnection());
@@ -265,7 +265,8 @@ tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
   TC_AWAIT(_deviceKeyStore->setDeviceId(deviceId));
   _trustchainPuller.setDeviceId(deviceId);
   _blockGenerator.setDeviceId(deviceId);
-  gotDeviceId(deviceId);
+  if (gotDeviceId)
+    gotDeviceId(deviceId);
 }
 
 Trustchain::DeviceId const& Session::deviceId() const
