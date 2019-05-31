@@ -41,11 +41,11 @@ Client::Client(std::unique_ptr<AConnection> cx,
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
   _cx->on("new relevant block", [this](auto const& e) { blockAvailable(); });
-  _cx->reconnected.connect([this]() {
+  _cx->reconnected = [this] {
     if (_connectionHandler)
       _taskCanceler.add(tc::async_resumable(
           [this]() -> tc::cotask<void> { TC_AWAIT(handleConnection()); }));
-  });
+  };
 }
 
 void Client::start()

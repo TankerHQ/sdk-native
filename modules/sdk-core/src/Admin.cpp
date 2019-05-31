@@ -32,12 +32,12 @@ namespace Tanker
 Admin::Admin(ConnectionPtr cx, std::string idToken)
   : _cx(std::move(cx)), _idToken(std::move(idToken))
 {
-  _cx->connected.connect([this]() {
+  _cx->connected = [this]() {
     _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
       TC_AWAIT(authenticateCustomer(_idToken));
       connected();
     }));
-  });
+  };
 }
 
 tc::cotask<void> Admin::start()

@@ -2,8 +2,6 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <boost/signals2/signal.hpp>
-
 #include <functional>
 #include <memory>
 #include <string>
@@ -25,8 +23,8 @@ public:
   virtual void on(std::string const& message, Handler handler) = 0;
   virtual ~AConnection() = default;
 
-  boost::signals2::signal<void()> connected;
-  boost::signals2::signal<void()> reconnected;
+  std::function<void()> connected;
+  std::function<void()> reconnected;
 };
 
 using ConnectionPtr = std::unique_ptr<AConnection>;
