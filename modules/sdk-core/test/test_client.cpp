@@ -283,29 +283,6 @@ TEST_CASE("Client getBlocks")
   }
 }
 
-TEST_CASE("Client subscribe to creation")
-{
-  auto cl = initClient();
-  auto trustchainId = make<Trustchain::TrustchainId>("My Trustchain");
-  auto sigKp = Crypto::SignatureKeyPair{
-      make<Crypto::PublicSignatureKey>("a very public key"),
-      make<Crypto::PrivateSignatureKey>("a very private key")};
-  auto sig = Crypto::sign(sigKp.publicKey, sigKp.privateKey);
-  auto req = nlohmann::json({
-      {"trustchain_id", trustchainId},
-      {"public_signature_key", sigKp.publicKey},
-      {"signature", sig},
-  });
-  REQUIRE_CALL(cl.mconn, emit("subscribe to creation", req.dump()))
-      .RETURN(WRAP_COTASK(nlohmann::json(nullptr).dump()));
-  SUBCASE("it does not throw")
-  {
-    REQUIRE_CALL(cl.mconn, on("device created", _));
-    REQUIRE_NOTHROW(AWAIT_VOID(
-        cl.c->subscribeToCreation(trustchainId, sigKp.publicKey, sig)));
-  }
-}
-
 TEST_CASE("Client unlock api")
 {
   auto const trustchainId = make<Trustchain::TrustchainId>("my trustchainId");

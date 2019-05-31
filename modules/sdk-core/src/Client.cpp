@@ -178,20 +178,6 @@ tc::cotask<EncryptedUserKey> Client::getLastUserKey(
   TC_RETURN(encryptedUserKey);
 }
 
-tc::cotask<void> Client::subscribeToCreation(
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& publicKey,
-    Crypto::Signature const& signedPublicKey)
-{
-  _cx->on("device created", [this](auto const& e) { this->deviceCreated(); });
-  auto p = nlohmann::json{
-      {"trustchain_id", trustchainId},
-      {"public_signature_key", publicKey},
-      {"signature", signedPublicKey},
-  };
-  TC_AWAIT(emit("subscribe to creation", p));
-}
-
 tc::cotask<std::vector<std::string>> Client::getBlocks(
     int lastIndex,
     std::vector<UserId> const& extra_users,

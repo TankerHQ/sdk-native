@@ -96,10 +96,6 @@ public:
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);
-  tc::cotask<void> subscribeToCreation(
-      Trustchain::TrustchainId const& trustchainId,
-      Crypto::PublicSignatureKey const& publicKey,
-      Crypto::Signature const& signedPublicKey);
 
   tc::cotask<std::vector<std::string>> getBlocks(
       int index,
@@ -114,7 +110,6 @@ public:
 
   std::string connectionId() const;
   boost::signals2::signal<void()> blockAvailable;
-  boost::signals2::signal<void()> deviceCreated;
 
 private:
   std::unique_ptr<AConnection> _cx;
