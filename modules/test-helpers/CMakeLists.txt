@@ -6,7 +6,6 @@ add_library(tankertesthelpers STATIC
   include/Helpers/TimeoutTerminate.hpp
   include/Helpers/Barrier.hpp
   include/Helpers/Stepper.hpp
-  include/Helpers/SignalSpy.hpp
   include/Helpers/UniquePath.hpp
   include/Helpers/Buffers.hpp
   include/Helpers/WaitForSignal.hpp
