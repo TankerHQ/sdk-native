@@ -11,7 +11,6 @@
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
-#include <boost/signals2/connection.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
@@ -45,13 +44,13 @@ tc::cotask<void> Admin::start()
 {
   tc::promise<void> prom;
   auto fut = prom.get_future();
-  boost::signals2::scoped_connection c =
-      connected.connect([prom = std::move(prom)]() mutable {
-        prom.set_value({});
-        prom = tc::promise<void>();
-      });
+  this->connected = ([prom = std::move(prom)]() mutable {
+    prom.set_value({});
+    prom = tc::promise<void>();
+  });
   _cx->connect();
   TC_AWAIT(std::move(fut));
+  connected = nullptr;
 }
 
 tc::cotask<void> Admin::authenticateCustomer(std::string const& idToken)
