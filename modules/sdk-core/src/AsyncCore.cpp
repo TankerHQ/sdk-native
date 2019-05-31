@@ -2,29 +2,24 @@
 
 #include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Version.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/coroutine.hpp>
-#include <tconcurrent/executor.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <memory>
+#include <algorithm>
+#include <functional>
 #include <string>
 #include <utility>
-
-TLOG_CATEGORY(sdk);
+#include <vector>
 
 namespace Tanker
 {
