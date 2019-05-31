@@ -15,7 +15,7 @@ class TankerConan(ConanFile):
         "coverage": [True, False],
         "coroutinests": [True, False],
         }
-    default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "warn_as_error=False", "sanitizer=None", "coverage=False", "coroutinests=False"
+    default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "warn_as_error=False", "sanitizer=None", "coverage=False", "coroutinests=False", "fmt:with_fmt_alias=True"
     exports_sources = "CMakeLists.txt", "modules/*"
     generators = "cmake", "json", "ycm"
     cmake = None
@@ -59,7 +59,7 @@ class TankerConan(ConanFile):
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
-        self.requires("fmt/5.2.1@tanker/testing", private=private)
+        self.requires("fmt/5.3.0@tanker/testing", private=private)
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.16@tanker/testing", private=private)

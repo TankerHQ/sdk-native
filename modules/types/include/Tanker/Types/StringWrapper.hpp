@@ -184,6 +184,12 @@ void to_json(BasicJsonType& j, StringWrapper<T> const& s)
 {
   j = s.string();
 }
+
+template <typename T>
+fmt::string_view to_string_view(StringWrapper<T> const& val)
+{
+  return fmt::string_view(val.string());
+}
 }
 
 namespace std
@@ -202,13 +208,5 @@ void swap(Tanker::StringWrapper<T>& lhs,
           Tanker::StringWrapper<T>& rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
   lhs.swap(rhs);
-}
-
-// FIXME use the incoming to_string_view from fmt >5.2.1
-template <typename C, typename T>
-fmt::internal::init<C, fmt::string_view, fmt::internal::string_type> make_value(
-    Tanker::StringWrapper<T> const& val)
-{
-  return fmt::string_view(val.string());
 }
 }
