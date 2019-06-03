@@ -164,8 +164,10 @@ static void multi(benchmark::State& state)
     {
       state.PauseTiming();
       auto phone = alice.makeDevice();
+      auto newcore = phone.createCore(SessionType::New);
       state.ResumeTiming();
-      auto newcore = TC_AWAIT(phone.open(SessionType::New));
+      TC_AWAIT(newcore->start(phone.identity()));
+      TC_AWAIT(newcore->verifyIdentity(Tanker::Password{"strong password"}));
       TC_AWAIT(newcore->stop());
       state.PauseTiming();
       TC_AWAIT(core->stop());
