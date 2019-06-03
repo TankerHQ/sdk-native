@@ -103,8 +103,9 @@ mirror:
     - linux
   stage: deploy
   only:
-    - /\Av[0-9.]+\z/   # public release tags only
+    - /\Av[0-9.]+\z/   # public release tags
     - master
+    - /\Afeat\/.+\z/   # feat/ branches
   except:
     - schedules
   script:
