@@ -358,14 +358,6 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->isUnlockAlreadySetUp().and_then(
-      tc::get_synchronous_executor(),
-      [](bool value) { return reinterpret_cast<void*>(value); }));
-}
-
 uint64_t tanker_encrypted_size(uint64_t clear_size)
 {
   return AsyncCore::encryptedSize(clear_size);

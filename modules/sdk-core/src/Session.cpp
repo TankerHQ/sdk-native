@@ -447,14 +447,6 @@ tc::cotask<void> Session::claimProvisionalIdentity(
   }
 }
 
-tc::cotask<bool> Session::isUnlockAlreadySetUp() const
-{
-  auto const devices = TC_AWAIT(_contactStore.findUserDevices(_userId));
-  TC_RETURN(std::any_of(devices.begin(), devices.end(), [](auto const& device) {
-    return device.isGhostDevice;
-  }));
-}
-
 std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const
 {
   std::vector<Unlock::VerificationMethod> methods;

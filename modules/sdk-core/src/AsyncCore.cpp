@@ -189,15 +189,6 @@ AsyncCore::getVerificationMethods() const
   });
 }
 
-tc::shared_future<bool> AsyncCore::isUnlockAlreadySetUp() const
-{
-  return _taskCanceler.run([&] {
-    return tc::async_resumable([this]() -> tc::cotask<bool> {
-      TC_RETURN(TC_AWAIT(this->_core.isUnlockAlreadySetUp()));
-    });
-  });
-}
-
 tc::shared_future<void> AsyncCore::claimProvisionalIdentity(
     SSecretProvisionalIdentity const& identity,
     VerificationCode const& verificationCode)

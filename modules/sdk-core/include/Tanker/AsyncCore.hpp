@@ -85,8 +85,6 @@ public:
   tc::shared_future<std::vector<Unlock::VerificationMethod>>
   getVerificationMethods() const;
 
-  tc::shared_future<bool> isUnlockAlreadySetUp() const;
-
   tc::shared_future<void> claimProvisionalIdentity(
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);

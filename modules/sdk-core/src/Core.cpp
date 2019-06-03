@@ -242,14 +242,6 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
   TC_AWAIT((*psession)->setVerificationMethod(method));
 }
 
-tc::cotask<bool> Core::isUnlockAlreadySetUp() const
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(isUnlockAlreadySetUp);
-  TC_RETURN(TC_AWAIT((*psession)->isUnlockAlreadySetUp()));
-}
-
 std::vector<Unlock::VerificationMethod> Core::getVerificationMethods() const
 {
   auto psession = mpark::get_if<SessionType>(&_state);

@@ -373,14 +373,6 @@ tanker_future_t* tanker_set_verification_method(
 tanker_future_t* tanker_get_verification_methods(tanker_t* session);
 
 /*!
- * Check if unlock mechanism has been set up for the current user.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \return true if an unlock mechanism is already set up, false otherwise
- */
-tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* session);
-
-/*!
  * Get the encrypted size from the clear size.
  * Must be called before encrypt to allocate the encrypted buffer.
  */

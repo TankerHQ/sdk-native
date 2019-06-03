@@ -93,7 +93,6 @@ public:
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
-  tc::cotask<bool> isUnlockAlreadySetUp() const;
   tc::cotask<void> claimProvisionalIdentity(
       SSecretProvisionalIdentity const& identity,
       VerificationCode const& verificationCode);
