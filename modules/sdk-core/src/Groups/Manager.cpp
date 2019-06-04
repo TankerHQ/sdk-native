@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/GroupNotFound.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -37,7 +38,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   {
     auto const notFoundIdentities = mapIdsToStrings(
         memberUsers.notFound, spublicIdentities, members.userIds);
-    throw Error::UserNotFound(fmt::format(fmt("Unknown users: {:s}"),
+    throw Error::UserNotFound(fmt::format(TFMT("Unknown users: {:s}"),
                                           fmt::join(notFoundIdentities.begin(),
                                                     notFoundIdentities.end(),
                                                     ", ")),
@@ -74,8 +75,7 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
   return keysForUsers;
 }
 
-UserGroupCreation::v2::ProvisionalMembers
-generateGroupKeysForProvisionalUsers(
+UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<PublicProvisionalUser> const& users)
 {
@@ -107,7 +107,7 @@ std::vector<uint8_t> generateCreateGroupBlock(
     throw Error::InvalidGroupSize("Cannot create an empty group");
   else if (groupSize > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
-        fmt("Cannot create group with {:d} members, max is {:d}"),
+        TFMT("Cannot create group with {:d} members, max is {:d}"),
         groupSize,
         MAX_GROUP_SIZE);
 
@@ -152,7 +152,7 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
     throw Error::InvalidGroupSize("Adding 0 members to a group is an error");
   else if (groupSize > MAX_GROUP_SIZE)
     throw Error::formatEx<Error::InvalidGroupSize>(
-        fmt("Cannot add {:d} members to a group, max is {:d}"),
+        TFMT("Cannot add {:d} members to a group, max is {:d}"),
         groupSize,
         MAX_GROUP_SIZE);
 

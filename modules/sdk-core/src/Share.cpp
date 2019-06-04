@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/RecipientNotFound.hpp>
@@ -16,7 +17,6 @@
 #include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
 
-#include <fmt/format.h>
 #include <mpark/variant.hpp>
 
 #include <algorithm>
@@ -148,7 +148,7 @@ void handleNotFound(
     auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
     throw Error::RecipientNotFound(
         fmt::format(
-            fmt("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+            TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
             fmt::join(clearPublicIdentities.begin(),
                       clearPublicIdentities.end(),
                       ", "),

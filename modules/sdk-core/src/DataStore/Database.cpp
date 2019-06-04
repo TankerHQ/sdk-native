@@ -23,6 +23,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Index.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -34,7 +35,6 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <fmt/format.h>
 #include <optional.hpp>
 #include <sqlite3.h>
 #include <sqlpp11/functions.h>
@@ -426,7 +426,7 @@ void Database::flushAllCaches()
 template <typename Table>
 void Database::dropTable()
 {
-  _db->execute(fmt::format("DROP TABLE {}", tableName<Table>()));
+  _db->execute(fmt::format(TFMT("DROP TABLE {:s}"), tableName<Table>()));
 }
 
 tc::cotask<void> Database::nuke()
@@ -488,7 +488,7 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
                          .where(tab.public_encryption_key == publicKey.base()));
   if (rows.empty())
     throw Error::formatEx<RecordNotFound>(
-        fmt("couldn't find user key for {:s}"), publicKey);
+        TFMT("couldn't find user key for {:s}"), publicKey);
   auto const& row = *rows.begin();
 
   TC_RETURN((Crypto::EncryptionKeyPair{

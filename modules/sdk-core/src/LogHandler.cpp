@@ -1,7 +1,7 @@
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/LogHandler.hpp>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 namespace Tanker
 {

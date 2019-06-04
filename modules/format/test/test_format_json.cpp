@@ -1,7 +1,7 @@
 #include <Tanker/Format/Json.hpp>
 
 #include <doctest.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
 TEST_CASE("Formatting a json value")

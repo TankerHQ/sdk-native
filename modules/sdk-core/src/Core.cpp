@@ -3,6 +3,7 @@
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
@@ -15,7 +16,6 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -25,7 +25,7 @@
 
 #define INVALID_STATUS(action)                 \
   Error::formatEx<Error::InvalidTankerStatus>( \
-      fmt("invalid status {:e} for " #action), status())
+      TFMT("invalid status {:e} for " #action), status())
 
 TLOG_CATEGORY(Core);
 

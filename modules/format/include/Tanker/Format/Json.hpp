@@ -2,7 +2,6 @@
 
 #include <Tanker/Format/Width.hpp>
 
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
 

@@ -4,8 +4,7 @@
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/DbModels/ContactUserKeys.hpp>
-
-#include <fmt/format.h>
+#include <Tanker/Format/Format.hpp>
 
 #include <cassert>
 
@@ -18,7 +17,7 @@ namespace contact_devices
 void createTable(DataStore::Connection& db, contact_devices const&)
 {
   db.execute(fmt::format(
-      fmt(R"(
+      TFMT(R"(
         CREATE TABLE IF NOT EXISTS contact_devices (
           id BLOB PRIMARY KEY,
           user_id BLOB NOT NULL,

@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -91,7 +92,7 @@ TEST_CASE("print a formated log")
   SUBCASE("Throw an ex")
   {
     REQUIRE_THROWS(throw Tanker::Error::formatEx<std::runtime_error>(
-        fmt("You lost, score {:d}/{:f}"), 42, 2.1));
+        TFMT("You lost, score {:d}/{:f}"), 42, 2.1));
   }
 
   SUBCASE("It format a ResourceId")

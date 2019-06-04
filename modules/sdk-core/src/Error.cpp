@@ -27,7 +27,7 @@
 
 #include <boost/stacktrace/frame.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <sstream>
 

@@ -1,11 +1,11 @@
 #include <Tanker/DataStore/Connection.hpp>
 
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Log.hpp>
 
 #include <boost/algorithm/hex.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <fmt/format.h>
 #include <sqlite3.h>
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlpp11.h>
@@ -135,7 +135,7 @@ ConnPtr createConnection(std::string const& dbPath,
   catch (const std::exception& e)
   {
     throw Error::formatEx<Error::InternalError>(
-        fmt("In createConnection, {:s}: {:s}"), dbPath, e.what());
+        TFMT("In createConnection, {:s}: {:s}"), dbPath, e.what());
   }
 }
 }

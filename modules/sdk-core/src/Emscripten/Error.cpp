@@ -55,13 +55,13 @@ emscripten::val currentExceptionToJs()
   {
     return emscripten::val(
         EmError{Error::Code::InvalidArgument,
-                fmt::format(fmt("invalid base64: {:s}"), e.what())});
+                fmt::format(TFMT("invalid base64: {:s}"), e.what())});
   }
   catch (cppcodec::invalid_output_length const& e)
   {
     return emscripten::val(
         EmError{Error::Code::InvalidArgument,
-                fmt::format(fmt("invalid base64 length: {:s}"), e.what())});
+                fmt::format(TFMT("invalid base64 length: {:s}"), e.what())});
   }
   catch (Tanker::Error::Exception const& e)
   {

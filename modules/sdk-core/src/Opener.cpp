@@ -7,6 +7,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -23,7 +24,6 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
-#include <fmt/format.h>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/promise.hpp>
@@ -61,7 +61,7 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 
   if (_identity->trustchainId != _info.trustchainId)
     throw Error::formatEx<Error::InvalidArgument>(
-        fmt("Identity's trustchain is {:s}, expected {:s}"),
+        TFMT("Identity's trustchain is {:s}, expected {:s}"),
         _identity->trustchainId,
         _info.trustchainId);
 

@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/UserNotFound.hpp>
 
 #include <tconcurrent/promise.hpp>
@@ -111,12 +112,12 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
   catch (cppcodec::parse_error const& e)
   {
     throw Tanker::Error::formatEx<Tanker::Error::InvalidArgument>(
-        fmt("invalid base64: {:s}"), e.what());
+        TFMT("invalid base64: {:s}"), e.what());
   }
   catch (cppcodec::invalid_output_length const& e)
   {
     throw Tanker::Error::formatEx<Tanker::Error::InvalidArgument>(
-        fmt("invalid base64 length: {:s}"), e.what());
+        TFMT("invalid base64 length: {:s}"), e.what());
   }
   catch (Tanker::Error::Exception const& e)
   {

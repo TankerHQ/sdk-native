@@ -10,7 +10,6 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <doctest.h>
-#include <fmt/format.h>
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 

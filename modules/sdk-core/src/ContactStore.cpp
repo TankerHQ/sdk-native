@@ -4,11 +4,11 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Device.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
-#include <fmt/format.h>
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
 
@@ -30,7 +30,7 @@ tc::cotask<void> ContactStore::putUser(User const& user)
   if (!TC_AWAIT(_db->getDevicesOf(user.id)).empty())
   {
     throw Error::formatEx<std::runtime_error>(
-        fmt("User {:s} is already stored"), user.id);
+        TFMT("User {:s} is already stored"), user.id);
   }
 
   TC_AWAIT(_db->putContact(user.id, user.userKey));

@@ -4,6 +4,7 @@
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Log.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -51,9 +52,9 @@ void migrate2To3(DataStore::Connection& db)
   auto const name = DataStore::tableName<contact_user_keys>();
   auto const name_orig = name + "_orig";
   db.execute(
-      fmt::format(fmt("ALTER TABLE {:s} RENAME TO {:s}"), name, name_orig));
+      fmt::format(TFMT("ALTER TABLE {:s} RENAME TO {:s}"), name, name_orig));
   createTable(db);
-  db.execute(fmt::format(fmt(R"(
+  db.execute(fmt::format(TFMT(R"(
       INSERT INTO {:s}(id, user_id, public_encryption_key)
       SELECT id, user_id, public_encryption_key FROM {:s})"),
                          name,

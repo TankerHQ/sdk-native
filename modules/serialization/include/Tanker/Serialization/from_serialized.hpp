@@ -11,7 +11,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/detail/static_const.hpp>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 // For more info:
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html

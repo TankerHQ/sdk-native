@@ -8,6 +8,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
@@ -42,7 +43,6 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -426,7 +426,7 @@ tc::cotask<void> Session::claimProvisionalIdentity(
         Email{identity.value}, verificationCode));
     if (!tankerKeys)
     {
-      throw Error::formatEx<Error::NothingToClaim>(fmt("nothing to claim {}"),
+      throw Error::formatEx<Error::NothingToClaim>(TFMT("nothing to claim {}"),
                                                    identity.value);
     }
     auto block = _blockGenerator.provisionalIdentityClaim(

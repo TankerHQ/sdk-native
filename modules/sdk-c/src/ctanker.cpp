@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Error.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
@@ -167,7 +168,7 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
               [=, cb = std::move(cb)] { cb(nullptr, data); });
         default:
           throw Error::formatEx<Error::InvalidArgument>(
-              fmt("unknown event {:d}"), static_cast<int>(event));
+              TFMT("unknown event {:d}"), static_cast<int>(event));
         }
       })
           .and_then(tc::get_synchronous_executor(), [](auto conn) {
@@ -189,7 +190,7 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
     break;
   default:
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(fmt("unknown event {:d}"),
+        Error::formatEx<Error::InvalidArgument>(TFMT("unknown event {:d}"),
                                                 static_cast<int>(event))));
   }
   return makeFuture(tc::make_ready_future());
