@@ -56,7 +56,6 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
     throw Error::formatEx<Error::InvalidTankerStatus>(
         "start() has already been called");
 
-  // FIXME: check for bad identity format
   _identity = Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
   _userId = _identity->delegation.userId;
 
