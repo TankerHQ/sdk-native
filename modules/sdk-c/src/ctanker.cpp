@@ -56,18 +56,17 @@ Unlock::Verification cverificationToVerification(
         VerificationCode{cverification->email_verification.verification_code}};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_PASSWORD:
+  case TANKER_VERIFICATION_METHOD_PASSPHRASE:
   {
-    if (!cverification->password)
-      throw Error::formatEx<Error::InvalidArgument>("password field is null");
-    verification = Password{cverification->password};
+    if (!cverification->passphrase)
+      throw Error::formatEx<Error::InvalidArgument>("passphrase field is null");
+    verification = Password{cverification->passphrase};
     break;
   }
   case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
   {
     if (!cverification->verification_key)
-      throw Error::formatEx<Error::InvalidArgument>(
-          "Mismatch between verification method and type");
+      throw Error::formatEx<Error::InvalidArgument>("verification key is null");
     verification = VerificationKey{cverification->verification_key};
     break;
   }
@@ -84,7 +83,7 @@ Unlock::Verification cverificationToVerification(
 // Unlock
 
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL, Unlock::Method::Email);
-STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSWORD,
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
                   Unlock::Method::Password);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
@@ -338,7 +337,7 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
           verifMethod = TANKER_VERIFICATION_METHOD_INIT;
           if (methods[i].holds_alternative<Password>())
             verifMethod.verification_method_type =
-                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSWORD);
+                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
           else if (methods[i].holds_alternative<VerificationKey>())
             verifMethod.verification_method_type = static_cast<uint8_t>(
                 TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);

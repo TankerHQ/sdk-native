@@ -41,7 +41,7 @@ enum tanker_event
 enum tanker_verification_method_type
 {
   TANKER_VERIFICATION_METHOD_EMAIL = 0x1,
-  TANKER_VERIFICATION_METHOD_PASSWORD,
+  TANKER_VERIFICATION_METHOD_PASSPHRASE,
   TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
 
   TANKER_VERIFICATION_METHOD_LAST = TANKER_VERIFICATION_METHOD_VERIFICATION_KEY
@@ -157,7 +157,7 @@ struct tanker_verification
   {
     char const* verification_key;
     tanker_email_verification_t email_verification;
-    char const* password;
+    char const* passphrase;
   };
 };
 
@@ -285,7 +285,7 @@ tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
- * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
@@ -302,7 +302,7 @@ tanker_future_t* tanker_register_identity(
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
- * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage

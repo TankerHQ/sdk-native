@@ -46,8 +46,8 @@ static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
       tanker_create_identity(trustchain->id, trustchain->private_key, userId));
 
   tanker_verification_t verification = TANKER_VERIFICATION_INIT;
-  verification.verification_method_type = TANKER_VERIFICATION_METHOD_PASSWORD;
-  verification.password = "password";
+  verification.verification_method_type = TANKER_VERIFICATION_METHOD_PASSPHRASE;
+  verification.passphrase = "passphrase";
 
   future_get(tanker_start(tanker, identity));
   future_get(tanker_register_identity(tanker, &verification));
