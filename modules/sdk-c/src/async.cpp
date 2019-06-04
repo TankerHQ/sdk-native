@@ -1,5 +1,6 @@
 #include <ctanker.h>
 
+#include <Tanker/Crypto/InvalidKeySize.hpp>
 #include <Tanker/Error.hpp>
 #include <Tanker/UserNotFound.hpp>
 
@@ -102,6 +103,20 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
     future.get();
     assert(false && "unreachable code");
     return nullptr;
+  }
+  catch (Tanker::Crypto::InvalidKeySize const& e)
+  {
+    throw Tanker::Error::InvalidArgument(e.what());
+  }
+  catch (cppcodec::parse_error const& e)
+  {
+    throw Tanker::Error::formatEx<Tanker::Error::InvalidArgument>(
+        fmt("invalid base64: {:s}"), e.what());
+  }
+  catch (cppcodec::invalid_output_length const& e)
+  {
+    throw Tanker::Error::formatEx<Tanker::Error::InvalidArgument>(
+        fmt("invalid base64 length: {:s}"), e.what());
   }
   catch (Tanker::Error::Exception const& e)
   {
