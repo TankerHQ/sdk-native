@@ -10,25 +10,25 @@ stages:
   stage: build
   except:
     - schedules
+
+build/linux:
+  stage: build
   artifacts:
     expire_in: 1 day
     paths:
       - package/
-
-build/linux:
-  extends: .build
   tags: [linux]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 build/macos:
-  stage: build
+  extends: .build
   tags: [macos]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
 build/windows:
-  stage: build
+  extends: .build
   tags: [windows]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile vs2017-release
@@ -69,7 +69,7 @@ nightly/emscripten:
   tags:
     - linux
 
-coverage:
+nightly/coverage:
   stage: build
   only:
     - schedules
@@ -88,7 +88,7 @@ pages:
   only:
     - schedules
   dependencies:
-    - coverage
+    - nightly/coverage
   script:
     - mv coverage/ public/
   artifacts:
