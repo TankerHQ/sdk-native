@@ -219,12 +219,14 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
-                                   VerificationCode const& verificationCode)
+Client::getProvisionalIdentityKeys(
+    Email const& provisonalIdentity,
+    nonstd::optional<VerificationCode> const& verificationCode)
 {
-  auto const json = TC_AWAIT(emit("get provisional identity",
-                                  {{"email", provisonalIdentity},
-                                   {"verification_code", verificationCode}}));
+  nlohmann::json body = {{"email", provisonalIdentity}};
+  if (verificationCode.has_value())
+    body["verification_code"] = *verificationCode;
+  auto const json = TC_AWAIT(emit("get provisional identity", body));
 
   if (json.empty())
     TC_RETURN(nonstd::nullopt);
