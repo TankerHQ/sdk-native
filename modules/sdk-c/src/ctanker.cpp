@@ -226,25 +226,21 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
                                         void* data)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tc::sync([&] {
-        switch (event)
-        {
-        case TANKER_EVENT_SESSION_CLOSED:
-          return tanker->connectSessionClosed(
-              [=, cb = std::move(cb)] { cb(nullptr, data); });
-        case TANKER_EVENT_DEVICE_REVOKED:
-          return tanker->connectDeviceRevoked(
-              [=, cb = std::move(cb)] { cb(nullptr, data); });
-        default:
-          throw formatEx(Errc::InvalidArgument,
-                         TFMT("unknown event: {:d}"),
-                         static_cast<int>(event));
-        }
-      })
-          .and_then(tc::get_synchronous_executor(), [](auto conn) {
-            return reinterpret_cast<void*>(new auto(std::move(conn)));
-          }));
+  return makeFuture(tc::sync([&] {
+    switch (event)
+    {
+    case TANKER_EVENT_SESSION_CLOSED:
+      return tanker->connectSessionClosed(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    case TANKER_EVENT_DEVICE_REVOKED:
+      return tanker->connectDeviceRevoked(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    default:
+      throw formatEx(Errc::InvalidArgument,
+                     TFMT("unknown event: {:d}"),
+                     static_cast<int>(event));
+    }
+  }));
 }
 
 tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,

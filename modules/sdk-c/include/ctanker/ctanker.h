@@ -106,7 +106,6 @@ struct tanker_log_record
  */
 typedef void (*tanker_log_handler_t)(tanker_log_record_t const* record);
 
-typedef struct tanker_connection tanker_connection_t;
 typedef void (*tanker_event_callback_t)(void* arg, void* data);
 
 /*!
@@ -256,8 +255,8 @@ tanker_future_t* tanker_destroy(tanker_t* tanker);
  * \param tanker A tanker tanker_t* instance.
  * \param event The event to connect.
  * \param data The data to pass to the callback.
- * \return an expected of a tanker_connection_t* that must be disconnected with
- * tanker_event_disconnect().
+ * \return an expected of NULL.
+ * \warning Do not call this function after the session has been started.
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p event does not exist
  */
 tanker_expected_t* tanker_event_connect(tanker_t* tanker,
