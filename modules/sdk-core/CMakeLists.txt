@@ -70,6 +70,7 @@ endif()
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/Admin.hpp
+  include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
   include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/Init.hpp
@@ -148,6 +149,7 @@ add_library(tankercore STATIC
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
 
   src/AsyncCore.cpp
+  src/AttachResult.cpp
   src/Admin.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
