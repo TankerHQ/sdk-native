@@ -68,6 +68,9 @@ public:
   tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+  tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+  findProvisionalUserKeysByAppPublicEncryptionKey(
+      Crypto::PublicEncryptionKey const& appPublicEncryptionKey) override;
 
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;

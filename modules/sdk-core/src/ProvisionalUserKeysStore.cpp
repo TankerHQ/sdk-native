@@ -32,4 +32,13 @@ ProvisionalUserKeysStore::findProvisionalUserKeys(
   TC_RETURN(TC_AWAIT(
       _db->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
 }
+
+tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicEncryptionKey(
+    Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const
+{
+
+  TC_RETURN(TC_AWAIT(_db->findProvisionalUserKeysByAppPublicEncryptionKey(
+      appPublicEncryptionKey)));
+}
 }

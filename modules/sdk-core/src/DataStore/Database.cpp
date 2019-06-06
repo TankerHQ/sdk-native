@@ -768,6 +768,31 @@ Database::findProvisionalUserKeys(
   TC_RETURN(ret);
 }
 
+tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+Database::findProvisionalUserKeysByAppPublicEncryptionKey(
+    Crypto::PublicEncryptionKey const& appPublicEncryptionKey)
+{
+  FUNC_TIMER(DB);
+  ProvisionalUserKeysTable tab{};
+  auto rows =
+      (*_db)(select(tab.app_enc_priv,
+                    tab.app_enc_pub,
+                    tab.tanker_enc_priv,
+                    tab.tanker_enc_pub)
+                 .from(tab)
+                 .where(tab.app_enc_pub == appPublicEncryptionKey.base()));
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = rows.front();
+  Tanker::ProvisionalUserKeys ret{
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(row.app_enc_priv)},
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.tanker_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+           row.tanker_enc_priv)}};
+  TC_RETURN(ret);
+}
+
 tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
 {
   FUNC_TIMER(DB);
