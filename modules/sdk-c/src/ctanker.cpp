@@ -76,6 +76,27 @@ Unlock::Verification cverificationToVerification(
   return verification;
 }
 
+void cVerificationMethodFromVerificationMethod(
+    tanker_verification_method_t& c_verif_method,
+    Unlock::VerificationMethod const& method)
+{
+  c_verif_method = TANKER_VERIFICATION_METHOD_INIT;
+  if (method.holds_alternative<Password>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
+  else if (method.holds_alternative<VerificationKey>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
+  else if (auto const email = method.get_if<Email>())
+  {
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
+    c_verif_method.email = duplicateString(email->c_str());
+  }
+  else
+    throw std::runtime_error("assertion failure");
+}
+
 #define STATIC_ENUM_CHECK(cval, cppval)           \
   static_assert(cval == static_cast<int>(cppval), \
                 "enum values not in sync: " #cval " and " #cppval)
@@ -333,22 +354,8 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
         auto verifMethods = new tanker_verification_method_t[methods.size()];
         for (size_t i = 0; i < methods.size(); ++i)
         {
-          auto& verifMethod = verifMethods[i];
-          verifMethod = TANKER_VERIFICATION_METHOD_INIT;
-          if (methods[i].holds_alternative<Password>())
-            verifMethod.verification_method_type =
-                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
-          else if (methods[i].holds_alternative<VerificationKey>())
-            verifMethod.verification_method_type = static_cast<uint8_t>(
-                TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
-          else if (auto const email = methods[i].get_if<Email>())
-          {
-            verifMethod.verification_method_type =
-                static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
-            verifMethod.email = duplicateString(email->c_str());
-          }
-          else
-            throw std::runtime_error("assertion failure");
+          cVerificationMethodFromVerificationMethod(verifMethods[i],
+                                                    methods[i]);
         }
         auto verifMethodList = new tanker_verification_method_list;
         verifMethodList->count = methods.size();
@@ -437,15 +444,40 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
   return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
 }
 
-tanker_future_t* tanker_claim_provisional_identity(
-    tanker_t* ctanker,
-    char const* provisional_identity,
-    char const* verification_code)
+tanker_future_t* tanker_attach_provisional_identity(
+    tanker_t* ctanker, char const* provisional_identity)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->claimProvisionalIdentity(
-      SSecretProvisionalIdentity{provisional_identity},
-      VerificationCode{verification_code}));
+  return makeFuture(
+      tanker
+          ->attachProvisionalIdentity(
+              SSecretProvisionalIdentity{provisional_identity})
+          .and_then(tc::get_synchronous_executor(),
+                    [](AttachResult const& attachResult) {
+                      auto cAttachResult = new tanker_attach_result_t;
+                      cAttachResult->version = 1;
+                      cAttachResult->method = nullptr;
+                      cAttachResult->status =
+                          static_cast<uint8_t>(attachResult.status);
+                      if (attachResult.verificationMethod.has_value())
+                      {
+                        tanker_verification_method cMethod;
+                        cVerificationMethodFromVerificationMethod(
+                            cMethod, *attachResult.verificationMethod);
+                        cAttachResult->method =
+                            new tanker_verification_method(cMethod);
+                      }
+                      return reinterpret_cast<void*>(cAttachResult);
+                    }));
+}
+
+tanker_future_t* tanker_verify_provisional_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  auto const verification = cverificationToVerification(cverification);
+
+  return makeFuture(tanker->verifyProvisionalIdentity(verification));
 }
 
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
@@ -479,4 +511,16 @@ void tanker_free_verification_method_list(
   }
   delete[] methodList->methods;
   delete methodList;
+}
+
+void tanker_free_attach_result(tanker_attach_result_t* result)
+{
+  if (result->method)
+  {
+    if (result->method->verification_method_type ==
+        TANKER_VERIFICATION_METHOD_EMAIL)
+      free(const_cast<char*>(result->method->email));
+    delete result->method;
+  }
+  delete result;
 }

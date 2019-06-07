@@ -66,6 +66,7 @@ typedef struct tanker_device_list_elem tanker_device_list_elem_t;
 typedef struct tanker_device_list tanker_device_list_t;
 typedef struct tanker_verification_method_list
     tanker_verification_method_list_t;
+typedef struct tanker_attach_result tanker_attach_result_t;
 
 /*!
  * \brief The list of a user's devices
@@ -201,6 +202,25 @@ struct tanker_encrypt_options
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
     2, NULL, 0, NULL, 0             \
+  }
+
+/*!
+ * \brief a struct containing the result of an attach_provisional_identity()
+ * If the status is TANKER_STATUS_READY, the method will be default initialized
+ * with the values in TANKER_VERIFICATION_METHOD_INIT
+ */
+struct tanker_attach_result
+{
+  uint8_t version;
+  // enum cannot be binded to java as they do not have a fixed size.
+  // It takes a value from the enum tanker_status:
+  uint8_t status;
+  tanker_verification_method_t* method;
+};
+
+#define TANKER_ATTACH_RESULT_INIT \
+  {                               \
+    1, 0, NULL                    \
   }
 
 /*!
@@ -471,12 +491,27 @@ tanker_future_t* tanker_share(tanker_t* session,
                               uint64_t nb_resource_ids);
 
 /*!
- * Claim a provisional identity to the current user
+ * Attach a provisional identity to the current user
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \param provisional_identity provisional identity you want to claim.
- * \param verification_code the verification code that verifies this provisional
+ *
+ * \return A future of tanker_attach_result_t*.
+ * \throws TANKER_ERROR_NOTHING_TO_CLAIM there is nothing to claim for this
+ * identity
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
+ * the server returned an error
+ */
+tanker_future_t* tanker_attach_provisional_identity(
+    tanker_t* session, char const* provisional_identity);
+
+/*!
+ * Verifies a provisional identity to the current user
+ *
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_READY
+ * \param verification the verification used to verify this provisional
  * identity.
  *
  * \return An empty future.
@@ -485,10 +520,8 @@ tanker_future_t* tanker_share(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-tanker_future_t* tanker_claim_provisional_identity(
-    tanker_t* session,
-    char const* provisional_identity,
-    char const* verification_code);
+tanker_future_t* tanker_verify_provisional_identity(
+    tanker_t* ctanker, tanker_verification_t const* verification);
 
 /*!
  * Revoke a device by device id.
@@ -512,6 +545,8 @@ void tanker_free_device_list(tanker_device_list_t* list);
 
 void tanker_free_verification_method_list(
     tanker_verification_method_list_t* list);
+
+void tanker_free_attach_result(tanker_attach_result_t* result);
 
 #ifdef __cplusplus
 }
