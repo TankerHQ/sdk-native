@@ -11,6 +11,8 @@ namespace Tanker
 {
 namespace Identity
 {
+namespace detail
+{
 nlohmann::json extract(std::string const& token)
 {
   try
@@ -25,6 +27,7 @@ nlohmann::json extract(std::string const& token)
   {
     throw formatEx(Errc::InvalidFormat, "base64 deserialization failed");
   }
+}
 }
 }
 }

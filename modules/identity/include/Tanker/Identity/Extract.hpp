@@ -8,12 +8,15 @@ namespace Tanker
 {
 namespace Identity
 {
+namespace detail
+{
 nlohmann::json extract(std::string const& token);
+}
 
 template <typename I>
 I extract(std::string const& token)
 {
-  return extract(token).get<I>();
+  return detail::extract(token).get<I>();
 }
 }
 }
