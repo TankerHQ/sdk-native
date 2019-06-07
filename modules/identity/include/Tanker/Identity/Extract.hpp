@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Tanker/Identity/UserToken.hpp>
-
 #include <nlohmann/json.hpp>
 
 namespace Tanker
