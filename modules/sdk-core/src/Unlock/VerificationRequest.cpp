@@ -1,6 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
 
+#include <nlohmann/json.hpp>
 #include <optional.hpp>
 
 namespace Tanker

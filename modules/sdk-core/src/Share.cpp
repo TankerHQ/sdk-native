@@ -7,6 +7,7 @@
 #include <Tanker/Error.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>

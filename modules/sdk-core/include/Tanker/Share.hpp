@@ -2,7 +2,6 @@
 
 #include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
