@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
@@ -8,6 +9,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -93,9 +95,10 @@ public:
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
-  tc::cotask<void> claimProvisionalIdentity(
-      SSecretProvisionalIdentity const& identity,
-      VerificationCode const& verificationCode);
+  tc::cotask<AttachResult> attachProvisionalIdentity(
+      SSecretProvisionalIdentity const& sidentity);
+  tc::cotask<void> verifyProvisionalIdentity(
+      Unlock::Verification const& verification);
 
   tc::cotask<void> syncTrustchain();
 
@@ -144,6 +147,7 @@ private:
   GroupAccessor _groupAcessor;
   BlockGenerator _blockGenerator;
   std::map<Unlock::Method, Unlock::VerificationMethod> _verificationMethods;
+  nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;

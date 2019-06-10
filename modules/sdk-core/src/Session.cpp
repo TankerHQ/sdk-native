@@ -1,5 +1,6 @@
 #include <Tanker/Session.hpp>
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -403,20 +404,65 @@ tc::cotask<void> Session::setVerificationMethod(
   }
 }
 
-tc::cotask<void> Session::claimProvisionalIdentity(
-    SSecretProvisionalIdentity const& sidentity,
-    VerificationCode const& verificationCode)
+tc::cotask<AttachResult> Session::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity)
 {
-  auto const identity = Identity::extract<Identity::SecretProvisionalIdentity>(
-      sidentity.string());
-  if (identity.target != Identity::TargetType::Email)
+  auto const provisionalIdentity =
+      Identity::extract<Identity::SecretProvisionalIdentity>(
+          sidentity.string());
+  if (provisionalIdentity.target != Identity::TargetType::Email)
     throw Error::formatEx("unsupported provisional identity target {}",
-                          identity.target);
+                          provisionalIdentity.target);
+  if (TC_AWAIT(_provisionalUserKeysStore
+                   .findProvisionalUserKeysByAppPublicEncryptionKey(
+                       provisionalIdentity.appEncryptionKeyPair.publicKey)))
+  {
+    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
+  }
+  auto const email = Email{provisionalIdentity.value};
+  auto const tankerKeys = TC_AWAIT(
+      this->_client->getProvisionalIdentityKeys(email, nonstd::nullopt));
+  if (tankerKeys)
+  {
+    auto block = _blockGenerator.provisionalIdentityClaim(
+        _userId,
+        SecretProvisionalUser{provisionalIdentity.target,
+                              provisionalIdentity.value,
+                              provisionalIdentity.appEncryptionKeyPair,
+                              tankerKeys->encryptionKeyPair,
+                              provisionalIdentity.appSignatureKeyPair,
+                              tankerKeys->signatureKeyPair},
+        TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+    TC_AWAIT(_client->pushBlock(block));
+    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
+  }
+  _provisionalIdentity = provisionalIdentity;
 
+  TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+}
+
+tc::cotask<void> Session::verifyProvisionalIdentity(
+    Unlock::Verification const& verification)
+{
+  if (!_provisionalIdentity.has_value())
+    throw std::invalid_argument(
+        "Cannot call verifyProvisionalIdentity() without having called "
+        "attachProvisionalIdentity() before");
   try
   {
-    auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-        Email{identity.value}, verificationCode));
+    nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
+    if (auto const emailVerification =
+            mpark::get_if<Unlock::EmailVerification>(&verification))
+    {
+      if (emailVerification->email != Email{_provisionalIdentity->value})
+        throw std::invalid_argument(
+            "Verification email does not match provisional identity");
+      tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
+          emailVerification->email, emailVerification->verificationCode));
+    }
+    else
+      throw std::invalid_argument(
+          "unknow verification method for provisional identity");
     if (!tankerKeys)
     {
       TINFO("Nothing to claim");
@@ -424,14 +470,15 @@ tc::cotask<void> Session::claimProvisionalIdentity(
     }
     auto block = _blockGenerator.provisionalIdentityClaim(
         _userId,
-        SecretProvisionalUser{identity.target,
-                              identity.value,
-                              identity.appEncryptionKeyPair,
+        SecretProvisionalUser{_provisionalIdentity->target,
+                              _provisionalIdentity->value,
+                              _provisionalIdentity->appEncryptionKeyPair,
                               tankerKeys->encryptionKeyPair,
-                              identity.appSignatureKeyPair,
+                              _provisionalIdentity->appSignatureKeyPair,
                               tankerKeys->signatureKeyPair},
         TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
     TC_AWAIT(_client->pushBlock(block));
+    _provisionalIdentity = nonstd::nullopt;
   }
   catch (Error::ServerError const& e)
   {

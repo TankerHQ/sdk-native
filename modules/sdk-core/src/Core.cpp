@@ -246,18 +246,26 @@ std::vector<Unlock::VerificationMethod> Core::getVerificationMethods() const
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registeredUnlockMethods);
+    throw INVALID_STATUS(getVerificationMethods);
   return (*psession)->getVerificationMethods();
 }
 
-tc::cotask<void> Core::claimProvisionalIdentity(
-    SSecretProvisionalIdentity const& identity,
-    VerificationCode const& verificationCode)
+tc::cotask<AttachResult> Core::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registeredUnlockMethods);
-  TC_AWAIT((*psession)->claimProvisionalIdentity(identity, verificationCode));
+    throw INVALID_STATUS(attachProvisionalIdentity);
+  TC_RETURN(TC_AWAIT((*psession)->attachProvisionalIdentity(sidentity)));
+}
+
+tc::cotask<void> Core::verifyProvisionalIdentity(
+    Unlock::Verification const& verification)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(verifyProvisionalIdentity);
+  TC_AWAIT((*psession)->verifyProvisionalIdentity(verification));
 }
 
 tc::cotask<void> Core::syncTrustchain()

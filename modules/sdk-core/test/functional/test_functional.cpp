@@ -304,11 +304,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
-  TC_AWAIT(bobSession->claimProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity},
-      VerificationCode{bobVerificationCode}));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
 
   std::vector<uint8_t> decrypted(
       bobSession->decryptedSize(encryptedData).get());
@@ -316,10 +318,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(decrypted == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Handles incorrect verification codes when claiming")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Handles incorrect verification codes when verifying provisional identity")
 {
-  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobEmail = Email{"bob2@my-box-of-emai.ls"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -327,12 +330,15 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = VerificationCode{"invalid"};
 
-  CHECK_THROWS_AS(TC_AWAIT(bobSession->claimProvisionalIdentity(
-                      SSecretProvisionalIdentity{bobProvisionalIdentity},
-                      VerificationCode{bobVerificationCode})),
-                  Error::InvalidVerificationCode);
+  CHECK_THROWS_AS(
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+          bobEmail, VerificationCode{bobVerificationCode}})),
+      Error::InvalidVerificationCode);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
