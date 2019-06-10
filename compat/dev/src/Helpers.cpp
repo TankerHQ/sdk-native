@@ -3,6 +3,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
 #include <Tanker/Types/Password.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
 
 using Tanker::Test::TrustchainFactory;
@@ -44,11 +45,14 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
 void claim(CorePtr& core,
            Tanker::Test::Trustchain& trustchain,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
-           std::string const& email)
+           std::string const& semail)
 {
-  auto const verifCode =
-      getVerificationCode(trustchain.id, Tanker::Email{"bob@tanker.io"}).get();
-  core->claimProvisionalIdentity(provisionalIdentity, verifCode).get();
+  auto const email = Tanker::Email{semail};
+  auto const verifCode = getVerificationCode(trustchain.id, email).get();
+  core->attachProvisionalIdentity(provisionalIdentity).get();
+  core->verifyProvisionalIdentity(
+          Tanker::Unlock::EmailVerification{email, verifCode})
+      .get();
 }
 
 UserSession signUpAndClaim(

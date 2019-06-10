@@ -219,21 +219,37 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(Email const& provisonalIdentity,
-                                   VerificationCode const& verificationCode)
+Client::getProvisionalIdentityKeys(
+    Email const& provisonalIdentity,
+    nonstd::optional<VerificationCode> const& verificationCode)
 {
-  auto const json = TC_AWAIT(emit("get provisional identity",
-                                  {{"email", provisonalIdentity},
-                                   {"verification_code", verificationCode}}));
+  nlohmann::json body = {{"email", provisonalIdentity}};
+  if (verificationCode.has_value())
+    body["verification_code"] = *verificationCode;
+  try
+  {
+    auto const json = TC_AWAIT(emit("get provisional identity", body));
 
-  if (json.empty())
-    TC_RETURN(nonstd::nullopt);
+    if (json.empty())
+      TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
-      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
-       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
-      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
+    TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+        {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
+         json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
+        {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
+         json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
+  }
+  catch (Error::ServerError const& e)
+  {
+    if (e.serverCode() == "verification_needed")
+    {
+      TC_RETURN(nonstd::nullopt);
+    }
+    else
+    {
+      throw;
+    }
+  }
 }
 
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,

@@ -103,8 +103,9 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-  getProvisionalIdentityKeys(Email const& provisionalIdentity,
-                             VerificationCode const& verificationCode);
+  getProvisionalIdentityKeys(
+      Email const& provisionalIdentity,
+      nonstd::optional<VerificationCode> const& verificationCode);
 
   std::string connectionId() const;
   std::function<void()> blockAvailable;

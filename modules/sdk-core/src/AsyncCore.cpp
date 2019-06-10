@@ -189,14 +189,22 @@ AsyncCore::getVerificationMethods() const
   });
 }
 
-tc::shared_future<void> AsyncCore::claimProvisionalIdentity(
-    SSecretProvisionalIdentity const& identity,
-    VerificationCode const& verificationCode)
+tc::shared_future<AttachResult> AsyncCore::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<AttachResult> {
+      TC_RETURN(TC_AWAIT(this->_core.attachProvisionalIdentity(sidentity)));
+    });
+  });
+}
+
+tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
+    Unlock::Verification const& verification)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<void> {
-      TC_AWAIT(
-          this->_core.claimProvisionalIdentity(identity, verificationCode));
+      TC_AWAIT(this->_core.verifyProvisionalIdentity(verification));
     });
   });
 }

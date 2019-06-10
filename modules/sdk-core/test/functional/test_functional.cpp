@@ -284,7 +284,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {
-  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobEmail = Email{"bob@mail.com"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -304,11 +304,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
-  TC_AWAIT(bobSession->claimProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity},
-      VerificationCode{bobVerificationCode}));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
 
   std::vector<uint8_t> decrypted(
       bobSession->decryptedSize(encryptedData).get());
@@ -316,10 +318,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(decrypted == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Handles incorrect verification codes when claiming")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Handles incorrect verification codes when verifying provisional identity")
 {
-  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobEmail = Email{"bob2@mail.com"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -327,12 +330,74 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = VerificationCode{"invalid"};
 
-  CHECK_THROWS_AS(TC_AWAIT(bobSession->claimProvisionalIdentity(
-                      SSecretProvisionalIdentity{bobProvisionalIdentity},
-                      VerificationCode{bobVerificationCode})),
-                  Error::InvalidVerificationCode);
+  CHECK_THROWS_AS(
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+          bobEmail, VerificationCode{bobVerificationCode}})),
+      Error::InvalidVerificationCode);
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob claims a provisionalIdentity with an already verified email")
+{
+  auto const bobEmail = Email{"bob3@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+  auto const bobOtherProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(),
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)},
+       SPublicIdentity{
+           Identity::getPublicIdentity(bobOtherProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
+
+  CHECK(TC_AWAIT(bobSession->attachProvisionalIdentity(
+                     SSecretProvisionalIdentity{bobOtherProvisionalIdentity}))
+            .status == Status::Ready);
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob cannot verify a provisionalIdentity without attaching it first")
+{
+  auto const bobEmail = Email{"bob4@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+
+  CHECK_THROWS_AS(
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+          bobEmail, VerificationCode{bobVerificationCode}})),
+      std::invalid_argument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")

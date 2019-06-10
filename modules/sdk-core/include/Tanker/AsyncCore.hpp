@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
 #include <Tanker/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
@@ -85,9 +86,10 @@ public:
   tc::shared_future<std::vector<Unlock::VerificationMethod>>
   getVerificationMethods() const;
 
-  tc::shared_future<void> claimProvisionalIdentity(
-      SSecretProvisionalIdentity const& identity,
-      VerificationCode const& verificationCode);
+  tc::shared_future<AttachResult> attachProvisionalIdentity(
+      SSecretProvisionalIdentity const& sidentity);
+  tc::shared_future<void> verifyProvisionalIdentity(
+      Unlock::Verification const& verification);
 
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();

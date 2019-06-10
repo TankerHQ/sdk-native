@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
@@ -70,9 +71,10 @@ public:
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
-  tc::cotask<void> claimProvisionalIdentity(
-      SSecretProvisionalIdentity const& identity,
-      VerificationCode const& verificationCode);
+  tc::cotask<AttachResult> attachProvisionalIdentity(
+      SSecretProvisionalIdentity const& sidentity);
+  tc::cotask<void> verifyProvisionalIdentity(
+      Unlock::Verification const& verification);
 
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
