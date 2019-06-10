@@ -3,7 +3,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cassert>
 #include <exception>

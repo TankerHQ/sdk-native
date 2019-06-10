@@ -7,7 +7,9 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
@@ -16,13 +18,12 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
-#include <Tanker/RecipientNotFound.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
+#include <Tanker/ServerError.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -38,7 +39,6 @@
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/UserKeyStore.hpp>
-#include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -64,6 +64,7 @@ using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 TLOG_CATEGORY(Session);
 
@@ -90,7 +91,7 @@ std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
     else if (method.holds_alternative<VerificationKey>())
       mappedMethods[Unlock::Method::VerificationKey] = method;
     else
-      throw Error::InvalidArgument("Unknown verification method type");
+      throw formatEx(Errc::InvalidArgument, "unknown verification method type");
   }
   return mappedMethods;
 }
@@ -176,9 +177,12 @@ tc::cotask<void> Session::connectionHandler()
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
     if (!boost::algorithm::starts_with(challenge, challengePrefix))
-      throw std::runtime_error(
-          "Received auth challenge does not contain mandatory prefix. Server "
+    {
+      throw formatEx(
+          Errc::InternalError,
+          "received auth challenge does not contain mandatory prefix, server "
           "may not be up to date, or we may be under attack.");
+    }
     auto const signature =
         Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
                      _deviceKeyStore->signatureKeyPair().privateKey);
@@ -285,7 +289,10 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
     }
   }
   if (!key)
-    throw Error::ResourceKeyNotFound(resourceId);
+  {
+    throw formatEx(
+        Errc::NotFound, TFMT("key not found for resource: {:s}"), resourceId);
+  }
 
   Encryptor::decrypt(decryptedData, *key, encryptedData);
 }
@@ -380,10 +387,10 @@ tc::cotask<void> Session::updateUnlock(Unlock::Verification const& method)
     TC_AWAIT(_client->updateVerificationKey(msg));
     updateLocalUnlockMethods(method);
   }
-  catch (Error::ServerError const& e)
+  catch (ServerError const& e)
   {
     if (e.httpStatusCode() == 400)
-      throw Error::InvalidVerificationKey{e.what()};
+      throw formatEx(Errc::InvalidCredentials, "{}", e.what());
     throw;
   }
 }
@@ -392,12 +399,17 @@ tc::cotask<void> Session::setVerificationMethod(
     Unlock::Verification const& method)
 {
   if (this->_verificationMethods.empty())
-    throw Error::OperationCanceled(
-        "Cannot call setVerificationMethod() after a verification key has been "
+  {
+    throw formatEx(
+        Errc::PreconditionFailed,
+        "cannot call setVerificationMethod after a verification key has been "
         "used");
+  }
   else if (mpark::holds_alternative<VerificationKey>(method))
-    throw Error::InvalidArgument(
-        "Cannot call setVerificationMethod with a verification key");
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot call setVerificationMethod with a verification key");
+  }
   else
   {
     TC_AWAIT(updateUnlock(method));
@@ -411,8 +423,11 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
       Identity::extract<Identity::SecretProvisionalIdentity>(
           sidentity.string());
   if (provisionalIdentity.target != Identity::TargetType::Email)
-    throw Error::formatEx("unsupported provisional identity target {}",
-                          provisionalIdentity.target);
+  {
+    throw AssertionError(
+        fmt::format(TFMT("unsupported provisional identity target {:s}"),
+                    provisionalIdentity.target));
+  }
   if (TC_AWAIT(_provisionalUserKeysStore
                    .findProvisionalUserKeysByAppPublicEncryptionKey(
                        provisionalIdentity.appEncryptionKeyPair.publicKey)))
@@ -445,9 +460,12 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
   if (!_provisionalIdentity.has_value())
-    throw std::invalid_argument(
-        "Cannot call verifyProvisionalIdentity() without having called "
-        "attachProvisionalIdentity() before");
+  {
+    throw formatEx(
+        Errc::PreconditionFailed,
+        "cannot call verifyProvisionalIdentity without having called "
+        "attachProvisionalIdentity before");
+  }
   try
   {
     nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
@@ -455,14 +473,19 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
             mpark::get_if<Unlock::EmailVerification>(&verification))
     {
       if (emailVerification->email != Email{_provisionalIdentity->value})
-        throw std::invalid_argument(
-            "Verification email does not match provisional identity");
+      {
+        throw Exception(
+            make_error_code(Errc::InvalidArgument),
+            "verification email does not match provisional identity");
+      }
       tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
           emailVerification->email, emailVerification->verificationCode));
     }
     else
-      throw std::invalid_argument(
-          "unknow verification method for provisional identity");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "unknow verification method for provisional identity");
+    }
     if (!tankerKeys)
     {
       TINFO("Nothing to claim");
@@ -480,17 +503,13 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
     TC_AWAIT(_client->pushBlock(block));
     _provisionalIdentity = nonstd::nullopt;
   }
-  catch (Error::ServerError const& e)
+  catch (ServerError const& e)
   {
     if (e.serverCode() == "invalid_verification_code" ||
         e.serverCode() == "authentication_failed")
-    {
-      throw Error::InvalidVerificationCode{e.what()};
-    }
+      throw formatEx(Errc::InvalidCredentials, "{}", e.what());
     else
-    {
-      throw e;
-    }
+      throw;
   }
 }
 
@@ -550,7 +569,8 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
     if (!_ready.get_future().is_ready())
     {
       _ready.set_exception(std::make_exception_ptr(
-          Error::OperationCanceled("this device was revoked")));
+          Exception(make_error_code(Errc::OperationCanceled),
+                    "this device was revoked")));
     }
     TC_AWAIT(nukeDatabase());
     if (deviceRevoked)

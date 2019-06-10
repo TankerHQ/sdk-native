@@ -4,18 +4,18 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/IdentityUtils.hpp>
-#include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/UserAccessor.hpp>
-#include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <mpark/variant.hpp>
@@ -147,15 +147,12 @@ void handleNotFound(
                      nonstd::nullopt;
         });
     auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
-    throw Error::RecipientNotFound(
-        fmt::format(
-            TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
-            fmt::join(clearPublicIdentities.begin(),
-                      clearPublicIdentities.end(),
-                      ", "),
-            fmt::join(clearGids.begin(), clearGids.end(), ", ")),
-        clearPublicIdentities,
-        groupsNotFound);
+    throw Errors::formatEx(
+        Errors::Errc::NotFound,
+        TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+        fmt::join(
+            clearPublicIdentities.begin(), clearPublicIdentities.end(), ", "),
+        fmt::join(clearGids.begin(), clearGids.end(), ", "));
   }
 }
 
@@ -168,9 +165,10 @@ KeyRecipients toKeyRecipients(
   for (auto const& user : users)
   {
     if (!user.userKey)
-      throw std::runtime_error(
-          "assertion error: sharing to users without user key is not supported "
-          "anymore");
+    {
+      throw Errors::AssertionError(
+          "sharing to users without user key is not supported anymore");
+    }
     out.recipientUserKeys.push_back(*user.userKey);
   }
 

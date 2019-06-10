@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 TLOG_CATEGORY(KeyPublishStore);
 

@@ -5,7 +5,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>

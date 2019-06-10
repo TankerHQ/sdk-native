@@ -4,7 +4,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -16,6 +16,7 @@
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -69,13 +70,13 @@ TEST_CASE("verificationKey")
 {
   SUBCASE("extract")
   {
-    REQUIRE_THROWS_AS(GhostDevice::create(VerificationKey{"plop"}),
-                      Error::InvalidVerificationKey);
+    TANKER_CHECK_THROWS_WITH_CODE(GhostDevice::create(VerificationKey{"plop"}),
+                                  Errors::Errc::InvalidArgument);
   }
 
   TrustchainBuilder builder;
   builder.makeUser("alice");
-  auto const alice = builder.getUser("alice").value();
+  auto const alice = builder.findUser("alice").value();
   auto const aliceUserSecret =
       make<Crypto::SymmetricKey>("this is alice's userSecret");
   auto const firstDev = alice.devices.front();

@@ -23,10 +23,10 @@ TEST_CASE("onKeyToDeviceReceived should process a key publish block")
   auto user = builder.makeUser1("receiver");
   builder.makeUser1("sender");
 
-  auto const receiver = *builder.getUser("receiver");
+  auto const receiver = *builder.findUser("receiver");
   auto const receiverDevice = receiver.devices.front();
 
-  auto const sender = *builder.getUser("sender");
+  auto const sender = *builder.findUser("sender");
   auto const senderDevice = sender.devices.front();
 
   auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
@@ -58,9 +58,9 @@ TEST_CASE("decryptAndStoreKey")
   builder.makeUser3("receiver");
   builder.makeUser3("sender");
 
-  auto const receiver = *builder.getUser("receiver");
+  auto const receiver = *builder.findUser("receiver");
 
-  auto const sender = *builder.getUser("sender");
+  auto const sender = *builder.findUser("sender");
   auto const senderDevice = sender.devices.front();
 
   auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");

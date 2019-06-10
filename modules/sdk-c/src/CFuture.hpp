@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Tanker/Error.hpp>
-
-#include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 
 #include <ctanker/async.h>
 

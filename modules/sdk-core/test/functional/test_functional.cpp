@@ -1,9 +1,7 @@
 #include <string>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/RecipientNotFound.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
@@ -13,6 +11,7 @@
 #include <doctest.h>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>
 
 #include "CheckDecrypt.hpp"
@@ -22,6 +21,7 @@
 using namespace std::string_literals;
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 using namespace type_literals;
 
 namespace
@@ -243,9 +243,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> decryptedData;
   decryptedData.resize(clearData.size());
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->decrypt(decryptedData.data(), encryptedData)),
-      Error::ResourceKeyNotFound);
+      Errc::NotFound);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
@@ -335,10 +335,10 @@ TEST_CASE_FIXTURE(
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = VerificationCode{"invalid"};
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
           bobEmail, VerificationCode{bobVerificationCode}})),
-      Error::InvalidVerificationCode);
+      Errc::InvalidCredentials);
 }
 
 TEST_CASE_FIXTURE(
@@ -389,15 +389,15 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
+  auto bob = trustchain.makeUser(Test::UserType::New);
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
           bobEmail, VerificationCode{bobVerificationCode}})),
-      std::invalid_argument);
+      Errc::PreconditionFailed);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
@@ -441,8 +441,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   tc::promise<void> prom;
   aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceSession->start(aliceDevice.identity())),
-                  Error::OperationCanceled);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->start(aliceDevice.identity())),
+      Errc::OperationCanceled);
 
   CHECK(TC_AWAIT(waitFor(prom)));
 }
@@ -468,10 +469,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
     // the revocation was handled before the session was closed
     CHECK(status == Status::IdentityVerificationNeeded);
   }
-  catch (Error::OperationCanceled const&)
+  catch (Errors::Exception const& e)
   {
     // the revocation was handled during the open()
-    CHECK(true);
+    CHECK(e.errorCode() == Errc::OperationCanceled);
   }
 }
 

@@ -162,7 +162,7 @@ public:
                               User const& user,
                               bool unsafe = false);
 
-  nonstd::optional<User> getUser(std::string const& suserId) const;
+  nonstd::optional<User> findUser(std::string const& suserId) const;
 
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;
@@ -205,5 +205,5 @@ private:
   std::set<Group, GroupComparator> _groups;
   std::vector<Tanker::Block> _blocks;
 
-  User& getMutableUser(Tanker::SUserId const& suserId);
+  User* findMutableUser(Tanker::SUserId const& suserId);
 };

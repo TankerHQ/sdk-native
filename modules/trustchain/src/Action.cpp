@@ -1,9 +1,11 @@
 #include <Tanker/Trustchain/Action.hpp>
 
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -54,7 +56,8 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   case Nature::UserGroupAddition2:
     return Serialization::deserialize<UserGroupAddition2>(payload);
   }
-  throw std::runtime_error{fmt::format(TFMT("unknown nature: {:d}"), nature)};
+  throw Errors::formatEx(
+      Errc::InvalidBlockNature, TFMT("unkown action nature: {:d}"), nature);
 }
 
 Nature Action::nature() const

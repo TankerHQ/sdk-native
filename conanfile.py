@@ -145,6 +145,8 @@ class TankerConan(ConanFile):
             "tankeridentity",
             "tankercrypto",
             "tankerserialization",
+            "tankererrors",
+            "tankerlog",
             "tankerformat",
         ]
 

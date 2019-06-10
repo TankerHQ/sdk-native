@@ -2,7 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/LogHandler.hpp>
+#include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>

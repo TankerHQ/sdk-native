@@ -2,10 +2,12 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
+
+#include <fmt/format.h>
 
 TLOG_CATEGORY(ResourceKeyStore);
 
@@ -29,7 +31,11 @@ tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
 {
   auto const key = TC_AWAIT(findKey(resourceId));
   if (!key)
-    throw Error::ResourceKeyNotFound(resourceId);
+  {
+    throw Errors::formatEx(Errors::Errc::NotFound,
+                           "key not found for resource {}",
+                           resourceId);
+  }
   TC_RETURN(*key);
 }
 

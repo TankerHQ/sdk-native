@@ -1,4 +1,3 @@
-#include <Tanker/Error.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -11,6 +10,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/KeyPublishToDevice.hpp>
 #include <Tanker/Verif/KeyPublishToUser.hpp>
 #include <Tanker/Verif/KeyPublishToUserGroup.hpp>
@@ -20,6 +20,7 @@
 #include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
@@ -31,24 +32,7 @@
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker;
-
-#define CHECK_VERIFICATION_FAILED_WITH(functionCall, errCode) \
-  do                                                          \
-  {                                                           \
-    try                                                       \
-    {                                                         \
-      functionCall;                                           \
-    }                                                         \
-    catch (Error::VerificationFailed const& err)              \
-    {                                                         \
-      CHECK_EQ(err.code(), errCode);                          \
-      break;                                                  \
-    }                                                         \
-    catch (...)                                               \
-    {                                                         \
-    }                                                         \
-    REQUIRE(false);                                           \
-  } while (0)
+using namespace Tanker::Verif;
 
 namespace
 {
@@ -97,17 +81,17 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   {
     auto& deviceCreation = extract<DeviceCreation>(user.entry.action());
     alter(deviceCreation, &DeviceCreation::delegationSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(user.entry, trustchainCreation),
-        Error::VerificationCode::InvalidDelegationSignature);
+        Errc::InvalidDelegationSignature);
   }
 
   SUBCASE("should reject an incorrectly signed device")
   {
     alter(user.entry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(user.entry, trustchainCreation),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should accept a valid DeviceCreation")
@@ -126,29 +110,29 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   SUBCASE("it should reject a device creation when author device is revoked")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
     auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
     alter(deviceCreation, &DeviceCreation::delegationSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidDelegationSignature);
+        Errc::InvalidDelegationSignature);
   }
 
   SUBCASE("should reject an incorrectly signed device")
   {
     alter(secondDevice.entry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject an incorrect userId")
@@ -158,10 +142,10 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
     auto const& authorPrivateSignatureKey =
         user.user.devices.front().keys.signatureKeyPair.privateKey;
     deviceCreation.sign(authorPrivateSignatureKey);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidUserId);
+        Errc::InvalidUserId);
   }
 
   SUBCASE("should accept a valid DeviceCreation")
@@ -179,28 +163,28 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
   SUBCASE("should reject an incorrectly signed DeviceRevocation")
   {
     alter(deviceRevocation, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             deviceRevocation, authorDevice, targetDevice, user),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a revocation from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             deviceRevocation, authorDevice, targetDevice, user),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should reject a revocation of an already revoked device")
   {
     targetDevice.revokedAtBlkIndex = targetDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             deviceRevocation, authorDevice, targetDevice, user),
-        Error::VerificationCode::InvalidTargetDevice);
+        Errc::InvalidTargetDevice);
   }
 
   SUBCASE("should accept a valid deviceRevocation")
@@ -216,26 +200,26 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
     alter(gcEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
   {
     auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
     alter(userGroupCreation, &UserGroupCreation::selfSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a UserGroupCreation from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
@@ -253,9 +237,9 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
   SUBCASE("should reject an incorrectly signed UserGroupAddition")
   {
     alter(gaEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE(
@@ -265,26 +249,26 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
     auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     alter(userGroupAddition, &UserGroupAddition::previousGroupBlockHash);
     userGroupAddition.selfSign(authorDevice.keys.signatureKeyPair.privateKey);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Error::VerificationCode::InvalidGroup);
+        Errc::InvalidGroup);
   }
 
   SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
   {
     auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     alter(userGroupAddition, &UserGroupAddition::selfSignature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a UserGroupAddition from a revoked device")
   {
     tankerDevice.revokedAtBlkIndex = tankerDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupAddition")
@@ -305,18 +289,18 @@ TEST_CASE("Verif TrustchainCreation")
     {
       alter(rootEntry, &ServerEntry::author);
 
-      CHECK_VERIFICATION_FAILED_WITH(
+      TANKER_CHECK_THROWS_WITH_CODE(
           Verif::verifyTrustchainCreation(rootEntry, builder.trustchainId()),
-          Error::VerificationCode::InvalidAuthor);
+          Errc::InvalidAuthor);
     }
 
     SUBCASE("Invalid signature")
     {
       alter(rootEntry, &ServerEntry::signature);
 
-      CHECK_VERIFICATION_FAILED_WITH(
+      TANKER_CHECK_THROWS_WITH_CODE(
           Verif::verifyTrustchainCreation(rootEntry, builder.trustchainId()),
-          Error::VerificationCode::InvalidSignature);
+          Errc::InvalidSignature);
     }
 
     SUBCASE("Valid TrustchainCreation block")
@@ -333,9 +317,9 @@ TEST_CASE("Verif TrustchainCreation")
       Trustchain::TrustchainId trustchainId(rootEntry.hash());
       trustchainId[0]++;
 
-      CHECK_VERIFICATION_FAILED_WITH(
+      TANKER_CHECK_THROWS_WITH_CODE(
           Verif::verifyTrustchainCreation(rootEntry, trustchainId),
-          Error::VerificationCode::InvalidHash);
+          Errc::InvalidHash);
     }
 
     SUBCASE("Valid TrustchainCreation block")
@@ -395,10 +379,10 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
     deviceCreation.sign(
         user.user.devices.front().keys.signatureKeyPair.privateKey);
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, user.user.asTankerUser()),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 }
 
@@ -414,10 +398,10 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
   SUBCASE("should reject a device creation 3 if the user has no user key")
   {
     tankerUser.userKey = nonstd::nullopt;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 
   SUBCASE("should reject an incorrect userKey")
@@ -430,10 +414,10 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
     tankerUser.userKey = secondDevice.user.userKey;
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 }
 
@@ -453,10 +437,10 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
     auto const keyPair = Crypto::makeEncryptionKeyPair();
     auto tankerUser = alice.user.asTankerUser();
     tankerUser.userKey = keyPair.publicKey;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 }
 
@@ -477,27 +461,27 @@ TEST_CASE("KeyPublishToDevice")
   SUBCASE("should reject an incorrectly signed KeyPublishToDevice")
   {
     alter(kp2dEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToDevice(kp2dEntry, authorDevice, targetUser),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a keyPublishToDevice to a recipient with a user key")
   {
     auto const deviceV3 = builder.makeDevice3("alice");
     auto const targetUserUpdated = deviceV3.user;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToDevice(
             kp2dEntry, authorDevice, targetUserUpdated),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 
   SUBCASE("should reject a KeyPublishToDevice from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToDevice(kp2dEntry, authorDevice, targetUser),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToDevice")
@@ -523,17 +507,17 @@ TEST_CASE("KeyPublishToUser")
   SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
   {
     alter(kp2uEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a KeyPublishToUser from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToUser(kp2uEntry, authorDevice),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToUser")
@@ -571,17 +555,17 @@ TEST_CASE("KeyPublishToProvisionalUser")
   SUBCASE("Should reject an incorrectly signed KeyPublishToUser")
   {
     alter(kp2puEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice),
-        Error::VerificationCode::InvalidSignature);
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a KeyPublishToUser from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyKeyPublishToUser(kp2puEntry, authorDevice),
-        Error::VerificationCode::InvalidAuthor);
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToUser")
@@ -611,17 +595,17 @@ TEST_CASE("KeyPublishToUserGroups")
   SUBCASE("should reject an incorrecly signed KeyPublishToUserGroups")
   {
     alter(kp2gEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyKeyPublishToUserGroup(
-                                       kp2gEntry, authorDevice, targetGroup),
-                                   Error::VerificationCode::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyKeyPublishToUserGroup(
+                                      kp2gEntry, authorDevice, targetGroup),
+                                  Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a KeyPublishToUserGroup from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyKeyPublishToUserGroup(
-                                       kp2gEntry, authorDevice, targetGroup),
-                                   Error::VerificationCode::InvalidAuthor);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyKeyPublishToUserGroup(
+                                      kp2gEntry, authorDevice, targetGroup),
+                                  Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid KeyPublishToUserGroups")
@@ -656,23 +640,23 @@ TEST_CASE("Verif DeviceRevocationV1")
 
     auto const revokeBobBlock =
         builder.revokeDevice1(secondDevice.device, bobDevice.device, true);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(blockToServerEntry(revokeBobBlock),
                                       authorDevice,
                                       bobDevice.device.asTankerDevice(),
                                       secondDevice.user),
-        Error::VerificationCode::InvalidUser);
+        Errc::InvalidUser);
   }
 
   SUBCASE("should reject a revocation whose user has a userKey v1")
   {
     auto fourthDevice = builder.makeDevice3("alice");
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(blockToServerEntry(revokeBlock),
                                       authorDevice,
                                       targetDevice,
                                       fourthDevice.user),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 }
 
@@ -685,7 +669,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto thirdDevice = builder.makeDevice3("alice");
   auto authorDevice = secondDevice.device.asTankerDevice();
   auto targetDevice = thirdDevice.device.asTankerDevice();
-  auto aliceUser = builder.getUser("alice");
+  auto aliceUser = builder.findUser("alice");
   auto const revokeBlock = builder.revokeDevice2(
       secondDevice.device, thirdDevice.device, *aliceUser);
   auto entry = blockToServerEntry(revokeBlock);
@@ -695,7 +679,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto bobOtherDevice = builder.makeDevice1("bob");
   auto const authorDeviceV1 = bobDevice.device.asTankerDevice();
   auto const targetDeviceV1 = bobOtherDevice.device.asTankerDevice();
-  auto bobUser = builder.getUser("bob");
+  auto bobUser = builder.findUser("bob");
   auto const revokeBlockUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
   auto entryUserV1 = blockToServerEntry(revokeBlockUserV1);
@@ -712,10 +696,10 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto& dr = extract<DeviceRevocation>(entryUserV1.action());
     alter(dr, &DeviceRevocation2::previousPublicEncryptionKey);
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entryUserV1, authorDeviceV1, targetDeviceV1, bobOtherDevice.user),
-        Error::VerificationCode::InvalidEncryptionKey);
+        Errc::InvalidEncryptionKey);
   }
 
   SUBCASE(
@@ -724,22 +708,22 @@ TEST_CASE("Verif DeviceRevocationV2")
   {
     auto& deviceRevocation = extract<DeviceRevocation>(entryUserV1.action());
     alter(deviceRevocation, &DeviceRevocation2::sealedKeyForPreviousUserKey);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entryUserV1, authorDeviceV1, targetDeviceV1, bobOtherDevice.user),
-        Error::VerificationCode::InvalidUserKey);
+        Errc::InvalidUserKey);
   }
 
   SUBCASE("should reject a revocation for another user's device")
   {
     auto const revokeBlock = builder.revokeDevice2(
         secondDevice.device, bobOtherDevice.device, user.user, true);
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(blockToServerEntry(revokeBlock),
                                       authorDevice,
                                       targetDeviceV1,
                                       secondDevice.user),
-        Error::VerificationCode::InvalidUser);
+        Errc::InvalidUser);
   }
 
   SUBCASE(
@@ -750,10 +734,10 @@ TEST_CASE("Verif DeviceRevocationV2")
     alter(deviceRevocation, &DeviceRevocation2::previousPublicEncryptionKey);
 
     REQUIRE_FALSE(authorDevice.revokedAtBlkIndex.has_value());
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidEncryptionKey);
+        Errc::InvalidEncryptionKey);
   }
 
   SUBCASE(
@@ -765,10 +749,10 @@ TEST_CASE("Verif DeviceRevocationV2")
         deviceRevocation, &DeviceRevocation2::sealedUserKeysForDevices);
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidUserKeys);
+        Errc::InvalidUserKeys);
   }
 
   SUBCASE(
@@ -784,10 +768,10 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.emplace_back(thirdDevice.device.id,
                                           sealedPrivateEncryptionKey);
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidUserKeys);
+        Errc::InvalidUserKeys);
   }
 
   SUBCASE(
@@ -804,10 +788,10 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.emplace_back(bobDevice.device.id,
                                           sealedPrivateEncryptionKey);
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidUserKeys);
+        Errc::InvalidUserKeys);
   }
 
   SUBCASE(
@@ -819,10 +803,10 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
     sealedUserKeysForDevices.push_back(*sealedUserKeysForDevices.begin());
 
-    CHECK_VERIFICATION_FAILED_WITH(
+    TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(
             entry, authorDevice, targetDevice, thirdDevice.user),
-        Error::VerificationCode::InvalidUserKeys);
+        Errc::InvalidUserKeys);
   }
 }
 
@@ -911,17 +895,17 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
   SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidAuthor);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidAuthor);
   }
 
   SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
   {
     alter(picEntry, &ServerEntry::signature);
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
@@ -930,39 +914,41 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
         extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByAppKey);
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidSignature);
   }
 
   SUBCASE(
-      "should reject a ProvisionalIdentityClaim with invalid tanker signature")
+      "should reject a ProvisionalIdentityClaim with invalid tanker "
+      "signature")
   {
     auto& provisionalIdentityClaim =
         extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByTankerKey);
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a ProvisionalIdentityClaim with an incorrect user ID")
   {
     authorUser.id[0]++;
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidUserId);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidUserId);
   }
 
   SUBCASE(
-      "should reject a ProvisionalIdentityClaim with an incorrect user public "
+      "should reject a ProvisionalIdentityClaim with an incorrect user "
+      "public "
       "key")
   {
     authorUser.userKey.value()[0]++;
-    CHECK_VERIFICATION_FAILED_WITH(Verif::verifyProvisionalIdentityClaim(
-                                       picEntry, authorUser, authorDevice),
-                                   Error::VerificationCode::InvalidUserKey);
+    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
+                                      picEntry, authorUser, authorDevice),
+                                  Errc::InvalidUserKey);
   }
 
   SUBCASE("should accept a valid ProvisionalIdentityClaim")

@@ -74,15 +74,7 @@ T deserialize_impl(SerializedSource& ss)
 template <typename T>
 void deserialize_impl(SerializedSource& ss, T& val)
 {
-  try
-  {
-    from_serialized(ss, val);
-  }
-  catch (std::exception const& e)
-  {
-    throw std::runtime_error(fmt::format(
-        "Could not deserialize into type: {}: {}", typeid(T).name(), e.what()));
-  }
+  from_serialized(ss, val);
 }
 
 struct from_serialized_fn

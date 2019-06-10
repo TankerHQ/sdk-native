@@ -4,6 +4,7 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <mpark/variant.hpp>
@@ -31,12 +32,12 @@ void verifyKeyPublishToUserGroup(ServerEntry const& serverEntry,
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),
-          Error::VerificationCode::InvalidAuthor,
+          Errc::InvalidAuthor,
           "author device must not be revoked");
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
                          author.publicSignatureKey),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "keyPublishToUserGroup block must be signed by the author device");
 }
 }

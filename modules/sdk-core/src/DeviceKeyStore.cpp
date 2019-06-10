@@ -2,10 +2,10 @@
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeys.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 namespace Tanker
@@ -75,7 +75,7 @@ tc::cotask<void> DeviceKeyStore::setDeviceId(
     Trustchain::DeviceId const& deviceId)
 {
   if (!this->_deviceId.is_null() && deviceId != this->_deviceId)
-    throw std::runtime_error("deviceId already set");
+    throw Errors::AssertionError("deviceId already set");
   TC_AWAIT(_db->setDeviceId(deviceId));
   _deviceId = deviceId;
 }

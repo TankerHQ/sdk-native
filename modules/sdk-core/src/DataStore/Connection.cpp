@@ -1,8 +1,10 @@
 #include <Tanker/DataStore/Connection.hpp>
 
-#include <Tanker/Error.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <boost/algorithm/hex.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -88,8 +90,12 @@ ConnPtr createConnection(std::string const& dbPath,
   TINFO("creating database {}", dbPath);
   auto const isEncrypted = isEncryptedDb(dbPath);
   if (isEncrypted && !hasCipher())
-    throw Error::formatEx(
-        "The db {} is encrypted but ssl support is not enabled", dbPath);
+  {
+    throw Errors::formatEx(
+        Errc::DatabaseError,
+        "database {} is encrypted but OpenSSL support is not enabled",
+        dbPath);
+  }
   auto const shouldEncrypt = hasCipher() && isEncrypted;
   auto const shouldMigrate = hasCipher() && !isEncrypted && userSecret;
   try
@@ -132,10 +138,16 @@ ConnPtr createConnection(std::string const& dbPath,
       makeExclusive(db);
     return db;
   }
-  catch (const std::exception& e)
+  catch (sqlpp::exception const& e)
   {
-    throw Error::formatEx<Error::InternalError>(
-        TFMT("In createConnection, {:s}: {:s}"), dbPath, e.what());
+    throw Errors::Exception(Errc::DatabaseError, e.what());
+  }
+  catch (std::exception const& e)
+  {
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           TFMT("could not open database: {:s}: {:s}"),
+                           dbPath,
+                           e.what());
   }
 }
 }

@@ -1,5 +1,6 @@
 #include <Tanker/IdentityUtils.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Utils.hpp>
 
@@ -29,8 +30,7 @@ PartitionedIdentities partitionIdentities(
                  mpark::get_if<Identity::PublicProvisionalIdentity>(&identity))
       out.publicProvisionalIdentities.push_back(*i);
     else
-      throw std::runtime_error(
-          "assertion failure: unknown variant value in identity");
+      throw Errors::AssertionError("unknown variant value in identity");
   }
   return out;
 }

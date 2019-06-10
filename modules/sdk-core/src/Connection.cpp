@@ -1,7 +1,6 @@
 #include <Tanker/Connection.hpp>
 
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <sio_message.h>

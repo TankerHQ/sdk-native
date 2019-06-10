@@ -2,11 +2,11 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
+#include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 #include <cppcodec/base64_rfc4648.hpp>
@@ -66,8 +66,8 @@ TEST_CASE("resource keys")
     auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
 
     ResourceKeyStore keys(dbPtr.get());
-    CHECK_THROWS_AS(AWAIT(keys.getKey(unexistentMac)),
-                    Error::ResourceKeyNotFound);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
+                                  Errors::Errc::NotFound);
   }
 
   SUBCASE("it should find a key that was inserted")

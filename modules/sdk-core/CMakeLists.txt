@@ -11,6 +11,8 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DataStore/Table.hpp
     include/Tanker/DataStore/Utils.hpp
     include/Tanker/DataStore/Version.hpp
+    include/Tanker/DataStore/Errors/Errc.hpp
+    include/Tanker/DataStore/Errors/ErrcCategory.hpp
     include/Tanker/DbModels/ContactDevices.hpp
     include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
@@ -73,6 +75,7 @@ add_library(tankercore STATIC
   include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
   include/Tanker/DataStore/ADatabase.hpp
+  include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
   include/Tanker/AConnection.hpp
@@ -97,11 +100,7 @@ add_library(tankercore STATIC
   include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
-  include/Tanker/Error.hpp
-  include/Tanker/UserNotFound.hpp
-  include/Tanker/ResourceKeyNotFound.hpp
-  include/Tanker/RecipientNotFound.hpp
-  include/Tanker/GroupNotFound.hpp
+  include/Tanker/ServerError.hpp
   include/Tanker/Index.hpp
   include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
@@ -113,8 +112,6 @@ add_library(tankercore STATIC
   include/Tanker/Groups/GroupUpdater.hpp
   include/Tanker/Groups/GroupAccessor.hpp
   include/Tanker/Groups/Manager.hpp
-  include/Tanker/Log.hpp
-  include/Tanker/LogHandler.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -142,6 +139,8 @@ add_library(tankercore STATIC
   include/Tanker/Verif/UserGroupCreation.hpp
   include/Tanker/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
+  include/Tanker/Verif/Errors/Errc.hpp
+  include/Tanker/Verif/Errors/ErrcCategory.hpp
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
   include/Tanker/EncryptionFormat/EncryptorV4.hpp
@@ -153,8 +152,11 @@ add_library(tankercore STATIC
   src/Admin.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
+  src/DataStore/Errors/Errc.cpp
+  src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
+  src/ServerError.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp
@@ -176,8 +178,6 @@ add_library(tankercore STATIC
   src/ResourceKeyStore.cpp
   src/Block.cpp
   src/Entry.cpp
-  src/LogHandler.cpp
-  src/Error.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
   src/UserKeyStore.cpp
@@ -195,6 +195,8 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Revocation.cpp
+  src/Verif/Errors/Errc.cpp
+  src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/KeyPublishToDevice.cpp
@@ -229,6 +231,8 @@ target_link_libraries(tankercore
   tankertrustchain
   tankercrypto
   tankerformat
+  tankerlog
+  tankerconfig
   ttracer
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent

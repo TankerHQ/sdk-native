@@ -2,14 +2,16 @@
 #include <Tanker/EncryptionFormat/EncryptorV2.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV3.hpp>
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 TEST_SUITE("EncryptorV2")
 {
@@ -40,9 +42,9 @@ TEST_SUITE("EncryptorV2")
   TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
     auto const truncatedBuffer = make_buffer("\2");
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         EncryptionFormat::EncryptorV2::decryptedSize(truncatedBuffer),
-        Error::InvalidArgument);
+        Errc::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
@@ -140,9 +142,10 @@ TEST_SUITE("EncryptorV2")
 
     encryptedTestVector[2]++;
 
-    CHECK_THROWS_AS(EncryptionFormat::EncryptorV2::decrypt(
-                        decryptedData.data(), keyVector, encryptedTestVector),
-                    Error::DecryptFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        EncryptionFormat::EncryptorV2::decrypt(
+            decryptedData.data(), keyVector, encryptedTestVector),
+        Errc::DecryptionFailed);
   }
 }
 
@@ -173,9 +176,9 @@ TEST_SUITE("EncryptorV3")
   TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
     auto const truncatedBuffer = make_buffer("\3");
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         EncryptionFormat::EncryptorV3::decryptedSize(truncatedBuffer),
-        Error::InvalidArgument);
+        Errc::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
@@ -272,16 +275,17 @@ TEST_SUITE("EncryptorV3")
         EncryptionFormat::EncryptorV3::decryptedSize(encryptedTestVector));
     encryptedTestVector[2]++;
 
-    CHECK_THROWS_AS(EncryptionFormat::EncryptorV3::decrypt(
-                        decryptedData.data(), keyVector, encryptedTestVector),
-                    Error::DecryptFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        EncryptionFormat::EncryptorV3::decrypt(
+            decryptedData.data(), keyVector, encryptedTestVector),
+        Errc::DecryptionFailed);
   }
 
   TEST_CASE("extractResourceId should throw on a truncated buffer")
   {
     auto encryptedData = make_buffer("");
 
-    CHECK_THROWS_AS(Encryptor::extractResourceId(encryptedData),
-                    Error::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
+                                  Errc::InvalidArgument);
   }
 }

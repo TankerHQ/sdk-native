@@ -1,7 +1,6 @@
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/UserNotFound.hpp>
 
 #include <Helpers/Buffers.hpp>
 

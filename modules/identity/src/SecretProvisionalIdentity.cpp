@@ -1,15 +1,19 @@
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
-#include <nlohmann/json.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <nlohmann/json.hpp>
+
+using namespace Tanker::Trustchain;
 
 namespace Tanker
 {
 namespace Identity
 {
 SecretProvisionalIdentity createProvisionalIdentity(
-    Trustchain::TrustchainId const& trustchainId, Email const& email)
+    TrustchainId const& trustchainId, Email const& email)
 {
   return SecretProvisionalIdentity{
       trustchainId,
@@ -24,13 +28,12 @@ std::string createProvisionalIdentity(std::string const& trustchainIdParam,
                                       Email const& email)
 {
   if (email.empty())
-    throw std::invalid_argument("Empty email");
+    throw Errors::Exception(Errc::InvalidEmail);
   if (trustchainIdParam.empty())
-    throw std::invalid_argument("Empty trustchainId");
+    throw Errors::Exception(Errc::InvalidTrustchainId);
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-          trustchainIdParam);
+      cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdParam);
   return to_string(createProvisionalIdentity(trustchainId, email));
 }
 
@@ -38,11 +41,14 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target != "email")
-    throw std::runtime_error("unsupported provisional identity target: " +
-                             target);
+  {
+    throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
+                           "unsupported provisional identity target: {}",
+                           target);
+  }
 
   identity = SecretProvisionalIdentity{
-      j.at("trustchain_id").get<Trustchain::TrustchainId>(),
+      j.at("trustchain_id").get<TrustchainId>(),
       TargetType::Email,
       j.at("value").get<std::string>(),
       {cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
@@ -59,8 +65,11 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity)
 {
   if (identity.target != TargetType::Email)
-    throw std::runtime_error("unsupported provisional identity target: " +
-                             std::to_string(static_cast<int>(identity.target)));
+  {
+    throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
+                           "unsupported provisional identity target: {}",
+                           static_cast<int>(identity.target));
+  }
 
   j["value"] = identity.value;
   j["trustchain_id"] = identity.trustchainId;

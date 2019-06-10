@@ -1,11 +1,12 @@
 #include <Tanker/Identity/UserToken.hpp>
 
-#include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Identity/Utils.hpp>
-
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
+#include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -24,11 +25,11 @@ std::string generateUserToken(std::string const& trustchainIdString,
                               SUserId const& userId)
 {
   if (userId.empty())
-    throw std::invalid_argument("Empty userId");
+    throw Errors::Exception(Errc::InvalidUserId);
   if (trustchainIdString.empty())
-    throw std::invalid_argument("Empty trustchainId");
+    throw Errors::Exception(Errc::InvalidTrustchainId);
   if (trustchainPrivateKey.empty())
-    throw std::invalid_argument("Empty trustchainPrivateKey");
+    throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
   auto const trustchainId =
       cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(

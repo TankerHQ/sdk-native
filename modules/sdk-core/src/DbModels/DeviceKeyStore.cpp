@@ -6,7 +6,7 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>

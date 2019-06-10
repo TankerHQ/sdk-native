@@ -1,5 +1,7 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 
@@ -34,14 +36,15 @@ std::string createIdentity(std::string const& trustchainIdParam,
                            SUserId const& userId)
 {
   if (userId.empty())
-    throw std::invalid_argument("Empty userId");
+    throw Errors::Exception(Errc::InvalidUserId);
   if (trustchainIdParam.empty())
-    throw std::invalid_argument("Empty trustchainId");
+    throw Errors::Exception(Errc::InvalidTrustchainId);
   if (trustchainPrivateKey.empty())
-    throw std::invalid_argument("Empty trustchainPrivateKey");
+    throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(trustchainIdParam);
+      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+          trustchainIdParam);
   return to_string(createIdentity(
       trustchainId,
       cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
@@ -55,7 +58,7 @@ SecretPermanentIdentity upgradeUserToken(
     UserToken const& userToken)
 {
   if (userToken.delegation.userId != userId)
-    throw std::invalid_argument("Wrong userId provided");
+    throw Errors::Exception(Errc::InvalidUserId, "invalid user id provided");
   return SecretPermanentIdentity(std::move(userToken), std::move(trustchainId));
 }
 
@@ -74,8 +77,11 @@ void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target != "user")
-    throw std::invalid_argument(
-        "failed to deserialize secret permanent identity");
+  {
+    throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
+                           "unsupported provisional identity target: {}",
+                           target);
+  }
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("value").get_to(identity.delegation.userId);
   j.at("user_secret").get_to(identity.userSecret);

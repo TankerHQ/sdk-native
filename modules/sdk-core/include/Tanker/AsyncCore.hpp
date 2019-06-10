@@ -2,7 +2,7 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
-#include <Tanker/LogHandler.hpp>
+#include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/Email.hpp>

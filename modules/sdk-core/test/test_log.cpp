@@ -1,10 +1,9 @@
 #include <doctest.h>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -87,12 +86,6 @@ TEST_CASE("print a formated log")
   SUBCASE("Print the fear")
   {
     TERROR("This is bad");
-  }
-
-  SUBCASE("Throw an ex")
-  {
-    REQUIRE_THROWS(throw Tanker::Error::formatEx<std::runtime_error>(
-        TFMT("You lost, score {:d}/{:f}"), 42, 2.1));
   }
 
   SUBCASE("It format a ResourceId")

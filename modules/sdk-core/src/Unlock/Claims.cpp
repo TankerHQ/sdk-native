@@ -1,6 +1,7 @@
 #include <Tanker/Unlock/Claims.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
@@ -22,8 +23,10 @@ Claims::Claims(Verification const& method,
     this->password =
         Crypto::generichash(gsl::make_span(*password).as_span<uint8_t const>());
   else if (auto const verificationKey = mpark::get_if<VerificationKey>(&method))
-    throw std::runtime_error(
-        "assertion failure, not supposed to have a verificationKey");
+  {
+    throw Errors::AssertionError(
+        "claims cannot be constructed with a verification key");
+  }
 }
 
 void from_json(nlohmann::json const& j, Claims& c)

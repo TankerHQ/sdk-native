@@ -1,5 +1,7 @@
-#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Unlock/VerificationRequest.hpp>
+
+#include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 
 #include <nlohmann/json.hpp>
 #include <optional.hpp>
@@ -21,7 +23,7 @@ nonstd::optional<VerificationRequest> makeVerificationRequest(
     return Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>());
   else if (mpark::holds_alternative<VerificationKey>(verification))
     return nonstd::nullopt;
-  throw std::runtime_error("assertion error: not implemented");
+  throw Errors::AssertionError("unsupported verification request");
 }
 
 void to_json(nlohmann::json& j, VerificationRequest const& vReq)
