@@ -9,6 +9,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
+#include <Tanker/Utils.hpp>
 #include <Tanker/Version.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -239,8 +240,7 @@ tc::shared_future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
   return _taskCanceler.run([&] {
     return tc::async_resumable([this, deviceId]() -> tc::cotask<void> {
       TC_AWAIT(this->_core.revokeDevice(
-          cppcodec::base64_rfc4648::decode<Trustchain::DeviceId>(
-              deviceId.string())));
+          base64DecodeArgument<Trustchain::DeviceId>(deviceId.string())));
     });
   });
 }

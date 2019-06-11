@@ -190,13 +190,22 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       "writable_path is null");
     }
 
-    return static_cast<void*>(new AsyncCore(
-        url,
-        {options->sdk_type,
-         cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-             std::string(options->trustchain_id)),
-         options->sdk_version},
-        options->writable_path));
+    try
+    {
+      auto const trustchainId =
+          cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+              std::string(options->trustchain_id));
+
+      return static_cast<void*>(
+          new AsyncCore(url,
+                        {options->sdk_type, trustchainId, options->sdk_version},
+                        options->writable_path));
+    }
+    catch (cppcodec::parse_error const&)
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "base64 deserialization failed");
+    }
   }));
 }
 

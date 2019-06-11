@@ -1,5 +1,9 @@
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+
+#include <cppcodec/base64_rfc4648.hpp>
 
 #include <algorithm>
 #include <type_traits>
@@ -7,6 +11,22 @@
 
 namespace Tanker
 {
+template <typename T, typename String>
+T base64DecodeArgument(String const& b64)
+{
+  using namespace Tanker::Errors;
+
+  try
+  {
+    return cppcodec::base64_rfc4648::decode<T>(b64);
+  }
+  catch (cppcodec::parse_error const&)
+  {
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "base64 deserialization failed");
+  }
+}
+
 template <typename T, typename F>
 auto convertList(std::vector<T> const& source, F&& f)
 {
@@ -21,8 +41,7 @@ inline std::vector<Trustchain::GroupId> convertToGroupIds(
     std::vector<SGroupId> const& sgroupIds)
 {
   return convertList(sgroupIds, [](auto&& sgroupId) {
-    return cppcodec::base64_rfc4648::decode<Trustchain::GroupId>(
-        sgroupId.string());
+    return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string());
   });
 }
 
