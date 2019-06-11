@@ -12,6 +12,7 @@
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -219,37 +220,36 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(
-    Email const& provisonalIdentity,
-    nonstd::optional<VerificationCode> const& verificationCode)
+Client::getProvisionalIdentityKeys(Unlock::VerificationRequest const& request)
 {
-  nlohmann::json body = {{"email", provisonalIdentity}};
-  if (verificationCode.has_value())
-    body["verification_code"] = *verificationCode;
-  try
-  {
-    auto const json = TC_AWAIT(emit("get provisional identity", body));
+  nlohmann::json body = {{"verification", request}};
+  auto const json = TC_AWAIT(emit("get provisional identity", body));
 
-    if (json.empty())
-      TC_RETURN(nonstd::nullopt);
+  if (json.empty())
+    TC_RETURN(nonstd::nullopt);
 
-    TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
-        {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
-         json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
-        {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-         json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
-  }
-  catch (ServerError const& e)
-  {
-    if (e.serverCode() == "verification_needed")
-    {
-      TC_RETURN(nonstd::nullopt);
-    }
-    else
-    {
-      throw;
-    }
-  }
+  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
+       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
+      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
+       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
+}
+
+tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
+{
+  nlohmann::json body = {
+      {"verification_method", {{"type", "email"}, {"email", hashedEmail}}}};
+  auto const json = TC_AWAIT(emit("get provisional identity", body));
+
+  if (json.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
+       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
+      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
+       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,

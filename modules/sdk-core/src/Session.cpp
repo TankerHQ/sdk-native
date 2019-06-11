@@ -435,25 +435,36 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
   }
   auto const email = Email{provisionalIdentity.value};
-  auto const tankerKeys = TC_AWAIT(
-      this->_client->getProvisionalIdentityKeys(email, nonstd::nullopt));
-  if (tankerKeys)
+  try
   {
-    auto block = _blockGenerator.provisionalIdentityClaim(
-        _userId,
-        SecretProvisionalUser{provisionalIdentity.target,
-                              provisionalIdentity.value,
-                              provisionalIdentity.appEncryptionKeyPair,
-                              tankerKeys->encryptionKeyPair,
-                              provisionalIdentity.appSignatureKeyPair,
-                              tankerKeys->signatureKeyPair},
-        TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-    TC_AWAIT(_client->pushBlock(block));
+    auto const tankerKeys = TC_AWAIT(
+        this->_client->getVerifiedProvisionalIdentityKeys(Crypto::generichash(
+            gsl::make_span(email).as_span<std::uint8_t const>())));
+    if (tankerKeys)
+    {
+      auto block = _blockGenerator.provisionalIdentityClaim(
+          _userId,
+          SecretProvisionalUser{provisionalIdentity.target,
+                                provisionalIdentity.value,
+                                provisionalIdentity.appEncryptionKeyPair,
+                                tankerKeys->encryptionKeyPair,
+                                provisionalIdentity.appSignatureKeyPair,
+                                tankerKeys->signatureKeyPair},
+          TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+      TC_AWAIT(_client->pushBlock(block));
+    }
     TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
   }
-  _provisionalIdentity = provisionalIdentity;
-
-  TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+  catch (ServerError const& e)
+  {
+    if (e.serverCode() == "verification_needed")
+    {
+      _provisionalIdentity = provisionalIdentity;
+      TC_RETURN(
+          (AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+    }
+    throw;
+  }
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(
@@ -479,12 +490,12 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
             "verification email does not match provisional identity");
       }
       tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-          emailVerification->email, emailVerification->verificationCode));
+          makeVerificationRequest(verification, _userSecret).value()));
     }
     else
     {
       throw Exception(make_error_code(Errc::InvalidArgument),
-                      "unknow verification method for provisional identity");
+                      "unknown verification method for provisional identity");
     }
     if (!tankerKeys)
     {

@@ -30,7 +30,8 @@ void to_json(nlohmann::json& j, VerificationRequest const& vReq)
 {
   if (auto const eev = mpark::get_if<EncryptedEmailVerification>(&vReq))
   {
-    j["email"] = eev->email;
+    j["email"] = Crypto::generichash(
+        gsl::make_span(eev->email).as_span<std::uint8_t const>());
     j["encrypted_email"] =
         cppcodec::base64_rfc4648::encode(eev->encrytpedEmail);
     j["verification_code"] = eev->verificationCode;
