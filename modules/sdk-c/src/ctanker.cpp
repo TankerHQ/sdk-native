@@ -256,21 +256,21 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
                                            enum tanker_event event)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  switch (event)
-  {
-  case TANKER_EVENT_SESSION_CLOSED:
-    tanker->disconnectSessionClosed();
-    break;
-  case TANKER_EVENT_DEVICE_REVOKED:
-    tanker->disconnectDeviceRevoked();
-    break;
-  default:
-    return makeFuture(
-        tc::make_exceptional_future<void>(formatEx(Errc::InvalidArgument,
-                                                   TFMT("unknown event: {:d}"),
-                                                   static_cast<int>(event))));
-  }
-  return makeFuture(tc::make_ready_future());
+  return makeFuture(tc::sync([&] {
+    switch (event)
+    {
+    case TANKER_EVENT_SESSION_CLOSED:
+      tanker->disconnectSessionClosed();
+      break;
+    case TANKER_EVENT_DEVICE_REVOKED:
+      tanker->disconnectDeviceRevoked();
+      break;
+    default:
+      throw formatEx(Errc::InvalidArgument,
+                     TFMT("unknown event: {:d}"),
+                     static_cast<int>(event));
+    }
+  }));
 }
 
 tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
@@ -290,10 +290,10 @@ tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 tanker_future_t* tanker_register_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tc::sync([&] {
                       auto const verification =
                           cverificationToVerification(cverification);
-                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
                       return tanker->registerIdentity(verification);
                     })
                         .unwrap());
@@ -302,10 +302,10 @@ tanker_future_t* tanker_register_identity(
 tanker_future_t* tanker_verify_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tc::sync([&] {
                       auto const verification =
                           cverificationToVerification(cverification);
-                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
                       return tanker->verifyIdentity(verification);
                     })
                         .unwrap());
@@ -326,11 +326,10 @@ enum tanker_status tanker_status(tanker_t* ctanker)
 tanker_future_t* tanker_device_id(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto fut = tanker->deviceId().and_then(
+  return makeFuture(tanker->deviceId().and_then(
       tc::get_synchronous_executor(), [](auto const& deviceId) {
         return static_cast<void*>(duplicateString(deviceId.string()));
-      });
-  return makeFuture(std::move(fut));
+      }));
 }
 
 tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
@@ -366,10 +365,10 @@ tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
 tanker_future_t* tanker_set_verification_method(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tc::sync([&] {
                       auto const verification =
                           cverificationToVerification(cverification);
-                      auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
                       return tanker->setVerificationMethod(verification);
                     })
                         .unwrap());
@@ -507,9 +506,12 @@ tanker_future_t* tanker_verify_provisional_identity(
     tanker_t* ctanker, tanker_verification_t const* cverification)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto const verification = cverificationToVerification(cverification);
-
-  return makeFuture(tanker->verifyProvisionalIdentity(verification));
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      return tanker->verifyProvisionalIdentity(verification);
+                    })
+                        .unwrap());
 }
 
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
