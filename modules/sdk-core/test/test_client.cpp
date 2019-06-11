@@ -200,42 +200,6 @@ TEST_CASE("Client getPublicProvisionalIdentities")
   FAST_REQUIRE_EQ(res.size(), 2);
 }
 
-TEST_CASE("Client getProvisionalIdentityKeys")
-{
-  auto cl = initClient();
-
-  std::vector<Email> emails{Email{"alice@tanker.io"}, Email{"bob@tanker.io"}};
-
-  auto enckp = Crypto::makeEncryptionKeyPair();
-  auto sigkp = Crypto::makeSignatureKeyPair();
-
-  nlohmann::json result;
-  result["SignaturePublicKey"] = sigkp.publicKey;
-  result["SignaturePrivateKey"] = sigkp.privateKey;
-  result["EncryptionPublicKey"] = enckp.publicKey;
-  result["EncryptionPrivateKey"] = enckp.privateKey;
-
-  auto const json = nlohmann::json(
-      {{"email", "bob@tanker.io"}, {"verification_code", "verification_code"}});
-
-  REQUIRE_CALL(cl.mconn, emit("get provisional identity", json.dump()))
-      .RETURN(WRAP_COTASK(result.dump()));
-  auto res = AWAIT(cl.c->getProvisionalIdentityKeys(
-      Email{"bob@tanker.io"}, VerificationCode{"verification_code"}));
-  FAST_REQUIRE_UNARY(res.has_value());
-  FAST_CHECK_EQ(
-      res->encryptionKeyPair.publicKey,
-      result["EncryptionPublicKey"].get<Crypto::PublicEncryptionKey>());
-  FAST_CHECK_EQ(
-      res->encryptionKeyPair.privateKey,
-      result["EncryptionPrivateKey"].get<Crypto::PrivateEncryptionKey>());
-  FAST_CHECK_EQ(res->signatureKeyPair.publicKey,
-                result["SignaturePublicKey"].get<Crypto::PublicSignatureKey>());
-  FAST_CHECK_EQ(
-      res->signatureKeyPair.privateKey,
-      result["SignaturePrivateKey"].get<Crypto::PrivateSignatureKey>());
-}
-
 TEST_CASE("Client getBlocks")
 {
   auto cl = initClient();

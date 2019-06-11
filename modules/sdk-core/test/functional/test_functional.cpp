@@ -326,18 +326,18 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
+  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = VerificationCode{"invalid"};
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-          bobEmail, VerificationCode{bobVerificationCode}})),
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(
+          Unlock::EmailVerification{bobEmail, VerificationCode{"invalid"}})),
       Errc::InvalidCredentials);
 }
 
@@ -389,7 +389,7 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser(Test::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
