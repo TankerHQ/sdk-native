@@ -325,7 +325,7 @@ tc::cotask<void> Session::share(
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
+    return base64DecodeArgument<ResourceId>(resourceId);
   });
 
   TC_AWAIT(Share::share(_resourceKeyStore,
@@ -352,7 +352,7 @@ tc::cotask<void> Session::updateGroupMembers(
     SGroupId const& groupIdString,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
-  auto const groupId = cppcodec::base64_rfc4648::decode<GroupId>(groupIdString);
+  auto const groupId = base64DecodeArgument<GroupId>(groupIdString);
 
   TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
                                           _blockGenerator,
