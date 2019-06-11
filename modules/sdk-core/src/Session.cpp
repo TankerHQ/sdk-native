@@ -452,6 +452,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
                                 tankerKeys->signatureKeyPair},
           TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
       TC_AWAIT(_client->pushBlock(block));
+      TC_AWAIT(syncTrustchain());
     }
     TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
   }
@@ -513,6 +514,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
         TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
     TC_AWAIT(_client->pushBlock(block));
     _provisionalIdentity = nonstd::nullopt;
+    TC_AWAIT(syncTrustchain());
   }
   catch (ServerError const& e)
   {
