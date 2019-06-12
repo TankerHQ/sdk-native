@@ -318,6 +318,42 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(decrypted == clearData);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can claim the same provisional identity twice")
+{
+  auto const bobEmail = Email{"bob5@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(),
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::IdentityVerificationNeeded);
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
+
+  auto const result2 = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result2.status == Tanker::Status::Ready);
+}
+
 TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Handles incorrect verification codes when verifying provisional identity")
