@@ -139,11 +139,6 @@ AsyncCorePtr signUp(MainArgs const& args)
        sdkVersion},
       ".")};
 
-  AuthenticationMethods authenticationMethods;
-  if (args.at(UnlockPasswordOpt))
-    authenticationMethods.password =
-        Password{args.at(UnlockPasswordOpt).asString()};
-
   auto const status = core->start(identity).get();
   if (status != Tanker::Status::Ready && !args.at(UnlockPasswordOpt))
     throw std::runtime_error("Please provide a password");
