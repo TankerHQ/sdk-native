@@ -374,27 +374,6 @@ void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
     _verificationMethods[Unlock::Method::Password] = Password{};
 }
 
-tc::cotask<void> Session::updateUnlock(Unlock::Verification const& method)
-{
-  auto const msg =
-      Unlock::Message(trustchainId(),
-                      deviceId(),
-                      method,
-                      userSecret(),
-                      _deviceKeyStore->signatureKeyPair().privateKey);
-  try
-  {
-    TC_AWAIT(_client->updateVerificationKey(msg));
-    updateLocalUnlockMethods(method);
-  }
-  catch (ServerError const& e)
-  {
-    if (e.httpStatusCode() == 400)
-      throw formatEx(Errc::InvalidCredentials, "{}", e.what());
-    throw;
-  }
-}
-
 tc::cotask<void> Session::setVerificationMethod(
     Unlock::Verification const& method)
 {
@@ -412,7 +391,23 @@ tc::cotask<void> Session::setVerificationMethod(
   }
   else
   {
-    TC_AWAIT(updateUnlock(method));
+    auto const msg =
+        Unlock::Message(trustchainId(),
+                        deviceId(),
+                        method,
+                        userSecret(),
+                        _deviceKeyStore->signatureKeyPair().privateKey);
+    try
+    {
+      TC_AWAIT(_client->updateVerificationKey(msg));
+      updateLocalUnlockMethods(method);
+    }
+    catch (ServerError const& e)
+    {
+      if (e.httpStatusCode() == 400)
+        throw formatEx(Errc::InvalidCredentials, "{}", e.what());
+      throw;
+    }
   }
 }
 

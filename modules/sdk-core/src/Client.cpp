@@ -240,7 +240,7 @@ Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
 {
   nlohmann::json body = {
       {"verification_method", {{"type", "email"}, {"email", hashedEmail}}}};
-  auto const json = TC_AWAIT(emit("get provisional identity", body));
+  auto const json = TC_AWAIT(emit("get verified provisional identity", body));
 
   if (json.empty())
     TC_RETURN(nonstd::nullopt);

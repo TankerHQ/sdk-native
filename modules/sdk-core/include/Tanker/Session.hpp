@@ -90,8 +90,6 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<void> updateUnlock(Unlock::Verification const& method);
-
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
