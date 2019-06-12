@@ -141,7 +141,7 @@ struct tanker_email_verification
 struct tanker_verification
 {
   uint8_t version;
-  // enum cannot be binded to java as they do not have a fixed size.
+  // enum cannot be bound to java as they do not have a fixed size.
   // It takes a value from tanker_verification_method_type:
   uint8_t verification_method_type;
   union
@@ -163,7 +163,7 @@ struct tanker_verification
 struct tanker_verification_method
 {
   uint8_t version;
-  // enum cannot be binded to java as they do not have a fixed size.
+  // enum cannot be bound to java as they do not have a fixed size.
   // It takes a value from tanker_verification_method_type:
   uint8_t verification_method_type;
   union
@@ -202,7 +202,7 @@ struct tanker_encrypt_options
 struct tanker_attach_result
 {
   uint8_t version;
-  // enum cannot be binded to java as they do not have a fixed size.
+  // enum cannot be bound to java as they do not have a fixed size.
   // It takes a value from the enum tanker_status:
   uint8_t status;
   tanker_verification_method_t* method;
@@ -488,8 +488,6 @@ tanker_future_t* tanker_share(tanker_t* session,
  * \param provisional_identity provisional identity you want to claim.
  *
  * \return A future of tanker_attach_result_t*.
- * \throws TANKER_ERROR_NOTHING_TO_CLAIM there is nothing to claim for this
- * identity
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
@@ -497,7 +495,7 @@ tanker_future_t* tanker_attach_provisional_identity(
     tanker_t* session, char const* provisional_identity);
 
 /*!
- * Verifies a provisional identity to the current user
+ * Verify a provisional identity for the current user
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
@@ -505,8 +503,6 @@ tanker_future_t* tanker_attach_provisional_identity(
  * identity.
  *
  * \return An empty future.
- * \throws TANKER_ERROR_NOTHING_TO_CLAIM there is nothing to claim for this
- * identity
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
