@@ -4,6 +4,7 @@ build*
 ._*
 conan_ycm_flags.json
 __pycache__
+package/
 
 .venv/
 *.egg-info/
