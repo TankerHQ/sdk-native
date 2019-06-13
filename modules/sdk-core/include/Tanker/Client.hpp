@@ -18,7 +18,6 @@
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
@@ -75,7 +74,7 @@ public:
       Identity::SecretPermanentIdentity const& identity,
       Block const& userCreation,
       Block const& firstDevice,
-      nonstd::optional<Unlock::VerificationRequest> const& request,
+      nlohmann::json const& verification,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
   tc::cotask<UserStatusResult> userStatus(
@@ -103,7 +102,7 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-  getProvisionalIdentityKeys(Unlock::VerificationRequest const& request);
+  getProvisionalIdentityKeys(nlohmann::json const& verification);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 

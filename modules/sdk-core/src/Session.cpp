@@ -487,7 +487,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
             "verification email does not match provisional identity");
       }
       tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-          makeVerificationRequest(verification, _userSecret).value()));
+          Unlock::makeVerificationRequest(verification, _userSecret)));
     }
     else
     {

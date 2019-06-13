@@ -12,7 +12,6 @@
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -92,13 +91,10 @@ tc::cotask<void> Client::createUser(
     Identity::SecretPermanentIdentity const& identity,
     Block const& userCreation,
     Block const& firstDevice,
-    nonstd::optional<Unlock::VerificationRequest> const& verificationRequest,
+    nlohmann::json const& verification,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   FUNC_TIMER(Proc);
-  nlohmann::json verification;
-  if (verificationRequest)
-    verification = *verificationRequest;
   nlohmann::json request{
       {"trustchain_id", identity.trustchainId},
       {"user_id", identity.delegation.userId},
@@ -220,9 +216,9 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(Unlock::VerificationRequest const& request)
+Client::getProvisionalIdentityKeys(nlohmann::json const& verification)
 {
-  nlohmann::json body = {{"verification", request}};
+  nlohmann::json body = {{"verification", verification}};
   auto const json = TC_AWAIT(emit("get provisional identity", body));
 
   if (json.empty())

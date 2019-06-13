@@ -25,7 +25,6 @@
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -212,7 +211,7 @@ tc::cotask<Session::Config> Opener::createUser(
       *_identity,
       userCreation,
       firstDevice,
-      makeVerificationRequest(verification, _identity->userSecret),
+      Unlock::makeVerificationRequest(verification, _identity->userSecret),
       encryptVerificationKey));
   TC_RETURN(makeConfig());
 }
