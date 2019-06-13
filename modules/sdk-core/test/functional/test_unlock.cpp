@@ -73,6 +73,17 @@ TEST_SUITE("Unlock")
       REQUIRE_NOTHROW(core2->verifyIdentity(newPassword));
     }
 
+    SUBCASE(
+        "it fails to set a verification method after using a verification key")
+    {
+      auto const verificationKey = TC_AWAIT(core1->generateVerificationKey());
+      REQUIRE_NOTHROW(TC_AWAIT(
+          core1->registerIdentity(Unlock::Verification{verificationKey})));
+      TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core1->setVerificationMethod(
+                                        Unlock::Verification{newPassword})),
+                                    Errc::PreconditionFailed);
+    }
+
     SUBCASE("it throws when trying to verify with an invalid password")
     {
       REQUIRE_NOTHROW(

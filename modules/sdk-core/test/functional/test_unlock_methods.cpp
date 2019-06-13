@@ -27,6 +27,16 @@ TEST_SUITE("Unlock")
       FAST_CHECK_UNARY(!method.empty());
     }
 
+    SUBCASE("It can test if the verification key method is registered")
+    {
+      auto const verificationKey = TC_AWAIT(core1->generateVerificationKey());
+      REQUIRE_NOTHROW(TC_AWAIT(
+          core1->registerIdentity(Unlock::Verification{verificationKey})));
+      auto const methods = TC_AWAIT(core1->getVerificationMethods());
+
+      FAST_CHECK_UNARY(!methods.empty());
+    }
+
     SUBCASE("It can test if email unlock method is registered")
     {
       auto const verificationCode = TC_AWAIT(getVerificationCode(email));

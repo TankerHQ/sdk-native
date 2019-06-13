@@ -29,12 +29,6 @@
 
 namespace Tanker
 {
-struct AuthenticationMethods
-{
-  nonstd::optional<Password> password;
-  nonstd::optional<Email> email;
-};
-
 class Core
 {
 public:

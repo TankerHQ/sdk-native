@@ -526,6 +526,8 @@ std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const
   std::vector<Unlock::VerificationMethod> methods;
   for (auto const method : _verificationMethods)
     methods.push_back(method.second);
+  if (methods.empty())
+    methods.push_back(VerificationKey{});
   return methods;
 }
 
