@@ -124,10 +124,8 @@ check/compat:
 
 check/e2e:
   stage: check
-  when: manual
   dependencies:
     - build/linux
-  when: manual
   script:
     - dmenv run -- python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
