@@ -479,7 +479,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
-    return;
+    TC_RETURN();
   }
   auto block = _blockGenerator.provisionalIdentityClaim(
       _userId,

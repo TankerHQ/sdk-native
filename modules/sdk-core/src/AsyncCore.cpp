@@ -84,7 +84,7 @@ tc::shared_future<void> AsyncCore::registerIdentity(
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<void> {
-      this->_core.registerIdentity(verification);
+      TC_AWAIT(this->_core.registerIdentity(verification));
     });
   });
 }
@@ -94,7 +94,7 @@ tc::shared_future<void> AsyncCore::verifyIdentity(
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable([=]() -> tc::cotask<void> {
-      this->_core.verifyIdentity(verification);
+      TC_AWAIT(this->_core.verifyIdentity(verification));
     });
   });
 }
