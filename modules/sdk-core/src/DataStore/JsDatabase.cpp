@@ -1,7 +1,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/JsDatabase.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -57,6 +57,7 @@ public:
       emscripten::val const& resourceId) = 0;
 
   virtual emscripten::val getDeviceKeys() = 0;
+  virtual emscripten::val getDeviceId() = 0;
   virtual emscripten::val setDeviceKeys(emscripten::val const& deviceKeys) = 0;
   virtual emscripten::val setDeviceId(emscripten::val const& deviceId) = 0;
 
@@ -93,6 +94,8 @@ public:
   virtual emscripten::val findProvisionalUserKeys(
       emscripten::val const& appPublicSigKey,
       emscripten::val const& tankerPublicSigKey) = 0;
+  virtual emscripten::val findProvisionalUserKeysByAppPublicEncryptionKey(
+      emscripten::val const& appPublicEncKey) = 0;
 
   virtual emscripten::val nuke() = 0;
 
@@ -151,6 +154,7 @@ public:
   FORWARD_CALL2(putResourceKey)
   FORWARD_CALL1(findResourceKey)
   FORWARD_CALL0(getDeviceKeys)
+  FORWARD_CALL0(getDeviceId)
   FORWARD_CALL1(setDeviceKeys)
   FORWARD_CALL1(setDeviceId)
   FORWARD_CALL2(putDevice)
@@ -169,6 +173,7 @@ public:
   FORWARD_CALL1(findExternalGroupByGroupPublicEncryptionKey)
   FORWARD_CALL1(putProvisionalUserKeys)
   FORWARD_CALL2(findProvisionalUserKeys)
+  FORWARD_CALL1(findProvisionalUserKeysByAppPublicEncryptionKey)
   FORWARD_CALL0(nuke)
   FORWARD_CALL0(startTransaction)
   FORWARD_CALL0(commitTransaction)
@@ -610,7 +615,9 @@ KeyPublish fromJsKeyPublish(emscripten::val const& jkp)
         Crypto::TwoTimesSealedSymmetricKey{encryptedSymmetricKey},
     };
   default:
-    throw Error::formatEx("invalid nature for key publish: {}", nature);
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "invalid nature for key publish: {}",
+                           nature);
   }
 }
 }
@@ -662,8 +669,16 @@ tc::cotask<nonstd::optional<DeviceKeys>> JsDatabase::getDeviceKeys()
        Crypto::PrivateSignatureKey(copyToVector(keys["privateSignatureKey"]))},
       {Crypto::PublicEncryptionKey(copyToVector(keys["publicEncryptionKey"])),
        Crypto::PrivateEncryptionKey(
-           copyToVector(keys["privateEncryptionKey"]))},
-      DeviceId(copyToVector(keys["deviceId"]))}));
+           copyToVector(keys["privateEncryptionKey"]))}}));
+}
+
+tc::cotask<nonstd::optional<Trustchain::DeviceId>> JsDatabase::getDeviceId()
+{
+  auto const deviceId = TC_AWAIT(jsPromiseToFuture(_db->getDeviceId()));
+  if (deviceId.isNull() || deviceId.isUndefined())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(DeviceId(copyToVector(deviceId)));
 }
 
 tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -677,7 +692,6 @@ tc::cotask<void> JsDatabase::setDeviceKeys(DeviceKeys const& deviceKeys)
                    containerToJs(deviceKeys.encryptionKeyPair.privateKey));
   jsDeviceKeys.set("publicEncryptionKey",
                    containerToJs(deviceKeys.encryptionKeyPair.publicKey));
-  jsDeviceKeys.set("deviceId", containerToJs(deviceKeys.deviceId));
   TC_AWAIT(jsPromiseToFuture(_db->setDeviceKeys(jsDeviceKeys)));
 }
 
@@ -1013,6 +1027,19 @@ JsDatabase::findProvisionalUserKeys(
   TC_RETURN(fromJsProvisionalUserKeys(jskeys));
 }
 
+tc::cotask<nonstd::optional<ProvisionalUserKeys>>
+JsDatabase::findProvisionalUserKeysByAppPublicEncryptionKey(
+    Crypto::PublicEncryptionKey const& appPublicEncKey)
+{
+  auto const jskeys = TC_AWAIT(
+      jsPromiseToFuture(_db->findProvisionalUserKeysByAppPublicEncryptionKey(
+          containerToJs(appPublicEncKey))));
+  if (jskeys.isNull() || jskeys.isUndefined())
+    TC_RETURN(nonstd::nullopt);
+
+  TC_RETURN(fromJsProvisionalUserKeys(jskeys));
+}
+
 tc::cotask<void> JsDatabase::nuke()
 {
   TC_AWAIT(jsPromiseToFuture(_db->nuke()));
@@ -1092,6 +1119,9 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("getDeviceKeys",
                 &JsDatabaseInterface::getDeviceKeys,
                 emscripten::pure_virtual())
+      .function("getDeviceId",
+                &JsDatabaseInterface::getDeviceId,
+                emscripten::pure_virtual())
       .function("setDeviceKeys",
                 &JsDatabaseInterface::setDeviceKeys,
                 emscripten::pure_virtual())
@@ -1141,6 +1171,10 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("findProvisionalUserKeys",
                 &JsDatabaseInterface::findProvisionalUserKeys,
                 emscripten::pure_virtual())
+      .function(
+          "findProvisionalUserKeysByAppPublicEncryptionKey",
+          &JsDatabaseInterface::findProvisionalUserKeysByAppPublicEncryptionKey,
+          emscripten::pure_virtual())
       .function("nuke", &JsDatabaseInterface::nuke, emscripten::pure_virtual())
       .function("startTransaction",
                 &JsDatabaseInterface::startTransaction,

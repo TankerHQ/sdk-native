@@ -447,6 +447,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     }
     throw;
   }
+  throw AssertionError("unreachable code");
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(

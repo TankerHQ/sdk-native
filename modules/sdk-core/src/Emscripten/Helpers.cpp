@@ -2,8 +2,8 @@
 
 #include <Tanker/Emscripten/Error.hpp>
 
-#include <Tanker/Crypto/InvalidKeySize.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -46,8 +46,8 @@ tc::cotask<emscripten::val> jsPromiseToFuture(emscripten::val const& jspromise)
         else
           errorMsg = error.call<std::string>("toString") + "\n" +
                      error["stack"].as<std::string>();
-        cpppromise.set_exception(std::make_exception_ptr(
-            Error::formatEx<std::runtime_error>("JS error: {}", errorMsg)));
+        cpppromise.set_exception(std::make_exception_ptr(Errors::formatEx(
+            Errors::Errc::InternalError, "JS error: {}", errorMsg)));
       });
   jspromise.call<emscripten::val>("then", toJsFunctionObject(thenCb))
       .call<emscripten::val>("catch", toJsFunctionObject(catchCb));
