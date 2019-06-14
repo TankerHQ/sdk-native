@@ -291,7 +291,7 @@ tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
  *
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
- * user, or NULL.
+ * user, must not be NULL.
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
@@ -308,7 +308,7 @@ tanker_future_t* tanker_register_identity(
  *
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
- * user, or NULL.
+ * user. Must not be NULL.
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
