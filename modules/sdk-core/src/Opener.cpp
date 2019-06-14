@@ -113,12 +113,12 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     if (err.httpStatusCode() == 401)
     {
       if (mpark::holds_alternative<Password>(locker))
-        throw formatEx(Errc::InvalidCredentials, "{}", err.what());
+        throw formatEx(Errc::InvalidVerification, "{}", err.what());
       else if (mpark::holds_alternative<VerificationCode>(locker))
-        throw formatEx(Errc::InvalidCredentials, "{}", err.what());
+        throw formatEx(Errc::InvalidVerification, "{}", err.what());
     }
     else if (err.httpStatusCode() == 404)
-      throw formatEx(Errc::InvalidCredentials, "{}", err.what());
+      throw formatEx(Errc::InvalidVerification, "{}", err.what());
     else if (err.httpStatusCode() == 429)
       throw formatEx(Errc::TooManyAttempts, "{}", err.what());
     throw;

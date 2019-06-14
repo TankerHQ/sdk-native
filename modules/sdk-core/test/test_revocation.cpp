@@ -39,7 +39,7 @@ TEST_CASE("Revocation tests")
                                       aliceResult.user.devices[0].id,
                                       userResult.user.userId,
                                       *contactStore.get())),
-                                  Errc::NotFound);
+                                  Errc::InvalidArgument);
   }
 
   SUBCASE(

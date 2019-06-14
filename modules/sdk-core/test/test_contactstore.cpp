@@ -36,7 +36,7 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(contacts.putUser(alice)),
-                                  Errors::Errc::AlreadyExists);
+                                  Errors::Errc::InternalError);
   }
 
   SUBCASE("it should find a user that was inserted")

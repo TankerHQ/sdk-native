@@ -48,8 +48,8 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getKeyPair(
   auto const optKeyPair = TC_AWAIT(findKeyPair(publicKey));
   if (!optKeyPair)
   {
-    throw Errors::formatEx(Errors::Errc::NotFound,
-                           "cannot find user key for public key: {}",
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           TFMT("cannot find user key for public key: {:s}"),
                            publicKey);
   }
   TC_RETURN(*optKeyPair);
@@ -66,8 +66,8 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getLastKeyPair() const
   auto const keyPair = TC_AWAIT(getOptLastKeyPair());
   if (!keyPair)
   {
-    throw Errors::formatEx(Errors::Errc::NotFound,
-                           "user does not have a user key yet");
+    throw Errors::Exception(make_error_code(Errors::Errc::InternalError),
+                            "user does not have a user key yet");
   }
   TC_RETURN(*keyPair);
 }

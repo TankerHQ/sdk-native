@@ -22,24 +22,16 @@ std::string ErrcCategory::message(int c) const
     return "precondition failed";
   case Errc::OperationCanceled:
     return "operation canceled";
-  case Errc::OperationForbidden:
-    return "operation forbidden";
   case Errc::DecryptionFailed:
     return "decryption failed";
   case Errc::InvalidGroupSize:
     return "invalid group size";
-  case Errc::NotFound:
-    return "not found";
-  case Errc::AlreadyExists:
-    return "already exists";
-  case Errc::InvalidCredentials:
-    return "invalid credentials";
+  case Errc::InvalidVerification:
+    return "invalid verification";
   case Errc::TooManyAttempts:
     return "too many attempts";
-  case Errc::Expired:
-    return "expired";
-  case Errc::DeviceRevoked:
-    return "device revoked";
+  case Errc::ExpiredVerification:
+    return "expired verification";
   default:
     return "unknown error";
   }

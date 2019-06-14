@@ -14,15 +14,11 @@ enum class Errc
   NetworkError,
   PreconditionFailed,
   OperationCanceled,
-  OperationForbidden,
   DecryptionFailed,
   InvalidGroupSize,
-  NotFound,
-  AlreadyExists,
-  InvalidCredentials,
+  InvalidVerification,
   TooManyAttempts,
-  Expired,
-  DeviceRevoked,
+  ExpiredVerification,
 
   Last,
 };

@@ -67,7 +67,7 @@ TEST_CASE("resource keys")
 
     ResourceKeyStore keys(dbPtr.get());
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
-                                  Errors::Errc::NotFound);
+                                  Errors::Errc::InvalidArgument);
   }
 
   SUBCASE("it should find a key that was inserted")

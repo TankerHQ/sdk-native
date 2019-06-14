@@ -245,7 +245,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->decrypt(decryptedData.data(), encryptedData)),
-      Errc::NotFound);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
@@ -429,7 +429,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(
           Unlock::EmailVerification{bobEmail, VerificationCode{"invalid"}})),
-      Errc::InvalidCredentials);
+      Errc::InvalidVerification);
 }
 
 TEST_CASE_FIXTURE(

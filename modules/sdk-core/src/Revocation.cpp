@@ -33,7 +33,10 @@ tc::cotask<void> ensureDeviceIsFromUser(Trustchain::DeviceId const& deviceId,
 {
   auto const userId = TC_AWAIT(contactStore.findUserIdByDeviceId(deviceId));
   if (!userId || userId != selfUserId)
-    throw formatEx(Errc::NotFound, TFMT("unknown device: {:s}"), deviceId);
+  {
+    throw formatEx(
+        Errc::InvalidArgument, TFMT("unknown device: {:s}"), deviceId);
+  }
 }
 
 tc::cotask<User> getUserFromUserId(UserId const& selfUserId,

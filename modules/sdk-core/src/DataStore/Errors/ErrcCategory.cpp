@@ -30,9 +30,8 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   {
   case Errc::InvalidDatabaseVersion:
   case Errc::DatabaseError:
-    return make_error_condition(Errors::Errc::InternalError);
   case Errc::RecordNotFound:
-    return make_error_condition(Errors::Errc::NotFound);
+    return make_error_condition(Errors::Errc::InternalError);
   default:
     return std::error_condition(c, *this);
   }

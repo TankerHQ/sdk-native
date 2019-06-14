@@ -290,8 +290,9 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   }
   if (!key)
   {
-    throw formatEx(
-        Errc::NotFound, TFMT("key not found for resource: {:s}"), resourceId);
+    throw formatEx(Errc::InvalidArgument,
+                   TFMT("key not found for resource: {:s}"),
+                   resourceId);
   }
 
   Encryptor::decrypt(decryptedData, *key, encryptedData);
@@ -405,7 +406,7 @@ tc::cotask<void> Session::setVerificationMethod(
     catch (ServerError const& e)
     {
       if (e.httpStatusCode() == 400)
-        throw formatEx(Errc::InvalidCredentials, "{}", e.what());
+        throw formatEx(Errc::InvalidVerification, "{}", e.what());
       throw;
     }
   }
@@ -515,7 +516,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
   {
     if (e.serverCode() == "invalid_verification_code" ||
         e.serverCode() == "authentication_failed")
-      throw formatEx(Errc::InvalidCredentials, "{}", e.what());
+      throw formatEx(Errc::InvalidVerification, "{}", e.what());
     else
       throw;
   }

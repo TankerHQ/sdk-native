@@ -70,7 +70,7 @@ TEST_CASE("user keys")
 
     UserKeyStore keys(dbPtr.get());
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKeyPair(unexistentPubKey)),
-                                  Errc::NotFound);
+                                  Errc::InternalError);
   }
 
   SUBCASE("it should discard a second user key with the same public key")
@@ -104,7 +104,7 @@ TEST_CASE("user keys")
   {
     UserKeyStore keys(dbPtr.get());
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getLastKeyPair()),
-                                  Errc::NotFound);
+                                  Errc::InternalError);
   }
 
   SUBCASE("getLastKeyPair should get the last inserted key")

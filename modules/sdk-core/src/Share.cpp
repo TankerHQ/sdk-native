@@ -148,7 +148,7 @@ void handleNotFound(
         });
     auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
     throw Errors::formatEx(
-        Errors::Errc::NotFound,
+        Errors::Errc::InvalidArgument,
         TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
         fmt::join(
             clearPublicIdentities.begin(), clearPublicIdentities.end(), ", "),

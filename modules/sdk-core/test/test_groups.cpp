@@ -167,7 +167,7 @@ TEST_CASE("throws when getting keys of an unknown member")
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Groups::Manager::fetchFutureMembers(
           userAccessor.get(), {SPublicIdentity{to_string(unknownIdentity)}})),
-      Errc::NotFound);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Fails to add 0 users to a group")

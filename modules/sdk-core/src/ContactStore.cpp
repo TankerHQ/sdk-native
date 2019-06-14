@@ -31,7 +31,7 @@ tc::cotask<void> ContactStore::putUser(User const& user)
 
   if (!TC_AWAIT(_db->getDevicesOf(user.id)).empty())
   {
-    throw Errors::formatEx(Errors::Errc::AlreadyExists,
+    throw Errors::formatEx(Errors::Errc::InternalError,
                            TFMT("user {:s} is already stored"),
                            user.id);
   }
