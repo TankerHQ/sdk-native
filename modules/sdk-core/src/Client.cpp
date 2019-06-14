@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ServerError.hpp>
@@ -91,7 +92,8 @@ tc::cotask<void> Client::createUser(
     Identity::SecretPermanentIdentity const& identity,
     Block const& userCreation,
     Block const& firstDevice,
-    nlohmann::json const& verification,
+    Unlock::Verification const& method,
+    Crypto::SymmetricKey userSecret,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   FUNC_TIMER(Proc);
@@ -102,7 +104,8 @@ tc::cotask<void> Client::createUser(
       {"first_device_block", firstDevice},
       {"encrypted_unlock_key",
        cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
-      {"verification", verification},
+      {"verification",
+       ClientHelpers::makeVerificationRequest(method, userSecret)},
   };
   auto const reply = TC_AWAIT(emit("create user", request));
 }
@@ -124,19 +127,25 @@ tc::cotask<UserStatusResult> Client::userStatus(
   TC_RETURN(reply.get<UserStatusResult>());
 }
 
-tc::cotask<void> Client::createVerificationKey(Unlock::Message const& message)
+tc::cotask<void> Client::setVerificationMethod(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    Unlock::Verification const& method,
+    Crypto::SymmetricKey userSecret)
 {
-  TC_AWAIT(emit("create unlock key", message));
-}
-
-tc::cotask<void> Client::updateVerificationKey(Unlock::Message const& message)
-{
-  TC_AWAIT(emit("update unlock key", message));
+  nlohmann::json request{
+      {"trustchain_id", trustchainId},
+      {"user_id", userId},
+      {"verification",
+       ClientHelpers::makeVerificationRequest(method, userSecret)},
+  };
+  TC_AWAIT(emit("set verification method", request));
 }
 
 tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
     Unlock::Request const& req)
 {
+  // DEPRECATED BUT STILL IN USE IN JS INVESTIGATE
   TC_RETURN(TC_AWAIT(emit("get unlock key", req)));
 }
 
@@ -216,9 +225,12 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(nlohmann::json const& verification)
+Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
+                                   Crypto::SymmetricKey const& userSecret)
 {
-  nlohmann::json body = {{"verification", verification}};
+  nlohmann::json body = {
+      {"verification",
+       ClientHelpers::makeVerificationRequest(verification, userSecret)}};
   auto const json = TC_AWAIT(emit("get provisional identity", body));
 
   if (json.empty())
@@ -278,4 +290,32 @@ void from_json(nlohmann::json const& j, UserStatusResult& result)
   else
     result.lastReset = Crypto::Hash{};
 }
+
+nlohmann::json ClientHelpers::makeVerificationRequest(
+    Unlock::Verification const& verification,
+    Crypto::SymmetricKey const& userSecret)
+{
+  nlohmann::json request;
+  if (auto const verif =
+          mpark::get_if<Unlock::EmailVerification>(&verification))
+  {
+    request["email"] = Crypto::generichash(
+        gsl::make_span(verif->email).as_span<std::uint8_t const>());
+    request["encrypted_email"] =
+        cppcodec::base64_rfc4648::encode(Crypto::encryptAead(
+            userSecret, gsl::make_span(verif->email).as_span<uint8_t const>()));
+    request["verification_code"] = verif->verificationCode;
+  }
+  else if (auto const pass = mpark::get_if<Password>(&verification))
+  {
+    request["passphrase"] = cppcodec::base64_rfc4648::encode(
+        Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>()));
+  }
+  else if (!mpark::holds_alternative<VerificationKey>(verification))
+    // as we return an empty json for verification key the only thing to do if
+    // it is NOT a verificationKey is to throw
+    throw Errors::AssertionError("unsupported verification request");
+  return request;
+}
+
 } // Tanker

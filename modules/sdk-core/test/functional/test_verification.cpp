@@ -190,4 +190,32 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->verifyIdentity(password)),
                                   Errc::PreconditionFailed);
   }
+
+  SUBCASE("It updates verification methods on setVerificationMethods")
+  {
+    // register
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+        Unlock::EmailVerification{email, verificationCode}}));
+
+    // update email
+    auto const newEmail = Email{"alice@yoohoo.fr"};
+    verificationCode = TC_AWAIT(getVerificationCode(newEmail));
+    TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
+        Unlock::EmailVerification{newEmail, verificationCode}}));
+
+    // check that email is updated in cache
+    auto methods = TC_AWAIT(core1->getVerificationMethods());
+    REQUIRE(methods.size() == 1);
+    CHECK(methods[0].get<Email>() == newEmail);
+
+    // reconnect
+    TC_AWAIT(core1->stop());
+    TC_AWAIT(core1->start(alice.identity));
+
+    // check that email is ok
+    methods = TC_AWAIT(core1->getVerificationMethods());
+    REQUIRE(methods.size() == 1);
+    CHECK(methods[0].get<Email>() == newEmail);
+  }
 }

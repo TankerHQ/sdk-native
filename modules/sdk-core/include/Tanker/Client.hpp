@@ -42,6 +42,12 @@ struct Message;
 struct Request;
 }
 
+namespace ClientHelpers
+{
+nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
+                                       Crypto::SymmetricKey const& userSecret);
+}
+
 struct UserStatusResult
 {
   bool deviceExists;
@@ -74,7 +80,8 @@ public:
       Identity::SecretPermanentIdentity const& identity,
       Block const& userCreation,
       Block const& firstDevice,
-      nlohmann::json const& verification,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
   tc::cotask<UserStatusResult> userStatus(
@@ -82,8 +89,11 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey);
 
-  tc::cotask<void> createVerificationKey(Unlock::Message const& request);
-  tc::cotask<void> updateVerificationKey(Unlock::Message const& request);
+  tc::cotask<void> setVerificationMethod(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret);
   tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(
       Unlock::Request const& req);
 
@@ -102,7 +112,8 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-  getProvisionalIdentityKeys(nlohmann::json const& verification);
+  getProvisionalIdentityKeys(Unlock::Verification const& verification,
+                             Crypto::SymmetricKey const& userSecret);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 

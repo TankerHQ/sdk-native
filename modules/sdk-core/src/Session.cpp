@@ -392,15 +392,10 @@ tc::cotask<void> Session::setVerificationMethod(
   }
   else
   {
-    auto const msg =
-        Unlock::Message(trustchainId(),
-                        deviceId(),
-                        method,
-                        userSecret(),
-                        _deviceKeyStore->signatureKeyPair().privateKey);
     try
     {
-      TC_AWAIT(_client->updateVerificationKey(msg));
+      TC_AWAIT(_client->setVerificationMethod(
+          trustchainId(), userId(), method, userSecret()));
       updateLocalUnlockMethods(method);
     }
     catch (ServerError const& e)
@@ -486,8 +481,8 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
             make_error_code(Errc::InvalidArgument),
             "verification email does not match provisional identity");
       }
-      tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-          Unlock::makeVerificationRequest(verification, _userSecret)));
+      tankerKeys = TC_AWAIT(
+          this->_client->getProvisionalIdentityKeys(verification, _userSecret));
     }
     else
     {

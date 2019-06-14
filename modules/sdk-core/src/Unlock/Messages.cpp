@@ -3,12 +3,10 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Claims.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url_unpadded.hpp>
@@ -42,27 +40,11 @@ void to_json(nlohmann::json& j, FetchAnswer const& m)
       cppcodec::base64_rfc4648::encode(m.encryptedVerificationKey);
 }
 
-void to_json(nlohmann::json& j, Message const& m)
-{
-  j["trustchain_id"] = m.trustchainId;
-  j["device_id"] = m.deviceId;
-  j["claims"] = m.claims;
-  j["signature"] = m.signature;
-}
-
 void from_json(nlohmann::json const& j, FetchAnswer& f)
 {
   f.encryptedVerificationKey =
       cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
           j.at("encrypted_unlock_key").get<std::string>());
-}
-
-void from_json(nlohmann::json const& j, Message& m)
-{
-  m.trustchainId = j.at("trustchain_id").get<Trustchain::TrustchainId>();
-  m.deviceId = j.at("device_id").get<Trustchain::DeviceId>();
-  m.claims = j.at("claims").get<Claims>();
-  m.signature = j.at("signature").get<Crypto::Signature>();
 }
 
 Request::Request(Trustchain::TrustchainId const& trustchainId,
@@ -111,40 +93,6 @@ VerificationKey FetchAnswer::getVerificationKey(
 {
   auto const binKey = Crypto::decryptAead(key, this->encryptedVerificationKey);
   return {begin(binKey), end(binKey)};
-}
-
-Message::Message(Trustchain::TrustchainId const& trustchainId,
-                 Trustchain::DeviceId const& deviceId,
-                 Verification const& verificationMethod,
-                 Crypto::SymmetricKey const& userSecret,
-                 Crypto::PrivateSignatureKey const& privateSignatureKey)
-  : trustchainId(trustchainId),
-    deviceId(deviceId),
-    claims{verificationMethod, userSecret}
-{
-  sign(privateSignatureKey);
-}
-
-std::size_t Message::size() const
-{
-  return trustchainId.size() + deviceId.size() + claims.size();
-}
-
-std::vector<uint8_t> Message::signData() const
-{
-  std::vector<uint8_t> toSign;
-  toSign.reserve(size());
-  toSign.insert(toSign.end(), trustchainId.begin(), trustchainId.end());
-  toSign.insert(toSign.end(), deviceId.begin(), deviceId.end());
-
-  auto const claimsSignData = claims.signData();
-  toSign.insert(toSign.end(), claimsSignData.begin(), claimsSignData.end());
-  return toSign;
-}
-
-void Message::sign(Crypto::PrivateSignatureKey const& privateSignatureKey)
-{
-  this->signature = Crypto::sign(signData(), privateSignatureKey);
 }
 }
 }

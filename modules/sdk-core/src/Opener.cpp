@@ -207,12 +207,12 @@ tc::cotask<Session::Config> Opener::createUser(
       gsl::make_span(Unlock::ghostDeviceToVerificationKey(ghostDevice))
           .as_span<uint8_t const>());
 
-  TC_AWAIT(_client->createUser(
-      *_identity,
-      userCreation,
-      firstDevice,
-      Unlock::makeVerificationRequest(verification, _identity->userSecret),
-      encryptVerificationKey));
+  TC_AWAIT(_client->createUser(*_identity,
+                               userCreation,
+                               firstDevice,
+                               verification,
+                               _identity->userSecret,
+                               encryptVerificationKey));
   TC_RETURN(makeConfig());
 }
 

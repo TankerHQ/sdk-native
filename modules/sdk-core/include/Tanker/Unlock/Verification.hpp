@@ -22,6 +22,7 @@ struct EmailVerification
 
 using Verification =
     mpark::variant<VerificationKey, EmailVerification, Password>;
+
 class VerificationMethod
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
@@ -31,8 +32,6 @@ private:
   friend void from_json(nlohmann::json const&, VerificationMethod&);
   friend bool operator<(VerificationMethod const& a,
                         VerificationMethod const& b);
-  friend nlohmann::json makeVerificationRequest(
-      Verification const& verification, Crypto::SymmetricKey const& userSecret);
 };
 
 void to_json(nlohmann::json&, VerificationMethod const&);
@@ -42,8 +41,6 @@ inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {
   return a._variant < b._variant;
 }
-nlohmann::json makeVerificationRequest(Verification const& verification,
-                                       Crypto::SymmetricKey const& userSecret);
 }
 }
 
