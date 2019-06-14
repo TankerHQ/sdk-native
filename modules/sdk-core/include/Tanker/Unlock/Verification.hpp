@@ -28,10 +28,17 @@ class VerificationMethod
 
 private:
   friend void from_json(nlohmann::json const&, VerificationMethod&);
+  friend bool operator<(VerificationMethod const& a,
+                        VerificationMethod const& b);
 };
 
 void to_json(nlohmann::json&, VerificationMethod const&);
 void from_json(nlohmann::json const&, VerificationMethod&);
+
+inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
+{
+  return a._variant < b._variant;
+}
 }
 }
 

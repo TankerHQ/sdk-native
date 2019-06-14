@@ -7,8 +7,7 @@ endif()
 add_executable(test_functional
   ${_main_cpp}
   test_functional.cpp
-  test_unlock.cpp
-  test_unlock_methods.cpp
+  test_verification.cpp
   test_groups.cpp
 )
 
