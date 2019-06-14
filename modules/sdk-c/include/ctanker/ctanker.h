@@ -507,7 +507,7 @@ tanker_future_t* tanker_attach_provisional_identity(
  * the server returned an error
  */
 tanker_future_t* tanker_verify_provisional_identity(
-    tanker_t* ctanker, tanker_verification_t const* verification);
+    tanker_t* session, tanker_verification_t const* verification);
 
 /*!
  * Revoke a device by device id.
