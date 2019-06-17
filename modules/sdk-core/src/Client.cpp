@@ -173,10 +173,18 @@ tc::cotask<void> Client::setVerificationMethod(
 }
 
 tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
-    Unlock::Request const& req)
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    Unlock::Verification const& method,
+    Crypto::SymmetricKey userSecret)
 {
-  // DEPRECATED BUT STILL IN USE IN JS INVESTIGATE
-  TC_RETURN(TC_AWAIT(emit("get unlock key", req)));
+  nlohmann::json request{
+      {"trustchain_id", trustchainId},
+      {"user_id", userId},
+      {"verification",
+       ClientHelpers::makeVerificationRequest(method, userSecret)},
+  };
+  TC_RETURN(TC_AWAIT(emit("get verification key", request)));
 }
 
 tc::cotask<std::string> Client::requestAuthChallenge()

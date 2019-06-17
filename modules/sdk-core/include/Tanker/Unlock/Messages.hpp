@@ -18,29 +18,6 @@ namespace Tanker
 {
 namespace Unlock
 {
-
-struct Request
-{
-  Trustchain::TrustchainId trustchainId;
-  Trustchain::UserId userId;
-  enum Type
-  {
-    Passphrase,
-    VerificationCode,
-    Last,
-  } type;
-  std::vector<uint8_t> value;
-
-  Request() = default;
-  Request(Trustchain::TrustchainId const& trustchainId,
-          Trustchain::UserId const& userId,
-          Verification const& verification);
-};
-
-std::string to_string(Request::Type type);
-
-void to_json(nlohmann::json&, Request const& m);
-
 struct FetchAnswer
 {
   std::vector<uint8_t> encryptedVerificationKey;

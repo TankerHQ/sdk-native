@@ -99,9 +99,11 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  auto const req = Unlock::Request(
-      _info.trustchainId, _identity->delegation.userId, verification);
-  auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
+  auto const fetchAnswer =
+      TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
+                                             _identity->delegation.userId,
+                                             verification,
+                                             _identity->userSecret));
   TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
 }
 

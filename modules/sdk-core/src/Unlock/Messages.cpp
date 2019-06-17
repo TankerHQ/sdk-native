@@ -22,21 +22,9 @@ namespace Tanker
 {
 namespace Unlock
 {
-
-void to_json(nlohmann::json& j, Request const& m)
-{
-  j["trustchain_id"] = m.trustchainId;
-  j["user_id"] = m.userId;
-  j["type"] = to_string(m.type);
-  if (m.type == Request::Type::VerificationCode)
-    j["value"] = std::string(m.value.begin(), m.value.end());
-  else
-    j["value"] = cppcodec::base64_rfc4648::encode(m.value);
-}
-
 void to_json(nlohmann::json& j, FetchAnswer const& m)
 {
-  j["encrypted_unlock_key"] =
+  j["encrypted_verification_key"] =
       cppcodec::base64_rfc4648::encode(m.encryptedVerificationKey);
 }
 
@@ -44,43 +32,7 @@ void from_json(nlohmann::json const& j, FetchAnswer& f)
 {
   f.encryptedVerificationKey =
       cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
-          j.at("encrypted_unlock_key").get<std::string>());
-}
-
-Request::Request(Trustchain::TrustchainId const& trustchainId,
-                 UserId const& userId,
-                 Unlock::Verification const& verification)
-  : trustchainId(trustchainId), userId(userId)
-{
-  if (auto const pass = mpark::get_if<Passphrase>(&verification))
-  {
-    auto const hash =
-        Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>());
-    value.assign(hash.begin(), hash.end());
-    type = Type::Passphrase;
-  }
-  else if (auto rawcode =
-               mpark::get_if<Unlock::EmailVerification>(&verification))
-  {
-    value.assign(rawcode->verificationCode.begin(),
-                 rawcode->verificationCode.end());
-    type = Type::VerificationCode;
-  }
-}
-
-std::string to_string(Request::Type type)
-{
-  switch (type)
-  {
-  case Request::Type::Passphrase:
-    return "password";
-  case Request::Type::VerificationCode:
-    return "verification_code";
-  case Request::Type::Last:
-    break;
-  }
-  throw Errors::AssertionError(
-      fmt::format("unhandled method type: {}", static_cast<int>(type)));
+          j.at("encrypted_verification_key").get<std::string>());
 }
 
 FetchAnswer::FetchAnswer(Crypto::SymmetricKey const& userSecret,

@@ -38,8 +38,6 @@ namespace Tanker
 namespace Unlock
 {
 struct FetchAnswer;
-struct Message;
-struct Request;
 }
 
 namespace ClientHelpers
@@ -95,7 +93,10 @@ public:
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret);
   tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(
-      Unlock::Request const& req);
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret);
 
   tc::cotask<std::string> requestAuthChallenge();
   tc::cotask<std::vector<Unlock::VerificationMethod>> authenticateDevice(
