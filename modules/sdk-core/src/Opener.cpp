@@ -20,12 +20,11 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Unlock/VerificationRequest.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -112,7 +111,7 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
   {
     if (err.httpStatusCode() == 401)
     {
-      if (mpark::holds_alternative<Password>(locker))
+      if (mpark::holds_alternative<Passphrase>(locker))
         throw formatEx(Errc::InvalidVerification, "{}", err.what());
       else if (mpark::holds_alternative<VerificationCode>(locker))
         throw formatEx(Errc::InvalidVerification, "{}", err.what());
@@ -208,12 +207,12 @@ tc::cotask<Session::Config> Opener::createUser(
       gsl::make_span(Unlock::ghostDeviceToVerificationKey(ghostDevice))
           .as_span<uint8_t const>());
 
-  TC_AWAIT(_client->createUser(
-      *_identity,
-      userCreation,
-      firstDevice,
-      makeVerificationRequest(verification, _identity->userSecret),
-      encryptVerificationKey));
+  TC_AWAIT(_client->createUser(*_identity,
+                               userCreation,
+                               firstDevice,
+                               verification,
+                               _identity->userSecret,
+                               encryptVerificationKey));
   TC_RETURN(makeConfig());
 }
 
@@ -227,7 +226,7 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
                mpark::get_if<Unlock::EmailVerification>(&verification))
     TC_RETURN(
         TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode)));
-  else if (auto const password = mpark::get_if<Password>(&verification))
+  else if (auto const password = mpark::get_if<Passphrase>(&verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
   throw AssertionError("invalid verification, unreachable code");
 }

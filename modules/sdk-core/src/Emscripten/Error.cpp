@@ -99,8 +99,8 @@ EMSCRIPTEN_BINDINGS(jserrors)
       .value("DecryptFailed", Tanker::Error::Code::DecryptFailed)
       .value("InvalidVerificationKey", Tanker::Error::Code::InvalidVerificationKey)
       .value("InternalError", Tanker::Error::Code::InternalError)
-      .value("InvalidUnlockPassword",
-             Tanker::Error::Code::InvalidUnlockPassword)
+      .value("InvalidUnlockPassphrase",
+             Tanker::Error::Code::InvalidUnlockPassphrase)
       .value("InvalidVerificationCode",
              Tanker::Error::Code::InvalidVerificationCode)
       .value("VerificationKeyAlreadyExists",

@@ -32,7 +32,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
@@ -86,8 +86,8 @@ std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
       mappedMethods[Unlock::Method::Email] =
           Email{decryptedEmail.begin(), decryptedEmail.end()};
     }
-    else if (method.holds_alternative<Password>())
-      mappedMethods[Unlock::Method::Password] = method;
+    else if (method.holds_alternative<Passphrase>())
+      mappedMethods[Unlock::Method::Passphrase] = method;
     else if (method.holds_alternative<VerificationKey>())
       mappedMethods[Unlock::Method::VerificationKey] = method;
     else
@@ -371,8 +371,8 @@ void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
   if (auto const emailVerification =
           mpark::get_if<Unlock::EmailVerification>(&method))
     _verificationMethods[Unlock::Method::Email] = emailVerification->email;
-  else if (mpark::holds_alternative<Password>(method))
-    _verificationMethods[Unlock::Method::Password] = Password{};
+  else if (mpark::holds_alternative<Passphrase>(method))
+    _verificationMethods[Unlock::Method::Passphrase] = Passphrase{};
 }
 
 tc::cotask<void> Session::setVerificationMethod(
@@ -392,15 +392,10 @@ tc::cotask<void> Session::setVerificationMethod(
   }
   else
   {
-    auto const msg =
-        Unlock::Message(trustchainId(),
-                        deviceId(),
-                        method,
-                        userSecret(),
-                        _deviceKeyStore->signatureKeyPair().privateKey);
     try
     {
-      TC_AWAIT(_client->updateVerificationKey(msg));
+      TC_AWAIT(_client->setVerificationMethod(
+          trustchainId(), userId(), method, userSecret()));
       updateLocalUnlockMethods(method);
     }
     catch (ServerError const& e)
@@ -486,8 +481,8 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
             make_error_code(Errc::InvalidArgument),
             "verification email does not match provisional identity");
       }
-      tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-          makeVerificationRequest(verification, _userSecret).value()));
+      tankerKeys = TC_AWAIT(
+          this->_client->getProvisionalIdentityKeys(verification, _userSecret));
     }
     else
     {

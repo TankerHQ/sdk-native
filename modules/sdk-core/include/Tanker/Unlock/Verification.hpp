@@ -1,8 +1,9 @@
 #pragma once
 
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
@@ -20,11 +21,12 @@ struct EmailVerification
 };
 
 using Verification =
-    mpark::variant<VerificationKey, EmailVerification, Password>;
+    mpark::variant<VerificationKey, EmailVerification, Passphrase>;
+
 class VerificationMethod
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
-      VerificationMethod, (VerificationKey, Email, Password))
+      VerificationMethod, (VerificationKey, Email, Passphrase))
 
 private:
   friend void from_json(nlohmann::json const&, VerificationMethod&);

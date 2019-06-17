@@ -66,7 +66,7 @@ Unlock::Verification cverificationToVerification(
   {
     if (!cverification->passphrase)
       throw formatEx(Errc::InvalidArgument, "passphrase field is null");
-    verification = Password{cverification->passphrase};
+    verification = Passphrase{cverification->passphrase};
     break;
   }
   case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
@@ -87,7 +87,7 @@ void cVerificationMethodFromVerificationMethod(
     Unlock::VerificationMethod const& method)
 {
   c_verif_method = TANKER_VERIFICATION_METHOD_INIT;
-  if (method.holds_alternative<Password>())
+  if (method.holds_alternative<Passphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
   else if (method.holds_alternative<VerificationKey>())
@@ -111,7 +111,7 @@ void cVerificationMethodFromVerificationMethod(
 
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL, Unlock::Method::Email);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
-                  Unlock::Method::Password);
+                  Unlock::Method::Passphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);

@@ -30,23 +30,6 @@ using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-namespace
-{
-void checkUnlockMessage(Trustchain::TrustchainId const& tid,
-                        Crypto::PublicSignatureKey const& key,
-                        Unlock::Message const& message)
-{
-  auto jmessage = nlohmann::json(message);
-  auto const message2 = Unlock::Message{jmessage};
-
-  FAST_CHECK_EQ(message2.trustchainId, message.trustchainId);
-  FAST_CHECK_EQ(message2.deviceId, message.deviceId);
-  FAST_CHECK_EQ(tid, message.trustchainId);
-  FAST_CHECK_UNARY(
-      Crypto::verify(message2.signData(), message2.signature, key));
-}
-}
-
 TEST_CASE("it can convert a ghost device to unlock key")
 {
   auto const ghostDevice = GhostDevice{
@@ -77,8 +60,6 @@ TEST_CASE("verificationKey")
   TrustchainBuilder builder;
   builder.makeUser("alice");
   auto const alice = builder.findUser("alice").value();
-  auto const aliceUserSecret =
-      make<Crypto::SymmetricKey>("this is alice's userSecret");
   auto const firstDev = alice.devices.front();
   auto const& aliceKeys = alice.userKeys.back();
   auto ghostDeviceKeys = DeviceKeys::create();
@@ -89,15 +70,10 @@ TEST_CASE("verificationKey")
                                       firstDev.keys.signatureKeyPair.privateKey,
                                       firstDev.id),
                        ghostDeviceKeys);
-  auto const password = Password{"some secret"};
+  auto const password = Passphrase{"some secret"};
   auto const email = Email{"alice@aol.com"};
-  auto const message =
-      Unlock::Message(builder.trustchainId(),
-                      firstDev.id,
-                      Unlock::Verification{password},
-                      aliceUserSecret,
-                      firstDev.keys.signatureKeyPair.privateKey);
   FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
+
   SUBCASE("generate")
   {
     REQUIRE_NOTHROW(GhostDevice::create(verificationKey));
@@ -106,13 +82,6 @@ TEST_CASE("verificationKey")
                   ghostDeviceKeys.encryptionKeyPair.privateKey);
     FAST_CHECK_EQ(gh.privateSignatureKey,
                   ghostDeviceKeys.signatureKeyPair.privateKey);
-  }
-
-  SUBCASE("serialization/unserialization of message")
-  {
-    checkUnlockMessage(builder.trustchainId(),
-                       firstDev.keys.signatureKeyPair.publicKey,
-                       message);
   }
 
   SUBCASE("createValidatedDevice")

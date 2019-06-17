@@ -9,7 +9,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -251,34 +251,29 @@ TEST_CASE("Client unlock api")
 {
   auto const trustchainId = make<Trustchain::TrustchainId>("my trustchainId");
   auto const userId = make<Trustchain::UserId>("alice");
-  auto const password = Password{"some secret"};
+  auto const password = Passphrase{"some secret"};
   auto const email = Email{"alice@aol.com"};
 
-  auto deviceKeys = DeviceKeys::create();
   auto const aliceUserSecret =
       make<Crypto::SymmetricKey>("this is alice's userSecret");
-  auto const message = Unlock::Message(trustchainId,
-                                       Trustchain::DeviceId{},
-                                       Unlock::Verification(password),
-                                       aliceUserSecret,
-                                       deviceKeys.signatureKeyPair.privateKey);
+  nlohmann::json message{
+      {"trustchain_id", trustchainId},
+      {"user_id", Trustchain::UserId{}},
+      {"verification",
+       ClientHelpers::makeVerificationRequest(Unlock::Verification(password),
+                                              aliceUserSecret)},
+  };
 
-  SUBCASE("createVerificationKey()")
+  SUBCASE("setVerificationMethod()")
   {
     auto cl = initClient();
-    REQUIRE_CALL(cl.mconn,
-                 emit("create unlock key", eq(nlohmann::json(message).dump())))
+    REQUIRE_CALL(cl.mconn, emit("set verification method", eq(message.dump())))
         .LR_RETURN(WRAP_COTASK(nlohmann::json{}.dump()));
-    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->createVerificationKey(message)));
-  }
-
-  SUBCASE("uploadVerificationKey()")
-  {
-    auto cl = initClient();
-    REQUIRE_CALL(cl.mconn,
-                 emit("update unlock key", eq(nlohmann::json(message).dump())))
-        .LR_RETURN(WRAP_COTASK(nlohmann::json{}.dump()));
-    REQUIRE_NOTHROW(AWAIT_VOID(cl.c->updateVerificationKey(message)));
+    REQUIRE_NOTHROW(
+        AWAIT_VOID(cl.c->setVerificationMethod(trustchainId,
+                                               Trustchain::UserId{},
+                                               Unlock::Verification(password),
+                                               aliceUserSecret)));
   }
 
   SUBCASE("fetchVerificationKey()")

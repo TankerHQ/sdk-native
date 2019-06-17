@@ -10,7 +10,7 @@ namespace Unlock
 enum class Method
 {
   Email = 0x1,
-  Password,
+  Passphrase,
   VerificationKey,
 
   Last = VerificationKey,

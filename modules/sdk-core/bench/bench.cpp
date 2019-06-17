@@ -86,7 +86,7 @@ static void signup(benchmark::State& state)
       auto core = device.createAsyncCore();
       state.ResumeTiming();
       TC_AWAIT(core->start(device.identity()));
-      TC_AWAIT(core->registerIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(core->registerIdentity(Tanker::Passphrase{"strong password"}));
       state.PauseTiming();
       core.reset();
       state.ResumeTiming();
@@ -111,7 +111,7 @@ static void signup_signout(benchmark::State& state)
       auto core = device.createAsyncCore();
       state.ResumeTiming();
       TC_AWAIT(core->start(device.identity()));
-      TC_AWAIT(core->registerIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(core->registerIdentity(Tanker::Passphrase{"strong password"}));
       TC_AWAIT(core->stop());
       state.PauseTiming();
       core.reset();
@@ -132,7 +132,7 @@ static void signin(benchmark::State& state)
   auto device = alice.makeDevice();
   auto core = device.createCore(SessionType::New);
   AWAIT_VOID(core->start(device.identity()));
-  AWAIT_VOID(core->registerIdentity(Tanker::Password{"strong password"}));
+  AWAIT_VOID(core->registerIdentity(Tanker::Passphrase{"strong password"}));
   AWAIT_VOID(core->stop());
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
@@ -159,7 +159,7 @@ static void multi(benchmark::State& state)
   auto core = laptop.createCore(SessionType::New);
   tc::async_resumable([&]() -> tc::cotask<void> {
     TC_AWAIT(core->start(laptop.identity()));
-    TC_AWAIT(core->registerIdentity(Tanker::Password{"strong password"}));
+    TC_AWAIT(core->registerIdentity(Tanker::Passphrase{"strong password"}));
     for (auto _ : state)
     {
       state.PauseTiming();
@@ -167,7 +167,7 @@ static void multi(benchmark::State& state)
       auto newcore = phone.createCore(SessionType::New);
       state.ResumeTiming();
       TC_AWAIT(newcore->start(phone.identity()));
-      TC_AWAIT(newcore->verifyIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(newcore->verifyIdentity(Tanker::Passphrase{"strong password"}));
       TC_AWAIT(newcore->stop());
       state.PauseTiming();
       TC_AWAIT(core->stop());
@@ -188,7 +188,7 @@ static void encrypt(benchmark::State& state)
   auto laptop = alice.makeDevice();
   auto core = laptop.createCore(SessionType::New);
   AWAIT_VOID(core->start(laptop.identity()));
-  AWAIT_VOID(core->registerIdentity(Tanker::Password{"strong password"}));
+  AWAIT_VOID(core->registerIdentity(Tanker::Passphrase{"strong password"}));
   auto p = create_encrypted("this is my secret message");
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
@@ -215,7 +215,7 @@ static void create_group(benchmark::State& state)
   auto laptop = laptopDev.createCore(SessionType::New);
   tc::async_resumable([&]() -> tc::cotask<void> {
     TC_AWAIT(laptop->start(laptopDev.identity()));
-    TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+    TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
     auto users = userIdsToPublicIdentities(
         tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
     // First hit to pull and verify the users
@@ -249,7 +249,7 @@ static void pull_and_create_group(benchmark::State& state)
       auto laptop = laptopDev.createAsyncCore();
       state.ResumeTiming();
       TC_AWAIT(laptop->start(laptopDev.identity()));
-      TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
       TC_AWAIT(laptop->createGroup(users));
       state.PauseTiming();
       TC_AWAIT(laptop->stop());
@@ -282,7 +282,7 @@ static void share_to_unverified_users(benchmark::State& state)
       auto laptopDev = alice.makeDevice();
       auto laptop = laptopDev.createAsyncCore();
       TC_AWAIT(laptop->start(laptopDev.identity()));
-      TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
       state.ResumeTiming();
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
       state.PauseTiming();
@@ -313,7 +313,7 @@ static void share_to_users(benchmark::State& state)
     auto laptopDev = alice.makeDevice();
     auto laptop = laptopDev.createCore(SessionType::New);
     TC_AWAIT(laptop->start(laptopDev.identity()));
-    TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+    TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
 
     // we trigger the verification
     TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
@@ -345,7 +345,7 @@ static void share_to_group(benchmark::State& state)
     auto laptopDev = alice.makeDevice();
     auto laptop = laptopDev.createCore(SessionType::New);
     TC_AWAIT(laptop->start(laptopDev.identity()));
-    TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+    TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
     // trigger the verification
     TC_AWAIT(laptop->encrypt(&p.second[0], p.first, {}, {sgroupId}));
     for (auto _ : state)
@@ -378,7 +378,7 @@ static void share_to_unverified_group(benchmark::State& state)
       auto laptopDev = alice.makeDevice();
       auto laptop = laptopDev.createAsyncCore();
       TC_AWAIT(laptop->start(laptopDev.identity()));
-      TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+      TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
       state.ResumeTiming();
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, {}, {sgroupId}));
       state.PauseTiming();
@@ -411,7 +411,7 @@ static void add_to_group(benchmark::State& state)
     auto laptopDev = alice.makeDevice();
     auto laptop = laptopDev.createCore(SessionType::New);
     TC_AWAIT(laptop->start(laptopDev.identity()));
-    TC_AWAIT(laptop->registerIdentity(Tanker::Password{"strong password"}));
+    TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
     auto sgroupId = TC_AWAIT(laptop->createGroup({alice.spublicIdentity()}));
 
     for (auto _ : state)
