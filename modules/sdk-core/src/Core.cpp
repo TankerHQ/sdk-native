@@ -44,8 +44,8 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
 
 Status Core::status() const
 {
-  assert(!_state.valueless_by_exception() &&
-         "_state variant must not be valueless");
+  if (_state.valueless_by_exception())
+    throw Errors::AssertionError("_state variant must not be valueless");
   if (auto core = mpark::get_if<Opener>(&_state))
     return core->status();
   else if (mpark::get_if<SessionType>(&_state))
