@@ -15,7 +15,7 @@ namespace Tanker
 {
 namespace Test
 {
-static auto const STRONG_PASSWORD_DO_NOT_LEAK = Password("********");
+static auto const STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
 
 namespace

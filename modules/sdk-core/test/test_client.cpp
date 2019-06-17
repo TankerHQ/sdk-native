@@ -9,7 +9,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Messages.hpp>
@@ -251,7 +251,7 @@ TEST_CASE("Client unlock api")
 {
   auto const trustchainId = make<Trustchain::TrustchainId>("my trustchainId");
   auto const userId = make<Trustchain::UserId>("alice");
-  auto const password = Password{"some secret"};
+  auto const password = Passphrase{"some secret"};
   auto const email = Email{"alice@aol.com"};
 
   auto const aliceUserSecret =

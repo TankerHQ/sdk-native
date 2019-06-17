@@ -306,7 +306,7 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
             userSecret, gsl::make_span(verif->email).as_span<uint8_t const>()));
     request["verification_code"] = verif->verificationCode;
   }
-  else if (auto const pass = mpark::get_if<Password>(&verification))
+  else if (auto const pass = mpark::get_if<Passphrase>(&verification))
   {
     request["passphrase"] = cppcodec::base64_rfc4648::encode(
         Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>()));

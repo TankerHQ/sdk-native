@@ -4,5 +4,5 @@
 
 namespace Tanker
 {
-using Password = StringWrapper<struct PasswordTag>;
+using Passphrase = StringWrapper<struct PassphraseTag>;
 }

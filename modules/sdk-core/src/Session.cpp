@@ -32,7 +32,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
@@ -86,8 +86,8 @@ std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
       mappedMethods[Unlock::Method::Email] =
           Email{decryptedEmail.begin(), decryptedEmail.end()};
     }
-    else if (method.holds_alternative<Password>())
-      mappedMethods[Unlock::Method::Password] = method;
+    else if (method.holds_alternative<Passphrase>())
+      mappedMethods[Unlock::Method::Passphrase] = method;
     else if (method.holds_alternative<VerificationKey>())
       mappedMethods[Unlock::Method::VerificationKey] = method;
     else
@@ -371,8 +371,8 @@ void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
   if (auto const emailVerification =
           mpark::get_if<Unlock::EmailVerification>(&method))
     _verificationMethods[Unlock::Method::Email] = emailVerification->email;
-  else if (mpark::holds_alternative<Password>(method))
-    _verificationMethods[Unlock::Method::Password] = Password{};
+  else if (mpark::holds_alternative<Passphrase>(method))
+    _verificationMethods[Unlock::Method::Passphrase] = Passphrase{};
 }
 
 tc::cotask<void> Session::setVerificationMethod(

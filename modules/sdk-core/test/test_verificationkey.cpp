@@ -70,7 +70,7 @@ TEST_CASE("verificationKey")
                                       firstDev.keys.signatureKeyPair.privateKey,
                                       firstDev.id),
                        ghostDeviceKeys);
-  auto const password = Password{"some secret"};
+  auto const password = Passphrase{"some secret"};
   auto const email = Email{"alice@aol.com"};
   FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
 

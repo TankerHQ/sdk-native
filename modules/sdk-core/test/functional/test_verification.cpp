@@ -33,7 +33,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore(Test::SessionType::New);
 
-  auto const password = Password{"my password"};
+  auto const password = Passphrase{"my password"};
   auto const email = Email{"kirby@dreamland.nes"};
 
   SUBCASE("it creates an verificationKey and use it to add a second device")
@@ -58,14 +58,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
 
     CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core1->getVerificationMethods()), {Password{}}));
+        TC_AWAIT(core1->getVerificationMethods()), {Passphrase{}}));
 
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(password)));
 
     CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core2->getVerificationMethods()), {Password{}}));
+        TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
   }
 
   SUBCASE("it sets an email and adds a new device")
@@ -92,13 +92,13 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(
         TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
 
-    auto const newPassword = Password{"new password"};
+    auto const newPassphrase = Passphrase{"new password"};
     REQUIRE_NOTHROW(TC_AWAIT(
-        core1->setVerificationMethod(Unlock::Verification{newPassword})));
+        core1->setVerificationMethod(Unlock::Verification{newPassphrase})));
 
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
-    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(newPassword)));
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(newPassphrase)));
   }
 
   SUBCASE("it sets an email and then sets a passphrase")
@@ -111,14 +111,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{password})));
 
     CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core1->getVerificationMethods()), {email, Password{}}));
+        TC_AWAIT(core1->getVerificationMethods()), {email, Passphrase{}}));
 
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(password)));
 
     CHECK_NOTHROW(checkVerificationMethods(
-        TC_AWAIT(core2->getVerificationMethods()), {email, Password{}}));
+        TC_AWAIT(core2->getVerificationMethods()), {email, Passphrase{}}));
   }
 
   SUBCASE(
@@ -141,7 +141,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core2->verifyIdentity(Password{"wrongPass"})),
+        TC_AWAIT(core2->verifyIdentity(Passphrase{"wrongPass"})),
         Errc::InvalidVerification);
   }
 

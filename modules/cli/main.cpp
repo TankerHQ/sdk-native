@@ -143,7 +143,7 @@ AsyncCorePtr signUp(MainArgs const& args)
   if (status != Tanker::Status::Ready && !args.at(UnlockPasswordOpt))
     throw std::runtime_error("Please provide a password");
   core->registerIdentity(
-          Tanker::Password{args.at(UnlockPasswordOpt).asString()})
+          Tanker::Passphrase{args.at(UnlockPasswordOpt).asString()})
       .get();
 
   return core;
@@ -168,7 +168,7 @@ AsyncCorePtr signIn(MainArgs const& args)
   if (args.at(VerificationKeyOpt))
     verification = VerificationKey{args.at(VerificationKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
-    verification = Password{args.at(UnlockPasswordOpt).asString()};
+    verification = Passphrase{args.at(UnlockPasswordOpt).asString()};
 
   auto const status = core->start(identity).get();
   if (status != Tanker::Status::IdentityVerificationNeeded)

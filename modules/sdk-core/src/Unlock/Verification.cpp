@@ -13,7 +13,7 @@ namespace Unlock
 {
 void to_json(nlohmann::json& j, VerificationMethod const& method)
 {
-  if (method.holds_alternative<Password>())
+  if (method.holds_alternative<Passphrase>())
     j.push_back({{"type", "password"}});
   else if (method.holds_alternative<VerificationKey>())
     j.push_back({{"type", "verificationKey"}});
@@ -28,7 +28,7 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
 {
   auto const value = j.at("type").get<std::string>();
   if (value == "password")
-    m = Password{};
+    m = Passphrase{};
   else if (value == "verificationKey")
     m = VerificationKey{};
   else if (value == "email")

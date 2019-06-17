@@ -26,7 +26,7 @@ struct Request
   Trustchain::UserId userId;
   enum Type
   {
-    Password,
+    Passphrase,
     VerificationCode,
     Last,
   } type;

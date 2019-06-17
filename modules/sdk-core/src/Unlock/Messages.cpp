@@ -5,7 +5,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -52,12 +52,12 @@ Request::Request(Trustchain::TrustchainId const& trustchainId,
                  DeviceLocker const& locker)
   : trustchainId(trustchainId), userId(userId)
 {
-  if (auto const pass = mpark::get_if<Password>(&locker))
+  if (auto const pass = mpark::get_if<Passphrase>(&locker))
   {
     auto const hash =
         Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>());
     value.assign(hash.begin(), hash.end());
-    type = Type::Password;
+    type = Type::Passphrase;
   }
   else if (auto rawcode = mpark::get_if<VerificationCode>(&locker))
   {
@@ -70,7 +70,7 @@ std::string to_string(Request::Type type)
 {
   switch (type)
   {
-  case Request::Type::Password:
+  case Request::Type::Passphrase:
     return "password";
   case Request::Type::VerificationCode:
     return "verification_code";

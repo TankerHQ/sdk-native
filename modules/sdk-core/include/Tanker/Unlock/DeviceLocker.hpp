@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
@@ -10,6 +10,6 @@ namespace Tanker
 {
 namespace Unlock
 {
-using DeviceLocker = mpark::variant<Password, VerificationCode, VerificationKey>;
+using DeviceLocker = mpark::variant<Passphrase, VerificationCode, VerificationKey>;
 }
 }

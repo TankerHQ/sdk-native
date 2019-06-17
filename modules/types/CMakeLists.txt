@@ -10,7 +10,7 @@ target_sources(tankertypes INTERFACE
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SResourceId.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/StringWrapper.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Email.hpp
-  ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Password.hpp
+  ${PROJECT_SOURCE_DIR}/include/Tanker/Types/Passphrase.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/VerificationKey.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/VerificationCode.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Types/SDeviceId.hpp
