@@ -84,7 +84,7 @@ tc::cotask<void> decryptAndStoreKey(
 
   if (!group)
   {
-    throw formatEx(Errc::NotFound,
+    throw formatEx(Errc::InternalError,
                    "received a KeyPublish for a group we are not "
                    "in (public encryption "
                    "key: {})",
@@ -111,7 +111,7 @@ tc::cotask<void> decryptAndStoreKey(
 
   if (!provisionalUserKeys)
   {
-    throw formatEx(Errc::NotFound,
+    throw formatEx(Errc::InternalError,
                    "received a KeyPublish for a provisional user we did not "
                    "claim (public encryption keys: {} {})",
                    keyPublishToProvisionalUser.appPublicSignatureKey(),

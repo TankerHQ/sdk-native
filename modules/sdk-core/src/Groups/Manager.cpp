@@ -40,7 +40,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
     auto const notFoundIdentities = mapIdsToStrings(
         memberUsers.notFound, spublicIdentities, members.userIds);
     throw formatEx(
-        Errc::NotFound,
+        Errc::InvalidArgument,
         TFMT("unknown users: {:s}"),
         fmt::join(notFoundIdentities.begin(), notFoundIdentities.end(), ", "));
   }
@@ -103,10 +103,10 @@ std::vector<uint8_t> generateCreateGroupBlock(
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
-    throw formatEx(Errc::InvalidGroupSize, "cannot create an empty group");
+    throw formatEx(Errc::InvalidArgument, "cannot create an empty group");
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::InvalidGroupSize,
+    throw formatEx(Errc::GroupTooBig,
                    TFMT("cannot create a group with {:d} members, max is {:d}"),
                    groupSize,
                    MAX_GROUP_SIZE);
@@ -151,12 +151,12 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
   {
-    throw Exception(make_error_code(Errc::InvalidGroupSize),
+    throw Exception(make_error_code(Errc::InvalidArgument),
                     "must add at least one member to a group");
   }
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::InvalidGroupSize,
+    throw formatEx(Errc::GroupTooBig,
                    TFMT("cannot add {:d} members to a group, max is {:d}"),
                    groupSize,
                    MAX_GROUP_SIZE);
@@ -184,7 +184,7 @@ tc::cotask<void> updateMembers(
 
   auto const group = TC_AWAIT(groupStore.findFullById(groupId));
   if (!group)
-    throw formatEx(Errc::NotFound, TFMT("no such group: {:s}"), groupId);
+    throw formatEx(Errc::InvalidArgument, TFMT("no such group: {:s}"), groupId);
 
   auto const groupBlock = generateAddUserToGroupBlock(
       members.users, members.provisionalUsers, blockGenerator, *group);

@@ -121,7 +121,7 @@ tc::cotask<VerificationCode> Admin::getVerificationCode(
   auto it = answer.find("verification_code");
   if (it == answer.end())
   {
-    throw Errors::formatEx(Errors::Errc::InvalidCredentials,
+    throw Errors::formatEx(Errors::Errc::InvalidVerification,
                            "could not find verification code for {}",
                            email);
   }

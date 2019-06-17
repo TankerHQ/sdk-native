@@ -32,8 +32,8 @@ tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
   auto const key = TC_AWAIT(findKey(resourceId));
   if (!key)
   {
-    throw Errors::formatEx(Errors::Errc::NotFound,
-                           "key not found for resource {}",
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           TFMT("key not found for resource {:s}"),
                            resourceId);
   }
   TC_RETURN(*key);

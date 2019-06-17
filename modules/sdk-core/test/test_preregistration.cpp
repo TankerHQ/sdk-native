@@ -33,7 +33,7 @@ TEST_CASE("Preregistration")
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT_VOID(Preregistration::applyEntry(
             userKeyStore, provisionalUserKeysStore, groupStore, picEntry)),
-        Errc::NotFound);
+        Errc::InternalError);
   }
 
   SUBCASE("can decrypt a preregistration claim")

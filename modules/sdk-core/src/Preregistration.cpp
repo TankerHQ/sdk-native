@@ -39,8 +39,8 @@ tc::cotask<SecretProvisionalUserToStore> extractKeysToStore(
 
   if (!userKeyPair)
   {
-    throw formatEx(Errc::NotFound,
-                   "cannot find user key for claim decryption");
+    throw Exception(make_error_code(Errc::InternalError),
+                    "cannot find user key for claim decryption");
   }
 
   auto const provisionalIdentityKeys = Crypto::sealDecrypt(

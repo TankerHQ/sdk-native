@@ -282,7 +282,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
           {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
               builder.trustchainId(), newUser.userId})}},
           {})),
-      make_error_code(Errc::NotFound));
+      make_error_code(Errc::InvalidArgument));
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -316,7 +316,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
                                     {},
                                     {cppcodec::base64_rfc4648::encode<SGroupId>(
                                         newGroup.group.tankerGroup.id)})),
-                                make_error_code(Errc::NotFound));
+                                make_error_code(Errc::InvalidArgument));
 }
 
 template <typename T>

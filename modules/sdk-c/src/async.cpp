@@ -62,15 +62,11 @@ CHECK_ENUM(INTERNAL_ERROR, InternalError);
 CHECK_ENUM(NETWORK_ERROR, NetworkError);
 CHECK_ENUM(PRECONDITION_FAILED, PreconditionFailed);
 CHECK_ENUM(OPERATION_CANCELED, OperationCanceled);
-CHECK_ENUM(OPERATION_FORBIDDEN, OperationForbidden);
 CHECK_ENUM(DECRYPTION_FAILED, DecryptionFailed);
-CHECK_ENUM(INVALID_GROUP_SIZE, InvalidGroupSize);
-CHECK_ENUM(NOT_FOUND, NotFound);
-CHECK_ENUM(ALREADY_EXISTS, AlreadyExists);
-CHECK_ENUM(INVALID_CREDENTIALS, InvalidCredentials);
+CHECK_ENUM(GROUP_TOO_BIG, GroupTooBig);
+CHECK_ENUM(INVALID_VERIFICATION, InvalidVerification);
 CHECK_ENUM(TOO_MANY_ATTEMPTS, TooManyAttempts);
-CHECK_ENUM(EXPIRED, Expired);
-CHECK_ENUM(DEVICE_REVOKED, DeviceRevoked);
+CHECK_ENUM(EXPIRED_VERIFICATION, ExpiredVerification);
 
 CHECK_ENUM(LAST, Last);
 
@@ -80,7 +76,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 15,
+static_assert(TANKER_ERROR_LAST == 11,
               "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)

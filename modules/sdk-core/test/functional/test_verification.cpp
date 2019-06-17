@@ -142,7 +142,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(Password{"wrongPass"})),
-        Errc::InvalidCredentials);
+        Errc::InvalidVerification);
   }
 
   SUBCASE("it throws when trying to verify with an invalid verification code")
@@ -156,7 +156,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
             Unlock::EmailVerification{email, VerificationCode{"d3JvbmcK"}})),
-        Errc::InvalidCredentials);
+        Errc::InvalidVerification);
   }
 
   SUBCASE(
@@ -176,7 +176,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
       TANKER_CHECK_THROWS_WITH_CODE(
           TC_AWAIT(core2->verifyIdentity(
               Unlock::EmailVerification{email, VerificationCode{"d3JvbmcK"}})),
-          Errc::InvalidCredentials);
+          Errc::InvalidVerification);
     }
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
