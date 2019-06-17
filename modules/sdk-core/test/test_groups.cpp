@@ -42,7 +42,7 @@ TEST_CASE("Can't create an empty group")
   TANKER_CHECK_THROWS_WITH_CODE(
       Groups::Manager::generateCreateGroupBlock(
           {}, {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey),
-      Errc::InvalidGroupSize);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Can create a group with two users")
@@ -183,7 +183,7 @@ TEST_CASE("Fails to add 0 users to a group")
 
   TANKER_CHECK_THROWS_WITH_CODE(Groups::Manager::generateAddUserToGroupBlock(
                                     {}, {}, userBlockGenerator, group),
-                                Errc::InvalidGroupSize);
+                                Errc::InvalidArgument);
 }
 
 TEST_CASE("Can add users to a group")

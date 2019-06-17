@@ -24,8 +24,8 @@ std::string ErrcCategory::message(int c) const
     return "operation canceled";
   case Errc::DecryptionFailed:
     return "decryption failed";
-  case Errc::InvalidGroupSize:
-    return "invalid group size";
+  case Errc::GroupTooBig:
+    return "group too big";
   case Errc::InvalidVerification:
     return "invalid verification";
   case Errc::TooManyAttempts:

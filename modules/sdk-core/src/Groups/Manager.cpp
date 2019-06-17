@@ -103,10 +103,10 @@ std::vector<uint8_t> generateCreateGroupBlock(
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
-    throw formatEx(Errc::InvalidGroupSize, "cannot create an empty group");
+    throw formatEx(Errc::InvalidArgument, "cannot create an empty group");
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::InvalidGroupSize,
+    throw formatEx(Errc::GroupTooBig,
                    TFMT("cannot create a group with {:d} members, max is {:d}"),
                    groupSize,
                    MAX_GROUP_SIZE);
@@ -151,12 +151,12 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
   {
-    throw Exception(make_error_code(Errc::InvalidGroupSize),
+    throw Exception(make_error_code(Errc::InvalidArgument),
                     "must add at least one member to a group");
   }
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::InvalidGroupSize,
+    throw formatEx(Errc::GroupTooBig,
                    TFMT("cannot add {:d} members to a group, max is {:d}"),
                    groupSize,
                    MAX_GROUP_SIZE);

@@ -15,7 +15,7 @@ enum class Errc
   PreconditionFailed,
   OperationCanceled,
   DecryptionFailed,
-  InvalidGroupSize,
+  GroupTooBig,
   InvalidVerification,
   TooManyAttempts,
   ExpiredVerification,
