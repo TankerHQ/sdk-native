@@ -87,7 +87,6 @@ add_library(tankercore STATIC
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
   include/Tanker/Unlock/Create.hpp
-  include/Tanker/Unlock/Messages.hpp
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
   include/Tanker/Opener.hpp
@@ -158,7 +157,6 @@ add_library(tankercore STATIC
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
-  src/Unlock/Messages.cpp
   src/Unlock/Verification.cpp
   src/Session.cpp
   src/Opener.cpp

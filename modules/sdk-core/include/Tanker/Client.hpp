@@ -35,11 +35,6 @@
 
 namespace Tanker
 {
-namespace Unlock
-{
-struct FetchAnswer;
-}
-
 namespace ClientHelpers
 {
 nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
@@ -92,7 +87,7 @@ public:
       Trustchain::UserId const& userId,
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret);
-  tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(
+  tc::cotask<VerificationKey> fetchVerificationKey(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Unlock::Verification const& method,

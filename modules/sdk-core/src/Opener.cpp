@@ -22,7 +22,6 @@
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <gsl-lite.hpp>
@@ -99,12 +98,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  auto const fetchAnswer =
-      TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
-                                             _identity->delegation.userId,
-                                             verification,
-                                             _identity->userSecret));
-  TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
+  TC_RETURN(TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
+                                                   _identity->delegation.userId,
+                                                   verification,
+                                                   _identity->userSecret)));
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(

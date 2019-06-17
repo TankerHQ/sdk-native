@@ -12,7 +12,6 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
@@ -172,7 +171,7 @@ tc::cotask<void> Client::setVerificationMethod(
   TC_AWAIT(emit("set verification method", request));
 }
 
-tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
+tc::cotask<VerificationKey> Client::fetchVerificationKey(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
     Unlock::Verification const& method,
@@ -184,7 +183,12 @@ tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
       {"verification",
        ClientHelpers::makeVerificationRequest(method, userSecret)},
   };
-  TC_RETURN(TC_AWAIT(emit("get verification key", request)));
+  auto const response = TC_AWAIT(emit("get verification key", request));
+  auto const verificationKey = Crypto::decryptAead(
+      userSecret,
+      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
+          response.at("encrypted_verification_key").get<std::string>()));
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
 tc::cotask<std::string> Client::requestAuthChallenge()

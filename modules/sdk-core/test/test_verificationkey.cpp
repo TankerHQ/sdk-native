@@ -12,7 +12,6 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Unlock/Create.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -70,8 +69,6 @@ TEST_CASE("verificationKey")
                                       firstDev.keys.signatureKeyPair.privateKey,
                                       firstDev.id),
                        ghostDeviceKeys);
-  auto const password = Passphrase{"some secret"};
-  auto const email = Email{"alice@aol.com"};
   FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
 
   SUBCASE("generate")
