@@ -97,10 +97,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 }
 
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
-    Unlock::DeviceLocker const& locker)
+    Unlock::Verification const& verification)
 {
-  auto const req =
-      Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
+  auto const req = Unlock::Request(
+      _info.trustchainId, _identity->delegation.userId, verification);
   auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
   TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
 }
@@ -191,12 +191,9 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
   if (auto const verificationKey =
           mpark::get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
-  else if (auto const emailVerification =
-               mpark::get_if<Unlock::EmailVerification>(&verification))
-    TC_RETURN(
-        TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode)));
-  else if (auto const password = mpark::get_if<Passphrase>(&verification))
-    TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
+  else if (mpark::holds_alternative<Unlock::EmailVerification>(verification) ||
+           mpark::holds_alternative<Passphrase>(verification))
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
   throw AssertionError("invalid verification, unreachable code");
 }
 

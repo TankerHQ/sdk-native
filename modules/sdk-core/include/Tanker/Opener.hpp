@@ -8,7 +8,6 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
@@ -41,7 +40,7 @@ public:
   tc::cotask<VerificationKey> generateVerificationKey() const;
 
   tc::cotask<VerificationKey> fetchVerificationKey(
-      Unlock::DeviceLocker const& pass);
+      Unlock::Verification const& verification);
 
 private:
   std::string _url;

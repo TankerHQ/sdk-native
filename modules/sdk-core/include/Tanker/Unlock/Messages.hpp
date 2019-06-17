@@ -6,7 +6,6 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <nlohmann/json.hpp>
@@ -35,7 +34,7 @@ struct Request
   Request() = default;
   Request(Trustchain::TrustchainId const& trustchainId,
           Trustchain::UserId const& userId,
-          DeviceLocker const& locker);
+          Verification const& verification);
 };
 
 std::string to_string(Request::Type type);

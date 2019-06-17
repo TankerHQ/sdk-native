@@ -49,19 +49,21 @@ void from_json(nlohmann::json const& j, FetchAnswer& f)
 
 Request::Request(Trustchain::TrustchainId const& trustchainId,
                  UserId const& userId,
-                 DeviceLocker const& locker)
+                 Unlock::Verification const& verification)
   : trustchainId(trustchainId), userId(userId)
 {
-  if (auto const pass = mpark::get_if<Passphrase>(&locker))
+  if (auto const pass = mpark::get_if<Passphrase>(&verification))
   {
     auto const hash =
         Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>());
     value.assign(hash.begin(), hash.end());
     type = Type::Passphrase;
   }
-  else if (auto rawcode = mpark::get_if<VerificationCode>(&locker))
+  else if (auto rawcode =
+               mpark::get_if<Unlock::EmailVerification>(&verification))
   {
-    value.assign(rawcode->begin(), rawcode->end());
+    value.assign(rawcode->verificationCode.begin(),
+                 rawcode->verificationCode.end());
     type = Type::VerificationCode;
   }
 }

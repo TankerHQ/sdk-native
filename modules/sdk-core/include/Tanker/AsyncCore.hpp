@@ -14,7 +14,6 @@
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/DeviceLocker.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/task_canceler.hpp>
