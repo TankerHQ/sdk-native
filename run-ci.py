@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import contextlib
 
 from path import Path
 
@@ -24,6 +25,13 @@ def build_and_check(profile: str, coverage: bool) -> None:
     ci.cpp.check(built_path, coverage=coverage)
 
 
+def get_notifier(coverage: bool):
+    if coverage:
+        return ci.mail.notify_failure("sdk-native")
+    else:
+        return contextlib.suppress()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
@@ -44,7 +52,8 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        build_and_check(args.profile, args.coverage)
+        with get_notifier(args.coverage):
+            build_and_check(args.profile, args.coverage)
     elif args.command == "nightly-build-emscripten":
         with ci.mail.notify_failure("sdk-native"):
             ci.cpp.build("emscripten")
