@@ -126,6 +126,8 @@ add_library(tankercore STATIC
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/IdentityUtils.hpp
+  include/Tanker/Server/Errors/Errc.hpp
+  include/Tanker/Server/Errors/ErrcCategory.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
@@ -191,6 +193,8 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Revocation.cpp
+  src/Server/Errors/Errc.cpp
+  src/Server/Errors/ErrcCategory.cpp
   src/Verif/Errors/Errc.cpp
   src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp

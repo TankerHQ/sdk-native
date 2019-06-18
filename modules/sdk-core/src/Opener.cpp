@@ -102,27 +102,8 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
 {
   auto const req =
       Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
-  try
-  {
-    auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
-    TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
-  }
-  catch (ServerError const& err)
-  {
-    if (err.httpStatusCode() == 401)
-    {
-      if (mpark::holds_alternative<Passphrase>(locker))
-        throw formatEx(Errc::InvalidVerification, "{}", err.what());
-      else if (mpark::holds_alternative<VerificationCode>(locker))
-        throw formatEx(Errc::InvalidVerification, "{}", err.what());
-    }
-    else if (err.httpStatusCode() == 404)
-      throw formatEx(Errc::InvalidVerification, "{}", err.what());
-    else if (err.httpStatusCode() == 429)
-      throw formatEx(Errc::TooManyAttempts, "{}", err.what());
-    throw;
-  }
-  throw AssertionError("fetchVerificationKey: unreachable code");
+  auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
+  TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(
@@ -131,28 +112,17 @@ tc::cotask<void> Opener::unlockCurrentDevice(
   TINFO("unlockCurrentDevice");
   FUNC_TIMER(Proc);
 
-  try
-  {
-    auto const ghostDevice = GhostDevice::create(verificationKey);
-    auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
-        _info.trustchainId,
-        Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey)
-            .publicKey));
+  auto const ghostDevice = GhostDevice::create(verificationKey);
+  auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
+      _info.trustchainId,
+      Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey).publicKey));
 
-    auto const block =
-        Unlock::createValidatedDevice(_info.trustchainId,
-                                      _identity->delegation.userId,
-                                      ghostDevice,
-                                      _keyStore->deviceKeys(),
-                                      encryptedUserKey);
-    TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
-  }
-  catch (Exception const& e)
-  {
-    if (e.errorCode() == Errc::InvalidArgument)
-      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
-    throw;
-  }
+  auto const block = Unlock::createValidatedDevice(_info.trustchainId,
+                                                   _identity->delegation.userId,
+                                                   ghostDevice,
+                                                   _keyStore->deviceKeys(),
+                                                   encryptedUserKey);
+  TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
 }
 
 Session::Config Opener::makeConfig()
