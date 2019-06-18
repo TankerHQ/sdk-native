@@ -24,7 +24,6 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Server/Errors/Errc.hpp>
-#include <Tanker/ServerError.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>

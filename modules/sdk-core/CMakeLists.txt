@@ -98,7 +98,6 @@ add_library(tankercore STATIC
   include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
-  include/Tanker/ServerError.hpp
   include/Tanker/Index.hpp
   include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
@@ -156,7 +155,6 @@ add_library(tankercore STATIC
   src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
-  src/ServerError.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp

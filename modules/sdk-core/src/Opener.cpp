@@ -16,7 +16,6 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/ServerError.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>

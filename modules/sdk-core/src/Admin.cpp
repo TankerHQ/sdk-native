@@ -7,7 +7,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/ServerError.hpp>
+#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
@@ -30,6 +30,30 @@ TLOG_CATEGORY(Admin);
 
 namespace Tanker
 {
+namespace
+{
+// FIXME Duplicated in Client.cpp
+std::map<std::string, Server::Errc> const serverErrorMap{
+    {"internal_error", Server::Errc::InternalError},
+    {"invalid_body", Server::Errc::InvalidBody},
+    {"invalid_origin", Server::Errc::InvalidOrigin},
+    {"trustchain_is_not_test", Server::Errc::TrustchainIsNotTest},
+    {"trustchain_not_found", Server::Errc::TrustchainNotFound},
+    {"device_not_found", Server::Errc::DeviceNotFound},
+    {"device_revoked", Server::Errc::DeviceRevoked},
+    {"too_many_attempts", Server::Errc::TooManyAttempts},
+    {"verification_needed", Server::Errc::VerificationNeeded},
+    {"invalid_passphrase", Server::Errc::InvalidPassphrase},
+    {"invalid_verification_code", Server::Errc::InvalidVerificationCode},
+    {"verification_code_expired", Server::Errc::VerificationCodeExpired},
+    {"verification_code_not_found", Server::Errc::VerificationCodeNotFound},
+    {"verification_method_not_set", Server::Errc::VerificationMethodNotSet},
+    {"verification_key_not_found", Server::Errc::VerificationKeyNotFound},
+    {"group_too_big", Server::Errc::GroupTooBig},
+    {"invalid_delegation_signature", Server::Errc::InvalidDelegationSignature},
+};
+}
+
 Admin::Admin(ConnectionPtr cx, std::string idToken)
   : _cx(std::move(cx)), _idToken(std::move(idToken))
 {
@@ -137,10 +161,13 @@ tc::cotask<nlohmann::json> Admin::emit(std::string const& eventName,
   auto const error_it = message.find("error");
   if (error_it != message.end())
   {
-    auto const statusCode = error_it->at("status").get<int>();
     auto const code = error_it->at("code").get<std::string>();
     auto const message = error_it->at("message").get<std::string>();
-    throw ServerError{eventName, statusCode, code, message};
+    auto const serverErrorIt = serverErrorMap.find(code);
+    if (serverErrorIt == serverErrorMap.end())
+      throw Errors::formatEx(
+          Server::Errc::UnknownError, "code: {}, message: {}", code, message);
+    throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
 }
