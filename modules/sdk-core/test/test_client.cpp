@@ -185,10 +185,10 @@ TEST_CASE("Client getPublicProvisionalIdentities")
   std::vector<Email> emails{Email{"alice@tanker.io"}, Email{"bob@tanker.io"}};
 
   nlohmann::json result;
-  result[0]["SignaturePublicKey"] = Crypto::PublicSignatureKey{};
-  result[0]["EncryptionPublicKey"] = Crypto::PublicEncryptionKey{};
-  result[1]["SignaturePublicKey"] = Crypto::PublicSignatureKey{};
-  result[1]["EncryptionPublicKey"] = Crypto::PublicEncryptionKey{};
+  result[0]["signature_public_key"] = Crypto::PublicSignatureKey{};
+  result[0]["encryption_public_key"] = Crypto::PublicEncryptionKey{};
+  result[1]["signature_public_key"] = Crypto::PublicSignatureKey{};
+  result[1]["encryption_public_key"] = Crypto::PublicEncryptionKey{};
 
   REQUIRE_CALL(
       cl.mconn,

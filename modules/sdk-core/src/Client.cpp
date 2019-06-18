@@ -35,7 +35,6 @@ TLOG_CATEGORY(Client);
 
 namespace Tanker
 {
-
 Client::Client(ConnectionPtr cx, ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
@@ -218,8 +217,8 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
   for (auto const& elem : result)
   {
     ret.emplace_back(
-        elem.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-        elem.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>());
+        elem.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
+        elem.at("encryption_public_key").get<Crypto::PublicEncryptionKey>());
   }
   TC_RETURN(ret);
 }
@@ -237,10 +236,10 @@ Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
     TC_RETURN(nonstd::nullopt);
 
   TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
-      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
-       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
-      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
+      {json.at("encryption_public_key").get<Crypto::PublicEncryptionKey>(),
+       json.at("encryption_private_key").get<Crypto::PrivateEncryptionKey>()},
+      {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
+       json.at("signature_private_key").get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
@@ -254,10 +253,10 @@ Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
     TC_RETURN(nonstd::nullopt);
 
   TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
-      {json.at("EncryptionPublicKey").get<Crypto::PublicEncryptionKey>(),
-       json.at("EncryptionPrivateKey").get<Crypto::PrivateEncryptionKey>()},
-      {json.at("SignaturePublicKey").get<Crypto::PublicSignatureKey>(),
-       json.at("SignaturePrivateKey").get<Crypto::PrivateSignatureKey>()}}));
+      {json.at("encryption_public_key").get<Crypto::PublicEncryptionKey>(),
+       json.at("encryption_private_key").get<Crypto::PrivateEncryptionKey>()},
+      {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
+       json.at("signature_private_key").get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
@@ -317,5 +316,4 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
     throw Errors::AssertionError("unsupported verification request");
   return request;
 }
-
-} // Tanker
+}
