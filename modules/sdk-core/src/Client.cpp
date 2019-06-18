@@ -35,6 +35,16 @@ TLOG_CATEGORY(Client);
 
 namespace Tanker
 {
+namespace
+{
+template <typename T>
+Crypto::Hash hashField(T const& field)
+{
+  return Crypto::generichash(
+      gsl::make_span(field).template as_span<std::uint8_t const>());
+}
+}
+
 Client::Client(ConnectionPtr cx, ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
@@ -206,7 +216,8 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
 
   nlohmann::json message;
   for (auto const& email : emails)
-    message.push_back({{"email", email}});
+    message.push_back({{"type", "email"}, {"hashed_email", hashField(email)}});
+
   auto const result = TC_AWAIT(
       emit("get public provisional identities", nlohmann::json(message)));
 
@@ -246,7 +257,7 @@ tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
 Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
 {
   nlohmann::json body = {
-      {"verification_method", {{"type", "email"}, {"email", hashedEmail}}}};
+      {"verification_method", {{"type", "email"}, {"hashed_email", hashedEmail}}}};
   auto const json = TC_AWAIT(emit("get verified provisional identity", body));
 
   if (json.empty())
@@ -298,18 +309,14 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
   if (auto const verif =
           mpark::get_if<Unlock::EmailVerification>(&verification))
   {
-    request["email"] = Crypto::generichash(
-        gsl::make_span(verif->email).as_span<std::uint8_t const>());
+    request["hashed_email"] = hashField(verif->email);
     request["encrypted_email"] =
         cppcodec::base64_rfc4648::encode(Crypto::encryptAead(
             userSecret, gsl::make_span(verif->email).as_span<uint8_t const>()));
     request["verification_code"] = verif->verificationCode;
   }
   else if (auto const pass = mpark::get_if<Passphrase>(&verification))
-  {
-    request["passphrase"] = cppcodec::base64_rfc4648::encode(
-        Crypto::generichash(gsl::make_span(*pass).as_span<uint8_t const>()));
-  }
+    request["hashed_passphrase"] = hashField(*pass);
   else if (!mpark::holds_alternative<VerificationKey>(verification))
     // as we return an empty json for verification key the only thing to do if
     // it is NOT a verificationKey is to throw
