@@ -33,7 +33,7 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
     m = VerificationKey{};
   else if (value == "email")
   {
-    auto const email = j.at("email").get<std::string>();
+    auto const email = j.at("encrypted_email").get<std::string>();
     auto const decodedEmail = cppcodec::base64_rfc4648::decode(email);
     m = Email{decodedEmail.begin(), decodedEmail.end()};
   }
