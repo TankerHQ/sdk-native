@@ -4,14 +4,14 @@
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ServerError.hpp>
+#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
@@ -43,6 +43,26 @@ Crypto::Hash hashField(T const& field)
   return Crypto::generichash(
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
+
+std::map<std::string, Server::Errc> const serverErrorMap{
+    {"internal_error", Server::Errc::InternalError},
+    {"invalid_body", Server::Errc::InvalidBody},
+    {"invalid_origin", Server::Errc::InvalidOrigin},
+    {"trustchain_is_not_test", Server::Errc::TrustchainIsNotTest},
+    {"trustchain_not_found", Server::Errc::TrustchainNotFound},
+    {"device_not_found", Server::Errc::DeviceNotFound},
+    {"device_revoked", Server::Errc::DeviceRevoked},
+    {"too_many_attempts", Server::Errc::TooManyAttempts},
+    {"verification_needed", Server::Errc::VerificationNeeded},
+    {"invalid_passphrase", Server::Errc::InvalidPassphrase},
+    {"invalid_verification_code", Server::Errc::InvalidVerificationCode},
+    {"verification_code_expired", Server::Errc::VerificationCodeExpired},
+    {"verification_code_not_found", Server::Errc::VerificationCodeNotFound},
+    {"verification_method_not_set", Server::Errc::VerificationMethodNotSet},
+    {"verification_key_not_found", Server::Errc::VerificationKeyNotFound},
+    {"group_too_big", Server::Errc::GroupTooBig},
+    {"invalid_delegation_signature", Server::Errc::InvalidDelegationSignature},
+};
 }
 
 Client::Client(ConnectionPtr cx, ConnectionHandler connectionHandler)
@@ -151,11 +171,24 @@ tc::cotask<void> Client::setVerificationMethod(
   TC_AWAIT(emit("set verification method", request));
 }
 
-tc::cotask<Unlock::FetchAnswer> Client::fetchVerificationKey(
-    Unlock::Request const& req)
+tc::cotask<VerificationKey> Client::fetchVerificationKey(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    Unlock::Verification const& method,
+    Crypto::SymmetricKey userSecret)
 {
-  // DEPRECATED BUT STILL IN USE IN JS INVESTIGATE
-  TC_RETURN(TC_AWAIT(emit("get unlock key", req)));
+  nlohmann::json request{
+      {"trustchain_id", trustchainId},
+      {"user_id", userId},
+      {"verification",
+       ClientHelpers::makeVerificationRequest(method, userSecret)},
+  };
+  auto const response = TC_AWAIT(emit("get verification key", request));
+  auto const verificationKey = Crypto::decryptAead(
+      userSecret,
+      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
+          response.at("encrypted_verification_key").get<std::string>()));
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
 tc::cotask<std::string> Client::requestAuthChallenge()
@@ -256,8 +289,8 @@ Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
 tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
 Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
 {
-  nlohmann::json body = {
-      {"verification_method", {{"type", "email"}, {"hashed_email", hashedEmail}}}};
+  nlohmann::json body = {{"verification_method",
+                          {{"type", "email"}, {"hashed_email", hashedEmail}}}};
   auto const json = TC_AWAIT(emit("get verified provisional identity", body));
 
   if (json.empty())
@@ -281,10 +314,13 @@ tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
   auto const error_it = message.find("error");
   if (error_it != message.end())
   {
-    auto const statusCode = error_it->at("status").get<int>();
-    auto const code = error_it->at("code").get<std::string>();
     auto const message = error_it->at("message").get<std::string>();
-    throw ServerError{eventName, statusCode, code, message};
+    auto const code = error_it->at("code").get<std::string>();
+    auto const serverErrorIt = serverErrorMap.find(code);
+    if (serverErrorIt == serverErrorMap.end())
+      throw Errors::formatEx(
+          Server::Errc::UnknownError, "code: {}, message: {}", code, message);
+    throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
 }

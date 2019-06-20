@@ -16,14 +16,12 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/ServerError.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <gsl-lite.hpp>
@@ -98,31 +96,12 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 }
 
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
-    Unlock::DeviceLocker const& locker)
+    Unlock::Verification const& verification)
 {
-  auto const req =
-      Unlock::Request(_info.trustchainId, _identity->delegation.userId, locker);
-  try
-  {
-    auto const fetchAnswer = TC_AWAIT(_client->fetchVerificationKey(req));
-    TC_RETURN(fetchAnswer.getVerificationKey(_identity->userSecret));
-  }
-  catch (ServerError const& err)
-  {
-    if (err.httpStatusCode() == 401)
-    {
-      if (mpark::holds_alternative<Passphrase>(locker))
-        throw formatEx(Errc::InvalidVerification, "{}", err.what());
-      else if (mpark::holds_alternative<VerificationCode>(locker))
-        throw formatEx(Errc::InvalidVerification, "{}", err.what());
-    }
-    else if (err.httpStatusCode() == 404)
-      throw formatEx(Errc::InvalidVerification, "{}", err.what());
-    else if (err.httpStatusCode() == 429)
-      throw formatEx(Errc::TooManyAttempts, "{}", err.what());
-    throw;
-  }
-  throw AssertionError("fetchVerificationKey: unreachable code");
+  TC_RETURN(TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
+                                                   _identity->delegation.userId,
+                                                   verification,
+                                                   _identity->userSecret)));
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(
@@ -131,28 +110,17 @@ tc::cotask<void> Opener::unlockCurrentDevice(
   TINFO("unlockCurrentDevice");
   FUNC_TIMER(Proc);
 
-  try
-  {
-    auto const ghostDevice = GhostDevice::create(verificationKey);
-    auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
-        _info.trustchainId,
-        Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey)
-            .publicKey));
+  auto const ghostDevice = GhostDevice::create(verificationKey);
+  auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
+      _info.trustchainId,
+      Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey).publicKey));
 
-    auto const block =
-        Unlock::createValidatedDevice(_info.trustchainId,
-                                      _identity->delegation.userId,
-                                      ghostDevice,
-                                      _keyStore->deviceKeys(),
-                                      encryptedUserKey);
-    TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
-  }
-  catch (Exception const& e)
-  {
-    if (e.errorCode() == Errc::InvalidArgument)
-      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
-    throw;
-  }
+  auto const block = Unlock::createValidatedDevice(_info.trustchainId,
+                                                   _identity->delegation.userId,
+                                                   ghostDevice,
+                                                   _keyStore->deviceKeys(),
+                                                   encryptedUserKey);
+  TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
 }
 
 Session::Config Opener::makeConfig()
@@ -222,12 +190,9 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
   if (auto const verificationKey =
           mpark::get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
-  else if (auto const emailVerification =
-               mpark::get_if<Unlock::EmailVerification>(&verification))
-    TC_RETURN(
-        TC_AWAIT(fetchVerificationKey(emailVerification->verificationCode)));
-  else if (auto const password = mpark::get_if<Passphrase>(&verification))
-    TC_RETURN(TC_AWAIT(fetchVerificationKey(*password)));
+  else if (mpark::holds_alternative<Unlock::EmailVerification>(verification) ||
+           mpark::holds_alternative<Passphrase>(verification))
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
   throw AssertionError("invalid verification, unreachable code");
 }
 

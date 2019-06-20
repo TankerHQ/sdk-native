@@ -23,7 +23,7 @@
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
-#include <Tanker/ServerError.hpp>
+#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -36,7 +36,6 @@
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/UserKeyStore.hpp>
 #include <Tanker/Utils.hpp>
@@ -392,18 +391,9 @@ tc::cotask<void> Session::setVerificationMethod(
   }
   else
   {
-    try
-    {
-      TC_AWAIT(_client->setVerificationMethod(
-          trustchainId(), userId(), method, userSecret()));
-      updateLocalUnlockMethods(method);
-    }
-    catch (ServerError const& e)
-    {
-      if (e.httpStatusCode() == 400)
-        throw formatEx(Errc::InvalidVerification, "{}", e.what());
-      throw;
-    }
+    TC_AWAIT(_client->setVerificationMethod(
+        trustchainId(), userId(), method, userSecret()));
+    updateLocalUnlockMethods(method);
   }
 }
 
@@ -447,9 +437,9 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     }
     TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
   }
-  catch (ServerError const& e)
+  catch (Tanker::Errors::Exception const& e)
   {
-    if (e.serverCode() == "verification_needed")
+    if (e.errorCode() == Server::Errc::VerificationNeeded)
     {
       _provisionalIdentity = provisionalIdentity;
       TC_RETURN(
@@ -469,52 +459,40 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
         "cannot call verifyProvisionalIdentity without having called "
         "attachProvisionalIdentity before");
   }
-  try
+  nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
+  if (auto const emailVerification =
+          mpark::get_if<Unlock::EmailVerification>(&verification))
   {
-    nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
-    if (auto const emailVerification =
-            mpark::get_if<Unlock::EmailVerification>(&verification))
-    {
-      if (emailVerification->email != Email{_provisionalIdentity->value})
-      {
-        throw Exception(
-            make_error_code(Errc::InvalidArgument),
-            "verification email does not match provisional identity");
-      }
-      tankerKeys = TC_AWAIT(
-          this->_client->getProvisionalIdentityKeys(verification, _userSecret));
-    }
-    else
+    if (emailVerification->email != Email{_provisionalIdentity->value})
     {
       throw Exception(make_error_code(Errc::InvalidArgument),
-                      "unknown verification method for provisional identity");
+                      "verification email does not match provisional identity");
     }
-    if (!tankerKeys)
-    {
-      TINFO("Nothing to claim");
-      return;
-    }
-    auto block = _blockGenerator.provisionalIdentityClaim(
-        _userId,
-        SecretProvisionalUser{_provisionalIdentity->target,
-                              _provisionalIdentity->value,
-                              _provisionalIdentity->appEncryptionKeyPair,
-                              tankerKeys->encryptionKeyPair,
-                              _provisionalIdentity->appSignatureKeyPair,
-                              tankerKeys->signatureKeyPair},
-        TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-    TC_AWAIT(_client->pushBlock(block));
-    _provisionalIdentity = nonstd::nullopt;
-    TC_AWAIT(syncTrustchain());
+    tankerKeys = TC_AWAIT(
+        this->_client->getProvisionalIdentityKeys(verification, _userSecret));
   }
-  catch (ServerError const& e)
+  else
   {
-    if (e.serverCode() == "invalid_verification_code" ||
-        e.serverCode() == "authentication_failed")
-      throw formatEx(Errc::InvalidVerification, "{}", e.what());
-    else
-      throw;
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "unknown verification method for provisional identity");
   }
+  if (!tankerKeys)
+  {
+    TINFO("Nothing to claim");
+    return;
+  }
+  auto block = _blockGenerator.provisionalIdentityClaim(
+      _userId,
+      SecretProvisionalUser{_provisionalIdentity->target,
+                            _provisionalIdentity->value,
+                            _provisionalIdentity->appEncryptionKeyPair,
+                            tankerKeys->encryptionKeyPair,
+                            _provisionalIdentity->appSignatureKeyPair,
+                            tankerKeys->signatureKeyPair},
+      TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+  TC_AWAIT(_client->pushBlock(block));
+  _provisionalIdentity = nonstd::nullopt;
+  TC_AWAIT(syncTrustchain());
 }
 
 std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const

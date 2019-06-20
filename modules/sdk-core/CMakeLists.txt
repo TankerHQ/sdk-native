@@ -87,8 +87,6 @@ add_library(tankercore STATIC
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
   include/Tanker/Unlock/Create.hpp
-  include/Tanker/Unlock/Messages.hpp
-  include/Tanker/Unlock/DeviceLocker.hpp
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
   include/Tanker/Opener.hpp
@@ -98,7 +96,6 @@ add_library(tankercore STATIC
   include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
-  include/Tanker/ServerError.hpp
   include/Tanker/Index.hpp
   include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
@@ -126,6 +123,8 @@ add_library(tankercore STATIC
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/IdentityUtils.hpp
+  include/Tanker/Server/Errors/Errc.hpp
+  include/Tanker/Server/Errors/ErrcCategory.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
@@ -154,12 +153,10 @@ add_library(tankercore STATIC
   src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
-  src/ServerError.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
-  src/Unlock/Messages.cpp
   src/Unlock/Verification.cpp
   src/Session.cpp
   src/Opener.cpp
@@ -191,6 +188,8 @@ add_library(tankercore STATIC
   src/User.cpp
   src/UserAccessor.cpp
   src/Revocation.cpp
+  src/Server/Errors/Errc.cpp
+  src/Server/Errors/ErrcCategory.cpp
   src/Verif/Errors/Errc.cpp
   src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp
