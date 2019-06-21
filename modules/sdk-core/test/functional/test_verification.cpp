@@ -38,8 +38,62 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto const email = Email{"kirby@dreamland.nes"};
 
   SUBCASE(
-      "it throws adequate exceptions when verificationKey public signature key "
-      "is corrupted")
+      "registerIdentity throws adequate exception when verificationKey public "
+      "signature key is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the public signature key
+    ghostDevice.privateSignatureKey[2]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
+
+  SUBCASE(
+      "registerIdentity throws adequate exception when verificationKey private "
+      "signature key is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the private signature key
+    ghostDevice.privateSignatureKey[60]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
+
+  SUBCASE(
+      "registerIdentity throws adequate exception when verificationKey private "
+      "encryption key is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the private encryption key
+    ghostDevice.privateEncryptionKey[2]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
+
+  SUBCASE(
+      "verify identity throws adequate exceptions when verificationKey public "
+      "signature key is corrupted")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     TC_AWAIT(core1->registerIdentity(verificationKey));
@@ -66,8 +120,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   }
 
   SUBCASE(
-      "it throws adequate exceptions when verificationKey private signature "
-      "key is corrupted")
+      "verify identity throws adequate exceptions when verificationKey private "
+      "signature key is corrupted")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     TC_AWAIT(core1->registerIdentity(verificationKey));
@@ -94,8 +148,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   }
 
   SUBCASE(
-      "it throws adequate exceptions when verificationKey private encryption "
-      "key is corrupted")
+      "verify identity throws adequate exceptions when verificationKey private "
+      "encryption key is corrupted")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     TC_AWAIT(core1->registerIdentity(verificationKey));
