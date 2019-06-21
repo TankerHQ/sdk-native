@@ -16,6 +16,7 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -110,17 +111,29 @@ tc::cotask<void> Opener::unlockCurrentDevice(
   TINFO("unlockCurrentDevice");
   FUNC_TIMER(Proc);
 
-  auto const ghostDevice = GhostDevice::create(verificationKey);
-  auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
-      _info.trustchainId,
-      Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey).publicKey));
+  try
+  {
+    auto const ghostDevice = GhostDevice::create(verificationKey);
+    auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
+        _info.trustchainId,
+        Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey)
+            .publicKey));
 
-  auto const block = Unlock::createValidatedDevice(_info.trustchainId,
-                                                   _identity->delegation.userId,
-                                                   ghostDevice,
-                                                   _keyStore->deviceKeys(),
-                                                   encryptedUserKey);
-  TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
+    auto const block =
+        Unlock::createValidatedDevice(_info.trustchainId,
+                                      _identity->delegation.userId,
+                                      ghostDevice,
+                                      _keyStore->deviceKeys(),
+                                      encryptedUserKey);
+    TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
+  }
+  catch (Exception const& e)
+  {
+    if (e.errorCode() == Server::Errc::DeviceNotFound ||
+        e.errorCode() == Errc::DecryptionFailed)
+      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
+    throw;
+  }
 }
 
 Session::Config Opener::makeConfig()

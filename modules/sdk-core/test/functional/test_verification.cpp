@@ -6,6 +6,7 @@
 #include <Helpers/Errors.hpp>
 
 #include <doctest.h>
+#include <nlohmann/json.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -35,6 +36,90 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
   auto const password = Passphrase{"my password"};
   auto const email = Email{"kirby@dreamland.nes"};
+
+  SUBCASE(
+      "it throws adequate exceptions when verificationKey public signature key "
+      "is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    TC_AWAIT(core1->registerIdentity(verificationKey));
+
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the public signature key
+    ghostDevice.privateSignatureKey[2]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    auto aliceIdentity =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+            .get<Identity::SecretPermanentIdentity>();
+    auto identity =
+        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+
+    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+             Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
+
+  SUBCASE(
+      "it throws adequate exceptions when verificationKey private signature "
+      "key is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    TC_AWAIT(core1->registerIdentity(verificationKey));
+
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the private signature key
+    ghostDevice.privateSignatureKey[60]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    auto aliceIdentity =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+            .get<Identity::SecretPermanentIdentity>();
+    auto identity =
+        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+
+    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+             Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
+
+  SUBCASE(
+      "it throws adequate exceptions when verificationKey private encryption "
+      "key is corrupted")
+  {
+    auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
+    TC_AWAIT(core1->registerIdentity(verificationKey));
+
+    auto ghostDevice =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+            .get<GhostDevice>();
+    // Corrupt the private encryption key
+    ghostDevice.privateEncryptionKey[2]++;
+    verificationKey = VerificationKey{
+        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+
+    auto aliceIdentity =
+        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+            .get<Identity::SecretPermanentIdentity>();
+    auto identity =
+        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+
+    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+             Status::IdentityVerificationNeeded);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(verificationKey)),
+        Errc::InvalidVerification);
+  }
 
   SUBCASE("it creates an verificationKey and use it to add a second device")
   {
