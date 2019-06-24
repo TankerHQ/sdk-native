@@ -16,7 +16,7 @@ GhostDevice GhostDevice::create(VerificationKey const& key) try
 }
 catch (std::exception const& e)
 {
-  throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+  throw Errors::Exception(make_error_code(Errors::Errc::InvalidVerification),
                           "invalid verification key");
 }
 
