@@ -3,6 +3,7 @@
 
 #include <ctanker/async.h>
 #include <ctanker/base64.h>
+#include <ctanker/export.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -217,19 +218,19 @@ struct tanker_attach_result
  * Allow to access version.
  * \return The current version of Tanker as a string.
  */
-char const* tanker_version_string(void);
+CTANKER_EXPORT char const* tanker_version_string(void);
 
 /*!
  * Set the log handler of the API with a function pointer
  * \param handler the function pointer, it must have the prototype of
  *        tanker_log_handler_t.
  */
-void tanker_set_log_handler(tanker_log_handler_t handler);
+CTANKER_EXPORT void tanker_set_log_handler(tanker_log_handler_t handler);
 
 /*!
  * Initialize the SDK
  */
-void tanker_init(void);
+CTANKER_EXPORT void tanker_init(void);
 
 /*!
  * Create a Tanker instance.
@@ -240,7 +241,7 @@ void tanker_init(void);
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p options is NULL, or lacks mandatory
  *         fields, or has malformed fields
  */
-tanker_future_t* tanker_create(tanker_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_create(tanker_options_t const* options);
 
 /*!
  * Destroy a tanker instance.
@@ -248,7 +249,7 @@ tanker_future_t* tanker_create(tanker_options_t const* options);
  * \pre The tanker parameter has been allocated.
  * \return an async future.
  */
-tanker_future_t* tanker_destroy(tanker_t* tanker);
+CTANKER_EXPORT tanker_future_t* tanker_destroy(tanker_t* tanker);
 
 /*!
  * Connect to an event.
@@ -259,10 +260,11 @@ tanker_future_t* tanker_destroy(tanker_t* tanker);
  * \warning Do not call this function after the session has been started.
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p event does not exist
  */
-tanker_expected_t* tanker_event_connect(tanker_t* tanker,
-                                        enum tanker_event event,
-                                        tanker_event_callback_t cb,
-                                        void* data);
+CTANKER_EXPORT tanker_expected_t* tanker_event_connect(
+    tanker_t* tanker,
+    enum tanker_event event,
+    tanker_event_callback_t cb,
+    void* data);
 
 /*!
  * Disconnect from an event.
@@ -270,8 +272,8 @@ tanker_expected_t* tanker_event_connect(tanker_t* tanker,
  * \param event The event to disconnect.
  * \return an expected of NULL.
  */
-tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
-                                           enum tanker_event event);
+CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(
+    tanker_t* tanker, enum tanker_event event);
 
 /*!
  * Sign up to Tanker.
@@ -284,7 +286,8 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
+CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
+                                             char const* identity);
 
 /*!
  * Register a verification method associated with an identity.
@@ -300,7 +303,7 @@ tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_register_identity(
+CTANKER_EXPORT tanker_future_t* tanker_register_identity(
     tanker_t* tanker, tanker_verification_t const* verification);
 
 /*!
@@ -317,7 +320,7 @@ tanker_future_t* tanker_register_identity(
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_verify_identity(
+CTANKER_EXPORT tanker_future_t* tanker_verify_identity(
     tanker_t* tanker, tanker_verification_t const* verification);
 
 /*!
@@ -326,7 +329,7 @@ tanker_future_t* tanker_verify_identity(
  * \pre tanker must be allocated with tanker_create().
  * \pre tanker must be opened with tanker_open().
  */
-tanker_future_t* tanker_stop(tanker_t* tanker);
+CTANKER_EXPORT tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
  * The current Tanker status.
@@ -334,7 +337,7 @@ tanker_future_t* tanker_stop(tanker_t* tanker);
  * \pre tanker must be allocated with tanker_create().
  * \return the current Tanker status.
  */
-enum tanker_status tanker_status(tanker_t* tanker);
+CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
  * Get the current device id.
@@ -342,7 +345,7 @@ enum tanker_status tanker_status(tanker_t* tanker);
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer.
  */
-tanker_future_t* tanker_device_id(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_device_id(tanker_t* session);
 
 /*!
  * Get the list of the user's devices.
@@ -351,7 +354,7 @@ tanker_future_t* tanker_device_id(tanker_t* session);
  * \return a future of tanker_device_list_t* that must be freed with
  * tanker_free_device_list.
  */
-tanker_future_t* tanker_get_device_list(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_get_device_list(tanker_t* session);
 
 /*!
  * Generate an verificationKey that can be used to accept a device
@@ -361,7 +364,8 @@ tanker_future_t* tanker_get_device_list(tanker_t* session);
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_generate_verification_key(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
+    tanker_t* session);
 
 /*!
  * Registers, or updates, the user's unlock claims,
@@ -371,7 +375,7 @@ tanker_future_t* tanker_generate_verification_key(tanker_t* session);
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future to void
  */
-tanker_future_t* tanker_set_verification_method(
+CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
     tanker_t* session, tanker_verification_t const* verification);
 
 /*!
@@ -380,13 +384,14 @@ tanker_future_t* tanker_set_verification_method(
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a tanker_verification_method_list_t*
  */
-tanker_future_t* tanker_get_verification_methods(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_get_verification_methods(
+    tanker_t* session);
 
 /*!
  * Get the encrypted size from the clear size.
  * Must be called before encrypt to allocate the encrypted buffer.
  */
-uint64_t tanker_encrypted_size(uint64_t clear_size);
+CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size);
 
 /*!
  * Get the decrypted size.
@@ -398,15 +403,15 @@ uint64_t tanker_encrypted_size(uint64_t clear_size);
  * \throws TANKER_ERROR_DECRYPT_FAILED the
  * buffer is corrupt or truncated
  */
-tanker_expected_t* tanker_decrypted_size(uint8_t const* encrypted_data,
-                                         uint64_t encrypted_size);
+CTANKER_EXPORT tanker_expected_t* tanker_decrypted_size(
+    uint8_t const* encrypted_data, uint64_t encrypted_size);
 
 /*!
  * Get the resource id from an encrypted data.
  * \return an already ready future of a string.
  */
-tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypted_data,
-                                          uint64_t encrypted_size);
+CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(
+    uint8_t const* encrypted_data, uint64_t encrypted_size);
 
 /*!
  * Encrypt data.
@@ -424,11 +429,12 @@ tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypted_data,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_encrypt(tanker_t* tanker,
-                                uint8_t* encrypted_data,
-                                uint8_t const* data,
-                                uint64_t data_size,
-                                tanker_encrypt_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_encrypt(
+    tanker_t* tanker,
+    uint8_t* encrypted_data,
+    uint8_t const* data,
+    uint64_t data_size,
+    tanker_encrypt_options_t const* options);
 
 /*!
  * Decrypt an encrypted data.
@@ -445,10 +451,10 @@ tanker_future_t* tanker_encrypt(tanker_t* tanker,
  * \throws TANKER_ERROR_DECRYPT_FAILED The buffer was corrupt or truncated
  * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found
  */
-tanker_future_t* tanker_decrypt(tanker_t* session,
-                                uint8_t* decrypted_data,
-                                uint8_t const* data,
-                                uint64_t data_size);
+CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
+                                               uint8_t* decrypted_data,
+                                               uint8_t const* data,
+                                               uint64_t data_size);
 
 /*!
  * Share a symetric key of an encrypted data with other users.
@@ -472,13 +478,14 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_share(tanker_t* session,
-                              char const* const* recipient_public_identities,
-                              uint64_t nb_recipient_public_identities,
-                              char const* const* recipient_gids,
-                              uint64_t nb_recipient_gids,
-                              b64char const* const* resource_ids,
-                              uint64_t nb_resource_ids);
+CTANKER_EXPORT tanker_future_t* tanker_share(
+    tanker_t* session,
+    char const* const* recipient_public_identities,
+    uint64_t nb_recipient_public_identities,
+    char const* const* recipient_gids,
+    uint64_t nb_recipient_gids,
+    b64char const* const* resource_ids,
+    uint64_t nb_resource_ids);
 
 /*!
  * Attach a provisional identity to the current user
@@ -491,7 +498,7 @@ tanker_future_t* tanker_share(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-tanker_future_t* tanker_attach_provisional_identity(
+CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(
     tanker_t* session, char const* provisional_identity);
 
 /*!
@@ -506,7 +513,7 @@ tanker_future_t* tanker_attach_provisional_identity(
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-tanker_future_t* tanker_verify_provisional_identity(
+CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(
     tanker_t* session, tanker_verification_t const* verification);
 
 /*!
@@ -522,17 +529,17 @@ tanker_future_t* tanker_verify_provisional_identity(
  * \throws TANKER_INVALID_ARGUMENT The device_id in parameter correspond to
  * another user's device.
  */
-tanker_future_t* tanker_revoke_device(tanker_t* session,
-                                      b64char const* device_id);
+CTANKER_EXPORT tanker_future_t* tanker_revoke_device(tanker_t* session,
+                                                     b64char const* device_id);
 
-void tanker_free_buffer(void const* buffer);
+CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
-void tanker_free_device_list(tanker_device_list_t* list);
+CTANKER_EXPORT void tanker_free_device_list(tanker_device_list_t* list);
 
-void tanker_free_verification_method_list(
+CTANKER_EXPORT void tanker_free_verification_method_list(
     tanker_verification_method_list_t* list);
 
-void tanker_free_attach_result(tanker_attach_result_t* result);
+CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
 
 #ifdef __cplusplus
 }

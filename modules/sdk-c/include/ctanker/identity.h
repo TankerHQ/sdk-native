@@ -3,6 +3,7 @@
 
 #include <ctanker/async.h>
 #include <ctanker/base64.h>
+#include <ctanker/export.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,9 +17,10 @@ extern "C" {
  * \return an expected (ready future) of base64-encoded identity (b64char*)
  * \post the identity must be freed with tanker_free_buffer()
  */
-tanker_expected_t* tanker_create_identity(b64char const* trustchain_id,
-                                          b64char const* trustchain_private_key,
-                                          char const* user_id);
+CTANKER_EXPORT tanker_expected_t* tanker_create_identity(
+    b64char const* trustchain_id,
+    b64char const* trustchain_private_key,
+    char const* user_id);
 
 /*!
  * Generate a new Tanker provisional identity
@@ -27,7 +29,7 @@ tanker_expected_t* tanker_create_identity(b64char const* trustchain_id,
  * \return an expected (ready future) of base64-encoded identity (b64char*)
  * \post the identity must be freed with tanker_free_buffer()
  */
-tanker_expected_t* tanker_create_provisional_identity(
+CTANKER_EXPORT tanker_expected_t* tanker_create_provisional_identity(
     b64char const* trustchain_id, char const* email);
 
 /*!
@@ -39,9 +41,10 @@ tanker_expected_t* tanker_create_provisional_identity(
  * \post the identity must be freed with tanker_free_buffer()
  * \throws TANKER_INVALID_ARGUMENT if the wrong userId is provided
  */
-tanker_expected_t* tanker_upgrade_user_token(b64char const* trustchain_id,
-                                             char const* user_id,
-                                             b64char const* user_token);
+CTANKER_EXPORT tanker_expected_t* tanker_upgrade_user_token(
+    b64char const* trustchain_id,
+    char const* user_id,
+    b64char const* user_token);
 
 /*!
  * Get a Public Identity from an Identity
@@ -50,7 +53,8 @@ tanker_expected_t* tanker_upgrade_user_token(b64char const* trustchain_id,
  * (b64char*)
  * \post the public identity must be freed with tanker_free_buffer()
  */
-tanker_expected_t* tanker_get_public_identity(b64char const* identity);
+CTANKER_EXPORT tanker_expected_t* tanker_get_public_identity(
+    b64char const* identity);
 #ifdef __cplusplus
 }
 #endif

@@ -3,6 +3,7 @@
 
 #include <ctanker/async.h>
 #include <ctanker/base64.h>
+#include <ctanker/export.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,29 +26,30 @@ typedef struct tanker_admin tanker_admin_t;
  * \param id_token The authentication token string for the admin API
  * \return The admin instance. Free with tanker_admin_destroy.
  */
-tanker_future_t* tanker_admin_connect(char const* trustchain_url,
-                                      char const* id_token);
+CTANKER_EXPORT tanker_future_t* tanker_admin_connect(char const* trustchain_url,
+                                                     char const* id_token);
 
 /*!
  * Creates a new trustchain
  *
- * \return The trustchain_descriptor. Free with tanker_admin_trustchain_descriptor_free
+ * \return The trustchain_descriptor. Free with
+ * tanker_admin_trustchain_descriptor_free
  */
-tanker_future_t* tanker_admin_create_trustchain(tanker_admin_t* admin,
-                                                char const* name);
+CTANKER_EXPORT tanker_future_t* tanker_admin_create_trustchain(
+    tanker_admin_t* admin, char const* name);
 
 /*!
  * Deletes the trustchain permanently
  *
  * \return A future that resolves when the trustchain has been deleted
  */
-tanker_future_t* tanker_admin_delete_trustchain(tanker_admin_t* admin,
-                                                char const* trustchain_id);
+CTANKER_EXPORT tanker_future_t* tanker_admin_delete_trustchain(
+    tanker_admin_t* admin, char const* trustchain_id);
 
 /*!
  * Frees the trustchain descriptor structure
  */
-void tanker_admin_trustchain_descriptor_free(
+CTANKER_EXPORT void tanker_admin_trustchain_descriptor_free(
     tanker_trustchain_descriptor_t* trustchain);
 
 /*!
@@ -55,14 +57,13 @@ void tanker_admin_trustchain_descriptor_free(
  *
  * \return A future that resolves when the instance has been deleted.
  */
-tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin);
+CTANKER_EXPORT tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin);
 
 /*!
  * Gets verification code of a user from the server
  */
-tanker_future_t* tanker_admin_get_verification_code(
+CTANKER_EXPORT tanker_future_t* tanker_admin_get_verification_code(
     tanker_admin_t* admin, char const* trustchain_id, char const* user_email);
-
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.4)
 
 project(TankerSDK-C)
+include(GenerateExportHeader)
 
 if(TANKERLIB_SHARED)
   set(tankerlib_type SHARED)
@@ -29,10 +30,15 @@ add_library(ctanker ${tankerlib_type}
   src/groups.cpp
 )
 
+generate_export_header(ctanker
+  EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/ctanker/export.h
+  )
+
 target_link_libraries(ctanker PUBLIC tankercore tankercrypto tankeridentity CONAN_PKG::cppcodec)
 target_include_directories(ctanker
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 if(BUILD_SHARED_LIBS)
@@ -54,6 +60,8 @@ install(TARGETS ctanker
 )
 
 install(DIRECTORY include DESTINATION .)
+install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION .)
+
 if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
