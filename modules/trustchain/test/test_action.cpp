@@ -1,8 +1,10 @@
 #include <Tanker/Trustchain/Action.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
@@ -16,7 +18,7 @@ TEST_CASE("Action tests")
 
   SUBCASE("Action variant functions")
   {
-    CHECK(dc.holdsAlternative<DeviceCreation>());
+    CHECK(dc.holds_alternative<DeviceCreation>());
     CHECK(dc.get_if<DeviceCreation>() != nullptr);
     CHECK(dc.get_if<DeviceRevocation>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation>());
@@ -30,6 +32,8 @@ TEST_CASE("Action tests")
     CHECK(Serialization::serialize(dc) == payload);
     CHECK(Action::deserialize(Nature::DeviceCreation, payload) == dc);
 
-    CHECK_THROWS(Action::deserialize(static_cast<Nature>(-1), payload));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Action::deserialize(static_cast<Nature>(-1), payload),
+        Errc::InvalidBlockNature);
   }
 }

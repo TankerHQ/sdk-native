@@ -6,7 +6,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/serialized_size.hpp>
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace Tanker
 {

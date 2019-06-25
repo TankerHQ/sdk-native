@@ -4,20 +4,23 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 
 #include <algorithm>
 #include <vector>
 
 using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -31,8 +34,8 @@ tc::cotask<void> ensureDeviceIsFromUser(Trustchain::DeviceId const& deviceId,
   auto const userId = TC_AWAIT(contactStore.findUserIdByDeviceId(deviceId));
   if (!userId || userId != selfUserId)
   {
-    throw Error::formatEx<Error::DeviceNotFound>(fmt::format(
-        "Unknown device: {:s}", cppcodec::base64_rfc4648::encode(deviceId)));
+    throw formatEx(
+        Errc::InvalidArgument, TFMT("unknown device: {:s}"), deviceId);
   }
 }
 
@@ -42,13 +45,12 @@ tc::cotask<User> getUserFromUserId(UserId const& selfUserId,
   auto const user = TC_AWAIT(contactStore.findUser(selfUserId));
   if (!user)
   {
-    throw Error::InternalError(
-        "User associated with given deviceId should be a valid user");
+    throw formatEx(
+        Errc::InternalError,
+        "user associated with given deviceId should be a valid user");
   }
   if (!user->userKey)
-  {
-    throw Error::InternalError("User should always have a userKey");
-  }
+    throw formatEx(Errc::InternalError, "user should always have a user key");
 
   TC_RETURN(*user);
 }
@@ -150,7 +152,8 @@ tc::cotask<void> onOtherDeviceRevocation(
     // deviceId is null for the first pass where the device has not been created
     if (*userId == selfUserId && !deviceId.is_null())
     {
-      auto const sealedUserKeysForDevices = deviceRevocation2->sealedUserKeysForDevices();
+      auto const sealedUserKeysForDevices =
+          deviceRevocation2->sealedUserKeysForDevices();
       auto const sealedPrivateUserKey =
           std::find_if(sealedUserKeysForDevices.begin(),
                        sealedUserKeysForDevices.end(),

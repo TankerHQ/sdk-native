@@ -1,5 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 
+#include <Tanker/Errors/Exception.hpp>
+
 #include <sodium/crypto_aead_xchacha20poly1305.h>
 #include <sodium/crypto_generichash.h>
 #include <sodium/crypto_scalarmult.h>
@@ -10,7 +12,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
+
+using Tanker::Errors::Exception;
 
 namespace Tanker
 {
@@ -42,7 +45,7 @@ void asymDecryptImpl(gsl::span<uint8_t const> cipherData,
                            senderKey.data(),
                            recipientKey.data());
   if (error != 0)
-    throw DecryptFailed("asymmetric decryption failed");
+    throw Exception(Errc::AsymmetricDecryptionFailed);
 }
 
 void sealDecryptImpl(gsl::span<uint8_t const> cipherData,
@@ -56,7 +59,7 @@ void sealDecryptImpl(gsl::span<uint8_t const> cipherData,
                                           recipientKeyPair.publicKey.data(),
                                           recipientKeyPair.privateKey.data());
   if (error != 0)
-    throw DecryptFailed("asymmetric decryption failed");
+    throw Exception(Errc::SealedDecryptionFailed);
 }
 
 void asymEncryptImpl(gsl::span<uint8_t const> clearData,
@@ -77,7 +80,7 @@ void asymEncryptImpl(gsl::span<uint8_t const> clearData,
                                      recipientKey.data(),
                                      senderKey.data());
   if (error != 0)
-    throw std::runtime_error("encryption failed");
+    throw Exception(Errc::AsymmetricEncryptionFailed);
 }
 
 void sealEncryptImpl(gsl::span<uint8_t const> clearData,
@@ -90,7 +93,7 @@ void sealEncryptImpl(gsl::span<uint8_t const> clearData,
                                      clearData.size(),
                                      recipientKey.data());
   if (error != 0)
-    throw std::runtime_error("encryption failed");
+    throw Exception(Errc::SealedEncryptionFailed);
 }
 }
 
@@ -187,14 +190,21 @@ size_t encryptedSize(size_t const clearSize)
 size_t decryptedSize(size_t const encryptedSize)
 {
   if (encryptedSize < aeadOverhead)
-    throw std::runtime_error("invalid encrypted size");
+    throw Exception(Errc::InvalidEncryptedDataSize);
   return encryptedSize - aeadOverhead;
 }
 
 gsl::span<uint8_t const> extractMac(gsl::span<uint8_t const> encryptedData)
 {
-  return encryptedData.subspan(encryptedData.size() - aeadOverhead,
-                               crypto_aead_xchacha20poly1305_ietf_ABYTES);
+  try
+  {
+    return encryptedData.subspan(encryptedData.size() - aeadOverhead,
+                                 crypto_aead_xchacha20poly1305_ietf_ABYTES);
+  }
+  catch (gsl::fail_fast const&)
+  {
+    throw Exception(Errc::InvalidEncryptedDataSize);
+  }
 }
 
 gsl::span<uint8_t const> encryptAead(SymmetricKey const& key,
@@ -260,7 +270,7 @@ void decryptAead(SymmetricKey const& key,
                                                  iv,
                                                  key.data());
   if (error != 0)
-    throw DecryptFailed("MAC verification failed");
+    throw Exception(Errc::AeadDecryptionFailed, "MAC verification failed");
 }
 
 std::vector<uint8_t> decryptAead(SymmetricKey const& key,

@@ -55,13 +55,13 @@ emscripten::val currentExceptionToJs()
   {
     return emscripten::val(
         EmError{Error::Code::InvalidArgument,
-                fmt::format(fmt("invalid base64: {:s}"), e.what())});
+                fmt::format(TFMT("invalid base64: {:s}"), e.what())});
   }
   catch (cppcodec::invalid_output_length const& e)
   {
     return emscripten::val(
         EmError{Error::Code::InvalidArgument,
-                fmt::format(fmt("invalid base64 length: {:s}"), e.what())});
+                fmt::format(TFMT("invalid base64 length: {:s}"), e.what())});
   }
   catch (Tanker::Error::Exception const& e)
   {
@@ -99,8 +99,8 @@ EMSCRIPTEN_BINDINGS(jserrors)
       .value("DecryptFailed", Tanker::Error::Code::DecryptFailed)
       .value("InvalidVerificationKey", Tanker::Error::Code::InvalidVerificationKey)
       .value("InternalError", Tanker::Error::Code::InternalError)
-      .value("InvalidUnlockPassword",
-             Tanker::Error::Code::InvalidUnlockPassword)
+      .value("InvalidUnlockPassphrase",
+             Tanker::Error::Code::InvalidUnlockPassphrase)
       .value("InvalidVerificationCode",
              Tanker::Error::Code::InvalidVerificationCode)
       .value("VerificationKeyAlreadyExists",

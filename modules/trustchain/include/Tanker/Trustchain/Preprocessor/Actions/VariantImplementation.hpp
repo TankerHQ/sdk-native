@@ -36,7 +36,7 @@ public:                                                                \
   }                                                                    \
                                                                        \
   template <typename T>                                                \
-  bool holdsAlternative() const                                        \
+  bool holds_alternative() const                                       \
   {                                                                    \
     return mpark::holds_alternative<T>(_variant);                      \
   }                                                                    \
@@ -76,3 +76,7 @@ public:                                                                \
     name, types_tuple, ...)                              \
   TANKER_DETAIL_DEFINE_ACTION_VARIANT(                   \
       name, types_tuple, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+#define TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(name,        \
+                                                             types_tuple) \
+  TANKER_DETAIL_DEFINE_ACTION_VARIANT(name, types_tuple, BOOST_PP_EMPTY())

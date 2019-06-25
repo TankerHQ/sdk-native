@@ -1,9 +1,11 @@
 #include <Tanker/Block.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -45,7 +47,7 @@ Crypto::Hash Block::hash() const
                        payload.size());
   auto it = hashedPayload.data();
   it = Serialization::varint_write(it, natureInt);
-  it = Serialization::serialize(it , author);
+  it = Serialization::serialize(it, author);
   std::copy(payload.begin(), payload.end(), it);
 
   return Crypto::generichash(hashedPayload);
@@ -74,8 +76,13 @@ void from_serialized(Serialization::SerializedSource& ss, Block& b)
   auto const version = ss.read_varint();
 
   if (version != 1)
-    throw std::runtime_error("unsupported block version: " +
-                             std::to_string(version));
+  {
+    // TODO should not have a Trustchain Errc,
+    // Block should be removed in the future
+    throw Errors::formatEx(Trustchain::Errc::InvalidBlockVersion,
+                           "unsupported block version: {}",
+                           version);
+  }
   b.index = ss.read_varint();
   b.trustchainId = Serialization::deserialize<Trustchain::TrustchainId>(ss);
   b.nature = static_cast<Nature>(ss.read_varint());
@@ -106,7 +113,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, Block const& b)
 
 void to_json(nlohmann::json& j, Block const& b)
 {
-  j["trustchainId"] = b.trustchainId;
+  j["trustchain_id"] = b.trustchainId;
   j["index"] = b.index;
   j["author"] = b.author;
   j["nature"] = b.nature;

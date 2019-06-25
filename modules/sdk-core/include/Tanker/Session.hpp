@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/ContactStore.hpp>
@@ -8,6 +9,7 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -20,18 +22,17 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
-#include <Tanker/Unlock/Options.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -46,11 +47,6 @@
 
 namespace Tanker
 {
-namespace Unlock
-{
-struct Registration;
-}
-
 struct Entry;
 struct UnverifiedEntry;
 
@@ -66,6 +62,7 @@ public:
     std::unique_ptr<DeviceKeyStore> deviceKeyStore;
     std::unique_ptr<Client> client;
   };
+  using DeviceRevokedHandler = std::function<void()>;
 
   Session(Config&&);
 
@@ -93,32 +90,20 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<std::unique_ptr<Unlock::Registration>> generateVerificationKey();
+  tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
+  std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
 
-  tc::cotask<void> registerVerificationKey(Unlock::Registration const& registration);
-
-  tc::cotask<void> createVerificationKey(Unlock::CreationOptions const& options);
-
-  tc::cotask<void> updateUnlock(Unlock::UpdateOptions const& options);
-
-  tc::cotask<void> registerUnlock(Unlock::RegistrationOptions const& options);
-
-  tc::cotask<VerificationKey> generateAndRegisterVerificationKey();
-
-  tc::cotask<bool> isUnlockAlreadySetUp() const;
-  Unlock::Methods registeredUnlockMethods() const;
-  tc::cotask<void> claimProvisionalIdentity(
-      SSecretProvisionalIdentity const& identity,
-      VerificationCode const& verificationCode);
-  bool hasRegisteredUnlockMethods() const;
-  bool hasRegisteredUnlockMethod(Unlock::Method) const;
+  tc::cotask<AttachResult> attachProvisionalIdentity(
+      SSecretProvisionalIdentity const& sidentity);
+  tc::cotask<void> verifyProvisionalIdentity(
+      Unlock::Verification const& verification);
 
   tc::cotask<void> syncTrustchain();
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  boost::signals2::signal<void()> deviceRevoked;
-  boost::signals2::signal<void(Trustchain::DeviceId const&)> gotDeviceId;
+  DeviceRevokedHandler deviceRevoked;
+  std::function<void(Trustchain::DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(
       Trustchain::DeviceId const& id,
@@ -137,7 +122,7 @@ private:
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
-  void updateLocalUnlockMethods(Unlock::RegistrationOptions const& methods);
+  void updateLocalUnlockMethods(Unlock::Verification const& method);
 
 private:
   Trustchain::TrustchainId _trustchainId;
@@ -159,7 +144,8 @@ private:
   UserAccessor _userAccessor;
   GroupAccessor _groupAcessor;
   BlockGenerator _blockGenerator;
-  Unlock::Methods _unlockMethods;
+  std::map<Unlock::Method, Unlock::VerificationMethod> _verificationMethods;
+  nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;

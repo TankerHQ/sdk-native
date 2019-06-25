@@ -1,6 +1,6 @@
 #include <Tanker/Format/Json.hpp>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 #include <nlohmann/json.hpp>
 
 namespace Tanker

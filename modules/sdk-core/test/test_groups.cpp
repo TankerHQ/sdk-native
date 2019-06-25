@@ -1,14 +1,15 @@
 #include <Tanker/Groups/Manager.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UserNotFound.hpp>
 
 #include <Helpers/Await.hpp>
+#include <Helpers/Errors.hpp>
 
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
@@ -24,23 +25,24 @@
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 TEST_CASE("Can't create an empty group")
 {
   TrustchainBuilder builder;
   builder.makeUser3("user");
 
-  auto const user = *builder.getUser("user");
+  auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       Groups::Manager::generateCreateGroupBlock(
           {}, {}, userBlockGenerator, groupSignatureKey, groupEncryptionKey),
-      Error::InvalidGroupSize);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Can create a group with two users")
@@ -49,8 +51,8 @@ TEST_CASE("Can create a group with two users")
   builder.makeUser3("user");
   builder.makeUser3("user2");
 
-  auto const user = *builder.getUser("user");
-  auto const user2 = *builder.getUser("user2");
+  auto const user = *builder.findUser("user");
+  auto const user2 = *builder.findUser("user2");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
@@ -98,7 +100,7 @@ TEST_CASE("Can create a group with two provisional users")
 {
   TrustchainBuilder builder;
   builder.makeUser3("user");
-  auto const user = *builder.getUser("user");
+  auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
@@ -162,10 +164,10 @@ TEST_CASE("throws when getting keys of an unknown member")
   REQUIRE_CALL(userAccessor.get_mock_impl(), pull(trompeloeil::_))
       .LR_RETURN((UserAccessor::PullResult{{}, {unknownIdentity.userId}}));
 
-  REQUIRE_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Groups::Manager::fetchFutureMembers(
           userAccessor.get(), {SPublicIdentity{to_string(unknownIdentity)}})),
-      Error::UserNotFound);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Fails to add 0 users to a group")
@@ -173,15 +175,15 @@ TEST_CASE("Fails to add 0 users to a group")
   TrustchainBuilder builder;
   builder.makeUser3("user");
 
-  auto const user = *builder.getUser("user");
+  auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   Group const group{};
 
-  CHECK_THROWS_AS(Groups::Manager::generateAddUserToGroupBlock(
-                      {}, {}, userBlockGenerator, group),
-                  Error::InvalidGroupSize);
+  TANKER_CHECK_THROWS_WITH_CODE(Groups::Manager::generateAddUserToGroupBlock(
+                                    {}, {}, userBlockGenerator, group),
+                                Errc::InvalidArgument);
 }
 
 TEST_CASE("Can add users to a group")
@@ -190,8 +192,8 @@ TEST_CASE("Can add users to a group")
   builder.makeUser3("user");
   builder.makeUser3("user2");
 
-  auto const user = *builder.getUser("user");
-  auto const user2 = *builder.getUser("user2");
+  auto const user = *builder.findUser("user");
+  auto const user2 = *builder.findUser("user2");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
@@ -237,7 +239,7 @@ TEST_CASE("Can add provisional users to a group")
 {
   TrustchainBuilder builder;
   builder.makeUser3("user");
-  auto const user = *builder.getUser("user");
+  auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 

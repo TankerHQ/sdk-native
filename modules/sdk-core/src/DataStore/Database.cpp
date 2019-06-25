@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
@@ -22,9 +23,11 @@
 #include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Index.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
@@ -34,7 +37,6 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <fmt/format.h>
 #include <optional.hpp>
 #include <sqlite3.h>
 #include <sqlpp11/functions.h>
@@ -219,8 +221,8 @@ KeyPublish rowToKeyPublish(T const& row)
         DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
   }
   default:
-    assert(false && "Unreachable code. Invalid nature for KeyPublish");
-    throw std::runtime_error{"Unreachable code. Invalid nature for KeyPublish"};
+    throw Errors::AssertionError(
+        "unreachable code. Invalid nature for KeyPublish");
   }
 }
 
@@ -284,7 +286,7 @@ int Database::currentDatabaseVersion()
   VersionTable const tab{};
   auto const rows = (*_db)(select(tab.db_version).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+    throw Errors::AssertionError("version table must have a single row");
   return static_cast<int>(rows.front().db_version);
 }
 
@@ -336,8 +338,9 @@ void Database::performUnifiedMigration()
       flushAllCaches();
       break;
     default:
-      throw std::runtime_error{"Invalid database version: " +
-                               std::to_string(currentVersion)};
+      throw Errors::formatEx(Errc::InvalidDatabaseVersion,
+                             "invalid database version: {}",
+                             currentVersion);
     }
 
     setDatabaseVersion(DataStore::latestVersion());
@@ -426,7 +429,7 @@ void Database::flushAllCaches()
 template <typename Table>
 void Database::dropTable()
 {
-  _db->execute(fmt::format("DROP TABLE {}", tableName<Table>()));
+  _db->execute(fmt::format(TFMT("DROP TABLE {:s}"), tableName<Table>()));
 }
 
 tc::cotask<void> Database::nuke()
@@ -487,8 +490,11 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
                          .from(tab)
                          .where(tab.public_encryption_key == publicKey.base()));
   if (rows.empty())
-    throw Error::formatEx<RecordNotFound>(
-        fmt("couldn't find user key for {:s}"), publicKey);
+  {
+    throw Errors::formatEx(Errc::RecordNotFound,
+                           TFMT("could not find user key for {:s}"),
+                           publicKey);
+  }
   auto const& row = *rows.begin();
 
   TC_RETURN((Crypto::EncryptionKeyPair{
@@ -527,7 +533,10 @@ tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
 
   auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  {
+    throw Errors::AssertionError(
+        "trustchain_info table must have a single row");
+  }
   if (rows.front().last_index.is_null())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(static_cast<uint64_t>(rows.front().last_index));
@@ -541,7 +550,10 @@ Database::findTrustchainPublicSignatureKey()
   auto rows = (*_db)(
       select(tab.trustchain_public_signature_key).from(tab).unconditionally());
   if (rows.empty())
-    throw std::runtime_error{"Assertion failure: table must have a single row"};
+  {
+    throw Errors::AssertionError(
+        "trustchain_info table must have a single row");
+  }
   if (rows.front().trustchain_public_signature_key.is_null())
     TC_RETURN(nonstd::nullopt);
   TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -768,6 +780,31 @@ Database::findProvisionalUserKeys(
   TC_RETURN(ret);
 }
 
+tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+Database::findProvisionalUserKeysByAppPublicEncryptionKey(
+    Crypto::PublicEncryptionKey const& appPublicEncryptionKey)
+{
+  FUNC_TIMER(DB);
+  ProvisionalUserKeysTable tab{};
+  auto rows =
+      (*_db)(select(tab.app_enc_priv,
+                    tab.app_enc_pub,
+                    tab.tanker_enc_priv,
+                    tab.tanker_enc_pub)
+                 .from(tab)
+                 .where(tab.app_enc_pub == appPublicEncryptionKey.base()));
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = rows.front();
+  Tanker::ProvisionalUserKeys ret{
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(row.app_enc_priv)},
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.tanker_enc_pub),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+           row.tanker_enc_priv)}};
+  TC_RETURN(ret);
+}
+
 tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
 {
   FUNC_TIMER(DB);
@@ -783,16 +820,14 @@ tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
     TC_RETURN(nonstd::nullopt);
 
   auto const& row = rows.front();
-  TC_RETURN((
-      DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                      row.public_signature_key),
-                  DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                      row.private_signature_key)},
-                 {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                      row.public_encryption_key),
-                  DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                      row.private_encryption_key)},
-                 DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)}));
+  TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
+                             row.public_signature_key),
+                         DataStore::extractBlob<Crypto::PrivateSignatureKey>(
+                             row.private_signature_key)},
+                        {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+                             row.public_encryption_key),
+                         DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+                             row.private_encryption_key)}}));
 }
 
 tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
@@ -804,8 +839,8 @@ tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
       tab.private_encryption_key =
           deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key = deviceKeys.encryptionKeyPair.publicKey.base(),
-      tab.device_id = deviceKeys.deviceId.base()));
+      tab.public_encryption_key =
+          deviceKeys.encryptionKeyPair.publicKey.base()));
   TC_RETURN();
 }
 
@@ -815,6 +850,19 @@ tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)
   DeviceKeysTable tab{};
   (*_db)(update(tab).set(tab.device_id = deviceId.base()).unconditionally());
   TC_RETURN();
+}
+
+tc::cotask<nonstd::optional<Trustchain::DeviceId>> Database::getDeviceId()
+{
+  FUNC_TIMER(DB);
+  DeviceKeysTable tab{};
+  auto rows = (*_db)(select(tab.device_id).from(tab).unconditionally());
+  if (rows.empty())
+    TC_RETURN(nonstd::nullopt);
+  auto const& row = rows.front();
+  if (row.device_id.len == 0)
+    TC_RETURN(nonstd::nullopt);
+  TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
 tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
@@ -912,9 +960,11 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
 {
   FUNC_TIMER(DB);
   if (!group.encryptedPrivateSignatureKey)
-    throw std::runtime_error(
-        "Assertion failed: external groups must be inserted with encrypted "
-        "private signature key");
+  {
+    throw Errors::AssertionError(
+        "external groups must be inserted with their sealed private signature "
+        "key");
+  }
 
   GroupsTable groups;
 

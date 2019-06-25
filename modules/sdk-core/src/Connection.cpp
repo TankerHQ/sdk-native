@@ -1,7 +1,6 @@
 #include <Tanker/Connection.hpp>
 
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <sio_message.h>
@@ -30,13 +29,15 @@ Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
     FUNC_END(fmt::format("connected {}", reinterpret_cast<void*>(this)), Net);
     _taskCanceler.add(tc::async([this] {
       TINFO("Connected");
-      connected();
+      if (connected)
+        connected();
     }));
   });
   _client.set_reconnect_listener([this](auto const&, auto const&) {
     _taskCanceler.add(tc::async([this] {
       TINFO("Reconnected");
-      reconnected();
+      if (reconnected)
+        reconnected();
     }));
   });
   _client.set_fail_listener([]() { TERROR("socket.io failure"); });

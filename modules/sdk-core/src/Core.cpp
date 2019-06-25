@@ -1,21 +1,23 @@
 #include <Tanker/Core.hpp>
 
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Format/Format.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -23,9 +25,10 @@
 #include <exception>
 #include <iterator>
 
-#define INVALID_STATUS(action)                 \
-  Error::formatEx<Error::InvalidTankerStatus>( \
-      fmt("invalid status {:e} for " #action), status())
+#define INVALID_STATUS(action)                               \
+  Errors::formatEx(Errors::Errc::PreconditionFailed,         \
+                   TFMT("invalid status {:e} for " #action), \
+                   status())
 
 TLOG_CATEGORY(Core);
 
@@ -41,19 +44,13 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
 
 Status Core::status() const
 {
-  assert(!_state.valueless_by_exception() &&
-         "_state variant must not be valueless");
-  if (mpark::get_if<Opener>(&_state))
-    return Status::Closed;
+  if (_state.valueless_by_exception())
+    throw Errors::AssertionError("_state variant must not be valueless");
+  if (auto core = mpark::get_if<Opener>(&_state))
+    return core->status();
   else if (mpark::get_if<SessionType>(&_state))
-    return Status::Open;
-  TERROR("unreachable code, invalid tanker status");
-  std::terminate();
-}
-
-bool Core::isOpen() const
-{
-  return this->status() == Status::Open;
+    return Status::Ready;
+  throw Errors::AssertionError("unreachable code: invalid Tanker status");
 }
 
 template <typename F>
@@ -76,89 +73,85 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
     reset();
     std::rethrow_exception(exception);
   }
-  throw std::runtime_error("unreachable code");
+  throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
-tc::cotask<void> Core::signUp(std::string const& identity,
-                              AuthenticationMethods const& authMethods)
-{
-  SCOPE_TIMER("core_signup", Proc);
-  TC_AWAIT(resetOnFailure([&]() -> tc::cotask<tc::tvoid> {
-    TC_AWAIT(signUpImpl(identity, authMethods));
-    TC_RETURN(tc::tvoid{});
-  }));
-}
-
-tc::cotask<void> Core::signUpImpl(std::string const& identity,
-                                  AuthenticationMethods const& authMethods)
+tc::cotask<Status> Core::startImpl(std::string const& identity)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
-    throw INVALID_STATUS(signUp);
-  auto openResult = TC_AWAIT(pcore->open(identity, {}, OpenMode::SignUp));
-  assert(mpark::holds_alternative<Session::Config>(openResult));
-  initSession(std::move(openResult));
-  auto const& session = mpark::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
-  if (authMethods.password || authMethods.email)
+    throw INVALID_STATUS(start);
+
+  auto status = TC_AWAIT(pcore->open(identity));
+  if (status == Status::Ready)
   {
-    Unlock::RegistrationOptions options{};
-    if (authMethods.password)
-      options.set(*authMethods.password);
-    if (authMethods.email)
-      options.set(*authMethods.email);
-    TC_AWAIT(session->registerUnlock(options));
+    initSession(TC_AWAIT(pcore->openDevice()));
+    auto const& session = mpark::get<SessionType>(_state);
+    TC_AWAIT(session->startConnection());
+    TC_RETURN(Status::Ready);
   }
+  TC_RETURN(status);
 }
 
-tc::cotask<OpenResult> Core::signIn(std::string const& identity,
-                                    SignInOptions const& signInOptions)
+tc::cotask<Status> Core::start(std::string const& identity)
 {
-  SCOPE_TIMER("core_signin", Proc);
-  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<OpenResult> {
-    TC_RETURN(TC_AWAIT(signInImpl(identity, signInOptions)));
+  SCOPE_TIMER("core_start", Proc);
+  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
+    TC_RETURN(TC_AWAIT(startImpl(identity)));
   })));
 }
 
-tc::cotask<OpenResult> Core::signInImpl(std::string const& identity,
-                                        SignInOptions const& signInOptions)
+tc::cotask<void> Core::registerIdentity(
+    Unlock::Verification const& verification)
 {
   auto pcore = mpark::get_if<Opener>(&_state);
   if (!pcore)
-    throw INVALID_STATUS(signIn);
-  auto openResult =
-      TC_AWAIT(pcore->open(identity, signInOptions, OpenMode::SignIn));
-  if (mpark::holds_alternative<Opener::StatusIdentityNotRegistered>(openResult))
-  {
-    reset();
-    TC_RETURN(OpenResult::IdentityNotRegistered);
-  }
-  else if (mpark::holds_alternative<Opener::StatusIdentityVerificationNeeded>(
-               openResult))
-  {
-    reset();
-    TC_RETURN(OpenResult::IdentityVerificationNeeded);
-  }
+    throw INVALID_STATUS(start);
+
+  auto openResult = TC_AWAIT(pcore->createUser(verification));
   initSession(std::move(openResult));
   auto const& session = mpark::get<SessionType>(_state);
   TC_AWAIT(session->startConnection());
-  TC_RETURN(OpenResult::Ok);
 }
 
-void Core::signOut()
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+{
+  SCOPE_TIMER("verify_identity", Proc);
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(verifyIdentity);
+
+  auto openResult = TC_AWAIT(pcore->createDevice(verification));
+  initSession(std::move(openResult));
+  auto const& session = mpark::get<SessionType>(_state);
+  TC_AWAIT(session->startConnection());
+}
+
+void Core::stop()
 {
   reset();
-  sessionClosed();
+  if (_sessionClosed)
+    _sessionClosed();
 }
 
-void Core::initSession(Opener::OpenResult&& openResult)
+void Core::initSession(Session::Config config)
 {
-  _state.emplace<SessionType>(std::make_unique<Session>(
-      mpark::get<Session::Config>(std::move(openResult))));
+  _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
   auto const& session = mpark::get<SessionType>(_state);
-  session->deviceRevoked.connect(deviceRevoked);
-  session->gotDeviceId.connect(
-      [this](auto const& deviceId) { _deviceId = deviceId; });
+  session->deviceRevoked = _deviceRevoked;
+  session->gotDeviceId = [this](auto const& deviceId) { _deviceId = deviceId; };
+}
+
+void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
+{
+  _deviceRevoked = std::move(handler);
+  if (auto const session = mpark::get_if<SessionType>(&_state))
+    (*session)->deviceRevoked = _deviceRevoked; // we need the copy here
+}
+
+void Core::setSessionClosedHandler(SessionClosedHandler handler)
+{
+  _sessionClosed = std::move(handler);
 }
 
 void Core::reset()
@@ -221,7 +214,7 @@ tc::cotask<void> Core::updateGroupMembers(
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
-  if (!isOpen())
+  if (status() != Status::Ready)
     throw INVALID_STATUS(deviceId);
   else
     return _deviceId;
@@ -235,63 +228,46 @@ tc::cotask<std::vector<Device>> Core::getDeviceList() const
   return (*psession)->getDeviceList();
 }
 
-tc::cotask<VerificationKey> Core::generateAndRegisterVerificationKey()
+tc::cotask<VerificationKey> Core::generateVerificationKey()
 {
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(generateAndRegisterVerificationKey);
-  TC_RETURN(TC_AWAIT((*psession)->generateAndRegisterVerificationKey()));
+  auto pcore = mpark::get_if<Opener>(&_state);
+  if (!pcore)
+    throw INVALID_STATUS(generateVerificationKey);
+  TC_RETURN(TC_AWAIT(pcore->generateVerificationKey()));
 }
 
-tc::cotask<void> Core::registerUnlock(
-    Unlock::RegistrationOptions const& options)
+tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registerUnlock);
-  TC_AWAIT((*psession)->registerUnlock(options));
+    throw INVALID_STATUS(setVerificationMethod);
+  TC_AWAIT((*psession)->setVerificationMethod(method));
 }
 
-tc::cotask<bool> Core::isUnlockAlreadySetUp() const
+std::vector<Unlock::VerificationMethod> Core::getVerificationMethods() const
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(isUnlockAlreadySetUp);
-  TC_RETURN(TC_AWAIT((*psession)->isUnlockAlreadySetUp()));
+    throw INVALID_STATUS(getVerificationMethods);
+  return (*psession)->getVerificationMethods();
 }
 
-Unlock::Methods Core::registeredUnlockMethods() const
+tc::cotask<AttachResult> Core::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registeredUnlockMethods);
-  return (*psession)->registeredUnlockMethods();
+    throw INVALID_STATUS(attachProvisionalIdentity);
+  TC_RETURN(TC_AWAIT((*psession)->attachProvisionalIdentity(sidentity)));
 }
 
-tc::cotask<void> Core::claimProvisionalIdentity(
-    SSecretProvisionalIdentity const& identity,
-    VerificationCode const& verificationCode)
+tc::cotask<void> Core::verifyProvisionalIdentity(
+    Unlock::Verification const& verification)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(registeredUnlockMethods);
-  TC_AWAIT((*psession)->claimProvisionalIdentity(identity, verificationCode));
-}
-
-bool Core::hasRegisteredUnlockMethods() const
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(hasRegisteredUnlockMethods);
-  return (*psession)->hasRegisteredUnlockMethods();
-}
-
-bool Core::hasRegisteredUnlockMethod(Unlock::Method method) const
-{
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(hasRegisteredUnlockMethod);
-  return (*psession)->hasRegisteredUnlockMethod(method);
+    throw INVALID_STATUS(verifyProvisionalIdentity);
+  TC_AWAIT((*psession)->verifyProvisionalIdentity(verification));
 }
 
 tc::cotask<void> Core::syncTrustchain()

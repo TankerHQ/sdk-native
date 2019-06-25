@@ -1,8 +1,10 @@
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 
-#include <nlohmann/json.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <nlohmann/json.hpp>
 
 namespace Tanker
 {
@@ -12,14 +14,17 @@ void from_json(nlohmann::json const& j, PublicPermanentIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target != "user")
-    throw std::runtime_error("unsupported public permanent identity target: " +
-                             target);
+  {
+    throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
+                           "unsupported permanent identity target: {}",
+                           target);
+  }
 
   if (j.find("user_secret") != j.end())
   {
-    throw std::invalid_argument(
-        "Cannot deserialize SecretPermanentIdentity in "
-        "PublicPermanentIdentity");
+    throw Errors::Exception(Errc::InvalidType,
+                            "cannot deserialize SecretPermanentIdentity in "
+                            "PublicPermanentIdentity");
   }
 
   j.at("trustchain_id").get_to(identity.trustchainId);

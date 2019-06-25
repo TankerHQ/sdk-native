@@ -7,8 +7,10 @@ namespace Tanker
 {
 enum class Status
 {
-  Closed,
-  Open,
+  Stopped,
+  Ready,
+  IdentityRegistrationNeeded,
+  IdentityVerificationNeeded,
   Last
 };
 

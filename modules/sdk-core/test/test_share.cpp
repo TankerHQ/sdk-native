@@ -1,8 +1,8 @@
 #include <Tanker/Share.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
-#include <Tanker/RecipientNotFound.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -10,6 +10,7 @@
 #include <Tanker/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
+#include <Helpers/Errors.hpp>
 
 #include "MockConnection.hpp"
 #include "TestVerifier.hpp"
@@ -24,8 +25,8 @@
 
 #include <Helpers/Buffers.hpp>
 
-using Tanker::Trustchain::GroupId;
 using namespace Tanker;
+using namespace Tanker::Errors;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
@@ -135,8 +136,8 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   builder.makeUser3("newUser");
   builder.makeUser3("keySender");
 
-  auto const newUser = *builder.getUser("newUser");
-  auto const keySender = *builder.getUser("keySender");
+  auto const newUser = *builder.findUser("newUser");
+  auto const keySender = *builder.findUser("keySender");
 
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
@@ -256,8 +257,8 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   builder.makeUser3("newUser");
   builder.makeUser3("keySender");
 
-  auto const newUser = *builder.getUser("newUser");
-  auto const keySender = *builder.getUser("keySender");
+  auto const newUser = *builder.findUser("newUser");
+  auto const keySender = *builder.findUser("keySender");
 
   mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
   mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
@@ -274,14 +275,14 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
                pull(trompeloeil::eq(gsl::span<GroupId const>{})))
       .LR_RETURN((GroupAccessor::PullResult{{}, {}}));
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Share::generateRecipientList(
           userAccessor.get(),
           groupAccessor.get(),
           {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
               builder.trustchainId(), newUser.userId})}},
           {})),
-      Error::RecipientNotFound);
+      make_error_code(Errc::InvalidArgument));
 }
 
 TEST_CASE("generateRecipientList of a not-found group should throw")
@@ -309,13 +310,13 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
       .LR_RETURN(
           (GroupAccessor::PullResult{{}, {newGroup.group.tankerGroup.id}}));
 
-  CHECK_THROWS_AS(AWAIT(Share::generateRecipientList(
-                      userAccessor.get(),
-                      groupAccessor.get(),
-                      {},
-                      {cppcodec::base64_rfc4648::encode<SGroupId>(
-                          newGroup.group.tankerGroup.id)})),
-                  Error::RecipientNotFound);
+  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(Share::generateRecipientList(
+                                    userAccessor.get(),
+                                    groupAccessor.get(),
+                                    {},
+                                    {cppcodec::base64_rfc4648::encode<SGroupId>(
+                                        newGroup.group.tankerGroup.id)})),
+                                make_error_code(Errc::InvalidArgument));
 }
 
 template <typename T>
@@ -342,8 +343,8 @@ TEST_CASE(
   builder.makeUser3("newUser");
   builder.makeUser3("keySender");
 
-  auto const newUser = *builder.getUser("newUser");
-  auto const keySender = *builder.getUser("keySender");
+  auto const newUser = *builder.findUser("newUser");
+  auto const keySender = *builder.findUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);
@@ -373,7 +374,7 @@ TEST_CASE(
   auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
   builder.makeUser3("keySender");
 
-  auto const keySender = *builder.getUser("keySender");
+  auto const keySender = *builder.findUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
   auto const keySenderBlockGenerator =
       builder.makeBlockGenerator(keySenderDevice);

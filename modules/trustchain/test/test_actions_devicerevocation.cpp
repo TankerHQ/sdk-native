@@ -19,7 +19,7 @@ TEST_CASE("DeviceRevocation tests")
   {
     DeviceRevocation dc;
 
-    CHECK(dc.holdsAlternative<DeviceRevocation::v1>());
+    CHECK(dc.holds_alternative<DeviceRevocation::v1>());
     CHECK(dc.get_if<DeviceRevocation::v1>() != nullptr);
     CHECK(dc.get_if<DeviceRevocation::v2>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceRevocation::v1>());

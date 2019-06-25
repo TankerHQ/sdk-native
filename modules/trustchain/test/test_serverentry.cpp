@@ -3,9 +3,11 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 #include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 #include <gsl-lite.hpp>
@@ -70,5 +72,17 @@ TEST_CASE("Serialization test vectors")
 
     CHECK(Serialization::deserialize<ServerEntry>(serializedServerEntry) ==
           serverEntry);
+  }
+
+  SUBCASE("it should throw when block version is unsupported")
+  {
+    std::vector<std::uint8_t> const serializedServerEntry = {
+        // varint version
+        0x0f,
+    };
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Serialization::deserialize<ServerEntry>(serializedServerEntry),
+        Errc::InvalidBlockVersion);
   }
 }

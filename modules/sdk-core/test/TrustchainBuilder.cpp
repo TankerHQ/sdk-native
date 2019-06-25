@@ -1,7 +1,7 @@
 #include "TrustchainBuilder.hpp"
 
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
@@ -34,9 +34,25 @@ TrustchainBuilder::TrustchainBuilder()
   _blocks.push_back(block);
 }
 
+namespace
+{
+TrustchainBuilder::Device createDevice()
+{
+  return TrustchainBuilder::Device{
+      {
+          Tanker::Crypto::makeSignatureKeyPair(),
+          Tanker::Crypto::makeEncryptionKeyPair(),
+      },
+      {}, // deviceId will be filled in later
+      {}, // delegation will be filled in later
+      {}  // blockIndex will be filled in later
+  };
+}
+}
+
 Tanker::Device TrustchainBuilder::Device::asTankerDevice() const
 {
-  return Tanker::Device{keys.deviceId,
+  return Tanker::Device{id,
                         blockIndex,
                         nonstd::nullopt,
                         keys.signatureKeyPair.publicKey,
@@ -102,18 +118,10 @@ auto TrustchainBuilder::makeUser(std::string const& suserId) -> ResultUser
 
 auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 {
-  if (getUser(suserId))
-    throw Error::formatEx("{} already exists", suserId);
+  if (findUser(suserId))
+    throw Errors::AssertionError(fmt::format("{} already exists", suserId));
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {}, // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
   auto const daUserId = SUserId{suserId};
   User user{
       daUserId,
@@ -135,7 +143,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   _blocks.push_back(block);
 
   user.devices[0].delegation = delegation;
-  user.devices[0].keys.deviceId = DeviceId(block.hash());
+  user.devices[0].id = DeviceId(block.hash());
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
@@ -146,18 +154,10 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 
 auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
 {
-  if (getUser(suserId))
-    throw Error::formatEx("{} already exists", suserId);
+  if (findUser(suserId))
+    throw Errors::AssertionError(fmt::format("{} already exists", suserId));
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {} // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
   auto const daUserId = SUserId{suserId};
   User user{
       daUserId,
@@ -181,7 +181,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  user.devices[0].keys.deviceId = DeviceId(block.hash());
+  user.devices[0].id = DeviceId(block.hash());
   user.devices[0].delegation = delegation;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
@@ -201,28 +201,20 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
                                     int validatorDeviceIndex) -> ResultDevice
 {
   auto const suserId = SUserId{p};
-  auto& user = getMutableUser(suserId);
+  auto user = findMutableUser(suserId);
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {} // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
 
   // the device that will validate this device
-  auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
+  auto const& validatorDevice = user->devices.at(validatorDeviceIndex);
 
   auto const delegation = Identity::makeDelegation(
-      user.userId, validatorDevice.keys.signatureKeyPair.privateKey);
+      user->userId, validatorDevice.keys.signatureKeyPair.privateKey);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,
                      validatorDevice.keys.signatureKeyPair.privateKey,
-                     validatorDevice.keys.deviceId)
+                     validatorDevice.id)
           .addDevice1(delegation,
                       device.keys.signatureKeyPair.publicKey,
                       device.keys.encryptionKeyPair.publicKey);
@@ -230,12 +222,12 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = DeviceId(block.hash());
+  device.id = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
-  user.devices.push_back(device);
+  user->devices.push_back(device);
 
-  auto const tankerUser = user.asTankerUser();
+  auto const tankerUser = user->asTankerUser();
   auto const entry = blockToServerEntry(block);
 
   return {device, tankerUser, entry};
@@ -245,47 +237,39 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
                                     int validatorDeviceIndex) -> ResultDevice
 {
   auto const suserId = SUserId{p};
-  auto& user = getMutableUser(suserId);
+  auto user = findMutableUser(suserId);
 
-  if (user.userKeys.empty()) // upgrading the user
+  if (user->userKeys.empty()) // upgrading the user
   {
-    user.userKeys.push_back(
+    user->userKeys.push_back(
         {Tanker::Crypto::makeEncryptionKeyPair(), _blocks.size() + 1});
   }
 
-  Device device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-          {}, // deviceId will be filled in later in this function
-      },
-      {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
-  };
+  auto device = createDevice();
 
   // the device that will validate this device
-  auto const& validatorDevice = user.devices.at(validatorDeviceIndex);
+  auto const& validatorDevice = user->devices.at(validatorDeviceIndex);
 
   auto const delegation = Identity::makeDelegation(
-      user.userId, validatorDevice.keys.signatureKeyPair.privateKey);
+      user->userId, validatorDevice.keys.signatureKeyPair.privateKey);
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,
                      validatorDevice.keys.signatureKeyPair.privateKey,
-                     validatorDevice.keys.deviceId)
+                     validatorDevice.id)
           .addDevice3(delegation,
                       device.keys.signatureKeyPair.publicKey,
                       device.keys.encryptionKeyPair.publicKey,
-                      user.userKeys.back().keyPair);
+                      user->userKeys.back().keyPair);
   auto block = Serialization::deserialize<Block>(preserializedBlock);
   block.index = _blocks.size() + 1;
   _blocks.push_back(block);
 
-  device.keys.deviceId = DeviceId(block.hash());
+  device.id = DeviceId(block.hash());
   device.delegation = delegation;
   device.blockIndex = block.index;
-  user.devices.push_back(device);
+  user->devices.push_back(device);
 
-  auto const tankerUser = user.asTankerUser();
+  auto const tankerUser = user->asTankerUser();
   auto const entry = blockToServerEntry(block);
 
   return {device, tankerUser, entry};
@@ -327,13 +311,13 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     Tanker::SecretProvisionalUser const& provisionalUser,
     int authorDeviceIndex)
 {
-  auto const user = getUser(suserId).value();
+  auto const user = findUser(suserId).value();
   auto const& authorDevice = user.devices.at(authorDeviceIndex);
 
   auto const preserializedBlock =
       BlockGenerator(_trustchainId,
                      authorDevice.keys.signatureKeyPair.privateKey,
-                     authorDevice.keys.deviceId)
+                     authorDevice.id)
           .provisionalIdentityClaim(
               user.userId, provisionalUser, user.userKeys.back().keyPair);
   auto block = Serialization::deserialize<Block>(preserializedBlock);
@@ -405,9 +389,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
       generateGroupKeysForUsers(encryptionKeyPair.privateKey, users);
 
   auto const preserializedBlock =
-      BlockGenerator(_trustchainId,
-                     author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId)
+      BlockGenerator(
+          _trustchainId, author.keys.signatureKeyPair.privateKey, author.id)
           .userGroupCreation(
               signatureKeyPair, encryptionKeyPair.publicKey, keysForUsers);
 
@@ -448,10 +431,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
 
-  auto const blockGenerator =
-      BlockGenerator(_trustchainId,
-                     author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId);
+  auto const blockGenerator = BlockGenerator(
+      _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
 
   std::vector<Tanker::User> tusers;
   for (auto const& user : users)
@@ -508,9 +489,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
       group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
 
   auto const preserializedBlock =
-      BlockGenerator(_trustchainId,
-                     author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId)
+      BlockGenerator(
+          _trustchainId, author.keys.signatureKeyPair.privateKey, author.id)
           .userGroupAddition(group.tankerGroup.signatureKeyPair,
                              group.tankerGroup.lastBlockHash,
                              keysForUsers);
@@ -547,10 +527,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   for (auto const& user : newUsers)
     tusers.push_back(user.asTankerUser());
 
-  auto const blockGenerator =
-      BlockGenerator(_trustchainId,
-                     author.keys.signatureKeyPair.privateKey,
-                     author.keys.deviceId);
+  auto const blockGenerator = BlockGenerator(
+      _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
 
   auto const preserializedBlock = Groups::Manager::generateAddUserToGroupBlock(
       tusers, provisionalUsers, blockGenerator, group.tankerGroup);
@@ -603,10 +581,9 @@ std::vector<Tanker::Block> TrustchainBuilder::shareToDevice(
             receiverDevice.keys.encryptionKeyPair.publicKey);
 
     auto const block =
-        BlockGenerator(_trustchainId,
-                       sender.keys.signatureKeyPair.privateKey,
-                       sender.keys.deviceId)
-            .keyPublish(encryptedKey, resourceId, receiverDevice.keys.deviceId);
+        BlockGenerator(
+            _trustchainId, sender.keys.signatureKeyPair.privateKey, sender.id)
+            .keyPublish(encryptedKey, resourceId, receiverDevice.id);
 
     auto deserializedBlock = Serialization::deserialize<Block>(block);
     deserializedBlock.index = _blocks.size() + 1;
@@ -627,9 +604,8 @@ Tanker::Block TrustchainBuilder::shareToUser(Device const& sender,
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
   auto const block = Share::makeKeyPublishToUser(
-      BlockGenerator(_trustchainId,
-                     sender.keys.signatureKeyPair.privateKey,
-                     sender.keys.deviceId),
+      BlockGenerator(
+          _trustchainId, sender.keys.signatureKeyPair.privateKey, sender.id),
       receiverPublicKey,
       resourceId,
       key);
@@ -656,7 +632,7 @@ Tanker::Block TrustchainBuilder::shareToUserGroup(
 
   Block block;
   block.trustchainId = _trustchainId;
-  block.author = Crypto::Hash{sender.keys.deviceId};
+  block.author = Crypto::Hash{sender.id};
   block.nature = Nature::KeyPublishToUserGroup;
   block.payload = Serialization::serialize(keyPublish);
   block.signature =
@@ -686,7 +662,7 @@ Block TrustchainBuilder::shareToProvisionalUser(
 
   Block block;
   block.trustchainId = _trustchainId;
-  block.author = Crypto::Hash{sender.keys.deviceId};
+  block.author = Crypto::Hash{sender.id};
   block.nature = Nature::KeyPublishToProvisionalUser;
   block.payload = Serialization::serialize(keyPublish);
   block.signature =
@@ -724,11 +700,11 @@ Tanker::Block TrustchainBuilder::revokeDevice1(Device const& sender,
         "TrustchainBuilder: cannot revoke a device from another user");
   }
 
-  auto const revocation = DeviceRevocation1{target.keys.deviceId};
+  auto const revocation = DeviceRevocation1{target.id};
 
   Block block;
   block.trustchainId = _trustchainId;
-  block.author = Crypto::Hash{sender.keys.deviceId};
+  block.author = Crypto::Hash{sender.id};
   block.nature = Nature::DeviceRevocation;
   block.payload = Serialization::serialize(revocation);
   block.signature =
@@ -776,16 +752,16 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices)
   {
-    if (device.keys.deviceId != target.keys.deviceId)
+    if (device.id != target.id)
     {
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{
           Crypto::sealEncrypt(newEncryptionKey.privateKey,
                               device.keys.encryptionKeyPair.publicKey)};
-      userKeys.emplace_back(device.keys.deviceId, sealedEncryptedKey);
+      userKeys.emplace_back(device.id, sealedEncryptedKey);
     }
   }
 
-  DeviceRevocation2 const revocation{target.keys.deviceId,
+  DeviceRevocation2 const revocation{target.id,
                                      newEncryptionKey.publicKey,
                                      encryptedKeyForPreviousUserKey,
                                      oldPublicEncryptionKey,
@@ -793,7 +769,7 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
 
   Block block;
   block.trustchainId = _trustchainId;
-  block.author = Crypto::Hash{sender.keys.deviceId};
+  block.author = Crypto::Hash{sender.id};
   block.nature = Nature::DeviceRevocation2;
   block.payload = Serialization::serialize(revocation);
   block.signature =
@@ -805,21 +781,17 @@ Tanker::Block TrustchainBuilder::revokeDevice2(Device const& sender,
   return block;
 }
 
-nonstd::optional<TrustchainBuilder::User> TrustchainBuilder::getUser(
+nonstd::optional<TrustchainBuilder::User> TrustchainBuilder::findUser(
     std::string const& suserId) const
 {
-  try
-  {
-    return const_cast<TrustchainBuilder*>(this)->getMutableUser(
-        SUserId{suserId});
-  }
-  catch (...)
-  {
-    return nonstd::nullopt;
-  }
+  auto user =
+      const_cast<TrustchainBuilder*>(this)->findMutableUser(SUserId{suserId});
+  if (user)
+    return *user;
+  return nonstd::nullopt;
 }
 
-TrustchainBuilder::User& TrustchainBuilder::getMutableUser(
+TrustchainBuilder::User* TrustchainBuilder::findMutableUser(
     SUserId const& suserId)
 {
   auto const it =
@@ -827,16 +799,15 @@ TrustchainBuilder::User& TrustchainBuilder::getMutableUser(
         return user.suserId == suserId;
       });
   if (it == _users.end())
-    throw Error::formatEx("user {} not found", suserId);
-  return *it;
+    return nullptr;
+  return std::addressof(*it);
 }
 
 Tanker::BlockGenerator TrustchainBuilder::makeBlockGenerator(
     TrustchainBuilder::Device const& device) const
 {
-  return Tanker::BlockGenerator(_trustchainId,
-                                device.keys.signatureKeyPair.privateKey,
-                                device.keys.deviceId);
+  return Tanker::BlockGenerator(
+      _trustchainId, device.keys.signatureKeyPair.privateKey, device.id);
 }
 
 std::unique_ptr<Tanker::UserKeyStore> TrustchainBuilder::makeUserKeyStore(
@@ -856,10 +827,12 @@ std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
   auto contactStore = std::make_unique<Tanker::ContactStore>(conn);
   for (auto const& suserId : suserIds)
   {
-    auto const optUser = getUser(suserId);
+    auto const optUser = findUser(suserId);
     if (!optUser)
-      throw std::runtime_error("makeContactStoreWith: no user named " +
-                               suserId);
+    {
+      throw Errors::AssertionError("makeContactStoreWith: no user named " +
+                                   suserId);
+    }
     AWAIT_VOID(contactStore->putUser(optUser->asTankerUser()));
   }
   return contactStore;

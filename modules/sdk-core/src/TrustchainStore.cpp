@@ -3,8 +3,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 

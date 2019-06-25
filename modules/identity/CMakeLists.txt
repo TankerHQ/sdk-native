@@ -14,6 +14,8 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/SecretIdentity.hpp
   include/Tanker/Identity/Extract.hpp
   include/Tanker/Identity/TargetType.hpp
+  include/Tanker/Identity/Errors/Errc.hpp
+  include/Tanker/Identity/Errors/ErrcCategory.hpp
 
   src/UserToken.cpp
   src/Extract.cpp
@@ -26,6 +28,8 @@ add_library(tankeridentity STATIC
   src/PublicIdentity.cpp
   src/SecretIdentity.cpp
   src/TargetType.cpp
+  src/Errors/Errc.cpp
+  src/Errors/ErrcCategory.cpp
 )
 
 target_include_directories(tankeridentity
@@ -38,7 +42,17 @@ target_include_directories(tankeridentity
 
 install(DIRECTORY include DESTINATION .)
 
-target_link_libraries(tankeridentity tankertrustchain tankertypes tankercrypto CONAN_PKG::jsonformoderncpp CONAN_PKG::gsl-lite CONAN_PKG::cppcodec)
+target_link_libraries(
+  tankeridentity
+  tankertrustchain
+  tankertypes
+  tankercrypto
+  tankererrors
+
+  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::gsl-lite
+  CONAN_PKG::cppcodec
+)
 
 install(TARGETS tankeridentity
   EXPORT tankeridentity

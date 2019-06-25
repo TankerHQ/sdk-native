@@ -68,10 +68,14 @@ public:
   tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+  tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+  findProvisionalUserKeysByAppPublicEncryptionKey(
+      Crypto::PublicEncryptionKey const& appPublicEncryptionKey) override;
 
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
+  tc::cotask<nonstd::optional<Trustchain::DeviceId>> getDeviceId() override;
 
   tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                              Device const& device) override;

@@ -46,5 +46,5 @@ TEST_CASE("blockToServerEntry")
   CHECK(entry.action().nature() == block.nature);
   CHECK(entry.author() == block.author);
   CHECK(entry.signature() == block.signature);
-  CHECK(entry.action().holdsAlternative<DeviceCreation>());
+  CHECK(entry.action().holds_alternative<DeviceCreation>());
 }

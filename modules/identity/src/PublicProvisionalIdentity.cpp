@@ -1,8 +1,12 @@
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 
-#include <nlohmann/json.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
+#include <fmt/format.h>
+#include <nlohmann/json.hpp>
 
 namespace Tanker
 {
@@ -12,14 +16,17 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
   if (target != "email")
-    throw std::runtime_error("unsupported provisional identity target: " +
-                             target);
+  {
+    throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
+                           "unsupported provisional identity target: {}",
+                           target);
+  }
 
   if (j.find("private_signature_key") != j.end())
   {
-    throw std::invalid_argument(
-        "Cannot deserialize SecretProvisionalIdentity in "
-        "PublicProvisionalIdentity");
+    throw Errors::Exception(Errc::InvalidType,
+                            "cannot deserialize SecretProvisionalIdentity in "
+                            "PublicProvisionalIdentity");
   }
 
   identity = PublicProvisionalIdentity{
@@ -36,8 +43,11 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
 {
   if (identity.target != TargetType::Email)
-    throw std::runtime_error("unsupported provisional identity target: " +
-                             std::to_string(static_cast<int>(identity.target)));
+  {
+    throw Errors::AssertionError(
+        fmt::format("unsupported provisional identity target: {}",
+                    static_cast<int>(identity.target)));
+  }
 
   j["value"] = identity.value;
   j["trustchain_id"] = identity.trustchainId;

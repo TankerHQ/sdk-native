@@ -5,6 +5,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Helpers/JsonFile.hpp>
+#include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
 
@@ -17,7 +18,7 @@ struct GroupCompat : Tanker::Compat::Command
     auto alice = signUpUser(trustchain, tankerPath);
 
     auto const bob = signUpUser(trustchain, tankerPath);
-    bob.core->signOut().get();
+    bob.core->stop().get();
 
     auto sgroupId =
         alice.core

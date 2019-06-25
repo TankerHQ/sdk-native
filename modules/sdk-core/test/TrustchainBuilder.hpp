@@ -14,6 +14,7 @@
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -34,6 +35,7 @@ public:
   struct Device
   {
     Tanker::DeviceKeys keys;
+    Tanker::Trustchain::DeviceId id;
     Tanker::Identity::Delegation delegation;
     uint64_t blockIndex;
 
@@ -160,7 +162,7 @@ public:
                               User const& user,
                               bool unsafe = false);
 
-  nonstd::optional<User> getUser(std::string const& suserId) const;
+  nonstd::optional<User> findUser(std::string const& suserId) const;
 
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;
@@ -203,5 +205,5 @@ private:
   std::set<Group, GroupComparator> _groups;
   std::vector<Tanker::Block> _blocks;
 
-  User& getMutableUser(Tanker::SUserId const& suserId);
+  User* findMutableUser(Tanker::SUserId const& suserId);
 };

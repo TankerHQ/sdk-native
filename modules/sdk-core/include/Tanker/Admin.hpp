@@ -7,13 +7,13 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -42,7 +42,7 @@ public:
   tc::cotask<VerificationCode> getVerificationCode(
       Trustchain::TrustchainId const& tcId, Email const&);
 
-  boost::signals2::signal<void()> connected;
+  std::function<void()> connected;
 
 private:
   ConnectionPtr _cx;

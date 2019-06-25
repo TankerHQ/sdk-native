@@ -4,9 +4,11 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
@@ -22,6 +24,7 @@
 TLOG_CATEGORY("ReceiveKey");
 
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -81,10 +84,11 @@ tc::cotask<void> decryptAndStoreKey(
 
   if (!group)
   {
-    throw Error::formatEx<Error::GroupKeyNotFound>(
-        "Received a keypublish for a group we are not in (public encryption "
-        "key: {})",
-        recipientPublicKey);
+    throw formatEx(Errc::InternalError,
+                   "received a KeyPublish for a group we are not "
+                   "in (public encryption "
+                   "key: {})",
+                   recipientPublicKey);
   }
 
   auto const key = Crypto::sealDecrypt(
@@ -107,11 +111,11 @@ tc::cotask<void> decryptAndStoreKey(
 
   if (!provisionalUserKeys)
   {
-    throw Error::formatEx<Error::ProvisionalUserKeysNotFound>(
-        "Received a keypublish for a provisional user we didn't claim (public "
-        "encryption keys: {} {})",
-        keyPublishToProvisionalUser.appPublicSignatureKey(),
-        keyPublishToProvisionalUser.tankerPublicSignatureKey());
+    throw formatEx(Errc::InternalError,
+                   "received a KeyPublish for a provisional user we did not "
+                   "claim (public encryption keys: {} {})",
+                   keyPublishToProvisionalUser.appPublicSignatureKey(),
+                   keyPublishToProvisionalUser.tankerPublicSignatureKey());
   }
 
   auto const encryptedKey = Crypto::sealDecrypt(
@@ -131,8 +135,8 @@ tc::cotask<void> decryptAndStoreKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
 {
-  throw std::runtime_error(
-      "Assertion failure: Invalid nature in decryptAndStoreKey");
+  throw AssertionError(
+      "invalid nature in decryptAndStoreKey: KeyPublishToDevice");
 }
 }
 

@@ -5,6 +5,7 @@
 
 #include <Tanker/Version.hpp>
 
+#include <fmt/format.h>
 #include <memory>
 
 #include <docopt/docopt.h>

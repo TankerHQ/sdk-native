@@ -5,14 +5,16 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
+#include <Tanker/Verif/Errors/ErrcCategory.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <mockaron/mockaron.hpp>
@@ -27,6 +29,7 @@
 
 TLOG_CATEGORY(TrustchainPuller);
 
+using namespace std::string_literals;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
@@ -135,15 +138,22 @@ tc::cotask<void> TrustchainPuller::catchUp()
 
           TC_AWAIT(verifyAndAddEntry(serverEntry));
         }
-        catch (Error::VerificationFailed const& err)
+        catch (Errors::Exception const& err)
         {
-          TERROR("Verification failed: {}", err.what());
+          if (err.errorCode().category() == Verif::ErrcCategory())
+          {
+            TERROR("skipping invalid block {}: {}",
+                   serverEntry.hash(),
+                   err.what());
+          }
+          else
+            throw;
         }
       }
     }));
     TINFO("Caught up");
   }
-  catch (std::exception const& e)
+  catch (Errors::Exception const& e)
   {
     TERROR("Failed to catch up: {}", e.what());
     throw;
@@ -200,10 +210,7 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
             }
           }
           else
-          {
-            throw std::runtime_error(
-                "assertion failed: self device must have a user key");
-          }
+            throw Errors::AssertionError("self device must have a user key");
         }
       }
       else if (auto const deviceRevocation =
@@ -225,10 +232,16 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
         }
       }
     }
-    catch (Error::VerificationFailed const& err)
-    {
-      TERROR("Verification failed: {}", err.what());
-    }
+      catch (Errors::Exception const& err)
+      {
+        if (err.errorCode().category() == Verif::ErrcCategory())
+        {
+          TERROR(
+              "skipping invalid block {}: {}", serverEntry.hash(), err.what());
+        }
+        else
+          throw;
+      }
   }
   TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
   TC_RETURN(processed);
@@ -250,9 +263,14 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doClaimProcess(
         processed.insert(serverEntry.hash());
       }
     }
-    catch (Error::VerificationFailed const& err)
+    catch (Errors::Exception const& err)
     {
-      TERROR("Verification failed: {}", err.what());
+      if (err.errorCode().category() == Verif::ErrcCategory())
+      {
+        TERROR("skipping invalid block {}: {}", serverEntry.hash(), err.what());
+      }
+      else
+        throw;
     }
   }
   TC_RETURN(processed);
@@ -275,10 +293,7 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
         Crypto::EncryptionKeyPair{userKeyIt->first, encryptionPrivateKey});
   }
   if (userEncryptionKeys.empty())
-  {
-    throw std::runtime_error(
-        "assertion failed: self device must have a user key");
-  }
+    throw Errors::AssertionError("self device must have a user key");
   for (auto encryptionKeyPairIt = userEncryptionKeys.rbegin();
        encryptionKeyPairIt != userEncryptionKeys.rend();
        ++encryptionKeyPairIt)
@@ -306,16 +321,16 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
     else
       TC_AWAIT(keyPublishReceived(entry));
   }
-  if (entry.action.holdsAlternative<UserGroupCreation>() ||
-      entry.action.holdsAlternative<UserGroupAddition>())
+  if (entry.action.holds_alternative<UserGroupCreation>() ||
+      entry.action.holds_alternative<UserGroupAddition>())
   {
     TC_AWAIT(userGroupActionReceived(entry));
   }
-  else if (entry.action.holdsAlternative<DeviceRevocation>())
+  else if (entry.action.holds_alternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));
-  else if (entry.action.holdsAlternative<ProvisionalIdentityClaim>())
+  else if (entry.action.holds_alternative<ProvisionalIdentityClaim>())
     TC_AWAIT(provisionalIdentityClaimReceived(entry));
-  else if (entry.action.holdsAlternative<TrustchainCreation>())
+  else if (entry.action.holds_alternative<TrustchainCreation>())
     TC_AWAIT(trustchainCreationReceived(entry));
 }
 }

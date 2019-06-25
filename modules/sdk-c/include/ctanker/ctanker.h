@@ -13,19 +13,12 @@ extern "C" {
 
 enum tanker_status
 {
-  TANKER_STATUS_CLOSED,
-  TANKER_STATUS_OPEN,
+  TANKER_STATUS_STOPPED,
+  TANKER_STATUS_READY,
+  TANKER_STATUS_IDENTITY_REGISTRATION_NEEDED,
+  TANKER_STATUS_IDENTITY_VERIFICATION_NEEDED,
 
   TANKER_STATUS_LAST
-};
-
-enum tanker_sign_in_result
-{
-  TANKER_SIGN_IN_RESULT_OK,
-  TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
-  TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
-
-  TANKER_SIGN_IN_RESULT_LAST,
 };
 
 enum tanker_event
@@ -36,12 +29,13 @@ enum tanker_event
   TANKER_EVENT_LAST,
 };
 
-enum tanker_unlock_method
+enum tanker_verification_method_type
 {
-  TANKER_UNLOCK_METHOD_EMAIL = 0x1,
-  TANKER_UNLOCK_METHOD_PASSWORD = 0x2,
+  TANKER_VERIFICATION_METHOD_EMAIL = 0x1,
+  TANKER_VERIFICATION_METHOD_PASSPHRASE,
+  TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
 
-  TANKER_UNLOCK_METHOD_LAST = TANKER_UNLOCK_METHOD_PASSWORD
+  TANKER_VERIFICATION_METHOD_LAST = TANKER_VERIFICATION_METHOD_VERIFICATION_KEY
 };
 
 enum tanker_log_level
@@ -54,12 +48,16 @@ enum tanker_log_level
 
 typedef struct tanker tanker_t;
 typedef struct tanker_options tanker_options_t;
-typedef struct tanker_authentication_methods tanker_authentication_methods_t;
-typedef struct tanker_sign_in_options tanker_sign_in_options_t;
+typedef struct tanker_email_verification tanker_email_verification_t;
+typedef struct tanker_verification tanker_verification_t;
+typedef struct tanker_verification_method tanker_verification_method_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
 typedef struct tanker_device_list_elem tanker_device_list_elem_t;
 typedef struct tanker_device_list tanker_device_list_t;
+typedef struct tanker_verification_method_list
+    tanker_verification_method_list_t;
+typedef struct tanker_attach_result tanker_attach_result_t;
 
 /*!
  * \brief The list of a user's devices
@@ -77,6 +75,15 @@ struct tanker_device_list_elem
 {
   b64char const* device_id;
   bool is_revoked;
+};
+
+/*!
+ * \brief The list of a user verification methods
+ */
+struct tanker_verification_method_list
+{
+  tanker_verification_method_t* methods;
+  uint32_t count;
 };
 
 /*!
@@ -99,7 +106,6 @@ struct tanker_log_record
  */
 typedef void (*tanker_log_handler_t)(tanker_log_record_t const* record);
 
-typedef struct tanker_connection tanker_connection_t;
 typedef void (*tanker_event_callback_t)(void* arg, void* data);
 
 /*!
@@ -120,29 +126,58 @@ struct tanker_options
     2, NULL, NULL, NULL, NULL, NULL \
   }
 
-struct tanker_authentication_methods
+struct tanker_email_verification
 {
   uint8_t version;
-  char const* password;
   char const* email;
+  char const* verification_code;
 };
 
-#define TANKER_AUTHENTICATION_METHODS_INIT \
-  {                                        \
-    1, NULL, NULL                          \
+#define TANKER_EMAIL_VERIFICATION_INIT \
+  {                                    \
+    1, NULL, NULL                      \
   }
 
-struct tanker_sign_in_options
+struct tanker_verification
 {
   uint8_t version;
-  char const* unlock_key;
-  char const* verification_code;
-  char const* password;
+  // enum cannot be bound to java as they do not have a fixed size.
+  // It takes a value from tanker_verification_method_type:
+  uint8_t verification_method_type;
+  union
+  {
+    char const* verification_key;
+    tanker_email_verification_t email_verification;
+    char const* passphrase;
+  };
 };
 
-#define TANKER_SIGN_IN_OPTIONS_INIT \
-  {                                 \
-    1, NULL, NULL, NULL             \
+#define TANKER_VERIFICATION_INIT \
+  {                              \
+    1, 0,                        \
+    {                            \
+      NULL                       \
+    }                            \
+  }
+
+struct tanker_verification_method
+{
+  uint8_t version;
+  // enum cannot be bound to java as they do not have a fixed size.
+  // It takes a value from tanker_verification_method_type:
+  uint8_t verification_method_type;
+  union
+  {
+    char const* email;
+  };
+};
+
+#define TANKER_VERIFICATION_METHOD_INIT \
+  {                                     \
+    1, 0,                               \
+    {                                   \
+      NULL                              \
+    }                                   \
   }
 
 struct tanker_encrypt_options
@@ -157,6 +192,25 @@ struct tanker_encrypt_options
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
     2, NULL, 0, NULL, 0             \
+  }
+
+/*!
+ * \brief a struct containing the result of an attach_provisional_identity()
+ * If the status is TANKER_STATUS_READY, the method will be default initialized
+ * with the values in TANKER_VERIFICATION_METHOD_INIT
+ */
+struct tanker_attach_result
+{
+  uint8_t version;
+  // enum cannot be bound to java as they do not have a fixed size.
+  // It takes a value from the enum tanker_status:
+  uint8_t status;
+  tanker_verification_method_t* method;
+};
+
+#define TANKER_ATTACH_RESULT_INIT \
+  {                               \
+    1, 0, NULL                    \
   }
 
 /*!
@@ -201,8 +255,8 @@ tanker_future_t* tanker_destroy(tanker_t* tanker);
  * \param tanker A tanker tanker_t* instance.
  * \param event The event to connect.
  * \param data The data to pass to the callback.
- * \return an expected of a tanker_connection_t* that must be disconnected with
- * tanker_event_disconnect().
+ * \return an expected of NULL.
+ * \warning Do not call this function after the session has been started.
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p event does not exist
  */
 tanker_expected_t* tanker_event_connect(tanker_t* tanker,
@@ -213,50 +267,58 @@ tanker_expected_t* tanker_event_connect(tanker_t* tanker,
 /*!
  * Disconnect from an event.
  * \param tanker is not yet used.
- * \param connection a tanker_connection_t* to disconnect from.
+ * \param event The event to disconnect.
  * \return an expected of NULL.
  */
 tanker_expected_t* tanker_event_disconnect(tanker_t* tanker,
-                                           tanker_connection_t* connection);
+                                           enum tanker_event event);
 
 /*!
  * Sign up to Tanker.
  *
  * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
- * \param authentication_methods the authentication methods to set up for the
- * user, or NULL.
  * \return a future of NULL
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_sign_up(
-    tanker_t* tanker,
-    char const* identity,
-    tanker_authentication_methods_t const* authentication_methods);
+tanker_future_t* tanker_start(tanker_t* tanker, char const* identity);
 
 /*!
- * Sign in to Tanker.
+ * Register a verification method associated with an identity.
  *
  * \param tanker a tanker tanker_t* instance.
- * \param identity the user identity.
- * \param sign_in_options the authentication options to use when this device is
- * not registered, or NULL.
- * \return a future of tanker_sign_in_result
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
- * \throws TANKER_ERROR_INVALID_UNLOCK_KEY unlock key is incorrect
+ * \param verification the verification methods to set up for the
+ * user, must not be NULL.
+ * \return a future of NULL
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
- * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD password is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
-tanker_future_t* tanker_sign_in(
-    tanker_t* tanker,
-    char const* identity,
-    tanker_sign_in_options_t const* sign_in_options);
+tanker_future_t* tanker_register_identity(
+    tanker_t* tanker, tanker_verification_t const* verification);
+
+/*!
+ * Verify an identity with provided verification.
+ *
+ * \param tanker a tanker tanker_t* instance.
+ * \param verification the verification methods to set up for the
+ * user. Must not be NULL.
+ * \return a future of NULL
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
+ * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
+ * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
+ * or the server returned an error
+ * \throws TANKER_ERROR_OTHER could not open the local storage
+ */
+tanker_future_t* tanker_verify_identity(
+    tanker_t* tanker, tanker_verification_t const* verification);
 
 /*!
  * Close a tanker session.
@@ -264,20 +326,20 @@ tanker_future_t* tanker_sign_in(
  * \pre tanker must be allocated with tanker_create().
  * \pre tanker must be opened with tanker_open().
  */
-tanker_future_t* tanker_sign_out(tanker_t* tanker);
+tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
- * Is tanker currently opened.
+ * The current Tanker status.
  * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().
- * \return true if tanker is open, false otherwise.
+ * \return the current Tanker status.
  */
-bool tanker_is_open(tanker_t* tanker);
+enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
  * Get the current device id.
  * \param session A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer.
  */
 tanker_future_t* tanker_device_id(tanker_t* session);
@@ -285,68 +347,40 @@ tanker_future_t* tanker_device_id(tanker_t* session);
 /*!
  * Get the list of the user's devices.
  * \param session A tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of tanker_device_list_t* that must be freed with
  * tanker_free_device_list.
  */
 tanker_future_t* tanker_get_device_list(tanker_t* session);
 
 /*!
- * Generate an unlockKey that can be used to accept a device
+ * Generate an verificationKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* session);
+tanker_future_t* tanker_generate_verification_key(tanker_t* session);
 
 /*!
  * Registers, or updates, the user's unlock claims,
  * creates an unlock key if necessary
  * \param session a tanker tanker_t* instance
- * \param new_email the new desired email
- * \param new_password the new desired password
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \param verification a instance of tanker_verification_t
+ * \pre tanker_status == TANKER_STATUS_READY
  * \return a future to void
  */
-tanker_future_t* tanker_register_unlock(tanker_t* session,
-                                        char const* new_email,
-                                        char const* new_password);
+tanker_future_t* tanker_set_verification_method(
+    tanker_t* session, tanker_verification_t const* verification);
 
 /*!
- * Check if unlock mechanism has been set up for the current user.
+ * Return all registered verification methods for the current user.
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return true if an unlock mechanism is already set up, false otherwise
+ * \pre tanker_status == TANKER_STATUS_READY
+ * \return a tanker_verification_method_list_t*
  */
-tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* session);
-
-/*!
- * Return all registered unlock methods for the current user.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return a tanker_unlock_method with its bit set to the registered methods
- */
-tanker_expected_t* tanker_registered_unlock_methods(tanker_t* session);
-
-/*!
- * Check if any unlock methods has been registered for the current user.
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return true if an unlock method is registered, false otherwise
- */
-tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* session);
-
-/*!
- * Check if a specific unlock method has been registered for the current user.
- * \param session A tanker tanker_t* instance.
- * \param method the unlock method we want to test.
- * \pre tanker_status == TANKER_STATUS_OPEN
- * \return true if an unlock method is registered, false otherwise
- */
-tanker_expected_t* tanker_has_registered_unlock_method(
-    tanker_t* session, enum tanker_unlock_method method);
+tanker_future_t* tanker_get_verification_methods(tanker_t* session);
 
 /*!
  * Get the encrypted size from the clear size.
@@ -377,7 +411,7 @@ tanker_expected_t* tanker_get_resource_id(uint8_t const* encrypted_data,
 /*!
  * Encrypt data.
  * \param tanker A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param encrypted_data The container for the encrypted data.
  * \pre encrypted_data must be allocated with a call to
  *      tanker_encrypted_size() in order to get the size beforehand.
@@ -400,7 +434,7 @@ tanker_future_t* tanker_encrypt(tanker_t* tanker,
  * Decrypt an encrypted data.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param decrypted_data Decrypted array of bytes.
  * \pre decrypted_data must be allocated with a call to
  *      tanker_decrypted_size() in order to get the size beforehand.
@@ -420,7 +454,7 @@ tanker_future_t* tanker_decrypt(tanker_t* session,
  * Share a symetric key of an encrypted data with other users.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param recipient_public_identities Array containing the recipients' public
  * identities.
  * \param nb_recipient_public_identities The number of recipients in
@@ -447,30 +481,39 @@ tanker_future_t* tanker_share(tanker_t* session,
                               uint64_t nb_resource_ids);
 
 /*!
- * Claim a provisional identity to the current user
+ * Attach a provisional identity to the current user
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param provisional_identity provisional identity you want to claim.
- * \param verification_code the verification code that verifies this provisional
- * identity.
  *
- * \return An empty future.
- * \throws TANKER_ERROR_NOTHING_TO_CLAIM there is nothing to claim for this
- * identity
+ * \return A future of tanker_attach_result_t*.
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
  * the server returned an error
  */
-tanker_future_t* tanker_claim_provisional_identity(
-    tanker_t* session,
-    char const* provisional_identity,
-    char const* verification_code);
+tanker_future_t* tanker_attach_provisional_identity(
+    tanker_t* session, char const* provisional_identity);
+
+/*!
+ * Verify a provisional identity for the current user
+ *
+ * \param session A tanker tanker_t* instance.
+ * \pre tanker_status == TANKER_STATUS_READY
+ * \param verification the verification used to verify this provisional
+ * identity.
+ *
+ * \return An empty future.
+ * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or
+ * the server returned an error
+ */
+tanker_future_t* tanker_verify_provisional_identity(
+    tanker_t* session, tanker_verification_t const* verification);
 
 /*!
  * Revoke a device by device id.
  *
  * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_OPEN
+ * \pre tanker_status == TANKER_STATUS_READY
  * \param device_id the device identifier as returned by tanker_device_id().
  *
  * \return An empty future.
@@ -485,6 +528,11 @@ tanker_future_t* tanker_revoke_device(tanker_t* session,
 void tanker_free_buffer(void const* buffer);
 
 void tanker_free_device_list(tanker_device_list_t* list);
+
+void tanker_free_verification_method_list(
+    tanker_verification_method_list_t* list);
+
+void tanker_free_attach_result(tanker_attach_result_t* result);
 
 #ifdef __cplusplus
 }

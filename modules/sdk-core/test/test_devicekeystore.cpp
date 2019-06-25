@@ -9,7 +9,7 @@
 #include <Helpers/UniquePath.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 using namespace Tanker;
 
@@ -43,7 +43,7 @@ OldDeviceKeyStore setupDeviceKeyStoreMigration(DataStore::Connection& db)
   auto const b64PubEncK =
       cppcodec::base64_rfc4648::encode(deviceKeys.encryptionKeyPair.publicKey);
   auto const b64DeviceId =
-      cppcodec::base64_rfc4648::encode(deviceKeys.deviceId);
+      cppcodec::base64_rfc4648::encode(Trustchain::DeviceId{});
 
   db.execute(R"(
     CREATE TABLE device_key_store (
@@ -102,15 +102,6 @@ TEST_CASE("device keystore")
       CHECK(previousEncryptionKeyPair == store->encryptionKeyPair());
       CHECK(deviceId == store->deviceId());
     }
-  }
-
-  SUBCASE("re set the deviceId with a different value")
-  {
-    auto const store = AWAIT(DeviceKeyStore::open(dbPtr.get()));
-    REQUIRE_NOTHROW(AWAIT_VOID(
-        store->setDeviceId(make<Trustchain::DeviceId>("bob's device"))));
-    REQUIRE_THROWS(AWAIT_VOID(
-        store->setDeviceId(make<Trustchain::DeviceId>("new device id"))));
   }
 }
 

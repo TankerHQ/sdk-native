@@ -1,7 +1,6 @@
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/UserNotFound.hpp>
 
 #include <Helpers/Buffers.hpp>
 
@@ -129,7 +128,7 @@ TEST_SUITE("Groups")
   TEST_CASE_FIXTURE(TrustchainFixture,
                     "Alice shares with a group with Bob as a provisional user")
   {
-    auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob1@my-box-of-emai.ls"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -150,11 +149,13 @@ TEST_SUITE("Groups")
     auto bobDevice = bob.makeDevice();
     auto bobSession = TC_AWAIT(bobDevice.open());
 
+    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{bobProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
     auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-    TC_AWAIT(bobSession->claimProvisionalIdentity(
-        SSecretProvisionalIdentity{bobProvisionalIdentity},
-        VerificationCode{bobVerificationCode}));
+    auto const verification = Unlock::Verification{Unlock::EmailVerification{
+        bobEmail, VerificationCode{bobVerificationCode}}};
+    TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
 
     std::vector<uint8_t> decrypted(
         bobSession->decryptedSize(encryptedData).get());
@@ -166,7 +167,7 @@ TEST_SUITE("Groups")
       TrustchainFixture,
       "Alice shares with a group with Bob later added as a provisional user")
   {
-    auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob2@my-box-of-emai.ls"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -193,10 +194,12 @@ TEST_SUITE("Groups")
     auto bobSession = TC_AWAIT(bobDevice.open());
 
     auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-    TC_AWAIT(bobSession->claimProvisionalIdentity(
-        SSecretProvisionalIdentity{bobProvisionalIdentity},
-        VerificationCode{bobVerificationCode}));
+    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{bobProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
+    auto const verification = Unlock::Verification{Unlock::EmailVerification{
+        bobEmail, VerificationCode{bobVerificationCode}}};
+    TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
 
     std::vector<uint8_t> decrypted(
         bobSession->decryptedSize(encryptedData).get());
@@ -208,7 +211,7 @@ TEST_SUITE("Groups")
                     "Alice shares with a group with Bob as a provisional user "
                     "when Bob has already verified the group")
   {
-    auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob3@my-box-of-emai.ls"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -234,10 +237,11 @@ TEST_SUITE("Groups")
     TC_AWAIT(bobSession->encrypt(useless.data(), {}, {}, {myGroup}));
 
     auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-    TC_AWAIT(bobSession->claimProvisionalIdentity(
-        SSecretProvisionalIdentity{bobProvisionalIdentity},
-        VerificationCode{bobVerificationCode}));
+    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{bobProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
+    TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+        bobEmail, VerificationCode{bobVerificationCode}}));
 
     std::vector<uint8_t> decrypted(
         bobSession->decryptedSize(encryptedData).get());
@@ -249,7 +253,7 @@ TEST_SUITE("Groups")
                     "Alice shares with a group with Bob later added as a "
                     "provisional user when Bob has already verified the group")
   {
-    auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob4@my-box-of-emai.ls"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -279,11 +283,12 @@ TEST_SUITE("Groups")
     std::vector<uint8_t> useless(AsyncCore::encryptedSize(0));
     TC_AWAIT(bobSession->encrypt(useless.data(), {}, {}, {myGroup}));
 
+    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{bobProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
     auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-    TC_AWAIT(bobSession->claimProvisionalIdentity(
-        SSecretProvisionalIdentity{bobProvisionalIdentity},
-        VerificationCode{bobVerificationCode}));
+    TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+        bobEmail, VerificationCode{bobVerificationCode}}));
 
     std::vector<uint8_t> decrypted(
         bobSession->decryptedSize(encryptedData).get());

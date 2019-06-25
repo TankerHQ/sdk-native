@@ -4,10 +4,11 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
-#include <Tanker/RecipientNotFound.hpp>
 
 #include <Helpers/Await.hpp>
+#include <Helpers/Errors.hpp>
 
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
@@ -17,8 +18,9 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
-TEST_CASE("Revocation namespace")
+TEST_CASE("Revocation tests")
 {
   TrustchainBuilder builder;
   auto const rootEntry = blockToServerEntry(builder.blocks().front());
@@ -33,36 +35,35 @@ TEST_CASE("Revocation namespace")
 
   SUBCASE("EnsureDeviceIsFromUser throws if given a bad deviceId")
   {
-    CHECK_THROWS_AS(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
-                        aliceResult.user.devices[0].keys.deviceId,
-                        userResult.user.userId,
-                        *contactStore.get())),
-                    Error::DeviceNotFound);
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
+                                      aliceResult.user.devices[0].id,
+                                      userResult.user.userId,
+                                      *contactStore.get())),
+                                  Errc::InvalidArgument);
   }
 
   SUBCASE(
       "EnsureDeviceIsFromUser does not throws if deviceId belongs to userId")
   {
-    CHECK_NOTHROW(AWAIT_VOID(
-        Revocation::ensureDeviceIsFromUser(deviceResult.device.keys.deviceId,
-                                           userResult.user.userId,
-                                           *contactStore.get())));
+    CHECK_NOTHROW(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
+        deviceResult.device.id, userResult.user.userId, *contactStore.get())));
   }
 
   SUBCASE("getUserFromUserId throws if userId is invalid")
   {
     auto userId = userResult.user.userId;
     userId[0]++;
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Revocation::getUserFromUserId(userId, *contactStore.get())),
-        Error::InternalError);
+        Errc::InternalError);
   }
 
   SUBCASE("getUserFromUserId throws if userId belongs to a user V1")
   {
-    CHECK_THROWS_AS(AWAIT(Revocation::getUserFromUserId(aliceResult.user.userId,
-                                                        *contactStore.get())),
-                    Error::InternalError);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT(Revocation::getUserFromUserId(aliceResult.user.userId,
+                                            *contactStore.get())),
+        Errc::InternalError);
   }
 
   SUBCASE("getUserFromUserId correctly finds bob user")
@@ -75,11 +76,10 @@ TEST_CASE("Revocation namespace")
   SUBCASE("devicePrivateKey can be encrypted & decrypted")
   {
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const encryptedPrivateKeys =
-        AWAIT(Revocation::encryptPrivateKeyForDevices(
-            deviceResult.user,
-            userResult.user.devices[0].keys.deviceId,
-            encryptionKeyPair.privateKey));
+    auto const encryptedPrivateKeys = AWAIT(
+        Revocation::encryptPrivateKeyForDevices(deviceResult.user,
+                                                userResult.user.devices[0].id,
+                                                encryptionKeyPair.privateKey));
 
     REQUIRE(encryptedPrivateKeys.size() == 1);
 

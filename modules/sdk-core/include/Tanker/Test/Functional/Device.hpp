@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Types/SUserId.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <Helpers/UniquePath.hpp>
@@ -34,9 +35,6 @@ public:
   AsyncCorePtr createCore(SessionType type);
   std::unique_ptr<AsyncCore> createAsyncCore();
   tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
-  tc::cotask<AsyncCorePtr> open(AsyncCore& session);
-  tc::cotask<void> attachDevice(AsyncCore& parentSession);
-  tc::cotask<void> registerUnlock(AsyncCore& session);
   SUserId const& suserId() const;
   std::string const& identity() const;
 

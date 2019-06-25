@@ -100,11 +100,15 @@ public:
   findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) = 0;
+  virtual tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+  findProvisionalUserKeysByAppPublicEncryptionKey(
+      Crypto::PublicEncryptionKey const& appPublicEncryptionKey) = 0;
 
   virtual tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() = 0;
   virtual tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) = 0;
   virtual tc::cotask<void> setDeviceId(
       Trustchain::DeviceId const& deviceId) = 0;
+  virtual tc::cotask<nonstd::optional<Trustchain::DeviceId>> getDeviceId() = 0;
 
   virtual tc::cotask<void> putDevice(Trustchain::UserId const& userId,
                                      Device const& device) = 0;

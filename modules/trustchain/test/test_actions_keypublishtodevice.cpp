@@ -1,8 +1,10 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 
+#include <Tanker/Crypto/Errors/Errc.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
@@ -73,7 +75,9 @@ TEST_CASE("Serialization test vectors")
     };
     // clang-format on
 
-    CHECK_THROWS(Serialization::deserialize<KeyPublishToDevice>(
-        serializedKeyPublishToDevice));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Serialization::deserialize<KeyPublishToDevice>(
+            serializedKeyPublishToDevice),
+        Crypto::Errc::InvalidBufferSize);
   }
 }

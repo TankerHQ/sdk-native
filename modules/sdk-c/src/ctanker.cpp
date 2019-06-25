@@ -1,7 +1,10 @@
 #include <ctanker.h>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
@@ -17,6 +20,7 @@
 #include <utility>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 namespace
 {
@@ -29,56 +33,107 @@ nonstd::optional<T> nullableToOpt(char const* str)
     return nonstd::nullopt;
 }
 
+Unlock::Verification cverificationToVerification(
+    tanker_verification_t const* cverification)
+{
+  if (!cverification)
+  {
+    throw formatEx(
+        Errc::InvalidArgument,
+        "no verification method specified in the tanker_verification_t struct");
+  }
+  if (cverification->version != 1)
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "unsupported tanker_verification_t struct version: {}",
+                   cverification->version);
+  }
+
+  Unlock::Verification verification;
+  switch (cverification->verification_method_type)
+  {
+  case TANKER_VERIFICATION_METHOD_EMAIL:
+  {
+    if (!cverification->email_verification.email ||
+        !cverification->email_verification.verification_code)
+      throw formatEx(Errc::InvalidArgument, "null field in email verification");
+    verification = Unlock::EmailVerification{
+        Email{cverification->email_verification.email},
+        VerificationCode{cverification->email_verification.verification_code}};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_PASSPHRASE:
+  {
+    if (!cverification->passphrase)
+      throw formatEx(Errc::InvalidArgument, "passphrase field is null");
+    verification = Passphrase{cverification->passphrase};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
+  {
+    if (!cverification->verification_key)
+      throw formatEx(Errc::InvalidArgument, "verification key is null");
+    verification = VerificationKey{cverification->verification_key};
+    break;
+  }
+  default:
+    throw formatEx(Errc::InvalidArgument, "unknown verification type");
+  }
+  return verification;
+}
+
+void cVerificationMethodFromVerificationMethod(
+    tanker_verification_method_t& c_verif_method,
+    Unlock::VerificationMethod const& method)
+{
+  c_verif_method = TANKER_VERIFICATION_METHOD_INIT;
+  if (method.holds_alternative<Passphrase>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
+  else if (method.holds_alternative<VerificationKey>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
+  else if (auto const email = method.get_if<Email>())
+  {
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
+    c_verif_method.email = duplicateString(email->c_str());
+  }
+  else
+    throw AssertionError("unknown verification type");
+}
+
 #define STATIC_ENUM_CHECK(cval, cppval)           \
   static_assert(cval == static_cast<int>(cppval), \
                 "enum values not in sync: " #cval " and " #cppval)
 
 // Unlock
 
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_EMAIL, Unlock::Method::Email);
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_PASSWORD, Unlock::Method::Password);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL, Unlock::Method::Email);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
+                  Unlock::Method::Passphrase);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
+                  Unlock::Method::VerificationKey);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
-STATIC_ENUM_CHECK(TANKER_UNLOCK_METHOD_LAST, Unlock::Method::Last);
-
-static_assert(TANKER_UNLOCK_METHOD_LAST == 2,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 3,
               "Please update the event assertions above if you added a new "
               "unlock methods");
 
 // Status
 
-STATIC_ENUM_CHECK(TANKER_STATUS_CLOSED, Status::Closed);
-STATIC_ENUM_CHECK(TANKER_STATUS_OPEN, Status::Open);
+STATIC_ENUM_CHECK(TANKER_STATUS_STOPPED, Status::Stopped);
+STATIC_ENUM_CHECK(TANKER_STATUS_READY, Status::Ready);
+STATIC_ENUM_CHECK(TANKER_STATUS_IDENTITY_REGISTRATION_NEEDED,
+                  Status::IdentityRegistrationNeeded);
+STATIC_ENUM_CHECK(TANKER_STATUS_IDENTITY_VERIFICATION_NEEDED,
+                  Status::IdentityVerificationNeeded);
 
 STATIC_ENUM_CHECK(TANKER_STATUS_LAST, Status::Last);
 
 static_assert(
-    TANKER_STATUS_LAST == 2,
+    TANKER_STATUS_LAST == 4,
     "Please update the status assertions above if you added a new status");
-
-// OpenResult
-
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_OK, OpenResult::Ok);
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_VERIFICATION_NEEDED,
-                  OpenResult::IdentityVerificationNeeded);
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_IDENTITY_NOT_REGISTERED,
-                  OpenResult::IdentityNotRegistered);
-
-STATIC_ENUM_CHECK(TANKER_SIGN_IN_RESULT_LAST, OpenResult::Last);
-
-static_assert(
-    TANKER_SIGN_IN_RESULT_LAST == 3,
-    "Please update the result assertions above if you added a new result");
-
-// Event
-
-STATIC_ENUM_CHECK(TANKER_EVENT_SESSION_CLOSED, Event::SessionClosed);
-STATIC_ENUM_CHECK(TANKER_EVENT_DEVICE_REVOKED, Event::DeviceRevoked);
-
-STATIC_ENUM_CHECK(TANKER_EVENT_LAST, Event::Last);
-
-static_assert(
-    TANKER_EVENT_LAST == 2,
-    "Please update the event assertions above if you added a new event");
 
 #undef STATIC_ENUM_CHECK
 }
@@ -97,31 +152,60 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
 {
   return makeFuture(tc::sync([&] {
     if (options == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("options is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "options is null");
+    }
     if (options->version != 2)
-      throw Error::formatEx<Error::InvalidArgument>(
-          "options version is {:d} should be {:d}", options->version, 2);
+    {
+      throw Exception(
+          make_error_code(Errc::InvalidArgument),
+          fmt::format("Options version should be {:d} instead of {:d}",
+                      options->version,
+                      2));
+    }
     if (options->trustchain_id == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("trustchain_id is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "trustchain_id is null");
+    }
     if (options->sdk_type == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("sdk_type is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "sdk_type is null");
+    }
     if (options->sdk_version == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("sdk_version is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "sdk_version is null");
+    }
 
     char const* url = options->trustchain_url;
     if (url == nullptr)
       url = "https://api.tanker.io";
 
     if (options->writable_path == nullptr)
-      throw Error::formatEx<Error::InvalidArgument>("writable_path is null");
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "writable_path is null");
+    }
 
-    return static_cast<void*>(new AsyncCore(
-        url,
-        {options->sdk_type,
-         cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-             std::string(options->trustchain_id)),
-         options->sdk_version},
-        options->writable_path));
+    try
+    {
+      auto const trustchainId =
+          cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+              std::string(options->trustchain_id));
+
+      return static_cast<void*>(
+          new AsyncCore(url,
+                        {options->sdk_type, trustchainId, options->sdk_version},
+                        options->writable_path));
+    }
+    catch (cppcodec::parse_error const&)
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "base64 deserialization failed");
+    }
   }));
 }
 
@@ -151,101 +235,101 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
                                         void* data)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->connectEvent(static_cast<Event>(event), cb, data)
-          .and_then(tc::get_synchronous_executor(), [](auto conn) {
-            return reinterpret_cast<void*>(new auto(std::move(conn)));
-          }));
+  return makeFuture(tc::sync([&] {
+    switch (event)
+    {
+    case TANKER_EVENT_SESSION_CLOSED:
+      return tanker->connectSessionClosed(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    case TANKER_EVENT_DEVICE_REVOKED:
+      return tanker->connectDeviceRevoked(
+          [=, cb = std::move(cb)] { cb(nullptr, data); });
+    default:
+      throw formatEx(Errc::InvalidArgument,
+                     TFMT("unknown event: {:d}"),
+                     static_cast<int>(event));
+    }
+  }));
 }
 
 tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
-                                           tanker_connection_t* cconnection)
+                                           enum tanker_event event)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->disconnectEvent(std::move(
-      *reinterpret_cast<boost::signals2::scoped_connection*>(cconnection))));
+  return makeFuture(tc::sync([&] {
+    switch (event)
+    {
+    case TANKER_EVENT_SESSION_CLOSED:
+      tanker->disconnectSessionClosed();
+      break;
+    case TANKER_EVENT_DEVICE_REVOKED:
+      tanker->disconnectDeviceRevoked();
+      break;
+    default:
+      throw formatEx(Errc::InvalidArgument,
+                     TFMT("unknown event: {:d}"),
+                     static_cast<int>(event));
+    }
+  }));
 }
 
-tanker_future_t* tanker_sign_up(
-    tanker_t* ctanker,
-    char const* identity,
-    tanker_authentication_methods_t const* authentication_methods)
+tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
 {
   if (identity == nullptr)
     return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>("identity is null")));
-  if (authentication_methods && authentication_methods->version != 1)
-    return makeFuture(tc::make_exceptional_future<void>(
-        Error::formatEx<Error::InvalidArgument>(
-            "unsupported tanker_authentication_methods struct version")));
-
-  auto authenticationMethods = AuthenticationMethods{};
-  if (authentication_methods)
-  {
-    if (authentication_methods->password)
-      authenticationMethods.password =
-          Password{authentication_methods->password};
-    if (authentication_methods->email)
-      authenticationMethods.email = Email{authentication_methods->email};
-  }
+        Exception(make_error_code(Errc::InvalidArgument), "identity is null")));
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->signUp(std::string(identity), authenticationMethods));
+      tanker->start(std::string(identity))
+          .and_then(tc::get_synchronous_executor(), [](auto status) {
+            return reinterpret_cast<void*>(status);
+          }));
 }
 
-tanker_future_t* tanker_sign_in(tanker_t* ctanker,
-                                char const* identity,
-                                tanker_sign_in_options_t const* sign_in_options)
+tanker_future_t* tanker_register_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  if (identity == nullptr)
-    return makeFuture(tc::make_exceptional_future<void*>(
-        Error::formatEx<Error::InvalidArgument>("identity is null")));
-  if (sign_in_options && sign_in_options->version != 1)
-    return makeFuture(tc::make_exceptional_future<void*>(
-        Error::formatEx<Error::InvalidArgument>(
-            "unsupported tanker_authentication_methods struct version")));
-
-  auto signInOptions = SignInOptions{};
-  if (sign_in_options)
-  {
-    if (sign_in_options->unlock_key)
-      signInOptions.verificationKey =
-          VerificationKey{sign_in_options->unlock_key};
-    if (sign_in_options->verification_code)
-      signInOptions.verificationCode =
-          VerificationCode{sign_in_options->verification_code};
-    if (sign_in_options->password)
-      signInOptions.password = Password{sign_in_options->password};
-  }
-
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->signIn(std::string(identity), signInOptions)
-          .and_then(tc::get_synchronous_executor(),
-                    [](OpenResult r) { return reinterpret_cast<void*>(r); }));
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      return tanker->registerIdentity(verification);
+                    })
+                        .unwrap());
 }
 
-tanker_future_t* tanker_sign_out(tanker_t* ctanker)
+tanker_future_t* tanker_verify_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      return tanker->verifyIdentity(verification);
+                    })
+                        .unwrap());
+}
+
+tanker_future_t* tanker_stop(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->signOut());
+  return makeFuture(tanker->stop());
 }
 
-bool tanker_is_open(tanker_t* ctanker)
+enum tanker_status tanker_status(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return tanker->isOpen();
+  return static_cast<enum tanker_status>(tanker->status());
 }
 
 tanker_future_t* tanker_device_id(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto fut = tanker->deviceId().and_then(
+  return makeFuture(tanker->deviceId().and_then(
       tc::get_synchronous_executor(), [](auto const& deviceId) {
         return static_cast<void*>(duplicateString(deviceId.string()));
-      });
-  return makeFuture(std::move(fut));
+      }));
 }
 
 tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
@@ -269,57 +353,44 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
       }));
 }
 
-tanker_future_t* tanker_generate_and_register_unlock_key(tanker_t* ctanker)
+tanker_future_t* tanker_generate_verification_key(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->generateAndRegisterVerificationKey().and_then(
+  return makeFuture(tanker->generateVerificationKey().and_then(
       tc::get_synchronous_executor(), [](auto uk) {
         return static_cast<void*>(duplicateString(uk.string()));
       }));
 }
 
-tanker_future_t* tanker_register_unlock(tanker_t* ctanker,
-                                        char const* new_email,
-                                        char const* new_password)
+tanker_future_t* tanker_set_verification_method(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
 {
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->registerUnlock(Unlock::CreationOptions{
-      nullableToOpt<Email>(new_email), nullableToOpt<Password>(new_password)}));
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      return tanker->setVerificationMethod(verification);
+                    })
+                        .unwrap());
 }
 
-tanker_future_t* tanker_is_unlock_already_set_up(tanker_t* ctanker)
+tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->isUnlockAlreadySetUp().and_then(
+  return makeFuture(tanker->getVerificationMethods().and_then(
       tc::get_synchronous_executor(),
-      [](bool value) { return reinterpret_cast<void*>(value); }));
-}
-
-tanker_expected_t* tanker_registered_unlock_methods(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->registeredUnlockMethods().and_then(
-      tc::get_synchronous_executor(), [](Unlock::Methods m) {
-        return reinterpret_cast<void*>(m.underlying_value());
+      [](std::vector<Unlock::VerificationMethod> methods) {
+        auto verifMethods = new tanker_verification_method_t[methods.size()];
+        for (size_t i = 0; i < methods.size(); ++i)
+        {
+          cVerificationMethodFromVerificationMethod(verifMethods[i],
+                                                    methods[i]);
+        }
+        auto verifMethodList = new tanker_verification_method_list;
+        verifMethodList->count = methods.size();
+        verifMethodList->methods = verifMethods;
+        return reinterpret_cast<void*>(verifMethodList);
       }));
-}
-
-tanker_expected_t* tanker_has_registered_unlock_methods(tanker_t* ctanker)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->hasRegisteredUnlockMethods().and_then(
-      tc::get_synchronous_executor(),
-      [](bool b) { return reinterpret_cast<void*>(b); }));
-}
-
-tanker_expected_t* tanker_has_registered_unlock_method(
-    tanker_t* ctanker, enum tanker_unlock_method method)
-{
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->hasRegisteredUnlockMethod(static_cast<Unlock::Method>(method))
-          .and_then(tc::get_synchronous_executor(),
-                    [](bool b) { return reinterpret_cast<void*>(b); }));
 }
 
 uint64_t tanker_encrypted_size(uint64_t clear_size)
@@ -359,9 +430,11 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
   if (options)
   {
     if (options->version != 2)
+    {
       return makeFuture(tc::make_exceptional_future<void>(
-          Error::formatEx<Error::InvalidArgument>(
-              "unsupported tanker_encrypt_options struct version")));
+          formatEx(Errc::InvalidArgument,
+                   "unsupported tanker_encrypt_options struct version")));
+    }
     spublicIdentities =
         to_vector<SPublicIdentity>(options->recipient_public_identities,
                                    options->nb_recipient_public_identities);
@@ -402,15 +475,43 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
   return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
 }
 
-tanker_future_t* tanker_claim_provisional_identity(
-    tanker_t* ctanker,
-    char const* provisional_identity,
-    char const* verification_code)
+tanker_future_t* tanker_attach_provisional_identity(
+    tanker_t* ctanker, char const* provisional_identity)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->claimProvisionalIdentity(
-      SSecretProvisionalIdentity{provisional_identity},
-      VerificationCode{verification_code}));
+  return makeFuture(
+      tanker
+          ->attachProvisionalIdentity(
+              SSecretProvisionalIdentity{provisional_identity})
+          .and_then(tc::get_synchronous_executor(),
+                    [](AttachResult const& attachResult) {
+                      auto cAttachResult = new tanker_attach_result_t;
+                      cAttachResult->version = 1;
+                      cAttachResult->method = nullptr;
+                      cAttachResult->status =
+                          static_cast<uint8_t>(attachResult.status);
+                      if (attachResult.verificationMethod.has_value())
+                      {
+                        tanker_verification_method cMethod;
+                        cVerificationMethodFromVerificationMethod(
+                            cMethod, *attachResult.verificationMethod);
+                        cAttachResult->method =
+                            new tanker_verification_method(cMethod);
+                      }
+                      return reinterpret_cast<void*>(cAttachResult);
+                    }));
+}
+
+tanker_future_t* tanker_verify_provisional_identity(
+    tanker_t* ctanker, tanker_verification_t const* cverification)
+{
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tc::sync([&] {
+                      auto const verification =
+                          cverificationToVerification(cverification);
+                      return tanker->verifyProvisionalIdentity(verification);
+                    })
+                        .unwrap());
 }
 
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
@@ -431,4 +532,29 @@ void tanker_free_device_list(tanker_device_list_t* list)
     free(const_cast<b64char*>(list->devices[i].device_id));
   delete[] list->devices;
   delete list;
+}
+
+void tanker_free_verification_method_list(
+    tanker_verification_method_list_t* methodList)
+{
+  for (size_t i = 0; i < methodList->count; ++i)
+  {
+    if (methodList->methods[i].verification_method_type ==
+        TANKER_VERIFICATION_METHOD_EMAIL)
+      free(const_cast<char*>(methodList->methods[i].email));
+  }
+  delete[] methodList->methods;
+  delete methodList;
+}
+
+void tanker_free_attach_result(tanker_attach_result_t* result)
+{
+  if (result->method)
+  {
+    if (result->method->verification_method_type ==
+        TANKER_VERIFICATION_METHOD_EMAIL)
+      free(const_cast<char*>(result->method->email));
+    delete result->method;
+  }
+  delete result;
 }

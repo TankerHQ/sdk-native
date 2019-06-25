@@ -1,7 +1,8 @@
-#include <ctanker.h>
+#include <ctanker/error.h>
 
-#include <Tanker/Error.hpp>
-#include <Tanker/UserNotFound.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 
 #include <tconcurrent/promise.hpp>
 
@@ -51,31 +52,22 @@ unsigned char tanker_future_has_error(tanker_future_t* future)
   return future->future.has_exception();
 }
 
-#define CHECK_ENUM(cerror, cpperror)                                 \
-  static_assert(static_cast<int>(TANKER_ERROR_##cerror) ==           \
-                    static_cast<int>(Tanker::Error::Code::cpperror), \
+#define CHECK_ENUM(cerror, cpperror)                                  \
+  static_assert(static_cast<int>(TANKER_ERROR_##cerror) ==            \
+                    static_cast<int>(Tanker::Errors::Errc::cpperror), \
                 "Error code enums not matching")
 
-CHECK_ENUM(NO_ERROR, NoError);
-CHECK_ENUM(OTHER, Other);
-CHECK_ENUM(INVALID_TANKER_STATUS, InvalidTankerStatus);
-CHECK_ENUM(SERVER_ERROR, ServerError);
-CHECK_ENUM(RESOURCE_KEY_NOT_FOUND, ResourceKeyNotFound);
-CHECK_ENUM(USER_NOT_FOUND, UserNotFound);
-CHECK_ENUM(DECRYPT_FAILED, DecryptFailed);
-CHECK_ENUM(INVALID_UNLOCK_KEY, InvalidVerificationKey);
+CHECK_ENUM(INVALID_ARGUMENT, InvalidArgument);
 CHECK_ENUM(INTERNAL_ERROR, InternalError);
-CHECK_ENUM(INVALID_UNLOCK_PASSWORD, InvalidUnlockPassword);
-CHECK_ENUM(INVALID_VERIFICATION_CODE, InvalidVerificationCode);
-CHECK_ENUM(UNLOCK_KEY_ALREADY_EXISTS, VerificationKeyAlreadyExists);
-CHECK_ENUM(MAX_VERIFICATION_ATTEMPTS_REACHED, MaxVerificationAttemptsReached);
-CHECK_ENUM(INVALID_GROUP_SIZE, InvalidGroupSize);
-CHECK_ENUM(RECIPIENT_NOT_FOUND, RecipientNotFound);
-CHECK_ENUM(GROUP_NOT_FOUND, GroupNotFound);
-CHECK_ENUM(DEVICE_NOT_FOUND, DeviceNotFound);
-CHECK_ENUM(IDENTITY_ALREADY_REGISTERED, IdentityAlreadyRegistered);
+CHECK_ENUM(NETWORK_ERROR, NetworkError);
+CHECK_ENUM(PRECONDITION_FAILED, PreconditionFailed);
 CHECK_ENUM(OPERATION_CANCELED, OperationCanceled);
-CHECK_ENUM(NOTHING_TO_CLAIM, NothingToClaim);
+CHECK_ENUM(DECRYPTION_FAILED, DecryptionFailed);
+CHECK_ENUM(GROUP_TOO_BIG, GroupTooBig);
+CHECK_ENUM(INVALID_VERIFICATION, InvalidVerification);
+CHECK_ENUM(TOO_MANY_ATTEMPTS, TooManyAttempts);
+CHECK_ENUM(EXPIRED_VERIFICATION, ExpiredVerification);
+
 CHECK_ENUM(LAST, Last);
 
 // Hi fellow Tanker developer!
@@ -84,7 +76,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 21,
+static_assert(TANKER_ERROR_LAST == 11,
               "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
@@ -103,11 +95,12 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
     assert(false && "unreachable code");
     return nullptr;
   }
-  catch (Tanker::Error::Exception const& e)
+  catch (Tanker::Errors::Exception const& e)
   {
     cfuture->error.reset(
-        new tanker_error_t{static_cast<tanker_error_code_t>(e.code()),
-                           duplicateString(e.message())});
+        new tanker_error_t{static_cast<tanker_error_code_t>(
+                               e.errorCode().default_error_condition().value()),
+                           duplicateString(e.what())});
   }
   catch (tc::operation_canceled const& e)
   {
@@ -117,12 +110,13 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
   catch (std::exception const& e)
   {
     cfuture->error.reset(new tanker_error_t{
-        TANKER_ERROR_OTHER,
-        duplicateString(std::string(typeid(e).name()) + ": " + e.what())});
+        TANKER_ERROR_INTERNAL_ERROR,
+        duplicateString(
+            fmt::format(TFMT("{:s}: {:s}"), typeid(e).name(), e.what()))});
   }
   catch (...)
   {
-    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_OTHER,
+    cfuture->error.reset(new tanker_error_t{TANKER_ERROR_INTERNAL_ERROR,
                                             duplicateString("unknown error")});
   }
   return cfuture->error.get();

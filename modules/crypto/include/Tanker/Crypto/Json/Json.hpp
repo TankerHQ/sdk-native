@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include <string>
 #include <type_traits>
@@ -15,19 +15,23 @@ struct adl_serializer<
     CryptoType,
     std::enable_if_t<::Tanker::Crypto::IsCryptographicType<CryptoType>::value>>
 {
-  static void to_json(json& j, CryptoType const& value)
+  template <typename Json>
+  static void to_json(Json& j, CryptoType const& value)
   {
     j = cppcodec::base64_rfc4648::encode(value);
   }
 
-  static CryptoType from_json(json const& j)
+  template <typename Json>
+  static CryptoType from_json(Json const& j)
   {
-    return cppcodec::base64_rfc4648::decode<CryptoType>(j.get<std::string>());
+    return cppcodec::base64_rfc4648::decode<CryptoType>(
+        j.template get<std::string>());
   }
 
-  static void from_json(json const& j, CryptoType& value)
+  template <typename Json>
+  static void from_json(Json const& j, CryptoType& value)
   {
-    value = adl_serializer<CryptoType>::from_json(j);
+    value = adl_serializer<CryptoType>::template from_json(j);
   }
 };
 }

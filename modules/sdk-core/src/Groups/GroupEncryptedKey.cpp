@@ -1,6 +1,7 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cstddef>
 

@@ -1,7 +1,7 @@
 #include <Tanker/Init.hpp>
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
-#include <Tanker/LogHandler.hpp>
+#include <Tanker/Log/LogHandler.hpp>
 
 #include <tconcurrent/thread_pool.hpp>
 

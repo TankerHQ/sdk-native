@@ -3,9 +3,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/DbModels/Version.hpp>
-#include <Tanker/Error.hpp>
 
-#include <fmt/format.h>
 #include <optional.hpp>
 #include <sqlpp11/char_sequence.h>
 #include <sqlpp11/type_traits.h>

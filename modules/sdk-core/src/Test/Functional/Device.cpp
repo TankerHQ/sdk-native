@@ -1,7 +1,7 @@
 #include <Tanker/Test/Functional/Device.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -15,7 +15,7 @@ namespace Tanker
 {
 namespace Test
 {
-static auto const STRONG_PASSWORD_DO_NOT_LEAK = Password("********");
+static auto const STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
 
 namespace
@@ -74,47 +74,20 @@ std::string const& Device::identity() const
   return this->_identity;
 }
 
-tc::cotask<void> Device::attachDevice(AsyncCore& parentSession)
+tc::cotask<AsyncCorePtr> Device::open(SessionType sessionType)
 {
-  assert(parentSession.isOpen());
-  auto const core = TC_AWAIT(this->open(parentSession));
-}
-
-tc::cotask<void> Device::registerUnlock(AsyncCore& session)
-{
-  assert(session.isOpen());
-  TC_AWAIT(session.registerUnlock(
-      Unlock::RegistrationOptions{}.set(STRONG_PASSWORD_DO_NOT_LEAK)));
-}
-
-tc::cotask<AsyncCorePtr> Device::open(SessionType type)
-{
-  auto tanker = createCore(type);
-  if (tanker->isOpen())
+  auto tanker = createCore(sessionType);
+  if (tanker->status() == Status::Ready)
     TC_RETURN(std::move(tanker));
 
-  auto const openResult = TC_AWAIT(tanker->signIn(_identity));
-  if (openResult == OpenResult::IdentityNotRegistered)
-    TC_AWAIT(tanker->signUp(_identity));
-  else if (openResult == OpenResult::IdentityVerificationNeeded)
-  {
-    auto const openResult2 =
-        TC_AWAIT(tanker->signIn(_identity,
-                                SignInOptions{
-                                    nonstd::nullopt,
-                                    nonstd::nullopt,
-                                    STRONG_PASSWORD_DO_NOT_LEAK,
-                                }));
-    if (openResult2 != OpenResult::Ok)
-      throw std::runtime_error("could not open functional test session");
-  }
+  auto const status = TC_AWAIT(tanker->start(_identity));
+  if (status == Status::IdentityRegistrationNeeded)
+    TC_AWAIT(tanker->registerIdentity(
+        Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
+  else if (status == Status::IdentityVerificationNeeded)
+    TC_AWAIT(tanker->verifyIdentity(
+        Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
   TC_RETURN(std::move(tanker));
-}
-
-tc::cotask<AsyncCorePtr> Device::open(AsyncCore& session)
-{
-  TC_AWAIT(registerUnlock(session));
-  TC_RETURN(TC_AWAIT(open(SessionType::Cached)));
 }
 }
 }

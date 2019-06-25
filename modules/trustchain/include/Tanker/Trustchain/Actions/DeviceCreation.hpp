@@ -52,7 +52,7 @@ public:
   Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
   template <typename T>
-  bool holdsAlternative() const;
+  bool holds_alternative() const;
 
   template <typename T>
   T const& get() const;
@@ -81,7 +81,7 @@ std::size_t serialized_size(DeviceCreation const& dc);
 void to_json(nlohmann::json& j, DeviceCreation const& dc);
 
 template <typename T>
-bool DeviceCreation::holdsAlternative() const
+bool DeviceCreation::holds_alternative() const
 {
   return mpark::holds_alternative<T>(_variant);
 }

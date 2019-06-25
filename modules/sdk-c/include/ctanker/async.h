@@ -42,12 +42,6 @@ tanker_future_t* tanker_promise_get_future(tanker_promise_t* promise);
  */
 void tanker_promise_set_value(tanker_promise_t* promise, void* value);
 
-/*!
- * Create a future
- * \remark must call tanker_future_destroy() to get rid of the returned
- *         future.
- */
-tanker_future_t* tanker_future_create(void);
 
 /*!
  * Get the content of the future.

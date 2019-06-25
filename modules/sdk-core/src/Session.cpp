@@ -1,26 +1,29 @@
 #include <Tanker/Session.hpp>
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
-#include <Tanker/RecipientNotFound.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Revocation.hpp>
+#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -29,20 +32,19 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
-#include <Tanker/Unlock/Messages.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/UserKeyStore.hpp>
-#include <Tanker/UserNotFound.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
+#include <mpark/variant.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -61,11 +63,39 @@ using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::ResourceId;
 using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
+namespace
+{
+std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
+    std::vector<Unlock::VerificationMethod> const& verificationMethods,
+    Crypto::SymmetricKey userSecret)
+{
+  std::map<Unlock::Method, Unlock::VerificationMethod> mappedMethods;
+  for (auto const method : verificationMethods)
+  {
+    if (auto const encryptedEmail = method.get_if<Email>())
+    {
+      auto const decryptedEmail = Crypto::decryptAead(
+          userSecret, gsl::make_span(*encryptedEmail).as_span<uint8_t const>());
+      mappedMethods[Unlock::Method::Email] =
+          Email{decryptedEmail.begin(), decryptedEmail.end()};
+    }
+    else if (method.holds_alternative<Passphrase>())
+      mappedMethods[Unlock::Method::Passphrase] = method;
+    else if (method.holds_alternative<VerificationKey>())
+      mappedMethods[Unlock::Method::VerificationKey] = method;
+    else
+      throw formatEx(Errc::InvalidArgument, "unknown verification method type");
+  }
+  return mappedMethods;
+}
+}
+
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -100,8 +130,7 @@ Session::Session(Config&& config)
   _client->setConnectionHandler(
       [this]() -> tc::cotask<void> { TC_AWAIT(connectionHandler()); });
 
-  _client->blockAvailable.connect(
-      [this] { _trustchainPuller.scheduleCatchUp(); });
+  _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
   _trustchainPuller.receivedThisDeviceId =
       [this](auto const& deviceId) -> tc::cotask<void> {
@@ -147,9 +176,12 @@ tc::cotask<void> Session::connectionHandler()
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
     if (!boost::algorithm::starts_with(challenge, challengePrefix))
-      throw std::runtime_error(
-          "Received auth challenge does not contain mandatory prefix. Server "
+    {
+      throw formatEx(
+          Errc::InternalError,
+          "received auth challenge does not contain mandatory prefix, server "
           "may not be up to date, or we may be under attack.");
+    }
     auto const signature =
         Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
                      _deviceKeyStore->signatureKeyPair().privateKey);
@@ -158,7 +190,8 @@ tc::cotask<void> Session::connectionHandler()
         {"public_signature_key", _deviceKeyStore->signatureKeyPair().publicKey},
         {"trustchain_id", _trustchainId},
         {"user_id", _userId}};
-    _unlockMethods = TC_AWAIT(_client->authenticateDevice(request));
+    _verificationMethods = verificationMethodsToMap(
+        TC_AWAIT(_client->authenticateDevice(request)), this->_userSecret);
   }
   catch (std::exception const& e)
   {
@@ -170,7 +203,7 @@ tc::cotask<void> Session::startConnection()
 {
   FUNC_TIMER(Net);
   auto const deviceId = _deviceKeyStore->deviceId();
-  if (!deviceId.is_null())
+  if (!deviceId.is_null() && gotDeviceId)
     gotDeviceId(deviceId);
 
   TC_AWAIT(_client->handleConnection());
@@ -255,7 +288,11 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
     }
   }
   if (!key)
-    throw Error::ResourceKeyNotFound(resourceId);
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   TFMT("key not found for resource: {:s}"),
+                   resourceId);
+  }
 
   Encryptor::decrypt(decryptedData, *key, encryptedData);
 }
@@ -265,7 +302,8 @@ tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
   TC_AWAIT(_deviceKeyStore->setDeviceId(deviceId));
   _trustchainPuller.setDeviceId(deviceId);
   _blockGenerator.setDeviceId(deviceId);
-  gotDeviceId(deviceId);
+  if (gotDeviceId)
+    gotDeviceId(deviceId);
 }
 
 Trustchain::DeviceId const& Session::deviceId() const
@@ -287,7 +325,7 @@ tc::cotask<void> Session::share(
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return cppcodec::base64_rfc4648::decode<ResourceId>(resourceId);
+    return base64DecodeArgument<ResourceId>(resourceId);
   });
 
   TC_AWAIT(Share::share(_resourceKeyStore,
@@ -314,7 +352,7 @@ tc::cotask<void> Session::updateGroupMembers(
     SGroupId const& groupIdString,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
-  auto const groupId = cppcodec::base64_rfc4648::decode<GroupId>(groupIdString);
+  auto const groupId = base64DecodeArgument<GroupId>(groupIdString);
 
   TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
                                           _blockGenerator,
@@ -327,161 +365,144 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(syncTrustchain());
 }
 
-tc::cotask<std::unique_ptr<Unlock::Registration>>
-Session::generateVerificationKey()
+void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
 {
-  TC_RETURN(Unlock::generate(
-      _userId, TC_AWAIT(_userKeyStore.getLastKeyPair()), _blockGenerator));
+  if (auto const emailVerification =
+          mpark::get_if<Unlock::EmailVerification>(&method))
+    _verificationMethods[Unlock::Method::Email] = emailVerification->email;
+  else if (mpark::holds_alternative<Passphrase>(method))
+    _verificationMethods[Unlock::Method::Passphrase] = Passphrase{};
 }
 
-tc::cotask<void> Session::registerVerificationKey(
-    Unlock::Registration const& registration)
+tc::cotask<void> Session::setVerificationMethod(
+    Unlock::Verification const& method)
 {
-  TC_AWAIT(_client->pushBlock(registration.block));
+  if (this->_verificationMethods.empty())
+  {
+    throw formatEx(
+        Errc::PreconditionFailed,
+        "cannot call setVerificationMethod after a verification key has been "
+        "used");
+  }
+  else if (mpark::holds_alternative<VerificationKey>(method))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot call setVerificationMethod with a verification key");
+  }
+  else
+  {
+    TC_AWAIT(_client->setVerificationMethod(
+        trustchainId(), userId(), method, userSecret()));
+    updateLocalUnlockMethods(method);
+  }
 }
 
-tc::cotask<void> Session::createVerificationKey(
-    Unlock::CreationOptions const& options)
+tc::cotask<AttachResult> Session::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity)
 {
-  auto const reg = TC_AWAIT(generateVerificationKey());
-  auto const msg = Unlock::Message(
-      trustchainId(),
-      deviceId(),
-      Unlock::UpdateOptions(
-          options.get<Email>(), options.get<Password>(), reg->verificationKey),
-      userSecret(),
-      _deviceKeyStore->signatureKeyPair().privateKey);
+  auto const provisionalIdentity =
+      Identity::extract<Identity::SecretProvisionalIdentity>(
+          sidentity.string());
+  if (provisionalIdentity.target != Identity::TargetType::Email)
+  {
+    throw AssertionError(
+        fmt::format(TFMT("unsupported provisional identity target {:s}"),
+                    provisionalIdentity.target));
+  }
+  if (TC_AWAIT(_provisionalUserKeysStore
+                   .findProvisionalUserKeysByAppPublicEncryptionKey(
+                       provisionalIdentity.appEncryptionKeyPair.publicKey)))
+  {
+    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
+  }
+  auto const email = Email{provisionalIdentity.value};
   try
   {
-    TC_AWAIT(_client->pushBlock(reg->block));
-    TC_AWAIT(_client->createVerificationKey(msg));
-    updateLocalUnlockMethods(options);
+    auto const tankerKeys = TC_AWAIT(
+        this->_client->getVerifiedProvisionalIdentityKeys(Crypto::generichash(
+            gsl::make_span(email).as_span<std::uint8_t const>())));
+    if (tankerKeys)
+    {
+      auto block = _blockGenerator.provisionalIdentityClaim(
+          _userId,
+          SecretProvisionalUser{provisionalIdentity.target,
+                                provisionalIdentity.value,
+                                provisionalIdentity.appEncryptionKeyPair,
+                                tankerKeys->encryptionKeyPair,
+                                provisionalIdentity.appSignatureKeyPair,
+                                tankerKeys->signatureKeyPair},
+          TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+      TC_AWAIT(_client->pushBlock(block));
+      TC_AWAIT(syncTrustchain());
+    }
+    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
   }
-  catch (Error::ServerError const& e)
+  catch (Tanker::Errors::Exception const& e)
   {
-    if (e.httpStatusCode() == 500)
-      throw Error::InternalError(e.what());
-    else if (e.httpStatusCode() == 409)
-      throw Error::VerificationKeyAlreadyExists(
-          "A verification key has already been registered");
-    else
-      throw;
-  }
-}
-
-void Session::updateLocalUnlockMethods(
-    Unlock::RegistrationOptions const& options)
-{
-  if (options.get<Email>().has_value())
-    _unlockMethods |= Unlock::Method::Email;
-  if (options.get<Password>().has_value())
-    _unlockMethods |= Unlock::Method::Password;
-}
-
-tc::cotask<void> Session::updateUnlock(Unlock::UpdateOptions const& options)
-{
-  auto const msg =
-      Unlock::Message(trustchainId(),
-                      deviceId(),
-                      options,
-                      userSecret(),
-                      _deviceKeyStore->signatureKeyPair().privateKey);
-  try
-  {
-    TC_AWAIT(_client->updateVerificationKey(msg));
-    updateLocalUnlockMethods(
-        std::forward_as_tuple(options.get<Email>(), options.get<Password>()));
-  }
-  catch (Error::ServerError const& e)
-  {
-    if (e.httpStatusCode() == 400)
-      throw Error::InvalidVerificationKey{e.what()};
+    if (e.errorCode() == Server::Errc::VerificationNeeded)
+    {
+      _provisionalIdentity = provisionalIdentity;
+      TC_RETURN(
+          (AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+    }
     throw;
   }
 }
 
-tc::cotask<void> Session::registerUnlock(
-    Unlock::RegistrationOptions const& options)
+tc::cotask<void> Session::verifyProvisionalIdentity(
+    Unlock::Verification const& verification)
 {
-  if (!this->_unlockMethods)
-    TC_AWAIT(createVerificationKey(options));
+  if (!_provisionalIdentity.has_value())
+  {
+    throw formatEx(
+        Errc::PreconditionFailed,
+        "cannot call verifyProvisionalIdentity without having called "
+        "attachProvisionalIdentity before");
+  }
+  nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
+  if (auto const emailVerification =
+          mpark::get_if<Unlock::EmailVerification>(&verification))
+  {
+    if (emailVerification->email != Email{_provisionalIdentity->value})
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "verification email does not match provisional identity");
+    }
+    tankerKeys = TC_AWAIT(
+        this->_client->getProvisionalIdentityKeys(verification, _userSecret));
+  }
   else
-    TC_AWAIT(updateUnlock(Unlock::UpdateOptions{
-        options.get<Email>(), options.get<Password>(), nonstd::nullopt}));
-}
-
-tc::cotask<void> Session::claimProvisionalIdentity(
-    SSecretProvisionalIdentity const& sidentity,
-    VerificationCode const& verificationCode)
-{
-  auto const identity = Identity::extract<Identity::SecretProvisionalIdentity>(
-      sidentity.string());
-  if (identity.target != Identity::TargetType::Email)
-    throw Error::formatEx("unsupported provisional identity target {}",
-                          identity.target);
-
-  try
   {
-    auto tankerKeys = TC_AWAIT(this->_client->getProvisionalIdentityKeys(
-        Email{identity.value}, verificationCode));
-    if (!tankerKeys)
-    {
-      throw Error::formatEx<Error::NothingToClaim>(fmt("nothing to claim {}"),
-                                                   identity.value);
-    }
-    auto block = _blockGenerator.provisionalIdentityClaim(
-        _userId,
-        SecretProvisionalUser{identity.target,
-                              identity.value,
-                              identity.appEncryptionKeyPair,
-                              tankerKeys->encryptionKeyPair,
-                              identity.appSignatureKeyPair,
-                              tankerKeys->signatureKeyPair},
-        TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-    TC_AWAIT(_client->pushBlock(block));
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "unknown verification method for provisional identity");
   }
-  catch (Error::ServerError const& e)
+  if (!tankerKeys)
   {
-    if (e.serverCode() == "invalid_verification_code" ||
-        e.serverCode() == "authentication_failed")
-    {
-      throw Error::InvalidVerificationCode{e.what()};
-    }
-    else
-    {
-      throw e;
-    }
+    TINFO("Nothing to claim");
+    return;
   }
+  auto block = _blockGenerator.provisionalIdentityClaim(
+      _userId,
+      SecretProvisionalUser{_provisionalIdentity->target,
+                            _provisionalIdentity->value,
+                            _provisionalIdentity->appEncryptionKeyPair,
+                            tankerKeys->encryptionKeyPair,
+                            _provisionalIdentity->appSignatureKeyPair,
+                            tankerKeys->signatureKeyPair},
+      TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
+  TC_AWAIT(_client->pushBlock(block));
+  _provisionalIdentity = nonstd::nullopt;
+  TC_AWAIT(syncTrustchain());
 }
 
-tc::cotask<VerificationKey> Session::generateAndRegisterVerificationKey()
+std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const
 {
-  auto const reg = TC_AWAIT(generateVerificationKey());
-  TC_AWAIT(registerVerificationKey(*reg));
-  TC_RETURN(reg->verificationKey);
-}
-
-tc::cotask<bool> Session::isUnlockAlreadySetUp() const
-{
-  auto const devices = TC_AWAIT(_contactStore.findUserDevices(_userId));
-  TC_RETURN(std::any_of(devices.begin(), devices.end(), [](auto const& device) {
-    return device.isGhostDevice;
-  }));
-}
-
-Unlock::Methods Session::registeredUnlockMethods() const
-{
-  return _unlockMethods;
-}
-
-bool Session::hasRegisteredUnlockMethods() const
-{
-  return !!_unlockMethods;
-}
-
-bool Session::hasRegisteredUnlockMethod(Unlock::Method method) const
-{
-  return !!(_unlockMethods & method);
+  std::vector<Unlock::VerificationMethod> methods;
+  for (auto const method : _verificationMethods)
+    methods.push_back(method.second);
+  if (methods.empty())
+    methods.push_back(VerificationKey{});
+  return methods;
 }
 
 tc::cotask<void> Session::catchUserKey(
@@ -532,10 +553,12 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
     if (!_ready.get_future().is_ready())
     {
       _ready.set_exception(std::make_exception_ptr(
-          Error::OperationCanceled("this device was revoked")));
+          Exception(make_error_code(Errc::OperationCanceled),
+                    "this device was revoked")));
     }
     TC_AWAIT(nukeDatabase());
-    deviceRevoked();
+    if (deviceRevoked)
+      deviceRevoked();
     TC_RETURN();
   }
 

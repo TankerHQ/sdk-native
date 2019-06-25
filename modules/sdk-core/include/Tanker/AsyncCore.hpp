@@ -1,28 +1,25 @@
 #pragma once
 
+#include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
-#include <Tanker/LogHandler.hpp>
+#include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Password.hpp>
+#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/DeviceLocker.hpp>
-#include <Tanker/Unlock/Methods.hpp>
-#include <Tanker/Unlock/Options.hpp>
+#include <Tanker/Types/VerificationKey.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/task_canceler.hpp>
 
 #include <tconcurrent/future.hpp>
 
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 
 #include <cstdint>
@@ -40,14 +37,6 @@ namespace Tanker
 template <typename T>
 using expected = tc::future<T>;
 
-enum class Event
-{
-  SessionClosed,
-  DeviceRevoked,
-
-  Last
-};
-
 class AsyncCore
 {
 public:
@@ -61,19 +50,15 @@ public:
 
   tc::future<void> destroy();
 
-  expected<boost::signals2::scoped_connection> connectEvent(
-      Event event, std::function<void(void*, void*)> cb, void* data = nullptr);
+  tc::shared_future<Status> start(std::string const& identity);
+  tc::shared_future<void> stop();
 
-  expected<void> disconnectEvent(boost::signals2::scoped_connection conn);
+  tc::shared_future<void> registerIdentity(
+      Unlock::Verification const& verification);
+  tc::shared_future<void> verifyIdentity(
+      Unlock::Verification const& verification);
 
-  tc::shared_future<void> signUp(std::string const& identity,
-                                 AuthenticationMethods const& authMethods = {});
-  tc::shared_future<OpenResult> signIn(std::string const& identity,
-                                       SignInOptions const& signInOptions = {});
-
-  tc::shared_future<void> signOut();
-
-  bool isOpen() const;
+  Tanker::Status status() const;
 
   tc::shared_future<void> encrypt(
       uint8_t* encryptedData,
@@ -93,22 +78,22 @@ public:
   tc::shared_future<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::shared_future<VerificationKey> generateAndRegisterVerificationKey();
+  tc::shared_future<VerificationKey> generateVerificationKey();
 
-  tc::shared_future<void> registerUnlock(
-      Unlock::RegistrationOptions const& options);
+  tc::shared_future<void> setVerificationMethod(
+      Unlock::Verification const& method);
+  tc::shared_future<std::vector<Unlock::VerificationMethod>>
+  getVerificationMethods() const;
 
-  tc::shared_future<bool> isUnlockAlreadySetUp() const;
-  expected<bool> hasRegisteredUnlockMethods() const;
-  expected<bool> hasRegisteredUnlockMethod(Unlock::Method) const;
-  expected<Unlock::Methods> registeredUnlockMethods() const;
+  tc::shared_future<AttachResult> attachProvisionalIdentity(
+      SSecretProvisionalIdentity const& sidentity);
+  tc::shared_future<void> verifyProvisionalIdentity(
+      Unlock::Verification const& verification);
 
-  tc::shared_future<void> claimProvisionalIdentity(
-      SSecretProvisionalIdentity const& identity,
-      VerificationCode const& verificationCode);
-
-  boost::signals2::signal<void()>& sessionClosed();
-  boost::signals2::signal<void()>& deviceRevoked();
+  void connectSessionClosed(std::function<void()> cb);
+  void disconnectSessionClosed();
+  void connectDeviceRevoked(std::function<void()> cb);
+  void disconnectDeviceRevoked();
 
   expected<SDeviceId> deviceId() const;
   tc::shared_future<std::vector<Device>> getDeviceList();
@@ -134,7 +119,7 @@ private:
 
   // this signal is special compared to the other two because we need to do
   // special work before forwarding it, so we redefine it
-  boost::signals2::signal<void()> _asyncDeviceRevoked;
+  std::function<void()> _asyncDeviceRevoked;
 
   mutable task_canceler _taskCanceler;
 };

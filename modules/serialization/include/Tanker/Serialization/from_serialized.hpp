@@ -11,7 +11,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Serialization/detail/static_const.hpp>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 // For more info:
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
@@ -74,15 +74,7 @@ T deserialize_impl(SerializedSource& ss)
 template <typename T>
 void deserialize_impl(SerializedSource& ss, T& val)
 {
-  try
-  {
-    from_serialized(ss, val);
-  }
-  catch (std::exception const& e)
-  {
-    throw std::runtime_error(fmt::format(
-        "Could not deserialize into type: {}: {}", typeid(T).name(), e.what()));
-  }
+  from_serialized(ss, val);
 }
 
 struct from_serialized_fn

@@ -3,6 +3,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <stdexcept>
 
 namespace Tanker

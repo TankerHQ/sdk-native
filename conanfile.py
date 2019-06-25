@@ -50,7 +50,7 @@ class TankerConan(ConanFile):
         # Thus we embed every dep in the shared lib
         private = (self.settings.os == "Android")
 
-        self.requires("Boost/1.68.0@tanker/testing", private=private, override=True)
+        self.requires("Boost/1.68.0@tanker/testing", private=private)
         if self.settings.os != "Emscripten":
             if self.options.with_ssl:
                 self.requires("LibreSSL/2.6.3@tanker/testing", private=private)
@@ -59,13 +59,13 @@ class TankerConan(ConanFile):
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
-        self.requires("fmt/5.2.1@tanker/testing", private=private)
+        self.requires("fmt/5.3.0@bincrafters/stable", private=private)
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
-        self.requires("mockaron/0.9.1@tanker/stable", private=private)
+        self.requires("mockaron/0.9.2@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.19.0@tanker/stable", private=private)
+        self.requires("tconcurrent/0.21.1@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
 
     def imports(self):
@@ -90,7 +90,7 @@ class TankerConan(ConanFile):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.2.3@tanker/testing")
-            self.build_requires("doctest-async/2.0.8@tanker/testing")
+            self.build_requires("doctest-async/2.0.10@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")
@@ -145,6 +145,8 @@ class TankerConan(ConanFile):
             "tankeridentity",
             "tankercrypto",
             "tankerserialization",
+            "tankererrors",
+            "tankerlog",
             "tankerformat",
         ]
 

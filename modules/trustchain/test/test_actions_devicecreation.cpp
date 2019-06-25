@@ -2,12 +2,14 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v1.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v3.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
@@ -21,7 +23,7 @@ TEST_CASE("DeviceCreation tests")
   {
     DeviceCreation dc;
 
-    CHECK(dc.holdsAlternative<DeviceCreation::v1>());
+    CHECK(dc.holds_alternative<DeviceCreation::v1>());
     CHECK(dc.get_if<DeviceCreation::v1>() != nullptr);
     CHECK(dc.get_if<DeviceCreation::v3>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation::v1>());
@@ -63,7 +65,8 @@ TEST_CASE("DeviceCreation tests")
                           publicEncryptionKey,
                           lastReset);
 
-      CHECK_THROWS(dc2.asDeviceCreation1());
+      TANKER_CHECK_THROWS_WITH_CODE(dc2.asDeviceCreation1(),
+                                    Errc::InvalidLastResetField);
     }
   }
 

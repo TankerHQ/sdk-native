@@ -1,6 +1,6 @@
 #include <Helpers/UniquePath.hpp>
 
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 #include <boost/filesystem/operations.hpp>
 

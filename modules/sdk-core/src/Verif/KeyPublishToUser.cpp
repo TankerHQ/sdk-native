@@ -4,6 +4,7 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/User.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <mpark/variant.hpp>
@@ -23,13 +24,14 @@ void verifyKeyPublishToUser(ServerEntry const& serverEntry,
   assert(serverEntry.action().nature() == Nature::KeyPublishToUser ||
          serverEntry.action().nature() == Nature::KeyPublishToProvisionalUser);
 
-  ensures(!author.revokedAtBlkIndex || author.revokedAtBlkIndex > serverEntry.index(),
-          Error::VerificationCode::InvalidAuthor,
+  ensures(!author.revokedAtBlkIndex ||
+              author.revokedAtBlkIndex > serverEntry.index(),
+          Errc::InvalidAuthor,
           "author device must not be revoked");
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
                          author.publicSignatureKey),
-          Error::VerificationCode::InvalidSignature,
+          Errc::InvalidSignature,
           "KeyPublishToUser block must be signed by the author device");
 }
 }

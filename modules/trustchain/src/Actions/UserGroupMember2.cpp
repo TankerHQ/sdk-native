@@ -2,6 +2,8 @@
 
 #include <Tanker/Serialization/Serialization.hpp>
 
+#include <nlohmann/json.hpp>
+
 namespace Tanker
 {
 namespace Trustchain

@@ -1,12 +1,15 @@
 #pragma once
 
 #include <Tanker/AConnection.hpp>
+#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
+#include <Tanker/GhostDevice.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -14,9 +17,8 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/Methods.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <gsl-lite.hpp>
 #include <mpark/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -33,11 +35,10 @@
 
 namespace Tanker
 {
-namespace Unlock
+namespace ClientHelpers
 {
-struct FetchAnswer;
-struct Message;
-struct Request;
+nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
+                                       Crypto::SymmetricKey const& userSecret);
 }
 
 struct UserStatusResult
@@ -59,8 +60,7 @@ public:
 
   using ConnectionHandler = std::function<tc::cotask<void>()>;
 
-  Client(std::unique_ptr<AConnection> conn,
-         ConnectionHandler connectionHandler = {});
+  Client(ConnectionPtr conn, ConnectionHandler connectionHandler = {});
 
   void start();
   void setConnectionHandler(ConnectionHandler handler);
@@ -69,24 +69,36 @@ public:
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
   tc::cotask<void> pushKeys(gsl::span<std::vector<uint8_t> const> block);
 
+  tc::cotask<void> createUser(
+      Identity::SecretPermanentIdentity const& identity,
+      Block const& userCreation,
+      Block const& firstDevice,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret,
+      gsl::span<uint8_t const> encryptedVerificationKey);
+
   tc::cotask<UserStatusResult> userStatus(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey);
 
-  tc::cotask<void> createVerificationKey(Unlock::Message const& request);
-  tc::cotask<void> updateVerificationKey(Unlock::Message const& request);
-  tc::cotask<Unlock::FetchAnswer> fetchVerificationKey(Unlock::Request const& req);
+  tc::cotask<void> setVerificationMethod(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret);
+  tc::cotask<VerificationKey> fetchVerificationKey(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Unlock::Verification const& method,
+      Crypto::SymmetricKey userSecret);
 
   tc::cotask<std::string> requestAuthChallenge();
-  tc::cotask<Unlock::Methods> authenticateDevice(nlohmann::json const& request);
+  tc::cotask<std::vector<Unlock::VerificationMethod>> authenticateDevice(
+      nlohmann::json const& request);
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
-      Trustchain::DeviceId const& deviceId);
-  tc::cotask<void> subscribeToCreation(
-      Trustchain::TrustchainId const& trustchainId,
-      Crypto::PublicSignatureKey const& publicKey,
-      Crypto::Signature const& signedPublicKey);
+      Crypto::PublicSignatureKey const& devicePublicUserKey);
 
   tc::cotask<std::vector<std::string>> getBlocks(
       int index,
@@ -96,12 +108,13 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
-  getProvisionalIdentityKeys(Email const& provisionalIdentity,
-                             VerificationCode const& verificationCode);
+  getProvisionalIdentityKeys(Unlock::Verification const& verification,
+                             Crypto::SymmetricKey const& userSecret);
+  tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+  getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 
   std::string connectionId() const;
-  boost::signals2::signal<void()> blockAvailable;
-  boost::signals2::signal<void()> deviceCreated;
+  std::function<void()> blockAvailable;
 
 private:
   std::unique_ptr<AConnection> _cx;

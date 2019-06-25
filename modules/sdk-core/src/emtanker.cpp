@@ -7,7 +7,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Init.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 

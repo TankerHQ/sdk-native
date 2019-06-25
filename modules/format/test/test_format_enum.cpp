@@ -1,7 +1,7 @@
 #include <Tanker/Format/Enum.hpp>
 
 #include <doctest.h>
-#include <fmt/format.h>
+#include <fmt/core.h>
 
 // VERY IMPORTANT to include this:
 // https://github.com/onqtam/doctest/issues/183
@@ -20,12 +20,12 @@ std::string to_string(Test t)
 {
   switch (t)
   {
-    case Test::One:
-      return "One";
-    case Test::Two:
-      return "Two";
-    default:
-      return "INVALID";
+  case Test::One:
+    return "One";
+  case Test::Two:
+    return "Two";
+  default:
+    return "INVALID";
   }
 }
 }

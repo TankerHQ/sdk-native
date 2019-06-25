@@ -72,4 +72,25 @@ TEST_CASE("ProvisionalUserKeysStore")
 
     REQUIRE_UNARY(!gotKeyPair2.has_value());
   }
+
+  SUBCASE("it should find a key by app public encryption key")
+  {
+    auto const appPubKey = make<Crypto::PublicSignatureKey>("app pub key...");
+    auto const tankerPubKey =
+        make<Crypto::PublicSignatureKey>("tanker pub key...");
+    auto const appKeys = Tanker::Crypto::makeEncryptionKeyPair();
+    auto const tankerKeys = Tanker::Crypto::makeEncryptionKeyPair();
+
+    ProvisionalUserKeysStore store(dbPtr.get());
+
+    AWAIT_VOID(store.putProvisionalUserKeys(
+        appPubKey, tankerPubKey, {appKeys, tankerKeys}));
+    auto const gotKeyPair =
+        AWAIT(store.findProvisionalUserKeysByAppPublicEncryptionKey(
+            appKeys.publicKey));
+
+    REQUIRE_UNARY(gotKeyPair.has_value());
+    CHECK_EQ(appKeys, gotKeyPair->appKeys);
+    CHECK_EQ(tankerKeys, gotKeyPair->tankerKeys);
+  }
 }

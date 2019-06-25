@@ -1,6 +1,6 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 
 TLOG_CATEGORY(ResourceKeyStore);
@@ -31,5 +31,14 @@ ProvisionalUserKeysStore::findProvisionalUserKeys(
 {
   TC_RETURN(TC_AWAIT(
       _db->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
+}
+
+tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicEncryptionKey(
+    Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const
+{
+
+  TC_RETURN(TC_AWAIT(_db->findProvisionalUserKeysByAppPublicEncryptionKey(
+      appPublicEncryptionKey)));
 }
 }

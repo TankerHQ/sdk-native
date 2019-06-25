@@ -28,6 +28,8 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
   include/Tanker/Trustchain/ClientEntry.hpp
+  include/Tanker/Trustchain/Errors/Errc.hpp
+  include/Tanker/Trustchain/Errors/ErrcCategory.hpp
   include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
@@ -64,6 +66,8 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupCreation/v2.cpp
   src/Actions/UserGroupMember2.cpp
   src/Actions/UserGroupProvisionalMember2.cpp
+  src/Errors/Errc.cpp
+  src/Errors/ErrcCategory.cpp
   src/ClientEntry.cpp
   src/ServerEntry.cpp
   src/ExternTemplates.cpp
@@ -85,7 +89,17 @@ install(TARGETS tankertrustchain
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertrustchain tankercrypto tankerserialization tankerformat CONAN_PKG::variant CONAN_PKG::jsonformoderncpp CONAN_PKG::Boost)
+target_link_libraries(
+  tankertrustchain
+  tankercrypto
+  tankerserialization
+  tankererrors
+  tankerformat
+
+  CONAN_PKG::variant
+  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::Boost
+)
 
 if(BUILD_TESTS)
   enable_testing()

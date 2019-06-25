@@ -89,7 +89,7 @@ std::vector<uint8_t> BlockGenerator::addUser3(
                          encryptionKey,
                          userEncryptionKeys.publicKey,
                          sealedPrivateEncryptionKey,
-                         DeviceCreation::DeviceType::Device};
+                         DeviceCreation::DeviceType::GhostDevice};
   auto const entry =
       ClientEntry::create(_trustchainId,
                           static_cast<Crypto::Hash>(_trustchainId),
@@ -262,9 +262,9 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation(
       Crypto::sealEncrypt(signatureKeyPair.privateKey, publicEncryptionKey);
 
   UserGroupCreation::v1 ugc{signatureKeyPair.publicKey,
-                         publicEncryptionKey,
-                         encryptedPrivateSignatureKey,
-                         sealedPrivateEncryptionKeysForUsers};
+                            publicEncryptionKey,
+                            encryptedPrivateSignatureKey,
+                            sealedPrivateEncryptionKeysForUsers};
   ugc.selfSign(signatureKeyPair.privateKey);
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
@@ -278,17 +278,17 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation2(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     UserGroupCreation::v2::Members const& groupMembers,
-    UserGroupCreation::v2::ProvisionalMembers const&
-        groupProvisionalMembers) const
+    UserGroupCreation::v2::ProvisionalMembers const& groupProvisionalMembers)
+    const
 {
   auto const encryptedPrivateSignatureKey =
       Crypto::sealEncrypt(signatureKeyPair.privateKey, publicEncryptionKey);
 
   UserGroupCreation::v2 ugc{signatureKeyPair.publicKey,
-                         publicEncryptionKey,
-                         encryptedPrivateSignatureKey,
-                         groupMembers,
-                         groupProvisionalMembers};
+                            publicEncryptionKey,
+                            encryptedPrivateSignatureKey,
+                            groupMembers,
+                            groupProvisionalMembers};
   ugc.selfSign(signatureKeyPair.privateKey);
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),

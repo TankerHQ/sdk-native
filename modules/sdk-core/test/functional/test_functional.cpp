@@ -1,9 +1,7 @@
 #include <string>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Error.hpp>
-#include <Tanker/RecipientNotFound.hpp>
-#include <Tanker/ResourceKeyNotFound.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
@@ -13,7 +11,7 @@
 #include <doctest.h>
 
 #include <Helpers/Buffers.hpp>
-#include <Helpers/SignalSpy.hpp>
+#include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>
 
 #include "CheckDecrypt.hpp"
@@ -23,6 +21,7 @@
 using namespace std::string_literals;
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 using namespace type_literals;
 
 namespace
@@ -37,7 +36,7 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
   return clearDatas;
 }
 
-tc::cotask<void> waitForPromise(tc::promise<void> prom)
+tc::cotask<bool> waitFor(tc::promise<void> prom)
 {
   std::vector<tc::future<void>> futures;
   futures.push_back(prom.get_future());
@@ -46,8 +45,32 @@ tc::cotask<void> waitForPromise(tc::promise<void> prom)
       TC_AWAIT(tc::when_any(std::make_move_iterator(futures.begin()),
                             std::make_move_iterator(futures.end()),
                             tc::when_any_options::auto_cancel));
-  CHECK(result.index == 0);
+  TC_RETURN(result.index == 0);
 }
+
+template <typename T /*, typename ...Args */>
+class SpyEvent
+{
+  using ConnectHandler = void (T::*)(std::function<void()>);
+  using DisconnectHandler = void (T::*)();
+
+public:
+  SpyEvent(T* target, ConnectHandler connect, DisconnectHandler disconnect)
+    : target(target), connect(connect), disconnect(disconnect)
+  {
+    (target->*connect)([this]() { receivedEvents.emplace_back(0); });
+  }
+
+  ~SpyEvent()
+  {
+    (target->*disconnect)();
+  }
+
+  T* target;
+  ConnectHandler connect;
+  DisconnectHandler disconnect;
+  std::vector<int> receivedEvents;
+};
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
@@ -55,10 +78,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto const core = TC_AWAIT(device.open());
-  REQUIRE(core->isOpen());
-  SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->signOut());
-  REQUIRE(!core->isOpen());
+  REQUIRE(core->status() == Status::Ready);
+  SpyEvent<AsyncCore> spyClose(core.get(),
+                               &AsyncCore::connectSessionClosed,
+                               &AsyncCore::disconnectSessionClosed);
+  TC_AWAIT(core->stop());
+  REQUIRE(core->status() == Status::Stopped);
   REQUIRE(spyClose.receivedEvents.size() == 1);
 }
 
@@ -67,15 +92,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto core = TC_AWAIT(device.open());
-  REQUIRE(core->isOpen());
-  SignalSpy<void> spyClose(core->sessionClosed());
-  TC_AWAIT(core->signOut());
-  REQUIRE(!core->isOpen());
+  REQUIRE(core->status() == Status::Ready);
+  SpyEvent<AsyncCore> spyClose(core.get(),
+                               &AsyncCore::connectSessionClosed,
+                               &AsyncCore::disconnectSessionClosed);
+  TC_AWAIT(core->stop());
+  REQUIRE(core->status() == Status::Stopped);
   REQUIRE(spyClose.receivedEvents.size() == 1);
   core = TC_AWAIT(device.open());
-  REQUIRE(core->isOpen());
-  TC_AWAIT(core->signOut());
-  REQUIRE(!core->isOpen());
+  REQUIRE(core->status() == Status::Ready);
+  TC_AWAIT(core->stop());
+  REQUIRE(core->status() == Status::Stopped);
   REQUIRE(spyClose.receivedEvents.size() == 2);
 }
 
@@ -85,10 +112,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto device = alice.makeDevice();
 
   auto const core = TC_AWAIT(device.open());
-  TC_AWAIT(core->signOut());
-  REQUIRE(!core->isOpen());
-  TC_AWAIT(core->signIn(alice.identity));
-  REQUIRE(core->isOpen());
+  TC_AWAIT(core->stop());
+  REQUIRE(core->status() == Status::Stopped);
+  CHECK_EQ(TC_AWAIT(core->start(alice.identity)), Status::Ready);
+  CHECK_EQ(core->status(), Status::Ready);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -100,7 +127,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Test::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->signIn(alice.identity)));
+  REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
@@ -110,32 +137,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   auto device1 = alice.makeDevice();
   auto session = TC_AWAIT(device1.open());
   auto device2 = alice.makeDevice(Test::DeviceType::New);
-  REQUIRE_NOTHROW(TC_AWAIT(device2.attachDevice(*session)));
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it fails to signUp if the user already exists")
-{
-  auto alice = trustchain.makeUser(Test::UserType::New);
-  auto device1 = alice.makeDevice();
-  {
-    auto session = TC_AWAIT(device1.open(Test::SessionType::New));
-  }
-  auto session = device1.createCore(Test::SessionType::New);
-  REQUIRE_THROWS_AS(TC_AWAIT(session->signUp(alice.identity)),
-                    Error::IdentityAlreadyRegistered);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it fails to open if no sign in options are provided")
-{
-  auto alice = trustchain.makeUser();
-  auto device1 = alice.makeDevice();
-  auto device2 = alice.makeDevice(Test::DeviceType::New);
-  auto session = TC_AWAIT(device1.open());
-  auto tanker2 = device2.createCore(Test::SessionType::New);
-  REQUIRE_EQ(TC_AWAIT(tanker2->signIn(alice.identity)),
-             OpenResult::IdentityVerificationNeeded);
+  REQUIRE_NOTHROW(TC_AWAIT(device2.open()));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
@@ -193,7 +195,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
       AsyncCore::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
-  TC_AWAIT(aliceSession->signOut());
+  TC_AWAIT(aliceSession->stop());
   REQUIRE(TC_AWAIT(
       checkDecrypt(aliceDevices, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -212,10 +214,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceFirstSession->encrypt(encryptedData.data(), clearData)));
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto const aliceSecondSession =
-      TC_AWAIT(aliceSecondDevice.open(*aliceFirstSession));
+  auto const aliceSecondSession = TC_AWAIT(aliceSecondDevice.open());
 
-  TC_AWAIT(aliceSecondSession->signOut());
+  TC_AWAIT(aliceSecondSession->stop());
 
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
@@ -242,9 +243,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> decryptedData;
   decryptedData.resize(clearData.size());
 
-  CHECK_THROWS_AS(
+  TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->decrypt(decryptedData.data(), encryptedData)),
-      Error::ResourceKeyNotFound);
+      Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
@@ -283,7 +284,45 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {
-  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(),
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bobDevice = bob.makeDevice();
+  auto const bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  auto const emailVerif = Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}};
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
+
+  std::vector<uint8_t> decrypted(
+      bobSession->decryptedSize(encryptedData).get());
+  TC_AWAIT(bobSession->decrypt(decrypted.data(), encryptedData));
+  CHECK(decrypted == clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can claim the same provisional identity twice")
+{
+  auto const bobEmail = Email{"bob5@mail.com"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -303,22 +342,101 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
-  TC_AWAIT(bobSession->claimProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity},
-      VerificationCode{bobVerificationCode}));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
 
-  std::vector<uint8_t> decrypted(
-      bobSession->decryptedSize(encryptedData).get());
-  TC_AWAIT(bobSession->decrypt(decrypted.data(), encryptedData));
-  CHECK(decrypted == clearData);
+  auto const result2 = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result2.status == Tanker::Status::Ready);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Handles incorrect verification codes when claiming")
+                  "Bob can claim when there is nothing to claim")
 {
-  auto const bobEmail = Email{"bob@my-box-of-emai.ls"};
+  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bobDevice = bob.makeDevice();
+  auto const bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  auto const emailVerif = Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}};
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can attach a provisional identity without verification")
+{
+  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      encryptedData.data(),
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bobDevice = bob.makeDevice();
+  auto const bobSession = bobDevice.createCore(Tanker::Test::SessionType::New);
+  TC_AWAIT(bobSession->start(bob.identity));
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  auto const emailVerif = Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}};
+  TC_AWAIT(bobSession->registerIdentity(emailVerif));
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  CHECK(result.status == Status::Ready);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Handles incorrect verification codes when verifying "
+                  "provisional identity")
+{
+  auto const bobEmail = Email{"bob2@mail.com"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+
+  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(
+          Unlock::EmailVerification{bobEmail, VerificationCode{"invalid"}})),
+      Errc::InvalidVerification);
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob cannot verify a provisionalIdentity without attaching it first")
+{
+  auto const bobEmail = Email{"bob3@mail.com"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -326,12 +444,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
-  auto const bobVerificationCode = VerificationCode{"invalid"};
-
-  CHECK_THROWS_AS(TC_AWAIT(bobSession->claimProvisionalIdentity(
-                      SSecretProvisionalIdentity{bobProvisionalIdentity},
-                      VerificationCode{bobVerificationCode})),
-                  Error::InvalidVerificationCode);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+          bobEmail, VerificationCode{"DUMMY_CODE_FOR_FASTER_TESTS"}})),
+      Errc::PreconditionFailed);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
@@ -343,17 +459,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   auto const deviceId = aliceSession->deviceId().get();
 
   tc::promise<void> prom;
-  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
-  CHECK(!aliceSession->isOpen());
+  REQUIRE(aliceSession->status() == Status::Stopped);
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
-           OpenResult::IdentityVerificationNeeded);
+  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
+           Status::IdentityVerificationNeeded);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -366,45 +482,20 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const deviceId = TC_AWAIT(aliceSession->deviceId());
 
   auto aliceDevice2 = alice.makeDevice();
-  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open(*aliceSession));
+  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open());
 
-  TC_AWAIT(aliceSession->signOut());
+  TC_AWAIT(aliceSession->stop());
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession2->revokeDevice(deviceId)));
 
   tc::promise<void> prom;
-  aliceSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
-  CHECK_THROWS_AS(TC_AWAIT(aliceSession->signIn(aliceDevice.identity())),
-                  Error::OperationCanceled);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->start(aliceDevice.identity())),
+      Errc::OperationCanceled);
 
-  TC_AWAIT(waitForPromise(prom));
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revokes a device and opens it")
-{
-  auto alice = trustchain.makeUser(Test::UserType::New);
-  auto aliceDevice = alice.makeDevice();
-
-  {
-    auto const aliceSession = TC_AWAIT(aliceDevice.open());
-    auto const deviceId = TC_AWAIT(aliceSession->deviceId());
-    REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
-    TC_AWAIT(aliceSession->signOut());
-  }
-
-  try
-  {
-    auto const aliceSession = aliceDevice.createCore(Test::SessionType::New);
-    auto const result = TC_AWAIT(aliceSession->signIn(aliceDevice.identity()));
-    // the revocation was handled before the session was closed
-    CHECK(result == OpenResult::IdentityVerificationNeeded);
-  }
-  catch (Error::OperationCanceled const&)
-  {
-    // the revocation was handled during the open()
-    CHECK(true);
-  }
+  CHECK(TC_AWAIT(waitFor(prom)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -415,7 +506,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  auto otherSession = TC_AWAIT(aliceSecondDevice.open());
 
   auto const deviceId = otherSession->deviceId().get();
 
@@ -428,15 +519,15 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   decryptedData.resize(clearData.size());
 
   tc::promise<void> prom;
-  otherSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
-  CHECK(!otherSession->isOpen());
+  REQUIRE(otherSession->status() == Status::Stopped);
 
-  TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 }
@@ -451,36 +542,36 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const deviceId = aliceSession->deviceId().get();
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto const otherSession = TC_AWAIT(aliceSecondDevice.open(*aliceSession));
+  auto const otherSession = TC_AWAIT(aliceSecondDevice.open());
   auto const otherDeviceId = otherSession->deviceId().get();
 
   tc::promise<void> prom;
-  otherSession->deviceRevoked().connect([&] { prom.set_value({}); });
+  otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(otherDeviceId)));
 
-  TC_AWAIT(waitForPromise(prom));
+  CHECK(TC_AWAIT(waitFor(prom)));
 
-  CHECK(!otherSession->isOpen());
+  REQUIRE(otherSession->status() == Status::Stopped);
 
   {
     auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
 
-    CHECK_EQ(TC_AWAIT(core->signIn(aliceSecondDevice.identity())),
-             OpenResult::IdentityVerificationNeeded);
+    CHECK_EQ(TC_AWAIT(core->start(aliceSecondDevice.identity())),
+             Status::IdentityVerificationNeeded);
   }
 
   tc::promise<void> prom2;
-  aliceSession->deviceRevoked().connect([&] { prom2.set_value({}); });
+  aliceSession->connectDeviceRevoked([&] { prom2.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  TC_AWAIT(waitForPromise(prom2));
+  CHECK(TC_AWAIT(waitFor(prom2)));
 
-  CHECK(!aliceSession->isOpen());
+  REQUIRE(aliceSession->status() == Status::Stopped);
 
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
 
-  CHECK_EQ(TC_AWAIT(core->signIn(aliceDevice.identity())),
-           OpenResult::IdentityVerificationNeeded);
+  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
+           Status::IdentityVerificationNeeded);
 }

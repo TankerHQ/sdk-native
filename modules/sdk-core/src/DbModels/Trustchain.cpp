@@ -4,10 +4,10 @@
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
-#include <Tanker/Log.hpp>
+#include <Tanker/Format/Format.hpp>
+#include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/format.h>
 
 #include <cassert>
 #include <exception>
@@ -28,9 +28,9 @@ void renameRecordToAction(DataStore::Connection& db)
   auto const name = DataStore::tableName<trustchain>();
   auto const name_orig = name + "_orig";
   db.execute(
-      fmt::format(fmt("ALTER TABLE {:s} RENAME TO {:s}"), name, name_orig));
+      fmt::format(TFMT("ALTER TABLE {:s} RENAME TO {:s}"), name, name_orig));
   createTable(db);
-  db.execute(fmt::format(fmt(R"--(
+  db.execute(fmt::format(TFMT(R"--(
       INSERT INTO {:s}(idx, nature, author, action, hash)
       SELECT idx, nature, author, record, hash FROM {:s}
     )--"),
@@ -85,9 +85,8 @@ void migrateTable(DataStore::Connection& db,
 {
   assert(dbVersion < DataStore::latestVersion());
 
-  TINFO("Migrating from version {} to {}",
-        dbVersion,
-        DataStore::latestVersion());
+  TINFO(
+      "Migrating from version {} to {}", dbVersion, DataStore::latestVersion());
   switch (dbVersion)
   {
   case 0:

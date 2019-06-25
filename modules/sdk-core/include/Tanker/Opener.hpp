@@ -5,13 +5,12 @@
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
+#include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Password.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/DeviceLocker.hpp>
+#include <Tanker/Unlock/Registration.hpp>
+#include <Tanker/Unlock/Verification.hpp>
 
-#include <boost/signals2/signal.hpp>
 #include <optional.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -25,40 +24,23 @@ namespace Tanker
 {
 class DeviceKeyStore;
 
-enum class OpenMode
-{
-  SignUp,
-  SignIn,
-};
-
-struct SignInOptions
-{
-  nonstd::optional<VerificationKey> verificationKey;
-  nonstd::optional<VerificationCode> verificationCode;
-  nonstd::optional<Password> password;
-};
-
 class Opener
 {
 public:
-  struct StatusIdentityNotRegistered
-  {
-  };
-  struct StatusIdentityVerificationNeeded
-  {
-  };
-
-  using OpenResult = mpark::variant<Session::Config,
-                                    StatusIdentityNotRegistered,
-                                    StatusIdentityVerificationNeeded>;
-
   Opener(std::string url, SdkInfo info, std::string writablePath);
 
-  tc::cotask<OpenResult> open(std::string const& b64Identity,
-                              SignInOptions const& signInOptions,
-                              OpenMode mode);
+  Status status() const;
 
-  tc::cotask<VerificationKey> fetchVerificationKey(Unlock::DeviceLocker const& pass);
+  tc::cotask<Status> open(std::string const& b64Identity);
+  tc::cotask<Session::Config> openDevice();
+  tc::cotask<Session::Config> createUser(
+      Unlock::Verification const& verification);
+  tc::cotask<Session::Config> createDevice(
+      Unlock::Verification const& verification);
+  tc::cotask<VerificationKey> generateVerificationKey() const;
+
+  tc::cotask<VerificationKey> fetchVerificationKey(
+      Unlock::Verification const& verification);
 
 private:
   std::string _url;
@@ -69,11 +51,12 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _keyStore;
   std::unique_ptr<Client> _client;
+  Trustchain::UserId _userId;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
+  Status _status = Status::Stopped;
+
+  tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
   Session::Config makeConfig();
-  tc::cotask<OpenResult> createUser();
-  tc::cotask<OpenResult> createDevice(SignInOptions const& signInOptions);
-  tc::cotask<OpenResult> openDevice();
 };
 }

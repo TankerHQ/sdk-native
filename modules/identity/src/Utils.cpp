@@ -1,5 +1,7 @@
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 #include <nlohmann/json.hpp>
 
 using Tanker::Trustchain::UserId;
@@ -12,7 +14,8 @@ std::vector<uint8_t> userSecretHash(gsl::span<uint8_t const> secretRand,
                                     UserId const& userId)
 {
   if (secretRand.size() != USER_SECRET_SIZE - 1)
-    throw std::invalid_argument("secretRand array has bad size");
+    throw Errors::AssertionError("invalid secretRand size");
+
   std::vector<uint8_t> input;
   input.insert(input.end(), secretRand.begin(), secretRand.end());
   input.insert(input.end(), userId.begin(), userId.end());

@@ -4,6 +4,8 @@
 
 #include <gsl-lite.hpp>
 
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Serialization/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
 namespace Tanker
@@ -21,9 +23,23 @@ public:
 
   gsl::span<std::uint8_t const> read(std::size_t size)
   {
-    auto ret = _sp.subspan(0, size);
-    _sp = _sp.subspan(size);
-    return ret;
+    try
+    {
+      auto ret = _sp.subspan(0, size);
+      _sp = _sp.subspan(size);
+      return ret;
+    }
+    catch (gsl::fail_fast const&)
+    {
+      throw Errors::Exception(
+          Errc::TruncatedInput,
+          "could not read " + std::to_string(size) + " bytes");
+    }
+  }
+
+  std::size_t remaining_size() const noexcept
+  {
+    return _sp.size();
   }
 
   std::size_t read_varint()

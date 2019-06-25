@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
-#include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Crypto/Errors/Errc.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
@@ -12,13 +12,14 @@
 #include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 
 #include <gsl-lite.hpp>
 #include <sodium/crypto_box.h>
 
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <typeinfo>
@@ -39,13 +40,16 @@ struct container_resizer<T, std::enable_if_t<IsCryptographicType<T>::value>>
   static T resize(typename T::size_type size)
   {
     using namespace std::string_literals;
+    auto const containerSize = T::arraySize;
 
-    if (T::arraySize != size)
+    if (containerSize != size)
     {
-      throw InvalidKeySize("invalid size for "s + typeid(T).name() +
-                           " while preparing container: got " +
-                           std::to_string(size) + ", expected " +
-                           std::to_string(T::arraySize));
+      throw Errors::formatEx(
+          Errc::InvalidBufferSize,
+          TFMT("invalid size for {:s} while preparing buffer: got {:d}, expected {:d}"),
+          typeid(T).name(),
+          size,
+          containerSize);
     }
     return {};
   }
@@ -83,22 +87,6 @@ void sealEncryptImpl(gsl::span<uint8_t const> clearData,
                      gsl::span<uint8_t> cipherData,
                      PublicEncryptionKey const& recipientKey);
 }
-
-class DecryptFailed : public std::exception
-{
-public:
-  DecryptFailed(std::string const& msg) : _msg(msg)
-  {
-  }
-
-  char const* what() const noexcept override
-  {
-    return _msg.c_str();
-  }
-
-private:
-  std::string _msg;
-};
 
 /// |--iv--|--data--||--mac--|
 /// |--iv--|--encryptedData--|
@@ -197,7 +185,10 @@ OutputContainer asymDecrypt(gsl::span<uint8_t const> cipherData,
   using ContainerResizer = detail::container_resizer<OutputContainer>;
 
   if (cipherData.size() < crypto_box_MACBYTES + crypto_box_NONCEBYTES)
-    throw DecryptFailed("asymmetric encrypted buffer too small");
+  {
+    throw Errors::Exception(Errc::InvalidEncryptedDataSize,
+                            "truncated asymmetric encrypted buffer");
+  }
 
   auto res = ContainerResizer::resize(cipherData.size() - crypto_box_MACBYTES -
                                       crypto_box_NONCEBYTES);
@@ -234,7 +225,10 @@ OutputContainer sealDecrypt(gsl::span<uint8_t const> cipherData,
   using ContainerResizer = detail::container_resizer<OutputContainer>;
 
   if (cipherData.size() < crypto_box_SEALBYTES)
-    throw DecryptFailed("sealed buffer too small");
+  {
+    throw Errors::Exception(Errc::InvalidSealedDataSize,
+                            "truncated sealed buffer");
+  }
 
   auto res = ContainerResizer::resize(cipherData.size() - crypto_box_SEALBYTES);
   detail::sealDecryptImpl(cipherData, res, recipientKeyPair);

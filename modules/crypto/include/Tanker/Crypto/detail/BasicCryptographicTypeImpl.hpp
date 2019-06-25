@@ -5,7 +5,9 @@
     "Thou shall not include this file directly, include Tanker/Crypto/BasicCryptographicType.hpp instead!"
 #endif
 
-#include <Tanker/Crypto/InvalidKeySize.hpp>
+#include <Tanker/Crypto/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Format.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -32,9 +34,12 @@ BasicCryptographicType<T, S>::BasicCryptographicType(InputIterator begin,
       static_cast<BasicCryptographicType::size_type>(std::distance(begin, end));
   if (dist != this->size())
   {
-    throw ::Tanker::Crypto::InvalidKeySize(
-        "invalid size for " + std::string(typeid(T).name()) + ": got " +
-        std::to_string(dist) + ", expected " + std::to_string(this->size()));
+    throw Errors::formatEx(
+        Errc::InvalidBufferSize,
+        TFMT("invalid size for {:s}: got {:d}, expected {:d}"),
+        typeid(T).name(),
+        dist,
+        this->size());
   }
   std::copy(begin, end, this->data());
 }

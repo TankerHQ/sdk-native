@@ -71,7 +71,7 @@ TEST_CASE("contact user keys")
     auto const unexistentUserId = make<Trustchain::UserId>("unexistent");
 
     ContactUserKeyStore keys(dbPtr.get());
-    CHECK(AWAIT(keys.getUserKey(unexistentUserId)) == nonstd::nullopt);
+    CHECK(AWAIT(keys.findUserKey(unexistentUserId)) == nonstd::nullopt);
   }
 
   SUBCASE("it should find a key that was inserted")
@@ -82,7 +82,7 @@ TEST_CASE("contact user keys")
     ContactUserKeyStore keys(dbPtr.get());
 
     AWAIT_VOID(keys.putUserKey(userId, pubKey));
-    CHECK(AWAIT(keys.getUserKey(userId)) == pubKey);
+    CHECK(AWAIT(keys.findUserKey(userId)) == pubKey);
   }
 
   SUBCASE("it should override an old key with a new one")
@@ -95,7 +95,7 @@ TEST_CASE("contact user keys")
 
     AWAIT_VOID(keys.putUserKey(userId, pubKey1));
     AWAIT_VOID(keys.putUserKey(userId, pubKey2));
-    CHECK(AWAIT(keys.getUserKey(userId)) == pubKey2);
+    CHECK(AWAIT(keys.findUserKey(userId)) == pubKey2);
   }
 }
 

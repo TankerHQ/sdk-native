@@ -1,6 +1,8 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -47,9 +49,10 @@ DeviceCreation1 const& DeviceCreation2::asDeviceCreation1() const
 {
   if (!_lastReset.is_null())
   {
-    throw std::runtime_error{
+    throw Errors::Exception(
+        Errc::InvalidLastResetField,
         "cannot convert DeviceCreation2 to DeviceCreation1: lastReset field is "
-        "not zero-filled"};
+        "not zero-filled");
   }
   return static_cast<DeviceCreation1 const&>(*this);
 }

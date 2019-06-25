@@ -2,16 +2,18 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
+#include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
-#include <Tanker/Log.hpp>
+#include <Tanker/Log/Log.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 
 using Tanker::Trustchain::GroupId;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 namespace Tanker
 {
@@ -51,9 +53,10 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
   auto const userKeyPair =
       TC_AWAIT(userKeyStore.findKeyPair(myKeysIt->userPublicKey()));
   if (!userKeyPair)
-    throw std::runtime_error(
-        "assertion error: group block does contains my user id but not my user "
-        "key");
+  {
+    throw AssertionError(
+        "group block does contains my user id but not my user key");
+  }
 
   auto const groupPrivateEncryptionKey = Crypto::sealDecrypt(
       myKeysIt->encryptedPrivateEncryptionKey(), *userKeyPair);
@@ -219,9 +222,11 @@ tc::cotask<void> applyUserGroupAddition(
   auto const previousGroup =
       TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId()));
   if (!previousGroup)
-    throw Error::formatEx<std::runtime_error>(
-        "assertion error: can't find previous group block for {}",
-        userGroupAddition.groupId());
+  {
+    throw AssertionError(
+        fmt::format(TFMT("cannot find previous group block for {:s}"),
+                    userGroupAddition.groupId()));
+  }
 
   TC_AWAIT(groupStore.updateLastGroupBlock(
       userGroupAddition.groupId(), entry.hash, entry.index));
@@ -264,15 +269,16 @@ tc::cotask<void> applyEntry(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
 {
-  if (entry.action.holdsAlternative<UserGroupCreation>())
+  if (entry.action.holds_alternative<UserGroupCreation>())
     TC_AWAIT(applyUserGroupCreation(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else if (entry.action.holdsAlternative<UserGroupAddition>())
+  else if (entry.action.holds_alternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else
-    throw Error::formatEx<std::runtime_error>(
-        "GroupUpdater can't handle this block (nature: {})", entry.nature);
+  {
+    throw AssertionError(fmt::format("cannot handle nature: {}", entry.nature));
+  }
 }
 
 tc::cotask<void> applyGroupPrivateKey(

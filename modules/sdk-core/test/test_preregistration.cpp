@@ -1,9 +1,10 @@
 #include <Tanker/Preregistration.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
+#include <Helpers/Errors.hpp>
 
 #include <doctest.h>
 
@@ -11,6 +12,7 @@
 #include "TrustchainBuilder.hpp"
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 TEST_CASE("Preregistration")
 {
@@ -28,10 +30,10 @@ TEST_CASE("Preregistration")
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
     GroupStore groupStore(db.get());
 
-    CHECK_THROWS_AS(
+    TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT_VOID(Preregistration::applyEntry(
             userKeyStore, provisionalUserKeysStore, groupStore, picEntry)),
-        Error::UserKeyNotFound);
+        Errc::InternalError);
   }
 
   SUBCASE("can decrypt a preregistration claim")
