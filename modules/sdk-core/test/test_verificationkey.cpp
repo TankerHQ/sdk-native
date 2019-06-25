@@ -53,7 +53,7 @@ TEST_CASE("verificationKey")
   SUBCASE("extract")
   {
     TANKER_CHECK_THROWS_WITH_CODE(GhostDevice::create(VerificationKey{"plop"}),
-                                  Errors::Errc::InvalidArgument);
+                                  Errors::Errc::InvalidVerification);
   }
 
   TrustchainBuilder builder;
