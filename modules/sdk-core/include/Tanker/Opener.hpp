@@ -41,6 +41,8 @@ public:
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::Verification const& verification);
+  tc::cotask<std::vector<Unlock::VerificationMethod>>
+  fetchVerificationMethods();
 
 private:
   std::string _url;

@@ -69,33 +69,6 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
-namespace
-{
-std::map<Unlock::Method, Unlock::VerificationMethod> verificationMethodsToMap(
-    std::vector<Unlock::VerificationMethod> const& verificationMethods,
-    Crypto::SymmetricKey userSecret)
-{
-  std::map<Unlock::Method, Unlock::VerificationMethod> mappedMethods;
-  for (auto const method : verificationMethods)
-  {
-    if (auto const encryptedEmail = method.get_if<Email>())
-    {
-      auto const decryptedEmail = Crypto::decryptAead(
-          userSecret, gsl::make_span(*encryptedEmail).as_span<uint8_t const>());
-      mappedMethods[Unlock::Method::Email] =
-          Email{decryptedEmail.begin(), decryptedEmail.end()};
-    }
-    else if (method.holds_alternative<Passphrase>())
-      mappedMethods[Unlock::Method::Passphrase] = method;
-    else if (method.holds_alternative<VerificationKey>())
-      mappedMethods[Unlock::Method::VerificationKey] = method;
-    else
-      throw formatEx(Errc::InvalidArgument, "unknown verification method type");
-  }
-  return mappedMethods;
-}
-}
-
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -190,8 +163,7 @@ tc::cotask<void> Session::connectionHandler()
         {"public_signature_key", _deviceKeyStore->signatureKeyPair().publicKey},
         {"trustchain_id", _trustchainId},
         {"user_id", _userId}};
-    _verificationMethods = verificationMethodsToMap(
-        TC_AWAIT(_client->authenticateDevice(request)), this->_userSecret);
+    TC_AWAIT(_client->authenticateDevice(request));
   }
   catch (std::exception const& e)
   {
@@ -365,36 +337,40 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(syncTrustchain());
 }
 
-void Session::updateLocalUnlockMethods(Unlock::Verification const& method)
-{
-  if (auto const emailVerification =
-          mpark::get_if<Unlock::EmailVerification>(&method))
-    _verificationMethods[Unlock::Method::Email] = emailVerification->email;
-  else if (mpark::holds_alternative<Passphrase>(method))
-    _verificationMethods[Unlock::Method::Passphrase] = Passphrase{};
-}
-
 tc::cotask<void> Session::setVerificationMethod(
     Unlock::Verification const& method)
 {
-  if (this->_verificationMethods.empty())
-  {
-    throw formatEx(
-        Errc::PreconditionFailed,
-        "cannot call setVerificationMethod after a verification key has been "
-        "used");
-  }
-  else if (mpark::holds_alternative<VerificationKey>(method))
+  if (mpark::holds_alternative<VerificationKey>(method))
   {
     throw formatEx(Errc::InvalidArgument,
                    "cannot call setVerificationMethod with a verification key");
   }
   else
   {
-    TC_AWAIT(_client->setVerificationMethod(
-        trustchainId(), userId(), method, userSecret()));
-    updateLocalUnlockMethods(method);
+    try
+    {
+      TC_AWAIT(_client->setVerificationMethod(
+          trustchainId(), userId(), method, userSecret()));
+    }
+    catch (Errors::Exception const& e)
+    {
+      if (e.errorCode() == Server::Errc::VerificationKeyNotFound)
+      {
+        // the server does not send an error message
+        throw Errors::Exception(make_error_code(Errc::PreconditionFailed),
+                                "cannot call setVerificationMethod after a "
+                                "verification key has been used");
+      }
+      throw;
+    }
   }
+}
+
+tc::cotask<std::vector<Unlock::VerificationMethod>>
+Session::fetchVerificationMethods()
+{
+  TC_RETURN(TC_AWAIT(
+      _client->fetchVerificationMethods(_trustchainId, _userId, _userSecret)));
 }
 
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
@@ -493,16 +469,6 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
   TC_AWAIT(_client->pushBlock(block));
   _provisionalIdentity = nonstd::nullopt;
   TC_AWAIT(syncTrustchain());
-}
-
-std::vector<Unlock::VerificationMethod> Session::getVerificationMethods() const
-{
-  std::vector<Unlock::VerificationMethod> methods;
-  for (auto const method : _verificationMethods)
-    methods.push_back(method.second);
-  if (methods.empty())
-    methods.push_back(VerificationKey{});
-  return methods;
 }
 
 tc::cotask<void> Session::catchUserKey(

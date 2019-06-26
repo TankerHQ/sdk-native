@@ -207,6 +207,18 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
   }
 
+  SUBCASE("it gets verification methods before verifying identity")
+  {
+    REQUIRE_NOTHROW(
+        TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
+
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+               Status::IdentityVerificationNeeded);
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
+  }
+
   SUBCASE("it sets an email and adds a new device")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));

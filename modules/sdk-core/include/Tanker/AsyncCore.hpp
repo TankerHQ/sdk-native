@@ -83,7 +83,7 @@ public:
   tc::shared_future<void> setVerificationMethod(
       Unlock::Verification const& method);
   tc::shared_future<std::vector<Unlock::VerificationMethod>>
-  getVerificationMethods() const;
+  getVerificationMethods();
 
   tc::shared_future<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);

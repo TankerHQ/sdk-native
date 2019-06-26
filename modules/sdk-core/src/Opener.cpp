@@ -105,6 +105,15 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
                                                    _identity->userSecret)));
 }
 
+tc::cotask<std::vector<Unlock::VerificationMethod>>
+Opener::fetchVerificationMethods()
+{
+  TC_RETURN(
+      TC_AWAIT(_client->fetchVerificationMethods(_info.trustchainId,
+                                                 _identity->delegation.userId,
+                                                 _identity->userSecret)));
+}
+
 tc::cotask<void> Opener::unlockCurrentDevice(
     VerificationKey const& verificationKey)
 {

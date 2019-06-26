@@ -244,12 +244,16 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
   TC_AWAIT((*psession)->setVerificationMethod(method));
 }
 
-std::vector<Unlock::VerificationMethod> Core::getVerificationMethods() const
+tc::cotask<std::vector<Unlock::VerificationMethod>> Core::getVerificationMethods()
 {
-  auto psession = mpark::get_if<SessionType>(&_state);
-  if (!psession)
+  auto const st = status();
+  if (st != Status::Ready && st != Status::IdentityVerificationNeeded)
     throw INVALID_STATUS(getVerificationMethods);
-  return (*psession)->getVerificationMethods();
+  if (auto psession = mpark::get_if<SessionType>(&_state))
+    TC_RETURN(TC_AWAIT((*psession)->fetchVerificationMethods()));
+  else if (auto pcore = mpark::get_if<Opener>(&_state))
+    TC_RETURN(TC_AWAIT(pcore->fetchVerificationMethods()));
+  throw Errors::AssertionError("unreachable code: getVerificationMethods");
 }
 
 tc::cotask<AttachResult> Core::attachProvisionalIdentity(

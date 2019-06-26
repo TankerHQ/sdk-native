@@ -91,7 +91,8 @@ public:
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
-  std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
+  tc::cotask<std::vector<Unlock::VerificationMethod>>
+  fetchVerificationMethods();
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
@@ -122,7 +123,6 @@ private:
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
-  void updateLocalUnlockMethods(Unlock::Verification const& method);
 
 private:
   Trustchain::TrustchainId _trustchainId;
@@ -144,7 +144,6 @@ private:
   UserAccessor _userAccessor;
   GroupAccessor _groupAcessor;
   BlockGenerator _blockGenerator;
-  std::map<Unlock::Method, Unlock::VerificationMethod> _verificationMethods;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
   tc::promise<void> _ready;

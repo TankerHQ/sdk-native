@@ -94,8 +94,11 @@ public:
       Crypto::SymmetricKey userSecret);
 
   tc::cotask<std::string> requestAuthChallenge();
-  tc::cotask<std::vector<Unlock::VerificationMethod>> authenticateDevice(
-      nlohmann::json const& request);
+  tc::cotask<void> authenticateDevice(nlohmann::json const& request);
+  tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Crypto::SymmetricKey const& userSecret);
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);
