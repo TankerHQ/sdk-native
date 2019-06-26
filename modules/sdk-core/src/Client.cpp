@@ -1,5 +1,6 @@
 #include <Tanker/Client.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
@@ -198,14 +199,33 @@ tc::cotask<std::string> Client::requestAuthChallenge()
                 .get<std::string>());
 }
 
-tc::cotask<std::vector<Unlock::VerificationMethod>> Client::authenticateDevice(
-    nlohmann::json const& request)
+tc::cotask<void> Client::authenticateDevice(nlohmann::json const& request)
 {
-  auto const response = TC_AWAIT(emit("authenticate device", request));
-  auto const it = response.find("unlock_methods");
-  if (it == response.end())
-    TC_RETURN(std::vector<Unlock::VerificationMethod>{});
-  TC_RETURN(it.value().get<std::vector<Unlock::VerificationMethod>>());
+  TC_AWAIT(emit("authenticate device", request));
+}
+
+tc::cotask<std::vector<Unlock::VerificationMethod>>
+Client::fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
+                                 Trustchain::UserId const& userId,
+                                 Crypto::SymmetricKey const& userSecret)
+{
+  auto const request =
+      nlohmann::json{{"trustchain_id", trustchainId}, {"user_id", userId}};
+
+  auto const reply = TC_AWAIT(emit("get verification methods", request));
+  auto methods = reply.at("verification_methods")
+                     .get<std::vector<Unlock::VerificationMethod>>();
+  for (auto& method : methods)
+  {
+    if (auto encryptedEmail = method.get_if<Email>())
+    {
+      auto const decryptedEmail = Crypto::decryptAead(
+          userSecret,
+          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>());
+      method = Email{decryptedEmail.begin(), decryptedEmail.end()};
+    }
+  }
+  TC_RETURN(methods);
 }
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(

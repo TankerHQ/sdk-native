@@ -186,10 +186,13 @@ tc::shared_future<void> AsyncCore::setVerificationMethod(
 }
 
 tc::shared_future<std::vector<Unlock::VerificationMethod>>
-AsyncCore::getVerificationMethods() const
+AsyncCore::getVerificationMethods()
 {
   return _taskCanceler.run([&] {
-    return tc::async([=] { return this->_core.getVerificationMethods(); });
+    return tc::async_resumable(
+        [=]() -> tc::cotask<std::vector<Unlock::VerificationMethod>> {
+          TC_RETURN(TC_AWAIT(this->_core.getVerificationMethods()));
+        });
   });
 }
 

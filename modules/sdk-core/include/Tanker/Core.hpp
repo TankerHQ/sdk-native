@@ -62,7 +62,7 @@ public:
   tc::cotask<VerificationKey> generateVerificationKey();
 
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
-  std::vector<Unlock::VerificationMethod> getVerificationMethods() const;
+  tc::cotask<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
