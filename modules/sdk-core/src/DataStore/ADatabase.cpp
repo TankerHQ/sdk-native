@@ -15,6 +15,7 @@ tc::cotask<void> ADatabase::inTransaction(
 {
   TC_AWAIT(startTransaction());
   bool transaction = true;
+  std::exception_ptr exc;
   try
   {
     TC_AWAIT(f());
@@ -22,6 +23,10 @@ tc::cotask<void> ADatabase::inTransaction(
     TC_AWAIT(commitTransaction());
   }
   catch (...)
+  {
+    exc = std::current_exception();
+  }
+  if (exc)
   {
     if (transaction)
     {
@@ -38,7 +43,7 @@ tc::cotask<void> ADatabase::inTransaction(
         TERROR("Failed to rollback transaction: unknown error");
       }
     }
-    throw;
+    std::rethrow_exception(exc);
   }
 }
 }
