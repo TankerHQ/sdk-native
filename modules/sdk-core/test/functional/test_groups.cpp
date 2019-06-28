@@ -84,13 +84,29 @@ TEST_SUITE("Groups")
     auto aliceSession = TC_AWAIT(aliceDevice.open());
 
     auto bob = trustchain.makeUser();
-    auto bobDevices = TC_AWAIT(bob.makeDevices(1));
+    auto bobDevice = bob.makeDevice();
+    auto bobSession = TC_AWAIT(bobDevice.open());
 
     auto const groupId =
         TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
+    auto const clearData = "my clear data is clear";
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*aliceSession, clearData, {}, {groupId})));
+
+    std::string decryptedData;
+    TANKER_CHECK_THROWS_WITH_CODE(
+        decryptedData = TC_AWAIT(decrypt(*bobSession, encryptedData)),
+        Errors::Errc::InvalidArgument);
+
     REQUIRE_NOTHROW(TC_AWAIT(
         aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
+
+    REQUIRE_NOTHROW(decryptedData =
+                        TC_AWAIT(decrypt(*bobSession, encryptedData)));
+
+    CHECK(decryptedData == clearData);
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
