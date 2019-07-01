@@ -107,6 +107,11 @@ struct tanker_log_record
  */
 typedef void (*tanker_log_handler_t)(tanker_log_record_t const* record);
 
+/*!
+ * \brief Callback for event notification
+ * \param arg is the event parameter if any
+ * \param data is the data pointer to tanker_event_connect
+ */
 typedef void (*tanker_event_callback_t)(void* arg, void* data);
 
 /*!
@@ -280,7 +285,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(
  *
  * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
- * \return a future of NULL
+ * \return a future of tanker_status
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
@@ -341,20 +346,20 @@ CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
 
 /*!
  * Get the current device id.
- * \param session A tanker_t* instance.
+ * \param tanker A tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of b64char* that must be freed with tanker_free_buffer.
  */
-CTANKER_EXPORT tanker_future_t* tanker_device_id(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_device_id(tanker_t* tanker);
 
 /*!
  * Get the list of the user's devices.
- * \param session A tanker_t* instance.
+ * \param tanker A tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
  * \return a future of tanker_device_list_t* that must be freed with
  * tanker_free_device_list.
  */
-CTANKER_EXPORT tanker_future_t* tanker_get_device_list(tanker_t* session);
+CTANKER_EXPORT tanker_future_t* tanker_get_device_list(tanker_t* tanker);
 
 /*!
  * Generate an verificationKey that can be used to accept a device
@@ -408,7 +413,8 @@ CTANKER_EXPORT tanker_expected_t* tanker_decrypted_size(
 
 /*!
  * Get the resource id from an encrypted data.
- * \return an already ready future of a string.
+ * \return an already ready future of a b64char* that must be freed with
+ * tanker_free_buffer.
  */
 CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(
     uint8_t const* encrypted_data, uint64_t encrypted_size);
