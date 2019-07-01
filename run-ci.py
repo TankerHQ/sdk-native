@@ -12,7 +12,6 @@ import ci.cpp
 import ci.endtoend
 import ci.git
 import ci.ios
-import ci.mail
 
 
 def build_and_check(profile: str, coverage: bool) -> None:
@@ -23,13 +22,6 @@ def build_and_check(profile: str, coverage: bool) -> None:
         warn_as_error=True
     )
     ci.cpp.check(built_path, coverage=coverage)
-
-
-def get_notifier(coverage: bool):
-    if coverage:
-        return ci.mail.notify_failure("sdk-native")
-    else:
-        return contextlib.suppress()
 
 
 def main() -> None:
@@ -52,11 +44,9 @@ def main() -> None:
     ci.cpp.update_conan_config()
 
     if args.command == "build-and-test":
-        with get_notifier(args.coverage):
-            build_and_check(args.profile, args.coverage)
+        build_and_check(args.profile, args.coverage)
     elif args.command == "nightly-build-emscripten":
-        with ci.mail.notify_failure("sdk-native"):
-            ci.cpp.build("emscripten")
+        ci.cpp.build("emscripten")
     elif args.command == "deploy":
         git_tag = os.environ["CI_COMMIT_TAG"]
         version = ci.version_from_git_tag(git_tag)
