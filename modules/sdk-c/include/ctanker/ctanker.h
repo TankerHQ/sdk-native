@@ -109,7 +109,7 @@ typedef void (*tanker_log_handler_t)(tanker_log_record_t const* record);
 
 /*!
  * \brief Callback for event notification
- * \param arg is the event parameter if any
+ * \param arg the event parameter if any
  * \param data is the data pointer to tanker_event_connect
  */
 typedef void (*tanker_event_callback_t)(void* arg, void* data);
