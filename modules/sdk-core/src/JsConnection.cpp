@@ -27,8 +27,13 @@ public:
   {
     connected();
   }
+  void onReconnected()
+  {
+    reconnected();
+  }
 
-  boost::signals2::signal<void()> connected;
+  std::function<void()> connected;
+  std::function<void()> reconnected;
 };
 }
 
@@ -78,10 +83,20 @@ namespace Tanker
 JsConnection::JsConnection(std::string url)
   : _trustchainUrl(std::move(url)), _conn(jsConnectionFactory(_trustchainUrl))
 {
-  _conn->connected.connect([this] {
+  _conn->connected = [this] {
     TINFO("Connected");
-    _taskCanceler.add(tc::async([this] { connected(); }));
-  });
+    _taskCanceler.add(tc::async([this] {
+      if (connected)
+        connected();
+    }));
+  };
+  _conn->reconnected = [this] {
+    TINFO("Reconnected");
+    _taskCanceler.add(tc::async([this] {
+      if (reconnected)
+        reconnected();
+    }));
+  };
 }
 
 JsConnection::~JsConnection() = default;
@@ -148,6 +163,7 @@ EMSCRIPTEN_BINDINGS(jsconnectioninterface)
       .function("connect", &JsConnectionInterface::connect)
       .function("id", &JsConnectionInterface::id)
       .function("onConnected", &JsConnectionInterface::onConnected)
+      .function("onReconnected", &JsConnectionInterface::onReconnected)
       .function(
           "emit", &JsConnectionInterface::emit, emscripten::pure_virtual())
       .function("on", &JsConnectionInterface::on, emscripten::pure_virtual())

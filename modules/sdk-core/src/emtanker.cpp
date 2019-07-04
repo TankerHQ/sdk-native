@@ -46,38 +46,78 @@ AsyncCore* makeCore(std::string trustchainId,
   }
 }
 
-emscripten::val CoreSignUp(AsyncCore& core,
-                           std::string const& identity,
-                           emscripten::val const& jauthenticationMethods)
+Unlock::Verification jverificationToVerification(
+    emscripten::val const& jverification)
 {
-  AuthenticationMethods authenticationMethods;
-  authenticationMethods.password = Emscripten::optionalStringFromValue<Password>(
-      jauthenticationMethods, "password");
-  authenticationMethods.email =
-      Emscripten::optionalStringFromValue<Email>(jauthenticationMethods, "email");
+  if (Emscripten::isNone(jverification))
+    throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+                            "verification is null");
+
+  Unlock::Verification verification;
+  if (!Emscripten::isNone(jverification["verificationKey"]))
+    verification =
+        VerificationKey(jverification["verificationKey"].as<std::string>());
+  else if (!Emscripten::isNone(jverification["passphrase"]))
+    verification = Passphrase(jverification["passphrase"].as<std::string>());
+  else if (!Emscripten::isNone(jverification["email"]) &&
+           !Emscripten::isNone(jverification["verificationCode"]))
+    verification = Unlock::EmailVerification{
+        Email(jverification["email"].as<std::string>()),
+        VerificationCode(jverification["verificationCode"].as<std::string>())};
+  else
+    throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
+                            "invalid verification");
+  return verification;
+}
+
+emscripten::val toVerificationMethod(Unlock::VerificationMethod const& method)
+{
+  auto o = emscripten::val::object();
+  if (method.holds_alternative<Passphrase>())
+  {
+    o.set("type", "passphrase");
+  }
+  else if (method.holds_alternative<VerificationKey>())
+  {
+    o.set("type", "verificationKey");
+  }
+  else if (method.holds_alternative<Email>())
+  {
+    o.set("type", "email");
+    o.set("email", method.get<Email>().string());
+  }
+  return o;
+}
+
+emscripten::val CoreStart(AsyncCore& core, std::string const& identity)
+{
+  return Emscripten::tcFutureToJsPromise(core.start(identity));
+}
+
+emscripten::val CoreRegisterIdentity(AsyncCore& core,
+                                     emscripten::val const& jverification)
+{
   return Emscripten::tcFutureToJsPromise(
-      core.signUp(identity, authenticationMethods));
+      tc::sync([&] {
+        return core.registerIdentity(
+            jverificationToVerification(jverification));
+      })
+          .unwrap());
 }
 
-emscripten::val CoreSignIn(AsyncCore& core,
-                           std::string const& identity,
-                           emscripten::val const& jsignInOptions)
+emscripten::val CoreVerifyIdentity(AsyncCore& core,
+                                   emscripten::val const& jverification)
 {
-  SignInOptions signInOptions;
-  signInOptions.verificationKey =
-      Emscripten::optionalStringFromValue<VerificationKey>(jsignInOptions,
-                                                     "unlockKey");
-  signInOptions.verificationCode =
-      Emscripten::optionalStringFromValue<VerificationCode>(jsignInOptions,
-                                                      "verificationCode");
-  signInOptions.password =
-      Emscripten::optionalStringFromValue<Password>(jsignInOptions, "password");
-  return Emscripten::tcFutureToJsPromise(core.signIn(identity, signInOptions));
+  return Emscripten::tcFutureToJsPromise(
+      tc::sync([&] {
+        return core.verifyIdentity(jverificationToVerification(jverification));
+      })
+          .unwrap());
 }
 
-emscripten::val CoreIsOpen(AsyncCore& core)
+emscripten::val CoreStatus(AsyncCore& core)
 {
-  return emscripten::val(core.isOpen());
+  return emscripten::val(core.status());
 }
 
 emscripten::val CoreEncrypt(AsyncCore& core,
@@ -130,9 +170,9 @@ emscripten::val CoreCreateGroup(AsyncCore& core, emscripten::val const& members)
   auto const publicIdentities =
       Emscripten::copyToStringLikeVector<SPublicIdentity>(members);
   return Emscripten::tcFutureToJsPromise(
-      core.createGroup(publicIdentities).and_then([](auto const& groupId) {
-        return groupId.string();
-      }));
+      core.createGroup(publicIdentities)
+          .and_then(tc::get_synchronous_executor(),
+                    [](auto const& groupId) { return groupId.string(); }));
 }
 
 emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
@@ -145,86 +185,65 @@ emscripten::val CoreUpdateGroupMembers(AsyncCore& core,
       SGroupId(jgroupId.as<std::string>()), usersToAdd));
 }
 
-emscripten::val CoreClaimProvisionalIdentity(
-    AsyncCore& core,
-    emscripten::val const& secretProvisionalIdentity,
-    emscripten::val const& verificationCode)
-{
-  return Emscripten::tcFutureToJsPromise(core.claimProvisionalIdentity(
-      SSecretProvisionalIdentity(secretProvisionalIdentity.as<std::string>()),
-      VerificationCode{verificationCode.as<std::string>()}));
-}
-
-emscripten::val CoreGenerateAndRegisterVerificationKey(AsyncCore& core)
+emscripten::val CoreAttachProvisionalIdentity(
+    AsyncCore& core, emscripten::val const& secretProvisionalIdentity)
 {
   return Emscripten::tcFutureToJsPromise(
-      core.generateAndRegisterVerificationKey().and_then(
-          [](auto const& verificationKey) {
-            return verificationKey.string();
-          }));
+      core
+          .attachProvisionalIdentity(SSecretProvisionalIdentity(
+              secretProvisionalIdentity.as<std::string>()))
+          .and_then(
+              tc::get_synchronous_executor(), [](auto const& attachResult) {
+                emscripten::val ret = emscripten::val::object();
+                ret.set("status", static_cast<int>(attachResult.status));
+                if (attachResult.verificationMethod)
+                  ret.set(
+                      "verificationMethod",
+                      toVerificationMethod(*attachResult.verificationMethod));
+                return ret;
+              }));
 }
 
-emscripten::val CoreRegisterUnlock(AsyncCore& core,
-                                   emscripten::val const& unlockMethods)
+emscripten::val CoreVerifyProvisionalIdentity(
+    AsyncCore& core, emscripten::val const& jverification)
 {
-  Unlock::RegistrationOptions o;
-  if (auto const email =
-          Emscripten::optionalStringFromValue<Email>(unlockMethods, "email"))
-    o.set(*email);
-  if (auto const password =
-          Emscripten::optionalStringFromValue<Password>(unlockMethods, "password"))
-    o.set(*password);
-  return Emscripten::tcFutureToJsPromise(core.registerUnlock(o));
+  return Emscripten::tcFutureToJsPromise(
+      tc::sync([&] {
+        return core.verifyProvisionalIdentity(
+            jverificationToVerification(jverification));
+      })
+          .unwrap());
 }
 
-emscripten::val CoreIsUnlockAlreadySetUp(AsyncCore& core)
+emscripten::val CoreGenerateVerificationKey(AsyncCore& core)
 {
-  return Emscripten::tcFutureToJsPromise(core.isUnlockAlreadySetUp());
+  return Emscripten::tcFutureToJsPromise(
+      core.generateVerificationKey().and_then(tc::get_synchronous_executor(),
+                                              [](auto const& verificationKey) {
+                                                return verificationKey.string();
+                                              }));
 }
 
-emscripten::val CoreHasRegisteredUnlockMethods(AsyncCore& core)
+emscripten::val CoreSetVerificationMethod(AsyncCore& core,
+                                          emscripten::val const& jverification)
 {
-  return Emscripten::tcExpectedToJsValue(core.hasRegisteredUnlockMethods());
+  return Emscripten::tcFutureToJsPromise(
+      tc::sync([&] {
+        return core.setVerificationMethod(
+            jverificationToVerification(jverification));
+      })
+          .unwrap());
 }
 
-emscripten::val CoreHasRegisteredUnlockMethod(AsyncCore& core,
-                                              emscripten::val const& jmethod)
+emscripten::val CoreGetVerificationMethods(AsyncCore& core)
 {
-  auto const smethod = jmethod.as<std::string>();
-  Unlock::Method method;
-  if (smethod == "password")
-    method = Unlock::Method::Password;
-  else if (smethod == "email")
-    method = Unlock::Method::Email;
-  else
-    return emscripten::val(false);
-
-  return Emscripten::tcExpectedToJsValue(
-      core.hasRegisteredUnlockMethod(method));
-}
-
-namespace
-{
-emscripten::val toUnlockMethod(std::string const& name)
-{
-  auto o = emscripten::val::object();
-  o.set("type", name);
-  return o;
-}
-}
-
-emscripten::val CoreRegisteredUnlockMethods(AsyncCore& core)
-{
-  return Emscripten::tcExpectedToJsValue(
-      core.registeredUnlockMethods().and_then(
-          tc::get_synchronous_executor(), [](auto const& methods) {
-            auto const ret = emscripten::val::array();
-            if (methods & Unlock::Method::Email)
-              ret.call<void>("push", toUnlockMethod("email"));
-            if (methods & Unlock::Method::Password)
-              ret.call<void>("push", toUnlockMethod("password"));
-            return ret;
-          }));
+  return Emscripten::tcFutureToJsPromise(core.getVerificationMethods().and_then(
+      tc::get_synchronous_executor(), [](auto const& methods) {
+        auto const ret = emscripten::val::array();
+        for (auto const& method : methods)
+          ret.call<void>("push", toVerificationMethod(method));
+        return ret;
+      }));
 }
 
 emscripten::val CoreRevokeDevice(AsyncCore& core, std::string const& deviceId)
@@ -242,8 +261,8 @@ emscripten::val CoreDeviceId(AsyncCore& core)
 
 emscripten::val CoreGetDeviceList(AsyncCore& core)
 {
-  return Emscripten::tcFutureToJsPromise(
-      core.getDeviceList().and_then([&](auto const& devices) {
+  return Emscripten::tcFutureToJsPromise(core.getDeviceList().and_then(
+      tc::get_synchronous_executor(), [](auto const& devices) {
         auto ret = emscripten::val::array();
         for (auto const& device : devices)
         {
@@ -256,12 +275,9 @@ emscripten::val CoreGetDeviceList(AsyncCore& core)
       }));
 }
 
-// There is no disconnect function because the JS just subscribes to this event
-// for the whole lifetime of the object. User connections are handled by
-// EventEmitter directly in JS.
 void CoreConnectDeviceRevoked(AsyncCore& core, emscripten::val const& cb)
 {
-  core.deviceRevoked().connect(cb);
+  core.connectDeviceRevoked(cb);
 }
 
 emscripten::val CoreSyncTrustchain(AsyncCore& core)
@@ -308,11 +324,12 @@ void TankerSetLogHandler(emscripten::val const& cb)
 
 EMSCRIPTEN_BINDINGS(Tanker)
 {
-  emscripten::enum_<OpenResult>("SignInResult")
-      .value("Ok", OpenResult::Ok)
-      .value("IdentityNotRegistered", OpenResult::IdentityNotRegistered)
-      .value("IdentityVerificationNeeded",
-             OpenResult::IdentityVerificationNeeded);
+  emscripten::enum_<Status>("Status")
+      .value("STOPPED", Status::Stopped)
+      .value("READY", Status::Ready)
+      .value("IDENTITY_REGISTRATION_NEEDED", Status::IdentityRegistrationNeeded)
+      .value("IDENTITY_VERIFICATION_NEEDED",
+             Status::IdentityVerificationNeeded);
 
   emscripten::function("setLogHandler", &TankerSetLogHandler);
 
@@ -322,9 +339,10 @@ EMSCRIPTEN_BINDINGS(Tanker)
 
   emscripten::class_<AsyncCore>("Tanker")
       .constructor(&makeCore)
-      .function("signUp", &CoreSignUp)
-      .function("signIn", &CoreSignIn)
-      .function("isOpen", &CoreIsOpen)
+      .function("start", &CoreStart)
+      .function("registerIdentity", &CoreRegisterIdentity)
+      .function("verifyIdentity", &CoreVerifyIdentity)
+      .function("status", &CoreStatus)
       .function("encryptedSize", &CoreEncryptedSize)
       .function("decryptedSize", &CoreDecryptedSize)
       .function("encrypt", &CoreEncrypt, emscripten::allow_raw_pointers())
@@ -332,14 +350,11 @@ EMSCRIPTEN_BINDINGS(Tanker)
       .function("share", &CoreShare)
       .function("createGroup", &CoreCreateGroup)
       .function("updateGroupMembers", &CoreUpdateGroupMembers)
-      .function("claimProvisionalIdentity", &CoreClaimProvisionalIdentity)
-      .function("generateAndRegisterVerificationKey",
-                &CoreGenerateAndRegisterVerificationKey)
-      .function("registerUnlock", &CoreRegisterUnlock)
-      .function("isUnlockAlreadySetUp", &CoreIsUnlockAlreadySetUp)
-      .function("hasRegisteredUnlockMethods", &CoreHasRegisteredUnlockMethods)
-      .function("hasRegisteredUnlockMethod", &CoreHasRegisteredUnlockMethod)
-      .function("registeredUnlockMethods", &CoreRegisteredUnlockMethods)
+      .function("attachProvisionalIdentity", &CoreAttachProvisionalIdentity)
+      .function("verifyProvisionalIdentity", &CoreVerifyProvisionalIdentity)
+      .function("generateVerificationKey", &CoreGenerateVerificationKey)
+      .function("setVerificationMethod", &CoreSetVerificationMethod)
+      .function("getVerificationMethods", &CoreGetVerificationMethods)
       .function("deviceId", &CoreDeviceId)
       .function("getDeviceList", &CoreGetDeviceList)
       .function("revokeDevice", &CoreRevokeDevice)

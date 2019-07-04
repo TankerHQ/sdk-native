@@ -423,6 +423,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     }
     throw;
   }
+  throw AssertionError("unreachable code");
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(
@@ -455,7 +456,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
-    return;
+    TC_RETURN();
   }
   auto block = _blockGenerator.provisionalIdentityClaim(
       _userId,

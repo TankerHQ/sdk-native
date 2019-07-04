@@ -1,4 +1,4 @@
-#include <Tanker/Error.hpp>
+#include <Tanker/Errors/Errc.hpp>
 
 #include <string>
 
@@ -8,7 +8,7 @@ namespace Emscripten
 {
 struct EmError
 {
-  Error::Code code;
+  Errors::Errc code;
   std::string message;
 };
 }

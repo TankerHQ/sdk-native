@@ -67,6 +67,7 @@ public:
       Trustchain::ResourceId const& resourceId) override;
 
   tc::cotask<nonstd::optional<DeviceKeys>> getDeviceKeys() override;
+  tc::cotask<nonstd::optional<Trustchain::DeviceId>> getDeviceId() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
 
@@ -109,6 +110,9 @@ public:
   tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+  tc::cotask<nonstd::optional<ProvisionalUserKeys>>
+  findProvisionalUserKeysByAppPublicEncryptionKey(
+      Crypto::PublicEncryptionKey const& appPublicEncKey) override;
 
   tc::cotask<void> nuke() override;
 
