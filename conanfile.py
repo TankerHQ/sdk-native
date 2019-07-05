@@ -79,6 +79,7 @@ class TankerConan(ConanFile):
     def configure(self):
         if self.settings.os == "Emscripten":
             self.options["Boost"].header_only = True
+            self.options["emscripten-toolchain"].filesystem = False
 
         if tools.cross_building(self.settings):
             del self.settings.compiler.libcxx
