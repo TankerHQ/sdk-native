@@ -77,7 +77,7 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
   _extraUsers.insert(_extraUsers.end(), extraUsers.begin(), extraUsers.end());
   _extraGroups.insert(
       _extraGroups.end(), extraGroups.begin(), extraGroups.end());
-  return _pullJob.trigger_success();
+  return _pullJob.trigger();
 }
 
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
