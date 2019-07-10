@@ -195,6 +195,7 @@ tc::cotask<void> Session::startConnection()
     }
   }));
 
+  if (_deviceKeyStore->deviceId().is_null())
   {
     SCOPE_TIMER("wait for trustchain sync", Net);
     TC_AWAIT(_ready.get_future());
