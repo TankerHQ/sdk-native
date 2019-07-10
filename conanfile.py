@@ -65,7 +65,7 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.16@tanker/testing", private=private)
         self.requires("mockaron/0.9.2@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.22.0@tanker/stable", private=private)
+        self.requires("tconcurrent/0.23.0@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
 
     def imports(self):
@@ -91,7 +91,7 @@ class TankerConan(ConanFile):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.2.3@tanker/testing")
-            self.build_requires("doctest-async/2.0.11@tanker/testing")
+            self.build_requires("doctest-async/2.0.12@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")

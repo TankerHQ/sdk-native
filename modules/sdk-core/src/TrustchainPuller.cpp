@@ -77,7 +77,7 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
   _extraUsers.insert(_extraUsers.end(), extraUsers.begin(), extraUsers.end());
   _extraGroups.insert(
       _extraGroups.end(), extraGroups.begin(), extraGroups.end());
-  return _pullJob.trigger_success();
+  return _pullJob.trigger();
 }
 
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
@@ -232,16 +232,15 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
         }
       }
     }
-      catch (Errors::Exception const& err)
+    catch (Errors::Exception const& err)
+    {
+      if (err.errorCode().category() == Verif::ErrcCategory())
       {
-        if (err.errorCode().category() == Verif::ErrcCategory())
-        {
-          TERROR(
-              "skipping invalid block {}: {}", serverEntry.hash(), err.what());
-        }
-        else
-          throw;
+        TERROR("skipping invalid block {}: {}", serverEntry.hash(), err.what());
       }
+      else
+        throw;
+    }
   }
   TC_AWAIT(recoverUserKeys(encryptedUserKeys, userEncryptionKeys));
   TC_RETURN(processed);
