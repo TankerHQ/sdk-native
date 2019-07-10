@@ -491,11 +491,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   tc::promise<void> prom;
   aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->start(aliceDevice.identity())),
-      Errc::OperationCanceled);
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
 
   CHECK(TC_AWAIT(waitFor(prom)));
+  CHECK(aliceSession->status() == Status::Stopped);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

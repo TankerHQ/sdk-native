@@ -10,6 +10,7 @@
     try                                           \
     {                                             \
       expr;                                       \
+      CHECK(false);                               \
     }                                             \
     catch (::Tanker::Errors::Exception const& e)  \
     {                                             \
@@ -23,6 +24,7 @@
     try                                                                    \
     {                                                                      \
       expr;                                                                \
+      CHECK(false);                                                        \
     }                                                                      \
     catch (::Tanker::Errors::Exception const& e)                           \
     {                                                                      \
