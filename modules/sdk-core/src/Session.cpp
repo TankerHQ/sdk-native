@@ -181,10 +181,17 @@ tc::cotask<void> Session::startConnection()
   TC_AWAIT(_client->handleConnection());
 
   _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
-    TC_AWAIT(syncTrustchain());
-    if (!_ready.get_future().is_ready())
+    try
     {
-      _ready.set_value({});
+      TC_AWAIT(syncTrustchain());
+      if (!_ready.get_future().is_ready())
+        _ready.set_value({});
+    }
+    catch (...)
+    {
+      if (!_ready.get_future().is_ready())
+        _ready.set_exception(std::current_exception());
+      throw;
     }
   }));
 
