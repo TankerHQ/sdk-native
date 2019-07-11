@@ -45,32 +45,10 @@ tc::cotask<bool> waitFor(tc::promise<void> prom)
       TC_AWAIT(tc::when_any(std::make_move_iterator(futures.begin()),
                             std::make_move_iterator(futures.end()),
                             tc::when_any_options::auto_cancel));
+  if (result.index != 0)
+    throw std::runtime_error("timeout waiting for promise");
   TC_RETURN(result.index == 0);
 }
-
-template <typename T /*, typename ...Args */>
-class SpyEvent
-{
-  using ConnectHandler = void (T::*)(std::function<void()>);
-  using DisconnectHandler = void (T::*)();
-
-public:
-  SpyEvent(T* target, ConnectHandler connect, DisconnectHandler disconnect)
-    : target(target), connect(connect), disconnect(disconnect)
-  {
-    (target->*connect)([this]() { receivedEvents.emplace_back(0); });
-  }
-
-  ~SpyEvent()
-  {
-    (target->*disconnect)();
-  }
-
-  T* target;
-  ConnectHandler connect;
-  DisconnectHandler disconnect;
-  std::vector<int> receivedEvents;
-};
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
@@ -78,13 +56,20 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto const core = TC_AWAIT(device.open());
+
+  tc::promise<void> closeProm1;
+  core->connectSessionClosed(
+      [closeProm1]() mutable { closeProm1.set_value({}); });
+
+  BOOST_SCOPE_EXIT_ALL(&)
+  {
+    core->disconnectSessionClosed();
+  };
+
   REQUIRE(core->status() == Status::Ready);
-  SpyEvent<AsyncCore> spyClose(core.get(),
-                               &AsyncCore::connectSessionClosed,
-                               &AsyncCore::disconnectSessionClosed);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  REQUIRE(spyClose.receivedEvents.size() == 1);
+  TC_AWAIT(waitFor(closeProm1));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
@@ -92,18 +77,31 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto core = TC_AWAIT(device.open());
+
+  BOOST_SCOPE_EXIT_ALL(&)
+  {
+    core->disconnectSessionClosed();
+  };
+
+  tc::promise<void> closeProm1;
+  core->connectSessionClosed(
+      [closeProm1]() mutable { closeProm1.set_value({}); });
+
   REQUIRE(core->status() == Status::Ready);
-  SpyEvent<AsyncCore> spyClose(core.get(),
-                               &AsyncCore::connectSessionClosed,
-                               &AsyncCore::disconnectSessionClosed);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  REQUIRE(spyClose.receivedEvents.size() == 1);
+  TC_AWAIT(waitFor(closeProm1));
+
+  tc::promise<void> closeProm2;
+  core->connectSessionClosed(
+      [closeProm2]() mutable { closeProm2.set_value({}); });
+
   core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Ready);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  REQUIRE(spyClose.receivedEvents.size() == 2);
+
+  TC_AWAIT(waitFor(closeProm2));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
