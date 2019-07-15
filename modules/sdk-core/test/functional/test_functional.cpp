@@ -18,6 +18,8 @@
 
 #include <tconcurrent/async_wait.hpp>
 
+#include <boost/scope_exit.hpp>
+
 using namespace std::string_literals;
 
 using namespace Tanker;
