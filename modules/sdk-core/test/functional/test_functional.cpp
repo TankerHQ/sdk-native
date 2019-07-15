@@ -36,7 +36,7 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
   return clearDatas;
 }
 
-tc::cotask<bool> waitFor(tc::promise<void> prom)
+tc::cotask<void> waitFor(tc::promise<void> prom)
 {
   std::vector<tc::future<void>> futures;
   futures.push_back(prom.get_future());
@@ -47,7 +47,6 @@ tc::cotask<bool> waitFor(tc::promise<void> prom)
                             tc::when_any_options::auto_cancel));
   if (result.index != 0)
     throw std::runtime_error("timeout waiting for promise");
-  TC_RETURN(result.index == 0);
 }
 }
 
@@ -69,7 +68,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   REQUIRE(core->status() == Status::Ready);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  TC_AWAIT(waitFor(closeProm1));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm1)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
@@ -90,7 +89,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   REQUIRE(core->status() == Status::Ready);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  TC_AWAIT(waitFor(closeProm1));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm1)));
 
   tc::promise<void> closeProm2;
   core->connectSessionClosed(
@@ -101,7 +100,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
 
-  TC_AWAIT(waitFor(closeProm2));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm2)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
@@ -461,7 +460,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  CHECK(TC_AWAIT(waitFor(prom)));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(aliceSession->status() == Status::Stopped);
   auto core = aliceDevice.createCore(Test::SessionType::Cached);
@@ -491,7 +490,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TC_AWAIT(aliceSession->start(aliceDevice.identity()));
 
-  CHECK(TC_AWAIT(waitFor(prom)));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
   CHECK(aliceSession->status() == Status::Stopped);
 }
 
@@ -520,7 +519,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  CHECK(TC_AWAIT(waitFor(prom)));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(otherSession->status() == Status::Stopped);
 
@@ -547,7 +546,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(otherDeviceId)));
 
-  CHECK(TC_AWAIT(waitFor(prom)));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(otherSession->status() == Status::Stopped);
 
@@ -563,7 +562,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
 
-  CHECK(TC_AWAIT(waitFor(prom2)));
+  CHECK_NOTHROW(TC_AWAIT(waitFor(prom2)));
 
   REQUIRE(aliceSession->status() == Status::Stopped);
 
