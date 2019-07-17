@@ -5,6 +5,9 @@
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
+#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -75,6 +78,13 @@ public:
   tc::cotask<void> syncTrustchain();
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
+
+  tc::cotask<StreamEncryptor> makeStreamEncryptor(
+      StreamInputSource,
+      std::vector<SPublicIdentity> const& suserIds = {},
+      std::vector<SGroupId> const& sgroupIds = {});
+
+  tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
 
   void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);

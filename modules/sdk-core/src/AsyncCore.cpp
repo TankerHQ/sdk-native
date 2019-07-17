@@ -306,6 +306,32 @@ expected<SResourceId> AsyncCore::getResourceId(
   return tc::sync([&] { return Core::getResourceId(encryptedData); });
 }
 
+tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(
+    StreamInputSource cb,
+    std::vector<SPublicIdentity> const& suserIds,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  // mutable so that we can move cb (otherwise it will be a const&&)
+  return _taskCanceler.run([&]() mutable {
+    return tc::async_resumable(
+        [=, cb = std::move(cb)]() -> tc::cotask<StreamEncryptor> {
+          TC_RETURN(TC_AWAIT(this->_core.makeStreamEncryptor(
+              std::move(cb), suserIds, sgroupIds)));
+        });
+  });
+}
+
+tc::shared_future<StreamDecryptor> AsyncCore::makeStreamDecryptor(
+    StreamInputSource cb)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable(
+        [this, cb = std::move(cb)]() -> tc::cotask<StreamDecryptor> {
+          TC_RETURN(TC_AWAIT(this->_core.makeStreamDecryptor(std::move(cb))));
+        });
+  });
+}
+
 std::string const& AsyncCore::version()
 {
   return TANKER_VERSION;

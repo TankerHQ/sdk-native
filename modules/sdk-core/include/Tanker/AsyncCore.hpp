@@ -5,6 +5,9 @@
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
+#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
@@ -108,6 +111,13 @@ public:
 
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
+
+  tc::shared_future<StreamEncryptor> makeStreamEncryptor(
+      StreamInputSource,
+      std::vector<SPublicIdentity> const& suserIds = {},
+      std::vector<SGroupId> const& sgroupIds = {});
+
+  tc::shared_future<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);

@@ -246,7 +246,6 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   auto const key = TC_AWAIT(getResourceKey(resourceId));
 
   TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
-  TC_RETURN();
 }
 
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
@@ -562,6 +561,30 @@ tc::cotask<void> Session::nukeDatabase()
   TC_AWAIT(_db->nuke());
 }
 
+tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
+    StreamInputSource cb,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  StreamEncryptor encryptor(std::move(cb));
+
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(SPublicIdentity{
+      to_string(Identity::PublicPermanentIdentity{_trustchainId, _userId})});
+
+  TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
+                                    encryptor.symmetricKey()));
+  TC_AWAIT(Share::share(_userAccessor,
+                        _groupAcessor,
+                        _blockGenerator,
+                        *_client,
+                        {{encryptor.symmetricKey(), encryptor.resourceId()}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
+
+  TC_RETURN(std::move(encryptor));
+}
+
 tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
@@ -597,5 +620,16 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
                    resourceId);
   }
   TC_RETURN(*key);
+}
+
+tc::cotask<StreamDecryptor> Session::makeStreamDecryptor(StreamInputSource cb)
+{
+  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+      -> tc::cotask<Crypto::SymmetricKey> {
+    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+  };
+
+  TC_RETURN(TC_AWAIT(
+      StreamDecryptor::create(std::move(cb), std::move(resourceKeyFinder))));
 }
 }

@@ -15,6 +15,7 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker.h
   include/ctanker/ctanker.h
   include/ctanker/async.h
+  include/ctanker/stream.h
   include/ctanker/base64.h
   include/ctanker/identity.h
   include/ctanker/admin.h
@@ -22,6 +23,7 @@ add_library(ctanker ${tankerlib_type}
 
   src/async.cpp
   src/base64.cpp
+  src/stream.cpp
   src/ctanker.cpp
   src/CFuture.hpp
   src/Utils.hpp
