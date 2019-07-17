@@ -16,6 +16,7 @@ class StreamHeader
 {
 public:
   static constexpr std::uint32_t currentVersion = 4u;
+  static constexpr std::uint32_t defaultEncryptedChunkSize = 1024 * 1024;
   static constexpr std::uint32_t serializedSize =
       Serialization::varint_size(StreamHeader::currentVersion) +
       sizeof(std::uint32_t) + Trustchain::ResourceId::arraySize +

@@ -2,6 +2,7 @@
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
+#include <Tanker/StreamHeader.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
@@ -14,7 +15,6 @@ using namespace EncryptionFormat;
 
 namespace
 {
-constexpr auto encryptedChunkSize = 1024lu * 1024lu;
 auto const versionSize = Serialization::varint_size(EncryptorV4::version());
 }
 
@@ -23,30 +23,25 @@ TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   std::vector<uint8_t> a0(EncryptorV4::encryptedSize(0));
   auto it0 = a0.data();
   it0 = Serialization::varint_write(it0, EncryptorV4::version());
-  Serialization::varint_write(it0, encryptedChunkSize);
+  Serialization::varint_write(it0, StreamHeader::defaultEncryptedChunkSize);
 
   std::vector<uint8_t> a42(EncryptorV4::encryptedSize(42));
   auto it42 = a42.data();
   it42 = Serialization::varint_write(it42, EncryptorV4::version());
-  Serialization::varint_write(it42, encryptedChunkSize);
+  Serialization::varint_write(it42, StreamHeader::defaultEncryptedChunkSize);
   CHECK(EncryptorV4::decryptedSize(a0) == 0);
   CHECK(EncryptorV4::decryptedSize(a42) == 42);
 }
 
 TEST_CASE("encryptedSize should return the right size")
 {
-  constexpr auto MacSize = Trustchain::ResourceId::arraySize;
-  constexpr auto ResourceIdSize = MacSize;
-  constexpr auto IvSize = Crypto::AeadIv::arraySize;
-
   CHECK(EncryptorV4::encryptedSize(0) ==
-        versionSize + ResourceIdSize + sizeof(uint32_t) + 0 + MacSize + IvSize);
+        StreamHeader::serializedSize + Crypto::Mac::arraySize);
   CHECK(EncryptorV4::encryptedSize(1) ==
-        versionSize + ResourceIdSize + sizeof(uint32_t) + 1 + MacSize + IvSize);
-  auto const bigSize = 2 * 1024 * 1024 + 5;
+        StreamHeader::serializedSize + Crypto::Mac::arraySize + 1);
+  auto const bigSize = 2 * StreamHeader::defaultEncryptedChunkSize + 5;
   CHECK(EncryptorV4::encryptedSize(bigSize) ==
-        bigSize + 3 * (MacSize + IvSize + versionSize + ResourceIdSize +
-                       sizeof(uint32_t)));
+        bigSize + 3 * (StreamHeader::serializedSize + Crypto::Mac::arraySize));
 }
 
 TEST_CASE("encrypt/decrypt should work with an empty buffer")
@@ -95,7 +90,8 @@ TEST_CASE("encrypt/decrypt should work with a normal buffer")
 
 TEST_CASE("encrypt/decrypt should work with a large buffer")
 {
-  std::vector<uint8_t> clearData(1024 * 1024 * 2 + 4);
+  std::vector<uint8_t> clearData(StreamHeader::defaultEncryptedChunkSize * 2 +
+                                 4);
   Crypto::randomFill(clearData);
 
   std::vector<uint8_t> encryptedData(

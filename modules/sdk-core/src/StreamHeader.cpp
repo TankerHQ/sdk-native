@@ -8,6 +8,7 @@ namespace Tanker
 {
 constexpr std::uint32_t StreamHeader::currentVersion;
 constexpr std::uint32_t StreamHeader::serializedSize;
+constexpr std::uint32_t StreamHeader::defaultEncryptedChunkSize;
 
 StreamHeader::StreamHeader(std::uint32_t encryptedChunkSize,
                            Trustchain::ResourceId const& resourceId,
