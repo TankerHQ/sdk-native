@@ -23,8 +23,6 @@ TEST_SUITE("Groups")
     auto bob = trustchain.makeUser();
     auto bobDevices = TC_AWAIT(bob.makeDevices(1));
 
-    TC_AWAIT(aliceSession->syncTrustchain());
-
     REQUIRE_NOTHROW(TC_AWAIT(aliceSession->createGroup(
         {bob.spublicIdentity(), alice.spublicIdentity()})));
   }
@@ -38,8 +36,6 @@ TEST_SUITE("Groups")
 
     auto bob = trustchain.makeUser();
     auto bobDevices = TC_AWAIT(bob.makeDevices(1));
-
-    TC_AWAIT(aliceSession->syncTrustchain());
 
     auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
@@ -61,8 +57,6 @@ TEST_SUITE("Groups")
 
     auto bob = trustchain.makeUser();
     auto bobDevices = TC_AWAIT(bob.makeDevices(1));
-
-    TC_AWAIT(aliceSession->syncTrustchain());
 
     auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
