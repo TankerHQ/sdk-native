@@ -8,6 +8,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Varint.hpp>
+#include <Tanker/StreamHeader.hpp>
 
 using Tanker::Trustchain::ResourceId;
 
@@ -20,11 +21,9 @@ namespace Encryptor
 {
 namespace
 {
-constexpr auto hugeDataThreshold = 1024 * 1024;
-
 constexpr bool isHugeClearData(uint64_t dataSize)
 {
-  return dataSize > hugeDataThreshold;
+  return dataSize > StreamHeader::defaultEncryptedChunkSize;
 }
 }
 
@@ -53,28 +52,31 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   }
 }
 
-EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
-                                             gsl::span<uint8_t const> clearData)
+tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
+    uint8_t* encryptedData, gsl::span<uint8_t const> clearData)
 {
   if (isHugeClearData(clearData.size()))
-    return EncryptorV4::encrypt(encryptedData, clearData);
-  return EncryptorV3::encrypt(encryptedData, clearData);
+    TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
+  TC_RETURN(EncryptorV3::encrypt(encryptedData, clearData));
 }
 
-void decrypt(uint8_t* decryptedData,
-             Crypto::SymmetricKey const& key,
-             gsl::span<uint8_t const> encryptedData)
+tc::cotask<void> decrypt(uint8_t* decryptedData,
+                         Crypto::SymmetricKey const& key,
+                         gsl::span<uint8_t const> encryptedData)
 {
   auto const version = Serialization::varint_read(encryptedData).first;
 
   switch (version)
   {
   case EncryptorV2::version():
-    return EncryptorV2::decrypt(decryptedData, key, encryptedData);
+    EncryptorV2::decrypt(decryptedData, key, encryptedData);
+    break;
   case EncryptorV3::version():
-    return EncryptorV3::decrypt(decryptedData, key, encryptedData);
+    EncryptorV3::decrypt(decryptedData, key, encryptedData);
+    break;
   case EncryptorV4::version():
-    return EncryptorV4::decrypt(decryptedData, key, encryptedData);
+    TC_AWAIT(EncryptorV4::decrypt(decryptedData, key, encryptedData));
+    break;
   default:
     throw formatEx(
         Errc::InvalidArgument, TFMT("unsupported version: {:d}"), version);

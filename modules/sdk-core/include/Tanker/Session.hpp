@@ -123,6 +123,8 @@ private:
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
+  tc::cotask<Crypto::SymmetricKey> getResourceKey(
+      Trustchain::ResourceId const&);
 
 private:
   Trustchain::TrustchainId _trustchainId;
