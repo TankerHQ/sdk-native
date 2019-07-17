@@ -78,6 +78,7 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/ssl.hpp
+  include/Tanker/StreamHeader.hpp
   include/Tanker/AConnection.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
@@ -155,6 +156,7 @@ add_library(tankercore STATIC
   src/BlockGenerator.cpp
   src/Client.cpp
   src/ConnectionFactory.cpp
+  src/StreamHeader.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
   src/Unlock/Verification.cpp
