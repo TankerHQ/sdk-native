@@ -121,6 +121,15 @@ T generichash(gsl::span<uint8_t const> data)
 std::vector<uint8_t> generichash16(gsl::span<uint8_t const> data);
 void randomFill(gsl::span<uint8_t> data);
 
+template <typename T,
+          typename = std::enable_if_t<IsCryptographicType<T>::value>>
+T getRandom()
+{
+  T ret;
+  randomFill(ret);
+  return ret;
+}
+
 Signature sign(gsl::span<uint8_t const> data,
                PrivateSignatureKey const& privateSignatureKey);
 bool verify(gsl::span<uint8_t const> data,
