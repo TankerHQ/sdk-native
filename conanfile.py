@@ -57,6 +57,7 @@ class TankerConan(ConanFile):
             self.requires("socket.io-client-cpp/1.6.2@tanker/testing", private=private)
             self.requires("sqlpp11/0.57@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
+            self.requires("libcurl/7.64.1@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
         self.requires("fmt/5.3.0@bincrafters/stable", private=private)
