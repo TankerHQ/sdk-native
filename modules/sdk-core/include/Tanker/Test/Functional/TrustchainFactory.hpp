@@ -25,7 +25,8 @@ public:
   tc::cotask<void> deleteTrustchain(Tanker::Trustchain::TrustchainId const& ic);
   tc::cotask<Trustchain::Ptr> createTrustchain(
       nonstd::optional<std::string> trustchainName = nonstd::nullopt,
-      bool isTest = true);
+      bool isTest = true,
+      bool storePrivateKey = true);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<VerificationCode> getVerificationCode(
       Tanker::Trustchain::TrustchainId trustchainId, Email const& email);

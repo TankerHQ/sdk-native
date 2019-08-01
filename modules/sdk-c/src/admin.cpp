@@ -31,22 +31,21 @@ tanker_future_t* tanker_admin_connect(char const* trustchain_url,
 tanker_future_t* tanker_admin_create_trustchain(tanker_admin_t* admin,
                                                 char const* name)
 {
-  return makeFuture(tc::async_resumable([admin =
-                                             reinterpret_cast<Admin*>(admin),
-                                         name = std::string(
-                                             name)]() -> tc::cotask<void*> {
-    const auto trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair());
-    const auto trustchainId = TC_AWAIT(
-        admin->createTrustchain(name, trustchainSignatureKeyPair, true));
-    TC_RETURN(static_cast<void*>(new tanker_trustchain_descriptor_t{
-        duplicateString(name),
-        duplicateString(cppcodec::base64_rfc4648::encode(trustchainId)),
-        duplicateString(cppcodec::base64_rfc4648::encode(
-            trustchainSignatureKeyPair.privateKey)),
-        duplicateString(cppcodec::base64_rfc4648::encode(
-            trustchainSignatureKeyPair.publicKey)),
-    }));
-  }));
+  return makeFuture(
+      tc::async_resumable([admin = reinterpret_cast<Admin*>(admin),
+                           name = std::string(name)]() -> tc::cotask<void*> {
+        const auto trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair());
+        const auto trustchainId = TC_AWAIT(admin->createTrustchain(
+            name, trustchainSignatureKeyPair, true, true));
+        TC_RETURN(static_cast<void*>(new tanker_trustchain_descriptor_t{
+            duplicateString(name),
+            duplicateString(cppcodec::base64_rfc4648::encode(trustchainId)),
+            duplicateString(cppcodec::base64_rfc4648::encode(
+                trustchainSignatureKeyPair.privateKey)),
+            duplicateString(cppcodec::base64_rfc4648::encode(
+                trustchainSignatureKeyPair.publicKey)),
+        }));
+      }));
 }
 
 tanker_future_t* tanker_admin_delete_trustchain(tanker_admin_t* admin,
@@ -77,8 +76,9 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
       tc::async([admin = reinterpret_cast<Admin*>(admin)] { delete admin; }));
 }
 
-tanker_future_t* tanker_admin_get_verification_code(
-    tanker_admin_t* admin, char const* trustchain_id, char const* user_email)
+tanker_future_t* tanker_admin_get_verification_code(tanker_admin_t* admin,
+                                                    char const* trustchain_id,
+                                                    char const* user_email)
 {
   return makeFuture(tc::async_resumable(
       [admin = reinterpret_cast<Admin*>(admin),

@@ -89,7 +89,8 @@ tc::cotask<void> Admin::authenticateCustomer(std::string const& idToken)
 tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
     std::string const& name,
     Crypto::SignatureKeyPair const& keyPair,
-    bool isTest)
+    bool isTest,
+    bool storePrivateKey)
 {
   FUNC_TIMER(Net);
   Block block{};
@@ -98,12 +99,14 @@ tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
       Trustchain::Actions::TrustchainCreation{keyPair.publicKey});
   block.trustchainId = Trustchain::TrustchainId(block.hash());
 
-  auto const message = nlohmann::json{
+  auto message = nlohmann::json{
       {"is_test", isTest},
       {"name", name},
       {"root_block",
        cppcodec::base64_rfc4648::encode(Serialization::serialize(block))},
   };
+  if (storePrivateKey)
+    message["private_signature_key"] = keyPair.privateKey;
   TC_AWAIT(emit("create trustchain", message));
 
   TC_RETURN(block.trustchainId);
