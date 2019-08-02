@@ -1,17 +1,13 @@
 import argparse
 import os
 import sys
-import contextlib
 
 from path import Path
 
 import ci
-import ci.android
 import ci.conan
 import ci.cpp
-import ci.endtoend
 import ci.git
-import ci.ios
 
 
 def build_and_check(profile: str, coverage: bool) -> None:
