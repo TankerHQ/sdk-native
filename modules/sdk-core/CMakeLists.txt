@@ -208,6 +208,7 @@ add_library(tankercore STATIC
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
+  ${TANKER_CORE_SSL_SRC}
   ${TANKER_CORE_EXTRA_SRC}
 )
 
@@ -228,6 +229,7 @@ target_link_libraries(tankercore
   tankerformat
   tankerlog
   tankerconfig
+  tankercacerts
   ttracer
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent
@@ -271,9 +273,6 @@ add_library(tankercore_test STATIC
 
 if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
-  if (WIN32)
-     target_link_libraries(tankercore crypt32 cryptui)
-  endif()
 endif()
 
 target_link_libraries(tankercore_test tankercore tankertesthelpers)

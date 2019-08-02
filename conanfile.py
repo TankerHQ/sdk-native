@@ -54,7 +54,7 @@ class TankerConan(ConanFile):
         if self.settings.os != "Emscripten":
             if self.options.with_ssl:
                 self.requires("LibreSSL/2.6.3@tanker/testing", private=private)
-            self.requires("socket.io-client-cpp/1.6.1@tanker/testing", private=private)
+            self.requires("socket.io-client-cpp/1.6.2@tanker/testing", private=private)
             self.requires("sqlpp11/0.57@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
@@ -83,9 +83,6 @@ class TankerConan(ConanFile):
 
         if tools.cross_building(self.settings):
             del self.settings.compiler.libcxx
-        if self.settings.os in ["Android", "iOS"]:
-            # On Android and iOS OpenSSL can't use system ca-certificates, so we ship mozilla's cacert.pem instead
-            self.options["socket.io-client-cpp"].embed_cacerts = True
 
     def build_requirements(self):
         if self.should_build_tests:
@@ -118,6 +115,10 @@ class TankerConan(ConanFile):
         self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
         self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
         self.cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
+        if self.settings.os not in ["Windows", "Emscripten"]:
+            # On Android and iOS OpenSSL can't use system ca-certificates, so we
+            # ship mozilla's cacert.pem instead on all platforms but windows
+            self.cmake.definitions["TANKER_EMBED_CERTIFICATES"] = True
         self.cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
@@ -149,6 +150,7 @@ class TankerConan(ConanFile):
             "tankererrors",
             "tankerlog",
             "tankerformat",
+            "tankercacerts",
         ]
 
         if self.sanitizer_flag:
