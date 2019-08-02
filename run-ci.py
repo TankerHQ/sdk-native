@@ -1,32 +1,30 @@
 import argparse
 import os
 import sys
-import contextlib
 
 from path import Path
 
 import ci
-import ci.android
 import ci.conan
 import ci.cpp
-import ci.endtoend
 import ci.git
-import ci.ios
 
 
 def build_and_check(profile: str, coverage: bool) -> None:
     built_path = ci.cpp.build(
-        profile,
-        make_package=True,
-        coverage=coverage,
-        warn_as_error=True
+        profile, make_package=True, coverage=coverage, warn_as_error=True
     )
     ci.cpp.check(built_path, coverage=coverage)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--isolate-conan-user-home", action="store_true", dest="home_isolation", default=False)
+    parser.add_argument(
+        "--isolate-conan-user-home",
+        action="store_true",
+        dest="home_isolation",
+        default=False,
+    )
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
     build_and_test_parser = subparsers.add_parser("build-and-test")
