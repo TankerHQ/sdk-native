@@ -5,6 +5,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Types/SResourceId.hpp>
+#include <Tanker/task_canceler.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -18,6 +19,7 @@ struct tanker_stream
 {
   StreamInputSource inputSource;
   SResourceId resourceId;
+  task_canceler canceler;
 };
 
 namespace
@@ -112,15 +114,13 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
 
 tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
                                     uint8_t* buffer,
-                                    int64_t buffer_size)
-{
-  return makeFuture(
-      tc::async_resumable([=]() -> tc::cotask<std::int64_t> {
-        TC_RETURN(TC_AWAIT(stream->inputSource(buffer, buffer_size)));
-      })
-          .and_then(tc::get_synchronous_executor(), [](std::int64_t nbRead) {
-            return reinterpret_cast<void*>(nbRead);
-          }));
+                                    int64_t buffer_size){
+  return makeFuture(stream->canceler.run([&]() mutable {
+    return tc::async_resumable([=]() -> tc::cotask<void*> {
+      TC_RETURN(reinterpret_cast<void*>(
+          TC_AWAIT(stream->inputSource(buffer, buffer_size))));
+    });
+  }));
 }
 
 tanker_expected_t* tanker_stream_get_resource_id(tanker_stream_t* stream)
