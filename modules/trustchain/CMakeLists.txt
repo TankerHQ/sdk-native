@@ -89,8 +89,7 @@ install(TARGETS tankertrustchain
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(
-  tankertrustchain
+target_link_libraries(tankertrustchain
   tankercrypto
   tankerserialization
   tankererrors
