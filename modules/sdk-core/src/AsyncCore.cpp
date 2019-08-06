@@ -30,7 +30,6 @@ namespace Tanker
 namespace
 {
 auto makeEventHandler(task_canceler& tc, std::function<void()> cb)
-
 {
   return [&tc, cb = std::move(cb)] {
     tc.run([&cb] { return tc::async([cb = std::move(cb)] { cb(); }); });
@@ -254,6 +253,27 @@ tc::shared_future<void> AsyncCore::syncTrustchain()
     return tc::async_resumable([this]() -> tc::cotask<void> {
       TC_AWAIT(this->_core.syncTrustchain());
     });
+  });
+}
+
+tc::shared_future<CloudStorage::UploadTicket> AsyncCore::getFileUploadTicket(
+    Trustchain::ResourceId const& resourceId, uint64_t length)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<CloudStorage::UploadTicket> {
+      TC_RETURN(TC_AWAIT(this->_core.getFileUploadTicket(resourceId, length)));
+    });
+  });
+}
+
+tc::shared_future<CloudStorage::DownloadTicket>
+AsyncCore::getFileDownloadTicket(Trustchain::ResourceId const& resourceId)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable(
+        [=]() -> tc::cotask<CloudStorage::DownloadTicket> {
+          TC_RETURN(TC_AWAIT(this->_core.getFileDownloadTicket(resourceId)));
+        });
   });
 }
 

@@ -105,6 +105,11 @@ public:
 
   tc::shared_future<void> syncTrustchain();
 
+  tc::shared_future<CloudStorage::UploadTicket> getFileUploadTicket(
+      Trustchain::ResourceId const& resourceId, uint64_t length);
+  tc::shared_future<CloudStorage::DownloadTicket> getFileDownloadTicket(
+      Trustchain::ResourceId const& resourceId);
+
   static void setLogHandler(Log::LogHandler handler);
 
   static uint64_t encryptedSize(uint64_t clearSize);

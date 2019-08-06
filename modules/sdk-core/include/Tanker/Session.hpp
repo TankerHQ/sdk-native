@@ -3,6 +3,7 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/CloudStorage.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
@@ -121,6 +122,11 @@ public:
       std::vector<SGroupId> const& sgroupIds = {});
 
   tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
+
+  tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
+      Trustchain::ResourceId const& resourceId, uint64_t length);
+  tc::cotask<CloudStorage::DownloadTicket> getFileDownloadTicket(
+      Trustchain::ResourceId const& resourceId);
 
 private:
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);

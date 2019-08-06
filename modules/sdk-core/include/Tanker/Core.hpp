@@ -86,6 +86,11 @@ public:
 
   tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
 
+  tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
+      Trustchain::ResourceId const& resourceId, uint64_t length);
+  tc::cotask<CloudStorage::DownloadTicket> getFileDownloadTicket(
+      Trustchain::ResourceId const& resourceId);
+
   void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);
 

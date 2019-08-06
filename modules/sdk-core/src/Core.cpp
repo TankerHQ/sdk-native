@@ -244,7 +244,8 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
   TC_AWAIT((*psession)->setVerificationMethod(method));
 }
 
-tc::cotask<std::vector<Unlock::VerificationMethod>> Core::getVerificationMethods()
+tc::cotask<std::vector<Unlock::VerificationMethod>>
+Core::getVerificationMethods()
 {
   auto const st = status();
   if (st != Status::Ready && st != Status::IdentityVerificationNeeded)
@@ -308,6 +309,24 @@ tc::cotask<StreamDecryptor> Core::makeStreamDecryptor(StreamInputSource cb)
   if (!psession)
     throw INVALID_STATUS(makeStreamDecryptor);
   TC_RETURN(TC_AWAIT((*psession)->makeStreamDecryptor(std::move(cb))));
+}
+
+tc::cotask<CloudStorage::UploadTicket> Core::getFileUploadTicket(
+    Trustchain::ResourceId const& resourceId, uint64_t length)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(getFileUploadTicket);
+  TC_RETURN(TC_AWAIT((*psession)->getFileUploadTicket(resourceId, length)));
+}
+
+tc::cotask<CloudStorage::DownloadTicket> Core::getFileDownloadTicket(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(getFileDownloadTicket);
+  TC_RETURN(TC_AWAIT((*psession)->getFileDownloadTicket(resourceId)));
 }
 
 SResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
