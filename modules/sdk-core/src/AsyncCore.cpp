@@ -323,7 +323,10 @@ expected<uint64_t> AsyncCore::decryptedSize(
 expected<SResourceId> AsyncCore::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {
-  return tc::sync([&] { return Core::getResourceId(encryptedData); });
+  return tc::sync([&] {
+    return cppcodec::base64_rfc4648::encode<SResourceId>(
+        Core::getResourceId(encryptedData));
+  });
 }
 
 tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(

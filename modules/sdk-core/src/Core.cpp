@@ -329,9 +329,9 @@ tc::cotask<CloudStorage::DownloadTicket> Core::getFileDownloadTicket(
   TC_RETURN(TC_AWAIT((*psession)->getFileDownloadTicket(resourceId)));
 }
 
-SResourceId Core::getResourceId(gsl::span<uint8_t const> encryptedData)
+Trustchain::ResourceId Core::getResourceId(
+    gsl::span<uint8_t const> encryptedData)
 {
-  return cppcodec::base64_rfc4648::encode<SResourceId>(
-      Encryptor::extractResourceId(encryptedData));
+  return Encryptor::extractResourceId(encryptedData);
 }
 }
