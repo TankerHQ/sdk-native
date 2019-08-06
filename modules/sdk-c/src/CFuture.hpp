@@ -26,8 +26,13 @@ struct tanker_future
   std::unique_ptr<tanker_error_t, tanker_error_deleter> error;
 };
 
-template <template <typename> class Future>
-tanker_future_t* makeFuture(Future<void*> fut)
+inline tanker_future_t* makeFuture(tc::shared_future<void*> fut)
+{
+  return new tanker_future{fut.and_then([](void* arg) { return arg; }),
+                           nullptr};
+}
+
+inline tanker_future_t* makeFuture(tc::future<void*> fut)
 {
   return new tanker_future{std::move(fut), nullptr};
 }
