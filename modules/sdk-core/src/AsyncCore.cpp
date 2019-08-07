@@ -133,6 +133,35 @@ tc::shared_future<void> AsyncCore::decrypt(
   });
 }
 
+tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<std::vector<uint8_t>> {
+      std::vector<uint8_t> encryptedData(
+          Encryptor::encryptedSize(clearData.size()));
+      TC_AWAIT(_core.encrypt(
+          encryptedData.data(), clearData, publicIdentities, groupIds));
+      TC_RETURN(std::move(encryptedData));
+    });
+  });
+}
+
+tc::shared_future<std::vector<uint8_t>> AsyncCore::decrypt(
+    gsl::span<uint8_t const> encryptedData)
+{
+  return _taskCanceler.run([&] {
+    return tc::async_resumable([=]() -> tc::cotask<std::vector<uint8_t>> {
+      std::vector<uint8_t> decryptedData(
+          Encryptor::decryptedSize(encryptedData));
+      TC_AWAIT(_core.decrypt(decryptedData.data(), encryptedData));
+      TC_RETURN(std::move(decryptedData));
+    });
+  });
+}
+
 tc::shared_future<void> AsyncCore::share(
     std::vector<SResourceId> const& resourceId,
     std::vector<SPublicIdentity> const& publicIdentities,
