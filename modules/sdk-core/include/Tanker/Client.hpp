@@ -116,6 +116,9 @@ public:
   tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 
+  tc::cotask<nlohmann::json> emit(std::string const& event,
+                                  nlohmann::json const& data);
+
   std::string connectionId() const;
   std::function<void()> blockAvailable;
 
@@ -124,8 +127,5 @@ private:
   ConnectionHandler _connectionHandler;
 
   tc::task_auto_canceler _taskCanceler;
-
-  tc::cotask<nlohmann::json> emit(std::string const& event,
-                                  nlohmann::json const& data);
 };
 }

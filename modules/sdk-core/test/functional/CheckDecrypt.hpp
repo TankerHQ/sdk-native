@@ -10,21 +10,15 @@ inline tc::cotask<std::vector<uint8_t>> encrypt(
     std::vector<SPublicIdentity> const& publicIdentities = {},
     std::vector<SGroupId> const& groupIds = {})
 {
-  auto const clearData = make_buffer(data);
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  TC_AWAIT(core.encrypt(
-      encryptedData.data(), clearData, publicIdentities, groupIds));
-  TC_RETURN(encryptedData);
+  TC_RETURN(
+      TC_AWAIT(core.encrypt(make_buffer(data), publicIdentities, groupIds)));
 }
 
 inline tc::cotask<std::string> decrypt(
     AsyncCore& core, std::vector<uint8_t> const& encryptedData)
 {
-  std::vector<uint8_t> decryptedData(
-      AsyncCore::decryptedSize(encryptedData).get());
-  TC_AWAIT(core.decrypt(decryptedData.data(), encryptedData));
-  TC_RETURN(std::string(decryptedData.begin(), decryptedData.end()));
+  auto const decrypted = TC_AWAIT(core.decrypt(encryptedData));
+  TC_RETURN(std::string(decrypted.begin(), decrypted.end()));
 }
 
 inline tc::cotask<bool> checkDecrypt(

@@ -149,6 +149,7 @@ add_library(tankercore STATIC
   include/Tanker/EncryptionFormat/EncryptorV4.hpp
   include/Tanker/EncryptionFormat/EncryptorV2.hpp
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
+  include/Tanker/CloudStorage.hpp
 
   src/AsyncCore.cpp
   src/AttachResult.cpp
@@ -214,6 +215,7 @@ add_library(tankercore STATIC
   src/EncryptionFormat/EncryptorV2.cpp
   src/EncryptionFormat/EncryptorV3.cpp
   src/EncryptionFormat/EncryptorV4.cpp
+  src/CloudStorage.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}

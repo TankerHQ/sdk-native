@@ -556,6 +556,20 @@ tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
                                     _client));
 }
 
+tc::cotask<CloudStorage::UploadTicket> Session::getFileUploadTicket(
+    ResourceId const& resourceId, uint64_t length)
+{
+  TC_RETURN(TC_AWAIT(
+      CloudStorage::getFileUploadTicket(*_client, resourceId, length)));
+}
+
+tc::cotask<CloudStorage::DownloadTicket> Session::getFileDownloadTicket(
+    ResourceId const& resourceId)
+{
+  TC_RETURN(
+      TC_AWAIT(CloudStorage::getFileDownloadTicket(*_client, resourceId)));
+}
+
 tc::cotask<void> Session::nukeDatabase()
 {
   TC_AWAIT(_db->nuke());

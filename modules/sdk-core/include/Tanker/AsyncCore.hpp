@@ -71,6 +71,13 @@ public:
   tc::shared_future<void> decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData);
 
+  tc::shared_future<std::vector<uint8_t>> encrypt(
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::shared_future<std::vector<uint8_t>> decrypt(
+      gsl::span<uint8_t const> encryptedData);
+
   tc::shared_future<void> share(
       std::vector<SResourceId> const& resourceId,
       std::vector<SPublicIdentity> const& publicIdentities,
@@ -104,6 +111,11 @@ public:
   tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
 
   tc::shared_future<void> syncTrustchain();
+
+  tc::shared_future<CloudStorage::UploadTicket> getFileUploadTicket(
+      Trustchain::ResourceId const& resourceId, uint64_t length);
+  tc::shared_future<CloudStorage::DownloadTicket> getFileDownloadTicket(
+      Trustchain::ResourceId const& resourceId);
 
   static void setLogHandler(Log::LogHandler handler);
 

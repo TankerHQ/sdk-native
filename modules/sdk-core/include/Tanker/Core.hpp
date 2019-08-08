@@ -86,10 +86,16 @@ public:
 
   tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
 
+  tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
+      Trustchain::ResourceId const& resourceId, uint64_t length);
+  tc::cotask<CloudStorage::DownloadTicket> getFileDownloadTicket(
+      Trustchain::ResourceId const& resourceId);
+
   void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);
 
-  static SResourceId getResourceId(gsl::span<uint8_t const> encryptedData);
+  static Trustchain::ResourceId getResourceId(
+      gsl::span<uint8_t const> encryptedData);
 
 private:
   // We store the session as a unique_ptr so that open() does not

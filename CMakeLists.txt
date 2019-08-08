@@ -102,6 +102,7 @@ add_subdirectory(modules/types)
 add_subdirectory(modules/cacerts)
 add_subdirectory(modules/tccurl)
 add_subdirectory(modules/fake-authentication)
+add_subdirectory(modules/filekit)
 
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
