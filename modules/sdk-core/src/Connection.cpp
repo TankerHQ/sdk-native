@@ -1,5 +1,6 @@
 #include <Tanker/Connection.hpp>
 
+#include <Tanker/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -41,6 +42,7 @@ Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
     }));
   });
   _client.set_fail_listener([]() { TERROR("socket.io failure"); });
+  _client.set_init_ssl_ctx(Tanker::add_certificate_authority);
 }
 
 bool Connection::isOpen() const
