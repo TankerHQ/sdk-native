@@ -34,7 +34,8 @@ public:
   tc::cotask<Trustchain::TrustchainId> createTrustchain(
       std::string const& name,
       Crypto::SignatureKeyPair const& keyPair,
-      bool isTest = true);
+      bool isTest,
+      bool storePrivateKey);
   tc::cotask<void> deleteTrustchain(
       Trustchain::TrustchainId const& trustchainId);
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);

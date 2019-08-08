@@ -39,7 +39,9 @@ tc::cotask<void> TrustchainFactory::deleteTrustchain(
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
-    nonstd::optional<std::string> trustchainName, bool isTest)
+    nonstd::optional<std::string> trustchainName,
+    bool isTest,
+    bool storePrivateKey)
 {
   auto kp = Tanker::Crypto::makeSignatureKeyPair();
   auto trustchainDefault = Tanker::Trustchain::TrustchainId{};
@@ -48,7 +50,8 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
       trustchainName.value_or(
           cppcodec::base64_rfc4648::encode(trustchainDefault)),
       kp,
-      isTest));
+      isTest,
+      storePrivateKey));
   TC_RETURN(Trustchain::make(
       Tanker::TestConstants::trustchainUrl(), trustchainId, kp));
 }
