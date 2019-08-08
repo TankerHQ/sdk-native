@@ -13,6 +13,9 @@
 #include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -112,6 +115,13 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
+  tc::cotask<StreamEncryptor> makeStreamEncryptor(
+      StreamInputSource,
+      std::vector<SPublicIdentity> const& suserIds = {},
+      std::vector<SGroupId> const& sgroupIds = {});
+
+  tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
+
 private:
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
@@ -123,6 +133,8 @@ private:
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
+  tc::cotask<Crypto::SymmetricKey> getResourceKey(
+      Trustchain::ResourceId const&);
 
 private:
   Trustchain::TrustchainId _trustchainId;

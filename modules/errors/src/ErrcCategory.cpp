@@ -32,6 +32,8 @@ std::string ErrcCategory::message(int c) const
     return "too many attempts";
   case Errc::ExpiredVerification:
     return "expired verification";
+  case Errc::IOError:
+    return "input/output error";
   default:
     return "unknown error";
   }

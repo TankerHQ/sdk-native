@@ -5,6 +5,11 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
+#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/StreamHeader.hpp>
+
+#include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>
 
@@ -24,26 +29,28 @@ constexpr auto sizeOfChunkSize = sizeof(uint32_t);
 auto const versionSize = Serialization::varint_size(version());
 auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
 
+// version 4 format layout:
+// N * chunk of encryptedChunkSize:
+// header: [version, varint] [chunkSize, 4B] [ResourceId, 16B]
+// content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
+
 uint32_t clearChunkSize(uint32_t const encryptedChunkSize)
 {
   return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
          Trustchain::ResourceId::arraySize;
 }
 
-// version 4 format layout:
-// N * chunk of encryptedChunkSize:
-// header: [version, 1B] [chunkSize, 4B] [ResourceId, 16B]
-// content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
-void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
+auto makeInputReader(gsl::span<std::uint8_t const> buffer)
 {
-  auto const dataVersionResult = Serialization::varint_read(encryptedData);
-  auto const overheadSize = sizeOfChunkSize + ResourceId::arraySize +
-                            Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize;
-
-  assert(dataVersionResult.first == version());
-
-  if (dataVersionResult.second.size() < overheadSize)
-    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
+  return
+      [index = 0u, buffer](std::uint8_t* out,
+                           std::int64_t n) mutable -> tc::cotask<std::int64_t> {
+        auto const toRead =
+            std::min(n, static_cast<std::int64_t>(buffer.size()) - index);
+        std::copy_n(buffer.data() + index, toRead, out);
+        index += toRead;
+        TC_RETURN(toRead);
+      };
 }
 }
 
@@ -58,128 +65,52 @@ uint64_t encryptedSize(uint64_t clearSize, uint32_t encryptedChunkSize)
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
-  try
-  {
-    checkEncryptedFormat(encryptedData);
+  Serialization::SerializedSource ss{encryptedData};
+  auto const header = Serialization::deserialize<StreamHeader>(ss);
 
-    auto const versionResult = Serialization::varint_read(encryptedData);
-    auto const encryptedChunkSize = Serialization::deserialize<uint32_t>(
-        versionResult.second.subspan(0, sizeOfChunkSize));
-    if (versionResult.second.size() < sizeOfChunkSize + ResourceId::arraySize)
-      throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-    auto const chunks = encryptedData.size() / encryptedChunkSize;
-    auto const lastClearChunkSize =
-        (encryptedData.size() % encryptedChunkSize) -
-        Crypto::AeadIv::arraySize - headerSize;
-    return chunks * clearChunkSize(encryptedChunkSize) +
-           Crypto::decryptedSize(lastClearChunkSize);
-  }
-  catch (gsl::fail_fast const&)
-  {
+  // aead overhead
+  if (ss.remaining_size() < Crypto::Mac::arraySize)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  }
+  auto const chunks = encryptedData.size() / header.encryptedChunkSize();
+  auto const lastClearChunkSize =
+      (encryptedData.size() % header.encryptedChunkSize()) -
+      Crypto::AeadIv::arraySize - headerSize;
+  return chunks * clearChunkSize(header.encryptedChunkSize()) +
+         Crypto::decryptedSize(lastClearChunkSize);
 }
 
-EncryptionFormat::EncryptionMetadata encrypt(uint8_t* encryptedData,
-                                             gsl::span<uint8_t const> clearData,
-                                             uint32_t encryptedChunkSize)
+tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
+    uint8_t* encryptedData,
+    gsl::span<uint8_t const> clearData,
+    uint32_t encryptedChunkSize)
 {
-  auto const chunkSize = clearChunkSize(encryptedChunkSize);
-  auto const key = Crypto::makeSymmetricKey();
-  ResourceId resourceId{};
-  Crypto::randomFill(resourceId);
+  StreamEncryptor encryptor(makeInputReader(clearData), encryptedChunkSize);
 
-  for (uint64_t clearDataIndex = 0; clearDataIndex <= clearData.size();
-       encryptedData += encryptedChunkSize, clearDataIndex += chunkSize)
-  {
-    // write header
-    Serialization::varint_write(encryptedData, version());
-    Serialization::serialize(encryptedData + versionSize, encryptedChunkSize);
-    Serialization::serialize(encryptedData + versionSize + sizeOfChunkSize,
-                             resourceId);
-    auto chunk = encryptedData + headerSize;
+  while (auto const nbRead =
+             TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
+    encryptedData += nbRead;
 
-    auto const ivSeed = gsl::span<uint8_t>(chunk, Crypto::AeadIv::arraySize);
-    Crypto::randomFill(ivSeed);
-    auto const numericalIndex = clearDataIndex / chunkSize;
-    auto const iv = Crypto::deriveIv(Crypto::AeadIv{ivSeed}, numericalIndex);
-    auto const nextClearChunkSize =
-        std::min<unsigned long>(chunkSize, clearData.size() - clearDataIndex);
-
-    Crypto::encryptAead(key,
-                        iv.data(),
-                        chunk + Crypto::AeadIv::arraySize,
-                        clearData.subspan(clearDataIndex, nextClearChunkSize),
-                        {});
-  }
-
-  return {ResourceId{resourceId}, key};
+  TC_RETURN((EncryptionFormat::EncryptionMetadata{encryptor.resourceId(),
+                                                  encryptor.symmetricKey()}));
 }
 
-void decrypt(uint8_t* decryptedData,
-             Crypto::SymmetricKey const& key,
-             gsl::span<uint8_t const> encryptedData)
+tc::cotask<void> decrypt(uint8_t* decryptedData,
+                         Crypto::SymmetricKey const& key,
+                         gsl::span<uint8_t const> encryptedData)
 {
-  try
-  {
-    checkEncryptedFormat(encryptedData);
+  auto decryptor = TC_AWAIT(StreamDecryptor::create(
+      makeInputReader(encryptedData),
+      [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
-    auto const versionResult = Serialization::varint_read(encryptedData);
-    auto const encryptedChunkSize = Serialization::deserialize<uint32_t>(
-        versionResult.second.subspan(0, sizeOfChunkSize));
-
-    for (uint64_t currentSize = 0; currentSize < encryptedData.size();
-         currentSize += encryptedChunkSize)
-    {
-      auto const numericalIndex = currentSize / encryptedChunkSize;
-      auto const nextClearChunkSize = std::min<unsigned long>(
-          encryptedChunkSize, encryptedData.size() - currentSize);
-      auto const chunk = encryptedData.subspan(currentSize, nextClearChunkSize);
-
-      // Header
-      auto const versionResult = Serialization::varint_read(chunk);
-      if (versionResult.first != version())
-      {
-        throw formatEx(Errc::DecryptionFailed,
-                       "unsupported version: {}",
-                       versionResult.first);
-      }
-      auto const headerRemoved =
-          versionResult.second.subspan(ResourceId::arraySize + sizeOfChunkSize);
-
-      auto const ivSeed =
-          Crypto::AeadIv{headerRemoved.subspan(0, Crypto::AeadIv::arraySize)};
-      auto const iv = Crypto::deriveIv(ivSeed, numericalIndex);
-      auto const cipherText = headerRemoved.subspan(Crypto::AeadIv::arraySize);
-      Crypto::decryptAead(
-          key,
-          iv.data(),
-          decryptedData + numericalIndex * clearChunkSize(encryptedChunkSize),
-          cipherText,
-          {});
-    }
-  }
-  catch (gsl::fail_fast const&)
-  {
-    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  }
+  while (auto const nbRead = TC_AWAIT(
+             decryptor(decryptedData, StreamHeader::defaultEncryptedChunkSize)))
+    decryptedData += nbRead;
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
-  try
-  {
-    checkEncryptedFormat(encryptedData);
-
-    auto const versionPair = Serialization::varint_read(encryptedData);
-    auto const resourceId =
-        versionPair.second.subspan(sizeof(uint32_t), ResourceId::arraySize);
-    return ResourceId{resourceId};
-  }
-  catch (gsl::fail_fast const&)
-  {
-    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  }
+  Serialization::SerializedSource ss{encryptedData};
+  return Serialization::deserialize<StreamHeader>(ss).resourceId();
 }
 }
 }

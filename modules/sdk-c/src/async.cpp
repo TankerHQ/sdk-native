@@ -67,6 +67,7 @@ CHECK_ENUM(GROUP_TOO_BIG, GroupTooBig);
 CHECK_ENUM(INVALID_VERIFICATION, InvalidVerification);
 CHECK_ENUM(TOO_MANY_ATTEMPTS, TooManyAttempts);
 CHECK_ENUM(EXPIRED_VERIFICATION, ExpiredVerification);
+CHECK_ENUM(IO_ERROR, IOError);
 
 CHECK_ENUM(LAST, Last);
 
@@ -76,7 +77,7 @@ CHECK_ENUM(LAST, Last);
 // update the above assertions. You must add the appropriate CHECK_ENUM()'s.
 // Solely then you can fix the static_assert() to allow you and your fellowship
 // to continue their journey.
-static_assert(TANKER_ERROR_LAST == 11,
+static_assert(TANKER_ERROR_LAST == 12,
               "Add an assertion above and fix this one");
 
 tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)

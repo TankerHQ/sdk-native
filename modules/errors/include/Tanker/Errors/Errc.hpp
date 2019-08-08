@@ -19,6 +19,7 @@ enum class Errc
   InvalidVerification,
   TooManyAttempts,
   ExpiredVerification,
+  IOError,
 
   Last,
 };

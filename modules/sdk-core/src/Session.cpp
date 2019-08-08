@@ -223,7 +223,7 @@ tc::cotask<void> Session::encrypt(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  auto const metadata = Encryptor::encrypt(encryptedData, clearData);
+  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
       to_string(Identity::PublicPermanentIdentity{_trustchainId, _userId})});
@@ -243,38 +243,9 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
 {
   auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
-  // Try to get the key, in order:
-  // - from the resource key store
-  // - from the trustchain
-  // - from the tanker server
-  // In all cases, we put the key in the resource key store
-  auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-  if (!key)
-  {
-    auto keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    if (!keyPublish)
-    {
-      TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-      keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    }
-    if (keyPublish) // do not use else!
-    {
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(_resourceKeyStore,
-                                              _userKeyStore,
-                                              _groupStore,
-                                              _provisionalUserKeysStore,
-                                              *keyPublish));
-      key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-    }
-  }
-  if (!key)
-  {
-    throw formatEx(Errc::InvalidArgument,
-                   TFMT("key not found for resource: {:s}"),
-                   resourceId);
-  }
+  auto const key = TC_AWAIT(getResourceKey(resourceId));
 
-  Encryptor::decrypt(decryptedData, *key, encryptedData);
+  TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
 }
 
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
@@ -588,5 +559,77 @@ tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 tc::cotask<void> Session::nukeDatabase()
 {
   TC_AWAIT(_db->nuke());
+}
+
+tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
+    StreamInputSource cb,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  StreamEncryptor encryptor(std::move(cb));
+
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(SPublicIdentity{
+      to_string(Identity::PublicPermanentIdentity{_trustchainId, _userId})});
+
+  TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
+                                    encryptor.symmetricKey()));
+  TC_AWAIT(Share::share(_userAccessor,
+                        _groupAcessor,
+                        _blockGenerator,
+                        *_client,
+                        {{encryptor.symmetricKey(), encryptor.resourceId()}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
+
+  TC_RETURN(std::move(encryptor));
+}
+
+tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
+    Trustchain::ResourceId const& resourceId)
+{
+  // Try to get the key, in order:
+  // - from the resource key store
+  // - from the trustchain
+  // - from the tanker server
+  // In all cases, we put the key in the resource key store
+
+  auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
+  if (!key)
+  {
+    auto keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
+    if (!keyPublish)
+    {
+      TC_AWAIT(_trustchainPuller.scheduleCatchUp());
+      keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
+    }
+    if (keyPublish) // do not use else!
+    {
+      TC_AWAIT(ReceiveKey::decryptAndStoreKey(_resourceKeyStore,
+                                              _userKeyStore,
+                                              _groupStore,
+                                              _provisionalUserKeysStore,
+                                              *keyPublish));
+      key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
+    }
+  }
+  if (!key)
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   TFMT("key not found for resource: {:s}"),
+                   resourceId);
+  }
+  TC_RETURN(*key);
+}
+
+tc::cotask<StreamDecryptor> Session::makeStreamDecryptor(StreamInputSource cb)
+{
+  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+      -> tc::cotask<Crypto::SymmetricKey> {
+    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+  };
+
+  TC_RETURN(TC_AWAIT(
+      StreamDecryptor::create(std::move(cb), std::move(resourceKeyFinder))));
 }
 }
