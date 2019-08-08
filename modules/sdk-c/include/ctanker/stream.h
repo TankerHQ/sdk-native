@@ -80,6 +80,12 @@ CTANKER_EXPORT void tanker_stream_read_operation_finish(
  * \pre buffer must be capable to hold *buffer_size* bytes
  * \pre buffer_size must be positive
  *
+ * Additionally, passing a buffer_size of 0 will either:
+ * 1. Return 0 immediately when there is still buffered output
+ * 2. Process input and buffer output, and then return 0
+ *
+ * This avoids waiting for the user's buffer to perform a read
+ *
  * \return The number of bytes read
  */
 CTANKER_EXPORT tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
