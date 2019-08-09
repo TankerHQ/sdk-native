@@ -34,7 +34,11 @@ generate_export_header(ctanker
   )
 
 if(TANKERLIB_SHARED)
-  if (UNIX AND NOT APPLE) # this means linux, including android
+  if (APPLE)
+    set(_whole_archive "-Wl,-force_load")
+    set_target_properties(ctanker PROPERTIES
+      LINK_FLAGS "-Wl,-exported_symbols_list ${PROJECT_SOURCE_DIR}/exports.sym")
+  elseif (UNIX) # this means linux, including android
     set(_whole_archive "-Wl,--whole-archive")
     set(_no_whole_archive "-Wl,--no-whole-archive")
     set_target_properties(ctanker PROPERTIES
@@ -42,11 +46,6 @@ if(TANKERLIB_SHARED)
   elseif (WIN32)
     set_target_properties(ctanker PROPERTIES
       LINK_FLAGS "/DEF:${PROJECT_SOURCE_DIR}/exports.def")
-  elseif (APPLE)
-    set(_whole_archive "-Wl,-force_load")
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "-Wl,-exported_symbols_list ${PROJECT_SOURCE_DIR}/exports.sym")
-    # do nothing, this is the default
   else()
     # you need to write an export file for your platform to support that
     message(FATAL_ERROR "Shared library building is not supported on this platform")
