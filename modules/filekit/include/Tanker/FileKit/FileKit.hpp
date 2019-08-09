@@ -48,6 +48,8 @@ public:
       std::vector<SGroupId> const& groupIds = {});
   tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> download(
       Trustchain::ResourceId const& resourceId);
+  tc::cotask<std::pair<StreamInputSource, Metadata>> downloadStream(
+      Trustchain::ResourceId const& resourceId);
 
 private:
   AsyncCore& _core;
@@ -68,8 +70,6 @@ private:
   tc::cotask<std::string> downloadMetadata(
       Trustchain::ResourceId const& resourceId, std::string const& url);
   tc::cotask<Metadata> decryptMetadata(std::string const& sencryptedMetadata);
-  tc::cotask<std::vector<uint8_t>> performDownloadRequest(
-      std::string const& url);
 };
 }
 }
