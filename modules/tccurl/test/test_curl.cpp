@@ -107,7 +107,7 @@ TEST_CASE("curl multiple requests")
 
   multi mul;
 
-  promise<void> finished[NB];
+  promise<CURLcode> finished[NB];
   bool dataread[NB] = {false};
   std::shared_ptr<request> reqs[NB];
   for (auto& req : reqs)
@@ -120,9 +120,9 @@ TEST_CASE("curl multiple requests")
           dataread[i] = true;
           return size;
         });
-    promise<void> finish = finished[i];
+    auto finish = finished[i];
     reqs[i]->set_finish_callback(
-        [finish](request&, CURLcode) mutable { finish.set_value({}); });
+        [finish](request&, CURLcode c) mutable { finish.set_value(c); });
     reqs[i]->set_url("http://httpbin.org/drip?numbytes=100&duration=1");
   }
 
@@ -131,7 +131,8 @@ TEST_CASE("curl multiple requests")
 
   for (int i = 0; i < NB; ++i)
   {
-    finished[i].get_future().wait();
+    CHECK(finished[i].get_future().get() == CURLE_OK);
+    CHECK(reqs[i]->get_status_code() == 200);
     CHECK(dataread[i]);
   }
 }
