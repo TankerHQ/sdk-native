@@ -10,8 +10,9 @@
 
 using namespace Tanker;
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Test upload/download")
+void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
 {
+  CAPTURE(size);
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto core = TC_AWAIT(device.open());
@@ -21,7 +22,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Test upload/download")
   metadata.mime = "image/jpeg";
   metadata.name = "holidays.jpg";
   metadata.lastModified = std::chrono::milliseconds(128128);
-  auto const buffer = make_buffer("this is a test");
+  std::vector<uint8_t> buffer(size);
+  Crypto::randomFill(buffer);
   auto const resourceId = TC_AWAIT(storage.upload(buffer, metadata));
   auto const downloadResult = TC_AWAIT(storage.download(resourceId));
   CHECK(std::get<0>(downloadResult) == buffer);
@@ -30,7 +32,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Test upload/download")
   CHECK(std::get<1>(downloadResult).lastModified == metadata.lastModified);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Test download 404")
+TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download small file")
+{
+  testUploadDownload(trustchain, 30);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download big file")
+{
+  testUploadDownload(trustchain, 5 * 1024 * 1024);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Filekit download 404")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
