@@ -14,6 +14,9 @@ endif()
 
 if (TANKER_EMBED_CERTIFICATES)
   enable_language(ASM)
+  if (CMAKE_SYSTEM_NAME MATCHES Darwin)
+    set(CMAKE_ASM_FLAGS "${CMAKE_CXX_FLAGS} -x assembler-with-cpp")
+  endif()
   set(CERTIFICATES_SRC
     src/ca_certificates.s
   )
