@@ -2,6 +2,7 @@
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/StreamHelpers.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Await.hpp>
@@ -24,19 +25,6 @@ Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
     0xa,  0x7,  0x3d, 0xd0, 0x2c, 0x2d, 0x17, 0xf9, 0x49, 0xd9, 0x35,
     0x8e, 0xf7, 0xfe, 0x7b, 0xd1, 0xf6, 0xb,  0xf1, 0x5c, 0xa4, 0x32,
     0x1e, 0xe4, 0xaa, 0x18, 0xe1, 0x97, 0xbf, 0xf4, 0x5e, 0xfe});
-
-auto bufferToStream(std::vector<std::uint8_t> const& buffer)
-{
-  return [index = std::int64_t(0), &buffer](
-             std::uint8_t* out,
-             std::int64_t n) mutable -> tc::cotask<std::int64_t> {
-    auto const toRead =
-        std::min(n, static_cast<std::int64_t>(buffer.size()) - index);
-    std::copy_n(buffer.data() + index, toRead, out);
-    index += toRead;
-    TC_RETURN(toRead);
-  };
-}
 
 tc::cotask<std::int64_t> failRead(std::uint8_t*, std::int64_t)
 {
@@ -85,7 +73,7 @@ TEST_SUITE("Stream encryption")
         24 + 5 * StreamHeader::defaultEncryptedChunkSize);
     Crypto::randomFill(buffer);
 
-    StreamEncryptor encryptor(bufferToStream(buffer));
+    StreamEncryptor encryptor(bufferToInputSource(buffer));
     auto const keyFinder =
         [&, key = encryptor.symmetricKey()](Trustchain::ResourceId const& id)
         -> tc::cotask<Crypto::SymmetricKey> {
@@ -108,7 +96,7 @@ TEST_SUITE("Stream encryption")
     std::vector<std::uint8_t> buffer(2 *
                                      StreamHeader::defaultEncryptedChunkSize);
     Crypto::randomFill(buffer);
-    auto readCallback = bufferToStream(buffer);
+    auto readCallback = bufferToInputSource(buffer);
     auto timesCallbackCalled = 0;
 
     StreamEncryptor encryptor(
@@ -154,7 +142,7 @@ TEST_SUITE("Stream encryption")
          0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
 
     auto decryptor = AWAIT(StreamDecryptor::create(
-        bufferToStream(encryptedTestVector), mockKeyFinder));
+        bufferToInputSource(encryptedTestVector), mockKeyFinder));
 
     auto const decrypted = AWAIT(decryptData(decryptor));
 
@@ -176,7 +164,7 @@ TEST_SUITE("Stream encryption")
          0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6, 0xbe, 0x54, 0xd4,
          0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47, 0x30,
          0x40, 0x2f, 0xe8, 0xf4, 0x50});
-    auto inputSource = bufferToStream(truncated);
+    auto inputSource = bufferToInputSource(truncated);
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(StreamDecryptor::create(inputSource, mockKeyFinder)),
         Errors::Errc::DecryptionFailed);
@@ -201,8 +189,8 @@ TEST_SUITE("Stream encryption")
          0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47,
          0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
 
-    auto decryptor = AWAIT(
-        StreamDecryptor::create(bufferToStream(invalidHeaders), mockKeyFinder));
+    auto decryptor = AWAIT(StreamDecryptor::create(
+        bufferToInputSource(invalidHeaders), mockKeyFinder));
 
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(decryptData(decryptor)),
                                   Errors::Errc::DecryptionFailed);
@@ -225,7 +213,7 @@ TEST_SUITE("Stream encryption")
         0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a,
     });
 
-    auto inputSource = bufferToStream(reversedTestVector);
+    auto inputSource = bufferToInputSource(reversedTestVector);
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(StreamDecryptor::create(inputSource, mockKeyFinder)),
         Errors::Errc::DecryptionFailed);
@@ -264,11 +252,11 @@ TEST_SUITE("Stream encryption")
          0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(StreamDecryptor::create(bufferToStream(invalidSizeTestVector),
-                                      mockKeyFinder)),
+        AWAIT(StreamDecryptor::create(
+            bufferToInputSource(invalidSizeTestVector), mockKeyFinder)),
         Errors::Errc::DecryptionFailed);
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(StreamDecryptor::create(bufferToStream(smallSizeTestVector),
+        AWAIT(StreamDecryptor::create(bufferToInputSource(smallSizeTestVector),
                                       mockKeyFinder)),
         Errors::Errc::DecryptionFailed);
   }
