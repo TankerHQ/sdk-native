@@ -6,6 +6,7 @@ add_library(tankerfilekit STATIC
   include/Tanker/FileKit/FileKit.hpp
 
   src/FileKit.cpp
+  src/Retry.cpp
 )
 
 target_include_directories(tankerfilekit

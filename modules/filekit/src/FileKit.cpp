@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/FileKit/Retry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -94,10 +95,15 @@ tc::cotask<Trustchain::ResourceId> FileKit::uploadStream(
   uint64_t position = 0;
   while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
   {
-    TC_AWAIT(performUploadRequest(uploadUrl,
-                                  position,
-                                  static_cast<uint64_t>(readSize) < buf.size(),
-                                  gsl::make_span(buf).subspan(0, readSize)));
+    TC_AWAIT(retry(
+        [&]() -> tc::cotask<void> {
+          TC_AWAIT(
+              performUploadRequest(uploadUrl,
+                                   position,
+                                   static_cast<uint64_t>(readSize) < buf.size(),
+                                   gsl::make_span(buf).subspan(0, readSize)));
+        },
+        exponentialDelays(2)));
     position += readSize;
   }
 
