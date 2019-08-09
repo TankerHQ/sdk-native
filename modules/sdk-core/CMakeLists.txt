@@ -232,6 +232,7 @@ target_include_directories(tankercore
 install(DIRECTORY include DESTINATION .)
 
 target_link_libraries(tankercore
+  tankererrors
   tankerserialization
   tankeridentity
   tankertypes
