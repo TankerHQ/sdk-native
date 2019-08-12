@@ -28,7 +28,7 @@ public:
   Crypto::SymmetricKey const& symmetricKey() const;
 
 private:
-  void encryptChunk();
+  tc::cotask<void> encryptChunk();
 
   tc::cotask<void> processInput();
 

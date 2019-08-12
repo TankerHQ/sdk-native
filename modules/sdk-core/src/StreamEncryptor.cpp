@@ -50,7 +50,7 @@ Crypto::SymmetricKey const& StreamEncryptor::symmetricKey() const
   return _key;
 }
 
-void StreamEncryptor::encryptChunk()
+tc::cotask<void> StreamEncryptor::encryptChunk()
 {
   auto const clearInput =
       TC_AWAIT(readInputSource(clearChunkSize(_encryptedChunkSize)));
