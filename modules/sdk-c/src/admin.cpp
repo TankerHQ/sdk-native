@@ -9,7 +9,7 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
-#include "CFuture.hpp"
+#include <ctanker/async/CFuture.hpp>
 #include "Utils.hpp"
 
 using namespace Tanker;

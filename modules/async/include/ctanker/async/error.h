@@ -1,5 +1,5 @@
-#ifndef CTANKER_SDK_TANKER_ERROR_H
-#define CTANKER_SDK_TANKER_ERROR_H
+#ifndef TANKER_ERROR_C_H
+#define TANKER_ERROR_C_H
 
 #include <stdint.h>
 
