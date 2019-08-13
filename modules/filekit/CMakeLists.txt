@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 project(tanker-filekit)
 
 add_library(tankerfilekit STATIC
+  include/Tanker/FileKit/Constants.hpp
   include/Tanker/FileKit/DownloadStream.hpp
   include/Tanker/FileKit/FileKit.hpp
   include/Tanker/FileKit/Retry.hpp

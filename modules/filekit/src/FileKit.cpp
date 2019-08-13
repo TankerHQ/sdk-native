@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/FileKit/Constants.hpp>
 #include <Tanker/FileKit/DownloadStream.hpp>
 #include <Tanker/FileKit/Retry.hpp>
 
@@ -92,7 +93,7 @@ tc::cotask<Trustchain::ResourceId> FileKit::uploadStream(
       TC_AWAIT(getUploadUrl(uploadTicket, encryptedMetadata));
 
   auto const inputStream = StreamInputSource(encryptedStream);
-  std::vector<uint8_t> buf(1024 * 1024);
+  std::vector<uint8_t> buf(CHUNK_SIZE);
   uint64_t position = 0;
   while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
   {
@@ -181,7 +182,7 @@ tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> FileKit::download(
 {
   auto const dlresult = TC_AWAIT(downloadStream(resourceId));
   std::vector<uint8_t> ret;
-  std::vector<uint8_t> buf(1024 * 1024);
+  std::vector<uint8_t> buf(CHUNK_SIZE);
   while (auto const readSize = TC_AWAIT(dlresult.first(buf.data(), buf.size())))
     ret.insert(ret.end(), buf.begin(), buf.begin() + readSize);
   TC_RETURN(std::make_pair(std::move(ret), std::move(dlresult.second)));

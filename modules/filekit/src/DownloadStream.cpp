@@ -1,6 +1,7 @@
 #include <Tanker/FileKit/DownloadStream.hpp>
 
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/FileKit/Constants.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -35,8 +36,8 @@ tc::cotask<void> DownloadStream::refill()
 
   auto const req = std::make_shared<tccurl::request>();
   req->set_url(_url);
-  req->add_header(fmt::format(
-      "range: bytes={}-{}", _position, _position + 1024 * 1024 - 1));
+  req->add_header(
+      fmt::format("range: bytes={}-{}", _position, _position + CHUNK_SIZE - 1));
 
   auto result = TC_AWAIT(tccurl::read_all(_multi, req));
   handleResponse(*req, result);
