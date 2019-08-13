@@ -70,13 +70,13 @@ TEST_SUITE("Stream encryption")
   {
     StreamEncryptor encryptor(failRead);
 
-    TANKER_CHECK_THROWS_WITH_CODE(encryptor(nullptr, 0), Errc::IOError);
+    auto const mockKeyFinder = [](auto) -> tc::cotask<Crypto::SymmetricKey> {
+      TC_RETURN(Crypto::SymmetricKey());
+    };
+
+    TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor(nullptr, 0)), Errc::IOError);
     TANKER_CHECK_THROWS_WITH_CODE(
-        StreamDecryptor::create(failRead,
-                                [](auto) -> tc::cotask<Crypto::SymmetricKey> {
-                                  TC_RETURN(Crypto::SymmetricKey());
-                                }),
-        Errc::IOError);
+        AWAIT(StreamDecryptor::create(failRead, mockKeyFinder)), Errc::IOError);
   }
 
   TEST_CASE("Encrypt/decrypt huge buffer")
@@ -99,7 +99,6 @@ TEST_SUITE("Stream encryption")
 
     CHECK(decrypted.size() == buffer.size());
     CHECK(decrypted == buffer);
-
   }
 
   TEST_CASE(
@@ -123,14 +122,16 @@ TEST_SUITE("Stream encryption")
     std::vector<std::uint8_t> encryptedBuffer(
         StreamHeader::defaultEncryptedChunkSize);
 
-    TC_AWAIT(encryptor(encryptedBuffer.data(), StreamHeader::defaultEncryptedChunkSize));
+    AWAIT(encryptor(encryptedBuffer.data(),
+                    StreamHeader::defaultEncryptedChunkSize));
     CHECK(timesCallbackCalled == 1);
-    TC_AWAIT(encryptor(encryptedBuffer.data(), 0));
+    AWAIT(encryptor(encryptedBuffer.data(), 0));
     CHECK(timesCallbackCalled == 2);
     // returns immediately
-    TC_AWAIT(encryptor(encryptedBuffer.data(), 0));
+    AWAIT(encryptor(encryptedBuffer.data(), 0));
     CHECK(timesCallbackCalled == 2);
-    TC_AWAIT(encryptor(encryptedBuffer.data(), StreamHeader::defaultEncryptedChunkSize));
+    AWAIT(encryptor(encryptedBuffer.data(),
+                    StreamHeader::defaultEncryptedChunkSize));
     CHECK(timesCallbackCalled == 2);
   }
 

@@ -48,9 +48,10 @@ EMSCRIPTEN_BINDINGS(jserrors)
       .value("GroupTooBig", Tanker::Errors::Errc::GroupTooBig)
       .value("InvalidVerification", Tanker::Errors::Errc::InvalidVerification)
       .value("TooManyAttempts", Tanker::Errors::Errc::TooManyAttempts)
-      .value("ExpiredVerification", Tanker::Errors::Errc::ExpiredVerification);
+      .value("ExpiredVerification", Tanker::Errors::Errc::ExpiredVerification)
+      .value("IOError", Tanker::Errors::Errc::IOError);
 
-  static_assert(static_cast<int>(Tanker::Errors::Errc::Last) == 11,
+  static_assert(static_cast<int>(Tanker::Errors::Errc::Last) == 12,
                 "Error code not mapped to emscripten");
 
   emscripten::value_object<Tanker::Emscripten::EmError>("EmError")
