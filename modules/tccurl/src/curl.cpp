@@ -132,6 +132,7 @@ CURLM* multi::get_multi()
 
 void multi::process(std::shared_ptr<request> req)
 {
+  scope_lock l{_mutex};
   curl_easy_setopt(
       req->_easy.get(), CURLOPT_OPENSOCKETFUNCTION, &multi::opensocket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_OPENSOCKETDATA, this);
@@ -150,6 +151,7 @@ void multi::process(std::shared_ptr<request> req)
 
 void multi::cancel(request& req)
 {
+  scope_lock l{_mutex};
   abort_request(req);
   _running_requests.erase(
       std::remove_if(_running_requests.begin(),
