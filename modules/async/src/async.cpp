@@ -1,4 +1,5 @@
-#include <ctanker/error.h>
+#include <ctanker/async.h>
+#include <ctanker/async/error.h>
 
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -6,11 +7,21 @@
 
 #include <tconcurrent/promise.hpp>
 
-#include "CFuture.hpp"
-#include "Utils.hpp"
+#include <ctanker/async/CFuture.hpp>
+
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 namespace
 {
+template <typename Str = char*>
+Str duplicateString(std::string const& str)
+{
+  auto ret = static_cast<Str>(std::malloc(str.size() + 1));
+  return std::strcpy(ret, str.c_str());
+}
+
 tanker_promise_t* asCPromise(tc::promise<void*>* prom)
 {
   return reinterpret_cast<tanker_promise_t*>(prom);

@@ -242,9 +242,9 @@ CTANKER_EXPORT void tanker_init(void);
  * \param options struct tanker_options_t with the following preconditions.
  * \pre The *option* structure must not be NULL, as well as the fields
  *      specified in its documentation.
- * \return A tanker_future of a tanker_t*
+ * \return A tanker_future of a tanker_t*.
  * \throws TANKER_ERROR_INVALID_ARGUMENT \p options is NULL, or lacks mandatory
- *         fields, or has malformed fields
+ *         fields, or has malformed fields.
  */
 CTANKER_EXPORT tanker_future_t* tanker_create(tanker_options_t const* options);
 

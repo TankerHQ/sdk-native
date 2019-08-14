@@ -64,7 +64,8 @@ CTANKER_EXPORT tanker_future_t* tanker_stream_decrypt(
  * Finish a read operation
  *
  * \param op The operation to finish
- * \param nb_read The number of bytes read during the operation, or -1 if an error occurred.
+ * \param nb_read The number of bytes read during the operation, or -1 if an
+ * error occurred.
  */
 CTANKER_EXPORT void tanker_stream_read_operation_finish(
     tanker_stream_read_operation_t* op, int64_t nb_read);

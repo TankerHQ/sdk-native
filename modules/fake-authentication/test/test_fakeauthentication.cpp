@@ -21,7 +21,7 @@ struct FakeAuthFixture : public TrustchainFixture
   std::string const appId = cppcodec::base64_url::encode(trustchain.id);
   std::string const url =
       boost::replace_all_copy<std::string>(trustchain.url, "api.", "fakeauth.");
-  FakeAuthentication::FakeAuthentication fakeAuth{url, appId};
+  FakeAuthentication::FakeAuthentication fakeAuth{appId, url};
 };
 
 namespace
