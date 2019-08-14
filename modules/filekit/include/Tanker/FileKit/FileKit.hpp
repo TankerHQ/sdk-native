@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <tccurl/curl.hpp>
@@ -39,7 +40,15 @@ public:
       Metadata const& metadata = {},
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<Trustchain::ResourceId> uploadStream(
+      StreamInputSource data,
+      uint64_t size,
+      Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
   tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> download(
+      Trustchain::ResourceId const& resourceId);
+  tc::cotask<std::pair<StreamInputSource, Metadata>> downloadStream(
       Trustchain::ResourceId const& resourceId);
 
 private:
@@ -54,13 +63,13 @@ private:
   tc::cotask<std::string> getUploadUrl(CloudStorage::UploadTicket const& ticket,
                                        std::string const& encryptedMetadata);
   tc::cotask<void> performUploadRequest(std::string const& url,
+                                        uint64_t position,
+                                        bool endOfStream,
                                         gsl::span<uint8_t const> data);
 
   tc::cotask<std::string> downloadMetadata(
       Trustchain::ResourceId const& resourceId, std::string const& url);
   tc::cotask<Metadata> decryptMetadata(std::string const& sencryptedMetadata);
-  tc::cotask<std::vector<uint8_t>> performDownloadRequest(
-      std::string const& url);
 };
 }
 }

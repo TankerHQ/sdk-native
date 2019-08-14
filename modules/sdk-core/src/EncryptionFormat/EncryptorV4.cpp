@@ -8,6 +8,7 @@
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/StreamHeader.hpp>
+#include <Tanker/StreamHelpers.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -38,19 +39,6 @@ uint32_t clearChunkSize(uint32_t const encryptedChunkSize)
 {
   return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
          Trustchain::ResourceId::arraySize;
-}
-
-auto makeInputReader(gsl::span<std::uint8_t const> buffer)
-{
-  return
-      [index = 0u, buffer](std::uint8_t* out,
-                           std::int64_t n) mutable -> tc::cotask<std::int64_t> {
-        auto const toRead =
-            std::min(n, static_cast<std::int64_t>(buffer.size()) - index);
-        std::copy_n(buffer.data() + index, toRead, out);
-        index += toRead;
-        TC_RETURN(toRead);
-      };
 }
 }
 
@@ -84,7 +72,7 @@ tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
     gsl::span<uint8_t const> clearData,
     uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(makeInputReader(clearData), encryptedChunkSize);
+  StreamEncryptor encryptor(bufferToInputSource(clearData), encryptedChunkSize);
 
   while (auto const nbRead =
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
@@ -99,7 +87,7 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
                          gsl::span<uint8_t const> encryptedData)
 {
   auto decryptor = TC_AWAIT(StreamDecryptor::create(
-      makeInputReader(encryptedData),
+      bufferToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(

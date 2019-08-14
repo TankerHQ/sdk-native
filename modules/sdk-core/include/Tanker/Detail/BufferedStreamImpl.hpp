@@ -3,6 +3,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/StreamHelpers.hpp>
 
 #include <stdexcept>
 #include <utility>
@@ -38,14 +39,7 @@ tc::cotask<gsl::span<std::uint8_t const>>
 BufferedStream<Derived>::readInputSource(std::int64_t n)
 {
   _input.resize(n);
-  auto totalRead = 0l;
-  while (totalRead != n)
-  {
-    auto const nbRead = TC_AWAIT(_cb(_input.data() + totalRead, n - totalRead));
-    if (nbRead == 0)
-      break;
-    totalRead += nbRead;
-  }
+  auto const totalRead = TC_AWAIT(readStream(_input, _cb));
   if (totalRead < n)
     _cb = nullptr;
   _input.resize(totalRead);

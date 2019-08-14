@@ -1,7 +1,11 @@
 #include <Tanker/FileKit/FileKit.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/FileKit/Constants.hpp>
+#include <Tanker/FileKit/DownloadStream.hpp>
+#include <Tanker/FileKit/Retry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -56,15 +60,29 @@ tc::cotask<Trustchain::ResourceId> FileKit::upload(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
+  TC_RETURN(TC_AWAIT(uploadStream(bufferToInputSource(data),
+                                  data.size(),
+                                  metadata,
+                                  publicIdentities,
+                                  groupIds)));
+}
+
+tc::cotask<Trustchain::ResourceId> FileKit::uploadStream(
+    StreamInputSource source,
+    uint64_t size,
+    Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
   auto const encryptedMetadata =
       TC_AWAIT(encryptMetadata(metadata, publicIdentities, groupIds));
 
-  auto const encryptedData =
-      TC_AWAIT(_core.encrypt(data, publicIdentities, groupIds));
-  auto const resourceId = Core::getResourceId(encryptedData);
+  auto const encryptedStream =
+      TC_AWAIT(_core.makeStreamEncryptor(source, publicIdentities, groupIds));
+  auto const resourceId = encryptedStream.resourceId();
 
-  auto const uploadTicket =
-      TC_AWAIT(_core.getFileUploadTicket(resourceId, encryptedData.size()));
+  auto const uploadTicket = TC_AWAIT(_core.getFileUploadTicket(
+      resourceId, EncryptionFormat::EncryptorV4::encryptedSize(size)));
 
   if (uploadTicket.service != "GCS")
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
@@ -73,7 +91,23 @@ tc::cotask<Trustchain::ResourceId> FileKit::upload(
 
   auto const uploadUrl =
       TC_AWAIT(getUploadUrl(uploadTicket, encryptedMetadata));
-  TC_AWAIT(performUploadRequest(uploadUrl, encryptedData));
+
+  auto const inputStream = StreamInputSource(encryptedStream);
+  std::vector<uint8_t> buf(CHUNK_SIZE);
+  uint64_t position = 0;
+  while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
+  {
+    TC_AWAIT(retry(
+        [&]() -> tc::cotask<void> {
+          TC_AWAIT(
+              performUploadRequest(uploadUrl,
+                                   position,
+                                   static_cast<uint64_t>(readSize) < buf.size(),
+                                   gsl::make_span(buf).subspan(0, readSize)));
+        },
+        exponentialDelays(2)));
+    position += readSize;
+  }
 
   TC_RETURN(resourceId);
 }
@@ -101,18 +135,22 @@ tc::cotask<std::string> FileKit::getUploadUrl(
     req->add_header(fmt::format("{}: {}", header.first, header.second));
   req->add_header(
       fmt::format("x-goog-meta-tanker-metadata: {}", encryptedMetadata));
+  req->add_header("content-type:");
   curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1L);
   curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDSIZE, 0L);
 
   auto const result = TC_AWAIT(tccurl::read_all(multi, req));
   if (!req->is_response_ok())
     throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status for initial upload request: {}",
-                           req->get_status_code());
+                           "invalid status for initial upload request: {}: {}",
+                           req->get_status_code(),
+                           std::string(result.data.begin(), result.data.end()));
   TC_RETURN(result.header.at("location"));
 }
 
 tc::cotask<void> FileKit::performUploadRequest(std::string const& url,
+                                               uint64_t position,
+                                               bool endOfStream,
                                                gsl::span<uint8_t const> data)
 {
   auto const req = std::make_shared<tccurl::request>();
@@ -124,15 +162,33 @@ tc::cotask<void> FileKit::performUploadRequest(std::string const& url,
   curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDS, data.data());
   curl_easy_setopt(
       req->get_curl(), CURLOPT_POSTFIELDSIZE, static_cast<long>(data.size()));
-  req->add_header("content-type:");
-  auto const dataUploadResult = TC_AWAIT(tccurl::read_all(multi, req));
-  if (!req->is_response_ok())
+  auto const fullSize =
+      endOfStream ? std::to_string(position + data.size()) : "*";
+  req->add_header(fmt::format("content-range: bytes {}-{}/{}",
+                              position,
+                              position + data.size() - 1,
+                              fullSize));
+  auto const result = TC_AWAIT(tccurl::read_all(multi, req));
+  if ((endOfStream && req->get_status_code() != 200) ||
+      (!endOfStream && req->get_status_code() != 308))
     throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status code for upload request: {}",
-                           req->get_status_code());
+                           "invalid status code for upload request: {}: {}",
+                           req->get_status_code(),
+                           std::string(result.data.begin(), result.data.end()));
 }
 
 tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> FileKit::download(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto const dlresult = TC_AWAIT(downloadStream(resourceId));
+  std::vector<uint8_t> ret;
+  std::vector<uint8_t> buf(CHUNK_SIZE);
+  while (auto const readSize = TC_AWAIT(dlresult.first(buf.data(), buf.size())))
+    ret.insert(ret.end(), buf.begin(), buf.begin() + readSize);
+  TC_RETURN(std::make_pair(std::move(ret), std::move(dlresult.second)));
+}
+
+tc::cotask<std::pair<StreamInputSource, Metadata>> FileKit::downloadStream(
     Trustchain::ResourceId const& resourceId)
 {
   auto const downloadTicket = TC_AWAIT(_core.getFileDownloadTicket(resourceId));
@@ -145,10 +201,9 @@ tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> FileKit::download(
   auto const metadata = TC_AWAIT(decryptMetadata(
       TC_AWAIT(downloadMetadata(resourceId, downloadTicket.url))));
 
-  auto const encryptedData =
-      TC_AWAIT(performDownloadRequest(downloadTicket.url));
-
-  TC_RETURN(std::make_pair(TC_AWAIT(_core.decrypt(encryptedData)), metadata));
+  TC_RETURN(std::make_pair(TC_AWAIT(_core.makeStreamDecryptor(
+                               DownloadStream(multi, downloadTicket.url))),
+                           metadata));
 }
 
 tc::cotask<std::string> FileKit::downloadMetadata(
@@ -180,20 +235,6 @@ tc::cotask<Metadata> FileKit::decryptMetadata(
   TC_RETURN(
       nlohmann::json::parse(decryptedMetadata.begin(), decryptedMetadata.end())
           .get<Metadata>());
-}
-
-tc::cotask<std::vector<uint8_t>> FileKit::performDownloadRequest(
-    std::string const& url)
-{
-  auto const req = std::make_shared<tccurl::request>();
-  req->set_url(url);
-
-  auto const result = TC_AWAIT(tccurl::read_all(multi, req));
-  if (!req->is_response_ok())
-    throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status for download GET request: {}",
-                           req->get_status_code());
-  TC_RETURN(result.data);
 }
 }
 }
