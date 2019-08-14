@@ -193,15 +193,18 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
 {
   curl_socket_t sockfd = CURL_SOCKET_BAD;
 
-  // restrict to IPv4
-  if (purpose == CURLSOCKTYPE_IPCXN && address->family == AF_INET)
+  if (purpose == CURLSOCKTYPE_IPCXN &&
+      (address->family == AF_INET || address->family == AF_INET6))
   {
     // create a tcp socket object
     std::unique_ptr<async_socket> asocket{new async_socket{_io_service}};
 
     // open it and get the native handle
     boost::system::error_code ec;
-    asocket->socket.open(boost::asio::ip::tcp::v4(), ec);
+    asocket->socket.open(address->family == AF_INET6 ?
+                             boost::asio::ip::tcp::v6() :
+                             boost::asio::ip::tcp::v4(),
+                         ec);
 
     if (ec)
     {
