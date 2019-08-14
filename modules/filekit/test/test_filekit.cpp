@@ -51,6 +51,15 @@ TEST_CASE("it auto retries until it gives up")
 
 namespace
 {
+FileKit::Metadata makeMetadata()
+{
+  FileKit::Metadata metadata;
+  metadata.mime = "image/jpeg";
+  metadata.name = "holidays.jpg";
+  metadata.lastModified = std::chrono::milliseconds(128128);
+  return metadata;
+}
+
 void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
 {
   CAPTURE(size);
@@ -59,10 +68,7 @@ void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
   auto core = TC_AWAIT(device.open());
 
   FileKit::FileKit storage(*core);
-  FileKit::Metadata metadata;
-  metadata.mime = "image/jpeg";
-  metadata.name = "holidays.jpg";
-  metadata.lastModified = std::chrono::milliseconds(128128);
+  auto const metadata = makeMetadata();
   std::vector<uint8_t> buffer(size);
   Crypto::randomFill(buffer);
   auto const resourceId = TC_AWAIT(storage.upload(buffer, metadata));
@@ -82,6 +88,30 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download small file")
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download big file")
 {
   testUploadDownload(trustchain, 5 * 1024 * 1024);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download with two users")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceCore = TC_AWAIT(aliceDevice.open());
+  FileKit::FileKit aliceFilekit(*aliceCore);
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobCore = TC_AWAIT(bobDevice.open());
+  FileKit::FileKit bobFilekit(*bobCore);
+
+  auto const metadata = makeMetadata();
+  auto const buffer = make_buffer("this is a test");
+  auto const resourceId =
+      TC_AWAIT(aliceFilekit.upload(buffer, metadata, {bob.spublicIdentity()}));
+  auto const downloadResult = TC_AWAIT(bobFilekit.download(resourceId));
+
+  CHECK(std::get<0>(downloadResult) == buffer);
+  CHECK(std::get<1>(downloadResult).mime == metadata.mime);
+  CHECK(std::get<1>(downloadResult).name == metadata.name);
+  CHECK(std::get<1>(downloadResult).lastModified == metadata.lastModified);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit download 404")
