@@ -26,7 +26,9 @@ void from_json(nlohmann::json const& j, PrivateIdentity& result);
 class FakeAuthentication
 {
 public:
-  FakeAuthentication(std::string const& url, std::string const& appId);
+  FakeAuthentication(
+      std::string const& appId,
+      nonstd::optional<std::string> const& url = nonstd::nullopt);
 
   tc::cotask<PrivateIdentity> getPrivateIdentity(
       nonstd::optional<std::string> const& email = nonstd::nullopt);

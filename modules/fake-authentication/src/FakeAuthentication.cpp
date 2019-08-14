@@ -44,9 +44,10 @@ void from_json(nlohmann::json const& j, PrivateIdentity& result)
   }
 }
 
-FakeAuthentication::FakeAuthentication(std::string const& url,
-                                       std::string const& appId)
-  : _baseUrl(fmt::format("{}/apps/{}", url, escapeUrl(appId)))
+FakeAuthentication::FakeAuthentication(std::string const& appId,
+                                       nonstd::optional<std::string> const& url)
+  : _baseUrl(fmt::format(
+        "{}/apps/{}", url.value_or("https://api.tanker.io"), escapeUrl(appId)))
 {
 }
 
