@@ -132,6 +132,7 @@ CURLM* multi::get_multi()
 
 void multi::process(std::shared_ptr<request> req)
 {
+  scope_lock l{_mutex};
   curl_easy_setopt(
       req->_easy.get(), CURLOPT_OPENSOCKETFUNCTION, &multi::opensocket_c);
   curl_easy_setopt(req->_easy.get(), CURLOPT_OPENSOCKETDATA, this);
@@ -150,6 +151,7 @@ void multi::process(std::shared_ptr<request> req)
 
 void multi::cancel(request& req)
 {
+  scope_lock l{_mutex};
   abort_request(req);
   _running_requests.erase(
       std::remove_if(_running_requests.begin(),
@@ -191,15 +193,18 @@ curl_socket_t multi::opensocket(curlsocktype purpose,
 {
   curl_socket_t sockfd = CURL_SOCKET_BAD;
 
-  // restrict to IPv4
-  if (purpose == CURLSOCKTYPE_IPCXN && address->family == AF_INET)
+  if (purpose == CURLSOCKTYPE_IPCXN &&
+      (address->family == AF_INET || address->family == AF_INET6))
   {
     // create a tcp socket object
     std::unique_ptr<async_socket> asocket{new async_socket{_io_service}};
 
     // open it and get the native handle
     boost::system::error_code ec;
-    asocket->socket.open(boost::asio::ip::tcp::v4(), ec);
+    asocket->socket.open(address->family == AF_INET6 ?
+                             boost::asio::ip::tcp::v6() :
+                             boost::asio::ip::tcp::v4(),
+                         ec);
 
     if (ec)
     {
