@@ -87,6 +87,22 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
+  tc::cotask<Trustchain::ResourceId> upload(
+      gsl::span<uint8_t const> data,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<Trustchain::ResourceId> uploadStream(
+      StreamInputSource data,
+      uint64_t size,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<FileKit::DownloadResult> download(
+      Trustchain::ResourceId const& resourceId);
+  tc::cotask<FileKit::DownloadStreamResult> downloadStream(
+      Trustchain::ResourceId const& resourceId);
+
   tc::cotask<StreamEncryptor> makeStreamEncryptor(
       StreamInputSource,
       std::vector<SPublicIdentity> const& suserIds = {},

@@ -214,6 +214,51 @@ tc::cotask<void> Core::share(
   TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
 }
 
+tc::cotask<Trustchain::ResourceId> Core::upload(
+    gsl::span<uint8_t const> data,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT(
+      (*psession)->upload(data, metadata, publicIdentities, groupIds)));
+}
+
+tc::cotask<Trustchain::ResourceId> Core::uploadStream(
+    StreamInputSource source,
+    uint64_t size,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->uploadStream(
+      source, size, metadata, publicIdentities, groupIds)));
+}
+
+tc::cotask<FileKit::DownloadResult> Core::download(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->download(resourceId)));
+}
+
+tc::cotask<FileKit::DownloadStreamResult> Core::downloadStream(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->downloadStream(resourceId)));
+}
+
 tc::cotask<SGroupId> Core::createGroup(
     std::vector<SPublicIdentity> const& members)
 {

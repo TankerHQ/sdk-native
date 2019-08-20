@@ -32,7 +32,9 @@ if (NOT EMSCRIPTEN)
     src/DataStore/Connection.cpp
     src/DataStore/Database.cpp
     src/DataStore/Table.cpp
+    src/FileKit/DownloadStream.cpp
     src/FileKit/Metadata.cpp
+    src/FileKit/Request.cpp
     src/DbModels/ContactDevices.cpp
     src/DbModels/ContactUserKeys.cpp
     src/DbModels/DeviceKeyStore.cpp
@@ -152,7 +154,9 @@ add_library(tankercore STATIC
   include/Tanker/EncryptionFormat/EncryptorV2.hpp
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
   include/Tanker/CloudStorage.hpp
+  include/Tanker/FileKit/DownloadStream.hpp
   include/Tanker/FileKit/Metadata.hpp
+  include/Tanker/FileKit/Request.hpp
   include/Tanker/FileKit/Constants.hpp
   include/Tanker/FileKit/DownloadResult.hpp
   include/Tanker/Retry.hpp

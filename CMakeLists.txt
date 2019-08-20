@@ -105,7 +105,6 @@ if (NOT EMSCRIPTEN)
   add_subdirectory(modules/tccurl)
   add_subdirectory(modules/fake-authentication)
   add_subdirectory(modules/fake-authentication-c)
-  add_subdirectory(modules/filekit)
 endif()
 
 if(${BUILD_TANKER_TOOLS})

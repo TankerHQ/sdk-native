@@ -7,6 +7,8 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/FileKit/DownloadResult.hpp>
+#include <Tanker/FileKit/Metadata.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -38,6 +40,7 @@
 #include <Tanker/UserKeyStore.hpp>
 
 #include <gsl-lite.hpp>
+#include <tccurl/curl.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
@@ -95,6 +98,22 @@ public:
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);
+
+  tc::cotask<Trustchain::ResourceId> upload(
+      gsl::span<uint8_t const> data,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<Trustchain::ResourceId> uploadStream(
+      StreamInputSource data,
+      uint64_t size,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<FileKit::DownloadResult> download(
+      Trustchain::ResourceId const& resourceId);
+  tc::cotask<FileKit::DownloadStreamResult> downloadStream(
+      Trustchain::ResourceId const& resourceId);
 
   tc::cotask<SGroupId> createGroup(
       std::vector<SPublicIdentity> const& spublicIdentities);
@@ -172,6 +191,7 @@ private:
   BlockGenerator _blockGenerator;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
+  tccurl::multi multi;
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 
