@@ -153,6 +153,8 @@ add_library(tankercore STATIC
   include/Tanker/CloudStorage.hpp
   include/Tanker/FileKit/Metadata.hpp
   include/Tanker/FileKit/Constants.hpp
+  include/Tanker/FileKit/DownloadResult.hpp
+  include/Tanker/Retry.hpp
 
   src/AsyncCore.cpp
   src/AttachResult.cpp

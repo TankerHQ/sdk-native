@@ -145,7 +145,7 @@ tc::cotask<void> FileKit::performUploadRequest(std::string const& url,
                            std::string(result.data.begin(), result.data.end()));
 }
 
-tc::cotask<FileKit::DownloadResult> FileKit::download(
+tc::cotask<DownloadResult> FileKit::download(
     Trustchain::ResourceId const& resourceId)
 {
   auto const dlresult = TC_AWAIT(downloadStream(resourceId));
@@ -157,7 +157,7 @@ tc::cotask<FileKit::DownloadResult> FileKit::download(
   TC_RETURN((DownloadResult{std::move(ret), std::move(dlresult.metadata)}));
 }
 
-tc::cotask<FileKit::DownloadStreamResult> FileKit::downloadStream(
+tc::cotask<DownloadStreamResult> FileKit::downloadStream(
     Trustchain::ResourceId const& resourceId)
 {
   auto const downloadTicket = TC_AWAIT(_core.getFileDownloadTicket(resourceId));

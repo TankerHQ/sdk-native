@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/FileKit/DownloadResult.hpp>
 #include <Tanker/FileKit/Metadata.hpp>
 #include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -23,18 +24,6 @@ namespace FileKit
 class FileKit
 {
 public:
-  struct DownloadResult
-  {
-    std::vector<uint8_t> data;
-    Metadata metadata;
-  };
-
-  struct DownloadStreamResult
-  {
-    StreamInputSource stream;
-    Metadata metadata;
-  };
-
   FileKit(AsyncCore& core);
 
   tc::cotask<Trustchain::ResourceId> upload(
