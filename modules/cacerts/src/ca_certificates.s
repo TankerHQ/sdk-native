@@ -1,5 +1,6 @@
 .global embedded_cacerts_data, embedded_cacerts_size, _embedded_cacerts_data, _embedded_cacerts_size
 
+.align 4
 embedded_cacerts_data:
 _embedded_cacerts_data:
 .incbin "../data/cacert.pem"
