@@ -1,5 +1,7 @@
 #include <Tanker/FileKit/Metadata.hpp>
 
+#include <Tanker/Session.hpp>
+
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -36,6 +38,31 @@ void to_json(nlohmann::json& j, Metadata const& m)
     j["name"] = *m.name;
   if (m.lastModified)
     j["lastModified"] = m.lastModified->count();
+}
+
+tc::cotask<std::string> encryptMetadata(
+    Session& session,
+    Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto const jmetadata = nlohmann::json(metadata).dump();
+  auto const encryptedMetadata = TC_AWAIT(
+      session.encrypt(gsl::make_span(jmetadata).as_span<uint8_t const>(),
+                      publicIdentities,
+                      groupIds));
+  TC_RETURN(cppcodec::base64_rfc4648::encode(encryptedMetadata));
+}
+
+tc::cotask<Metadata> decryptMetadata(Session& session,
+                                     std::string const& sencryptedMetadata)
+{
+  auto const encryptedMetadata =
+      cppcodec::base64_rfc4648::decode(sencryptedMetadata);
+  auto const decryptedMetadata = TC_AWAIT(session.decrypt(encryptedMetadata));
+  TC_RETURN(
+      nlohmann::json::parse(decryptedMetadata.begin(), decryptedMetadata.end())
+          .get<Metadata>());
 }
 }
 }
