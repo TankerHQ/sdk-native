@@ -5,7 +5,7 @@
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/FileKit/Constants.hpp>
 #include <Tanker/FileKit/DownloadStream.hpp>
-#include <Tanker/FileKit/Retry.hpp>
+#include <Tanker/Retry.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 

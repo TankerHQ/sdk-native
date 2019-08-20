@@ -8,12 +8,9 @@
 
 namespace Tanker
 {
-namespace FileKit
-{
 using DelayList = std::vector<std::chrono::milliseconds>;
 
 DelayList exponentialDelays(int retries);
 tc::cotask<void> retry(std::function<tc::cotask<void>()> f,
                        DelayList const& delays);
-}
 }

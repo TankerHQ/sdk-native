@@ -5,11 +5,9 @@ project(tanker-filekit)
 add_library(tankerfilekit STATIC
   include/Tanker/FileKit/DownloadStream.hpp
   include/Tanker/FileKit/FileKit.hpp
-  include/Tanker/FileKit/Retry.hpp
 
   src/DownloadStream.cpp
   src/FileKit.cpp
-  src/Retry.cpp
 )
 
 target_include_directories(tankerfilekit

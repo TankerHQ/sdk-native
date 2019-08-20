@@ -1,4 +1,4 @@
-#include <Tanker/FileKit/Retry.hpp>
+#include <Tanker/Retry.hpp>
 
 #include <Tanker/Errors/Exception.hpp>
 
@@ -7,8 +7,6 @@
 #include <random>
 
 namespace Tanker
-{
-namespace FileKit
 {
 DelayList exponentialDelays(int retries)
 {
@@ -47,6 +45,5 @@ tc::cotask<void> retry(std::function<tc::cotask<void>()> f,
     TC_AWAIT(tc::async_wait(delays[i]));
     ++i;
   }
-}
 }
 }

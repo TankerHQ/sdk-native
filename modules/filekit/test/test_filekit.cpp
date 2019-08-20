@@ -1,8 +1,8 @@
 #include <Tanker/FileKit/FileKit.hpp>
-#include <Tanker/FileKit/Retry.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Retry.hpp>
 #include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -37,15 +37,14 @@ struct SucceedAt
 TEST_CASE("it auto retries until it works")
 {
   auto cb = SucceedAt(2);
-  TC_AWAIT(FileKit::retry(cb, FileKit::DelayList(4)));
+  TC_AWAIT(retry(cb, DelayList(4)));
   CHECK(*cb.called == 3);
 }
 
 TEST_CASE("it auto retries until it gives up")
 {
   auto cb = SucceedAt(15);
-  CHECK_THROWS_AS(TC_AWAIT(FileKit::retry(cb, FileKit::DelayList(4))),
-                  Errors::Exception);
+  CHECK_THROWS_AS(TC_AWAIT(retry(cb, DelayList(4))), Errors::Exception);
   CHECK(*cb.called == 5);
 }
 
