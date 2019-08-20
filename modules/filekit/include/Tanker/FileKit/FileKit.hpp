@@ -33,6 +33,18 @@ void to_json(nlohmann::json& j, Metadata const& m);
 class FileKit
 {
 public:
+  struct DownloadResult
+  {
+    std::vector<uint8_t> data;
+    Metadata metadata;
+  };
+
+  struct DownloadStreamResult
+  {
+    StreamInputSource stream;
+    Metadata metadata;
+  };
+
   FileKit(AsyncCore& core);
 
   tc::cotask<Trustchain::ResourceId> upload(
@@ -46,9 +58,8 @@ public:
       Metadata const& metadata = {},
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
-  tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> download(
-      Trustchain::ResourceId const& resourceId);
-  tc::cotask<std::pair<StreamInputSource, Metadata>> downloadStream(
+  tc::cotask<DownloadResult> download(Trustchain::ResourceId const& resourceId);
+  tc::cotask<DownloadStreamResult> downloadStream(
       Trustchain::ResourceId const& resourceId);
 
 private:

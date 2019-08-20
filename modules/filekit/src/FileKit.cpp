@@ -177,18 +177,19 @@ tc::cotask<void> FileKit::performUploadRequest(std::string const& url,
                            std::string(result.data.begin(), result.data.end()));
 }
 
-tc::cotask<std::pair<std::vector<uint8_t>, Metadata>> FileKit::download(
+tc::cotask<FileKit::DownloadResult> FileKit::download(
     Trustchain::ResourceId const& resourceId)
 {
   auto const dlresult = TC_AWAIT(downloadStream(resourceId));
   std::vector<uint8_t> ret;
   std::vector<uint8_t> buf(CHUNK_SIZE);
-  while (auto const readSize = TC_AWAIT(dlresult.first(buf.data(), buf.size())))
+  while (auto const readSize =
+             TC_AWAIT(dlresult.stream(buf.data(), buf.size())))
     ret.insert(ret.end(), buf.begin(), buf.begin() + readSize);
-  TC_RETURN(std::make_pair(std::move(ret), std::move(dlresult.second)));
+  TC_RETURN((DownloadResult{std::move(ret), std::move(dlresult.metadata)}));
 }
 
-tc::cotask<std::pair<StreamInputSource, Metadata>> FileKit::downloadStream(
+tc::cotask<FileKit::DownloadStreamResult> FileKit::downloadStream(
     Trustchain::ResourceId const& resourceId)
 {
   auto const downloadTicket = TC_AWAIT(_core.getFileDownloadTicket(resourceId));
@@ -201,9 +202,10 @@ tc::cotask<std::pair<StreamInputSource, Metadata>> FileKit::downloadStream(
   auto const metadata = TC_AWAIT(decryptMetadata(
       TC_AWAIT(downloadMetadata(resourceId, downloadTicket.url))));
 
-  TC_RETURN(std::make_pair(TC_AWAIT(_core.makeStreamDecryptor(
-                               DownloadStream(multi, downloadTicket.url))),
-                           metadata));
+  TC_RETURN(
+      (DownloadStreamResult{TC_AWAIT(_core.makeStreamDecryptor(
+                                DownloadStream(multi, downloadTicket.url))),
+                            metadata}));
 }
 
 tc::cotask<std::string> FileKit::downloadMetadata(

@@ -73,10 +73,10 @@ void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
   Crypto::randomFill(buffer);
   auto const resourceId = TC_AWAIT(storage.upload(buffer, metadata));
   auto const downloadResult = TC_AWAIT(storage.download(resourceId));
-  CHECK(std::get<0>(downloadResult) == buffer);
-  CHECK(std::get<1>(downloadResult).mime == metadata.mime);
-  CHECK(std::get<1>(downloadResult).name == metadata.name);
-  CHECK(std::get<1>(downloadResult).lastModified == metadata.lastModified);
+  CHECK(downloadResult.data == buffer);
+  CHECK(downloadResult.metadata.mime == metadata.mime);
+  CHECK(downloadResult.metadata.name == metadata.name);
+  CHECK(downloadResult.metadata.lastModified == metadata.lastModified);
 }
 }
 
@@ -108,10 +108,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download with two users")
       TC_AWAIT(aliceFilekit.upload(buffer, metadata, {bob.spublicIdentity()}));
   auto const downloadResult = TC_AWAIT(bobFilekit.download(resourceId));
 
-  CHECK(std::get<0>(downloadResult) == buffer);
-  CHECK(std::get<1>(downloadResult).mime == metadata.mime);
-  CHECK(std::get<1>(downloadResult).name == metadata.name);
-  CHECK(std::get<1>(downloadResult).lastModified == metadata.lastModified);
+  CHECK(downloadResult.data == buffer);
+  CHECK(downloadResult.metadata.mime == metadata.mime);
+  CHECK(downloadResult.metadata.name == metadata.name);
+  CHECK(downloadResult.metadata.lastModified == metadata.lastModified);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit download 404")
