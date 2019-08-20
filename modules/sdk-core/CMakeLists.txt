@@ -152,6 +152,7 @@ add_library(tankercore STATIC
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
   include/Tanker/CloudStorage.hpp
   include/Tanker/FileKit/Metadata.hpp
+  include/Tanker/FileKit/Constants.hpp
 
   src/AsyncCore.cpp
   src/AttachResult.cpp
