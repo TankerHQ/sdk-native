@@ -51,6 +51,11 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
 
+  tc::cotask<std::vector<uint8_t>> encrypt(
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 

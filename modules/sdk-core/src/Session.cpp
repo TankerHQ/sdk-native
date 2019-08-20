@@ -238,6 +238,18 @@ tc::cotask<void> Session::encrypt(
                         sgroupIds));
 }
 
+tc::cotask<std::vector<uint8_t>> Session::encrypt(
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  std::vector<uint8_t> encryptedData(
+      Encryptor::encryptedSize(clearData.size()));
+  TC_AWAIT(
+      encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
+  TC_RETURN(std::move(encryptedData));
+}
+
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {

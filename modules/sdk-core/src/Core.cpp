@@ -173,6 +173,18 @@ tc::cotask<void> Core::encrypt(
       encryptedData, clearData, publicIdentities, groupIds));
 }
 
+tc::cotask<std::vector<uint8_t>> Core::encrypt(
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(encrypt);
+  TC_RETURN(
+      TC_AWAIT((*psession)->encrypt(clearData, publicIdentities, groupIds)));
+}
+
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {

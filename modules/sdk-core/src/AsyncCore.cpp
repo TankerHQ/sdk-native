@@ -136,11 +136,7 @@ tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
     std::vector<SGroupId> const& groupIds)
 {
   return runResumable(_taskCanceler, [=]() -> tc::cotask<std::vector<uint8_t>> {
-    std::vector<uint8_t> encryptedData(
-        Encryptor::encryptedSize(clearData.size()));
-    TC_AWAIT(_core.encrypt(
-        encryptedData.data(), clearData, publicIdentities, groupIds));
-    TC_RETURN(std::move(encryptedData));
+    TC_RETURN(TC_AWAIT(_core.encrypt(clearData, publicIdentities, groupIds)));
   });
 }
 
