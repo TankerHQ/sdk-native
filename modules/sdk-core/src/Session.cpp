@@ -260,6 +260,15 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
 }
 
+tc::cotask<std::vector<uint8_t>> Session::decrypt(
+    gsl::span<uint8_t const> encryptedData)
+{
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  TC_AWAIT(decrypt(decryptedData.data(), encryptedData));
+
+  TC_RETURN(std::move(decryptedData));
+}
+
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(_deviceKeyStore->setDeviceId(deviceId));

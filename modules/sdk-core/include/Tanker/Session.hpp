@@ -89,6 +89,9 @@ public:
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
+  tc::cotask<std::vector<uint8_t>> decrypt(
+      gsl::span<uint8_t const> encryptedData);
+
   tc::cotask<void> share(std::vector<SResourceId> const& sresourceIds,
                          std::vector<SPublicIdentity> const& publicIdentities,
                          std::vector<SGroupId> const& groupIds);

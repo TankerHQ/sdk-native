@@ -194,6 +194,15 @@ tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
   TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData));
 }
 
+tc::cotask<std::vector<uint8_t>> Core::decrypt(
+    gsl::span<uint8_t const> encryptedData)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(decrypt);
+  TC_RETURN(TC_AWAIT((*psession)->decrypt(encryptedData)));
+}
+
 tc::cotask<void> Core::share(
     std::vector<SResourceId> const& sresourceIds,
     std::vector<SPublicIdentity> const& publicIdentities,
