@@ -7,7 +7,7 @@
 
 #include <tconcurrent/promise.hpp>
 
-#include <ctanker/async/CFuture.hpp>
+#include <ctanker/async/private/CFuture.hpp>
 
 #include <cstdlib>
 #include <cstring>

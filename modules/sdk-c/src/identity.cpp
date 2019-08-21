@@ -7,7 +7,7 @@
 
 #include <tconcurrent/async.hpp>
 
-#include <ctanker/async/CFuture.hpp>
+#include <ctanker/async/private/CFuture.hpp>
 #include "Utils.hpp"
 
 tanker_expected_t* tanker_create_identity(b64char const* trustchain_id,
