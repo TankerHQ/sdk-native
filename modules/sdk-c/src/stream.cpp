@@ -3,24 +3,17 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Types/SResourceId.hpp>
-#include <Tanker/task_canceler.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
-#include <ctanker/async/private/CFuture.hpp>
+#include "Stream.hpp"
 #include "Utils.hpp"
+
+#include <ctanker/async/private/CFuture.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
-
-struct tanker_stream
-{
-  StreamInputSource inputSource;
-  SResourceId resourceId;
-  task_canceler canceler;
-};
 
 namespace
 {
@@ -103,18 +96,20 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
   auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
       tanker->makeStreamDecryptor(wrapCallback(cb, data))
-          .and_then(tc::get_synchronous_executor(), [](StreamDecryptor decryptor) {
+          .and_then(
+              tc::get_synchronous_executor(), [](StreamDecryptor decryptor) {
                 auto c_stream = new tanker_stream;
                 c_stream->resourceId = SResourceId{
                     cppcodec::base64_rfc4648::encode(decryptor.resourceId())};
                 c_stream->inputSource = std::move(decryptor);
                 return static_cast<void*>(c_stream);
-          }));
+              }));
 }
 
 tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
                                     uint8_t* buffer,
-                                    int64_t buffer_size){
+                                    int64_t buffer_size)
+{
   return makeFuture(stream->canceler.run([&]() mutable {
     return tc::async_resumable([=]() -> tc::cotask<void*> {
       TC_RETURN(reinterpret_cast<void*>(
