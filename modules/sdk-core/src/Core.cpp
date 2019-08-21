@@ -173,6 +173,18 @@ tc::cotask<void> Core::encrypt(
       encryptedData, clearData, publicIdentities, groupIds));
 }
 
+tc::cotask<std::vector<uint8_t>> Core::encrypt(
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(encrypt);
+  TC_RETURN(
+      TC_AWAIT((*psession)->encrypt(clearData, publicIdentities, groupIds)));
+}
+
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {
@@ -180,6 +192,15 @@ tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
   if (!psession)
     throw INVALID_STATUS(decrypt);
   TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData));
+}
+
+tc::cotask<std::vector<uint8_t>> Core::decrypt(
+    gsl::span<uint8_t const> encryptedData)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(decrypt);
+  TC_RETURN(TC_AWAIT((*psession)->decrypt(encryptedData)));
 }
 
 tc::cotask<void> Core::share(
@@ -191,6 +212,51 @@ tc::cotask<void> Core::share(
   if (!psession)
     throw INVALID_STATUS(share);
   TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
+}
+
+tc::cotask<Trustchain::ResourceId> Core::upload(
+    gsl::span<uint8_t const> data,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT(
+      (*psession)->upload(data, metadata, publicIdentities, groupIds)));
+}
+
+tc::cotask<Trustchain::ResourceId> Core::uploadStream(
+    StreamInputSource source,
+    uint64_t size,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->uploadStream(
+      source, size, metadata, publicIdentities, groupIds)));
+}
+
+tc::cotask<FileKit::DownloadResult> Core::download(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->download(resourceId)));
+}
+
+tc::cotask<FileKit::DownloadStreamResult> Core::downloadStream(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto psession = mpark::get_if<SessionType>(&_state);
+  if (!psession)
+    throw INVALID_STATUS(share);
+  TC_RETURN(TC_AWAIT((*psession)->downloadStream(resourceId)));
 }
 
 tc::cotask<SGroupId> Core::createGroup(

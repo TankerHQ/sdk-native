@@ -83,6 +83,22 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities,
       std::vector<SGroupId> const& groupIds);
 
+  tc::shared_future<SResourceId> upload(
+      gsl::span<uint8_t const> data,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::shared_future<SResourceId> uploadStream(
+      StreamInputSource data,
+      uint64_t size,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::shared_future<FileKit::DownloadResult> download(
+      SResourceId const& resourceId);
+  tc::shared_future<FileKit::DownloadStreamResult> downloadStream(
+      SResourceId const& resourceId);
+
   tc::shared_future<SGroupId> createGroup(
       std::vector<SPublicIdentity> const& members);
   tc::shared_future<void> updateGroupMembers(

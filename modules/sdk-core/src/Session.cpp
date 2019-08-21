@@ -5,11 +5,15 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/FileKit/Constants.hpp>
+#include <Tanker/FileKit/DownloadStream.hpp>
+#include <Tanker/FileKit/Request.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
@@ -22,6 +26,7 @@
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Share.hpp>
@@ -69,6 +74,7 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
+
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -238,6 +244,18 @@ tc::cotask<void> Session::encrypt(
                         sgroupIds));
 }
 
+tc::cotask<std::vector<uint8_t>> Session::encrypt(
+    gsl::span<uint8_t const> clearData,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  std::vector<uint8_t> encryptedData(
+      Encryptor::encryptedSize(clearData.size()));
+  TC_AWAIT(
+      encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
+  TC_RETURN(std::move(encryptedData));
+}
+
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {
@@ -246,6 +264,108 @@ tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
   auto const key = TC_AWAIT(getResourceKey(resourceId));
 
   TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
+}
+
+tc::cotask<std::vector<uint8_t>> Session::decrypt(
+    gsl::span<uint8_t const> encryptedData)
+{
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  TC_AWAIT(decrypt(decryptedData.data(), encryptedData));
+
+  TC_RETURN(std::move(decryptedData));
+}
+
+tc::cotask<Trustchain::ResourceId> Session::upload(
+    gsl::span<uint8_t const> data,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  TC_RETURN(TC_AWAIT(uploadStream(bufferToInputSource(data),
+                                  data.size(),
+                                  metadata,
+                                  publicIdentities,
+                                  groupIds)));
+}
+
+tc::cotask<Trustchain::ResourceId> Session::uploadStream(
+    StreamInputSource source,
+    uint64_t size,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  auto const encryptedMetadata = TC_AWAIT(
+      FileKit::encryptMetadata(*this, metadata, publicIdentities, groupIds));
+
+  auto const encryptedStream =
+      TC_AWAIT(makeStreamEncryptor(source, publicIdentities, groupIds));
+  auto const resourceId = encryptedStream.resourceId();
+
+  auto const uploadTicket = TC_AWAIT(getFileUploadTicket(
+      resourceId, EncryptionFormat::EncryptorV4::encryptedSize(size)));
+
+  if (uploadTicket.service != "GCS")
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "unsupported storage service: {}",
+                           uploadTicket.service);
+
+  auto const uploadUrl =
+      TC_AWAIT(FileKit::getUploadUrl(multi, uploadTicket, encryptedMetadata));
+
+  auto const inputStream = StreamInputSource(encryptedStream);
+  std::vector<uint8_t> buf(FileKit::CHUNK_SIZE);
+  uint64_t position = 0;
+  while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
+  {
+    TC_AWAIT(retry(
+        [&]() -> tc::cotask<void> {
+          TC_AWAIT(FileKit::performUploadRequest(
+              multi,
+              uploadUrl,
+              position,
+              static_cast<uint64_t>(readSize) < buf.size(),
+              gsl::make_span(buf).subspan(0, readSize)));
+        },
+        exponentialDelays(2)));
+    position += readSize;
+  }
+
+  TC_RETURN(resourceId);
+}
+
+tc::cotask<FileKit::DownloadResult> Session::download(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto const dlresult = TC_AWAIT(downloadStream(resourceId));
+  std::vector<uint8_t> ret;
+  std::vector<uint8_t> buf(FileKit::CHUNK_SIZE);
+  while (auto const readSize =
+             TC_AWAIT(dlresult.stream(buf.data(), buf.size())))
+    ret.insert(ret.end(), buf.begin(), buf.begin() + readSize);
+  TC_RETURN(
+      (FileKit::DownloadResult{std::move(ret), std::move(dlresult.metadata)}));
+}
+
+tc::cotask<FileKit::DownloadStreamResult> Session::downloadStream(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto const downloadTicket = TC_AWAIT(getFileDownloadTicket(resourceId));
+
+  if (downloadTicket.service != "GCS")
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "unsupported storage service: {}",
+                           downloadTicket.service);
+
+  auto const metadata = TC_AWAIT(
+      FileKit::decryptMetadata(*this,
+                               TC_AWAIT(FileKit::downloadMetadata(
+                                   multi, resourceId, downloadTicket.url))));
+
+  TC_RETURN((FileKit::DownloadStreamResult{
+      TC_AWAIT(makeStreamDecryptor(
+          FileKit::DownloadStream(multi, downloadTicket.url))),
+      metadata}));
 }
 
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)

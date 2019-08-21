@@ -136,11 +136,7 @@ tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
     std::vector<SGroupId> const& groupIds)
 {
   return runResumable(_taskCanceler, [=]() -> tc::cotask<std::vector<uint8_t>> {
-    std::vector<uint8_t> encryptedData(
-        Encryptor::encryptedSize(clearData.size()));
-    TC_AWAIT(_core.encrypt(
-        encryptedData.data(), clearData, publicIdentities, groupIds));
-    TC_RETURN(std::move(encryptedData));
+    TC_RETURN(TC_AWAIT(_core.encrypt(clearData, publicIdentities, groupIds)));
   });
 }
 
@@ -162,6 +158,55 @@ tc::shared_future<void> AsyncCore::share(
   return runResumable(_taskCanceler, [=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.share(resourceId, publicIdentities, groupIds));
   });
+}
+
+tc::shared_future<SResourceId> AsyncCore::upload(
+    gsl::span<uint8_t const> data,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  return runResumable(_taskCanceler, [=]() -> tc::cotask<SResourceId> {
+    auto resourceId = TC_AWAIT(
+        this->_core.upload(data, metadata, publicIdentities, groupIds));
+    TC_RETURN(cppcodec::base64_rfc4648::encode<SResourceId>(resourceId));
+  });
+}
+
+tc::shared_future<SResourceId> AsyncCore::uploadStream(
+    StreamInputSource source,
+    uint64_t size,
+    FileKit::Metadata const& metadata,
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  return runResumable(_taskCanceler, [=]() -> tc::cotask<SResourceId> {
+    auto resourceId = TC_AWAIT(this->_core.uploadStream(
+        source, size, metadata, publicIdentities, groupIds));
+    TC_RETURN(cppcodec::base64_rfc4648::encode<SResourceId>(resourceId));
+  });
+}
+
+tc::shared_future<FileKit::DownloadResult> AsyncCore::download(
+    SResourceId const& resourceId)
+{
+  return runResumable(
+      _taskCanceler, [=]() -> tc::cotask<FileKit::DownloadResult> {
+        TC_RETURN(TC_AWAIT(this->_core.download(
+            cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+                resourceId))));
+      });
+}
+
+tc::shared_future<FileKit::DownloadStreamResult> AsyncCore::downloadStream(
+    SResourceId const& resourceId)
+{
+  return runResumable(
+      _taskCanceler, [=]() -> tc::cotask<FileKit::DownloadStreamResult> {
+        TC_RETURN(TC_AWAIT(this->_core.downloadStream(
+            cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+                resourceId))));
+      });
 }
 
 tc::shared_future<SGroupId> AsyncCore::createGroup(

@@ -51,8 +51,16 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
 
+  tc::cotask<std::vector<uint8_t>> encrypt(
+      gsl::span<uint8_t const> clearData,
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
+
+  tc::cotask<std::vector<uint8_t>> decrypt(
+      gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> share(std::vector<SResourceId> const& resourceId,
                          std::vector<SPublicIdentity> const& publicIdentities,
@@ -78,6 +86,22 @@ public:
   tc::cotask<void> syncTrustchain();
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
+
+  tc::cotask<Trustchain::ResourceId> upload(
+      gsl::span<uint8_t const> data,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<Trustchain::ResourceId> uploadStream(
+      StreamInputSource data,
+      uint64_t size,
+      FileKit::Metadata const& metadata = {},
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
+  tc::cotask<FileKit::DownloadResult> download(
+      Trustchain::ResourceId const& resourceId);
+  tc::cotask<FileKit::DownloadStreamResult> downloadStream(
+      Trustchain::ResourceId const& resourceId);
 
   tc::cotask<StreamEncryptor> makeStreamEncryptor(
       StreamInputSource,
