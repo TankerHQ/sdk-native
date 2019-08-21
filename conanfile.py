@@ -153,6 +153,7 @@ class TankerConan(ConanFile):
             "tankerlog",
             "tankerformat",
             "tankercacerts",
+            "tccurl",
         ]
 
         if self.sanitizer_flag:
