@@ -3,7 +3,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/FakeAuthentication/FakeAuthentication.hpp>
-#include <ctanker/async/CFuture.hpp>
+#include <ctanker/async/private/CFuture.hpp>
 #include <optional.hpp>
 
 #include <cstring>

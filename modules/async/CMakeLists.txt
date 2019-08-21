@@ -6,13 +6,13 @@ include(GenerateExportHeader)
 add_library(${PROJECT_NAME}
   include/ctanker/async.h
   include/ctanker/async/error.h
-  include/ctanker/async/CFuture.hpp
+  include/ctanker/async/private/CFuture.hpp
 
   src/async.cpp
 )
 
 generate_export_header(${PROJECT_NAME}
-  EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/async/export.h
+  EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/ctanker/async/export.h
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC tankererrors CONAN_PKG::tconcurrent)
@@ -30,5 +30,8 @@ install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
 )
 
-install(DIRECTORY include DESTINATION .)
+install(
+  DIRECTORY include DESTINATION .
+  PATTERN "private" EXCLUDE
+)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION .)

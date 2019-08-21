@@ -13,7 +13,7 @@
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
-#include <ctanker/async/CFuture.hpp>
+#include <ctanker/async/private/CFuture.hpp>
 #include "Utils.hpp"
 
 #include <string>

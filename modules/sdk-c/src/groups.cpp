@@ -5,7 +5,7 @@
 
 #include <tconcurrent/async.hpp>
 
-#include <ctanker/async/CFuture.hpp>
+#include <ctanker/async/private/CFuture.hpp>
 #include "Utils.hpp"
 
 using namespace Tanker;
