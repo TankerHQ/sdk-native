@@ -19,6 +19,7 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/identity.h
   include/ctanker/admin.h
   include/ctanker/groups.h
+  include/ctanker/filekit.h
 
   src/base64.cpp
   src/stream.cpp
@@ -27,6 +28,7 @@ add_library(ctanker ${tankerlib_type}
   src/identity.cpp
   src/admin.cpp
   src/groups.cpp
+  src/filekit.cpp
 )
 
 generate_export_header(ctanker
@@ -61,6 +63,7 @@ target_link_libraries(ctanker PUBLIC
   tankeridentity
   CONAN_PKG::cppcodec
 )
+
 target_include_directories(ctanker
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
