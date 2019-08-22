@@ -60,15 +60,6 @@ deploy/windows:
   script:
     - dmenv run -- python run-ci.py deploy
 
-nightly/emscripten:
-  stage: build
-  only:
-    - schedules
-  script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home nightly-build-emscripten
-  tags:
-    - linux
-
 nightly/coverage:
   stage: build
   only:
