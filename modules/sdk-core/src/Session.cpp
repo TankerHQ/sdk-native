@@ -295,12 +295,12 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  auto const encryptedMetadata = TC_AWAIT(
-      FileKit::encryptMetadata(*this, metadata, publicIdentities, groupIds));
-
   auto const encryptedStream =
       TC_AWAIT(makeStreamEncryptor(source, publicIdentities, groupIds));
   auto const resourceId = encryptedStream.resourceId();
+
+  auto const encryptedMetadata = TC_AWAIT(FileKit::encryptMetadata(
+      metadata, resourceId, encryptedStream.symmetricKey()));
 
   auto const uploadTicket = TC_AWAIT(getFileUploadTicket(
       resourceId, EncryptionFormat::EncryptorV4::encryptedSize(size)));
