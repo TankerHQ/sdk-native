@@ -15,9 +15,6 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
-#include <Tanker/Verif/KeyPublishToDevice.hpp>
-#include <Tanker/Verif/KeyPublishToUser.hpp>
-#include <Tanker/Verif/KeyPublishToUserGroup.hpp>
 #include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 #include <Tanker/Verif/UserGroupAddition.hpp>
@@ -62,9 +59,8 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::KeyPublishToDevice:
   case Nature::KeyPublishToUser:
   case Nature::KeyPublishToProvisionalUser:
-    TC_RETURN(TC_AWAIT(handleKeyPublish(e)));
   case Nature::KeyPublishToUserGroup:
-    TC_RETURN(TC_AWAIT(handleKeyPublishToUserGroups(e)));
+    TC_RETURN(toEntry(e));
   case Nature::DeviceRevocation:
   case Nature::DeviceRevocation2:
     TC_RETURN(TC_AWAIT(handleDeviceRevocation(e)));
@@ -100,52 +96,6 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
     Verif::verifyDeviceCreation(dc, user.devices[idx], user);
   }
   TC_RETURN(toEntry(dc));
-}
-
-tc::cotask<Entry> TrustchainVerifier::handleKeyPublish(
-    Trustchain::ServerEntry const& kp) const
-{
-  User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
-      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
-
-  auto const nature = kp.action().nature();
-
-  if (nature == Nature::KeyPublishToDevice)
-  {
-    Verif::verifyKeyPublishToDevice(kp, user.devices[idx], user);
-  }
-  else if (nature == Nature::KeyPublishToUser ||
-           nature == Nature::KeyPublishToProvisionalUser)
-  {
-    Verif::verifyKeyPublishToUser(kp, user.devices[idx]);
-  }
-  else
-  {
-    assert(false &&
-           "nature must be "
-           "KeyPublishToDevice/KeyPublishToUser/KeyPublishToProvisionalUser");
-  }
-  TC_RETURN(toEntry(kp));
-}
-
-tc::cotask<Entry> TrustchainVerifier::handleKeyPublishToUserGroups(
-    Trustchain::ServerEntry const& kp) const
-{
-  User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
-      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(kp.author())));
-  auto const& keyPublishToUserGroup =
-      kp.action().get<KeyPublish>().get<KeyPublish::ToUserGroup>();
-  auto const group = TC_AWAIT(getGroupByEncryptionKey(
-      keyPublishToUserGroup.recipientPublicEncryptionKey()));
-  Verif::verifyKeyPublishToUserGroup(kp, user.devices[idx], group);
-
-  TC_RETURN(toEntry(kp));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(

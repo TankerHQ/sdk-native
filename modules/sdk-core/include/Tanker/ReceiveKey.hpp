@@ -10,7 +10,7 @@ namespace Tanker
 class ContactStore;
 class ResourceKeyStore;
 class UserKeyStore;
-class GroupStore;
+class GroupAccessor;
 class ProvisionalUserKeysStore;
 struct Entry;
 
@@ -25,7 +25,7 @@ tc::cotask<void> onKeyToDeviceReceived(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
+    GroupAccessor& GroupAccessor,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublish const& kp);
 }

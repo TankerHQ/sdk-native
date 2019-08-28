@@ -21,6 +21,21 @@ tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
       {}, std::vector<GroupId>{groupIds.begin(), groupIds.end()}));
 }
 
+auto GroupAccessor::getFullGroup(
+    Crypto::PublicEncryptionKey const& publicGroupKey)
+    -> tc::cotask<nonstd::optional<Group>>
+{
+  // We don't need to fetch full groups because
+  // we know they are up to date.
+  auto const maybeGroup =
+      TC_AWAIT(_groupStore->findFullByPublicEncryptionKey(publicGroupKey));
+  if (maybeGroup)
+    TC_RETURN(maybeGroup);
+  TC_AWAIT(_trustchainPuller->scheduleCatchUp({}, {}));
+  TC_RETURN(
+      TC_AWAIT(_groupStore->findFullByPublicEncryptionKey(publicGroupKey)));
+}
+
 auto GroupAccessor::pull(gsl::span<GroupId const> groupIds)
     -> tc::cotask<PullResult>
 {
@@ -37,6 +52,8 @@ auto GroupAccessor::pull(gsl::span<GroupId const> groupIds)
 
   for (auto const& id : groupIds)
   {
+    // We don't need to fetch full groups because
+    // we know they are up to date.
     auto const maybeGroup = TC_AWAIT(_groupStore->findFullById(id));
     if (maybeGroup)
       ret.found.emplace_back(maybeGroup.value());

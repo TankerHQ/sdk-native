@@ -273,28 +273,4 @@ TEST_CASE("TrustchainVerifier")
         AWAIT_VOID(verifier.verify(deviceResult.entry)),
         Verif::Errc::InvalidAuthor);
   }
-
-  SUBCASE("verif kp2g throws if group does not exists")
-  {
-    auto const thomasUserResult = builder.makeUser3("thomas");
-    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(thomasUserResult.entry)));
-    auto const userResult = builder.makeUser3("bob");
-    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(userResult.entry)));
-    auto const deviceResult = builder.makeDevice3("bob");
-    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(deviceResult.entry)));
-    auto const resultGroup = builder.makeGroup(
-        deviceResult.device, {userResult.user, thomasUserResult.user});
-    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(resultGroup.entry)));
-    auto const blockKp2g = builder.shareToUserGroup(
-        deviceResult.device, resultGroup.group, resourceId, symmetricKey);
-
-    auto const contactStore =
-        builder.makeContactStoreWith({"bob", "thomas"}, db.get());
-    TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get(), groupStore.get());
-
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(verifier.verify(blockToServerEntry(blockKp2g))),
-        Verif::Errc::InvalidGroup);
-  }
 }

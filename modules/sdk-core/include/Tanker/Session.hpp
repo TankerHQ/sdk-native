@@ -15,6 +15,7 @@
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
@@ -188,6 +189,7 @@ private:
   TrustchainPuller _trustchainPuller;
   UserAccessor _userAccessor;
   GroupAccessor _groupAcessor;
+  ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 

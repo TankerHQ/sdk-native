@@ -102,6 +102,12 @@ Session::Session(Config&& config)
                       _userId),
     _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
     _groupAcessor(&_trustchainPuller, &_groupStore),
+    _resourceKeyAccessor(_client.get(),
+                         &_verifier,
+                         &_userKeyStore,
+                         &_groupAcessor,
+                         &_provisionalUserKeysStore,
+                         &_resourceKeyStore),
     _blockGenerator(_trustchainId,
                     _deviceKeyStore->signatureKeyPair().privateKey,
                     _deviceKeyStore->deviceId())
@@ -722,31 +728,8 @@ tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
 tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
-  // Try to get the key, in order:
-  // - from the resource key store
-  // - from the trustchain
-  // - from the tanker server
-  // In all cases, we put the key in the resource key store
 
-  auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-  if (!key)
-  {
-    auto keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    if (!keyPublish)
-    {
-      TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-      keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    }
-    if (keyPublish) // do not use else!
-    {
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(_resourceKeyStore,
-                                              _userKeyStore,
-                                              _groupStore,
-                                              _provisionalUserKeysStore,
-                                              *keyPublish));
-      key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-    }
-  }
+  auto const key = TC_AWAIT(_resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {
     throw formatEx(Errc::InvalidArgument,

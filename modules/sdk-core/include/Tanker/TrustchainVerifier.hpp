@@ -42,9 +42,6 @@ public:
 private:
   tc::cotask<Entry> handleDeviceCreation(
       Trustchain::ServerEntry const& dc) const;
-  tc::cotask<Entry> handleKeyPublish(Trustchain::ServerEntry const& dc) const;
-  tc::cotask<Entry> handleKeyPublishToUserGroups(
-      Trustchain::ServerEntry const& kp) const;
   tc::cotask<Entry> handleDeviceRevocation(
       Trustchain::ServerEntry const& dr) const;
   tc::cotask<Entry> handleUserGroupAddition(
