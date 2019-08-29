@@ -106,7 +106,6 @@ add_library(tankercore STATIC
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
   include/Tanker/Index.hpp
-  include/Tanker/KeyPublishStore.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/Preregistration.hpp
   include/Tanker/Groups/Group.hpp
@@ -193,7 +192,6 @@ add_library(tankercore STATIC
   src/IdentityUtils.cpp
   src/UserKeyStore.cpp
   src/ContactStore.cpp
-  src/KeyPublishStore.cpp
   src/Preregistration.cpp
   src/ProvisionalUserKeysStore.cpp
   src/Groups/Group.cpp

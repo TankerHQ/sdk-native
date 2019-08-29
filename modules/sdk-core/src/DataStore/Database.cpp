@@ -628,22 +628,6 @@ tc::cotask<void> Database::putContact(
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putKeyPublishes(
-    gsl::span<Trustchain::Actions::KeyPublish const> kps)
-{
-  FUNC_TIMER(DB);
-  KeyPublishesTable tab{};
-  for (auto const& elem : kps)
-  {
-    (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-        tab.nature = static_cast<int>(elem.nature()),
-        tab.resource_id = elem.resourceId().base(),
-        tab.recipient = elem.visit(KeyPublishRecipientVisitor{}),
-        tab.key = elem.visit(KeyPublishKeyVisitor{})));
-  }
-  TC_RETURN();
-}
-
 tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>>
 Database::findKeyPublish(Trustchain::ResourceId const& resourceId)
 {

@@ -57,7 +57,6 @@ public:
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
   std::function<tc::cotask<void>(Entry const&)>
       provisionalIdentityClaimReceived;
-  std::function<tc::cotask<void>(Entry const&)> keyPublishReceived;
   std::function<tc::cotask<void>(Entry const&)> trustchainCreationReceived;
 
 private:

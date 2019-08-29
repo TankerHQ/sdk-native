@@ -88,7 +88,6 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _keyPublishStore(_db.get()),
     _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
@@ -136,10 +135,6 @@ Session::Session(Config&& config)
   _trustchainPuller.provisionalIdentityClaimReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onProvisionalIdentityClaimEntry(entry));
-  };
-  _trustchainPuller.keyPublishReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onKeyPublishReceived(entry));
   };
   _trustchainPuller.trustchainCreationReceived =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -261,7 +256,6 @@ tc::cotask<std::vector<uint8_t>> Session::encrypt(
       encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
   TC_RETURN(std::move(encryptedData));
 }
-
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {
@@ -653,11 +647,6 @@ tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 {
   TC_AWAIT(Preregistration::applyEntry(
       _userKeyStore, _provisionalUserKeysStore, _groupStore, entry));
-}
-
-tc::cotask<void> Session::onKeyPublishReceived(Entry const& entry)
-{
-  TC_AWAIT(_keyPublishStore.put(entry.action.get<KeyPublish>()));
 }
 
 tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)

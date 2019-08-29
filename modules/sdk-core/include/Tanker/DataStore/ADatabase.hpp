@@ -72,8 +72,6 @@ public:
       Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
 
-  virtual tc::cotask<void> putKeyPublishes(
-      gsl::span<Trustchain::Actions::KeyPublish const>) = 0;
   virtual tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>>
   findKeyPublish(Trustchain::ResourceId const&) = 0;
 

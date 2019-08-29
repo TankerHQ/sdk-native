@@ -13,7 +13,6 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
-#include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -183,7 +182,6 @@ private:
   GroupStore _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
-  KeyPublishStore _keyPublishStore;
 
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;
