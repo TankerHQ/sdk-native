@@ -42,8 +42,6 @@ public:
       Trustchain::UserId const& userId,
       nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
 
-  tc::cotask<void> putKeyPublishes(
-      gsl::span<Trustchain::Actions::KeyPublish const>) override;
   tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>> findKeyPublish(
       Trustchain::ResourceId const&) override;
 

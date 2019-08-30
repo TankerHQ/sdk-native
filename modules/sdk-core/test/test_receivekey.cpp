@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 
 #include "TestVerifier.hpp"
@@ -76,13 +77,14 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     GroupStore const receiverGroupStore(db.get());
+    GroupAccessor receiverGroupAccessor(nullptr, &receiverGroupStore);
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        receiverGroupStore,
+        receiverGroupAccessor,
         receiverProvisionalUserKeysStore,
         keyPublishToUserEntry.action.get<KeyPublish>()));
 
@@ -101,13 +103,14 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     auto const receiverGroupStore = builder.makeGroupStore(receiver, db.get());
+    GroupAccessor receiverGroupAccessor(nullptr, receiverGroupStore.get());
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        *receiverGroupStore,
+        receiverGroupAccessor,
         receiverProvisionalUserKeysStore,
         keyPublishToUserGroupEntry.action.get<KeyPublish>()));
 
@@ -129,6 +132,7 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     GroupStore const receiverGroupStore(db.get());
+    GroupAccessor receiverGroupAccessor(nullptr, &receiverGroupStore);
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
     ResourceKeyStore resourceKeyStore(db.get());
@@ -136,7 +140,7 @@ TEST_CASE("decryptAndStoreKey")
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        receiverGroupStore,
+        receiverGroupAccessor,
         *receiverProvisionalUserKeysStore,
         keyPublishToProvisionalUserEntry.action.get<KeyPublish>()));
 

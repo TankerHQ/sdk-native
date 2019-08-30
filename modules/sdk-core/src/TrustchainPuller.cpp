@@ -317,8 +317,6 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       if (kpd->recipient() == _deviceId)
         TC_AWAIT(receivedKeyToDevice(entry));
     }
-    else
-      TC_AWAIT(keyPublishReceived(entry));
   }
   if (entry.action.holds_alternative<UserGroupCreation>() ||
       entry.action.holds_alternative<UserGroupAddition>())

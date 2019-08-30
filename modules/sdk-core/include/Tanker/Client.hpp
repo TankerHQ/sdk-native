@@ -107,6 +107,10 @@ public:
       int index,
       std::vector<Trustchain::UserId> const& extra_users,
       std::vector<Trustchain::GroupId> const& extra_groups);
+
+  tc::cotask<std::vector<std::string>> getKeyPublishes(
+      gsl::span<Trustchain::ResourceId const> resourceIds);
+
   tc::cotask<std::vector<
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);

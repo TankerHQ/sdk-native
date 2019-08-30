@@ -88,7 +88,6 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _keyPublishStore(_db.get()),
     _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
@@ -102,6 +101,12 @@ Session::Session(Config&& config)
                       _userId),
     _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
     _groupAcessor(&_trustchainPuller, &_groupStore),
+    _resourceKeyAccessor(_client.get(),
+                         &_verifier,
+                         &_userKeyStore,
+                         &_groupAcessor,
+                         &_provisionalUserKeysStore,
+                         &_resourceKeyStore),
     _blockGenerator(_trustchainId,
                     _deviceKeyStore->signatureKeyPair().privateKey,
                     _deviceKeyStore->deviceId())
@@ -130,10 +135,6 @@ Session::Session(Config&& config)
   _trustchainPuller.provisionalIdentityClaimReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onProvisionalIdentityClaimEntry(entry));
-  };
-  _trustchainPuller.keyPublishReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onKeyPublishReceived(entry));
   };
   _trustchainPuller.trustchainCreationReceived =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -255,7 +256,6 @@ tc::cotask<std::vector<uint8_t>> Session::encrypt(
       encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
   TC_RETURN(std::move(encryptedData));
 }
-
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {
@@ -649,11 +649,6 @@ tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
       _userKeyStore, _provisionalUserKeysStore, _groupStore, entry));
 }
 
-tc::cotask<void> Session::onKeyPublishReceived(Entry const& entry)
-{
-  TC_AWAIT(_keyPublishStore.put(entry.action.get<KeyPublish>()));
-}
-
 tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)
 {
   TC_AWAIT(_trustchain.setPublicSignatureKey(
@@ -722,31 +717,8 @@ tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
 tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
-  // Try to get the key, in order:
-  // - from the resource key store
-  // - from the trustchain
-  // - from the tanker server
-  // In all cases, we put the key in the resource key store
 
-  auto key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-  if (!key)
-  {
-    auto keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    if (!keyPublish)
-    {
-      TC_AWAIT(_trustchainPuller.scheduleCatchUp());
-      keyPublish = TC_AWAIT(_keyPublishStore.find(resourceId));
-    }
-    if (keyPublish) // do not use else!
-    {
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(_resourceKeyStore,
-                                              _userKeyStore,
-                                              _groupStore,
-                                              _provisionalUserKeysStore,
-                                              *keyPublish));
-      key = TC_AWAIT(_resourceKeyStore.findKey(resourceId));
-    }
-  }
+  auto const key = TC_AWAIT(_resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {
     throw formatEx(Errc::InvalidArgument,

@@ -255,7 +255,16 @@ tc::cotask<std::vector<std::string>> Client::getBlocks(
   auto const json = TC_AWAIT(emit("get blocks 2",
                                   {{"index", lastIndex},
                                    {"extra_users", extra_users},
-                                   {"extra_groups", extra_groups}}));
+                                   {"extra_groups", extra_groups},
+                                   {"on_demand_key_publishes", true}}));
+  TC_RETURN(json.get<std::vector<std::string>>());
+}
+
+tc::cotask<std::vector<std::string>> Client::getKeyPublishes(
+    gsl::span<Trustchain::ResourceId const> resourceIds)
+{
+  auto const json =
+      TC_AWAIT(emit("get key publishes", {{"resource_ids", resourceIds}}));
   TC_RETURN(json.get<std::vector<std::string>>());
 }
 

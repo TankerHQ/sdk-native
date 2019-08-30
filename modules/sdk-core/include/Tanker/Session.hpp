@@ -13,8 +13,8 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
-#include <Tanker/KeyPublishStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
@@ -182,12 +182,12 @@ private:
   GroupStore _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
-  KeyPublishStore _keyPublishStore;
 
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;
   UserAccessor _userAccessor;
   GroupAccessor _groupAcessor;
+  ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 

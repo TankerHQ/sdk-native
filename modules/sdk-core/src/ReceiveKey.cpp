@@ -7,7 +7,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -55,8 +55,8 @@ namespace
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    GroupAccessor&,
+    ProvisionalUserKeysStore const&,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
   auto const& recipientPublicKey =
@@ -72,15 +72,14 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    UserKeyStore const&,
+    GroupAccessor& groupAccessor,
+    ProvisionalUserKeysStore const&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
 {
   auto const& recipientPublicKey =
       keyPublishToUserGroup.recipientPublicEncryptionKey();
-  auto const group =
-      TC_AWAIT(groupStore.findFullByPublicEncryptionKey(recipientPublicKey));
+  auto const group = TC_AWAIT(groupAccessor.getFullGroup(recipientPublicKey));
 
   if (!group)
   {
@@ -99,8 +98,8 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
+    UserKeyStore const&,
+    GroupAccessor&,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
 {
@@ -131,7 +130,7 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
+    GroupAccessor&,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
 {
@@ -143,14 +142,14 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupStore const& groupStore,
+    GroupAccessor& groupAccessor,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublish const& kp)
 {
   TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<void> {
     TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
                                 userKeyStore,
-                                groupStore,
+                                groupAccessor,
                                 provisionalUserKeysStore,
                                 val));
   }));
