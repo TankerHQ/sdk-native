@@ -1,5 +1,6 @@
 #include <Tanker/FileKit/Metadata.hpp>
 
+#include <Tanker/EncryptionFormat/EncryptorV5.hpp>
 #include <Tanker/Session.hpp>
 
 #include <nlohmann/json.hpp>
@@ -41,16 +42,20 @@ void to_json(nlohmann::json& j, Metadata const& m)
 }
 
 tc::cotask<std::string> encryptMetadata(
-    Session& session,
     Metadata const& metadata,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key)
 {
+  using namespace EncryptionFormat;
+
   auto const jmetadata = nlohmann::json(metadata).dump();
-  auto const encryptedMetadata = TC_AWAIT(
-      session.encrypt(gsl::make_span(jmetadata).as_span<uint8_t const>(),
-                      publicIdentities,
-                      groupIds));
+
+  std::vector<uint8_t> encryptedMetadata(
+      EncryptorV5::encryptedSize(jmetadata.size()));
+  EncryptorV5::encrypt(encryptedMetadata.data(),
+                       gsl::make_span(jmetadata).as_span<uint8_t const>(),
+                       resourceId,
+                       key);
   TC_RETURN(cppcodec::base64_rfc4648::encode(encryptedMetadata));
 }
 

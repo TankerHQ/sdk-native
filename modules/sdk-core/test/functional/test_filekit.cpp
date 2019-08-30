@@ -76,6 +76,8 @@ void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
 }
 }
 
+TEST_SUITE_BEGIN("FileKit");
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download small file")
 {
   testUploadDownload(trustchain, 30);
@@ -119,3 +121,5 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Filekit download 404")
           make<Trustchain::ResourceId>("no such resource")))),
       Errors::Errc::InvalidArgument);
 }
+
+TEST_SUITE_END();
