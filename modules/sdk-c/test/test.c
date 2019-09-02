@@ -21,29 +21,28 @@ static void* future_get(tanker_future_t* future)
   return ret;
 }
 
-static tanker_options_t make_tanker_options(
-    tanker_trustchain_descriptor_t* trustchain)
+static tanker_options_t make_tanker_options(tanker_app_descriptor_t* app)
 {
   tanker_options_t tanker_options = TANKER_OPTIONS_INIT;
-  tanker_options.trustchain_id = trustchain->id;
-  tanker_options.trustchain_url = get_config_trustchain_url();
+  tanker_options.app_id = app->id;
+  tanker_options.url = get_config_app_url();
   tanker_options.sdk_type = "test";
   tanker_options.sdk_version = "0.0.1";
   return tanker_options;
 }
 
-static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
+static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
 {
   char const* userId = "alice";
 
-  tanker_options_t options = make_tanker_options(trustchain);
+  tanker_options_t options = make_tanker_options(app);
   options.writable_path = "testtmp/test-c";
   mkdir("testtmp", 0755);
   mkdir("testtmp/test-c", 0755);
   tanker_t* tanker = future_get(tanker_create(&options));
 
-  char const* identity = future_get(
-      tanker_create_identity(trustchain->id, trustchain->private_key, userId));
+  char const* identity =
+      future_get(tanker_create_identity(app->id, app->private_key, userId));
 
   tanker_verification_t verification = TANKER_VERIFICATION_INIT;
   verification.verification_method_type = TANKER_VERIFICATION_METHOD_PASSPHRASE;
@@ -60,13 +59,13 @@ static void test_sign_up_sign_in(tanker_trustchain_descriptor_t* trustchain)
 int main(int argc, char* argv[])
 {
   tanker_admin_t* admin = future_get(
-      tanker_admin_connect(get_config_trustchain_url(), get_config_id_token()));
-  tanker_trustchain_descriptor_t* trustchain =
-      future_get(tanker_admin_create_trustchain(admin, "functest"));
+      tanker_admin_connect(get_config_app_url(), get_config_id_token()));
+  tanker_app_descriptor_t* app =
+      future_get(tanker_admin_create_app(admin, "functest"));
 
-  test_sign_up_sign_in(trustchain);
+  test_sign_up_sign_in(app);
 
-  future_get(tanker_admin_delete_trustchain(admin, trustchain->id));
-  tanker_admin_trustchain_descriptor_free(trustchain);
+  future_get(tanker_admin_delete_app(admin, app->id));
+  tanker_admin_app_descriptor_free(app);
   future_get(tanker_admin_destroy(admin));
 }

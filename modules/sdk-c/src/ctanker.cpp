@@ -13,8 +13,8 @@
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
-#include <ctanker/async/private/CFuture.hpp>
 #include "Utils.hpp"
+#include <ctanker/async/private/CFuture.hpp>
 
 #include <string>
 #include <utility>
@@ -164,10 +164,9 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       options->version,
                       2));
     }
-    if (options->trustchain_id == nullptr)
+    if (options->app_id == nullptr)
     {
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "trustchain_id is null");
+      throw Exception(make_error_code(Errc::InvalidArgument), "app_id is null");
     }
     if (options->sdk_type == nullptr)
     {
@@ -180,7 +179,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       "sdk_version is null");
     }
 
-    char const* url = options->trustchain_url;
+    char const* url = options->url;
     if (url == nullptr)
       url = "https://api.tanker.io";
 
@@ -194,7 +193,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     {
       auto const trustchainId =
           cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-              std::string(options->trustchain_id));
+              std::string(options->app_id));
 
       return static_cast<void*>(
           new AsyncCore(url,
