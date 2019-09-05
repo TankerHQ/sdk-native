@@ -17,23 +17,21 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/stream.h
   include/ctanker/base64.h
   include/ctanker/identity.h
-  include/ctanker/admin.h
   include/ctanker/groups.h
   include/ctanker/filekit.h
+  include/ctanker/private/Utils.hpp
 
   src/base64.cpp
   src/stream.cpp
   src/ctanker.cpp
-  src/Utils.hpp
   src/identity.cpp
-  src/admin.cpp
   src/groups.cpp
   src/filekit.cpp
 )
 
 generate_export_header(ctanker
   EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/ctanker/export.h
-  )
+)
 
 if(TANKERLIB_SHARED)
   if (APPLE)
@@ -79,7 +77,10 @@ install(TARGETS ctanker
   # PUBLIC_HEADER DESTINATION include
 )
 
-install(DIRECTORY include DESTINATION .)
+install(
+  DIRECTORY include DESTINATION .
+  PATTERN "private" EXCLUDE
+)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION .)
 
 if(BUILD_TESTS)

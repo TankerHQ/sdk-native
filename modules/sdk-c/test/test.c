@@ -1,4 +1,5 @@
 #include <ctanker.h>
+#include <ctanker/admin.h>
 #include <ctanker/identity.h>
 
 #include "config.h"

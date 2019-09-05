@@ -87,6 +87,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 
 add_subdirectory(modules/admin)
+add_subdirectory(modules/admin-c)
 add_subdirectory(modules/async)
 add_subdirectory(modules/config)
 add_subdirectory(modules/crypto)

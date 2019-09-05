@@ -8,7 +8,7 @@
 #include <cppcodec/base64_rfc4648.hpp>
 
 #include "Stream.hpp"
-#include "Utils.hpp"
+#include <ctanker/private/Utils.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
 
