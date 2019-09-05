@@ -1,4 +1,4 @@
-#include <Tanker/InitSsl.hpp>
+#include <Tanker/Cacerts/InitSsl.hpp>
 
 #include <Tanker/Log/Log.hpp>
 
@@ -17,6 +17,8 @@ extern const char embedded_cacerts_data[];
 extern unsigned embedded_cacerts_size;
 
 namespace Tanker
+{
+namespace Cacerts
 {
 void add_certificate_authority(void* vctx)
 {
@@ -92,5 +94,6 @@ void add_certificate_authority(void* vctx)
   CertCloseStore(hStore, 0);
 #endif
 #endif
+}
 }
 }

@@ -23,7 +23,7 @@ if (TANKER_EMBED_CERTIFICATES)
 endif()
 
 add_library(tankercacerts STATIC
-  include/Tanker/InitSsl.hpp
+  include/Tanker/Cacerts/InitSsl.hpp
   src/InitSsl.cpp
 
   ${CERTIFICATES_SRC}
