@@ -11,6 +11,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/FileKit/Constants.hpp>
 #include <Tanker/FileKit/DownloadStream.hpp>
 #include <Tanker/FileKit/Request.hpp>
@@ -28,7 +29,6 @@
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
-#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -453,7 +453,7 @@ tc::cotask<void> Session::setVerificationMethod(
     }
     catch (Errors::Exception const& e)
     {
-      if (e.errorCode() == Server::Errc::VerificationKeyNotFound)
+      if (e.errorCode() == ServerErrc::VerificationKeyNotFound)
       {
         // the server does not send an error message
         throw Errors::Exception(make_error_code(Errc::PreconditionFailed),
@@ -514,7 +514,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
   }
   catch (Tanker::Errors::Exception const& e)
   {
-    if (e.errorCode() == Server::Errc::VerificationNeeded)
+    if (e.errorCode() == ServerErrc::VerificationNeeded)
     {
       _provisionalIdentity = provisionalIdentity;
       TC_RETURN(

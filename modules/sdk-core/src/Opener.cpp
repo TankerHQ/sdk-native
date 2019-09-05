@@ -16,7 +16,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Server/Errors/Errc.hpp>
+#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -139,7 +139,7 @@ tc::cotask<void> Opener::unlockCurrentDevice(
   }
   catch (Exception const& e)
   {
-    if (e.errorCode() == Server::Errc::DeviceNotFound ||
+    if (e.errorCode() == ServerErrc::DeviceNotFound ||
         e.errorCode() == Errc::DecryptionFailed)
       throw Exception(make_error_code(Errc::InvalidVerification), e.what());
     throw;

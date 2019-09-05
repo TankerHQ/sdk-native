@@ -5,9 +5,9 @@
 
 namespace Tanker
 {
-namespace Server
+namespace Errors
 {
-enum class Errc
+enum class ServerErrc
 {
   InternalError = 1,
   InvalidBody,
@@ -29,14 +29,14 @@ enum class Errc
   UnknownError
 };
 
-std::error_code make_error_code(Errc c) noexcept;
+std::error_code make_error_code(ServerErrc c) noexcept;
 }
 }
 
 namespace std
 {
 template <>
-struct is_error_code_enum<::Tanker::Server::Errc> : std::true_type
+struct is_error_code_enum<::Tanker::Errors::ServerErrc> : std::true_type
 {
 };
 }

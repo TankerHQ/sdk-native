@@ -5,12 +5,16 @@ project(Errors)
 add_library(tankererrors STATIC
   include/Tanker/Errors/Errc.hpp
   include/Tanker/Errors/ErrcCategory.hpp
+  include/Tanker/Errors/ServerErrc.hpp
+  include/Tanker/Errors/ServerErrcCategory.hpp
   include/Tanker/Errors/Exception.hpp
   include/Tanker/Errors/AssertionError.hpp
 
   src/AssertionError.cpp
   src/Errc.cpp
   src/ErrcCategory.cpp
+  src/ServerErrc.cpp
+  src/ServerErrcCategory.cpp
   src/Exception.cpp
 )
 

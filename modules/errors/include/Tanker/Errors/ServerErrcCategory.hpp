@@ -5,11 +5,11 @@
 
 namespace Tanker
 {
-namespace Server
+namespace Errors
 {
 namespace detail
 {
-class ErrcCategory : public std::error_category
+class ServerErrcCategory : public std::error_category
 {
 public:
   char const* name() const noexcept override final
@@ -23,9 +23,9 @@ public:
 };
 }
 
-extern inline detail::ErrcCategory const& ErrcCategory()
+extern inline detail::ServerErrcCategory const& ServerErrcCategory()
 {
-  static detail::ErrcCategory c;
+  static detail::ServerErrcCategory c;
   return c;
 }
 }
