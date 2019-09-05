@@ -3,7 +3,7 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
 #include <Tanker/Log/LogHandler.hpp>
-#include <Tanker/SdkInfo.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
@@ -48,7 +48,7 @@ public:
   AsyncCore& operator=(AsyncCore const&) = delete;
   AsyncCore& operator=(AsyncCore&&) = delete;
 
-  AsyncCore(std::string url, SdkInfo info, std::string writablePath);
+  AsyncCore(std::string url, Network::SdkInfo info, std::string writablePath);
   ~AsyncCore();
 
   tc::future<void> destroy();

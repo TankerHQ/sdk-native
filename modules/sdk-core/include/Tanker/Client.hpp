@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/EncryptedUserKey.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Network/AConnection.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -60,7 +60,7 @@ public:
 
   using ConnectionHandler = std::function<tc::cotask<void>()>;
 
-  Client(ConnectionPtr conn, ConnectionHandler connectionHandler = {});
+  Client(Network::ConnectionPtr conn, ConnectionHandler connectionHandler = {});
 
   void start();
   void setConnectionHandler(ConnectionHandler handler);
@@ -127,7 +127,7 @@ public:
   std::function<void()> blockAvailable;
 
 private:
-  std::unique_ptr<AConnection> _cx;
+  std::unique_ptr<Network::AConnection> _cx;
   ConnectionHandler _connectionHandler;
 
   tc::task_auto_canceler _taskCanceler;

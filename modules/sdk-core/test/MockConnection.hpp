@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/AConnection.hpp>
+#include <Tanker/Network/AConnection.hpp>
 
 #include <nlohmann/json.hpp>
 #include <trompeloeil.hpp>
@@ -9,7 +9,7 @@
 
 namespace Tanker
 {
-class MockConnection : public AConnection
+class MockConnection : public Network::AConnection
 {
 public:
   MockConnection();

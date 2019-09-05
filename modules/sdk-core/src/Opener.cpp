@@ -2,7 +2,6 @@
 
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
-#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -15,6 +14,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Session.hpp>
@@ -40,7 +40,7 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Opener::Opener(std::string url, SdkInfo info, std::string writablePath)
+Opener::Opener(std::string url, Network::SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath))
@@ -72,7 +72,8 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
                    _info.trustchainId);
   }
 
-  _client = std::make_unique<Client>(ConnectionFactory::create(_url, _info));
+  _client =
+      std::make_unique<Client>(Network::ConnectionFactory::create(_url, _info));
   _client->start();
 
   std::string dbPath;

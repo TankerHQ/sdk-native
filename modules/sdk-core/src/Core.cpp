@@ -34,7 +34,7 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Core::Core(std::string url, SdkInfo info, std::string writablePath)
+Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),

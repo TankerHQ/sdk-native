@@ -66,7 +66,7 @@ std::map<std::string, Server::Errc> const serverErrorMap{
 };
 }
 
-Client::Client(ConnectionPtr cx, ConnectionHandler connectionHandler)
+Client::Client(Network::ConnectionPtr cx, ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
   _cx->on("new relevant block", [this](auto const& e) { blockAvailable(); });

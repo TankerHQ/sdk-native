@@ -6,10 +6,13 @@
 
 namespace Tanker
 {
+namespace Network
+{
 struct SdkInfo
 {
   std::string sdkType;
   Trustchain::TrustchainId trustchainId;
   std::string version;
 };
+}
 }

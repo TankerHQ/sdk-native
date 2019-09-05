@@ -1,4 +1,5 @@
-#include <Tanker/JsConnection.hpp>
+#include <Tanker/Network/JsConnection.hpp>
+
 #include <Tanker/Log/Log.hpp>
 
 #include <fmt/format.h>
@@ -10,6 +11,8 @@
 TLOG_CATEGORY(JsConnection);
 
 namespace Tanker
+{
+namespace Network
 {
 class JsConnectionInterface
 {
@@ -36,11 +39,12 @@ public:
   std::function<void()> reconnected;
 };
 }
+}
 
 namespace
 {
 class JsConnectionInterfaceWrapper
-  : public emscripten::wrapper<Tanker::JsConnectionInterface>
+  : public emscripten::wrapper<Tanker::Network::JsConnectionInterface>
 {
 public:
   EMSCRIPTEN_WRAPPER(JsConnectionInterfaceWrapper);
@@ -66,19 +70,22 @@ public:
   }
 };
 
-std::function<std::unique_ptr<Tanker::JsConnectionInterface>(
+std::function<std::unique_ptr<Tanker::Network::JsConnectionInterface>(
     std::string const& url)>
     jsConnectionFactory;
 
 void setJsConnectionFactory(emscripten::val factory)
 {
   jsConnectionFactory = [=](std::string const& url) mutable {
-    return factory(url).as<std::unique_ptr<Tanker::JsConnectionInterface>>();
+    return factory(url)
+        .as<std::unique_ptr<Tanker::Network::JsConnectionInterface>>();
   };
 }
 }
 
 namespace Tanker
+{
+namespace Network
 {
 JsConnection::JsConnection(std::string url)
   : _trustchainUrl(std::move(url)), _conn(jsConnectionFactory(_trustchainUrl))
@@ -150,10 +157,11 @@ tc::cotask<std::string> JsConnection::emit(std::string const& eventName,
   TC_RETURN(TC_AWAIT(std::move(future)));
 }
 }
+}
 
 EMSCRIPTEN_BINDINGS(jsconnectioninterface)
 {
-  using namespace Tanker;
+  using namespace Tanker::Network;
 
   emscripten::class_<std::function<void(std::string const&)>>("SioCbFunction")
       .constructor<>()

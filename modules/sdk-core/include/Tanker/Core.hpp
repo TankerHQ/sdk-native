@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Opener.hpp>
-#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/StreamDecryptor.hpp>
@@ -36,7 +36,7 @@ class Core
 public:
   using SessionClosedHandler = std::function<void()>;
 
-  Core(std::string url, SdkInfo infos, std::string writablePath);
+  Core(std::string url, Network::SdkInfo infos, std::string writablePath);
   Tanker::Status status() const;
 
   tc::cotask<Status> start(std::string const& identity);
@@ -129,7 +129,7 @@ private:
   using SessionType = std::unique_ptr<Session>;
 
   std::string _url;
-  SdkInfo _info;
+  Network::SdkInfo _info;
   std::string _writablePath;
 
   mpark::variant<Opener, SessionType> _state;

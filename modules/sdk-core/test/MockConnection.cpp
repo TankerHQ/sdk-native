@@ -2,7 +2,7 @@
 
 namespace Tanker
 {
-MockConnection::MockConnection() : AConnection()
+MockConnection::MockConnection() : Network::AConnection()
 {
   this->connected = [this] { wasConnected(); };
 }

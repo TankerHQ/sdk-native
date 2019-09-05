@@ -1,4 +1,4 @@
-#include <Tanker/Connection.hpp>
+#include <Tanker/Network/Connection.hpp>
 
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -22,7 +22,8 @@ TLOG_CATEGORY(Connection);
 
 namespace Tanker
 {
-
+namespace Network
+{
 Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
   : _url(std::move(url)), _infos(std::move(infos))
 {
@@ -128,5 +129,5 @@ tc::cotask<std::string> Connection::emit(std::string const& eventName,
       });
   TC_RETURN(TC_AWAIT(std::move(future)));
 }
-
-} /* Tanker */
+}
+}
