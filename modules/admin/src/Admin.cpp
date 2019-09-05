@@ -1,4 +1,4 @@
-#include <Tanker/Admin.hpp>
+#include <Tanker/Admin/Admin.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -24,12 +24,14 @@
 #include <algorithm>
 #include <iterator>
 
-using Tanker::Trustchain::Actions::Nature;
 using namespace Tanker::Errors;
+using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Admin);
 
 namespace Tanker
+{
+namespace Admin
 {
 namespace
 {
@@ -174,5 +176,6 @@ tc::cotask<nlohmann::json> Admin::emit(std::string const& eventName,
     throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
+}
 }
 }

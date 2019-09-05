@@ -2,7 +2,7 @@
 
 #include <Tanker/Test/Functional/Trustchain.hpp>
 
-#include <Tanker/Admin.hpp>
+#include <Tanker/Admin/Admin.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -32,7 +32,7 @@ public:
       Tanker::Trustchain::TrustchainId trustchainId, Email const& email);
 
 private:
-  std::unique_ptr<Tanker::Admin> _admin;
+  std::unique_ptr<Tanker::Admin::Admin> _admin;
 
   TrustchainFactory();
   TrustchainFactory(TrustchainFactory&&) = delete;

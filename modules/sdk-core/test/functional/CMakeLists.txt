@@ -15,6 +15,7 @@ add_executable(test_functional
 target_link_libraries(test_functional
   tankercore_test
   tankertesthelpers
+  tankeradmin
   tankercore
   CONAN_PKG::doctest-async
 )
