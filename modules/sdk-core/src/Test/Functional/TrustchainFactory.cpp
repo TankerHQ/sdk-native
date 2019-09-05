@@ -1,7 +1,7 @@
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
 
-#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Init.hpp>
+#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Helpers/Config.hpp>
@@ -18,7 +18,7 @@ namespace Test
 {
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Tanker::Admin>(
-        Tanker::ConnectionFactory::create(
+        Tanker::Network::ConnectionFactory::create(
             Tanker::TestConstants::trustchainUrl(), nonstd::nullopt),
         Tanker::TestConstants::idToken()))
 {

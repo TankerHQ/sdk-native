@@ -1,11 +1,11 @@
 #include <Tanker/Admin.hpp>
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/AConnection.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -54,7 +54,7 @@ std::map<std::string, Server::Errc> const serverErrorMap{
 };
 }
 
-Admin::Admin(ConnectionPtr cx, std::string idToken)
+Admin::Admin(Network::ConnectionPtr cx, std::string idToken)
   : _cx(std::move(cx)), _idToken(std::move(idToken))
 {
   _cx->connected = [this]() {

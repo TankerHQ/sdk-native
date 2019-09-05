@@ -51,18 +51,10 @@ if (NOT EMSCRIPTEN)
     src/DbModels/Versions.cpp
     src/DbModels/Version.cpp
   )
-  set(TANKER_CORE_CONNECTION_SRC
-    include/Tanker/Connection.hpp
-    src/Connection.cpp
-  )
 else()
   set(TANKER_CORE_DATASTORE_SRC
     include/Tanker/DataStore/JsDatabase.hpp
     src/DataStore/JsDatabase.cpp
-  )
-  set(TANKER_CORE_CONNECTION_SRC
-    include/Tanker/JsConnection.hpp
-    src/JsConnection.cpp
   )
   set(TANKER_CORE_EXTRA_SRC
     include/Tanker/Emscripten/Error.hpp
@@ -87,7 +79,6 @@ add_library(tankercore STATIC
   include/Tanker/StreamHeader.hpp
   include/Tanker/BufferedStream.hpp
   include/Tanker/StreamInputSource.hpp
-  include/Tanker/AConnection.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
@@ -102,7 +93,6 @@ add_library(tankercore STATIC
   include/Tanker/DeviceKeyStore.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
-  include/Tanker/ConnectionFactory.hpp
   include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
   include/Tanker/Index.hpp
@@ -169,7 +159,6 @@ add_library(tankercore STATIC
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
-  src/ConnectionFactory.cpp
   src/StreamDecryptor.cpp
   src/StreamEncryptor.cpp
   src/StreamHeader.cpp
@@ -243,6 +232,7 @@ target_link_libraries(tankercore
   tankerserialization
   tankeridentity
   tankertypes
+  tankernetwork
   tankertrustchain
   tankercrypto
   tankerformat

@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
-#include <Tanker/SdkInfo.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -27,7 +27,7 @@ class DeviceKeyStore;
 class Opener
 {
 public:
-  Opener(std::string url, SdkInfo info, std::string writablePath);
+  Opener(std::string url, Network::SdkInfo info, std::string writablePath);
 
   Status status() const;
 
@@ -46,7 +46,7 @@ public:
 
 private:
   std::string _url;
-  SdkInfo _info;
+  Network::SdkInfo _info;
   std::string _writablePath;
 
   nonstd::optional<Identity::SecretPermanentIdentity> _identity;

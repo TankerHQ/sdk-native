@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tanker/AConnection.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Network/AConnection.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -22,7 +22,7 @@ namespace Tanker
 class Admin
 {
 public:
-  Admin(ConnectionPtr cx, std::string idToken);
+  Admin(Network::ConnectionPtr cx, std::string idToken);
   Admin(Admin const&) = delete;
   Admin& operator=(Admin const&) = delete;
   Admin(Admin&&) = delete;
@@ -46,7 +46,7 @@ public:
   std::function<void()> connected;
 
 private:
-  ConnectionPtr _cx;
+  Network::ConnectionPtr _cx;
   std::string _idToken;
 
   tc::task_auto_canceler _taskCanceler;

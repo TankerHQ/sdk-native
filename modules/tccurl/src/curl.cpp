@@ -1,8 +1,8 @@
 #include <tccurl/curl.hpp>
 
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Cacerts/InitSsl.hpp>
 
 #include <chrono>
 
@@ -396,7 +396,7 @@ namespace
 {
 CURLcode init_ssl_ctx_callback(CURL* curl, void* ssl_ctx, void* userptr)
 {
-  Tanker::add_certificate_authority(ssl_ctx);
+  Tanker::Cacerts::add_certificate_authority(ssl_ctx);
   return CURLE_OK;
 }
 }

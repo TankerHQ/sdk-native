@@ -8,6 +8,8 @@
 
 namespace Tanker
 {
+namespace Network
+{
 class AConnection
 {
 public:
@@ -28,4 +30,5 @@ public:
 };
 
 using ConnectionPtr = std::unique_ptr<AConnection>;
+}
 }

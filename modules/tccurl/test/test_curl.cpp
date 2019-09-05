@@ -1,7 +1,5 @@
 #include <doctest.h>
 
-#include <Tanker/InitSsl.hpp>
-
 #include <tccurl/curl.hpp>
 
 #include <tconcurrent/async.hpp>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/AConnection.hpp>
+#include <Tanker/Network/AConnection.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
@@ -8,6 +8,8 @@
 #include <nlohmann/json_fwd.hpp>
 
 namespace Tanker
+{
+namespace Network
 {
 class JsConnectionInterface;
 
@@ -39,4 +41,5 @@ private:
 
   tc::task_auto_canceler _taskCanceler;
 };
+}
 }

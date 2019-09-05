@@ -1,12 +1,14 @@
-#include <Tanker/ConnectionFactory.hpp>
+#include <Tanker/Network/ConnectionFactory.hpp>
 
 #ifndef EMSCRIPTEN
-#include <Tanker/Connection.hpp>
+#include <Tanker/Network/Connection.hpp>
 #else
-#include <Tanker/JsConnection.hpp>
+#include <Tanker/Network/JsConnection.hpp>
 #endif
 
 namespace Tanker
+{
+namespace Network
 {
 ConnectionPtr ConnectionFactory::create(std::string url,
                                         nonstd::optional<SdkInfo> info)
@@ -16,5 +18,6 @@ ConnectionPtr ConnectionFactory::create(std::string url,
 #else
   return std::make_unique<JsConnection>(url);
 #endif
+}
 }
 }

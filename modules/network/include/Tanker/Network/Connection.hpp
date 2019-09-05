@@ -1,17 +1,19 @@
 #pragma once
 
-#include <Tanker/AConnection.hpp>
-#include <Tanker/SdkInfo.hpp>
+#include <Tanker/Network/AConnection.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
+#include <optional.hpp>
 #include <sio_client.h>
 
-#include <optional.hpp>
 #include <string>
 
 namespace Tanker
+{
+namespace Network
 {
 class Connection : public AConnection
 {
@@ -39,5 +41,5 @@ private:
   tc::task_auto_canceler _taskCanceler;
   sio::client _client;
 };
-
-} // Tanker
+}
+}

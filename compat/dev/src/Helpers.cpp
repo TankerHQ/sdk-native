@@ -1,6 +1,7 @@
 #include <Compat/Helpers.hpp>
 
 #include <Helpers/Buffers.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Test/Functional/TrustchainFactory.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
@@ -28,7 +29,9 @@ CorePtr createCore(std::string const& url,
 {
   return std::unique_ptr<Tanker::AsyncCore, AsyncCoreDeleter>(
       new Tanker::AsyncCore(
-          url, Tanker::SdkInfo{"test", id, TANKER_VERSION}, tankerPath),
+          url,
+          Tanker::Network::SdkInfo{"test", id, TANKER_VERSION},
+          tankerPath),
       AsyncCoreDeleter{});
 }
 

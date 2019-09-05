@@ -1,6 +1,6 @@
-#include <Tanker/Connection.hpp>
+#include <Tanker/Network/Connection.hpp>
 
-#include <Tanker/InitSsl.hpp>
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -22,7 +22,8 @@ TLOG_CATEGORY(Connection);
 
 namespace Tanker
 {
-
+namespace Network
+{
 Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
   : _url(std::move(url)), _infos(std::move(infos))
 {
@@ -42,7 +43,7 @@ Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
     }));
   });
   _client.set_fail_listener([]() { TERROR("socket.io failure"); });
-  _client.set_init_ssl_ctx(Tanker::add_certificate_authority);
+  _client.set_init_ssl_ctx(Tanker::Cacerts::add_certificate_authority);
 }
 
 bool Connection::isOpen() const
@@ -128,5 +129,5 @@ tc::cotask<std::string> Connection::emit(std::string const& eventName,
       });
   TC_RETURN(TC_AWAIT(std::move(future)));
 }
-
-} /* Tanker */
+}
+}

@@ -2,9 +2,9 @@
 #include <ctanker/ctanker.h>
 
 #include <Tanker/Admin.hpp>
-#include <Tanker/ConnectionFactory.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Init.hpp>
+#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -22,7 +22,8 @@ tanker_future_t* tanker_admin_connect(char const* trustchain_url,
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Tanker::init();
         const auto admin = new Admin(
-            ConnectionFactory::create(trustchainUrl, nonstd::nullopt), idToken);
+            Network::ConnectionFactory::create(trustchainUrl, nonstd::nullopt),
+            idToken);
         TC_AWAIT(admin->start());
         TC_RETURN(static_cast<void*>(admin));
       }));
