@@ -1,9 +1,9 @@
 #include <doctest.h>
 
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Block.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -11,9 +11,8 @@
 
 #include <Helpers/Buffers.hpp>
 
-using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::ResourceId;
 using namespace Tanker;
+using namespace Tanker::Trustchain;
 
 TEST_CASE("it should serialize/deserialize a Block")
 {

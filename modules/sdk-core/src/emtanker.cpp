@@ -1,6 +1,5 @@
 #include <Tanker/Admin.hpp>
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Emscripten/Helpers.hpp>
 #include <Tanker/Encryptor.hpp>

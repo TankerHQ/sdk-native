@@ -1,6 +1,5 @@
 #include <Tanker/Admin.hpp>
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -11,6 +10,7 @@
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -94,7 +94,7 @@ tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
     bool storePrivateKey)
 {
   FUNC_TIMER(Net);
-  Block block{};
+  Trustchain::Block block{};
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
       Trustchain::Actions::TrustchainCreation{keyPair.publicKey});

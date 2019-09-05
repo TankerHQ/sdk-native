@@ -29,9 +29,8 @@
 #include <iterator>
 #include <utility>
 
-using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::UserId;
 using namespace Tanker::Errors;
+using namespace Tanker::Trustchain;
 
 TLOG_CATEGORY(Client);
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptedSymmetricKey.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>

@@ -1,6 +1,5 @@
 #include <Tanker/TrustchainPuller.hpp>
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -103,14 +103,14 @@ tc::cotask<void> TrustchainPuller::catchUp()
     auto const blocks = TC_AWAIT(_client->getBlocks(
         TC_AWAIT(_trustchain->getLastIndex()), extraUsers, extraGroups));
     std::vector<ServerEntry> entries;
-    std::transform(
-        std::begin(blocks),
-        std::end(blocks),
-        std::back_inserter(entries),
-        [](auto const& block) {
-          return blockToServerEntry(Serialization::deserialize<Block>(
-              cppcodec::base64_rfc4648::decode(block)));
-        });
+    std::transform(std::begin(blocks),
+                   std::end(blocks),
+                   std::back_inserter(entries),
+                   [](auto const& block) {
+                     return blockToServerEntry(
+                         Serialization::deserialize<Trustchain::Block>(
+                             cppcodec::base64_rfc4648::decode(block)));
+                   });
     std::sort(
         entries.begin(), entries.end(), [](auto const& lhs, auto const& rhs) {
           return lhs.index() < rhs.index();

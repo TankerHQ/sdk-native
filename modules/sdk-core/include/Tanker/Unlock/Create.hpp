@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Tanker/Block.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/GhostDevice.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -27,10 +27,11 @@ VerificationKey generate(Trustchain::UserId const& userId,
                          BlockGenerator const& blockGen,
                          DeviceKeys const& deviceKeys = DeviceKeys::create());
 
-Block createValidatedDevice(Trustchain::TrustchainId const& trustchainId,
-                            Trustchain::UserId const& userId,
-                            GhostDevice const& ghostDevice,
-                            DeviceKeys const& deviceKeys,
-                            EncryptedUserKey const& encryptedUserKey);
+Trustchain::Block createValidatedDevice(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    GhostDevice const& ghostDevice,
+    DeviceKeys const& deviceKeys,
+    EncryptedUserKey const& encryptedUserKey);
 }
 }
