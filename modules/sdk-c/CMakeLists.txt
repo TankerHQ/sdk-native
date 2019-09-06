@@ -19,7 +19,6 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/identity.h
   include/ctanker/groups.h
   include/ctanker/filekit.h
-  include/ctanker/private/Utils.hpp
 
   src/base64.cpp
   src/stream.cpp
@@ -56,9 +55,11 @@ target_link_libraries(ctanker PUBLIC
   ${_whole_archive}
   tanker_async
   ${_no_whole_archive}
+  tanker_utils-c
   tankercore
   tankercrypto
   tankeridentity
+
   CONAN_PKG::cppcodec
 )
 
@@ -77,10 +78,7 @@ install(TARGETS ctanker
   # PUBLIC_HEADER DESTINATION include
 )
 
-install(
-  DIRECTORY include DESTINATION .
-  PATTERN "private" EXCLUDE
-)
+install(DIRECTORY include DESTINATION .)
 install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION .)
 
 if(BUILD_TESTS)

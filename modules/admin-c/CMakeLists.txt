@@ -22,7 +22,7 @@ target_include_directories(tanker_admin-c
 
 target_link_libraries(tanker_admin-c PUBLIC
   tankeradmin
-  ctanker
+  tanker_utils-c
   tanker_async
   tankererrors
 )

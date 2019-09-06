@@ -1,5 +1,4 @@
 #include <ctanker/admin.h>
-#include <ctanker/ctanker.h>
 
 #include <Tanker/Admin/Admin.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -61,10 +60,10 @@ tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
 
 void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
 {
-  tanker_free_buffer(const_cast<char*>(app->name));
-  tanker_free_buffer(const_cast<char*>(app->id));
-  tanker_free_buffer(const_cast<char*>(app->private_key));
-  tanker_free_buffer(const_cast<char*>(app->public_key));
+  free(const_cast<char*>(app->name));
+  free(const_cast<char*>(app->id));
+  free(const_cast<char*>(app->private_key));
+  free(const_cast<char*>(app->public_key));
   delete app;
 }
 
