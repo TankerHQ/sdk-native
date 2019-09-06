@@ -71,7 +71,6 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
-  include/Tanker/ssl.hpp
   include/Tanker/Retry.hpp
   include/Tanker/StreamDecryptor.hpp
   include/Tanker/StreamEncryptor.hpp
@@ -207,7 +206,6 @@ add_library(tankercore STATIC
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
-  ${TANKER_CORE_SSL_SRC}
   ${TANKER_CORE_EXTRA_SRC}
 )
 
