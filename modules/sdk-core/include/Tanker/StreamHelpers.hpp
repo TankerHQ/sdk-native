@@ -8,7 +8,7 @@
 
 namespace Tanker
 {
-inline auto bufferToInputSource(gsl::span<std::uint8_t const> buffer)
+inline auto bufferViewToInputSource(gsl::span<std::uint8_t const> buffer)
 {
   return
       [index = 0u, buffer](std::uint8_t* out,

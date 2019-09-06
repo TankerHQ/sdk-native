@@ -281,7 +281,7 @@ tc::cotask<Trustchain::ResourceId> Session::upload(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  TC_RETURN(TC_AWAIT(uploadStream(bufferToInputSource(data),
+  TC_RETURN(TC_AWAIT(uploadStream(bufferViewToInputSource(data),
                                   data.size(),
                                   metadata,
                                   publicIdentities,
