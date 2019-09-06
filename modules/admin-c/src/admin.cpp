@@ -1,8 +1,9 @@
 #include <ctanker/admin.h>
 
 #include <Tanker/Admin/Admin.hpp>
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Init.hpp>
+#include <Tanker/Crypto/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -18,7 +19,8 @@ tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
   return makeFuture(tc::async_resumable(
       [url = std::string(url),
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
-        Tanker::init();
+        Cacerts::init();
+        Crypto::init();
         const auto admin = new Admin::Admin(
             Network::ConnectionFactory::create(url, nonstd::nullopt), idToken);
         TC_AWAIT(admin->start());

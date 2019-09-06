@@ -20,6 +20,13 @@ namespace Tanker
 {
 namespace Cacerts
 {
+void init()
+{
+#if TANKER_BUILD_WITH_SSL
+  SSL_library_init();
+#endif
+}
+
 void add_certificate_authority(void* vctx)
 {
 #if TANKER_BUILD_WITH_SSL

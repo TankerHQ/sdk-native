@@ -24,6 +24,8 @@ target_link_libraries(tanker_admin-c PUBLIC
   tankeradmin
   tanker_utils-c
   tanker_async
+  tankercacerts
+  tankercrypto
   tankererrors
 )
 
