@@ -159,6 +159,56 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   REQUIRE_EQ(decryptedData, clearData);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  std::vector<uint8_t> clearData(1024 * 1024 * 5);
+  Crypto::randomFill(clearData);
+  auto encryptor = TC_AWAIT(
+      aliceSession->makeStreamEncryptor(bufferViewToInputSource(clearData)));
+  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(encryptor));
+
+  auto decryptedData = TC_AWAIT(readAllStream(decryptor));
+  CHECK_EQ(encryptor.resourceId(), decryptor.resourceId());
+  CHECK_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream-encrypt and decrypt")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  std::vector<uint8_t> clearData(1024 * 1024 * 5);
+  Crypto::randomFill(clearData);
+  auto encryptor = TC_AWAIT(
+      aliceSession->makeStreamEncryptor(bufferViewToInputSource(clearData)));
+  auto encryptedData = TC_AWAIT(readAllStream(encryptor));
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK_EQ(Core::getResourceId(encryptedData), encryptor.resourceId());
+  CHECK_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
+  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(
+      bufferViewToInputSource(encryptedData)));
+
+  auto decryptedData = TC_AWAIT(readAllStream(decryptor));
+  CHECK_EQ(Core::getResourceId(encryptedData), decryptor.resourceId());
+  CHECK_EQ(decryptedData, clearData);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
 {
   auto alice = trustchain.makeUser();

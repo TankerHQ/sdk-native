@@ -23,6 +23,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -30,6 +31,7 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Share.hpp>
+#include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -728,14 +730,32 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<StreamDecryptor> Session::makeStreamDecryptor(StreamInputSource cb)
+tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
+    StreamInputSource cb)
 {
-  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
-      -> tc::cotask<Crypto::SymmetricKey> {
-    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
-  };
+  auto peekableSource = PeekableInputSource(std::move(cb));
+  auto const version = TC_AWAIT(peekableSource.peek(1));
+  if (version.empty())
+    throw formatEx(Errc::InvalidArgument, TFMT("empty stream"));
 
-  TC_RETURN(TC_AWAIT(
-      StreamDecryptor::create(std::move(cb), std::move(resourceKeyFinder))));
+  if (version[0] == 4)
+  {
+    auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+        -> tc::cotask<Crypto::SymmetricKey> {
+      TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    };
+
+    auto streamDecryptor = TC_AWAIT(StreamDecryptor::create(
+        std::move(peekableSource), std::move(resourceKeyFinder)));
+    TC_RETURN(GenericStreamDecryptor(std::move(streamDecryptor),
+                                     streamDecryptor.resourceId()));
+  }
+  else
+  {
+    auto encryptedData = TC_AWAIT(readAllStream(std::move(peekableSource)));
+    auto const resourceId = Encryptor::extractResourceId(encryptedData);
+    TC_RETURN(GenericStreamDecryptor(
+        bufferToInputSource(TC_AWAIT(decrypt(encryptedData))), resourceId));
+  }
 }
 }

@@ -390,12 +390,12 @@ tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(
   });
 }
 
-tc::shared_future<StreamDecryptor> AsyncCore::makeStreamDecryptor(
+tc::shared_future<GenericStreamDecryptor> AsyncCore::makeStreamDecryptor(
     StreamInputSource cb)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable(
-        [this, cb = std::move(cb)]() -> tc::cotask<StreamDecryptor> {
+        [this, cb = std::move(cb)]() -> tc::cotask<GenericStreamDecryptor> {
           TC_RETURN(TC_AWAIT(this->_core.makeStreamDecryptor(std::move(cb))));
         });
   });

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/GenericStreamDecryptor.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -108,7 +108,7 @@ public:
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::cotask<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
+  tc::cotask<GenericStreamDecryptor> makeStreamDecryptor(StreamInputSource);
 
   tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
       Trustchain::ResourceId const& resourceId, uint64_t length);
