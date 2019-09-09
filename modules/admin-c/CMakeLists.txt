@@ -3,7 +3,13 @@ cmake_minimum_required(VERSION 3.4)
 project(tanker_admin-c)
 include(GenerateExportHeader)
 
-add_library(tanker_admin-c STATIC
+if(TANKERLIB_SHARED)
+  set(tankerlib_type SHARED)
+else()
+  set(tankerlib_type STATIC)
+endif()
+
+add_library(tanker_admin-c ${tankerlib_type}
   include/ctanker/admin.h
 
   src/admin.cpp
