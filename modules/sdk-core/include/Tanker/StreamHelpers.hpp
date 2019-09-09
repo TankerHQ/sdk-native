@@ -35,8 +35,8 @@ inline auto bufferToInputSource(std::vector<uint8_t> buffer)
   return detail::bufferToInputSource(std::move(buffer));
 }
 
-inline tc::cotask<int64_t> readStream(gsl::span<uint8_t> out,
-                                      StreamInputSource const& source)
+template <typename T>
+tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
 {
   auto totalRead = 0lu;
   while (totalRead != out.size())
@@ -48,5 +48,29 @@ inline tc::cotask<int64_t> readStream(gsl::span<uint8_t> out,
     totalRead += nbRead;
   }
   TC_RETURN(totalRead);
+}
+
+template <typename T>
+tc::cotask<std::vector<uint8_t>> readAllStream(T&& source)
+{
+  std::vector<uint8_t> out;
+  auto const blockSize = 1024 * 1024;
+  auto pos = 0;
+  while (true)
+  {
+    auto availableRoom = out.size() - pos;
+    if (availableRoom == 0)
+    {
+      out.resize(pos + blockSize);
+      availableRoom = blockSize;
+    }
+    auto const nbRead = TC_AWAIT(source(&out[pos], availableRoom));
+    if (nbRead == 0)
+    {
+      out.resize(pos + nbRead);
+      TC_RETURN(out);
+    }
+    pos += nbRead;
+  }
 }
 }
