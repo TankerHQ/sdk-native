@@ -9,48 +9,48 @@
 extern "C" {
 #endif
 
-typedef struct tanker_trustchain_descriptor
+typedef struct tanker_app_descriptor
 {
   char const* name;
   b64char const* id;
   b64char const* private_key;
   b64char const* public_key;
-} tanker_trustchain_descriptor_t;
+} tanker_app_descriptor_t;
 
 typedef struct tanker_admin tanker_admin_t;
 
 /*!
  * Authenticates to the Tanker admin server API
  *
- * \param trustchain_url The URL of the tanker server to connect to
+ * \param url The URL of the tanker server to connect to
  * \param id_token The authentication token string for the admin API
  * \return The admin instance. Free with tanker_admin_destroy.
  */
-CTANKER_EXPORT tanker_future_t* tanker_admin_connect(char const* trustchain_url,
+CTANKER_EXPORT tanker_future_t* tanker_admin_connect(char const* url,
                                                      char const* id_token);
 
 /*!
- * Creates a new trustchain
+ * Creates a new app
  *
- * \return The trustchain_descriptor. Free with
- * tanker_admin_trustchain_descriptor_free
+ * \return The app_descriptor. Free with
+ * tanker_admin_app_descriptor_free
  */
-CTANKER_EXPORT tanker_future_t* tanker_admin_create_trustchain(
-    tanker_admin_t* admin, char const* name);
+CTANKER_EXPORT tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
+                                                        char const* name);
 
 /*!
- * Deletes the trustchain permanently
+ * Deletes the app permanently
  *
- * \return A future that resolves when the trustchain has been deleted
+ * \return A future that resolves when the app has been deleted
  */
-CTANKER_EXPORT tanker_future_t* tanker_admin_delete_trustchain(
-    tanker_admin_t* admin, char const* trustchain_id);
+CTANKER_EXPORT tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
+                                                        char const* app_id);
 
 /*!
- * Frees the trustchain descriptor structure
+ * Frees the app descriptor structure
  */
-CTANKER_EXPORT void tanker_admin_trustchain_descriptor_free(
-    tanker_trustchain_descriptor_t* trustchain);
+CTANKER_EXPORT void tanker_admin_app_descriptor_free(
+    tanker_app_descriptor_t* app);
 
 /*!
  * Disconnects and destroys the admin instance.
@@ -63,7 +63,7 @@ CTANKER_EXPORT tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin);
  * Gets verification code of a user from the server
  */
 CTANKER_EXPORT tanker_future_t* tanker_admin_get_verification_code(
-    tanker_admin_t* admin, char const* trustchain_id, char const* user_email);
+    tanker_admin_t* admin, char const* app_id, char const* user_email);
 
 #ifdef __cplusplus
 }

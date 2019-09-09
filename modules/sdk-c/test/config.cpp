@@ -6,7 +6,7 @@ extern "C" {
 
 using namespace Tanker;
 
-char const* get_config_trustchain_url()
+char const* get_config_app_url()
 {
   return TestConstants::trustchainUrl().c_str();
 }

@@ -9,66 +9,63 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
-#include <ctanker/async/private/CFuture.hpp>
 #include "Utils.hpp"
+#include <ctanker/async/private/CFuture.hpp>
 
 using namespace Tanker;
 
-tanker_future_t* tanker_admin_connect(char const* trustchain_url,
-                                      char const* id_token)
+tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
 {
   return makeFuture(tc::async_resumable(
-      [trustchainUrl = std::string(trustchain_url),
+      [url = std::string(url),
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Tanker::init();
         const auto admin = new Admin(
-            Network::ConnectionFactory::create(trustchainUrl, nonstd::nullopt),
-            idToken);
+            Network::ConnectionFactory::create(url, nonstd::nullopt), idToken);
         TC_AWAIT(admin->start());
         TC_RETURN(static_cast<void*>(admin));
       }));
 }
 
-tanker_future_t* tanker_admin_create_trustchain(tanker_admin_t* admin,
-                                                char const* name)
+tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
+                                         char const* name)
 {
   return makeFuture(
       tc::async_resumable([admin = reinterpret_cast<Admin*>(admin),
                            name = std::string(name)]() -> tc::cotask<void*> {
-        const auto trustchainSignatureKeyPair(Crypto::makeSignatureKeyPair());
-        const auto trustchainId = TC_AWAIT(admin->createTrustchain(
-            name, trustchainSignatureKeyPair, true, true));
-        TC_RETURN(static_cast<void*>(new tanker_trustchain_descriptor_t{
+        const auto appSignatureKeyPair(Crypto::makeSignatureKeyPair());
+        const auto appId = TC_AWAIT(
+            admin->createTrustchain(name, appSignatureKeyPair, true, true));
+        TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
             duplicateString(name),
-            duplicateString(cppcodec::base64_rfc4648::encode(trustchainId)),
+            duplicateString(cppcodec::base64_rfc4648::encode(appId)),
             duplicateString(cppcodec::base64_rfc4648::encode(
-                trustchainSignatureKeyPair.privateKey)),
+                appSignatureKeyPair.privateKey)),
             duplicateString(cppcodec::base64_rfc4648::encode(
-                trustchainSignatureKeyPair.publicKey)),
+                appSignatureKeyPair.publicKey)),
         }));
       }));
 }
 
-tanker_future_t* tanker_admin_delete_trustchain(tanker_admin_t* admin,
-                                                char const* trustchain_id)
+tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
+                                         char const* app_id)
 {
-  return makeFuture(tc::async_resumable(
-      [admin = reinterpret_cast<Admin*>(admin),
-       trustchainId = std::string(trustchain_id)]() -> tc::cotask<void> {
+  return makeFuture(
+      tc::async_resumable([admin = reinterpret_cast<Admin*>(admin),
+                           appId = std::string(app_id)]() -> tc::cotask<void> {
         TC_AWAIT(admin->deleteTrustchain(
             cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-                {trustchainId})));
+                {appId})));
       }));
 }
 
-void tanker_admin_trustchain_descriptor_free(
-    tanker_trustchain_descriptor_t* trustchain)
+void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
 {
-  tanker_free_buffer(const_cast<char*>(trustchain->name));
-  tanker_free_buffer(const_cast<char*>(trustchain->id));
-  tanker_free_buffer(const_cast<char*>(trustchain->private_key));
-  tanker_free_buffer(const_cast<char*>(trustchain->public_key));
-  delete trustchain;
+  tanker_free_buffer(const_cast<char*>(app->name));
+  tanker_free_buffer(const_cast<char*>(app->id));
+  tanker_free_buffer(const_cast<char*>(app->private_key));
+  tanker_free_buffer(const_cast<char*>(app->public_key));
+  delete app;
 }
 
 tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
@@ -78,16 +75,15 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
 }
 
 tanker_future_t* tanker_admin_get_verification_code(tanker_admin_t* admin,
-                                                    char const* trustchain_id,
+                                                    char const* app_id,
                                                     char const* user_email)
 {
   return makeFuture(tc::async_resumable(
       [admin = reinterpret_cast<Admin*>(admin),
-       trustchainId = std::string(trustchain_id),
+       appId = std::string(app_id),
        email = std::string(user_email)]() -> tc::cotask<void*> {
         auto verifCode = TC_AWAIT(admin->getVerificationCode(
-            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-                {trustchainId}),
+            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>({appId}),
             Email{email}));
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
       }));

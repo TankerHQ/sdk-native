@@ -120,11 +120,11 @@ typedef void (*tanker_event_callback_t)(void* arg, void* data);
 struct tanker_options
 {
   uint8_t version;
-  b64char const* trustchain_id; /*!< Must not be NULL. */
-  char const* trustchain_url;   /*!< Must not be NULL. */
-  char const* writable_path;    /*!< Must not be NULL. */
-  char const* sdk_type;         /*!< Must not be NULL. */
-  char const* sdk_version;      /*!< Must not be NULL. */
+  b64char const* app_id;     /*!< Must not be NULL. */
+  char const* url;           /*!< Must not be NULL. */
+  char const* writable_path; /*!< Must not be NULL. */
+  char const* sdk_type;      /*!< Must not be NULL. */
+  char const* sdk_version;   /*!< Must not be NULL. */
 };
 
 #define TANKER_OPTIONS_INIT         \
