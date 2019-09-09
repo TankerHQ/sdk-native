@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/EncryptionFormat/EncryptorV4.hpp>
+#include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/StreamHelpers.hpp>
@@ -45,7 +46,73 @@ tc::cotask<std::vector<std::uint8_t>> decryptData(StreamDecryptor& decryptor)
   decrypted.resize(totalRead);
   TC_RETURN(std::move(decrypted));
 }
+
+auto fillAndMakePeekableSource(std::vector<uint8_t>& buffer)
+{
+  Crypto::randomFill(buffer);
+  auto source = bufferViewToInputSource(buffer);
+  return PeekableInputSource(source);
 }
+}
+
+TEST_SUITE_BEGIN("PeekableInputSource");
+
+TEST_CASE("reads an underlying stream")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto out = AWAIT(readAllStream(peekable));
+  CHECK(out == buffer);
+}
+
+TEST_CASE("peeks and reads an underlying stream")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
+
+  auto out = AWAIT(readAllStream(peekable));
+  CHECK(out == buffer);
+}
+
+TEST_CASE("peeks past the end and reads an underlying stream")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto peek = AWAIT(peekable.peek(70));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
+
+  auto out = AWAIT(readAllStream(peekable));
+  CHECK(out == buffer);
+}
+
+TEST_CASE("alternate between peeks and read on a long underlying stream")
+{
+  std::vector<uint8_t> buffer(5 * 1024 * 1024);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
+
+  peek = AWAIT(peekable.peek(1200));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 1200));
+
+  std::vector<uint8_t> begin(1000);
+  AWAIT(readStream(begin, peekable));
+  CHECK(gsl::make_span(begin) == gsl::make_span(buffer).subspan(0, 1000));
+
+  peek = AWAIT(peekable.peek(10));
+  CHECK(peek == gsl::make_span(buffer).subspan(1000, 10));
+
+  auto out = AWAIT(readAllStream(peekable));
+  CHECK(gsl::make_span(out) == gsl::make_span(buffer).subspan(1000));
+}
+
+TEST_SUITE_END();
 
 TEST_SUITE("Stream encryption")
 {
