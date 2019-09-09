@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 
 project(TankerSDK-C)
 include(GenerateExportHeader)
+include(TankerExportSymbols)
 
 if(TANKERLIB_SHARED)
   set(tankerlib_type SHARED)
@@ -33,21 +34,13 @@ generate_export_header(ctanker
 )
 
 if(TANKERLIB_SHARED)
+  tanker_export_symbols(ctanker)
+
   if (APPLE)
     set(_whole_archive "-Wl,-force_load")
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "-Wl,-exported_symbols_list ${PROJECT_SOURCE_DIR}/exports.sym")
   elseif (UNIX) # this means linux, including android
     set(_whole_archive "-Wl,--whole-archive")
     set(_no_whole_archive "-Wl,--no-whole-archive")
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "-Wl,--version-script=${PROJECT_SOURCE_DIR}/exports.ld")
-  elseif (WIN32)
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "/DEF:${PROJECT_SOURCE_DIR}/exports.def")
-  else()
-    # you need to write an export file for your platform to support that
-    message(FATAL_ERROR "Shared library building is not supported on this platform")
   endif()
 endif()
 

@@ -1,0 +1,8 @@
+LIBRARY tanker_admin-c
+EXPORTS
+tanker_admin_connect
+tanker_admin_create_app
+tanker_admin_delete_app
+tanker_admin_app_descriptor_free
+tanker_admin_destroy
+tanker_admin_get_verification_code

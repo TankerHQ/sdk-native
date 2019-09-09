@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 
 project(tanker_admin-c)
 include(GenerateExportHeader)
+include(TankerExportSymbols)
 
 if(TANKERLIB_SHARED)
   set(tankerlib_type SHARED)
@@ -26,7 +27,11 @@ target_include_directories(tanker_admin-c
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tanker_admin-c PUBLIC
+if (TANKERLIB_SHARED)
+  tanker_export_symbols(tanker_admin-c)
+endif()
+
+target_link_libraries(tanker_admin-c
   tankeradmin
   tanker_utils-c
   tanker_async
