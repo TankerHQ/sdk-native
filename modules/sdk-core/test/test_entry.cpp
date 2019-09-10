@@ -1,12 +1,12 @@
 #include <doctest.h>
 
-#include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -15,6 +15,7 @@
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("blockToServerEntry")

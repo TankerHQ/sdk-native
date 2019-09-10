@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 
 project(TankerSDK-C)
 include(GenerateExportHeader)
+include(TankerExportSymbols)
 
 if(TANKERLIB_SHARED)
   set(tankerlib_type SHARED)
@@ -17,40 +18,29 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/stream.h
   include/ctanker/base64.h
   include/ctanker/identity.h
-  include/ctanker/admin.h
   include/ctanker/groups.h
   include/ctanker/filekit.h
 
   src/base64.cpp
   src/stream.cpp
   src/ctanker.cpp
-  src/Utils.hpp
   src/identity.cpp
-  src/admin.cpp
   src/groups.cpp
   src/filekit.cpp
 )
 
 generate_export_header(ctanker
   EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/ctanker/export.h
-  )
+)
 
 if(TANKERLIB_SHARED)
+  tanker_export_symbols(ctanker)
+
   if (APPLE)
     set(_whole_archive "-Wl,-force_load")
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "-Wl,-exported_symbols_list ${PROJECT_SOURCE_DIR}/exports.sym")
   elseif (UNIX) # this means linux, including android
     set(_whole_archive "-Wl,--whole-archive")
     set(_no_whole_archive "-Wl,--no-whole-archive")
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "-Wl,--version-script=${PROJECT_SOURCE_DIR}/exports.ld")
-  elseif (WIN32)
-    set_target_properties(ctanker PROPERTIES
-      LINK_FLAGS "/DEF:${PROJECT_SOURCE_DIR}/exports.def")
-  else()
-    # you need to write an export file for your platform to support that
-    message(FATAL_ERROR "Shared library building is not supported on this platform")
   endif()
 endif()
 
@@ -58,9 +48,11 @@ target_link_libraries(ctanker PUBLIC
   ${_whole_archive}
   tanker_async
   ${_no_whole_archive}
+  tanker_utils-c
   tankercore
   tankercrypto
   tankeridentity
+
   CONAN_PKG::cppcodec
 )
 

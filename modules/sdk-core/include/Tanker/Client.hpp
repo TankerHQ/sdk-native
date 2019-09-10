@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
@@ -10,6 +9,7 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/AConnection.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -71,8 +71,8 @@ public:
 
   tc::cotask<void> createUser(
       Identity::SecretPermanentIdentity const& identity,
-      Block const& userCreation,
-      Block const& firstDevice,
+      Trustchain::Block const& userCreation,
+      Trustchain::Block const& firstDevice,
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret,
       gsl::span<uint8_t const> encryptedVerificationKey);

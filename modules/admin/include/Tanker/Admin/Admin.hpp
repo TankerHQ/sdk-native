@@ -19,6 +19,8 @@
 
 namespace Tanker
 {
+namespace Admin
+{
 class Admin
 {
 public:
@@ -54,4 +56,5 @@ private:
   tc::cotask<nlohmann::json> emit(std::string const& event,
                                   nlohmann::json const& data);
 };
+}
 }

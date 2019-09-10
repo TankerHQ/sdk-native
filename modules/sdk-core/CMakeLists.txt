@@ -66,13 +66,11 @@ endif()
 
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
-  include/Tanker/Admin.hpp
   include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
   include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
-  include/Tanker/ssl.hpp
   include/Tanker/Retry.hpp
   include/Tanker/StreamDecryptor.hpp
   include/Tanker/StreamEncryptor.hpp
@@ -93,7 +91,6 @@ add_library(tankercore STATIC
   include/Tanker/DeviceKeyStore.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
-  include/Tanker/Block.hpp
   include/Tanker/Entry.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
@@ -122,8 +119,6 @@ add_library(tankercore STATIC
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/IdentityUtils.hpp
-  include/Tanker/Server/Errors/Errc.hpp
-  include/Tanker/Server/Errors/ErrcCategory.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
@@ -151,7 +146,6 @@ add_library(tankercore STATIC
 
   src/AsyncCore.cpp
   src/AttachResult.cpp
-  src/Admin.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
   src/DataStore/Errors/Errc.cpp
@@ -176,7 +170,6 @@ add_library(tankercore STATIC
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp
-  src/Block.cpp
   src/Entry.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
@@ -195,8 +188,6 @@ add_library(tankercore STATIC
   src/UserAccessor.cpp
   src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
-  src/Server/Errors/Errc.cpp
-  src/Server/Errors/ErrcCategory.cpp
   src/Verif/Errors/Errc.cpp
   src/Verif/Errors/ErrcCategory.cpp
   src/Verif/DeviceCreation.cpp
@@ -215,7 +206,6 @@ add_library(tankercore STATIC
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}
-  ${TANKER_CORE_SSL_SRC}
   ${TANKER_CORE_EXTRA_SRC}
 )
 
@@ -239,6 +229,7 @@ target_link_libraries(tankercore
   tankerlog
   tankerconfig
   tankercacerts
+  tankeradmin
   ttracer
   tccurl
   CONAN_PKG::Boost
@@ -285,7 +276,7 @@ if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
 endif()
 
-target_link_libraries(tankercore_test tankercore tankertesthelpers)
+target_link_libraries(tankercore_test tankercore tankeradmin tankertesthelpers)
 
 install(TARGETS tankercore_test
   EXPORT tankertest

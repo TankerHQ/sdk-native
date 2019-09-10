@@ -140,9 +140,11 @@ class TankerConan(ConanFile):
 
     def package_info(self):
         libs = [
+            "tanker_admin-c",
             "ctanker",
             "tanker_async",
             "tankercore_test",
+            "tankeradmin",
             "tankertesthelpers",
             "tankercore",
             "tankernetwork",

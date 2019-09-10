@@ -1,4 +1,4 @@
-#include <Tanker/Block.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -19,13 +19,13 @@
 #include <string>
 #include <tuple>
 
-using namespace Tanker::Trustchain;
-using namespace Tanker::Trustchain::Actions;
 using namespace std::string_literals;
 
 using json = nlohmann::json;
 
 namespace Tanker
+{
+namespace Trustchain
 {
 bool operator==(Block const& l, Block const& r)
 {
@@ -77,15 +77,12 @@ void from_serialized(Serialization::SerializedSource& ss, Block& b)
 
   if (version != 1)
   {
-    // TODO should not have a Trustchain Errc,
-    // Block should be removed in the future
-    throw Errors::formatEx(Trustchain::Errc::InvalidBlockVersion,
-                           "unsupported block version: {}",
-                           version);
+    throw Errors::formatEx(
+        Errc::InvalidBlockVersion, "unsupported block version: {}", version);
   }
   b.index = ss.read_varint();
   b.trustchainId = Serialization::deserialize<Trustchain::TrustchainId>(ss);
-  b.nature = static_cast<Nature>(ss.read_varint());
+  b.nature = static_cast<Actions::Nature>(ss.read_varint());
 
   auto const payloadSize = ss.read_varint();
   auto const payloadSpan = ss.read(payloadSize);
@@ -130,5 +127,6 @@ ServerEntry blockToServerEntry(Block const& b)
           Action::deserialize(b.nature, b.payload),
           b.hash(),
           b.signature};
+}
 }
 }

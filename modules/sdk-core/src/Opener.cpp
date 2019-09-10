@@ -7,6 +7,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/GhostDevice.hpp>
@@ -16,9 +17,9 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -139,7 +140,7 @@ tc::cotask<void> Opener::unlockCurrentDevice(
   }
   catch (Exception const& e)
   {
-    if (e.errorCode() == Server::Errc::DeviceNotFound ||
+    if (e.errorCode() == ServerErrc::DeviceNotFound ||
         e.errorCode() == Errc::DecryptionFailed)
       throw Exception(make_error_code(Errc::InvalidVerification), e.what());
     throw;
@@ -175,7 +176,7 @@ tc::cotask<Session::Config> Opener::createUser(
                         DeviceKeys::create();
   auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
 
-  auto const userCreation = Serialization::deserialize<Block>(
+  auto const userCreation = Serialization::deserialize<Trustchain::Block>(
       BlockGenerator(_info.trustchainId, {}, {})
           .addUser(_identity->delegation,
                    ghostDeviceKeys.signatureKeyPair.publicKey,

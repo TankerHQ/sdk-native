@@ -10,8 +10,8 @@
 #include <nlohmann/json.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Block.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 

@@ -1,10 +1,10 @@
 #include <Tanker/BlockGenerator.hpp>
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>

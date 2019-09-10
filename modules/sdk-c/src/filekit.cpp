@@ -10,7 +10,7 @@
 #include <ctanker/async/private/CFuture.hpp>
 
 #include "Stream.hpp"
-#include "Utils.hpp"
+#include <ctanker/private/Utils.hpp>
 
 using namespace Tanker::Errors;
 using Tanker::AsyncCore;

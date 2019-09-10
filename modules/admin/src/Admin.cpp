@@ -1,16 +1,16 @@
-#include <Tanker/Admin.hpp>
+#include <Tanker/Admin/Admin.hpp>
 
-#include <Tanker/Block.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/AConnection.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Server/Errors/Errc.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -24,33 +24,36 @@
 #include <algorithm>
 #include <iterator>
 
+using namespace Tanker::Errors;
 using Tanker::Trustchain::Actions::Nature;
 
 TLOG_CATEGORY(Admin);
 
 namespace Tanker
 {
+namespace Admin
+{
 namespace
 {
 // FIXME Duplicated in Client.cpp
-std::map<std::string, Server::Errc> const serverErrorMap{
-    {"internal_error", Server::Errc::InternalError},
-    {"invalid_body", Server::Errc::InvalidBody},
-    {"invalid_origin", Server::Errc::InvalidOrigin},
-    {"trustchain_is_not_test", Server::Errc::TrustchainIsNotTest},
-    {"trustchain_not_found", Server::Errc::TrustchainNotFound},
-    {"device_not_found", Server::Errc::DeviceNotFound},
-    {"device_revoked", Server::Errc::DeviceRevoked},
-    {"too_many_attempts", Server::Errc::TooManyAttempts},
-    {"verification_needed", Server::Errc::VerificationNeeded},
-    {"invalid_passphrase", Server::Errc::InvalidPassphrase},
-    {"invalid_verification_code", Server::Errc::InvalidVerificationCode},
-    {"verification_code_expired", Server::Errc::VerificationCodeExpired},
-    {"verification_code_not_found", Server::Errc::VerificationCodeNotFound},
-    {"verification_method_not_set", Server::Errc::VerificationMethodNotSet},
-    {"verification_key_not_found", Server::Errc::VerificationKeyNotFound},
-    {"group_too_big", Server::Errc::GroupTooBig},
-    {"invalid_delegation_signature", Server::Errc::InvalidDelegationSignature},
+std::map<std::string, ServerErrc> const serverErrorMap{
+    {"internal_error", ServerErrc::InternalError},
+    {"invalid_body", ServerErrc::InvalidBody},
+    {"invalid_origin", ServerErrc::InvalidOrigin},
+    {"trustchain_is_not_test", ServerErrc::TrustchainIsNotTest},
+    {"trustchain_not_found", ServerErrc::TrustchainNotFound},
+    {"device_not_found", ServerErrc::DeviceNotFound},
+    {"device_revoked", ServerErrc::DeviceRevoked},
+    {"too_many_attempts", ServerErrc::TooManyAttempts},
+    {"verification_needed", ServerErrc::VerificationNeeded},
+    {"invalid_passphrase", ServerErrc::InvalidPassphrase},
+    {"invalid_verification_code", ServerErrc::InvalidVerificationCode},
+    {"verification_code_expired", ServerErrc::VerificationCodeExpired},
+    {"verification_code_not_found", ServerErrc::VerificationCodeNotFound},
+    {"verification_method_not_set", ServerErrc::VerificationMethodNotSet},
+    {"verification_key_not_found", ServerErrc::VerificationKeyNotFound},
+    {"group_too_big", ServerErrc::GroupTooBig},
+    {"invalid_delegation_signature", ServerErrc::InvalidDelegationSignature},
 };
 }
 
@@ -93,7 +96,7 @@ tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
     bool storePrivateKey)
 {
   FUNC_TIMER(Net);
-  Block block{};
+  Trustchain::Block block{};
   block.nature = Nature::TrustchainCreation;
   block.payload = Serialization::serialize(
       Trustchain::Actions::TrustchainCreation{keyPair.publicKey});
@@ -169,9 +172,10 @@ tc::cotask<nlohmann::json> Admin::emit(std::string const& eventName,
     auto const serverErrorIt = serverErrorMap.find(code);
     if (serverErrorIt == serverErrorMap.end())
       throw Errors::formatEx(
-          Server::Errc::UnknownError, "code: {}, message: {}", code, message);
+          ServerErrc::UnknownError, "code: {}, message: {}", code, message);
     throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
+}
 }
 }

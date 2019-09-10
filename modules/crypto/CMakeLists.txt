@@ -4,6 +4,7 @@ project(tankercrypto)
 
 add_library(tankercrypto STATIC
     src/Crypto.cpp
+    src/Init.cpp
     src/ExternTemplates.cpp
     src/Errors/Errc.cpp
     src/Errors/ErrcCategory.cpp
@@ -20,6 +21,7 @@ add_library(tankercrypto STATIC
     include/Tanker/Crypto/BasicHash.hpp
     include/Tanker/Crypto/Hash.hpp
     include/Tanker/Crypto/Mac.hpp
+    include/Tanker/Crypto/Init.hpp
     include/Tanker/Crypto/Sealed.hpp
     include/Tanker/Crypto/Signature.hpp
     include/Tanker/Crypto/SealedPrivateEncryptionKey.hpp

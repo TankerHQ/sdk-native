@@ -16,13 +16,15 @@
 
 namespace Tanker
 {
+namespace Trustchain
+{
 struct Block
 {
-  Trustchain::TrustchainId trustchainId;
-  uint64_t index;
+  TrustchainId trustchainId;
+  std::uint64_t index;
   Crypto::Hash author;
-  Trustchain::Actions::Nature nature;
-  std::vector<uint8_t> payload;
+  Actions::Nature nature;
+  std::vector<std::uint8_t> payload;
   Crypto::Signature signature;
 
   Crypto::Hash hash() const;
@@ -39,5 +41,6 @@ std::uint8_t* to_serialized(std::uint8_t* it, Block const& b);
 
 void to_json(nlohmann::json& j, Block const& b);
 
-Trustchain::ServerEntry blockToServerEntry(Block const& b);
+ServerEntry blockToServerEntry(Block const& b);
+}
 }

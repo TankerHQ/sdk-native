@@ -11,7 +11,6 @@
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ssl.hpp>
 
 #include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>

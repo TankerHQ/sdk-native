@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Block.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -14,6 +13,7 @@
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
+#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -134,33 +134,34 @@ public:
       Tanker::SecretProvisionalUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
-  std::vector<Tanker::Block> shareToDevice(
+  std::vector<Tanker::Trustchain::Block> shareToDevice(
       Device const& sender,
       User const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Block shareToUser(Device const& sender,
-                            User const& receiver,
-                            Tanker::Trustchain::ResourceId const& resourceId,
-                            Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Block shareToUserGroup(
+  Tanker::Trustchain::Block shareToUser(
+      Device const& sender,
+      User const& receiver,
+      Tanker::Trustchain::ResourceId const& resourceId,
+      Tanker::Crypto::SymmetricKey const& key);
+  Tanker::Trustchain::Block shareToUserGroup(
       Device const& sender,
       Group const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Block shareToProvisionalUser(
+  Tanker::Trustchain::Block shareToProvisionalUser(
       Device const& sender,
       Tanker::PublicProvisionalUser const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
 
-  Tanker::Block revokeDevice1(Device const& sender,
-                              Device const& target,
-                              bool unsafe = false);
-  Tanker::Block revokeDevice2(Device const& sender,
-                              Device const& target,
-                              User const& user,
-                              bool unsafe = false);
+  Tanker::Trustchain::Block revokeDevice1(Device const& sender,
+                                          Device const& target,
+                                          bool unsafe = false);
+  Tanker::Trustchain::Block revokeDevice2(Device const& sender,
+                                          Device const& target,
+                                          User const& user,
+                                          bool unsafe = false);
 
   nonstd::optional<User> findUser(std::string const& suserId) const;
 
@@ -182,7 +183,7 @@ public:
       std::vector<ProvisionalUser> const& provisionalUsers,
       Tanker::DataStore::ADatabase* conn) const;
 
-  std::vector<Tanker::Block> const& blocks() const;
+  std::vector<Tanker::Trustchain::Block> const& blocks() const;
   std::vector<Group> groups() const;
   std::vector<User> const& users() const;
 
@@ -203,7 +204,7 @@ private:
 
   std::vector<User> _users;
   std::set<Group, GroupComparator> _groups;
-  std::vector<Tanker::Block> _blocks;
+  std::vector<Tanker::Trustchain::Block> _blocks;
 
   User* findMutableUser(Tanker::SUserId const& suserId);
 };

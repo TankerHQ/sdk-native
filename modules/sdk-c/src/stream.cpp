@@ -8,7 +8,7 @@
 #include <cppcodec/base64_rfc4648.hpp>
 
 #include "Stream.hpp"
-#include "Utils.hpp"
+#include <ctanker/private/Utils.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
 
@@ -124,8 +124,8 @@ tanker_expected_t* tanker_stream_get_resource_id(tanker_stream_t* stream)
       static_cast<void*>(duplicateString(stream->resourceId.string()))));
 }
 
-tanker_expected_t* tanker_stream_close(tanker_stream_t* stream)
+tanker_future_t* tanker_stream_close(tanker_stream_t* stream)
 {
-  delete stream;
-  return makeFuture(tc::make_ready_future());
+  return makeFuture(
+      tc::async_resumable([=]() -> tc::cotask<void> { delete stream; }));
 }

@@ -17,7 +17,7 @@ namespace Tanker
 namespace Test
 {
 TrustchainFactory::TrustchainFactory()
-  : _admin(std::make_unique<Tanker::Admin>(
+  : _admin(std::make_unique<Tanker::Admin::Admin>(
         Tanker::Network::ConnectionFactory::create(
             Tanker::TestConstants::trustchainUrl(), nonstd::nullopt),
         Tanker::TestConstants::idToken()))
