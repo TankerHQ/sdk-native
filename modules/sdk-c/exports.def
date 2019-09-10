@@ -1,11 +1,11 @@
 LIBRARY ctanker
 EXPORTS
 tanker_admin_connect
-tanker_admin_create_trustchain
-tanker_admin_delete_trustchain
+tanker_admin_create_app
+tanker_admin_delete_app
 tanker_admin_destroy
 tanker_admin_get_verification_code
-tanker_admin_trustchain_descriptor_free
+tanker_admin_app_descriptor_free
 tanker_attach_provisional_identity
 tanker_base64_decode
 tanker_base64_decoded_max_size
