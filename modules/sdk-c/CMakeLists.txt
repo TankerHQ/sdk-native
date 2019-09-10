@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 project(TankerSDK-C)
 include(GenerateExportHeader)
 include(TankerExportSymbols)
+include(TankerLinkLibraries)
 
 if(TANKERLIB_SHARED)
   set(tankerlib_type SHARED)
@@ -35,25 +36,18 @@ generate_export_header(ctanker
 
 if(TANKERLIB_SHARED)
   tanker_export_symbols(ctanker)
-
-  if (APPLE)
-    set(_whole_archive "-Wl,-force_load")
-  elseif (UNIX) # this means linux, including android
-    set(_whole_archive "-Wl,--whole-archive")
-    set(_no_whole_archive "-Wl,--no-whole-archive")
-  endif()
 endif()
 
-target_link_libraries(ctanker PUBLIC
-  ${_whole_archive}
-  tanker_async
-  ${_no_whole_archive}
+tanker_link_libraries(ctanker PUBLIC
   tanker_utils-c
   tankercore
   tankercrypto
   tankeridentity
 
   CONAN_PKG::cppcodec
+
+  EMBED_LIBS
+    tanker_async
 )
 
 target_include_directories(ctanker
