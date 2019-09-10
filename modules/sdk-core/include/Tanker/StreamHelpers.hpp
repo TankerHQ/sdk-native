@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/StreamInputSource.hpp>
+
 #include <tconcurrent/coroutine.hpp>
 
 #include <gsl-lite.hpp>
@@ -8,32 +10,8 @@
 
 namespace Tanker
 {
-namespace detail
-{
-template <typename T>
-inline auto bufferToInputSource(T&& buffer)
-{
-  return [index = 0u, buffer = std::forward<T>(buffer)](
-             std::uint8_t* out,
-             std::int64_t n) mutable -> tc::cotask<std::int64_t> {
-    auto const toRead =
-        std::min(n, static_cast<std::int64_t>(buffer.size()) - index);
-    std::copy_n(buffer.data() + index, toRead, out);
-    index += toRead;
-    TC_RETURN(toRead);
-  };
-}
-}
-
-inline auto bufferViewToInputSource(gsl::span<uint8_t const> buffer)
-{
-  return detail::bufferToInputSource(buffer);
-}
-
-inline auto bufferToInputSource(std::vector<uint8_t> buffer)
-{
-  return detail::bufferToInputSource(std::move(buffer));
-}
+StreamInputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer);
+StreamInputSource bufferToInputSource(std::vector<uint8_t> buffer);
 
 template <typename T>
 tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
