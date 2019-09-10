@@ -17,12 +17,10 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker.h
   include/ctanker/ctanker.h
   include/ctanker/stream.h
-  include/ctanker/base64.h
   include/ctanker/identity.h
   include/ctanker/groups.h
   include/ctanker/filekit.h
 
-  src/base64.cpp
   src/stream.cpp
   src/ctanker.cpp
   src/identity.cpp

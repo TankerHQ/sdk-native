@@ -1,10 +1,6 @@
 LIBRARY ctanker
 EXPORTS
 tanker_attach_provisional_identity
-tanker_base64_decode
-tanker_base64_decoded_max_size
-tanker_base64_encode
-tanker_base64_encoded_size
 tanker_create
 tanker_create_group
 tanker_create_identity
