@@ -57,7 +57,7 @@ FileKit::Metadata makeMetadata()
   return metadata;
 }
 
-void testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
+tc::cotask<void> testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
 {
   CAPTURE(size);
   auto alice = trustchain.makeUser();
@@ -80,12 +80,12 @@ TEST_SUITE_BEGIN("FileKit");
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download small file")
 {
-  testUploadDownload(trustchain, 30);
+  TC_AWAIT(testUploadDownload(trustchain, 30));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download big file")
 {
-  testUploadDownload(trustchain, 5 * 1024 * 1024);
+  TC_AWAIT(testUploadDownload(trustchain, 5 * 1024 * 1024));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Filekit upload/download with two users")

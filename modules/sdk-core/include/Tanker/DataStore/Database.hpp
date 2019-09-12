@@ -19,6 +19,7 @@ public:
   explicit Database(std::string const& dbPath,
                     nonstd::optional<Crypto::SymmetricKey> const& userSecret,
                     bool exclusive);
+  tc::cotask<void> migrate();
 
   tc::cotask<void> putUserPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
@@ -129,7 +130,6 @@ private:
 
   int currentDatabaseVersion();
 
-  void migrate();
   void flushAllCaches();
   tc::cotask<std::vector<GroupProvisionalUser>> findProvisionalUsersByGroupId(
       Trustchain::GroupId const& groupId);

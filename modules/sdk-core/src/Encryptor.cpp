@@ -81,7 +81,7 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
     TC_AWAIT(EncryptorV4::decrypt(decryptedData, key, encryptedData));
     break;
   case EncryptorV5::version():
-    TC_AWAIT(EncryptorV5::decrypt(decryptedData, key, encryptedData));
+    EncryptorV5::decrypt(decryptedData, key, encryptedData);
     break;
   default:
     throw formatEx(

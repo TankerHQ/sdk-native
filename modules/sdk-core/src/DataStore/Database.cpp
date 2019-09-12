@@ -263,7 +263,6 @@ Database::Database(std::string const& dbPath,
                    bool exclusive)
   : _db(createConnection(dbPath, userSecret, exclusive))
 {
-  migrate();
 }
 
 template <typename Table>
@@ -370,9 +369,9 @@ void Database::performOldMigration()
   dropTable<OldVersionsTable>();
 }
 
-void Database::migrate()
+tc::cotask<void> Database::migrate()
 {
-  TC_AWAIT(inTransaction([&] {
+  TC_AWAIT(inTransaction([&]() -> tc::cotask<void> {
     // We used to have a version per table.
     // We now have a unique version for the db.
     // To migrate from the old system, we first create/migrate tables that
@@ -383,6 +382,7 @@ void Database::migrate()
     if (!tableExists<VersionTable>(*_db) && tableExists<OldVersionsTable>(*_db))
       performOldMigration();
     performUnifiedMigration();
+    TC_RETURN();
   }));
 }
 
@@ -589,6 +589,7 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
       tab.author = entry.author.base(),
       tab.action = Serialization::serialize(entry.action),
       tab.hash = entry.hash.base()));
+  TC_RETURN();
 }
 
 tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
