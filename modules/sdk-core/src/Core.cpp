@@ -369,7 +369,8 @@ tc::cotask<StreamEncryptor> Core::makeStreamEncryptor(
       (*psession)->makeStreamEncryptor(std::move(cb), suserIds, sgroupIds)));
 }
 
-tc::cotask<StreamDecryptor> Core::makeStreamDecryptor(StreamInputSource cb)
+tc::cotask<GenericStreamDecryptor> Core::makeStreamDecryptor(
+    StreamInputSource cb)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)

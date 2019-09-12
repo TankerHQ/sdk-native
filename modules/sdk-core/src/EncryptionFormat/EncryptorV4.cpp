@@ -72,7 +72,7 @@ tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
     gsl::span<uint8_t const> clearData,
     uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(bufferToInputSource(clearData), encryptedChunkSize);
+  StreamEncryptor encryptor(bufferViewToInputSource(clearData), encryptedChunkSize);
 
   while (auto const nbRead =
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
@@ -87,7 +87,7 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
                          gsl::span<uint8_t const> encryptedData)
 {
   auto decryptor = TC_AWAIT(StreamDecryptor::create(
-      bufferToInputSource(encryptedData),
+      bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(

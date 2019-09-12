@@ -2,10 +2,10 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
+#include <Tanker/GenericStreamDecryptor.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/StreamInputSource.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -145,7 +145,8 @@ public:
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::shared_future<StreamDecryptor> makeStreamDecryptor(StreamInputSource);
+  tc::shared_future<GenericStreamDecryptor> makeStreamDecryptor(
+      StreamInputSource);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);
