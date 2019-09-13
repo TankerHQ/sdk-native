@@ -110,9 +110,7 @@ tanker_future_t* tanker_upload(tanker_t* ctanker,
                               m,
                               std::get<std::vector<Tanker::SPublicIdentity>>(o),
                               std::get<std::vector<Tanker::SGroupId>>(o)));
-    TC_RETURN(static_cast<void*>(duplicateString(
-        cppcodec::base64_rfc4648::encode<Tanker::SResourceId>(fileId)
-            .string())));
+    TC_RETURN(static_cast<void*>(duplicateString(fileId.string())));
   }));
 }
 catch (...)
@@ -138,9 +136,7 @@ tanker_future_t* tanker_upload_stream(tanker_t* ctanker,
                            m,
                            std::get<std::vector<Tanker::SPublicIdentity>>(o),
                            std::get<std::vector<Tanker::SGroupId>>(o)));
-    TC_RETURN(static_cast<void*>(duplicateString(
-        cppcodec::base64_rfc4648::encode<Tanker::SResourceId>(fileId)
-            .string())));
+    TC_RETURN(static_cast<void*>(duplicateString(fileId.string())));
   }));
 }
 catch (...)
@@ -160,6 +156,7 @@ tanker_future_t* tanker_download(tanker_t* ctanker, char const* resource_id)
         auto res = TC_AWAIT(core->download(resourceId));
         auto download_result = new tanker_download_result_t;
         download_result->data = new uint8_t[res.data.size()];
+        download_result->data_size = res.data.size();
         std::copy(res.data.begin(), res.data.end(), download_result->data);
         download_result->metadata = convertMetadata(res.metadata);
         TC_RETURN(download_result);
