@@ -23,7 +23,9 @@ tc::cotask<DatabasePtr> createDatabase(
 {
   FUNC_TIMER(DB);
 #ifndef EMSCRIPTEN
-  TC_RETURN(std::make_unique<Database>(dbPath, userSecret, exclusive));
+  auto db = std::make_unique<Database>(dbPath, userSecret, exclusive);
+  TC_AWAIT(db->migrate());
+  TC_RETURN(std::move(db));
 #else
   auto db = std::make_unique<JsDatabase>();
   TC_AWAIT(db->open(dbPath));

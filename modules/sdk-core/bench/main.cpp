@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 
   tc::async_resumable("main_functional",
                       tc::executor(tp),
-                      [&] {
+                      [&]() -> tc::cotask<void> {
                         TC_AWAIT(TrustchainFixture::setUp());
                         benchmark::Initialize(&argc, argv);
 #ifdef TANKER_ENABLE_TRACER

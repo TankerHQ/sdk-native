@@ -127,6 +127,5 @@ tanker_expected_t* tanker_stream_get_resource_id(tanker_stream_t* stream)
 
 tanker_future_t* tanker_stream_close(tanker_stream_t* stream)
 {
-  return makeFuture(
-      tc::async_resumable([=]() -> tc::cotask<void> { delete stream; }));
+  return makeFuture(tc::async([=] { delete stream; }));
 }
