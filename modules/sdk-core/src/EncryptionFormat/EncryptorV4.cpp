@@ -67,7 +67,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
          Crypto::decryptedSize(lastClearChunkSize);
 }
 
-tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
+tc::cotask<EncryptionMetadata> encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
     uint32_t encryptedChunkSize)
@@ -78,7 +78,7 @@ tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
     encryptedData += nbRead;
 
-  TC_RETURN((EncryptionFormat::EncryptionMetadata{encryptor.resourceId(),
+  TC_RETURN((EncryptionMetadata{encryptor.resourceId(),
                                                   encryptor.symmetricKey()}));
 }
 

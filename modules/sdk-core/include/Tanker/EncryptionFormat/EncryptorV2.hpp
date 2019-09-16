@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/EncryptionFormat/EncryptionMetadata.hpp>
+#include <Tanker/EncryptionMetadata.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>

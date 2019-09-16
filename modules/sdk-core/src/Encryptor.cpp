@@ -55,7 +55,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   }
 }
 
-tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
+tc::cotask<EncryptionMetadata> encrypt(
     uint8_t* encryptedData, gsl::span<uint8_t const> clearData)
 {
   if (isHugeClearData(clearData.size()))

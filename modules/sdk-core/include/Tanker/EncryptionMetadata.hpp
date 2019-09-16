@@ -5,12 +5,9 @@
 
 namespace Tanker
 {
-namespace EncryptionFormat
-{
 struct EncryptionMetadata
 {
   Trustchain::ResourceId resourceId;
   Crypto::SymmetricKey key;
 };
-}
 }

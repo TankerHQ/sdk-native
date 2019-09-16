@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/EncryptionFormat/EncryptionMetadata.hpp>
+#include <Tanker/EncryptionMetadata.hpp>
 #include <Tanker/StreamHeader.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -26,7 +26,7 @@ uint64_t encryptedSize(
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData);
 
-tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
+tc::cotask<EncryptionMetadata> encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
     uint32_t encryptedChunkSize = StreamHeader::defaultEncryptedChunkSize);

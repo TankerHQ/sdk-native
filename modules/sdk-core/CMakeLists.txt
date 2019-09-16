@@ -134,7 +134,7 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Errors/ErrcCategory.hpp
   include/Tanker/Detail/BufferedStreamImpl.hpp
   include/Tanker/Encryptor.hpp
-  include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
+  include/Tanker/EncryptionMetadata.hpp
   include/Tanker/EncryptionFormat/EncryptorV2.hpp
   include/Tanker/EncryptionFormat/EncryptorV3.hpp
   include/Tanker/EncryptionFormat/EncryptorV4.hpp
