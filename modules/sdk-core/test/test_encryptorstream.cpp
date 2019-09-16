@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/StreamHeader.hpp>
@@ -13,7 +13,6 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
-using namespace EncryptionFormat;
 
 TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
 {

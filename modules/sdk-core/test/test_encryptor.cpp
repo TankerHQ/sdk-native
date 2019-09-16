@@ -1,8 +1,8 @@
 #include <Tanker/Crypto/AeadIv.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV2.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV3.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV5.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v2.hpp>
+#include <Tanker/Encryptor/v3.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
@@ -30,50 +30,42 @@ TEST_SUITE("EncryptorV2")
 
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
-    std::vector<uint8_t> a0(EncryptionFormat::EncryptorV2::encryptedSize(0));
-    Serialization::varint_write(a0.data(),
-                                EncryptionFormat::EncryptorV2::version());
-    std::vector<uint8_t> a42(EncryptionFormat::EncryptorV2::encryptedSize(42));
-    Serialization::varint_write(a42.data(),
-                                EncryptionFormat::EncryptorV2::version());
-    CHECK(EncryptionFormat::EncryptorV2::decryptedSize(a0) == 0);
-    CHECK(EncryptionFormat::EncryptorV2::decryptedSize(a42) == 42);
+    std::vector<uint8_t> a0(EncryptorV2::encryptedSize(0));
+    Serialization::varint_write(a0.data(), EncryptorV2::version());
+    std::vector<uint8_t> a42(EncryptorV2::encryptedSize(42));
+    Serialization::varint_write(a42.data(), EncryptorV2::version());
+    CHECK(EncryptorV2::decryptedSize(a0) == 0);
+    CHECK(EncryptorV2::decryptedSize(a42) == 42);
   }
 
   TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
     auto const truncatedBuffer = make_buffer("\2");
-    TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV2::decryptedSize(truncatedBuffer),
-        Errc::InvalidArgument);
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV2::decryptedSize(truncatedBuffer),
+                                  Errc::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
   {
-    auto const versionSize =
-        Serialization::varint_size(EncryptionFormat::EncryptorV2::version());
+    auto const versionSize = Serialization::varint_size(EncryptorV2::version());
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
-    CHECK(EncryptionFormat::EncryptorV2::encryptedSize(0) ==
-          versionSize + 0 + MacSize + IvSize);
-    CHECK(EncryptionFormat::EncryptorV2::encryptedSize(1) ==
-          versionSize + 1 + MacSize + IvSize);
+    CHECK(EncryptorV2::encryptedSize(0) == versionSize + 0 + MacSize + IvSize);
+    CHECK(EncryptorV2::encryptedSize(1) == versionSize + 1 + MacSize + IvSize);
   }
 
   TEST_CASE("encrypt/decrypt should work with an empty buffer")
   {
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV2::encryptedSize(clearData.size()));
+        EncryptorV2::encryptedSize(clearData.size()));
 
-    auto const metadata =
-        EncryptionFormat::EncryptorV2::encrypt(encryptedData.data(), clearData);
+    auto const metadata = EncryptorV2::encrypt(encryptedData.data(), clearData);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV2::decryptedSize(encryptedData));
+        EncryptorV2::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV2::decrypt(
-        decryptedData.data(), metadata.key, encryptedData);
+    EncryptorV2::decrypt(decryptedData.data(), metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
@@ -82,16 +74,14 @@ TEST_SUITE("EncryptorV2")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV2::encryptedSize(clearData.size()));
+        EncryptorV2::encryptedSize(clearData.size()));
 
-    auto const metadata =
-        EncryptionFormat::EncryptorV2::encrypt(encryptedData.data(), clearData);
+    auto const metadata = EncryptorV2::encrypt(encryptedData.data(), clearData);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV2::decryptedSize(encryptedData));
+        EncryptorV2::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV2::decrypt(
-        decryptedData.data(), metadata.key, encryptedData);
+    EncryptorV2::decrypt(decryptedData.data(), metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
@@ -100,11 +90,11 @@ TEST_SUITE("EncryptorV2")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(
-        EncryptionFormat::EncryptorV2::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV2::encrypt(encryptedData1.data(), clearData);
+        EncryptorV2::encryptedSize(clearData.size()));
+    EncryptorV2::encrypt(encryptedData1.data(), clearData);
     std::vector<uint8_t> encryptedData2(
-        EncryptionFormat::EncryptorV2::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV2::encrypt(encryptedData2.data(), clearData);
+        EncryptorV2::encryptedSize(clearData.size()));
+    EncryptorV2::encrypt(encryptedData2.data(), clearData);
 
     CHECK(encryptedData1 != encryptedData2);
   }
@@ -113,13 +103,11 @@ TEST_SUITE("EncryptorV2")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV2::encryptedSize(clearData.size()));
+        EncryptorV2::encryptedSize(clearData.size()));
 
-    auto const metadata =
-        EncryptionFormat::EncryptorV2::encrypt(encryptedData.data(), clearData);
+    auto const metadata = EncryptorV2::encrypt(encryptedData.data(), clearData);
 
-    CHECK(EncryptionFormat::EncryptorV2::extractResourceId(encryptedData) ==
-          metadata.resourceId);
+    CHECK(EncryptorV2::extractResourceId(encryptedData) == metadata.resourceId);
   }
 
   TEST_CASE("decrypt should work with a buffer v2")
@@ -127,9 +115,8 @@ TEST_SUITE("EncryptorV2")
     auto const clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV2::decryptedSize(encryptedTestVector));
-    EncryptionFormat::EncryptorV2::decrypt(
-        decryptedData.data(), keyVector, encryptedTestVector);
+        EncryptorV2::decryptedSize(encryptedTestVector));
+    EncryptorV2::decrypt(decryptedData.data(), keyVector, encryptedTestVector);
 
     CHECK(decryptedData == clearData);
   }
@@ -139,12 +126,12 @@ TEST_SUITE("EncryptorV2")
     auto const clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV2::decryptedSize(encryptedTestVector));
+        EncryptorV2::decryptedSize(encryptedTestVector));
 
     encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV2::decrypt(
+        EncryptorV2::decrypt(
             decryptedData.data(), keyVector, encryptedTestVector),
         Errc::DecryptionFailed);
   }
@@ -164,32 +151,32 @@ TEST_SUITE("EncryptorV3")
 
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
-    std::vector<uint8_t> a0(EncryptionFormat::EncryptorV3::encryptedSize(0));
+    std::vector<uint8_t> a0(EncryptorV3::encryptedSize(0));
     Serialization::varint_write(a0.data(),
-                                EncryptionFormat::EncryptorV3::version());
-    std::vector<uint8_t> a42(EncryptionFormat::EncryptorV3::encryptedSize(42));
+                                EncryptorV3::version());
+    std::vector<uint8_t> a42(EncryptorV3::encryptedSize(42));
     Serialization::varint_write(a42.data(),
-                                EncryptionFormat::EncryptorV3::version());
-    CHECK(EncryptionFormat::EncryptorV3::decryptedSize(a0) == 0);
-    CHECK(EncryptionFormat::EncryptorV3::decryptedSize(a42) == 42);
+                                EncryptorV3::version());
+    CHECK(EncryptorV3::decryptedSize(a0) == 0);
+    CHECK(EncryptorV3::decryptedSize(a42) == 42);
   }
 
   TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
     auto const truncatedBuffer = make_buffer("\3");
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV3::decryptedSize(truncatedBuffer),
+        EncryptorV3::decryptedSize(truncatedBuffer),
         Errc::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
   {
     auto const versionSize =
-        Serialization::varint_size(EncryptionFormat::EncryptorV3::version());
+        Serialization::varint_size(EncryptorV3::version());
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
-    CHECK(EncryptionFormat::EncryptorV3::encryptedSize(0) ==
+    CHECK(EncryptorV3::encryptedSize(0) ==
           versionSize + 0 + MacSize);
-    CHECK(EncryptionFormat::EncryptorV3::encryptedSize(1) ==
+    CHECK(EncryptorV3::encryptedSize(1) ==
           versionSize + 1 + MacSize);
   }
 
@@ -197,15 +184,15 @@ TEST_SUITE("EncryptorV3")
   {
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV3::encryptedSize(clearData.size()));
+        EncryptorV3::encryptedSize(clearData.size()));
 
     auto const metadata =
-        EncryptionFormat::EncryptorV3::encrypt(encryptedData.data(), clearData);
+        EncryptorV3::encrypt(encryptedData.data(), clearData);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV3::decryptedSize(encryptedData));
+        EncryptorV3::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV3::decrypt(
+    EncryptorV3::decrypt(
         decryptedData.data(), metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
@@ -215,15 +202,15 @@ TEST_SUITE("EncryptorV3")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV3::encryptedSize(clearData.size()));
+        EncryptorV3::encryptedSize(clearData.size()));
 
     auto const metadata =
-        EncryptionFormat::EncryptorV3::encrypt(encryptedData.data(), clearData);
+        EncryptorV3::encrypt(encryptedData.data(), clearData);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV3::decryptedSize(encryptedData));
+        EncryptorV3::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV3::decrypt(
+    EncryptorV3::decrypt(
         decryptedData.data(), metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
@@ -233,11 +220,11 @@ TEST_SUITE("EncryptorV3")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(
-        EncryptionFormat::EncryptorV3::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV3::encrypt(encryptedData1.data(), clearData);
+        EncryptorV3::encryptedSize(clearData.size()));
+    EncryptorV3::encrypt(encryptedData1.data(), clearData);
     std::vector<uint8_t> encryptedData2(
-        EncryptionFormat::EncryptorV3::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV3::encrypt(encryptedData2.data(), clearData);
+        EncryptorV3::encryptedSize(clearData.size()));
+    EncryptorV3::encrypt(encryptedData2.data(), clearData);
 
     CHECK(encryptedData1 != encryptedData2);
   }
@@ -246,12 +233,12 @@ TEST_SUITE("EncryptorV3")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV3::encryptedSize(clearData.size()));
+        EncryptorV3::encryptedSize(clearData.size()));
 
     auto const metadata =
-        EncryptionFormat::EncryptorV3::encrypt(encryptedData.data(), clearData);
+        EncryptorV3::encrypt(encryptedData.data(), clearData);
 
-    CHECK(EncryptionFormat::EncryptorV3::extractResourceId(encryptedData) ==
+    CHECK(EncryptorV3::extractResourceId(encryptedData) ==
           metadata.resourceId);
   }
 
@@ -260,9 +247,9 @@ TEST_SUITE("EncryptorV3")
     auto clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV3::decryptedSize(encryptedTestVector));
+        EncryptorV3::decryptedSize(encryptedTestVector));
 
-    EncryptionFormat::EncryptorV3::decrypt(
+    EncryptorV3::decrypt(
         decryptedData.data(), keyVector, encryptedTestVector);
 
     CHECK(clearData == decryptedData);
@@ -273,11 +260,11 @@ TEST_SUITE("EncryptorV3")
     auto const clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV3::decryptedSize(encryptedTestVector));
+        EncryptorV3::decryptedSize(encryptedTestVector));
     encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV3::decrypt(
+        EncryptorV3::decrypt(
             decryptedData.data(), keyVector, encryptedTestVector),
         Errc::DecryptionFailed);
   }
@@ -287,7 +274,7 @@ TEST_SUITE("EncryptorV3")
     auto encryptedData = make_buffer("");
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV3::extractResourceId(encryptedData),
+        EncryptorV3::extractResourceId(encryptedData),
         Errc::InvalidArgument);
   }
 }
@@ -331,34 +318,34 @@ TEST_SUITE("EncryptorV5")
 
   TEST_CASE("decryptedSize and encryptedSize should be symmetrical")
   {
-    std::vector<uint8_t> a0(EncryptionFormat::EncryptorV5::encryptedSize(0));
+    std::vector<uint8_t> a0(EncryptorV5::encryptedSize(0));
     Serialization::varint_write(a0.data(),
-                                EncryptionFormat::EncryptorV5::version());
-    std::vector<uint8_t> a42(EncryptionFormat::EncryptorV5::encryptedSize(42));
+                                EncryptorV5::version());
+    std::vector<uint8_t> a42(EncryptorV5::encryptedSize(42));
     Serialization::varint_write(a42.data(),
-                                EncryptionFormat::EncryptorV5::version());
-    CHECK(EncryptionFormat::EncryptorV5::decryptedSize(a0) == 0);
-    CHECK(EncryptionFormat::EncryptorV5::decryptedSize(a42) == 42);
+                                EncryptorV5::version());
+    CHECK(EncryptorV5::decryptedSize(a0) == 0);
+    CHECK(EncryptorV5::decryptedSize(a42) == 42);
   }
 
   TEST_CASE("decryptedSize should throw if the buffer is truncated")
   {
     auto const truncatedBuffer = make_buffer("\5");
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV5::decryptedSize(truncatedBuffer),
+        EncryptorV5::decryptedSize(truncatedBuffer),
         Errc::InvalidArgument);
   }
 
   TEST_CASE("encryptedSize should return the right size")
   {
     auto const versionSize =
-        Serialization::varint_size(EncryptionFormat::EncryptorV5::version());
+        Serialization::varint_size(EncryptorV5::version());
     constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
-    CHECK(EncryptionFormat::EncryptorV5::encryptedSize(0) ==
+    CHECK(EncryptorV5::encryptedSize(0) ==
           versionSize + ResourceIdSize + IvSize + 0 + MacSize);
-    CHECK(EncryptionFormat::EncryptorV5::encryptedSize(1) ==
+    CHECK(EncryptorV5::encryptedSize(1) ==
           versionSize + ResourceIdSize + IvSize + 1 + MacSize);
   }
 
@@ -366,17 +353,17 @@ TEST_SUITE("EncryptorV5")
   {
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV5::encryptedSize(clearData.size()));
+        EncryptorV5::encryptedSize(clearData.size()));
 
-    auto const metadata = EncryptionFormat::EncryptorV5::encrypt(
+    auto const metadata = EncryptorV5::encrypt(
         encryptedData.data(), clearData, resourceId, keyVector);
     CHECK(metadata.resourceId == resourceId);
     CHECK(metadata.key == keyVector);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV5::decryptedSize(encryptedData));
+        EncryptorV5::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV5::decrypt(
+    EncryptorV5::decrypt(
         decryptedData.data(), keyVector, encryptedData);
 
     CHECK(clearData == decryptedData);
@@ -386,17 +373,17 @@ TEST_SUITE("EncryptorV5")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV5::encryptedSize(clearData.size()));
+        EncryptorV5::encryptedSize(clearData.size()));
 
-    auto const metadata = EncryptionFormat::EncryptorV5::encrypt(
+    auto const metadata = EncryptorV5::encrypt(
         encryptedData.data(), clearData, resourceId, keyVector);
     CHECK(metadata.resourceId == resourceId);
     CHECK(metadata.key == keyVector);
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV5::decryptedSize(encryptedData));
+        EncryptorV5::decryptedSize(encryptedData));
 
-    EncryptionFormat::EncryptorV5::decrypt(
+    EncryptorV5::decrypt(
         decryptedData.data(), keyVector, encryptedData);
 
     CHECK(clearData == decryptedData);
@@ -406,12 +393,12 @@ TEST_SUITE("EncryptorV5")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(
-        EncryptionFormat::EncryptorV5::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV5::encrypt(
+        EncryptorV5::encryptedSize(clearData.size()));
+    EncryptorV5::encrypt(
         encryptedData1.data(), clearData, resourceId, keyVector);
     std::vector<uint8_t> encryptedData2(
-        EncryptionFormat::EncryptorV5::encryptedSize(clearData.size()));
-    EncryptionFormat::EncryptorV5::encrypt(
+        EncryptorV5::encryptedSize(clearData.size()));
+    EncryptorV5::encrypt(
         encryptedData2.data(), clearData, resourceId, keyVector);
 
     CHECK(encryptedData1 != encryptedData2);
@@ -421,13 +408,13 @@ TEST_SUITE("EncryptorV5")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionFormat::EncryptorV5::encryptedSize(clearData.size()));
+        EncryptorV5::encryptedSize(clearData.size()));
 
-    auto const metadata = EncryptionFormat::EncryptorV5::encrypt(
+    auto const metadata = EncryptorV5::encrypt(
         encryptedData.data(), clearData, resourceId, keyVector);
 
     CHECK(metadata.resourceId == resourceId);
-    CHECK(EncryptionFormat::EncryptorV5::extractResourceId(encryptedData) ==
+    CHECK(EncryptorV5::extractResourceId(encryptedData) ==
           resourceId);
   }
 
@@ -436,9 +423,9 @@ TEST_SUITE("EncryptorV5")
     auto clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV5::decryptedSize(encryptedTestVector));
+        EncryptorV5::decryptedSize(encryptedTestVector));
 
-    EncryptionFormat::EncryptorV5::decrypt(
+    EncryptorV5::decrypt(
         decryptedData.data(), keyVector, encryptedTestVector);
 
     CHECK(clearData == decryptedData);
@@ -449,11 +436,11 @@ TEST_SUITE("EncryptorV5")
     auto const clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> decryptedData(
-        EncryptionFormat::EncryptorV5::decryptedSize(encryptedTestVector));
+        EncryptorV5::decryptedSize(encryptedTestVector));
     encryptedTestVector[20]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV5::decrypt(
+        EncryptorV5::decrypt(
             decryptedData.data(), keyVector, encryptedTestVector),
         Errc::DecryptionFailed);
   }
@@ -463,7 +450,7 @@ TEST_SUITE("EncryptorV5")
     auto encryptedData = make_buffer("");
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        EncryptionFormat::EncryptorV5::extractResourceId(encryptedData),
+        EncryptorV5::extractResourceId(encryptedData),
         Errc::InvalidArgument);
   }
 }

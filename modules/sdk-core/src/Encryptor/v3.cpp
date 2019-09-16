@@ -1,4 +1,4 @@
-#include <Tanker/EncryptionFormat/EncryptorV3.hpp>
+#include <Tanker/Encryptor/v3.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -12,22 +12,18 @@ using Tanker::Trustchain::ResourceId;
 
 namespace Tanker
 {
-namespace EncryptionFormat
-{
-namespace EncryptorV3
-{
 namespace
 {
-auto const versionSize = Serialization::varint_size(version());
+auto const versionSize = Serialization::varint_size(EncryptorV3::version());
 
 // version 3 format layout:
 // [version, 1B] [[ciphertext, variable] [MAC, 16B]]
-void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
+void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
   auto const dataVersionResult = Serialization::varint_read(encryptedData);
   auto const overheadSize = Trustchain::ResourceId::arraySize;
 
-  assert(dataVersionResult.first == version());
+  assert(dataVersionResult.first == EncryptorV3::version());
 
   if (dataVersionResult.second.size() < overheadSize)
   {
@@ -37,12 +33,13 @@ void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
 }
 }
 
-uint64_t encryptedSize(uint64_t clearSize)
+std::uint64_t EncryptorV3::encryptedSize(std::uint64_t clearSize)
 {
   return versionSize + Crypto::encryptedSize(clearSize);
 }
 
-uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
+std::uint64_t EncryptorV3::decryptedSize(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
@@ -50,8 +47,8 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   return Crypto::decryptedSize(versionResult.second.size());
 }
 
-EncryptionMetadata encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData)
+EncryptionMetadata EncryptorV3::encrypt(std::uint8_t* encryptedData,
+                                        gsl::span<std::uint8_t const> clearData)
 {
   Serialization::varint_write(encryptedData, version());
   auto const key = Crypto::makeSymmetricKey();
@@ -61,9 +58,9 @@ EncryptionMetadata encrypt(uint8_t* encryptedData,
   return {ResourceId(resourceId), key};
 }
 
-void decrypt(uint8_t* decryptedData,
-             Crypto::SymmetricKey const& key,
-             gsl::span<uint8_t const> encryptedData)
+void EncryptorV3::decrypt(std::uint8_t* decryptedData,
+                          Crypto::SymmetricKey const& key,
+                          gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
@@ -72,13 +69,12 @@ void decrypt(uint8_t* decryptedData,
   Crypto::decryptAead(key, iv.data(), decryptedData, versionResult.second, {});
 }
 
-ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
+ResourceId EncryptorV3::extractResourceId(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const cipherText = Serialization::varint_read(encryptedData).second;
   return ResourceId{Crypto::extractMac(cipherText)};
-}
-}
 }
 }

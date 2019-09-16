@@ -1,10 +1,10 @@
 #include <Tanker/Encryptor.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV2.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV3.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV5.hpp>
+#include <Tanker/Encryptor/v2.hpp>
+#include <Tanker/Encryptor/v3.hpp>
+#include <Tanker/Encryptor/v4.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
@@ -15,7 +15,6 @@ using Tanker::Trustchain::ResourceId;
 
 namespace Tanker
 {
-using namespace EncryptionFormat;
 using namespace Errors;
 
 namespace Encryptor

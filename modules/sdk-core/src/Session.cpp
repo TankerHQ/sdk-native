@@ -5,8 +5,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -304,8 +304,8 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
   auto const encryptedMetadata = TC_AWAIT(FileKit::encryptMetadata(
       metadata, resourceId, encryptedStream.symmetricKey()));
 
-  auto const uploadTicket = TC_AWAIT(getFileUploadTicket(
-      resourceId, EncryptionFormat::EncryptorV4::encryptedSize(size)));
+  auto const uploadTicket = TC_AWAIT(
+      getFileUploadTicket(resourceId, EncryptorV4::encryptedSize(size)));
 
   if (uploadTicket.service != "GCS")
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
