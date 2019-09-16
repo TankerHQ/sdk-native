@@ -462,7 +462,7 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
                               uint64_t nb_recipient_public_identities,
                               char const* const* recipient_gids,
                               uint64_t nb_recipient_gids,
-                              b64char const* const* resource_ids,
+                              char const* const* resource_ids,
                               uint64_t nb_resource_ids)
 {
   auto const spublicIdentities = to_vector<SPublicIdentity>(
@@ -513,8 +513,7 @@ tanker_future_t* tanker_verify_provisional_identity(
                         .unwrap());
 }
 
-tanker_future_t* tanker_revoke_device(tanker_t* ctanker,
-                                      b64char const* device_id)
+tanker_future_t* tanker_revoke_device(tanker_t* ctanker, char const* device_id)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->revokeDevice(SDeviceId(device_id)));
@@ -528,7 +527,7 @@ void tanker_free_buffer(void const* buffer)
 void tanker_free_device_list(tanker_device_list_t* list)
 {
   for (size_t i = 0; i < list->count; ++i)
-    free(const_cast<b64char*>(list->devices[i].device_id));
+    free(const_cast<char*>(list->devices[i].device_id));
   delete[] list->devices;
   delete list;
 }

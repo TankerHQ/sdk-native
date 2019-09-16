@@ -31,9 +31,9 @@ struct tanker_metadata
 struct tanker_upload_options
 {
   uint8_t version;
-  b64char const* const* recipient_public_identities;
+  char const* const* recipient_public_identities;
   uint32_t nb_recipient_public_identities;
-  b64char const* const* recipient_gids;
+  char const* const* recipient_gids;
   uint32_t nb_recipient_gids;
 };
 

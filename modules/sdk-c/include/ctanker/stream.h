@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include <ctanker/async.h>
-#include <ctanker/base64.h>
 #include <ctanker/ctanker.h>
 #include <ctanker/export.h>
 

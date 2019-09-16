@@ -2,7 +2,6 @@
 #define CTANKER_SDK_TANKER_TANKER_H
 
 #include <ctanker/async.h>
-#include <ctanker/base64.h>
 #include <ctanker/export.h>
 
 #include <stdbool.h>
@@ -74,7 +73,7 @@ struct tanker_device_list
  */
 struct tanker_device_list_elem
 {
-  b64char const* device_id;
+  char const* device_id;
   bool is_revoked;
 };
 
@@ -120,7 +119,7 @@ typedef void (*tanker_event_callback_t)(void* arg, void* data);
 struct tanker_options
 {
   uint8_t version;
-  b64char const* app_id;     /*!< Must not be NULL. */
+  char const* app_id;        /*!< Must not be NULL. */
   char const* url;           /*!< Must not be NULL. */
   char const* writable_path; /*!< Must not be NULL. */
   char const* sdk_type;      /*!< Must not be NULL. */
@@ -189,9 +188,9 @@ struct tanker_verification_method
 struct tanker_encrypt_options
 {
   uint8_t version;
-  b64char const* const* recipient_public_identities;
+  char const* const* recipient_public_identities;
   uint32_t nb_recipient_public_identities;
-  b64char const* const* recipient_gids;
+  char const* const* recipient_gids;
   uint32_t nb_recipient_gids;
 };
 
@@ -348,7 +347,7 @@ CTANKER_EXPORT enum tanker_status tanker_status(tanker_t* tanker);
  * Get the current device id.
  * \param tanker A tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
- * \return a future of b64char* that must be freed with tanker_free_buffer.
+ * \return a future of char* that must be freed with tanker_free_buffer.
  */
 CTANKER_EXPORT tanker_future_t* tanker_device_id(tanker_t* tanker);
 
@@ -365,7 +364,7 @@ CTANKER_EXPORT tanker_future_t* tanker_get_device_list(tanker_t* tanker);
  * Generate an verificationKey that can be used to accept a device
  * \param session A tanker tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_READY
- * \return a future of b64char* that must be freed with tanker_free_buffer
+ * \return a future of char* that must be freed with tanker_free_buffer
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
@@ -413,7 +412,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_decrypted_size(
 
 /*!
  * Get the resource id from an encrypted data.
- * \return an already ready future of a b64char* that must be freed with
+ * \return an already ready future of a char* that must be freed with
  * tanker_free_buffer.
  */
 CTANKER_EXPORT tanker_expected_t* tanker_get_resource_id(
@@ -490,7 +489,7 @@ CTANKER_EXPORT tanker_future_t* tanker_share(
     uint64_t nb_recipient_public_identities,
     char const* const* recipient_gids,
     uint64_t nb_recipient_gids,
-    b64char const* const* resource_ids,
+    char const* const* resource_ids,
     uint64_t nb_resource_ids);
 
 /*!
@@ -536,7 +535,7 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(
  * another user's device.
  */
 CTANKER_EXPORT tanker_future_t* tanker_revoke_device(tanker_t* session,
-                                                     b64char const* device_id);
+                                                     char const* device_id);
 
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
