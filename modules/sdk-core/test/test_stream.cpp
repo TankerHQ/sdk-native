@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
@@ -17,7 +17,6 @@
 #include <vector>
 
 using namespace Tanker;
-using namespace Tanker::EncryptionFormat::EncryptorV4;
 using namespace Tanker::Errors;
 
 namespace

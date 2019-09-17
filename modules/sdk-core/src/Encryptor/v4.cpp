@@ -1,4 +1,4 @@
-#include <Tanker/EncryptionFormat/EncryptorV4.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -20,14 +20,10 @@ using namespace Tanker::Errors;
 
 namespace Tanker
 {
-namespace EncryptionFormat
-{
-namespace EncryptorV4
-{
 namespace
 {
-constexpr auto sizeOfChunkSize = sizeof(uint32_t);
-auto const versionSize = Serialization::varint_size(version());
+constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
+auto const versionSize = Serialization::varint_size(EncryptorV4::version());
 auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
 
 // version 4 format layout:
@@ -35,14 +31,15 @@ auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
 // header: [version, varint] [chunkSize, 4B] [ResourceId, 16B]
 // content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
 
-uint32_t clearChunkSize(uint32_t const encryptedChunkSize)
+std::uint32_t clearChunkSize(std::uint32_t const encryptedChunkSize)
 {
   return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
          Trustchain::ResourceId::arraySize;
 }
 }
 
-uint64_t encryptedSize(uint64_t clearSize, uint32_t encryptedChunkSize)
+std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize,
+                                         std::uint32_t encryptedChunkSize)
 {
   auto const chunkSize = clearChunkSize(encryptedChunkSize);
   auto const chunks = clearSize / chunkSize;
@@ -51,7 +48,8 @@ uint64_t encryptedSize(uint64_t clearSize, uint32_t encryptedChunkSize)
          Crypto::encryptedSize(lastClearChunkSize);
 }
 
-uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
+std::uint64_t EncryptorV4::decryptedSize(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
   auto const header = Serialization::deserialize<StreamHeader>(ss);
@@ -67,24 +65,26 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
          Crypto::decryptedSize(lastClearChunkSize);
 }
 
-tc::cotask<EncryptionFormat::EncryptionMetadata> encrypt(
-    uint8_t* encryptedData,
-    gsl::span<uint8_t const> clearData,
-    uint32_t encryptedChunkSize)
+tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
+    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t const> clearData,
+    std::uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(bufferViewToInputSource(clearData), encryptedChunkSize);
+  StreamEncryptor encryptor(bufferViewToInputSource(clearData),
+                            encryptedChunkSize);
 
   while (auto const nbRead =
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
     encryptedData += nbRead;
 
-  TC_RETURN((EncryptionFormat::EncryptionMetadata{encryptor.resourceId(),
-                                                  encryptor.symmetricKey()}));
+  TC_RETURN(
+      (EncryptionMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
 }
 
-tc::cotask<void> decrypt(uint8_t* decryptedData,
-                         Crypto::SymmetricKey const& key,
-                         gsl::span<uint8_t const> encryptedData)
+tc::cotask<void> EncryptorV4::decrypt(
+    std::uint8_t* decryptedData,
+    Crypto::SymmetricKey const& key,
+    gsl::span<std::uint8_t const> encryptedData)
 {
   auto decryptor = TC_AWAIT(StreamDecryptor::create(
       bufferViewToInputSource(encryptedData),
@@ -95,11 +95,10 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
     decryptedData += nbRead;
 }
 
-ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
+ResourceId EncryptorV4::extractResourceId(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
   return Serialization::deserialize<StreamHeader>(ss).resourceId();
-}
-}
 }
 }

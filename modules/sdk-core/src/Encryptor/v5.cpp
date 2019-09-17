@@ -1,4 +1,4 @@
-#include <Tanker/EncryptionFormat/EncryptorV5.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -12,24 +12,20 @@ using Tanker::Trustchain::ResourceId;
 
 namespace Tanker
 {
-namespace EncryptionFormat
-{
-namespace EncryptorV5
-{
 namespace
 {
-auto const versionSize = Serialization::varint_size(version());
+auto const versionSize = Serialization::varint_size(EncryptorV5::version());
 
 // version 5 format layout:
 // [version, 1B] [resourceid, 16B] [iv, 24B] [[ciphertext, variable] [MAC, 16B]]
-void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
+void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
   auto const dataVersionResult = Serialization::varint_read(encryptedData);
   auto const overheadSize = Trustchain::ResourceId::arraySize +
                             Crypto::AeadIv::arraySize +
                             Trustchain::ResourceId::arraySize;
 
-  assert(dataVersionResult.first == version());
+  assert(dataVersionResult.first == EncryptorV5::version());
 
   if (dataVersionResult.second.size() < overheadSize)
   {
@@ -39,13 +35,14 @@ void checkEncryptedFormat(gsl::span<uint8_t const> encryptedData)
 }
 }
 
-uint64_t encryptedSize(uint64_t clearSize)
+std::uint64_t EncryptorV5::encryptedSize(std::uint64_t clearSize)
 {
   return versionSize + Trustchain::ResourceId::arraySize +
          Crypto::AeadIv::arraySize + Crypto::encryptedSize(clearSize);
 }
 
-uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
+std::uint64_t EncryptorV5::decryptedSize(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
@@ -55,16 +52,17 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
                                Crypto::AeadIv::arraySize);
 }
 
-EncryptionMetadata encrypt(uint8_t* encryptedData,
-                           gsl::span<uint8_t const> clearData,
-                           Trustchain::ResourceId const& resourceId,
-                           Crypto::SymmetricKey const& key)
+EncryptionMetadata EncryptorV5::encrypt(
+    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t const> clearData,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key)
 {
   Serialization::varint_write(encryptedData, version());
   std::copy(resourceId.begin(), resourceId.end(), encryptedData + versionSize);
   auto const iv =
       encryptedData + versionSize + Trustchain::ResourceId::arraySize;
-  Crypto::randomFill(gsl::span<uint8_t>(iv, Crypto::AeadIv::arraySize));
+  Crypto::randomFill(gsl::make_span(iv, Crypto::AeadIv::arraySize));
   Crypto::encryptAead(key,
                       iv,
                       encryptedData + versionSize +
@@ -75,9 +73,9 @@ EncryptionMetadata encrypt(uint8_t* encryptedData,
   return {ResourceId(resourceId), key};
 }
 
-void decrypt(uint8_t* decryptedData,
-             Crypto::SymmetricKey const& key,
-             gsl::span<uint8_t const> encryptedData)
+void EncryptorV5::decrypt(std::uint8_t* decryptedData,
+                          Crypto::SymmetricKey const& key,
+                          gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
@@ -91,12 +89,11 @@ void decrypt(uint8_t* decryptedData,
   Crypto::decryptAead(key, iv.data(), decryptedData, data, resourceId);
 }
 
-ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
+ResourceId EncryptorV5::extractResourceId(
+    gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   return ResourceId{encryptedData.subspan(versionSize, ResourceId::arraySize)};
-}
-}
 }
 }

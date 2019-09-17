@@ -134,11 +134,11 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Errors/ErrcCategory.hpp
   include/Tanker/Detail/BufferedStreamImpl.hpp
   include/Tanker/Encryptor.hpp
-  include/Tanker/EncryptionFormat/EncryptionMetadata.hpp
-  include/Tanker/EncryptionFormat/EncryptorV2.hpp
-  include/Tanker/EncryptionFormat/EncryptorV3.hpp
-  include/Tanker/EncryptionFormat/EncryptorV4.hpp
-  include/Tanker/EncryptionFormat/EncryptorV5.hpp
+  include/Tanker/EncryptionMetadata.hpp
+  include/Tanker/Encryptor/v2.hpp
+  include/Tanker/Encryptor/v3.hpp
+  include/Tanker/Encryptor/v4.hpp
+  include/Tanker/Encryptor/v5.hpp
   include/Tanker/CloudStorage.hpp
   include/Tanker/FileKit/DownloadStream.hpp
   include/Tanker/FileKit/Metadata.hpp
@@ -203,10 +203,10 @@ add_library(tankercore STATIC
   src/Verif/UserGroupCreation.cpp
   src/Verif/ProvisionalIdentityClaim.cpp
   src/Encryptor.cpp
-  src/EncryptionFormat/EncryptorV2.cpp
-  src/EncryptionFormat/EncryptorV3.cpp
-  src/EncryptionFormat/EncryptorV4.cpp
-  src/EncryptionFormat/EncryptorV5.cpp
+  src/Encryptor/v2.cpp
+  src/Encryptor/v3.cpp
+  src/Encryptor/v4.cpp
+  src/Encryptor/v5.cpp
   src/CloudStorage.cpp
   src/Retry.cpp
 

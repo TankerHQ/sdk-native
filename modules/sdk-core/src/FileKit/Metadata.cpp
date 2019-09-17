@@ -1,6 +1,6 @@
 #include <Tanker/FileKit/Metadata.hpp>
 
-#include <Tanker/EncryptionFormat/EncryptorV5.hpp>
+#include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Session.hpp>
 
 #include <nlohmann/json.hpp>
@@ -46,8 +46,6 @@ tc::cotask<std::string> encryptMetadata(
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
-  using namespace EncryptionFormat;
-
   auto const jmetadata = nlohmann::json(metadata).dump();
 
   std::vector<uint8_t> encryptedMetadata(
