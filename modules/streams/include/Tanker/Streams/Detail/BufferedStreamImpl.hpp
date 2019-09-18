@@ -10,9 +10,10 @@
 
 namespace Tanker
 {
+namespace Streams
+{
 template <typename Derived>
-BufferedStream<Derived>::BufferedStream(Streams::InputSource cb)
-  : _cb(std::move(cb))
+BufferedStream<Derived>::BufferedStream(InputSource cb) : _cb(std::move(cb))
 {
 }
 
@@ -39,7 +40,7 @@ tc::cotask<gsl::span<std::uint8_t const>>
 BufferedStream<Derived>::readInputSource(std::int64_t n)
 {
   _input.resize(n);
-  auto const totalRead = TC_AWAIT(Streams::readStream(_input, _cb));
+  auto const totalRead = TC_AWAIT(readStream(_input, _cb));
   if (totalRead < n)
     _cb = nullptr;
   _input.resize(totalRead);
@@ -86,5 +87,6 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(std::uint8_t* out,
     throw;
   }
   throw AssertionError("unknown state");
+}
 }
 }

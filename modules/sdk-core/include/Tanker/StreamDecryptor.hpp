@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Tanker/BufferedStream.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Streams/BufferedStream.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -17,15 +17,15 @@
 
 namespace Tanker
 {
-class StreamDecryptor : BufferedStream<StreamDecryptor>
+class StreamDecryptor : Streams::BufferedStream<StreamDecryptor>
 {
-  friend BufferedStream<StreamDecryptor>;
+  friend Streams::BufferedStream<StreamDecryptor>;
 
 public:
   using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
       Trustchain::ResourceId const&)>;
 
-  using BufferedStream<StreamDecryptor>::operator();
+  using Streams::BufferedStream<StreamDecryptor>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
   Trustchain::ResourceId const& resourceId() const;

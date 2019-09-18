@@ -75,7 +75,6 @@ add_library(tankercore STATIC
   include/Tanker/StreamDecryptor.hpp
   include/Tanker/GenericStreamDecryptor.hpp
   include/Tanker/StreamEncryptor.hpp
-  include/Tanker/BufferedStream.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
@@ -128,7 +127,6 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp
-  include/Tanker/Detail/BufferedStreamImpl.hpp
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionMetadata.hpp
   include/Tanker/Encryptor/v2.hpp

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.4)
 project(tankerstreams)
 
 add_library(tankerstreams
+  include/Tanker/Streams/BufferedStream.hpp
+  include/Tanker/Streams/Detail/BufferedStreamImpl.hpp
   include/Tanker/Streams/InputSource.hpp
   include/Tanker/Streams/Header.hpp
   include/Tanker/Streams/Helpers.hpp

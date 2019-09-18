@@ -11,11 +11,13 @@
 
 namespace Tanker
 {
+namespace Streams
+{
 template <typename Derived>
 class BufferedStream
 {
 public:
-  explicit BufferedStream(Streams::InputSource);
+  explicit BufferedStream(InputSource);
 
   tc::cotask<std::int64_t> operator()(std::uint8_t* out, std::int64_t n);
 
@@ -37,12 +39,13 @@ private:
   tc::cotask<std::int64_t> copyBufferedOutput(std::uint8_t* out,
                                               std::int64_t n);
 
-  Streams::InputSource _cb;
+  InputSource _cb;
   std::vector<std::uint8_t> _input;
   std::vector<std::uint8_t> _output;
   State _state{State::NoOutput};
   std::int64_t _currentPosition{};
 };
 }
+}
 
-#include <Tanker/Detail/BufferedStreamImpl.hpp>
+#include <Tanker/Streams/Detail/BufferedStreamImpl.hpp>
