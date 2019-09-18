@@ -176,7 +176,7 @@ tc::shared_future<SResourceId> AsyncCore::upload(
 }
 
 tc::shared_future<SResourceId> AsyncCore::uploadStream(
-    StreamInputSource source,
+    Streams::InputSource source,
     uint64_t size,
     FileKit::Metadata const& metadata,
     std::vector<SPublicIdentity> const& publicIdentities,
@@ -376,7 +376,7 @@ expected<SResourceId> AsyncCore::getResourceId(
 }
 
 tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(
-    StreamInputSource cb,
+    Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)
 {
@@ -391,7 +391,7 @@ tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(
 }
 
 tc::shared_future<GenericStreamDecryptor> AsyncCore::makeStreamDecryptor(
-    StreamInputSource cb)
+    Streams::InputSource cb)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable(

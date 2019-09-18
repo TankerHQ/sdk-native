@@ -77,7 +77,6 @@ add_library(tankercore STATIC
   include/Tanker/StreamEncryptor.hpp
   include/Tanker/StreamHeader.hpp
   include/Tanker/BufferedStream.hpp
-  include/Tanker/StreamInputSource.hpp
   include/Tanker/StreamHelpers.hpp
   include/Tanker/PeekableInputSource.hpp
   include/Tanker/TrustchainStore.hpp
@@ -229,6 +228,7 @@ target_link_libraries(tankercore
   tankeridentity
   tankertypes
   tankernetwork
+  tankerstreams
   tankertrustchain
   tankercrypto
   tankerformat

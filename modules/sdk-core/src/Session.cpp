@@ -291,7 +291,7 @@ tc::cotask<Trustchain::ResourceId> Session::upload(
 }
 
 tc::cotask<Trustchain::ResourceId> Session::uploadStream(
-    StreamInputSource source,
+    Streams::InputSource source,
     uint64_t size,
     FileKit::Metadata const& metadata,
     std::vector<SPublicIdentity> const& publicIdentities,
@@ -315,7 +315,7 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
   auto const uploadUrl =
       TC_AWAIT(FileKit::getUploadUrl(multi, uploadTicket, encryptedMetadata));
 
-  auto const inputStream = StreamInputSource(encryptedStream);
+  auto const inputStream = Streams::InputSource(encryptedStream);
   std::vector<uint8_t> buf(FileKit::CHUNK_SIZE);
   uint64_t position = 0;
   while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
@@ -693,7 +693,7 @@ tc::cotask<void> Session::nukeDatabase()
 }
 
 tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
-    StreamInputSource cb,
+    Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
@@ -731,7 +731,7 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
 }
 
 tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
-    StreamInputSource cb)
+    Streams::InputSource cb)
 {
   auto peekableSource = PeekableInputSource(std::move(cb));
   auto const version = TC_AWAIT(peekableSource.peek(1));

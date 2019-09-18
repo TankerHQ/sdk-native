@@ -22,12 +22,12 @@ constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 }
 }
 
-StreamEncryptor::StreamEncryptor(StreamInputSource cb)
+StreamEncryptor::StreamEncryptor(Streams::InputSource cb)
   : StreamEncryptor(std::move(cb), StreamHeader::defaultEncryptedChunkSize)
 {
 }
 
-StreamEncryptor::StreamEncryptor(StreamInputSource cb,
+StreamEncryptor::StreamEncryptor(Streams::InputSource cb,
                                  std::uint32_t encryptedChunkSize)
   : BufferedStream(std::move(cb)), _encryptedChunkSize(encryptedChunkSize)
 {

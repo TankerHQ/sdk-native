@@ -1,6 +1,6 @@
 #pragma once
 #include <Tanker/FileKit/Metadata.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 
 #include <vector>
 
@@ -16,7 +16,7 @@ struct DownloadResult
 
 struct DownloadStreamResult
 {
-  StreamInputSource stream;
+  Streams::InputSource stream;
   Metadata metadata;
 };
 }

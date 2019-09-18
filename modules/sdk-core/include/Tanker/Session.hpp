@@ -18,7 +18,7 @@
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/StreamEncryptor.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -105,7 +105,7 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
   tc::cotask<Trustchain::ResourceId> uploadStream(
-      StreamInputSource data,
+      Streams::InputSource data,
       uint64_t size,
       FileKit::Metadata const& metadata = {},
       std::vector<SPublicIdentity> const& publicIdentities = {},
@@ -144,11 +144,11 @@ public:
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
   tc::cotask<StreamEncryptor> makeStreamEncryptor(
-      StreamInputSource,
+      Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::cotask<GenericStreamDecryptor> makeStreamDecryptor(StreamInputSource);
+  tc::cotask<GenericStreamDecryptor> makeStreamDecryptor(Streams::InputSource);
 
   tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
       Trustchain::ResourceId const& resourceId, uint64_t length);

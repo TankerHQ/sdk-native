@@ -4,7 +4,7 @@ namespace Tanker
 {
 constexpr const uint64_t PeekableInputSource::chunkSize;
 
-PeekableInputSource::PeekableInputSource(StreamInputSource source)
+PeekableInputSource::PeekableInputSource(Streams::InputSource source)
   : _underlyingStream(std::move(source))
 {
 }

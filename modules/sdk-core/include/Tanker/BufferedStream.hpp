@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -15,7 +15,7 @@ template <typename Derived>
 class BufferedStream
 {
 public:
-  explicit BufferedStream(StreamInputSource);
+  explicit BufferedStream(Streams::InputSource);
 
   tc::cotask<std::int64_t> operator()(std::uint8_t* out, std::int64_t n);
 
@@ -37,7 +37,7 @@ private:
   tc::cotask<std::int64_t> copyBufferedOutput(std::uint8_t* out,
                                               std::int64_t n);
 
-  StreamInputSource _cb;
+  Streams::InputSource _cb;
   std::vector<std::uint8_t> _input;
   std::vector<std::uint8_t> _output;
   State _state{State::NoOutput};

@@ -7,7 +7,7 @@
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/StreamEncryptor.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
@@ -89,7 +89,7 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
   tc::shared_future<SResourceId> uploadStream(
-      StreamInputSource data,
+      Streams::InputSource data,
       uint64_t size,
       FileKit::Metadata const& metadata = {},
       std::vector<SPublicIdentity> const& publicIdentities = {},
@@ -141,12 +141,12 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   tc::shared_future<StreamEncryptor> makeStreamEncryptor(
-      StreamInputSource,
+      Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
   tc::shared_future<GenericStreamDecryptor> makeStreamDecryptor(
-      StreamInputSource);
+      Streams::InputSource);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);

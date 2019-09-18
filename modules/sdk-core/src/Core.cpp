@@ -228,7 +228,7 @@ tc::cotask<Trustchain::ResourceId> Core::upload(
 }
 
 tc::cotask<Trustchain::ResourceId> Core::uploadStream(
-    StreamInputSource source,
+    Streams::InputSource source,
     uint64_t size,
     FileKit::Metadata const& metadata,
     std::vector<SPublicIdentity> const& publicIdentities,
@@ -358,7 +358,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 }
 
 tc::cotask<StreamEncryptor> Core::makeStreamEncryptor(
-    StreamInputSource cb,
+    Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)
 {
@@ -370,7 +370,7 @@ tc::cotask<StreamEncryptor> Core::makeStreamEncryptor(
 }
 
 tc::cotask<GenericStreamDecryptor> Core::makeStreamDecryptor(
-    StreamInputSource cb)
+    Streams::InputSource cb)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)

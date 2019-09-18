@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -10,8 +10,8 @@
 
 namespace Tanker
 {
-StreamInputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer);
-StreamInputSource bufferToInputSource(std::vector<uint8_t> buffer);
+Streams::InputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer);
+Streams::InputSource bufferToInputSource(std::vector<uint8_t> buffer);
 
 template <typename T>
 tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)

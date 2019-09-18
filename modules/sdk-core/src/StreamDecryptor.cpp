@@ -43,12 +43,12 @@ void checkHeaderIntegrity(StreamHeader const& oldHeader,
 }
 }
 
-StreamDecryptor::StreamDecryptor(StreamInputSource cb)
+StreamDecryptor::StreamDecryptor(Streams::InputSource cb)
   : BufferedStream(std::move(cb))
 {
 }
 
-tc::cotask<StreamDecryptor> StreamDecryptor::create(StreamInputSource cb,
+tc::cotask<StreamDecryptor> StreamDecryptor::create(Streams::InputSource cb,
                                                     ResourceKeyFinder finder)
 {
   StreamDecryptor decryptor(std::move(cb));

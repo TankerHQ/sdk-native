@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/StreamHeader.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -30,10 +30,10 @@ public:
   Crypto::SymmetricKey const& symmetricKey() const;
   Trustchain::ResourceId const& resourceId() const;
 
-  static tc::cotask<StreamDecryptor> create(StreamInputSource,
+  static tc::cotask<StreamDecryptor> create(Streams::InputSource,
                                             ResourceKeyFinder);
 private:
-  explicit StreamDecryptor(StreamInputSource);
+  explicit StreamDecryptor(Streams::InputSource);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();

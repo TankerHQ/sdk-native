@@ -39,6 +39,7 @@ endif()
 tanker_link_libraries(ctanker PUBLIC
   tanker_utils-c
   tankercore
+  tankerstreams
   tankercrypto
   tankeridentity
 

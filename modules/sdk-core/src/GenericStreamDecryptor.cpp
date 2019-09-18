@@ -3,7 +3,7 @@
 namespace Tanker
 {
 GenericStreamDecryptor::GenericStreamDecryptor(
-    StreamInputSource source, Trustchain::ResourceId const& resourceId)
+    Streams::InputSource source, Trustchain::ResourceId const& resourceId)
   : _source(std::move(source)), _resourceId(resourceId)
 {
 }

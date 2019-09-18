@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -16,7 +16,7 @@ class PeekableInputSource
 public:
   static constexpr uint64_t chunkSize = 1024;
 
-  explicit PeekableInputSource(StreamInputSource source);
+  explicit PeekableInputSource(Streams::InputSource source);
 
   tc::cotask<gsl::span<uint8_t const>> peek(uint64_t size);
 
@@ -26,6 +26,6 @@ private:
   std::vector<uint8_t> _buffer;
   uint64_t _pos = 0;
 
-  StreamInputSource _underlyingStream;
+  Streams::InputSource _underlyingStream;
 };
 }

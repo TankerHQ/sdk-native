@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -12,7 +12,7 @@ namespace Tanker
 class GenericStreamDecryptor
 {
 public:
-  explicit GenericStreamDecryptor(StreamInputSource source,
+  explicit GenericStreamDecryptor(Streams::InputSource source,
                                   Trustchain::ResourceId const& resourceId);
 
   Trustchain::ResourceId const& resourceId() const;
@@ -20,7 +20,7 @@ public:
   tc::cotask<int64_t> operator()(uint8_t* buffer, size_t size);
 
 private:
-  StreamInputSource _source;
+  Streams::InputSource _source;
   Trustchain::ResourceId _resourceId;
 };
 }

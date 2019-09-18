@@ -2,7 +2,7 @@
 
 #include <Tanker/BufferedStream.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -19,8 +19,8 @@ class StreamEncryptor : BufferedStream<StreamEncryptor>
   friend BufferedStream<StreamEncryptor>;
 
 public:
-  explicit StreamEncryptor(StreamInputSource);
-  StreamEncryptor(StreamInputSource, std::uint32_t encryptedChunkSize);
+  explicit StreamEncryptor(Streams::InputSource);
+  StreamEncryptor(Streams::InputSource, std::uint32_t encryptedChunkSize);
 
   using BufferedStream<StreamEncryptor>::operator();
 

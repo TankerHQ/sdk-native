@@ -11,7 +11,7 @@
 namespace Tanker
 {
 template <typename Derived>
-BufferedStream<Derived>::BufferedStream(StreamInputSource cb)
+BufferedStream<Derived>::BufferedStream(Streams::InputSource cb)
   : _cb(std::move(cb))
 {
 }
