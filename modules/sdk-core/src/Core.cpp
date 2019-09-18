@@ -357,7 +357,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
   TC_AWAIT((*psession)->revokeDevice(deviceId));
 }
 
-tc::cotask<StreamEncryptor> Core::makeStreamEncryptor(
+tc::cotask<Streams::StreamEncryptor> Core::makeStreamEncryptor(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)

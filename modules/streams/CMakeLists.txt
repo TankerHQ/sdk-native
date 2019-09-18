@@ -9,10 +9,14 @@ add_library(tankerstreams
   include/Tanker/Streams/Header.hpp
   include/Tanker/Streams/Helpers.hpp
   include/Tanker/Streams/PeekableInputSource.hpp
+  include/Tanker/Streams/StreamDecryptor.hpp
+  include/Tanker/Streams/StreamEncryptor.hpp
 
   src/Header.cpp
   src/Helpers.cpp
   src/PeekableInputSource.cpp
+  src/StreamDecryptor.cpp
+  src/StreamEncryptor.cpp
 )
 target_include_directories(tankerstreams
   PUBLIC

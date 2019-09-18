@@ -30,7 +30,7 @@
 #include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/Streams/StreamDecryptor.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -692,12 +692,12 @@ tc::cotask<void> Session::nukeDatabase()
   TC_AWAIT(_db->nuke());
 }
 
-tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
+tc::cotask<Streams::StreamEncryptor> Session::makeStreamEncryptor(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  StreamEncryptor encryptor(std::move(cb));
+  Streams::StreamEncryptor encryptor(std::move(cb));
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
@@ -745,7 +745,7 @@ tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
       TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
     };
 
-    auto streamDecryptor = TC_AWAIT(StreamDecryptor::create(
+    auto streamDecryptor = TC_AWAIT(Streams::StreamDecryptor::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
     TC_RETURN(GenericStreamDecryptor(std::move(streamDecryptor),
                                      streamDecryptor.resourceId()));

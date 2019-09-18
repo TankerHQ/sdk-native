@@ -17,7 +17,7 @@
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/Streams/StreamEncryptor.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -143,7 +143,7 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Device>> getDeviceList() const;
 
-  tc::cotask<StreamEncryptor> makeStreamEncryptor(
+  tc::cotask<Streams::StreamEncryptor> makeStreamEncryptor(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});

@@ -17,23 +17,25 @@
 
 namespace Tanker
 {
-class StreamDecryptor : Streams::BufferedStream<StreamDecryptor>
+namespace Streams
 {
-  friend Streams::BufferedStream<StreamDecryptor>;
+class StreamDecryptor : BufferedStream<StreamDecryptor>
+{
+  friend BufferedStream<StreamDecryptor>;
 
 public:
   using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
       Trustchain::ResourceId const&)>;
 
-  using Streams::BufferedStream<StreamDecryptor>::operator();
+  using BufferedStream<StreamDecryptor>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
   Trustchain::ResourceId const& resourceId() const;
 
-  static tc::cotask<StreamDecryptor> create(Streams::InputSource,
-                                            ResourceKeyFinder);
+  static tc::cotask<StreamDecryptor> create(InputSource, ResourceKeyFinder);
+
 private:
-  explicit StreamDecryptor(Streams::InputSource);
+  explicit StreamDecryptor(InputSource);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();
@@ -41,7 +43,8 @@ private:
   tc::cotask<void> decryptChunk();
 
   Crypto::SymmetricKey _key;
-  Streams::Header _header;
+  Header _header;
   std::int64_t _chunkIndex{};
 };
+}
 }

@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Streams/StreamEncryptor.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -80,7 +81,8 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
           ->makeStreamEncryptor(
               wrapCallback(cb, additional_data), spublicIdentities, sgroupIds)
           .and_then(
-              tc::get_synchronous_executor(), [](StreamEncryptor encryptor) {
+              tc::get_synchronous_executor(),
+              [](Streams::StreamEncryptor encryptor) {
                 auto c_stream = new tanker_stream;
                 c_stream->resourceId = SResourceId{
                     cppcodec::base64_rfc4648::encode(encryptor.resourceId())};

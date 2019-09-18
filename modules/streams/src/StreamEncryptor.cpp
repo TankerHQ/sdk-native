@@ -1,4 +1,4 @@
-#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/Streams/StreamEncryptor.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -13,29 +13,27 @@ using namespace Tanker::Errors;
 
 namespace Tanker
 {
+namespace Streams
+{
 namespace
 {
 constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 {
-  return encryptedChunkSize - Streams::Header::serializedSize -
-         Crypto::Mac::arraySize;
+  return encryptedChunkSize - Header::serializedSize - Crypto::Mac::arraySize;
 }
 }
 
-StreamEncryptor::StreamEncryptor(Streams::InputSource cb)
-  : StreamEncryptor(std::move(cb), Streams::Header::defaultEncryptedChunkSize)
+StreamEncryptor::StreamEncryptor(InputSource cb)
+  : StreamEncryptor(std::move(cb), Header::defaultEncryptedChunkSize)
 {
 }
 
-StreamEncryptor::StreamEncryptor(Streams::InputSource cb,
-                                 std::uint32_t encryptedChunkSize)
+StreamEncryptor::StreamEncryptor(InputSource cb,
+                                   std::uint32_t encryptedChunkSize)
   : BufferedStream(std::move(cb)), _encryptedChunkSize(encryptedChunkSize)
 {
-  if (encryptedChunkSize <
-      Streams::Header::serializedSize + Crypto::Mac::arraySize)
-  {
+  if (encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
     throw AssertionError("invalid encrypted chunk size");
-  }
   Crypto::randomFill(_resourceId);
   _key = Crypto::makeSymmetricKey();
 }
@@ -54,10 +52,10 @@ tc::cotask<void> StreamEncryptor::encryptChunk()
 {
   auto const clearInput =
       TC_AWAIT(readInputSource(clearChunkSize(_encryptedChunkSize)));
-  auto output = prepareWrite(Streams::Header::serializedSize +
+  auto output = prepareWrite(Header::serializedSize +
                              Crypto::encryptedSize(clearInput.size()));
 
-  Streams::Header const header(
+  Header const header(
       _encryptedChunkSize, _resourceId, Crypto::getRandom<Crypto::AeadIv>());
   auto const it = Serialization::serialize(output.data(), header);
   auto const iv = Crypto::deriveIv(header.seed(), _chunkIndex);
@@ -68,5 +66,6 @@ tc::cotask<void> StreamEncryptor::encryptChunk()
 tc::cotask<void> StreamEncryptor::processInput()
 {
   TC_AWAIT(encryptChunk());
+}
 }
 }

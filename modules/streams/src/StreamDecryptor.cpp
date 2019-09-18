@@ -1,4 +1,4 @@
-#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/Streams/StreamDecryptor.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -13,10 +13,11 @@ using namespace Tanker::Errors;
 
 namespace Tanker
 {
+namespace Streams
+{
 namespace
 {
-void checkHeaderIntegrity(Streams::Header const& oldHeader,
-                          Streams::Header const& currentHeader)
+void checkHeaderIntegrity(Header const& oldHeader, Header const& currentHeader)
 {
   if (oldHeader.version() != currentHeader.version())
   {
@@ -43,13 +44,13 @@ void checkHeaderIntegrity(Streams::Header const& oldHeader,
 }
 }
 
-StreamDecryptor::StreamDecryptor(Streams::InputSource cb)
+StreamDecryptor::StreamDecryptor(InputSource cb)
   : BufferedStream(std::move(cb))
 {
 }
 
-tc::cotask<StreamDecryptor> StreamDecryptor::create(Streams::InputSource cb,
-                                                    ResourceKeyFinder finder)
+tc::cotask<StreamDecryptor> StreamDecryptor::create(InputSource cb,
+                                                      ResourceKeyFinder finder)
 {
   StreamDecryptor decryptor(std::move(cb));
 
@@ -61,10 +62,10 @@ tc::cotask<StreamDecryptor> StreamDecryptor::create(Streams::InputSource cb,
 
 tc::cotask<void> StreamDecryptor::readHeader()
 {
-  auto const buffer = TC_AWAIT(readInputSource(Streams::Header::serializedSize));
+  auto const buffer = TC_AWAIT(readInputSource(Header::serializedSize));
   try
   {
-    if (buffer.size() != Streams::Header::serializedSize)
+    if (buffer.size() != Header::serializedSize)
     {
       throw Exception(make_error_code(Errc::IOError),
                       "could not read encrypted input header");
@@ -92,7 +93,7 @@ Crypto::SymmetricKey const& StreamDecryptor::symmetricKey() const
 tc::cotask<void> StreamDecryptor::decryptChunk()
 {
   auto const sizeToRead =
-      _header.encryptedChunkSize() - Streams::Header::serializedSize;
+      _header.encryptedChunkSize() - Header::serializedSize;
   auto const encryptedInput = TC_AWAIT(readInputSource(sizeToRead));
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
   ++_chunkIndex;
@@ -106,5 +107,6 @@ tc::cotask<void> StreamDecryptor::processInput()
   TC_AWAIT(readHeader());
   checkHeaderIntegrity(oldHeader, _header);
   TC_AWAIT(decryptChunk());
+}
 }
 }

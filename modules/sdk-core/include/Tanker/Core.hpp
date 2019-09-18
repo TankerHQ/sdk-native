@@ -6,8 +6,8 @@
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/Streams/InputSource.hpp>
+#include <Tanker/Streams/StreamEncryptor.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -103,7 +103,7 @@ public:
   tc::cotask<FileKit::DownloadStreamResult> downloadStream(
       Trustchain::ResourceId const& resourceId);
 
-  tc::cotask<StreamEncryptor> makeStreamEncryptor(
+  tc::cotask<Streams::StreamEncryptor> makeStreamEncryptor(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});

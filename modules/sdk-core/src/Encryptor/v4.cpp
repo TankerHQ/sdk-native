@@ -5,8 +5,8 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/StreamDecryptor.hpp>
-#include <Tanker/StreamEncryptor.hpp>
+#include <Tanker/Streams/StreamDecryptor.hpp>
+#include <Tanker/Streams/StreamEncryptor.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 
@@ -17,6 +17,7 @@
 using Tanker::Trustchain::ResourceId;
 
 using namespace Tanker::Errors;
+using namespace Tanker::Streams;
 
 namespace Tanker
 {
@@ -52,7 +53,7 @@ std::uint64_t EncryptorV4::decryptedSize(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  auto const header = Serialization::deserialize<Streams::Header>(ss);
+  auto const header = Serialization::deserialize<Header>(ss);
 
   // aead overhead
   if (ss.remaining_size() < Crypto::Mac::arraySize)
@@ -70,7 +71,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(Streams::bufferViewToInputSource(clearData),
+  StreamEncryptor encryptor(bufferViewToInputSource(clearData),
                             encryptedChunkSize);
 
   while (auto const nbRead =
@@ -87,11 +88,11 @@ tc::cotask<void> EncryptorV4::decrypt(
     gsl::span<std::uint8_t const> encryptedData)
 {
   auto decryptor = TC_AWAIT(StreamDecryptor::create(
-      Streams::bufferViewToInputSource(encryptedData),
+      bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(
-             decryptor(decryptedData, Streams::Header::defaultEncryptedChunkSize)))
+             decryptor(decryptedData, Header::defaultEncryptedChunkSize)))
     decryptedData += nbRead;
 }
 
@@ -99,6 +100,6 @@ ResourceId EncryptorV4::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  return Serialization::deserialize<Streams::Header>(ss).resourceId();
+  return Serialization::deserialize<Header>(ss).resourceId();
 }
 }

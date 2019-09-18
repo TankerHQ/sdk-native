@@ -1,9 +1,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Encryptor/v4.hpp>
-#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Streams/StreamDecryptor.hpp>
 #include <Tanker/Streams/StreamEncryptor.hpp>
 #include <Tanker/Streams/Helpers.hpp>
+#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Await.hpp>
@@ -131,7 +130,8 @@ TEST_SUITE("Stream encryption")
 
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor(nullptr, 0)), Errc::IOError);
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(StreamDecryptor::create(failRead, mockKeyFinder)), Errc::IOError);
+        AWAIT(StreamDecryptor::create(failRead, mockKeyFinder)),
+        Errc::IOError);
   }
 
   TEST_CASE("Encrypt/decrypt huge buffer")
@@ -160,8 +160,8 @@ TEST_SUITE("Stream encryption")
       "Performs an underlying read when reading 0 when no buffered output is "
       "left")
   {
-    std::vector<std::uint8_t> buffer(2 *
-                                     Streams::Header::defaultEncryptedChunkSize);
+    std::vector<std::uint8_t> buffer(
+        2 * Streams::Header::defaultEncryptedChunkSize);
     Crypto::randomFill(buffer);
     auto readCallback = bufferViewToInputSource(buffer);
     auto timesCallbackCalled = 0;
