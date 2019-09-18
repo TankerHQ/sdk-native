@@ -147,6 +147,7 @@ class TankerConan(ConanFile):
             "tankeradmin",
             "tankertesthelpers",
             "tankercore",
+            "tankerstreams",
             "tankernetwork",
             "tankertrustchain",
             "tankeridentity",

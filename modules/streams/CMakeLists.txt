@@ -2,14 +2,19 @@ cmake_minimum_required(VERSION 3.4)
 
 project(tankerstreams)
 
-add_library(tankerstreams INTERFACE)
+add_library(tankerstreams
+  include/Tanker/Streams/InputSource.hpp
+  include/Tanker/Streams/Helpers.hpp
+
+  src/Helpers.cpp
+)
 target_include_directories(tankerstreams
-  INTERFACE
+  PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankerstreams INTERFACE CONAN_PKG::tconcurrent)
+target_link_libraries(tankerstreams PUBLIC CONAN_PKG::tconcurrent CONAN_PKG::gsl-lite)
 
 install(DIRECTORY include DESTINATION .)
 

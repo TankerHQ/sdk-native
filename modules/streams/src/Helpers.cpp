@@ -1,11 +1,15 @@
-#include <Tanker/StreamHelpers.hpp>
+#include <Tanker/Streams/Helpers.hpp>
+
+#include <algorithm>
 
 namespace Tanker
+{
+namespace Streams
 {
 namespace
 {
 template <typename T>
-Streams::InputSource bufferToInputSourceImpl(T&& buffer)
+InputSource bufferToInputSourceImpl(T&& buffer)
 {
   return [index = 0u, buffer = std::forward<T>(buffer)](
              std::uint8_t* out,
@@ -19,13 +23,14 @@ Streams::InputSource bufferToInputSourceImpl(T&& buffer)
 }
 }
 
-Streams::InputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer)
+InputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer)
 {
   return bufferToInputSourceImpl(buffer);
 }
 
-Streams::InputSource bufferToInputSource(std::vector<uint8_t> buffer)
+InputSource bufferToInputSource(std::vector<uint8_t> buffer)
 {
   return bufferToInputSourceImpl(std::move(buffer));
+}
 }
 }

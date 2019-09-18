@@ -3,7 +3,7 @@
 #include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
-#include <Tanker/StreamHelpers.hpp>
+#include <Tanker/Streams/Helpers.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <Helpers/Await.hpp>
@@ -18,6 +18,7 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
+using namespace Tanker::Streams;
 
 namespace
 {

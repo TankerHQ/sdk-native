@@ -8,7 +8,7 @@
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/StreamHeader.hpp>
-#include <Tanker/StreamHelpers.hpp>
+#include <Tanker/Streams/Helpers.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -70,7 +70,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(bufferViewToInputSource(clearData),
+  StreamEncryptor encryptor(Streams::bufferViewToInputSource(clearData),
                             encryptedChunkSize);
 
   while (auto const nbRead =
@@ -87,7 +87,7 @@ tc::cotask<void> EncryptorV4::decrypt(
     gsl::span<std::uint8_t const> encryptedData)
 {
   auto decryptor = TC_AWAIT(StreamDecryptor::create(
-      bufferViewToInputSource(encryptedData),
+      Streams::bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(

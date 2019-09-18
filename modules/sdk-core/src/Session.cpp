@@ -283,7 +283,7 @@ tc::cotask<Trustchain::ResourceId> Session::upload(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  TC_RETURN(TC_AWAIT(uploadStream(bufferViewToInputSource(data),
+  TC_RETURN(TC_AWAIT(uploadStream(Streams::bufferViewToInputSource(data),
                                   data.size(),
                                   metadata,
                                   publicIdentities,
@@ -318,7 +318,7 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
   auto const inputStream = Streams::InputSource(encryptedStream);
   std::vector<uint8_t> buf(FileKit::CHUNK_SIZE);
   uint64_t position = 0;
-  while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
+  while (auto const readSize = TC_AWAIT(Streams::readStream(buf, inputStream)))
   {
     TC_AWAIT(retry(
         [&]() -> tc::cotask<void> {
@@ -752,10 +752,12 @@ tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
   }
   else
   {
-    auto encryptedData = TC_AWAIT(readAllStream(std::move(peekableSource)));
+    auto encryptedData =
+        TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
     TC_RETURN(GenericStreamDecryptor(
-        bufferToInputSource(TC_AWAIT(decrypt(encryptedData))), resourceId));
+        Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
+        resourceId));
   }
   throw AssertionError("makeStreamDecryptor: unreachable code");
 }
