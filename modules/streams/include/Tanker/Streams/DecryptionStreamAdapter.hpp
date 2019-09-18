@@ -9,18 +9,21 @@
 
 namespace Tanker
 {
-class GenericDecryptionStream
+namespace Streams
+{
+class DecryptionStreamAdapter
 {
 public:
-  explicit GenericDecryptionStream(Streams::InputSource source,
-                                  Trustchain::ResourceId const& resourceId);
+  explicit DecryptionStreamAdapter(InputSource source,
+                                   Trustchain::ResourceId const& resourceId);
 
   Trustchain::ResourceId const& resourceId() const;
 
-  tc::cotask<int64_t> operator()(uint8_t* buffer, size_t size);
+  tc::cotask<std::int64_t> operator()(std::uint8_t* buffer, std::size_t size);
 
 private:
-  Streams::InputSource _source;
+  InputSource _source;
   Trustchain::ResourceId _resourceId;
 };
+}
 }

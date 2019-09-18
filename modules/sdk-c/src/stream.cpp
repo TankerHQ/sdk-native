@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 
@@ -96,17 +97,17 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
                                        void* data)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(session);
-  return makeFuture(tanker->makeDecryptionStream(wrapCallback(cb, data))
-                        .and_then(tc::get_synchronous_executor(),
-                                  [](GenericDecryptionStream decryptor) {
-                                    auto c_stream = new tanker_stream;
-                                    c_stream->resourceId = SResourceId{
-                                        cppcodec::base64_rfc4648::encode(
-                                            decryptor.resourceId())};
-                                    c_stream->inputSource =
-                                        std::move(decryptor);
-                                    return static_cast<void*>(c_stream);
-                                  }));
+  return makeFuture(
+      tanker->makeDecryptionStream(wrapCallback(cb, data))
+          .and_then(tc::get_synchronous_executor(),
+                    [](Streams::DecryptionStreamAdapter decryptor) {
+                      auto c_stream = new tanker_stream;
+                      c_stream->resourceId =
+                          SResourceId{cppcodec::base64_rfc4648::encode(
+                              decryptor.resourceId())};
+                      c_stream->inputSource = std::move(decryptor);
+                      return static_cast<void*>(c_stream);
+                    }));
 }
 
 tanker_future_t* tanker_stream_read(tanker_stream_t* stream,

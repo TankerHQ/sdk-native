@@ -2,7 +2,7 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
-#include <Tanker/GenericDecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
@@ -145,7 +145,7 @@ public:
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::shared_future<GenericDecryptionStream> makeDecryptionStream(
+  tc::shared_future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
   static expected<SResourceId> getResourceId(

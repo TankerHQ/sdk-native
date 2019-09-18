@@ -9,7 +9,7 @@
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/FileKit/DownloadResult.hpp>
 #include <Tanker/FileKit/Metadata.hpp>
-#include <Tanker/GenericDecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -148,7 +148,7 @@ public:
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::cotask<GenericDecryptionStream> makeDecryptionStream(Streams::InputSource);
+  tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(Streams::InputSource);
 
   tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
       Trustchain::ResourceId const& resourceId, uint64_t length);

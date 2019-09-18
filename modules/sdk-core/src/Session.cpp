@@ -730,7 +730,7 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<GenericDecryptionStream> Session::makeDecryptionStream(
+tc::cotask<Streams::DecryptionStreamAdapter> Session::makeDecryptionStream(
     Streams::InputSource cb)
 {
   auto peekableSource = Streams::PeekableInputSource(std::move(cb));
@@ -747,7 +747,7 @@ tc::cotask<GenericDecryptionStream> Session::makeDecryptionStream(
 
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
-    TC_RETURN(GenericDecryptionStream(std::move(streamDecryptor),
+    TC_RETURN(Streams::DecryptionStreamAdapter(std::move(streamDecryptor),
                                      streamDecryptor.resourceId()));
   }
   else
@@ -755,7 +755,7 @@ tc::cotask<GenericDecryptionStream> Session::makeDecryptionStream(
     auto encryptedData =
         TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
-    TC_RETURN(GenericDecryptionStream(
+    TC_RETURN(Streams::DecryptionStreamAdapter(
         Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
         resourceId));
   }

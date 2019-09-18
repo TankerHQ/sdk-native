@@ -390,12 +390,12 @@ tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
   });
 }
 
-tc::shared_future<GenericDecryptionStream> AsyncCore::makeDecryptionStream(
+tc::shared_future<Streams::DecryptionStreamAdapter> AsyncCore::makeDecryptionStream(
     Streams::InputSource cb)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable(
-        [this, cb = std::move(cb)]() -> tc::cotask<GenericDecryptionStream> {
+        [this, cb = std::move(cb)]() -> tc::cotask<Streams::DecryptionStreamAdapter> {
           TC_RETURN(TC_AWAIT(this->_core.makeDecryptionStream(std::move(cb))));
         });
   });
