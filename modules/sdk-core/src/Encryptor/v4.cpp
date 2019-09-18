@@ -31,7 +31,7 @@ auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
 // header: [version, varint] [chunkSize, 4B] [ResourceId, 16B]
 // content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
 
-std::uint32_t clearChunkSize(std::uint32_t const encryptedChunkSize)
+constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 {
   return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
          Trustchain::ResourceId::arraySize;

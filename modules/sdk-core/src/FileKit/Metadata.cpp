@@ -48,12 +48,13 @@ tc::cotask<std::string> encryptMetadata(
 {
   auto const jmetadata = nlohmann::json(metadata).dump();
 
+  EncryptorV5 encryptor;
   std::vector<uint8_t> encryptedMetadata(
-      EncryptorV5::encryptedSize(jmetadata.size()));
-  EncryptorV5::encrypt(encryptedMetadata.data(),
-                       gsl::make_span(jmetadata).as_span<uint8_t const>(),
-                       resourceId,
-                       key);
+      encryptor.encryptedSize(jmetadata.size()));
+  TC_AWAIT(encryptor.encrypt(encryptedMetadata.data(),
+                             gsl::make_span(jmetadata).as_span<uint8_t const>(),
+                             resourceId,
+                             key));
   TC_RETURN(cppcodec::base64_rfc4648::encode(encryptedMetadata));
 }
 
