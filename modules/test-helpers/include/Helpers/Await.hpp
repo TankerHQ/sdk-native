@@ -14,11 +14,10 @@ struct cotask_type
 #define AWAIT_VOID(code) \
   tc::async_resumable([&]() -> tc::cotask<void> { TC_AWAIT(code); }).get()
 
-#define AWAIT(code)                                                     \
-  tc::async_resumable(                                                  \
-      [&]() -> test_helpers_detail::cotask_type<decltype(code)>::type { \
-        TC_RETURN(TC_AWAIT(code));                                      \
-      })                                                                \
+#define AWAIT(code)                                                       \
+  tc::async_resumable([&]() ->                                            \
+                      typename test_helpers_detail::cotask_type<decltype( \
+                          code)>::type { TC_RETURN(TC_AWAIT(code)); })    \
       .get()
 
 #define WRAP_COTASK(...) \
