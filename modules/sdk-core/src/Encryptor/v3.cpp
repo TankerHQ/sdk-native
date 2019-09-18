@@ -47,26 +47,28 @@ std::uint64_t EncryptorV3::decryptedSize(
   return Crypto::decryptedSize(versionResult.second.size());
 }
 
-EncryptionMetadata EncryptorV3::encrypt(std::uint8_t* encryptedData,
-                                        gsl::span<std::uint8_t const> clearData)
+tc::cotask<EncryptionMetadata> EncryptorV3::encrypt(
+    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
 {
   Serialization::varint_write(encryptedData, version());
   auto const key = Crypto::makeSymmetricKey();
   auto const iv = Crypto::AeadIv{};
   auto const resourceId = Crypto::encryptAead(
       key, iv.data(), encryptedData + versionSize, clearData, {});
-  return {ResourceId(resourceId), key};
+  TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
 }
 
-void EncryptorV3::decrypt(std::uint8_t* decryptedData,
-                          Crypto::SymmetricKey const& key,
-                          gsl::span<std::uint8_t const> encryptedData)
+tc::cotask<void> EncryptorV3::decrypt(
+    std::uint8_t* decryptedData,
+    Crypto::SymmetricKey const& key,
+    gsl::span<std::uint8_t const> encryptedData)
 {
   checkEncryptedFormat(encryptedData);
 
   auto const versionResult = Serialization::varint_read(encryptedData);
   auto const iv = Crypto::AeadIv{};
   Crypto::decryptAead(key, iv.data(), decryptedData, versionResult.second, {});
+  TC_RETURN();
 }
 
 ResourceId EncryptorV3::extractResourceId(

@@ -51,8 +51,8 @@ std::uint64_t EncryptorV2::decryptedSize(
                                Crypto::AeadIv::arraySize);
 }
 
-EncryptionMetadata EncryptorV2::encrypt(std::uint8_t* encryptedData,
-                                        gsl::span<std::uint8_t const> clearData)
+tc::cotask<EncryptionMetadata> EncryptorV2::encrypt(
+    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
 {
   Serialization::varint_write(encryptedData, version());
   auto const key = Crypto::makeSymmetricKey();
@@ -64,12 +64,13 @@ EncryptionMetadata EncryptorV2::encrypt(std::uint8_t* encryptedData,
       encryptedData + versionSize + Crypto::AeadIv::arraySize,
       clearData,
       {});
-  return {ResourceId(resourceId), key};
+  TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
 }
 
-void EncryptorV2::decrypt(std::uint8_t* decryptedData,
-                          Crypto::SymmetricKey const& key,
-                          gsl::span<std::uint8_t const> encryptedData)
+tc::cotask<void> EncryptorV2::decrypt(
+    std::uint8_t* decryptedData,
+    Crypto::SymmetricKey const& key,
+    gsl::span<std::uint8_t const> encryptedData)
 {
   try
   {
@@ -80,6 +81,7 @@ void EncryptorV2::decrypt(std::uint8_t* decryptedData,
     auto const iv = versionRemoved.data();
     auto const cipherText = versionRemoved.subspan(Crypto::AeadIv::arraySize);
     Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
+    TC_RETURN();
   }
   catch (gsl::fail_fast const&)
   {

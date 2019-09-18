@@ -25,6 +25,25 @@ constexpr bool isHugeClearData(uint64_t dataSize)
 {
   return dataSize > StreamHeader::defaultEncryptedChunkSize;
 }
+
+template <typename Callable>
+decltype(auto) performEncryptorAction(std::uint8_t version, Callable&& cb)
+{
+  switch (version)
+  {
+  case EncryptorV2::version():
+    return std::forward<Callable>(cb)(EncryptorV2{});
+  case EncryptorV3::version():
+    return std::forward<Callable>(cb)(EncryptorV3{});
+  case EncryptorV4::version():
+    return std::forward<Callable>(cb)(EncryptorV4{});
+  case EncryptorV5::version():
+    return std::forward<Callable>(cb)(EncryptorV5{});
+  default:
+    throw formatEx(
+        Errc::InvalidArgument, TFMT("unsupported version: {:d}"), version);
+  }
+}
 }
 
 uint64_t encryptedSize(uint64_t clearSize)
@@ -38,28 +57,17 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
   auto const version = Serialization::varint_read(encryptedData).first;
 
-  switch (version)
-  {
-  case EncryptorV2::version():
-    return EncryptorV2::decryptedSize(encryptedData);
-  case EncryptorV3::version():
-    return EncryptorV3::decryptedSize(encryptedData);
-  case EncryptorV4::version():
-    return EncryptorV4::decryptedSize(encryptedData);
-  case EncryptorV5::version():
-    return EncryptorV5::decryptedSize(encryptedData);
-  default:
-    throw formatEx(
-        Errc::InvalidArgument, TFMT("unsupported version: {:d}"), version);
-  }
+  return performEncryptorAction(version, [=](auto encryptor) {
+    return encryptor.decryptedSize(encryptedData);
+  });
 }
 
-tc::cotask<EncryptionMetadata> encrypt(
-    uint8_t* encryptedData, gsl::span<uint8_t const> clearData)
+tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,
+                                       gsl::span<uint8_t const> clearData)
 {
   if (isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
-  TC_RETURN(EncryptorV3::encrypt(encryptedData, clearData));
+  TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
 }
 
 tc::cotask<void> decrypt(uint8_t* decryptedData,
@@ -68,44 +76,18 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
 {
   auto const version = Serialization::varint_read(encryptedData).first;
 
-  switch (version)
-  {
-  case EncryptorV2::version():
-    EncryptorV2::decrypt(decryptedData, key, encryptedData);
-    break;
-  case EncryptorV3::version():
-    EncryptorV3::decrypt(decryptedData, key, encryptedData);
-    break;
-  case EncryptorV4::version():
-    TC_AWAIT(EncryptorV4::decrypt(decryptedData, key, encryptedData));
-    break;
-  case EncryptorV5::version():
-    EncryptorV5::decrypt(decryptedData, key, encryptedData);
-    break;
-  default:
-    throw formatEx(
-        Errc::InvalidArgument, TFMT("unsupported version: {:d}"), version);
-  }
+  return performEncryptorAction(version, [&](auto encryptor) {
+    return encryptor.decrypt(decryptedData, key, encryptedData);
+  });
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
   auto const version = Serialization::varint_read(encryptedData).first;
 
-  switch (version)
-  {
-  case EncryptorV2::version():
-    return EncryptorV2::extractResourceId(encryptedData);
-  case EncryptorV3::version():
-    return EncryptorV3::extractResourceId(encryptedData);
-  case EncryptorV4::version():
-    return EncryptorV4::extractResourceId(encryptedData);
-  case EncryptorV5::version():
-    return EncryptorV5::extractResourceId(encryptedData);
-  default:
-    throw formatEx(
-        Errc::InvalidArgument, TFMT("unsupported version: {:d}"), version);
-  }
+  return performEncryptorAction(version, [&](auto encryptor) {
+    return encryptor.extractResourceId(encryptedData);
+  });
 }
 }
 }

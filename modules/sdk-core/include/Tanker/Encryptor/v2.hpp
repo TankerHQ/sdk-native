@@ -4,6 +4,7 @@
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
+#include <tconcurrent/coroutine.hpp>
 
 #include <cstdint>
 
@@ -20,11 +21,11 @@ public:
   static std::uint64_t encryptedSize(std::uint64_t clearSize);
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
-  static EncryptionMetadata encrypt(uint8_t* encryptedData,
-                                    gsl::span<std::uint8_t const> clearData);
-  static void decrypt(std::uint8_t* decryptedData,
-                      Crypto::SymmetricKey const& key,
-                      gsl::span<std::uint8_t const> encryptedData);
+  static tc::cotask<EncryptionMetadata> encrypt(
+      uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
+  static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
+                                  Crypto::SymmetricKey const& key,
+                                  gsl::span<std::uint8_t const> encryptedData);
   static Trustchain::ResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);
 };

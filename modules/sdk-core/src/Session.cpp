@@ -305,7 +305,7 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
       metadata, resourceId, encryptedStream.symmetricKey()));
 
   auto const uploadTicket = TC_AWAIT(
-      getFileUploadTicket(resourceId, EncryptorV4::encryptedSize(size)));
+      getFileUploadTicket(resourceId, EncryptorV4{}.encryptedSize(size)));
 
   if (uploadTicket.service != "GCS")
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
@@ -757,5 +757,6 @@ tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
     TC_RETURN(GenericStreamDecryptor(
         bufferToInputSource(TC_AWAIT(decrypt(encryptedData))), resourceId));
   }
+  throw AssertionError("makeStreamDecryptor: unreachable code");
 }
 }
