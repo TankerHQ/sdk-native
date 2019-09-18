@@ -2,12 +2,12 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
-#include <Tanker/GenericStreamDecryptor.hpp>
+#include <Tanker/GenericDecryptionStream.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Streams/StreamEncryptor.hpp>
+#include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
@@ -140,12 +140,12 @@ public:
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
 
-  tc::shared_future<Streams::StreamEncryptor> makeStreamEncryptor(
+  tc::shared_future<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::shared_future<GenericStreamDecryptor> makeStreamDecryptor(
+  tc::shared_future<GenericDecryptionStream> makeDecryptionStream(
       Streams::InputSource);
 
   static expected<SResourceId> getResourceId(

@@ -1,19 +1,19 @@
-#include <Tanker/GenericStreamDecryptor.hpp>
+#include <Tanker/GenericDecryptionStream.hpp>
 
 namespace Tanker
 {
-GenericStreamDecryptor::GenericStreamDecryptor(
+GenericDecryptionStream::GenericDecryptionStream(
     Streams::InputSource source, Trustchain::ResourceId const& resourceId)
   : _source(std::move(source)), _resourceId(resourceId)
 {
 }
 
-Trustchain::ResourceId const& GenericStreamDecryptor::resourceId() const
+Trustchain::ResourceId const& GenericDecryptionStream::resourceId() const
 {
   return _resourceId;
 }
 
-tc::cotask<int64_t> GenericStreamDecryptor::operator()(uint8_t* buffer,
+tc::cotask<int64_t> GenericDecryptionStream::operator()(uint8_t* buffer,
                                                        size_t size)
 {
   return _source(buffer, size);

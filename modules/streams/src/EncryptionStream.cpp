@@ -1,4 +1,4 @@
-#include <Tanker/Streams/StreamEncryptor.hpp>
+#include <Tanker/Streams/EncryptionStream.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -23,12 +23,12 @@ constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 }
 }
 
-StreamEncryptor::StreamEncryptor(InputSource cb)
-  : StreamEncryptor(std::move(cb), Header::defaultEncryptedChunkSize)
+EncryptionStream::EncryptionStream(InputSource cb)
+  : EncryptionStream(std::move(cb), Header::defaultEncryptedChunkSize)
 {
 }
 
-StreamEncryptor::StreamEncryptor(InputSource cb,
+EncryptionStream::EncryptionStream(InputSource cb,
                                    std::uint32_t encryptedChunkSize)
   : BufferedStream(std::move(cb)), _encryptedChunkSize(encryptedChunkSize)
 {
@@ -38,17 +38,17 @@ StreamEncryptor::StreamEncryptor(InputSource cb,
   _key = Crypto::makeSymmetricKey();
 }
 
-Trustchain::ResourceId const& StreamEncryptor::resourceId() const
+Trustchain::ResourceId const& EncryptionStream::resourceId() const
 {
   return _resourceId;
 }
 
-Crypto::SymmetricKey const& StreamEncryptor::symmetricKey() const
+Crypto::SymmetricKey const& EncryptionStream::symmetricKey() const
 {
   return _key;
 }
 
-tc::cotask<void> StreamEncryptor::encryptChunk()
+tc::cotask<void> EncryptionStream::encryptChunk()
 {
   auto const clearInput =
       TC_AWAIT(readInputSource(clearChunkSize(_encryptedChunkSize)));
@@ -63,7 +63,7 @@ tc::cotask<void> StreamEncryptor::encryptChunk()
   Crypto::encryptAead(_key, iv.data(), it, clearInput, {});
 }
 
-tc::cotask<void> StreamEncryptor::processInput()
+tc::cotask<void> EncryptionStream::processInput()
 {
   TC_AWAIT(encryptChunk());
 }

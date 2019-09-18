@@ -5,8 +5,8 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/Streams/StreamDecryptor.hpp>
-#include <Tanker/Streams/StreamEncryptor.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 
@@ -71,7 +71,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(bufferViewToInputSource(clearData),
+  EncryptionStream encryptor(bufferViewToInputSource(clearData),
                             encryptedChunkSize);
 
   while (auto const nbRead =
@@ -87,7 +87,7 @@ tc::cotask<void> EncryptorV4::decrypt(
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
-  auto decryptor = TC_AWAIT(StreamDecryptor::create(
+  auto decryptor = TC_AWAIT(DecryptionStream::create(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 

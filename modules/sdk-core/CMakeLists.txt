@@ -72,7 +72,7 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
-  include/Tanker/GenericStreamDecryptor.hpp
+  include/Tanker/GenericDecryptionStream.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
@@ -148,7 +148,7 @@ add_library(tankercore STATIC
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
-  src/GenericStreamDecryptor.cpp
+  src/GenericDecryptionStream.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
   src/Unlock/Verification.cpp

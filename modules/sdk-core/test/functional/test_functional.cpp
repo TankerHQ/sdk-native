@@ -167,9 +167,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
 
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(aliceSession->makeStreamEncryptor(
+  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
       Streams::bufferViewToInputSource(clearData)));
-  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(encryptor));
+  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(encryptor));
 
   auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
   CHECK_EQ(encryptor.resourceId(), decryptor.resourceId());
@@ -184,7 +184,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream-encrypt and decrypt")
 
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(aliceSession->makeStreamEncryptor(
+  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
       Streams::bufferViewToInputSource(clearData)));
   auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
@@ -201,7 +201,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 
   auto const clearData = make_buffer("my clear data is clear");
   auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
-  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(
+  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(
       Streams::bufferViewToInputSource(encryptedData)));
 
   auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));

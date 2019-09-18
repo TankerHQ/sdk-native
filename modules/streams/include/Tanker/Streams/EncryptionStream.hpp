@@ -16,15 +16,15 @@ namespace Tanker
 {
 namespace Streams
 {
-class StreamEncryptor : BufferedStream<StreamEncryptor>
+class EncryptionStream : BufferedStream<EncryptionStream>
 {
-  friend BufferedStream<StreamEncryptor>;
+  friend BufferedStream<EncryptionStream>;
 
 public:
-  explicit StreamEncryptor(InputSource);
-  StreamEncryptor(InputSource, std::uint32_t encryptedChunkSize);
+  explicit EncryptionStream(InputSource);
+  EncryptionStream(InputSource, std::uint32_t encryptedChunkSize);
 
-  using BufferedStream<StreamEncryptor>::operator();
+  using BufferedStream<EncryptionStream>::operator();
 
   Trustchain::ResourceId const& resourceId() const;
   Crypto::SymmetricKey const& symmetricKey() const;

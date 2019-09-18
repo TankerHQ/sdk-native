@@ -19,23 +19,23 @@ namespace Tanker
 {
 namespace Streams
 {
-class StreamDecryptor : BufferedStream<StreamDecryptor>
+class DecryptionStream : BufferedStream<DecryptionStream>
 {
-  friend BufferedStream<StreamDecryptor>;
+  friend BufferedStream<DecryptionStream>;
 
 public:
   using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
       Trustchain::ResourceId const&)>;
 
-  using BufferedStream<StreamDecryptor>::operator();
+  using BufferedStream<DecryptionStream>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
   Trustchain::ResourceId const& resourceId() const;
 
-  static tc::cotask<StreamDecryptor> create(InputSource, ResourceKeyFinder);
+  static tc::cotask<DecryptionStream> create(InputSource, ResourceKeyFinder);
 
 private:
-  explicit StreamDecryptor(InputSource);
+  explicit DecryptionStream(InputSource);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();

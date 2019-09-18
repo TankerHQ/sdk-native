@@ -9,7 +9,7 @@ namespace Tanker
 {
 namespace Streams
 {
-// Callback type used in StreamEncryptor/StreamDecryptor to retrieve input in
+// Callback type used in EncryptionStream/DecryptionStream to retrieve input in
 // out. It must read at most n bytes, and returns the number of bytes read,
 // or 0 when EOF is reached.
 //

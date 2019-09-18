@@ -9,10 +9,10 @@
 
 namespace Tanker
 {
-class GenericStreamDecryptor
+class GenericDecryptionStream
 {
 public:
-  explicit GenericStreamDecryptor(Streams::InputSource source,
+  explicit GenericDecryptionStream(Streams::InputSource source,
                                   Trustchain::ResourceId const& resourceId);
 
   Trustchain::ResourceId const& resourceId() const;

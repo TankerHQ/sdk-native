@@ -357,25 +357,25 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
   TC_AWAIT((*psession)->revokeDevice(deviceId));
 }
 
-tc::cotask<Streams::StreamEncryptor> Core::makeStreamEncryptor(
+tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(makeStreamEncryptor);
+    throw INVALID_STATUS(makeEncryptionStream);
   TC_RETURN(TC_AWAIT(
-      (*psession)->makeStreamEncryptor(std::move(cb), suserIds, sgroupIds)));
+      (*psession)->makeEncryptionStream(std::move(cb), suserIds, sgroupIds)));
 }
 
-tc::cotask<GenericStreamDecryptor> Core::makeStreamDecryptor(
+tc::cotask<GenericDecryptionStream> Core::makeDecryptionStream(
     Streams::InputSource cb)
 {
   auto psession = mpark::get_if<SessionType>(&_state);
   if (!psession)
-    throw INVALID_STATUS(makeStreamDecryptor);
-  TC_RETURN(TC_AWAIT((*psession)->makeStreamDecryptor(std::move(cb))));
+    throw INVALID_STATUS(makeDecryptionStream);
+  TC_RETURN(TC_AWAIT((*psession)->makeDecryptionStream(std::move(cb))));
 }
 
 tc::cotask<CloudStorage::UploadTicket> Core::getFileUploadTicket(

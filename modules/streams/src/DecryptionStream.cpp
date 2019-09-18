@@ -1,4 +1,4 @@
-#include <Tanker/Streams/StreamDecryptor.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
@@ -44,15 +44,15 @@ void checkHeaderIntegrity(Header const& oldHeader, Header const& currentHeader)
 }
 }
 
-StreamDecryptor::StreamDecryptor(InputSource cb)
+DecryptionStream::DecryptionStream(InputSource cb)
   : BufferedStream(std::move(cb))
 {
 }
 
-tc::cotask<StreamDecryptor> StreamDecryptor::create(InputSource cb,
+tc::cotask<DecryptionStream> DecryptionStream::create(InputSource cb,
                                                       ResourceKeyFinder finder)
 {
-  StreamDecryptor decryptor(std::move(cb));
+  DecryptionStream decryptor(std::move(cb));
 
   TC_AWAIT(decryptor.readHeader());
   decryptor._key = TC_AWAIT(finder(decryptor._header.resourceId()));
@@ -60,7 +60,7 @@ tc::cotask<StreamDecryptor> StreamDecryptor::create(InputSource cb,
   TC_RETURN(std::move(decryptor));
 }
 
-tc::cotask<void> StreamDecryptor::readHeader()
+tc::cotask<void> DecryptionStream::readHeader()
 {
   auto const buffer = TC_AWAIT(readInputSource(Header::serializedSize));
   try
@@ -80,17 +80,17 @@ tc::cotask<void> StreamDecryptor::readHeader()
   }
 }
 
-Trustchain::ResourceId const& StreamDecryptor::resourceId() const
+Trustchain::ResourceId const& DecryptionStream::resourceId() const
 {
   return _header.resourceId();
 }
 
-Crypto::SymmetricKey const& StreamDecryptor::symmetricKey() const
+Crypto::SymmetricKey const& DecryptionStream::symmetricKey() const
 {
   return _key;
 }
 
-tc::cotask<void> StreamDecryptor::decryptChunk()
+tc::cotask<void> DecryptionStream::decryptChunk()
 {
   auto const sizeToRead =
       _header.encryptedChunkSize() - Header::serializedSize;
@@ -101,7 +101,7 @@ tc::cotask<void> StreamDecryptor::decryptChunk()
   Crypto::decryptAead(_key, iv.data(), output.data(), encryptedInput, {});
 }
 
-tc::cotask<void> StreamDecryptor::processInput()
+tc::cotask<void> DecryptionStream::processInput()
 {
   auto const oldHeader = _header;
   TC_AWAIT(readHeader());
