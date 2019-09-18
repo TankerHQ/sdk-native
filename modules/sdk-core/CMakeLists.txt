@@ -76,7 +76,6 @@ add_library(tankercore STATIC
   include/Tanker/GenericStreamDecryptor.hpp
   include/Tanker/StreamEncryptor.hpp
   include/Tanker/BufferedStream.hpp
-  include/Tanker/PeekableInputSource.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
@@ -156,7 +155,6 @@ add_library(tankercore STATIC
   src/StreamDecryptor.cpp
   src/GenericStreamDecryptor.cpp
   src/StreamEncryptor.cpp
-  src/PeekableInputSource.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
   src/Unlock/Verification.cpp

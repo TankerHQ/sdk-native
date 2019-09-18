@@ -24,7 +24,6 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -32,6 +31,7 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -733,7 +733,7 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
 tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
     Streams::InputSource cb)
 {
-  auto peekableSource = PeekableInputSource(std::move(cb));
+  auto peekableSource = Streams::PeekableInputSource(std::move(cb));
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, TFMT("empty stream"));

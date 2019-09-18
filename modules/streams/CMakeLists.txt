@@ -6,9 +6,11 @@ add_library(tankerstreams
   include/Tanker/Streams/InputSource.hpp
   include/Tanker/Streams/Header.hpp
   include/Tanker/Streams/Helpers.hpp
+  include/Tanker/Streams/PeekableInputSource.hpp
 
   src/Header.cpp
   src/Helpers.cpp
+  src/PeekableInputSource.cpp
 )
 target_include_directories(tankerstreams
   PUBLIC

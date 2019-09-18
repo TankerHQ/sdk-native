@@ -1,6 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Encryptor/v4.hpp>
-#include <Tanker/PeekableInputSource.hpp>
+#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
 #include <Tanker/Streams/Helpers.hpp>
