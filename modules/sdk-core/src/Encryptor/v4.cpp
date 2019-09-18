@@ -7,7 +7,7 @@
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/StreamDecryptor.hpp>
 #include <Tanker/StreamEncryptor.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -52,7 +52,7 @@ std::uint64_t EncryptorV4::decryptedSize(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  auto const header = Serialization::deserialize<StreamHeader>(ss);
+  auto const header = Serialization::deserialize<Streams::Header>(ss);
 
   // aead overhead
   if (ss.remaining_size() < Crypto::Mac::arraySize)
@@ -91,7 +91,7 @@ tc::cotask<void> EncryptorV4::decrypt(
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(
-             decryptor(decryptedData, StreamHeader::defaultEncryptedChunkSize)))
+             decryptor(decryptedData, Streams::Header::defaultEncryptedChunkSize)))
     decryptedData += nbRead;
 }
 
@@ -99,6 +99,6 @@ ResourceId EncryptorV4::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  return Serialization::deserialize<StreamHeader>(ss).resourceId();
+  return Serialization::deserialize<Streams::Header>(ss).resourceId();
 }
 }

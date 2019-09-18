@@ -4,8 +4,10 @@ project(tankerstreams)
 
 add_library(tankerstreams
   include/Tanker/Streams/InputSource.hpp
+  include/Tanker/Streams/Header.hpp
   include/Tanker/Streams/Helpers.hpp
 
+  src/Header.cpp
   src/Helpers.cpp
 )
 target_include_directories(tankerstreams
@@ -14,7 +16,16 @@ target_include_directories(tankerstreams
   $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankerstreams PUBLIC CONAN_PKG::tconcurrent CONAN_PKG::gsl-lite)
+target_link_libraries(tankerstreams
+  PUBLIC
+  tankercrypto
+  tankerserialization
+  tankertrustchain
+  tankererrors
+
+  CONAN_PKG::tconcurrent
+  CONAN_PKG::gsl-lite
+)
 
 install(DIRECTORY include DESTINATION .)
 

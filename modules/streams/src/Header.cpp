@@ -1,4 +1,4 @@
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -6,53 +6,55 @@
 
 namespace Tanker
 {
-constexpr std::uint32_t StreamHeader::currentVersion;
-constexpr std::uint32_t StreamHeader::serializedSize;
-constexpr std::uint32_t StreamHeader::defaultEncryptedChunkSize;
+namespace Streams
+{
+constexpr std::uint32_t Header::currentVersion;
+constexpr std::uint32_t Header::serializedSize;
+constexpr std::uint32_t Header::defaultEncryptedChunkSize;
 
-StreamHeader::StreamHeader(std::uint32_t encryptedChunkSize,
-                           Trustchain::ResourceId const& resourceId,
-                           Crypto::AeadIv const& seed)
-  : _version(StreamHeader::currentVersion),
+Header::Header(std::uint32_t encryptedChunkSize,
+               Trustchain::ResourceId const& resourceId,
+               Crypto::AeadIv const& seed)
+  : _version(Header::currentVersion),
     _encryptedChunkSize(encryptedChunkSize),
     _resourceId(resourceId),
     _seed(seed)
 {
 }
 
-std::uint32_t StreamHeader::version() const
+std::uint32_t Header::version() const
 {
   return _version;
 }
 
-std::uint32_t StreamHeader::encryptedChunkSize() const
+std::uint32_t Header::encryptedChunkSize() const
 {
   return _encryptedChunkSize;
 }
 
-Trustchain::ResourceId const& StreamHeader::resourceId() const
+Trustchain::ResourceId const& Header::resourceId() const
 {
   return _resourceId;
 }
 
-Crypto::AeadIv const& StreamHeader::seed() const
+Crypto::AeadIv const& Header::seed() const
 {
   return _seed;
 }
 
-void from_serialized(Serialization::SerializedSource& ss, StreamHeader& header)
+void from_serialized(Serialization::SerializedSource& ss, Header& header)
 {
   using namespace Tanker::Errors;
 
   header._version = ss.read_varint();
-  if (header._version != StreamHeader::currentVersion)
+  if (header._version != Header::currentVersion)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported version: {}", header._version);
   }
   Serialization::deserialize_to(ss, header._encryptedChunkSize);
   if (header._encryptedChunkSize <
-      StreamHeader::serializedSize + Crypto::Mac::arraySize)
+      Header::serializedSize + Crypto::Mac::arraySize)
   {
     throw formatEx(Errc::InvalidArgument,
                    "invalid encrypted chunk size in header: {}",
@@ -62,11 +64,12 @@ void from_serialized(Serialization::SerializedSource& ss, StreamHeader& header)
   Serialization::deserialize_to(ss, header._seed);
 }
 
-std::uint8_t* to_serialized(std::uint8_t* it, StreamHeader const& header)
+std::uint8_t* to_serialized(std::uint8_t* it, Header const& header)
 {
-  it = Serialization::varint_write(it, StreamHeader::currentVersion);
+  it = Serialization::varint_write(it, Header::currentVersion);
   it = Serialization::serialize(it, header.encryptedChunkSize());
   it = Serialization::serialize(it, header.resourceId());
   return Serialization::serialize(it, header.seed());
+}
 }
 }

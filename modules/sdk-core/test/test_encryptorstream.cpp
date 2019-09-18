@@ -2,7 +2,7 @@
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -21,12 +21,12 @@ TEST_SUITE("Stream encryption tests")
     std::vector<uint8_t> a0(EncryptorV4::encryptedSize(0));
     auto it0 = a0.data();
     it0 = Serialization::varint_write(it0, EncryptorV4::version());
-    Serialization::varint_write(it0, StreamHeader::defaultEncryptedChunkSize);
+    Serialization::varint_write(it0, Streams::Header::defaultEncryptedChunkSize);
 
     std::vector<uint8_t> a42(EncryptorV4::encryptedSize(42));
     auto it42 = a42.data();
     it42 = Serialization::varint_write(it42, EncryptorV4::version());
-    Serialization::varint_write(it42, StreamHeader::defaultEncryptedChunkSize);
+    Serialization::varint_write(it42, Streams::Header::defaultEncryptedChunkSize);
     CHECK(EncryptorV4::decryptedSize(a0) == 0);
     CHECK(EncryptorV4::decryptedSize(a42) == 42);
   }
@@ -34,13 +34,13 @@ TEST_SUITE("Stream encryption tests")
   TEST_CASE("encryptedSize should return the right size")
   {
     CHECK(EncryptorV4::encryptedSize(0) ==
-          StreamHeader::serializedSize + Crypto::Mac::arraySize);
+          Streams::Header::serializedSize + Crypto::Mac::arraySize);
     CHECK(EncryptorV4::encryptedSize(1) ==
-          StreamHeader::serializedSize + Crypto::Mac::arraySize + 1);
-    auto const bigSize = 2 * StreamHeader::defaultEncryptedChunkSize + 5;
+          Streams::Header::serializedSize + Crypto::Mac::arraySize + 1);
+    auto const bigSize = 2 * Streams::Header::defaultEncryptedChunkSize + 5;
     CHECK(EncryptorV4::encryptedSize(bigSize) ==
           bigSize +
-              3 * (StreamHeader::serializedSize + Crypto::Mac::arraySize));
+              3 * (Streams::Header::serializedSize + Crypto::Mac::arraySize));
   }
 
   TEST_CASE("encrypt/decrypt should work with an empty buffer")
@@ -98,7 +98,7 @@ TEST_SUITE("Stream encryption tests")
 
   TEST_CASE("encrypt/decrypt should work with a large buffer")
   {
-    std::vector<uint8_t> clearData(StreamHeader::defaultEncryptedChunkSize * 2 +
+    std::vector<uint8_t> clearData(Streams::Header::defaultEncryptedChunkSize * 2 +
                                    4);
     Crypto::randomFill(clearData);
 

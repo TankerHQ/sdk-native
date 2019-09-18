@@ -5,7 +5,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 #include <algorithm>
 
@@ -17,13 +17,13 @@ namespace
 {
 constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 {
-  return encryptedChunkSize - StreamHeader::serializedSize -
+  return encryptedChunkSize - Streams::Header::serializedSize -
          Crypto::Mac::arraySize;
 }
 }
 
 StreamEncryptor::StreamEncryptor(Streams::InputSource cb)
-  : StreamEncryptor(std::move(cb), StreamHeader::defaultEncryptedChunkSize)
+  : StreamEncryptor(std::move(cb), Streams::Header::defaultEncryptedChunkSize)
 {
 }
 
@@ -32,7 +32,7 @@ StreamEncryptor::StreamEncryptor(Streams::InputSource cb,
   : BufferedStream(std::move(cb)), _encryptedChunkSize(encryptedChunkSize)
 {
   if (encryptedChunkSize <
-      StreamHeader::serializedSize + Crypto::Mac::arraySize)
+      Streams::Header::serializedSize + Crypto::Mac::arraySize)
   {
     throw AssertionError("invalid encrypted chunk size");
   }
@@ -54,10 +54,10 @@ tc::cotask<void> StreamEncryptor::encryptChunk()
 {
   auto const clearInput =
       TC_AWAIT(readInputSource(clearChunkSize(_encryptedChunkSize)));
-  auto output = prepareWrite(StreamHeader::serializedSize +
+  auto output = prepareWrite(Streams::Header::serializedSize +
                              Crypto::encryptedSize(clearInput.size()));
 
-  StreamHeader const header(
+  Streams::Header const header(
       _encryptedChunkSize, _resourceId, Crypto::getRandom<Crypto::AeadIv>());
   auto const it = Serialization::serialize(output.data(), header);
   auto const iv = Crypto::deriveIv(header.seed(), _chunkIndex);

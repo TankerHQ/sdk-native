@@ -5,7 +5,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 #include <algorithm>
 
@@ -15,8 +15,8 @@ namespace Tanker
 {
 namespace
 {
-void checkHeaderIntegrity(StreamHeader const& oldHeader,
-                          StreamHeader const& currentHeader)
+void checkHeaderIntegrity(Streams::Header const& oldHeader,
+                          Streams::Header const& currentHeader)
 {
   if (oldHeader.version() != currentHeader.version())
   {
@@ -61,10 +61,10 @@ tc::cotask<StreamDecryptor> StreamDecryptor::create(Streams::InputSource cb,
 
 tc::cotask<void> StreamDecryptor::readHeader()
 {
-  auto const buffer = TC_AWAIT(readInputSource(StreamHeader::serializedSize));
+  auto const buffer = TC_AWAIT(readInputSource(Streams::Header::serializedSize));
   try
   {
-    if (buffer.size() != StreamHeader::serializedSize)
+    if (buffer.size() != Streams::Header::serializedSize)
     {
       throw Exception(make_error_code(Errc::IOError),
                       "could not read encrypted input header");
@@ -92,7 +92,7 @@ Crypto::SymmetricKey const& StreamDecryptor::symmetricKey() const
 tc::cotask<void> StreamDecryptor::decryptChunk()
 {
   auto const sizeToRead =
-      _header.encryptedChunkSize() - StreamHeader::serializedSize;
+      _header.encryptedChunkSize() - Streams::Header::serializedSize;
   auto const encryptedInput = TC_AWAIT(readInputSource(sizeToRead));
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
   ++_chunkIndex;

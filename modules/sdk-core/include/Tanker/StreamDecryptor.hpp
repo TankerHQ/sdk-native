@@ -3,7 +3,7 @@
 #include <Tanker/BufferedStream.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -41,7 +41,7 @@ private:
   tc::cotask<void> decryptChunk();
 
   Crypto::SymmetricKey _key;
-  StreamHeader _header;
+  Streams::Header _header;
   std::int64_t _chunkIndex{};
 };
 }

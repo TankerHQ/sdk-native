@@ -35,7 +35,7 @@ tc::cotask<std::int64_t> failRead(std::uint8_t*, std::int64_t)
 tc::cotask<std::vector<std::uint8_t>> decryptData(StreamDecryptor& decryptor)
 {
   std::vector<std::uint8_t> decrypted(
-      24 + 5 * StreamHeader::defaultEncryptedChunkSize);
+      24 + 5 * Streams::Header::defaultEncryptedChunkSize);
   auto it = decrypted.data();
   std::int64_t totalRead{};
   while (auto const nbRead = TC_AWAIT(decryptor(it, 1024 * 1024 / 2)))
@@ -137,7 +137,7 @@ TEST_SUITE("Stream encryption")
   TEST_CASE("Encrypt/decrypt huge buffer")
   {
     std::vector<std::uint8_t> buffer(
-        24 + 5 * StreamHeader::defaultEncryptedChunkSize);
+        24 + 5 * Streams::Header::defaultEncryptedChunkSize);
     Crypto::randomFill(buffer);
 
     StreamEncryptor encryptor(bufferViewToInputSource(buffer));
@@ -161,7 +161,7 @@ TEST_SUITE("Stream encryption")
       "left")
   {
     std::vector<std::uint8_t> buffer(2 *
-                                     StreamHeader::defaultEncryptedChunkSize);
+                                     Streams::Header::defaultEncryptedChunkSize);
     Crypto::randomFill(buffer);
     auto readCallback = bufferViewToInputSource(buffer);
     auto timesCallbackCalled = 0;
@@ -175,10 +175,10 @@ TEST_SUITE("Stream encryption")
         });
 
     std::vector<std::uint8_t> encryptedBuffer(
-        StreamHeader::defaultEncryptedChunkSize);
+        Streams::Header::defaultEncryptedChunkSize);
 
     AWAIT(encryptor(encryptedBuffer.data(),
-                    StreamHeader::defaultEncryptedChunkSize));
+                    Streams::Header::defaultEncryptedChunkSize));
     CHECK(timesCallbackCalled == 1);
     AWAIT(encryptor(encryptedBuffer.data(), 0));
     CHECK(timesCallbackCalled == 2);
@@ -186,7 +186,7 @@ TEST_SUITE("Stream encryption")
     AWAIT(encryptor(encryptedBuffer.data(), 0));
     CHECK(timesCallbackCalled == 2);
     AWAIT(encryptor(encryptedBuffer.data(),
-                    StreamHeader::defaultEncryptedChunkSize));
+                    Streams::Header::defaultEncryptedChunkSize));
     CHECK(timesCallbackCalled == 2);
   }
 
