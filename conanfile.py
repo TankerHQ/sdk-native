@@ -143,7 +143,7 @@ class TankerConan(ConanFile):
             "tanker_admin-c",
             "ctanker",
             "tanker_async",
-            "tankercore_test",
+            "tankerfunctionalhelpers",
             "tankeradmin",
             "tankertesthelpers",
             "tankercore",

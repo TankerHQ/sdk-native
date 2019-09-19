@@ -2,13 +2,13 @@
 
 #include <Helpers/Buffers.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
-#include <Tanker/Test/Functional/TrustchainFactory.hpp>
+#include <Tanker/Functional/TrustchainFactory.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
 
-using Tanker::Test::TrustchainFactory;
-using Tanker::Test::User;
+using Tanker::Functional::TrustchainFactory;
+using Tanker::Functional::User;
 using Tanker::Trustchain::TrustchainId;
 
 namespace
@@ -35,7 +35,7 @@ CorePtr createCore(std::string const& url,
       AsyncCoreDeleter{});
 }
 
-UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
+UserSession signUpUser(Tanker::Functional::Trustchain& trustchain,
                        std::string const& tankerPath)
 {
   auto user = trustchain.makeUser();
@@ -46,7 +46,7 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
 }
 
 void claim(CorePtr& core,
-           Tanker::Test::Trustchain& trustchain,
+           Tanker::Functional::Trustchain& trustchain,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
            std::string const& semail)
 {
@@ -61,7 +61,7 @@ void claim(CorePtr& core,
 UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
-    Tanker::Test::Trustchain& trustchain,
+    Tanker::Functional::Trustchain& trustchain,
     std::string const& tankerPath)
 {
   auto session = signUpUser(trustchain, tankerPath);
@@ -70,7 +70,7 @@ UserSession signUpAndClaim(
 }
 
 CorePtr signInUser(std::string const& identity,
-                   Tanker::Test::Trustchain& trustchain,
+                   Tanker::Functional::Trustchain& trustchain,
                    std::string const& tankerPath)
 {
   auto core = createCore(trustchain.url, trustchain.id, tankerPath);

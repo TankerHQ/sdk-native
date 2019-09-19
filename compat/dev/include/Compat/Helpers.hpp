@@ -2,8 +2,8 @@
 
 #include <Tanker/AsyncCore.hpp>
 
-#include <Tanker/Test/Functional/Trustchain.hpp>
-#include <Tanker/Test/Functional/User.hpp>
+#include <Tanker/Functional/Trustchain.hpp>
+#include <Tanker/Functional/User.hpp>
 
 struct AsyncCoreDeleter
 {
@@ -22,25 +22,25 @@ CorePtr createCore(std::string const& url,
 struct UserSession
 {
   CorePtr core;
-  Tanker::Test::User user;
+  Tanker::Functional::User user;
 };
 
-UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
+UserSession signUpUser(Tanker::Functional::Trustchain& trustchain,
                        std::string const& tankerPath);
 
 void claim(CorePtr& core,
-           Tanker::Test::Trustchain& trustchain,
+           Tanker::Functional::Trustchain& trustchain,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
            std::string const& email);
 
 UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
-    Tanker::Test::Trustchain& trustchain,
+    Tanker::Functional::Trustchain& trustchain,
     std::string const& tankerPath);
 
 CorePtr signInUser(std::string const& identity,
-                   Tanker::Test::Trustchain& trustchain,
+                   Tanker::Functional::Trustchain& trustchain,
                    std::string const& tankerPath);
 
 void decrypt(CorePtr const& core,
@@ -52,6 +52,6 @@ std::vector<uint8_t> encrypt(CorePtr& core,
                              std::vector<Tanker::SPublicIdentity> users,
                              std::vector<Tanker::SGroupId> groups);
 
-Tanker::Test::User upgradeToIdentity(
+Tanker::Functional::User upgradeToIdentity(
     Tanker::Trustchain::TrustchainId const& trustchainId,
-    Tanker::Test::User user);
+    Tanker::Functional::User user);
