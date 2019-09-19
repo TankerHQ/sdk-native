@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Test/Functional/User.hpp>
+#include <Tanker/Functional/User.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -21,8 +21,8 @@ void from_json(nlohmann::json const& j, EncryptState& state);
 
 struct ShareState
 {
-  Tanker::Test::User alice;
-  Tanker::Test::User bob;
+  Tanker::Functional::User alice;
+  Tanker::Functional::User bob;
   nonstd::optional<Tanker::SGroupId> groupId;
   EncryptState encryptState;
 };

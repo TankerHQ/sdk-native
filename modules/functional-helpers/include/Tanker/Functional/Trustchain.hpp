@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Tanker/Test/Functional/User.hpp>
-
+#include <Tanker/Functional/User.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -11,13 +10,13 @@
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
 struct TrustchainConfig
 {
   std::string url;
   Tanker::Trustchain::TrustchainId id;
-  Tanker::Crypto::PrivateSignatureKey privateKey;
+  Crypto::PrivateSignatureKey privateKey;
 };
 
 void to_json(nlohmann::json& j, TrustchainConfig const& state);
@@ -39,17 +38,17 @@ public:
 
   std::string url;
   Tanker::Trustchain::TrustchainId id;
-  Tanker::Crypto::SignatureKeyPair keyPair;
+  Crypto::SignatureKeyPair keyPair;
 
   static Ptr make(TrustchainConfig const& config);
   static Ptr make(std::string url,
                   Tanker::Trustchain::TrustchainId id,
-                  Tanker::Crypto::SignatureKeyPair keypair);
+                  Crypto::SignatureKeyPair keypair);
 
   Trustchain(TrustchainConfig const& config);
   Trustchain(std::string url,
              Tanker::Trustchain::TrustchainId id,
-             Tanker::Crypto::SignatureKeyPair keypair);
+             Crypto::SignatureKeyPair keypair);
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
 

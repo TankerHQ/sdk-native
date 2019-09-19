@@ -17,7 +17,7 @@ add_executable(test_functional
 )
 
 target_link_libraries(test_functional
-  tankercore_test
+  tankerfunctionalhelpers
   tankertesthelpers
   tankeradmin
   tankercore

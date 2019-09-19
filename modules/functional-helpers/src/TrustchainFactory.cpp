@@ -1,4 +1,4 @@
-#include <Tanker/Test/Functional/TrustchainFactory.hpp>
+#include <Tanker/Functional/TrustchainFactory.hpp>
 
 #include <Tanker/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
@@ -14,13 +14,13 @@
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
-  : _admin(std::make_unique<Tanker::Admin::Admin>(
-        Tanker::Network::ConnectionFactory::create(
-            Tanker::TestConstants::trustchainUrl(), nonstd::nullopt),
-        Tanker::TestConstants::idToken()))
+  : _admin(std::make_unique<Admin::Admin>(
+        Network::ConnectionFactory::create(
+            TestConstants::trustchainUrl(), nonstd::nullopt),
+        TestConstants::idToken()))
 {
 }
 
@@ -43,7 +43,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
     bool isTest,
     bool storePrivateKey)
 {
-  auto kp = Tanker::Crypto::makeSignatureKeyPair();
+  auto kp = Crypto::makeSignatureKeyPair();
   auto trustchainDefault = Tanker::Trustchain::TrustchainId{};
   Crypto::randomFill(trustchainDefault);
   auto trustchainId = TC_AWAIT(_admin->createTrustchain(
@@ -53,7 +53,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
       isTest,
       storePrivateKey));
   TC_RETURN(Trustchain::make(
-      Tanker::TestConstants::trustchainUrl(), trustchainId, kp));
+      TestConstants::trustchainUrl(), trustchainId, kp));
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
@@ -64,7 +64,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
 }
 
 tc::cotask<VerificationCode> TrustchainFactory::getVerificationCode(
-    Tanker::Trustchain::TrustchainId id, Email const& email)
+    Tanker::Trustchain::TrustchainId const& id, Email const& email)
 {
   TC_RETURN(TC_AWAIT(this->_admin->getVerificationCode(id, email)));
 }

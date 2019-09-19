@@ -1,5 +1,5 @@
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Test/Functional/Device.hpp>
+#include <Tanker/Functional/Device.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -22,7 +22,7 @@ inline tc::cotask<std::string> decrypt(
 }
 
 inline tc::cotask<bool> checkDecrypt(
-    std::vector<Test::Device> devices,
+    std::vector<Functional::Device> devices,
     std::vector<std::tuple<std::vector<uint8_t>, std::vector<uint8_t>>> const&
         metas)
 {

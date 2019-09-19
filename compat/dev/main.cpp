@@ -1,7 +1,7 @@
 #include <Compat/Command.hpp>
 
 #include <Helpers/TimeoutTerminate.hpp>
-#include <Tanker/Test/Functional/TrustchainFactory.hpp>
+#include <Tanker/Functional/TrustchainFactory.hpp>
 
 #include <Tanker/Version.hpp>
 
@@ -12,8 +12,8 @@
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
-using Tanker::Test::Trustchain;
-using Tanker::Test::TrustchainFactory;
+using Tanker::Functional::Trustchain;
+using Tanker::Functional::TrustchainFactory;
 
 static const char USAGE[] = R"(compat cli
   Usage:
@@ -44,7 +44,7 @@ using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
 tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
     std::string const& command, std::string const& path, bool create)
 {
-  auto tf = TC_AWAIT(Tanker::Test::TrustchainFactory::create());
+  auto tf = TC_AWAIT(Tanker::Functional::TrustchainFactory::create());
   if (create)
   {
     auto trustchain = TC_AWAIT(tf->createTrustchain(

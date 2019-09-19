@@ -5,7 +5,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <doctest.h>
 
@@ -24,6 +24,7 @@ using namespace std::string_literals;
 using namespace Tanker;
 using namespace Tanker::Errors;
 using namespace type_literals;
+using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
@@ -124,7 +125,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto const core = TC_AWAIT(device.open());
 
-  auto const core2 = device.createCore(Test::SessionType::New);
+  auto const core2 = device.createCore(Functional::SessionType::New);
   REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
 }
 
@@ -134,7 +135,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 
   auto device1 = alice.makeDevice();
   auto session = TC_AWAIT(device1.open());
-  auto device2 = alice.makeDevice(Test::DeviceType::New);
+  auto device2 = alice.makeDevice(Functional::DeviceType::New);
   REQUIRE_NOTHROW(TC_AWAIT(device2.open()));
 }
 
@@ -348,7 +349,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       clearData,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
 
-  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
   auto const bobSession = TC_AWAIT(bobDevice.open());
 
@@ -410,7 +411,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
   auto const bobSession = TC_AWAIT(bobDevice.open());
 
@@ -443,9 +444,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       clearData,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
 
-  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
-  auto const bobSession = bobDevice.createCore(Tanker::Test::SessionType::New);
+  auto const bobSession = bobDevice.createCore(Tanker::Functional::SessionType::New);
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const emailVerif = Unlock::EmailVerification{
@@ -465,7 +466,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser(Tanker::Test::UserType::New);
+  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
@@ -500,7 +501,7 @@ TEST_CASE_FIXTURE(
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 {
-  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -514,7 +515,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
 
   REQUIRE(aliceSession->status() == Status::Stopped);
-  auto core = aliceDevice.createCore(Test::SessionType::Cached);
+  auto core = aliceDevice.createCore(Functional::SessionType::Cached);
 
   CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
            Status::IdentityVerificationNeeded);
@@ -523,7 +524,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can revoke a device while it is disconnected")
 {
-  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -548,7 +549,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can reopen and decrypt with a revoked device")
 {
-  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -582,7 +583,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "multiple devices can be successively revoked")
 {
-  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -602,7 +603,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE(otherSession->status() == Status::Stopped);
 
   {
-    auto core = aliceSecondDevice.createCore(Test::SessionType::Cached);
+    auto core = aliceSecondDevice.createCore(Functional::SessionType::Cached);
 
     CHECK_EQ(TC_AWAIT(core->start(aliceSecondDevice.identity())),
              Status::IdentityVerificationNeeded);
@@ -617,7 +618,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   REQUIRE(aliceSession->status() == Status::Stopped);
 
-  auto core = aliceDevice.createCore(Test::SessionType::Cached);
+  auto core = aliceDevice.createCore(Functional::SessionType::Cached);
 
   CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
            Status::IdentityVerificationNeeded);

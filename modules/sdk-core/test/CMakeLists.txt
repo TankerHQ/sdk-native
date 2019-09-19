@@ -40,7 +40,7 @@ add_executable(test_tanker
   ${TEST_TANKER_EXTRA_SRC}
 )
 target_link_libraries(test_tanker
-  tankercore_test
+  tankercore
   tankertesthelpers
   CONAN_PKG::doctest
   CONAN_PKG::trompeloeil

@@ -1,4 +1,4 @@
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -10,6 +10,7 @@
 
 using namespace Tanker;
 using namespace Tanker::Errors;
+using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
@@ -25,14 +26,14 @@ void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 {
-  auto alice = trustchain.makeUser(Test::UserType::New);
+  auto alice = trustchain.makeUser(Functional::UserType::New);
   auto device1 = alice.makeDevice();
-  auto core1 = device1.createCore(Test::SessionType::New);
+  auto core1 = device1.createCore(Functional::SessionType::New);
   REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
              Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
-  auto core2 = device2.createCore(Test::SessionType::New);
+  auto core2 = device2.createCore(Functional::SessionType::New);
 
   auto const password = Passphrase{"my password"};
   auto const email = Email{"kirby@dreamland.nes"};

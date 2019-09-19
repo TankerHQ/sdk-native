@@ -14,7 +14,7 @@ namespace Tanker
 {
 class AsyncCore;
 
-namespace Test
+namespace Functional
 {
 using AsyncCorePtr = std::shared_ptr<AsyncCore>;
 

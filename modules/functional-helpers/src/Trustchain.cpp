@@ -1,4 +1,4 @@
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Functional/Trustchain.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -12,9 +12,8 @@
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
-
 void to_json(nlohmann::json& j, TrustchainConfig const& config)
 {
   j["trustchainId"] = config.id;
@@ -31,15 +30,14 @@ void from_json(nlohmann::json const& j, TrustchainConfig& config)
 
 Trustchain::Trustchain(std::string url,
                        Tanker::Trustchain::TrustchainId id,
-                       Tanker::Crypto::SignatureKeyPair keypair)
+                       Crypto::SignatureKeyPair keypair)
   : url(std::move(url)), id(std::move(id)), keyPair(std::move(keypair))
 {
 }
 
 Trustchain::Trustchain(TrustchainConfig const& config)
-  : Trustchain(config.url,
-               config.id,
-               Tanker::Crypto::makeSignatureKeyPair(config.privateKey))
+  : Trustchain(
+        config.url, config.id, Crypto::makeSignatureKeyPair(config.privateKey))
 {
 }
 
@@ -77,7 +75,7 @@ Trustchain::Ptr Trustchain::make(TrustchainConfig const& config)
 
 Trustchain::Ptr Trustchain::make(std::string url,
                                  Tanker::Trustchain::TrustchainId id,
-                                 Tanker::Crypto::SignatureKeyPair keypair)
+                                 Crypto::SignatureKeyPair keypair)
 {
   return std::make_unique<Trustchain>(
       std::move(url), std::move(id), std::move(keypair));

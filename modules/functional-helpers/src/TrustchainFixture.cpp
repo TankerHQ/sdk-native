@@ -1,9 +1,13 @@
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 
+namespace Tanker
+{
+namespace Functional
+{
 namespace
 {
-Tanker::Test::Trustchain::Ptr _trustchain;
-Tanker::Test::TrustchainFactory::Ptr _trustchainFactory;
+Trustchain::Ptr _trustchain;
+TrustchainFactory::Ptr _trustchainFactory;
 
 tc::cotask<void> deleteTrustchain()
 {
@@ -26,12 +30,12 @@ TrustchainFixture::TrustchainFixture() : trustchain(getTrustchain())
   trustchain.reuseCache();
 }
 
-Tanker::Test::TrustchainFactory& TrustchainFixture::trustchainFactory()
+TrustchainFactory& TrustchainFixture::trustchainFactory()
 {
   return *_trustchainFactory;
 }
 
-Tanker::Test::Trustchain& TrustchainFixture::getTrustchain()
+Trustchain& TrustchainFixture::getTrustchain()
 {
   assert(_trustchain);
   return *_trustchain;
@@ -39,7 +43,7 @@ Tanker::Test::Trustchain& TrustchainFixture::getTrustchain()
 
 tc::cotask<void> TrustchainFixture::setUp()
 {
-  _trustchainFactory = TC_AWAIT(Tanker::Test::TrustchainFactory::create());
+  _trustchainFactory = TC_AWAIT(TrustchainFactory::create());
   TC_AWAIT(createTrustchain());
 }
 
@@ -49,9 +53,11 @@ tc::cotask<void> TrustchainFixture::tearDown()
   _trustchainFactory.reset();
 }
 
-tc::cotask<Tanker::VerificationCode> TrustchainFixture::getVerificationCode(
-    Tanker::Email const& email)
+tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
+    Email const& email)
 {
   TC_RETURN(
       TC_AWAIT(trustchainFactory().getVerificationCode(trustchain.id, email)));
+}
+}
 }

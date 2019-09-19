@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Test/Functional/Trustchain.hpp>
+#include <Tanker/Functional/Trustchain.hpp>
 
 #include <Tanker/Admin/Admin.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -9,7 +9,7 @@
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
 class TrustchainFactory
 {
@@ -29,10 +29,10 @@ public:
       bool storePrivateKey = true);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<VerificationCode> getVerificationCode(
-      Tanker::Trustchain::TrustchainId trustchainId, Email const& email);
+      Tanker::Trustchain::TrustchainId const& trustchainId, Email const& email);
 
 private:
-  std::unique_ptr<Tanker::Admin::Admin> _admin;
+  std::unique_ptr<Admin::Admin> _admin;
 
   TrustchainFactory();
   TrustchainFactory(TrustchainFactory&&) = delete;

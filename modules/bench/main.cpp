@@ -1,5 +1,5 @@
 #include <Tanker/Init.hpp>
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/Log/LogHandler.hpp>
 
@@ -11,7 +11,9 @@
 
 #include <cstdio>
 #include <string>
+
 using namespace std::string_literals;
+using Tanker::Functional::TrustchainFixture;
 
 static void log_handler(Tanker::Log::Record const&)
 {

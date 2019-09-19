@@ -8,7 +8,8 @@ add_executable(bench_tanker
 )
 
 target_link_libraries(bench_tanker
-  tankercore_test
+  tankercore
+  tankerfunctionalhelpers
   tankertesthelpers
   CONAN_PKG::google-benchmark
 )

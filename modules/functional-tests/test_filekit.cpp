@@ -1,7 +1,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Retry.hpp>
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
@@ -9,6 +9,7 @@
 #include <doctest.h>
 
 using namespace Tanker;
+using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
@@ -57,7 +58,8 @@ FileKit::Metadata makeMetadata()
   return metadata;
 }
 
-tc::cotask<void> testUploadDownload(Test::Trustchain& trustchain, uint64_t size)
+tc::cotask<void> testUploadDownload(Functional::Trustchain& trustchain,
+                                    uint64_t size)
 {
   CAPTURE(size);
   auto alice = trustchain.makeUser();

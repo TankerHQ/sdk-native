@@ -1,4 +1,4 @@
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -11,6 +11,7 @@
 #include "CheckDecrypt.hpp"
 
 using namespace Tanker;
+using Tanker::Functional::TrustchainFixture;
 
 TEST_SUITE("Groups")
 {

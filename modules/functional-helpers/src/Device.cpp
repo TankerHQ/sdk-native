@@ -1,4 +1,4 @@
-#include <Tanker/Test/Functional/Device.hpp>
+#include <Tanker/Functional/Device.hpp>
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Status.hpp>
@@ -13,7 +13,7 @@
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
 static auto const STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
@@ -59,7 +59,7 @@ std::unique_ptr<AsyncCore> Device::createAsyncCore()
       _trustchainUrl,
       Network::SdkInfo{
           "test",
-          cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+          cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
               _trustchainId),
           "0.0.1"},
       _storage->path);

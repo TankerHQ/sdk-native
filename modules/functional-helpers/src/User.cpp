@@ -1,14 +1,14 @@
 #include <Tanker/AsyncCore.hpp>
 
+#include <Tanker/Functional/User.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/Test/Functional/User.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
 {
-namespace Test
+namespace Functional
 {
 namespace
 {
@@ -16,7 +16,7 @@ auto createRandomUserId()
 {
   auto rdm = std::array<std::uint8_t, 10>{};
   Crypto::randomFill(rdm);
-  return Tanker::SUserId{cppcodec::base64_rfc4648::encode(rdm)};
+  return SUserId{cppcodec::base64_rfc4648::encode(rdm)};
 }
 }
 

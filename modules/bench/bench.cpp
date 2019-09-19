@@ -1,11 +1,10 @@
 #include <benchmark/benchmark.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-
-#include <Tanker/Test/Functional/TrustchainFixture.hpp>
 
 #include <Helpers/Await.hpp>
 
@@ -13,7 +12,7 @@
 
 using namespace std::string_literals;
 
-using namespace Tanker::Test;
+using namespace Tanker::Functional;
 
 namespace
 {
@@ -64,7 +63,7 @@ tc::cotask<Tanker::SGroupId> createGroup(
   TC_RETURN(sgroupId);
 }
 
-Tanker::Test::Trustchain& getTrustchain()
+Trustchain& getTrustchain()
 {
   static auto& trustchain = TrustchainFixture{}.trustchain;
   return trustchain;
