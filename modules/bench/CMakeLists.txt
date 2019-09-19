@@ -1,3 +1,7 @@
+cmake_minimum_required(VERSION 3.4)
+
+project(bench)
+
 add_executable(bench_tanker
   bench.cpp
   main.cpp

@@ -281,10 +281,6 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-if(BUILD_BENCH)
-  add_subdirectory(bench)
-endif()
-
 if(EMSCRIPTEN)
   add_executable(emtanker
     src/emtanker.cpp
