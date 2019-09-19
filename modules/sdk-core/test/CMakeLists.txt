@@ -46,5 +46,3 @@ target_link_libraries(test_tanker
   CONAN_PKG::trompeloeil
 )
 add_test(NAME test_tanker COMMAND test_tanker --duration=true)
-
-add_subdirectory(functional)

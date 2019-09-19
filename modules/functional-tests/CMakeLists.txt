@@ -1,3 +1,7 @@
+cmake_minimum_required(VERSION 3.4)
+
+project(functional-tests)
+
 if (NOT EMSCRIPTEN)
   set(_main_cpp main_functional.cpp)
 else ()

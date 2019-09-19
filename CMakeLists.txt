@@ -115,6 +115,10 @@ if (NOT EMSCRIPTEN)
   add_subdirectory(modules/fake-authentication-c)
 endif()
 
+if (BUILD_TESTS)
+  add_subdirectory(modules/functional-tests)
+endif()
+
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
 endif()
