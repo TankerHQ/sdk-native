@@ -250,39 +250,12 @@ install(TARGETS tankercore
   ARCHIVE DESTINATION lib
 )
 
-add_library(tankercore_test STATIC
-  include/Tanker/Test/Functional/Trustchain.hpp
-  include/Tanker/Test/Functional/TrustchainFactory.hpp
-  include/Tanker/Test/Functional/User.hpp
-  include/Tanker/Test/Functional/Device.hpp
-  include/Tanker/Test/Functional/TrustchainFixture.hpp
-
-  src/Test/Functional/Trustchain.cpp
-  src/Test/Functional/TrustchainFactory.cpp
-  src/Test/Functional/TrustchainFixture.cpp
-  src/Test/Functional/User.cpp
-  src/Test/Functional/Device.cpp
-  )
-
 if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
 endif()
 
-target_link_libraries(tankercore_test tankercore tankeradmin tankertesthelpers)
-
-install(TARGETS tankercore_test
-  EXPORT tankertest
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
-
 if(BUILD_TESTS)
   add_subdirectory(test)
-endif()
-
-if(BUILD_BENCH)
-  add_subdirectory(bench)
 endif()
 
 if(EMSCRIPTEN)

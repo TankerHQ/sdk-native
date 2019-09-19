@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tanker/Test/Functional/Trustchain.hpp>
-#include <Tanker/Test/Functional/TrustchainFactory.hpp>
+#include <Tanker/Functional/Trustchain.hpp>
+#include <Tanker/Functional/TrustchainFactory.hpp>
 
 #include <memory>
 #include <string>
@@ -13,7 +13,9 @@ namespace Compat
 class Command
 {
 public:
-  Command(Test::Trustchain& tc, std::string tankerPath, std::string statePath)
+  Command(Functional::Trustchain& tc,
+          std::string tankerPath,
+          std::string statePath)
     : tankerPath(std::move(tankerPath)),
       statePath(std::move(statePath)),
       trustchain(tc)
@@ -27,11 +29,11 @@ public:
 protected:
   std::string tankerPath;
   std::string statePath;
-  Test::Trustchain& trustchain;
+  Functional::Trustchain& trustchain;
 };
 
 using CreateFn = std::function<std::unique_ptr<Command>(
-    Test::Trustchain& tc, std::string tankerPath, std::string satePate)>;
+    Functional::Trustchain& tc, std::string tankerPath, std::string satePate)>;
 
 struct CommandInfo
 {
@@ -47,7 +49,7 @@ bool registerCommand(std::string name, std::string description)
 {
   registerCommand(std::move(name),
                   std::move(description),
-                  [](Tanker::Test::Trustchain& tc,
+                  [](Tanker::Functional::Trustchain& tc,
                      std::string tankerPath,
                      std::string statePath) {
                     return std::make_unique<C>(
