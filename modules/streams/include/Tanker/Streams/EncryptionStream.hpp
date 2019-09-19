@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Tanker/BufferedStream.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/BufferedStream.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -14,15 +14,17 @@
 
 namespace Tanker
 {
-class StreamEncryptor : BufferedStream<StreamEncryptor>
+namespace Streams
 {
-  friend BufferedStream<StreamEncryptor>;
+class EncryptionStream : BufferedStream<EncryptionStream>
+{
+  friend BufferedStream<EncryptionStream>;
 
 public:
-  explicit StreamEncryptor(StreamInputSource);
-  StreamEncryptor(StreamInputSource, std::uint32_t encryptedChunkSize);
+  explicit EncryptionStream(InputSource);
+  EncryptionStream(InputSource, std::uint32_t encryptedChunkSize);
 
-  using BufferedStream<StreamEncryptor>::operator();
+  using BufferedStream<EncryptionStream>::operator();
 
   Trustchain::ResourceId const& resourceId() const;
   Crypto::SymmetricKey const& symmetricKey() const;
@@ -37,4 +39,5 @@ private:
   Crypto::SymmetricKey _key;
   std::int64_t _chunkIndex{};
 };
+}
 }

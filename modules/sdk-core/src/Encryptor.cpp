@@ -9,7 +9,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 using Tanker::Trustchain::ResourceId;
 
@@ -23,7 +23,7 @@ namespace
 {
 constexpr bool isHugeClearData(uint64_t dataSize)
 {
-  return dataSize > StreamHeader::defaultEncryptedChunkSize;
+  return dataSize > Streams::Header::defaultEncryptedChunkSize;
 }
 
 template <typename Callable>

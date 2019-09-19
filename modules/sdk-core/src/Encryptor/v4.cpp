@@ -5,10 +5,10 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Serialization/Varint.hpp>
-#include <Tanker/StreamDecryptor.hpp>
-#include <Tanker/StreamEncryptor.hpp>
-#include <Tanker/StreamHeader.hpp>
-#include <Tanker/StreamHelpers.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/Header.hpp>
+#include <Tanker/Streams/Helpers.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -17,6 +17,7 @@
 using Tanker::Trustchain::ResourceId;
 
 using namespace Tanker::Errors;
+using namespace Tanker::Streams;
 
 namespace Tanker
 {
@@ -52,7 +53,7 @@ std::uint64_t EncryptorV4::decryptedSize(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  auto const header = Serialization::deserialize<StreamHeader>(ss);
+  auto const header = Serialization::deserialize<Header>(ss);
 
   // aead overhead
   if (ss.remaining_size() < Crypto::Mac::arraySize)
@@ -70,7 +71,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
-  StreamEncryptor encryptor(bufferViewToInputSource(clearData),
+  EncryptionStream encryptor(bufferViewToInputSource(clearData),
                             encryptedChunkSize);
 
   while (auto const nbRead =
@@ -86,12 +87,12 @@ tc::cotask<void> EncryptorV4::decrypt(
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
-  auto decryptor = TC_AWAIT(StreamDecryptor::create(
+  auto decryptor = TC_AWAIT(DecryptionStream::create(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(
-             decryptor(decryptedData, StreamHeader::defaultEncryptedChunkSize)))
+             decryptor(decryptedData, Header::defaultEncryptedChunkSize)))
     decryptedData += nbRead;
 }
 
@@ -99,6 +100,6 @@ ResourceId EncryptorV4::extractResourceId(
     gsl::span<std::uint8_t const> encryptedData)
 {
   Serialization::SerializedSource ss{encryptedData};
-  return Serialization::deserialize<StreamHeader>(ss).resourceId();
+  return Serialization::deserialize<Header>(ss).resourceId();
 }
 }

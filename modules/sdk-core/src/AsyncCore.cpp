@@ -176,7 +176,7 @@ tc::shared_future<SResourceId> AsyncCore::upload(
 }
 
 tc::shared_future<SResourceId> AsyncCore::uploadStream(
-    StreamInputSource source,
+    Streams::InputSource source,
     uint64_t size,
     FileKit::Metadata const& metadata,
     std::vector<SPublicIdentity> const& publicIdentities,
@@ -375,28 +375,28 @@ expected<SResourceId> AsyncCore::getResourceId(
   });
 }
 
-tc::shared_future<StreamEncryptor> AsyncCore::makeStreamEncryptor(
-    StreamInputSource cb,
+tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
+    Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)
 {
   // mutable so that we can move cb (otherwise it will be a const&&)
   return _taskCanceler.run([&]() mutable {
     return tc::async_resumable(
-        [=, cb = std::move(cb)]() -> tc::cotask<StreamEncryptor> {
-          TC_RETURN(TC_AWAIT(this->_core.makeStreamEncryptor(
+        [=, cb = std::move(cb)]() -> tc::cotask<Streams::EncryptionStream> {
+          TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
               std::move(cb), suserIds, sgroupIds)));
         });
   });
 }
 
-tc::shared_future<GenericStreamDecryptor> AsyncCore::makeStreamDecryptor(
-    StreamInputSource cb)
+tc::shared_future<Streams::DecryptionStreamAdapter> AsyncCore::makeDecryptionStream(
+    Streams::InputSource cb)
 {
   return _taskCanceler.run([&] {
     return tc::async_resumable(
-        [this, cb = std::move(cb)]() -> tc::cotask<GenericStreamDecryptor> {
-          TC_RETURN(TC_AWAIT(this->_core.makeStreamDecryptor(std::move(cb))));
+        [this, cb = std::move(cb)]() -> tc::cotask<Streams::DecryptionStreamAdapter> {
+          TC_RETURN(TC_AWAIT(this->_core.makeDecryptionStream(std::move(cb))));
         });
   });
 }

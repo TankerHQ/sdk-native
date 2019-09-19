@@ -3,7 +3,6 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/StreamEncryptor.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/async.hpp>
 

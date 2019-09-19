@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Tanker/BufferedStream.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/StreamHeader.hpp>
-#include <Tanker/StreamInputSource.hpp>
+#include <Tanker/Streams/BufferedStream.hpp>
+#include <Tanker/Streams/Header.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -17,23 +17,25 @@
 
 namespace Tanker
 {
-class StreamDecryptor : BufferedStream<StreamDecryptor>
+namespace Streams
 {
-  friend BufferedStream<StreamDecryptor>;
+class DecryptionStream : BufferedStream<DecryptionStream>
+{
+  friend BufferedStream<DecryptionStream>;
 
 public:
   using ResourceKeyFinder = std::function<tc::cotask<Crypto::SymmetricKey>(
       Trustchain::ResourceId const&)>;
 
-  using BufferedStream<StreamDecryptor>::operator();
+  using BufferedStream<DecryptionStream>::operator();
 
   Crypto::SymmetricKey const& symmetricKey() const;
   Trustchain::ResourceId const& resourceId() const;
 
-  static tc::cotask<StreamDecryptor> create(StreamInputSource,
-                                            ResourceKeyFinder);
+  static tc::cotask<DecryptionStream> create(InputSource, ResourceKeyFinder);
+
 private:
-  explicit StreamDecryptor(StreamInputSource);
+  explicit DecryptionStream(InputSource);
 
   tc::cotask<void> processInput();
   tc::cotask<void> readHeader();
@@ -41,7 +43,8 @@ private:
   tc::cotask<void> decryptChunk();
 
   Crypto::SymmetricKey _key;
-  StreamHeader _header;
+  Header _header;
   std::int64_t _chunkIndex{};
 };
+}
 }

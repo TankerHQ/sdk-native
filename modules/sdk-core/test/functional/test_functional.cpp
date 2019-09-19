@@ -167,11 +167,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
 
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(
-      aliceSession->makeStreamEncryptor(bufferViewToInputSource(clearData)));
-  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(encryptor));
+  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
+      Streams::bufferViewToInputSource(clearData)));
+  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(encryptor));
 
-  auto decryptedData = TC_AWAIT(readAllStream(decryptor));
+  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
   CHECK_EQ(encryptor.resourceId(), decryptor.resourceId());
   CHECK_EQ(decryptedData, clearData);
 }
@@ -184,9 +184,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream-encrypt and decrypt")
 
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(
-      aliceSession->makeStreamEncryptor(bufferViewToInputSource(clearData)));
-  auto encryptedData = TC_AWAIT(readAllStream(encryptor));
+  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
+      Streams::bufferViewToInputSource(clearData)));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
   CHECK_EQ(Core::getResourceId(encryptedData), encryptor.resourceId());
@@ -201,10 +201,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 
   auto const clearData = make_buffer("my clear data is clear");
   auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
-  auto decryptor = TC_AWAIT(aliceSession->makeStreamDecryptor(
-      bufferViewToInputSource(encryptedData)));
+  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(
+      Streams::bufferViewToInputSource(encryptedData)));
 
-  auto decryptedData = TC_AWAIT(readAllStream(decryptor));
+  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
   CHECK_EQ(Core::getResourceId(encryptedData), decryptor.resourceId());
   CHECK_EQ(decryptedData, clearData);
 }

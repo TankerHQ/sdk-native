@@ -1,17 +1,20 @@
 #pragma once
 
-#include <Tanker/StreamInputSource.hpp>
-
-#include <tconcurrent/coroutine.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 
 #include <gsl-lite.hpp>
+#include <tconcurrent/coroutine.hpp>
 
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 namespace Tanker
 {
-StreamInputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer);
-StreamInputSource bufferToInputSource(std::vector<uint8_t> buffer);
+namespace Streams
+{
+InputSource bufferViewToInputSource(gsl::span<uint8_t const> buffer);
+InputSource bufferToInputSource(std::vector<uint8_t> buffer);
 
 template <typename T>
 tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
@@ -19,8 +22,8 @@ tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
   auto totalRead = 0lu;
   while (totalRead != out.size())
   {
-    auto const nbRead =
-        TC_AWAIT(source(out.data() + totalRead, out.size() - totalRead));
+    auto const nbRead = TC_AWAIT(std::forward<T>(source)(
+        out.data() + totalRead, out.size() - totalRead));
     if (nbRead == 0)
       break;
     totalRead += nbRead;
@@ -42,7 +45,8 @@ tc::cotask<std::vector<uint8_t>> readAllStream(T&& source)
       out.resize(pos + blockSize);
       availableRoom = blockSize;
     }
-    auto const nbRead = TC_AWAIT(source(&out[pos], availableRoom));
+    auto const nbRead =
+        TC_AWAIT(std::forward<T>(source)(&out[pos], availableRoom));
     if (nbRead == 0)
     {
       out.resize(pos + nbRead);
@@ -50,5 +54,6 @@ tc::cotask<std::vector<uint8_t>> readAllStream(T&& source)
     }
     pos += nbRead;
   }
+}
 }
 }

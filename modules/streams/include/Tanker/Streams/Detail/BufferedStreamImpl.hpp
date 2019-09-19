@@ -3,16 +3,17 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/StreamHelpers.hpp>
+#include <Tanker/Streams/Helpers.hpp>
 
 #include <stdexcept>
 #include <utility>
 
 namespace Tanker
 {
+namespace Streams
+{
 template <typename Derived>
-BufferedStream<Derived>::BufferedStream(StreamInputSource cb)
-  : _cb(std::move(cb))
+BufferedStream<Derived>::BufferedStream(InputSource cb) : _cb(std::move(cb))
 {
 }
 
@@ -86,5 +87,6 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(std::uint8_t* out,
     throw;
   }
   throw AssertionError("unknown state");
+}
 }
 }

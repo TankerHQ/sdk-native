@@ -1,11 +1,11 @@
-#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 
 #include <algorithm>
 
@@ -13,10 +13,11 @@ using namespace Tanker::Errors;
 
 namespace Tanker
 {
+namespace Streams
+{
 namespace
 {
-void checkHeaderIntegrity(StreamHeader const& oldHeader,
-                          StreamHeader const& currentHeader)
+void checkHeaderIntegrity(Header const& oldHeader, Header const& currentHeader)
 {
   if (oldHeader.version() != currentHeader.version())
   {
@@ -43,15 +44,15 @@ void checkHeaderIntegrity(StreamHeader const& oldHeader,
 }
 }
 
-StreamDecryptor::StreamDecryptor(StreamInputSource cb)
+DecryptionStream::DecryptionStream(InputSource cb)
   : BufferedStream(std::move(cb))
 {
 }
 
-tc::cotask<StreamDecryptor> StreamDecryptor::create(StreamInputSource cb,
-                                                    ResourceKeyFinder finder)
+tc::cotask<DecryptionStream> DecryptionStream::create(InputSource cb,
+                                                      ResourceKeyFinder finder)
 {
-  StreamDecryptor decryptor(std::move(cb));
+  DecryptionStream decryptor(std::move(cb));
 
   TC_AWAIT(decryptor.readHeader());
   decryptor._key = TC_AWAIT(finder(decryptor._header.resourceId()));
@@ -59,12 +60,12 @@ tc::cotask<StreamDecryptor> StreamDecryptor::create(StreamInputSource cb,
   TC_RETURN(std::move(decryptor));
 }
 
-tc::cotask<void> StreamDecryptor::readHeader()
+tc::cotask<void> DecryptionStream::readHeader()
 {
-  auto const buffer = TC_AWAIT(readInputSource(StreamHeader::serializedSize));
+  auto const buffer = TC_AWAIT(readInputSource(Header::serializedSize));
   try
   {
-    if (buffer.size() != StreamHeader::serializedSize)
+    if (buffer.size() != Header::serializedSize)
     {
       throw Exception(make_error_code(Errc::IOError),
                       "could not read encrypted input header");
@@ -79,20 +80,20 @@ tc::cotask<void> StreamDecryptor::readHeader()
   }
 }
 
-Trustchain::ResourceId const& StreamDecryptor::resourceId() const
+Trustchain::ResourceId const& DecryptionStream::resourceId() const
 {
   return _header.resourceId();
 }
 
-Crypto::SymmetricKey const& StreamDecryptor::symmetricKey() const
+Crypto::SymmetricKey const& DecryptionStream::symmetricKey() const
 {
   return _key;
 }
 
-tc::cotask<void> StreamDecryptor::decryptChunk()
+tc::cotask<void> DecryptionStream::decryptChunk()
 {
   auto const sizeToRead =
-      _header.encryptedChunkSize() - StreamHeader::serializedSize;
+      _header.encryptedChunkSize() - Header::serializedSize;
   auto const encryptedInput = TC_AWAIT(readInputSource(sizeToRead));
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
   ++_chunkIndex;
@@ -100,11 +101,12 @@ tc::cotask<void> StreamDecryptor::decryptChunk()
   Crypto::decryptAead(_key, iv.data(), output.data(), encryptedInput, {});
 }
 
-tc::cotask<void> StreamDecryptor::processInput()
+tc::cotask<void> DecryptionStream::processInput()
 {
   auto const oldHeader = _header;
   TC_AWAIT(readHeader());
   checkHeaderIntegrity(oldHeader, _header);
   TC_AWAIT(decryptChunk());
+}
 }
 }

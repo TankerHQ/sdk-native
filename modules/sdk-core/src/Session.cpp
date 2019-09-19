@@ -24,14 +24,14 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/PeekableInputSource.hpp>
 #include <Tanker/Preregistration.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/StreamDecryptor.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -283,7 +283,7 @@ tc::cotask<Trustchain::ResourceId> Session::upload(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  TC_RETURN(TC_AWAIT(uploadStream(bufferViewToInputSource(data),
+  TC_RETURN(TC_AWAIT(uploadStream(Streams::bufferViewToInputSource(data),
                                   data.size(),
                                   metadata,
                                   publicIdentities,
@@ -291,14 +291,14 @@ tc::cotask<Trustchain::ResourceId> Session::upload(
 }
 
 tc::cotask<Trustchain::ResourceId> Session::uploadStream(
-    StreamInputSource source,
+    Streams::InputSource source,
     uint64_t size,
     FileKit::Metadata const& metadata,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
   auto const encryptedStream =
-      TC_AWAIT(makeStreamEncryptor(source, publicIdentities, groupIds));
+      TC_AWAIT(makeEncryptionStream(source, publicIdentities, groupIds));
   auto const resourceId = encryptedStream.resourceId();
 
   auto const encryptedMetadata = TC_AWAIT(FileKit::encryptMetadata(
@@ -315,10 +315,10 @@ tc::cotask<Trustchain::ResourceId> Session::uploadStream(
   auto const uploadUrl =
       TC_AWAIT(FileKit::getUploadUrl(multi, uploadTicket, encryptedMetadata));
 
-  auto const inputStream = StreamInputSource(encryptedStream);
+  auto const inputStream = Streams::InputSource(encryptedStream);
   std::vector<uint8_t> buf(FileKit::CHUNK_SIZE);
   uint64_t position = 0;
-  while (auto const readSize = TC_AWAIT(readStream(buf, inputStream)))
+  while (auto const readSize = TC_AWAIT(Streams::readStream(buf, inputStream)))
   {
     TC_AWAIT(retry(
         [&]() -> tc::cotask<void> {
@@ -365,7 +365,7 @@ tc::cotask<FileKit::DownloadStreamResult> Session::downloadStream(
                                    multi, resourceId, downloadTicket.url))));
 
   TC_RETURN((FileKit::DownloadStreamResult{
-      TC_AWAIT(makeStreamDecryptor(
+      TC_AWAIT(makeDecryptionStream(
           FileKit::DownloadStream(multi, downloadTicket.url))),
       metadata}));
 }
@@ -692,12 +692,12 @@ tc::cotask<void> Session::nukeDatabase()
   TC_AWAIT(_db->nuke());
 }
 
-tc::cotask<StreamEncryptor> Session::makeStreamEncryptor(
-    StreamInputSource cb,
+tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
+    Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  StreamEncryptor encryptor(std::move(cb));
+  Streams::EncryptionStream encryptor(std::move(cb));
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
@@ -730,10 +730,10 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
-    StreamInputSource cb)
+tc::cotask<Streams::DecryptionStreamAdapter> Session::makeDecryptionStream(
+    Streams::InputSource cb)
 {
-  auto peekableSource = PeekableInputSource(std::move(cb));
+  auto peekableSource = Streams::PeekableInputSource(std::move(cb));
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, TFMT("empty stream"));
@@ -745,18 +745,20 @@ tc::cotask<GenericStreamDecryptor> Session::makeStreamDecryptor(
       TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
     };
 
-    auto streamDecryptor = TC_AWAIT(StreamDecryptor::create(
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
-    TC_RETURN(GenericStreamDecryptor(std::move(streamDecryptor),
+    TC_RETURN(Streams::DecryptionStreamAdapter(std::move(streamDecryptor),
                                      streamDecryptor.resourceId()));
   }
   else
   {
-    auto encryptedData = TC_AWAIT(readAllStream(std::move(peekableSource)));
+    auto encryptedData =
+        TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
-    TC_RETURN(GenericStreamDecryptor(
-        bufferToInputSource(TC_AWAIT(decrypt(encryptedData))), resourceId));
+    TC_RETURN(Streams::DecryptionStreamAdapter(
+        Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
+        resourceId));
   }
-  throw AssertionError("makeStreamDecryptor: unreachable code");
+  throw AssertionError("makeDecryptionStream: unreachable code");
 }
 }

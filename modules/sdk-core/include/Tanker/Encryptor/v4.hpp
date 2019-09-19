@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/EncryptionMetadata.hpp>
-#include <Tanker/StreamHeader.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl-lite.hpp>
@@ -22,14 +22,14 @@ public:
   static std::uint64_t encryptedSize(
       std::uint64_t clearSize,
       std::uint32_t encryptedChunkSize =
-          StreamHeader::defaultEncryptedChunkSize);
+          Streams::Header::defaultEncryptedChunkSize);
   static std::uint64_t decryptedSize(gsl::span<std::uint8_t const> encryptedData);
 
   static tc::cotask<EncryptionMetadata> encrypt(
       std::uint8_t* encryptedData,
       gsl::span<std::uint8_t const> clearData,
       std::uint32_t encryptedChunkSize =
-          StreamHeader::defaultEncryptedChunkSize);
+          Streams::Header::defaultEncryptedChunkSize);
 
   static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
                            Crypto::SymmetricKey const& key,

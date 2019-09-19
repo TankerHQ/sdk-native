@@ -72,14 +72,6 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
-  include/Tanker/StreamDecryptor.hpp
-  include/Tanker/GenericStreamDecryptor.hpp
-  include/Tanker/StreamEncryptor.hpp
-  include/Tanker/StreamHeader.hpp
-  include/Tanker/BufferedStream.hpp
-  include/Tanker/StreamInputSource.hpp
-  include/Tanker/StreamHelpers.hpp
-  include/Tanker/PeekableInputSource.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
@@ -132,7 +124,6 @@ add_library(tankercore STATIC
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp
-  include/Tanker/Detail/BufferedStreamImpl.hpp
   include/Tanker/Encryptor.hpp
   include/Tanker/EncryptionMetadata.hpp
   include/Tanker/Encryptor/v2.hpp
@@ -156,12 +147,6 @@ add_library(tankercore STATIC
   src/DataStore/DatabaseFactory.cpp
   src/BlockGenerator.cpp
   src/Client.cpp
-  src/StreamDecryptor.cpp
-  src/GenericStreamDecryptor.cpp
-  src/StreamEncryptor.cpp
-  src/StreamHeader.cpp
-  src/StreamHelpers.cpp
-  src/PeekableInputSource.cpp
   src/GhostDevice.cpp
   src/Unlock/Create.cpp
   src/Unlock/Verification.cpp
@@ -229,6 +214,7 @@ target_link_libraries(tankercore
   tankeridentity
   tankertypes
   tankernetwork
+  tankerstreams
   tankertrustchain
   tankercrypto
   tankerformat
