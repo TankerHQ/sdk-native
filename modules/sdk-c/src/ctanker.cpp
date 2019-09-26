@@ -13,8 +13,8 @@
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
-#include <ctanker/private/Utils.hpp>
 #include <ctanker/async/private/CFuture.hpp>
+#include <ctanker/private/Utils.hpp>
 
 #include <string>
 #include <utility>
@@ -42,7 +42,7 @@ Unlock::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 1)
+  if (cverification->version != 2)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
