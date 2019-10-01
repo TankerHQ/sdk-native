@@ -68,6 +68,8 @@ class TankerConan(ConanFile):
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
         self.requires("tconcurrent/0.25.0@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
+        if self.settings.os == "Windows" and self.settings.compiler == "gcc":
+            self.requires("mingw-threads/1.0.0@tanker/testing", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
@@ -143,7 +145,9 @@ class TankerConan(ConanFile):
             "tanker_admin-c",
             "ctanker",
             "tanker_async",
+            "tankerfunctionalhelpers",
             "tankeradmin",
+            "tankertesthelpers",
             "tankercore",
             "tankerstreams",
             "tankernetwork",

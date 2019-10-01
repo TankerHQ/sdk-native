@@ -107,6 +107,8 @@ ConnPtr createConnection(std::string const& dbPath,
         false,
         shouldEncrypt ? hexUserSecret(userSecret) : "",
     });
+    // migrate from sqlcipher 3 to 4
+    db->execute("PRAGMA cipher_migrate");
     // enable foreign key support
     db->execute("PRAGMA foreign_keys = ON");
     // for revocation (when wiping db)
