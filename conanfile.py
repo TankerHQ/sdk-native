@@ -168,7 +168,5 @@ class TankerConan(ConanFile):
 
         if self.settings.os == "Windows" and self.options.with_ssl:
             libs.append("crypt32")
-            if self.settings.compiler == "Visual Studio":
-                libs.append("cryptui")
 
         self.cpp_info.libs = libs
