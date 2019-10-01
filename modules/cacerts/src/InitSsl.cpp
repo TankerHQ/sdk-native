@@ -5,7 +5,6 @@
 #if TANKER_BUILD_WITH_SSL
 #include <openssl/ssl.h>
 #ifdef _WIN32
-#include <cryptuiapi.h>
 #include <wincrypt.h>
 #include <windows.h>
 #endif
@@ -81,11 +80,6 @@ void add_certificate_authority(void* vctx)
 
   while (pContext = CertEnumCertificatesInStore(hStore, pContext))
   {
-    // uncomment the line below and link with cryptui if you want to see the
-    // certificates as pop ups
-    // CryptUIDlgViewContext(CERT_STORE_CERTIFICATE_CONTEXT, pContext,   NULL,
-    // NULL, 0, NULL);
-
     x509 = NULL;
     x509 = d2i_X509(NULL,
                     (const unsigned char**)&pContext->pbCertEncoded,

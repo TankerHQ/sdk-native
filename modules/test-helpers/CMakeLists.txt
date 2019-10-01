@@ -35,4 +35,10 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt CONAN_PKG::optional-lite)
+set(_libs tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt CONAN_PKG::optional-lite)
+
+if (MINGW)
+  list(APPEND _libs CONAN_PKG::mingw-threads)
+endif()
+
+target_link_libraries(tankertesthelpers ${_libs})
