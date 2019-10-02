@@ -16,12 +16,7 @@ class task_canceler
 public:
   ~task_canceler()
   {
-    auto const fut = terminate(true);
-    if (!fut.is_ready())
-    {
-      assert(false && "destructing a task_canceler that could not be canceled");
-      return;
-    }
+    terminate(true);
   }
 
   template <typename Func>
