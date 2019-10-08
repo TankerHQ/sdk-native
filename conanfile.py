@@ -57,7 +57,7 @@ class TankerConan(ConanFile):
             self.requires("socket.io-client-cpp/1.6.2@tanker/testing", private=private)
             self.requires("sqlpp11/0.58@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
-            self.requires("libcurl/7.64.1@tanker/testing", private=private)
+            self.requires("libcurl/7.66.0@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
         self.requires("fmt/5.3.0@bincrafters/stable", private=private)
@@ -66,7 +66,7 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.18@tanker/testing", private=private)
         self.requires("mockaron/0.9.3@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.25.0@tanker/stable", private=private)
+        self.requires("tconcurrent/0.25.1@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
         if self.settings.os == "Windows" and self.settings.compiler == "gcc":
             self.requires("mingw-threads/1.0.0@tanker/testing", private=private)
