@@ -45,10 +45,7 @@ class TankerConan(ConanFile):
         return None
 
     def requirements(self):
-        # Why only private for Android?
-        # Because it's the only platform for which we directly build a shared library which only depends on static libs.
-        # Thus we embed every dep in the shared lib
-        private = (self.settings.os == "Android")
+        private = self.options.tankerlib_shared == True
 
         self.requires("Boost/1.68.0@tanker/testing", private=private)
         if self.settings.os != "Emscripten":
@@ -144,23 +141,26 @@ class TankerConan(ConanFile):
         libs = [
             "tanker_admin-c",
             "ctanker",
-            "tanker_async",
-            "tankerfunctionalhelpers",
-            "tankeradmin",
-            "tankertesthelpers",
-            "tankercore",
-            "tankerstreams",
-            "tankernetwork",
-            "tankertrustchain",
-            "tankeridentity",
-            "tankercrypto",
-            "tankerserialization",
-            "tankererrors",
-            "tankerlog",
-            "tankerformat",
-            "tankercacerts",
-            "tccurl",
         ]
+        if not self.options.tankerlib_shared:
+            libs.extend([
+                "tanker_async",
+                "tankerfunctionalhelpers",
+                "tankeradmin",
+                "tankertesthelpers",
+                "tankercore",
+                "tankerstreams",
+                "tankernetwork",
+                "tankertrustchain",
+                "tankeridentity",
+                "tankercrypto",
+                "tankerserialization",
+                "tankererrors",
+                "tankerlog",
+                "tankerformat",
+                "tankercacerts",
+                "tccurl",
+            ])
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
