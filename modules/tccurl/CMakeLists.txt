@@ -35,7 +35,7 @@ install(TARGETS tccurl
 if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tccurl PUBLIC TANKER_BUILD_WITH_SSL)
   if (WIN32)
-     target_link_libraries(tccurl crypt32 cryptui)
+     target_link_libraries(tccurl crypt32)
   endif()
 endif()
 
