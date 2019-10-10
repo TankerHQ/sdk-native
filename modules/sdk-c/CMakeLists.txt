@@ -34,6 +34,11 @@ generate_export_header(ctanker
 
 if(TANKERLIB_SHARED)
   tanker_export_symbols(ctanker)
+  if(MINGW)
+    # mingw will create libctanker.dll, which is not found via -lctanker
+    set_target_properties(ctanker PROPERTIES PREFIX "")
+    set(_additional_link_flags "-Wl,-static;-static-libgcc")
+  endif()
 endif()
 
 tanker_link_libraries(ctanker PUBLIC
@@ -45,6 +50,8 @@ tanker_link_libraries(ctanker PUBLIC
 
   CONAN_PKG::cppcodec
 
+  ${_additional_link_flags}
+
   EMBED_LIBS
     tanker_async
 )
@@ -55,6 +62,7 @@ target_include_directories(ctanker
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+
 
 install(TARGETS ctanker
   EXPORT ctanker

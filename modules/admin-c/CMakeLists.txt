@@ -30,6 +30,10 @@ target_include_directories(tanker_admin-c
 
 if (TANKERLIB_SHARED)
   tanker_export_symbols(tanker_admin-c)
+  if (MINGW)
+    set_target_properties(tanker_admin-c PROPERTIES PREFIX "")
+    set(_additional_link_flags "-Wl,-static;-static-libgcc")
+  endif()
 endif()
 
 tanker_link_libraries(tanker_admin-c
@@ -38,6 +42,8 @@ tanker_link_libraries(tanker_admin-c
   tankercacerts
   tankercrypto
   tankererrors
+
+  ${_additional_link_flags}
 
   EMBED_LIBS
     tanker_async

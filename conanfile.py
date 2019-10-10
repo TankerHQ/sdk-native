@@ -44,6 +44,10 @@ class TankerConan(ConanFile):
             return " -fsanitize=%s " % self.options.sanitizer
         return None
 
+    @property
+    def is_mingw(self):
+        return self.settings.os == "Windows" and self.settings.compiler == "gcc"
+
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
@@ -65,7 +69,7 @@ class TankerConan(ConanFile):
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
         self.requires("tconcurrent/0.25.1@tanker/stable", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
-        if self.settings.os == "Windows" and self.settings.compiler == "gcc":
+        if self.is_mingw:
             self.requires("mingw-threads/1.0.0@tanker/testing", private=private)
 
     def imports(self):
@@ -166,7 +170,7 @@ class TankerConan(ConanFile):
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
 
-        if self.settings.os == "Windows" and self.options.with_ssl:
+        if self.settings.os == "Windows" and self.options.with_ssl and not self.options.tankerlib_shared:
             libs.append("crypt32")
 
         self.cpp_info.libs = libs
