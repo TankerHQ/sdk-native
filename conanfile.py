@@ -51,11 +51,11 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("Boost/1.68.0@tanker/testing", private=private)
+        self.requires("Boost/1.71.0@tanker/testing", private=private)
         if self.settings.os != "Emscripten":
             if self.options.with_ssl:
                 self.requires("LibreSSL/2.9.2@tanker/testing", private=private)
-            self.requires("socket.io-client-cpp/1.6.2@tanker/testing", private=private)
+            self.requires("socket.io-client-cpp/1.6.2@tanker/dev", private=private)
             self.requires("sqlpp11/0.58@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
             self.requires("libcurl/7.66.0@tanker/testing", private=private)
@@ -67,7 +67,7 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.18@tanker/testing", private=private)
         self.requires("mockaron/0.9.3@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.25.1@tanker/stable", private=private)
+        self.requires("tconcurrent/0.26.0@tanker/testing", private=private)
         self.requires("variant/1.3.0@tanker/testing", private=private)
         if self.is_mingw:
             self.requires("mingw-threads/1.0.0@tanker/testing", private=private)
