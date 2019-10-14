@@ -12,7 +12,7 @@ import ci.git
 
 def build_and_check(profile: str, coverage: bool) -> None:
     built_path = ci.cpp.build(
-        profile, make_package=True, coverage=coverage, warn_as_error=True
+        profile, make_package=True, coverage=coverage,
     )
     ci.cpp.check(built_path, coverage=coverage)
 
