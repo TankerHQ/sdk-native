@@ -8,7 +8,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
@@ -48,7 +48,7 @@ public:
   decltype(auto) visit(Callable&&) const;
 
 private:
-  mpark::variant<v1, v2> _variant;
+  boost::variant2::variant<v1, v2> _variant;
 
   friend bool operator==(DeviceRevocation const&, DeviceRevocation const&);
   friend std::uint8_t* to_serialized(std::uint8_t*, DeviceRevocation const&);
@@ -69,25 +69,25 @@ void to_json(nlohmann::json&, DeviceRevocation const&);
 template <typename T>
 bool DeviceRevocation::holds_alternative() const
 {
-  return mpark::holds_alternative<T>(_variant);
+  return boost::variant2::holds_alternative<T>(_variant);
 }
 
 template <typename T>
 T const& DeviceRevocation::get() const
 {
-  return mpark::get<T>(_variant);
+  return boost::variant2::get<T>(_variant);
 }
 
 template <typename T>
 T const* DeviceRevocation::get_if() const
 {
-  return mpark::get_if<T>(&_variant);
+  return boost::variant2::get_if<T>(&_variant);
 }
 
 template <typename Callable>
 decltype(auto) DeviceRevocation::visit(Callable&& c) const
 {
-  return mpark::visit(std::forward<Callable>(c), _variant);
+  return boost::variant2::visit(std::forward<Callable>(c), _variant);
 }
 }
 }

@@ -22,13 +22,13 @@ DeviceCreation::DeviceCreation(v3 const& dc3) : _variant(dc3)
 
 Nature DeviceCreation::nature() const
 {
-  return mpark::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
 }
 
 Crypto::PublicSignatureKey const& DeviceCreation::ephemeralPublicSignatureKey()
     const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) {
         return a.ephemeralPublicSignatureKey();
       },
@@ -37,48 +37,48 @@ Crypto::PublicSignatureKey const& DeviceCreation::ephemeralPublicSignatureKey()
 
 UserId const& DeviceCreation::userId() const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) { return a.userId(); }, _variant);
 }
 
 Crypto::Signature const& DeviceCreation::delegationSignature() const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) { return a.delegationSignature(); },
       _variant);
 }
 
 Crypto::PublicSignatureKey const& DeviceCreation::publicSignatureKey() const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) { return a.publicSignatureKey(); },
       _variant);
 }
 
 Crypto::PublicEncryptionKey const& DeviceCreation::publicEncryptionKey() const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) { return a.publicEncryptionKey(); },
       _variant);
 }
 
 bool DeviceCreation::isGhostDevice() const
 {
-  if (auto dc3 = mpark::get_if<DeviceCreation3>(&_variant))
+  if (auto dc3 = boost::variant2::get_if<DeviceCreation3>(&_variant))
     return dc3->isGhostDevice();
   return false;
 }
 
 std::vector<std::uint8_t> DeviceCreation::signatureData() const
 {
-  return mpark::visit([&](auto const& val) { return val.signatureData(); },
+  return boost::variant2::visit([&](auto const& val) { return val.signatureData(); },
                       _variant);
 }
 
 Crypto::Signature const& DeviceCreation::sign(
     Crypto::PrivateSignatureKey const& key)
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [&](auto& val) -> decltype(auto) { return val.sign(key); }, _variant);
 }
 
@@ -104,7 +104,7 @@ std::size_t serialized_size(DeviceCreation const& dc)
 
 void to_json(nlohmann::json& j, DeviceCreation const& dc)
 {
-  mpark::visit([&j](auto const& val) { j = val; }, dc._variant);
+  boost::variant2::visit([&j](auto const& val) { j = val; }, dc._variant);
 }
 }
 }

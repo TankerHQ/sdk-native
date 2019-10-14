@@ -227,7 +227,7 @@ TEST_SUITE("serialization")
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
     auto const publicPermanentIdentity =
-        mpark::get<PublicPermanentIdentity>(publicIdentity);
+        boost::variant2::get<PublicPermanentIdentity>(publicIdentity);
     CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
   }
@@ -307,7 +307,7 @@ TEST_SUITE("getPublicIdentity")
     auto const publicIdentityStr = getPublicIdentity(identityStr);
     auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-    auto const p = mpark::get_if<PublicPermanentIdentity>(&publicIdentity);
+    auto const p = boost::variant2::get_if<PublicPermanentIdentity>(&publicIdentity);
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
     CHECK_EQ(p->userId, aliceO);
@@ -318,7 +318,7 @@ TEST_SUITE("getPublicIdentity")
     auto const b64PublicIdentity =
         getPublicIdentity(GOOD_SECRET_PROVISIONAL_IDENTITY);
     auto const publicIdentity = extract<PublicIdentity>(b64PublicIdentity);
-    auto const p = mpark::get_if<PublicProvisionalIdentity>(&publicIdentity);
+    auto const p = boost::variant2::get_if<PublicProvisionalIdentity>(&publicIdentity);
 
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);

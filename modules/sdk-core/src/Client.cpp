@@ -372,7 +372,7 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
 {
   nlohmann::json request;
   if (auto const verif =
-          mpark::get_if<Unlock::EmailVerification>(&verification))
+          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
   {
     request["hashed_email"] = hashField(verif->email);
     request["encrypted_email"] =
@@ -380,9 +380,9 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
             userSecret, gsl::make_span(verif->email).as_span<uint8_t const>()));
     request["verification_code"] = verif->verificationCode;
   }
-  else if (auto const pass = mpark::get_if<Passphrase>(&verification))
+  else if (auto const pass = boost::variant2::get_if<Passphrase>(&verification))
     request["hashed_passphrase"] = hashField(*pass);
-  else if (!mpark::holds_alternative<VerificationKey>(verification))
+  else if (!boost::variant2::holds_alternative<VerificationKey>(verification))
     // as we return an empty json for verification key the only thing to do if
     // it is NOT a verificationKey is to throw
     throw Errors::AssertionError("unsupported verification request");

@@ -13,7 +13,7 @@ namespace Tanker
 struct Device
 {
   Trustchain::DeviceId id;
-  uint64_t createdAtBlkIndex;
+  uint64_t createdAtBlkIndex = 0;
   nonstd::optional<uint64_t> revokedAtBlkIndex;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;

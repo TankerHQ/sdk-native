@@ -4,7 +4,7 @@
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 
 namespace Tanker
 {
@@ -13,7 +13,7 @@ namespace Identity
 struct SecretPermanentIdentity;
 
 using PublicIdentity =
-    mpark::variant<PublicPermanentIdentity, PublicProvisionalIdentity>;
+    boost::variant2::variant<PublicPermanentIdentity, PublicProvisionalIdentity>;
 
 PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity);
 PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity);

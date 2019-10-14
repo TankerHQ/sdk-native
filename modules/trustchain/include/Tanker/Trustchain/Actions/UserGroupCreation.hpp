@@ -13,7 +13,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>

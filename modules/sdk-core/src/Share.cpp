@@ -18,7 +18,7 @@
 #include <Tanker/UserAccessor.hpp>
 #include <Tanker/Utils.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -141,7 +141,7 @@ void handleNotFound(
         publicIdentities,
         [](auto const& identity) {
           auto const permanentIdentity =
-              mpark::get_if<Identity::PublicPermanentIdentity>(&identity);
+              boost::variant2::get_if<Identity::PublicPermanentIdentity>(&identity);
           return permanentIdentity ?
                      nonstd::make_optional(permanentIdentity->userId) :
                      nonstd::nullopt;

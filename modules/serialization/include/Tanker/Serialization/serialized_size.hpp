@@ -3,7 +3,7 @@
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Serialization/detail/static_const.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <optional.hpp>
 
 #include <cstddef>
@@ -25,9 +25,9 @@ std::size_t serialized_size(std::pair<T, U> const& val)
 }
 
 template <typename... Args>
-std::size_t serialized_size(mpark::variant<Args...> const& val)
+std::size_t serialized_size(boost::variant2::variant<Args...> const& val)
 {
-  return mpark::visit([](auto const& a) { return serialized_size(a); }, val);
+  return boost::variant2::visit([](auto const& a) { return serialized_size(a); }, val);
 }
 
 template <typename T>

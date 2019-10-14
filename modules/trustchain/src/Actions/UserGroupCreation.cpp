@@ -16,19 +16,19 @@ namespace Actions
 {
 Nature UserGroupCreation::nature() const
 {
-  return mpark::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
 }
 
 std::vector<std::uint8_t> UserGroupCreation::signatureData() const
 {
-  return mpark::visit([&](auto const& val) { return val.signatureData(); },
+  return boost::variant2::visit([&](auto const& val) { return val.signatureData(); },
                       _variant);
 }
 
 Crypto::Signature const& UserGroupCreation::selfSign(
     Crypto::PrivateSignatureKey const& key)
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [&](auto& val) -> decltype(auto) { return val.selfSign(key); }, _variant);
 }
 
@@ -44,7 +44,7 @@ std::size_t serialized_size(UserGroupCreation const& dc)
 
 void to_json(nlohmann::json& j, UserGroupCreation const& dc)
 {
-  mpark::visit([&j](auto const& val) { j = val; }, dc._variant);
+  boost::variant2::visit([&j](auto const& val) { j = val; }, dc._variant);
 }
 }
 }

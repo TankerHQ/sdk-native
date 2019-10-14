@@ -22,12 +22,12 @@ DeviceRevocation::DeviceRevocation(v2 const& dr2) : _variant(dr2)
 
 Nature DeviceRevocation::nature() const
 {
-  return mpark::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
 }
 
 DeviceId const& DeviceRevocation::deviceId() const
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [](auto const& a) -> decltype(auto) { return a.deviceId(); }, _variant);
 }
 
@@ -53,7 +53,7 @@ std::size_t serialized_size(DeviceRevocation const& dc)
 
 void to_json(nlohmann::json& j, DeviceRevocation const& dr)
 {
-  mpark::visit([&j](auto const& val) { j = val; }, dr._variant);
+  boost::variant2::visit([&j](auto const& val) { j = val; }, dr._variant);
 }
 }
 }
