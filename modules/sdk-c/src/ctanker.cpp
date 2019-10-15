@@ -42,7 +42,7 @@ Unlock::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 2)
+  if (cverification->version != 3)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
@@ -76,6 +76,13 @@ Unlock::Verification cverificationToVerification(
     verification = VerificationKey{cverification->verification_key};
     break;
   }
+  case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN:
+  {
+    if (!cverification->oidc_id_token)
+      throw formatEx(Errc::InvalidArgument, "oidc id token field is null");
+    verification = OidcIdToken{cverification->oidc_id_token};
+    break;
+  }
   default:
     throw formatEx(Errc::InvalidArgument, "unknown verification type");
   }
@@ -90,6 +97,9 @@ void cVerificationMethodFromVerificationMethod(
   if (method.holds_alternative<Passphrase>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PASSPHRASE);
+  else if (method.holds_alternative<OidcIdToken>())
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN);
   else if (method.holds_alternative<VerificationKey>())
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY);
@@ -114,9 +124,11 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
                   Unlock::Method::Passphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
+                  Unlock::Method::OidcIdToken);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 3,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 4,
               "Please update the event assertions above if you added a new "
               "unlock methods");
 

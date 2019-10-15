@@ -63,6 +63,7 @@ std::map<std::string, ServerErrc> const serverErrorMap{
     {"verification_key_not_found", ServerErrc::VerificationKeyNotFound},
     {"group_too_big", ServerErrc::GroupTooBig},
     {"invalid_delegation_signature", ServerErrc::InvalidDelegationSignature},
+    {"invalid_oidc_id_token", ServerErrc::InvalidVerificationCode},
 };
 }
 
@@ -382,6 +383,9 @@ nlohmann::json ClientHelpers::makeVerificationRequest(
   }
   else if (auto const pass = boost::variant2::get_if<Passphrase>(&verification))
     request["hashed_passphrase"] = hashField(*pass);
+  else if (auto const oidcIdToken =
+               boost::variant2::get_if<OidcIdToken>(&verification))
+    request["oidc_id_token"] = oidcIdToken->string();
   else if (!boost::variant2::holds_alternative<VerificationKey>(verification))
     // as we return an empty json for verification key the only thing to do if
     // it is NOT a verificationKey is to throw

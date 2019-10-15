@@ -12,8 +12,9 @@ enum class Method
   Email = 0x1,
   Passphrase,
   VerificationKey,
+  OidcIdToken,
 
-  Last = VerificationKey,
+  Last = OidcIdToken,
 };
 
 using Methods = ::flags::flags<Method>;

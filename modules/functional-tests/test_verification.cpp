@@ -3,10 +3,17 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 
+#include <Helpers/Buffers.hpp>
+#include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <cppcodec/base64_url_unpadded.hpp>
 #include <doctest.h>
 #include <nlohmann/json.hpp>
+#include <tccurl/curl.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -21,6 +28,48 @@ void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
   std::sort(expected.begin(), expected.end());
   if (actual != expected)
     throw std::runtime_error("check failed: verification methods do not match");
+}
+
+tc::cotask<Tanker::Status> expectVerification(
+    Functional::AsyncCorePtr session,
+    std::string const& identity,
+    Unlock::Verification const& verification)
+{
+  REQUIRE_EQ(TC_AWAIT(session->start(identity)),
+             Status::IdentityVerificationNeeded);
+  TC_AWAIT(session->verifyIdentity(verification));
+  checkVerificationMethods(TC_AWAIT(session->getVerificationMethods()),
+                           {Unlock::VerificationMethod::from(verification)});
+  TC_RETURN(session->status());
+}
+
+tc::cotask<OidcIdToken> getOidcToken(tccurl::multi& multi,
+                                     TestConstants::OidcConfig& oidcConfig,
+                                     std::string userName)
+{
+  auto const req = std::make_shared<tccurl::request>();
+  auto const payload = nlohmann::json{
+      {"client_id", oidcConfig.clientId},
+      {"client_secret", oidcConfig.clientSecret},
+      {"grant_type", "refresh_token"},
+      {"refresh_token", oidcConfig.users.at(userName).refreshToken},
+  };
+  req->set_url("https://www.googleapis.com/oauth2/v4/token");
+  req->add_header("content-type: application/json");
+  auto const data = payload.dump();
+  curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1L);
+  curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDS, data.c_str());
+  curl_easy_setopt(
+      req->get_curl(), CURLOPT_POSTFIELDSIZE, static_cast<long>(data.size()));
+
+  auto const result = TC_AWAIT(tccurl::read_all(multi, req));
+  if (!req->is_response_ok())
+    throw Errors::formatEx(Errors::Errc::NetworkError,
+                           "invalid status google id token request: {}: {}",
+                           req->get_status_code(),
+                           std::string(result.data.begin(), result.data.end()));
+  auto json = nlohmann::json::parse(result.data.begin(), result.data.end());
+  TC_RETURN(json.at("id_token").get<OidcIdToken>());
 }
 }
 
@@ -351,5 +400,123 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     methods = TC_AWAIT(core1->getVerificationMethods());
     REQUIRE(methods.size() == 1);
     CHECK(methods[0].get<Email>() == newEmail);
+  }
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
+{
+  TC_AWAIT(enableOidc());
+
+  auto martine = trustchain.makeUser(Functional::UserType::New);
+  auto martineDevice = martine.makeDevice();
+  auto martineLaptop = martineDevice.createCore(Functional::SessionType::New);
+  REQUIRE_EQ(TC_AWAIT(martineLaptop->start(martine.identity)),
+             Status::IdentityRegistrationNeeded);
+
+  auto martineDevice2 = martine.makeDevice();
+  auto martinePhone = martineDevice2.createCore(Functional::SessionType::New);
+
+  auto oidcConfig = TestConstants::oidcConfig();
+
+  OidcIdToken martineIdToken, kevinIdToken;
+  {
+    tccurl::multi multi;
+
+    martineIdToken = TC_AWAIT(getOidcToken(multi, oidcConfig, "martine"));
+    kevinIdToken = TC_AWAIT(getOidcToken(multi, oidcConfig, "kevin"));
+  }
+
+  SUBCASE("")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(martineIdToken)));
+
+    SUBCASE("registers and verifies identity with an oidc id token")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(
+          expectVerification(martinePhone, martine.identity, martineIdToken)));
+    }
+    SUBCASE("fails to verify a token with incorrect signature")
+    {
+      namespace ba = boost::algorithm;
+      using b64 = cppcodec::base64_url_unpadded;
+
+      std::vector<std::string> res;
+      auto itSig = ba::split(res, martineIdToken, ba::is_any_of(".")).rbegin();
+      auto alterSig = b64::decode(*itSig);
+      ++alterSig[5];
+      *itSig = b64::encode(alterSig);
+
+      auto const alteredToken = OidcIdToken{ba::join(res, ".")};
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(
+              expectVerification(martinePhone, martine.identity, alteredToken)),
+          Errc::InvalidVerification);
+    }
+    SUBCASE("fails to verify a valid token for the wrong user")
+    {
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(
+              expectVerification(martinePhone, martine.identity, kevinIdToken)),
+          Errc::InvalidVerification);
+    }
+  }
+  SUBCASE("")
+  {
+    auto const pass = Passphrase{"******"};
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+
+    SUBCASE("updates and verifies with an oidc token")
+    {
+      REQUIRE_NOTHROW(
+          TC_AWAIT(martineLaptop->setVerificationMethod(martineIdToken)));
+      REQUIRE_EQ(TC_AWAIT(martinePhone->start(martine.identity)),
+                 Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
+      REQUIRE_NOTHROW(checkVerificationMethods(
+          TC_AWAIT(martinePhone->getVerificationMethods()),
+          {Passphrase{}, OidcIdToken{}}));
+    }
+    SUBCASE(
+        "fails to attach a provisional identity for the wrong google account")
+    {
+      auto const email = Email{"the-ceo@tanker.io"};
+      auto const martineProvisionalIdentity =
+          Identity::createProvisionalIdentity(
+              cppcodec::base64_rfc4648::encode(trustchain.id), email);
+      auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
+          SSecretProvisionalIdentity{martineProvisionalIdentity}));
+      REQUIRE_EQ(result.status, Tanker::Status::IdentityVerificationNeeded);
+      REQUIRE_EQ(result.verificationMethod, email);
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken)),
+          Errc::InvalidArgument);
+    }
+    SUBCASE("decrypts data shared with an attached provisional identity")
+    {
+      auto alice = trustchain.makeUser(Functional::UserType::New);
+      auto aliceDevice = alice.makeDevice();
+      auto aliceLaptop =
+          TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+
+      auto const martineEmail = Email{oidcConfig.users.at("martine").email};
+      auto const martineProvisionalIdentity =
+          Identity::createProvisionalIdentity(
+              cppcodec::base64_rfc4648::encode(trustchain.id), martineEmail);
+
+      auto const publicProvisionalId = SPublicIdentity{
+          Identity::getPublicIdentity(martineProvisionalIdentity)};
+
+      auto const clearText = make_buffer("this is some clear test");
+      auto const encrypted =
+          TC_AWAIT(aliceLaptop->encrypt(clearText, {publicProvisionalId}));
+
+      auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
+          SSecretProvisionalIdentity{martineProvisionalIdentity}));
+      REQUIRE_EQ(result.status, Tanker::Status::IdentityVerificationNeeded);
+      REQUIRE_EQ(result.verificationMethod, martineEmail);
+      TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken));
+      auto const decrypted = TC_AWAIT(martineLaptop->decrypt(encrypted));
+      REQUIRE_EQ(clearText, decrypted);
+    }
   }
 }

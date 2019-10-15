@@ -51,6 +51,7 @@
 
 #include <boost/variant2/variant.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
+#include <cppcodec/base64_url_unpadded.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
@@ -58,7 +59,9 @@
 #include <tconcurrent/promise.hpp>
 #include <tconcurrent/when.hpp>
 
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -76,6 +79,49 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
+namespace
+{
+void matchProvisional(
+    Unlock::Verification const& verification,
+    Identity::SecretProvisionalIdentity const& provisionalIdentity)
+{
+  namespace bv = boost::variant2;
+  namespace ba = boost::algorithm;
+
+  if (!(bv::holds_alternative<Unlock::EmailVerification>(verification) ||
+        bv::holds_alternative<OidcIdToken>(verification)))
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "unknown verification method for provisional identity");
+
+  if (auto const emailVerification =
+          bv::get_if<Unlock::EmailVerification>(&verification))
+  {
+    if (emailVerification->email != Email{provisionalIdentity.value})
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "verification email does not match provisional identity");
+  }
+  else if (auto const oidcIdToken = bv::get_if<OidcIdToken>(&verification))
+  {
+    std::string jwtEmail;
+    try
+    {
+      std::vector<std::string> res;
+      ba::split(res, *oidcIdToken, ba::is_any_of("."));
+      jwtEmail = nlohmann::json::parse(
+                     cppcodec::base64_url_unpadded::decode(res.at(1)))
+                     .at("email");
+    }
+    catch (...)
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "Failed to parse verification oidcIdToken");
+    }
+    if (jwtEmail != provisionalIdentity.value)
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "verification does not match provisional identity");
+  }
+}
+}
 
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
@@ -531,29 +577,13 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
   if (!_provisionalIdentity.has_value())
-  {
     throw formatEx(
         Errc::PreconditionFailed,
         "cannot call verifyProvisionalIdentity without having called "
         "attachProvisionalIdentity before");
-  }
-  nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
-  if (auto const emailVerification =
-          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
-  {
-    if (emailVerification->email != Email{_provisionalIdentity->value})
-    {
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "verification email does not match provisional identity");
-    }
-    tankerKeys = TC_AWAIT(
-        this->_client->getProvisionalIdentityKeys(verification, _userSecret));
-  }
-  else
-  {
-    throw Exception(make_error_code(Errc::InvalidArgument),
-                    "unknown verification method for provisional identity");
-  }
+  matchProvisional(verification, _provisionalIdentity.value());
+  auto const tankerKeys = TC_AWAIT(
+      this->_client->getProvisionalIdentityKeys(verification, _userSecret));
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
@@ -569,7 +599,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
                             tankerKeys->signatureKeyPair},
       TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
   TC_AWAIT(_client->pushBlock(block));
-  _provisionalIdentity = nonstd::nullopt;
+  _provisionalIdentity.reset();
   TC_AWAIT(syncTrustchain());
 }
 
