@@ -89,3 +89,20 @@ tanker_future_t* tanker_admin_get_verification_code(tanker_admin_t* admin,
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
       }));
 }
+
+tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
+                                         char const* app_id,
+                                         char const* oidc_client_id,
+                                         char const* oidc_provier)
+{
+  return makeFuture(tc::async_resumable(
+      [admin = reinterpret_cast<Admin::Admin*>(admin),
+       appID = std::string(app_id),
+       oidcClientId = std::string(oidc_client_id),
+       oidcProvider = std::string(oidc_provier)]() -> tc::cotask<void> {
+        TC_AWAIT(admin->update(
+            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(appID),
+            oidcClientId,
+            oidcProvider));
+      }));
+}

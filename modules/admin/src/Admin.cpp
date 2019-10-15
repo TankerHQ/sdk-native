@@ -124,6 +124,18 @@ tc::cotask<void> Admin::deleteTrustchain(
   TC_AWAIT(emit("delete trustchain", message));
 }
 
+tc::cotask<void> Admin::update(Trustchain::TrustchainId const& trustchainId,
+                               nonstd::optional<std::string> oidcClientId,
+                               nonstd::optional<std::string> oidcProvider)
+{
+  auto request = nlohmann::json{{"id", trustchainId}};
+  if (oidcClientId)
+    request["oidc_client_id"] = oidcClientId.value();
+  if (oidcProvider)
+    request["oidc_provider"] = oidcProvider.value();
+  TC_AWAIT(emit("update trustchain", request));
+}
+
 tc::cotask<VerificationCode> Admin::getVerificationCode(
     Trustchain::TrustchainId const& tcid, Email const& email)
 {
