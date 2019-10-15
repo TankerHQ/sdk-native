@@ -30,6 +30,7 @@ public:
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<VerificationCode> getVerificationCode(
       Tanker::Trustchain::TrustchainId const& trustchainId, Email const& email);
+  tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
 
 private:
   std::unique_ptr<Admin::Admin> _admin;

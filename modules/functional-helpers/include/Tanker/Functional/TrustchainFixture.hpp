@@ -20,6 +20,7 @@ struct TrustchainFixture
   static tc::cotask<void> tearDown();
 
   tc::cotask<VerificationCode> getVerificationCode(Email const& email);
+  tc::cotask<void> enableOidc();
 };
 }
 }
