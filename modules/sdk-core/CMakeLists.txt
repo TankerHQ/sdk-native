@@ -227,7 +227,6 @@ target_link_libraries(tankercore
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent
   CONAN_PKG::cppcodec
-  CONAN_PKG::variant
   CONAN_PKG::gsl-lite
   CONAN_PKG::fmt
   CONAN_PKG::jsonformoderncpp

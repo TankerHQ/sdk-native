@@ -10,7 +10,7 @@
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <gsl-lite.hpp>
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
@@ -23,7 +23,7 @@ namespace Trustchain
 {
 class Action
 {
-  using variant_t = mpark::variant<Actions::DeviceCreation,
+  using variant_t = boost::variant2::variant<Actions::DeviceCreation,
                                    Actions::DeviceRevocation,
                                    Actions::KeyPublish,
                                    Actions::ProvisionalIdentityClaim,
@@ -70,25 +70,25 @@ Action::Action(Alternative&& val) : _variant(std::forward<Alternative>(val))
 template <typename T>
 bool Action::holds_alternative() const
 {
-  return mpark::holds_alternative<T>(_variant);
+  return boost::variant2::holds_alternative<T>(_variant);
 }
 
 template <typename T>
 T const& Action::get() const
 {
-  return mpark::get<T>(_variant);
+  return boost::variant2::get<T>(_variant);
 }
 
 template <typename T>
 T const* Action::get_if() const
 {
-  return mpark::get_if<T>(&_variant);
+  return boost::variant2::get_if<T>(&_variant);
 }
 
 template <typename Callable>
 decltype(auto) Action::visit(Callable&& c) const
 {
-  return mpark::visit(std::forward<Callable>(c), _variant);
+  return boost::variant2::visit(std::forward<Callable>(c), _variant);
 }
 
 bool operator==(Action const& lhs, Action const& rhs);

@@ -20,7 +20,7 @@
 #include <Tanker/Unlock/Verification.hpp>
 
 #include <gsl-lite.hpp>
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
@@ -132,7 +132,7 @@ private:
   Network::SdkInfo _info;
   std::string _writablePath;
 
-  mpark::variant<Opener, SessionType> _state;
+  boost::variant2::variant<Opener, SessionType> _state;
 
   Trustchain::DeviceId _deviceId{};
   Session::DeviceRevokedHandler _deviceRevoked;

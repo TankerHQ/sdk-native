@@ -51,7 +51,7 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -441,7 +441,7 @@ tc::cotask<void> Session::updateGroupMembers(
 tc::cotask<void> Session::setVerificationMethod(
     Unlock::Verification const& method)
 {
-  if (mpark::holds_alternative<VerificationKey>(method))
+  if (boost::variant2::holds_alternative<VerificationKey>(method))
   {
     throw formatEx(Errc::InvalidArgument,
                    "cannot call setVerificationMethod with a verification key");
@@ -539,7 +539,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
   }
   nonstd::optional<TankerSecretProvisionalIdentity> tankerKeys;
   if (auto const emailVerification =
-          mpark::get_if<Unlock::EmailVerification>(&verification))
+          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
   {
     if (emailVerification->email != Email{_provisionalIdentity->value})
     {

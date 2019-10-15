@@ -23,7 +23,7 @@ std::vector<std::uint8_t> UserGroupAddition::signatureData() const
 Crypto::Signature const& UserGroupAddition::selfSign(
     Crypto::PrivateSignatureKey const& key)
 {
-  return mpark::visit(
+  return boost::variant2::visit(
       [&](auto& val) -> decltype(auto) { return val.selfSign(key); }, _variant);
 }
 

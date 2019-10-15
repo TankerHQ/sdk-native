@@ -11,7 +11,7 @@
 #include <Helpers/Errors.hpp>
 
 #include <doctest.h>
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 
 #include <cstring>
 #include <memory>

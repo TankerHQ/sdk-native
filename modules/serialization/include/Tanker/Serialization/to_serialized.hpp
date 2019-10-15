@@ -9,7 +9,7 @@
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Serialization/detail/static_const.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <optional.hpp>
 
 namespace Tanker
@@ -64,9 +64,9 @@ std::uint8_t* to_serialized(std::uint8_t* it,
 }
 
 template <typename... Args>
-std::uint8_t* to_serialized(std::uint8_t* it, mpark::variant<Args...> const& v)
+std::uint8_t* to_serialized(std::uint8_t* it, boost::variant2::variant<Args...> const& v)
 {
-  return mpark::visit([it](auto const& a) { return to_serialized(it, a); }, v);
+  return boost::variant2::visit([it](auto const& a) { return to_serialized(it, a); }, v);
 }
 
 struct to_serialized_fn

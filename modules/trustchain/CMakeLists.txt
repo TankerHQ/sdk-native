@@ -97,7 +97,6 @@ target_link_libraries(tankertrustchain
   tankererrors
   tankerformat
 
-  CONAN_PKG::variant
   CONAN_PKG::jsonformoderncpp
   CONAN_PKG::Boost
 )

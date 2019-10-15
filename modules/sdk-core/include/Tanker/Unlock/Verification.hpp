@@ -7,7 +7,7 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 namespace Tanker
@@ -21,7 +21,7 @@ struct EmailVerification
 };
 
 using Verification =
-    mpark::variant<VerificationKey, EmailVerification, Passphrase>;
+    boost::variant2::variant<VerificationKey, EmailVerification, Passphrase>;
 
 class VerificationMethod
 {

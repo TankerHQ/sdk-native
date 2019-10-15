@@ -24,10 +24,10 @@ PartitionedIdentities partitionIdentities(
   for (auto const& identity : identities)
   {
     if (auto const i =
-            mpark::get_if<Identity::PublicPermanentIdentity>(&identity))
+            boost::variant2::get_if<Identity::PublicPermanentIdentity>(&identity))
       out.userIds.push_back(i->userId);
     else if (auto const i =
-                 mpark::get_if<Identity::PublicProvisionalIdentity>(&identity))
+                 boost::variant2::get_if<Identity::PublicProvisionalIdentity>(&identity))
       out.publicProvisionalIdentities.push_back(*i);
     else
       throw Errors::AssertionError("unknown variant value in identity");

@@ -8,7 +8,7 @@
 #include <boost/preprocessor/tuple/rem.hpp>
 #include <boost/preprocessor/tuple/remove.hpp>
 #include <boost/preprocessor/variadic/to_seq.hpp>
-#include <mpark/variant.hpp>
+#include <boost/variant2/variant.hpp>
 
 #include <type_traits>
 #include <utility>
@@ -22,7 +22,7 @@
   }
 
 #define TANKER_DETAIL_DEFINE_ACTION_VARIANT(name, types, list)         \
-  using variant_t = mpark::variant<BOOST_PP_TUPLE_ENUM(types)>;        \
+  using variant_t = boost::variant2::variant<BOOST_PP_TUPLE_ENUM(types)>;        \
   variant_t _variant;                                                  \
                                                                        \
 public:                                                                \
@@ -38,25 +38,25 @@ public:                                                                \
   template <typename T>                                                \
   bool holds_alternative() const                                       \
   {                                                                    \
-    return mpark::holds_alternative<T>(_variant);                      \
+    return boost::variant2::holds_alternative<T>(_variant);                      \
   }                                                                    \
                                                                        \
   template <typename T>                                                \
   T const& get() const                                                 \
   {                                                                    \
-    return mpark::get<T>(_variant);                                    \
+    return boost::variant2::get<T>(_variant);                                    \
   }                                                                    \
                                                                        \
   template <typename T>                                                \
   T const* get_if() const                                              \
   {                                                                    \
-    return mpark::get_if<T>(&_variant);                                \
+    return boost::variant2::get_if<T>(&_variant);                                \
   }                                                                    \
                                                                        \
   template <typename Callable>                                         \
   decltype(auto) visit(Callable&& c) const                             \
   {                                                                    \
-    return mpark::visit(std::forward<Callable>(c), _variant);          \
+    return boost::variant2::visit(std::forward<Callable>(c), _variant);          \
   }                                                                    \
                                                                        \
   BOOST_PP_SEQ_FOR_EACH(                                               \
