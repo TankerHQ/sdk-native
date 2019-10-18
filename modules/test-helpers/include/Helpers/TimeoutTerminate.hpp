@@ -3,11 +3,7 @@
 #include <atomic>
 #include <chrono>
 
-#ifdef __MINGW32__
-#include <mingw-threads/mingw.thread.h>
-#else
 #include <thread>
-#endif
 
 namespace Tanker
 {

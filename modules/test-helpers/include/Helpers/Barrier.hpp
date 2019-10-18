@@ -1,12 +1,7 @@
 #pragma once
 
-#ifdef __MINGW32__
-#include <mingw-threads/mingw.thread.h>
-#include <mingw-threads/mingw.condition_variable.h>
-#else
 #include <condition_variable>
 #include <mutex>
-#endif
 
 namespace Tanker
 {

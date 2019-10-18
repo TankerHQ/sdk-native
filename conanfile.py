@@ -67,9 +67,7 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.18@tanker/testing", private=private)
         self.requires("mockaron/0.9.3@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.26.1@tanker/stable", private=private)
-        if self.is_mingw:
-            self.requires("mingw-threads/1.0.0@tanker/testing", private=private)
+        self.requires("tconcurrent/0.27.0@tanker/stable", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
