@@ -21,7 +21,9 @@ namespace Actions
 {
 class DeviceCreation3 : private DeviceCreation1
 {
-  using base_t = DeviceCreation1;
+  // GCC 8.1 fails to build when base_t is used...
+  // Eldritch compiler bug
+  using base_type = DeviceCreation1;
 
 public:
   enum class DeviceType
@@ -51,13 +53,13 @@ public:
 
   static constexpr Nature nature();
 
-  using base_t::ephemeralPublicSignatureKey;
-  using base_t::userId;
-  using base_t::delegationSignature;
-  using base_t::publicSignatureKey;
-  using base_t::publicEncryptionKey;
-  using base_t::signatureData;
-  using base_t::sign;
+  using base_type::ephemeralPublicSignatureKey;
+  using base_type::userId;
+  using base_type::delegationSignature;
+  using base_type::publicSignatureKey;
+  using base_type::publicEncryptionKey;
+  using base_type::signatureData;
+  using base_type::sign;
 
   Crypto::PublicEncryptionKey const& publicUserEncryptionKey() const;
   Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey()
