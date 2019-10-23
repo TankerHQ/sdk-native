@@ -22,7 +22,8 @@ DeviceCreation::DeviceCreation(v3 const& dc3) : _variant(dc3)
 
 Nature DeviceCreation::nature() const
 {
-  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); },
+                                _variant);
 }
 
 Crypto::PublicSignatureKey const& DeviceCreation::ephemeralPublicSignatureKey()
@@ -71,8 +72,8 @@ bool DeviceCreation::isGhostDevice() const
 
 std::vector<std::uint8_t> DeviceCreation::signatureData() const
 {
-  return boost::variant2::visit([&](auto const& val) { return val.signatureData(); },
-                      _variant);
+  return boost::variant2::visit(
+      [&](auto const& val) { return val.signatureData(); }, _variant);
 }
 
 Crypto::Signature const& DeviceCreation::sign(

@@ -1,8 +1,8 @@
 #include <Compat/Helpers.hpp>
 
 #include <Helpers/Buffers.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Functional/TrustchainFactory.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>

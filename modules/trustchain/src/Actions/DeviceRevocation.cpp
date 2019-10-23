@@ -22,7 +22,8 @@ DeviceRevocation::DeviceRevocation(v2 const& dr2) : _variant(dr2)
 
 Nature DeviceRevocation::nature() const
 {
-  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); },
+                                _variant);
 }
 
 DeviceId const& DeviceRevocation::deviceId() const

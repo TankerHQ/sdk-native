@@ -49,9 +49,9 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <boost/variant2/variant.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <fmt/format.h>
-#include <boost/variant2/variant.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/async_wait.hpp>
 #include <tconcurrent/future.hpp>
@@ -748,7 +748,7 @@ tc::cotask<Streams::DecryptionStreamAdapter> Session::makeDecryptionStream(
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
     TC_RETURN(Streams::DecryptionStreamAdapter(std::move(streamDecryptor),
-                                     streamDecryptor.resourceId()));
+                                               streamDecryptor.resourceId()));
   }
   else
   {

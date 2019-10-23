@@ -23,7 +23,8 @@ public:
       std::uint64_t clearSize,
       std::uint32_t encryptedChunkSize =
           Streams::Header::defaultEncryptedChunkSize);
-  static std::uint64_t decryptedSize(gsl::span<std::uint8_t const> encryptedData);
+  static std::uint64_t decryptedSize(
+      gsl::span<std::uint8_t const> encryptedData);
 
   static tc::cotask<EncryptionMetadata> encrypt(
       std::uint8_t* encryptedData,
@@ -32,8 +33,8 @@ public:
           Streams::Header::defaultEncryptedChunkSize);
 
   static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
-                           Crypto::SymmetricKey const& key,
-                           gsl::span<std::uint8_t const> encryptedData);
+                                  Crypto::SymmetricKey const& key,
+                                  gsl::span<std::uint8_t const> encryptedData);
 
   static Trustchain::ResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);

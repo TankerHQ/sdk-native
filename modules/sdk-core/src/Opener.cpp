@@ -170,7 +170,8 @@ tc::cotask<Session::Config> Opener::createUser(
                    Status::IdentityRegistrationNeeded);
   }
 
-  auto const verificationKey = boost::variant2::get_if<VerificationKey>(&verification);
+  auto const verificationKey =
+      boost::variant2::get_if<VerificationKey>(&verification);
   auto const ghostDeviceKeys =
       verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
                         DeviceKeys::create();
@@ -214,7 +215,8 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
   if (auto const verificationKey =
           boost::variant2::get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
-  else if (boost::variant2::holds_alternative<Unlock::EmailVerification>(verification) ||
+  else if (boost::variant2::holds_alternative<Unlock::EmailVerification>(
+               verification) ||
            boost::variant2::holds_alternative<Passphrase>(verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
   throw AssertionError("invalid verification, unreachable code");

@@ -446,7 +446,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
-  auto const bobSession = bobDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const bobSession =
+      bobDevice.createCore(Tanker::Functional::SessionType::New);
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const emailVerif = Unlock::EmailVerification{

@@ -18,7 +18,7 @@ TrustchainCreation::TrustchainCreation(
 
 Crypto::PublicSignatureKey const& TrustchainCreation::publicSignatureKey() const
 {
-  return _publicSignatureKey; 
+  return _publicSignatureKey;
 }
 
 bool operator==(TrustchainCreation const& lhs, TrustchainCreation const& rhs)

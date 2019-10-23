@@ -1,8 +1,8 @@
 #include <tccurl/curl.hpp>
 
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Cacerts/InitSsl.hpp>
 
 #include <chrono>
 

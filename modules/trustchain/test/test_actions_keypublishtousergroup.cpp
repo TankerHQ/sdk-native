@@ -48,7 +48,8 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicEncryptionKey>("recipient user");
     auto const resourceId = make<ResourceId>("resource mac");
     auto const key = make<Crypto::SealedSymmetricKey>("encrypted key...");
-    KeyPublishToUserGroup const kp(recipientPublicEncryptionKey, resourceId, key);
+    KeyPublishToUserGroup const kp(
+        recipientPublicEncryptionKey, resourceId, key);
 
     CHECK(Serialization::serialize(kp) == serializedKeyPublishToUserGroup);
     CHECK(Serialization::deserialize<KeyPublishToUserGroup>(

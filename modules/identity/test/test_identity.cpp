@@ -307,7 +307,8 @@ TEST_SUITE("getPublicIdentity")
     auto const publicIdentityStr = getPublicIdentity(identityStr);
     auto const publicIdentity = extract<PublicIdentity>(publicIdentityStr);
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
-    auto const p = boost::variant2::get_if<PublicPermanentIdentity>(&publicIdentity);
+    auto const p =
+        boost::variant2::get_if<PublicPermanentIdentity>(&publicIdentity);
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
     CHECK_EQ(p->userId, aliceO);
@@ -318,7 +319,8 @@ TEST_SUITE("getPublicIdentity")
     auto const b64PublicIdentity =
         getPublicIdentity(GOOD_SECRET_PROVISIONAL_IDENTITY);
     auto const publicIdentity = extract<PublicIdentity>(b64PublicIdentity);
-    auto const p = boost::variant2::get_if<PublicProvisionalIdentity>(&publicIdentity);
+    auto const p =
+        boost::variant2::get_if<PublicProvisionalIdentity>(&publicIdentity);
 
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
@@ -387,7 +389,8 @@ TEST_SUITE("Generate user token")
 
     SUBCASE("base64")
     {
-      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>("?"), Errc::InvalidFormat);
+      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>("?"),
+                                    Errc::InvalidFormat);
     }
   }
 

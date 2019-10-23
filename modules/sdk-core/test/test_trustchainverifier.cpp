@@ -10,8 +10,8 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest.h>
 #include <boost/variant2/variant.hpp>
+#include <doctest.h>
 
 #include <cstring>
 #include <memory>

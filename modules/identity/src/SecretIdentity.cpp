@@ -19,12 +19,14 @@ void from_json(nlohmann::json const& j, SecretIdentity& identity)
 
 void to_json(nlohmann::json& j, SecretIdentity const& identity)
 {
-  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); }, identity);
+  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); },
+                         identity);
 }
 
 std::string to_string(SecretIdentity const& identity)
 {
-  return boost::variant2::visit([](auto const& i) { return to_string(i); }, identity);
+  return boost::variant2::visit([](auto const& i) { return to_string(i); },
+                                identity);
 }
 }
 }

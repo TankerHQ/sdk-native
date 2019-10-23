@@ -43,4 +43,3 @@ inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 }
 }
 }
-

@@ -22,4 +22,3 @@ namespace Trustchain
 using DeviceId = Crypto::BasicHash<detail::DeviceIdImpl>;
 }
 }
-

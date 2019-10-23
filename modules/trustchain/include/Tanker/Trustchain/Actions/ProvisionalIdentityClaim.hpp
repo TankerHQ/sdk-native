@@ -12,8 +12,8 @@
 #include <Tanker/Trustchain/UserId.hpp>
 
 // TODO remove it once Crypto::Sealed<> is added
-#include <sodium/crypto_box.h>
 #include <nlohmann/json_fwd.hpp>
+#include <sodium/crypto_box.h>
 
 #include <cstddef>
 #include <cstdint>

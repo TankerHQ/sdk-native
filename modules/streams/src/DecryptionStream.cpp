@@ -92,8 +92,7 @@ Crypto::SymmetricKey const& DecryptionStream::symmetricKey() const
 
 tc::cotask<void> DecryptionStream::decryptChunk()
 {
-  auto const sizeToRead =
-      _header.encryptedChunkSize() - Header::serializedSize;
+  auto const sizeToRead = _header.encryptedChunkSize() - Header::serializedSize;
   auto const encryptedInput = TC_AWAIT(readInputSource(sizeToRead));
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
   ++_chunkIndex;

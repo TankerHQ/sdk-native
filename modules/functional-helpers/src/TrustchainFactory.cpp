@@ -18,8 +18,8 @@ namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Admin>(
-        Network::ConnectionFactory::create(
-            TestConstants::trustchainUrl(), nonstd::nullopt),
+        Network::ConnectionFactory::create(TestConstants::trustchainUrl(),
+                                           nonstd::nullopt),
         TestConstants::idToken()))
 {
 }
@@ -52,8 +52,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
       kp,
       isTest,
       storePrivateKey));
-  TC_RETURN(Trustchain::make(
-      TestConstants::trustchainUrl(), trustchainId, kp));
+  TC_RETURN(Trustchain::make(TestConstants::trustchainUrl(), trustchainId, kp));
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(

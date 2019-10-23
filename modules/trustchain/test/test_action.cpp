@@ -22,7 +22,8 @@ TEST_CASE("Action tests")
     CHECK(dc.get_if<DeviceCreation>() != nullptr);
     CHECK(dc.get_if<DeviceRevocation>() == nullptr);
     CHECK_NOTHROW(dc.get<DeviceCreation>());
-    CHECK_THROWS_AS(dc.get<DeviceRevocation>(), boost::variant2::bad_variant_access);
+    CHECK_THROWS_AS(dc.get<DeviceRevocation>(),
+                    boost::variant2::bad_variant_access);
   }
 
   SUBCASE("Serialization")

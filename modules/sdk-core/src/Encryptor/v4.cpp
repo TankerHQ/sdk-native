@@ -72,7 +72,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     std::uint32_t encryptedChunkSize)
 {
   EncryptionStream encryptor(bufferViewToInputSource(clearData),
-                            encryptedChunkSize);
+                             encryptedChunkSize);
 
   while (auto const nbRead =
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))

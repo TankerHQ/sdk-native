@@ -56,9 +56,9 @@ struct IdentityFunc
 
 template <typename S, typename T, typename I, typename F = IdentityFunc>
 auto mapIdsToStrings(std::vector<T> const& errorIds,
-               std::vector<S> const& sIds,
-               std::vector<I> const& ids,
-               F&& mapToT = IdentityFunc{})
+                     std::vector<S> const& sIds,
+                     std::vector<I> const& ids,
+                     F&& mapToT = IdentityFunc{})
 {
   std::vector<S> clearIds;
   clearIds.reserve(ids.size());

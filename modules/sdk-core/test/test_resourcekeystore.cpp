@@ -8,8 +8,8 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest.h>
 #include <cppcodec/base64_rfc4648.hpp>
+#include <doctest.h>
 
 using namespace Tanker;
 
@@ -123,7 +123,8 @@ TEST_CASE("Migration")
         DataStore::extractBlob<Crypto::SymmetricKey>(resourceKeys.resource_key);
 
     CHECK_EQ(resourceId,
-             cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(oldKeys.b64Mac));
+             cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+                 oldKeys.b64Mac));
     CHECK_EQ(key,
              cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
                  oldKeys.b64ResourceKey));

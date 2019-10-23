@@ -27,7 +27,8 @@ std::size_t serialized_size(std::pair<T, U> const& val)
 template <typename... Args>
 std::size_t serialized_size(boost::variant2::variant<Args...> const& val)
 {
-  return boost::variant2::visit([](auto const& a) { return serialized_size(a); }, val);
+  return boost::variant2::visit(
+      [](auto const& a) { return serialized_size(a); }, val);
 }
 
 template <typename T>

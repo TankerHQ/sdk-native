@@ -8,8 +8,8 @@
 
 #include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
-#include <Tanker/Init.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
+#include <Tanker/Init.hpp>
 
 #include <emscripten.h>
 #include <emscripten/bind.h>

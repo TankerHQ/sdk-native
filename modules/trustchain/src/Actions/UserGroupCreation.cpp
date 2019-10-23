@@ -16,13 +16,14 @@ namespace Actions
 {
 Nature UserGroupCreation::nature() const
 {
-  return boost::variant2::visit([](auto const& a) { return a.nature(); }, _variant);
+  return boost::variant2::visit([](auto const& a) { return a.nature(); },
+                                _variant);
 }
 
 std::vector<std::uint8_t> UserGroupCreation::signatureData() const
 {
-  return boost::variant2::visit([&](auto const& val) { return val.signatureData(); },
-                      _variant);
+  return boost::variant2::visit(
+      [&](auto const& val) { return val.signatureData(); }, _variant);
 }
 
 Crypto::Signature const& UserGroupCreation::selfSign(

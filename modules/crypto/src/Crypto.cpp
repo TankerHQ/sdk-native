@@ -163,8 +163,7 @@ SymmetricKey makeSymmetricKey()
   return key;
 }
 
-PublicEncryptionKey derivePublicKey(
-    PrivateEncryptionKey const& privateKey)
+PublicEncryptionKey derivePublicKey(PrivateEncryptionKey const& privateKey)
 {
   PublicEncryptionKey publicKey;
 
@@ -175,7 +174,7 @@ PublicEncryptionKey derivePublicKey(
 PublicSignatureKey derivePublicKey(PrivateSignatureKey const& privateKey)
 {
   PublicSignatureKey publicKey;
-  
+
   crypto_sign_ed25519_sk_to_pk(publicKey.data(), privateKey.data());
   return publicKey;
 }

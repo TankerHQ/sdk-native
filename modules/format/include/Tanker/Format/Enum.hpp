@@ -34,7 +34,7 @@ template <typename EnumType>
 struct formatter<
     EnumType,
     char,
-    std::enable_if_t<std::is_enum<EnumType>::value && ::Tanker::Format::detail::
+    std::enable_if_t<std::is_enum<EnumType>::value&& ::Tanker::Format::detail::
                          HasToString<EnumType>::value>>
 {
   int flag = 0;

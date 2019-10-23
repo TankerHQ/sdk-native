@@ -45,25 +45,26 @@ BasicCryptographicType<T, S>::BasicCryptographicType(InputIterator begin,
 }
 
 template <typename T, std::size_t S>
-auto BasicCryptographicType<T, S>::base() & noexcept -> array_t&
+    auto BasicCryptographicType<T, S>::base() & noexcept -> array_t&
 {
   return *static_cast<array_t*>(this);
 }
 
 template <typename T, std::size_t S>
-auto BasicCryptographicType<T, S>::base() const & noexcept -> array_t const&
+    auto BasicCryptographicType<T, S>::base() const & noexcept -> array_t const&
 {
   return *static_cast<array_t const*>(this);
 }
 
 template <typename T, std::size_t S>
-auto BasicCryptographicType<T, S>::base() && noexcept -> array_t&&
+    auto BasicCryptographicType<T, S>::base() && noexcept -> array_t&&
 {
   return std::move(*static_cast<array_t*>(this));
 }
 
 template <typename T, std::size_t S>
-auto BasicCryptographicType<T, S>::base() const && noexcept -> array_t const&&
+    auto BasicCryptographicType<T, S>::base() const &&
+    noexcept -> array_t const&&
 {
   return std::move(*static_cast<array_t const*>(this));
 }

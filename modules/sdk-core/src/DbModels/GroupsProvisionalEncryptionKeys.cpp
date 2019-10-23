@@ -28,4 +28,3 @@ void createTable(DataStore::Connection& db,
 }
 }
 }
-

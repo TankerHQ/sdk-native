@@ -81,15 +81,15 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
       tanker
           ->makeEncryptionStream(
               wrapCallback(cb, additional_data), spublicIdentities, sgroupIds)
-          .and_then(
-              tc::get_synchronous_executor(),
-              [](Streams::EncryptionStream encryptor) {
-                auto c_stream = new tanker_stream;
-                c_stream->resourceId = SResourceId{
-                    cppcodec::base64_rfc4648::encode(encryptor.resourceId())};
-                c_stream->inputSource = std::move(encryptor);
-                return static_cast<void*>(c_stream);
-              }));
+          .and_then(tc::get_synchronous_executor(),
+                    [](Streams::EncryptionStream encryptor) {
+                      auto c_stream = new tanker_stream;
+                      c_stream->resourceId =
+                          SResourceId{cppcodec::base64_rfc4648::encode(
+                              encryptor.resourceId())};
+                      c_stream->inputSource = std::move(encryptor);
+                      return static_cast<void*>(c_stream);
+                    }));
 }
 
 tanker_future_t* tanker_stream_decrypt(tanker_t* session,

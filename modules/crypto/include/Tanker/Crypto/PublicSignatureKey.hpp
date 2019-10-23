@@ -26,8 +26,7 @@ class AsymmetricKey<KeyType::Public, KeyUsage::Signature>
 
 extern template class AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
 
-using PublicSignatureKey =
-    AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
+using PublicSignatureKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>;
 }
 }
 

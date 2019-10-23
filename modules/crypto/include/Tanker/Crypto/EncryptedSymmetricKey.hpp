@@ -53,8 +53,7 @@ class tuple_size<::Tanker::Crypto::EncryptedSymmetricKey>
 
 template <size_t I>
 class tuple_element<I, ::Tanker::Crypto::EncryptedSymmetricKey>
-  : public tuple_element<I,
-                         ::Tanker::Crypto::EncryptedSymmetricKey::base_t>
+  : public tuple_element<I, ::Tanker::Crypto::EncryptedSymmetricKey::base_t>
 {
 };
 }

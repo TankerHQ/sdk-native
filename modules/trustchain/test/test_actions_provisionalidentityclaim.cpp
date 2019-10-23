@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
-#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 
 #include <Helpers/Buffers.hpp>
 

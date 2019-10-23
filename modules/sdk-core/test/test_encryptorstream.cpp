@@ -21,12 +21,14 @@ TEST_SUITE("Stream encryption tests")
     std::vector<uint8_t> a0(EncryptorV4::encryptedSize(0));
     auto it0 = a0.data();
     it0 = Serialization::varint_write(it0, EncryptorV4::version());
-    Serialization::varint_write(it0, Streams::Header::defaultEncryptedChunkSize);
+    Serialization::varint_write(it0,
+                                Streams::Header::defaultEncryptedChunkSize);
 
     std::vector<uint8_t> a42(EncryptorV4::encryptedSize(42));
     auto it42 = a42.data();
     it42 = Serialization::varint_write(it42, EncryptorV4::version());
-    Serialization::varint_write(it42, Streams::Header::defaultEncryptedChunkSize);
+    Serialization::varint_write(it42,
+                                Streams::Header::defaultEncryptedChunkSize);
     CHECK(EncryptorV4::decryptedSize(a0) == 0);
     CHECK(EncryptorV4::decryptedSize(a42) == 42);
   }
@@ -98,8 +100,8 @@ TEST_SUITE("Stream encryption tests")
 
   TEST_CASE("encrypt/decrypt should work with a large buffer")
   {
-    std::vector<uint8_t> clearData(Streams::Header::defaultEncryptedChunkSize * 2 +
-                                   4);
+    std::vector<uint8_t> clearData(
+        Streams::Header::defaultEncryptedChunkSize * 2 + 4);
     Crypto::randomFill(clearData);
 
     std::vector<uint8_t> encryptedData(
