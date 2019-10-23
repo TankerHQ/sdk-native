@@ -4,6 +4,7 @@ tanker_admin_connect
 tanker_admin_create_app
 tanker_admin_delete_app
 tanker_admin_app_descriptor_free
+tanker_admin_app_update
 tanker_admin_destroy
 tanker_admin_get_verification_code
 tanker_future_destroy
