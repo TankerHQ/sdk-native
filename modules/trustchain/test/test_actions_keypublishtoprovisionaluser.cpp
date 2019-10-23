@@ -63,7 +63,8 @@ TEST_CASE("Serialization test vectors")
     KeyPublishToProvisionalUser const kp(
         appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key);
 
-    CHECK(Serialization::serialize(kp) == serializedKeyPublishToProvisionalUser);
+    CHECK(Serialization::serialize(kp) ==
+          serializedKeyPublishToProvisionalUser);
     CHECK(Serialization::deserialize<KeyPublishToProvisionalUser>(
               serializedKeyPublishToProvisionalUser) == kp);
   }

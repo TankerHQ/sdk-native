@@ -38,19 +38,19 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
 {
   switch (static_cast<Errc>(c))
   {
-    case Errc::AsymmetricDecryptionFailed:
-    case Errc::SealedDecryptionFailed:
-    case Errc::AeadDecryptionFailed:
-      return make_error_condition(Errors::Errc::DecryptionFailed);
-    case Errc::AsymmetricEncryptionFailed:
-    case Errc::SealedEncryptionFailed:
-      return make_error_condition(Errors::Errc::InternalError);
-    case Errc::InvalidEncryptedDataSize:
-    case Errc::InvalidSealedDataSize:
-    case Errc::InvalidBufferSize:
-      return make_error_condition(Errors::Errc::InvalidArgument);
-    default:
-      return std::error_condition(c, *this);
+  case Errc::AsymmetricDecryptionFailed:
+  case Errc::SealedDecryptionFailed:
+  case Errc::AeadDecryptionFailed:
+    return make_error_condition(Errors::Errc::DecryptionFailed);
+  case Errc::AsymmetricEncryptionFailed:
+  case Errc::SealedEncryptionFailed:
+    return make_error_condition(Errors::Errc::InternalError);
+  case Errc::InvalidEncryptedDataSize:
+  case Errc::InvalidSealedDataSize:
+  case Errc::InvalidBufferSize:
+    return make_error_condition(Errors::Errc::InvalidArgument);
+  default:
+    return std::error_condition(c, *this);
   }
 }
 }

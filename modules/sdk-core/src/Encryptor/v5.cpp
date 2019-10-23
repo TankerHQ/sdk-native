@@ -79,12 +79,10 @@ tc::cotask<void> EncryptorV5::decrypt(
 
   auto const resourceId =
       encryptedData.subspan(versionSize, ResourceId::arraySize);
-  auto const iv =
-      encryptedData.subspan(versionSize + ResourceId::arraySize);
+  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize);
   auto const data = encryptedData.subspan(versionSize + ResourceId::arraySize +
                                           Crypto::AeadIv::arraySize);
-  Crypto::decryptAead(
-      key, iv.data(), decryptedData, data, resourceId);
+  Crypto::decryptAead(key, iv.data(), decryptedData, data, resourceId);
   TC_RETURN();
 }
 

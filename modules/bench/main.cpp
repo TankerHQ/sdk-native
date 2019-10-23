@@ -1,5 +1,5 @@
-#include <Tanker/Init.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
+#include <Tanker/Init.hpp>
 
 #include <Tanker/Log/LogHandler.hpp>
 

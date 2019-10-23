@@ -38,7 +38,6 @@ TrustchainStore::findPublicSignatureKey()
   TC_RETURN(TC_AWAIT(_db->findTrustchainPublicSignatureKey()));
 }
 
-
 tc::cotask<uint64_t> TrustchainStore::getLastIndex()
 {
   if (!_lastIndex)

@@ -30,8 +30,7 @@ namespace Actions
   (publicSignatureKey, Crypto::PublicSignatureKey),                   \
       (publicEncryptionKey, Crypto::PublicEncryptionKey),             \
       (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey), \
-      (members, Members),                           \
-      (provisionalMembers, ProvisionalMembers),     \
+      (members, Members), (provisionalMembers, ProvisionalMembers),   \
       (selfSignature, Crypto::Signature)
 
 class UserGroupCreation2

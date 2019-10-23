@@ -1,13 +1,13 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Streams/InputSource.hpp>
+#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -19,8 +19,8 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
-#include <gsl-lite.hpp>
 #include <boost/variant2/variant.hpp>
+#include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
@@ -108,7 +108,8 @@ public:
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {});
 
-  tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(Streams::InputSource);
+  tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
+      Streams::InputSource);
 
   tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
       Trustchain::ResourceId const& resourceId, uint64_t length);

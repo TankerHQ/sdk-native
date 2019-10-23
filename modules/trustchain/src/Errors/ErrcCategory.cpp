@@ -28,12 +28,12 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
 {
   switch (static_cast<Errc>(c))
   {
-    case Errc::InvalidBlockVersion:
-    case Errc::InvalidBlockNature:
-    case Errc::InvalidLastResetField:
-      return make_error_condition(Errors::Errc::InternalError);
-    default:
-      return std::error_condition(c, *this);
+  case Errc::InvalidBlockVersion:
+  case Errc::InvalidBlockNature:
+  case Errc::InvalidLastResetField:
+    return make_error_condition(Errors::Errc::InternalError);
+  default:
+    return std::error_condition(c, *this);
   }
 }
 }

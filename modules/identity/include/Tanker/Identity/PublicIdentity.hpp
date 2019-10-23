@@ -12,8 +12,8 @@ namespace Identity
 {
 struct SecretPermanentIdentity;
 
-using PublicIdentity =
-    boost::variant2::variant<PublicPermanentIdentity, PublicProvisionalIdentity>;
+using PublicIdentity = boost::variant2::variant<PublicPermanentIdentity,
+                                                PublicProvisionalIdentity>;
 
 PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity);
 PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity);

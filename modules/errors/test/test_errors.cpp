@@ -1,7 +1,7 @@
 #include <Tanker/Errors/Errc.hpp>
 
-#include <ostream>
 #include <doctest.h>
+#include <ostream>
 
 using namespace Tanker::Errors;
 

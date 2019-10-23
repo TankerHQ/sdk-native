@@ -59,5 +59,10 @@ tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
   TC_RETURN(
       TC_AWAIT(trustchainFactory().getVerificationCode(trustchain.id, email)));
 }
+
+tc::cotask<void> TrustchainFixture::enableOidc()
+{
+  TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));
+}
 }
 }

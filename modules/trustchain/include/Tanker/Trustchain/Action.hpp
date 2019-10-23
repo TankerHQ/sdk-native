@@ -9,8 +9,8 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
-#include <gsl-lite.hpp>
 #include <boost/variant2/variant.hpp>
+#include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>
@@ -24,12 +24,12 @@ namespace Trustchain
 class Action
 {
   using variant_t = boost::variant2::variant<Actions::DeviceCreation,
-                                   Actions::DeviceRevocation,
-                                   Actions::KeyPublish,
-                                   Actions::ProvisionalIdentityClaim,
-                                   Actions::TrustchainCreation,
-                                   Actions::UserGroupAddition,
-                                   Actions::UserGroupCreation>;
+                                             Actions::DeviceRevocation,
+                                             Actions::KeyPublish,
+                                             Actions::ProvisionalIdentityClaim,
+                                             Actions::TrustchainCreation,
+                                             Actions::UserGroupAddition,
+                                             Actions::UserGroupCreation>;
 
 public:
   Action() = default;

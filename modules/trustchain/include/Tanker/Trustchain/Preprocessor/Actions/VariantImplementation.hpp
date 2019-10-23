@@ -21,55 +21,55 @@
     });                                                             \
   }
 
-#define TANKER_DETAIL_DEFINE_ACTION_VARIANT(name, types, list)         \
-  using variant_t = boost::variant2::variant<BOOST_PP_TUPLE_ENUM(types)>;        \
-  variant_t _variant;                                                  \
-                                                                       \
-public:                                                                \
-  name() = default;                                                    \
-                                                                       \
-  template <typename Alternative,                                      \
-            typename = std::enable_if_t<                               \
-                std::is_constructible<variant_t, Alternative>::value>> \
-  name(Alternative&& val) : _variant(std::forward<Alternative>(val))   \
-  {                                                                    \
-  }                                                                    \
-                                                                       \
-  template <typename T>                                                \
-  bool holds_alternative() const                                       \
-  {                                                                    \
-    return boost::variant2::holds_alternative<T>(_variant);                      \
-  }                                                                    \
-                                                                       \
-  template <typename T>                                                \
-  T const& get() const                                                 \
-  {                                                                    \
-    return boost::variant2::get<T>(_variant);                                    \
-  }                                                                    \
-                                                                       \
-  template <typename T>                                                \
-  T const* get_if() const                                              \
-  {                                                                    \
-    return boost::variant2::get_if<T>(&_variant);                                \
-  }                                                                    \
-                                                                       \
-  template <typename Callable>                                         \
-  decltype(auto) visit(Callable&& c) const                             \
-  {                                                                    \
-    return boost::variant2::visit(std::forward<Callable>(c), _variant);          \
-  }                                                                    \
-                                                                       \
-  BOOST_PP_SEQ_FOR_EACH(                                               \
-      TANKER_DETAIL_DEFINE_VARIANT_GETTER, BOOST_PP_EMPTY(), list)     \
-                                                                       \
-  friend bool operator==(name const& lhs, name const& rhs)             \
-  {                                                                    \
-    return lhs._variant == rhs._variant;                               \
-  }                                                                    \
-                                                                       \
-  friend bool operator!=(name const& lhs, name const& rhs)             \
-  {                                                                    \
-    return !(lhs == rhs);                                              \
+#define TANKER_DETAIL_DEFINE_ACTION_VARIANT(name, types, list)            \
+  using variant_t = boost::variant2::variant<BOOST_PP_TUPLE_ENUM(types)>; \
+  variant_t _variant;                                                     \
+                                                                          \
+public:                                                                   \
+  name() = default;                                                       \
+                                                                          \
+  template <typename Alternative,                                         \
+            typename = std::enable_if_t<                                  \
+                std::is_constructible<variant_t, Alternative>::value>>    \
+  name(Alternative&& val) : _variant(std::forward<Alternative>(val))      \
+  {                                                                       \
+  }                                                                       \
+                                                                          \
+  template <typename T>                                                   \
+  bool holds_alternative() const                                          \
+  {                                                                       \
+    return boost::variant2::holds_alternative<T>(_variant);               \
+  }                                                                       \
+                                                                          \
+  template <typename T>                                                   \
+  T const& get() const                                                    \
+  {                                                                       \
+    return boost::variant2::get<T>(_variant);                             \
+  }                                                                       \
+                                                                          \
+  template <typename T>                                                   \
+  T const* get_if() const                                                 \
+  {                                                                       \
+    return boost::variant2::get_if<T>(&_variant);                         \
+  }                                                                       \
+                                                                          \
+  template <typename Callable>                                            \
+  decltype(auto) visit(Callable&& c) const                                \
+  {                                                                       \
+    return boost::variant2::visit(std::forward<Callable>(c), _variant);   \
+  }                                                                       \
+                                                                          \
+  BOOST_PP_SEQ_FOR_EACH(                                                  \
+      TANKER_DETAIL_DEFINE_VARIANT_GETTER, BOOST_PP_EMPTY(), list)        \
+                                                                          \
+  friend bool operator==(name const& lhs, name const& rhs)                \
+  {                                                                       \
+    return lhs._variant == rhs._variant;                                  \
+  }                                                                       \
+                                                                          \
+  friend bool operator!=(name const& lhs, name const& rhs)                \
+  {                                                                       \
+    return !(lhs == rhs);                                                 \
   }
 
 #define TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION( \

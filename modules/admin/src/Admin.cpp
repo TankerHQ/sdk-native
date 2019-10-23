@@ -124,22 +124,16 @@ tc::cotask<void> Admin::deleteTrustchain(
   TC_AWAIT(emit("delete trustchain", message));
 }
 
-tc::cotask<void> Admin::pushBlock(gsl::span<uint8_t const> block)
+tc::cotask<void> Admin::update(Trustchain::TrustchainId const& trustchainId,
+                               nonstd::optional<std::string> oidcClientId,
+                               nonstd::optional<std::string> oidcProvider)
 {
-  TC_AWAIT(emit("push block", cppcodec::base64_rfc4648::encode(block)));
-}
-
-tc::cotask<void> Admin::pushKeys(
-    std::vector<std::vector<uint8_t>> const& blocks)
-{
-  std::vector<std::string> sb;
-  sb.reserve(blocks.size());
-  std::transform(
-      begin(blocks), end(blocks), std::back_inserter(sb), [](auto&& block) {
-        return cppcodec::base64_rfc4648::encode(block);
-      });
-
-  TC_AWAIT(emit("push keys", sb));
+  auto request = nlohmann::json{{"id", trustchainId}};
+  if (oidcClientId)
+    request["oidc_client_id"] = oidcClientId.value();
+  if (oidcProvider)
+    request["oidc_provider"] = oidcProvider.value();
+  TC_AWAIT(emit("update trustchain", request));
 }
 
 tc::cotask<VerificationCode> Admin::getVerificationCode(

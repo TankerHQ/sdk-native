@@ -56,7 +56,9 @@ void createTable(DataStore::Connection& db, user_keys const&)
   )");
 }
 
-void migrateTable(DataStore::Connection& db, int currentVersion, user_keys const&)
+void migrateTable(DataStore::Connection& db,
+                  int currentVersion,
+                  user_keys const&)
 {
   assert(currentVersion < DataStore::latestVersion());
 

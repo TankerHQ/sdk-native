@@ -1,7 +1,7 @@
 #include <Tanker/Identity/Errors/ErrcCategory.hpp>
 
-#include <Tanker/Identity/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Identity/Errors/Errc.hpp>
 
 namespace Tanker
 {
@@ -57,4 +57,3 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
 }
 }
 }
-

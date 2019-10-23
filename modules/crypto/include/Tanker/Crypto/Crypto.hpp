@@ -44,12 +44,12 @@ struct container_resizer<T, std::enable_if_t<IsCryptographicType<T>::value>>
 
     if (containerSize != size)
     {
-      throw Errors::formatEx(
-          Errc::InvalidBufferSize,
-          TFMT("invalid size for {:s} while preparing buffer: got {:d}, expected {:d}"),
-          typeid(T).name(),
-          size,
-          containerSize);
+      throw Errors::formatEx(Errc::InvalidBufferSize,
+                             TFMT("invalid size for {:s} while preparing "
+                                  "buffer: got {:d}, expected {:d}"),
+                             typeid(T).name(),
+                             size,
+                             containerSize);
     }
     return {};
   }

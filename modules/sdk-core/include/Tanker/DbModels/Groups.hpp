@@ -29,7 +29,9 @@ SQLPP_DECLARE_TABLE(
 namespace groups
 {
 void createTable(DataStore::Connection&, groups const& = {});
-void migrateTable(DataStore::Connection&, int currentVersion, groups const& = {});
+void migrateTable(DataStore::Connection&,
+                  int currentVersion,
+                  groups const& = {});
 }
 }
 }

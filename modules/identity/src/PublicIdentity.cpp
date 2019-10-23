@@ -32,7 +32,7 @@ std::string getPublicIdentity(std::string const& secretIdentity)
 {
   return to_string(
       boost::variant2::visit([](auto const& i) { return getPublicIdentity(i); },
-                   extract<SecretIdentity>(secretIdentity)));
+                             extract<SecretIdentity>(secretIdentity)));
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)
@@ -46,12 +46,14 @@ void from_json(nlohmann::json const& j, PublicIdentity& identity)
 
 void to_json(nlohmann::json& j, PublicIdentity const& identity)
 {
-  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); }, identity);
+  boost::variant2::visit([&](auto const& i) { nlohmann::to_json(j, i); },
+                         identity);
 }
 
 std::string to_string(PublicIdentity const& identity)
 {
-  return boost::variant2::visit([](auto const& i) { return to_string(i); }, identity);
+  return boost::variant2::visit([](auto const& i) { return to_string(i); },
+                                identity);
 }
 }
 }

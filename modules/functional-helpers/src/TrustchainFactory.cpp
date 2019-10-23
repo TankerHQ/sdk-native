@@ -18,8 +18,8 @@ namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Admin>(
-        Network::ConnectionFactory::create(
-            TestConstants::trustchainUrl(), nonstd::nullopt),
+        Network::ConnectionFactory::create(TestConstants::trustchainUrl(),
+                                           nonstd::nullopt),
         TestConstants::idToken()))
 {
 }
@@ -52,8 +52,14 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
       kp,
       isTest,
       storePrivateKey));
-  TC_RETURN(Trustchain::make(
-      TestConstants::trustchainUrl(), trustchainId, kp));
+  TC_RETURN(Trustchain::make(TestConstants::trustchainUrl(), trustchainId, kp));
+}
+
+tc::cotask<void> TrustchainFactory::enableOidc(
+    Tanker::Trustchain::TrustchainId const& id)
+{
+  auto const& oidcConfig = TestConstants::oidcConfig();
+  TC_AWAIT(_admin->update(id, oidcConfig.clientId, oidcConfig.provider));
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(

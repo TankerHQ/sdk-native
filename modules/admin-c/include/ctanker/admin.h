@@ -65,6 +65,15 @@ TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_destroy(
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_get_verification_code(
     tanker_admin_t* admin, char const* app_id, char const* user_email);
 
+/*!
+ * Updates app properties
+ */
+TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_app_update(
+    tanker_admin_t* admin,
+    char const* app_id,
+    char const* oidc_client_id,
+    char const* oidc_client_provider);
+
 #ifdef __cplusplus
 }
 #endif

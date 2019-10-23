@@ -76,7 +76,7 @@ TEST_CASE("Serialization test vectors")
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
     // clang-format on
-    
+
     auto const groupId = make<GroupId>("group id");
     auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
     UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const
@@ -196,7 +196,7 @@ TEST_CASE("Serialization test vectors")
       0x00, 0x00, 0x00, 0x00
     };
     // clang-format on
-    
+
     auto const groupId = make<GroupId>("group id");
     auto const previousGroupBlockHash = make<Crypto::Hash>("prev group block");
     std::vector<UserGroupAddition::v2::Member> const members{

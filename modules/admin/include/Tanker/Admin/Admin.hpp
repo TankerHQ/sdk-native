@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional.hpp>
 #include <string>
 
 namespace Tanker
@@ -38,10 +39,11 @@ public:
       Crypto::SignatureKeyPair const& keyPair,
       bool isTest,
       bool storePrivateKey);
+  tc::cotask<void> update(Trustchain::TrustchainId const& trustchainId,
+                          nonstd::optional<std::string> oidcClientId,
+                          nonstd::optional<std::string> oidcProvider);
   tc::cotask<void> deleteTrustchain(
       Trustchain::TrustchainId const& trustchainId);
-  tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
-  tc::cotask<void> pushKeys(std::vector<std::vector<uint8_t>> const& block);
   tc::cotask<VerificationCode> getVerificationCode(
       Trustchain::TrustchainId const& tcId, Email const&);
 

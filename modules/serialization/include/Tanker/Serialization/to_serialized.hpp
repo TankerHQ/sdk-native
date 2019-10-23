@@ -55,8 +55,7 @@ std::uint8_t* to_serialized(std::uint8_t* it, T number)
 }
 
 template <typename T>
-std::uint8_t* to_serialized(std::uint8_t* it,
-                            nonstd::optional<T> const& opt)
+std::uint8_t* to_serialized(std::uint8_t* it, nonstd::optional<T> const& opt)
 {
   if (opt)
     it = to_serialized(it, *opt);
@@ -64,9 +63,11 @@ std::uint8_t* to_serialized(std::uint8_t* it,
 }
 
 template <typename... Args>
-std::uint8_t* to_serialized(std::uint8_t* it, boost::variant2::variant<Args...> const& v)
+std::uint8_t* to_serialized(std::uint8_t* it,
+                            boost::variant2::variant<Args...> const& v)
 {
-  return boost::variant2::visit([it](auto const& a) { return to_serialized(it, a); }, v);
+  return boost::variant2::visit(
+      [it](auto const& a) { return to_serialized(it, a); }, v);
 }
 
 struct to_serialized_fn

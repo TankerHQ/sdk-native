@@ -42,13 +42,13 @@ public:
 
   static constexpr Nature nature();
 
-  using base_type::ephemeralPublicSignatureKey;
-  using base_type::userId;
   using base_type::delegationSignature;
-  using base_type::publicSignatureKey;
+  using base_type::ephemeralPublicSignatureKey;
   using base_type::publicEncryptionKey;
-  using base_type::signatureData;
+  using base_type::publicSignatureKey;
   using base_type::sign;
+  using base_type::signatureData;
+  using base_type::userId;
 
   Crypto::Hash const& lastReset() const;
 
