@@ -6,14 +6,17 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
+#include <Tanker/Functional/Fetcher.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <cppcodec/base64_url_unpadded.hpp>
 #include <doctest.h>
+
+#include <boost/asio/use_future.hpp>
+
 #include <nlohmann/json.hpp>
-#include <tccurl/curl.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -21,6 +24,7 @@ using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
+
 void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
                               std::vector<Unlock::VerificationMethod> expected)
 {
@@ -43,32 +47,39 @@ tc::cotask<Tanker::Status> expectVerification(
   TC_RETURN(session->status());
 }
 
-tc::cotask<OidcIdToken> getOidcToken(tccurl::multi& multi,
-                                     TestConstants::OidcConfig& oidcConfig,
+tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
                                      std::string userName)
 {
-  auto const req = std::make_shared<tccurl::request>();
   auto const payload = nlohmann::json{
       {"client_id", oidcConfig.clientId},
       {"client_secret", oidcConfig.clientSecret},
       {"grant_type", "refresh_token"},
       {"refresh_token", oidcConfig.users.at(userName).refreshToken},
   };
-  req->set_url("https://www.googleapis.com/oauth2/v4/token");
-  req->add_header("content-type: application/json");
-  auto const data = payload.dump();
-  curl_easy_setopt(req->get_curl(), CURLOPT_POST, 1L);
-  curl_easy_setopt(req->get_curl(), CURLOPT_POSTFIELDS, data.c_str());
-  curl_easy_setopt(
-      req->get_curl(), CURLOPT_POSTFIELDSIZE, static_cast<long>(data.size()));
 
-  auto const result = TC_AWAIT(tccurl::read_all(multi, req));
-  if (!req->is_response_ok())
-    throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status google id token request: {}: {}",
-                           req->get_status_code(),
-                           std::string(result.data.begin(), result.data.end()));
-  auto json = nlohmann::json::parse(result.data.begin(), result.data.end());
+  fetch::request<> req(fetch::http::verb::post, "/oauth2/v4/token", 11);
+  req.body() = payload.dump();
+
+  req.set(fetch::http::field::host, "www.googleapis.com");
+  req.set(fetch::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.prepare_payload();
+
+  fetch::ssl::context ctx{fetch::ssl::context::tlsv12_client};
+  fetch::beast::ssl_stream<fetch::beast::tcp_stream> stream(
+      tc::get_default_executor().get_io_service(), ctx);
+
+  fetch::response<> res;
+  fetch::async_get(
+      stream, "www.googleapis.com", req, res, boost::asio::use_future)
+      .get();
+  if (res.result() != fetch::http::status::ok)
+    throw Errors::formatEx(
+        Errors::Errc::NetworkError,
+        "invalid status google id token request: {}: {}",
+        res.result_int(),
+        fetch::http::obsolete_reason(res.result()).to_string());
+
+  auto const json = nlohmann::json::parse(res.body().begin(), res.body().end());
   TC_RETURN(json.at("id_token").get<OidcIdToken>());
 }
 }
@@ -420,10 +431,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 
   OidcIdToken martineIdToken, kevinIdToken;
   {
-    tccurl::multi multi;
-
-    martineIdToken = TC_AWAIT(getOidcToken(multi, oidcConfig, "martine"));
-    kevinIdToken = TC_AWAIT(getOidcToken(multi, oidcConfig, "kevin"));
+    martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
+    kevinIdToken = TC_AWAIT(getOidcToken(oidcConfig, "kevin"));
   }
 
   SUBCASE("")
