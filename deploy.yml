@@ -13,15 +13,10 @@ profiles:
   darwin:
     - macos-debug
     - macos-release
-    - ios-x86-debug
     - ios-x86-release
-    - ios-x86_64-debug
     - ios-x86_64-release
-    - ios-armv7-debug
     - ios-armv7-release
-    - ios-armv7s-debug
     - ios-armv7s-release
-    - ios-armv8-debug
     - ios-armv8-release
   win32:
     - vs2019-debug
