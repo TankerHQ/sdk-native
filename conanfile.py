@@ -65,9 +65,9 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.18@tanker/testing", private=private)
-        self.requires("mockaron/0.9.3@tanker/stable", private=private)
+        self.requires("mockaron/0.9.4@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
-        self.requires("tconcurrent/0.28.0@tanker/stable", private=private)
+        self.requires("tconcurrent/0.28.1@tanker/stable", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
