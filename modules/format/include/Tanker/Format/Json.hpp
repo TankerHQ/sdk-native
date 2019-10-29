@@ -25,7 +25,8 @@ struct formatter<nlohmann::json, char, void>
 {
   int width = -1;
 
-  constexpr auto parse(fmt::parse_context& ctx)
+  template <typename ParseContext>
+  constexpr auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     if (*it == ':')
@@ -54,20 +55,10 @@ struct formatter<nlohmann::json, char, void>
     return end;
   }
 
-  auto format(nlohmann::json const& j, format_context& ctx)
+  template <typename FormatContext>
+  auto format(nlohmann::json const& j, FormatContext& ctx)
   {
     return Tanker::Format::detail::formatJson(j, this->width, ctx.out());
   }
 };
-}
-
-// Huge hack to bypass nlohmann implicit conversions as always
-namespace nlohmann
-{
-template <typename C>
-fmt::internal::init<C, nlohmann::json const&, fmt::internal::custom_type>
-make_value(nlohmann::json const& j)
-{
-  return {j};
-}
 }

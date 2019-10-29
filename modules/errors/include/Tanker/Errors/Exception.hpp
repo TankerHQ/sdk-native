@@ -36,19 +36,22 @@ private:
   static std::string backtraceAsString();
 };
 
-template <typename Code, typename T, typename... Args>
-TANKER_WARN_UNUSED_RESULT auto formatEx(Code c, T format, Args const&... args)
+template <typename Code, typename... Args>
+TANKER_WARN_UNUSED_RESULT auto formatEx(Code c,
+                                        fmt::string_view format,
+                                        Args const&... args)
     -> std::enable_if_t<std::is_error_code_enum<Code>::value, Exception>
 {
-  return Exception(c, fmt::format(format, args...));
+  return Exception(c, fmt::vformat(format, {fmt::make_format_args(args...)}));
 }
 
-template <typename T, typename... Args>
+template <typename... Args>
 TANKER_WARN_UNUSED_RESULT Exception formatEx(Errc c,
-                                             T format,
+                                             fmt::string_view format,
                                              Args const&... args)
 {
-  return Exception(make_error_code(c), fmt::format(format, args...));
+  return Exception(make_error_code(c),
+                   fmt::vformat(format, {fmt::make_format_args(args...)}));
 }
 }
 }

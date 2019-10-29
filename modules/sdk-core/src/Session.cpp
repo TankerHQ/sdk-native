@@ -753,9 +753,8 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
   auto const key = TC_AWAIT(_resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {
-    throw formatEx(Errc::InvalidArgument,
-                   TFMT("key not found for resource: {:s}"),
-                   resourceId);
+    throw formatEx(
+        Errc::InvalidArgument, "key not found for resource: {:s}", resourceId);
   }
   TC_RETURN(*key);
 }
@@ -766,7 +765,7 @@ tc::cotask<Streams::DecryptionStreamAdapter> Session::makeDecryptionStream(
   auto peekableSource = Streams::PeekableInputSource(std::move(cb));
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
-    throw formatEx(Errc::InvalidArgument, TFMT("empty stream"));
+    throw formatEx(Errc::InvalidArgument, "empty stream");
 
   if (version[0] == 4)
   {
