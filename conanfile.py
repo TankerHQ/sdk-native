@@ -26,8 +26,27 @@ class TankerConan(ConanFile):
 
     @property
     def should_build_tests(self):
-        # develop is false when the package is used as a requirement.
-        return self.develop and (not self.cross_building or self.settings.os == "Emscripten")
+        # develop is false when the package is used as a requirement,
+        # so don't bother compiling tests in that case
+        if not self.develop:
+            return False
+
+        # Code generated with emscripten must be tested with
+        # Javascript code, not C++
+        if self.settings.os == "Emscripten":
+            return False
+
+        # Usually, tests cannot be run when cross-compiling,
+        # _except_ when cross-compiling from win64 to win32 with mingw
+        # on Windows, so check for the special use case before
+        # reading the value of `self.cross_building`
+        if self.is_mingw and tools.os_info.is_windows:
+            return True
+
+        if self.cross_building:
+            return False
+
+        return True
 
     @property
     def should_build_bench(self):
