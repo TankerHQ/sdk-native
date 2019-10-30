@@ -18,23 +18,20 @@ public:
   StringWrapper() = default;
 
   template <typename InputIterator>
-  StringWrapper(InputIterator begin, InputIterator end)
+  StringWrapper(InputIterator begin, InputIterator end) : base_t(begin, end)
   {
-    *static_cast<base_t*>(this) = StringWrapper{base_t(begin, end)};
   }
 
   StringWrapper(base_t::value_type const* s, std::size_t size) : base_t(s, size)
   {
   }
 
-  explicit StringWrapper(base_t const& s)
+  explicit StringWrapper(base_t const& s) : base_t(s)
   {
-    *static_cast<base_t*>(this) = s;
   }
 
-  explicit StringWrapper(base_t&& s)
+  explicit StringWrapper(base_t&& s) : base_t(std::move(s))
   {
-    *static_cast<base_t*>(this) = std::move(s);
   }
 
   base_t const& string() const noexcept
