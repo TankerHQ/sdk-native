@@ -39,7 +39,8 @@ struct formatter<
 {
   int flag = 0;
 
-  constexpr auto parse(fmt::parse_context& ctx)
+  template <typename ParseContext>
+  constexpr auto parse(ParseContext& ctx)
   {
     auto it = ctx.begin();
     if (*it == ':')
@@ -61,7 +62,8 @@ struct formatter<
     return end;
   }
 
-  auto format(EnumType n, fmt::format_context& ctx) -> decltype(ctx.out())
+  template <typename FormatContext>
+  auto format(EnumType n, FormatContext& ctx) -> decltype(ctx.out())
   {
     auto out = ctx.out();
     if (this->flag == 0x3)

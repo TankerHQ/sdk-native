@@ -20,10 +20,10 @@ void format(Log::Level level,
             char const* cat,
             char const* file,
             std::uint32_t line,
-            char const* format,
+            fmt::string_view format,
             Args const&... args)
 {
-  auto const message = fmt::vformat(format, fmt::make_format_args(args...));
+  auto const message = fmt::vformat(format, {fmt::make_format_args(args...)});
   auto const record = Record{
       cat,
       level,

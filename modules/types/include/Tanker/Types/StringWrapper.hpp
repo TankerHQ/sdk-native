@@ -4,6 +4,7 @@
 #include <string>
 
 #include <fmt/core.h>
+#include <fmt/format.h>
 
 namespace Tanker
 {
@@ -190,6 +191,21 @@ fmt::string_view to_string_view(StringWrapper<T> const& val)
 {
   return fmt::string_view(val.string());
 }
+}
+
+namespace fmt
+{
+template <typename Tag>
+struct formatter<Tanker::StringWrapper<Tag>, char>
+  : formatter<fmt::basic_string_view<char>, char>
+{
+  template <typename FormatContext>
+  auto format(Tanker::StringWrapper<Tag> const& str, FormatContext& ctx)
+  {
+    return formatter<fmt::basic_string_view<char>, char>::format(
+        to_string_view(str), ctx);
+  }
+};
 }
 
 namespace std

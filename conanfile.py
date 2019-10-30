@@ -61,7 +61,7 @@ class TankerConan(ConanFile):
             self.requires("libcurl/7.66.0@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
-        self.requires("fmt/5.3.0@bincrafters/stable", private=private)
+        self.requires("fmt/6.0.0", private=private)
         self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
         self.requires("libsodium/1.0.18@tanker/testing", private=private)

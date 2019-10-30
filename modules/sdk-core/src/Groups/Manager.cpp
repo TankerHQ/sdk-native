@@ -39,10 +39,9 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   {
     auto const notFoundIdentities = mapIdsToStrings(
         memberUsers.notFound, spublicIdentities, members.userIds);
-    throw formatEx(
-        Errc::InvalidArgument,
-        TFMT("unknown users: {:s}"),
-        fmt::join(notFoundIdentities.begin(), notFoundIdentities.end(), ", "));
+    throw formatEx(Errc::InvalidArgument,
+                   "unknown users: {:s}",
+                   fmt::join(notFoundIdentities, ", "));
   }
 
   auto const memberProvisionalUsers = TC_AWAIT(
@@ -184,7 +183,7 @@ tc::cotask<void> updateMembers(
 
   auto const group = TC_AWAIT(groupStore.findFullById(groupId));
   if (!group)
-    throw formatEx(Errc::InvalidArgument, TFMT("no such group: {:s}"), groupId);
+    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
   auto const groupBlock = generateAddUserToGroupBlock(
       members.users, members.provisionalUsers, blockGenerator, *group);

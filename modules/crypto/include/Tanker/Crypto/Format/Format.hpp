@@ -22,7 +22,8 @@ struct formatter<
 
   bool useSafe = false;
 
-  constexpr auto parse(fmt::parse_context& ctx)
+  template <typename ParserContext>
+  constexpr auto parse(ParserContext& ctx)
   {
     auto it = ctx.begin();
     if (*it == ':')
@@ -45,7 +46,8 @@ struct formatter<
                      cppcodec::base64_rfc4648::encode<std::string>(beg, size);
   }
 
-  auto format(CryptoType const& c, format_context& ctx)
+  template <typename FormatContext>
+  auto format(CryptoType const& c, FormatContext& ctx)
   {
     return format_to(
         ctx.out(), "{:s}", format_crypto_array(c.data(), c.size()));

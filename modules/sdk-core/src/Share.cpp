@@ -151,9 +151,8 @@ void handleNotFound(
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
         TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
-        fmt::join(
-            clearPublicIdentities.begin(), clearPublicIdentities.end(), ", "),
-        fmt::join(clearGids.begin(), clearGids.end(), ", "));
+        fmt::join(clearPublicIdentities, ", "),
+        fmt::join(clearGids, ", "));
   }
 }
 

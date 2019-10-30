@@ -15,13 +15,14 @@ namespace Verif
 template <typename... Args>
 void ensures(bool condition,
              std::error_code code,
-             std::string const& formatString,
+             fmt::string_view formatString,
              Args&&... formatArgs)
 {
   if (!condition)
   {
     throw Errors::Exception(
-        code, fmt::vformat(formatString, fmt::make_format_args(formatArgs...)));
+        code,
+        fmt::vformat(formatString, {fmt::make_format_args(formatArgs...)}));
   }
 }
 }
