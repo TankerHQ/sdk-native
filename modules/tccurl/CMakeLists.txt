@@ -21,8 +21,17 @@ target_link_libraries(tccurl
   tankercacerts
   tankererrors
   tankerlog
-  CONAN_PKG::libcurl
+
+  # Keep libcurl *after* tconcurrent
+  # There is a CMake bug where the -lws2_32 library
+  # gets added at the wrong place on the command line,
+  # - probably because tconcurrent and libcurl both
+  # depend on libressl, which itself depends on
+  # ws3_32 - and the link will fail if libcurl is placed 
+  # before tconcurrent
   CONAN_PKG::tconcurrent
+  CONAN_PKG::libcurl
+
 )
 
 install(TARGETS tccurl
