@@ -162,55 +162,6 @@ tc::shared_future<void> AsyncCore::share(
   });
 }
 
-tc::shared_future<SResourceId> AsyncCore::upload(
-    gsl::span<uint8_t const> data,
-    FileKit::Metadata const& metadata,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  return runResumable(_taskCanceler, [=]() -> tc::cotask<SResourceId> {
-    auto resourceId = TC_AWAIT(
-        this->_core.upload(data, metadata, publicIdentities, groupIds));
-    TC_RETURN(cppcodec::base64_rfc4648::encode<SResourceId>(resourceId));
-  });
-}
-
-tc::shared_future<SResourceId> AsyncCore::uploadStream(
-    Streams::InputSource source,
-    uint64_t size,
-    FileKit::Metadata const& metadata,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  return runResumable(_taskCanceler, [=]() -> tc::cotask<SResourceId> {
-    auto resourceId = TC_AWAIT(this->_core.uploadStream(
-        source, size, metadata, publicIdentities, groupIds));
-    TC_RETURN(cppcodec::base64_rfc4648::encode<SResourceId>(resourceId));
-  });
-}
-
-tc::shared_future<FileKit::DownloadResult> AsyncCore::download(
-    SResourceId const& resourceId)
-{
-  return runResumable(
-      _taskCanceler, [=]() -> tc::cotask<FileKit::DownloadResult> {
-        TC_RETURN(TC_AWAIT(this->_core.download(
-            cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
-                resourceId))));
-      });
-}
-
-tc::shared_future<FileKit::DownloadStreamResult> AsyncCore::downloadStream(
-    SResourceId const& resourceId)
-{
-  return runResumable(
-      _taskCanceler, [=]() -> tc::cotask<FileKit::DownloadStreamResult> {
-        TC_RETURN(TC_AWAIT(this->_core.downloadStream(
-            cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
-                resourceId))));
-      });
-}
-
 tc::shared_future<SGroupId> AsyncCore::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
@@ -302,25 +253,6 @@ tc::shared_future<void> AsyncCore::syncTrustchain()
   return runResumable(_taskCanceler, [this]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.syncTrustchain());
   });
-}
-
-tc::shared_future<CloudStorage::UploadTicket> AsyncCore::getFileUploadTicket(
-    Trustchain::ResourceId const& resourceId, uint64_t length)
-{
-  return runResumable(
-      _taskCanceler, [=]() -> tc::cotask<CloudStorage::UploadTicket> {
-        TC_RETURN(
-            TC_AWAIT(this->_core.getFileUploadTicket(resourceId, length)));
-      });
-}
-
-tc::shared_future<CloudStorage::DownloadTicket>
-AsyncCore::getFileDownloadTicket(Trustchain::ResourceId const& resourceId)
-{
-  return runResumable(
-      _taskCanceler, [=]() -> tc::cotask<CloudStorage::DownloadTicket> {
-        TC_RETURN(TC_AWAIT(this->_core.getFileDownloadTicket(resourceId)));
-      });
 }
 
 void AsyncCore::connectSessionClosed(std::function<void()> cb)

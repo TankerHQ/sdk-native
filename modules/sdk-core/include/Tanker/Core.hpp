@@ -87,22 +87,6 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  tc::cotask<Trustchain::ResourceId> upload(
-      gsl::span<uint8_t const> data,
-      FileKit::Metadata const& metadata = {},
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
-  tc::cotask<Trustchain::ResourceId> uploadStream(
-      Streams::InputSource data,
-      uint64_t size,
-      FileKit::Metadata const& metadata = {},
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
-  tc::cotask<FileKit::DownloadResult> download(
-      Trustchain::ResourceId const& resourceId);
-  tc::cotask<FileKit::DownloadStreamResult> downloadStream(
-      Trustchain::ResourceId const& resourceId);
-
   tc::cotask<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
@@ -110,11 +94,6 @@ public:
 
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
-
-  tc::cotask<CloudStorage::UploadTicket> getFileUploadTicket(
-      Trustchain::ResourceId const& resourceId, uint64_t length);
-  tc::cotask<CloudStorage::DownloadTicket> getFileDownloadTicket(
-      Trustchain::ResourceId const& resourceId);
 
   void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);

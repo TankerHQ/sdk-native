@@ -214,51 +214,6 @@ tc::cotask<void> Core::share(
   TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
 }
 
-tc::cotask<Trustchain::ResourceId> Core::upload(
-    gsl::span<uint8_t const> data,
-    FileKit::Metadata const& metadata,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(share);
-  TC_RETURN(TC_AWAIT(
-      (*psession)->upload(data, metadata, publicIdentities, groupIds)));
-}
-
-tc::cotask<Trustchain::ResourceId> Core::uploadStream(
-    Streams::InputSource source,
-    uint64_t size,
-    FileKit::Metadata const& metadata,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(share);
-  TC_RETURN(TC_AWAIT((*psession)->uploadStream(
-      source, size, metadata, publicIdentities, groupIds)));
-}
-
-tc::cotask<FileKit::DownloadResult> Core::download(
-    Trustchain::ResourceId const& resourceId)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(share);
-  TC_RETURN(TC_AWAIT((*psession)->download(resourceId)));
-}
-
-tc::cotask<FileKit::DownloadStreamResult> Core::downloadStream(
-    Trustchain::ResourceId const& resourceId)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(share);
-  TC_RETURN(TC_AWAIT((*psession)->downloadStream(resourceId)));
-}
-
 tc::cotask<SGroupId> Core::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
@@ -376,24 +331,6 @@ tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
   if (!psession)
     throw INVALID_STATUS(makeDecryptionStream);
   TC_RETURN(TC_AWAIT((*psession)->makeDecryptionStream(std::move(cb))));
-}
-
-tc::cotask<CloudStorage::UploadTicket> Core::getFileUploadTicket(
-    Trustchain::ResourceId const& resourceId, uint64_t length)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(getFileUploadTicket);
-  TC_RETURN(TC_AWAIT((*psession)->getFileUploadTicket(resourceId, length)));
-}
-
-tc::cotask<CloudStorage::DownloadTicket> Core::getFileDownloadTicket(
-    Trustchain::ResourceId const& resourceId)
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(getFileDownloadTicket);
-  TC_RETURN(TC_AWAIT((*psession)->getFileDownloadTicket(resourceId)));
 }
 
 Trustchain::ResourceId Core::getResourceId(
