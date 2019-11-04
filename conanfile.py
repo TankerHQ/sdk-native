@@ -107,8 +107,8 @@ class TankerConan(ConanFile):
     def build_requirements(self):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
-            self.build_requires("doctest/2.2.3@tanker/testing")
-            self.build_requires("doctest-async/2.0.12@tanker/testing")
+            self.build_requires("doctest/2.3.5@tanker/testing")
+            self.build_requires("doctest-async/2.3.5-tanker2@tanker/testing")
             self.build_requires("trompeloeil/v29@tanker/testing")
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")
