@@ -77,7 +77,6 @@ class TankerConan(ConanFile):
             self.requires("socket.io-client-cpp/1.6.2@tanker/testing", private=private)
             self.requires("sqlpp11/0.58@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
-            self.requires("libcurl/7.66.0@tanker/testing", private=private)
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
         self.requires("fmt/6.0.0", private=private)
@@ -179,7 +178,6 @@ class TankerConan(ConanFile):
                 "tankerlog",
                 "tankerformat",
                 "tankercacerts",
-                "tccurl",
             ])
 
         if self.sanitizer_flag:

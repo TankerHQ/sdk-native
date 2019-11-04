@@ -37,7 +37,6 @@
 #include <Tanker/UserKeyStore.hpp>
 
 #include <gsl-lite.hpp>
-#include <tccurl/curl.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
@@ -168,7 +167,6 @@ private:
   BlockGenerator _blockGenerator;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
-  tccurl::multi multi;
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 

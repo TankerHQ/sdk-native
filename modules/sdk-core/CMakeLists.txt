@@ -213,7 +213,6 @@ target_link_libraries(tankercore
   tankercacerts
   tankeradmin
   ttracer
-  tccurl
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent
   CONAN_PKG::cppcodec
