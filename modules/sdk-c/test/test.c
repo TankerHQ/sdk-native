@@ -38,8 +38,13 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
 
   tanker_options_t options = make_tanker_options(app);
   options.writable_path = "testtmp/test-c";
-  mkdir("testtmp", 0755);
-  mkdir("testtmp/test-c", 0755);
+  #ifdef _WIN32
+    _mkdir("testtmp");
+    _mkdir("testtmp/test-c");
+  #else
+    mkdir("testtmp", 0755);
+    mkdir("testtmp/test-c", 0755);
+  #endif
   tanker_t* tanker = future_get(tanker_create(&options));
 
   char const* identity =

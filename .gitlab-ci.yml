@@ -27,11 +27,17 @@ build/macos:
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
-build/windows:
+build/windows/visual:
   extends: .build
   tags: [windows]
   script:
     - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+
+build/windows/mingw:
+  extends: .build
+  tags: [windows]
+  script:
+    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
 
 
 .deploy:

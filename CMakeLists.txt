@@ -37,7 +37,9 @@ if(WIN32)
   add_definitions("-DNOMINMAX")
 
   # allow tanker to allocate more than 1gb of ram
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+  if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+  endif()
 elseif(EMSCRIPTEN)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXPORT_NAME=Tanker -s SINGLE_FILE=1 --bind")
 endif()
