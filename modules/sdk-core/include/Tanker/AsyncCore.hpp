@@ -83,22 +83,6 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities,
       std::vector<SGroupId> const& groupIds);
 
-  tc::shared_future<SResourceId> upload(
-      gsl::span<uint8_t const> data,
-      FileKit::Metadata const& metadata = {},
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
-  tc::shared_future<SResourceId> uploadStream(
-      Streams::InputSource data,
-      uint64_t size,
-      FileKit::Metadata const& metadata = {},
-      std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
-  tc::shared_future<FileKit::DownloadResult> download(
-      SResourceId const& resourceId);
-  tc::shared_future<FileKit::DownloadStreamResult> downloadStream(
-      SResourceId const& resourceId);
-
   tc::shared_future<SGroupId> createGroup(
       std::vector<SPublicIdentity> const& members);
   tc::shared_future<void> updateGroupMembers(
@@ -127,11 +111,6 @@ public:
   tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
 
   tc::shared_future<void> syncTrustchain();
-
-  tc::shared_future<CloudStorage::UploadTicket> getFileUploadTicket(
-      Trustchain::ResourceId const& resourceId, uint64_t length);
-  tc::shared_future<CloudStorage::DownloadTicket> getFileDownloadTicket(
-      Trustchain::ResourceId const& resourceId);
 
   static void setLogHandler(Log::LogHandler handler);
 

@@ -8,6 +8,7 @@ add_library(tankerfunctionalhelpers STATIC
   include/Tanker/Functional/User.hpp
   include/Tanker/Functional/Device.hpp
   include/Tanker/Functional/TrustchainFixture.hpp
+  include/Tanker/Functional/Fetcher.hpp
 
   src/Trustchain.cpp
   src/TrustchainFactory.cpp

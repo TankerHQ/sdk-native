@@ -121,10 +121,6 @@ add_subdirectory(modules/trustchain)
 add_subdirectory(modules/types)
 add_subdirectory(modules/cacerts)
 
-if (NOT EMSCRIPTEN)
-  add_subdirectory(modules/tccurl)
-endif()
-
 if (BUILD_TESTS)
   add_subdirectory(modules/functional-tests)
 endif()

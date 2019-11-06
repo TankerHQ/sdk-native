@@ -32,9 +32,6 @@ if (NOT EMSCRIPTEN)
     src/DataStore/Connection.cpp
     src/DataStore/Database.cpp
     src/DataStore/Table.cpp
-    src/FileKit/DownloadStream.cpp
-    src/FileKit/Metadata.cpp
-    src/FileKit/Request.cpp
     src/DbModels/ContactDevices.cpp
     src/DbModels/ContactUserKeys.cpp
     src/DbModels/DeviceKeyStore.cpp
@@ -130,12 +127,6 @@ add_library(tankercore STATIC
   include/Tanker/Encryptor/v3.hpp
   include/Tanker/Encryptor/v4.hpp
   include/Tanker/Encryptor/v5.hpp
-  include/Tanker/CloudStorage.hpp
-  include/Tanker/FileKit/DownloadStream.hpp
-  include/Tanker/FileKit/Metadata.hpp
-  include/Tanker/FileKit/Request.hpp
-  include/Tanker/FileKit/Constants.hpp
-  include/Tanker/FileKit/DownloadResult.hpp
   include/Tanker/Retry.hpp
 
   src/AsyncCore.cpp
@@ -192,7 +183,6 @@ add_library(tankercore STATIC
   src/Encryptor/v3.cpp
   src/Encryptor/v4.cpp
   src/Encryptor/v5.cpp
-  src/CloudStorage.cpp
   src/Retry.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
@@ -223,7 +213,6 @@ target_link_libraries(tankercore
   tankercacerts
   tankeradmin
   ttracer
-  tccurl
   CONAN_PKG::Boost
   CONAN_PKG::tconcurrent
   CONAN_PKG::cppcodec
