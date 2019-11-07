@@ -19,7 +19,6 @@ tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
   return makeFuture(tc::async_resumable(
       [url = std::string(url),
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
-        Cacerts::init();
         Crypto::init();
         const auto admin = new Admin::Admin(
             Network::ConnectionFactory::create(url, nonstd::nullopt), idToken);

@@ -6,6 +6,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Functional/Fetcher.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
@@ -64,7 +65,7 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
   req.set(fetch::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   req.prepare_payload();
 
-  fetch::ssl::context ctx{fetch::ssl::context::tlsv12_client};
+  auto& ctx = Tanker::Cacerts::get_ssl_context();
   fetch::beast::ssl_stream<fetch::beast::tcp_stream> stream(
       tc::get_default_executor().get_io_service(), ctx);
 

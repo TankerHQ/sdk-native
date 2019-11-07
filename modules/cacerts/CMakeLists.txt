@@ -31,6 +31,8 @@ add_library(tankercacerts STATIC
 target_include_directories(tankercacerts PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(tankercacerts
   tankerlog
+  tankererrors
+  CONAN_PKG::Boost
 )
 
 if(TANKER_EMBED_CERTIFICATES)

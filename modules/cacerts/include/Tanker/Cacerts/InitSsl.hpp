@@ -1,10 +1,15 @@
 #pragma once
 
+#if TANKER_BUILD_WITH_SSL
+#include <boost/asio/ssl/context.hpp>
+#endif
+
 namespace Tanker
 {
 namespace Cacerts
 {
-void init();
-void add_certificate_authority(void* ctx);
+#if TANKER_BUILD_WITH_SSL
+boost::asio::ssl::context& get_ssl_context();
+#endif
 }
 }
