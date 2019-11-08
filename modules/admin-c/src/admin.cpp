@@ -1,7 +1,6 @@
 #include <ctanker/admin.h>
 
 #include <Tanker/Admin/Admin.hpp>
-#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>

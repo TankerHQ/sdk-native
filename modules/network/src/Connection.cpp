@@ -1,6 +1,9 @@
 #include <Tanker/Network/Connection.hpp>
 
+#if TANKER_BUILD_WITH_SSL
 #include <Tanker/Cacerts/InitSsl.hpp>
+#endif
+
 #include <Tanker/Log/Log.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -27,7 +30,11 @@ namespace Network
 Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
   : _url(std::move(url)),
     _infos(std::move(infos)),
+#if TANKER_BUILD_WITH_SSL
     _client(Cacerts::get_ssl_context())
+#else
+    _client()
+#endif
 {
   _client.set_socket_open_listener([this](auto const&) {
     FUNC_END(fmt::format("connected {}", reinterpret_cast<void*>(this)), Net);
