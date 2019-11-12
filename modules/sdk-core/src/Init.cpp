@@ -7,7 +7,6 @@ namespace Tanker
 {
 void init()
 {
-  Cacerts::init();
   Crypto::init();
 }
 }

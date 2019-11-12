@@ -25,7 +25,9 @@ namespace Tanker
 namespace Network
 {
 Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
-  : _url(std::move(url)), _infos(std::move(infos))
+  : _url(std::move(url)),
+    _infos(std::move(infos)),
+    _client(Cacerts::get_ssl_context())
 {
   _client.set_socket_open_listener([this](auto const&) {
     FUNC_END(fmt::format("connected {}", reinterpret_cast<void*>(this)), Net);
@@ -43,7 +45,6 @@ Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
     }));
   });
   _client.set_fail_listener([]() { TERROR("socket.io failure"); });
-  _client.set_init_ssl_ctx(Tanker::Cacerts::add_certificate_authority);
 }
 
 bool Connection::isOpen() const
