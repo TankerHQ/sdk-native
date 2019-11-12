@@ -210,7 +210,6 @@ target_link_libraries(tankercore
   tankerformat
   tankerlog
   tankerconfig
-  tankercacerts
   tankeradmin
   ttracer
   CONAN_PKG::Boost
@@ -223,6 +222,11 @@ target_link_libraries(tankercore
   CONAN_PKG::mockaron
   CONAN_PKG::enum-flags
 )
+
+if(TANKER_BUILD_WITH_SSL)
+  target_link_libraries(tankercore tankercacerts)
+  target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
+endif()
 
 if (NOT EMSCRIPTEN)
   target_link_libraries(tankercore
@@ -238,9 +242,6 @@ install(TARGETS tankercore
   ARCHIVE DESTINATION lib
 )
 
-if(TANKER_BUILD_WITH_SSL)
-  target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
-endif()
 
 if(BUILD_TESTS)
   add_subdirectory(test)

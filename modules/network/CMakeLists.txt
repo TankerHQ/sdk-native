@@ -28,8 +28,11 @@ target_include_directories(tankernetwork
     $<INSTALL_INTERFACE:include>
 )
 
+if(TANKER_BUILD_WITH_SSL)
+  target_link_libraries(tankernetwork tankercacerts)
+endif()
+
 target_link_libraries(tankernetwork
-  tankercacerts
   tankerlog
   tankertrustchain
   ttracer
@@ -40,6 +43,7 @@ target_link_libraries(tankernetwork
   CONAN_PKG::optional-lite
   CONAN_PKG::jsonformoderncpp
 )
+
 
 if (NOT EMSCRIPTEN)
   target_link_libraries(tankernetwork

@@ -6,8 +6,11 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
+
+#ifdef TANKER_BUILD_WITH_SSL
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Functional/Fetcher.hpp>
+#endif
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -48,6 +51,7 @@ tc::cotask<Tanker::Status> expectVerification(
   TC_RETURN(session->status());
 }
 
+#ifdef TANKER_BUILD_WITH_SSL
 tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
                                      std::string userName)
 {
@@ -83,6 +87,7 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
   auto const json = nlohmann::json::parse(res.body().begin(), res.body().end());
   TC_RETURN(json.at("id_token").get<OidcIdToken>());
 }
+#endif
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
@@ -415,6 +420,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   }
 }
 
+#ifdef TANKER_BUILD_WITH_SSL
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 {
   TC_AWAIT(enableOidc());
@@ -530,3 +536,4 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     }
   }
 }
+#endif
