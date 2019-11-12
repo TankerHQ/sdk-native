@@ -194,11 +194,18 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 void testUserGroupCreationCommon(Tanker::Device& authorDevice,
                                  ServerEntry& gcEntry)
 {
+  SUBCASE("should reject a UserGroupCreation if the group already exists")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, ExternalGroup{}),
+        Errc::InvalidGroup);
+  }
+
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
     alter(gcEntry, &ServerEntry::signature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -207,7 +214,7 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
     auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
     alter(userGroupCreation, &UserGroupCreation::selfSignature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -215,13 +222,14 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
   {
-    CHECK_NOTHROW(Verif::verifyUserGroupCreation(gcEntry, authorDevice));
+    CHECK_NOTHROW(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt));
   }
 }
 

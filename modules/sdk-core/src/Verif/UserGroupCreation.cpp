@@ -16,11 +16,17 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupCreation(ServerEntry const& serverEntry,
-                             Device const& author)
+void verifyUserGroupCreation(
+    ServerEntry const& serverEntry,
+    Device const& author,
+    nonstd::optional<ExternalGroup> const& previousGroup)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
          serverEntry.action().nature() == Nature::UserGroupCreation2);
+
+  ensures(!previousGroup,
+          Verif::Errc::InvalidGroup,
+          "UserGroupCreation - group already exist");
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),

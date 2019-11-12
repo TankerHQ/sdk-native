@@ -141,11 +141,7 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
 
   auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
       userGroupCreation.publicEncryptionKey()));
-  Verif::ensures(!group,
-                 Verif::Errc::InvalidGroup,
-                 "UserGroupCreation - group already exist");
-
-  Verif::verifyUserGroupCreation(gc, user.devices[idx]);
+  Verif::verifyUserGroupCreation(gc, user.devices[idx], group);
 
   TC_RETURN(toEntry(gc));
 }
