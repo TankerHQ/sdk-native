@@ -68,4 +68,8 @@ inline nonstd::optional<ExternalGroup> extractExternalGroup(
     return nonstd::nullopt;
   return extractExternalGroup(*group);
 }
+
+void updateLastGroupBlock(Group& group,
+                          Crypto::Hash const& lastBlockHash,
+                          uint64_t lastBlockIndex);
 }

@@ -81,4 +81,16 @@ ExternalGroup extractExternalGroup(Group const& group)
       [](auto&& g) { return ExternalGroup(std::forward<decltype(g)>(g)); },
       group);
 }
+
+void updateLastGroupBlock(Group& group,
+                          Crypto::Hash const& lastBlockHash,
+                          uint64_t lastBlockIndex)
+{
+  boost::variant2::visit(
+      [&](auto& g) {
+        g.lastBlockHash = lastBlockHash;
+        g.lastBlockIndex = lastBlockIndex;
+      },
+      group);
+}
 }

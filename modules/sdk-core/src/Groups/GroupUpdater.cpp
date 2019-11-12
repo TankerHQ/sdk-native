@@ -206,26 +206,28 @@ tc::cotask<Group> applyUserGroupCreation(
     TC_RETURN(makeExternalGroup(entry, userGroupCreation));
 }
 
-tc::cotask<void> applyUserGroupAddition(
+tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> previousGroup,
     Entry const& entry)
 {
   auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
-  auto const previousGroup =
-      TC_AWAIT(groupStore.findById(userGroupAddition.groupId()));
   if (!previousGroup)
   {
+    // this block should never have passed verification
     throw AssertionError(
         fmt::format(TFMT("cannot find previous group block for {:s}"),
                     userGroupAddition.groupId()));
   }
 
-  TC_AWAIT(groupStore.updateLastGroupBlock(
-      userGroupAddition.groupId(), entry.hash, entry.index));
+  updateLastGroupBlock(*previousGroup, entry.hash, entry.index);
+
+  // I am already member of this group, ignore
+  if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
+    TC_RETURN(*previousGroup);
 
   nonstd::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const uga1 = userGroupAddition.get_if<UserGroupAddition::v1>())
@@ -240,23 +242,23 @@ tc::cotask<void> applyUserGroupAddition(
           provisionalUserKeysStore, uga2->provisionalMembers()));
   }
 
-  // I am already member of this group, ignore
-  if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
-    TC_RETURN();
+  // we checked above that this is an external group
+  auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
+
   // I am still not part of this group, store provisional members for maybe
   // future use
   if (!groupPrivateEncryptionKey)
   {
-    TC_AWAIT(groupStore.putGroupProvisionalEncryptionKeys(
-        userGroupAddition.groupId(),
-        extractGroupProvisionalUsers(userGroupAddition)));
-    TC_RETURN();
+    auto const provisionalUsers =
+        extractGroupProvisionalUsers(userGroupAddition);
+    externalGroup.provisionalUsers.insert(externalGroup.provisionalUsers.end(),
+                                          provisionalUsers.begin(),
+                                          provisionalUsers.end());
+    TC_RETURN(externalGroup);
   }
 
-  TC_AWAIT(groupStore.put(
-      makeInternalGroup(boost::variant2::get<ExternalGroup>(*previousGroup),
-                        *groupPrivateEncryptionKey,
-                        entry)));
+  TC_RETURN(
+      makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, entry));
 }
 
 tc::cotask<void> applyUserGroupCreationToStore(
@@ -268,6 +270,23 @@ tc::cotask<void> applyUserGroupCreationToStore(
 {
   auto const group = TC_AWAIT(applyUserGroupCreation(
       myUserId, userKeyStore, provisionalUserKeysStore, entry));
+  TC_AWAIT(groupStore.put(group));
+}
+
+tc::cotask<void> applyUserGroupAdditionToStore(
+    Trustchain::UserId const& myUserId,
+    GroupStore& groupStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
+{
+  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
+
+  auto const previousGroup =
+      TC_AWAIT(groupStore.findById(userGroupAddition.groupId()));
+
+  auto const group = TC_AWAIT(applyUserGroupAddition(
+      myUserId, userKeyStore, provisionalUserKeysStore, previousGroup, entry));
   TC_AWAIT(groupStore.put(group));
 }
 }
@@ -283,7 +302,7 @@ tc::cotask<void> applyEntry(
     TC_AWAIT(applyUserGroupCreationToStore(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else if (entry.action.holds_alternative<UserGroupAddition>())
-    TC_AWAIT(applyUserGroupAddition(
+    TC_AWAIT(applyUserGroupAdditionToStore(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else
   {
