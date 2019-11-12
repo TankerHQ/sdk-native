@@ -112,11 +112,10 @@ std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
   return {};
 }
 
-tc::cotask<void> putExternalGroup(GroupStore& groupStore,
-                                  Entry const& entry,
-                                  UserGroupCreation const& userGroupCreation)
+ExternalGroup makeExternalGroup(Entry const& entry,
+                                UserGroupCreation const& userGroupCreation)
 {
-  TC_AWAIT(groupStore.put(ExternalGroup{
+  return ExternalGroup{
       GroupId{userGroupCreation.publicSignatureKey()},
       userGroupCreation.publicSignatureKey(),
       userGroupCreation.sealedPrivateSignatureKey(),
@@ -124,11 +123,10 @@ tc::cotask<void> putExternalGroup(GroupStore& groupStore,
       entry.hash,
       entry.index,
       extractGroupProvisionalUsers(userGroupCreation),
-  }));
+  };
 }
 
-tc::cotask<void> putInternalGroup(
-    GroupStore& groupStore,
+InternalGroup makeInternalGroup(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     Entry const& entry,
     UserGroupCreation const& userGroupCreation)
@@ -139,7 +137,7 @@ tc::cotask<void> putInternalGroup(
                               userGroupCreation.publicEncryptionKey(),
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(InternalGroup{
+  return InternalGroup{
       GroupId{userGroupCreation.publicSignatureKey()},
       Crypto::SignatureKeyPair{
           userGroupCreation.publicSignatureKey(),
@@ -151,11 +149,10 @@ tc::cotask<void> putInternalGroup(
       },
       entry.hash,
       entry.index,
-  }));
+  };
 }
 
-tc::cotask<void> putInternalGroup(
-    GroupStore& groupStore,
+InternalGroup makeInternalGroup(
     ExternalGroup const& previousGroup,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     Entry const& entry)
@@ -166,7 +163,7 @@ tc::cotask<void> putInternalGroup(
                               previousGroup.publicEncryptionKey,
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(InternalGroup{
+  return InternalGroup{
       GroupId{previousGroup.publicSignatureKey},
       Crypto::SignatureKeyPair{
           previousGroup.publicSignatureKey,
@@ -178,12 +175,11 @@ tc::cotask<void> putInternalGroup(
       },
       entry.hash,
       entry.index,
-  }));
+  };
 }
 
-tc::cotask<void> applyUserGroupCreation(
+tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
@@ -204,10 +200,10 @@ tc::cotask<void> applyUserGroupCreation(
   }
 
   if (groupPrivateEncryptionKey)
-    TC_AWAIT(putInternalGroup(
-        groupStore, *groupPrivateEncryptionKey, entry, userGroupCreation));
+    TC_RETURN(makeInternalGroup(
+        *groupPrivateEncryptionKey, entry, userGroupCreation));
   else
-    TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));
+    TC_RETURN(makeExternalGroup(entry, userGroupCreation));
 }
 
 tc::cotask<void> applyUserGroupAddition(
@@ -257,10 +253,22 @@ tc::cotask<void> applyUserGroupAddition(
     TC_RETURN();
   }
 
-  TC_AWAIT(putInternalGroup(groupStore,
-                            boost::variant2::get<ExternalGroup>(*previousGroup),
-                            *groupPrivateEncryptionKey,
-                            entry));
+  TC_AWAIT(groupStore.put(
+      makeInternalGroup(boost::variant2::get<ExternalGroup>(*previousGroup),
+                        *groupPrivateEncryptionKey,
+                        entry)));
+}
+
+tc::cotask<void> applyUserGroupCreationToStore(
+    Trustchain::UserId const& myUserId,
+    GroupStore& groupStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    Entry const& entry)
+{
+  auto const group = TC_AWAIT(applyUserGroupCreation(
+      myUserId, userKeyStore, provisionalUserKeysStore, entry));
+  TC_AWAIT(groupStore.put(group));
 }
 }
 
@@ -272,7 +280,7 @@ tc::cotask<void> applyEntry(
     Entry const& entry)
 {
   if (entry.action.holds_alternative<UserGroupCreation>())
-    TC_AWAIT(applyUserGroupCreation(
+    TC_AWAIT(applyUserGroupCreationToStore(
         myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
   else if (entry.action.holds_alternative<UserGroupAddition>())
     TC_AWAIT(applyUserGroupAddition(
