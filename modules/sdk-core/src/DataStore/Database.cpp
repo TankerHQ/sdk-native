@@ -151,23 +151,24 @@ Entry rowToEntry(Row const& row)
 }
 
 template <typename T>
-Group rowToFullGroup(T const& row)
+InternalGroup rowToFullGroup(T const& row)
 {
   assert(!row.private_signature_key.is_null() &&
          !row.private_encryption_key.is_null());
 
-  return Group{DataStore::extractBlob<GroupId>(row.group_id),
-               {DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                    row.public_signature_key),
-                DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                    row.private_signature_key)},
-               {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                    row.public_encryption_key),
-                DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                    row.private_encryption_key)},
-               DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
-               // sqlpp uses int64_t
-               static_cast<uint64_t>(row.last_group_block_index)};
+  return InternalGroup{
+      DataStore::extractBlob<GroupId>(row.group_id),
+      {DataStore::extractBlob<Crypto::PublicSignatureKey>(
+           row.public_signature_key),
+       DataStore::extractBlob<Crypto::PrivateSignatureKey>(
+           row.private_signature_key)},
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+           row.public_encryption_key),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+           row.private_encryption_key)},
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
+      // sqlpp uses int64_t
+      static_cast<uint64_t>(row.last_group_block_index)};
 }
 
 template <typename T>
@@ -924,7 +925,7 @@ tc::cotask<void> Database::updateDeviceRevokedAt(Trustchain::DeviceId const& id,
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putFullGroup(Group const& group)
+tc::cotask<void> Database::putFullGroup(InternalGroup const& group)
 {
   FUNC_TIMER(DB);
   GroupsTable groups;
@@ -1007,7 +1008,7 @@ tc::cotask<void> Database::updateLastGroupBlock(
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
+tc::cotask<nonstd::optional<InternalGroup>> Database::findFullGroupByGroupId(
     GroupId const& groupId)
 {
   FUNC_TIMER(DB);
@@ -1106,7 +1107,7 @@ Database::findExternalGroupsByProvisionalUser(
   TC_RETURN(groups);
 }
 
-tc::cotask<nonstd::optional<Group>>
+tc::cotask<nonstd::optional<InternalGroup>>
 Database::findFullGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {

@@ -13,7 +13,7 @@
 
 namespace Tanker
 {
-struct Group
+struct InternalGroup
 {
   Trustchain::GroupId id;
   Crypto::SignatureKeyPair signatureKeyPair;
@@ -22,8 +22,8 @@ struct Group
   uint64_t lastBlockIndex;
 };
 
-bool operator==(Group const& l, Group const& r);
-bool operator!=(Group const& l, Group const& r);
+bool operator==(InternalGroup const& l, InternalGroup const& r);
+bool operator!=(InternalGroup const& l, InternalGroup const& r);
 
 struct ExternalGroup
 {
@@ -39,7 +39,7 @@ struct ExternalGroup
                 Crypto::Hash const&,
                 uint64_t lastBlockIndex,
                 std::vector<GroupProvisionalUser> const& = {});
-  ExternalGroup(Group const&);
+  ExternalGroup(InternalGroup const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;

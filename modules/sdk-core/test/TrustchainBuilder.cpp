@@ -77,7 +77,7 @@ Tanker::User TrustchainBuilder::User::asTankerUser() const
   return tankerUser;
 }
 
-Tanker::ExternalGroup TrustchainBuilder::Group::asExternalGroup() const
+Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
 {
   std::vector<GroupProvisionalUser> provisionalUsers;
   provisionalUsers.reserve(provisionalMembers.size());
@@ -400,7 +400,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 
   auto const entry = blockToServerEntry(block);
 
-  Tanker::Group tgroup{
+  Tanker::InternalGroup tgroup{
       GroupId{signatureKeyPair.publicKey},
       signatureKeyPair,
       encryptionKeyPair,
@@ -416,7 +416,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
                                                 .get<UserGroupCreation>()
                                                 .get<UserGroupCreation::v1>()
                                                 .sealedPrivateSignatureKey();
-  Group group{tgroup, encryptedPrivateSignatureKey, members, {}};
+  InternalGroup group{tgroup, encryptedPrivateSignatureKey, members, {}};
 
   _groups.insert(group);
 
@@ -451,7 +451,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
 
   auto const entry = blockToServerEntry(block);
 
-  Tanker::Group tgroup{
+  Tanker::InternalGroup tgroup{
       GroupId{signatureKeyPair.publicKey},
       signatureKeyPair,
       encryptionKeyPair,
@@ -472,7 +472,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
                                       .get<UserGroupCreation::v2>()
                                       .provisionalMembers();
 
-  Group group{
+  InternalGroup group{
       tgroup, encryptedPrivateSignatureKey, members, provisionalMembers};
 
   _groups.insert(group);
@@ -481,7 +481,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
 }
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
-    Device const& author, Group group, std::vector<User> const& users)
+    Device const& author, InternalGroup group, std::vector<User> const& users)
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
@@ -517,7 +517,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
     Device const& author,
-    Group group,
+    InternalGroup group,
     std::vector<User> const& users,
     std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
 {
@@ -618,7 +618,7 @@ Block TrustchainBuilder::shareToUser(Device const& sender,
 }
 
 Block TrustchainBuilder::shareToUserGroup(Device const& sender,
-                                          Group const& receiver,
+                                          InternalGroup const& receiver,
                                           ResourceId const& resourceId,
                                           Crypto::SymmetricKey const& key)
 {
@@ -899,9 +899,9 @@ std::vector<Block> const& TrustchainBuilder::blocks() const
   return _blocks;
 }
 
-std::vector<TrustchainBuilder::Group> TrustchainBuilder::groups() const
+std::vector<TrustchainBuilder::InternalGroup> TrustchainBuilder::groups() const
 {
-  return std::vector<Group>(_groups.begin(), _groups.end());
+  return std::vector<InternalGroup>(_groups.begin(), _groups.end());
 }
 
 std::vector<TrustchainBuilder::User> const& TrustchainBuilder::users() const

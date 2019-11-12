@@ -65,7 +65,7 @@ void testUserGroupAdditionCommon(
     std::function<TrustchainBuilder::ResultGroup(
         TrustchainBuilder&,
         TrustchainBuilder::Device const&,
-        TrustchainBuilder::Group const&,
+        TrustchainBuilder::InternalGroup const&,
         std::vector<TrustchainBuilder::User> const&)> const& addUserToGroup)
 {
   auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
@@ -244,7 +244,7 @@ TEST_CASE("GroupUpdater UserGroupAddition1")
   testUserGroupAdditionCommon(
       [](TrustchainBuilder& builder,
          TrustchainBuilder::Device const& authorDevice,
-         TrustchainBuilder::Group const& group,
+         TrustchainBuilder::InternalGroup const& group,
          std::vector<TrustchainBuilder::User> const& members) {
         return builder.addUserToGroup(authorDevice, group, members);
       });
@@ -257,7 +257,7 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
     testUserGroupAdditionCommon(
         [](TrustchainBuilder& builder,
            TrustchainBuilder::Device const& authorDevice,
-           TrustchainBuilder::Group const& group,
+           TrustchainBuilder::InternalGroup const& group,
            std::vector<TrustchainBuilder::User> const& members) {
           return builder.addUserToGroup2(authorDevice, group, members, {});
         });

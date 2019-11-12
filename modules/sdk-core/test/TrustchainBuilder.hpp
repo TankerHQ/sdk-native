@@ -79,9 +79,9 @@ public:
     Tanker::SPublicIdentity spublicIdentity;
   };
 
-  struct Group
+  struct InternalGroup
   {
-    Tanker::Group tankerGroup;
+    Tanker::InternalGroup tankerGroup;
     Tanker::Crypto::SealedPrivateSignatureKey encryptedPrivateSignatureKey;
     std::vector<Tanker::SUserId> members;
     std::vector<Tanker::Trustchain::Actions::UserGroupProvisionalMember2>
@@ -92,7 +92,7 @@ public:
 
   struct ResultGroup
   {
-    Group group;
+    InternalGroup group;
     Tanker::Trustchain::ServerEntry entry;
   };
 
@@ -118,11 +118,11 @@ public:
       std::vector<User> const& users,
       std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
   ResultGroup addUserToGroup(Device const& author,
-                             Group group,
+                             InternalGroup group,
                              std::vector<User> const& users);
   ResultGroup addUserToGroup2(
       Device const& author,
-      Group group,
+      InternalGroup group,
       std::vector<User> const& users,
       std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
 
@@ -146,7 +146,7 @@ public:
       Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::Block shareToUserGroup(
       Device const& sender,
-      Group const& receiver,
+      InternalGroup const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::Block shareToProvisionalUser(
@@ -184,7 +184,7 @@ public:
       Tanker::DataStore::ADatabase* conn) const;
 
   std::vector<Tanker::Trustchain::Block> const& blocks() const;
-  std::vector<Group> groups() const;
+  std::vector<InternalGroup> groups() const;
   std::vector<User> const& users() const;
 
   Tanker::Trustchain::TrustchainId const& trustchainId() const;
@@ -193,7 +193,7 @@ public:
 private:
   struct GroupComparator
   {
-    bool operator()(Group const& l, Group const& r) const
+    bool operator()(InternalGroup const& l, InternalGroup const& r) const
     {
       return l.tankerGroup.id < r.tankerGroup.id;
     }
@@ -203,7 +203,7 @@ private:
   Tanker::Trustchain::TrustchainId _trustchainId;
 
   std::vector<User> _users;
-  std::set<Group, GroupComparator> _groups;
+  std::set<InternalGroup, GroupComparator> _groups;
   std::vector<Tanker::Trustchain::Block> _blocks;
 
   User* findMutableUser(Tanker::SUserId const& suserId);

@@ -23,7 +23,7 @@ public:
 
   GroupStore(DataStore::ADatabase* dbConn);
 
-  tc::cotask<void> put(Group const& group);
+  tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
   tc::cotask<void> putGroupProvisionalEncryptionKeys(
       Trustchain::GroupId const& groupId,
@@ -32,11 +32,11 @@ public:
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex);
 
-  tc::cotask<nonstd::optional<Group>> findFullById(
+  tc::cotask<nonstd::optional<InternalGroup>> findFullById(
       Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalById(
       Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<Group>> findFullByPublicEncryptionKey(
+  tc::cotask<nonstd::optional<InternalGroup>> findFullByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;

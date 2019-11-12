@@ -51,7 +51,7 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
-    Group const& group);
+    InternalGroup const& group);
 
 tc::cotask<void> updateMembers(
     UserAccessor& userAccessor,

@@ -777,7 +777,7 @@ tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
   TC_RETURN(out);
 }
 
-tc::cotask<void> JsDatabase::putFullGroup(Group const& group)
+tc::cotask<void> JsDatabase::putFullGroup(InternalGroup const& group)
 {
   auto jsgroup = emscripten::val::object();
   jsgroup.set("id", containerToJs(group.id));
@@ -863,9 +863,9 @@ tc::cotask<void> JsDatabase::updateLastGroupBlock(
 
 namespace
 {
-Group fromJsFullGroup(emscripten::val const& group)
+InternalGroup fromJsFullGroup(emscripten::val const& group)
 {
-  return Group{
+  return InternalGroup{
       GroupId(copyToVector(group["id"])),
       {Crypto::PublicSignatureKey(copyToVector(group["publicSignatureKey"])),
        Crypto::PrivateSignatureKey(copyToVector(group["privateSignatureKey"]))},
@@ -910,7 +910,7 @@ ExternalGroup fromJsExternalGroup(emscripten::val const& group)
 }
 }
 
-tc::cotask<nonstd::optional<Group>> JsDatabase::findFullGroupByGroupId(
+tc::cotask<nonstd::optional<InternalGroup>> JsDatabase::findFullGroupByGroupId(
     GroupId const& id)
 {
   auto const jsgroup = TC_AWAIT(
@@ -949,7 +949,7 @@ JsDatabase::findExternalGroupsByProvisionalUser(
   TC_RETURN(out);
 }
 
-tc::cotask<nonstd::optional<Group>>
+tc::cotask<nonstd::optional<InternalGroup>>
 JsDatabase::findFullGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {

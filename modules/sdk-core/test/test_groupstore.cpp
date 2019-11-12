@@ -17,7 +17,7 @@ TEST_CASE("GroupStore")
 
   GroupStore groupStore(dbPtr.get());
 
-  auto const group = Group{
+  auto const group = InternalGroup{
       make<GroupId>("group id"),
       Crypto::makeSignatureKeyPair(),
       Crypto::makeEncryptionKeyPair(),

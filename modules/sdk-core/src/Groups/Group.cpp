@@ -4,7 +4,7 @@ using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {
-bool operator==(Group const& l, Group const& r)
+bool operator==(InternalGroup const& l, InternalGroup const& r)
 {
   return std::tie(l.id,
                   l.signatureKeyPair,
@@ -17,7 +17,7 @@ bool operator==(Group const& l, Group const& r)
                                                 r.lastBlockIndex);
 }
 
-bool operator!=(Group const& l, Group const& r)
+bool operator!=(InternalGroup const& l, InternalGroup const& r)
 {
   return !(l == r);
 }
@@ -40,7 +40,7 @@ ExternalGroup::ExternalGroup(
 {
 }
 
-ExternalGroup::ExternalGroup(Group const& group)
+ExternalGroup::ExternalGroup(InternalGroup const& group)
   : id(group.id),
     publicSignatureKey(group.signatureKeyPair.publicKey),
     encryptedPrivateSignatureKey(nonstd::nullopt),

@@ -139,7 +139,7 @@ tc::cotask<void> putFullGroup(
                               userGroupCreation.publicEncryptionKey(),
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(Group{
+  TC_AWAIT(groupStore.put(InternalGroup{
       GroupId{userGroupCreation.publicSignatureKey()},
       Crypto::SignatureKeyPair{
           userGroupCreation.publicSignatureKey(),
@@ -166,7 +166,7 @@ tc::cotask<void> putFullGroup(
                               previousGroup.publicEncryptionKey,
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(Group{
+  TC_AWAIT(groupStore.put(InternalGroup{
       GroupId{previousGroup.publicSignatureKey},
       Crypto::SignatureKeyPair{
           previousGroup.publicSignatureKey,
@@ -296,7 +296,7 @@ tc::cotask<void> applyGroupPrivateKey(
                               group.publicEncryptionKey,
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(Group{
+  TC_AWAIT(groupStore.put(InternalGroup{
       group.id,
       Crypto::SignatureKeyPair{
           group.publicSignatureKey,

@@ -171,10 +171,10 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
   // process our blocks first or here's what'll happen!
   // if you receive:
   // - Device Creation
-  // - Group Creation (with a key encrypted for my user key)
+  // - InternalGroup Creation (with a key encrypted for my user key)
   // - My Device Creation (with my user key that I can decrypt)
-  // If I process the Group Creation, I won't be able to decrypt it. More
-  // generally, I can't process stuff if I don't have my user keys and
+  // If I process the InternalGroup Creation, I won't be able to decrypt it.
+  // More generally, I can't process stuff if I don't have my user keys and
   // device id, so we do not process other blocks before we have those.
   // - Device revocation
   // I need to get all the previous userKeys in order of creation to fill

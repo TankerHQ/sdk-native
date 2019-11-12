@@ -181,7 +181,7 @@ TEST_CASE("Fails to add 0 users to a group")
   auto const userDevice = user.devices.front();
   auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
-  Group const group{};
+  InternalGroup const group{};
 
   TANKER_CHECK_THROWS_WITH_CODE(Groups::Manager::generateAddUserToGroupBlock(
                                     {}, {}, userBlockGenerator, group),

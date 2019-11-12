@@ -23,7 +23,7 @@ tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
 
 auto GroupAccessor::getFullGroup(
     Crypto::PublicEncryptionKey const& publicGroupKey)
-    -> tc::cotask<nonstd::optional<Group>>
+    -> tc::cotask<nonstd::optional<InternalGroup>>
 {
   // We don't need to fetch full groups because
   // we know they are up to date.
