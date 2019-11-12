@@ -9,6 +9,8 @@
 
 #include <optional.hpp>
 
+#include <boost/variant2/variant.hpp>
+
 #include <cstdint>
 
 namespace Tanker
@@ -53,4 +55,6 @@ struct ExternalGroup
 
 bool operator==(ExternalGroup const& l, ExternalGroup const& r);
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
+
+using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
 }

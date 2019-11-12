@@ -23,6 +23,7 @@ public:
 
   GroupStore(DataStore::ADatabase* dbConn);
 
+  tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
   tc::cotask<void> putGroupProvisionalEncryptionKeys(

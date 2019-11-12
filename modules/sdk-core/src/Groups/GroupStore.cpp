@@ -17,6 +17,12 @@ GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 
+tc::cotask<void> GroupStore::put(Group const& group)
+{
+  TC_AWAIT(boost::variant2::visit(
+      [this](auto const& g) -> tc::cotask<void> { TC_AWAIT(put(g)); }, group));
+}
+
 tc::cotask<void> GroupStore::put(InternalGroup const& group)
 {
   TINFO("Adding internal group {}", group.id);
