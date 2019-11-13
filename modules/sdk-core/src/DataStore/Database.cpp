@@ -1002,21 +1002,6 @@ tc::cotask<void> Database::putGroupProvisionalEncryptionKeys(
   TC_RETURN();
 }
 
-tc::cotask<void> Database::updateLastGroupBlock(
-    GroupId const& groupId,
-    Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups;
-
-  (*_db)(update(groups)
-             .set(groups.last_group_block_hash = lastBlockHash.base(),
-                  groups.last_group_block_index = lastBlockIndex)
-             .where(groups.group_id == groupId.base()));
-  TC_RETURN();
-}
-
 tc::cotask<nonstd::optional<InternalGroup>>
 Database::findInternalGroupByGroupId(GroupId const& groupId)
 {

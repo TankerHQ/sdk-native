@@ -26,12 +26,6 @@ public:
   tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
-  tc::cotask<void> putGroupProvisionalEncryptionKeys(
-      Trustchain::GroupId const& groupId,
-      std::vector<GroupProvisionalUser> const& provisionalUsers);
-  tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
-                                        Crypto::Hash const& lastBlockHash,
-                                        uint64_t lastBlockIndex);
 
   tc::cotask<nonstd::optional<InternalGroup>> findInternalById(
       Trustchain::GroupId const& groupId) const;

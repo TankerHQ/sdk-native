@@ -35,29 +35,6 @@ tc::cotask<void> GroupStore::put(ExternalGroup const& group)
   TC_AWAIT(_db->putExternalGroup(group));
 }
 
-tc::cotask<void> GroupStore::putGroupProvisionalEncryptionKeys(
-    Trustchain::GroupId const& groupId,
-    std::vector<GroupProvisionalUser> const& provisionalUsers)
-{
-  if (provisionalUsers.empty())
-    TC_RETURN();
-
-  TINFO("Adding group provisional encryption keys {}", groupId);
-  TC_AWAIT(_db->putGroupProvisionalEncryptionKeys(groupId, provisionalUsers));
-}
-
-tc::cotask<void> GroupStore::updateLastGroupBlock(
-    GroupId const& groupId,
-    Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex)
-{
-  TINFO("Updating group {}, last block is {} {}",
-        groupId,
-        lastBlockIndex,
-        lastBlockHash);
-  TC_AWAIT(_db->updateLastGroupBlock(groupId, lastBlockHash, lastBlockIndex));
-}
-
 tc::cotask<nonstd::optional<InternalGroup>> GroupStore::findInternalById(
     GroupId const& groupId) const
 {

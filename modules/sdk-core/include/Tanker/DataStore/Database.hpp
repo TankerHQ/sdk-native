@@ -89,13 +89,6 @@ public:
 
   tc::cotask<void> putInternalGroup(InternalGroup const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
-  tc::cotask<void> putGroupProvisionalEncryptionKeys(
-      Trustchain::GroupId const& groupId,
-      std::vector<GroupProvisionalUser> const& provisionalUsers) override;
-  // Does nothing if the group does not exist
-  tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
-                                        Crypto::Hash const& lastBlockHash,
-                                        uint64_t lastBlockIndex) override;
   tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
@@ -137,6 +130,10 @@ private:
   tc::cotask<void> startTransaction() override;
   tc::cotask<void> commitTransaction() override;
   tc::cotask<void> rollbackTransaction() override;
+
+  tc::cotask<void> putGroupProvisionalEncryptionKeys(
+      Trustchain::GroupId const& groupId,
+      std::vector<GroupProvisionalUser> const& provisionalUsers);
 };
 }
 }
