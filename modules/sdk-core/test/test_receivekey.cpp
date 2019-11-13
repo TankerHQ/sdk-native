@@ -77,7 +77,8 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     GroupStore const receiverGroupStore(db.get());
-    GroupAccessor receiverGroupAccessor(nullptr, &receiverGroupStore);
+    GroupAccessor receiverGroupAccessor(
+        {}, nullptr, nullptr, nullptr, &receiverGroupStore, nullptr, nullptr);
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
@@ -103,7 +104,13 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     auto const receiverGroupStore = builder.makeGroupStore(receiver, db.get());
-    GroupAccessor receiverGroupAccessor(nullptr, receiverGroupStore.get());
+    GroupAccessor receiverGroupAccessor({},
+                                        nullptr,
+                                        nullptr,
+                                        nullptr,
+                                        receiverGroupStore.get(),
+                                        nullptr,
+                                        nullptr);
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
@@ -132,7 +139,8 @@ TEST_CASE("decryptAndStoreKey")
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     GroupStore const receiverGroupStore(db.get());
-    GroupAccessor receiverGroupAccessor(nullptr, &receiverGroupStore);
+    GroupAccessor receiverGroupAccessor(
+        {}, nullptr, nullptr, nullptr, &receiverGroupStore, nullptr, nullptr);
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
     ResourceKeyStore resourceKeyStore(db.get());

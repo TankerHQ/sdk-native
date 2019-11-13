@@ -72,7 +72,13 @@ TEST_CASE("GroupAccessor")
       getMember({luke, jolly, rantanplan}, &decltype(luke)::user));
 
   mockaron::mock<TrustchainPuller, TrustchainPullerStub> trustchainPuller;
-  GroupAccessor GroupAccessor(&trustchainPuller.get(), &groupStore);
+  GroupAccessor GroupAccessor({},
+                              nullptr,
+                              &trustchainPuller.get(),
+                              nullptr,
+                              &groupStore,
+                              nullptr,
+                              nullptr);
 
   SUBCASE("it should return external groups it did not find")
   {

@@ -9,9 +9,21 @@ using Tanker::Trustchain::GroupId;
 
 namespace Tanker
 {
-GroupAccessor::GroupAccessor(TrustchainPuller* trustchainPuller,
-                             GroupStore const* groupStore)
-  : _trustchainPuller(trustchainPuller), _groupStore(groupStore)
+GroupAccessor::GroupAccessor(
+    Trustchain::UserId const& userId,
+    Client* client,
+    TrustchainPuller* trustchainPuller,
+    ContactStore const* contactStore,
+    GroupStore const* groupStore,
+    UserKeyStore const* userKeyStore,
+    ProvisionalUserKeysStore const* provisionalUserKeysStore)
+  : _myUserId(userId),
+    _client(client),
+    _trustchainPuller(trustchainPuller),
+    _contactStore(contactStore),
+    _groupStore(groupStore),
+    _userKeyStore(userKeyStore),
+    _provisionalUserKeysStore(provisionalUserKeysStore)
 {
 }
 

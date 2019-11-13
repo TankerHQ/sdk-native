@@ -1,8 +1,12 @@
 #pragma once
 
 #include <Tanker/BasicPullResult.hpp>
+#include <Tanker/Client.hpp>
+#include <Tanker/ContactStore.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -19,8 +23,13 @@ class GroupAccessor
 public:
   using PullResult = BasicPullResult<ExternalGroup>;
 
-  GroupAccessor(TrustchainPuller* trustchainPuller,
-                GroupStore const* groupstore);
+  GroupAccessor(Trustchain::UserId const& myUserId,
+                Client* client,
+                TrustchainPuller* trustchainPuller,
+                ContactStore const* contactStore,
+                GroupStore const* groupstore,
+                UserKeyStore const* userKeyStore,
+                ProvisionalUserKeysStore const* provisionalUserKeysStore);
 
   GroupAccessor() = delete;
   GroupAccessor(GroupAccessor const&) = delete;
@@ -36,7 +45,12 @@ private:
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
 
 private:
+  Trustchain::UserId _myUserId;
+  Client* _client;
   TrustchainPuller* _trustchainPuller;
+  ContactStore const* _contactStore;
   GroupStore const* _groupStore;
+  UserKeyStore const* _userKeyStore;
+  ProvisionalUserKeysStore const* _provisionalUserKeysStore;
 };
 }
