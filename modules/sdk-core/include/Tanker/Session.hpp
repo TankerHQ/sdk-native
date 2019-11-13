@@ -162,7 +162,7 @@ private:
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;
   UserAccessor _userAccessor;
-  GroupAccessor _groupAcessor;
+  GroupAccessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
   nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;

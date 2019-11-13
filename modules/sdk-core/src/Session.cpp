@@ -145,11 +145,11 @@ Session::Session(Config&& config)
                       _deviceKeyStore->deviceId(),
                       _userId),
     _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
-    _groupAcessor(&_trustchainPuller, &_groupStore),
+    _groupAccessor(&_trustchainPuller, &_groupStore),
     _resourceKeyAccessor(_client.get(),
                          &_verifier,
                          &_userKeyStore,
-                         &_groupAcessor,
+                         &_groupAccessor,
                          &_provisionalUserKeysStore,
                          &_resourceKeyStore),
     _blockGenerator(_trustchainId,
@@ -282,7 +282,7 @@ tc::cotask<void> Session::encrypt(
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
@@ -353,7 +353,7 @@ tc::cotask<void> Session::share(
 
   TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         resourceIds,
@@ -626,7 +626,7 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
   TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
                                     encryptor.symmetricKey()));
   TC_AWAIT(Share::share(_userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},
