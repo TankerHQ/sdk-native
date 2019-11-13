@@ -90,11 +90,10 @@ auto create_ssl_context()
 {
   using net::ssl::context;
 
-  auto ctx = context{context::tlsv12_client};
+  auto ctx = context{context::tls_client};
   auto auth = get_certificate_authority();
 
-  ctx.set_options(context::default_workarounds | context::no_sslv2 |
-                  context::no_sslv3 | context::no_tlsv1 | context::no_tlsv1_1 |
+  ctx.set_options(context::no_sslv3 | context::no_tlsv1 | context::no_tlsv1_1 |
                   context::single_dh_use);
 
   ctx.set_verify_mode(net::ssl::verify_peer |
