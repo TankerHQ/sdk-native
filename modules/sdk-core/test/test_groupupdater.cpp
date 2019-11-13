@@ -40,7 +40,7 @@ void testUserGroupCreationCommon(
                                         *aliceKeyStore,
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(group.entry)));
-    CHECK_EQ(AWAIT(groupStore.findFullById(group.group.tankerGroup.id)).value(),
+    CHECK_EQ(AWAIT(groupStore.findInternalById(group.group.tankerGroup.id)).value(),
              group.group.tankerGroup);
   }
 
@@ -97,7 +97,7 @@ void testUserGroupAdditionCommon(
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
     CHECK_EQ(
-        AWAIT(aliceGroupStore.findFullById(aliceGroup.group.tankerGroup.id))
+        AWAIT(aliceGroupStore.findInternalById(aliceGroup.group.tankerGroup.id))
             .value(),
         updatedGroup.group.tankerGroup);
   }
@@ -119,7 +119,7 @@ void testUserGroupAdditionCommon(
                                         *aliceKeyStore,
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
-    CHECK_EQ(AWAIT(aliceGroupStore.findFullById(bobGroup.group.tankerGroup.id))
+    CHECK_EQ(AWAIT(aliceGroupStore.findInternalById(bobGroup.group.tankerGroup.id))
                  .value(),
              updatedGroup.group.tankerGroup);
   }
@@ -233,7 +233,7 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
                                           toVerifiedEntry(group.entry)));
 
       CHECK_EQ(
-          AWAIT(groupStore.findFullById(group.group.tankerGroup.id)).value(),
+          AWAIT(groupStore.findInternalById(group.group.tankerGroup.id)).value(),
           group.group.tankerGroup);
     }
   }
@@ -337,7 +337,7 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
                                           toVerifiedEntry(updatedGroup.entry)));
 
       CHECK_EQ(
-          AWAIT(aliceGroupStore.findFullById(bobGroup.group.tankerGroup.id))
+          AWAIT(aliceGroupStore.findInternalById(bobGroup.group.tankerGroup.id))
               .value(),
           updatedGroup.group.tankerGroup);
     }

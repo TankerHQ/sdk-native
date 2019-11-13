@@ -48,10 +48,10 @@ TEST_CASE("GroupStore")
     auto const unexistentGroupKey =
         make<Crypto::PublicEncryptionKey>("unexistent");
 
-    CHECK_EQ(AWAIT(groupStore.findFullById(unexistentGroupId)),
+    CHECK_EQ(AWAIT(groupStore.findInternalById(unexistentGroupId)),
              nonstd::nullopt);
     CHECK_EQ(
-        AWAIT(groupStore.findFullByPublicEncryptionKey(unexistentGroupKey)),
+        AWAIT(groupStore.findInternalByPublicEncryptionKey(unexistentGroupKey)),
         nonstd::nullopt);
     CHECK_EQ(AWAIT(groupStore.findExternalById(unexistentGroupId)),
              nonstd::nullopt);
@@ -63,10 +63,10 @@ TEST_CASE("GroupStore")
   SUBCASE("it should find a group that was inserted")
   {
     AWAIT_VOID(groupStore.put(group));
-    CHECK_EQ(AWAIT(groupStore.findFullById(group.id)).value(), group);
+    CHECK_EQ(AWAIT(groupStore.findInternalById(group.id)).value(), group);
     CHECK_EQ(AWAIT(groupStore.findExternalById(group.id)).value(),
              externalGroup);
-    CHECK_EQ(AWAIT(groupStore.findFullByPublicEncryptionKey(
+    CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                        group.encryptionKeyPair.publicKey))
                  .value(),
              group);
@@ -84,8 +84,8 @@ TEST_CASE("GroupStore")
     CHECK_EQ(AWAIT(groupStore.findExternalByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
              externalGroupWithKey);
-    CHECK_EQ(AWAIT(groupStore.findFullById(group.id)), nonstd::nullopt);
-    CHECK_EQ(AWAIT(groupStore.findFullByPublicEncryptionKey(
+    CHECK_EQ(AWAIT(groupStore.findInternalById(group.id)), nonstd::nullopt);
+    CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
              nonstd::nullopt);
   }
@@ -99,7 +99,7 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findFullById(group2.id)).value(), group2);
+    CHECK_EQ(AWAIT(groupStore.findInternalById(group2.id)).value(), group2);
   }
 
   SUBCASE(
@@ -113,7 +113,7 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findFullById(group2.id)).value(), group2);
+    CHECK_EQ(AWAIT(groupStore.findInternalById(group2.id)).value(), group2);
   }
 
   SUBCASE(
@@ -131,7 +131,7 @@ TEST_CASE("GroupStore")
     AWAIT_VOID(groupStore.put(externalGroup2));
     CHECK_EQ(AWAIT(groupStore.findExternalById(externalGroup2.id)).value(),
              externalGroup2);
-    CHECK_EQ(AWAIT(groupStore.findFullById(externalGroup2.id)),
+    CHECK_EQ(AWAIT(groupStore.findInternalById(externalGroup2.id)),
              nonstd::nullopt);
   }
 

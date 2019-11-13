@@ -181,7 +181,7 @@ tc::cotask<void> updateMembers(
   auto const members =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  auto const group = TC_AWAIT(groupStore.findFullById(groupId));
+  auto const group = TC_AWAIT(groupStore.findInternalById(groupId));
   if (!group)
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 

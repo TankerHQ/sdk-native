@@ -127,7 +127,7 @@ tc::cotask<void> putExternalGroup(GroupStore& groupStore,
   }));
 }
 
-tc::cotask<void> putFullGroup(
+tc::cotask<void> putInternalGroup(
     GroupStore& groupStore,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     Entry const& entry,
@@ -154,7 +154,7 @@ tc::cotask<void> putFullGroup(
   }));
 }
 
-tc::cotask<void> putFullGroup(
+tc::cotask<void> putInternalGroup(
     GroupStore& groupStore,
     ExternalGroup const& previousGroup,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
@@ -204,7 +204,7 @@ tc::cotask<void> applyUserGroupCreation(
   }
 
   if (groupPrivateEncryptionKey)
-    TC_AWAIT(putFullGroup(
+    TC_AWAIT(putInternalGroup(
         groupStore, *groupPrivateEncryptionKey, entry, userGroupCreation));
   else
     TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));
@@ -257,7 +257,7 @@ tc::cotask<void> applyUserGroupAddition(
     TC_RETURN();
   }
 
-  TC_AWAIT(putFullGroup(
+  TC_AWAIT(putInternalGroup(
       groupStore, *previousGroup, *groupPrivateEncryptionKey, entry));
 }
 }

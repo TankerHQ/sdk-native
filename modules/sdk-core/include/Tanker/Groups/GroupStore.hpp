@@ -32,11 +32,11 @@ public:
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex);
 
-  tc::cotask<nonstd::optional<InternalGroup>> findFullById(
+  tc::cotask<nonstd::optional<InternalGroup>> findInternalById(
       Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalById(
       Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<InternalGroup>> findFullByPublicEncryptionKey(
+  tc::cotask<nonstd::optional<InternalGroup>> findInternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;

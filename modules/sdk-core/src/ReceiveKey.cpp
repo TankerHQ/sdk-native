@@ -79,7 +79,7 @@ tc::cotask<void> decryptAndStoreKey(
 {
   auto const& recipientPublicKey =
       keyPublishToUserGroup.recipientPublicEncryptionKey();
-  auto const group = TC_AWAIT(groupAccessor.getFullGroup(recipientPublicKey));
+  auto const group = TC_AWAIT(groupAccessor.getInternalGroup(recipientPublicKey));
 
   if (!group)
   {

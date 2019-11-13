@@ -151,7 +151,7 @@ Entry rowToEntry(Row const& row)
 }
 
 template <typename T>
-InternalGroup rowToFullGroup(T const& row)
+InternalGroup rowToInternalGroup(T const& row)
 {
   assert(!row.private_signature_key.is_null() &&
          !row.private_encryption_key.is_null());
@@ -925,7 +925,7 @@ tc::cotask<void> Database::updateDeviceRevokedAt(Trustchain::DeviceId const& id,
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putFullGroup(InternalGroup const& group)
+tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
 {
   FUNC_TIMER(DB);
   GroupsTable groups;
@@ -1008,8 +1008,8 @@ tc::cotask<void> Database::updateLastGroupBlock(
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<InternalGroup>> Database::findFullGroupByGroupId(
-    GroupId const& groupId)
+tc::cotask<nonstd::optional<InternalGroup>>
+Database::findInternalGroupByGroupId(GroupId const& groupId)
 {
   FUNC_TIMER(DB);
   GroupsTable groups{};
@@ -1027,7 +1027,7 @@ tc::cotask<nonstd::optional<InternalGroup>> Database::findFullGroupByGroupId(
       row.private_encryption_key.is_null())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(rowToFullGroup(row));
+  TC_RETURN(rowToInternalGroup(row));
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>>
@@ -1108,7 +1108,7 @@ Database::findExternalGroupsByProvisionalUser(
 }
 
 tc::cotask<nonstd::optional<InternalGroup>>
-Database::findFullGroupByGroupPublicEncryptionKey(
+Database::findInternalGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);
@@ -1128,7 +1128,7 @@ Database::findFullGroupByGroupPublicEncryptionKey(
       row.private_encryption_key.is_null())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(rowToFullGroup(row));
+  TC_RETURN(rowToInternalGroup(row));
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>>

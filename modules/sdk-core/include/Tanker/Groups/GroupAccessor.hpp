@@ -29,7 +29,7 @@ public:
   GroupAccessor& operator=(GroupAccessor&&) = delete;
 
   tc::cotask<PullResult> pull(gsl::span<Trustchain::GroupId const> groupIds);
-  tc::cotask<nonstd::optional<InternalGroup>> getFullGroup(
+  tc::cotask<nonstd::optional<InternalGroup>> getInternalGroup(
       Crypto::PublicEncryptionKey const& groupKeys);
 
 private:

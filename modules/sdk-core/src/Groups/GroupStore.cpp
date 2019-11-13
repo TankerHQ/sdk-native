@@ -20,7 +20,7 @@ GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 tc::cotask<void> GroupStore::put(InternalGroup const& group)
 {
   TINFO("Adding internal group {}", group.id);
-  TC_AWAIT(_db->putFullGroup(group));
+  TC_AWAIT(_db->putInternalGroup(group));
 }
 
 tc::cotask<void> GroupStore::put(ExternalGroup const& group)
@@ -52,10 +52,10 @@ tc::cotask<void> GroupStore::updateLastGroupBlock(
   TC_AWAIT(_db->updateLastGroupBlock(groupId, lastBlockHash, lastBlockIndex));
 }
 
-tc::cotask<nonstd::optional<InternalGroup>> GroupStore::findFullById(
+tc::cotask<nonstd::optional<InternalGroup>> GroupStore::findInternalById(
     GroupId const& groupId) const
 {
-  TC_RETURN(TC_AWAIT(_db->findFullGroupByGroupId(groupId)));
+  TC_RETURN(TC_AWAIT(_db->findInternalGroupByGroupId(groupId)));
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>> GroupStore::findExternalById(
@@ -65,11 +65,11 @@ tc::cotask<nonstd::optional<ExternalGroup>> GroupStore::findExternalById(
 }
 
 tc::cotask<nonstd::optional<InternalGroup>>
-GroupStore::findFullByPublicEncryptionKey(
+GroupStore::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   TC_RETURN(TC_AWAIT(
-      _db->findFullGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
+      _db->findInternalGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>>

@@ -73,7 +73,7 @@ TEST_CASE("Preregistration")
         *userKeyStore, provisionalUserKeysStore, *groupStore, picEntry)));
 
     CHECK_EQ(
-        AWAIT(groupStore->findFullById(group.group.tankerGroup.id)).value(),
+        AWAIT(groupStore->findInternalById(group.group.tankerGroup.id)).value(),
         group.group.tankerGroup);
   }
 }
