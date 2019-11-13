@@ -129,10 +129,10 @@ public:
       Trustchain::GroupId const& groupId,
       Crypto::Hash const& lastBlockHash,
       uint64_t lastBlockIndex) = 0;
-  virtual tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupId(
+  virtual tc::cotask<nonstd::optional<InternalGroup>>
+  findInternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
+  virtual tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<std::vector<ExternalGroup>>
   findExternalGroupsByProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,
@@ -140,8 +140,8 @@ public:
   virtual tc::cotask<nonstd::optional<InternalGroup>>
   findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
-  virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupPublicEncryptionKey(
+  virtual tc::cotask<nonstd::optional<Group>>
+  findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
 
   virtual tc::cotask<void> nuke() = 0;

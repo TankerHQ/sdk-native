@@ -190,6 +190,15 @@ ExternalGroup rowToExternalGroup(T const& row)
 }
 
 template <typename T>
+Group rowToGroup(T const& row)
+{
+  if (row.encrypted_private_signature_key.is_null())
+    return rowToInternalGroup(row);
+  else
+    return rowToExternalGroup(row);
+}
+
+template <typename T>
 KeyPublish rowToKeyPublish(T const& row)
 {
   auto const resourceId = DataStore::extractBlob<ResourceId>(row.resource_id);
@@ -1030,8 +1039,8 @@ Database::findInternalGroupByGroupId(GroupId const& groupId)
   TC_RETURN(rowToInternalGroup(row));
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>>
-Database::findExternalGroupByGroupId(GroupId const& groupId)
+tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
+    GroupId const& groupId)
 {
   FUNC_TIMER(DB);
   GroupsTable groups{};
@@ -1045,12 +1054,13 @@ Database::findExternalGroupByGroupId(GroupId const& groupId)
 
   auto const& row = *rows.begin();
 
-  auto externalGroup = rowToExternalGroup(row);
+  auto group = rowToGroup(row);
 
-  externalGroup.provisionalUsers =
-      TC_AWAIT(this->findProvisionalUsersByGroupId(groupId));
+  if (auto const externalGroup = boost::variant2::get_if<ExternalGroup>(&group))
+    externalGroup->provisionalUsers =
+        TC_AWAIT(this->findProvisionalUsersByGroupId(groupId));
 
-  TC_RETURN(externalGroup);
+  TC_RETURN(group);
 }
 
 tc::cotask<std::vector<GroupProvisionalUser>>
@@ -1131,8 +1141,8 @@ Database::findInternalGroupByGroupPublicEncryptionKey(
   TC_RETURN(rowToInternalGroup(row));
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>>
-Database::findExternalGroupByGroupPublicEncryptionKey(
+tc::cotask<nonstd::optional<Group>>
+Database::findGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);
@@ -1148,7 +1158,7 @@ Database::findExternalGroupByGroupPublicEncryptionKey(
 
   auto const& row = *rows.begin();
 
-  TC_RETURN(rowToExternalGroup(row));
+  TC_RETURN(rowToGroup(row));
 }
 }
 }

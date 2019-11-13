@@ -1,5 +1,7 @@
 #include <Tanker/Groups/Group.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 using Tanker::Trustchain::GroupId;
 
 namespace Tanker
@@ -71,5 +73,12 @@ bool operator==(ExternalGroup const& l, ExternalGroup const& r)
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r)
 {
   return !(l == r);
+}
+
+ExternalGroup extractExternalGroup(Group const& group)
+{
+  return boost::variant2::visit(
+      [](auto&& g) { return ExternalGroup(std::forward<decltype(g)>(g)); },
+      group);
 }
 }

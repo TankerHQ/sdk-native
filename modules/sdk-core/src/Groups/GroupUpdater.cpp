@@ -220,7 +220,7 @@ tc::cotask<void> applyUserGroupAddition(
   auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
   auto const previousGroup =
-      TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId()));
+      TC_AWAIT(groupStore.findById(userGroupAddition.groupId()));
   if (!previousGroup)
   {
     throw AssertionError(
@@ -245,7 +245,7 @@ tc::cotask<void> applyUserGroupAddition(
   }
 
   // I am already member of this group, ignore
-  if (!previousGroup->encryptedPrivateSignatureKey)
+  if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
     TC_RETURN();
   // I am still not part of this group, store provisional members for maybe
   // future use
@@ -257,8 +257,10 @@ tc::cotask<void> applyUserGroupAddition(
     TC_RETURN();
   }
 
-  TC_AWAIT(putInternalGroup(
-      groupStore, *previousGroup, *groupPrivateEncryptionKey, entry));
+  TC_AWAIT(putInternalGroup(groupStore,
+                            boost::variant2::get<ExternalGroup>(*previousGroup),
+                            *groupPrivateEncryptionKey,
+                            entry));
 }
 }
 

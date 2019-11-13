@@ -139,8 +139,9 @@ tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(gc.author())));
   auto const& userGroupCreation = gc.action().get<UserGroupCreation>();
 
-  auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
-      userGroupCreation.publicEncryptionKey()));
+  auto const group =
+      extractExternalGroup(TC_AWAIT(_groups->findByPublicEncryptionKey(
+          userGroupCreation.publicEncryptionKey())));
   Verif::verifyUserGroupCreation(gc, user.devices[idx], group);
 
   TC_RETURN(toEntry(gc));
@@ -198,8 +199,8 @@ Device TrustchainVerifier::getDevice(User const& user,
 tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
 {
-  auto const group = TC_AWAIT(
-      _groups->findExternalByPublicEncryptionKey(recipientPublicEncryptionKey));
+  auto const group = extractExternalGroup(TC_AWAIT(
+      _groups->findByPublicEncryptionKey(recipientPublicEncryptionKey)));
   Verif::ensures(
       group.has_value(), Verif::Errc::InvalidGroup, "group not found");
   TC_RETURN(*group);
@@ -208,7 +209,7 @@ tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
 tc::cotask<ExternalGroup> TrustchainVerifier::getGroupById(
     Trustchain::GroupId const& groupId) const
 {
-  auto const group = TC_AWAIT(_groups->findExternalById(groupId));
+  auto const group = extractExternalGroup(TC_AWAIT(_groups->findById(groupId)));
   Verif::ensures(
       group.has_value(), Verif::Errc::InvalidGroup, "group not found");
   TC_RETURN(*group);

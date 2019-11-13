@@ -35,11 +35,11 @@ public:
 
   tc::cotask<nonstd::optional<InternalGroup>> findInternalById(
       Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<ExternalGroup>> findExternalById(
+  tc::cotask<nonstd::optional<Group>> findById(
       Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<InternalGroup>> findInternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<nonstd::optional<ExternalGroup>> findExternalByPublicEncryptionKey(
+  tc::cotask<nonstd::optional<Group>> findByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
   tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,

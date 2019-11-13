@@ -64,10 +64,10 @@ tc::cotask<nonstd::optional<InternalGroup>> GroupStore::findInternalById(
   TC_RETURN(TC_AWAIT(_db->findInternalGroupByGroupId(groupId)));
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>> GroupStore::findExternalById(
+tc::cotask<nonstd::optional<Group>> GroupStore::findById(
     GroupId const& groupId) const
 {
-  TC_RETURN(TC_AWAIT(_db->findExternalGroupByGroupId(groupId)));
+  TC_RETURN(TC_AWAIT(_db->findGroupByGroupId(groupId)));
 }
 
 tc::cotask<nonstd::optional<InternalGroup>>
@@ -78,12 +78,11 @@ GroupStore::findInternalByPublicEncryptionKey(
       _db->findInternalGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>>
-GroupStore::findExternalByPublicEncryptionKey(
+tc::cotask<nonstd::optional<Group>> GroupStore::findByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
-  TC_RETURN(TC_AWAIT(
-      _db->findExternalGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
+  TC_RETURN(
+      TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
 }
 
 tc::cotask<std::vector<ExternalGroup>>

@@ -69,7 +69,8 @@ auto GroupAccessor::pull(gsl::span<GroupId const> groupIds)
     auto const itend = std::end(groupsToFetch);
     for (auto it = first; it != itend; ++it)
     {
-      auto const opt = TC_AWAIT(_groupStore->findExternalById(*it));
+      auto const opt =
+          extractExternalGroup(TC_AWAIT(_groupStore->findById(*it)));
       if (opt)
         ret.found.emplace_back(opt.value());
       else

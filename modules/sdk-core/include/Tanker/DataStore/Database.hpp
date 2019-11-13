@@ -98,15 +98,15 @@ public:
                                         uint64_t lastBlockIndex) override;
   tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
-  tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
+  tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
   tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,
       Crypto::PublicSignatureKey const& tankerPublicSignatureKey) override;
-  tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupPublicEncryptionKey(
+  tc::cotask<nonstd::optional<InternalGroup>>
+  findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
-  tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupPublicEncryptionKey(
+  tc::cotask<nonstd::optional<Group>> findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
 
   tc::cotask<void> nuke() override;

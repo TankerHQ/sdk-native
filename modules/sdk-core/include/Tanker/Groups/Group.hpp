@@ -57,4 +57,15 @@ bool operator==(ExternalGroup const& l, ExternalGroup const& r);
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
 
 using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
+
+ExternalGroup extractExternalGroup(Group const& group);
+
+// optional has no .map()
+inline nonstd::optional<ExternalGroup> extractExternalGroup(
+    nonstd::optional<Group> const& group)
+{
+  if (!group)
+    return nonstd::nullopt;
+  return extractExternalGroup(*group);
+}
 }

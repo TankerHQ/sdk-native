@@ -40,8 +40,9 @@ void testUserGroupCreationCommon(
                                         *aliceKeyStore,
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(group.entry)));
-    CHECK_EQ(AWAIT(groupStore.findInternalById(group.group.tankerGroup.id)).value(),
-             group.group.tankerGroup);
+    CHECK_EQ(
+        AWAIT(groupStore.findInternalById(group.group.tankerGroup.id)).value(),
+        group.group.tankerGroup);
   }
 
   SUBCASE("handles creation of a group I am *not* part of")
@@ -55,9 +56,8 @@ void testUserGroupCreationCommon(
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(group.entry)));
 
-    CHECK_EQ(
-        AWAIT(groupStore.findExternalById(group.group.tankerGroup.id)).value(),
-        group.group.asExternalGroup());
+    CHECK_EQ(AWAIT(groupStore.findById(group.group.tankerGroup.id)).value(),
+             Group{group.group.asExternalGroup()});
   }
 }
 
@@ -119,9 +119,10 @@ void testUserGroupAdditionCommon(
                                         *aliceKeyStore,
                                         *aliceProvisionalUserKeysStore,
                                         toVerifiedEntry(updatedGroup.entry)));
-    CHECK_EQ(AWAIT(aliceGroupStore.findInternalById(bobGroup.group.tankerGroup.id))
-                 .value(),
-             updatedGroup.group.tankerGroup);
+    CHECK_EQ(
+        AWAIT(aliceGroupStore.findInternalById(bobGroup.group.tankerGroup.id))
+            .value(),
+        updatedGroup.group.tankerGroup);
   }
 
   SUBCASE("Alice sees Charly being added to Bob's group")
@@ -145,9 +146,8 @@ void testUserGroupAdditionCommon(
                                         toVerifiedEntry(updatedGroup.entry)));
 
     CHECK_EQ(
-        AWAIT(aliceGroupStore.findExternalById(bobGroup.group.tankerGroup.id))
-            .value(),
-        updatedGroup.group.asExternalGroup());
+        AWAIT(aliceGroupStore.findById(bobGroup.group.tankerGroup.id)).value(),
+        Group{updatedGroup.group.asExternalGroup()});
   }
 }
 }
@@ -206,9 +206,8 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
                                           *emptyProvisionalKeyStore,
                                           toVerifiedEntry(group.entry)));
 
-      auto const externalGroup =
-          AWAIT(groupStore.findExternalById(group.group.tankerGroup.id))
-              .value();
+      auto const externalGroup = boost::variant2::get<ExternalGroup>(
+          AWAIT(groupStore.findById(group.group.tankerGroup.id)).value());
 
       REQUIRE_EQ(externalGroup.provisionalUsers.size(), 1);
       CHECK_EQ(
@@ -232,9 +231,9 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
                                           *aliceProvisionalUserKeysStore,
                                           toVerifiedEntry(group.entry)));
 
-      CHECK_EQ(
-          AWAIT(groupStore.findInternalById(group.group.tankerGroup.id)).value(),
-          group.group.tankerGroup);
+      CHECK_EQ(AWAIT(groupStore.findInternalById(group.group.tankerGroup.id))
+                   .value(),
+               group.group.tankerGroup);
     }
   }
 }
@@ -304,9 +303,9 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
                                           *emptyProvisionalKeyStore,
                                           toVerifiedEntry(updatedGroup.entry)));
 
-      auto const externalGroup =
-          AWAIT(aliceGroupStore.findExternalById(bobGroup.group.tankerGroup.id))
-              .value();
+      auto const externalGroup = boost::variant2::get<ExternalGroup>(
+          AWAIT(aliceGroupStore.findById(bobGroup.group.tankerGroup.id))
+              .value());
 
       REQUIRE_EQ(externalGroup.provisionalUsers.size(), 1);
       CHECK_EQ(
