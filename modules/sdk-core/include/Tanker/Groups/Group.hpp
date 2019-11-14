@@ -72,4 +72,5 @@ inline nonstd::optional<ExternalGroup> extractExternalGroup(
 void updateLastGroupBlock(Group& group,
                           Crypto::Hash const& lastBlockHash,
                           uint64_t lastBlockIndex);
+Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 }

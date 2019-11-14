@@ -5,9 +5,15 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Trustchain/GroupId.hpp>
-
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
+#include <Tanker/Verif/Helpers.hpp>
+#include <Tanker/Verif/UserGroupAddition.hpp>
+#include <Tanker/Verif/UserGroupCreation.hpp>
+
+#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 
@@ -289,6 +295,112 @@ tc::cotask<void> applyUserGroupAdditionToStore(
       myUserId, userKeyStore, provisionalUserKeysStore, previousGroup, entry));
   TC_AWAIT(groupStore.put(group));
 }
+
+using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
+
+tc::cotask<DeviceMap> extractAuthors(
+    TrustchainPuller& trustchainPuller,
+    ContactStore const& contactStore,
+    std::vector<Trustchain::ServerEntry> const& entries)
+{
+  DeviceMap out;
+
+  // There is no way to pull users by device id, so for the moment we pull the
+  // whole group through a hack that gives us all authors without the
+  // groups themselves. This will disappear once we have that new route.
+  boost::container::flat_set<Trustchain::GroupId> groupsToPull;
+
+  for (auto const& entry : entries)
+  {
+    if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
+      continue;
+
+    auto const author =
+        TC_AWAIT(contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
+    if (author)
+      out[Trustchain::DeviceId{entry.author()}] = *author;
+    else
+    {
+      if (auto const userGroupCreation =
+              entry.action().get_if<UserGroupCreation>())
+        groupsToPull.insert(GroupId{userGroupCreation->publicSignatureKey()});
+      else if (auto const userGroupAddition =
+                   entry.action().get_if<UserGroupAddition>())
+        groupsToPull.insert(userGroupAddition->groupId());
+      else
+        throw Errors::AssertionError(
+            fmt::format("cannot handle nature: {}", entry.action().nature()));
+    }
+  }
+
+  if (!groupsToPull.empty())
+  {
+    std::vector<Trustchain::GroupId> vgroupsToPull(groupsToPull.begin(),
+                                                   groupsToPull.end());
+    TC_AWAIT(trustchainPuller.scheduleCatchUp({}, vgroupsToPull));
+
+    for (auto const& entry : entries)
+    {
+      if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
+        continue;
+
+      auto const author = TC_AWAIT(
+          contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
+      if (author)
+        out[Trustchain::DeviceId{entry.author()}] = *author;
+    }
+  }
+
+  TC_RETURN(out);
+}
+
+Entry toEntry(Trustchain::ServerEntry const& se)
+{
+  return {
+      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
+}
+
+tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
+    Trustchain::UserId const& myUserId,
+    DeviceMap const& authors,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> previousGroup,
+    std::vector<Trustchain::ServerEntry> const& entries)
+{
+  for (auto const& entry : entries)
+  {
+    auto const authorIt = authors.find(Trustchain::DeviceId{entry.author()});
+    Verif::ensures(authorIt != authors.end(),
+                   Verif::Errc::InvalidAuthor,
+                   "author not found");
+    auto const& author = authorIt->second;
+    if (entry.action().holds_alternative<UserGroupCreation>())
+    {
+      Verif::verifyUserGroupCreation(
+          entry, author, extractExternalGroup(previousGroup));
+      previousGroup = TC_AWAIT(applyUserGroupCreation(
+          myUserId, userKeyStore, provisionalUserKeysStore, toEntry(entry)));
+    }
+    else if (entry.action().holds_alternative<UserGroupAddition>())
+    {
+      Verif::ensures(previousGroup.has_value(),
+                     Verif::Errc::InvalidGroup,
+                     "UserGroupAddition references unknown group");
+      Verif::verifyUserGroupAddition(
+          entry, author, extractExternalGroup(*previousGroup));
+      previousGroup = TC_AWAIT(applyUserGroupAddition(myUserId,
+                                                      userKeyStore,
+                                                      provisionalUserKeysStore,
+                                                      previousGroup,
+                                                      toEntry(entry)));
+    }
+    else
+      throw Errors::AssertionError(
+          fmt::format("cannot handle nature: {}", entry.action().nature()));
+  }
+  TC_RETURN(previousGroup);
+}
 }
 
 tc::cotask<void> applyEntry(
@@ -308,6 +420,25 @@ tc::cotask<void> applyEntry(
   {
     throw AssertionError(fmt::format("cannot handle nature: {}", entry.nature));
   }
+}
+
+tc::cotask<nonstd::optional<Group>> processGroupEntries(
+    Trustchain::UserId const& myUserId,
+    TrustchainPuller& trustchainPuller,
+    ContactStore const& contactStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> const& previousGroup,
+    std::vector<Trustchain::ServerEntry> const& entries)
+{
+  auto const authors =
+      TC_AWAIT(extractAuthors(trustchainPuller, contactStore, entries));
+  TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(myUserId,
+                                                    authors,
+                                                    userKeyStore,
+                                                    provisionalUserKeysStore,
+                                                    previousGroup,
+                                                    entries)));
 }
 
 tc::cotask<void> applyGroupPrivateKey(

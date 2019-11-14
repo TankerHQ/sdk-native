@@ -93,4 +93,21 @@ void updateLastGroupBlock(Group& group,
       },
       group);
 }
+
+Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group)
+{
+  struct Getter
+  {
+    auto operator()(ExternalGroup const& externalGroup) const
+    {
+      return externalGroup.publicEncryptionKey;
+    }
+    auto operator()(InternalGroup const& internalGroup) const
+    {
+      return internalGroup.encryptionKeyPair.publicKey;
+    }
+  };
+
+  return boost::variant2::visit(Getter{}, group);
+}
 }

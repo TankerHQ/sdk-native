@@ -1,9 +1,19 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 
+#include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/GroupUpdater.hpp>
+#include <Tanker/Groups/Requests.hpp>
+#include <Tanker/Log/Log.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/TrustchainPuller.hpp>
 
 #include <mockaron/mockaron.hpp>
+
+#include <boost/container/flat_map.hpp>
+
+TLOG_CATEGORY("GroupAccessor");
 
 using Tanker::Trustchain::GroupId;
 
@@ -25,6 +35,26 @@ GroupAccessor::GroupAccessor(
     _userKeyStore(userKeyStore),
     _provisionalUserKeysStore(provisionalUserKeysStore)
 {
+}
+
+tc::cotask<GroupAccessor::PublicEncryptionKeyPullResult>
+GroupAccessor::getPublicEncryptionKeys(
+    std::vector<Trustchain::GroupId> const& groupIds)
+{
+  MOCKARON_HOOK_CUSTOM(
+      tc::cotask<PublicEncryptionKeyPullResult>(std::vector<GroupId> const&),
+      PublicEncryptionKeyPullResult,
+      GroupAccessor,
+      getPublicEncryptionKeys,
+      TC_RETURN,
+      MOCKARON_ADD_COMMA(groupIds));
+
+  auto const groupPullResult = TC_AWAIT(getGroups(groupIds));
+  PublicEncryptionKeyPullResult out;
+  out.notFound = groupPullResult.notFound;
+  for (auto const& group : groupPullResult.found)
+    out.found.push_back(getPublicEncryptionKey(group));
+  TC_RETURN(out);
 }
 
 tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
@@ -93,5 +123,63 @@ auto GroupAccessor::pull(gsl::span<GroupId const> groupIds)
   }
 
   TC_RETURN(ret);
+}
+
+namespace
+{
+using GroupMap =
+    boost::container::flat_map<Trustchain::GroupId,
+                               std::vector<Trustchain::ServerEntry>>;
+
+GroupMap partitionGroups(std::vector<Trustchain::ServerEntry> const& entries)
+{
+  GroupMap out;
+  for (auto const& entry : entries)
+  {
+    if (auto const userGroupCreation =
+            entry.action().get_if<Trustchain::Actions::UserGroupCreation>())
+      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(entry);
+    else if (auto const userGroupAddition =
+                 entry.action()
+                     .get_if<Trustchain::Actions::UserGroupAddition>())
+      out[userGroupAddition->groupId()].push_back(entry);
+    else
+      TERROR("Expected group blocks but got {}", entry.action().nature());
+  }
+  return out;
+}
+}
+
+tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
+    std::vector<Trustchain::GroupId> const& groupIds)
+{
+  auto const entries =
+      TC_AWAIT(Groups::Requests::getGroupBlocks(*_client, groupIds));
+  auto const groupMap = partitionGroups(entries);
+
+  GroupPullResult out;
+  for (auto const& groupId : groupIds)
+  {
+    auto const groupEntriesIt = groupMap.find(groupId);
+    if (groupEntriesIt == groupMap.end())
+      out.notFound.push_back(groupId);
+    else
+    {
+      auto const group =
+          TC_AWAIT(GroupUpdater::processGroupEntries(_myUserId,
+                                                     *_trustchainPuller,
+                                                     *_contactStore,
+                                                     *_userKeyStore,
+                                                     *_provisionalUserKeysStore,
+                                                     nonstd::nullopt,
+                                                     groupEntriesIt->second));
+      if (!group)
+        throw Errors::AssertionError(
+            fmt::format("group {} has no blocks", groupId));
+      out.found.push_back(*group);
+    }
+  }
+
+  TC_RETURN(out);
 }
 }

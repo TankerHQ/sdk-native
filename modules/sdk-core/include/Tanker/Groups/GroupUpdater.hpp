@@ -1,9 +1,12 @@
 #pragma once
 
+#include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -23,5 +26,14 @@ tc::cotask<void> applyGroupPrivateKey(
     GroupStore& groupStore,
     ExternalGroup const& group,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey);
+
+tc::cotask<nonstd::optional<Group>> processGroupEntries(
+    Trustchain::UserId const& myUserId,
+    TrustchainPuller& trustchainPuller,
+    ContactStore const& contactStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> const& previousGroup,
+    std::vector<Trustchain::ServerEntry> const& entries);
 }
 }
