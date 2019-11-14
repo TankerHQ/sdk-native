@@ -57,6 +57,43 @@ GroupAccessor::getPublicEncryptionKeys(
   TC_RETURN(out);
 }
 
+tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
+GroupAccessor::getEncryptionKeyPair(
+    Crypto::PublicEncryptionKey const& publicEncryptionKey)
+{
+  MOCKARON_HOOK_CUSTOM(tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>(
+                           Crypto::PublicEncryptionKey const&),
+                       nonstd::optional<Crypto::EncryptionKeyPair>,
+                       GroupAccessor,
+                       getEncryptionKeyPair,
+                       TC_RETURN,
+                       MOCKARON_ADD_COMMA(publicEncryptionKey));
+
+  auto const entries =
+      TC_AWAIT(Groups::Requests::getGroupBlocks(*_client, publicEncryptionKey));
+
+  if (entries.empty())
+    TC_RETURN(nonstd::nullopt);
+
+  auto const group =
+      TC_AWAIT(GroupUpdater::processGroupEntries(_myUserId,
+                                                 *_trustchainPuller,
+                                                 *_contactStore,
+                                                 *_userKeyStore,
+                                                 *_provisionalUserKeysStore,
+                                                 nonstd::nullopt,
+                                                 entries));
+  if (!group)
+    throw Errors::AssertionError(
+        fmt::format("group {} has no blocks", publicEncryptionKey));
+
+  if (auto const internalGroup =
+          boost::variant2::get_if<InternalGroup>(&*group))
+    TC_RETURN(internalGroup->encryptionKeyPair);
+  else
+    TC_RETURN(nonstd::nullopt);
+}
+
 tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
 {
   TC_AWAIT(_trustchainPuller->scheduleCatchUp(

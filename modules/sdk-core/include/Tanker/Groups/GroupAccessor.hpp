@@ -24,6 +24,8 @@ public:
   using PullResult = BasicPullResult<ExternalGroup>;
   using PublicEncryptionKeyPullResult =
       BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
+  using EncryptionKeyPairPullResult =
+      BasicPullResult<Crypto::EncryptionKeyPair, Trustchain::GroupId>;
 
   GroupAccessor(Trustchain::UserId const& myUserId,
                 Client* client,
@@ -45,6 +47,9 @@ public:
 
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds);
+  // This function can only return keys for groups you are a member of
+  tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>> getEncryptionKeyPair(
+      Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
 private:
   using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
