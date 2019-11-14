@@ -14,8 +14,55 @@
 
 #include <doctest.h>
 
+#include <mockaron/mockaron.hpp>
+
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
+
+namespace
+{
+class GroupAccessorFake : public mockaron::mock_impl
+{
+public:
+  std::vector<Group> groups;
+
+  GroupAccessorFake()
+  {
+    MOCKARON_DECLARE_IMPL_CUSTOM(
+        tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>(
+            Crypto::PublicEncryptionKey const&),
+        nonstd::optional<Crypto::EncryptionKeyPair>,
+        GroupAccessor,
+        getEncryptionKeyPair);
+  }
+
+  nonstd::optional<Crypto::EncryptionKeyPair> getEncryptionKeyPair(
+      Crypto::PublicEncryptionKey const& publicEncryptionKey)
+  {
+    auto const group = findGroup(publicEncryptionKey);
+    if (group)
+      if (auto const internalGroup =
+              boost::variant2::get_if<InternalGroup>(&*group))
+        return internalGroup->encryptionKeyPair;
+    return nonstd::nullopt;
+  }
+
+private:
+  nonstd::optional<Group> findGroup(
+      Crypto::PublicEncryptionKey const& publicEncryptionKey)
+  {
+    auto const groupIt =
+        std::find_if(groups.begin(), groups.end(), [&](auto const& g) {
+          return getPublicEncryptionKey(g) == publicEncryptionKey;
+        });
+
+    if (groupIt == groups.end())
+      return nonstd::nullopt;
+    else
+      return *groupIt;
+  }
+};
+}
 
 TEST_CASE("onKeyToDeviceReceived should process a key publish block")
 {
@@ -76,16 +123,14 @@ TEST_CASE("decryptAndStoreKey")
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
-    GroupStore const receiverGroupStore(db.get());
-    GroupAccessor receiverGroupAccessor(
-        {}, nullptr, nullptr, nullptr, &receiverGroupStore, nullptr, nullptr);
+    mockaron::mock<GroupAccessor, GroupAccessorFake> receiverGroupAccessor;
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        receiverGroupAccessor,
+        receiverGroupAccessor.get(),
         receiverProvisionalUserKeysStore,
         keyPublishToUserEntry.action.get<KeyPublish>()));
 
@@ -103,21 +148,16 @@ TEST_CASE("decryptAndStoreKey")
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
-    auto const receiverGroupStore = builder.makeGroupStore(receiver, db.get());
-    GroupAccessor receiverGroupAccessor({},
-                                        nullptr,
-                                        nullptr,
-                                        nullptr,
-                                        receiverGroupStore.get(),
-                                        nullptr,
-                                        nullptr);
+    mockaron::mock<GroupAccessor, GroupAccessorFake> receiverGroupAccessor;
+    receiverGroupAccessor.get_mock_impl().groups =
+        builder.getGroupsOfUser(receiver);
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        receiverGroupAccessor,
+        receiverGroupAccessor.get(),
         receiverProvisionalUserKeysStore,
         keyPublishToUserGroupEntry.action.get<KeyPublish>()));
 
@@ -138,9 +178,7 @@ TEST_CASE("decryptAndStoreKey")
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
-    GroupStore const receiverGroupStore(db.get());
-    GroupAccessor receiverGroupAccessor(
-        {}, nullptr, nullptr, nullptr, &receiverGroupStore, nullptr, nullptr);
+    mockaron::mock<GroupAccessor, GroupAccessorFake> receiverGroupAccessor;
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
     ResourceKeyStore resourceKeyStore(db.get());
@@ -148,7 +186,7 @@ TEST_CASE("decryptAndStoreKey")
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
-        receiverGroupAccessor,
+        receiverGroupAccessor.get(),
         *receiverProvisionalUserKeysStore,
         keyPublishToProvisionalUserEntry.action.get<KeyPublish>()));
 

@@ -857,19 +857,28 @@ TrustchainBuilder::makeProvisionalUserKeysStoreWith(
   return provisionalUserKeysStore;
 }
 
+std::vector<Group> TrustchainBuilder::getGroupsOfUser(
+    TrustchainBuilder::User const& user) const
+{
+  std::vector<Group> result;
+  for (auto const& group : _groups)
+  {
+    if (std::find(group.members.begin(), group.members.end(), user.suserId) !=
+        group.members.end())
+      result.push_back(group.tankerGroup);
+    else
+      result.push_back(group.asExternalGroup());
+  }
+  return result;
+}
+
 std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
     TrustchainBuilder::User const& user,
     Tanker::DataStore::ADatabase* conn) const
 {
   auto result = std::make_unique<Tanker::GroupStore>(conn);
-  for (auto const& group : _groups)
-  {
-    if (std::find(group.members.begin(), group.members.end(), user.suserId) !=
-        group.members.end())
-      AWAIT_VOID(result->put(group.tankerGroup));
-    else
-      AWAIT_VOID(result->put(group.asExternalGroup()));
-  }
+  for (auto const& group : getGroupsOfUser(user))
+    AWAIT_VOID(result->put(group));
   return result;
 }
 

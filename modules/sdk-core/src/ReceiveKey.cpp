@@ -79,19 +79,19 @@ tc::cotask<void> decryptAndStoreKey(
 {
   auto const& recipientPublicKey =
       keyPublishToUserGroup.recipientPublicEncryptionKey();
-  auto const group = TC_AWAIT(groupAccessor.getInternalGroup(recipientPublicKey));
+  auto const encryptionKeyPair =
+      TC_AWAIT(groupAccessor.getEncryptionKeyPair(recipientPublicKey));
 
-  if (!group)
+  if (!encryptionKeyPair)
   {
     throw formatEx(Errc::InternalError,
                    "received a KeyPublish for a group we are not "
-                   "in (public encryption "
-                   "key: {})",
+                   "in (public encryption key: {})",
                    recipientPublicKey);
   }
 
   auto const key = Crypto::sealDecrypt(
-      keyPublishToUserGroup.sealedSymmetricKey(), group->encryptionKeyPair);
+      keyPublishToUserGroup.sealedSymmetricKey(), *encryptionKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
 }

@@ -172,6 +172,8 @@ public:
   std::unique_ptr<Tanker::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,
       Tanker::DataStore::ADatabase* conn) const;
+  std::vector<Tanker::Group> getGroupsOfUser(
+      TrustchainBuilder::User const& user) const;
   std::unique_ptr<Tanker::GroupStore> makeGroupStore(
       TrustchainBuilder::User const& user,
       Tanker::DataStore::ADatabase* conn) const;
