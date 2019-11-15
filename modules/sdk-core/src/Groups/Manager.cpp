@@ -174,19 +174,25 @@ tc::cotask<void> updateMembers(
     UserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    GroupStore const& groupStore,
+    GroupAccessor& groupAccessor,
     GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
   auto const members =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  auto const group = TC_AWAIT(groupStore.findInternalById(groupId));
-  if (!group)
+  auto const group = TC_AWAIT(groupAccessor.getGroups({groupId}));
+  if (group.found.empty())
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+  if (!boost::variant2::holds_alternative<InternalGroup>(group.found[0]))
+    throw formatEx(
+        Errc::InvalidArgument, "not a member of group: {:s}", groupId);
 
   auto const groupBlock = generateAddUserToGroupBlock(
-      members.users, members.provisionalUsers, blockGenerator, *group);
+      members.users,
+      members.provisionalUsers,
+      blockGenerator,
+      boost::variant2::get<InternalGroup>(group.found[0]));
   TC_AWAIT(client.pushBlock(groupBlock));
 }
 }

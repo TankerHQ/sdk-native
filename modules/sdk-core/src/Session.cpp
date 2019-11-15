@@ -386,7 +386,7 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
                                           _blockGenerator,
                                           *_client,
-                                          _groupStore,
+                                          _groupAccessor,
                                           groupId,
                                           spublicIdentitiesToAdd));
 
