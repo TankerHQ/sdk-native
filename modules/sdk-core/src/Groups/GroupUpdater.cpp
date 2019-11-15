@@ -154,6 +154,7 @@ InternalGroup makeInternalGroup(
       entry.index,
   };
 }
+}
 
 tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
@@ -229,35 +230,8 @@ tc::cotask<Group> applyUserGroupAddition(
         makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, entry));
 }
 
-tc::cotask<void> applyUserGroupCreationToStore(
-    Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
-    UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry)
+namespace
 {
-  auto const group = TC_AWAIT(applyUserGroupCreation(
-      myUserId, userKeyStore, provisionalUserKeysStore, entry));
-  TC_AWAIT(groupStore.put(group));
-}
-
-tc::cotask<void> applyUserGroupAdditionToStore(
-    Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
-    UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry)
-{
-  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
-
-  auto const previousGroup =
-      TC_AWAIT(groupStore.findById(userGroupAddition.groupId()));
-
-  auto const group = TC_AWAIT(applyUserGroupAddition(
-      myUserId, userKeyStore, provisionalUserKeysStore, previousGroup, entry));
-  TC_AWAIT(groupStore.put(group));
-}
-
 using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
 
 tc::cotask<DeviceMap> extractAuthors(
@@ -363,25 +337,6 @@ tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
   }
   TC_RETURN(previousGroup);
 }
-}
-
-tc::cotask<void> applyEntry(
-    Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
-    UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry)
-{
-  if (entry.action.holds_alternative<UserGroupCreation>())
-    TC_AWAIT(applyUserGroupCreationToStore(
-        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else if (entry.action.holds_alternative<UserGroupAddition>())
-    TC_AWAIT(applyUserGroupAdditionToStore(
-        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else
-  {
-    throw AssertionError(fmt::format("cannot handle nature: {}", entry.nature));
-  }
 }
 
 tc::cotask<nonstd::optional<Group>> processGroupEntries(
