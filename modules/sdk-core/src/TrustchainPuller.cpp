@@ -83,6 +83,16 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
     ServerEntry const& serverEntry)
 {
+  // we don't handle group group blocks here anymore
+  if (serverEntry.action().holds_alternative<UserGroupCreation>() ||
+      serverEntry.action().holds_alternative<UserGroupAddition>())
+  {
+    TERROR(
+        "The server has sent us group blocks even though we didn't ask for "
+        "them");
+    TC_RETURN();
+  }
+
   auto const existingEntry =
       TC_AWAIT(_db->findTrustchainEntry(serverEntry.hash()));
   if (!existingEntry)
@@ -315,18 +325,13 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
-  if (auto const keyPublish = entry.action.get_if<KeyPublish>())
+  else if (auto const keyPublish = entry.action.get_if<KeyPublish>())
   {
     if (auto const kpd = keyPublish->get_if<KeyPublish::ToDevice>())
     {
       if (kpd->recipient() == _deviceId)
         TC_AWAIT(receivedKeyToDevice(entry));
     }
-  }
-  if (entry.action.holds_alternative<UserGroupCreation>() ||
-      entry.action.holds_alternative<UserGroupAddition>())
-  {
-    TC_AWAIT(userGroupActionReceived(entry));
   }
   else if (entry.action.holds_alternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));

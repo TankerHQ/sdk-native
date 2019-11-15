@@ -53,7 +53,6 @@ public:
       receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
-  std::function<tc::cotask<void>(Entry const&)> userGroupActionReceived;
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
   std::function<tc::cotask<void>(Entry const&)>
       provisionalIdentityClaimReceived;

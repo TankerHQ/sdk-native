@@ -133,7 +133,7 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
+    _verifier(_trustchainId, _db.get(), &_contactStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
                       _db.get(),
@@ -178,10 +178,6 @@ Session::Session(Config&& config)
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
-  };
-  _trustchainPuller.userGroupActionReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onUserGroupEntry(entry));
   };
   _trustchainPuller.provisionalIdentityClaimReceived =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -577,12 +573,6 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
                                                _contactStore,
                                                _deviceKeyStore,
                                                _userKeyStore));
-}
-
-tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
-{
-  TC_AWAIT(GroupUpdater::applyEntry(
-      _userId, _groupStore, _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
