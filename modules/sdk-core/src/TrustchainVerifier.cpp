@@ -25,15 +25,6 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
-namespace
-{
-Entry toEntry(Trustchain::ServerEntry const& se)
-{
-  return {
-      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
-}
-}
-
 TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
                                        DataStore::ADatabase* db,
                                        ContactStore* contacts)
@@ -48,7 +39,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   {
   case Nature::TrustchainCreation:
     Verif::verifyTrustchainCreation(e, _trustchainId);
-    TC_RETURN(toEntry(e));
+    TC_RETURN(Verif::makeVerifiedEntry(e));
   case Nature::DeviceCreation:
   case Nature::DeviceCreation2:
   case Nature::DeviceCreation3:
@@ -57,7 +48,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::KeyPublishToUser:
   case Nature::KeyPublishToProvisionalUser:
   case Nature::KeyPublishToUserGroup:
-    TC_RETURN(toEntry(e));
+    TC_RETURN(Verif::makeVerifiedEntry(e));
   case Nature::DeviceRevocation:
   case Nature::DeviceRevocation2:
     TC_RETURN(TC_AWAIT(handleDeviceRevocation(e)));
@@ -94,7 +85,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
         TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dc.author())));
     Verif::verifyDeviceCreation(dc, user.devices[idx], user);
   }
-  TC_RETURN(toEntry(dc));
+  TC_RETURN(Verif::makeVerifiedEntry(dc));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
@@ -110,7 +101,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
   auto const targetDevice = getDevice(user, revocation.deviceId());
   Verif::verifyDeviceRevocation(dr, user.devices[idx], targetDevice, user);
 
-  TC_RETURN(toEntry(dr));
+  TC_RETURN(Verif::makeVerifiedEntry(dr));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
@@ -123,7 +114,7 @@ tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
   Verif::verifyProvisionalIdentityClaim(claim, user, user.devices[idx]);
 
-  TC_RETURN(toEntry(claim));
+  TC_RETURN(Verif::makeVerifiedEntry(claim));
 }
 
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
