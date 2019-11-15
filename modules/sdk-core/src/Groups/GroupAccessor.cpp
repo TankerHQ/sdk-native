@@ -24,7 +24,7 @@ GroupAccessor::GroupAccessor(
     Client* client,
     TrustchainPuller* trustchainPuller,
     ContactStore const* contactStore,
-    GroupStore const* groupStore,
+    GroupStore* groupStore,
     UserKeyStore const* userKeyStore,
     ProvisionalUserKeysStore const* provisionalUserKeysStore)
   : _myUserId(userId),
@@ -35,6 +35,48 @@ GroupAccessor::GroupAccessor(
     _userKeyStore(userKeyStore),
     _provisionalUserKeysStore(provisionalUserKeysStore)
 {
+}
+
+tc::cotask<GroupAccessor::InternalGroupPullResult>
+GroupAccessor::getInternalGroups(
+    std::vector<Trustchain::GroupId> const& groupIds)
+{
+  MOCKARON_HOOK_CUSTOM(
+      tc::cotask<InternalGroupPullResult>(std::vector<GroupId> const&),
+      InternalGroupPullResult,
+      GroupAccessor,
+      getInternalGroups,
+      TC_RETURN,
+      MOCKARON_ADD_COMMA(groupIds));
+
+  InternalGroupPullResult out;
+  for (auto const& groupId : groupIds)
+  {
+    auto const group = TC_AWAIT(_groupStore->findById(groupId));
+    if (group)
+      if (auto const internalGroup =
+              boost::variant2::get_if<InternalGroup>(&*group))
+      {
+        out.found.push_back(*internalGroup);
+        continue;
+      }
+    out.notFound.push_back(groupId);
+  }
+
+  auto const groupPullResult = TC_AWAIT(getGroups(out.notFound));
+
+  out.notFound = groupPullResult.notFound;
+  for (auto const& group : groupPullResult.found)
+  {
+    if (auto const internalGroup =
+            boost::variant2::get_if<InternalGroup>(&group))
+      out.found.push_back(*internalGroup);
+    else if (auto const externalGroup =
+                 boost::variant2::get_if<ExternalGroup>(&group))
+      out.notFound.push_back(externalGroup->id);
+  }
+
+  TC_RETURN(out);
 }
 
 tc::cotask<GroupAccessor::PublicEncryptionKeyPullResult>
@@ -49,11 +91,22 @@ GroupAccessor::getPublicEncryptionKeys(
       TC_RETURN,
       MOCKARON_ADD_COMMA(groupIds));
 
-  auto const groupPullResult = TC_AWAIT(getGroups(groupIds));
   PublicEncryptionKeyPullResult out;
+  for (auto const& groupId : groupIds)
+  {
+    auto const group = TC_AWAIT(_groupStore->findById(groupId));
+    if (group)
+      out.found.push_back(getPublicEncryptionKey(*group));
+    else
+      out.notFound.push_back(groupId);
+  }
+
+  auto const groupPullResult = TC_AWAIT(getGroups(out.notFound));
+
   out.notFound = groupPullResult.notFound;
   for (auto const& group : groupPullResult.found)
     out.found.push_back(getPublicEncryptionKey(group));
+
   TC_RETURN(out);
 }
 
@@ -68,6 +121,13 @@ GroupAccessor::getEncryptionKeyPair(
                        getEncryptionKeyPair,
                        TC_RETURN,
                        MOCKARON_ADD_COMMA(publicEncryptionKey));
+
+  {
+    auto const group = TC_AWAIT(
+        _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
+    if (group)
+      TC_RETURN(group->encryptionKeyPair);
+  }
 
   auto const entries =
       TC_AWAIT(Groups::Requests::getGroupBlocks(*_client, publicEncryptionKey));
@@ -86,6 +146,9 @@ GroupAccessor::getEncryptionKeyPair(
   if (!group)
     throw Errors::AssertionError(
         fmt::format("group {} has no blocks", publicEncryptionKey));
+
+  // add the group to cache
+  TC_AWAIT(_groupStore->put(*group));
 
   if (auto const internalGroup =
           boost::variant2::get_if<InternalGroup>(&*group))
@@ -216,6 +279,10 @@ tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
       out.found.push_back(*group);
     }
   }
+
+  // add all the groups to cache
+  for (auto const& group : out.found)
+    TC_AWAIT(_groupStore->put(group));
 
   TC_RETURN(out);
 }

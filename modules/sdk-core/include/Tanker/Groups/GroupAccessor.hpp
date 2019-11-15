@@ -23,6 +23,8 @@ class GroupAccessor
 public:
   using PullResult = BasicPullResult<ExternalGroup>;
   using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
+  using InternalGroupPullResult =
+      BasicPullResult<InternalGroup, Trustchain::GroupId>;
   using PublicEncryptionKeyPullResult =
       BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
   using EncryptionKeyPairPullResult =
@@ -32,7 +34,7 @@ public:
                 Client* client,
                 TrustchainPuller* trustchainPuller,
                 ContactStore const* contactStore,
-                GroupStore const* groupstore,
+                GroupStore* groupstore,
                 UserKeyStore const* userKeyStore,
                 ProvisionalUserKeysStore const* provisionalUserKeysStore);
 
@@ -46,7 +48,7 @@ public:
   tc::cotask<nonstd::optional<InternalGroup>> getInternalGroup(
       Crypto::PublicEncryptionKey const& groupKeys);
 
-  tc::cotask<GroupAccessor::GroupPullResult> getGroups(
+  tc::cotask<GroupAccessor::InternalGroupPullResult> getInternalGroups(
       std::vector<Trustchain::GroupId> const& groupIds);
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds);
@@ -59,10 +61,12 @@ private:
   Client* _client;
   TrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
-  GroupStore const* _groupStore;
+  GroupStore* _groupStore;
   UserKeyStore const* _userKeyStore;
   ProvisionalUserKeysStore const* _provisionalUserKeysStore;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
+  tc::cotask<GroupAccessor::GroupPullResult> getGroups(
+      std::vector<Trustchain::GroupId> const& groupIds);
 };
 }
