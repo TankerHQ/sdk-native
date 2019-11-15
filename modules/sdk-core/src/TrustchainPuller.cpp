@@ -153,9 +153,14 @@ tc::cotask<void> TrustchainPuller::catchUp()
     }));
     TINFO("Caught up");
   }
-  catch (Errors::Exception const& e)
+  catch (std::exception const& e)
   {
     TERROR("Failed to catch up: {}", e.what());
+    throw;
+  }
+  catch (...)
+  {
+    TERROR("Failed to catch up: unknown error");
     throw;
   }
 }
