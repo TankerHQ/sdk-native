@@ -1068,40 +1068,6 @@ Database::findProvisionalUsersByGroupId(Trustchain::GroupId const& groupId)
   TC_RETURN(groupProvisionalUsers);
 }
 
-tc::cotask<std::vector<ExternalGroup>>
-Database::findExternalGroupsByProvisionalUser(
-    Crypto::PublicSignatureKey const& appPublicSignatureKey,
-    Crypto::PublicSignatureKey const& tankerPublicSignatureKey)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable tab_groups_provisional_users{};
-  GroupsTable tab_groups{};
-
-  auto rows = (*_db)(
-      select(all_of(tab_groups),
-             tab_groups_provisional_users.app_public_signature_key,
-             tab_groups_provisional_users.tanker_public_signature_key,
-             tab_groups_provisional_users.encrypted_private_encryption_key)
-          .from(tab_groups.join(tab_groups_provisional_users)
-                    .on(tab_groups.group_id ==
-                        tab_groups_provisional_users.group_id))
-          .where(tab_groups_provisional_users.app_public_signature_key ==
-                     appPublicSignatureKey.base() &&
-                 tab_groups_provisional_users.tanker_public_signature_key ==
-                     tankerPublicSignatureKey.base()));
-
-  std::vector<ExternalGroup> groups;
-
-  for (auto const& row : rows)
-  {
-    auto group = rowToExternalGroup(row);
-    group.provisionalUsers = {rowToGroupProvisionalUser(row)};
-    groups.push_back(group);
-  }
-
-  TC_RETURN(groups);
-}
-
 tc::cotask<nonstd::optional<InternalGroup>>
 Database::findInternalGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)

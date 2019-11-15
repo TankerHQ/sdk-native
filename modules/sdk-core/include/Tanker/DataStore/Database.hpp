@@ -93,9 +93,6 @@ public:
       Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
-  tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
-      Crypto::PublicSignatureKey const& appPublicSignatureKey,
-      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) override;
   tc::cotask<nonstd::optional<InternalGroup>>
   findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;

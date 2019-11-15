@@ -32,12 +32,6 @@ TEST_CASE("GroupStore")
       make<Crypto::Hash>("last block hash"),
       1234,
   };
-  auto const groupProvisionalUser = GroupProvisionalUser{
-      make<Crypto::PublicSignatureKey>("app public signature key"),
-      make<Crypto::PublicSignatureKey>("tanker public signature key"),
-      make<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-          "encrypted private encryption key"),
-  };
   auto externalGroupWithKey = externalGroup;
   externalGroupWithKey.encryptedPrivateSignatureKey =
       make<Crypto::SealedPrivateSignatureKey>("encrypted private key");
@@ -130,17 +124,5 @@ TEST_CASE("GroupStore")
              Group{externalGroup2});
     CHECK_EQ(AWAIT(groupStore.findInternalById(externalGroup2.id)),
              nonstd::nullopt);
-  }
-
-  SUBCASE("it should find an external group with one of its provisional users")
-  {
-    auto externalGroup2(externalGroupWithKey);
-    externalGroup2.provisionalUsers = {groupProvisionalUser};
-    AWAIT_VOID(groupStore.put(externalGroup2));
-    auto const groups = AWAIT(groupStore.findExternalGroupsByProvisionalUser(
-        groupProvisionalUser.appPublicSignatureKey(),
-        groupProvisionalUser.tankerPublicSignatureKey()));
-    REQUIRE(groups.size() == 1);
-    CHECK_EQ(groups[0], externalGroup2);
   }
 }

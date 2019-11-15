@@ -35,9 +35,6 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
   tc::cotask<nonstd::optional<Group>> findByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
-      Crypto::PublicSignatureKey const& appPublicSignatureKey,
-      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) const;
 
 private:
   DataStore::ADatabase* _db;

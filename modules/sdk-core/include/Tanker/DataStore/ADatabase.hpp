@@ -125,10 +125,6 @@ public:
   findInternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<std::vector<ExternalGroup>>
-  findExternalGroupsByProvisionalUser(
-      Crypto::PublicSignatureKey const& appPublicSignatureKey,
-      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) = 0;
   virtual tc::cotask<nonstd::optional<InternalGroup>>
   findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;

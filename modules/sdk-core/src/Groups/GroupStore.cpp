@@ -61,13 +61,4 @@ tc::cotask<nonstd::optional<Group>> GroupStore::findByPublicEncryptionKey(
   TC_RETURN(
       TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
 }
-
-tc::cotask<std::vector<ExternalGroup>>
-GroupStore::findExternalGroupsByProvisionalUser(
-    Crypto::PublicSignatureKey const& appPublicSignatureKey,
-    Crypto::PublicSignatureKey const& tankerPublicSignatureKey) const
-{
-  TC_RETURN(TC_AWAIT(_db->findExternalGroupsByProvisionalUser(
-      appPublicSignatureKey, tankerPublicSignatureKey)));
-}
 }
