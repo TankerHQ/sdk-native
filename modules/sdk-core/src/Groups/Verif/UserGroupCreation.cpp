@@ -16,7 +16,7 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupCreation(
+Entry verifyUserGroupCreation(
     ServerEntry const& serverEntry,
     Device const& author,
     nonstd::optional<ExternalGroup> const& previousGroup)
@@ -47,6 +47,8 @@ void verifyUserGroupCreation(
           Errc::InvalidSignature,
           "UserGroupCreation signature data must be signed with the group "
           "public key");
+
+  return makeVerifiedEntry(serverEntry);
 }
 }
 }

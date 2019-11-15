@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
 namespace Tanker
@@ -9,8 +10,8 @@ struct ExternalGroup;
 
 namespace Verif
 {
-void verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
-                             Device const& author,
-                             ExternalGroup const& group);
+Entry verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
+                              Device const& author,
+                              ExternalGroup const& group);
 }
 }

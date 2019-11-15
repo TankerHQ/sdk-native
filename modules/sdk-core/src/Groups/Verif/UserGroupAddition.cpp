@@ -16,9 +16,9 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupAddition(ServerEntry const& serverEntry,
-                             Device const& author,
-                             ExternalGroup const& group)
+Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
+                              Device const& author,
+                              ExternalGroup const& group)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupAddition ||
          serverEntry.action().nature() == Nature::UserGroupAddition2);
@@ -47,6 +47,8 @@ void verifyUserGroupAddition(ServerEntry const& serverEntry,
           Errc::InvalidSignature,
           "UserGroupAddition signature data must be signed with the group "
           "public key");
+
+  return makeVerifiedEntry(serverEntry);
 }
 }
 }

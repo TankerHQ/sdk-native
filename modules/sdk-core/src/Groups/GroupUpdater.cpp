@@ -290,50 +290,45 @@ tc::cotask<DeviceMap> extractAuthors(
   TC_RETURN(out);
 }
 
-Entry toEntry(Trustchain::ServerEntry const& se)
-{
-  return {
-      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
-}
-
 tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
     Trustchain::UserId const& myUserId,
     DeviceMap const& authors,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     nonstd::optional<Group> previousGroup,
-    std::vector<Trustchain::ServerEntry> const& entries)
+    std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
-  for (auto const& entry : entries)
+  for (auto const& serverEntry : serverEntries)
   {
-    auto const authorIt = authors.find(Trustchain::DeviceId{entry.author()});
+    auto const authorIt =
+        authors.find(Trustchain::DeviceId{serverEntry.author()});
     Verif::ensures(authorIt != authors.end(),
                    Verif::Errc::InvalidAuthor,
                    "author not found");
     auto const& author = authorIt->second;
-    if (entry.action().holds_alternative<UserGroupCreation>())
+    if (serverEntry.action().holds_alternative<UserGroupCreation>())
     {
-      Verif::verifyUserGroupCreation(
-          entry, author, extractExternalGroup(previousGroup));
+      auto const entry = Verif::verifyUserGroupCreation(
+          serverEntry, author, extractExternalGroup(previousGroup));
       previousGroup = TC_AWAIT(applyUserGroupCreation(
-          myUserId, userKeyStore, provisionalUserKeysStore, toEntry(entry)));
+          myUserId, userKeyStore, provisionalUserKeysStore, entry));
     }
-    else if (entry.action().holds_alternative<UserGroupAddition>())
+    else if (serverEntry.action().holds_alternative<UserGroupAddition>())
     {
       Verif::ensures(previousGroup.has_value(),
                      Verif::Errc::InvalidGroup,
                      "UserGroupAddition references unknown group");
-      Verif::verifyUserGroupAddition(
-          entry, author, extractExternalGroup(*previousGroup));
+      auto const entry = Verif::verifyUserGroupAddition(
+          serverEntry, author, extractExternalGroup(*previousGroup));
       previousGroup = TC_AWAIT(applyUserGroupAddition(myUserId,
                                                       userKeyStore,
                                                       provisionalUserKeysStore,
                                                       previousGroup,
-                                                      toEntry(entry)));
+                                                      entry));
     }
     else
-      throw Errors::AssertionError(
-          fmt::format("cannot handle nature: {}", entry.action().nature()));
+      throw Errors::AssertionError(fmt::format("cannot handle nature: {}",
+                                               serverEntry.action().nature()));
   }
   TC_RETURN(previousGroup);
 }
