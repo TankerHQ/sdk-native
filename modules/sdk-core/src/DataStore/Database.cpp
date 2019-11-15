@@ -10,7 +10,6 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
-#include <Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp>
 #include <Tanker/DbModels/KeyPublishes.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
@@ -251,8 +250,6 @@ using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
 using KeyPublishesTable = DbModels::key_publishes::key_publishes;
-using GroupsProvisionalUsersTable = DbModels::
-    group_provisional_encryption_keys::group_provisional_encryption_keys;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
@@ -326,12 +323,13 @@ void Database::performUnifiedMigration()
       createTable<VersionTable>(*_db);
       // fallthrough
     case 3:
-      createTable<GroupsProvisionalUsersTable>(*_db);
       createTable<TrustchainInfoTable>(*_db);
       createTable<KeyPublishesTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
       dropTable<TrustchainResourceIdToKeyPublishTable>();
       dropTable<TrustchainIndexesTable>();
+      // fallthrough
+    case 4:
       flushAllCaches();
       break;
     default:
@@ -407,7 +405,6 @@ void Database::flushAllCaches()
   flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
   flushTable(KeyPublishesTable{});
-  flushTable(GroupsProvisionalUsersTable{});
 
   {
     TrustchainInfoTable tab{};
