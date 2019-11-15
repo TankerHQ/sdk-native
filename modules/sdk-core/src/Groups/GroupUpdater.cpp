@@ -5,12 +5,12 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
+#include <Tanker/Groups/Verif/UserGroupAddition.hpp>
+#include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
-#include <Tanker/Verif/UserGroupAddition.hpp>
-#include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>

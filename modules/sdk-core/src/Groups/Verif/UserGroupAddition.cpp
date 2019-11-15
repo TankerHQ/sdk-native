@@ -1,4 +1,4 @@
-#include <Tanker/Verif/UserGroupAddition.hpp>
+#include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>

@@ -17,8 +17,6 @@
 #include <Tanker/Verif/Helpers.hpp>
 #include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
-#include <Tanker/Verif/UserGroupAddition.hpp>
-#include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <cassert>
 

@@ -1,3 +1,5 @@
+#include <Tanker/Groups/Verif/UserGroupAddition.hpp>
+#include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -13,8 +15,6 @@
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
-#include <Tanker/Verif/UserGroupAddition.hpp>
-#include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
