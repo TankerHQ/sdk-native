@@ -440,35 +440,5 @@ tc::cotask<nonstd::optional<Group>> processGroupEntries(
                                                     previousGroup,
                                                     entries)));
 }
-
-tc::cotask<void> applyGroupPrivateKey(
-    GroupStore& groupStore,
-    ExternalGroup const& group,
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey)
-{
-  if (!group.encryptedPrivateSignatureKey)
-    // we are already in the group, nothing more to decrypt
-    TC_RETURN();
-
-  auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt(*group.encryptedPrivateSignatureKey,
-                          Crypto::EncryptionKeyPair{
-                              group.publicEncryptionKey,
-                              groupPrivateEncryptionKey,
-                          });
-  TC_AWAIT(groupStore.put(InternalGroup{
-      group.id,
-      Crypto::SignatureKeyPair{
-          group.publicSignatureKey,
-          groupPrivateSignatureKey,
-      },
-      Crypto::EncryptionKeyPair{
-          group.publicEncryptionKey,
-          groupPrivateEncryptionKey,
-      },
-      group.lastBlockHash,
-      group.lastBlockIndex,
-  }));
-}
 }
 }

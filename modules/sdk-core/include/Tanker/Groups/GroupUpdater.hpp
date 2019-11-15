@@ -22,11 +22,6 @@ tc::cotask<void> applyEntry(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry);
 
-tc::cotask<void> applyGroupPrivateKey(
-    GroupStore& groupStore,
-    ExternalGroup const& group,
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey);
-
 tc::cotask<nonstd::optional<Group>> processGroupEntries(
     Trustchain::UserId const& myUserId,
     TrustchainPuller& trustchainPuller,

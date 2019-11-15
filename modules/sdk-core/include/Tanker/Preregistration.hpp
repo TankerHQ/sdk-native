@@ -13,7 +13,6 @@ namespace Preregistration
 {
 tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
                             ProvisionalUserKeysStore& provisionalUserKeysStore,
-                            GroupStore& groupStore,
                             Entry const& entry);
 }
 }
