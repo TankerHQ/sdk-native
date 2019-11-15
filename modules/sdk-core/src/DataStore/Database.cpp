@@ -235,18 +235,6 @@ KeyPublish rowToKeyPublish(T const& row)
         "unreachable code. Invalid nature for KeyPublish");
   }
 }
-
-template <typename T>
-GroupProvisionalUser rowToGroupProvisionalUser(T const& row)
-{
-  return GroupProvisionalUser{
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.app_public_signature_key),
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.tanker_public_signature_key),
-      DataStore::extractBlob<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-          row.encrypted_private_encryption_key)};
-}
 }
 
 using UserKeysTable = DbModels::user_keys::user_keys;
@@ -974,31 +962,6 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
       groups.last_group_block_hash = group.lastBlockHash.base(),
       groups.last_group_block_index = group.lastBlockIndex));
 
-  TC_AWAIT(this->putGroupProvisionalEncryptionKeys(group.id,
-                                                   group.provisionalUsers));
-
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::putGroupProvisionalEncryptionKeys(
-    Trustchain::GroupId const& groupId,
-    std::vector<GroupProvisionalUser> const& provisionalUsers)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable groupsProvisionalUsers;
-
-  for (auto const provisionalUser : provisionalUsers)
-  {
-    (*_db)(
-        sqlpp::sqlite3::insert_or_ignore_into(groupsProvisionalUsers)
-            .set(groupsProvisionalUsers.group_id = groupId.base(),
-                 groupsProvisionalUsers.app_public_signature_key =
-                     provisionalUser.appPublicSignatureKey().base(),
-                 groupsProvisionalUsers.tanker_public_signature_key =
-                     provisionalUser.tankerPublicSignatureKey().base(),
-                 groupsProvisionalUsers.encrypted_private_encryption_key =
-                     provisionalUser.encryptedPrivateEncryptionKey().base()));
-  }
   TC_RETURN();
 }
 
@@ -1039,33 +1002,7 @@ tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
 
   auto const& row = *rows.begin();
 
-  auto group = rowToGroup(row);
-
-  if (auto const externalGroup = boost::variant2::get_if<ExternalGroup>(&group))
-    externalGroup->provisionalUsers =
-        TC_AWAIT(this->findProvisionalUsersByGroupId(groupId));
-
-  TC_RETURN(group);
-}
-
-tc::cotask<std::vector<GroupProvisionalUser>>
-Database::findProvisionalUsersByGroupId(Trustchain::GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  std::vector<GroupProvisionalUser> groupProvisionalUsers;
-
-  for (auto const& row : rows)
-  {
-    groupProvisionalUsers.push_back(rowToGroupProvisionalUser(row));
-  }
-
-  TC_RETURN(groupProvisionalUsers);
+  TC_RETURN(rowToGroup(row));
 }
 
 tc::cotask<nonstd::optional<InternalGroup>>

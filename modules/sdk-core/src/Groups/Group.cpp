@@ -30,15 +30,13 @@ ExternalGroup::ExternalGroup(
     nonstd::optional<Crypto::SealedPrivateSignatureKey> const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex,
-    std::vector<GroupProvisionalUser> const& provisionalUsers)
+    uint64_t lastBlockIndex)
   : id(id),
     publicSignatureKey(publicSignatureKey),
     encryptedPrivateSignatureKey(enc),
     publicEncryptionKey(publicEncryptionKey),
     lastBlockHash(lastBlockHash),
-    lastBlockIndex(lastBlockIndex),
-    provisionalUsers(provisionalUsers)
+    lastBlockIndex(lastBlockIndex)
 {
 }
 
@@ -59,15 +57,12 @@ bool operator==(ExternalGroup const& l, ExternalGroup const& r)
                   l.encryptedPrivateSignatureKey,
                   l.publicEncryptionKey,
                   l.lastBlockHash,
-                  l.lastBlockIndex,
-                  l.provisionalUsers) ==
-         std::tie(r.id,
-                  r.publicSignatureKey,
-                  r.encryptedPrivateSignatureKey,
-                  r.publicEncryptionKey,
-                  r.lastBlockHash,
-                  r.lastBlockIndex,
-                  r.provisionalUsers);
+                  l.lastBlockIndex) == std::tie(r.id,
+                                                r.publicSignatureKey,
+                                                r.encryptedPrivateSignatureKey,
+                                                r.publicEncryptionKey,
+                                                r.lastBlockHash,
+                                                r.lastBlockIndex);
 }
 
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r)

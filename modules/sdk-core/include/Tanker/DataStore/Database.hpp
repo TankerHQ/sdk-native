@@ -121,16 +121,10 @@ private:
   int currentDatabaseVersion();
 
   void flushAllCaches();
-  tc::cotask<std::vector<GroupProvisionalUser>> findProvisionalUsersByGroupId(
-      Trustchain::GroupId const& groupId);
 
   tc::cotask<void> startTransaction() override;
   tc::cotask<void> commitTransaction() override;
   tc::cotask<void> rollbackTransaction() override;
-
-  tc::cotask<void> putGroupProvisionalEncryptionKeys(
-      Trustchain::GroupId const& groupId,
-      std::vector<GroupProvisionalUser> const& provisionalUsers);
 };
 }
 }

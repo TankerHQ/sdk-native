@@ -90,34 +90,6 @@ decryptMyProvisionalKey(
   TC_RETURN(nonstd::nullopt);
 }
 
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    std::vector<UserGroupProvisionalMember2> const& members)
-{
-  std::vector<GroupProvisionalUser> out;
-  out.reserve(members.size());
-  for (auto const& member : members)
-    out.push_back({member.appPublicSignatureKey(),
-                   member.tankerPublicSignatureKey(),
-                   member.encryptedPrivateEncryptionKey()});
-  return out;
-}
-
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    UserGroupCreation const& g)
-{
-  if (auto const g2 = g.get_if<UserGroupCreation::v2>())
-    return extractGroupProvisionalUsers(g2->provisionalMembers());
-  return {};
-}
-
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    UserGroupAddition const& g)
-{
-  if (auto const g2 = g.get_if<UserGroupAddition::v2>())
-    return extractGroupProvisionalUsers(g2->provisionalMembers());
-  return {};
-}
-
 ExternalGroup makeExternalGroup(Entry const& entry,
                                 UserGroupCreation const& userGroupCreation)
 {
@@ -128,7 +100,6 @@ ExternalGroup makeExternalGroup(Entry const& entry,
       userGroupCreation.publicEncryptionKey(),
       entry.hash,
       entry.index,
-      extractGroupProvisionalUsers(userGroupCreation),
   };
 }
 
@@ -251,20 +222,11 @@ tc::cotask<Group> applyUserGroupAddition(
   // we checked above that this is an external group
   auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
 
-  // I am still not part of this group, store provisional members for maybe
-  // future use
   if (!groupPrivateEncryptionKey)
-  {
-    auto const provisionalUsers =
-        extractGroupProvisionalUsers(userGroupAddition);
-    externalGroup.provisionalUsers.insert(externalGroup.provisionalUsers.end(),
-                                          provisionalUsers.begin(),
-                                          provisionalUsers.end());
     TC_RETURN(externalGroup);
-  }
-
-  TC_RETURN(
-      makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, entry));
+  else
+    TC_RETURN(
+        makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, entry));
 }
 
 tc::cotask<void> applyUserGroupCreationToStore(

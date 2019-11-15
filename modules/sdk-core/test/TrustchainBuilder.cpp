@@ -79,15 +79,6 @@ Tanker::User TrustchainBuilder::User::asTankerUser() const
 
 Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
 {
-  std::vector<GroupProvisionalUser> provisionalUsers;
-  provisionalUsers.reserve(provisionalMembers.size());
-  for (auto const& provisionalMember : provisionalMembers)
-    provisionalUsers.push_back({
-        provisionalMember.appPublicSignatureKey(),
-        provisionalMember.tankerPublicSignatureKey(),
-        provisionalMember.encryptedPrivateEncryptionKey(),
-    });
-
   Tanker::ExternalGroup extGroup{
       tankerGroup.id,
       tankerGroup.signatureKeyPair.publicKey,
@@ -95,7 +86,6 @@ Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
       tankerGroup.encryptionKeyPair.publicKey,
       tankerGroup.lastBlockHash,
       tankerGroup.lastBlockIndex,
-      provisionalUsers,
   };
   return extGroup;
 }
