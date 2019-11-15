@@ -315,11 +315,8 @@ tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
     }
     else if (serverEntry.action().holds_alternative<UserGroupAddition>())
     {
-      Verif::ensures(previousGroup.has_value(),
-                     Verif::Errc::InvalidGroup,
-                     "UserGroupAddition references unknown group");
       auto const entry = Verif::verifyUserGroupAddition(
-          serverEntry, author, extractExternalGroup(*previousGroup));
+          serverEntry, author, extractExternalGroup(previousGroup));
       previousGroup = TC_AWAIT(applyUserGroupAddition(myUserId,
                                                       userKeyStore,
                                                       provisionalUserKeysStore,

@@ -3,6 +3,8 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
+#include <optional.hpp>
+
 namespace Tanker
 {
 struct Device;
@@ -12,6 +14,6 @@ namespace Verif
 {
 Entry verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
                               Device const& author,
-                              ExternalGroup const& group);
+                              nonstd::optional<ExternalGroup> const& group);
 }
 }

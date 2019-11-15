@@ -239,6 +239,13 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
 {
   auto tankerDevice = authorDevice.asTankerDevice();
 
+  SUBCASE("should reject a UserGroupAddition for an unknown group")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, nonstd::nullopt),
+        Errc::InvalidGroup);
+  }
+
   SUBCASE("should reject an incorrectly signed UserGroupAddition")
   {
     alter(gaEntry, &ServerEntry::signature);
