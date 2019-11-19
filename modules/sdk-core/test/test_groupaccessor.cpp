@@ -106,16 +106,6 @@ TEST_CASE("GroupAccessor")
              aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey);
   }
 
-  SUBCASE("it should return cached internal groups")
-  {
-    AWAIT_VOID(groupStore.put(aliceGroup.group.tankerGroup));
-
-    auto const result = AWAIT(
-        groupAccessor.getInternalGroups({aliceGroup.group.tankerGroup.id}));
-
-    CHECK_EQ(result.found.at(0), aliceGroup.group.tankerGroup);
-  }
-
   SUBCASE("it should return cached encryption key pairs")
   {
     AWAIT_VOID(groupStore.put(aliceGroup.group.tankerGroup));

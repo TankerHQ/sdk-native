@@ -49,22 +49,12 @@ GroupAccessor::getInternalGroups(
       TC_RETURN,
       MOCKARON_ADD_COMMA(groupIds));
 
+  // This function is only called when updating group members, and in that
+  // case we need the last block of the group. Since there is no way to know
+  // if we are up to date, just pull the group again
+  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+
   InternalGroupPullResult out;
-  for (auto const& groupId : groupIds)
-  {
-    auto const group = TC_AWAIT(_groupStore->findById(groupId));
-    if (group)
-      if (auto const internalGroup =
-              boost::variant2::get_if<InternalGroup>(&*group))
-      {
-        out.found.push_back(*internalGroup);
-        continue;
-      }
-    out.notFound.push_back(groupId);
-  }
-
-  auto const groupPullResult = TC_AWAIT(getGroups(out.notFound));
-
   out.notFound = groupPullResult.notFound;
   for (auto const& group : groupPullResult.found)
   {

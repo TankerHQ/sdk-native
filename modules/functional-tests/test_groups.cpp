@@ -97,6 +97,8 @@ TEST_SUITE("Groups")
 
     REQUIRE_NOTHROW(TC_AWAIT(
         aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
 
     REQUIRE_NOTHROW(decryptedData =
                         TC_AWAIT(decrypt(*bobSession, encryptedData)));
