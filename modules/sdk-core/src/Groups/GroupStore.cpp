@@ -35,12 +35,6 @@ tc::cotask<void> GroupStore::put(ExternalGroup const& group)
   TC_AWAIT(_db->putExternalGroup(group));
 }
 
-tc::cotask<nonstd::optional<InternalGroup>> GroupStore::findInternalById(
-    GroupId const& groupId) const
-{
-  TC_RETURN(TC_AWAIT(_db->findInternalGroupByGroupId(groupId)));
-}
-
 tc::cotask<nonstd::optional<Group>> GroupStore::findById(
     GroupId const& groupId) const
 {
@@ -51,8 +45,15 @@ tc::cotask<nonstd::optional<InternalGroup>>
 GroupStore::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
-  TC_RETURN(TC_AWAIT(
-      _db->findInternalGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
+  auto const group =
+      TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey));
+  if (!group)
+    TC_RETURN(nonstd::nullopt);
+  else if (auto const internalGroup =
+               boost::variant2::get_if<InternalGroup>(&*group))
+    TC_RETURN(*internalGroup);
+  else
+    TC_RETURN(nonstd::nullopt);
 }
 
 tc::cotask<nonstd::optional<Group>> GroupStore::findByPublicEncryptionKey(

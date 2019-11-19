@@ -121,13 +121,8 @@ public:
 
   virtual tc::cotask<void> putInternalGroup(InternalGroup const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
-  virtual tc::cotask<nonstd::optional<InternalGroup>>
-  findInternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<nonstd::optional<InternalGroup>>
-  findInternalGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
   virtual tc::cotask<nonstd::optional<Group>>
   findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;

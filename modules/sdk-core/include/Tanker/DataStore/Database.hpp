@@ -89,13 +89,8 @@ public:
 
   tc::cotask<void> putInternalGroup(InternalGroup const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
-  tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupId(
-      Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
-  tc::cotask<nonstd::optional<InternalGroup>>
-  findInternalGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<nonstd::optional<Group>> findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
 

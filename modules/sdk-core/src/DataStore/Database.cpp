@@ -962,28 +962,6 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<InternalGroup>>
-Database::findInternalGroupByGroupId(GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
-
-  auto const& row = *rows.begin();
-
-  if (row.private_signature_key.is_null() ||
-      row.private_encryption_key.is_null())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(rowToInternalGroup(row));
-}
-
 tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
     GroupId const& groupId)
 {
@@ -1000,30 +978,6 @@ tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
   auto const& row = *rows.begin();
 
   TC_RETURN(rowToGroup(row));
-}
-
-tc::cotask<nonstd::optional<InternalGroup>>
-Database::findInternalGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(
-      select(all_of(groups))
-          .from(groups)
-          .where(groups.public_encryption_key == publicEncryptionKey.base()));
-
-  if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
-
-  auto const& row = *rows.begin();
-
-  if (row.private_signature_key.is_null() ||
-      row.private_encryption_key.is_null())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(rowToInternalGroup(row));
 }
 
 tc::cotask<nonstd::optional<Group>>

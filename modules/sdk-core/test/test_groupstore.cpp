@@ -42,8 +42,6 @@ TEST_CASE("GroupStore")
     auto const unexistentGroupKey =
         make<Crypto::PublicEncryptionKey>("unexistent");
 
-    CHECK_EQ(AWAIT(groupStore.findInternalById(unexistentGroupId)),
-             nonstd::nullopt);
     CHECK_EQ(
         AWAIT(groupStore.findInternalByPublicEncryptionKey(unexistentGroupKey)),
         nonstd::nullopt);
@@ -55,7 +53,6 @@ TEST_CASE("GroupStore")
   SUBCASE("it should find a group that was inserted")
   {
     AWAIT_VOID(groupStore.put(group));
-    CHECK_EQ(AWAIT(groupStore.findInternalById(group.id)).value(), group);
     CHECK_EQ(AWAIT(groupStore.findById(group.id)).value(), Group{group});
     CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                        group.encryptionKeyPair.publicKey))
@@ -75,7 +72,6 @@ TEST_CASE("GroupStore")
     CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
              Group{externalGroupWithKey});
-    CHECK_EQ(AWAIT(groupStore.findInternalById(group.id)), nonstd::nullopt);
     CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
              nonstd::nullopt);
@@ -90,7 +86,7 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findInternalById(group2.id)).value(), group2);
+    CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
 
   SUBCASE(
@@ -104,7 +100,7 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findInternalById(group2.id)).value(), group2);
+    CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
 
   SUBCASE(
@@ -122,7 +118,5 @@ TEST_CASE("GroupStore")
     AWAIT_VOID(groupStore.put(externalGroup2));
     CHECK_EQ(AWAIT(groupStore.findById(externalGroup2.id)).value(),
              Group{externalGroup2});
-    CHECK_EQ(AWAIT(groupStore.findInternalById(externalGroup2.id)),
-             nonstd::nullopt);
   }
 }

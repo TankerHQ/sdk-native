@@ -27,8 +27,6 @@ public:
   tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
 
-  tc::cotask<nonstd::optional<InternalGroup>> findInternalById(
-      Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<Group>> findById(
       Trustchain::GroupId const& groupId) const;
   tc::cotask<nonstd::optional<InternalGroup>> findInternalByPublicEncryptionKey(
