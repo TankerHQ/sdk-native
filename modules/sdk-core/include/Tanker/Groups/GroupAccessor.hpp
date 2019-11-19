@@ -44,10 +44,6 @@ public:
   GroupAccessor& operator=(GroupAccessor const&) = delete;
   GroupAccessor& operator=(GroupAccessor&&) = delete;
 
-  tc::cotask<PullResult> pull(gsl::span<Trustchain::GroupId const> groupIds);
-  tc::cotask<nonstd::optional<InternalGroup>> getInternalGroup(
-      Crypto::PublicEncryptionKey const& groupKeys);
-
   tc::cotask<GroupAccessor::InternalGroupPullResult> getInternalGroups(
       std::vector<Trustchain::GroupId> const& groupIds);
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
