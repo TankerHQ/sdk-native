@@ -16,9 +16,9 @@ namespace Requests
 namespace
 {
 tc::cotask<std::vector<Trustchain::ServerEntry>> doBlockRequest(
-    Client& client, nlohmann::json const& req)
+    Client* client, nlohmann::json const& req)
 {
-  auto const response = TC_AWAIT(client.emit("get groups blocks", req));
+  auto const response = TC_AWAIT(client->emit("get groups blocks", req));
   auto const sblocks = response.get<std::vector<std::string>>();
   std::vector<Trustchain::ServerEntry> ret;
   ret.reserve(sblocks.size());
@@ -31,11 +31,11 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> doBlockRequest(
 }
 
 tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
-    Client& client, std::vector<Trustchain::GroupId> const& groupIds)
+    Client* client, std::vector<Trustchain::GroupId> const& groupIds)
 {
   MOCKARON_FUNCTION_HOOK_CUSTOM(
       tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client&, std::vector<Trustchain::GroupId> const&),
+          Client*, std::vector<Trustchain::GroupId> const&),
       std::vector<Trustchain::ServerEntry>,
       getGroupBlocks,
       TC_RETURN,
@@ -52,11 +52,11 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
 }
 
 tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
-    Client& client, Crypto::PublicEncryptionKey const& groupEncryptionKey)
+    Client* client, Crypto::PublicEncryptionKey const& groupEncryptionKey)
 {
   MOCKARON_FUNCTION_HOOK_CUSTOM(
       tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client&, Crypto::PublicEncryptionKey const&),
+          Client*, Crypto::PublicEncryptionKey const&),
       std::vector<Trustchain::ServerEntry>,
       getGroupBlocks,
       TC_RETURN,

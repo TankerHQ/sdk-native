@@ -130,7 +130,7 @@ GroupAccessor::getEncryptionKeyPair(
   }
 
   auto const entries =
-      TC_AWAIT(Groups::Requests::getGroupBlocks(*_client, publicEncryptionKey));
+      TC_AWAIT(Groups::Requests::getGroupBlocks(_client, publicEncryptionKey));
 
   if (entries.empty())
     TC_RETURN(nonstd::nullopt);
@@ -254,7 +254,7 @@ tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   auto const entries =
-      TC_AWAIT(Groups::Requests::getGroupBlocks(*_client, groupIds));
+      TC_AWAIT(Groups::Requests::getGroupBlocks(_client, groupIds));
   auto const groupMap = partitionGroups(entries);
 
   GroupPullResult out;
