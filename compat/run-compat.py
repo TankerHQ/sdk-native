@@ -36,7 +36,7 @@ def build_all(profile):
             make_package=False,
             warn_as_error=False,
         )
-        builder.install_deps(build_missing=True)
+        builder.install_deps()
         builder.configure()
         builder.build()
         built_binary[version] = builder.get_build_path() / "bin" / "compat"
