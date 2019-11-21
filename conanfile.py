@@ -18,6 +18,7 @@ class TankerConan(ConanFile):
     default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "warn_as_error=False", "sanitizer=None", "coverage=False", "coroutinests=False"
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
+    build_policy = "missing"
     cmake = None
 
     @property
