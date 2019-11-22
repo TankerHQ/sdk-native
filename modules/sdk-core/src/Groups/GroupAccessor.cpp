@@ -55,7 +55,7 @@ GroupAccessor::getInternalGroups(
   auto groupPullResult = TC_AWAIT(getGroups(groupIds));
 
   InternalGroupPullResult out;
-  out.notFound = groupPullResult.notFound;
+  out.notFound = std::move(groupPullResult.notFound);
   for (auto const& group : groupPullResult.found)
   {
     if (auto const internalGroup =
@@ -91,9 +91,9 @@ GroupAccessor::getPublicEncryptionKeys(
       out.notFound.push_back(groupId);
   }
 
-  auto const groupPullResult = TC_AWAIT(getGroups(out.notFound));
+  auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
 
-  out.notFound = groupPullResult.notFound;
+  out.notFound = std::move(groupPullResult.notFound);
   for (auto const& group : groupPullResult.found)
     out.found.push_back(getPublicEncryptionKey(group));
 
