@@ -5,7 +5,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IRequester.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 

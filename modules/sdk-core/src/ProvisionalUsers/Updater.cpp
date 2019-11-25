@@ -1,4 +1,4 @@
-#include <Tanker/Preregistration.hpp>
+#include <Tanker/ProvisionalUsers/Updater.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -9,14 +9,16 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
-TLOG_CATEGORY("Preregistration");
+TLOG_CATEGORY("ProvisionalUsersUpdater");
 
 using Tanker::Trustchain::Actions::ProvisionalIdentityClaim;
 using namespace Tanker::Errors;
 
 namespace Tanker
 {
-namespace Preregistration
+namespace ProvisionalUsers
+{
+namespace Updater
 {
 namespace
 {
@@ -77,6 +79,7 @@ tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
       toStore.appSignaturePublicKey,
       toStore.tankerSignaturePublicKey,
       {toStore.appEncryptionKeyPair, toStore.tankerEncryptionKeyPair}));
+}
 }
 }
 }

@@ -1,7 +1,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 
 TLOG_CATEGORY(ResourceKeyStore);
 

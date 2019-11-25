@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/UserKeyStore.hpp>

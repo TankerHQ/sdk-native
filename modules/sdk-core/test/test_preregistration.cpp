@@ -1,4 +1,4 @@
-#include <Tanker/Preregistration.hpp>
+#include <Tanker/ProvisionalUsers/Updater.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -14,7 +14,7 @@
 using namespace Tanker;
 using namespace Tanker::Errors;
 
-TEST_CASE("Preregistration")
+TEST_CASE("ProvisionalUsers")
 {
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
 
@@ -30,7 +30,7 @@ TEST_CASE("Preregistration")
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(Preregistration::applyEntry(
+        AWAIT_VOID(ProvisionalUsers::Updater::applyEntry(
             userKeyStore, provisionalUserKeysStore, picEntry)),
         Errc::InternalError);
   }
@@ -41,7 +41,7 @@ TEST_CASE("Preregistration")
         builder.makeUserKeyStore(userResult.user, db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
-    CHECK_NOTHROW(AWAIT_VOID(Preregistration::applyEntry(
+    CHECK_NOTHROW(AWAIT_VOID(ProvisionalUsers::Updater::applyEntry(
         *userKeyStore, provisionalUserKeysStore, picEntry)));
     auto const gotKeys = AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
         provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,

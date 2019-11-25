@@ -4,7 +4,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>

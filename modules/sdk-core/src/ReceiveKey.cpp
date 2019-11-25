@@ -9,7 +9,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>

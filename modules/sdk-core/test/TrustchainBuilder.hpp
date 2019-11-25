@@ -9,7 +9,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>

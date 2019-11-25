@@ -22,7 +22,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Preregistration.hpp>
+#include <Tanker/ProvisionalUsers/Updater.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Retry.hpp>
@@ -560,7 +560,7 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 {
-  TC_AWAIT(Preregistration::applyEntry(
+  TC_AWAIT(ProvisionalUsers::Updater::applyEntry(
       _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
