@@ -80,6 +80,7 @@ add_library(tankercore STATIC
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Updater.hpp
+  include/Tanker/ProvisionalUsers/Requests.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
@@ -155,6 +156,7 @@ add_library(tankercore STATIC
   src/ContactStore.cpp
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
+  src/ProvisionalUsers/Requests.cpp
   src/Groups/Group.cpp
   src/Groups/GroupEncryptedKey.cpp
   src/Groups/GroupStore.cpp
