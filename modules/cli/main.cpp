@@ -11,6 +11,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -36,6 +37,7 @@ static const char USAGE[] =
 
     Usage:
       tcli deserializeblock [-x] <block>
+      tcli deserializepayload [-x] <nature-int> <block>
       tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
@@ -202,6 +204,22 @@ int main(int argc, char* argv[])
 
     auto const entry = blockToServerEntry(block);
     std::cout << formatEntry(block, entry) << std::endl;
+  }
+  else if (args.at("deserializepayload").asBool())
+  {
+    std::vector<uint8_t> payload;
+
+    if (args.at("--hex").asBool())
+      payload = cppcodec::hex_lower::decode(args.at("<block>").asString());
+    else
+      payload = cppcodec::base64_rfc4648::decode(args.at("<block>").asString());
+
+    auto const nature = args.at("<nature-int>").asLong();
+
+    auto const action =
+        Action::deserialize(static_cast<Nature>(nature), payload);
+    nlohmann::json jaction(action);
+    std::cout << jaction.dump(4) << std::endl;
   }
   else if (args.at("deserializesplitblock").asBool())
   {
