@@ -736,17 +736,17 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
   SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidAuthor);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
+        Errc::InvalidAuthor);
   }
 
   SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
   {
     alter(picEntry, &ServerEntry::signature);
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
@@ -755,9 +755,9 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
         extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByAppKey);
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
+        Errc::InvalidSignature);
   }
 
   SUBCASE(
@@ -768,33 +768,22 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
         extract<ProvisionalIdentityClaim>(picEntry.action());
     alter(provisionalIdentityClaim,
           &ProvisionalIdentityClaim::authorSignatureByTankerKey);
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidSignature);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
+        Errc::InvalidSignature);
   }
 
   SUBCASE("should reject a ProvisionalIdentityClaim with an incorrect user ID")
   {
-    authorUser.id[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidUserId);
-  }
-
-  SUBCASE(
-      "should reject a ProvisionalIdentityClaim with an incorrect user "
-      "public "
-      "key")
-  {
-    authorUser.userKey.value()[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
-                                      picEntry, authorUser, authorDevice),
-                                  Errc::InvalidUserKey);
+    authorDevice.userId[0]++;
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
+        Errc::InvalidUserId);
   }
 
   SUBCASE("should accept a valid ProvisionalIdentityClaim")
   {
-    CHECK_NOTHROW(Verif::verifyProvisionalIdentityClaim(
-        picEntry, authorUser, authorDevice));
+    CHECK_NOTHROW(
+        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice));
   }
 }

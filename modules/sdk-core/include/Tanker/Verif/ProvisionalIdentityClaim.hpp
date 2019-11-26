@@ -11,7 +11,6 @@ struct Device;
 namespace Verif
 {
 void verifyProvisionalIdentityClaim(Trustchain::ServerEntry const& serverEntry,
-                                    User const& authorUser,
                                     Device const& author);
 }
 }

@@ -20,7 +20,6 @@ namespace Tanker
 namespace Verif
 {
 void verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
-                                    User const& authorUser,
                                     Device const& author)
 {
   assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
@@ -38,14 +37,9 @@ void verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
   auto const& provisionalIdentityClaim =
       serverEntry.action().get<ProvisionalIdentityClaim>();
 
-  ensures(provisionalIdentityClaim.userId() == authorUser.id,
+  ensures(provisionalIdentityClaim.userId() == author.userId,
           Errc::InvalidUserId,
           "ProvisionalIdentityClaim's user ID does not match the author's one");
-
-  ensures(
-      provisionalIdentityClaim.userPublicEncryptionKey() == authorUser.userKey,
-      Errc::InvalidUserKey,
-      "ProvisionalIdentityClaim's user key does not match the user's one");
 
   auto const multiSignedPayload =
       provisionalIdentityClaim.signatureData(author.id);

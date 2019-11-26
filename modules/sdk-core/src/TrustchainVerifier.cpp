@@ -112,7 +112,7 @@ tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
 
   std::tie(user, idx) =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
-  Verif::verifyProvisionalIdentityClaim(claim, user, user.devices[idx]);
+  Verif::verifyProvisionalIdentityClaim(claim, user.devices[idx]);
 
   TC_RETURN(Verif::makeVerifiedEntry(claim));
 }
