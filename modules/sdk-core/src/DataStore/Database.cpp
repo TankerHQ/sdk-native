@@ -818,14 +818,14 @@ tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
-tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
+tc::cotask<void> Database::putDevice(Device const& device)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
       tab.id = device.id.base(),
-      tab.user_id = userId.base(),
+      tab.user_id = device.userId.base(),
       tab.created_at_block_index = device.createdAtBlkIndex,
       tab.revoked_at_block_index =
           sqlpp::tvin(device.revokedAtBlkIndex.value_or(0)),

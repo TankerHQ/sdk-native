@@ -31,8 +31,7 @@ public:
   tc::cotask<void> putUser(User const& user);
   tc::cotask<void> putUserKey(Trustchain::UserId const& id,
                               Crypto::PublicEncryptionKey const& userKey);
-  tc::cotask<void> putUserDevice(Trustchain::UserId const& id,
-                                 Device const& device);
+  tc::cotask<void> putUserDevice(Device const& device);
 
   tc::cotask<std::optional<User>> findUser(
       Trustchain::UserId const& id) const;

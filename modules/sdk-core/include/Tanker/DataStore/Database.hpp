@@ -73,8 +73,7 @@ public:
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
   tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() override;
 
-  tc::cotask<void> putDevice(Trustchain::UserId const& userId,
-                             Device const& device) override;
+  tc::cotask<void> putDevice(Device const& device) override;
   tc::cotask<std::optional<Device>> findDevice(
       Trustchain::DeviceId const& id) override;
   tc::cotask<std::vector<Device>> getDevicesOf(

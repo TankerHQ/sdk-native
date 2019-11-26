@@ -23,7 +23,7 @@ TEST_CASE("ContactStore")
   ContactStore contacts(dbPtr.get());
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice").user.asTankerUser();
-  auto const aliceDevice = alice.devices.front();
+  auto aliceDevice = alice.devices.front();
 
   SUBCASE("it should not find a non-existent user")
   {
@@ -68,7 +68,7 @@ TEST_CASE("ContactStore")
     auto aliceBis = alice;
     auto const newDevice = builder.makeDevice3("alice").device.asTankerDevice();
     aliceBis.devices.push_back(newDevice);
-    AWAIT_VOID(contacts.putUserDevice(alice.id, newDevice));
+    AWAIT_VOID(contacts.putUserDevice(newDevice));
     CHECK_EQ(AWAIT(contacts.findUser(alice.id)), aliceBis);
   }
 
@@ -77,7 +77,7 @@ TEST_CASE("ContactStore")
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceDeviceBis = aliceDevice;
     ++aliceDeviceBis.createdAtBlkIndex;
-    AWAIT_VOID(contacts.putUserDevice(alice.id, aliceDeviceBis));
+    AWAIT_VOID(contacts.putUserDevice(aliceDeviceBis));
 
     CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id)), aliceDevice);
   }
@@ -122,8 +122,8 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should throw when inserting a device with an invalid user id")
   {
-    CHECK_THROWS_AS(AWAIT_VOID(contacts.putUserDevice(
-                        make<Trustchain::UserId>("unexistent"), aliceDevice)),
+    aliceDevice.userId = make<Trustchain::UserId>("unexistent");
+    CHECK_THROWS_AS(AWAIT_VOID(contacts.putUserDevice(aliceDevice)),
                     std::runtime_error);
   }
 

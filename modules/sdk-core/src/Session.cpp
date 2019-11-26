@@ -528,7 +528,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
                        deviceCreation.publicSignatureKey(),
                        deviceCreation.publicEncryptionKey(),
                        deviceCreation.isGhostDevice()};
-  TC_AWAIT(_contactStore.putUserDevice(deviceCreation.userId(), createdDevice));
+  TC_AWAIT(_contactStore.putUserDevice(createdDevice));
 }
 
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
