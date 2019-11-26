@@ -145,7 +145,7 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
-    Group const& group)
+    InternalGroup const& group)
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
@@ -174,19 +174,19 @@ tc::cotask<void> updateMembers(
     UserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    GroupStore const& groupStore,
+    GroupAccessor& groupAccessor,
     GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
   auto const members =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  auto const group = TC_AWAIT(groupStore.findFullById(groupId));
-  if (!group)
+  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
+  if (groups.found.empty())
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
   auto const groupBlock = generateAddUserToGroupBlock(
-      members.users, members.provisionalUsers, blockGenerator, *group);
+      members.users, members.provisionalUsers, blockGenerator, groups.found[0]);
   TC_AWAIT(client.pushBlock(groupBlock));
 }
 }

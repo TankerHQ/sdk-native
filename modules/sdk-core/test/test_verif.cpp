@@ -1,3 +1,5 @@
+#include <Tanker/Groups/Verif/UserGroupAddition.hpp>
+#include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -13,8 +15,6 @@
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
-#include <Tanker/Verif/UserGroupAddition.hpp>
-#include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
@@ -194,11 +194,18 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 void testUserGroupCreationCommon(Tanker::Device& authorDevice,
                                  ServerEntry& gcEntry)
 {
+  SUBCASE("should reject a UserGroupCreation if the group already exists")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, ExternalGroup{}),
+        Errc::InvalidGroup);
+  }
+
   SUBCASE("should reject an incorrectly signed UserGroupCreation")
   {
     alter(gcEntry, &ServerEntry::signature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -207,7 +214,7 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
     auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
     alter(userGroupCreation, &UserGroupCreation::selfSignature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -215,13 +222,14 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
         Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
   {
-    CHECK_NOTHROW(Verif::verifyUserGroupCreation(gcEntry, authorDevice));
+    CHECK_NOTHROW(
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt));
   }
 }
 
@@ -230,6 +238,13 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
                                  ExternalGroup const& group)
 {
   auto tankerDevice = authorDevice.asTankerDevice();
+
+  SUBCASE("should reject a UserGroupAddition for an unknown group")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, nonstd::nullopt),
+        Errc::InvalidGroup);
+  }
 
   SUBCASE("should reject an incorrectly signed UserGroupAddition")
   {

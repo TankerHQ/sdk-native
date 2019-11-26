@@ -29,8 +29,7 @@ class TrustchainVerifier
 public:
   TrustchainVerifier(Trustchain::TrustchainId const&,
                      DataStore::ADatabase*,
-                     ContactStore*,
-                     GroupStore*);
+                     ContactStore*);
 
   TrustchainVerifier(TrustchainVerifier const&) = delete;
   TrustchainVerifier(TrustchainVerifier&&) = delete;
@@ -44,10 +43,6 @@ private:
       Trustchain::ServerEntry const& dc) const;
   tc::cotask<Entry> handleDeviceRevocation(
       Trustchain::ServerEntry const& dr) const;
-  tc::cotask<Entry> handleUserGroupAddition(
-      Trustchain::ServerEntry const& ga) const;
-  tc::cotask<Entry> handleUserGroupCreation(
-      Trustchain::ServerEntry const& gc) const;
   tc::cotask<Entry> handleProvisionalIdentityClaim(
       Trustchain::ServerEntry const& claim) const;
 
@@ -56,14 +51,9 @@ private:
       Trustchain::DeviceId const& deviceId) const;
   Device getDevice(User const& user,
                    Trustchain::DeviceId const& deviceHash) const;
-  tc::cotask<ExternalGroup> getGroupByEncryptionKey(
-      Crypto::PublicEncryptionKey const& recipientPublicEncryprionKey) const;
-  tc::cotask<ExternalGroup> getGroupById(
-      Trustchain::GroupId const& groupId) const;
 
   Trustchain::TrustchainId _trustchainId;
   DataStore::ADatabase* _db;
   ContactStore* _contacts;
-  GroupStore* _groups;
 };
 }

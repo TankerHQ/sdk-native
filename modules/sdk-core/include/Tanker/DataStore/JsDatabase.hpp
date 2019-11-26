@@ -82,7 +82,7 @@ public:
   tc::cotask<void> updateDeviceRevokedAt(Trustchain::DeviceId const& id,
                                          uint64_t revokedAtBlkIndex) override;
 
-  tc::cotask<void> putFullGroup(Group const& group) override;
+  tc::cotask<void> putInternalGroup(InternalGroup const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;
   tc::cotask<void> putGroupProvisionalEncryptionKeys(
       Trustchain::GroupId const& groupId,
@@ -91,14 +91,14 @@ public:
   tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
                                         Crypto::Hash const& lastBlockHash,
                                         uint64_t lastBlockIndex) override;
-  tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
+  tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
   tc::cotask<nonstd::optional<ExternalGroup>> findExternalGroupByGroupId(
       Trustchain::GroupId const& groupId) override;
   tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,
       Crypto::PublicSignatureKey const& tankerPublicSignatureKey) override;
-  tc::cotask<nonstd::optional<Group>> findFullGroupByGroupPublicEncryptionKey(
+  tc::cotask<nonstd::optional<InternalGroup>> findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<nonstd::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(

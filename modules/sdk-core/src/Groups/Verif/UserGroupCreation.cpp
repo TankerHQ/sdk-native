@@ -1,4 +1,4 @@
-#include <Tanker/Verif/UserGroupCreation.hpp>
+#include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>
@@ -16,11 +16,17 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyUserGroupCreation(ServerEntry const& serverEntry,
-                             Device const& author)
+Entry verifyUserGroupCreation(
+    ServerEntry const& serverEntry,
+    Device const& author,
+    nonstd::optional<ExternalGroup> const& previousGroup)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
          serverEntry.action().nature() == Nature::UserGroupCreation2);
+
+  ensures(!previousGroup,
+          Verif::Errc::InvalidGroup,
+          "UserGroupCreation - group already exist");
 
   ensures(!author.revokedAtBlkIndex ||
               author.revokedAtBlkIndex > serverEntry.index(),
@@ -41,6 +47,8 @@ void verifyUserGroupCreation(ServerEntry const& serverEntry,
           Errc::InvalidSignature,
           "UserGroupCreation signature data must be signed with the group "
           "public key");
+
+  return makeVerifiedEntry(serverEntry);
 }
 }
 }

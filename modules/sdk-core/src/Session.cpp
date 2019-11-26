@@ -133,7 +133,7 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _verifier(_trustchainId, _db.get(), &_contactStore, &_groupStore),
+    _verifier(_trustchainId, _db.get(), &_contactStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
                       _db.get(),
@@ -145,11 +145,17 @@ Session::Session(Config&& config)
                       _deviceKeyStore->deviceId(),
                       _userId),
     _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
-    _groupAcessor(&_trustchainPuller, &_groupStore),
+    _groupAccessor(_userId,
+                   _client.get(),
+                   &_trustchainPuller,
+                   &_contactStore,
+                   &_groupStore,
+                   &_userKeyStore,
+                   &_provisionalUserKeysStore),
     _resourceKeyAccessor(_client.get(),
                          &_verifier,
                          &_userKeyStore,
-                         &_groupAcessor,
+                         &_groupAccessor,
                          &_provisionalUserKeysStore,
                          &_resourceKeyStore),
     _blockGenerator(_trustchainId,
@@ -172,10 +178,6 @@ Session::Session(Config&& config)
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
-  };
-  _trustchainPuller.userGroupActionReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onUserGroupEntry(entry));
   };
   _trustchainPuller.provisionalIdentityClaimReceived =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -282,7 +284,7 @@ tc::cotask<void> Session::encrypt(
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
@@ -353,7 +355,7 @@ tc::cotask<void> Session::share(
 
   TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         resourceIds,
@@ -380,7 +382,7 @@ tc::cotask<void> Session::updateGroupMembers(
   TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
                                           _blockGenerator,
                                           *_client,
-                                          _groupStore,
+                                          _groupAccessor,
                                           groupId,
                                           spublicIdentitiesToAdd));
 
@@ -573,16 +575,10 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
                                                _userKeyStore));
 }
 
-tc::cotask<void> Session::onUserGroupEntry(Entry const& entry)
-{
-  TC_AWAIT(GroupUpdater::applyEntry(
-      _userId, _groupStore, _userKeyStore, _provisionalUserKeysStore, entry));
-}
-
 tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
 {
   TC_AWAIT(Preregistration::applyEntry(
-      _userKeyStore, _provisionalUserKeysStore, _groupStore, entry));
+      _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)
@@ -626,7 +622,7 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
   TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
                                     encryptor.symmetricKey()));
   TC_AWAIT(Share::share(_userAccessor,
-                        _groupAcessor,
+                        _groupAccessor,
                         _blockGenerator,
                         *_client,
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},

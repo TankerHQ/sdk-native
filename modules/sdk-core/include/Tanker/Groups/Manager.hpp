@@ -3,7 +3,7 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -51,13 +51,13 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
     std::vector<User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
-    Group const& group);
+    InternalGroup const& group);
 
 tc::cotask<void> updateMembers(
     UserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    GroupStore const& groupStore,
+    GroupAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 }

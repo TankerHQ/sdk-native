@@ -83,6 +83,16 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
 tc::cotask<void> TrustchainPuller::verifyAndAddEntry(
     ServerEntry const& serverEntry)
 {
+  // we don't handle group group blocks here anymore
+  if (serverEntry.action().holds_alternative<UserGroupCreation>() ||
+      serverEntry.action().holds_alternative<UserGroupAddition>())
+  {
+    TERROR(
+        "The server has sent us group blocks even though we didn't ask for "
+        "them");
+    TC_RETURN();
+  }
+
   auto const existingEntry =
       TC_AWAIT(_db->findTrustchainEntry(serverEntry.hash()));
   if (!existingEntry)
@@ -153,9 +163,14 @@ tc::cotask<void> TrustchainPuller::catchUp()
     }));
     TINFO("Caught up");
   }
-  catch (Errors::Exception const& e)
+  catch (std::exception const& e)
   {
     TERROR("Failed to catch up: {}", e.what());
+    throw;
+  }
+  catch (...)
+  {
+    TERROR("Failed to catch up: unknown error");
     throw;
   }
 }
@@ -171,10 +186,10 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
   // process our blocks first or here's what'll happen!
   // if you receive:
   // - Device Creation
-  // - Group Creation (with a key encrypted for my user key)
+  // - InternalGroup Creation (with a key encrypted for my user key)
   // - My Device Creation (with my user key that I can decrypt)
-  // If I process the Group Creation, I won't be able to decrypt it. More
-  // generally, I can't process stuff if I don't have my user keys and
+  // If I process the InternalGroup Creation, I won't be able to decrypt it.
+  // More generally, I can't process stuff if I don't have my user keys and
   // device id, so we do not process other blocks before we have those.
   // - Device revocation
   // I need to get all the previous userKeys in order of creation to fill
@@ -310,18 +325,13 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
       TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
     TC_AWAIT(deviceCreated(entry));
   }
-  if (auto const keyPublish = entry.action.get_if<KeyPublish>())
+  else if (auto const keyPublish = entry.action.get_if<KeyPublish>())
   {
     if (auto const kpd = keyPublish->get_if<KeyPublish::ToDevice>())
     {
       if (kpd->recipient() == _deviceId)
         TC_AWAIT(receivedKeyToDevice(entry));
     }
-  }
-  if (entry.action.holds_alternative<UserGroupCreation>() ||
-      entry.action.holds_alternative<UserGroupAddition>())
-  {
-    TC_AWAIT(userGroupActionReceived(entry));
   }
   else if (entry.action.holds_alternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));

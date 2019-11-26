@@ -119,29 +119,12 @@ public:
   virtual tc::cotask<void> updateDeviceRevokedAt(
       Trustchain::DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;
 
-  virtual tc::cotask<void> putFullGroup(Group const& group) = 0;
+  virtual tc::cotask<void> putInternalGroup(InternalGroup const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
-  virtual tc::cotask<void> putGroupProvisionalEncryptionKeys(
-      Trustchain::GroupId const& groupId,
-      std::vector<GroupProvisionalUser> const& provisionalUsers) = 0;
-  // Does nothing if the group does not exist
-  virtual tc::cotask<void> updateLastGroupBlock(
-      Trustchain::GroupId const& groupId,
-      Crypto::Hash const& lastBlockHash,
-      uint64_t lastBlockIndex) = 0;
-  virtual tc::cotask<nonstd::optional<Group>> findFullGroupByGroupId(
+  virtual tc::cotask<nonstd::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupId(Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<std::vector<ExternalGroup>>
-  findExternalGroupsByProvisionalUser(
-      Crypto::PublicSignatureKey const& appPublicSignatureKey,
-      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) = 0;
   virtual tc::cotask<nonstd::optional<Group>>
-  findFullGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
-  virtual tc::cotask<nonstd::optional<ExternalGroup>>
-  findExternalGroupByGroupPublicEncryptionKey(
+  findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
 
   virtual tc::cotask<void> nuke() = 0;

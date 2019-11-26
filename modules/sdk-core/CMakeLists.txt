@@ -18,7 +18,6 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/DeviceKeyStore.hpp
     include/Tanker/DbModels/Groups.hpp
     include/Tanker/DbModels/KeyPublishes.hpp
-    include/Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp
     include/Tanker/DbModels/ResourceIdToKeyPublish.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
@@ -37,7 +36,6 @@ if (NOT EMSCRIPTEN)
     src/DbModels/DeviceKeyStore.cpp
     src/DbModels/Groups.cpp
     src/DbModels/KeyPublishes.cpp
-    src/DbModels/GroupsProvisionalEncryptionKeys.cpp
     src/DbModels/ResourceIdToKeyPublish.cpp
     src/DbModels/ResourceKeys.cpp
     src/DbModels/ProvisionalUserKeys.cpp
@@ -94,6 +92,7 @@ add_library(tankercore STATIC
   include/Tanker/Groups/GroupUpdater.hpp
   include/Tanker/Groups/GroupAccessor.hpp
   include/Tanker/Groups/Manager.hpp
+  include/Tanker/Groups/Requests.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -115,8 +114,8 @@ add_library(tankercore STATIC
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
-  include/Tanker/Verif/UserGroupAddition.hpp
-  include/Tanker/Verif/UserGroupCreation.hpp
+  include/Tanker/Groups/Verif/UserGroupAddition.hpp
+  include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
@@ -165,6 +164,7 @@ add_library(tankercore STATIC
   src/Groups/GroupAccessor.cpp
   src/Groups/GroupUpdater.cpp
   src/Groups/Manager.cpp
+  src/Groups/Requests.cpp
   src/Device.cpp
   src/User.cpp
   src/UserAccessor.cpp
@@ -175,8 +175,8 @@ add_library(tankercore STATIC
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/TrustchainCreation.cpp
-  src/Verif/UserGroupAddition.cpp
-  src/Verif/UserGroupCreation.cpp
+  src/Groups/Verif/UserGroupAddition.cpp
+  src/Groups/Verif/UserGroupCreation.cpp
   src/Verif/ProvisionalIdentityClaim.cpp
   src/Encryptor.cpp
   src/Encryptor/v2.cpp

@@ -19,8 +19,14 @@ GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 
 tc::cotask<void> GroupStore::put(Group const& group)
 {
-  TINFO("Adding full group {}", group.id);
-  TC_AWAIT(_db->putFullGroup(group));
+  TC_AWAIT(boost::variant2::visit(
+      [this](auto const& g) -> tc::cotask<void> { TC_AWAIT(put(g)); }, group));
+}
+
+tc::cotask<void> GroupStore::put(InternalGroup const& group)
+{
+  TINFO("Adding internal group {}", group.id);
+  TC_AWAIT(_db->putInternalGroup(group));
 }
 
 tc::cotask<void> GroupStore::put(ExternalGroup const& group)
@@ -29,62 +35,31 @@ tc::cotask<void> GroupStore::put(ExternalGroup const& group)
   TC_AWAIT(_db->putExternalGroup(group));
 }
 
-tc::cotask<void> GroupStore::putGroupProvisionalEncryptionKeys(
-    Trustchain::GroupId const& groupId,
-    std::vector<GroupProvisionalUser> const& provisionalUsers)
-{
-  if (provisionalUsers.empty())
-    TC_RETURN();
-
-  TINFO("Adding group provisional encryption keys {}", groupId);
-  TC_AWAIT(_db->putGroupProvisionalEncryptionKeys(groupId, provisionalUsers));
-}
-
-tc::cotask<void> GroupStore::updateLastGroupBlock(
-    GroupId const& groupId,
-    Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex)
-{
-  TINFO("Updating group {}, last block is {} {}",
-        groupId,
-        lastBlockIndex,
-        lastBlockHash);
-  TC_AWAIT(_db->updateLastGroupBlock(groupId, lastBlockHash, lastBlockIndex));
-}
-
-tc::cotask<nonstd::optional<Group>> GroupStore::findFullById(
+tc::cotask<nonstd::optional<Group>> GroupStore::findById(
     GroupId const& groupId) const
 {
-  TC_RETURN(TC_AWAIT(_db->findFullGroupByGroupId(groupId)));
+  TC_RETURN(TC_AWAIT(_db->findGroupByGroupId(groupId)));
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>> GroupStore::findExternalById(
-    GroupId const& groupId) const
-{
-  TC_RETURN(TC_AWAIT(_db->findExternalGroupByGroupId(groupId)));
-}
-
-tc::cotask<nonstd::optional<Group>> GroupStore::findFullByPublicEncryptionKey(
+tc::cotask<nonstd::optional<InternalGroup>>
+GroupStore::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
-  TC_RETURN(TC_AWAIT(
-      _db->findFullGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
+  auto const group =
+      TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey));
+  if (!group)
+    TC_RETURN(nonstd::nullopt);
+  else if (auto const internalGroup =
+               boost::variant2::get_if<InternalGroup>(&*group))
+    TC_RETURN(*internalGroup);
+  else
+    TC_RETURN(nonstd::nullopt);
 }
 
-tc::cotask<nonstd::optional<ExternalGroup>>
-GroupStore::findExternalByPublicEncryptionKey(
+tc::cotask<nonstd::optional<Group>> GroupStore::findByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
-  TC_RETURN(TC_AWAIT(
-      _db->findExternalGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
-}
-
-tc::cotask<std::vector<ExternalGroup>>
-GroupStore::findExternalGroupsByProvisionalUser(
-    Crypto::PublicSignatureKey const& appPublicSignatureKey,
-    Crypto::PublicSignatureKey const& tankerPublicSignatureKey) const
-{
-  TC_RETURN(TC_AWAIT(_db->findExternalGroupsByProvisionalUser(
-      appPublicSignatureKey, tankerPublicSignatureKey)));
+  TC_RETURN(
+      TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey)));
 }
 }

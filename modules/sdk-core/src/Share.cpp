@@ -159,7 +159,7 @@ void handleNotFound(
 KeyRecipients toKeyRecipients(
     std::vector<User> const& users,
     std::vector<PublicProvisionalUser> const& publicProvisionalUsers,
-    std::vector<ExternalGroup> const& groups)
+    std::vector<Crypto::PublicEncryptionKey> const& groupEncryptionKeys)
 {
   KeyRecipients out;
   for (auto const& user : users)
@@ -173,9 +173,7 @@ KeyRecipients toKeyRecipients(
   }
 
   out.recipientProvisionalUserKeys = publicProvisionalUsers;
-
-  for (auto const& group : groups)
-    out.recipientGroupKeys.push_back(group.publicEncryptionKey);
+  out.recipientGroupKeys = groupEncryptionKeys;
 
   return out;
 }
@@ -214,7 +212,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
   auto const provisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
       partitionedIdentities.publicProvisionalIdentities));
 
-  auto const groupResult = TC_AWAIT(groupAccessor.pull(groupIds));
+  auto const groupResult =
+      TC_AWAIT(groupAccessor.getPublicEncryptionKeys(groupIds));
 
   handleNotFound(spublicIdentities,
                  publicIdentities,

@@ -4,10 +4,10 @@
 
 namespace Tanker
 {
-template <typename T>
+template <typename T, typename Id = decltype(T::id)>
 struct BasicPullResult
 {
   std::vector<T> found;
-  std::vector<decltype(T::id)> notFound;
+  std::vector<Id> notFound;
 };
 }

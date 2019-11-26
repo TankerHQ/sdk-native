@@ -70,7 +70,7 @@ public:
       emscripten::val const& deviceId,
       emscripten ::val const& revokedAtBlkIndex) = 0;
 
-  virtual emscripten::val putFullGroup(emscripten::val const& group) = 0;
+  virtual emscripten::val putInternalGroup(emscripten::val const& group) = 0;
   virtual emscripten::val putExternalGroup(emscripten::val const& group) = 0;
   virtual emscripten::val putGroupProvisionalEncryptionKeys(
       emscripten::val const& groupid, emscripten::val const& keys) = 0;
@@ -80,14 +80,14 @@ public:
       emscripten::val const& groupId,
       emscripten::val const& lastBlockHash,
       emscripten::val const& lastBlockIndex) = 0;
-  virtual emscripten::val findFullGroupByGroupId(
+  virtual emscripten::val findInternalGroupByGroupId(
       emscripten::val const& groupId) = 0;
   virtual emscripten::val findExternalGroupByGroupId(
       emscripten::val const& groupId) = 0;
   virtual emscripten::val findExternalGroupsByProvisionalUser(
       emscripten::val const& appSignaturePublicKey,
       emscripten::val const& tankerSignaturePublicKey) = 0;
-  virtual emscripten::val findFullGroupByGroupPublicEncryptionKey(
+  virtual emscripten::val findInternalGroupByGroupPublicEncryptionKey(
       emscripten::val const& publicEncryptionKey) = 0;
   virtual emscripten::val findExternalGroupByGroupPublicEncryptionKey(
       emscripten::val const& publicEncryptionKey) = 0;
@@ -162,14 +162,14 @@ public:
   FORWARD_CALL1(findDeviceUserId)
   FORWARD_CALL1(getDevicesOf)
   FORWARD_CALL2(updateDeviceRevokedAt)
-  FORWARD_CALL1(putFullGroup)
+  FORWARD_CALL1(putInternalGroup)
   FORWARD_CALL1(putExternalGroup)
   FORWARD_CALL2(putGroupProvisionalEncryptionKeys)
   FORWARD_CALL3(updateLastGroupBlock)
-  FORWARD_CALL1(findFullGroupByGroupId)
+  FORWARD_CALL1(findInternalGroupByGroupId)
   FORWARD_CALL1(findExternalGroupByGroupId)
   FORWARD_CALL2(findExternalGroupsByProvisionalUser)
-  FORWARD_CALL1(findFullGroupByGroupPublicEncryptionKey)
+  FORWARD_CALL1(findInternalGroupByGroupPublicEncryptionKey)
   FORWARD_CALL1(findExternalGroupByGroupPublicEncryptionKey)
   FORWARD_CALL1(putProvisionalUserKeys)
   FORWARD_CALL2(findProvisionalUserKeys)
@@ -777,7 +777,7 @@ tc::cotask<std::vector<Device>> JsDatabase::getDevicesOf(UserId const& id)
   TC_RETURN(out);
 }
 
-tc::cotask<void> JsDatabase::putFullGroup(Group const& group)
+tc::cotask<void> JsDatabase::putInternalGroup(InternalGroup const& group)
 {
   auto jsgroup = emscripten::val::object();
   jsgroup.set("id", containerToJs(group.id));
@@ -791,7 +791,7 @@ tc::cotask<void> JsDatabase::putFullGroup(Group const& group)
               containerToJs(group.encryptionKeyPair.privateKey));
   jsgroup.set("lastBlockHash", containerToJs(group.lastBlockHash));
   jsgroup.set("lastBlockIndex", static_cast<double>(group.lastBlockIndex));
-  TC_AWAIT(jsPromiseToFuture(_db->putFullGroup(jsgroup)));
+  TC_AWAIT(jsPromiseToFuture(_db->putInternalGroup(jsgroup)));
 }
 
 tc::cotask<void> JsDatabase::putExternalGroup(ExternalGroup const& group)
@@ -863,9 +863,9 @@ tc::cotask<void> JsDatabase::updateLastGroupBlock(
 
 namespace
 {
-Group fromJsFullGroup(emscripten::val const& group)
+InternalGroup fromJsInternalGroup(emscripten::val const& group)
 {
-  return Group{
+  return InternalGroup{
       GroupId(copyToVector(group["id"])),
       {Crypto::PublicSignatureKey(copyToVector(group["publicSignatureKey"])),
        Crypto::PrivateSignatureKey(copyToVector(group["privateSignatureKey"]))},
@@ -910,15 +910,15 @@ ExternalGroup fromJsExternalGroup(emscripten::val const& group)
 }
 }
 
-tc::cotask<nonstd::optional<Group>> JsDatabase::findFullGroupByGroupId(
+tc::cotask<nonstd::optional<InternalGroup>> JsDatabase::findInternalGroupByGroupId(
     GroupId const& id)
 {
   auto const jsgroup = TC_AWAIT(
-      jsPromiseToFuture(_db->findFullGroupByGroupId(containerToJs(id))));
+      jsPromiseToFuture(_db->findInternalGroupByGroupId(containerToJs(id))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(fromJsFullGroup(jsgroup));
+  TC_RETURN(fromJsInternalGroup(jsgroup));
 }
 
 tc::cotask<nonstd::optional<ExternalGroup>>
@@ -949,17 +949,17 @@ JsDatabase::findExternalGroupsByProvisionalUser(
   TC_RETURN(out);
 }
 
-tc::cotask<nonstd::optional<Group>>
-JsDatabase::findFullGroupByGroupPublicEncryptionKey(
+tc::cotask<nonstd::optional<InternalGroup>>
+JsDatabase::findInternalGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   auto const jsgroup =
-      TC_AWAIT(jsPromiseToFuture(_db->findFullGroupByGroupPublicEncryptionKey(
+      TC_AWAIT(jsPromiseToFuture(_db->findInternalGroupByGroupPublicEncryptionKey(
           containerToJs(publicEncryptionKey))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(nonstd::nullopt);
 
-  TC_RETURN(fromJsFullGroup(jsgroup));
+  TC_RETURN(fromJsInternalGroup(jsgroup));
 }
 
 namespace
@@ -1143,8 +1143,8 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("updateDeviceRevokedAt",
                 &JsDatabaseInterface::updateDeviceRevokedAt,
                 emscripten::pure_virtual())
-      .function("putFullGroup",
-                &JsDatabaseInterface::putFullGroup,
+      .function("putInternalGroup",
+                &JsDatabaseInterface::putInternalGroup,
                 emscripten::pure_virtual())
       .function("putExternalGroup",
                 &JsDatabaseInterface::putExternalGroup,
@@ -1152,14 +1152,14 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("updateLastGroupBlock",
                 &JsDatabaseInterface::updateLastGroupBlock,
                 emscripten::pure_virtual())
-      .function("findFullGroupByGroupId",
-                &JsDatabaseInterface::findFullGroupByGroupId,
+      .function("findInternalGroupByGroupId",
+                &JsDatabaseInterface::findInternalGroupByGroupId,
                 emscripten::pure_virtual())
       .function("findExternalGroupByGroupId",
                 &JsDatabaseInterface::findExternalGroupByGroupId,
                 emscripten::pure_virtual())
-      .function("findFullGroupByGroupPublicEncryptionKey",
-                &JsDatabaseInterface::findFullGroupByGroupPublicEncryptionKey,
+      .function("findInternalGroupByGroupPublicEncryptionKey",
+                &JsDatabaseInterface::findInternalGroupByGroupPublicEncryptionKey,
                 emscripten::pure_virtual())
       .function(
           "findExternalGroupByGroupPublicEncryptionKey",

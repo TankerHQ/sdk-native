@@ -17,8 +17,6 @@
 #include <Tanker/Verif/Helpers.hpp>
 #include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
-#include <Tanker/Verif/UserGroupAddition.hpp>
-#include <Tanker/Verif/UserGroupCreation.hpp>
 
 #include <cassert>
 
@@ -27,20 +25,10 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
-namespace
-{
-Entry toEntry(Trustchain::ServerEntry const& se)
-{
-  return {
-      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
-}
-}
-
 TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
                                        DataStore::ADatabase* db,
-                                       ContactStore* contacts,
-                                       GroupStore* groups)
-  : _trustchainId(id), _db(db), _contacts(contacts), _groups(groups)
+                                       ContactStore* contacts)
+  : _trustchainId(id), _db(db), _contacts(contacts)
 {
 }
 
@@ -51,7 +39,7 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   {
   case Nature::TrustchainCreation:
     Verif::verifyTrustchainCreation(e, _trustchainId);
-    TC_RETURN(toEntry(e));
+    TC_RETURN(Verif::makeVerifiedEntry(e));
   case Nature::DeviceCreation:
   case Nature::DeviceCreation2:
   case Nature::DeviceCreation3:
@@ -60,16 +48,18 @@ tc::cotask<Entry> TrustchainVerifier::verify(
   case Nature::KeyPublishToUser:
   case Nature::KeyPublishToProvisionalUser:
   case Nature::KeyPublishToUserGroup:
-    TC_RETURN(toEntry(e));
+    TC_RETURN(Verif::makeVerifiedEntry(e));
   case Nature::DeviceRevocation:
   case Nature::DeviceRevocation2:
     TC_RETURN(TC_AWAIT(handleDeviceRevocation(e)));
   case Nature::UserGroupAddition:
   case Nature::UserGroupAddition2:
-    TC_RETURN(TC_AWAIT(handleUserGroupAddition(e)));
   case Nature::UserGroupCreation:
   case Nature::UserGroupCreation2:
-    TC_RETURN(TC_AWAIT(handleUserGroupCreation(e)));
+    throw Errors::AssertionError(
+        fmt::format("group blocks are not handled by TrustchainVerifier "
+                    "anymore (nature: {})",
+                    e.action().nature()));
   case Nature::ProvisionalIdentityClaim:
     TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));
   }
@@ -95,7 +85,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
         TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dc.author())));
     Verif::verifyDeviceCreation(dc, user.devices[idx], user);
   }
-  TC_RETURN(toEntry(dc));
+  TC_RETURN(Verif::makeVerifiedEntry(dc));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
@@ -111,43 +101,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
   auto const targetDevice = getDevice(user, revocation.deviceId());
   Verif::verifyDeviceRevocation(dr, user.devices[idx], targetDevice, user);
 
-  TC_RETURN(toEntry(dr));
-}
-
-tc::cotask<Entry> TrustchainVerifier::handleUserGroupAddition(
-    Trustchain::ServerEntry const& ga) const
-{
-  User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
-      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(ga.author())));
-  auto const& userGroupAddition = ga.action().get<UserGroupAddition>();
-  auto const group = TC_AWAIT(getGroupById(userGroupAddition.groupId()));
-  Verif::verifyUserGroupAddition(ga, user.devices[idx], group);
-
-  TC_RETURN(toEntry(ga));
-}
-
-tc::cotask<Entry> TrustchainVerifier::handleUserGroupCreation(
-    Trustchain::ServerEntry const& gc) const
-{
-  User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
-      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(gc.author())));
-  auto const& userGroupCreation = gc.action().get<UserGroupCreation>();
-
-  auto const group = TC_AWAIT(_groups->findExternalByPublicEncryptionKey(
-      userGroupCreation.publicEncryptionKey()));
-  Verif::ensures(!group,
-                 Verif::Errc::InvalidGroup,
-                 "UserGroupCreation - group already exist");
-
-  Verif::verifyUserGroupCreation(gc, user.devices[idx]);
-
-  TC_RETURN(toEntry(gc));
+  TC_RETURN(Verif::makeVerifiedEntry(dr));
 }
 
 tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
@@ -160,7 +114,7 @@ tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
   Verif::verifyProvisionalIdentityClaim(claim, user, user.devices[idx]);
 
-  TC_RETURN(toEntry(claim));
+  TC_RETURN(Verif::makeVerifiedEntry(claim));
 }
 
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
@@ -197,24 +151,5 @@ Device TrustchainVerifier::getDevice(User const& user,
       });
   assert(device != user.devices.end() && "device should belong to user");
   return *device;
-}
-
-tc::cotask<ExternalGroup> TrustchainVerifier::getGroupByEncryptionKey(
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
-{
-  auto const group = TC_AWAIT(
-      _groups->findExternalByPublicEncryptionKey(recipientPublicEncryptionKey));
-  Verif::ensures(
-      group.has_value(), Verif::Errc::InvalidGroup, "group not found");
-  TC_RETURN(*group);
-}
-
-tc::cotask<ExternalGroup> TrustchainVerifier::getGroupById(
-    Trustchain::GroupId const& groupId) const
-{
-  auto const group = TC_AWAIT(_groups->findExternalById(groupId));
-  Verif::ensures(
-      group.has_value(), Verif::Errc::InvalidGroup, "group not found");
-  TC_RETURN(*group);
 }
 }

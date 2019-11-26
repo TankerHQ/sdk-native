@@ -5,9 +5,16 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Trustchain/GroupId.hpp>
-
+#include <Tanker/Groups/Verif/UserGroupAddition.hpp>
+#include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Verif/Errors/Errc.hpp>
+#include <Tanker/Verif/Errors/ErrcCategory.hpp>
+#include <Tanker/Verif/Helpers.hpp>
+
+#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 
@@ -84,51 +91,20 @@ decryptMyProvisionalKey(
   TC_RETURN(nonstd::nullopt);
 }
 
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    std::vector<UserGroupProvisionalMember2> const& members)
+ExternalGroup makeExternalGroup(Entry const& entry,
+                                UserGroupCreation const& userGroupCreation)
 {
-  std::vector<GroupProvisionalUser> out;
-  out.reserve(members.size());
-  for (auto const& member : members)
-    out.push_back({member.appPublicSignatureKey(),
-                   member.tankerPublicSignatureKey(),
-                   member.encryptedPrivateEncryptionKey()});
-  return out;
-}
-
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    UserGroupCreation const& g)
-{
-  if (auto const g2 = g.get_if<UserGroupCreation::v2>())
-    return extractGroupProvisionalUsers(g2->provisionalMembers());
-  return {};
-}
-
-std::vector<GroupProvisionalUser> extractGroupProvisionalUsers(
-    UserGroupAddition const& g)
-{
-  if (auto const g2 = g.get_if<UserGroupAddition::v2>())
-    return extractGroupProvisionalUsers(g2->provisionalMembers());
-  return {};
-}
-
-tc::cotask<void> putExternalGroup(GroupStore& groupStore,
-                                  Entry const& entry,
-                                  UserGroupCreation const& userGroupCreation)
-{
-  TC_AWAIT(groupStore.put(ExternalGroup{
+  return ExternalGroup{
       GroupId{userGroupCreation.publicSignatureKey()},
       userGroupCreation.publicSignatureKey(),
       userGroupCreation.sealedPrivateSignatureKey(),
       userGroupCreation.publicEncryptionKey(),
       entry.hash,
       entry.index,
-      extractGroupProvisionalUsers(userGroupCreation),
-  }));
+  };
 }
 
-tc::cotask<void> putFullGroup(
-    GroupStore& groupStore,
+InternalGroup makeInternalGroup(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     Entry const& entry,
     UserGroupCreation const& userGroupCreation)
@@ -139,7 +115,7 @@ tc::cotask<void> putFullGroup(
                               userGroupCreation.publicEncryptionKey(),
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(Group{
+  return InternalGroup{
       GroupId{userGroupCreation.publicSignatureKey()},
       Crypto::SignatureKeyPair{
           userGroupCreation.publicSignatureKey(),
@@ -151,11 +127,10 @@ tc::cotask<void> putFullGroup(
       },
       entry.hash,
       entry.index,
-  }));
+  };
 }
 
-tc::cotask<void> putFullGroup(
-    GroupStore& groupStore,
+InternalGroup makeInternalGroup(
     ExternalGroup const& previousGroup,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     Entry const& entry)
@@ -166,7 +141,7 @@ tc::cotask<void> putFullGroup(
                               previousGroup.publicEncryptionKey,
                               groupPrivateEncryptionKey,
                           });
-  TC_AWAIT(groupStore.put(Group{
+  return InternalGroup{
       GroupId{previousGroup.publicSignatureKey},
       Crypto::SignatureKeyPair{
           previousGroup.publicSignatureKey,
@@ -178,12 +153,12 @@ tc::cotask<void> putFullGroup(
       },
       entry.hash,
       entry.index,
-  }));
+  };
+}
 }
 
-tc::cotask<void> applyUserGroupCreation(
+tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Entry const& entry)
@@ -204,32 +179,34 @@ tc::cotask<void> applyUserGroupCreation(
   }
 
   if (groupPrivateEncryptionKey)
-    TC_AWAIT(putFullGroup(
-        groupStore, *groupPrivateEncryptionKey, entry, userGroupCreation));
+    TC_RETURN(makeInternalGroup(
+        *groupPrivateEncryptionKey, entry, userGroupCreation));
   else
-    TC_AWAIT(putExternalGroup(groupStore, entry, userGroupCreation));
+    TC_RETURN(makeExternalGroup(entry, userGroupCreation));
 }
 
-tc::cotask<void> applyUserGroupAddition(
+tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> previousGroup,
     Entry const& entry)
 {
   auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
 
-  auto const previousGroup =
-      TC_AWAIT(groupStore.findExternalById(userGroupAddition.groupId()));
   if (!previousGroup)
   {
+    // this block should never have passed verification
     throw AssertionError(
         fmt::format(TFMT("cannot find previous group block for {:s}"),
                     userGroupAddition.groupId()));
   }
 
-  TC_AWAIT(groupStore.updateLastGroupBlock(
-      userGroupAddition.groupId(), entry.hash, entry.index));
+  updateLastGroupBlock(*previousGroup, entry.hash, entry.index);
+
+  // I am already member of this group, ignore
+  if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
+    TC_RETURN(*previousGroup);
 
   nonstd::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const uga1 = userGroupAddition.get_if<UserGroupAddition::v1>())
@@ -244,71 +221,149 @@ tc::cotask<void> applyUserGroupAddition(
           provisionalUserKeysStore, uga2->provisionalMembers()));
   }
 
-  // I am already member of this group, ignore
-  if (!previousGroup->encryptedPrivateSignatureKey)
-    TC_RETURN();
-  // I am still not part of this group, store provisional members for maybe
-  // future use
+  // we checked above that this is an external group
+  auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
+
   if (!groupPrivateEncryptionKey)
+    TC_RETURN(externalGroup);
+  else
+    TC_RETURN(
+        makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, entry));
+}
+
+namespace
+{
+using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
+
+tc::cotask<DeviceMap> extractAuthors(
+    TrustchainPuller& trustchainPuller,
+    ContactStore const& contactStore,
+    std::vector<Trustchain::ServerEntry> const& entries)
+{
+  DeviceMap out;
+
+  // There is no way to pull users by device id, so for the moment we pull the
+  // whole group through a hack that gives us all authors without the
+  // groups themselves. This will disappear once we have that new route.
+  boost::container::flat_set<Trustchain::GroupId> groupsToPull;
+
+  for (auto const& entry : entries)
   {
-    TC_AWAIT(groupStore.putGroupProvisionalEncryptionKeys(
-        userGroupAddition.groupId(),
-        extractGroupProvisionalUsers(userGroupAddition)));
-    TC_RETURN();
+    if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
+      continue;
+
+    auto const author =
+        TC_AWAIT(contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
+    if (author)
+      out[Trustchain::DeviceId{entry.author()}] = *author;
+    else
+    {
+      if (auto const userGroupCreation =
+              entry.action().get_if<UserGroupCreation>())
+        groupsToPull.insert(GroupId{userGroupCreation->publicSignatureKey()});
+      else if (auto const userGroupAddition =
+                   entry.action().get_if<UserGroupAddition>())
+        groupsToPull.insert(userGroupAddition->groupId());
+      else
+        throw Errors::AssertionError(
+            fmt::format("cannot handle nature: {}", entry.action().nature()));
+    }
   }
 
-  TC_AWAIT(putFullGroup(
-      groupStore, *previousGroup, *groupPrivateEncryptionKey, entry));
-}
+  if (!groupsToPull.empty())
+  {
+    std::vector<Trustchain::GroupId> vgroupsToPull(groupsToPull.begin(),
+                                                   groupsToPull.end());
+    TC_AWAIT(trustchainPuller.scheduleCatchUp({}, vgroupsToPull));
+
+    for (auto const& entry : entries)
+    {
+      if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
+        continue;
+
+      auto const author = TC_AWAIT(
+          contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
+      if (author)
+        out[Trustchain::DeviceId{entry.author()}] = *author;
+    }
+  }
+
+  TC_RETURN(out);
 }
 
-tc::cotask<void> applyEntry(
+tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
     Trustchain::UserId const& myUserId,
-    GroupStore& groupStore,
+    DeviceMap const& authors,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    Entry const& entry)
+    nonstd::optional<Group> previousGroup,
+    std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
-  if (entry.action.holds_alternative<UserGroupCreation>())
-    TC_AWAIT(applyUserGroupCreation(
-        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else if (entry.action.holds_alternative<UserGroupAddition>())
-    TC_AWAIT(applyUserGroupAddition(
-        myUserId, groupStore, userKeyStore, provisionalUserKeysStore, entry));
-  else
+  for (auto const& serverEntry : serverEntries)
   {
-    throw AssertionError(fmt::format("cannot handle nature: {}", entry.nature));
+    try
+    {
+      auto const authorIt =
+          authors.find(Trustchain::DeviceId{serverEntry.author()});
+      Verif::ensures(authorIt != authors.end(),
+                     Verif::Errc::InvalidAuthor,
+                     "author not found");
+      auto const& author = authorIt->second;
+      if (serverEntry.action().holds_alternative<UserGroupCreation>())
+      {
+        auto const entry = Verif::verifyUserGroupCreation(
+            serverEntry, author, extractExternalGroup(previousGroup));
+        previousGroup = TC_AWAIT(applyUserGroupCreation(
+            myUserId, userKeyStore, provisionalUserKeysStore, entry));
+      }
+      else if (serverEntry.action().holds_alternative<UserGroupAddition>())
+      {
+        auto const entry = Verif::verifyUserGroupAddition(
+            serverEntry, author, extractExternalGroup(previousGroup));
+        previousGroup =
+            TC_AWAIT(applyUserGroupAddition(myUserId,
+                                            userKeyStore,
+                                            provisionalUserKeysStore,
+                                            previousGroup,
+                                            entry));
+      }
+      else
+        throw Errors::AssertionError(fmt::format(
+            "cannot handle nature: {}", serverEntry.action().nature()));
+    }
+    catch (Errors::Exception const& err)
+    {
+      if (err.errorCode().category() == Verif::ErrcCategory())
+      {
+        TERROR("skipping invalid group block {}: {}",
+               serverEntry.hash(),
+               err.what());
+      }
+      else
+        throw;
+    }
   }
+  TC_RETURN(previousGroup);
+}
 }
 
-tc::cotask<void> applyGroupPrivateKey(
-    GroupStore& groupStore,
-    ExternalGroup const& group,
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey)
+tc::cotask<nonstd::optional<Group>> processGroupEntries(
+    Trustchain::UserId const& myUserId,
+    TrustchainPuller& trustchainPuller,
+    ContactStore const& contactStore,
+    UserKeyStore const& userKeyStore,
+    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    nonstd::optional<Group> const& previousGroup,
+    std::vector<Trustchain::ServerEntry> const& entries)
 {
-  if (!group.encryptedPrivateSignatureKey)
-    // we are already in the group, nothing more to decrypt
-    TC_RETURN();
-
-  auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt(*group.encryptedPrivateSignatureKey,
-                          Crypto::EncryptionKeyPair{
-                              group.publicEncryptionKey,
-                              groupPrivateEncryptionKey,
-                          });
-  TC_AWAIT(groupStore.put(Group{
-      group.id,
-      Crypto::SignatureKeyPair{
-          group.publicSignatureKey,
-          groupPrivateSignatureKey,
-      },
-      Crypto::EncryptionKeyPair{
-          group.publicEncryptionKey,
-          groupPrivateEncryptionKey,
-      },
-      group.lastBlockHash,
-      group.lastBlockIndex,
-  }));
+  auto const authors =
+      TC_AWAIT(extractAuthors(trustchainPuller, contactStore, entries));
+  TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(myUserId,
+                                                    authors,
+                                                    userKeyStore,
+                                                    provisionalUserKeysStore,
+                                                    previousGroup,
+                                                    entries)));
 }
 }
 }

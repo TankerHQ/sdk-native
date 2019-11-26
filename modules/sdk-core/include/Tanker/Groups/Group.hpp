@@ -9,11 +9,13 @@
 
 #include <optional.hpp>
 
+#include <boost/variant2/variant.hpp>
+
 #include <cstdint>
 
 namespace Tanker
 {
-struct Group
+struct InternalGroup
 {
   Trustchain::GroupId id;
   Crypto::SignatureKeyPair signatureKeyPair;
@@ -22,8 +24,8 @@ struct Group
   uint64_t lastBlockIndex;
 };
 
-bool operator==(Group const& l, Group const& r);
-bool operator!=(Group const& l, Group const& r);
+bool operator==(InternalGroup const& l, InternalGroup const& r);
+bool operator!=(InternalGroup const& l, InternalGroup const& r);
 
 struct ExternalGroup
 {
@@ -37,9 +39,8 @@ struct ExternalGroup
                 nonstd::optional<Crypto::SealedPrivateSignatureKey> const&,
                 Crypto::PublicEncryptionKey const&,
                 Crypto::Hash const&,
-                uint64_t lastBlockIndex,
-                std::vector<GroupProvisionalUser> const& = {});
-  ExternalGroup(Group const&);
+                uint64_t lastBlockIndex);
+  ExternalGroup(InternalGroup const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
@@ -48,9 +49,26 @@ struct ExternalGroup
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
   uint64_t lastBlockIndex;
-  std::vector<GroupProvisionalUser> provisionalUsers;
 };
 
 bool operator==(ExternalGroup const& l, ExternalGroup const& r);
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
+
+using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
+
+ExternalGroup extractExternalGroup(Group const& group);
+
+// optional has no .map()
+inline nonstd::optional<ExternalGroup> extractExternalGroup(
+    nonstd::optional<Group> const& group)
+{
+  if (!group)
+    return nonstd::nullopt;
+  return extractExternalGroup(*group);
+}
+
+void updateLastGroupBlock(Group& group,
+                          Crypto::Hash const& lastBlockHash,
+                          uint64_t lastBlockIndex);
+Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 }

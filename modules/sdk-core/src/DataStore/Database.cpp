@@ -10,7 +10,6 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
-#include <Tanker/DbModels/GroupsProvisionalEncryptionKeys.hpp>
 #include <Tanker/DbModels/KeyPublishes.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
@@ -151,23 +150,24 @@ Entry rowToEntry(Row const& row)
 }
 
 template <typename T>
-Group rowToFullGroup(T const& row)
+InternalGroup rowToInternalGroup(T const& row)
 {
   assert(!row.private_signature_key.is_null() &&
          !row.private_encryption_key.is_null());
 
-  return Group{DataStore::extractBlob<GroupId>(row.group_id),
-               {DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                    row.public_signature_key),
-                DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                    row.private_signature_key)},
-               {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                    row.public_encryption_key),
-                DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                    row.private_encryption_key)},
-               DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
-               // sqlpp uses int64_t
-               static_cast<uint64_t>(row.last_group_block_index)};
+  return InternalGroup{
+      DataStore::extractBlob<GroupId>(row.group_id),
+      {DataStore::extractBlob<Crypto::PublicSignatureKey>(
+           row.public_signature_key),
+       DataStore::extractBlob<Crypto::PrivateSignatureKey>(
+           row.private_signature_key)},
+      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+           row.public_encryption_key),
+       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+           row.private_encryption_key)},
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
+      // sqlpp uses int64_t
+      static_cast<uint64_t>(row.last_group_block_index)};
 }
 
 template <typename T>
@@ -186,6 +186,15 @@ ExternalGroup rowToExternalGroup(T const& row)
       DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
       // sqlpp uses int64_t
       static_cast<uint64_t>(row.last_group_block_index)};
+}
+
+template <typename T>
+Group rowToGroup(T const& row)
+{
+  if (row.encrypted_private_signature_key.is_null())
+    return rowToInternalGroup(row);
+  else
+    return rowToExternalGroup(row);
 }
 
 template <typename T>
@@ -225,18 +234,6 @@ KeyPublish rowToKeyPublish(T const& row)
         "unreachable code. Invalid nature for KeyPublish");
   }
 }
-
-template <typename T>
-GroupProvisionalUser rowToGroupProvisionalUser(T const& row)
-{
-  return GroupProvisionalUser{
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.app_public_signature_key),
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.tanker_public_signature_key),
-      DataStore::extractBlob<Crypto::TwoTimesSealedPrivateEncryptionKey>(
-          row.encrypted_private_encryption_key)};
-}
 }
 
 using UserKeysTable = DbModels::user_keys::user_keys;
@@ -253,8 +250,6 @@ using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
 using KeyPublishesTable = DbModels::key_publishes::key_publishes;
-using GroupsProvisionalUsersTable = DbModels::
-    group_provisional_encryption_keys::group_provisional_encryption_keys;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
@@ -328,12 +323,13 @@ void Database::performUnifiedMigration()
       createTable<VersionTable>(*_db);
       // fallthrough
     case 3:
-      createTable<GroupsProvisionalUsersTable>(*_db);
       createTable<TrustchainInfoTable>(*_db);
       createTable<KeyPublishesTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
       dropTable<TrustchainResourceIdToKeyPublishTable>();
       dropTable<TrustchainIndexesTable>();
+      // fallthrough
+    case 4:
       flushAllCaches();
       break;
     default:
@@ -409,7 +405,6 @@ void Database::flushAllCaches()
   flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
   flushTable(KeyPublishesTable{});
-  flushTable(GroupsProvisionalUsersTable{});
 
   {
     TrustchainInfoTable tab{};
@@ -924,7 +919,7 @@ tc::cotask<void> Database::updateDeviceRevokedAt(Trustchain::DeviceId const& id,
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putFullGroup(Group const& group)
+tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
 {
   FUNC_TIMER(DB);
   GroupsTable groups;
@@ -964,50 +959,10 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
       groups.last_group_block_hash = group.lastBlockHash.base(),
       groups.last_group_block_index = group.lastBlockIndex));
 
-  TC_AWAIT(this->putGroupProvisionalEncryptionKeys(group.id,
-                                                   group.provisionalUsers));
-
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putGroupProvisionalEncryptionKeys(
-    Trustchain::GroupId const& groupId,
-    std::vector<GroupProvisionalUser> const& provisionalUsers)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable groupsProvisionalUsers;
-
-  for (auto const provisionalUser : provisionalUsers)
-  {
-    (*_db)(
-        sqlpp::sqlite3::insert_or_ignore_into(groupsProvisionalUsers)
-            .set(groupsProvisionalUsers.group_id = groupId.base(),
-                 groupsProvisionalUsers.app_public_signature_key =
-                     provisionalUser.appPublicSignatureKey().base(),
-                 groupsProvisionalUsers.tanker_public_signature_key =
-                     provisionalUser.tankerPublicSignatureKey().base(),
-                 groupsProvisionalUsers.encrypted_private_encryption_key =
-                     provisionalUser.encryptedPrivateEncryptionKey().base()));
-  }
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::updateLastGroupBlock(
-    GroupId const& groupId,
-    Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups;
-
-  (*_db)(update(groups)
-             .set(groups.last_group_block_hash = lastBlockHash.base(),
-                  groups.last_group_block_index = lastBlockIndex)
-             .where(groups.group_id == groupId.base()));
-  TC_RETURN();
-}
-
-tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
+tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
     GroupId const& groupId)
 {
   FUNC_TIMER(DB);
@@ -1022,92 +977,11 @@ tc::cotask<nonstd::optional<Group>> Database::findFullGroupByGroupId(
 
   auto const& row = *rows.begin();
 
-  if (row.private_signature_key.is_null() ||
-      row.private_encryption_key.is_null())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(rowToFullGroup(row));
-}
-
-tc::cotask<nonstd::optional<ExternalGroup>>
-Database::findExternalGroupByGroupId(GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
-
-  auto const& row = *rows.begin();
-
-  auto externalGroup = rowToExternalGroup(row);
-
-  externalGroup.provisionalUsers =
-      TC_AWAIT(this->findProvisionalUsersByGroupId(groupId));
-
-  TC_RETURN(externalGroup);
-}
-
-tc::cotask<std::vector<GroupProvisionalUser>>
-Database::findProvisionalUsersByGroupId(Trustchain::GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  std::vector<GroupProvisionalUser> groupProvisionalUsers;
-
-  for (auto const& row : rows)
-  {
-    groupProvisionalUsers.push_back(rowToGroupProvisionalUser(row));
-  }
-
-  TC_RETURN(groupProvisionalUsers);
-}
-
-tc::cotask<std::vector<ExternalGroup>>
-Database::findExternalGroupsByProvisionalUser(
-    Crypto::PublicSignatureKey const& appPublicSignatureKey,
-    Crypto::PublicSignatureKey const& tankerPublicSignatureKey)
-{
-  FUNC_TIMER(DB);
-  GroupsProvisionalUsersTable tab_groups_provisional_users{};
-  GroupsTable tab_groups{};
-
-  auto rows = (*_db)(
-      select(all_of(tab_groups),
-             tab_groups_provisional_users.app_public_signature_key,
-             tab_groups_provisional_users.tanker_public_signature_key,
-             tab_groups_provisional_users.encrypted_private_encryption_key)
-          .from(tab_groups.join(tab_groups_provisional_users)
-                    .on(tab_groups.group_id ==
-                        tab_groups_provisional_users.group_id))
-          .where(tab_groups_provisional_users.app_public_signature_key ==
-                     appPublicSignatureKey.base() &&
-                 tab_groups_provisional_users.tanker_public_signature_key ==
-                     tankerPublicSignatureKey.base()));
-
-  std::vector<ExternalGroup> groups;
-
-  for (auto const& row : rows)
-  {
-    auto group = rowToExternalGroup(row);
-    group.provisionalUsers = {rowToGroupProvisionalUser(row)};
-    groups.push_back(group);
-  }
-
-  TC_RETURN(groups);
+  TC_RETURN(rowToGroup(row));
 }
 
 tc::cotask<nonstd::optional<Group>>
-Database::findFullGroupByGroupPublicEncryptionKey(
+Database::findGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);
@@ -1123,31 +997,7 @@ Database::findFullGroupByGroupPublicEncryptionKey(
 
   auto const& row = *rows.begin();
 
-  if (row.private_signature_key.is_null() ||
-      row.private_encryption_key.is_null())
-    TC_RETURN(nonstd::nullopt);
-
-  TC_RETURN(rowToFullGroup(row));
-}
-
-tc::cotask<nonstd::optional<ExternalGroup>>
-Database::findExternalGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(
-      select(all_of(groups))
-          .from(groups)
-          .where(groups.public_encryption_key == publicEncryptionKey.base()));
-
-  if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToExternalGroup(row));
+  TC_RETURN(rowToGroup(row));
 }
 }
 }

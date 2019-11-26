@@ -257,7 +257,8 @@ tc::cotask<std::vector<std::string>> Client::getBlocks(
                                   {{"index", lastIndex},
                                    {"extra_users", extra_users},
                                    {"extra_groups", extra_groups},
-                                   {"on_demand_key_publishes", true}}));
+                                   {"on_demand_key_publishes", true},
+                                   {"on_demand_user_groups", true}}));
   TC_RETURN(json.get<std::vector<std::string>>());
 }
 

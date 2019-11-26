@@ -24,25 +24,15 @@ public:
   GroupStore(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> put(Group const& group);
+  tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
-  tc::cotask<void> putGroupProvisionalEncryptionKeys(
-      Trustchain::GroupId const& groupId,
-      std::vector<GroupProvisionalUser> const& provisionalUsers);
-  tc::cotask<void> updateLastGroupBlock(Trustchain::GroupId const& groupId,
-                                        Crypto::Hash const& lastBlockHash,
-                                        uint64_t lastBlockIndex);
 
-  tc::cotask<nonstd::optional<Group>> findFullById(
+  tc::cotask<nonstd::optional<Group>> findById(
       Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<ExternalGroup>> findExternalById(
-      Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<Group>> findFullByPublicEncryptionKey(
+  tc::cotask<nonstd::optional<InternalGroup>> findInternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<nonstd::optional<ExternalGroup>> findExternalByPublicEncryptionKey(
+  tc::cotask<nonstd::optional<Group>> findByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
-      Crypto::PublicSignatureKey const& appPublicSignatureKey,
-      Crypto::PublicSignatureKey const& tankerPublicSignatureKey) const;
 
 private:
   DataStore::ADatabase* _db;
