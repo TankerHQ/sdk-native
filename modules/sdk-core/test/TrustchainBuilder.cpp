@@ -44,6 +44,7 @@ TrustchainBuilder::Device createDevice()
           Tanker::Crypto::makeEncryptionKeyPair(),
       },
       {}, // deviceId will be filled in later
+      {}, // userId will be filled in later
       {}, // delegation will be filled in later
       {}  // blockIndex will be filled in later
   };
@@ -53,6 +54,7 @@ TrustchainBuilder::Device createDevice()
 Tanker::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Device{id,
+                        userId,
                         blockIndex,
                         std::nullopt,
                         keys.signatureKeyPair.publicKey,
@@ -133,6 +135,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 
   user.devices[0].delegation = delegation;
   user.devices[0].id = DeviceId(block.hash());
+  user.devices[0].userId = user.userId;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
 
@@ -171,6 +174,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   block.index = _entries.size() + 1;
 
   user.devices[0].id = DeviceId(block.hash());
+  user.devices[0].userId = user.userId;
   user.devices[0].delegation = delegation;
   user.devices[0].blockIndex = block.index;
   _users.push_back(user);
@@ -212,6 +216,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   block.index = _entries.size() + 1;
 
   device.id = DeviceId(block.hash());
+  device.userId = user->userId;
   device.delegation = delegation;
   device.blockIndex = block.index;
   user->devices.push_back(device);
@@ -254,6 +259,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   block.index = _entries.size() + 1;
 
   device.id = DeviceId(block.hash());
+  device.userId = user->userId;
   device.delegation = delegation;
   device.blockIndex = block.index;
   user->devices.push_back(device);

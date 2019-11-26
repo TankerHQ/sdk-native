@@ -121,6 +121,7 @@ Device rowToDevice(Row const& row)
     revokedAtBlockIndex = static_cast<uint64_t>(row.revoked_at_block_index);
 
   return {DataStore::extractBlob<Trustchain::DeviceId>(row.id),
+          DataStore::extractBlob<Trustchain::UserId>(row.user_id),
           static_cast<uint64_t>(row.created_at_block_index),
           std::move(revokedAtBlockIndex),
           DataStore::extractBlob<Crypto::PublicSignatureKey>(

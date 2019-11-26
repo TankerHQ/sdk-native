@@ -522,6 +522,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
   Trustchain::DeviceId const deviceId{entry.hash};
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
   Device createdDevice{deviceId,
+                       deviceCreation.userId(),
                        entry.index,
                        std::nullopt,
                        deviceCreation.publicSignatureKey(),

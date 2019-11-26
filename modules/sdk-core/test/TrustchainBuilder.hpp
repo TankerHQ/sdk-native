@@ -36,6 +36,7 @@ public:
   {
     Tanker::DeviceKeys keys;
     Tanker::Trustchain::DeviceId id;
+    Tanker::Trustchain::UserId userId;
     Tanker::Identity::Delegation delegation;
     uint64_t blockIndex;
 
