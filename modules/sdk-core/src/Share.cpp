@@ -193,7 +193,7 @@ std::vector<uint8_t> makeKeyPublishToUser(
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
-    UserAccessor& userAccessor,
+    IUserAccessor& userAccessor,
     GroupAccessor& groupAccessor,
     std::vector<SPublicIdentity> const& aspublicIdentities,
     std::vector<SGroupId> const& asgroupIds)
@@ -247,7 +247,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
   return out;
 }
 
-tc::cotask<void> share(UserAccessor& userAccessor,
+tc::cotask<void> share(IUserAccessor& userAccessor,
                        GroupAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
@@ -266,7 +266,7 @@ tc::cotask<void> share(UserAccessor& userAccessor,
 }
 
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
-                       UserAccessor& userAccessor,
+                       IUserAccessor& userAccessor,
                        GroupAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,

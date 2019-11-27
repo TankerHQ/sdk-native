@@ -32,7 +32,8 @@ struct MembersToAdd
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    UserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities);
+    IUserAccessor& userAccessor,
+    std::vector<SPublicIdentity> spublicIdentities);
 
 std::vector<uint8_t> generateCreateGroupBlock(
     std::vector<User> const& memberUsers,

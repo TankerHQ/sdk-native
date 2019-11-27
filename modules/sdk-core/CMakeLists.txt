@@ -106,6 +106,7 @@ add_library(tankercore STATIC
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
   include/Tanker/UserAccessor.hpp
+  include/Tanker/IUserAccessor.hpp
   include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp

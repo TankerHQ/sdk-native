@@ -10,14 +10,13 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 #include "UserAccessorMock.hpp"
 
 #include <doctest.h>
-
-#include <mockaron/mockaron.hpp>
 
 #include <trompeloeil.hpp>
 
@@ -161,14 +160,15 @@ TEST_CASE("throws when getting keys of an unknown member")
       make<Trustchain::UserId>("unknown"),
   };
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
+  UserAccessorMock userAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pull(trompeloeil::_))
-      .LR_RETURN((UserAccessor::PullResult{{}, {unknownIdentity.userId}}));
+  REQUIRE_CALL(userAccessor, pull(trompeloeil::_))
+      .LR_RETURN(
+          makeCoTask(UserAccessor::PullResult{{}, {unknownIdentity.userId}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Groups::Manager::fetchFutureMembers(
-          userAccessor.get(), {SPublicIdentity{to_string(unknownIdentity)}})),
+          userAccessor, {SPublicIdentity{to_string(unknownIdentity)}})),
       Errc::InvalidArgument);
 }
 

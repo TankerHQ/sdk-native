@@ -28,7 +28,7 @@ namespace Groups
 namespace Manager
 {
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    UserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities)
+    IUserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities)
 {
   spublicIdentities = removeDuplicates(std::move(spublicIdentities));
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);

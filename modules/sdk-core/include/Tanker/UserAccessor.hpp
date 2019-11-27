@@ -2,6 +2,7 @@
 
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/IUserAccessor.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -18,11 +19,9 @@ namespace Tanker
 class TrustchainPuller;
 class ContactStore;
 
-class UserAccessor
+class UserAccessor : public IUserAccessor
 {
 public:
-  using PullResult = BasicPullResult<User>;
-
   UserAccessor(Trustchain::UserId const& selfUserId,
                Client* client,
                TrustchainPuller* trustchainPuller,

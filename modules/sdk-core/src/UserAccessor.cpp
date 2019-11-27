@@ -31,13 +31,6 @@ UserAccessor::UserAccessor(UserId const& selfUserId,
 auto UserAccessor::pull(gsl::span<UserId const> userIds)
     -> tc::cotask<PullResult>
 {
-  MOCKARON_HOOK_CUSTOM(tc::cotask<PullResult>(gsl::span<UserId const>),
-                       PullResult,
-                       UserAccessor,
-                       pull,
-                       TC_RETURN,
-                       MOCKARON_ADD_COMMA(userIds));
-
   TC_AWAIT(fetch(userIds));
 
   PullResult ret;
@@ -59,15 +52,6 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
-  MOCKARON_HOOK_CUSTOM(
-      tc::cotask<std::vector<PublicProvisionalUser>>(
-          gsl::span<Identity::PublicProvisionalIdentity const>),
-      std::vector<PublicProvisionalUser>,
-      UserAccessor,
-      pullProvisional,
-      TC_RETURN,
-      MOCKARON_ADD_COMMA(appProvisionalIdentities));
-
   if (appProvisionalIdentities.empty())
     TC_RETURN(std::vector<PublicProvisionalUser>{});
 
