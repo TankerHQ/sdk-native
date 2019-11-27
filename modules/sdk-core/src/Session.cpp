@@ -181,10 +181,6 @@ Session::Session(Config&& config)
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
   };
-  _trustchainPuller.provisionalIdentityClaimReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onProvisionalIdentityClaimEntry(entry));
-  };
   _trustchainPuller.trustchainCreationReceived =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onTrustchainCreationReceived(entry));
@@ -562,12 +558,6 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
                                                _contactStore,
                                                _deviceKeyStore,
                                                _userKeyStore));
-}
-
-tc::cotask<void> Session::onProvisionalIdentityClaimEntry(Entry const& entry)
-{
-  TC_AWAIT(ProvisionalUsers::Updater::applyEntry(
-      _userKeyStore, _provisionalUserKeysStore, entry));
 }
 
 tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)

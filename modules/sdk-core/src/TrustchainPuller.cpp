@@ -131,10 +131,6 @@ tc::cotask<void> TrustchainPuller::catchUp()
         auto const initiallyProcessed = TC_AWAIT(doInitialProcess(entries));
         processed.insert(initiallyProcessed.begin(), initiallyProcessed.end());
       }
-      {
-        auto const processedClaims = TC_AWAIT(doClaimProcess(entries));
-        processed.insert(processedClaims.begin(), processedClaims.end());
-      }
 
       for (auto const& serverEntry : entries)
       {
@@ -258,35 +254,6 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
   TC_RETURN(processed);
 }
 
-tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doClaimProcess(
-    std::vector<ServerEntry> const& entries)
-{
-  std::set<Crypto::Hash> processed;
-  // We must process our claims first because we might have group blocks later
-  // that are addressed to our provisional identities
-  for (auto const& serverEntry : entries)
-  {
-    try
-    {
-      if (serverEntry.action().get_if<ProvisionalIdentityClaim>())
-      {
-        TC_AWAIT(verifyAndAddEntry(serverEntry));
-        processed.insert(serverEntry.hash());
-      }
-    }
-    catch (Errors::Exception const& err)
-    {
-      if (err.errorCode().category() == Verif::ErrcCategory())
-      {
-        TERROR("skipping invalid block {}: {}", serverEntry.hash(), err.what());
-      }
-      else
-        throw;
-    }
-  }
-  TC_RETURN(processed);
-}
-
 tc::cotask<void> TrustchainPuller::recoverUserKeys(
     std::vector<std::pair<Crypto::PublicEncryptionKey,
                           Crypto::SealedPrivateEncryptionKey>> const&
@@ -324,8 +291,6 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
   }
   else if (entry.action.holds_alternative<DeviceRevocation>())
     TC_AWAIT(deviceRevoked(entry));
-  else if (entry.action.holds_alternative<ProvisionalIdentityClaim>())
-    TC_AWAIT(provisionalIdentityClaimReceived(entry));
   else if (entry.action.holds_alternative<TrustchainCreation>())
     TC_AWAIT(trustchainCreationReceived(entry));
 }
