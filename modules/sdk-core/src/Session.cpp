@@ -434,6 +434,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
         fmt::format(TFMT("unsupported provisional identity target {:s}"),
                     provisionalIdentity.target));
   }
+  TC_AWAIT(_provisionalUsersAccessor.refreshKeys());
   if (TC_AWAIT(_provisionalUserKeysStore
                    .findProvisionalUserKeysByAppPublicEncryptionKey(
                        provisionalIdentity.appEncryptionKeyPair.publicKey)))
