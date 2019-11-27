@@ -53,6 +53,7 @@ tc::cotask<DeviceMap> extractAuthors(
 
   TC_RETURN(out);
 }
+}
 
 tc::cotask<SecretProvisionalUser> extractKeysToStore(
     UserKeyStore const& userKeyStore, Entry const& entry)
@@ -90,19 +91,6 @@ tc::cotask<SecretProvisionalUser> extractKeysToStore(
                             provisionalIdentityClaim.tankerSignaturePublicKey(),
                             appEncryptionKeyPair,
                             tankerEncryptionKeyPair}));
-}
-}
-
-tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
-                            ProvisionalUserKeysStore& provisionalUserKeysStore,
-                            Entry const& entry)
-{
-  auto const toStore = TC_AWAIT(extractKeysToStore(userKeyStore, entry));
-
-  TC_AWAIT(provisionalUserKeysStore.putProvisionalUserKeys(
-      toStore.appSignaturePublicKey,
-      toStore.tankerSignaturePublicKey,
-      {toStore.appEncryptionKeyPair, toStore.tankerEncryptionKeyPair}));
 }
 
 tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(

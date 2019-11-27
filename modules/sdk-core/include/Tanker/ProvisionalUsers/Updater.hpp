@@ -23,9 +23,8 @@ struct SecretProvisionalUser
   Crypto::EncryptionKeyPair tankerEncryptionKeyPair;
 };
 
-tc::cotask<void> applyEntry(UserKeyStore& userKeyStore,
-                            ProvisionalUserKeysStore& provisionalUserKeysStore,
-                            Entry const& entry);
+tc::cotask<SecretProvisionalUser> extractKeysToStore(
+    UserKeyStore const& userKeyStore, Entry const& entry);
 
 tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
     ContactStore const& contactStore,

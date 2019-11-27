@@ -30,8 +30,8 @@ TEST_CASE("ProvisionalUsers")
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(ProvisionalUsers::Updater::applyEntry(
-            userKeyStore, provisionalUserKeysStore, picEntry)),
+        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(userKeyStore,
+                                                                 picEntry)),
         Errc::InternalError);
   }
 
@@ -41,16 +41,17 @@ TEST_CASE("ProvisionalUsers")
         builder.makeUserKeyStore(userResult.user, db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
-    CHECK_NOTHROW(AWAIT_VOID(ProvisionalUsers::Updater::applyEntry(
-        *userKeyStore, provisionalUserKeysStore, picEntry)));
-    auto const gotKeys = AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
-        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,
-        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair
-            .publicKey));
-    REQUIRE_UNARY(gotKeys);
-    CHECK_EQ(gotKeys->appKeys,
+    auto const gotKeys = AWAIT(
+        ProvisionalUsers::Updater::extractKeysToStore(*userKeyStore, picEntry));
+    CHECK_EQ(
+        gotKeys.appSignaturePublicKey,
+        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey);
+    CHECK_EQ(
+        gotKeys.tankerSignaturePublicKey,
+        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair.publicKey);
+    CHECK_EQ(gotKeys.appEncryptionKeyPair,
              provisionalUser.secretProvisionalUser.appEncryptionKeyPair);
-    CHECK_EQ(gotKeys->tankerKeys,
+    CHECK_EQ(gotKeys.tankerEncryptionKeyPair,
              provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair);
   }
 }
