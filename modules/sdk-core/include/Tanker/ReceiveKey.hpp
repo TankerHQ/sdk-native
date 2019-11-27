@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -14,7 +15,6 @@ class IAccessor;
 class ContactStore;
 class ResourceKeyStore;
 class UserKeyStore;
-class ProvisionalUserKeysStore;
 struct Entry;
 
 namespace ReceiveKey
@@ -29,7 +29,7 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
     Groups::IAccessor& GroupAccessor,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublish const& kp);
 }
 }

@@ -11,13 +11,13 @@ ResourceKeyAccessor::ResourceKeyAccessor(
     TrustchainVerifier* verifier,
     UserKeyStore* userKeyStore,
     Groups::IAccessor* groupAccessor,
-    ProvisionalUserKeysStore* provisionalKeyStore,
+    ProvisionalUsers::IAccessor* provisionalUsersAccessor,
     ResourceKeyStore* resourceKeyStore)
   : _client(client),
     _verifier(verifier),
     _userKeyStore(userKeyStore),
     _groupAccessor(groupAccessor),
-    _provisionalUserKeysStore(provisionalKeyStore),
+    _provisionalUsersAccessor(provisionalUsersAccessor),
     _resourceKeyStore(resourceKeyStore)
 {
 }
@@ -44,7 +44,7 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
           *_resourceKeyStore,
           *_userKeyStore,
           *_groupAccessor,
-          *_provisionalUserKeysStore,
+          *_provisionalUsersAccessor,
           keyEntry.action.get<Trustchain::Actions::KeyPublish>()));
     }
     key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));

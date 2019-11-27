@@ -162,7 +162,7 @@ Session::Session(Config&& config)
                          &_verifier,
                          &_userKeyStore,
                          &_groupAccessor,
-                         &_provisionalUserKeysStore,
+                         &_provisionalUsersAccessor,
                          &_resourceKeyStore),
     _blockGenerator(_trustchainId,
                     _deviceKeyStore->signatureKeyPair().privateKey,

@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -19,7 +19,7 @@ public:
                       TrustchainVerifier* verifier,
                       UserKeyStore* userKeyStore,
                       Groups::IAccessor* groupAccessor,
-                      ProvisionalUserKeysStore* provisionalKeyStore,
+                      ProvisionalUsers::IAccessor* provisionalUsersAccessor,
                       ResourceKeyStore* resourceKeyStore);
   ResourceKeyAccessor() = delete;
   ResourceKeyAccessor(ResourceKeyAccessor const&) = delete;
@@ -35,7 +35,7 @@ private:
   TrustchainVerifier* _verifier;
   UserKeyStore* _userKeyStore;
   Groups::IAccessor* _groupAccessor;
-  ProvisionalUserKeysStore* _provisionalUserKeysStore;
+  ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   ResourceKeyStore* _resourceKeyStore;
 };
 }

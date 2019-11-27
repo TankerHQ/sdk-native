@@ -5,6 +5,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 
+#include "FakeProvisionalUsersAccessor.hpp"
 #include "GroupAccessorMock.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
@@ -81,13 +82,16 @@ TEST_CASE("decryptAndStoreKey")
     auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
@@ -109,13 +113,16 @@ TEST_CASE("decryptAndStoreKey")
         .LR_RETURN(makeCoTask(
             std::make_optional(group.group.tankerGroup.encryptionKeyPair)));
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToUserGroupEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
@@ -138,13 +145,16 @@ TEST_CASE("decryptAndStoreKey")
     GroupAccessorMock receiverGroupAccessor;
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            *receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        *receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToProvisionalUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);

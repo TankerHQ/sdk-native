@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <tconcurrent/coroutine.hpp>

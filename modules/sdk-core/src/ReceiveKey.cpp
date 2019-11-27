@@ -9,7 +9,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
@@ -56,7 +56,7 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
     Groups::IAccessor&,
-    ProvisionalUserKeysStore const&,
+    ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
   auto const& recipientPublicKey =
@@ -74,7 +74,7 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const&,
     Groups::IAccessor& groupAccessor,
-    ProvisionalUserKeysStore const&,
+    ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
 {
   auto const& recipientPublicKey =
@@ -100,11 +100,11 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const&,
     Groups::IAccessor&,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
 {
   auto const provisionalUserKeys =
-      TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
+      TC_AWAIT(provisionalUsersAccessor.pullEncryptionKeys(
           keyPublishToProvisionalUser.appPublicSignatureKey(),
           keyPublishToProvisionalUser.tankerPublicSignatureKey()));
 
@@ -131,7 +131,7 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
     Groups::IAccessor&,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
 {
   throw AssertionError(
@@ -143,14 +143,14 @@ tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
     Groups::IAccessor& groupAccessor,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublish const& kp)
 {
   TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<void> {
     TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
                                 userKeyStore,
                                 groupAccessor,
-                                provisionalUserKeysStore,
+                                provisionalUsersAccessor,
                                 val));
   }));
 }
