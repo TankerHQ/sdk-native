@@ -11,6 +11,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
+#include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -168,10 +169,10 @@ private:
   TrustchainPuller _trustchainPuller;
   UserAccessor _userAccessor;
   ProvisionalUsers::Accessor _provisionalUsersAccessor;
+  ProvisionalUsers::Manager _provisionalUsersManager;
   GroupAccessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
-  std::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;

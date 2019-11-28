@@ -83,6 +83,7 @@ add_library(tankercore STATIC
   include/Tanker/ProvisionalUsers/IAccessor.hpp
   include/Tanker/ProvisionalUsers/Updater.hpp
   include/Tanker/ProvisionalUsers/Requests.hpp
+  include/Tanker/ProvisionalUsers/Manager.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
@@ -160,6 +161,7 @@ add_library(tankercore STATIC
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
   src/ProvisionalUsers/Requests.cpp
+  src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
   src/Groups/GroupEncryptedKey.cpp
   src/Groups/GroupStore.cpp

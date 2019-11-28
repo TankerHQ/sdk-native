@@ -22,7 +22,6 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ProvisionalUsers/Updater.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Retry.hpp>
@@ -47,6 +46,7 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/variant2/variant.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url_unpadded.hpp>
@@ -56,10 +56,6 @@
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
 #include <tconcurrent/when.hpp>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/split.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -77,50 +73,6 @@ TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
-namespace
-{
-void matchProvisional(
-    Unlock::Verification const& verification,
-    Identity::SecretProvisionalIdentity const& provisionalIdentity)
-{
-  namespace bv = boost::variant2;
-  namespace ba = boost::algorithm;
-
-  if (!(bv::holds_alternative<Unlock::EmailVerification>(verification) ||
-        bv::holds_alternative<OidcIdToken>(verification)))
-    throw Exception(make_error_code(Errc::InvalidArgument),
-                    "unknown verification method for provisional identity");
-
-  if (auto const emailVerification =
-          bv::get_if<Unlock::EmailVerification>(&verification))
-  {
-    if (emailVerification->email != Email{provisionalIdentity.value})
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "verification email does not match provisional identity");
-  }
-  else if (auto const oidcIdToken = bv::get_if<OidcIdToken>(&verification))
-  {
-    std::string jwtEmail;
-    try
-    {
-      std::vector<std::string> res;
-      ba::split(res, *oidcIdToken, ba::is_any_of("."));
-      jwtEmail = nlohmann::json::parse(
-                     cppcodec::base64_url_unpadded::decode(res.at(1)))
-                     .at("email");
-    }
-    catch (...)
-    {
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "Failed to parse verification oidcIdToken");
-    }
-    if (jwtEmail != provisionalIdentity.value)
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "verification does not match provisional identity");
-  }
-}
-}
-
 Session::Session(Config&& config)
   : _trustchainId(config.trustchainId),
     _userId(config.userId),
@@ -151,6 +103,12 @@ Session::Session(Config&& config)
                               &_contactStore,
                               &_userKeyStore,
                               &_provisionalUserKeysStore),
+    _provisionalUsersManager(_userId,
+                             _client.get(),
+                             &_provisionalUsersAccessor,
+                             &_provisionalUserKeysStore,
+                             &_blockGenerator,
+                             _userSecret),
     _groupAccessor(_userId,
                    _requester.get(),
                    &_trustchainPuller,
@@ -421,85 +379,15 @@ Session::fetchVerificationMethods()
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  auto const provisionalIdentity =
-      Identity::extract<Identity::SecretProvisionalIdentity>(
-          sidentity.string());
-  if (provisionalIdentity.target != Identity::TargetType::Email)
-  {
-    throw AssertionError(
-        fmt::format(TFMT("unsupported provisional identity target {:s}"),
-                    provisionalIdentity.target));
-  }
-  TC_AWAIT(_provisionalUsersAccessor.refreshKeys());
-  if (TC_AWAIT(_provisionalUserKeysStore
-                   .findProvisionalUserKeysByAppPublicEncryptionKey(
-                       provisionalIdentity.appEncryptionKeyPair.publicKey)))
-  {
-    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
-  }
-  auto const email = Email{provisionalIdentity.value};
-  try
-  {
-    auto const tankerKeys = TC_AWAIT(
-        this->_client->getVerifiedProvisionalIdentityKeys(Crypto::generichash(
-            gsl::make_span(email).as_span<std::uint8_t const>())));
-    if (tankerKeys)
-    {
-      auto block = _blockGenerator.provisionalIdentityClaim(
-          _userId,
-          SecretProvisionalUser{provisionalIdentity.target,
-                                provisionalIdentity.value,
-                                provisionalIdentity.appEncryptionKeyPair,
-                                tankerKeys->encryptionKeyPair,
-                                provisionalIdentity.appSignatureKeyPair,
-                                tankerKeys->signatureKeyPair},
-          TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-      TC_AWAIT(_client->pushBlock(block));
-      TC_AWAIT(syncTrustchain());
-    }
-    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
-  }
-  catch (Tanker::Errors::Exception const& e)
-  {
-    if (e.errorCode() == ServerErrc::VerificationNeeded)
-    {
-      _provisionalIdentity = provisionalIdentity;
-      TC_RETURN(
-          (AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
-    }
-    throw;
-  }
-  throw AssertionError("unreachable code");
+  TC_RETURN(TC_AWAIT(_provisionalUsersManager.attachProvisionalIdentity(
+      TC_AWAIT(_userKeyStore.getLastKeyPair()), sidentity)));
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
-  if (!_provisionalIdentity.has_value())
-    throw formatEx(
-        Errc::PreconditionFailed,
-        "cannot call verifyProvisionalIdentity without having called "
-        "attachProvisionalIdentity before");
-  matchProvisional(verification, _provisionalIdentity.value());
-  auto const tankerKeys = TC_AWAIT(
-      this->_client->getProvisionalIdentityKeys(verification, _userSecret));
-  if (!tankerKeys)
-  {
-    TINFO("Nothing to claim");
-    TC_RETURN();
-  }
-  auto block = _blockGenerator.provisionalIdentityClaim(
-      _userId,
-      SecretProvisionalUser{_provisionalIdentity->target,
-                            _provisionalIdentity->value,
-                            _provisionalIdentity->appEncryptionKeyPair,
-                            tankerKeys->encryptionKeyPair,
-                            _provisionalIdentity->appSignatureKeyPair,
-                            tankerKeys->signatureKeyPair},
-      TC_AWAIT(this->_userKeyStore.getLastKeyPair()));
-  TC_AWAIT(_client->pushBlock(block));
-  _provisionalIdentity.reset();
-  TC_AWAIT(syncTrustchain());
+  TC_AWAIT(_provisionalUsersManager.verifyProvisionalIdentity(
+      TC_AWAIT(_userKeyStore.getLastKeyPair()), verification));
 }
 
 tc::cotask<void> Session::catchUserKey(
