@@ -43,8 +43,6 @@ private:
       Trustchain::ServerEntry const& dc) const;
   tc::cotask<Entry> handleDeviceRevocation(
       Trustchain::ServerEntry const& dr) const;
-  tc::cotask<Entry> handleProvisionalIdentityClaim(
-      Trustchain::ServerEntry const& claim) const;
 
   tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
   tc::cotask<std::pair<User, std::size_t>> getUserByDeviceId(

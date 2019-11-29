@@ -73,22 +73,6 @@ TEST_CASE("TrustchainVerifier")
     CHECK_NOTHROW(AWAIT_VOID(verifier.verify(blockToServerEntry(revokeBlock))));
   }
 
-  SUBCASE("verifies a valid ProvisionalIdentityClaim")
-  {
-    auto const userResult = builder.makeUser3("alice");
-    AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(userResult.entry)));
-
-    auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
-    auto picEntry = builder.claimProvisionalIdentity(
-        "alice", provisionalUser.secretProvisionalUser);
-
-    auto const contactStore = builder.makeContactStoreWith({"alice"}, db.get());
-    TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
-
-    CHECK_NOTHROW(AWAIT_VOID(verifier.verify(picEntry)));
-  }
-
   SUBCASE("throws if the author does not exist")
   {
     builder.makeUser3("bob");

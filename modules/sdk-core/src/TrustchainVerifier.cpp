@@ -15,7 +15,6 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
-#include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
 #include <cassert>
@@ -61,7 +60,10 @@ tc::cotask<Entry> TrustchainVerifier::verify(
                     "anymore (nature: {})",
                     e.action().nature()));
   case Nature::ProvisionalIdentityClaim:
-    TC_RETURN(TC_AWAIT(handleProvisionalIdentityClaim(e)));
+    throw Errors::AssertionError(
+        fmt::format("claim blocks are not handled by TrustchainVerifier "
+                    "anymore (nature: {})",
+                    e.action().nature()));
   }
   throw Errors::AssertionError(fmt::format(
       "invalid nature for unverified entry: {}", e.action().nature()));
@@ -102,19 +104,6 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
   Verif::verifyDeviceRevocation(dr, user.devices[idx], targetDevice, user);
 
   TC_RETURN(Verif::makeVerifiedEntry(dr));
-}
-
-tc::cotask<Entry> TrustchainVerifier::handleProvisionalIdentityClaim(
-    Trustchain::ServerEntry const& claim) const
-{
-  User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
-      TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(claim.author())));
-  Verif::verifyProvisionalIdentityClaim(claim, user.devices[idx]);
-
-  TC_RETURN(Verif::makeVerifiedEntry(claim));
 }
 
 tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
