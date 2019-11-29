@@ -115,8 +115,8 @@ tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
         throw Errors::AssertionError(fmt::format(
             "cannot handle nature: {}", serverEntry.action().nature()));
 
-      Verif::verifyProvisionalIdentityClaim(serverEntry, author);
-      auto const entry = Verif::makeVerifiedEntry(serverEntry);
+      auto const entry =
+          Verif::verifyProvisionalIdentityClaim(serverEntry, author);
 
       out.push_back(TC_AWAIT(extractKeysToStore(userKeyStore, entry)));
     }

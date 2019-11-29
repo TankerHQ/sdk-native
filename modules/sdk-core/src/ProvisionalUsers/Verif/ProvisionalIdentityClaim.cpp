@@ -19,8 +19,8 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
-                                    Device const& author)
+Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
+                                     Device const& author)
 {
   assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
 
@@ -55,6 +55,8 @@ void verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
           Errc::InvalidSignature,
           "ProvisionalIdentityClaim block must be signed by the provisional "
           "Tanker signature key");
+
+  return makeVerifiedEntry(serverEntry);
 }
 }
 }
