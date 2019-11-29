@@ -1,4 +1,4 @@
-#include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
+#include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Device.hpp>

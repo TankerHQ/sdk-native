@@ -6,11 +6,11 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
-#include <Tanker/Verif/ProvisionalIdentityClaim.hpp>
 
 #include <boost/container/flat_map.hpp>
 
