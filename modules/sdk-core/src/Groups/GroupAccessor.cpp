@@ -5,9 +5,9 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Requests.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 
 #include <mockaron/mockaron.hpp>
 
@@ -22,7 +22,7 @@ namespace Tanker
 GroupAccessor::GroupAccessor(
     Trustchain::UserId const& userId,
     Client* client,
-    TrustchainPuller* trustchainPuller,
+    ITrustchainPuller* trustchainPuller,
     ContactStore const* contactStore,
     GroupStore* groupStore,
     UserKeyStore const* userKeyStore,

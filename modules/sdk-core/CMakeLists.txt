@@ -69,6 +69,7 @@ add_library(tankercore STATIC
   include/Tanker/Retry.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
+  include/Tanker/ITrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
   include/Tanker/BlockGenerator.hpp
   include/Tanker/GhostDevice.hpp

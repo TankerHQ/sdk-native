@@ -16,7 +16,7 @@
 
 namespace Tanker
 {
-class TrustchainPuller;
+class ITrustchainPuller;
 class ContactStore;
 
 class UserAccessor : public IUserAccessor
@@ -24,7 +24,7 @@ class UserAccessor : public IUserAccessor
 public:
   UserAccessor(Trustchain::UserId const& selfUserId,
                Client* client,
-               TrustchainPuller* trustchainPuller,
+               ITrustchainPuller* trustchainPuller,
                ContactStore const* contactStore);
 
   UserAccessor() = delete;
@@ -45,7 +45,7 @@ private:
   Trustchain::UserId _selfUserId;
 
   Client* _client;
-  TrustchainPuller* _trustchainPuller;
+  ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
 };
 }

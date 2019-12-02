@@ -5,10 +5,9 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Types/Email.hpp>
 
-#include <mockaron/mockaron.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 using Tanker::Trustchain::UserId;
@@ -19,7 +18,7 @@ namespace Tanker
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,
                            Client* client,
-                           TrustchainPuller* trustchainPuller,
+                           ITrustchainPuller* trustchainPuller,
                            ContactStore const* contactStore)
   : _selfUserId(selfUserId),
     _client(client),

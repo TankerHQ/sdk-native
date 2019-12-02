@@ -14,7 +14,7 @@
 
 namespace Tanker
 {
-class TrustchainPuller;
+class ITrustchainPuller;
 class GroupStore;
 
 class GroupAccessor
@@ -32,7 +32,7 @@ public:
 
   GroupAccessor(Trustchain::UserId const& myUserId,
                 Client* client,
-                TrustchainPuller* trustchainPuller,
+                ITrustchainPuller* trustchainPuller,
                 ContactStore const* contactStore,
                 GroupStore* groupstore,
                 UserKeyStore const* userKeyStore,
@@ -55,7 +55,7 @@ public:
 private:
   Trustchain::UserId _myUserId;
   Client* _client;
-  TrustchainPuller* _trustchainPuller;
+  ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
   GroupStore* _groupStore;
   UserKeyStore const* _userKeyStore;

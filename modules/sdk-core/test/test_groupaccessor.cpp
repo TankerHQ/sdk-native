@@ -3,9 +3,9 @@
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Groups/Requests.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -21,17 +21,13 @@ using Tanker::Trustchain::GroupId;
 
 namespace
 {
-class TrustchainPullerStub : public mockaron::mock_impl
+class TrustchainPullerStub : public Tanker::ITrustchainPuller
 {
 public:
-  TrustchainPullerStub()
-  {
-    MOCKARON_DECLARE_IMPL(TrustchainPuller, scheduleCatchUp);
-  }
-
   MAKE_MOCK2(scheduleCatchUp,
-             tc::shared_future<void>(std::vector<Trustchain::UserId>,
-                                     std::vector<Trustchain::GroupId>));
+             tc::shared_future<void>(std::vector<Trustchain::UserId> const&,
+                                     std::vector<Trustchain::GroupId> const&),
+             override);
 };
 
 class RequestMock : public mockaron::mock_impl
@@ -82,14 +78,14 @@ TEST_CASE("GroupAccessor")
              getGroupBlocks(trompeloeil::_, std::vector<GroupId>{}))
       .RETURN(std::vector<Trustchain::ServerEntry>{});
 
-  mockaron::mock<TrustchainPuller, TrustchainPullerStub> trustchainPuller;
+  TrustchainPullerStub trustchainPuller;
   auto const aliceContactStore =
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
   auto const aliceUserKeyStore =
       builder.makeUserKeyStore(alice.user, dbPtr.get());
   GroupAccessor groupAccessor(alice.user.userId,
                               nullptr,
-                              &trustchainPuller.get(),
+                              &trustchainPuller,
                               aliceContactStore.get(),
                               &groupStore,
                               aliceUserKeyStore.get(),
