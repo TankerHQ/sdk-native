@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <sqlpp11/sqlite3/connection.h>
 
 #include <memory>
@@ -17,7 +17,7 @@ using Connection = sqlpp::sqlite3::connection;
 using ConnPtr = std::unique_ptr<sqlpp::sqlite3::connection>;
 
 ConnPtr createConnection(std::string const& dbPath,
-                         nonstd::optional<Crypto::SymmetricKey> userSecret = {},
+                         std::optional<Crypto::SymmetricKey> userSecret = {},
                          bool exclusive = true);
 
 constexpr bool hasCipher()

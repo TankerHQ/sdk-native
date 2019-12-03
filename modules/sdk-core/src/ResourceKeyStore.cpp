@@ -39,7 +39,7 @@ tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<nonstd::optional<Crypto::SymmetricKey>> ResourceKeyStore::findKey(
+tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyStore::findKey(
     ResourceId const& resourceId) const
 {
   TC_RETURN(TC_AWAIT(_db->findResourceKey(resourceId)));

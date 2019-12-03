@@ -27,7 +27,7 @@ namespace Tanker
 {
 namespace Network
 {
-Connection::Connection(std::string url, nonstd::optional<SdkInfo> infos)
+Connection::Connection(std::string url, std::optional<SdkInfo> infos)
   : _url(std::move(url)),
     _infos(std::move(infos)),
 #if TANKER_BUILD_WITH_SSL

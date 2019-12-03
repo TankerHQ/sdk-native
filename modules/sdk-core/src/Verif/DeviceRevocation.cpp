@@ -62,7 +62,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
   }
   size_t const nbrDevicesNotRevoked = std::count_if(
       user.devices.begin(), user.devices.end(), [](auto const& device) {
-        return device.revokedAtBlkIndex == nonstd::nullopt;
+        return device.revokedAtBlkIndex == std::nullopt;
       });
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
               nbrDevicesNotRevoked - 1,

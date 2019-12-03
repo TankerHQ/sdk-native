@@ -11,7 +11,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 #include <stdexcept>
@@ -53,18 +53,18 @@ tc::cotask<void> ContactStore::putUserDevice(UserId const& userId,
   TC_AWAIT(_db->putDevice(userId, device));
 }
 
-tc::cotask<nonstd::optional<User>> ContactStore::findUser(
+tc::cotask<std::optional<User>> ContactStore::findUser(
     UserId const& id) const
 {
   auto devices = TC_AWAIT(_db->getDevicesOf(id));
   if (devices.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto userKey = TC_AWAIT(_db->findContactUserKey(id));
   TC_RETURN((User{id, std::move(userKey), std::move(devices)}));
 }
 
-tc::cotask<nonstd::optional<Device>> ContactStore::findDevice(
+tc::cotask<std::optional<Device>> ContactStore::findDevice(
     Trustchain::DeviceId const& id) const
 {
   TC_RETURN(TC_AWAIT(_db->findDevice(id)));
@@ -76,13 +76,13 @@ tc::cotask<std::vector<Device>> ContactStore::findUserDevices(
   TC_RETURN(TC_AWAIT(_db->getDevicesOf(id)));
 }
 
-tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByUserPublicKey(
+tc::cotask<std::optional<UserId>> ContactStore::findUserIdByUserPublicKey(
     Crypto::PublicEncryptionKey const& userKey) const
 {
   TC_RETURN(TC_AWAIT(_db->findContactUserIdByPublicEncryptionKey(userKey)));
 }
 
-tc::cotask<nonstd::optional<UserId>> ContactStore::findUserIdByDeviceId(
+tc::cotask<std::optional<UserId>> ContactStore::findUserIdByDeviceId(
     Trustchain::DeviceId const& id) const
 {
   TC_RETURN(TC_AWAIT(_db->findDeviceUserId(id)));

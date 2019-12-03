@@ -19,7 +19,7 @@ namespace Verif
 Entry verifyUserGroupCreation(
     ServerEntry const& serverEntry,
     Device const& author,
-    nonstd::optional<ExternalGroup> const& previousGroup)
+    std::optional<ExternalGroup> const& previousGroup)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
          serverEntry.action().nature() == Nature::UserGroupCreation2);

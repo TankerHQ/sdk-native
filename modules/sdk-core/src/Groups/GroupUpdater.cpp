@@ -28,7 +28,7 @@ namespace GroupUpdater
 {
 namespace
 {
-tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     UserKeyStore const& userKeyStore,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
@@ -42,10 +42,10 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
       TC_RETURN(groupPrivateEncryptionKey);
     }
   }
-  TC_RETURN(nonstd::nullopt);
+  TC_RETURN(std::nullopt);
 }
 
-tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
     UserGroupCreation::v2::Members const& groupKeys)
@@ -55,7 +55,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
         return k.userId() == myUserId;
       });
   if (myKeysIt == groupKeys.end())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const userKeyPair =
       TC_AWAIT(userKeyStore.findKeyPair(myKeysIt->userPublicKey()));
@@ -70,7 +70,7 @@ tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
   TC_RETURN(groupPrivateEncryptionKey);
 }
 
-tc::cotask<nonstd::optional<Crypto::PrivateEncryptionKey>>
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>>
 decryptMyProvisionalKey(
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     UserGroupCreation::v2::ProvisionalMembers const& groupKeys)
@@ -88,7 +88,7 @@ decryptMyProvisionalKey(
       TC_RETURN(groupPrivateEncryptionKey);
     }
   }
-  TC_RETURN(nonstd::nullopt);
+  TC_RETURN(std::nullopt);
 }
 
 ExternalGroup makeExternalGroup(Entry const& entry,
@@ -165,7 +165,7 @@ tc::cotask<Group> applyUserGroupCreation(
 {
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
 
-  nonstd::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
+  std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation::v1>())
     groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
         userKeyStore, ugc1->sealedPrivateEncryptionKeysForUsers()));
@@ -189,7 +189,7 @@ tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    nonstd::optional<Group> previousGroup,
+    std::optional<Group> previousGroup,
     Entry const& entry)
 {
   auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
@@ -208,7 +208,7 @@ tc::cotask<Group> applyUserGroupAddition(
   if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
     TC_RETURN(*previousGroup);
 
-  nonstd::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
+  std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const uga1 = userGroupAddition.get_if<UserGroupAddition::v1>())
     groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
         userKeyStore, uga1->sealedPrivateEncryptionKeysForUsers()));
@@ -291,12 +291,12 @@ tc::cotask<DeviceMap> extractAuthors(
   TC_RETURN(out);
 }
 
-tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
+tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     Trustchain::UserId const& myUserId,
     DeviceMap const& authors,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    nonstd::optional<Group> previousGroup,
+    std::optional<Group> previousGroup,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
   for (auto const& serverEntry : serverEntries)
@@ -347,13 +347,13 @@ tc::cotask<nonstd::optional<Group>> processGroupEntriesWithAuthors(
 }
 }
 
-tc::cotask<nonstd::optional<Group>> processGroupEntries(
+tc::cotask<std::optional<Group>> processGroupEntries(
     Trustchain::UserId const& myUserId,
     TrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
-    nonstd::optional<Group> const& previousGroup,
+    std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
   auto const authors =

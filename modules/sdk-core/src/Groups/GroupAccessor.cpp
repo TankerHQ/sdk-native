@@ -100,13 +100,13 @@ GroupAccessor::getPublicEncryptionKeys(
   TC_RETURN(out);
 }
 
-tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 GroupAccessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
-  MOCKARON_HOOK_CUSTOM(tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>(
+  MOCKARON_HOOK_CUSTOM(tc::cotask<std::optional<Crypto::EncryptionKeyPair>>(
                            Crypto::PublicEncryptionKey const&),
-                       nonstd::optional<Crypto::EncryptionKeyPair>,
+                       std::optional<Crypto::EncryptionKeyPair>,
                        GroupAccessor,
                        getEncryptionKeyPair,
                        TC_RETURN,
@@ -123,7 +123,7 @@ GroupAccessor::getEncryptionKeyPair(
       TC_AWAIT(Groups::Requests::getGroupBlocks(_client, publicEncryptionKey));
 
   if (entries.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const group =
       TC_AWAIT(GroupUpdater::processGroupEntries(_myUserId,
@@ -131,7 +131,7 @@ GroupAccessor::getEncryptionKeyPair(
                                                  *_contactStore,
                                                  *_userKeyStore,
                                                  *_provisionalUserKeysStore,
-                                                 nonstd::nullopt,
+                                                 std::nullopt,
                                                  entries));
   if (!group)
     throw Errors::AssertionError(
@@ -144,7 +144,7 @@ GroupAccessor::getEncryptionKeyPair(
           boost::variant2::get_if<InternalGroup>(&*group))
     TC_RETURN(internalGroup->encryptionKeyPair);
   else
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 }
 
 tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
@@ -199,7 +199,7 @@ tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
                                                      *_contactStore,
                                                      *_userKeyStore,
                                                      *_provisionalUserKeysStore,
-                                                     nonstd::nullopt,
+                                                     std::nullopt,
                                                      groupEntriesIt->second));
       if (!group)
         throw Errors::AssertionError(

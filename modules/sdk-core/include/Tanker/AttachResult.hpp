@@ -3,14 +3,14 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 namespace Tanker
 {
 struct AttachResult
 {
   Tanker::Status status;
-  nonstd::optional<Unlock::VerificationMethod> verificationMethod;
+  std::optional<Unlock::VerificationMethod> verificationMethod;
 };
 
 bool operator==(AttachResult const& l, AttachResult const& r);

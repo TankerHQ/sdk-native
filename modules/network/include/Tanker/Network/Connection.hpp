@@ -6,7 +6,7 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <sio_client.h>
 
 #include <string>
@@ -23,7 +23,7 @@ public:
   Connection& operator=(Connection const&) = delete;
   Connection& operator=(Connection&&) = delete;
 
-  Connection(std::string url, nonstd::optional<SdkInfo>);
+  Connection(std::string url, std::optional<SdkInfo>);
 
   bool isOpen() const override;
   void connect() override;
@@ -36,7 +36,7 @@ public:
 
 private:
   std::string _url;
-  nonstd::optional<SdkInfo> _infos;
+  std::optional<SdkInfo> _infos;
 
   tc::task_auto_canceler _taskCanceler;
   sio::client _client;

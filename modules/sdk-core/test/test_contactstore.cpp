@@ -11,7 +11,7 @@
 #include "TrustchainBuilder.hpp"
 
 #include <doctest.h>
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 using namespace Tanker;
@@ -29,7 +29,7 @@ TEST_CASE("ContactStore")
   {
     auto const unexistentUserId = make<Trustchain::UserId>("unexistent");
 
-    CHECK_EQ(AWAIT(contacts.findUser(unexistentUserId)), nonstd::nullopt);
+    CHECK_EQ(AWAIT(contacts.findUser(unexistentUserId)), std::nullopt);
   }
 
   SUBCASE("it should throw when adding a user twice")
@@ -86,7 +86,7 @@ TEST_CASE("ContactStore")
   {
     auto const unexistentDeviceId = make<Trustchain::DeviceId>("unexistent");
 
-    CHECK_EQ(AWAIT(contacts.findDevice(unexistentDeviceId)), nonstd::nullopt);
+    CHECK_EQ(AWAIT(contacts.findDevice(unexistentDeviceId)), std::nullopt);
   }
 
   SUBCASE("it should find a device that was inserted")
@@ -133,7 +133,7 @@ TEST_CASE("ContactStore")
     AWAIT_VOID(contacts.putUserKey(
         alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
     CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
-             nonstd::nullopt);
+             std::nullopt);
   }
 
   SUBCASE("it should find a userId with a valid userPublicKey")
@@ -165,7 +165,7 @@ TEST_CASE("ContactStore")
     AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(
         alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
     CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
-             nonstd::nullopt);
+             std::nullopt);
   }
 
   SUBCASE("it should find a userId with an updated userPublicKey")

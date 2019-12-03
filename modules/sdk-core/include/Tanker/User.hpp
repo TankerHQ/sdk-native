@@ -3,7 +3,7 @@
 #include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <vector>
 
@@ -12,7 +12,7 @@ namespace Tanker
 struct User
 {
   Trustchain::UserId id;
-  nonstd::optional<Crypto::PublicEncryptionKey> userKey;
+  std::optional<Crypto::PublicEncryptionKey> userKey;
   std::vector<Device> devices;
 };
 

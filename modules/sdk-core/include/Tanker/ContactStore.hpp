@@ -4,7 +4,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/User.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -34,15 +34,15 @@ public:
   tc::cotask<void> putUserDevice(Trustchain::UserId const& id,
                                  Device const& device);
 
-  tc::cotask<nonstd::optional<User>> findUser(
+  tc::cotask<std::optional<User>> findUser(
       Trustchain::UserId const& id) const;
-  tc::cotask<nonstd::optional<Device>> findDevice(
+  tc::cotask<std::optional<Device>> findDevice(
       Trustchain::DeviceId const& id) const;
   tc::cotask<std::vector<Device>> findUserDevices(
       Trustchain::UserId const& id) const;
-  tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByUserPublicKey(
+  tc::cotask<std::optional<Trustchain::UserId>> findUserIdByUserPublicKey(
       Crypto::PublicEncryptionKey const& userKey) const;
-  tc::cotask<nonstd::optional<Trustchain::UserId>> findUserIdByDeviceId(
+  tc::cotask<std::optional<Trustchain::UserId>> findUserIdByDeviceId(
       Trustchain::DeviceId const& id) const;
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& id,

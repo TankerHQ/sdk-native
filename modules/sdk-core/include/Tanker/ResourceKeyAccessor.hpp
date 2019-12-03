@@ -8,7 +8,7 @@
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 namespace Tanker
 {
@@ -27,7 +27,7 @@ public:
   ResourceKeyAccessor& operator=(ResourceKeyAccessor const&) = delete;
   ResourceKeyAccessor& operator=(ResourceKeyAccessor&&) = delete;
 
-  tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findKey(
+  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId);
 
 private:

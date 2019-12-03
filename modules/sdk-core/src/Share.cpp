@@ -144,8 +144,8 @@ void handleNotFound(
               boost::variant2::get_if<Identity::PublicPermanentIdentity>(
                   &identity);
           return permanentIdentity ?
-                     nonstd::make_optional(permanentIdentity->userId) :
-                     nonstd::nullopt;
+                     std::make_optional(permanentIdentity->userId) :
+                     std::nullopt;
         });
     auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
     throw Errors::formatEx(

@@ -10,7 +10,7 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 namespace Tanker
 {
@@ -49,7 +49,7 @@ public:
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds);
   // This function can only return keys for groups you are a member of
-  tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>> getEncryptionKeyPair(
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getEncryptionKeyPair(
       Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
 private:

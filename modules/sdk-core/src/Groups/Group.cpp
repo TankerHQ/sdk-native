@@ -27,7 +27,7 @@ bool operator!=(InternalGroup const& l, InternalGroup const& r)
 ExternalGroup::ExternalGroup(
     GroupId const& id,
     Crypto::PublicSignatureKey const& publicSignatureKey,
-    nonstd::optional<Crypto::SealedPrivateSignatureKey> const& enc,
+    std::optional<Crypto::SealedPrivateSignatureKey> const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::Hash const& lastBlockHash,
     uint64_t lastBlockIndex)
@@ -43,7 +43,7 @@ ExternalGroup::ExternalGroup(
 ExternalGroup::ExternalGroup(InternalGroup const& group)
   : id(group.id),
     publicSignatureKey(group.signatureKeyPair.publicKey),
-    encryptedPrivateSignatureKey(nonstd::nullopt),
+    encryptedPrivateSignatureKey(std::nullopt),
     publicEncryptionKey(group.encryptionKeyPair.publicKey),
     lastBlockHash(group.lastBlockHash),
     lastBlockIndex(group.lastBlockIndex)

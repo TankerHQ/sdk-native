@@ -25,12 +25,12 @@ using namespace Tanker::Errors;
 namespace
 {
 template <typename T>
-nonstd::optional<T> nullableToOpt(char const* str)
+std::optional<T> nullableToOpt(char const* str)
 {
   if (str && *str)
     return T(str);
   else
-    return nonstd::nullopt;
+    return std::nullopt;
 }
 
 Unlock::Verification cverificationToVerification(

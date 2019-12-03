@@ -28,7 +28,7 @@ User::User(std::string trustchainUrl,
     suserId(createRandomUserId()),
     identity(Identity::createIdentity(
         this->trustchainId, trustchainPrivateSignatureKey, suserId)),
-    userToken(nonstd::nullopt)
+    userToken(std::nullopt)
 {
 }
 

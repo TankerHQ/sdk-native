@@ -125,8 +125,8 @@ tc::cotask<void> Admin::deleteTrustchain(
 }
 
 tc::cotask<void> Admin::update(Trustchain::TrustchainId const& trustchainId,
-                               nonstd::optional<std::string> oidcClientId,
-                               nonstd::optional<std::string> oidcProvider)
+                               std::optional<std::string> oidcClientId,
+                               std::optional<std::string> oidcProvider)
 {
   auto request = nlohmann::json{{"id", trustchainId}};
   if (oidcClientId)

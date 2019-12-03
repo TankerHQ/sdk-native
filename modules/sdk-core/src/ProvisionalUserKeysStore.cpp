@@ -24,7 +24,7 @@ tc::cotask<void> ProvisionalUserKeysStore::putProvisionalUserKeys(
       appPublicSigKey, tankerPublicSigKey, provisionalUserKeys));
 }
 
-tc::cotask<nonstd::optional<ProvisionalUserKeys>>
+tc::cotask<std::optional<ProvisionalUserKeys>>
 ProvisionalUserKeysStore::findProvisionalUserKeys(
     Crypto::PublicSignatureKey const& appPublicSigKey,
     Crypto::PublicSignatureKey const& tankerPublicSigKey) const
@@ -33,7 +33,7 @@ ProvisionalUserKeysStore::findProvisionalUserKeys(
       _db->findProvisionalUserKeys(appPublicSigKey, tankerPublicSigKey)));
 }
 
-tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
 ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const
 {

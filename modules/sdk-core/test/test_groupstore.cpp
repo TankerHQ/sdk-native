@@ -27,7 +27,7 @@ TEST_CASE("GroupStore")
   auto const externalGroup = ExternalGroup{
       make<GroupId>("group id"),
       group.signatureKeyPair.publicKey,
-      nonstd::nullopt,
+      std::nullopt,
       group.encryptionKeyPair.publicKey,
       make<Crypto::Hash>("last block hash"),
       1234,
@@ -44,10 +44,10 @@ TEST_CASE("GroupStore")
 
     CHECK_EQ(
         AWAIT(groupStore.findInternalByPublicEncryptionKey(unexistentGroupKey)),
-        nonstd::nullopt);
-    CHECK_EQ(AWAIT(groupStore.findById(unexistentGroupId)), nonstd::nullopt);
+        std::nullopt);
+    CHECK_EQ(AWAIT(groupStore.findById(unexistentGroupId)), std::nullopt);
     CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(unexistentGroupKey)),
-             nonstd::nullopt);
+             std::nullopt);
   }
 
   SUBCASE("it should find a group that was inserted")
@@ -74,7 +74,7 @@ TEST_CASE("GroupStore")
              Group{externalGroupWithKey});
     CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
-             nonstd::nullopt);
+             std::nullopt);
   }
 
   SUBCASE("it should overwrite a group that was previously inserted")

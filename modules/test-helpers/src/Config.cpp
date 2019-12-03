@@ -5,7 +5,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <algorithm>
 #include <array>
@@ -57,7 +57,7 @@ struct TestConfig
   ServerConfig serverConfig;
   OidcConfig oidcConfig;
 };
-nonstd::optional<TestConfig> testConfig;
+std::optional<TestConfig> testConfig;
 
 auto selectConfig(nlohmann::json const& configs,
                   std::string const& serverConfig,

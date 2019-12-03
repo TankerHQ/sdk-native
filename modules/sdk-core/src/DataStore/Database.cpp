@@ -36,7 +36,7 @@
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <sqlite3.h>
 #include <sqlpp11/functions.h>
 #include <sqlpp11/insert.h>
@@ -119,7 +119,7 @@ struct KeyPublishRecipientVisitor
 template <typename Row>
 Device rowToDevice(Row const& row)
 {
-  nonstd::optional<uint64_t> revokedAtBlockIndex;
+  std::optional<uint64_t> revokedAtBlockIndex;
   if (!row.revoked_at_block_index.is_null())
     revokedAtBlockIndex = static_cast<uint64_t>(row.revoked_at_block_index);
 
@@ -178,7 +178,7 @@ ExternalGroup rowToExternalGroup(T const& row)
       DataStore::extractBlob<Crypto::PublicSignatureKey>(
           row.public_signature_key),
       row.encrypted_private_signature_key.is_null() ?
-          nonstd::optional<Crypto::SealedPrivateSignatureKey>{} :
+          std::optional<Crypto::SealedPrivateSignatureKey>{} :
           DataStore::extractBlob<Crypto::SealedPrivateSignatureKey>(
               row.encrypted_private_signature_key),
       DataStore::extractBlob<Crypto::PublicEncryptionKey>(
@@ -254,7 +254,7 @@ using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
 Database::Database(std::string const& dbPath,
-                   nonstd::optional<Crypto::SymmetricKey> const& userSecret,
+                   std::optional<Crypto::SymmetricKey> const& userSecret,
                    bool exclusive)
   : _db(createConnection(dbPath, userSecret, exclusive))
 {
@@ -498,7 +498,7 @@ tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
           row.private_encryption_key)}));
 }
 
-tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 Database::getUserOptLastKeyPair()
 {
   FUNC_TIMER(DB);
@@ -511,17 +511,17 @@ Database::getUserOptLastKeyPair()
                  .limit(1u)
                  .unconditionally());
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = *rows.begin();
 
-  TC_RETURN((nonstd::optional<Crypto::EncryptionKeyPair>{
+  TC_RETURN((std::optional<Crypto::EncryptionKeyPair>{
       {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
            row.public_encryption_key),
        DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
            row.private_encryption_key)}}));
 }
 
-tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
+tc::cotask<std::optional<uint64_t>> Database::findTrustchainLastIndex()
 {
   FUNC_TIMER(DB);
   TrustchainInfoTable tab{};
@@ -533,11 +533,11 @@ tc::cotask<nonstd::optional<uint64_t>> Database::findTrustchainLastIndex()
         "trustchain_info table must have a single row");
   }
   if (rows.front().last_index.is_null())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   TC_RETURN(static_cast<uint64_t>(rows.front().last_index));
 }
 
-tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+tc::cotask<std::optional<Crypto::PublicSignatureKey>>
 Database::findTrustchainPublicSignatureKey()
 {
   FUNC_TIMER(DB);
@@ -550,7 +550,7 @@ Database::findTrustchainPublicSignatureKey()
         "trustchain_info table must have a single row");
   }
   if (rows.front().trustchain_public_signature_key.is_null())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
       rows.front().trustchain_public_signature_key));
 }
@@ -587,7 +587,7 @@ tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
+tc::cotask<std::optional<Entry>> Database::findTrustchainEntry(
     Crypto::Hash const& hash)
 {
   FUNC_TIMER(DB);
@@ -597,13 +597,13 @@ tc::cotask<nonstd::optional<Entry>> Database::findTrustchainEntry(
       (*_db)(select(all_of(tab)).from(tab).where(tab.hash == hash.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   TC_RETURN(rowToEntry(*rows.begin()));
 }
 
 tc::cotask<void> Database::putContact(
     UserId const& userId,
-    nonstd::optional<Crypto::PublicEncryptionKey> const& publicKey)
+    std::optional<Crypto::PublicEncryptionKey> const& publicKey)
 {
   FUNC_TIMER(DB);
   ContactUserKeysTable tab{};
@@ -624,7 +624,7 @@ tc::cotask<void> Database::putContact(
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Trustchain::Actions::KeyPublish>>
+tc::cotask<std::optional<Trustchain::Actions::KeyPublish>>
 Database::findKeyPublish(Trustchain::ResourceId const& resourceId)
 {
   FUNC_TIMER(DB);
@@ -635,12 +635,12 @@ Database::findKeyPublish(Trustchain::ResourceId const& resourceId)
                          .where(tab.resource_id == resourceId.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = *rows.begin();
   TC_RETURN(rowToKeyPublish(row));
 }
 
-tc::cotask<nonstd::optional<Crypto::PublicEncryptionKey>>
+tc::cotask<std::optional<Crypto::PublicEncryptionKey>>
 Database::findContactUserKey(UserId const& userId)
 {
   FUNC_TIMER(DB);
@@ -650,17 +650,17 @@ Database::findContactUserKey(UserId const& userId)
                          .where(tab.user_id == userId.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
   if (row.public_encryption_key.is_null())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   TC_RETURN(DataStore::extractBlob<Crypto::PublicEncryptionKey>(
       row.public_encryption_key));
 }
 
-tc::cotask<nonstd::optional<UserId>>
+tc::cotask<std::optional<UserId>>
 Database::findContactUserIdByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& userPublicKey)
 {
@@ -672,7 +672,7 @@ Database::findContactUserIdByPublicEncryptionKey(
                  .where(tab.public_encryption_key == userPublicKey.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
 
@@ -701,7 +701,7 @@ tc::cotask<void> Database::putResourceKey(ResourceId const& resourceId,
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
+tc::cotask<std::optional<Crypto::SymmetricKey>> Database::findResourceKey(
     ResourceId const& resourceId)
 {
   FUNC_TIMER(DB);
@@ -709,7 +709,7 @@ tc::cotask<nonstd::optional<Crypto::SymmetricKey>> Database::findResourceKey(
   auto rows = (*_db)(
       select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = rows.front();
 
   TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
@@ -733,7 +733,7 @@ tc::cotask<void> Database::putProvisionalUserKeys(
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
 Database::findProvisionalUserKeys(
     Crypto::PublicSignatureKey const& appPublicSigKey,
     Crypto::PublicSignatureKey const& tankerPublicSigKey)
@@ -749,7 +749,7 @@ Database::findProvisionalUserKeys(
                  .where(tab.app_pub_sig_key == appPublicSigKey.base() and
                         tab.tanker_pub_sig_key == tankerPublicSigKey.base()));
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = rows.front();
   Tanker::ProvisionalUserKeys ret{
       {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
@@ -760,7 +760,7 @@ Database::findProvisionalUserKeys(
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
 Database::findProvisionalUserKeysByAppPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& appPublicEncryptionKey)
 {
@@ -774,7 +774,7 @@ Database::findProvisionalUserKeysByAppPublicEncryptionKey(
                  .from(tab)
                  .where(tab.app_enc_pub == appPublicEncryptionKey.base()));
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = rows.front();
   Tanker::ProvisionalUserKeys ret{
       {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
@@ -785,7 +785,7 @@ Database::findProvisionalUserKeysByAppPublicEncryptionKey(
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
+tc::cotask<std::optional<DeviceKeys>> Database::getDeviceKeys()
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
@@ -797,7 +797,7 @@ tc::cotask<nonstd::optional<DeviceKeys>> Database::getDeviceKeys()
                          .from(tab)
                          .unconditionally());
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = rows.front();
   TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -832,16 +832,16 @@ tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Trustchain::DeviceId>> Database::getDeviceId()
+tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
   auto rows = (*_db)(select(tab.device_id).from(tab).unconditionally());
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   auto const& row = rows.front();
   if (row.device_id.len == 0)
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
@@ -862,7 +862,7 @@ tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Device>> Database::findDevice(
+tc::cotask<std::optional<Device>> Database::findDevice(
     Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
@@ -870,7 +870,7 @@ tc::cotask<nonstd::optional<Device>> Database::findDevice(
 
   auto rows = (*_db)(select(all_of(tab)).from(tab).where(tab.id == id.base()));
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
 
@@ -891,7 +891,7 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
+tc::cotask<std::optional<UserId>> Database::findDeviceUserId(
     Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
@@ -899,7 +899,7 @@ tc::cotask<nonstd::optional<UserId>> Database::findDeviceUserId(
 
   auto rows = (*_db)(select(tab.user_id).from(tab).where(tab.id == id.base()));
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
 
@@ -962,7 +962,7 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
   TC_RETURN();
 }
 
-tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
+tc::cotask<std::optional<Group>> Database::findGroupByGroupId(
     GroupId const& groupId)
 {
   FUNC_TIMER(DB);
@@ -973,14 +973,14 @@ tc::cotask<nonstd::optional<Group>> Database::findGroupByGroupId(
                          .where(groups.group_id == groupId.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
 
   TC_RETURN(rowToGroup(row));
 }
 
-tc::cotask<nonstd::optional<Group>>
+tc::cotask<std::optional<Group>>
 Database::findGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
@@ -993,7 +993,7 @@ Database::findGroupByGroupPublicEncryptionKey(
           .where(groups.public_encryption_key == publicEncryptionKey.base()));
 
   if (rows.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
   auto const& row = *rows.begin();
 

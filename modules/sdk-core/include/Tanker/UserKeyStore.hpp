@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -25,12 +25,12 @@ public:
   tc::cotask<void> putPrivateKey(
       Crypto::PublicEncryptionKey const& publicKey,
       Crypto::PrivateEncryptionKey const& privateKey);
-  tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>> findKeyPair(
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> findKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) const;
   tc::cotask<Crypto::EncryptionKeyPair> getKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) const;
 
-  tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>> getOptLastKeyPair()
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getOptLastKeyPair()
       const;
   tc::cotask<Crypto::EncryptionKeyPair> getLastKeyPair() const;
   tc::cotask<bool> isEmpty() const;

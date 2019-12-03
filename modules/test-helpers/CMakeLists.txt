@@ -35,4 +35,4 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt CONAN_PKG::optional-lite)
+target_link_libraries(tankertesthelpers tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt)
