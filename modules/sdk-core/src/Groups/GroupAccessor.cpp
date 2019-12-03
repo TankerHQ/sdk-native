@@ -91,11 +91,14 @@ GroupAccessor::getPublicEncryptionKeys(
       out.notFound.push_back(groupId);
   }
 
-  auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
+  if (!out.notFound.empty())
+  {
+    auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
 
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto const& group : groupPullResult.found)
-    out.found.push_back(getPublicEncryptionKey(group));
+    out.notFound = std::move(groupPullResult.notFound);
+    for (auto const& group : groupPullResult.found)
+      out.found.push_back(getPublicEncryptionKey(group));
+  }
 
   TC_RETURN(out);
 }
