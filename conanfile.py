@@ -87,6 +87,9 @@ class TankerConan(ConanFile):
         self.requires("mockaron/0.10.0@tanker/stable", private=private)
         self.requires("optional-lite/3.1.1@tanker/testing", private=private)
         self.requires("tconcurrent/0.28.1@tanker/stable", private=private)
+        # Hack to be able to import libc++{abi}.a later on
+        if self.settings.os == "iOS":
+            self.requires("libc++/9.0@tanker/testing", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
@@ -101,15 +104,12 @@ class TankerConan(ConanFile):
             self.options["Boost"].header_only = True
             self.options["emscripten-toolchain"].filesystem = False
 
-        if tools.cross_building(self.settings):
-            del self.settings.compiler.libcxx
-
     def build_requirements(self):
         if self.should_build_tests:
             self.build_requires("docopt.cpp/0.6.2@tanker/testing")
             self.build_requires("doctest/2.3.5@tanker/testing")
             self.build_requires("doctest-async/2.3.5-tanker2@tanker/testing")
-            self.build_requires("trompeloeil/v29@tanker/testing")
+            self.build_requires("trompeloeil/v35@tanker/testing")
             if self.should_build_bench:
                 self.build_requires("google-benchmark/1.4.1@tanker/testing")
 

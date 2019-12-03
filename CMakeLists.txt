@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.4)
 project(tanker)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
@@ -83,7 +84,7 @@ endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # warns about void foo(); (should be void foo(void);).
   tanker_add_flags(CMAKE_C_FLAGS "-Wstrict-prototypes")
-  set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type -Wno-c++17-extensions")
+  set(COMMON_COMPILE_FLAGS "-Wall -Wextra -pedantic -Wno-unused-parameter -Wmissing-declarations -Werror=return-type")
   if(WARN_AS_ERROR)
     tanker_add_flags(CMAKE_CXX_FLAGS "-Werror")
   endif()
