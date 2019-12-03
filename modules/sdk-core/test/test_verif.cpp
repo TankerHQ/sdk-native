@@ -205,7 +205,7 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
   {
     alter(gcEntry, &ServerEntry::signature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -214,7 +214,7 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
     auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
     alter(userGroupCreation, &UserGroupCreation::selfSignature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidSignature);
   }
 
@@ -222,14 +222,14 @@ void testUserGroupCreationCommon(Tanker::Device& authorDevice,
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt),
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
   {
     CHECK_NOTHROW(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, nonstd::nullopt));
+        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt));
   }
 }
 
@@ -242,7 +242,7 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
   SUBCASE("should reject a UserGroupAddition for an unknown group")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, nonstd::nullopt),
+        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, std::nullopt),
         Errc::InvalidGroup);
   }
 
@@ -409,7 +409,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
   SUBCASE("should reject a device creation 3 if the user has no user key")
   {
-    tankerUser.userKey = nonstd::nullopt;
+    tankerUser.userKey = std::nullopt;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, authorDevice, tankerUser),

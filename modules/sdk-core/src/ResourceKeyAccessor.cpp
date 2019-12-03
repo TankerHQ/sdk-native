@@ -26,7 +26,7 @@ ResourceKeyAccessor::ResourceKeyAccessor(
 // - from the resource key store
 // - from the tanker server
 // In all cases, we put the key in the resource key store
-tc::cotask<nonstd::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
+tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
     Trustchain::ResourceId const& resourceId)
 {
   auto key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));

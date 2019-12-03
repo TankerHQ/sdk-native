@@ -20,7 +20,7 @@ tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Crypto::init();
         const auto admin = new Admin::Admin(
-            Network::ConnectionFactory::create(url, nonstd::nullopt), idToken);
+            Network::ConnectionFactory::create(url, std::nullopt), idToken);
         TC_AWAIT(admin->start());
         TC_RETURN(static_cast<void*>(admin));
       }));

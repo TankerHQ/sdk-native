@@ -442,7 +442,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
                    .findProvisionalUserKeysByAppPublicEncryptionKey(
                        provisionalIdentity.appEncryptionKeyPair.publicKey)))
   {
-    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
+    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
   auto const email = Email{provisionalIdentity.value};
   try
@@ -464,7 +464,7 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
       TC_AWAIT(_client->pushBlock(block));
       TC_AWAIT(syncTrustchain());
     }
-    TC_RETURN((AttachResult{Tanker::Status::Ready, nonstd::nullopt}));
+    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
   catch (Tanker::Errors::Exception const& e)
   {
@@ -540,7 +540,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
   Device createdDevice{deviceId,
                        entry.index,
-                       nonstd::nullopt,
+                       std::nullopt,
                        deviceCreation.publicSignatureKey(),
                        deviceCreation.publicEncryptionKey(),
                        deviceCreation.isGhostDevice()};

@@ -4,7 +4,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 namespace Tanker
 {
@@ -14,6 +14,6 @@ namespace Verif
 {
 Entry verifyUserGroupCreation(Trustchain::ServerEntry const& serverEntry,
                               Device const& author,
-                              nonstd::optional<ExternalGroup> const& group);
+                              std::optional<ExternalGroup> const& group);
 }
 }

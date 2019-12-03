@@ -4,7 +4,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Log/Log.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY(GroupStore);
@@ -35,28 +35,28 @@ tc::cotask<void> GroupStore::put(ExternalGroup const& group)
   TC_AWAIT(_db->putExternalGroup(group));
 }
 
-tc::cotask<nonstd::optional<Group>> GroupStore::findById(
+tc::cotask<std::optional<Group>> GroupStore::findById(
     GroupId const& groupId) const
 {
   TC_RETURN(TC_AWAIT(_db->findGroupByGroupId(groupId)));
 }
 
-tc::cotask<nonstd::optional<InternalGroup>>
+tc::cotask<std::optional<InternalGroup>>
 GroupStore::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   auto const group =
       TC_AWAIT(_db->findGroupByGroupPublicEncryptionKey(publicEncryptionKey));
   if (!group)
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
   else if (auto const internalGroup =
                boost::variant2::get_if<InternalGroup>(&*group))
     TC_RETURN(*internalGroup);
   else
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 }
 
-tc::cotask<nonstd::optional<Group>> GroupStore::findByPublicEncryptionKey(
+tc::cotask<std::optional<Group>> GroupStore::findByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   TC_RETURN(

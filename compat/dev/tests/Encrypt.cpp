@@ -28,7 +28,7 @@ struct EncryptCompat : Command
     Tanker::saveJson(statePath,
                      ShareState{alice.user,
                                 bob.user,
-                                nonstd::nullopt,
+                                std::nullopt,
                                 EncryptState{clearData, encryptedData}});
   }
 

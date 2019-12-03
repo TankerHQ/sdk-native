@@ -29,14 +29,14 @@ public:
   GroupAccessorFake()
   {
     MOCKARON_DECLARE_IMPL_CUSTOM(
-        tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>(
+        tc::cotask<std::optional<Crypto::EncryptionKeyPair>>(
             Crypto::PublicEncryptionKey const&),
-        nonstd::optional<Crypto::EncryptionKeyPair>,
+        std::optional<Crypto::EncryptionKeyPair>,
         GroupAccessor,
         getEncryptionKeyPair);
   }
 
-  nonstd::optional<Crypto::EncryptionKeyPair> getEncryptionKeyPair(
+  std::optional<Crypto::EncryptionKeyPair> getEncryptionKeyPair(
       Crypto::PublicEncryptionKey const& publicEncryptionKey)
   {
     auto const group = findGroup(publicEncryptionKey);
@@ -44,11 +44,11 @@ public:
       if (auto const internalGroup =
               boost::variant2::get_if<InternalGroup>(&*group))
         return internalGroup->encryptionKeyPair;
-    return nonstd::nullopt;
+    return std::nullopt;
   }
 
 private:
-  nonstd::optional<Group> findGroup(
+  std::optional<Group> findGroup(
       Crypto::PublicEncryptionKey const& publicEncryptionKey)
   {
     auto const groupIt =
@@ -57,7 +57,7 @@ private:
         });
 
     if (groupIt == groups.end())
-      return nonstd::nullopt;
+      return std::nullopt;
     else
       return *groupIt;
   }

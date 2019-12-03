@@ -6,7 +6,7 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <string>
 
 namespace Tanker
@@ -26,7 +26,7 @@ public:
   std::string trustchainId;
   SUserId suserId;
   std::string identity;
-  nonstd::optional<std::string> userToken;
+  std::optional<std::string> userToken;
 
   User() = default;
 

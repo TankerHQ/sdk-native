@@ -4,7 +4,7 @@
 #include <Tanker/Serialization/detail/static_const.hpp>
 
 #include <boost/variant2/variant.hpp>
-#include <optional.hpp>
+#include <optional>
 
 #include <cstddef>
 #include <map>
@@ -61,7 +61,7 @@ constexpr std::size_t serialized_size(T const& number)
 }
 
 template <typename T>
-std::size_t serialized_size(nonstd::optional<T> const& opt)
+std::size_t serialized_size(std::optional<T> const& opt)
 {
   if (!opt)
     return 0;

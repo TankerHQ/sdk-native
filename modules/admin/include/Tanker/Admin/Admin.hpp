@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional.hpp>
+#include <optional>
 #include <string>
 
 namespace Tanker
@@ -40,8 +40,8 @@ public:
       bool isTest,
       bool storePrivateKey);
   tc::cotask<void> update(Trustchain::TrustchainId const& trustchainId,
-                          nonstd::optional<std::string> oidcClientId,
-                          nonstd::optional<std::string> oidcProvider);
+                          std::optional<std::string> oidcClientId,
+                          std::optional<std::string> oidcProvider);
   tc::cotask<void> deleteTrustchain(
       Trustchain::TrustchainId const& trustchainId);
   tc::cotask<VerificationCode> getVerificationCode(

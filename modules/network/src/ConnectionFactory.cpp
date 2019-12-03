@@ -11,7 +11,7 @@ namespace Tanker
 namespace Network
 {
 ConnectionPtr ConnectionFactory::create(std::string url,
-                                        nonstd::optional<SdkInfo> info)
+                                        std::optional<SdkInfo> info)
 {
 #ifndef EMSCRIPTEN
   return std::make_unique<Connection>(std::move(url), std::move(info));

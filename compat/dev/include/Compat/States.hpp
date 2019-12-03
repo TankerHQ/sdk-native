@@ -5,7 +5,7 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <string>
 #include <vector>
@@ -23,7 +23,7 @@ struct ShareState
 {
   Tanker::Functional::User alice;
   Tanker::Functional::User bob;
-  nonstd::optional<Tanker::SGroupId> groupId;
+  std::optional<Tanker::SGroupId> groupId;
   EncryptState encryptState;
 };
 

@@ -7,7 +7,7 @@
 #include <Tanker/Groups/GroupProvisionalUser.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <boost/variant2/variant.hpp>
 
@@ -36,7 +36,7 @@ struct ExternalGroup
   ExternalGroup& operator=(ExternalGroup&&) = default;
   ExternalGroup(Trustchain::GroupId const&,
                 Crypto::PublicSignatureKey const&,
-                nonstd::optional<Crypto::SealedPrivateSignatureKey> const&,
+                std::optional<Crypto::SealedPrivateSignatureKey> const&,
                 Crypto::PublicEncryptionKey const&,
                 Crypto::Hash const&,
                 uint64_t lastBlockIndex);
@@ -44,7 +44,7 @@ struct ExternalGroup
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
-  nonstd::optional<Crypto::SealedPrivateSignatureKey>
+  std::optional<Crypto::SealedPrivateSignatureKey>
       encryptedPrivateSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
@@ -59,11 +59,11 @@ using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
 ExternalGroup extractExternalGroup(Group const& group);
 
 // optional has no .map()
-inline nonstd::optional<ExternalGroup> extractExternalGroup(
-    nonstd::optional<Group> const& group)
+inline std::optional<ExternalGroup> extractExternalGroup(
+    std::optional<Group> const& group)
 {
   if (!group)
-    return nonstd::nullopt;
+    return std::nullopt;
   return extractExternalGroup(*group);
 }
 

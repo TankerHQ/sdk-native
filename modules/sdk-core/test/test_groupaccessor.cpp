@@ -192,7 +192,7 @@ TEST_CASE("GroupAccessor")
     auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
         bobGroup.group.tankerGroup.encryptionKeyPair.publicKey));
 
-    CHECK_EQ(encryptionKeyPair, nonstd::nullopt);
+    CHECK_EQ(encryptionKeyPair, std::nullopt);
   }
 
   SUBCASE(

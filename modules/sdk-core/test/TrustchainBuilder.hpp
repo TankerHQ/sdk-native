@@ -23,7 +23,7 @@
 #include <Tanker/User.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <set>
 #include <string>
@@ -163,7 +163,7 @@ public:
                                           User const& user,
                                           bool unsafe = false);
 
-  nonstd::optional<User> findUser(std::string const& suserId) const;
+  std::optional<User> findUser(std::string const& suserId) const;
 
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;

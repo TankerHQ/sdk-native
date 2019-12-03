@@ -71,7 +71,7 @@ bool isEncryptedDb(std::string const& dbPath)
 }
 
 std::string hexUserSecret(
-    nonstd::optional<Crypto::SymmetricKey> const& userSecret)
+    std::optional<Crypto::SymmetricKey> const& userSecret)
 {
   if (!userSecret)
     return {};
@@ -84,7 +84,7 @@ std::string hexUserSecret(
 }
 
 ConnPtr createConnection(std::string const& dbPath,
-                         nonstd::optional<Crypto::SymmetricKey> userSecret,
+                         std::optional<Crypto::SymmetricKey> userSecret,
                          bool exclusive)
 {
   TINFO("creating database {}", dbPath);

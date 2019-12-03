@@ -108,7 +108,7 @@ TEST_CASE("trustchain")
   {
     TrustchainStore trustchain(dbPtr.get());
 
-    CHECK_EQ(AWAIT(trustchain.findPublicSignatureKey()), nonstd::nullopt);
+    CHECK_EQ(AWAIT(trustchain.findPublicSignatureKey()), std::nullopt);
   }
 
   SUBCASE("it should add entries to the trustchain and update last index")

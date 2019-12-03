@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -27,10 +27,10 @@ public:
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey,
       ProvisionalUserKeys const& provisionalUserKeys);
-  tc::cotask<nonstd::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
+  tc::cotask<std::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) const;
-  tc::cotask<nonstd::optional<Tanker::ProvisionalUserKeys>>
+  tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
   findProvisionalUserKeysByAppPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const;
 

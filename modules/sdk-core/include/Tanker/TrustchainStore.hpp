@@ -6,7 +6,7 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <cstdint>
 #include <vector>
@@ -32,7 +32,7 @@ public:
 
   tc::cotask<void> addEntry(Entry const& entry);
   tc::cotask<void> setPublicSignatureKey(Crypto::PublicSignatureKey const&);
-  tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+  tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findPublicSignatureKey();
 
   tc::cotask<uint64_t> getLastIndex();

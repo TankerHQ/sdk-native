@@ -19,7 +19,7 @@ namespace Functional
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Admin>(
         Network::ConnectionFactory::create(TestConstants::trustchainUrl(),
-                                           nonstd::nullopt),
+                                           std::nullopt),
         TestConstants::idToken()))
 {
 }
@@ -39,7 +39,7 @@ tc::cotask<void> TrustchainFactory::deleteTrustchain(
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
-    nonstd::optional<std::string> trustchainName,
+    std::optional<std::string> trustchainName,
     bool isTest,
     bool storePrivateKey)
 {

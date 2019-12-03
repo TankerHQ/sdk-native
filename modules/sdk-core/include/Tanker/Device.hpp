@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <cstdint>
 
@@ -15,7 +15,7 @@ struct Device
   Device() = default;
   Trustchain::DeviceId id;
   uint64_t createdAtBlkIndex = 0;
-  nonstd::optional<uint64_t> revokedAtBlkIndex;
+  std::optional<uint64_t> revokedAtBlkIndex;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   bool isGhostDevice;

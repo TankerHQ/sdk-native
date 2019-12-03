@@ -1,7 +1,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 
 #include <functional>
-#include <optional.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -21,21 +21,21 @@ inline bool isNone(emscripten::val const& v)
 }
 
 template <typename T>
-nonstd::optional<T> optionalStringFromValue(emscripten::val const& val,
+std::optional<T> optionalStringFromValue(emscripten::val const& val,
                                             std::string const& key)
 {
   if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
-    return nonstd::nullopt;
+    return std::nullopt;
   else
     return T{val[key].as<std::string>()};
 }
 
 template <typename T>
-nonstd::optional<T> optionalFromValue(emscripten::val const& val,
+std::optional<T> optionalFromValue(emscripten::val const& val,
                                       std::string const& key)
 {
   if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
-    return nonstd::nullopt;
+    return std::nullopt;
   else
     return val[key].as<T>();
 }

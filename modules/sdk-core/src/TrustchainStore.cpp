@@ -32,7 +32,7 @@ tc::cotask<void> TrustchainStore::setPublicSignatureKey(
   TC_AWAIT(_db->setTrustchainPublicSignatureKey(key));
 }
 
-tc::cotask<nonstd::optional<Crypto::PublicSignatureKey>>
+tc::cotask<std::optional<Crypto::PublicSignatureKey>>
 TrustchainStore::findPublicSignatureKey()
 {
   TC_RETURN(TC_AWAIT(_db->findTrustchainPublicSignatureKey()));

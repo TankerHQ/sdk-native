@@ -3,7 +3,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -27,11 +27,11 @@ public:
   tc::cotask<void> put(InternalGroup const& group);
   tc::cotask<void> put(ExternalGroup const& group);
 
-  tc::cotask<nonstd::optional<Group>> findById(
+  tc::cotask<std::optional<Group>> findById(
       Trustchain::GroupId const& groupId) const;
-  tc::cotask<nonstd::optional<InternalGroup>> findInternalByPublicEncryptionKey(
+  tc::cotask<std::optional<InternalGroup>> findInternalByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<nonstd::optional<Group>> findByPublicEncryptionKey(
+  tc::cotask<std::optional<Group>> findByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
 
 private:

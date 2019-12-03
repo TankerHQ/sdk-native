@@ -8,6 +8,7 @@
 #include <Helpers/JsonFile.hpp>
 
 #include <nlohmann/json.hpp>
+#include <optional.hpp>
 
 using namespace std::string_literals;
 

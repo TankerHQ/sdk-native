@@ -2,7 +2,7 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <memory>
 
@@ -35,7 +35,7 @@ public:
 
   tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
-  tc::cotask<nonstd::optional<Crypto::SymmetricKey>> findKey(
+  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId) const;
   tc::cotask<Crypto::SymmetricKey> getKey(
       Trustchain::ResourceId const& resourceId) const;

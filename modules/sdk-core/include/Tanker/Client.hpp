@@ -25,7 +25,7 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
-#include <optional.hpp>
+#include <optional>
 
 #include <cstdint>
 #include <functional>
@@ -114,10 +114,10 @@ public:
   tc::cotask<std::vector<
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>);
-  tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+  tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Verification const& verification,
                              Crypto::SymmetricKey const& userSecret);
-  tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+  tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 
   tc::cotask<nlohmann::json> emit(std::string const& event,

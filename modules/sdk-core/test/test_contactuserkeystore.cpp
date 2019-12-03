@@ -71,7 +71,7 @@ TEST_CASE("contact user keys")
     auto const unexistentUserId = make<Trustchain::UserId>("unexistent");
 
     ContactUserKeyStore keys(dbPtr.get());
-    CHECK(AWAIT(keys.findUserKey(unexistentUserId)) == nonstd::nullopt);
+    CHECK(AWAIT(keys.findUserKey(unexistentUserId)) == std::nullopt);
   }
 
   SUBCASE("it should find a key that was inserted")

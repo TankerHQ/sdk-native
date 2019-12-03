@@ -165,7 +165,7 @@ private:
   GroupAccessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
-  nonstd::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
+  std::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;

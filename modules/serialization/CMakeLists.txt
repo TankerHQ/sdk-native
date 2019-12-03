@@ -30,7 +30,7 @@ target_link_libraries(
   tankererrors
 
   CONAN_PKG::gsl-lite
-  CONAN_PKG::optional-lite
+ 
   CONAN_PKG::fmt
 )
 

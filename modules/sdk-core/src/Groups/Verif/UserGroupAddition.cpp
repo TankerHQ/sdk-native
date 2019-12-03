@@ -18,7 +18,7 @@ namespace Verif
 {
 Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
                               Device const& author,
-                              nonstd::optional<ExternalGroup> const& group)
+                              std::optional<ExternalGroup> const& group)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupAddition ||
          serverEntry.action().nature() == Nature::UserGroupAddition2);

@@ -21,7 +21,7 @@
 #include <cppcodec/base64_rfc4648.hpp>
 
 #include <nlohmann/json.hpp>
-#include <optional.hpp>
+#include <optional>
 
 #include <algorithm>
 #include <cassert>
@@ -298,7 +298,7 @@ Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
   TC_RETURN(ret);
 }
 
-tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
                                    Crypto::SymmetricKey const& userSecret)
 {
@@ -308,16 +308,16 @@ Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
   auto const json = TC_AWAIT(emit("get provisional identity", body));
 
   if (json.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
-  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+  TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
       {json.at("encryption_public_key").get<Crypto::PublicEncryptionKey>(),
        json.at("encryption_private_key").get<Crypto::PrivateEncryptionKey>()},
       {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
        json.at("signature_private_key").get<Crypto::PrivateSignatureKey>()}}));
 }
 
-tc::cotask<nonstd::optional<TankerSecretProvisionalIdentity>>
+tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
 {
   nlohmann::json body = {{"verification_method",
@@ -325,9 +325,9 @@ Client::getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail)
   auto const json = TC_AWAIT(emit("get verified provisional identity", body));
 
   if (json.empty())
-    TC_RETURN(nonstd::nullopt);
+    TC_RETURN(std::nullopt);
 
-  TC_RETURN(nonstd::make_optional(TankerSecretProvisionalIdentity{
+  TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
       {json.at("encryption_public_key").get<Crypto::PublicEncryptionKey>(),
        json.at("encryption_private_key").get<Crypto::PrivateEncryptionKey>()},
       {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),

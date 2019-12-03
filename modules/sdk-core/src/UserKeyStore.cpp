@@ -8,7 +8,7 @@
 #include <Tanker/Log/Log.hpp>
 
 #include <fmt/format.h>
-#include <optional.hpp>
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY(UserKeyStore);
@@ -27,7 +27,7 @@ tc::cotask<void> UserKeyStore::putPrivateKey(
   TC_AWAIT(_db->putUserPrivateKey(publicKey, privateKey));
 }
 
-tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 UserKeyStore::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
 {
   try
@@ -37,7 +37,7 @@ UserKeyStore::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
   catch (Errors::Exception const& e)
   {
     if (e.errorCode() == DataStore::Errc::RecordNotFound)
-      TC_RETURN(nonstd::nullopt);
+      TC_RETURN(std::nullopt);
     throw;
   }
 }
@@ -55,7 +55,7 @@ tc::cotask<Crypto::EncryptionKeyPair> UserKeyStore::getKeyPair(
   TC_RETURN(*optKeyPair);
 }
 
-tc::cotask<nonstd::optional<Crypto::EncryptionKeyPair>>
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 UserKeyStore::getOptLastKeyPair() const
 {
   TC_RETURN(TC_AWAIT(_db->getUserOptLastKeyPair()));

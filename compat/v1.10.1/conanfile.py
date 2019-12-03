@@ -6,6 +6,7 @@ class Compat(ConanFile):
     def requirements(self):
         self.requires("tanker/1.10.0-r16@tanker/stable")
         self.requires("docopt.cpp/0.6.2@tanker/testing")
+        self.requires("optional-lite/3.1.1@tanker/testing")
         # Must use exact revisions to avoid problems
         # Without it, 1.10.1 will use the latest revision of sqlpp11-connector-sqlite3/0.29,
         # compiled with sqlcipher/4.2.0, instead of using the old one (3.4.1)

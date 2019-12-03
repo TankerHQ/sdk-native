@@ -54,7 +54,7 @@ Tanker::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Device{id,
                         blockIndex,
-                        nonstd::nullopt,
+                        std::nullopt,
                         keys.signatureKeyPair.publicKey,
                         keys.encryptionKeyPair.publicKey,
                         false};
@@ -65,7 +65,7 @@ Tanker::User TrustchainBuilder::User::asTankerUser() const
   Tanker::User tankerUser{
       userId,
       userKeys.empty() ?
-          nonstd::optional<Tanker::Crypto::PublicEncryptionKey>() :
+          std::optional<Tanker::Crypto::PublicEncryptionKey>() :
           userKeys.back().keyPair.publicKey,
       std::vector<Tanker::Device>(devices.size())};
 
@@ -770,14 +770,14 @@ Block TrustchainBuilder::revokeDevice2(Device const& sender,
   return block;
 }
 
-nonstd::optional<TrustchainBuilder::User> TrustchainBuilder::findUser(
+std::optional<TrustchainBuilder::User> TrustchainBuilder::findUser(
     std::string const& suserId) const
 {
   auto user =
       const_cast<TrustchainBuilder*>(this)->findMutableUser(SUserId{suserId});
   if (user)
     return *user;
-  return nonstd::nullopt;
+  return std::nullopt;
 }
 
 TrustchainBuilder::User* TrustchainBuilder::findMutableUser(
