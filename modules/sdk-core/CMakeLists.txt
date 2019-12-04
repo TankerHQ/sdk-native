@@ -222,7 +222,6 @@ target_link_libraries(tankercore
   CONAN_PKG::fmt
   CONAN_PKG::jsonformoderncpp
  
-  CONAN_PKG::mockaron
   CONAN_PKG::enum-flags
 )
 
