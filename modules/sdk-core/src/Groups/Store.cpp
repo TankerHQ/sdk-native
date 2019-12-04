@@ -1,4 +1,4 @@
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -11,38 +11,37 @@ TLOG_CATEGORY(GroupStore);
 
 using Tanker::Trustchain::GroupId;
 
-namespace Tanker
+namespace Tanker::Groups
 {
-GroupStore::GroupStore(DataStore::ADatabase* dbConn) : _db(dbConn)
+Store::Store(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 
-tc::cotask<void> GroupStore::put(Group const& group)
+tc::cotask<void> Store::put(Group const& group)
 {
   TC_AWAIT(boost::variant2::visit(
       [this](auto const& g) -> tc::cotask<void> { TC_AWAIT(put(g)); }, group));
 }
 
-tc::cotask<void> GroupStore::put(InternalGroup const& group)
+tc::cotask<void> Store::put(InternalGroup const& group)
 {
   TINFO("Adding internal group {}", group.id);
   TC_AWAIT(_db->putInternalGroup(group));
 }
 
-tc::cotask<void> GroupStore::put(ExternalGroup const& group)
+tc::cotask<void> Store::put(ExternalGroup const& group)
 {
   TINFO("Adding external group {}", group.id);
   TC_AWAIT(_db->putExternalGroup(group));
 }
 
-tc::cotask<std::optional<Group>> GroupStore::findById(
-    GroupId const& groupId) const
+tc::cotask<std::optional<Group>> Store::findById(GroupId const& groupId) const
 {
   TC_RETURN(TC_AWAIT(_db->findGroupByGroupId(groupId)));
 }
 
 tc::cotask<std::optional<InternalGroup>>
-GroupStore::findInternalByPublicEncryptionKey(
+Store::findInternalByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   auto const group =
@@ -56,7 +55,7 @@ GroupStore::findInternalByPublicEncryptionKey(
     TC_RETURN(std::nullopt);
 }
 
-tc::cotask<std::optional<Group>> GroupStore::findByPublicEncryptionKey(
+tc::cotask<std::optional<Group>> Store::findByPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey) const
 {
   TC_RETURN(

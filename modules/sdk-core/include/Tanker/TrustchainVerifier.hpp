@@ -14,7 +14,7 @@
 namespace Tanker
 {
 class ContactStore;
-class GroupStore;
+class Store;
 struct ExternalGroup;
 struct User;
 struct Device;

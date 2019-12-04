@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -139,7 +139,7 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
       .LR_RETURN(
-          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+          makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
   auto const recipients = AWAIT(Share::generateRecipientList(
       userAccessor,
@@ -178,7 +178,7 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(
                    std::vector<GroupId>{newGroup.group.tankerGroup.id})))
-      .LR_RETURN(makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{
+      .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{
           {newGroup.group.tankerGroup.encryptionKeyPair.publicKey}, {}}));
 
   auto const recipients = AWAIT(
@@ -217,7 +217,7 @@ TEST_CASE(
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
       .LR_RETURN(
-          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+          makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
   auto const recipients = AWAIT(Share::generateRecipientList(
       userAccessor, groupAccessor, {provisionalUser.spublicIdentity}, {}));
@@ -260,7 +260,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
       .LR_RETURN(
-          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+          makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Share::generateRecipientList(
@@ -294,7 +294,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(
                    std::vector<GroupId>{newGroup.group.tankerGroup.id})))
-      .LR_RETURN(makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{
+      .LR_RETURN(makeCoTask(Groups::Accessor::PublicEncryptionKeyPullResult{
           {}, {newGroup.group.tankerGroup.id}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(AWAIT(Share::generateRecipientList(

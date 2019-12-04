@@ -66,9 +66,8 @@ Tanker::User TrustchainBuilder::User::asTankerUser() const
 {
   Tanker::User tankerUser{
       userId,
-      userKeys.empty() ?
-          std::optional<Tanker::Crypto::PublicEncryptionKey>() :
-          userKeys.back().keyPair.publicKey,
+      userKeys.empty() ? std::optional<Tanker::Crypto::PublicEncryptionKey>() :
+                         userKeys.back().keyPair.publicKey,
       std::vector<Tanker::Device>(devices.size())};
 
   std::transform(devices.begin(),
@@ -868,21 +867,21 @@ std::vector<Group> TrustchainBuilder::getGroupsOfUser(
   return result;
 }
 
-std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
+std::unique_ptr<Tanker::Groups::Store> TrustchainBuilder::makeGroupStore(
     TrustchainBuilder::User const& user,
     Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = std::make_unique<Tanker::GroupStore>(conn);
+  auto result = std::make_unique<Tanker::Groups::Store>(conn);
   for (auto const& group : getGroupsOfUser(user))
     AWAIT_VOID(result->put(group));
   return result;
 }
 
-std::unique_ptr<Tanker::GroupStore> TrustchainBuilder::makeGroupStore(
+std::unique_ptr<Tanker::Groups::Store> TrustchainBuilder::makeGroupStore(
     std::vector<Trustchain::GroupId> const& groups,
     Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = std::make_unique<Tanker::GroupStore>(conn);
+  auto result = std::make_unique<Tanker::Groups::Store>(conn);
   for (auto const& groupId : groups)
   {
     auto const groupIt =

@@ -5,7 +5,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/Accessor.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>

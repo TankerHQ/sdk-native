@@ -87,12 +87,14 @@ add_library(tankercore STATIC
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
-  include/Tanker/Groups/GroupStore.hpp
-  include/Tanker/Groups/GroupUpdater.hpp
-  include/Tanker/Groups/GroupAccessor.hpp
+  include/Tanker/Groups/Store.hpp
+  include/Tanker/Groups/Updater.hpp
+  include/Tanker/Groups/Accessor.hpp
   include/Tanker/Groups/IAccessor.hpp
   include/Tanker/Groups/Manager.hpp
   include/Tanker/Groups/Requester.hpp
+  include/Tanker/Groups/Verif/UserGroupAddition.hpp
+  include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -115,8 +117,6 @@ add_library(tankercore STATIC
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
-  include/Tanker/Groups/Verif/UserGroupAddition.hpp
-  include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
@@ -164,11 +164,13 @@ add_library(tankercore STATIC
   src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
   src/Groups/GroupEncryptedKey.cpp
-  src/Groups/GroupStore.cpp
-  src/Groups/GroupAccessor.cpp
-  src/Groups/GroupUpdater.cpp
+  src/Groups/Store.cpp
+  src/Groups/Accessor.cpp
+  src/Groups/Updater.cpp
   src/Groups/Manager.cpp
   src/Groups/Requester.cpp
+  src/Groups/Verif/UserGroupAddition.cpp
+  src/Groups/Verif/UserGroupCreation.cpp
   src/Device.cpp
   src/User.cpp
   src/UserAccessor.cpp
@@ -179,8 +181,6 @@ add_library(tankercore STATIC
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/TrustchainCreation.cpp
-  src/Groups/Verif/UserGroupAddition.cpp
-  src/Groups/Verif/UserGroupCreation.cpp
   src/ProvisionalUsers/Verif/ProvisionalIdentityClaim.cpp
   src/Encryptor.cpp
   src/Encryptor/v2.cpp

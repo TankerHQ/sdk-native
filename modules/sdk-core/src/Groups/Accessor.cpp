@@ -1,10 +1,10 @@
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/Accessor.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/Groups/Store.hpp>
+#include <Tanker/Groups/Updater.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
@@ -15,16 +15,15 @@ TLOG_CATEGORY("GroupAccessor");
 
 using Tanker::Trustchain::GroupId;
 
-namespace Tanker
+namespace Tanker::Groups
 {
-GroupAccessor::GroupAccessor(
-    Trustchain::UserId const& userId,
-    Groups::IRequester* requester,
-    ITrustchainPuller* trustchainPuller,
-    ContactStore const* contactStore,
-    GroupStore* groupStore,
-    UserKeyStore const* userKeyStore,
-    ProvisionalUsers::IAccessor* provisionalUserAccessor)
+Accessor::Accessor(Trustchain::UserId const& userId,
+                   Groups::IRequester* requester,
+                   ITrustchainPuller* trustchainPuller,
+                   ContactStore const* contactStore,
+                   Store* groupStore,
+                   UserKeyStore const* userKeyStore,
+                   ProvisionalUsers::IAccessor* provisionalUserAccessor)
   : _myUserId(userId),
     _requester(requester),
     _trustchainPuller(trustchainPuller),
@@ -35,8 +34,7 @@ GroupAccessor::GroupAccessor(
 {
 }
 
-tc::cotask<GroupAccessor::InternalGroupPullResult>
-GroupAccessor::getInternalGroups(
+tc::cotask<Accessor::InternalGroupPullResult> Accessor::getInternalGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   // This function is only called when updating group members, and in that
@@ -59,8 +57,8 @@ GroupAccessor::getInternalGroups(
   TC_RETURN(out);
 }
 
-tc::cotask<GroupAccessor::PublicEncryptionKeyPullResult>
-GroupAccessor::getPublicEncryptionKeys(
+tc::cotask<Accessor::PublicEncryptionKeyPullResult>
+Accessor::getPublicEncryptionKeys(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   PublicEncryptionKeyPullResult out;
@@ -86,7 +84,7 @@ GroupAccessor::getPublicEncryptionKeys(
 }
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-GroupAccessor::getEncryptionKeyPair(
+Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   {
@@ -124,7 +122,7 @@ GroupAccessor::getEncryptionKeyPair(
     TC_RETURN(std::nullopt);
 }
 
-tc::cotask<void> GroupAccessor::fetch(gsl::span<GroupId const> groupIds)
+tc::cotask<void> Accessor::fetch(gsl::span<GroupId const> groupIds)
 {
   TC_AWAIT(_trustchainPuller->scheduleCatchUp(
       {}, std::vector<GroupId>{groupIds.begin(), groupIds.end()}));
@@ -155,7 +153,7 @@ GroupMap partitionGroups(std::vector<Trustchain::ServerEntry> const& entries)
 }
 }
 
-tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
+tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   auto const entries = TC_AWAIT(_requester->getGroupBlocks(groupIds));

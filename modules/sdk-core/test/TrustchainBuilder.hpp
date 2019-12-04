@@ -7,7 +7,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
@@ -175,10 +175,10 @@ public:
       Tanker::DataStore::ADatabase* conn) const;
   std::vector<Tanker::Group> getGroupsOfUser(
       TrustchainBuilder::User const& user) const;
-  std::unique_ptr<Tanker::GroupStore> makeGroupStore(
+  std::unique_ptr<Tanker::Groups::Store> makeGroupStore(
       TrustchainBuilder::User const& user,
       Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::GroupStore> makeGroupStore(
+  std::unique_ptr<Tanker::Groups::Store> makeGroupStore(
       std::vector<Tanker::Trustchain::GroupId> const& groups,
       Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::ProvisionalUserKeysStore>

@@ -2,7 +2,6 @@
 
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/UserKeyStore.hpp>

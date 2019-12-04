@@ -1,4 +1,4 @@
-#include <Tanker/Groups/GroupUpdater.hpp>
+#include <Tanker/Groups/Updater.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>

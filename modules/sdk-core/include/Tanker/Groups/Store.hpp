@@ -6,22 +6,22 @@
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
 
-namespace Tanker
-{
-namespace DataStore
+namespace Tanker::DataStore
 {
 class ADatabase;
 }
 
-class GroupStore
+namespace Tanker::Groups
+{
+class Store
 {
 public:
-  GroupStore(GroupStore const&) = delete;
-  GroupStore(GroupStore&&) = delete;
-  GroupStore& operator=(GroupStore const&) = delete;
-  GroupStore& operator=(GroupStore&&) = delete;
+  Store(Store const&) = delete;
+  Store(Store&&) = delete;
+  Store& operator=(Store const&) = delete;
+  Store& operator=(Store&&) = delete;
 
-  GroupStore(DataStore::ADatabase* dbConn);
+  Store(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(InternalGroup const& group);

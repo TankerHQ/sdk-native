@@ -16,24 +16,27 @@
 namespace Tanker
 {
 class ITrustchainPuller;
-class GroupStore;
+}
 
-class GroupAccessor : public Groups::IAccessor
+namespace Tanker::Groups
+{
+class Store;
+class Accessor : public Groups::IAccessor
 {
 public:
-  GroupAccessor(Trustchain::UserId const& myUserId,
-                Groups::IRequester* requester,
-                ITrustchainPuller* trustchainPuller,
-                ContactStore const* contactStore,
-                GroupStore* groupstore,
-                UserKeyStore const* userKeyStore,
-                ProvisionalUsers::IAccessor* provisionalUserAccessor);
+  Accessor(Trustchain::UserId const& myUserId,
+           Groups::IRequester* requester,
+           ITrustchainPuller* trustchainPuller,
+           ContactStore const* contactStore,
+           Store* groupstore,
+           UserKeyStore const* userKeyStore,
+           ProvisionalUsers::IAccessor* provisionalUserAccessor);
 
-  GroupAccessor() = delete;
-  GroupAccessor(GroupAccessor const&) = delete;
-  GroupAccessor(GroupAccessor&&) = delete;
-  GroupAccessor& operator=(GroupAccessor const&) = delete;
-  GroupAccessor& operator=(GroupAccessor&&) = delete;
+  Accessor() = delete;
+  Accessor(Accessor const&) = delete;
+  Accessor(Accessor&&) = delete;
+  Accessor& operator=(Accessor const&) = delete;
+  Accessor& operator=(Accessor&&) = delete;
 
   tc::cotask<InternalGroupPullResult> getInternalGroups(
       std::vector<Trustchain::GroupId> const& groupIds) override;
@@ -48,12 +51,12 @@ private:
   Groups::IRequester* _requester;
   ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
-  GroupStore* _groupStore;
+  Store* _groupStore;
   UserKeyStore const* _userKeyStore;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
-  tc::cotask<GroupAccessor::GroupPullResult> getGroups(
+  tc::cotask<Accessor::GroupPullResult> getGroups(
       std::vector<Trustchain::GroupId> const& groupIds);
 };
 }

@@ -7,7 +7,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/User.hpp>

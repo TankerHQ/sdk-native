@@ -6,8 +6,8 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Accessor.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
@@ -161,7 +161,7 @@ private:
   TrustchainStore _trustchain;
   UserKeyStore _userKeyStore;
   ContactStore _contactStore;
-  GroupStore _groupStore;
+  Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
 
@@ -170,7 +170,7 @@ private:
   UserAccessor _userAccessor;
   ProvisionalUsers::Accessor _provisionalUsersAccessor;
   ProvisionalUsers::Manager _provisionalUsersManager;
-  GroupAccessor _groupAccessor;
+  Groups::Accessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;
 

@@ -1,8 +1,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -48,7 +48,7 @@ public:
 TEST_CASE("GroupAccessor")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
-  GroupStore groupStore(dbPtr.get());
+  Groups::Store groupStore(dbPtr.get());
 
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice");
@@ -70,13 +70,13 @@ TEST_CASE("GroupAccessor")
   auto const aliceProvisionalUsersAccessor =
       std::make_unique<FakeProvisionalUsersAccessor>(
           *aliceProvisionalUserKeysStore);
-  GroupAccessor groupAccessor(alice.user.userId,
-                              &requestStub,
-                              &trustchainPuller,
-                              aliceContactStore.get(),
-                              &groupStore,
-                              aliceUserKeyStore.get(),
-                              aliceProvisionalUsersAccessor.get());
+  Groups::Accessor groupAccessor(alice.user.userId,
+                                 &requestStub,
+                                 &trustchainPuller,
+                                 aliceContactStore.get(),
+                                 &groupStore,
+                                 aliceUserKeyStore.get(),
+                                 aliceProvisionalUsersAccessor.get());
 
   SUBCASE("it should return cached public encryption keys")
   {
