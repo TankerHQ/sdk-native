@@ -92,8 +92,9 @@ add_library(tankercore STATIC
   include/Tanker/Groups/GroupStore.hpp
   include/Tanker/Groups/GroupUpdater.hpp
   include/Tanker/Groups/GroupAccessor.hpp
+  include/Tanker/Groups/IAccessor.hpp
   include/Tanker/Groups/Manager.hpp
-  include/Tanker/Groups/Requests.hpp
+  include/Tanker/Groups/Requester.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -166,7 +167,7 @@ add_library(tankercore STATIC
   src/Groups/GroupAccessor.cpp
   src/Groups/GroupUpdater.cpp
   src/Groups/Manager.cpp
-  src/Groups/Requests.cpp
+  src/Groups/Requester.cpp
   src/Device.cpp
   src/User.cpp
   src/UserAccessor.cpp

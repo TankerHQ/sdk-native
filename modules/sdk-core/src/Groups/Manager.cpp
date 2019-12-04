@@ -174,7 +174,7 @@ tc::cotask<void> updateMembers(
     UserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
-    GroupAccessor& groupAccessor,
+    IAccessor& groupAccessor,
     GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {

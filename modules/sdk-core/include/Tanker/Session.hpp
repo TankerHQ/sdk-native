@@ -53,6 +53,11 @@ namespace Tanker
 struct Entry;
 struct UnverifiedEntry;
 
+namespace Groups
+{
+class IRequester;
+}
+
 class Session
 {
 public:
@@ -152,6 +157,7 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
   std::unique_ptr<Client> _client;
+  std::unique_ptr<Groups::IRequester> _requester;
   TrustchainStore _trustchain;
   UserKeyStore _userKeyStore;
   ContactStore _contactStore;

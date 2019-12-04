@@ -21,8 +21,12 @@ namespace Tanker
 {
 class BlockGenerator;
 class IUserAccessor;
-class GroupAccessor;
 class Client;
+
+namespace Groups
+{
+class IAccessor;
+}
 
 namespace Share
 {
@@ -44,7 +48,7 @@ std::vector<uint8_t> makeKeyPublishToUser(
 
 tc::cotask<KeyRecipients> generateRecipientList(
     IUserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
+    Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds);
 
@@ -54,7 +58,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
     KeyRecipients const& keyRecipients);
 
 tc::cotask<void> share(IUserAccessor& userAccessor,
-                       GroupAccessor& groupAccessor,
+                       Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
                        ResourceKeys const& resourceKeys,
@@ -63,7 +67,7 @@ tc::cotask<void> share(IUserAccessor& userAccessor,
 
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
                        IUserAccessor& userAccessor,
-                       GroupAccessor& groupAccessor,
+                       Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
                        std::vector<Trustchain::ResourceId> const& resourceIds,
