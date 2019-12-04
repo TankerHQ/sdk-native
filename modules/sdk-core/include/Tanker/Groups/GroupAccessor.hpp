@@ -5,7 +5,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IRequester.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
@@ -27,7 +27,7 @@ public:
                 ContactStore const* contactStore,
                 GroupStore* groupstore,
                 UserKeyStore const* userKeyStore,
-                ProvisionalUserKeysStore const* provisionalUserKeysStore);
+                ProvisionalUsers::IAccessor* provisionalUserAccessor);
 
   GroupAccessor() = delete;
   GroupAccessor(GroupAccessor const&) = delete;
@@ -50,7 +50,7 @@ private:
   ContactStore const* _contactStore;
   GroupStore* _groupStore;
   UserKeyStore const* _userKeyStore;
-  ProvisionalUserKeysStore const* _provisionalUserKeysStore;
+  ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
   tc::cotask<GroupAccessor::GroupPullResult> getGroups(

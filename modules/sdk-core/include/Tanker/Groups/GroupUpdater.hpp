@@ -4,7 +4,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -18,13 +18,13 @@ namespace GroupUpdater
 tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Entry const& entry);
 
 tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     Entry const& entry);
 
@@ -33,7 +33,7 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     ITrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries);
 }

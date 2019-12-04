@@ -24,14 +24,14 @@ GroupAccessor::GroupAccessor(
     ContactStore const* contactStore,
     GroupStore* groupStore,
     UserKeyStore const* userKeyStore,
-    ProvisionalUserKeysStore const* provisionalUserKeysStore)
+    ProvisionalUsers::IAccessor* provisionalUserAccessor)
   : _myUserId(userId),
     _requester(requester),
     _trustchainPuller(trustchainPuller),
     _contactStore(contactStore),
     _groupStore(groupStore),
     _userKeyStore(userKeyStore),
-    _provisionalUserKeysStore(provisionalUserKeysStore)
+    _provisionalUserAccessor(provisionalUserAccessor)
 {
 }
 
@@ -107,7 +107,7 @@ GroupAccessor::getEncryptionKeyPair(
                                                  *_trustchainPuller,
                                                  *_contactStore,
                                                  *_userKeyStore,
-                                                 *_provisionalUserKeysStore,
+                                                 *_provisionalUserAccessor,
                                                  std::nullopt,
                                                  entries));
   if (!group)
@@ -174,7 +174,7 @@ tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
                                                      *_trustchainPuller,
                                                      *_contactStore,
                                                      *_userKeyStore,
-                                                     *_provisionalUserKeysStore,
+                                                     *_provisionalUserAccessor,
                                                      std::nullopt,
                                                      groupEntriesIt->second));
       if (!group)

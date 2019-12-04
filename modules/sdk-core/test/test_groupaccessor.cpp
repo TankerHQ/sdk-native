@@ -11,6 +11,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
+#include "FakeProvisionalUsersAccessor.hpp"
 #include "TrustchainBuilder.hpp"
 
 #include <doctest.h>
@@ -64,13 +65,18 @@ TEST_CASE("GroupAccessor")
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
   auto const aliceUserKeyStore =
       builder.makeUserKeyStore(alice.user, dbPtr.get());
+  auto const aliceProvisionalUserKeysStore =
+      builder.makeProvisionalUserKeysStoreWith({}, dbPtr.get());
+  auto const aliceProvisionalUsersAccessor =
+      std::make_unique<FakeProvisionalUsersAccessor>(
+          *aliceProvisionalUserKeysStore);
   GroupAccessor groupAccessor(alice.user.userId,
                               &requestStub,
                               &trustchainPuller,
                               aliceContactStore.get(),
                               &groupStore,
                               aliceUserKeyStore.get(),
-                              nullptr);
+                              aliceProvisionalUsersAccessor.get());
 
   SUBCASE("it should return cached public encryption keys")
   {

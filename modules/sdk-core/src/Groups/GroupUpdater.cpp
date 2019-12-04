@@ -70,15 +70,14 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
   TC_RETURN(groupPrivateEncryptionKey);
 }
 
-tc::cotask<std::optional<Crypto::PrivateEncryptionKey>>
-decryptMyProvisionalKey(
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyProvisionalKey(
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     UserGroupCreation::v2::ProvisionalMembers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
     if (auto const matchingProvisionalUserKeys =
-            TC_AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
+            TC_AWAIT(provisionalUsersAccessor.findEncryptionKeysFromCache(
                 gek.appPublicSignatureKey(), gek.tankerPublicSignatureKey())))
     {
       auto const groupPrivateEncryptionKey = Crypto::sealDecrypt(
@@ -160,7 +159,7 @@ InternalGroup makeInternalGroup(
 tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Entry const& entry)
 {
   auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
@@ -175,7 +174,7 @@ tc::cotask<Group> applyUserGroupCreation(
         TC_AWAIT(decryptMyKey(myUserId, userKeyStore, ugc2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUserKeysStore, ugc2->provisionalMembers()));
+          provisionalUsersAccessor, ugc2->provisionalMembers()));
   }
 
   if (groupPrivateEncryptionKey)
@@ -188,7 +187,7 @@ tc::cotask<Group> applyUserGroupCreation(
 tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     Entry const& entry)
 {
@@ -218,7 +217,7 @@ tc::cotask<Group> applyUserGroupAddition(
         TC_AWAIT(decryptMyKey(myUserId, userKeyStore, uga2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUserKeysStore, uga2->provisionalMembers()));
+          provisionalUsersAccessor, uga2->provisionalMembers()));
   }
 
   // we checked above that this is an external group
@@ -295,7 +294,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     Trustchain::UserId const& myUserId,
     DeviceMap const& authors,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
@@ -314,7 +313,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
         auto const entry = Verif::verifyUserGroupCreation(
             serverEntry, author, extractExternalGroup(previousGroup));
         previousGroup = TC_AWAIT(applyUserGroupCreation(
-            myUserId, userKeyStore, provisionalUserKeysStore, entry));
+            myUserId, userKeyStore, provisionalUsersAccessor, entry));
       }
       else if (serverEntry.action().holds_alternative<UserGroupAddition>())
       {
@@ -323,7 +322,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
         previousGroup =
             TC_AWAIT(applyUserGroupAddition(myUserId,
                                             userKeyStore,
-                                            provisionalUserKeysStore,
+                                            provisionalUsersAccessor,
                                             previousGroup,
                                             entry));
       }
@@ -352,16 +351,21 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     ITrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     UserKeyStore const& userKeyStore,
-    ProvisionalUserKeysStore const& provisionalUserKeysStore,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
   auto const authors =
       TC_AWAIT(extractAuthors(trustchainPuller, contactStore, entries));
+  // We are going to process group entries in which there are provisional
+  // identities. We can't know in advance if one of these identity is us or not.
+  // That's why we pull all our claim blocks once here to know all our
+  // provisional identities so that we can find if they are in the group or not.
+  TC_AWAIT(provisionalUsersAccessor.refreshKeys());
   TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(myUserId,
                                                     authors,
                                                     userKeyStore,
-                                                    provisionalUserKeysStore,
+                                                    provisionalUsersAccessor,
                                                     previousGroup,
                                                     entries)));
 }

@@ -10,6 +10,7 @@
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -166,6 +167,7 @@ private:
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;
   UserAccessor _userAccessor;
+  ProvisionalUsers::Accessor _provisionalUsersAccessor;
   GroupAccessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
   BlockGenerator _blockGenerator;

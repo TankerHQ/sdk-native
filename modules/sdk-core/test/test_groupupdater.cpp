@@ -6,6 +6,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
+#include "FakeProvisionalUsersAccessor.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 
@@ -29,6 +30,9 @@ void testUserGroupCreationCommon(
       builder.makeUserKeyStore(alice.user, aliceDb.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
+  auto const aliceProvisionalUsersAccessor =
+      std::make_unique<FakeProvisionalUsersAccessor>(
+          *aliceProvisionalUserKeysStore);
 
   SUBCASE("handles creation of a group I am part of")
   {
@@ -36,7 +40,7 @@ void testUserGroupCreationCommon(
     auto const resultGroup = AWAIT(
         GroupUpdater::applyUserGroupCreation(alice.user.userId,
                                              *aliceKeyStore,
-                                             *aliceProvisionalUserKeysStore,
+                                             *aliceProvisionalUsersAccessor,
                                              toVerifiedEntry(group.entry)));
     CHECK_EQ(resultGroup, Group{group.group.tankerGroup});
   }
@@ -49,7 +53,7 @@ void testUserGroupCreationCommon(
     auto const resultGroup = AWAIT(
         GroupUpdater::applyUserGroupCreation(alice.user.userId,
                                              *aliceKeyStore,
-                                             *aliceProvisionalUserKeysStore,
+                                             *aliceProvisionalUsersAccessor,
                                              toVerifiedEntry(group.entry)));
 
     CHECK_EQ(resultGroup, Group{group.group.asExternalGroup()});
@@ -72,6 +76,9 @@ void testUserGroupAdditionCommon(
       builder.makeUserKeyStore(alice.user, aliceDb.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
+  auto const aliceProvisionalUsersAccessor =
+      std::make_unique<FakeProvisionalUsersAccessor>(
+          *aliceProvisionalUserKeysStore);
 
   SUBCASE("Alice sees Bob being added to her group")
   {
@@ -82,7 +89,7 @@ void testUserGroupAdditionCommon(
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
         alice.user.userId,
         *aliceKeyStore,
-        *aliceProvisionalUserKeysStore,
+        *aliceProvisionalUsersAccessor,
         aliceGroup.group.tankerGroup,
         toVerifiedEntry(updatedGroup.entry)));
     CHECK_EQ(resultGroup, Group{updatedGroup.group.tankerGroup});
@@ -97,7 +104,7 @@ void testUserGroupAdditionCommon(
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
         alice.user.userId,
         *aliceKeyStore,
-        *aliceProvisionalUserKeysStore,
+        *aliceProvisionalUsersAccessor,
         bobGroup.group.asExternalGroup(),
         toVerifiedEntry(updatedGroup.entry)));
     CHECK_EQ(resultGroup, Group{updatedGroup.group.tankerGroup});
@@ -113,7 +120,7 @@ void testUserGroupAdditionCommon(
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
         alice.user.userId,
         *aliceKeyStore,
-        *aliceProvisionalUserKeysStore,
+        *aliceProvisionalUsersAccessor,
         bobGroup.group.asExternalGroup(),
         toVerifiedEntry(updatedGroup.entry)));
 
@@ -157,6 +164,9 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
     auto const aliceProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
                                                  aliceDb.get());
+    auto const aliceProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            *aliceProvisionalUserKeysStore);
 
     SUBCASE(
         "handles creation of a group I am part of through a provisional "
@@ -171,7 +181,7 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
       auto const resultGroup = AWAIT(
           GroupUpdater::applyUserGroupCreation(alice.user.userId,
                                                *aliceKeyStore,
-                                               *aliceProvisionalUserKeysStore,
+                                               *aliceProvisionalUsersAccessor,
                                                toVerifiedEntry(group.entry)));
 
       CHECK_EQ(resultGroup, Group{group.group.tankerGroup});
@@ -217,6 +227,9 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
     auto const aliceProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
                                                  aliceDb.get());
+    auto const aliceProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            *aliceProvisionalUserKeysStore);
 
     SUBCASE(
         "Alice sees herself being added to Bob's group as a provisional user")
@@ -231,7 +244,7 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           alice.user.userId,
           *aliceKeyStore,
-          *aliceProvisionalUserKeysStore,
+          *aliceProvisionalUsersAccessor,
           bobGroup.group.asExternalGroup(),
           toVerifiedEntry(updatedGroup.entry)));
 
