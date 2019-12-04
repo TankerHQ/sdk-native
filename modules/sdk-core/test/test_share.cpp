@@ -11,15 +11,15 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
+#include "GroupAccessorMock.hpp"
 #include "MockConnection.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 #include "UserAccessorMock.hpp"
 
 #include <doctest.h>
-
-#include <mockaron/mockaron.hpp>
 
 #include <trompeloeil.hpp>
 
@@ -113,24 +113,6 @@ void assertKeyPublishToGroupTargetedAt(
              std::get<Crypto::SymmetricKey>(resourceKey));
   }
 }
-
-class GroupAccessorMock : public mockaron::mock_impl
-{
-public:
-  GroupAccessorMock()
-  {
-    MOCKARON_DECLARE_IMPL_CUSTOM(
-        tc::cotask<GroupAccessor::PublicEncryptionKeyPullResult>(
-            std::vector<GroupId> const&),
-        GroupAccessor::PublicEncryptionKeyPullResult,
-        GroupAccessor,
-        getPublicEncryptionKeys);
-  }
-
-  MAKE_MOCK1(getPublicEncryptionKeys,
-             GroupAccessor::PublicEncryptionKeyPullResult(
-                 std::vector<GroupId> const&));
-};
 }
 
 TEST_CASE("generateRecipientList of a new user should return their user key")
@@ -142,24 +124,26 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   auto const newUser = *builder.findUser("newUser");
   auto const keySender = *builder.findUser("keySender");
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+  UserAccessorMock userAccessor;
+  GroupAccessorMock groupAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
+  REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
-      .LR_RETURN((UserAccessor::PullResult{{newUser.asTankerUser()}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(
+          UserAccessor::PullResult{{newUser.asTankerUser()}, {}}));
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
-      .LR_RETURN((std::vector<PublicProvisionalUser>{}));
+  REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
+      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
 
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+  REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
-      .LR_RETURN((GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+      .LR_RETURN(
+          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
 
   auto const recipients = AWAIT(Share::generateRecipientList(
-      userAccessor.get(),
-      groupAccessor.get(),
+      userAccessor,
+      groupAccessor,
       {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
           builder.trustchainId(), newUser.userId})}},
       {}));
@@ -181,25 +165,25 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   auto const newGroup =
       builder.makeGroup(keySender.user.devices.at(0), {newUser.user});
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+  UserAccessorMock userAccessor;
+  GroupAccessorMock groupAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
+  REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN((UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
-      .LR_RETURN((std::vector<PublicProvisionalUser>{}));
+  REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
+      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
 
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+  REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(
                    std::vector<GroupId>{newGroup.group.tankerGroup.id})))
-      .LR_RETURN((GroupAccessor::PublicEncryptionKeyPullResult{
+      .LR_RETURN(makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{
           {newGroup.group.tankerGroup.encryptionKeyPair.publicKey}, {}}));
 
   auto const recipients = AWAIT(
-      Share::generateRecipientList(userAccessor.get(),
-                                   groupAccessor.get(),
+      Share::generateRecipientList(userAccessor,
+                                   groupAccessor,
                                    {},
                                    {cppcodec::base64_rfc4648::encode<SGroupId>(
                                        newGroup.group.tankerGroup.id)}));
@@ -219,26 +203,24 @@ TEST_CASE(
   auto const provisionalUser = builder.makeProvisionalUser("bob@gmail");
   auto const keySender = builder.makeUser3("keySender");
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+  UserAccessorMock userAccessor;
+  GroupAccessorMock groupAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
+  REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN((UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
-      .LR_RETURN((std::vector<PublicProvisionalUser>{
+  REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
+      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{
           provisionalUser.publicProvisionalUser}));
 
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+  REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
-      .LR_RETURN((GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+      .LR_RETURN(
+          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
 
-  auto const recipients =
-      AWAIT(Share::generateRecipientList(userAccessor.get(),
-                                         groupAccessor.get(),
-                                         {provisionalUser.spublicIdentity},
-                                         {}));
+  auto const recipients = AWAIT(Share::generateRecipientList(
+      userAccessor, groupAccessor, {provisionalUser.spublicIdentity}, {}));
 
   CHECK(recipients.recipientUserKeys.size() == 0);
   CHECK(recipients.recipientGroupKeys.size() == 0);
@@ -263,25 +245,27 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   auto const newUser = *builder.findUser("newUser");
   auto const keySender = *builder.findUser("keySender");
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+  UserAccessorMock userAccessor;
+  GroupAccessorMock groupAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
+  REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
-      .LR_RETURN((UserAccessor::PullResult{{}, {newUser.userId}}));
+      .LR_RETURN(
+          Tanker::makeCoTask(UserAccessor::PullResult{{}, {newUser.userId}}));
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
-      .LR_RETURN((std::vector<PublicProvisionalUser>{}));
+  REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
+      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
 
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+  REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
-      .LR_RETURN((GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
+      .LR_RETURN(
+          makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{{}, {}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Share::generateRecipientList(
-          userAccessor.get(),
-          groupAccessor.get(),
+          userAccessor,
+          groupAccessor,
           {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
               builder.trustchainId(), newUser.userId})}},
           {})),
@@ -297,25 +281,25 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   auto const newGroup =
       builder.makeGroup(keySender.user.devices.at(0), {newUser.user});
 
-  mockaron::mock<UserAccessor, UserAccessorMock> userAccessor;
-  mockaron::mock<GroupAccessor, GroupAccessorMock> groupAccessor;
+  UserAccessorMock userAccessor;
+  GroupAccessorMock groupAccessor;
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(),
+  REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN((UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
 
-  REQUIRE_CALL(userAccessor.get_mock_impl(), pullProvisional(trompeloeil::_))
-      .LR_RETURN((std::vector<PublicProvisionalUser>{}));
+  REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
+      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
 
-  REQUIRE_CALL(groupAccessor.get_mock_impl(),
+  REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(
                    std::vector<GroupId>{newGroup.group.tankerGroup.id})))
-      .LR_RETURN((GroupAccessor::PublicEncryptionKeyPullResult{
+      .LR_RETURN(makeCoTask(GroupAccessor::PublicEncryptionKeyPullResult{
           {}, {newGroup.group.tankerGroup.id}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(AWAIT(Share::generateRecipientList(
-                                    userAccessor.get(),
-                                    groupAccessor.get(),
+                                    userAccessor,
+                                    groupAccessor,
                                     {},
                                     {cppcodec::base64_rfc4648::encode<SGroupId>(
                                         newGroup.group.tankerGroup.id)})),

@@ -1,17 +1,15 @@
-#include <Tanker/Groups/Requests.hpp>
+#include <Tanker/Groups/Requester.hpp>
 
+#include <Tanker/Client.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <mockaron/mockaron.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
 {
 namespace Groups
-{
-namespace Requests
 {
 namespace
 {
@@ -30,45 +28,30 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> doBlockRequest(
 }
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
-    Client* client, std::vector<Trustchain::GroupId> const& groupIds)
+Requester::Requester(Client* client) : _client(client)
 {
-  MOCKARON_FUNCTION_HOOK_CUSTOM(
-      tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client*, std::vector<Trustchain::GroupId> const&),
-      std::vector<Trustchain::ServerEntry>,
-      getGroupBlocks,
-      TC_RETURN,
-      client,
-      groupIds);
+}
 
+tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getGroupBlocks(
+    std::vector<Trustchain::GroupId> const& groupIds)
+{
   if (groupIds.empty())
     TC_RETURN(std::vector<Trustchain::ServerEntry>{});
 
-  TC_RETURN(TC_AWAIT(doBlockRequest(client,
+  TC_RETURN(TC_AWAIT(doBlockRequest(_client,
                                     nlohmann::json{
                                         {"groups_ids", groupIds},
                                     })));
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
-    Client* client, Crypto::PublicEncryptionKey const& groupEncryptionKey)
+tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getGroupBlocks(
+    Crypto::PublicEncryptionKey const& groupEncryptionKey)
 {
-  MOCKARON_FUNCTION_HOOK_CUSTOM(
-      tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client*, Crypto::PublicEncryptionKey const&),
-      std::vector<Trustchain::ServerEntry>,
-      getGroupBlocks,
-      TC_RETURN,
-      client,
-      groupEncryptionKey);
-
   TC_RETURN(
-      TC_AWAIT(doBlockRequest(client,
+      TC_AWAIT(doBlockRequest(_client,
                               nlohmann::json{
                                   {"group_public_key", groupEncryptionKey},
                               })));
-}
 }
 }
 }

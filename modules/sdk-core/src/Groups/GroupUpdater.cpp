@@ -236,7 +236,7 @@ namespace
 using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
 
 tc::cotask<DeviceMap> extractAuthors(
-    TrustchainPuller& trustchainPuller,
+    ITrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
@@ -349,7 +349,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 
 tc::cotask<std::optional<Group>> processGroupEntries(
     Trustchain::UserId const& myUserId,
-    TrustchainPuller& trustchainPuller,
+    ITrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,

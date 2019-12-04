@@ -2,6 +2,7 @@
 
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Client.hpp>
+#include <Tanker/IUserAccessor.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -15,17 +16,15 @@
 
 namespace Tanker
 {
-class TrustchainPuller;
+class ITrustchainPuller;
 class ContactStore;
 
-class UserAccessor
+class UserAccessor : public IUserAccessor
 {
 public:
-  using PullResult = BasicPullResult<User>;
-
   UserAccessor(Trustchain::UserId const& selfUserId,
                Client* client,
-               TrustchainPuller* trustchainPuller,
+               ITrustchainPuller* trustchainPuller,
                ContactStore const* contactStore);
 
   UserAccessor() = delete;
@@ -46,7 +45,7 @@ private:
   Trustchain::UserId _selfUserId;
 
   Client* _client;
-  TrustchainPuller* _trustchainPuller;
+  ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
 };
 }

@@ -69,6 +69,7 @@ add_library(tankercore STATIC
   include/Tanker/Retry.hpp
   include/Tanker/TrustchainStore.hpp
   include/Tanker/TrustchainPuller.hpp
+  include/Tanker/ITrustchainPuller.hpp
   include/Tanker/TrustchainVerifier.hpp
   include/Tanker/BlockGenerator.hpp
   include/Tanker/GhostDevice.hpp
@@ -91,8 +92,9 @@ add_library(tankercore STATIC
   include/Tanker/Groups/GroupStore.hpp
   include/Tanker/Groups/GroupUpdater.hpp
   include/Tanker/Groups/GroupAccessor.hpp
+  include/Tanker/Groups/IAccessor.hpp
   include/Tanker/Groups/Manager.hpp
-  include/Tanker/Groups/Requests.hpp
+  include/Tanker/Groups/Requester.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
@@ -106,6 +108,7 @@ add_library(tankercore STATIC
   include/Tanker/Revocation.hpp
   include/Tanker/User.hpp
   include/Tanker/UserAccessor.hpp
+  include/Tanker/IUserAccessor.hpp
   include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
@@ -164,7 +167,7 @@ add_library(tankercore STATIC
   src/Groups/GroupAccessor.cpp
   src/Groups/GroupUpdater.cpp
   src/Groups/Manager.cpp
-  src/Groups/Requests.cpp
+  src/Groups/Requester.cpp
   src/Device.cpp
   src/User.cpp
   src/UserAccessor.cpp
@@ -219,7 +222,6 @@ target_link_libraries(tankercore
   CONAN_PKG::fmt
   CONAN_PKG::jsonformoderncpp
  
-  CONAN_PKG::mockaron
   CONAN_PKG::enum-flags
 )
 

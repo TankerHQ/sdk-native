@@ -3,6 +3,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -24,7 +25,7 @@ class TrustchainStore;
 class TrustchainVerifier;
 struct Entry;
 
-class TrustchainPuller
+class TrustchainPuller : public ITrustchainPuller
 {
 public:
   TrustchainPuller(TrustchainPuller const&) = delete;
@@ -47,7 +48,7 @@ public:
 
   tc::shared_future<void> scheduleCatchUp(
       std::vector<Trustchain::UserId> const& extraUsers = {},
-      std::vector<Trustchain::GroupId> const& extraGroups = {});
+      std::vector<Trustchain::GroupId> const& extraGroups = {}) override;
 
   std::function<tc::cotask<void>(Trustchain::DeviceId const&)>
       receivedThisDeviceId;

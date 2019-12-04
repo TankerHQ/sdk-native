@@ -1,7 +1,7 @@
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
@@ -10,7 +10,6 @@
 #include "TrustchainBuilder.hpp"
 
 #include <doctest.h>
-#include <mockaron/mockaron.hpp>
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
 #include <trompeloeil.hpp>
@@ -19,17 +18,13 @@ using namespace Tanker;
 
 namespace
 {
-class TrustchainPullerStub : public mockaron::mock_impl
+class TrustchainPullerStub : public ITrustchainPuller
 {
 public:
-  TrustchainPullerStub()
-  {
-    MOCKARON_SET_IMPL(TrustchainPuller,
-                      scheduleCatchUp,
-                      [](auto...) -> tc::shared_future<void> {
-                        return {tc::make_ready_future()};
-                      });
-  }
+  MAKE_MOCK2(scheduleCatchUp,
+             tc::shared_future<void>(std::vector<Trustchain::UserId> const&,
+                                     std::vector<Trustchain::GroupId> const&),
+             override);
 };
 }
 
@@ -43,9 +38,14 @@ TEST_CASE("UserAccessor")
   auto const bob = builder.makeUser3("bob").user.asTankerUser();
   auto const charlie = builder.makeUser3("charlie").user.asTankerUser();
 
-  mockaron::mock<TrustchainPuller, TrustchainPullerStub> trustchainPuller;
+  TrustchainPullerStub trustchainPuller;
+  REQUIRE_CALL(trustchainPuller,
+               scheduleCatchUp(trompeloeil::_, trompeloeil::_))
+      .RETURN([](auto...) -> tc::shared_future<void> {
+        return {tc::make_ready_future()};
+      }());
   UserAccessor userAccessor(
-      alice.id, nullptr, &trustchainPuller.get(), &contactStore);
+      alice.id, nullptr, &trustchainPuller, &contactStore);
 
   SUBCASE("it should return user ids it did not find")
   {

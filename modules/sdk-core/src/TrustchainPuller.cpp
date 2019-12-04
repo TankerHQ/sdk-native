@@ -17,7 +17,6 @@
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <mockaron/mockaron.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>
@@ -72,8 +71,6 @@ tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
     std::vector<UserId> const& extraUsers,
     std::vector<GroupId> const& extraGroups)
 {
-  MOCKARON_HOOK(TrustchainPuller, scheduleCatchUp, extraUsers, extraGroups);
-
   _extraUsers.insert(_extraUsers.end(), extraUsers.begin(), extraUsers.end());
   _extraGroups.insert(
       _extraGroups.end(), extraGroups.begin(), extraGroups.end());

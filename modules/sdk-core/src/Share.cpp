@@ -8,7 +8,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -193,8 +193,8 @@ std::vector<uint8_t> makeKeyPublishToUser(
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
-    UserAccessor& userAccessor,
-    GroupAccessor& groupAccessor,
+    IUserAccessor& userAccessor,
+    Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> const& aspublicIdentities,
     std::vector<SGroupId> const& asgroupIds)
 {
@@ -247,8 +247,8 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
   return out;
 }
 
-tc::cotask<void> share(UserAccessor& userAccessor,
-                       GroupAccessor& groupAccessor,
+tc::cotask<void> share(IUserAccessor& userAccessor,
+                       Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
                        ResourceKeys const& resourceKeys,
@@ -266,8 +266,8 @@ tc::cotask<void> share(UserAccessor& userAccessor,
 }
 
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
-                       UserAccessor& userAccessor,
-                       GroupAccessor& groupAccessor,
+                       IUserAccessor& userAccessor,
+                       Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
                        std::vector<Trustchain::ResourceId> const& resourceIds,

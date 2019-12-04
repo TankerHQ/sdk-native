@@ -7,7 +7,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
@@ -55,7 +55,7 @@ namespace
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupAccessor&,
+    Groups::IAccessor&,
     ProvisionalUserKeysStore const&,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
 {
@@ -73,7 +73,7 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const&,
-    GroupAccessor& groupAccessor,
+    Groups::IAccessor& groupAccessor,
     ProvisionalUserKeysStore const&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
 {
@@ -99,7 +99,7 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const&,
-    GroupAccessor&,
+    Groups::IAccessor&,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
 {
@@ -130,7 +130,7 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupAccessor&,
+    Groups::IAccessor&,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
 {
@@ -142,7 +142,7 @@ tc::cotask<void> decryptAndStoreKey(
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
     UserKeyStore const& userKeyStore,
-    GroupAccessor& groupAccessor,
+    Groups::IAccessor& groupAccessor,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,
     KeyPublish const& kp)
 {

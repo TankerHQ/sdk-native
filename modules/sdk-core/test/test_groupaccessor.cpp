@@ -2,18 +2,18 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/GroupAccessor.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
-#include <Tanker/Groups/Requests.hpp>
+#include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
 #include "TrustchainBuilder.hpp"
 
 #include <doctest.h>
-#include <mockaron/mockaron.hpp>
 #include <trompeloeil.hpp>
 
 using namespace Tanker;
@@ -21,28 +21,26 @@ using Tanker::Trustchain::GroupId;
 
 namespace
 {
-class TrustchainPullerStub : public mockaron::mock_impl
+class TrustchainPullerStub : public Tanker::ITrustchainPuller
 {
 public:
-  TrustchainPullerStub()
-  {
-    MOCKARON_DECLARE_IMPL(TrustchainPuller, scheduleCatchUp);
-  }
-
   MAKE_MOCK2(scheduleCatchUp,
-             tc::shared_future<void>(std::vector<Trustchain::UserId>,
-                                     std::vector<Trustchain::GroupId>));
+             tc::shared_future<void>(std::vector<Trustchain::UserId> const&,
+                                     std::vector<Trustchain::GroupId> const&),
+             override);
 };
 
-class RequestMock : public mockaron::mock_impl
+class RequesterStub : public Groups::IRequester
 {
 public:
-  MAKE_MOCK2(getGroupBlocks,
-             std::vector<Trustchain::ServerEntry>(
-                 Client*, Crypto::PublicEncryptionKey const& key));
-  MAKE_MOCK2(getGroupBlocks,
-             std::vector<Trustchain::ServerEntry>(
-                 Client*, std::vector<Trustchain::GroupId> const&));
+  MAKE_MOCK1(getGroupBlocks,
+             tc::cotask<std::vector<Trustchain::ServerEntry>>(
+                 std::vector<Trustchain::GroupId> const&),
+             override);
+  MAKE_MOCK1(getGroupBlocks,
+             tc::cotask<std::vector<Trustchain::ServerEntry>>(
+                 Crypto::PublicEncryptionKey const&),
+             override);
 };
 }
 
@@ -59,37 +57,16 @@ TEST_CASE("GroupAccessor")
       builder.makeGroup(alice.user.devices.front(), {alice.user});
   auto const bobGroup = builder.makeGroup(bob.user.devices.front(), {bob.user});
 
-  RequestMock requestMock;
-  MOCKARON_SET_FUNCTION_IMPL_CUSTOM(
-      tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client*, std::vector<Trustchain::GroupId> const&),
-      std::vector<Trustchain::ServerEntry>,
-      Groups::Requests::getGroupBlocks,
-      [&](auto&&... args) {
-        return requestMock.getGroupBlocks(
-            std::forward<decltype(args)>(args)...);
-      });
-  MOCKARON_SET_FUNCTION_IMPL_CUSTOM(
-      tc::cotask<std::vector<Trustchain::ServerEntry>>(
-          Client*, Crypto::PublicEncryptionKey const&),
-      std::vector<Trustchain::ServerEntry>,
-      Groups::Requests::getGroupBlocks,
-      [&](auto&&... args) {
-        return requestMock.getGroupBlocks(
-            std::forward<decltype(args)>(args)...);
-      });
-  ALLOW_CALL(requestMock,
-             getGroupBlocks(trompeloeil::_, std::vector<GroupId>{}))
-      .RETURN(std::vector<Trustchain::ServerEntry>{});
+  RequesterStub requestStub;
 
-  mockaron::mock<TrustchainPuller, TrustchainPullerStub> trustchainPuller;
+  TrustchainPullerStub trustchainPuller;
   auto const aliceContactStore =
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
   auto const aliceUserKeyStore =
       builder.makeUserKeyStore(alice.user, dbPtr.get());
   GroupAccessor groupAccessor(alice.user.userId,
-                              nullptr,
-                              &trustchainPuller.get(),
+                              &requestStub,
+                              &trustchainPuller,
                               aliceContactStore.get(),
                               &groupStore,
                               aliceUserKeyStore.get(),
@@ -119,10 +96,9 @@ TEST_CASE("GroupAccessor")
   SUBCASE("it can request group public keys by invalid groupId")
   {
     auto const unknownGroupId = make<GroupId>("unknownGroup");
-    REQUIRE_CALL(
-        requestMock,
-        getGroupBlocks(trompeloeil::_, std::vector<GroupId>{unknownGroupId}))
-        .RETURN(std::vector<Trustchain::ServerEntry>{});
+    REQUIRE_CALL(requestStub,
+                 getGroupBlocks(std::vector<GroupId>{unknownGroupId}))
+        .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
 
     auto const result =
         AWAIT(groupAccessor.getPublicEncryptionKeys({unknownGroupId}));
@@ -135,10 +111,10 @@ TEST_CASE("GroupAccessor")
   SUBCASE("it should request group public keys by groupId if not in store")
   {
     REQUIRE_CALL(
-        requestMock,
-        getGroupBlocks(trompeloeil::_,
-                       std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
-        .RETURN(std::vector<Trustchain::ServerEntry>{aliceGroup.entry});
+        requestStub,
+        getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
+        .RETURN(
+            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
 
     auto const result = AWAIT(groupAccessor.getPublicEncryptionKeys(
         {aliceGroup.group.tankerGroup.id}));
@@ -152,10 +128,10 @@ TEST_CASE("GroupAccessor")
   SUBCASE("it fails request internal groups when are not part of")
   {
     REQUIRE_CALL(
-        requestMock,
-        getGroupBlocks(trompeloeil::_,
-                       std::vector<GroupId>{bobGroup.group.tankerGroup.id}))
-        .RETURN(std::vector<Trustchain::ServerEntry>{bobGroup.entry});
+        requestStub,
+        getGroupBlocks(std::vector<GroupId>{bobGroup.group.tankerGroup.id}))
+        .RETURN(
+            makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
 
     auto const result =
         AWAIT(groupAccessor.getInternalGroups({bobGroup.group.tankerGroup.id}));
@@ -168,10 +144,10 @@ TEST_CASE("GroupAccessor")
   SUBCASE("it should request internal groups by groupId if not in store")
   {
     REQUIRE_CALL(
-        requestMock,
-        getGroupBlocks(trompeloeil::_,
-                       std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
-        .RETURN(std::vector<Trustchain::ServerEntry>{aliceGroup.entry});
+        requestStub,
+        getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
+        .RETURN(
+            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
 
     auto const result = AWAIT(
         groupAccessor.getInternalGroups({aliceGroup.group.tankerGroup.id}));
@@ -184,10 +160,10 @@ TEST_CASE("GroupAccessor")
   SUBCASE("it fails to get group encryption key pairs if not in group")
   {
     REQUIRE_CALL(
-        requestMock,
-        getGroupBlocks(trompeloeil::_,
-                       bobGroup.group.tankerGroup.encryptionKeyPair.publicKey))
-        .RETURN(std::vector<Trustchain::ServerEntry>{bobGroup.entry});
+        requestStub,
+        getGroupBlocks(bobGroup.group.tankerGroup.encryptionKeyPair.publicKey))
+        .RETURN(
+            makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
 
     auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
         bobGroup.group.tankerGroup.encryptionKeyPair.publicKey));
@@ -199,11 +175,11 @@ TEST_CASE("GroupAccessor")
       "it should request group encryption key pairs by publicEncryptionKey if "
       "not in store")
   {
-    REQUIRE_CALL(requestMock,
+    REQUIRE_CALL(requestStub,
                  getGroupBlocks(
-                     trompeloeil::_,
                      aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey))
-        .RETURN(std::vector<Trustchain::ServerEntry>{aliceGroup.entry});
+        .RETURN(
+            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
 
     auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
         aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey));

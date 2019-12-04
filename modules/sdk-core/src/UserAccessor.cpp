@@ -5,10 +5,9 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/TrustchainPuller.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Types/Email.hpp>
 
-#include <mockaron/mockaron.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 using Tanker::Trustchain::UserId;
@@ -19,7 +18,7 @@ namespace Tanker
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,
                            Client* client,
-                           TrustchainPuller* trustchainPuller,
+                           ITrustchainPuller* trustchainPuller,
                            ContactStore const* contactStore)
   : _selfUserId(selfUserId),
     _client(client),
@@ -31,13 +30,6 @@ UserAccessor::UserAccessor(UserId const& selfUserId,
 auto UserAccessor::pull(gsl::span<UserId const> userIds)
     -> tc::cotask<PullResult>
 {
-  MOCKARON_HOOK_CUSTOM(tc::cotask<PullResult>(gsl::span<UserId const>),
-                       PullResult,
-                       UserAccessor,
-                       pull,
-                       TC_RETURN,
-                       MOCKARON_ADD_COMMA(userIds));
-
   TC_AWAIT(fetch(userIds));
 
   PullResult ret;
@@ -59,15 +51,6 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
-  MOCKARON_HOOK_CUSTOM(
-      tc::cotask<std::vector<PublicProvisionalUser>>(
-          gsl::span<Identity::PublicProvisionalIdentity const>),
-      std::vector<PublicProvisionalUser>,
-      UserAccessor,
-      pullProvisional,
-      TC_RETURN,
-      MOCKARON_ADD_COMMA(appProvisionalIdentities));
-
   if (appProvisionalIdentities.empty())
     TC_RETURN(std::vector<PublicProvisionalUser>{});
 

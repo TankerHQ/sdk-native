@@ -1,9 +1,10 @@
 #pragma once
 
-#include <Tanker/BasicPullResult.hpp>
-#include <Tanker/Client.hpp>
+#include <Tanker/Groups/IAccessor.hpp>
+
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/UserKeyStore.hpp>
@@ -14,25 +15,15 @@
 
 namespace Tanker
 {
-class TrustchainPuller;
+class ITrustchainPuller;
 class GroupStore;
 
-class GroupAccessor
+class GroupAccessor : public Groups::IAccessor
 {
-
 public:
-  using PullResult = BasicPullResult<ExternalGroup>;
-  using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
-  using InternalGroupPullResult =
-      BasicPullResult<InternalGroup, Trustchain::GroupId>;
-  using PublicEncryptionKeyPullResult =
-      BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
-  using EncryptionKeyPairPullResult =
-      BasicPullResult<Crypto::EncryptionKeyPair, Trustchain::GroupId>;
-
   GroupAccessor(Trustchain::UserId const& myUserId,
-                Client* client,
-                TrustchainPuller* trustchainPuller,
+                Groups::IRequester* requester,
+                ITrustchainPuller* trustchainPuller,
                 ContactStore const* contactStore,
                 GroupStore* groupstore,
                 UserKeyStore const* userKeyStore,
@@ -44,18 +35,18 @@ public:
   GroupAccessor& operator=(GroupAccessor const&) = delete;
   GroupAccessor& operator=(GroupAccessor&&) = delete;
 
-  tc::cotask<GroupAccessor::InternalGroupPullResult> getInternalGroups(
-      std::vector<Trustchain::GroupId> const& groupIds);
+  tc::cotask<InternalGroupPullResult> getInternalGroups(
+      std::vector<Trustchain::GroupId> const& groupIds) override;
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
-      std::vector<Trustchain::GroupId> const& groupIds);
+      std::vector<Trustchain::GroupId> const& groupIds) override;
   // This function can only return keys for groups you are a member of
   tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getEncryptionKeyPair(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey);
+      Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
 
 private:
   Trustchain::UserId _myUserId;
-  Client* _client;
-  TrustchainPuller* _trustchainPuller;
+  Groups::IRequester* _requester;
+  ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
   GroupStore* _groupStore;
   UserKeyStore const* _userKeyStore;

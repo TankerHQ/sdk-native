@@ -16,6 +16,7 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
 #include <Tanker/Groups/Manager.hpp>
+#include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -127,6 +128,7 @@ Session::Session(Config&& config)
     _db(std::move(config.db)),
     _deviceKeyStore(std::move(config.deviceKeyStore)),
     _client(std::move(config.client)),
+    _requester(std::make_unique<Groups::Requester>(_client.get())),
     _trustchain(_db.get()),
     _userKeyStore(_db.get()),
     _contactStore(_db.get()),
@@ -146,7 +148,7 @@ Session::Session(Config&& config)
                       _userId),
     _userAccessor(_userId, _client.get(), &_trustchainPuller, &_contactStore),
     _groupAccessor(_userId,
-                   _client.get(),
+                   _requester.get(),
                    &_trustchainPuller,
                    &_contactStore,
                    &_groupStore,

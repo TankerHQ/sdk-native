@@ -2,10 +2,11 @@
 
 #include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Groups/Group.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -29,7 +30,7 @@ tc::cotask<Group> applyUserGroupAddition(
 
 tc::cotask<std::optional<Group>> processGroupEntries(
     Trustchain::UserId const& myUserId,
-    TrustchainPuller& trustchainPuller,
+    ITrustchainPuller& trustchainPuller,
     ContactStore const& contactStore,
     UserKeyStore const& userKeyStore,
     ProvisionalUserKeysStore const& provisionalUserKeysStore,

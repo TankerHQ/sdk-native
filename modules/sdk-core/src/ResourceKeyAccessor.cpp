@@ -10,7 +10,7 @@ ResourceKeyAccessor::ResourceKeyAccessor(
     Client* client,
     TrustchainVerifier* verifier,
     UserKeyStore* userKeyStore,
-    GroupAccessor* groupAccessor,
+    Groups::IAccessor* groupAccessor,
     ProvisionalUserKeysStore* provisionalKeyStore,
     ResourceKeyStore* resourceKeyStore)
   : _client(client),

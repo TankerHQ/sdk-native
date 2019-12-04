@@ -4,12 +4,10 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Groups/GroupStore.hpp>
 #include <Tanker/Groups/GroupUpdater.hpp>
-#include <Tanker/Groups/Requests.hpp>
+#include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/TrustchainPuller.hpp>
-
-#include <mockaron/mockaron.hpp>
 
 #include <boost/container/flat_map.hpp>
 
@@ -21,14 +19,14 @@ namespace Tanker
 {
 GroupAccessor::GroupAccessor(
     Trustchain::UserId const& userId,
-    Client* client,
-    TrustchainPuller* trustchainPuller,
+    Groups::IRequester* requester,
+    ITrustchainPuller* trustchainPuller,
     ContactStore const* contactStore,
     GroupStore* groupStore,
     UserKeyStore const* userKeyStore,
     ProvisionalUserKeysStore const* provisionalUserKeysStore)
   : _myUserId(userId),
-    _client(client),
+    _requester(requester),
     _trustchainPuller(trustchainPuller),
     _contactStore(contactStore),
     _groupStore(groupStore),
@@ -41,14 +39,6 @@ tc::cotask<GroupAccessor::InternalGroupPullResult>
 GroupAccessor::getInternalGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  MOCKARON_HOOK_CUSTOM(
-      tc::cotask<InternalGroupPullResult>(std::vector<GroupId> const&),
-      InternalGroupPullResult,
-      GroupAccessor,
-      getInternalGroups,
-      TC_RETURN,
-      MOCKARON_ADD_COMMA(groupIds));
-
   // This function is only called when updating group members, and in that
   // case we need the last block of the group. Since there is no way to know
   // if we are up to date, just pull the group again
@@ -73,14 +63,6 @@ tc::cotask<GroupAccessor::PublicEncryptionKeyPullResult>
 GroupAccessor::getPublicEncryptionKeys(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  MOCKARON_HOOK_CUSTOM(
-      tc::cotask<PublicEncryptionKeyPullResult>(std::vector<GroupId> const&),
-      PublicEncryptionKeyPullResult,
-      GroupAccessor,
-      getPublicEncryptionKeys,
-      TC_RETURN,
-      MOCKARON_ADD_COMMA(groupIds));
-
   PublicEncryptionKeyPullResult out;
   for (auto const& groupId : groupIds)
   {
@@ -91,11 +73,14 @@ GroupAccessor::getPublicEncryptionKeys(
       out.notFound.push_back(groupId);
   }
 
-  auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
+  if (!out.notFound.empty())
+  {
+    auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
 
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto const& group : groupPullResult.found)
-    out.found.push_back(getPublicEncryptionKey(group));
+    out.notFound = std::move(groupPullResult.notFound);
+    for (auto const& group : groupPullResult.found)
+      out.found.push_back(getPublicEncryptionKey(group));
+  }
 
   TC_RETURN(out);
 }
@@ -104,14 +89,6 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 GroupAccessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
-  MOCKARON_HOOK_CUSTOM(tc::cotask<std::optional<Crypto::EncryptionKeyPair>>(
-                           Crypto::PublicEncryptionKey const&),
-                       std::optional<Crypto::EncryptionKeyPair>,
-                       GroupAccessor,
-                       getEncryptionKeyPair,
-                       TC_RETURN,
-                       MOCKARON_ADD_COMMA(publicEncryptionKey));
-
   {
     auto const group = TC_AWAIT(
         _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
@@ -120,7 +97,7 @@ GroupAccessor::getEncryptionKeyPair(
   }
 
   auto const entries =
-      TC_AWAIT(Groups::Requests::getGroupBlocks(_client, publicEncryptionKey));
+      TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
 
   if (entries.empty())
     TC_RETURN(std::nullopt);
@@ -181,8 +158,7 @@ GroupMap partitionGroups(std::vector<Trustchain::ServerEntry> const& entries)
 tc::cotask<GroupAccessor::GroupPullResult> GroupAccessor::getGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  auto const entries =
-      TC_AWAIT(Groups::Requests::getGroupBlocks(_client, groupIds));
+  auto const entries = TC_AWAIT(_requester->getGroupBlocks(groupIds));
   auto const groupMap = partitionGroups(entries);
 
   GroupPullResult out;
