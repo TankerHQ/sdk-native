@@ -348,7 +348,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->getDeviceList().and_then(
       tc::get_synchronous_executor(),
-      [](std::vector<Device> const& deviceList) {
+      [](std::vector<Users::Device> const& deviceList) {
         auto* cDeviceList = new tanker_device_list_t;
         cDeviceList->count = deviceList.size();
         cDeviceList->devices = new tanker_device_list_elem_t[deviceList.size()];

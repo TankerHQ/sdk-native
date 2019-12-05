@@ -1,4 +1,4 @@
-#include <Tanker/ContactStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -20,7 +20,7 @@ TEST_CASE("ContactStore")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
 
-  ContactStore contacts(dbPtr.get());
+  Users::ContactStore contacts(dbPtr.get());
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice").user.asTankerUser();
   auto aliceDevice = alice.devices.front();

@@ -2,16 +2,20 @@
 
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
+namespace Tanker::Users
+{
+struct User;
+struct Device;
+}
+
 namespace Tanker
 {
-struct Device;
-struct User;
 
 namespace Verif
 {
 void verifyDeviceRevocation(Trustchain::ServerEntry const& serverEntry,
-                            Device const& author,
-                            Device const& target,
-                            User const& user);
+                            Users::Device const& author,
+                            Users::Device const& target,
+                            Users::User const& user);
 }
 }

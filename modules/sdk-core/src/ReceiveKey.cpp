@@ -1,6 +1,5 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
@@ -17,7 +16,8 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -31,7 +31,7 @@ namespace Tanker
 namespace ReceiveKey
 {
 tc::cotask<void> onKeyToDeviceReceived(
-    ContactStore const& contactStore,
+    Users::ContactStore const& contactStore,
     ResourceKeyStore& resourceKeyStore,
     Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
     Entry const& entry)
@@ -54,7 +54,7 @@ namespace
 {
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
@@ -72,7 +72,7 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const&,
+    Users::UserKeyStore const&,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
@@ -98,7 +98,7 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const&,
+    Users::UserKeyStore const&,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
@@ -129,7 +129,7 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
@@ -141,7 +141,7 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublish const& kp)

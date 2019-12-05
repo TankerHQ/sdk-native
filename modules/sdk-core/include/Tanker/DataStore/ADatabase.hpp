@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
@@ -12,6 +11,7 @@
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <gsl-lite.hpp>
 #include <optional>
@@ -105,10 +105,10 @@ public:
       Trustchain::DeviceId const& deviceId) = 0;
   virtual tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() = 0;
 
-  virtual tc::cotask<void> putDevice(Device const& device) = 0;
-  virtual tc::cotask<std::optional<Device>> findDevice(
+  virtual tc::cotask<void> putDevice(Users::Device const& device) = 0;
+  virtual tc::cotask<std::optional<Users::Device>> findDevice(
       Trustchain::DeviceId const& id) = 0;
-  virtual tc::cotask<std::vector<Device>> getDevicesOf(
+  virtual tc::cotask<std::vector<Users::Device>> getDevicesOf(
       Trustchain::UserId const& id) = 0;
   virtual tc::cotask<std::optional<Trustchain::UserId>> findDeviceUserId(
       Trustchain::DeviceId const& id) = 0;

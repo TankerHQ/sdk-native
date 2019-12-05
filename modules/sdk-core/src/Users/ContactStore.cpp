@@ -1,15 +1,14 @@
-#include <Tanker/ContactStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
@@ -19,7 +18,7 @@
 
 using Tanker::Trustchain::UserId;
 
-namespace Tanker
+namespace Tanker::Users
 {
 ContactStore::ContactStore(DataStore::ADatabase* db) : _db(db)
 {
@@ -55,8 +54,7 @@ tc::cotask<void> ContactStore::putUserDevice(Device const& device)
   TC_AWAIT(_db->putDevice(device));
 }
 
-tc::cotask<std::optional<User>> ContactStore::findUser(
-    UserId const& id) const
+tc::cotask<std::optional<User>> ContactStore::findUser(UserId const& id) const
 {
   auto devices = TC_AWAIT(_db->getDevicesOf(id));
   if (devices.empty())

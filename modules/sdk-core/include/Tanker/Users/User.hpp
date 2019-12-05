@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Tanker/Device.hpp>
+#include <Tanker/Users/Device.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <optional>
-
 #include <vector>
 
-namespace Tanker
+namespace Tanker::Users
 {
 struct User
 {

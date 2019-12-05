@@ -11,6 +11,8 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Helpers/Await.hpp>
 
@@ -51,24 +53,24 @@ TrustchainBuilder::Device createDevice()
 }
 }
 
-Tanker::Device TrustchainBuilder::Device::asTankerDevice() const
+Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
 {
-  return Tanker::Device{id,
-                        userId,
-                        blockIndex,
-                        std::nullopt,
-                        keys.signatureKeyPair.publicKey,
-                        keys.encryptionKeyPair.publicKey,
-                        false};
+  return Tanker::Users::Device{id,
+                               userId,
+                               blockIndex,
+                               std::nullopt,
+                               keys.signatureKeyPair.publicKey,
+                               keys.encryptionKeyPair.publicKey,
+                               false};
 }
 
-Tanker::User TrustchainBuilder::User::asTankerUser() const
+Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
 {
-  Tanker::User tankerUser{
+  Tanker::Users::User tankerUser{
       userId,
       userKeys.empty() ? std::optional<Tanker::Crypto::PublicEncryptionKey>() :
                          userKeys.back().keyPair.publicKey,
-      std::vector<Tanker::Device>(devices.size())};
+      std::vector<Tanker::Users::Device>(devices.size())};
 
   std::transform(devices.begin(),
                  devices.end(),
@@ -429,7 +431,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   auto const blockGenerator = BlockGenerator(
       _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
 
-  std::vector<Tanker::User> tusers;
+  std::vector<Tanker::Users::User> tusers;
   for (auto const& user : users)
     tusers.push_back(user.asTankerUser());
 
@@ -518,7 +520,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
-  std::vector<Tanker::User> tusers;
+  std::vector<Tanker::Users::User> tusers;
   for (auto const& user : newUsers)
     tusers.push_back(user.asTankerUser());
 
@@ -804,21 +806,23 @@ BlockGenerator TrustchainBuilder::makeBlockGenerator(
       _trustchainId, device.keys.signatureKeyPair.privateKey, device.id);
 }
 
-std::unique_ptr<Tanker::UserKeyStore> TrustchainBuilder::makeUserKeyStore(
-    User const& user, Tanker::DataStore::ADatabase* conn) const
+std::unique_ptr<Tanker::Users::UserKeyStore>
+TrustchainBuilder::makeUserKeyStore(User const& user,
+                                    Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = std::make_unique<Tanker::UserKeyStore>(conn);
+  auto result = std::make_unique<Tanker::Users::UserKeyStore>(conn);
   for (auto const& userKey : user.userKeys)
     AWAIT_VOID(result->putPrivateKey(userKey.keyPair.publicKey,
                                      userKey.keyPair.privateKey));
   return result;
 }
 
-std::unique_ptr<Tanker::ContactStore> TrustchainBuilder::makeContactStoreWith(
+std::unique_ptr<Tanker::Users::ContactStore>
+TrustchainBuilder::makeContactStoreWith(
     std::vector<std::string> const& suserIds,
     Tanker::DataStore::ADatabase* conn) const
 {
-  auto contactStore = std::make_unique<Tanker::ContactStore>(conn);
+  auto contactStore = std::make_unique<Tanker::Users::ContactStore>(conn);
   for (auto const& suserId : suserIds)
   {
     auto const optUser = findUser(suserId);

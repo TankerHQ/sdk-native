@@ -1,11 +1,11 @@
 #include <Tanker/Verif/DeviceCreation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -27,14 +27,16 @@ bool verifySignature(DeviceCreation const& dc,
   return Crypto::verify(toVerify, dc.delegationSignature(), publicSignatureKey);
 }
 
-void verifySubAction(DeviceCreation::v1 const& deviceCreation, User const& user)
+void verifySubAction(DeviceCreation::v1 const& deviceCreation,
+                     Users::User const& user)
 {
   ensures(!user.userKey.has_value(),
           Errc::InvalidUserKey,
           "A user must not have a user key to create a device creation v1");
 }
 
-void verifySubAction(DeviceCreation::v3 const& deviceCreation, User const& user)
+void verifySubAction(DeviceCreation::v3 const& deviceCreation,
+                     Users::User const& user)
 {
   ensures(deviceCreation.publicUserEncryptionKey() == user.userKey,
           Errc::InvalidUserKey,
@@ -43,8 +45,8 @@ void verifySubAction(DeviceCreation::v3 const& deviceCreation, User const& user)
 }
 
 void verifyDeviceCreation(ServerEntry const& serverEntry,
-                          Device const& author,
-                          User const& user)
+                          Users::Device const& author,
+                          Users::User const& user)
 {
   auto const nature = serverEntry.action().nature();
   (void)nature;

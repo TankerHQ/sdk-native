@@ -5,6 +5,7 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -13,11 +14,13 @@
 
 namespace Tanker
 {
+namespace Users
+{
 class ContactStore;
-class Store;
-struct ExternalGroup;
 struct User;
-struct Device;
+}
+
+struct ExternalGroup;
 
 namespace DataStore
 {
@@ -29,7 +32,7 @@ class TrustchainVerifier
 public:
   TrustchainVerifier(Trustchain::TrustchainId const&,
                      DataStore::ADatabase*,
-                     ContactStore*);
+                     Users::ContactStore*);
 
   TrustchainVerifier(TrustchainVerifier const&) = delete;
   TrustchainVerifier(TrustchainVerifier&&) = delete;
@@ -44,14 +47,14 @@ private:
   tc::cotask<Entry> handleDeviceRevocation(
       Trustchain::ServerEntry const& dr) const;
 
-  tc::cotask<User> getUser(Trustchain::UserId const& userId) const;
-  tc::cotask<std::pair<User, std::size_t>> getUserByDeviceId(
+  tc::cotask<Users::User> getUser(Trustchain::UserId const& userId) const;
+  tc::cotask<std::pair<Users::User, std::size_t>> getUserByDeviceId(
       Trustchain::DeviceId const& deviceId) const;
-  Device getDevice(User const& user,
-                   Trustchain::DeviceId const& deviceHash) const;
+  Users::Device getDevice(Users::User const& user,
+                          Trustchain::DeviceId const& deviceHash) const;
 
   Trustchain::TrustchainId _trustchainId;
   DataStore::ADatabase* _db;
-  ContactStore* _contacts;
+  Users::ContactStore* _contacts;
 };
 }

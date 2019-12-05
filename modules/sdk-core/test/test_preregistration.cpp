@@ -1,7 +1,7 @@
-#include <Tanker/ProvisionalUsers/Updater.hpp>
-
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/ProvisionalUsers/Updater.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
@@ -26,7 +26,7 @@ TEST_CASE("ProvisionalUsers")
 
   SUBCASE("throws if the user key is not found")
   {
-    UserKeyStore userKeyStore(db.get());
+    Users::UserKeyStore userKeyStore(db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
     TANKER_CHECK_THROWS_WITH_CODE(

@@ -1,12 +1,12 @@
-#include <Tanker/UserAccessor.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -14,7 +14,7 @@ using Tanker::Trustchain::UserId;
 
 using namespace Tanker::Errors;
 
-namespace Tanker
+namespace Tanker::Users
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,
                            Client* client,

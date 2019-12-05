@@ -3,7 +3,6 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/Accessor.hpp>
@@ -35,8 +34,10 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/UserAccessor.hpp>
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -127,7 +128,7 @@ public:
       Trustchain::DeviceId const& id,
       Trustchain::Actions::DeviceCreation const& deviceCreation);
   Trustchain::DeviceId const& deviceId() const;
-  tc::cotask<std::vector<Device>> getDeviceList() const;
+  tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
   tc::cotask<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
@@ -159,15 +160,15 @@ private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Groups::IRequester> _requester;
   TrustchainStore _trustchain;
-  UserKeyStore _userKeyStore;
-  ContactStore _contactStore;
+  Users::UserKeyStore _userKeyStore;
+  Users::ContactStore _contactStore;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
 
   TrustchainVerifier _verifier;
   TrustchainPuller _trustchainPuller;
-  UserAccessor _userAccessor;
+  Users::UserAccessor _userAccessor;
   ProvisionalUsers::Accessor _provisionalUsersAccessor;
   ProvisionalUsers::Manager _provisionalUsersManager;
   Groups::Accessor _groupAccessor;

@@ -99,7 +99,7 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 
 template <typename T>
 void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
-                                Device authorDevice,
+                                Users::Device authorDevice,
                                 TrustchainBuilder::ResultDevice secondDevice)
 {
   auto const tankerUser = user.user.asTankerUser();
@@ -153,9 +153,9 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
 }
 
 void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
-                                  Device authorDevice,
-                                  Device targetDevice,
-                                  User const& user)
+                                  Users::Device authorDevice,
+                                  Users::Device targetDevice,
+                                  Users::User const& user)
 {
   SUBCASE("should reject an incorrectly signed DeviceRevocation")
   {
@@ -191,7 +191,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
   }
 }
 
-void testUserGroupCreationCommon(Tanker::Device& authorDevice,
+void testUserGroupCreationCommon(Users::Device& authorDevice,
                                  ServerEntry& gcEntry)
 {
   SUBCASE("should reject a UserGroupCreation if the group already exists")

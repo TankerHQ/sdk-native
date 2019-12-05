@@ -1,9 +1,9 @@
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Users/Device.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -16,10 +16,9 @@ namespace Tanker
 {
 namespace Verif
 {
-Entry verifyUserGroupCreation(
-    ServerEntry const& serverEntry,
-    Device const& author,
-    std::optional<ExternalGroup> const& previousGroup)
+Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
+                              Users::Device const& author,
+                              std::optional<ExternalGroup> const& previousGroup)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
          serverEntry.action().nature() == Nature::UserGroupCreation2);

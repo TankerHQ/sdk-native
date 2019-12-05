@@ -1,4 +1,4 @@
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -13,6 +13,7 @@
 #include <doctest.h>
 
 using namespace Tanker;
+using namespace Tanker::Users;
 using namespace Tanker::Errors;
 
 #ifndef EMSCRIPTEN

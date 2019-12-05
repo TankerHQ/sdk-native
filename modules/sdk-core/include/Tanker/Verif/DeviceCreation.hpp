@@ -3,10 +3,14 @@
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
+namespace Tanker::Users
+{
+struct User;
+struct Device;
+}
+
 namespace Tanker
 {
-struct Device;
-struct User;
 
 namespace Verif
 {
@@ -15,7 +19,7 @@ void verifyDeviceCreation(
     Trustchain::Actions::TrustchainCreation const& author);
 
 void verifyDeviceCreation(Trustchain::ServerEntry const& serverEntry,
-                          Device const& author,
-                          User const& user);
+                          Users::Device const& author,
+                          Users::User const& user);
 }
 }

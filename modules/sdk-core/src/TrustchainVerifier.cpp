@@ -1,8 +1,6 @@
 #include <Tanker/TrustchainVerifier.hpp>
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Format/Enum.hpp>
@@ -10,7 +8,8 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
@@ -26,7 +25,7 @@ namespace Tanker
 {
 TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
                                        DataStore::ADatabase* db,
-                                       ContactStore* contacts)
+                                       Users::ContactStore* contacts)
   : _trustchainId(id), _db(db), _contacts(contacts)
 {
 }
@@ -80,7 +79,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
   }
   else
   {
-    User user;
+    Users::User user;
     std::size_t idx;
 
     std::tie(user, idx) =
@@ -93,7 +92,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
     Trustchain::ServerEntry const& dr) const
 {
-  User user;
+  Users::User user;
   std::size_t idx;
 
   std::tie(user, idx) =
@@ -106,14 +105,15 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
   TC_RETURN(Verif::makeVerifiedEntry(dr));
 }
 
-tc::cotask<User> TrustchainVerifier::getUser(UserId const& userId) const
+tc::cotask<Users::User> TrustchainVerifier::getUser(UserId const& userId) const
 {
   auto const user = TC_AWAIT(_contacts->findUser(userId));
   Verif::ensures(user.has_value(), Verif::Errc::InvalidUser, "user not found");
   TC_RETURN(*user);
 }
 
-tc::cotask<std::pair<User, std::size_t>> TrustchainVerifier::getUserByDeviceId(
+tc::cotask<std::pair<Users::User, std::size_t>>
+TrustchainVerifier::getUserByDeviceId(
     Trustchain::DeviceId const& deviceId) const
 {
   auto const optUserId = TC_AWAIT(_contacts->findUserIdByDeviceId(deviceId));
@@ -131,8 +131,8 @@ tc::cotask<std::pair<User, std::size_t>> TrustchainVerifier::getUserByDeviceId(
       user, static_cast<std::size_t>(deviceIt - user.devices.begin())));
 }
 
-Device TrustchainVerifier::getDevice(User const& user,
-                                     DeviceId const& deviceId) const
+Users::Device TrustchainVerifier::getDevice(Users::User const& user,
+                                            DeviceId const& deviceId) const
 {
   auto const device = std::find_if(
       user.devices.begin(), user.devices.end(), [&](auto const& device) {

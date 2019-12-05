@@ -2,12 +2,10 @@
 
 #include <Tanker/Groups/IAccessor.hpp>
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -16,6 +14,12 @@
 namespace Tanker
 {
 class ITrustchainPuller;
+}
+
+namespace Tanker::Users
+{
+class ContactStore;
+class UserKeyStore;
 }
 
 namespace Tanker::Groups
@@ -27,9 +31,9 @@ public:
   Accessor(Trustchain::UserId const& myUserId,
            Groups::IRequester* requester,
            ITrustchainPuller* trustchainPuller,
-           ContactStore const* contactStore,
+           Users::ContactStore const* contactStore,
            Store* groupstore,
-           UserKeyStore const* userKeyStore,
+           Users::UserKeyStore const* userKeyStore,
            ProvisionalUsers::IAccessor* provisionalUserAccessor);
 
   Accessor() = delete;
@@ -50,9 +54,9 @@ private:
   Trustchain::UserId _myUserId;
   Groups::IRequester* _requester;
   ITrustchainPuller* _trustchainPuller;
-  ContactStore const* _contactStore;
+  Users::ContactStore const* _contactStore;
   Store* _groupStore;
-  UserKeyStore const* _userKeyStore;
+  Users::UserKeyStore const* _userKeyStore;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
@@ -8,7 +7,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UserKeyStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -17,6 +15,12 @@
 #include <set>
 #include <utility>
 #include <vector>
+
+namespace Tanker::Users
+{
+class ContactStore;
+class UserKeyStore;
+}
 
 namespace Tanker
 {
@@ -36,8 +40,8 @@ public:
   TrustchainPuller(TrustchainStore* trustchain,
                    TrustchainVerifier* verifier,
                    DataStore::ADatabase* db,
-                   ContactStore* contactStore,
-                   UserKeyStore* userKeyStore,
+                   Users::ContactStore* contactStore,
+                   Users::UserKeyStore* userKeyStore,
                    DeviceKeyStore* deviceKeyStore,
                    Client* client,
                    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
@@ -60,8 +64,8 @@ private:
   TrustchainStore* _trustchain;
   TrustchainVerifier* _verifier;
   DataStore::ADatabase* _db;
-  ContactStore* _contactStore;
-  UserKeyStore* _userKeyStore;
+  Users::ContactStore* _contactStore;
+  Users::UserKeyStore* _userKeyStore;
   DeviceKeyStore* _deviceKeyStore;
   Client* _client;
 

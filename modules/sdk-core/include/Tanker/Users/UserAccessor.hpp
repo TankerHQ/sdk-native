@@ -2,21 +2,24 @@
 
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Client.hpp>
-#include <Tanker/IUserAccessor.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/IUserAccessor.hpp>
 
 #include <gsl-lite.hpp>
-#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace Tanker
 {
 class ITrustchainPuller;
+}
+
+namespace Tanker::Users
+{
 class ContactStore;
 
 class UserAccessor : public IUserAccessor

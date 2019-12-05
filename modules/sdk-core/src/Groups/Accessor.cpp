@@ -20,9 +20,9 @@ namespace Tanker::Groups
 Accessor::Accessor(Trustchain::UserId const& userId,
                    Groups::IRequester* requester,
                    ITrustchainPuller* trustchainPuller,
-                   ContactStore const* contactStore,
+                   Users::ContactStore const* contactStore,
                    Store* groupStore,
-                   UserKeyStore const* userKeyStore,
+                   Users::UserKeyStore const* userKeyStore,
                    ProvisionalUsers::IAccessor* provisionalUserAccessor)
   : _myUserId(userId),
     _requester(requester),

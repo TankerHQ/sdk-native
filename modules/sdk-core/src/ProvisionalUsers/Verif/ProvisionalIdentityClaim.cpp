@@ -1,10 +1,9 @@
 #include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/Device.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -20,7 +19,7 @@ namespace Tanker
 namespace Verif
 {
 Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
-                                     Device const& author)
+                                     Users::Device const& author)
 {
   assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
 

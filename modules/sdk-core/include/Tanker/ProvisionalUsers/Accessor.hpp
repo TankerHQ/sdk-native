@@ -1,21 +1,23 @@
 #pragma once
 
 #include <Tanker/Client.hpp>
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/UserKeyStore.hpp>
 
-namespace Tanker
+namespace Tanker::Users
 {
-namespace ProvisionalUsers
+class ContactStore;
+class UserKeyStore;
+}
+
+namespace Tanker::ProvisionalUsers
 {
 class Accessor : public IAccessor
 {
 public:
   Accessor(Client* client,
-           ContactStore const* contactStore,
-           UserKeyStore const* userKeyStore,
+           Users::ContactStore const* contactStore,
+           Users::UserKeyStore const* userKeyStore,
            ProvisionalUserKeysStore* provisionalUserKeysStore);
 
   Accessor() = delete;
@@ -35,9 +37,8 @@ public:
 
 private:
   Client* _client;
-  ContactStore const* _contactStore;
-  UserKeyStore const* _userKeyStore;
+  Users::ContactStore const* _contactStore;
+  Users::UserKeyStore const* _userKeyStore;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
 };
-}
 }

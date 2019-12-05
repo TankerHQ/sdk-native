@@ -1,9 +1,7 @@
 #pragma once
 
 #include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
@@ -20,14 +18,19 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/User.hpp>
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/User.hpp>
 
 #include <optional>
-
 #include <set>
 #include <string>
 #include <vector>
+
+namespace Tanker::Users
+{
+class ContactStore;
+class UserKeyStore;
+}
 
 class TrustchainBuilder
 {
@@ -40,7 +43,7 @@ public:
     Tanker::Identity::Delegation delegation;
     uint64_t blockIndex;
 
-    Tanker::Device asTankerDevice() const;
+    Tanker::Users::Device asTankerDevice() const;
   };
 
   struct UserKey
@@ -57,7 +60,7 @@ public:
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;
 
-    Tanker::User asTankerUser() const;
+    Tanker::Users::User asTankerUser() const;
   };
 
   struct ResultUser
@@ -69,7 +72,7 @@ public:
   struct ResultDevice
   {
     Device device;
-    Tanker::User user;
+    Tanker::Users::User user;
     Tanker::Trustchain::ServerEntry entry;
   };
 
@@ -168,9 +171,9 @@ public:
 
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;
-  std::unique_ptr<Tanker::UserKeyStore> makeUserKeyStore(
+  std::unique_ptr<Tanker::Users::UserKeyStore> makeUserKeyStore(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::ContactStore> makeContactStoreWith(
+  std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,
       Tanker::DataStore::ADatabase* conn) const;
   std::vector<Tanker::Group> getGroupsOfUser(

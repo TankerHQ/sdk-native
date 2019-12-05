@@ -2,16 +2,17 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 
-#include <optional>
 #include <tconcurrent/coroutine.hpp>
 
-namespace Tanker
-{
-namespace DataStore
+#include <optional>
+
+namespace Tanker::DataStore
 {
 class ADatabase;
 }
 
+namespace Tanker::Users
+{
 class UserKeyStore
 {
 public:

@@ -1,8 +1,9 @@
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UserAccessor.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/User.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -31,7 +32,7 @@ public:
 TEST_CASE("UserAccessor")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
-  ContactStore contactStore(dbPtr.get());
+  Users::ContactStore contactStore(dbPtr.get());
 
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice").user.asTankerUser();
@@ -44,7 +45,7 @@ TEST_CASE("UserAccessor")
       .RETURN([](auto...) -> tc::shared_future<void> {
         return {tc::make_ready_future()};
       }());
-  UserAccessor userAccessor(
+  Users::UserAccessor userAccessor(
       alice.id, nullptr, &trustchainPuller, &contactStore);
 
   SUBCASE("it should return user ids it did not find")
@@ -63,6 +64,6 @@ TEST_CASE("UserAccessor")
     std::vector<Trustchain::UserId> ids{bob.id, charlie.id};
     auto const result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.notFound.empty());
-    CHECK_EQ(result.found, std::vector<User>{bob, charlie});
+    CHECK_EQ(result.found, std::vector<Users::User>{bob, charlie});
   }
 }

@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 

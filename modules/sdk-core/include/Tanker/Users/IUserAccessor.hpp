@@ -3,13 +3,13 @@
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/User.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
 #include <gsl-lite.hpp>
 
-namespace Tanker
+namespace Tanker::Users
 {
 class IUserAccessor
 {

@@ -98,17 +98,17 @@ add_library(tankercore STATIC
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/UserKeyStore.hpp
-  include/Tanker/ContactStore.hpp
   include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
-  include/Tanker/Device.hpp
   include/Tanker/Revocation.hpp
-  include/Tanker/User.hpp
-  include/Tanker/UserAccessor.hpp
-  include/Tanker/IUserAccessor.hpp
+  include/Tanker/Users/User.hpp
+  include/Tanker/Users/UserAccessor.hpp
+  include/Tanker/Users/UserKeyStore.hpp
+  include/Tanker/Users/IUserAccessor.hpp
+  include/Tanker/Users/ContactStore.hpp
+  include/Tanker/Users/Device.hpp
   include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
@@ -155,8 +155,6 @@ add_library(tankercore STATIC
   src/Entry.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
-  src/UserKeyStore.cpp
-  src/ContactStore.cpp
   src/ProvisionalUsers/Accessor.cpp
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
@@ -171,9 +169,11 @@ add_library(tankercore STATIC
   src/Groups/Requester.cpp
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
-  src/Device.cpp
-  src/User.cpp
-  src/UserAccessor.cpp
+  src/Users/User.cpp
+  src/Users/UserAccessor.cpp
+  src/Users/UserKeyStore.cpp
+  src/Users/ContactStore.cpp
+  src/Users/Device.cpp
   src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
   src/Verif/Errors/Errc.cpp

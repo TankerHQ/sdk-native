@@ -5,11 +5,10 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
+#include <cstdint>
 #include <optional>
 
-#include <cstdint>
-
-namespace Tanker
+namespace Tanker::Users
 {
 struct Device
 {

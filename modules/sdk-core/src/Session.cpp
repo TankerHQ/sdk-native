@@ -41,7 +41,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/UserKeyStore.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -286,7 +285,7 @@ Trustchain::DeviceId const& Session::deviceId() const
   return _deviceKeyStore->deviceId();
 }
 
-tc::cotask<std::vector<Device>> Session::getDeviceList() const
+tc::cotask<std::vector<Users::Device>> Session::getDeviceList() const
 {
   TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(_userId)));
 }
@@ -410,13 +409,13 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
   auto const& deviceCreation = entry.action.get<DeviceCreation>();
   Trustchain::DeviceId const deviceId{entry.hash};
   TC_AWAIT(catchUserKey(deviceId, deviceCreation));
-  Device createdDevice{deviceId,
-                       deviceCreation.userId(),
-                       entry.index,
-                       std::nullopt,
-                       deviceCreation.publicSignatureKey(),
-                       deviceCreation.publicEncryptionKey(),
-                       deviceCreation.isGhostDevice()};
+  Users::Device const createdDevice{deviceId,
+                                    deviceCreation.userId(),
+                                    entry.index,
+                                    std::nullopt,
+                                    deviceCreation.publicSignatureKey(),
+                                    deviceCreation.publicEncryptionKey(),
+                                    deviceCreation.isGhostDevice()};
   TC_AWAIT(_contactStore.putUserDevice(createdDevice));
 }
 

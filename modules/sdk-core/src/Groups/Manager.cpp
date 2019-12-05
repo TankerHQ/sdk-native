@@ -12,6 +12,8 @@
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <Tanker/Users/IUserAccessor.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -28,7 +30,8 @@ namespace Groups
 namespace Manager
 {
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    IUserAccessor& userAccessor, std::vector<SPublicIdentity> spublicIdentities)
+    Users::IUserAccessor& userAccessor,
+    std::vector<SPublicIdentity> spublicIdentities)
 {
   spublicIdentities = removeDuplicates(std::move(spublicIdentities));
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);
@@ -57,7 +60,7 @@ namespace
 {
 UserGroupCreation::v2::Members generateGroupKeysForUsers2(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<User> const& users)
+    std::vector<Users::User> const& users)
 {
   UserGroupCreation::v2::Members keysForUsers;
   for (auto const& user : users)
@@ -94,7 +97,7 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 }
 
 std::vector<uint8_t> generateCreateGroupBlock(
-    std::vector<User> const& memberUsers,
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
@@ -120,7 +123,7 @@ std::vector<uint8_t> generateCreateGroupBlock(
 }
 
 tc::cotask<SGroupId> create(
-    UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
     std::vector<SPublicIdentity> const& spublicIdentities)
@@ -142,7 +145,7 @@ tc::cotask<SGroupId> create(
 }
 
 std::vector<uint8_t> generateAddUserToGroupBlock(
-    std::vector<User> const& memberUsers,
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     InternalGroup const& group)
@@ -171,7 +174,7 @@ std::vector<uint8_t> generateAddUserToGroupBlock(
 }
 
 tc::cotask<void> updateMembers(
-    UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
     IAccessor& groupAccessor,

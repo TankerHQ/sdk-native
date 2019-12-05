@@ -240,7 +240,7 @@ Trustchain::DeviceId const& Core::deviceId() const
   ;
 }
 
-tc::cotask<std::vector<Device>> Core::getDeviceList() const
+tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
   auto const psession = boost::variant2::get_if<SessionType>(&_state);
   if (!psession)

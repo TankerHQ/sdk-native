@@ -1,4 +1,4 @@
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -8,12 +8,13 @@
 #include <Tanker/Log/Log.hpp>
 
 #include <fmt/format.h>
-#include <optional>
 #include <tconcurrent/coroutine.hpp>
+
+#include <optional>
 
 TLOG_CATEGORY(UserKeyStore);
 
-namespace Tanker
+namespace Tanker::Users
 {
 UserKeyStore::UserKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
@@ -27,8 +28,8 @@ tc::cotask<void> UserKeyStore::putPrivateKey(
   TC_AWAIT(_db->putUserPrivateKey(publicKey, privateKey));
 }
 
-tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-UserKeyStore::findKeyPair(Crypto::PublicEncryptionKey const& publicKey) const
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> UserKeyStore::findKeyPair(
+    Crypto::PublicEncryptionKey const& publicKey) const
 {
   try
   {

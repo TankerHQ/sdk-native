@@ -114,7 +114,7 @@ struct KeyPublishRecipientVisitor
 };
 
 template <typename Row>
-Device rowToDevice(Row const& row)
+Users::Device rowToDevice(Row const& row)
 {
   std::optional<uint64_t> revokedAtBlockIndex;
   if (!row.revoked_at_block_index.is_null())
@@ -818,7 +818,7 @@ tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
-tc::cotask<void> Database::putDevice(Device const& device)
+tc::cotask<void> Database::putDevice(Users::Device const& device)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
@@ -835,7 +835,7 @@ tc::cotask<void> Database::putDevice(Device const& device)
   TC_RETURN();
 }
 
-tc::cotask<std::optional<Device>> Database::findDevice(
+tc::cotask<std::optional<Users::Device>> Database::findDevice(
     Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
@@ -850,7 +850,7 @@ tc::cotask<std::optional<Device>> Database::findDevice(
   TC_RETURN(rowToDevice(row));
 }
 
-tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
+tc::cotask<std::vector<Users::Device>> Database::getDevicesOf(UserId const& id)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
@@ -858,7 +858,7 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
   auto rows =
       (*_db)(select(all_of(tab)).from(tab).where(tab.user_id == id.base()));
 
-  std::vector<Device> ret;
+  std::vector<Users::Device> ret;
   for (auto const& row : rows)
     ret.push_back(rowToDevice(row));
   TC_RETURN(ret);

@@ -81,7 +81,7 @@ public:
       Unlock::Verification const& verification);
 
   Trustchain::DeviceId const& deviceId() const;
-  tc::cotask<std::vector<Device>> getDeviceList() const;
+  tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
   tc::cotask<void> syncTrustchain();
 

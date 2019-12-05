@@ -4,7 +4,6 @@
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/User.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -15,37 +14,43 @@
 
 namespace Tanker
 {
-class BlockGenerator;
+namespace Users
+{
 class ContactStore;
 class UserKeyStore;
+struct User;
+}
+
+class BlockGenerator;
 class DeviceKeyStore;
-class UserAccessor;
 class Client;
 
 namespace Revocation
 {
-tc::cotask<void> ensureDeviceIsFromUser(Trustchain::DeviceId const& deviceId,
-                                        Trustchain::UserId const& selfUserId,
-                                        ContactStore const& contactStore);
+tc::cotask<void> ensureDeviceIsFromUser(
+    Trustchain::DeviceId const& deviceId,
+    Trustchain::UserId const& selfUserId,
+    Users::ContactStore const& contactStore);
 
-tc::cotask<User> getUserFromUserId(Trustchain::UserId const& selfUserId,
-                                   ContactStore const& contactStore);
+tc::cotask<Users::User> getUserFromUserId(
+    Trustchain::UserId const& selfUserId,
+    Users::ContactStore const& contactStore);
 
 tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
-    UserKeyStore const& userKeyStore,
-    User const& user,
+    Users::UserKeyStore const& userKeyStore,
+    Users::User const& user,
     Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
 tc::cotask<Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices>
 encryptPrivateKeyForDevices(
-    User const& user,
+    Users::User const& user,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
 tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Trustchain::UserId const& userId,
-                              ContactStore const& contactStore,
-                              UserKeyStore const& userKeyStore,
+                              Users::ContactStore const& contactStore,
+                              Users::UserKeyStore const& userKeyStore,
                               BlockGenerator const& blockGenerator,
                               std::unique_ptr<Client> const& client);
 
@@ -58,8 +63,8 @@ tc::cotask<void> onOtherDeviceRevocation(
     Entry const& entry,
     Trustchain::UserId const& selfUserId,
     Trustchain::DeviceId const& deviceId,
-    ContactStore& contactStore,
+    Users::ContactStore& contactStore,
     std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,
-    UserKeyStore& userKeyStore);
+    Users::UserKeyStore& userKeyStore);
 }
 }

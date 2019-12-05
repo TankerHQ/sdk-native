@@ -9,7 +9,6 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
-#include <Tanker/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -17,50 +16,50 @@
 #include <string>
 #include <vector>
 
-namespace Tanker
+namespace Tanker::Users
 {
-namespace Groups
-{
-namespace Manager
+class IUserAccessor;
+struct User;
+}
+
+namespace Tanker::Groups::Manager
 {
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
 struct MembersToAdd
 {
-  std::vector<User> users;
+  std::vector<Users::User> users;
   std::vector<PublicProvisionalUser> provisionalUsers;
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    IUserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
 
 std::vector<uint8_t> generateCreateGroupBlock(
-    std::vector<User> const& memberUsers,
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     Crypto::SignatureKeyPair const& groupSignatureKey,
     Crypto::EncryptionKeyPair const& groupEncryptionKey);
 
 tc::cotask<SGroupId> create(
-    UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
     std::vector<SPublicIdentity> const& spublicIdentities);
 
 std::vector<uint8_t> generateAddUserToGroupBlock(
-    std::vector<User> const& memberUsers,
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
     BlockGenerator const& blockGenerator,
     InternalGroup const& group);
 
 tc::cotask<void> updateMembers(
-    UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     BlockGenerator const& blockGenerator,
     Client& client,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
-}
-}
 }

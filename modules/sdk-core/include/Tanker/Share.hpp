@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Device.hpp>
+#include <Tanker/Users/Device.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
@@ -17,10 +17,14 @@
 #include <tuple>
 #include <vector>
 
+namespace Tanker::Users
+{
+class IUserAccessor;
+}
+
 namespace Tanker
 {
 class BlockGenerator;
-class IUserAccessor;
 class Client;
 
 namespace Groups
@@ -47,7 +51,7 @@ std::vector<uint8_t> makeKeyPublishToUser(
     Crypto::SymmetricKey const& resourceKey);
 
 tc::cotask<KeyRecipients> generateRecipientList(
-    IUserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds);
@@ -57,7 +61,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
     ResourceKeys const& resourceKeys,
     KeyRecipients const& keyRecipients);
 
-tc::cotask<void> share(IUserAccessor& userAccessor,
+tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
@@ -66,7 +70,7 @@ tc::cotask<void> share(IUserAccessor& userAccessor,
                        std::vector<SGroupId> const& groupIds);
 
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
-                       IUserAccessor& userAccessor,
+                       Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,

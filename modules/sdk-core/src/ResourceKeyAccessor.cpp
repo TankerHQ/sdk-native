@@ -9,7 +9,7 @@ namespace Tanker
 ResourceKeyAccessor::ResourceKeyAccessor(
     Client* client,
     TrustchainVerifier* verifier,
-    UserKeyStore* userKeyStore,
+    Users::UserKeyStore* userKeyStore,
     Groups::IAccessor* groupAccessor,
     ProvisionalUsers::IAccessor* provisionalUsersAccessor,
     ResourceKeyStore* resourceKeyStore)

@@ -1,8 +1,8 @@
-#include <Tanker/Device.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <tuple>
 
-namespace Tanker
+namespace Tanker::Users
 {
 bool operator==(Device const& l, Device const& r)
 {

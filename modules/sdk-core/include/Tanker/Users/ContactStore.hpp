@@ -2,7 +2,7 @@
 
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/User.hpp>
 
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
@@ -14,30 +14,30 @@ namespace DataStore
 class ADatabase;
 }
 
+namespace Users
+{
 struct Device;
-
 class ContactStore
 {
 public:
   ContactStore(DataStore::ADatabase* dbConn);
 
   ContactStore() = delete;
-  ContactStore(ContactStore const&) = delete;
-  ContactStore(ContactStore&&) = delete;
-  ContactStore& operator=(ContactStore const&) = delete;
-  ContactStore& operator=(ContactStore&&) = delete;
+  ContactStore(Users::ContactStore const&) = delete;
+  ContactStore(Users::ContactStore&&) = delete;
+  Users::ContactStore& operator=(Users::ContactStore const&) = delete;
+  Users::ContactStore& operator=(Users::ContactStore&&) = delete;
   ~ContactStore() = default;
 
   tc::cotask<void> putUser(User const& user);
   tc::cotask<void> putUserKey(Trustchain::UserId const& id,
                               Crypto::PublicEncryptionKey const& userKey);
-  tc::cotask<void> putUserDevice(Device const& device);
+  tc::cotask<void> putUserDevice(Users::Device const& device);
 
-  tc::cotask<std::optional<User>> findUser(
-      Trustchain::UserId const& id) const;
-  tc::cotask<std::optional<Device>> findDevice(
+  tc::cotask<std::optional<User>> findUser(Trustchain::UserId const& id) const;
+  tc::cotask<std::optional<Users::Device>> findDevice(
       Trustchain::DeviceId const& id) const;
-  tc::cotask<std::vector<Device>> findUserDevices(
+  tc::cotask<std::vector<Users::Device>> findUserDevices(
       Trustchain::UserId const& id) const;
   tc::cotask<std::optional<Trustchain::UserId>> findUserIdByUserPublicKey(
       Crypto::PublicEncryptionKey const& userKey) const;
@@ -53,4 +53,5 @@ public:
 private:
   DataStore::ADatabase* _db;
 };
+}
 }

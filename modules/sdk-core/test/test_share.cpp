@@ -7,7 +7,8 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/UserAccessor.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
@@ -33,7 +34,7 @@ using namespace Tanker::Trustchain::Actions;
 namespace
 {
 template <typename T>
-bool hasDevice(gsl::span<Device const> devices,
+bool hasDevice(gsl::span<Users::Device const> devices,
                Crypto::BasicHash<T> const& hash)
 {
   return std::find_if(devices.begin(), devices.end(), [&](auto const& device) {
@@ -115,6 +116,8 @@ void assertKeyPublishToGroupTargetedAt(
 }
 }
 
+using UsersPullResult = Tanker::Users::UserAccessor::PullResult;
+
 TEST_CASE("generateRecipientList of a new user should return their user key")
 {
   TrustchainBuilder builder;
@@ -130,8 +133,8 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
-      .LR_RETURN(Tanker::makeCoTask(
-          UserAccessor::PullResult{{newUser.asTankerUser()}, {}}));
+      .LR_RETURN(
+          Tanker::makeCoTask(UsersPullResult{{newUser.asTankerUser()}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
       .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
@@ -170,7 +173,7 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
 
   REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
       .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
@@ -208,7 +211,7 @@ TEST_CASE(
 
   REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
       .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{
@@ -251,8 +254,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
-      .LR_RETURN(
-          Tanker::makeCoTask(UserAccessor::PullResult{{}, {newUser.userId}}));
+      .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {newUser.userId}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
       .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
@@ -286,7 +288,7 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
 
   REQUIRE_CALL(userAccessor,
                pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
-      .LR_RETURN(Tanker::makeCoTask(UserAccessor::PullResult{{}, {}}));
+      .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
       .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));

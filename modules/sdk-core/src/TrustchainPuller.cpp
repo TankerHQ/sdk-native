@@ -14,6 +14,8 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -38,8 +40,8 @@ TrustchainPuller::TrustchainPuller(
     TrustchainStore* trustchain,
     TrustchainVerifier* verifier,
     DataStore::ADatabase* db,
-    ContactStore* contactStore,
-    UserKeyStore* userKeyStore,
+    Users::ContactStore* contactStore,
+    Users::UserKeyStore* userKeyStore,
     DeviceKeyStore* deviceKeyStore,
     Client* client,
     Crypto::PublicSignatureKey const& deviceSignatureKey,

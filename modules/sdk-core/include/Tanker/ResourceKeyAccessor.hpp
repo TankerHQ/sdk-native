@@ -6,9 +6,13 @@
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
-#include <Tanker/UserKeyStore.hpp>
 
 #include <optional>
+
+namespace Tanker::Users
+{
+class UserKeyStore;
+}
 
 namespace Tanker
 {
@@ -17,7 +21,7 @@ class ResourceKeyAccessor
 public:
   ResourceKeyAccessor(Client* client,
                       TrustchainVerifier* verifier,
-                      UserKeyStore* userKeyStore,
+                      Users::UserKeyStore* userKeyStore,
                       Groups::IAccessor* groupAccessor,
                       ProvisionalUsers::IAccessor* provisionalUsersAccessor,
                       ResourceKeyStore* resourceKeyStore);
@@ -33,7 +37,7 @@ public:
 private:
   Client* _client;
   TrustchainVerifier* _verifier;
-  UserKeyStore* _userKeyStore;
+  Users::UserKeyStore* _userKeyStore;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   ResourceKeyStore* _resourceKeyStore;

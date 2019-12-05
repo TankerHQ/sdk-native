@@ -6,6 +6,8 @@
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>

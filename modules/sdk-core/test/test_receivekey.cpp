@@ -4,6 +4,8 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 #include "FakeProvisionalUsersAccessor.hpp"
 #include "GroupAccessorMock.hpp"

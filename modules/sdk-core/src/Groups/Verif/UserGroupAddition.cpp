@@ -1,9 +1,9 @@
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
+#include <Tanker/Users/Device.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -17,7 +17,7 @@ namespace Tanker
 namespace Verif
 {
 Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
-                              Device const& author,
+                              Users::Device const& author,
                               std::optional<ExternalGroup> const& group)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupAddition ||

@@ -228,10 +228,10 @@ tc::shared_future<SDeviceId> AsyncCore::deviceId() const
   });
 }
 
-tc::shared_future<std::vector<Device>> AsyncCore::getDeviceList()
+tc::shared_future<std::vector<Users::Device>> AsyncCore::getDeviceList()
 {
   return runResumable(
-      _taskCanceler, [this]() -> tc::cotask<std::vector<Device>> {
+      _taskCanceler, [this]() -> tc::cotask<std::vector<Users::Device>> {
         TC_AWAIT(syncTrustchain());
         auto devices = TC_AWAIT(this->_core.getDeviceList());
         devices.erase(std::remove_if(

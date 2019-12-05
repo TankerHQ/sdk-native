@@ -9,6 +9,9 @@
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -22,14 +25,12 @@ using Tanker::Trustchain::GroupId;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
-namespace Tanker
-{
-namespace GroupUpdater
+namespace Tanker::GroupUpdater
 {
 namespace
 {
 tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
@@ -47,7 +48,7 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
 
 tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Trustchain::UserId const& myUserId,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     UserGroupCreation::v2::Members const& groupKeys)
 {
   auto const myKeysIt =
@@ -158,7 +159,7 @@ InternalGroup makeInternalGroup(
 
 tc::cotask<Group> applyUserGroupCreation(
     Trustchain::UserId const& myUserId,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Entry const& entry)
 {
@@ -186,7 +187,7 @@ tc::cotask<Group> applyUserGroupCreation(
 
 tc::cotask<Group> applyUserGroupAddition(
     Trustchain::UserId const& myUserId,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     Entry const& entry)
@@ -232,11 +233,12 @@ tc::cotask<Group> applyUserGroupAddition(
 
 namespace
 {
-using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
+using DeviceMap =
+    boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
 tc::cotask<DeviceMap> extractAuthors(
     ITrustchainPuller& trustchainPuller,
-    ContactStore const& contactStore,
+    Users::ContactStore const& contactStore,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
   DeviceMap out;
@@ -293,7 +295,7 @@ tc::cotask<DeviceMap> extractAuthors(
 tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     Trustchain::UserId const& myUserId,
     DeviceMap const& authors,
-    UserKeyStore const& userKeyStore,
+    Users::UserKeyStore const& userKeyStore,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
@@ -349,8 +351,8 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 tc::cotask<std::optional<Group>> processGroupEntries(
     Trustchain::UserId const& myUserId,
     ITrustchainPuller& trustchainPuller,
-    ContactStore const& contactStore,
-    UserKeyStore const& userKeyStore,
+    Users::ContactStore const& contactStore,
+    Users::UserKeyStore const& userKeyStore,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries)
@@ -368,6 +370,5 @@ tc::cotask<std::optional<Group>> processGroupEntries(
                                                     provisionalUsersAccessor,
                                                     previousGroup,
                                                     entries)));
-}
 }
 }

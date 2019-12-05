@@ -1,12 +1,12 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -29,8 +29,8 @@ bool has_duplicates(std::vector<T> vect)
 }
 
 void verifySubAction(DeviceRevocation1 const& deviceRevocation,
-                     Device const& target,
-                     User const& user)
+                     Users::Device const& target,
+                     Users::User const& user)
 {
   ensures(!user.userKey,
           Errc::InvalidUserKey,
@@ -38,8 +38,8 @@ void verifySubAction(DeviceRevocation1 const& deviceRevocation,
 }
 
 void verifySubAction(DeviceRevocation2 const& deviceRevocation,
-                     Device const& target,
-                     User const& user)
+                     Users::Device const& target,
+                     Users::User const& user)
 {
   if (!user.userKey)
   {
@@ -93,9 +93,9 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 
 void verifyDeviceRevocation(ServerEntry const& serverEntry,
-                            Device const& author,
-                            Device const& target,
-                            User const& user)
+                            Users::Device const& author,
+                            Users::Device const& target,
+                            Users::User const& user)
 {
   assert(serverEntry.action().nature() == Nature::DeviceRevocation ||
          serverEntry.action().nature() == Nature::DeviceRevocation2);

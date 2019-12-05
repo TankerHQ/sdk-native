@@ -26,6 +26,8 @@ using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
+using UsersPullResult = Tanker::Users::IUserAccessor::PullResult;
+
 TEST_CASE("Can't create an empty group")
 {
   TrustchainBuilder builder;
@@ -163,8 +165,7 @@ TEST_CASE("throws when getting keys of an unknown member")
   UserAccessorMock userAccessor;
 
   REQUIRE_CALL(userAccessor, pull(trompeloeil::_))
-      .LR_RETURN(
-          makeCoTask(UserAccessor::PullResult{{}, {unknownIdentity.userId}}));
+      .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(Groups::Manager::fetchFutureMembers(

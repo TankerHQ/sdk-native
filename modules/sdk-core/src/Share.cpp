@@ -15,7 +15,7 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
-#include <Tanker/UserAccessor.hpp>
+#include <Tanker/Users/IUserAccessor.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <boost/variant2/variant.hpp>
@@ -157,7 +157,7 @@ void handleNotFound(
 }
 
 KeyRecipients toKeyRecipients(
-    std::vector<User> const& users,
+    std::vector<Users::User> const& users,
     std::vector<PublicProvisionalUser> const& publicProvisionalUsers,
     std::vector<Crypto::PublicEncryptionKey> const& groupEncryptionKeys)
 {
@@ -193,7 +193,7 @@ std::vector<uint8_t> makeKeyPublishToUser(
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
-    IUserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> const& aspublicIdentities,
     std::vector<SGroupId> const& asgroupIds)
@@ -247,7 +247,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
   return out;
 }
 
-tc::cotask<void> share(IUserAccessor& userAccessor,
+tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,
@@ -266,7 +266,7 @@ tc::cotask<void> share(IUserAccessor& userAccessor,
 }
 
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
-                       IUserAccessor& userAccessor,
+                       Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
                        BlockGenerator const& blockGenerator,
                        Client& client,

@@ -8,6 +8,9 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -27,10 +30,11 @@ namespace Updater
 {
 namespace
 {
-using DeviceMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
+using DeviceMap =
+    boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
 tc::cotask<DeviceMap> extractAuthors(
-    ContactStore const& contactStore,
+    Users::ContactStore const& contactStore,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
   DeviceMap out;
@@ -56,7 +60,7 @@ tc::cotask<DeviceMap> extractAuthors(
 }
 
 tc::cotask<SecretProvisionalUser> extractKeysToStore(
-    UserKeyStore const& userKeyStore, Entry const& entry)
+    Users::UserKeyStore const& userKeyStore, Entry const& entry)
 {
   auto const& provisionalIdentityClaim =
       entry.action.get<ProvisionalIdentityClaim>();
@@ -94,8 +98,8 @@ tc::cotask<SecretProvisionalUser> extractKeysToStore(
 }
 
 tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
-    ContactStore const& contactStore,
-    UserKeyStore const& userKeyStore,
+    Users::ContactStore const& contactStore,
+    Users::UserKeyStore const& userKeyStore,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
   auto const authors = TC_AWAIT(extractAuthors(contactStore, serverEntries));

@@ -106,7 +106,7 @@ public:
   void disconnectDeviceRevoked();
 
   tc::shared_future<SDeviceId> deviceId() const;
-  tc::shared_future<std::vector<Device>> getDeviceList();
+  tc::shared_future<std::vector<Users::Device>> getDeviceList();
 
   tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
 

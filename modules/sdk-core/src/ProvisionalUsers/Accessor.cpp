@@ -6,18 +6,18 @@
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requests.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserKeyStore.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 
 using Tanker::Trustchain::GroupId;
 
-namespace Tanker
-{
-namespace ProvisionalUsers
+namespace Tanker::ProvisionalUsers
 {
 Accessor::Accessor(Client* client,
-                   ContactStore const* contactStore,
-                   UserKeyStore const* userKeyStore,
+                   Users::ContactStore const* contactStore,
+                   Users::UserKeyStore const* userKeyStore,
                    ProvisionalUserKeysStore* provisionalUserKeysStore)
   : _client(client),
     _contactStore(contactStore),
@@ -62,6 +62,5 @@ tc::cotask<void> Accessor::refreshKeys()
         keys.appSignaturePublicKey,
         keys.tankerSignaturePublicKey,
         {keys.appEncryptionKeyPair, keys.tankerEncryptionKeyPair}));
-}
 }
 }
