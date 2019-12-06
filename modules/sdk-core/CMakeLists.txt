@@ -109,6 +109,7 @@ add_library(tankercore STATIC
   include/Tanker/Users/IUserAccessor.hpp
   include/Tanker/Users/ContactStore.hpp
   include/Tanker/Users/Device.hpp
+  include/Tanker/Users/EntryGenerator.hpp
   include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
@@ -174,6 +175,7 @@ add_library(tankercore STATIC
   src/Users/UserKeyStore.cpp
   src/Users/ContactStore.cpp
   src/Users/Device.cpp
+  src/Users/EntryGenerator.cpp
   src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
   src/Verif/Errors/Errc.cpp

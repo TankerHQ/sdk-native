@@ -8,6 +8,7 @@
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 
 #include <stdexcept>
 
@@ -60,16 +61,12 @@ std::vector<uint8_t> BlockGenerator::addUser1(
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
-  DeviceCreation::v1 dc1{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey};
   auto const entry =
-      ClientEntry::create(_trustchainId,
-                          static_cast<Crypto::Hash>(_trustchainId),
-                          dc1,
-                          delegation.ephemeralKeyPair.privateKey);
+      Users::createDeviceV1Entry(_trustchainId,
+                                 static_cast<Crypto::Hash>(_trustchainId),
+                                 delegation,
+                                 signatureKey,
+                                 encryptionKey);
   return Serialization::serialize(entry);
 }
 
@@ -79,22 +76,11 @@ std::vector<uint8_t> BlockGenerator::addUser3(
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
-  auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
-
-  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey,
-                         userEncryptionKeys.publicKey,
-                         sealedPrivateEncryptionKey,
-                         DeviceCreation::DeviceType::GhostDevice};
-  auto const entry =
-      ClientEntry::create(_trustchainId,
-                          static_cast<Crypto::Hash>(_trustchainId),
-                          dc3,
-                          delegation.ephemeralKeyPair.privateKey);
+  auto const entry = Users::createNewUserEntry(_trustchainId,
+                                               delegation,
+                                               signatureKey,
+                                               encryptionKey,
+                                               userEncryptionKeys);
   return Serialization::serialize(entry);
 }
 
@@ -113,22 +99,12 @@ std::vector<uint8_t> BlockGenerator::addGhostDevice(
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
-  auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
-
-  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey,
-                         userEncryptionKeys.publicKey,
-                         sealedPrivateEncryptionKey,
-                         DeviceCreation::DeviceType::GhostDevice};
-  auto const entry =
-      ClientEntry::create(_trustchainId,
-                          static_cast<Crypto::Hash>(_deviceId),
-                          dc3,
-                          delegation.ephemeralKeyPair.privateKey);
+  auto const entry = Users::createNewGhostDeviceEntry(_trustchainId,
+                                                      _deviceId,
+                                                      delegation,
+                                                      signatureKey,
+                                                      encryptionKey,
+                                                      userEncryptionKeys);
   return Serialization::serialize(entry);
 }
 
@@ -137,16 +113,12 @@ std::vector<uint8_t> BlockGenerator::addDevice1(
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey) const
 {
-  DeviceCreation::v1 dc1{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey};
   auto const entry =
-      ClientEntry::create(_trustchainId,
-                          static_cast<Crypto::Hash>(_deviceId),
-                          dc1,
-                          delegation.ephemeralKeyPair.privateKey);
+      Users::createDeviceV1Entry(_trustchainId,
+                                 static_cast<Crypto::Hash>(_deviceId),
+                                 delegation,
+                                 signatureKey,
+                                 encryptionKey);
   return Serialization::serialize(entry);
 }
 
@@ -156,22 +128,12 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys) const
 {
-  auto const sealedPrivateEncryptionKey =
-      Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
-
-  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey,
-                         userEncryptionKeys.publicKey,
-                         sealedPrivateEncryptionKey,
-                         DeviceCreation::DeviceType::Device};
-  auto const entry =
-      ClientEntry::create(_trustchainId,
-                          static_cast<Crypto::Hash>(_deviceId),
-                          dc3,
-                          delegation.ephemeralKeyPair.privateKey);
+  auto const entry = Users::createNewDeviceEntry(_trustchainId,
+                                                 _deviceId,
+                                                 delegation,
+                                                 signatureKey,
+                                                 encryptionKey,
+                                                 userEncryptionKeys);
   return Serialization::serialize(entry);
 }
 
