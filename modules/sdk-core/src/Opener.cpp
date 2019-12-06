@@ -23,7 +23,6 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
@@ -125,19 +124,22 @@ tc::cotask<void> Opener::unlockCurrentDevice(
 
   try
   {
-    auto const ghostDevice = GhostDevice::create(verificationKey);
+    auto const ghostDeviceKeys =
+        GhostDevice::create(verificationKey).toDeviceKeys();
     auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
+        _info.trustchainId, ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const privateUserEncryptionKey =
+        Crypto::sealDecrypt(encryptedUserKey.encryptedPrivateKey,
+                            ghostDeviceKeys.encryptionKeyPair);
+    auto const entry = Users::createNewDeviceEntry(
         _info.trustchainId,
-        Crypto::makeSignatureKeyPair(ghostDevice.privateSignatureKey)
-            .publicKey));
-
-    auto const block =
-        Unlock::createValidatedDevice(_info.trustchainId,
-                                      _identity->delegation.userId,
-                                      ghostDevice,
-                                      _keyStore->deviceKeys(),
-                                      encryptedUserKey);
-    TC_AWAIT(_client->pushBlock(Serialization::serialize(block)));
+        encryptedUserKey.deviceId,
+        Identity::makeDelegation(_identity->delegation.userId,
+                                 ghostDeviceKeys.signatureKeyPair.privateKey),
+        _keyStore->deviceKeys().signatureKeyPair.publicKey,
+        _keyStore->deviceKeys().encryptionKeyPair.publicKey,
+        Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
+    TC_AWAIT(_client->pushBlock(Serialization::serialize(entry)));
   }
   catch (Exception const& e)
   {

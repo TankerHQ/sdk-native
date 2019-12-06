@@ -39,7 +39,6 @@
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Utils.hpp>
 
