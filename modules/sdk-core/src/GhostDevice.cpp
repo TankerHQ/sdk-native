@@ -26,10 +26,16 @@ GhostDevice GhostDevice::create(DeviceKeys const& keys)
                      keys.encryptionKeyPair.privateKey};
 }
 
-DeviceKeys GhostDevice::toDeviceKeys()
+DeviceKeys GhostDevice::toDeviceKeys() const
 {
   return DeviceKeys::create(this->privateSignatureKey,
                             this->privateEncryptionKey);
+}
+
+VerificationKey GhostDevice::toVerificationKey() const
+{
+  return cppcodec::base64_rfc4648::encode<VerificationKey>(
+      nlohmann::json(*this).dump());
 }
 
 void from_json(nlohmann::json const& j, GhostDevice& d)

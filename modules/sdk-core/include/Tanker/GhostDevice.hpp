@@ -15,8 +15,10 @@ struct GhostDevice
   Crypto::PrivateSignatureKey privateSignatureKey;
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   static GhostDevice create(VerificationKey const& key);
-  static GhostDevice create(DeviceKeys const&);
-  DeviceKeys toDeviceKeys();
+  static GhostDevice create(
+      DeviceKeys const& deviceKeys = DeviceKeys::create());
+  DeviceKeys toDeviceKeys() const;
+  VerificationKey toVerificationKey() const;
 };
 
 void from_json(nlohmann::json const& j, GhostDevice& d);

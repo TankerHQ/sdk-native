@@ -197,8 +197,7 @@ tc::cotask<Session::Config> Opener::createUser(
 
   auto const encryptVerificationKey = Crypto::encryptAead(
       _identity->userSecret,
-      gsl::make_span(Unlock::ghostDeviceToVerificationKey(ghostDevice))
-          .as_span<uint8_t const>());
+      gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
   TC_AWAIT(_client->createUser(*_identity,
                                userCreation,
@@ -226,9 +225,7 @@ tc::cotask<VerificationKey> Opener::getVerificationKey(
 
 tc::cotask<VerificationKey> Opener::generateVerificationKey() const
 {
-  TC_RETURN(Unlock::generate(_userId,
-                             _keyStore->encryptionKeyPair(),
-                             BlockGenerator(_info.trustchainId, {}, {})));
+  TC_RETURN(GhostDevice::create().toVerificationKey());
 }
 
 tc::cotask<Session::Config> Opener::createDevice(

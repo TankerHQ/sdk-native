@@ -59,16 +59,10 @@ TEST_CASE("verificationKey")
   TrustchainBuilder builder;
   builder.makeUser("alice");
   auto const alice = builder.findUser("alice").value();
-  auto const firstDev = alice.devices.front();
   auto const& aliceKeys = alice.userKeys.back();
   auto ghostDeviceKeys = DeviceKeys::create();
   auto const verificationKey =
-      Unlock::generate(alice.userId,
-                       aliceKeys.keyPair,
-                       BlockGenerator(builder.trustchainId(),
-                                      firstDev.keys.signatureKeyPair.privateKey,
-                                      firstDev.id),
-                       ghostDeviceKeys);
+      GhostDevice::create(ghostDeviceKeys).toVerificationKey();
   FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
 
   SUBCASE("generate")
