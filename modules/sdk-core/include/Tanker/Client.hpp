@@ -71,8 +71,8 @@ public:
 
   tc::cotask<void> createUser(
       Identity::SecretPermanentIdentity const& identity,
-      Trustchain::Block const& userCreation,
-      Trustchain::Block const& firstDevice,
+      gsl::span<uint8_t const> userCreation,
+      gsl::span<uint8_t const> firstDevice,
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret,
       gsl::span<uint8_t const> encryptedVerificationKey);

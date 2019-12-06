@@ -121,8 +121,8 @@ tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
 
 tc::cotask<void> Client::createUser(
     Identity::SecretPermanentIdentity const& identity,
-    Block const& userCreation,
-    Block const& firstDevice,
+    gsl::span<uint8_t const> userCreation,
+    gsl::span<uint8_t const> firstDevice,
     Unlock::Verification const& method,
     Crypto::SymmetricKey userSecret,
     gsl::span<uint8_t const> encryptedVerificationKey)
@@ -131,14 +131,14 @@ tc::cotask<void> Client::createUser(
   nlohmann::json request{
       {"trustchain_id", identity.trustchainId},
       {"user_id", identity.delegation.userId},
-      {"user_creation_block", userCreation},
-      {"first_device_block", firstDevice},
+      {"user_creation_block", cppcodec::base64_rfc4648::encode(userCreation)},
+      {"first_device_block", cppcodec::base64_rfc4648::encode(firstDevice)},
       {"encrypted_unlock_key",
        cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
       {"verification",
        ClientHelpers::makeVerificationRequest(method, userSecret)},
   };
-  auto const reply = TC_AWAIT(emit("create user", request));
+  auto const reply = TC_AWAIT(emit("create user 2", request));
 }
 
 tc::cotask<UserStatusResult> Client::userStatus(

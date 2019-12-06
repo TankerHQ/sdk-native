@@ -25,6 +25,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Create.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -177,31 +178,30 @@ tc::cotask<Session::Config> Opener::createUser(
                         DeviceKeys::create();
   auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
 
-  auto const userCreation = Serialization::deserialize<Trustchain::Block>(
-      BlockGenerator(_info.trustchainId, {}, {})
-          .addUser(_identity->delegation,
-                   ghostDeviceKeys.signatureKeyPair.publicKey,
-                   ghostDeviceKeys.encryptionKeyPair.publicKey,
-                   Crypto::makeEncryptionKeyPair()));
-  auto const action =
-      Serialization::deserialize<Trustchain::Actions::DeviceCreation::v3>(
-          userCreation.payload);
+  auto const userKeyPair = Crypto::makeEncryptionKeyPair();
+  auto const userCreationEntry =
+      Users::createNewUserEntry(_info.trustchainId,
+                                _identity->delegation,
+                                ghostDeviceKeys.signatureKeyPair.publicKey,
+                                ghostDeviceKeys.encryptionKeyPair.publicKey,
+                                userKeyPair);
 
-  auto const firstDevice = Unlock::createValidatedDevice(
+  auto const firstDeviceEntry = Users::createNewDeviceEntry(
       _info.trustchainId,
-      _identity->delegation.userId,
-      ghostDevice,
-      _keyStore->deviceKeys(),
-      EncryptedUserKey{Trustchain::DeviceId{userCreation.hash()},
-                       action.sealedPrivateUserEncryptionKey()});
+      Trustchain::DeviceId{userCreationEntry.hash()},
+      Identity::makeDelegation(_identity->delegation.userId,
+                               ghostDevice.privateSignatureKey),
+      _keyStore->deviceKeys().signatureKeyPair.publicKey,
+      _keyStore->deviceKeys().encryptionKeyPair.publicKey,
+      userKeyPair);
 
   auto const encryptVerificationKey = Crypto::encryptAead(
       _identity->userSecret,
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
   TC_AWAIT(_client->createUser(*_identity,
-                               userCreation,
-                               firstDevice,
+                               Serialization::serialize(userCreationEntry),
+                               Serialization::serialize(firstDeviceEntry),
                                verification,
                                _identity->userSecret,
                                encryptVerificationKey));
