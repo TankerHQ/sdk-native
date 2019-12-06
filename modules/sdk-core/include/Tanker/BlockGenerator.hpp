@@ -75,12 +75,6 @@ public:
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
-  std::vector<uint8_t> addGhostDevice(
-      Identity::Delegation const& delegation,
-      Crypto::PublicSignatureKey const& signatureKey,
-      Crypto::PublicEncryptionKey const& encryptionKey,
-      Crypto::EncryptionKeyPair const& userEncryptionKey) const;
-
   std::vector<uint8_t> revokeDevice2(
       Trustchain::DeviceId const& deviceId,
       Crypto::PublicEncryptionKey const& publicEncryptionKey,

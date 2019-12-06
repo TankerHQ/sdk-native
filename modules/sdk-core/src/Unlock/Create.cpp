@@ -39,15 +39,6 @@ VerificationKey generate(UserId const& userId,
                          BlockGenerator const& blockGen,
                          DeviceKeys const& deviceKeys)
 {
-  auto const ghostDeviceBlock = blockGen.addGhostDevice(
-      Identity::makeDelegation(userId, blockGen.signatureKey()),
-      deviceKeys.signatureKeyPair.publicKey,
-      deviceKeys.encryptionKeyPair.publicKey,
-      userKeypair);
-
-  auto const hash =
-      Serialization::deserialize<Trustchain::Block>(ghostDeviceBlock).hash();
-  Trustchain::DeviceId deviceId{hash};
   return ghostDeviceToVerificationKey(
       GhostDevice{deviceKeys.signatureKeyPair.privateKey,
                   deviceKeys.encryptionKeyPair.privateKey});

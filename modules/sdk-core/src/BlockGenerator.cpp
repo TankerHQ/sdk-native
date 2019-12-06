@@ -93,21 +93,6 @@ std::vector<uint8_t> BlockGenerator::addDevice(
   return addDevice3(delegation, signatureKey, encryptionKey, userEncryptionKey);
 }
 
-std::vector<uint8_t> BlockGenerator::addGhostDevice(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys) const
-{
-  auto const entry = Users::createNewGhostDeviceEntry(_trustchainId,
-                                                      _deviceId,
-                                                      delegation,
-                                                      signatureKey,
-                                                      encryptionKey,
-                                                      userEncryptionKeys);
-  return Serialization::serialize(entry);
-}
-
 std::vector<uint8_t> BlockGenerator::addDevice1(
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
