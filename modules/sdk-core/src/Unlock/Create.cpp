@@ -67,9 +67,7 @@ Trustchain::Block createValidatedDevice(
       encryptedUserKey.encryptedPrivateKey, ghostEncryptionKeyPair);
 
   return Serialization::deserialize<Trustchain::Block>(
-      BlockGenerator(trustchainId,
-                     ghostDevice.privateSignatureKey,
-                     encryptedUserKey.deviceId)
+      BlockGenerator(trustchainId, {}, encryptedUserKey.deviceId)
           .addDevice(
               Identity::makeDelegation(userId, ghostDevice.privateSignatureKey),
               deviceKeys.signatureKeyPair.publicKey,
