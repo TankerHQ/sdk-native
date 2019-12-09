@@ -19,6 +19,7 @@
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <optional>
@@ -29,7 +30,6 @@
 namespace Tanker::Users
 {
 class ContactStore;
-class UserKeyStore;
 }
 
 class TrustchainBuilder
@@ -171,7 +171,7 @@ public:
 
   Tanker::BlockGenerator makeBlockGenerator(
       TrustchainBuilder::Device const& device) const;
-  std::unique_ptr<Tanker::Users::UserKeyStore> makeUserKeyStore(
+  Tanker::Users::LocalUser::Ptr makeLocalUser(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,

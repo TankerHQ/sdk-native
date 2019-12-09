@@ -15,7 +15,7 @@
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -36,37 +36,23 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker
 {
-TrustchainPuller::TrustchainPuller(
-    TrustchainStore* trustchain,
-    TrustchainVerifier* verifier,
-    DataStore::ADatabase* db,
-    Users::ContactStore* contactStore,
-    Users::UserKeyStore* userKeyStore,
-    DeviceKeyStore* deviceKeyStore,
-    Client* client,
-    Crypto::PublicSignatureKey const& deviceSignatureKey,
-    Trustchain::DeviceId const& deviceId,
-    UserId const& userId)
+TrustchainPuller::TrustchainPuller(TrustchainStore* trustchain,
+                                   TrustchainVerifier* verifier,
+                                   DataStore::ADatabase* db,
+                                   Users::LocalUser* localUser,
+                                   Users::ContactStore* contactStore,
+                                   Client* client)
   : _trustchain(trustchain),
     _verifier(verifier),
     _db(db),
+    _localUser(localUser),
     _contactStore(contactStore),
-    _userKeyStore(userKeyStore),
-    _deviceKeyStore(deviceKeyStore),
     _client(client),
-    _devicePublicSignatureKey(deviceSignatureKey),
-    _deviceId(deviceId),
-    _userId(userId),
     _pullJob([this] {
       return tc::async_resumable(
           [this]() -> tc::cotask<void> { TC_AWAIT(catchUp()); });
     })
 {
-}
-
-void TrustchainPuller::setDeviceId(Trustchain::DeviceId const& deviceId)
-{
-  _deviceId = deviceId;
 }
 
 tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
@@ -127,7 +113,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
 
     TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
       std::set<Crypto::Hash> processed;
-      if (_deviceId.is_null())
+      if (_localUser->deviceId().is_null())
       {
         TINFO("No device id, processing our devices first");
         auto const initiallyProcessed = TC_AWAIT(doInitialProcess(entries));
@@ -204,17 +190,18 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
       else if (auto const deviceCreation =
                    serverEntry.action().get_if<DeviceCreation>())
       {
-        if (deviceCreation->userId() == _userId)
+        if (deviceCreation->userId() == _localUser->userId())
         {
           TC_AWAIT(verifyAndAddEntry(serverEntry));
           processed.insert(serverEntry.hash());
           if (auto dc3 = deviceCreation->get_if<DeviceCreation::v3>())
           {
-            if (Trustchain::DeviceId{serverEntry.hash()} == _deviceId)
+            if (Trustchain::DeviceId{serverEntry.hash()} ==
+                _localUser->deviceId())
             {
-              auto const lastPrivateEncryptionKey =
-                  Crypto::sealDecrypt(dc3->sealedPrivateUserEncryptionKey(),
-                                      _deviceKeyStore->encryptionKeyPair());
+              auto const lastPrivateEncryptionKey = Crypto::sealDecrypt(
+                  dc3->sealedPrivateUserEncryptionKey(),
+                  _localUser->deviceKeys().encryptionKeyPair);
               userEncryptionKeys.push_back(Crypto::EncryptionKeyPair{
                   dc3->publicUserEncryptionKey(), lastPrivateEncryptionKey});
             }
@@ -228,7 +215,7 @@ tc::cotask<std::set<Crypto::Hash>> TrustchainPuller::doInitialProcess(
       {
         auto const userId = TC_AWAIT(
             _contactStore->findUserIdByDeviceId(deviceRevocation->deviceId()));
-        if (userId == _userId)
+        if (userId == _localUser->userId())
         {
           TC_AWAIT(verifyAndAddEntry(serverEntry));
           processed.insert(serverEntry.hash());
@@ -262,7 +249,7 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
         encryptedUserKeys,
     std::vector<Crypto::EncryptionKeyPair>& userEncryptionKeys)
 {
-  auto const user = TC_AWAIT(_contactStore->findUser(_userId));
+  auto const user = TC_AWAIT(_contactStore->findUser(_localUser->userId()));
   for (auto userKeyIt = encryptedUserKeys.rbegin();
        userKeyIt != encryptedUserKeys.rend();
        ++userKeyIt)
@@ -278,8 +265,7 @@ tc::cotask<void> TrustchainPuller::recoverUserKeys(
        encryptionKeyPairIt != userEncryptionKeys.rend();
        ++encryptionKeyPairIt)
   {
-    TC_AWAIT(_userKeyStore->putPrivateKey(encryptionKeyPairIt->publicKey,
-                                          encryptionKeyPairIt->privateKey));
+    TC_AWAIT(_localUser->insertUserKey(*encryptionKeyPairIt));
   }
 }
 
@@ -287,8 +273,12 @@ tc::cotask<void> TrustchainPuller::triggerSignals(Entry const& entry)
 {
   if (auto const deviceCreation = entry.action.get_if<DeviceCreation>())
   {
-    if (deviceCreation->publicSignatureKey() == _devicePublicSignatureKey)
+    if (deviceCreation->publicSignatureKey() ==
+        _localUser->deviceKeys().signatureKeyPair.publicKey)
+    {
+      TC_AWAIT(_localUser->setDeviceId(Trustchain::DeviceId{entry.hash}));
       TC_AWAIT(receivedThisDeviceId(Trustchain::DeviceId{entry.hash}));
+    }
     TC_AWAIT(deviceCreated(entry));
   }
   else if (entry.action.holds_alternative<DeviceRevocation>())

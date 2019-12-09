@@ -4,7 +4,6 @@
 #include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -36,8 +35,8 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -68,9 +67,7 @@ public:
   {
     DataStore::DatabasePtr db;
     Trustchain::TrustchainId trustchainId;
-    Trustchain::UserId userId;
-    Crypto::SymmetricKey userSecret;
-    std::unique_ptr<DeviceKeyStore> deviceKeyStore;
+    Users::LocalUser::Ptr localUser;
     std::unique_ptr<Client> client;
   };
   using DeviceRevokedHandler = std::function<void()>;
@@ -153,14 +150,11 @@ private:
 
 private:
   Trustchain::TrustchainId _trustchainId;
-  Trustchain::UserId _userId;
-  Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
-  std::unique_ptr<DeviceKeyStore> _deviceKeyStore;
+  Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Groups::IRequester> _requester;
   TrustchainStore _trustchain;
-  Users::UserKeyStore _userKeyStore;
   Users::ContactStore _contactStore;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;

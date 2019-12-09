@@ -9,13 +9,13 @@ namespace Tanker
 ResourceKeyAccessor::ResourceKeyAccessor(
     Client* client,
     TrustchainVerifier* verifier,
-    Users::UserKeyStore* userKeyStore,
+    Users::LocalUser* localUser,
     Groups::IAccessor* groupAccessor,
     ProvisionalUsers::IAccessor* provisionalUsersAccessor,
     ResourceKeyStore* resourceKeyStore)
   : _client(client),
     _verifier(verifier),
-    _userKeyStore(userKeyStore),
+    _localUser(localUser),
     _groupAccessor(groupAccessor),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _resourceKeyStore(resourceKeyStore)
@@ -42,7 +42,7 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
       auto keyEntry = TC_AWAIT(_verifier->verify(keyPublish));
       TC_AWAIT(ReceiveKey::decryptAndStoreKey(
           *_resourceKeyStore,
-          *_userKeyStore,
+          *_localUser,
           *_groupAccessor,
           *_provisionalUsersAccessor,
           keyEntry.action.get<Trustchain::Actions::KeyPublish>()));

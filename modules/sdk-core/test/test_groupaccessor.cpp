@@ -7,7 +7,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -65,19 +64,17 @@ TEST_CASE("GroupAccessor")
   TrustchainPullerStub trustchainPuller;
   auto const aliceContactStore =
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
-  auto const aliceUserKeyStore =
-      builder.makeUserKeyStore(alice.user, dbPtr.get());
+  auto const aliceLocalUser = builder.makeLocalUser(alice.user, dbPtr.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, dbPtr.get());
   auto const aliceProvisionalUsersAccessor =
       std::make_unique<FakeProvisionalUsersAccessor>(
           *aliceProvisionalUserKeysStore);
-  Groups::Accessor groupAccessor(alice.user.userId,
-                                 &requestStub,
+  Groups::Accessor groupAccessor(&requestStub,
                                  &trustchainPuller,
                                  aliceContactStore.get(),
                                  &groupStore,
-                                 aliceUserKeyStore.get(),
+                                 aliceLocalUser.get(),
                                  aliceProvisionalUsersAccessor.get());
 
   SUBCASE("it should return cached public encryption keys")

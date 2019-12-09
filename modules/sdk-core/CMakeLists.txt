@@ -72,7 +72,6 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
   include/Tanker/Opener.hpp
-  include/Tanker/DeviceKeyStore.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
   include/Tanker/Entry.hpp
@@ -103,8 +102,8 @@ add_library(tankercore STATIC
   include/Tanker/Status.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/Users/User.hpp
+  include/Tanker/Users/LocalUser.hpp
   include/Tanker/Users/UserAccessor.hpp
-  include/Tanker/Users/UserKeyStore.hpp
   include/Tanker/Users/IUserAccessor.hpp
   include/Tanker/Users/ContactStore.hpp
   include/Tanker/Users/Device.hpp
@@ -147,7 +146,6 @@ add_library(tankercore STATIC
   src/TrustchainStore.cpp
   src/TrustchainPuller.cpp
   src/TrustchainVerifier.cpp
-  src/DeviceKeyStore.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp
@@ -169,8 +167,8 @@ add_library(tankercore STATIC
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
   src/Users/User.cpp
+  src/Users/LocalUser.cpp
   src/Users/UserAccessor.cpp
-  src/Users/UserKeyStore.cpp
   src/Users/ContactStore.cpp
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp

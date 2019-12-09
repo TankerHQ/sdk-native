@@ -1,7 +1,7 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
@@ -26,23 +26,25 @@ TEST_CASE("ProvisionalUsers")
 
   SUBCASE("throws if the user key is not found")
   {
-    Users::UserKeyStore userKeyStore(db.get());
-    ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    auto const userLocalUser = AWAIT(Tanker::Users::LocalUser::open(
+        Tanker::Identity::createIdentity(builder.trustchainId(),
+                                         builder.trustchainPrivateKey(),
+                                         userResult.user.userId),
+        db.get()));
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(userKeyStore,
+        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(*userLocalUser,
                                                                  picEntry)),
         Errc::InternalError);
   }
 
   SUBCASE("can decrypt a preregistration claim")
   {
-    auto const userKeyStore =
-        builder.makeUserKeyStore(userResult.user, db.get());
+    auto const userLocalUser = builder.makeLocalUser(userResult.user, db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
-    auto const gotKeys = AWAIT(
-        ProvisionalUsers::Updater::extractKeysToStore(*userKeyStore, picEntry));
+    auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(
+        *userLocalUser, picEntry));
     CHECK_EQ(
         gotKeys.appSignaturePublicKey,
         provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey);

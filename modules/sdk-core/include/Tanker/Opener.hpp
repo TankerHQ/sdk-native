@@ -10,6 +10,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
@@ -22,8 +23,6 @@
 
 namespace Tanker
 {
-class DeviceKeyStore;
-
 class Opener
 {
 public:
@@ -51,7 +50,7 @@ private:
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
   DataStore::DatabasePtr _db;
-  std::unique_ptr<DeviceKeyStore> _keyStore;
+  Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
   Trustchain::UserId _userId;
 

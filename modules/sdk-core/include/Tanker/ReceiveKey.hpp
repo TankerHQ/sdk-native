@@ -17,7 +17,7 @@ class IAccessor;
 namespace Users
 {
 class ContactStore;
-class UserKeyStore;
+class LocalUser;
 }
 
 class ResourceKeyStore;
@@ -33,7 +33,7 @@ tc::cotask<void> onKeyToDeviceReceived(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::UserKeyStore const& userKeyStore,
+    Users::LocalUser const& localUser,
     Groups::IAccessor& GroupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublish const& kp);

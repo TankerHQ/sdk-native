@@ -7,7 +7,7 @@
 #include <Tanker/ProvisionalUsers/Requests.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 
@@ -17,11 +17,11 @@ namespace Tanker::ProvisionalUsers
 {
 Accessor::Accessor(Client* client,
                    Users::ContactStore const* contactStore,
-                   Users::UserKeyStore const* userKeyStore,
+                   Users::LocalUser const* localUser,
                    ProvisionalUserKeysStore* provisionalUserKeysStore)
   : _client(client),
     _contactStore(contactStore),
-    _userKeyStore(userKeyStore),
+    _localUser(localUser),
     _provisionalUserKeysStore(provisionalUserKeysStore)
 {
 }
@@ -55,7 +55,7 @@ tc::cotask<void> Accessor::refreshKeys()
 {
   auto const blocks = TC_AWAIT(Requests::getClaimBlocks(_client));
   auto const toStore = TC_AWAIT(
-      Updater::processClaimEntries(*_contactStore, *_userKeyStore, blocks));
+      Updater::processClaimEntries(*_localUser, *_contactStore, blocks));
 
   for (auto const& keys : toStore)
     TC_AWAIT(_provisionalUserKeysStore->putProvisionalUserKeys(

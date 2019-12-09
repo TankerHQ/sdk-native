@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -27,8 +26,7 @@ void testUserGroupCreationCommon(
 
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice");
-  auto const aliceKeyStore =
-      builder.makeUserKeyStore(alice.user, aliceDb.get());
+  auto const aliceLocalUser = builder.makeLocalUser(alice.user, aliceDb.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
   auto const aliceProvisionalUsersAccessor =
@@ -39,8 +37,7 @@ void testUserGroupCreationCommon(
   {
     auto const group = makeGroup(builder, alice.user.devices[0], {alice.user});
     auto const resultGroup = AWAIT(
-        GroupUpdater::applyUserGroupCreation(alice.user.userId,
-                                             *aliceKeyStore,
+        GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
                                              *aliceProvisionalUsersAccessor,
                                              toVerifiedEntry(group.entry)));
     CHECK_EQ(resultGroup, Group{group.group.tankerGroup});
@@ -52,8 +49,7 @@ void testUserGroupCreationCommon(
 
     auto const group = makeGroup(builder, bob.user.devices[0], {bob.user});
     auto const resultGroup = AWAIT(
-        GroupUpdater::applyUserGroupCreation(alice.user.userId,
-                                             *aliceKeyStore,
+        GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
                                              *aliceProvisionalUsersAccessor,
                                              toVerifiedEntry(group.entry)));
 
@@ -73,8 +69,7 @@ void testUserGroupAdditionCommon(
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice");
   auto const bob = builder.makeUser3("bob");
-  auto const aliceKeyStore =
-      builder.makeUserKeyStore(alice.user, aliceDb.get());
+  auto const aliceLocalUser = builder.makeLocalUser(alice.user, aliceDb.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
   auto const aliceProvisionalUsersAccessor =
@@ -88,8 +83,7 @@ void testUserGroupAdditionCommon(
     auto const updatedGroup = addUserToGroup(
         builder, alice.user.devices[0], aliceGroup.group, {bob.user});
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        alice.user.userId,
-        *aliceKeyStore,
+        *aliceLocalUser,
         *aliceProvisionalUsersAccessor,
         aliceGroup.group.tankerGroup,
         toVerifiedEntry(updatedGroup.entry)));
@@ -103,8 +97,7 @@ void testUserGroupAdditionCommon(
     auto const updatedGroup = addUserToGroup(
         builder, bob.user.devices[0], bobGroup.group, {alice.user});
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        alice.user.userId,
-        *aliceKeyStore,
+        *aliceLocalUser,
         *aliceProvisionalUsersAccessor,
         bobGroup.group.asExternalGroup(),
         toVerifiedEntry(updatedGroup.entry)));
@@ -119,8 +112,7 @@ void testUserGroupAdditionCommon(
     auto const updatedGroup = addUserToGroup(
         builder, bob.user.devices[0], bobGroup.group, {charly.user});
     auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        alice.user.userId,
-        *aliceKeyStore,
+        *aliceLocalUser,
         *aliceProvisionalUsersAccessor,
         bobGroup.group.asExternalGroup(),
         toVerifiedEntry(updatedGroup.entry)));
@@ -158,8 +150,8 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
 
     TrustchainBuilder builder;
     auto const alice = builder.makeUser3("alice");
-    auto const aliceKeyStore =
-        builder.makeUserKeyStore(alice.user, aliceDb.get());
+    auto const aliceLocalUser =
+        builder.makeLocalUser(alice.user, aliceDb.get());
     auto const aliceProvisionalUser =
         builder.makeProvisionalUser("alice@tanker");
     auto const aliceProvisionalUserKeysStore =
@@ -180,8 +172,7 @@ TEST_CASE("GroupUpdater UserGroupCreation::v2")
                              {},
                              {aliceProvisionalUser.publicProvisionalUser});
       auto const resultGroup = AWAIT(
-          GroupUpdater::applyUserGroupCreation(alice.user.userId,
-                                               *aliceKeyStore,
+          GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
                                                *aliceProvisionalUsersAccessor,
                                                toVerifiedEntry(group.entry)));
 
@@ -221,8 +212,8 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
     TrustchainBuilder builder;
     auto const alice = builder.makeUser3("alice");
     auto const bob = builder.makeUser3("bob");
-    auto const aliceKeyStore =
-        builder.makeUserKeyStore(alice.user, aliceDb.get());
+    auto const aliceLocalUser =
+        builder.makeLocalUser(alice.user, aliceDb.get());
     auto const aliceProvisionalUser =
         builder.makeProvisionalUser("alice@tanker");
     auto const aliceProvisionalUserKeysStore =
@@ -243,8 +234,7 @@ TEST_CASE("GroupUpdater UserGroupAddition2")
                                   {},
                                   {aliceProvisionalUser.publicProvisionalUser});
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-          alice.user.userId,
-          *aliceKeyStore,
+          *aliceLocalUser,
           *aliceProvisionalUsersAccessor,
           bobGroup.group.asExternalGroup(),
           toVerifiedEntry(updatedGroup.entry)));

@@ -7,6 +7,7 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -19,18 +20,16 @@ namespace Tanker
 {
 namespace ProvisionalUsers
 {
-Manager::Manager(Trustchain::UserId const& userId,
+Manager::Manager(Users::LocalUser* localUser,
                  Client* client,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
-                 BlockGenerator* blockGenerator,
-                 Crypto::SymmetricKey const& userSecret)
-  : _userId(userId),
+                 BlockGenerator* blockGenerator)
+  : _localUser(localUser),
     _client(client),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore),
-    _blockGenerator(blockGenerator),
-    _userSecret(userSecret)
+    _blockGenerator(blockGenerator)
 {
 }
 
@@ -64,7 +63,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
     if (tankerKeys)
     {
       auto block = _blockGenerator->provisionalIdentityClaim(
-          _userId,
+          _localUser->userId(),
           SecretProvisionalUser{provisionalIdentity.target,
                                 provisionalIdentity.value,
                                 provisionalIdentity.appEncryptionKeyPair,
@@ -146,15 +145,15 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
         "cannot call verifyProvisionalIdentity without having called "
         "attachProvisionalIdentity before");
   matchProvisional(verification, _provisionalIdentity.value());
-  auto const tankerKeys =
-      TC_AWAIT(_client->getProvisionalIdentityKeys(verification, _userSecret));
+  auto const tankerKeys = TC_AWAIT(_client->getProvisionalIdentityKeys(
+      verification, _localUser->userSecret()));
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
     TC_RETURN();
   }
   auto block = _blockGenerator->provisionalIdentityClaim(
-      _userId,
+      _localUser->userId(),
       SecretProvisionalUser{_provisionalIdentity->target,
                             _provisionalIdentity->value,
                             _provisionalIdentity->appEncryptionKeyPair,

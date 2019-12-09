@@ -12,17 +12,20 @@
 
 namespace Tanker
 {
+namespace Users
+{
+class LocalUser;
+}
 namespace ProvisionalUsers
 {
 class Manager
 {
 public:
-  Manager(Trustchain::UserId const& userId,
+  Manager(Users::LocalUser* localUser,
           Client* client,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
-          BlockGenerator* blockGenerator,
-          Crypto::SymmetricKey const& userSecret);
+          BlockGenerator* blockGenerator);
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       Crypto::EncryptionKeyPair const& lastUserKey,
@@ -33,7 +36,7 @@ public:
       Unlock::Verification const& verification);
 
 private:
-  Trustchain::UserId _userId;
+  Users::LocalUser* _localUser;
   Client* _client;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;

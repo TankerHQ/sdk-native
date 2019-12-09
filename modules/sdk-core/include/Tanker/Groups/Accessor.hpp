@@ -19,7 +19,7 @@ class ITrustchainPuller;
 namespace Tanker::Users
 {
 class ContactStore;
-class UserKeyStore;
+class LocalUser;
 }
 
 namespace Tanker::Groups
@@ -28,12 +28,11 @@ class Store;
 class Accessor : public Groups::IAccessor
 {
 public:
-  Accessor(Trustchain::UserId const& myUserId,
-           Groups::IRequester* requester,
+  Accessor(Groups::IRequester* requester,
            ITrustchainPuller* trustchainPuller,
            Users::ContactStore const* contactStore,
            Store* groupstore,
-           Users::UserKeyStore const* userKeyStore,
+           Users::LocalUser const* localUser,
            ProvisionalUsers::IAccessor* provisionalUserAccessor);
 
   Accessor() = delete;
@@ -51,12 +50,11 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
 
 private:
-  Trustchain::UserId _myUserId;
   Groups::IRequester* _requester;
   ITrustchainPuller* _trustchainPuller;
   Users::ContactStore const* _contactStore;
   Store* _groupStore;
-  Users::UserKeyStore const* _userKeyStore;
+  Users::LocalUser const* _localUser;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);

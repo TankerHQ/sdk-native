@@ -11,7 +11,7 @@
 
 namespace Tanker::Users
 {
-class UserKeyStore;
+class LocalUser;
 }
 
 namespace Tanker
@@ -21,7 +21,7 @@ class ResourceKeyAccessor
 public:
   ResourceKeyAccessor(Client* client,
                       TrustchainVerifier* verifier,
-                      Users::UserKeyStore* userKeyStore,
+                      Users::LocalUser* localUser,
                       Groups::IAccessor* groupAccessor,
                       ProvisionalUsers::IAccessor* provisionalUsersAccessor,
                       ResourceKeyStore* resourceKeyStore);
@@ -37,7 +37,7 @@ public:
 private:
   Client* _client;
   TrustchainVerifier* _verifier;
-  Users::UserKeyStore* _userKeyStore;
+  Users::LocalUser* _localUser;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   ResourceKeyStore* _resourceKeyStore;

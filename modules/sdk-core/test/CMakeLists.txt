@@ -5,14 +5,13 @@ endif()
 add_executable(test_tanker
   test_serialization.cpp
   test_contactstore.cpp
-  test_devicekeystore.cpp
+  test_localuser.cpp
   test_groupstore.cpp
   test_groupaccessor.cpp
   test_groupupdater.cpp
   test_resourcekeystore.cpp
   test_provisionaluserkeysstore.cpp
   test_trustchain.cpp
-  test_userkeystore.cpp
   test_blockgenerator.cpp
   test_log.cpp
   test_encryptor.cpp

@@ -17,12 +17,12 @@ namespace Tanker
 namespace Users
 {
 class ContactStore;
-class UserKeyStore;
+class LocalUser;
 struct User;
 }
 
+struct DeviceKeys;
 class BlockGenerator;
-class DeviceKeyStore;
 class Client;
 
 namespace Revocation
@@ -37,7 +37,7 @@ tc::cotask<Users::User> getUserFromUserId(
     Users::ContactStore const& contactStore);
 
 tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
-    Users::UserKeyStore const& userKeyStore,
+    Users::LocalUser const& localUser,
     Users::User const& user,
     Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
@@ -48,23 +48,19 @@ encryptPrivateKeyForDevices(
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
 tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
-                              Trustchain::UserId const& userId,
+                              Users::LocalUser const& localUser,
                               Users::ContactStore const& contactStore,
-                              Users::UserKeyStore const& userKeyStore,
                               BlockGenerator const& blockGenerator,
                               std::unique_ptr<Client> const& client);
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
-    std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,
+    DeviceKeys const& deviceKeys,
     Crypto::SealedPrivateEncryptionKey const& encryptedPrivateEncryptionKey);
 
 tc::cotask<void> onOtherDeviceRevocation(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation,
     Entry const& entry,
-    Trustchain::UserId const& selfUserId,
-    Trustchain::DeviceId const& deviceId,
     Users::ContactStore& contactStore,
-    std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,
-    Users::UserKeyStore& userKeyStore);
+    Users::LocalUser& localUser);
 }
 }

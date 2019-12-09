@@ -5,7 +5,6 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
 
 #include "FakeProvisionalUsersAccessor.hpp"
 #include "GroupAccessorMock.hpp"
@@ -81,7 +80,7 @@ TEST_CASE("decryptAndStoreKey")
         toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
     auto const receiverProvisionalUsersAccessor =
@@ -109,7 +108,7 @@ TEST_CASE("decryptAndStoreKey")
         toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     REQUIRE_CALL(receiverGroupAccessor, getEncryptionKeyPair(trompeloeil::_))
         .LR_RETURN(makeCoTask(
@@ -143,7 +142,7 @@ TEST_CASE("decryptAndStoreKey")
         toVerifiedEntry(blockToServerEntry(keyPublishBlock));
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());

@@ -1,6 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Session.hpp>
 
 #include <doctest.h>
@@ -14,6 +15,7 @@
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
+using namespace type_literals;
 
 namespace
 {
@@ -31,19 +33,21 @@ TEST_CASE(
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice");
 
-  auto const aliceDevice = alice.user.devices.front();
   auto const aliceUserKeyPair = alice.user.userKeys.back();
 
   auto db = AWAIT(DataStore::createDatabase(":memory:"));
   auto dbPtr = db.get();
-  auto deviceKeyStore = AWAIT(DeviceKeyStore::open(db.get(), aliceDevice.keys));
+  auto localUser = AWAIT(Users::LocalUser::open(
+      Identity::createIdentity(
+          alice.entry.trustchainId(),
+          make<Crypto::PrivateSignatureKey>("a private signature key"),
+          alice.user.userId),
+      db.get()));
   auto client = makeClient();
 
   Session session({std::move(db),
                    builder.trustchainId(),
-                   alice.user.userId,
-                   Crypto::SymmetricKey{},
-                   std::move(deviceKeyStore),
+                   std::move(localUser),
                    std::move(client)});
 
   auto const entry = toVerifiedEntry(alice.entry);

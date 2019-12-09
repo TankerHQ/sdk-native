@@ -17,19 +17,17 @@ using Tanker::Trustchain::GroupId;
 
 namespace Tanker::Groups
 {
-Accessor::Accessor(Trustchain::UserId const& userId,
-                   Groups::IRequester* requester,
+Accessor::Accessor(Groups::IRequester* requester,
                    ITrustchainPuller* trustchainPuller,
                    Users::ContactStore const* contactStore,
                    Store* groupStore,
-                   Users::UserKeyStore const* userKeyStore,
+                   Users::LocalUser const* localUser,
                    ProvisionalUsers::IAccessor* provisionalUserAccessor)
-  : _myUserId(userId),
-    _requester(requester),
+  : _requester(requester),
     _trustchainPuller(trustchainPuller),
     _contactStore(contactStore),
     _groupStore(groupStore),
-    _userKeyStore(userKeyStore),
+    _localUser(localUser),
     _provisionalUserAccessor(provisionalUserAccessor)
 {
 }
@@ -101,10 +99,9 @@ Accessor::getEncryptionKeyPair(
     TC_RETURN(std::nullopt);
 
   auto const group =
-      TC_AWAIT(GroupUpdater::processGroupEntries(_myUserId,
-                                                 *_trustchainPuller,
+      TC_AWAIT(GroupUpdater::processGroupEntries(*_trustchainPuller,
+                                                 *_localUser,
                                                  *_contactStore,
-                                                 *_userKeyStore,
                                                  *_provisionalUserAccessor,
                                                  std::nullopt,
                                                  entries));
@@ -168,10 +165,9 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
     else
     {
       auto const group =
-          TC_AWAIT(GroupUpdater::processGroupEntries(_myUserId,
-                                                     *_trustchainPuller,
+          TC_AWAIT(GroupUpdater::processGroupEntries(*_trustchainPuller,
+                                                     *_localUser,
                                                      *_contactStore,
-                                                     *_userKeyStore,
                                                      *_provisionalUserAccessor,
                                                      std::nullopt,
                                                      groupEntriesIt->second));

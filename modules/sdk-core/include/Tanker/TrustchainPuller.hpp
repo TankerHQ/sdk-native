@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -20,6 +19,7 @@ namespace Tanker::Users
 {
 class ContactStore;
 class UserKeyStore;
+class LocalUser;
 }
 
 namespace Tanker
@@ -40,15 +40,9 @@ public:
   TrustchainPuller(TrustchainStore* trustchain,
                    TrustchainVerifier* verifier,
                    DataStore::ADatabase* db,
+                   Users::LocalUser* localUser,
                    Users::ContactStore* contactStore,
-                   Users::UserKeyStore* userKeyStore,
-                   DeviceKeyStore* deviceKeyStore,
-                   Client* client,
-                   Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                   Trustchain::DeviceId const& deviceId,
-                   Trustchain::UserId const& userId);
-
-  void setDeviceId(Trustchain::DeviceId const& deviceId);
+                   Client* client);
 
   tc::shared_future<void> scheduleCatchUp(
       std::vector<Trustchain::UserId> const& extraUsers = {},
@@ -64,14 +58,9 @@ private:
   TrustchainStore* _trustchain;
   TrustchainVerifier* _verifier;
   DataStore::ADatabase* _db;
+  Users::LocalUser* _localUser;
   Users::ContactStore* _contactStore;
-  Users::UserKeyStore* _userKeyStore;
-  DeviceKeyStore* _deviceKeyStore;
   Client* _client;
-
-  Crypto::PublicSignatureKey _devicePublicSignatureKey;
-  Trustchain::DeviceId _deviceId;
-  Trustchain::UserId _userId;
 
   std::vector<Trustchain::UserId> _extraUsers;
   std::vector<Trustchain::GroupId> _extraGroups;

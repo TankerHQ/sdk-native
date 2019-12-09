@@ -5,6 +5,7 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
@@ -12,7 +13,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 
@@ -806,14 +807,15 @@ BlockGenerator TrustchainBuilder::makeBlockGenerator(
       _trustchainId, device.keys.signatureKeyPair.privateKey, device.id);
 }
 
-std::unique_ptr<Tanker::Users::UserKeyStore>
-TrustchainBuilder::makeUserKeyStore(User const& user,
-                                    Tanker::DataStore::ADatabase* conn) const
+Tanker::Users::LocalUser::Ptr TrustchainBuilder::makeLocalUser(
+    User const& user, Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = std::make_unique<Tanker::Users::UserKeyStore>(conn);
+  auto result = AWAIT(Tanker::Users::LocalUser::open(
+      Tanker::Identity::createIdentity(
+          _trustchainId, _trustchainKeyPair.privateKey, user.userId),
+      conn));
   for (auto const& userKey : user.userKeys)
-    AWAIT_VOID(result->putPrivateKey(userKey.keyPair.publicKey,
-                                     userKey.keyPair.privateKey));
+    AWAIT_VOID(result->insertUserKey(userKey.keyPair));
   return result;
 }
 

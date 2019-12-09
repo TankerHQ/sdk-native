@@ -4,15 +4,14 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -57,14 +56,19 @@ tc::cotask<Users::User> getUserFromUserId(
 }
 
 tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
-    Users::UserKeyStore const& userKeyStore,
+    Users::LocalUser const& localUser,
     Users::User const& user,
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   auto const previousEncryptionPrivateKey =
-      TC_AWAIT(userKeyStore.getKeyPair(*user.userKey));
+      TC_AWAIT(localUser.findKeyPair(*user.userKey));
+
+  if (!previousEncryptionPrivateKey)
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           TFMT("cannot find user key for public key: {:s}"),
+                           *user.userKey);
   auto const encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-      previousEncryptionPrivateKey.privateKey, publicEncryptionKey);
+      previousEncryptionPrivateKey->privateKey, publicEncryptionKey);
 
   TC_RETURN(encryptedKeyForPreviousUserKey);
 }
@@ -90,21 +94,20 @@ encryptPrivateKeyForDevices(
 }
 
 tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
-                              UserId const& userId,
+                              Users::LocalUser const& localUser,
                               Users::ContactStore const& contactStore,
-                              Users::UserKeyStore const& userKeyStore,
                               BlockGenerator const& blockGenerator,
                               std::unique_ptr<Client> const& client)
 {
-  TC_AWAIT(ensureDeviceIsFromUser(deviceId, userId, contactStore));
-  auto const user = TC_AWAIT(getUserFromUserId(userId, contactStore));
+  TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), contactStore));
+  auto const user =
+      TC_AWAIT(getUserFromUserId(localUser.userId(), contactStore));
 
   auto const newEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto const oldPublicEncryptionKey = *user.userKey;
 
-  auto const encryptedKeyForPreviousUserKey =
-      TC_AWAIT(encryptForPreviousUserKey(
-          userKeyStore, user, newEncryptionKey.publicKey));
+  auto const encryptedKeyForPreviousUserKey = TC_AWAIT(
+      encryptForPreviousUserKey(localUser, user, newEncryptionKey.publicKey));
 
   auto const userKeys = TC_AWAIT(
       encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey));
@@ -120,10 +123,10 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
 }
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
-    std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,
+    DeviceKeys const& deviceKeys,
     Crypto::SealedPrivateEncryptionKey const& encryptedPrivateEncryptionKey)
 {
-  auto const deviceEncryptionKeyPair = deviceKeyStore->encryptionKeyPair();
+  auto const deviceEncryptionKeyPair = deviceKeys.encryptionKeyPair;
   auto const decryptedUserPrivateKey =
       Crypto::PrivateEncryptionKey{Crypto::sealDecrypt(
           encryptedPrivateEncryptionKey, deviceEncryptionKeyPair)};
@@ -133,11 +136,8 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
 tc::cotask<void> onOtherDeviceRevocation(
     DeviceRevocation const& deviceRevocation,
     Entry const& entry,
-    UserId const& selfUserId,
-    Trustchain::DeviceId const& deviceId,
     Users::ContactStore& contactStore,
-    std::unique_ptr<DeviceKeyStore> const& deviceKeyStore,
-    Users::UserKeyStore& userKeyStore)
+    Users::LocalUser& localUser)
 {
   TC_AWAIT(contactStore.revokeDevice(deviceRevocation.deviceId(), entry.index));
 
@@ -151,25 +151,25 @@ tc::cotask<void> onOtherDeviceRevocation(
     assert(userId.has_value() &&
            "Device revocation has been verified, userId should exists");
     // deviceId is null for the first pass where the device has not been created
-    if (*userId == selfUserId && !deviceId.is_null())
+    if (*userId == localUser.userId() && !localUser.deviceId().is_null())
     {
       auto const sealedUserKeysForDevices =
           deviceRevocation2->sealedUserKeysForDevices();
       auto const sealedPrivateUserKey =
           std::find_if(sealedUserKeysForDevices.begin(),
                        sealedUserKeysForDevices.end(),
-                       [deviceId](auto const& encryptedUserKey) {
-                         return encryptedUserKey.first == deviceId;
+                       [&](auto const& encryptedUserKey) {
+                         return encryptedUserKey.first == localUser.deviceId();
                        });
 
       assert(
           sealedPrivateUserKey != sealedUserKeysForDevices.end() &&
           "Device revocation has been revoked deviceId should belong to user");
       auto const decryptedUserPrivateKey = decryptPrivateKeyForDevice(
-          deviceKeyStore, sealedPrivateUserKey->second);
+          localUser.deviceKeys(), sealedPrivateUserKey->second);
 
-      TC_AWAIT(userKeyStore.putPrivateKey(
-          deviceRevocation2->publicEncryptionKey(), decryptedUserPrivateKey));
+      TC_AWAIT(localUser.insertUserKey(Crypto::EncryptionKeyPair{
+          deviceRevocation2->publicEncryptionKey(), decryptedUserPrivateKey}));
     }
   }
 }

@@ -8,7 +8,7 @@
 
 namespace Tanker::Users
 {
-class UserKeyStore;
+class LocalUser;
 class ContactStore;
 }
 
@@ -23,10 +23,10 @@ struct SecretProvisionalUser
 };
 
 tc::cotask<SecretProvisionalUser> extractKeysToStore(
-    Users::UserKeyStore const& userKeyStore, Entry const& entry);
+    Users::LocalUser const& localUser, Entry const& entry);
 
 tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
+    Users::LocalUser const& userKeyStore,
     Users::ContactStore const& contactStore,
-    Users::UserKeyStore const& userKeyStore,
     std::vector<Trustchain::ServerEntry> const& serverEntries);
 }

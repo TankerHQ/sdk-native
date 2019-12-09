@@ -10,7 +10,7 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
-#include <Tanker/Users/UserKeyStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -60,19 +60,17 @@ tc::cotask<DeviceMap> extractAuthors(
 }
 
 tc::cotask<SecretProvisionalUser> extractKeysToStore(
-    Users::UserKeyStore const& userKeyStore, Entry const& entry)
+    Users::LocalUser const& localUser, Entry const& entry)
 {
   auto const& provisionalIdentityClaim =
       entry.action.get<ProvisionalIdentityClaim>();
 
-  auto const userKeyPair = TC_AWAIT(userKeyStore.findKeyPair(
+  auto const userKeyPair = TC_AWAIT(localUser.findKeyPair(
       provisionalIdentityClaim.userPublicEncryptionKey()));
 
   if (!userKeyPair)
-  {
     throw Exception(make_error_code(Errc::InternalError),
                     "cannot find user key for claim decryption");
-  }
 
   auto const provisionalIdentityKeys = Crypto::sealDecrypt(
       provisionalIdentityClaim.sealedPrivateEncryptionKeys(), *userKeyPair);
@@ -98,8 +96,8 @@ tc::cotask<SecretProvisionalUser> extractKeysToStore(
 }
 
 tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
+    Users::LocalUser const& localUser,
     Users::ContactStore const& contactStore,
-    Users::UserKeyStore const& userKeyStore,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
   auto const authors = TC_AWAIT(extractAuthors(contactStore, serverEntries));
@@ -122,7 +120,7 @@ tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
       auto const entry =
           Verif::verifyProvisionalIdentityClaim(serverEntry, author);
 
-      out.push_back(TC_AWAIT(extractKeysToStore(userKeyStore, entry)));
+      out.push_back(TC_AWAIT(extractKeysToStore(localUser, entry)));
     }
     catch (Errors::Exception const& err)
     {

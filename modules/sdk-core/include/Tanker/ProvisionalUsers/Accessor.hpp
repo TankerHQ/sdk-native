@@ -7,7 +7,7 @@
 namespace Tanker::Users
 {
 class ContactStore;
-class UserKeyStore;
+class LocalUser;
 }
 
 namespace Tanker::ProvisionalUsers
@@ -17,7 +17,7 @@ class Accessor : public IAccessor
 public:
   Accessor(Client* client,
            Users::ContactStore const* contactStore,
-           Users::UserKeyStore const* userKeyStore,
+           Users::LocalUser const* localUser,
            ProvisionalUserKeysStore* provisionalUserKeysStore);
 
   Accessor() = delete;
@@ -38,7 +38,7 @@ public:
 private:
   Client* _client;
   Users::ContactStore const* _contactStore;
-  Users::UserKeyStore const* _userKeyStore;
+  Users::LocalUser const* _localUser;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
 };
 }
