@@ -38,6 +38,7 @@ void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
     throw std::runtime_error("check failed: verification methods do not match");
 }
 
+#ifdef TANKER_BUILD_WITH_SSL
 tc::cotask<Tanker::Status> expectVerification(
     Functional::AsyncCorePtr session,
     std::string const& identity,
@@ -51,7 +52,6 @@ tc::cotask<Tanker::Status> expectVerification(
   TC_RETURN(session->status());
 }
 
-#ifdef TANKER_BUILD_WITH_SSL
 tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
                                      std::string userName)
 {
