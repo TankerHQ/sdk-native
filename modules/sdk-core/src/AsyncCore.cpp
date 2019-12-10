@@ -11,6 +11,9 @@
 #include <mgs/base64.hpp>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/coroutine.hpp>
+#include <tconcurrent/lazy/async.hpp>
+#include <tconcurrent/lazy/sink_receiver.hpp>
+#include <tconcurrent/lazy/then.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
 #include <functional>
@@ -25,12 +28,52 @@ namespace Tanker
 {
 namespace
 {
-auto makeEventHandler(task_canceler& tc, std::function<void()> cb)
+auto makeEventHandler(tc::lazy::task_canceler& taskCanceler,
+                      std::function<void()> cb)
 {
-  return [&tc, cb = std::move(cb)] {
-    tc.run([&cb] { return tc::async([cb = std::move(cb)] { cb(); }); });
+  auto cancelableSender = taskCanceler.wrap(
+      tc::lazy::then(tc::lazy::async(tc::get_default_executor()), cb));
+  return [cancelableSender = std::move(cancelableSender),
+          cb = std::move(cb)]() mutable {
+    cancelableSender.submit(tc::lazy::sink_receiver{});
   };
 }
+}
+
+template <typename F>
+auto AsyncCore::runResumable(F&& f)
+{
+  using Func = std::decay_t<F>;
+  return tc::submit_to_future<typename tc::detail::task_return_type<decltype(
+      std::declval<F>()())>::type>(
+             _taskCanceler.wrap(tc::lazy::connect(
+                 tc::lazy::async(tc::get_default_executor()),
+                 tc::lazy::run_resumable(
+                     tc::get_default_executor(),
+                     {},
+                     [](AsyncCore* core, Func f) -> decltype(f()) {
+                       try
+                       {
+                         if constexpr (std::is_same_v<decltype(f()), void>)
+                         {
+                           TC_AWAIT(f());
+                           TC_RETURN();
+                         }
+                         else
+                         {
+                           TC_RETURN(TC_AWAIT(f()));
+                         }
+                       }
+                       catch (Errors::Exception const& ex)
+                       {
+                         if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
+                           throw;
+                       }
+                       TC_AWAIT(core->handleDeviceRevocation());
+                     },
+                     this,
+                     std::forward<F>(f)))))
+      .to_shared();
 }
 
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
@@ -204,10 +247,13 @@ tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
 
 tc::shared_future<SDeviceId> AsyncCore::deviceId() const
 {
-  return _taskCanceler.run([&] {
-    return tc::async(
-        [this] { return SDeviceId(mgs::base64::encode(_core.deviceId())); });
-  });
+  return tc::submit_to_future<SDeviceId>(
+             _taskCanceler.wrap(tc::lazy::then(
+                 tc::lazy::async(tc::get_default_executor()),
+                 [this] {
+                   return SDeviceId(mgs::base64::encode(_core.deviceId()));
+                 })))
+      .to_shared();
 }
 
 tc::shared_future<std::vector<Users::Device>> AsyncCore::getDeviceList()
@@ -296,26 +342,21 @@ tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
     std::vector<SGroupId> const& sgroupIds,
     Core::ShareWithSelf shareWithSelf)
 {
-  // mutable so that we can move cb (otherwise it will be a const&&)
-  return _taskCanceler.run([&]() mutable {
-    return tc::async_resumable(
-        [=, cb = std::move(cb)]() -> tc::cotask<Streams::EncryptionStream> {
-          TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
-              std::move(cb), suserIds, sgroupIds, shareWithSelf)));
-        });
-  });
+  return runResumable(
+      [=, cb = std::move(cb)]() -> tc::cotask<Streams::EncryptionStream> {
+        TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
+            std::move(cb), suserIds, sgroupIds, shareWithSelf)));
+      });
 }
 
 tc::shared_future<Streams::DecryptionStreamAdapter>
 AsyncCore::makeDecryptionStream(Streams::InputSource cb)
 {
-  return _taskCanceler.run([&] {
-    return tc::async_resumable(
-        [this,
-         cb = std::move(cb)]() -> tc::cotask<Streams::DecryptionStreamAdapter> {
-          TC_RETURN(TC_AWAIT(this->_core.makeDecryptionStream(std::move(cb))));
-        });
-  });
+  return runResumable(
+      [this,
+       cb = std::move(cb)]() -> tc::cotask<Streams::DecryptionStreamAdapter> {
+        TC_RETURN(TC_AWAIT(this->_core.makeDecryptionStream(std::move(cb))));
+      });
 }
 
 tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(

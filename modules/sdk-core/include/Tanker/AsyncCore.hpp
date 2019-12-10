@@ -19,9 +19,8 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
-#include <Tanker/task_canceler.hpp>
-
 #include <tconcurrent/future.hpp>
+#include <tconcurrent/lazy/task_canceler.hpp>
 #include <tconcurrent/semaphore.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -50,7 +49,8 @@ public:
   AsyncCore& operator=(AsyncCore&&) = delete;
 
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
-  AsyncCore(SdkInfo info, Core::HttpClientFactory httpClientFactory,
+  AsyncCore(SdkInfo info,
+            Core::HttpClientFactory httpClientFactory,
             std::string writablePath);
   ~AsyncCore();
 
@@ -152,35 +152,11 @@ private:
 
   tc::semaphore _revokeSemaphore{1};
 
-  mutable task_canceler _taskCanceler;
+  mutable tc::lazy::task_canceler _taskCanceler;
 
   [[noreturn]] tc::cotask<void> handleDeviceRevocation();
 
   template <typename F>
-  auto runResumable(F&& f)
-  {
-    return _taskCanceler.run([this, f = std::forward<F>(f)]() mutable {
-      return tc::async_resumable([this, f = std::move(f)]() -> decltype(f()) {
-        try
-        {
-          if constexpr (std::is_same_v<decltype(f()), void>)
-          {
-            TC_AWAIT(f());
-            TC_RETURN();
-          }
-          else
-          {
-            TC_RETURN(TC_AWAIT(f()));
-          }
-        }
-        catch (Errors::Exception const& ex)
-        {
-          if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
-            throw;
-        }
-        TC_AWAIT(handleDeviceRevocation());
-      });
-    });
-  }
+  auto runResumable(F&& f);
 };
 }
