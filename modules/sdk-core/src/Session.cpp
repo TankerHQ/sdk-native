@@ -197,14 +197,13 @@ Session::Session(Config&& config)
 
 tc::cotask<void> Session::connectionHandler()
 {
-  // NOTE: It is MANDATORY to check this prefix is valid, or the server could
-  // get us to sign anything!
-  static std::string const challengePrefix =
-      u8"\U0001F512 Auth Challenge. 1234567890.";
   try
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
-    if (!boost::algorithm::starts_with(challenge, challengePrefix))
+    // NOTE: It is MANDATORY to check this prefix is valid, or the server could
+    // get us to sign anything!
+    if (!boost::algorithm::starts_with(
+            challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
     {
       throw formatEx(
           Errc::InternalError,
