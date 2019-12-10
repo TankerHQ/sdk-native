@@ -18,6 +18,7 @@ public:
 
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) = 0;
+  virtual ~IRequester() = default;
 };
 }
 }
