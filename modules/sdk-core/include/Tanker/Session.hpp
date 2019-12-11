@@ -120,7 +120,6 @@ public:
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   DeviceRevokedHandler deviceRevoked;
-  std::function<void(Trustchain::DeviceId const&)> gotDeviceId;
 
   tc::cotask<void> catchUserKey(
       Trustchain::DeviceId const& id,
