@@ -76,10 +76,6 @@ public:
 
   tc::cotask<void> startConnection();
 
-  Trustchain::UserId const& userId() const;
-  Trustchain::TrustchainId const& trustchainId() const;
-  Crypto::SymmetricKey const& userSecret() const;
-
   tc::cotask<void> encrypt(uint8_t* encryptedData,
                            gsl::span<uint8_t const> clearData,
                            std::vector<SPublicIdentity> const& suserIds = {},
@@ -136,6 +132,9 @@ public:
       Streams::InputSource);
 
 private:
+  Trustchain::UserId const& userId() const;
+  Trustchain::TrustchainId const& trustchainId() const;
+  Crypto::SymmetricKey const& userSecret() const;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onDeviceCreated(Entry const& entry);
   tc::cotask<void> onDeviceRevoked(Entry const& entry);
