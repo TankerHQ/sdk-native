@@ -139,7 +139,6 @@ void Core::initSession(Session::Config config)
   _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
   auto const& session = boost::variant2::get<SessionType>(_state);
   session->deviceRevoked = _deviceRevoked;
-  session->gotDeviceId = [this](auto const& deviceId) { _deviceId = deviceId; };
 }
 
 void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
@@ -157,7 +156,6 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 void Core::reset()
 {
   _state.emplace<Opener>(_url, _info, _writablePath);
-  _deviceId = Trustchain::DeviceId{};
 }
 
 tc::cotask<void> Core::encrypt(
@@ -235,10 +233,11 @@ tc::cotask<void> Core::updateGroupMembers(
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
-  if (status() != Status::Ready)
+  auto const psession = boost::variant2::get_if<SessionType>(&_state);
+  if (!psession)
     throw INVALID_STATUS(deviceId);
-  else
-    return _deviceId;
+  return (*psession)->deviceId();
+  ;
 }
 
 tc::cotask<std::vector<Device>> Core::getDeviceList() const

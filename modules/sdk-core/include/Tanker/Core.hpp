@@ -114,7 +114,6 @@ private:
 
   boost::variant2::variant<Opener, SessionType> _state;
 
-  Trustchain::DeviceId _deviceId{};
   Session::DeviceRevokedHandler _deviceRevoked;
   SessionClosedHandler _sessionClosed;
 

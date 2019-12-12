@@ -219,10 +219,12 @@ tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
   });
 }
 
-expected<SDeviceId> AsyncCore::deviceId() const
+tc::shared_future<SDeviceId> AsyncCore::deviceId() const
 {
-  return tc::sync([&] {
-    return SDeviceId(cppcodec::base64_rfc4648::encode(_core.deviceId()));
+  return _taskCanceler.run([&] {
+    return tc::async([this] {
+      return SDeviceId(cppcodec::base64_rfc4648::encode(_core.deviceId()));
+    });
   });
 }
 
