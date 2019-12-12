@@ -171,7 +171,7 @@ private:
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 
-  tc::cotask<void> connectionHandler();
+  tc::cotask<void> authenticate();
   tc::cotask<void> nukeDatabase();
 };
 }

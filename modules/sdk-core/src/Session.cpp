@@ -115,7 +115,7 @@ Session::Session(Config&& config)
                     deviceId())
 {
   _client->setConnectionHandler(
-      [this]() -> tc::cotask<void> { TC_AWAIT(connectionHandler()); });
+      [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); });
 
   _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
@@ -137,8 +137,9 @@ Session::Session(Config&& config)
   };
 }
 
-tc::cotask<void> Session::connectionHandler()
+tc::cotask<void> Session::authenticate()
 {
+  FUNC_TIMER(Net);
   try
   {
     auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
