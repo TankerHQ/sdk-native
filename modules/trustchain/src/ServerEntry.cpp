@@ -7,6 +7,7 @@
 #include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -112,6 +113,21 @@ void to_json(nlohmann::json& j, ServerEntry const& se)
   j["action"] = se.action();
   j["hash"] = se.hash();
   j["signature"] = se.signature();
+}
+
+std::vector<ServerEntry> fromBlocksToServerEntries(
+    gsl::span<std::string const> blocks)
+{
+  std::vector<ServerEntry> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return (Serialization::deserialize<Trustchain::ServerEntry>(
+                       cppcodec::base64_rfc4648::decode(block)));
+                 });
+  return entries;
 }
 }
 }

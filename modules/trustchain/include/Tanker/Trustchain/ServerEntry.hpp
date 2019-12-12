@@ -6,6 +6,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
+#include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstdint>
@@ -47,6 +48,9 @@ bool operator==(ServerEntry const& lhs, ServerEntry const& rhs);
 bool operator!=(ServerEntry const& lhs, ServerEntry const& rhs);
 
 void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se);
+
+std::vector<ServerEntry> fromBlocksToServerEntries(
+    gsl::span<std::string const>);
 
 void to_json(nlohmann::json& j, ServerEntry const& se);
 }

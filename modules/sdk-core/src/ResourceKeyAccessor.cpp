@@ -31,14 +31,11 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
   auto key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));
   if (!key)
   {
-    auto blocks =
-        TC_AWAIT(_client->getKeyPublishes(gsl::make_span(&resourceId, 1)));
-    for (auto const& block : blocks)
+    auto const entries = Trustchain::fromBlocksToServerEntries(
+        TC_AWAIT(_client->getKeyPublishes(gsl::make_span(&resourceId, 1))));
+    for (auto const& entry : entries)
     {
-      auto const keyPublish =
-          Serialization::deserialize<Trustchain::ServerEntry>(
-              cppcodec::base64_rfc4648::decode(block));
-      auto keyEntry = TC_AWAIT(_verifier->verify(keyPublish));
+      auto keyEntry = TC_AWAIT(_verifier->verify(entry));
       TC_AWAIT(ReceiveKey::decryptAndStoreKey(
           *_resourceKeyStore,
           *_localUser,

@@ -18,7 +18,6 @@
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <algorithm>
@@ -97,14 +96,7 @@ tc::cotask<void> TrustchainPuller::catchUp()
     auto const extraGroups = std::exchange(_extraGroups, {});
     auto const blocks = TC_AWAIT(_client->getBlocks(
         TC_AWAIT(_trustchain->getLastIndex()), extraUsers, extraGroups));
-    std::vector<ServerEntry> entries;
-    std::transform(std::begin(blocks),
-                   std::end(blocks),
-                   std::back_inserter(entries),
-                   [](auto const& block) {
-                     return Serialization::deserialize<Trustchain::ServerEntry>(
-                         cppcodec::base64_rfc4648::decode(block));
-                   });
+    auto entries = fromBlocksToServerEntries(blocks);
     std::sort(
         entries.begin(), entries.end(), [](auto const& lhs, auto const& rhs) {
           return lhs.index() < rhs.index();
