@@ -21,12 +21,18 @@
 #include <string>
 #include <vector>
 
+namespace Tanker::Users
+{
+class Requester;
+}
+
 namespace Tanker
 {
 class Opener
 {
 public:
   Opener(std::string url, Network::SdkInfo info, std::string writablePath);
+  ~Opener();
 
   Status status() const;
 
@@ -52,6 +58,8 @@ private:
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
+  std::unique_ptr<Users::Requester> _userRequester;
+  Trustchain::UserId _userId;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   Status _status = Status::Stopped;

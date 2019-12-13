@@ -14,6 +14,7 @@
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
+#include <Tanker/Users/Requester.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 

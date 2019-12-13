@@ -76,7 +76,6 @@ Session::Session(Config&& config)
     _localUser(std::move(config.localUser)),
     _client(std::move(config.client)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
-    _usersRequester(std::make_unique<Users::Requester>(_client.get())),
     _trustchain(_db.get()),
     _contactStore(_db.get()),
     _groupStore(_db.get()),
@@ -115,17 +114,6 @@ Session::Session(Config&& config)
                     _localUser->deviceKeys().signatureKeyPair.privateKey,
                     deviceId())
 {
-  _client->setConnectionHandler([this]() -> tc::cotask<void> {
-    try
-    {
-      TC_AWAIT(_usersRequester->authenticate(_trustchainId, *_localUser));
-    }
-    catch (std::exception const& e)
-    {
-      TERROR("Failed to authenticate device: {}", e.what());
-    }
-  });
-
   _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
   _trustchainPuller.receivedThisDeviceId =
@@ -149,8 +137,6 @@ Session::Session(Config&& config)
 tc::cotask<void> Session::startConnection()
 {
   FUNC_TIMER(Net);
-
-  TC_AWAIT(_usersRequester->authenticate(_trustchainId, *_localUser));
 
   _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
     try

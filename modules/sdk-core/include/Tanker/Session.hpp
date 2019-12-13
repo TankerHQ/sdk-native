@@ -154,7 +154,6 @@ private:
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
-  std::unique_ptr<Users::IRequester> _usersRequester;
   TrustchainStore _trustchain;
   Users::ContactStore _contactStore;
   Groups::Store _groupStore;

@@ -25,6 +25,7 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/Requester.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -47,6 +48,8 @@ Opener::Opener(std::string url, Network::SdkInfo info, std::string writablePath)
     _writablePath(std::move(writablePath))
 {
 }
+
+Opener::~Opener() = default;
 
 Status Opener::status() const
 {
@@ -74,6 +77,8 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 
   _client =
       std::make_unique<Client>(Network::ConnectionFactory::create(_url, _info));
+  _userRequester = std::make_unique<Users::Requester>(_client.get());
+
   _client->start();
 
   std::string dbPath;
@@ -85,6 +90,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
                          _identity->delegation.userId);
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _localUser = TC_AWAIT(Users::LocalUser::open(_identity.value(), _db.get()));
+
+  _client->setConnectionHandler([this]() -> tc::cotask<void> {
+    TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  });
 
   auto const userStatusResult = TC_AWAIT(_userRequester->userStatus(
       _info.trustchainId,
@@ -207,6 +216,7 @@ tc::cotask<Session::Config> Opener::createUser(
                                verification,
                                _identity->userSecret,
                                encryptVerificationKey));
+  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
   TC_RETURN(makeConfig());
 }
 
@@ -245,6 +255,7 @@ tc::cotask<Session::Config> Opener::createDevice(
 
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   TC_AWAIT(unlockCurrentDevice(verificationKey));
+  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
   TC_RETURN(makeConfig());
 }
 
@@ -258,6 +269,7 @@ tc::cotask<Session::Config> Opener::openDevice()
                    status(),
                    Status::Ready);
   }
+  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
   TC_RETURN(makeConfig());
 }
 }
