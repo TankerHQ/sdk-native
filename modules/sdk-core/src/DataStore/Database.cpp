@@ -312,16 +312,16 @@ void Database::performUnifiedMigration()
       createTable<ContactUserKeysTable>(*_db);
       createTable<DeviceKeysTable>(*_db);
       createTable<VersionTable>(*_db);
-      // fallthrough
+      [[fallthrough]];
     case 3:
       createTable<TrustchainInfoTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
       _db->execute("DROP TABLE IF EXISTS resource_id_to_key_publish");
       _db->execute("DROP TABLE IF EXISTS trustchain_indexes");
-      // fallthrough
+      [[fallthrough]];
     case 4:
       _db->execute("DROP TABLE IF EXISTS key_publishes");
-      // fallthrough
+      [[fallthrough]];
     case 5:
       flushAllCaches();
       break;
