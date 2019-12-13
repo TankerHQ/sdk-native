@@ -11,10 +11,8 @@
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
-#include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/DbModels/TrustchainIndexes.hpp>
 #include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DbModels/Version.hpp>
@@ -237,10 +235,7 @@ KeyPublish rowToKeyPublish(T const& row)
 
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainTable = DbModels::trustchain::trustchain;
-using TrustchainIndexesTable = DbModels::trustchain_indexes::trustchain_indexes;
 using TrustchainInfoTable = DbModels::trustchain_info::trustchain_info;
-using TrustchainResourceIdToKeyPublishTable =
-    DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
 using ProvisionalUserKeysTable =
@@ -312,8 +307,6 @@ void Database::performUnifiedMigration()
       createTable<GroupsTable>(*_db);
       createTable<ResourceKeysTable>(*_db);
       createTable<TrustchainTable>(*_db);
-      createTable<TrustchainResourceIdToKeyPublishTable>(*_db);
-      createTable<TrustchainIndexesTable>(*_db);
       createTable<UserKeysTable>(*_db);
       createTable<ContactDevicesTable>(*_db);
       createTable<ContactUserKeysTable>(*_db);
@@ -323,8 +316,8 @@ void Database::performUnifiedMigration()
     case 3:
       createTable<TrustchainInfoTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
-      dropTable<TrustchainResourceIdToKeyPublishTable>();
-      dropTable<TrustchainIndexesTable>();
+      _db->execute("DROP TABLE IF EXISTS resource_id_to_key_publish");
+      _db->execute("DROP TABLE IF EXISTS trustchain_indexes");
       // fallthrough
     case 4:
       _db->execute("DROP TABLE IF EXISTS key_publishes");
@@ -350,10 +343,6 @@ void Database::performOldMigration()
   createOrMigrateTable<ResourceKeysTable>(
       currentTableVersion<ResourceKeysTable>());
   createOrMigrateTable<TrustchainTable>(currentTableVersion<TrustchainTable>());
-  createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(
-      currentTableVersion<TrustchainResourceIdToKeyPublishTable>());
-  createOrMigrateTable<TrustchainIndexesTable>(
-      currentTableVersion<TrustchainIndexesTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
   createOrMigrateTable<ContactDevicesTable>(
       currentTableVersion<ContactDevicesTable>());
