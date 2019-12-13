@@ -26,8 +26,8 @@ public:
       Crypto::PrivateEncryptionKey const& privateKey) override;
   tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) override;
-  tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-  getUserOptLastKeyPair() override;
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getUserOptLastKeyPair()
+      override;
 
   tc::cotask<std::optional<uint64_t>> findTrustchainLastIndex() override;
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
@@ -42,9 +42,6 @@ public:
   tc::cotask<void> putContact(
       Trustchain::UserId const& userId,
       std::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
-
-  tc::cotask<std::optional<Trustchain::Actions::KeyPublish>> findKeyPublish(
-      Trustchain::ResourceId const&) override;
 
   tc::cotask<std::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
       Trustchain::UserId const& userId) override;

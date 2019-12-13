@@ -72,9 +72,6 @@ public:
       Trustchain::UserId const& userId,
       std::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
 
-  virtual tc::cotask<std::optional<Trustchain::Actions::KeyPublish>>
-  findKeyPublish(Trustchain::ResourceId const&) = 0;
-
   virtual tc::cotask<std::optional<Crypto::PublicEncryptionKey>>
   findContactUserKey(Trustchain::UserId const& userId) = 0;
   virtual tc::cotask<std::optional<Trustchain::UserId>>
@@ -123,8 +120,7 @@ public:
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
   virtual tc::cotask<std::optional<Group>> findGroupByGroupId(
       Trustchain::GroupId const& groupId) = 0;
-  virtual tc::cotask<std::optional<Group>>
-  findGroupByGroupPublicEncryptionKey(
+  virtual tc::cotask<std::optional<Group>> findGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) = 0;
 
   virtual tc::cotask<void> nuke() = 0;

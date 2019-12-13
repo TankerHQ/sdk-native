@@ -23,7 +23,6 @@ using namespace Tanker;
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/DbModels/TrustchainIndexes.hpp>
 
 #include <sqlpp11/sqlpp11.h>
 
@@ -67,30 +66,6 @@ OldBlock setupTrustchainMigration(DataStore::Connection& db)
                   b64Hash));
 
   return {b64Hash, b64Author, b64Record};
-}
-
-OldIndex setupTrustchainIndexesMigration(DataStore::Connection& db)
-{
-  auto const b64Hash =
-      cppcodec::base64_rfc4648::encode(make<Crypto::Hash>("hash"));
-  auto const b64Value = cppcodec::base64_rfc4648::encode("value");
-
-  db.execute(R"(
-    CREATE TABLE trustchain_indexes (
-      id_index INTEGER PRIMARY KEY,
-      hash TEXT NOT NULL,
-      type INTEGER NOT NULL,
-      value TEXT NOT NULL,
-      UNIQUE(type, value, hash)
-    );
-  )");
-
-  db.execute(
-      fmt::format("INSERT INTO trustchain_indexes VALUES(1, '{}', 1, '{}')",
-                  b64Hash,
-                  b64Value));
-
-  return {b64Hash, b64Value};
 }
 }
 #endif
@@ -217,32 +192,6 @@ TEST_CASE("trustchain migration")
                    oldRootBlock.b64Author));
       CHECK_EQ(action,
                cppcodec::base64_rfc4648::decode(oldRootBlock.b64Action));
-    }
-
-    SUBCASE("TrustchainIndexes")
-    {
-      using TrustchainIndexesTable =
-          DbModels::trustchain_indexes::trustchain_indexes;
-
-      auto const oldIndex = setupTrustchainIndexesMigration(db);
-
-      DataStore::createTable<TrustchainIndexesTable>(db);
-      DataStore::migrateTable<TrustchainIndexesTable>(db, 1);
-
-      TrustchainIndexesTable tab{};
-
-      auto const indexes = db(select(all_of(tab)).from(tab).unconditionally());
-      auto const& index = indexes.front();
-
-      auto const hash = extractBlob<Crypto::Hash>(index.hash);
-      // TODO add constructor with iterators in Crypto/Types.hpp
-      auto const sp = extractBlob(index.value);
-      std::vector<uint8_t> const value(sp.begin(), sp.end());
-
-      CHECK_EQ(value, cppcodec::base64_rfc4648::decode(oldIndex.b64Value));
-      CHECK_EQ(
-          hash,
-          cppcodec::base64_rfc4648::decode<Crypto::Hash>(oldIndex.b64Hash));
     }
   }
 }

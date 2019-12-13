@@ -10,12 +10,9 @@
 #include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
-#include <Tanker/DbModels/KeyPublishes.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
-#include <Tanker/DbModels/ResourceIdToKeyPublish.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/DbModels/Trustchain.hpp>
-#include <Tanker/DbModels/TrustchainIndexes.hpp>
 #include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DbModels/Version.hpp>
@@ -238,10 +235,7 @@ KeyPublish rowToKeyPublish(T const& row)
 
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainTable = DbModels::trustchain::trustchain;
-using TrustchainIndexesTable = DbModels::trustchain_indexes::trustchain_indexes;
 using TrustchainInfoTable = DbModels::trustchain_info::trustchain_info;
-using TrustchainResourceIdToKeyPublishTable =
-    DbModels::resource_id_to_key_publish::resource_id_to_key_publish;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
 using ProvisionalUserKeysTable =
@@ -249,7 +243,6 @@ using ProvisionalUserKeysTable =
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
 using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
-using KeyPublishesTable = DbModels::key_publishes::key_publishes;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
@@ -314,22 +307,22 @@ void Database::performUnifiedMigration()
       createTable<GroupsTable>(*_db);
       createTable<ResourceKeysTable>(*_db);
       createTable<TrustchainTable>(*_db);
-      createTable<TrustchainResourceIdToKeyPublishTable>(*_db);
-      createTable<TrustchainIndexesTable>(*_db);
       createTable<UserKeysTable>(*_db);
       createTable<ContactDevicesTable>(*_db);
       createTable<ContactUserKeysTable>(*_db);
       createTable<DeviceKeysTable>(*_db);
       createTable<VersionTable>(*_db);
-      // fallthrough
+      [[fallthrough]];
     case 3:
       createTable<TrustchainInfoTable>(*_db);
-      createTable<KeyPublishesTable>(*_db);
       createTable<ProvisionalUserKeysTable>(*_db);
-      dropTable<TrustchainResourceIdToKeyPublishTable>();
-      dropTable<TrustchainIndexesTable>();
-      // fallthrough
+      _db->execute("DROP TABLE IF EXISTS resource_id_to_key_publish");
+      _db->execute("DROP TABLE IF EXISTS trustchain_indexes");
+      [[fallthrough]];
     case 4:
+      _db->execute("DROP TABLE IF EXISTS key_publishes");
+      [[fallthrough]];
+    case 5:
       flushAllCaches();
       break;
     default:
@@ -350,10 +343,6 @@ void Database::performOldMigration()
   createOrMigrateTable<ResourceKeysTable>(
       currentTableVersion<ResourceKeysTable>());
   createOrMigrateTable<TrustchainTable>(currentTableVersion<TrustchainTable>());
-  createOrMigrateTable<TrustchainResourceIdToKeyPublishTable>(
-      currentTableVersion<TrustchainResourceIdToKeyPublishTable>());
-  createOrMigrateTable<TrustchainIndexesTable>(
-      currentTableVersion<TrustchainIndexesTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
   createOrMigrateTable<ContactDevicesTable>(
       currentTableVersion<ContactDevicesTable>());
@@ -404,7 +393,6 @@ void Database::flushAllCaches()
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
-  flushTable(KeyPublishesTable{});
 
   {
     TrustchainInfoTable tab{};
@@ -622,22 +610,6 @@ tc::cotask<void> Database::putContact(
                                 tab.public_encryption_key = sqlpp::null));
   }
   TC_RETURN();
-}
-
-tc::cotask<std::optional<Trustchain::Actions::KeyPublish>>
-Database::findKeyPublish(Trustchain::ResourceId const& resourceId)
-{
-  FUNC_TIMER(DB);
-  KeyPublishesTable tab{};
-
-  auto rows = (*_db)(select(all_of(tab))
-                         .from(tab)
-                         .where(tab.resource_id == resourceId.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = *rows.begin();
-  TC_RETURN(rowToKeyPublish(row));
 }
 
 tc::cotask<std::optional<Crypto::PublicEncryptionKey>>
@@ -980,8 +952,7 @@ tc::cotask<std::optional<Group>> Database::findGroupByGroupId(
   TC_RETURN(rowToGroup(row));
 }
 
-tc::cotask<std::optional<Group>>
-Database::findGroupByGroupPublicEncryptionKey(
+tc::cotask<std::optional<Group>> Database::findGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   FUNC_TIMER(DB);

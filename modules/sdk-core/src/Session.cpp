@@ -173,10 +173,6 @@ Session::Session(Config&& config)
       [this](auto const& deviceId) -> tc::cotask<void> {
     TC_AWAIT(this->setDeviceId(deviceId));
   };
-  _trustchainPuller.receivedKeyToDevice =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(this->onKeyToDeviceReceived(entry));
-  };
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
@@ -518,15 +514,6 @@ tc::cotask<void> Session::catchUserKey(
     TC_AWAIT(_contactStore.putUserKey(deviceCreation.userId(),
                                       dc3->publicUserEncryptionKey()));
   }
-}
-
-tc::cotask<void> Session::onKeyToDeviceReceived(Entry const& entry)
-{
-  TC_AWAIT(ReceiveKey::onKeyToDeviceReceived(
-      _contactStore,
-      _resourceKeyStore,
-      _deviceKeyStore->encryptionKeyPair().privateKey,
-      entry));
 }
 
 tc::cotask<void> Session::onDeviceCreated(Entry const& entry)

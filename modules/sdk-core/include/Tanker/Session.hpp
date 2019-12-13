@@ -137,7 +137,6 @@ public:
 
 private:
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
-  tc::cotask<void> onKeyToDeviceReceived(Entry const& entry);
   tc::cotask<void> onDeviceCreated(Entry const& entry);
   tc::cotask<void> onDeviceRevoked(Entry const& entry);
   void onKeyToUserReceived(Entry const& entry);

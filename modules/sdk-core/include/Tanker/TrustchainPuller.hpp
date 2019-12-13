@@ -52,7 +52,6 @@ public:
 
   std::function<tc::cotask<void>(Trustchain::DeviceId const&)>
       receivedThisDeviceId;
-  std::function<tc::cotask<void>(Entry const&)> receivedKeyToDevice;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
   std::function<tc::cotask<void>(Entry const&)>
