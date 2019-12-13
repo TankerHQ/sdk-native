@@ -39,11 +39,11 @@
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
+#include <Tanker/Users/Requester.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/variant2/variant.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url_unpadded.hpp>
@@ -75,7 +75,8 @@ Session::Session(Config&& config)
     _db(std::move(config.db)),
     _localUser(std::move(config.localUser)),
     _client(std::move(config.client)),
-    _requester(std::make_unique<Groups::Requester>(_client.get())),
+    _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
+    _usersRequester(std::make_unique<Users::Requester>(_client.get())),
     _trustchain(_db.get()),
     _contactStore(_db.get()),
     _groupStore(_db.get()),
@@ -98,7 +99,7 @@ Session::Session(Config&& config)
                              &_provisionalUsersAccessor,
                              &_provisionalUserKeysStore,
                              &_blockGenerator),
-    _groupAccessor(_requester.get(),
+    _groupAccessor(_groupsRequester.get(),
                    &_trustchainPuller,
                    &_contactStore,
                    &_groupStore,
@@ -114,8 +115,16 @@ Session::Session(Config&& config)
                     _localUser->deviceKeys().signatureKeyPair.privateKey,
                     deviceId())
 {
-  _client->setConnectionHandler(
-      [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); });
+  _client->setConnectionHandler([this]() -> tc::cotask<void> {
+    try
+    {
+      TC_AWAIT(_usersRequester->authenticate(_trustchainId, *_localUser));
+    }
+    catch (std::exception const& e)
+    {
+      TERROR("Failed to authenticate device: {}", e.what());
+    }
+  });
 
   _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
@@ -137,44 +146,11 @@ Session::Session(Config&& config)
   };
 }
 
-tc::cotask<void> Session::authenticate()
-{
-  FUNC_TIMER(Net);
-  try
-  {
-    auto const challenge = TC_AWAIT(_client->requestAuthChallenge());
-    // NOTE: It is MANDATORY to check this prefix is valid, or the server could
-    // get us to sign anything!
-    if (!boost::algorithm::starts_with(
-            challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
-    {
-      throw formatEx(
-          Errc::InternalError,
-          "received auth challenge does not contain mandatory prefix, server "
-          "may not be up to date, or we may be under attack.");
-    }
-    auto const signature =
-        Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                     _localUser->deviceKeys().signatureKeyPair.privateKey);
-    auto const request =
-        nlohmann::json{{"signature", signature},
-                       {"public_signature_key",
-                        _localUser->deviceKeys().signatureKeyPair.publicKey},
-                       {"trustchain_id", _trustchainId},
-                       {"user_id", userId()}};
-    TC_AWAIT(_client->authenticateDevice(request));
-  }
-  catch (std::exception const& e)
-  {
-    TERROR("Failed to authenticate session: {}", e.what());
-  }
-}
-
 tc::cotask<void> Session::startConnection()
 {
   FUNC_TIMER(Net);
 
-  TC_AWAIT(_client->handleConnection());
+  TC_AWAIT(_usersRequester->authenticate(_trustchainId, *_localUser));
 
   _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
     try

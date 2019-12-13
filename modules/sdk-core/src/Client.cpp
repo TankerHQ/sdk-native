@@ -141,23 +141,6 @@ tc::cotask<void> Client::createUser(
   auto const reply = TC_AWAIT(emit("create user 2", request));
 }
 
-tc::cotask<UserStatusResult> Client::userStatus(
-    Trustchain::TrustchainId const& trustchainId,
-    UserId const& userId,
-    Crypto::PublicSignatureKey const& publicSignatureKey)
-{
-  FUNC_TIMER(Proc);
-  nlohmann::json request{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"device_public_signature_key", publicSignatureKey},
-  };
-
-  auto const reply = TC_AWAIT(emit("get user status", request));
-
-  TC_RETURN(reply.get<UserStatusResult>());
-}
-
 tc::cotask<void> Client::setVerificationMethod(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
@@ -191,18 +174,6 @@ tc::cotask<VerificationKey> Client::fetchVerificationKey(
       cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
           response.at("encrypted_verification_key").get<std::string>()));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
-}
-
-tc::cotask<std::string> Client::requestAuthChallenge()
-{
-  TC_RETURN(TC_AWAIT(emit("request auth challenge", {}))
-                .at("challenge")
-                .get<std::string>());
-}
-
-tc::cotask<void> Client::authenticateDevice(nlohmann::json const& request)
-{
-  TC_AWAIT(emit("authenticate device", request));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
@@ -357,18 +328,6 @@ tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
     throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
-}
-
-void from_json(nlohmann::json const& j, UserStatusResult& result)
-{
-  j.at("device_exists").get_to(result.deviceExists);
-  result.userExists = j.at("user_exists").get<bool>();
-  auto const lastReset = j.at("last_reset").get<std::string>();
-  if (!lastReset.empty())
-    result.lastReset =
-        cppcodec::base64_rfc4648::decode<Crypto::Hash>(lastReset);
-  else
-    result.lastReset = Crypto::Hash{};
 }
 
 nlohmann::json ClientHelpers::makeVerificationRequest(

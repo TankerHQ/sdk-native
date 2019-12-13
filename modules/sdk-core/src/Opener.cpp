@@ -86,10 +86,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _localUser = TC_AWAIT(Users::LocalUser::open(_identity.value(), _db.get()));
 
-  auto const userStatusResult = TC_AWAIT(
-      _client->userStatus(_info.trustchainId,
-                          _localUser->userId(),
-                          _localUser->deviceKeys().signatureKeyPair.publicKey));
+  auto const userStatusResult = TC_AWAIT(_userRequester->userStatus(
+      _info.trustchainId,
+      _localUser->userId(),
+      _localUser->deviceKeys().signatureKeyPair.publicKey));
 
   if (userStatusResult.deviceExists)
     _status = Status::Ready;

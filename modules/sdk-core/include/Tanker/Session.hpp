@@ -35,6 +35,7 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
@@ -152,7 +153,8 @@ private:
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
-  std::unique_ptr<Groups::IRequester> _requester;
+  std::unique_ptr<Groups::IRequester> _groupsRequester;
+  std::unique_ptr<Users::IRequester> _usersRequester;
   TrustchainStore _trustchain;
   Users::ContactStore _contactStore;
   Groups::Store _groupStore;
@@ -171,7 +173,6 @@ private:
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 
-  tc::cotask<void> authenticate();
   tc::cotask<void> nukeDatabase();
 };
 }

@@ -41,15 +41,6 @@ nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
                                        Crypto::SymmetricKey const& userSecret);
 }
 
-struct UserStatusResult
-{
-  bool deviceExists;
-  bool userExists;
-  Crypto::Hash lastReset;
-};
-
-void from_json(nlohmann::json const& j, UserStatusResult& result);
-
 class Client
 {
 public:
@@ -77,11 +68,6 @@ public:
       Crypto::SymmetricKey userSecret,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
-  tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey);
-
   tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
@@ -93,8 +79,6 @@ public:
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret);
 
-  tc::cotask<std::string> requestAuthChallenge();
-  tc::cotask<void> authenticateDevice(nlohmann::json const& request);
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

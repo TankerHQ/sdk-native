@@ -102,6 +102,8 @@ add_library(tankercore STATIC
   include/Tanker/Status.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/Users/User.hpp
+  include/Tanker/Users/IRequester.hpp
+  include/Tanker/Users/Requester.hpp
   include/Tanker/Users/LocalUser.hpp
   include/Tanker/Users/UserAccessor.hpp
   include/Tanker/Users/IUserAccessor.hpp
@@ -172,6 +174,7 @@ add_library(tankercore STATIC
   src/Users/ContactStore.cpp
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp
+  src/Users/Requester.cpp
   src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
   src/Verif/Errors/Errc.cpp
@@ -220,7 +223,6 @@ target_link_libraries(tankercore
   CONAN_PKG::gsl-lite
   CONAN_PKG::fmt
   CONAN_PKG::jsonformoderncpp
- 
   CONAN_PKG::enum-flags
 )
 
