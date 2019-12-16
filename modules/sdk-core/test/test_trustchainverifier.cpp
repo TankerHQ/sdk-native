@@ -36,8 +36,9 @@ TEST_CASE("TrustchainVerifier")
   SUBCASE("verifies a valid trustchain creation")
   {
     auto const contactStore = builder.makeContactStoreWith({}, db.get());
+    auto const localUser = builder.makeLocalUser({}, db.get());
     TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
+        builder.trustchainId(), localUser.get(), contactStore.get());
 
     CHECK_NOTHROW(AWAIT_VOID(verifier.verify(rootEntry)));
   }
@@ -47,8 +48,9 @@ TEST_CASE("TrustchainVerifier")
     auto const userResult = builder.makeUser3("bob");
 
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
+    auto const localUser = builder.makeLocalUser(userResult.user, db.get());
     TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
+        builder.trustchainId(), localUser.get(), contactStore.get());
 
     CHECK_NOTHROW(AWAIT_VOID(verifier.verify(userResult.entry)));
   }
@@ -63,13 +65,13 @@ TEST_CASE("TrustchainVerifier")
     AWAIT_VOID(db->addTrustchainEntry(toVerifiedEntry(targetResult.entry)));
 
     auto bobUser = builder.findUser("bob");
-
+    auto const localUser = builder.makeLocalUser(*bobUser, db.get());
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
     auto const revokeEntry = builder.revokeDevice2(
         deviceResult.device, targetResult.device, *bobUser);
 
     TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
+        builder.trustchainId(), localUser.get(), contactStore.get());
 
     CHECK_NOTHROW(AWAIT_VOID(verifier.verify(revokeEntry)));
   }
@@ -81,8 +83,9 @@ TEST_CASE("TrustchainVerifier")
     ++const_cast<Crypto::Hash&>(deviceResult.entry.author())[0];
 
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
+    auto const localUser = builder.makeLocalUser({}, db.get());
     TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
+        builder.trustchainId(), localUser.get(), contactStore.get());
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT_VOID(verifier.verify(deviceResult.entry)),
@@ -97,8 +100,9 @@ TEST_CASE("TrustchainVerifier")
 
     // Do not add user 'bob' to contactStore:
     auto const contactStore = builder.makeContactStoreWith({}, db.get());
+    auto const localUser = builder.makeLocalUser({}, db.get());
     TrustchainVerifier const verifier(
-        builder.trustchainId(), db.get(), contactStore.get());
+        builder.trustchainId(), localUser.get(), contactStore.get());
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT_VOID(verifier.verify(deviceResult.entry)),

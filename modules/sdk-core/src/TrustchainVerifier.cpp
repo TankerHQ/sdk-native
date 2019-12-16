@@ -9,6 +9,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
@@ -24,9 +25,9 @@ using namespace Tanker::Trustchain::Actions;
 namespace Tanker
 {
 TrustchainVerifier::TrustchainVerifier(Trustchain::TrustchainId const& id,
-                                       DataStore::ADatabase* db,
+                                       Users::LocalUser* localUser,
                                        Users::ContactStore* contacts)
-  : _trustchainId(id), _db(db), _contacts(contacts)
+  : _trustchainId(id), _localUser(localUser), _contacts(contacts)
 {
 }
 
@@ -73,8 +74,8 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 {
   if (dc.author().base() == _trustchainId.base())
   {
-    auto const trustchainCreation = TrustchainCreation{
-        TC_AWAIT(_db->findTrustchainPublicSignatureKey()).value()};
+    auto const trustchainCreation =
+        TrustchainCreation(_localUser->trustchainPublicSignatureKey());
     Verif::verifyDeviceCreation(dc, trustchainCreation);
   }
   else

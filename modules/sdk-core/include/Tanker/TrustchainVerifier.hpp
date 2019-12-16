@@ -17,6 +17,7 @@ namespace Tanker
 namespace Users
 {
 class ContactStore;
+class LocalUser;
 struct User;
 }
 
@@ -31,7 +32,7 @@ class TrustchainVerifier
 {
 public:
   TrustchainVerifier(Trustchain::TrustchainId const&,
-                     DataStore::ADatabase*,
+                     Users::LocalUser*,
                      Users::ContactStore*);
 
   TrustchainVerifier(TrustchainVerifier const&) = delete;
@@ -54,7 +55,7 @@ private:
                           Trustchain::DeviceId const& deviceHash) const;
 
   Trustchain::TrustchainId _trustchainId;
-  DataStore::ADatabase* _db;
+  Users::LocalUser* _localUser;
   Users::ContactStore* _contacts;
 };
 }

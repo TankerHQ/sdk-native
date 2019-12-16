@@ -27,22 +27,29 @@ tc::cotask<LocalUser::Ptr> LocalUser::open(
   }();
   auto const deviceId =
       TC_AWAIT(dbCon->getDeviceId()).value_or(Trustchain::DeviceId{});
+  auto const trustchainPublicSignatureKey =
+      TC_AWAIT(dbCon->findTrustchainPublicSignatureKey())
+          .value_or(Crypto::PublicSignatureKey{});
   TC_RETURN(std::make_unique<LocalUser>(identity.delegation.userId,
                                         deviceId,
                                         identity.userSecret,
                                         deviceKeys,
+                                        trustchainPublicSignatureKey,
                                         dbCon));
 }
 
-LocalUser::LocalUser(Trustchain::UserId const& userId,
-                     Trustchain::DeviceId const& deviceId,
-                     Crypto::SymmetricKey const& userSecret,
-                     DeviceKeys const& deviceKeys,
-                     DataStore::ADatabase* dbCon)
+LocalUser::LocalUser(
+    Trustchain::UserId const& userId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::SymmetricKey const& userSecret,
+    DeviceKeys const& deviceKeys,
+    Crypto::PublicSignatureKey const& trustchainPublicSignatureKey,
+    DataStore::ADatabase* dbCon)
   : _userId(userId),
     _deviceId(deviceId),
     _userSecret(userSecret),
     _deviceKeys(deviceKeys),
+    _trustchainPublicSignatureKey(trustchainPublicSignatureKey),
     _db(dbCon)
 {
 }
@@ -52,12 +59,28 @@ Trustchain::DeviceId const& LocalUser::deviceId() const
   return _deviceId;
 }
 
-void LocalUser::setDeviceId(Trustchain::DeviceId const& deviceId)
+tc::cotask<void> LocalUser::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
-  if (!this->_deviceId.is_null() && deviceId != this->_deviceId)
+  if (!_deviceId.is_null() && deviceId != _deviceId)
     throw Errors::AssertionError("deviceId already set");
   TC_AWAIT(_db->setDeviceId(deviceId));
   _deviceId = deviceId;
+}
+
+tc::cotask<void> LocalUser::setTrustchainPublicSignatureKey(
+    Crypto::PublicSignatureKey const& key)
+{
+  if (!_trustchainPublicSignatureKey.is_null() &&
+      key != _trustchainPublicSignatureKey)
+    throw Errors::AssertionError("trustchainPublicSignatureKey is already set");
+  TC_AWAIT(_db->setTrustchainPublicSignatureKey(key));
+  _trustchainPublicSignatureKey = key;
+}
+
+Crypto::PublicSignatureKey const& LocalUser::trustchainPublicSignatureKey()
+    const
+{
+  return _trustchainPublicSignatureKey;
 }
 
 DeviceKeys const& LocalUser::deviceKeys() const

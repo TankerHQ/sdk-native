@@ -81,7 +81,7 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _verifier(_trustchainId, _db.get(), &_contactStore),
+    _verifier(_trustchainId, _localUser.get(), &_contactStore),
     _trustchainPuller(&_trustchain,
                       &_verifier,
                       _db.get(),
@@ -432,7 +432,7 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 
 tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)
 {
-  TC_AWAIT(_trustchain.setPublicSignatureKey(
+  TC_AWAIT(_localUser->setTrustchainPublicSignatureKey(
       entry.action.get<TrustchainCreation>().publicSignatureKey()));
 }
 
