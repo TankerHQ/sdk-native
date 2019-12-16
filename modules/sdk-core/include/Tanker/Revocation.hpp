@@ -9,6 +9,7 @@
 #include <tconcurrent/coroutine.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -41,8 +42,10 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
     Users::User const& user,
     Crypto::PublicEncryptionKey const& publicEncryptionKey);
 
-tc::cotask<Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices>
-encryptPrivateKeyForDevices(
+using SealedKeysForDevices =
+    Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices;
+
+tc::cotask<SealedKeysForDevices> encryptPrivateKeyForDevices(
     Users::User const& user,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
@@ -56,6 +59,10 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
     DeviceKeys const& deviceKeys,
     Crypto::SealedPrivateEncryptionKey const& encryptedPrivateEncryptionKey);
+
+std::optional<Crypto::SealedPrivateEncryptionKey>
+findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
+                               SealedKeysForDevices const& keyForDevices);
 
 tc::cotask<void> onOtherDeviceRevocation(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation,

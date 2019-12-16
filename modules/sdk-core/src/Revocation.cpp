@@ -133,6 +133,21 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
   return decryptedUserPrivateKey;
 }
 
+std::optional<Crypto::SealedPrivateEncryptionKey>
+findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
+                                SealedKeysForDevices const& keyForDevices)
+{
+  auto const sealedPrivateUserKey =
+      std::find_if(keyForDevices.begin(),
+                   keyForDevices.end(),
+                   [&](auto const& encryptedUserKey) {
+                     return encryptedUserKey.first == deviceId;
+                   });
+  if (sealedPrivateUserKey == keyForDevices.end())
+    return std::nullopt;
+  return sealedPrivateUserKey->second;
+}
+
 tc::cotask<void> onOtherDeviceRevocation(
     DeviceRevocation const& deviceRevocation,
     Entry const& entry,
@@ -153,23 +168,16 @@ tc::cotask<void> onOtherDeviceRevocation(
     // deviceId is null for the first pass where the device has not been created
     if (*userId == localUser.userId() && !localUser.deviceId().is_null())
     {
-      auto const sealedUserKeysForDevices =
-          deviceRevocation2->sealedUserKeysForDevices();
-      auto const sealedPrivateUserKey =
-          std::find_if(sealedUserKeysForDevices.begin(),
-                       sealedUserKeysForDevices.end(),
-                       [&](auto const& encryptedUserKey) {
-                         return encryptedUserKey.first == localUser.deviceId();
-                       });
+      auto decryptedUserPrivateKey = findUserKeyFromDeviceSealedKeys(
+          localUser.deviceId(), deviceRevocation2->sealedUserKeysForDevices());
 
-      assert(
-          sealedPrivateUserKey != sealedUserKeysForDevices.end() &&
-          "Device revocation has been revoked deviceId should belong to user");
-      auto const decryptedUserPrivateKey = decryptPrivateKeyForDevice(
-          localUser.deviceKeys(), sealedPrivateUserKey->second);
+      assert(decryptedUserPrivateKey.has_value() &&
+             "Did not find our deviceId in sealedKeys' DeviceRevocation");
 
+      auto const privateKey = decryptPrivateKeyForDevice(
+          localUser.deviceKeys(), decryptedUserPrivateKey.value());
       TC_AWAIT(localUser.insertUserKey(Crypto::EncryptionKeyPair{
-          deviceRevocation2->publicEncryptionKey(), decryptedUserPrivateKey}));
+          deviceRevocation2->publicEncryptionKey(), privateKey}));
     }
   }
 }
