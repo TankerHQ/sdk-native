@@ -293,7 +293,7 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
 TEST_CASE("Verif TrustchainCreation")
 {
   TrustchainBuilder builder;
-  auto rootEntry = blockToServerEntry(builder.blocks().front());
+  auto rootEntry = builder.entries().front();
 
   SUBCASE("Entry level")
   {
@@ -350,7 +350,7 @@ TEST_CASE("Verif DeviceCreation v3 - Trustchain author")
   auto user = builder.makeUser3("alice");
 
   auto const authorEntry =
-      toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
+      toVerifiedEntry(builder.entries()[0]);
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
   deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v3>(
@@ -364,7 +364,7 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
   auto user = builder.makeUser1("alice");
 
   auto const authorEntry =
-      toVerifiedEntry(blockToServerEntry(builder.blocks()[0]));
+      toVerifiedEntry(builder.entries()[0]);
   auto const trustchainCreation = authorEntry.action.get<TrustchainCreation>();
 
   deviceCreationCommonChecks<Trustchain::Actions::DeviceCreation::v1>(

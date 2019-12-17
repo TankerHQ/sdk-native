@@ -185,7 +185,7 @@ public:
       std::vector<ProvisionalUser> const& provisionalUsers,
       Tanker::DataStore::ADatabase* conn) const;
 
-  std::vector<Tanker::Trustchain::Block> const& blocks() const;
+  std::vector<Tanker::Trustchain::ServerEntry> const& entries() const;
   std::vector<InternalGroup> groups() const;
   std::vector<User> const& users() const;
 
@@ -206,7 +206,7 @@ private:
 
   std::vector<User> _users;
   std::set<InternalGroup, GroupComparator> _groups;
-  std::vector<Tanker::Trustchain::Block> _blocks;
+  std::vector<Tanker::Trustchain::ServerEntry> _entries;
 
   User* findMutableUser(Tanker::SUserId const& suserId);
 };
