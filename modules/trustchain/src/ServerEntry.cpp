@@ -4,8 +4,8 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
-#include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -101,7 +101,7 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
   se._action = Action::deserialize(nature, payloadSpan);
   Serialization::deserialize_to(ss, se._author);
   Serialization::deserialize_to(ss, se._signature);
-  se._hash = detail::computeHash(nature, se._author, payloadSpan);
+  se._hash = computeHash(nature, se._author, payloadSpan);
 }
 
 void to_json(nlohmann::json& j, ServerEntry const& se)

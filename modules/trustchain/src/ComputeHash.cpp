@@ -1,4 +1,4 @@
-#include <Tanker/Trustchain/detail/ComputeHash.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -6,11 +6,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace detail
+namespace Tanker::Trustchain
 {
 Crypto::Hash computeHash(Actions::Nature nature,
                          Crypto::Hash const& author,
@@ -25,7 +21,5 @@ Crypto::Hash computeHash(Actions::Nature nature,
   std::copy(serializedPayload.begin(), serializedPayload.end(), it);
 
   return Crypto::generichash(buffer);
-}
-}
 }
 }

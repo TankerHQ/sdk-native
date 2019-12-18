@@ -7,15 +7,9 @@
 
 #include <cstdint>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace detail
+namespace Tanker::Trustchain
 {
 Crypto::Hash computeHash(Actions::Nature,
                          Crypto::Hash const& author,
                          gsl::span<std::uint8_t const> serializedPayload);
-}
-}
 }

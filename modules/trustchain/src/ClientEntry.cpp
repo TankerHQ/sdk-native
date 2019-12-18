@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/detail/ComputeHash.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -35,8 +35,7 @@ ClientEntry ClientEntry::create(TrustchainId const& trustchainId,
                                 Crypto::PrivateSignatureKey const& key)
 {
   auto const serializedPayload = Serialization::serialize(action);
-  auto const hash =
-      detail::computeHash(action.nature(), author, serializedPayload);
+  auto const hash = computeHash(action.nature(), author, serializedPayload);
   auto const signature = Crypto::sign(hash, key);
 
   return {trustchainId,
