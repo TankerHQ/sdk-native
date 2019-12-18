@@ -22,7 +22,6 @@ add_executable(test_tanker
   test_ghostdevice.cpp
   test_verificationkey.cpp
   test_useraccessor.cpp
-  test_entry.cpp
   test_groups.cpp
   test_verif.cpp
   test_trustchainverifier.cpp

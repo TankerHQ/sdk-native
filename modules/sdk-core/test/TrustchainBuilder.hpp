@@ -11,7 +11,6 @@
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -138,34 +137,34 @@ public:
       Tanker::SecretProvisionalUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
-  std::vector<Tanker::Trustchain::Block> shareToDevice(
+  std::vector<Tanker::Trustchain::ServerEntry> shareToDevice(
       Device const& sender,
       User const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToUser(
+  Tanker::Trustchain::ServerEntry shareToUser(
       Device const& sender,
       User const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToUserGroup(
+  Tanker::Trustchain::ServerEntry shareToUserGroup(
       Device const& sender,
       InternalGroup const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToProvisionalUser(
+  Tanker::Trustchain::ServerEntry shareToProvisionalUser(
       Device const& sender,
       Tanker::PublicProvisionalUser const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
 
-  Tanker::Trustchain::Block revokeDevice1(Device const& sender,
-                                          Device const& target,
-                                          bool unsafe = false);
-  Tanker::Trustchain::Block revokeDevice2(Device const& sender,
-                                          Device const& target,
-                                          User const& user,
-                                          bool unsafe = false);
+  Tanker::Trustchain::ServerEntry revokeDevice1(Device const& sender,
+                                                Device const& target,
+                                                bool unsafe = false);
+  Tanker::Trustchain::ServerEntry revokeDevice2(Device const& sender,
+                                                Device const& target,
+                                                User const& user,
+                                                bool unsafe = false);
 
   std::optional<User> findUser(std::string const& suserId) const;
 

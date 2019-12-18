@@ -64,14 +64,14 @@ TEST_CASE("TrustchainVerifier")
 
     auto bobUser = builder.findUser("bob");
 
-    auto const revokeBlock = builder.revokeDevice2(
+    auto const revokeEntry = builder.revokeDevice2(
         deviceResult.device, targetResult.device, *bobUser);
     auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
 
     TrustchainVerifier const verifier(
         builder.trustchainId(), db.get(), contactStore.get());
 
-    CHECK_NOTHROW(AWAIT_VOID(verifier.verify(blockToServerEntry(revokeBlock))));
+    CHECK_NOTHROW(AWAIT_VOID(verifier.verify(revokeEntry)));
   }
 
   SUBCASE("throws if the author does not exist")
