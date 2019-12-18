@@ -6,6 +6,8 @@ namespace Tanker::Users
 {
 using Trustchain::ClientEntry;
 using Trustchain::Actions::DeviceCreation;
+using Trustchain::Actions::DeviceRevocation;
+using Trustchain::Actions::DeviceRevocation2;
 
 namespace
 {
@@ -98,5 +100,24 @@ ClientEntry createNewGhostDeviceEntry(
                            encryptionKey,
                            userEncryptionKeys,
                            DeviceCreation::DeviceType::GhostDevice);
+}
+
+ClientEntry revokeDeviceEntry(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& author,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    Trustchain::DeviceId const& toBeRevoked,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
+    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
+    DeviceRevocation::v2::SealedKeysForDevices const& userKeys)
+{
+  DeviceRevocation2 dr2{toBeRevoked,
+                        publicEncryptionKey,
+                        encryptedKeyForPreviousUserKey,
+                        previousPublicEncryptionKey,
+                        userKeys};
+  return ClientEntry::create(
+      trustchainId, static_cast<Crypto::Hash>(author), dr2, signatureKey);
 }
 }

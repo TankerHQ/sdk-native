@@ -129,15 +129,14 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
     Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
     DeviceRevocation::v2::SealedKeysForDevices const& userKeys) const
 {
-  DeviceRevocation2 dr2{deviceId,
-                        publicEncryptionKey,
-                        encryptedKeyForPreviousUserKey,
-                        previousPublicEncryptionKey,
-                        userKeys};
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         dr2,
-                                         _privateSignatureKey);
+  auto const entry = Users::revokeDeviceEntry(_trustchainId,
+                                              _deviceId,
+                                              _privateSignatureKey,
+                                              deviceId,
+                                              publicEncryptionKey,
+                                              encryptedKeyForPreviousUserKey,
+                                              previousPublicEncryptionKey,
+                                              userKeys);
   return Serialization::serialize(entry);
 }
 
