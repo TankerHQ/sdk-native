@@ -9,8 +9,8 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
@@ -102,9 +102,8 @@ tc::cotask<void> TrustchainPuller::catchUp()
                    std::end(blocks),
                    std::back_inserter(entries),
                    [](auto const& block) {
-                     return blockToServerEntry(
-                         Serialization::deserialize<Trustchain::Block>(
-                             cppcodec::base64_rfc4648::decode(block)));
+                     return Serialization::deserialize<Trustchain::ServerEntry>(
+                         cppcodec::base64_rfc4648::decode(block));
                    });
     std::sort(
         entries.begin(), entries.end(), [](auto const& lhs, auto const& rhs) {

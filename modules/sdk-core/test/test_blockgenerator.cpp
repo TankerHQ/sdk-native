@@ -6,7 +6,6 @@
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -40,15 +39,17 @@ TEST_CASE("BlockGenerator")
                                                encryptionKeyPair.publicKey,
                                                userEncryptionKeyPair);
 
-    auto const block = Serialization::deserialize<Block>(sblock);
-    CHECK_EQ(block.author.base(), trustchainId.base());
-    auto const entry = blockToServerEntry(block);
+    auto const entry = Serialization::deserialize<ServerEntry>(sblock);
+    CHECK_EQ(entry.author().base(), trustchainId.base());
     auto const deviceCreation = entry.action().get_if<DeviceCreation>();
     REQUIRE(deviceCreation != nullptr);
     CHECK(deviceCreation->userId() == userId);
     CHECK(deviceCreation->publicSignatureKey() == mySignKeyPair.publicKey);
     CHECK(deviceCreation->publicEncryptionKey() == encryptionKeyPair.publicKey);
-    CHECK(block.verifySignature(deviceCreation->ephemeralPublicSignatureKey()));
+    CHECK(
+        Tanker::Crypto::verify(entry.hash(),
+                               entry.signature(),
+                               deviceCreation->ephemeralPublicSignatureKey()));
     auto const toVerify = deviceCreation->signatureData();
     CHECK(Crypto::verify(toVerify,
                          deviceCreation->delegationSignature(),

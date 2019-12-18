@@ -2,7 +2,6 @@
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 
 namespace Tanker
 {
@@ -37,8 +36,8 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
     for (auto const& block : blocks)
     {
       auto const keyPublish =
-          blockToServerEntry(Serialization::deserialize<Trustchain::Block>(
-              cppcodec::base64_rfc4648::decode(block)));
+          Serialization::deserialize<Trustchain::ServerEntry>(
+              cppcodec::base64_rfc4648::decode(block));
       auto keyEntry = TC_AWAIT(_verifier->verify(keyPublish));
       TC_AWAIT(ReceiveKey::decryptAndStoreKey(
           *_resourceKeyStore,

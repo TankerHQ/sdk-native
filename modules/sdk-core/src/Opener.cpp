@@ -19,7 +19,6 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>

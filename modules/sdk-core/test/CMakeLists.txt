@@ -3,7 +3,6 @@ if (NOT EMSCRIPTEN)
 endif()
 
 add_executable(test_tanker
-  test_serialization.cpp
   test_contactstore.cpp
   test_localuser.cpp
   test_groupstore.cpp

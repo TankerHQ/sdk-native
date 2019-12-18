@@ -314,8 +314,7 @@ std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
   std::vector<T> keyPublishes;
   for (auto const& block : blocks)
   {
-    auto const entry =
-        blockToServerEntry(Serialization::deserialize<Block>(block));
+    auto const entry = Serialization::deserialize<ServerEntry>(block);
     auto const keyPublish = entry.action().get_if<KeyPublish>();
     REQUIRE(keyPublish);
     auto const keyPublishTo = keyPublish->get_if<T>();

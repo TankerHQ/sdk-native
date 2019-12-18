@@ -67,9 +67,8 @@ TEST_CASE("Can create a group with two users")
       groupSignatureKey,
       groupEncryptionKey);
 
-  auto block =
-      Serialization::deserialize<Trustchain::Block>(preserializedBlock);
-  auto entry = blockToServerEntry(block);
+  auto const entry =
+      Serialization::deserialize<Trustchain::ServerEntry>(preserializedBlock);
   auto group =
       entry.action().get<UserGroupCreation>().get<UserGroupCreation::v2>();
 
@@ -120,9 +119,8 @@ TEST_CASE("Can create a group with two provisional users")
       groupSignatureKey,
       groupEncryptionKey);
 
-  auto block =
-      Serialization::deserialize<Trustchain::Block>(preserializedBlock);
-  auto entry = blockToServerEntry(block);
+  auto const entry =
+      Serialization::deserialize<Trustchain::ServerEntry>(preserializedBlock);
   auto group =
       entry.action().get<UserGroupCreation>().get<UserGroupCreation::v2>();
 
@@ -209,9 +207,8 @@ TEST_CASE("Can add users to a group")
       userBlockGenerator,
       group);
 
-  auto block =
-      Serialization::deserialize<Trustchain::Block>(preserializedBlock);
-  auto entry = blockToServerEntry(block);
+  auto const entry =
+      Serialization::deserialize<Trustchain::ServerEntry>(preserializedBlock);
   auto groupAdd =
       entry.action().get<UserGroupAddition>().get<UserGroupAddition::v2>();
 
@@ -260,9 +257,8 @@ TEST_CASE("Can add provisional users to a group")
       userBlockGenerator,
       group);
 
-  auto block =
-      Serialization::deserialize<Trustchain::Block>(preserializedBlock);
-  auto entry = blockToServerEntry(block);
+  auto const entry =
+      Serialization::deserialize<Trustchain::ServerEntry>(preserializedBlock);
   auto groupAdd =
       entry.action().get<UserGroupAddition>().get<UserGroupAddition::v2>();
 

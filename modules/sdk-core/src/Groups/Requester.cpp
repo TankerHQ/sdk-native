@@ -21,9 +21,8 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> doBlockRequest(
   std::vector<Trustchain::ServerEntry> ret;
   ret.reserve(sblocks.size());
   for (auto const& sblock : sblocks)
-    ret.push_back(
-        blockToServerEntry(Serialization::deserialize<Trustchain::Block>(
-            cppcodec::base64_rfc4648::decode(sblock))));
+    ret.push_back(Serialization::deserialize<Trustchain::ServerEntry>(
+        cppcodec::base64_rfc4648::decode(sblock)));
   TC_RETURN(ret);
 }
 }

@@ -1,5 +1,6 @@
 #include <Tanker/Admin/Admin.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -10,7 +11,8 @@
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/Trustchain/Block.hpp>
+#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -95,24 +97,31 @@ tc::cotask<Trustchain::TrustchainId> Admin::createTrustchain(
     bool isTest,
     bool storePrivateKey)
 {
+  using namespace Tanker::Trustchain;
+
   FUNC_TIMER(Net);
-  Trustchain::Block block{};
-  block.nature = Nature::TrustchainCreation;
-  block.payload = Serialization::serialize(
-      Trustchain::Actions::TrustchainCreation{keyPair.publicKey});
-  block.trustchainId = Trustchain::TrustchainId(block.hash());
+  Actions::TrustchainCreation const action(keyPair.publicKey);
+  auto const serializedPayload = Serialization::serialize(action);
+  auto const trustchainId = static_cast<TrustchainId>(
+      computeHash(action.nature(), {}, serializedPayload));
+  ClientEntry const entry(trustchainId,
+                          {},
+                          Actions::Nature::TrustchainCreation,
+                          serializedPayload,
+                          Crypto::Hash{trustchainId},
+                          {});
 
   auto message = nlohmann::json{
       {"is_test", isTest},
       {"name", name},
       {"root_block",
-       cppcodec::base64_rfc4648::encode(Serialization::serialize(block))},
+       cppcodec::base64_rfc4648::encode(Serialization::serialize(entry))},
   };
   if (storePrivateKey)
     message["private_signature_key"] = keyPair.privateKey;
   TC_AWAIT(emit("create trustchain", message));
 
-  TC_RETURN(block.trustchainId);
+  TC_RETURN(trustchainId);
 }
 
 tc::cotask<void> Admin::deleteTrustchain(
