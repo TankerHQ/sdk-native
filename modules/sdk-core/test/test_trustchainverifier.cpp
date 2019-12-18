@@ -24,7 +24,7 @@ using namespace Tanker;
 TEST_CASE("TrustchainVerifier")
 {
   TrustchainBuilder builder;
-  auto const rootEntry = blockToServerEntry(builder.blocks().front());
+  auto const rootEntry = builder.entries().front();
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   AWAIT_VOID(db->setTrustchainPublicSignatureKey(

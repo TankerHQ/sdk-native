@@ -128,12 +128,12 @@ TEST_CASE("trustchain")
         builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
 
     TrustchainStore trustchain(dbPtr.get());
-    for (auto const& block : builder.blocks())
+    for (auto const& entry : builder.entries())
       AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block))));
+          trustchain.addEntry(toVerifiedEntry(entry)));
 
     CHECK_THROWS(AWAIT_VOID(trustchain.addEntry(
-        toVerifiedEntry(blockToServerEntry(builder.blocks().back())))));
+        toVerifiedEntry(builder.entries().back()))));
   }
 
   SUBCASE("it should not throw when sharing the same resource twice")
@@ -150,9 +150,9 @@ TEST_CASE("trustchain")
         builder.shareToUser(alice.user.devices[0], bob.user, resourceId, key);
 
     TrustchainStore trustchain(dbPtr.get());
-    for (auto const& block : builder.blocks())
+    for (auto const& entry : builder.entries())
       CHECK_NOTHROW(AWAIT_VOID(
-          trustchain.addEntry(toVerifiedEntry(blockToServerEntry(block)))));
+          trustchain.addEntry(toVerifiedEntry(entry))));
   }
 }
 

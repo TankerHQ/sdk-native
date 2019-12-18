@@ -23,7 +23,7 @@ using namespace Tanker::Errors;
 TEST_CASE("Revocation tests")
 {
   TrustchainBuilder builder;
-  auto const rootEntry = blockToServerEntry(builder.blocks().front());
+  auto const rootEntry = builder.entries().front();
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   auto const userResult = builder.makeUser("bob");
