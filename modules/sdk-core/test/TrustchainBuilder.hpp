@@ -194,6 +194,7 @@ public:
 
   Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
+  Tanker::Crypto::PublicSignatureKey const& trustchainPublicKey() const;
 
 private:
   struct GroupComparator

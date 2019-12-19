@@ -108,6 +108,11 @@ Crypto::PrivateSignatureKey const& TrustchainBuilder::trustchainPrivateKey()
   return _trustchainKeyPair.privateKey;
 }
 
+Crypto::PublicSignatureKey const& TrustchainBuilder::trustchainPublicKey() const
+{
+  return _trustchainKeyPair.publicKey;
+}
+
 auto TrustchainBuilder::makeUser(std::string const& suserId) -> ResultUser
 {
   return makeUser3(suserId);
