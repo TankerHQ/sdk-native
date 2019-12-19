@@ -17,6 +17,7 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
 #include <Tanker/Utils.hpp>
 
@@ -44,11 +45,14 @@ std::vector<uint8_t> makeKeyPublishToProvisionalUser(
   auto const encryptedKeyTwice = Crypto::sealEncrypt(
       encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
 
-  return blockGenerator.keyPublishToProvisionalUser(
+  return Serialization::serialize(Users::createKeyPublishToProvisionalUserEntry(
+      blockGenerator.trustchainId(),
+      blockGenerator.deviceId(),
+      blockGenerator.signatureKey(),
       recipientProvisionalUser.appSignaturePublicKey,
       recipientProvisionalUser.tankerSignaturePublicKey,
       resourceId,
-      encryptedKeyTwice);
+      encryptedKeyTwice));
 }
 
 std::vector<uint8_t> makeKeyPublishToGroup(
