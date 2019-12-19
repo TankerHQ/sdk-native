@@ -4,6 +4,7 @@ project(tankeridentity CXX)
 add_library(tankertesthelpers STATIC
   include/Helpers/Config.hpp
   include/Helpers/TimeoutTerminate.hpp
+  include/Helpers/Entries.hpp
   include/Helpers/Barrier.hpp
   include/Helpers/Errors.hpp
   include/Helpers/MakeCoTask.hpp
@@ -17,6 +18,7 @@ add_library(tankertesthelpers STATIC
   src/TimeoutTerminate.cpp
   src/Barrier.cpp
   src/Stepper.cpp
+  src/Entries.cpp
   src/UniquePath.cpp
   src/JsonFile.cpp
 )
@@ -36,4 +38,4 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt)
+target_link_libraries(tankertesthelpers tankertrustchain tankererrors CONAN_PKG::Boost CONAN_PKG::jsonformoderncpp CONAN_PKG::fmt)

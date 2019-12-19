@@ -253,7 +253,12 @@ tc::cotask<SGroupId> Session::createGroup(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
   auto const groupId = TC_AWAIT(Groups::Manager::create(
-      _userAccessor, _blockGenerator, *_client, spublicIdentities));
+      _userAccessor,
+      *_client,
+      spublicIdentities,
+      _trustchainId,
+      _localUser->deviceId(),
+      _localUser->deviceKeys().signatureKeyPair.privateKey));
   // Make sure group's lastBlockHash updates before the next group operation
   TC_AWAIT(syncTrustchain());
   TC_RETURN(groupId);
@@ -265,12 +270,15 @@ tc::cotask<void> Session::updateGroupMembers(
 {
   auto const groupId = base64DecodeArgument<GroupId>(groupIdString);
 
-  TC_AWAIT(Groups::Manager::updateMembers(_userAccessor,
-                                          _blockGenerator,
-                                          *_client,
-                                          _groupAccessor,
-                                          groupId,
-                                          spublicIdentitiesToAdd));
+  TC_AWAIT(Groups::Manager::updateMembers(
+      _userAccessor,
+      *_client,
+      _groupAccessor,
+      groupId,
+      spublicIdentitiesToAdd,
+      _trustchainId,
+      _localUser->deviceId(),
+      _localUser->deviceKeys().signatureKeyPair.privateKey));
 
   // Make sure group's lastBlockHash updates before the next group operation
   TC_AWAIT(syncTrustchain());

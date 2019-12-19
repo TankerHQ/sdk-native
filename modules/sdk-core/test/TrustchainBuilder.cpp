@@ -17,6 +17,7 @@
 #include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
+#include <Helpers/Entries.hpp>
 
 #include <algorithm>
 #include <cstring>
@@ -444,35 +445,35 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   for (auto const& user : users)
     tusers.push_back(user.asTankerUser());
 
-  auto const preserializedBlock =
-      Groups::Manager::generateCreateGroupBlock(tusers,
+  auto const clientEntry =
+      Groups::Manager::generateCreateGroupEntry(tusers,
                                                 provisionalUsers,
-                                                blockGenerator,
                                                 signatureKeyPair,
-                                                encryptionKeyPair);
+                                                encryptionKeyPair,
+                                                _trustchainId,
+                                                blockGenerator.deviceId(),
+                                                blockGenerator.signatureKey());
 
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-
-  _entries.push_back(entry);
+  auto const serverEntry = clientToServerEntry(clientEntry, _entries.size() + 1);
+  _entries.push_back(serverEntry);
 
   Tanker::InternalGroup tgroup{
       GroupId{signatureKeyPair.publicKey},
       signatureKeyPair,
       encryptionKeyPair,
-      entry.hash(),
-      entry.index(),
+      serverEntry.hash(),
+      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
   for (auto const& user : users)
     members.push_back(user.suserId);
 
-  auto const encryptedPrivateSignatureKey = entry.action()
+  auto const encryptedPrivateSignatureKey = serverEntry.action()
                                                 .get<UserGroupCreation>()
                                                 .get<UserGroupCreation::v2>()
                                                 .sealedPrivateSignatureKey();
-  auto const provisionalMembers = entry.action()
+  auto const provisionalMembers = serverEntry.action()
                                       .get<UserGroupCreation>()
                                       .get<UserGroupCreation::v2>()
                                       .provisionalMembers();
@@ -482,7 +483,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
 
   _groups.insert(group);
 
-  return {group, entry};
+  return {group, serverEntry};
 }
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
@@ -534,14 +535,19 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   auto const blockGenerator = BlockGenerator(
       _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
 
-  auto const preserializedBlock = Groups::Manager::generateAddUserToGroupBlock(
-      tusers, provisionalUsers, blockGenerator, group.tankerGroup);
+  auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
+      tusers,
+      provisionalUsers,
+      group.tankerGroup,
+      _trustchainId,
+      blockGenerator.deviceId(),
+      blockGenerator.signatureKey());
 
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-  _entries.push_back(entry);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
+  _entries.push_back(serverEntry);
 
-  auto const newProvisionalMembers = entry.action()
+  auto const newProvisionalMembers = serverEntry.action()
                                          .get<UserGroupAddition>()
                                          .get<UserGroupAddition::v2>()
                                          .provisionalMembers();
@@ -549,8 +555,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   group.provisionalMembers.insert(group.provisionalMembers.end(),
                                   newProvisionalMembers.begin(),
                                   newProvisionalMembers.end());
-  group.tankerGroup.lastBlockHash = entry.hash();
-  group.tankerGroup.lastBlockIndex = entry.index();
+  group.tankerGroup.lastBlockHash = serverEntry.hash();
+  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -561,7 +567,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   _groups.erase(group);
   _groups.insert(group);
 
-  return {group, entry};
+  return {group, serverEntry};
 }
 
 std::vector<ServerEntry> TrustchainBuilder::shareToDevice(
