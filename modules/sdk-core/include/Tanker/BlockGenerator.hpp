@@ -60,21 +60,6 @@ public:
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
-  std::vector<uint8_t> addDevice(
-      Identity::Delegation const& delegation,
-      Crypto::PublicSignatureKey const& signatureKey,
-      Crypto::PublicEncryptionKey const& encryptionKey,
-      Crypto::EncryptionKeyPair const& userEncryptionKey) const;
-  std::vector<uint8_t> addDevice1(
-      Identity::Delegation const& delegation,
-      Crypto::PublicSignatureKey const& signatureKey,
-      Crypto::PublicEncryptionKey const& encryptionKey) const;
-  std::vector<uint8_t> addDevice3(
-      Identity::Delegation const& delegation,
-      Crypto::PublicSignatureKey const& signatureKey,
-      Crypto::PublicEncryptionKey const& encryptionKey,
-      Crypto::EncryptionKeyPair const& userEncryptionKey) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;

@@ -84,42 +84,4 @@ std::vector<uint8_t> BlockGenerator::addUser3(
                                                userEncryptionKeys);
   return Serialization::serialize(entry);
 }
-
-std::vector<uint8_t> BlockGenerator::addDevice(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKey) const
-{
-  return addDevice3(delegation, signatureKey, encryptionKey, userEncryptionKey);
-}
-
-std::vector<uint8_t> BlockGenerator::addDevice1(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey) const
-{
-  auto const entry =
-      Users::createDeviceV1Entry(_trustchainId,
-                                 static_cast<Crypto::Hash>(_deviceId),
-                                 delegation,
-                                 signatureKey,
-                                 encryptionKey);
-  return Serialization::serialize(entry);
-}
-
-std::vector<uint8_t> BlockGenerator::addDevice3(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys) const
-{
-  auto const entry = Users::createNewDeviceEntry(_trustchainId,
-                                                 _deviceId,
-                                                 delegation,
-                                                 signatureKey,
-                                                 encryptionKey,
-                                                 userEncryptionKeys);
-  return Serialization::serialize(entry);
-}
 }
