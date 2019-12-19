@@ -36,6 +36,14 @@ tc::cotask<UserStatusResult> Requester::userStatus(
   TC_RETURN(reply.get<UserStatusResult>());
 }
 
+tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getMe()
+{
+  auto const response = TC_AWAIT(_client->emit("get my user blocks", {}));
+  auto const ret = Trustchain::fromBlocksToServerEntries(
+      response.get<std::vector<std::string>>());
+  TC_RETURN(ret);
+}
+
 tc::cotask<void> Requester::authenticate(
     Trustchain::TrustchainId const& trustchainId, LocalUser const& localUser)
 {
@@ -69,8 +77,8 @@ tc::cotask<void> Requester::authenticate(
   catch (Errors::Exception const& ex)
   {
     if (ex.errorCode().category() == Errors::ServerErrcCategory())
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::AuthenticationFailed));
+      throw Errors::formatEx(Errors::Errc::InternalError,
+                             "device authentication failed");
   }
 }
 

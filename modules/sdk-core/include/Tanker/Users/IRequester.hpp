@@ -22,6 +22,7 @@ class IRequester
 {
 public:
   virtual ~IRequester() = default;
+  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() = 0;
   virtual tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,
       LocalUser const& localUser) = 0;
