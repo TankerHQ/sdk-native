@@ -147,22 +147,23 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   auto const delegation =
       Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
 
-  auto const preserializedBlock =
-      BlockGenerator(_trustchainId, trustchainPrivateKey(), {})
-          .addUser1(delegation,
-                    device.keys.signatureKeyPair.publicKey,
-                    device.keys.encryptionKeyPair.publicKey);
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
+  auto const clientEntry =
+      Users::createDeviceV1Entry(_trustchainId,
+                                 {},
+                                 delegation,
+                                 device.keys.signatureKeyPair.publicKey,
+                                 device.keys.encryptionKeyPair.publicKey);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
 
   user.devices[0].delegation = delegation;
-  user.devices[0].id = DeviceId(entry.hash());
+  user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
-  user.devices[0].blockIndex = entry.index();
+  user.devices[0].blockIndex = serverEntry.index();
   _users.push_back(user);
-  _entries.push_back(entry);
+  _entries.push_back(serverEntry);
 
-  return {user, entry};
+  return {user, serverEntry};
 }
 
 auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
@@ -183,25 +184,24 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   auto const delegation =
       Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
 
-  auto const preserializedBlock =
-      BlockGenerator(_trustchainId, trustchainPrivateKey(), {})
-          .addUser3(delegation,
-                    device.keys.signatureKeyPair.publicKey,
-                    device.keys.encryptionKeyPair.publicKey,
-                    user.userKeys.back().keyPair);
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
+  auto const clientEntry =
+      Users::createNewUserEntry(_trustchainId,
+                                delegation,
+                                device.keys.signatureKeyPair.publicKey,
+                                device.keys.encryptionKeyPair.publicKey,
+                                user.userKeys.back().keyPair);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
 
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-
-  user.devices[0].id = DeviceId(entry.hash());
+  user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
   user.devices[0].delegation = delegation;
-  user.devices[0].blockIndex = entry.index();
+  user.devices[0].blockIndex = serverEntry.index();
   _users.push_back(user);
 
-  _entries.push_back(entry);
+  _entries.push_back(serverEntry);
 
-  return {user, entry};
+  return {user, serverEntry};
 }
 
 auto TrustchainBuilder::makeDevice(std::string const& suserId,

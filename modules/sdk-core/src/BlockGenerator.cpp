@@ -47,41 +47,4 @@ Crypto::PrivateSignatureKey const& BlockGenerator::signatureKey() const noexcept
 {
   return _privateSignatureKey;
 }
-
-std::vector<uint8_t> BlockGenerator::addUser(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKey) const
-{
-  return addUser3(delegation, signatureKey, encryptionKey, userEncryptionKey);
-}
-
-std::vector<uint8_t> BlockGenerator::addUser1(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey) const
-{
-  auto const entry =
-      Users::createDeviceV1Entry(_trustchainId,
-                                 static_cast<Crypto::Hash>(_trustchainId),
-                                 delegation,
-                                 signatureKey,
-                                 encryptionKey);
-  return Serialization::serialize(entry);
-}
-
-std::vector<uint8_t> BlockGenerator::addUser3(
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys) const
-{
-  auto const entry = Users::createNewUserEntry(_trustchainId,
-                                               delegation,
-                                               signatureKey,
-                                               encryptionKey,
-                                               userEncryptionKeys);
-  return Serialization::serialize(entry);
-}
 }
