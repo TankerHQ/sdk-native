@@ -95,4 +95,20 @@ ClientEntry createUserGroupAdditionV2Entry(
                              uga,
                              deviceSignatureKey);
 }
+
+ClientEntry createKeyPublishToGroupEntry(
+    Crypto::SealedSymmetricKey const& symKey,
+    ResourceId const& resourceId,
+    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  KeyPublishToUserGroup kp{recipientPublicEncryptionKey, resourceId, symKey};
+
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             kp,
+                             deviceSignatureKey);
+}
 }

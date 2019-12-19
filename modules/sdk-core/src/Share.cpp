@@ -8,10 +8,12 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
+#include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
@@ -58,8 +60,13 @@ std::vector<uint8_t> makeKeyPublishToGroup(
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
       resourceKey, recipientPublicEncryptionKey);
 
-  return blockGenerator.keyPublishToGroup(
-      encryptedKey, resourceId, recipientPublicEncryptionKey);
+  return Serialization::serialize(
+      Groups::createKeyPublishToGroupEntry(encryptedKey,
+                                           resourceId,
+                                           recipientPublicEncryptionKey,
+                                           blockGenerator.trustchainId(),
+                                           blockGenerator.deviceId(),
+                                           blockGenerator.signatureKey()));
 }
 
 tc::cotask<ResourceKeys> getResourceKeys(

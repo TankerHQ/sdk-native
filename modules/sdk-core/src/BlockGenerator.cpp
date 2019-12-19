@@ -184,18 +184,4 @@ std::vector<uint8_t> BlockGenerator::keyPublishToProvisionalUser(
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }
-
-std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
-    Crypto::SealedSymmetricKey const& symKey,
-    Trustchain::ResourceId const& resourceId,
-    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const
-{
-  KeyPublishToUserGroup kp{recipientPublicEncryptionKey, resourceId, symKey};
-
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         kp,
-                                         _privateSignatureKey);
-  return Serialization::serialize(entry);
-}
 }

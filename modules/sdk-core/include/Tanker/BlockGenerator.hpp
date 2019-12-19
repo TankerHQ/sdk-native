@@ -98,11 +98,6 @@ public:
       Trustchain::ResourceId const& resourceId,
       Crypto::TwoTimesSealedSymmetricKey const& symKey) const;
 
-  std::vector<uint8_t> keyPublishToGroup(
-      Crypto::SealedSymmetricKey const& symKey,
-      Trustchain::ResourceId const& resourceId,
-      Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;
