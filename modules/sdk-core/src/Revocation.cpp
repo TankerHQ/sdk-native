@@ -7,9 +7,11 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 
@@ -112,14 +114,17 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
   auto const userKeys = TC_AWAIT(
       encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey));
 
-  auto const block =
-      blockGenerator.revokeDevice2(deviceId,
-                                   newEncryptionKey.publicKey,
-                                   oldPublicEncryptionKey,
-                                   encryptedKeyForPreviousUserKey,
-                                   userKeys);
+  auto const clientEntry =
+      Users::revokeDeviceEntry(blockGenerator.trustchainId(),
+                               blockGenerator.deviceId(),
+                               blockGenerator.signatureKey(),
+                               deviceId,
+                               newEncryptionKey.publicKey,
+                               encryptedKeyForPreviousUserKey,
+                               oldPublicEncryptionKey,
+                               userKeys);
 
-  TC_AWAIT(client->pushBlock(block));
+  TC_AWAIT(client->pushBlock(Serialization::serialize(clientEntry)));
 }
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(

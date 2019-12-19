@@ -75,14 +75,6 @@ public:
       Crypto::PublicEncryptionKey const& encryptionKey,
       Crypto::EncryptionKeyPair const& userEncryptionKey) const;
 
-  std::vector<uint8_t> revokeDevice2(
-      Trustchain::DeviceId const& deviceId,
-      Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
-      Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-      Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
-          userKeys) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;

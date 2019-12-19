@@ -122,22 +122,4 @@ std::vector<uint8_t> BlockGenerator::addDevice3(
                                                  userEncryptionKeys);
   return Serialization::serialize(entry);
 }
-
-std::vector<uint8_t> BlockGenerator::revokeDevice2(
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
-    Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
-    DeviceRevocation::v2::SealedKeysForDevices const& userKeys) const
-{
-  auto const entry = Users::revokeDeviceEntry(_trustchainId,
-                                              _deviceId,
-                                              _privateSignatureKey,
-                                              deviceId,
-                                              publicEncryptionKey,
-                                              encryptedKeyForPreviousUserKey,
-                                              previousPublicEncryptionKey,
-                                              userKeys);
-  return Serialization::serialize(entry);
-}
 }
