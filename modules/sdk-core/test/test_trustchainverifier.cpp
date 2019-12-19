@@ -64,9 +64,9 @@ TEST_CASE("TrustchainVerifier")
 
     auto bobUser = builder.findUser("bob");
 
+    auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
     auto const revokeEntry = builder.revokeDevice2(
         deviceResult.device, targetResult.device, *bobUser);
-    auto const contactStore = builder.makeContactStoreWith({"bob"}, db.get());
 
     TrustchainVerifier const verifier(
         builder.trustchainId(), db.get(), contactStore.get());

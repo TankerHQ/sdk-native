@@ -698,9 +698,9 @@ ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
 }
 
 ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
-                                       Device const& target,
-                                       User const& user,
-                                       bool unsafe)
+                                             Device const& target,
+                                             User const& user,
+                                             bool unsafe)
 {
   auto const userHasDevices =
       std::find_if(user.devices.begin(),
@@ -756,6 +756,8 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
       _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
+  findMutableUser(user.suserId)
+      ->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
   return _entries.back();
 }
 
