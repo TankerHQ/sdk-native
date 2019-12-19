@@ -2,6 +2,7 @@
 
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
@@ -494,19 +495,20 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   auto const keysForUsers = generateGroupKeysForUsers(
       group.tankerGroup.encryptionKeyPair.privateKey, newUsers);
 
-  auto const preserializedBlock =
-      BlockGenerator(
-          _trustchainId, author.keys.signatureKeyPair.privateKey, author.id)
-          .userGroupAddition(group.tankerGroup.signatureKeyPair,
-                             group.tankerGroup.lastBlockHash,
-                             keysForUsers);
+  auto const clientEntry = Groups::createUserGroupAdditionV1Entry(
+      group.tankerGroup.signatureKeyPair,
+      group.tankerGroup.lastBlockHash,
+      keysForUsers,
+      _trustchainId,
+      author.id,
+      author.keys.signatureKeyPair.privateKey);
 
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-  _entries.push_back(entry);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
+  _entries.push_back(serverEntry);
 
-  group.tankerGroup.lastBlockHash = entry.hash();
-  group.tankerGroup.lastBlockIndex = entry.index();
+  group.tankerGroup.lastBlockHash = serverEntry.hash();
+  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -517,7 +519,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   _groups.erase(group);
   _groups.insert(group);
 
-  return {group, entry};
+  return {group, serverEntry};
 }
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
@@ -532,16 +534,13 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   for (auto const& user : newUsers)
     tusers.push_back(user.asTankerUser());
 
-  auto const blockGenerator = BlockGenerator(
-      _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
-
   auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
       tusers,
       provisionalUsers,
       group.tankerGroup,
       _trustchainId,
-      blockGenerator.deviceId(),
-      blockGenerator.signatureKey());
+      author.id,
+      author.keys.signatureKeyPair.privateKey);
 
   auto const serverEntry =
       clientToServerEntry(clientEntry, _entries.size() + 1);

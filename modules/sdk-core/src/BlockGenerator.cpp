@@ -1,6 +1,7 @@
 #include <Tanker/BlockGenerator.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
@@ -240,43 +241,6 @@ std::vector<uint8_t> BlockGenerator::userGroupCreation2(
                                          ugc,
                                          _privateSignatureKey);
 
-  return Serialization::serialize(entry);
-}
-
-std::vector<uint8_t> BlockGenerator::userGroupAddition(
-    Crypto::SignatureKeyPair const& signatureKeyPair,
-    Crypto::Hash const& previousGroupBlockHash,
-    UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const&
-        sealedPrivateEncryptionKeysForUsers) const
-{
-  Trustchain::GroupId const groupId{signatureKeyPair.publicKey.base()};
-  UserGroupAddition::v1 uga{
-      groupId, previousGroupBlockHash, sealedPrivateEncryptionKeysForUsers};
-  uga.selfSign(signatureKeyPair.privateKey);
-
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         uga,
-                                         _privateSignatureKey);
-  return Serialization::serialize(entry);
-}
-
-std::vector<uint8_t> BlockGenerator::userGroupAddition2(
-    Crypto::SignatureKeyPair const& signatureKeyPair,
-    Crypto::Hash const& previousGroupBlockHash,
-    std::vector<UserGroupAddition::v2::Member> const& members,
-    std::vector<UserGroupAddition::v2::ProvisionalMember> const&
-        provisionalMembers) const
-{
-  Trustchain::GroupId const groupId{signatureKeyPair.publicKey.base()};
-  UserGroupAddition::v2 uga{
-      groupId, previousGroupBlockHash, members, provisionalMembers};
-  uga.selfSign(signatureKeyPair.privateKey);
-
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         uga,
-                                         _privateSignatureKey);
   return Serialization::serialize(entry);
 }
 

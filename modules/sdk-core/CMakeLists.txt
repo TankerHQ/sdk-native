@@ -91,6 +91,7 @@ add_library(tankercore STATIC
   include/Tanker/Groups/IAccessor.hpp
   include/Tanker/Groups/Manager.hpp
   include/Tanker/Groups/Requester.hpp
+  include/Tanker/Groups/EntryGenerator.hpp
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/ResourceKeyStore.hpp
@@ -161,6 +162,7 @@ add_library(tankercore STATIC
   src/ProvisionalUsers/Requests.cpp
   src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
+  src/Groups/EntryGenerator.cpp
   src/Groups/GroupEncryptedKey.cpp
   src/Groups/Store.cpp
   src/Groups/Accessor.cpp
