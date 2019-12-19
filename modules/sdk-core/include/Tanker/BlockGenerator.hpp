@@ -83,10 +83,6 @@ public:
       Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
           userKeys) const;
 
-  std::vector<uint8_t> keyPublish(Crypto::EncryptedSymmetricKey const& symKey,
-                                  Trustchain::ResourceId const& resourceId,
-                                  Trustchain::DeviceId const& recipient) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;

@@ -140,18 +140,4 @@ std::vector<uint8_t> BlockGenerator::revokeDevice2(
                                               userKeys);
   return Serialization::serialize(entry);
 }
-
-std::vector<uint8_t> BlockGenerator::keyPublish(
-    Crypto::EncryptedSymmetricKey const& symKey,
-    Trustchain::ResourceId const& resourceId,
-    Trustchain::DeviceId const& recipient) const
-{
-  KeyPublishToDevice kp{recipient, resourceId, symKey};
-
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         kp,
-                                         _privateSignatureKey);
-  return Serialization::serialize(entry);
-}
 }

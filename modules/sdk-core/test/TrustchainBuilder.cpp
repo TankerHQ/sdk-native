@@ -590,15 +590,17 @@ std::vector<ServerEntry> TrustchainBuilder::shareToDevice(
             sender.keys.encryptionKeyPair.privateKey,
             receiverDevice.keys.encryptionKeyPair.publicKey);
 
-    auto const block =
-        BlockGenerator(
-            _trustchainId, sender.keys.signatureKeyPair.privateKey, sender.id)
-            .keyPublish(encryptedKey, resourceId, receiverDevice.id);
+    auto const clientEntry = Users::createKeyPublishToDeviceEntry(
+        _trustchainId,
+        sender.id,
+        sender.keys.signatureKeyPair.privateKey,
+        encryptedKey,
+        resourceId,
+        receiverDevice.id);
 
-    auto entry = Serialization::deserialize<ServerEntry>(block);
-    const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-    _entries.push_back(entry);
-    result.push_back(entry);
+    auto const serverEntry = clientToServerEntry(clientEntry);
+    _entries.push_back(serverEntry);
+    result.push_back(serverEntry);
   }
   return result;
 }
