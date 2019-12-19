@@ -52,7 +52,6 @@ private:
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
-  Trustchain::UserId _userId;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   Status _status = Status::Stopped;

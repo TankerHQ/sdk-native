@@ -41,7 +41,6 @@ private:
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
   BlockGenerator* _blockGenerator;
-  Crypto::SymmetricKey _userSecret;
 
   std::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 };
