@@ -7,6 +7,8 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
@@ -62,7 +64,10 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
             gsl::make_span(email).as_span<std::uint8_t const>())));
     if (tankerKeys)
     {
-      auto block = _blockGenerator->provisionalIdentityClaim(
+      auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
+          _blockGenerator->trustchainId(),
+          _localUser->deviceId(),
+          _localUser->deviceKeys().signatureKeyPair.privateKey,
           _localUser->userId(),
           SecretProvisionalUser{provisionalIdentity.target,
                                 provisionalIdentity.value,
@@ -71,7 +76,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
                                 provisionalIdentity.appSignatureKeyPair,
                                 tankerKeys->signatureKeyPair},
           lastUserKey);
-      TC_AWAIT(_client->pushBlock(block));
+      TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
     }
     TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
@@ -152,7 +157,11 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
     TINFO("Nothing to claim");
     TC_RETURN();
   }
-  auto block = _blockGenerator->provisionalIdentityClaim(
+
+  auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
+      _blockGenerator->trustchainId(),
+      _localUser->deviceId(),
+      _localUser->deviceKeys().signatureKeyPair.privateKey,
       _localUser->userId(),
       SecretProvisionalUser{_provisionalIdentity->target,
                             _provisionalIdentity->value,
@@ -161,7 +170,8 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
                             _provisionalIdentity->appSignatureKeyPair,
                             tankerKeys->signatureKeyPair},
       lastUserKey);
-  TC_AWAIT(_client->pushBlock(block));
+  TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
+
   _provisionalIdentity.reset();
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
 }

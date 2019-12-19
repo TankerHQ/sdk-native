@@ -4,7 +4,7 @@
 
 namespace Tanker::Users
 {
-using Trustchain::ClientEntry;
+using namespace Tanker::Trustchain;
 using Trustchain::Actions::DeviceCreation;
 using Trustchain::Actions::DeviceRevocation;
 using Trustchain::Actions::DeviceRevocation2;
@@ -12,7 +12,7 @@ using Trustchain::Actions::DeviceRevocation2;
 namespace
 {
 ClientEntry createDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
+    TrustchainId const& trustchainId,
     Crypto::Hash const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
@@ -37,7 +37,7 @@ ClientEntry createDeviceEntry(
 }
 
 ClientEntry createDeviceV1Entry(
-    Trustchain::TrustchainId const& trustchainId,
+    TrustchainId const& trustchainId,
     Crypto::Hash const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
@@ -53,7 +53,7 @@ ClientEntry createDeviceV1Entry(
 }
 
 ClientEntry createNewUserEntry(
-    Trustchain::TrustchainId const& trustchainId,
+    TrustchainId const& trustchainId,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
@@ -69,8 +69,8 @@ ClientEntry createNewUserEntry(
 }
 
 ClientEntry createNewDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
+    TrustchainId const& trustchainId,
+    DeviceId const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
@@ -86,8 +86,8 @@ ClientEntry createNewDeviceEntry(
 }
 
 ClientEntry createNewGhostDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
+    TrustchainId const& trustchainId,
+    DeviceId const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
@@ -103,10 +103,10 @@ ClientEntry createNewGhostDeviceEntry(
 }
 
 ClientEntry revokeDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
+    TrustchainId const& trustchainId,
+    DeviceId const& author,
     Crypto::PrivateSignatureKey const& signatureKey,
-    Trustchain::DeviceId const& toBeRevoked,
+    DeviceId const& toBeRevoked,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateEncryptionKey const& encryptedKeyForPreviousUserKey,
     Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
@@ -119,5 +119,44 @@ ClientEntry revokeDeviceEntry(
                         userKeys};
   return ClientEntry::create(
       trustchainId, static_cast<Crypto::Hash>(author), dr2, signatureKey);
+}
+
+ClientEntry createProvisionalIdentityClaimEntry(
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey,
+    UserId const& userId,
+    SecretProvisionalUser const& provisionalUser,
+    Crypto::EncryptionKeyPair const& userKeyPair)
+{
+  std::vector<std::uint8_t> keysToEncrypt(
+      Crypto::PrivateEncryptionKey::arraySize * 2);
+
+  auto it = std::copy(provisionalUser.appEncryptionKeyPair.privateKey.begin(),
+                      provisionalUser.appEncryptionKeyPair.privateKey.end(),
+                      keysToEncrypt.data());
+  std::copy(provisionalUser.tankerEncryptionKeyPair.privateKey.begin(),
+            provisionalUser.tankerEncryptionKeyPair.privateKey.end(),
+            it);
+
+  Actions::ProvisionalIdentityClaim claim{
+      userId,
+      provisionalUser.appSignatureKeyPair.publicKey,
+      provisionalUser.tankerSignatureKeyPair.publicKey,
+      userKeyPair.publicKey,
+      Crypto::sealEncrypt<
+          Actions::ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
+          keysToEncrypt, userKeyPair.publicKey),
+  };
+
+  claim.signWithAppKey(provisionalUser.appSignatureKeyPair.privateKey,
+                       deviceId);
+  claim.signWithTankerKey(provisionalUser.tankerSignatureKeyPair.privateKey,
+                          deviceId);
+
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             claim,
+                             deviceSignatureKey);
 }
 }

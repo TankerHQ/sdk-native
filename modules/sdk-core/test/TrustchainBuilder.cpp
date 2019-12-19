@@ -15,6 +15,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
@@ -324,17 +325,18 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
   auto const user = findUser(suserId).value();
   auto const& authorDevice = user.devices.at(authorDeviceIndex);
 
-  auto const preserializedBlock =
-      BlockGenerator(_trustchainId,
-                     authorDevice.keys.signatureKeyPair.privateKey,
-                     authorDevice.id)
-          .provisionalIdentityClaim(
-              user.userId, provisionalUser, user.userKeys.back().keyPair);
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
+  auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
+      _trustchainId,
+      authorDevice.id,
+      authorDevice.keys.signatureKeyPair.privateKey,
+      user.userId,
+      provisionalUser,
+      user.userKeys.back().keyPair);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
 
-  _entries.push_back(entry);
-  return entry;
+  _entries.push_back(serverEntry);
+  return serverEntry;
 }
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(

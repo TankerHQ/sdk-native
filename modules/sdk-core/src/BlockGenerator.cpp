@@ -8,6 +8,7 @@
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
 #include <stdexcept>
@@ -194,43 +195,6 @@ std::vector<uint8_t> BlockGenerator::keyPublishToGroup(
   auto const entry = ClientEntry::create(_trustchainId,
                                          static_cast<Crypto::Hash>(_deviceId),
                                          kp,
-                                         _privateSignatureKey);
-  return Serialization::serialize(entry);
-}
-
-std::vector<uint8_t> BlockGenerator::provisionalIdentityClaim(
-    Trustchain::UserId const& userId,
-    SecretProvisionalUser const& provisionalUser,
-    Crypto::EncryptionKeyPair const& userKeyPair) const
-{
-  std::vector<std::uint8_t> keysToEncrypt(
-      Crypto::PrivateEncryptionKey::arraySize * 2);
-
-  auto it = std::copy(provisionalUser.appEncryptionKeyPair.privateKey.begin(),
-                      provisionalUser.appEncryptionKeyPair.privateKey.end(),
-                      keysToEncrypt.data());
-  std::copy(provisionalUser.tankerEncryptionKeyPair.privateKey.begin(),
-            provisionalUser.tankerEncryptionKeyPair.privateKey.end(),
-            it);
-
-  ProvisionalIdentityClaim claim{
-      userId,
-      provisionalUser.appSignatureKeyPair.publicKey,
-      provisionalUser.tankerSignatureKeyPair.publicKey,
-      userKeyPair.publicKey,
-      Crypto::sealEncrypt<
-          ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
-          keysToEncrypt, userKeyPair.publicKey),
-  };
-
-  claim.signWithAppKey(provisionalUser.appSignatureKeyPair.privateKey,
-                       _deviceId);
-  claim.signWithTankerKey(provisionalUser.tankerSignatureKeyPair.privateKey,
-                          _deviceId);
-
-  auto const entry = ClientEntry::create(_trustchainId,
-                                         static_cast<Crypto::Hash>(_deviceId),
-                                         claim,
                                          _privateSignatureKey);
   return Serialization::serialize(entry);
 }

@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Identity/Delegation.hpp>
+#include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 
@@ -48,4 +49,12 @@ Trustchain::ClientEntry revokeDeviceEntry(
     Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
         userKeys);
+
+Trustchain::ClientEntry createProvisionalIdentityClaimEntry(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey,
+    Trustchain::UserId const& userId,
+    SecretProvisionalUser const& provisionalUser,
+    Crypto::EncryptionKeyPair const& userKeyPair);
 }

@@ -103,11 +103,6 @@ public:
       Trustchain::ResourceId const& resourceId,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
 
-  std::vector<uint8_t> provisionalIdentityClaim(
-      Trustchain::UserId const& userId,
-      SecretProvisionalUser const& provisionalUser,
-      Crypto::EncryptionKeyPair const& userKeyPair) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;
