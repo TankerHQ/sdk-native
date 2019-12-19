@@ -199,8 +199,13 @@ std::vector<uint8_t> makeKeyPublishToUser(
   auto const encryptedKey =
       Crypto::sealEncrypt(resourceKey, recipientPublicEncryptionKey);
 
-  return blockGenerator.keyPublishToUser(
-      encryptedKey, resourceId, recipientPublicEncryptionKey);
+  return Serialization::serialize(
+      Users::createKeyPublishToUserEntry(blockGenerator.trustchainId(),
+                                         blockGenerator.deviceId(),
+                                         blockGenerator.signatureKey(),
+                                         encryptedKey,
+                                         resourceId,
+                                         recipientPublicEncryptionKey));
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(

@@ -87,11 +87,6 @@ public:
                                   Trustchain::ResourceId const& resourceId,
                                   Trustchain::DeviceId const& recipient) const;
 
-  std::vector<uint8_t> keyPublishToUser(
-      Crypto::SealedSymmetricKey const& symKey,
-      Trustchain::ResourceId const& resourceId,
-      Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
-
 private:
   Trustchain::TrustchainId _trustchainId;
   Crypto::PrivateSignatureKey _privateSignatureKey;

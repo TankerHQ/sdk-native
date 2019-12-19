@@ -1,6 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
 namespace Tanker::Users
@@ -172,6 +173,23 @@ ClientEntry createKeyPublishToProvisionalUserEntry(
 {
   Trustchain::Actions::KeyPublishToProvisionalUser kp{
       appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey};
+
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             kp,
+                             deviceSignatureKey);
+}
+
+ClientEntry createKeyPublishToUserEntry(
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey,
+    Crypto::SealedSymmetricKey const& symKey,
+    ResourceId const& resourceId,
+    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey)
+{
+  Trustchain::Actions::KeyPublishToUser kp{
+      recipientPublicEncryptionKey, resourceId, symKey};
 
   return ClientEntry::create(trustchainId,
                              static_cast<Crypto::Hash>(deviceId),
