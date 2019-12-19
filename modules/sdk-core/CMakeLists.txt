@@ -102,6 +102,7 @@ add_library(tankercore STATIC
   include/Tanker/Status.hpp
   include/Tanker/Revocation.hpp
   include/Tanker/Users/User.hpp
+  include/Tanker/Users/Updater.hpp
   include/Tanker/Users/IRequester.hpp
   include/Tanker/Users/Requester.hpp
   include/Tanker/Users/LocalUser.hpp
@@ -169,6 +170,7 @@ add_library(tankercore STATIC
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
   src/Users/User.cpp
+  src/Users/Updater.cpp
   src/Users/LocalUser.cpp
   src/Users/UserAccessor.cpp
   src/Users/ContactStore.cpp

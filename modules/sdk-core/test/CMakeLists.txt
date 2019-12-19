@@ -8,6 +8,7 @@ add_executable(test_tanker
   test_groupstore.cpp
   test_groupaccessor.cpp
   test_groupupdater.cpp
+  test_userupdater.cpp
   test_resourcekeystore.cpp
   test_provisionaluserkeysstore.cpp
   test_trustchain.cpp

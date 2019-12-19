@@ -13,6 +13,15 @@ std::optional<Device> User::findDevice(
   return std::nullopt;
 }
 
+std::optional<Device> User::findDevice(
+    Crypto::PublicEncryptionKey const& publicKey) const
+{
+  for (auto const& device : devices)
+    if (device.publicEncryptionKey == publicKey)
+      return device;
+  return std::nullopt;
+}
+
 bool operator==(User const& l, User const& r)
 {
   return std::tie(l.id, l.userKey, l.devices) ==
