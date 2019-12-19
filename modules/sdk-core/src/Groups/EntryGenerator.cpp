@@ -1,5 +1,6 @@
 #include <Tanker/Groups/EntryGenerator.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 
 using namespace Tanker::Trustchain;
@@ -7,7 +8,54 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker::Groups
 {
-Trustchain::ClientEntry createUserGroupAdditionV1Entry(
+ClientEntry createUserGroupCreationV1Entry(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
+    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const&
+        sealedPrivateEncryptionKeysForUsers,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
+      groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
+
+  UserGroupCreation::v1 ugc{groupSignatureKeyPair.publicKey,
+                            groupPublicEncryptionKey,
+                            encryptedPrivateSignatureKey,
+                            sealedPrivateEncryptionKeysForUsers};
+  ugc.selfSign(groupSignatureKeyPair.privateKey);
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             ugc,
+                             deviceSignatureKey);
+}
+
+ClientEntry createUserGroupCreationV2Entry(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
+    UserGroupCreation::v2::Members const& groupMembers,
+    UserGroupCreation::v2::ProvisionalMembers const& groupProvisionalMembers,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
+      groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
+
+  UserGroupCreation::v2 ugc{groupSignatureKeyPair.publicKey,
+                            groupPublicEncryptionKey,
+                            encryptedPrivateSignatureKey,
+                            groupMembers,
+                            groupProvisionalMembers};
+  ugc.selfSign(groupSignatureKeyPair.privateKey);
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             ugc,
+                             deviceSignatureKey);
+}
+
+ClientEntry createUserGroupAdditionV1Entry(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const&
@@ -16,7 +64,7 @@ Trustchain::ClientEntry createUserGroupAdditionV1Entry(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
-  Trustchain::GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
+  GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
   UserGroupAddition::v1 uga{
       groupId, previousGroupBlockHash, sealedPrivateEncryptionKeysForUsers};
   uga.selfSign(groupSignatureKeyPair.privateKey);
@@ -37,7 +85,7 @@ ClientEntry createUserGroupAdditionV2Entry(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
-  Trustchain::GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
+  GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
   UserGroupAddition::v2 uga{
       groupId, previousGroupBlockHash, members, provisionalMembers};
   uga.selfSign(groupSignatureKeyPair.privateKey);

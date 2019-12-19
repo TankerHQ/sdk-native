@@ -397,30 +397,30 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
   auto const keysForUsers =
       generateGroupKeysForUsers(encryptionKeyPair.privateKey, users);
 
-  auto const preserializedBlock =
-      BlockGenerator(
-          _trustchainId, author.keys.signatureKeyPair.privateKey, author.id)
-          .userGroupCreation(
-              signatureKeyPair, encryptionKeyPair.publicKey, keysForUsers);
+  auto const clientEntry = Groups::createUserGroupCreationV1Entry(
+      signatureKeyPair,
+      encryptionKeyPair.publicKey,
+      keysForUsers,
+      _trustchainId,
+      author.id,
+      author.keys.signatureKeyPair.privateKey);
 
-  auto entry = Serialization::deserialize<ServerEntry>(preserializedBlock);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-
-  _entries.push_back(entry);
+  auto const serverEntry = clientToServerEntry(clientEntry, _entries.size() + 1);
+  _entries.push_back(serverEntry);
 
   Tanker::InternalGroup tgroup{
       GroupId{signatureKeyPair.publicKey},
       signatureKeyPair,
       encryptionKeyPair,
-      entry.hash(),
-      entry.index(),
+      serverEntry.hash(),
+      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
   for (auto const& user : users)
     members.push_back(user.suserId);
 
-  auto const encryptedPrivateSignatureKey = entry.action()
+  auto const encryptedPrivateSignatureKey = serverEntry.action()
                                                 .get<UserGroupCreation>()
                                                 .get<UserGroupCreation::v1>()
                                                 .sealedPrivateSignatureKey();
@@ -428,7 +428,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 
   _groups.insert(group);
 
-  return {group, entry};
+  return {group, serverEntry};
 }
 
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(

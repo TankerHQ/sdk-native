@@ -103,20 +103,6 @@ public:
       Trustchain::ResourceId const& resourceId,
       Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey) const;
 
-  std::vector<uint8_t> userGroupCreation(
-      Crypto::SignatureKeyPair const& signatureKeyPair,
-      Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Trustchain::Actions::UserGroupCreation::v1::
-          SealedPrivateEncryptionKeysForUsers const&
-              sealedPrivateEncryptionKeysForUsers) const;
-
-  std::vector<uint8_t> userGroupCreation2(
-      Crypto::SignatureKeyPair const& signatureKeyPair,
-      Crypto::PublicEncryptionKey const& publicEncryptionKey,
-      Trustchain::Actions::UserGroupCreation::v2::Members const& groupMembers,
-      Trustchain::Actions::UserGroupCreation::v2::ProvisionalMembers const&
-          groupProvisionalMembers) const;
-
   std::vector<uint8_t> provisionalIdentityClaim(
       Trustchain::UserId const& userId,
       SecretProvisionalUser const& provisionalUser,
