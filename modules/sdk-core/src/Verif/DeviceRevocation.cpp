@@ -92,10 +92,10 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 }
 
-void verifyDeviceRevocation(ServerEntry const& serverEntry,
-                            Users::Device const& author,
-                            Users::Device const& target,
-                            Users::User const& user)
+Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
+                             Users::Device const& author,
+                             Users::Device const& target,
+                             Users::User const& user)
 {
   assert(serverEntry.action().nature() == Nature::DeviceRevocation ||
          serverEntry.action().nature() == Nature::DeviceRevocation2);
@@ -128,6 +128,7 @@ void verifyDeviceRevocation(ServerEntry const& serverEntry,
 
   deviceRevocation.visit(
       [&](auto const& subAction) { verifySubAction(subAction, target, user); });
+  return Verif::makeVerifiedEntry(serverEntry);
 }
 }
 }

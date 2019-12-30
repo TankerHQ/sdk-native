@@ -73,11 +73,7 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
     Trustchain::ServerEntry const& dc) const
 {
   if (dc.author().base() == _trustchainId.base())
-  {
-    auto const trustchainCreation =
-        TrustchainCreation(_localUser->trustchainPublicSignatureKey());
-    Verif::verifyDeviceCreation(dc, trustchainCreation);
-  }
+    Verif::verifyDeviceCreation(dc, _localUser->trustchainPublicSignatureKey());
   else
   {
     Users::User user;
@@ -85,7 +81,8 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 
     std::tie(user, idx) =
         TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dc.author())));
-    Verif::verifyDeviceCreation(dc, user.devices[idx], user);
+    Verif::verifyDeviceCreation(
+        dc, _trustchainId, _localUser->trustchainPublicSignatureKey(), user);
   }
   TC_RETURN(Verif::makeVerifiedEntry(dc));
 }
