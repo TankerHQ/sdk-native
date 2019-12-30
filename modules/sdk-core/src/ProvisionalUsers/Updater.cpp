@@ -47,7 +47,7 @@ tc::cotask<DeviceMap> extractAuthors(
     auto const author =
         TC_AWAIT(contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
     if (author)
-      out[Trustchain::DeviceId{entry.author()}] = *author;
+      out.emplace(Trustchain::DeviceId{entry.author()}, *author);
     else
       // we should have all the devices because they are *our* devices
       throw Errors::formatEx(Errors::Errc::InternalError,

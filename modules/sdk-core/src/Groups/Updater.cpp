@@ -253,7 +253,11 @@ tc::cotask<DeviceMap> extractAuthors(
     auto const author =
         TC_AWAIT(contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
     if (author)
-      out[Trustchain::DeviceId{entry.author()}] = *author;
+    {
+      auto [it, isInserted] =
+          out.emplace(Trustchain::DeviceId{entry.author()}, *author);
+      assert(isInserted);
+    }
     else
     {
       if (auto const userGroupCreation =
@@ -282,7 +286,11 @@ tc::cotask<DeviceMap> extractAuthors(
       auto const author = TC_AWAIT(
           contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
       if (author)
-        out[Trustchain::DeviceId{entry.author()}] = *author;
+      {
+        auto [it, isInserted] =
+            out.emplace(Trustchain::DeviceId{entry.author()}, *author);
+        assert(isInserted);
+      }
     }
   }
 

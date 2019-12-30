@@ -59,13 +59,12 @@ TrustchainBuilder::Device createDevice()
 
 Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
 {
-  return Tanker::Users::Device{id,
+  return Tanker::Users::Device(id,
                                userId,
                                blockIndex,
-                               std::nullopt,
+                               false,
                                keys.signatureKeyPair.publicKey,
-                               keys.encryptionKeyPair.publicKey,
-                               false};
+                               keys.encryptionKeyPair.publicKey);
 }
 
 Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
@@ -74,11 +73,12 @@ Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
       userId,
       userKeys.empty() ? std::optional<Tanker::Crypto::PublicEncryptionKey>() :
                          userKeys.back().keyPair.publicKey,
-      std::vector<Tanker::Users::Device>(devices.size())};
+      std::vector<Tanker::Users::Device>()};
 
+  tankerUser.devices.reserve(devices.size());
   std::transform(devices.begin(),
                  devices.end(),
-                 tankerUser.devices.begin(),
+                 std::back_inserter(tankerUser.devices),
                  [](auto const& device) { return device.asTankerDevice(); });
 
   return tankerUser;

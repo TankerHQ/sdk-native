@@ -123,12 +123,12 @@ Users::Device rowToDevice(Row const& row)
   return {DataStore::extractBlob<Trustchain::DeviceId>(row.id),
           DataStore::extractBlob<Trustchain::UserId>(row.user_id),
           static_cast<uint64_t>(row.created_at_block_index),
+          row.is_ghost_device,
           std::move(revokedAtBlockIndex),
           DataStore::extractBlob<Crypto::PublicSignatureKey>(
               row.public_signature_key),
           DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-              row.public_encryption_key),
-          row.is_ghost_device};
+              row.public_encryption_key)};
 }
 
 template <typename Row>

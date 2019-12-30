@@ -12,16 +12,29 @@ namespace Tanker::Users
 {
 struct Device
 {
-  Device() = default;
+  Device(Trustchain::DeviceId const& id,
+         Trustchain::UserId const& userId,
+         uint64_t createdAtBlkIndex,
+         bool isGhostDevice,
+         Crypto::PublicSignatureKey const& publicSignatureKey,
+         Crypto::PublicEncryptionKey const& publicEncryptionKey);
+
+  Device(Trustchain::DeviceId const& id,
+         Trustchain::UserId const& userId,
+         uint64_t createdAtBlkIndex,
+         bool isGhostDevice,
+         std::optional<uint64_t> revokedAtBlkIndex,
+         Crypto::PublicSignatureKey const& publicSignatureKey,
+         Crypto::PublicEncryptionKey const& publicEncryptionKey);
+
   Trustchain::DeviceId id;
   Trustchain::UserId userId;
-  uint64_t createdAtBlkIndex = 0;
+  uint64_t createdAtBlkIndex;
+  bool isGhostDevice;
   std::optional<uint64_t> revokedAtBlkIndex;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
-  bool isGhostDevice = false;
 };
-
 bool operator==(Device const& l, Device const& r);
 bool operator!=(Device const& l, Device const& r);
 }

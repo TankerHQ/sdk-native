@@ -363,10 +363,9 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
   Users::Device const createdDevice{deviceId,
                                     deviceCreation.userId(),
                                     entry.index,
-                                    std::nullopt,
+                                    deviceCreation.isGhostDevice(),
                                     deviceCreation.publicSignatureKey(),
-                                    deviceCreation.publicEncryptionKey(),
-                                    deviceCreation.isGhostDevice()};
+                                    deviceCreation.publicEncryptionKey()};
   TC_AWAIT(_contactStore.putUserDevice(createdDevice));
 }
 

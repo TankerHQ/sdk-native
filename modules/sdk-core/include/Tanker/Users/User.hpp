@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tanker/Users/Device.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <optional>
 #include <vector>
