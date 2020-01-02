@@ -14,8 +14,8 @@ namespace Tanker
 {
 namespace Verif
 {
-void verifyTrustchainCreation(ServerEntry const& rootEntry,
-                              TrustchainId const& currentTrustchainId)
+Entry verifyTrustchainCreation(ServerEntry const& rootEntry,
+                               TrustchainId const& currentTrustchainId)
 {
   assert(rootEntry.action().nature() == Nature::TrustchainCreation);
 
@@ -28,6 +28,7 @@ void verifyTrustchainCreation(ServerEntry const& rootEntry,
   ensures(rootEntry.signature().is_null(),
           Errc::InvalidSignature,
           "signature must be zero-filled");
+  return makeVerifiedEntry(rootEntry);
 }
 }
 }
