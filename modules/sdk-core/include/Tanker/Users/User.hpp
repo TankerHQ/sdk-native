@@ -10,6 +10,8 @@ namespace Tanker::Users
 {
 struct User
 {
+  std::optional<Device> findDevice(Trustchain::DeviceId const& deviceId) const;
+
   Trustchain::UserId id;
   std::optional<Crypto::PublicEncryptionKey> userKey;
   std::vector<Device> devices;
