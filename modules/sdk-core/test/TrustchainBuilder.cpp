@@ -84,6 +84,15 @@ Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
   return tankerUser;
 }
 
+std::optional<TrustchainBuilder::Device> TrustchainBuilder::User::findDevice(
+    Tanker::Trustchain::DeviceId const& id) const
+{
+  for (auto const& device : devices)
+    if (device.id == id)
+      return device;
+  return std::nullopt;
+}
+
 Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
 {
   Tanker::ExternalGroup extGroup{
@@ -707,17 +716,8 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
                                              User const& user,
                                              bool unsafe)
 {
-  auto const userHasDevices =
-      std::find_if(user.devices.begin(),
-                   user.devices.end(),
-                   [sender](Device const& device) {
-                     return device.asTankerDevice() == sender.asTankerDevice();
-                   }) != user.devices.end() &&
-      std::find_if(user.devices.begin(),
-                   user.devices.end(),
-                   [target](Device const& device) {
-                     return device.asTankerDevice() == target.asTankerDevice();
-                   }) != user.devices.end();
+  auto const userHasDevices = user.findDevice(sender.id).has_value() &&
+                              user.findDevice(target.id).has_value();
 
   if (!userHasDevices && !unsafe)
   {
@@ -761,8 +761,8 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
       _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
-  findMutableUser(user.suserId)
-      ->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
+  auto mutableUser = findMutableUser(user.suserId);
+  mutableUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
   return _entries.back();
 }
 

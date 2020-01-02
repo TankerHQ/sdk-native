@@ -60,6 +60,8 @@ public:
     uint64_t blockIndex;
 
     Tanker::Users::User asTankerUser() const;
+    std::optional<Device> findDevice(
+        Tanker::Trustchain::DeviceId const& id) const;
   };
 
   struct ResultUser

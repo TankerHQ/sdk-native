@@ -150,16 +150,15 @@ void deviceCreationCommonChecks(
 }
 
 void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
-                                  Users::Device authorDevice,
-                                  Users::Device targetDevice,
+                                  Users::Device& authorDevice,
+                                  Users::Device& targetDevice,
                                   Users::User const& user)
 {
   SUBCASE("should reject an incorrectly signed DeviceRevocation")
   {
     alter(deviceRevocation, &ServerEntry::signature);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            deviceRevocation, authorDevice, targetDevice, user),
+        Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidSignature);
   }
 
@@ -167,8 +166,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
   {
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            deviceRevocation, authorDevice, targetDevice, user),
+        Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidAuthor);
   }
 
@@ -176,15 +174,13 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
   {
     targetDevice.revokedAtBlkIndex = targetDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            deviceRevocation, authorDevice, targetDevice, user),
+        Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidTargetDevice);
   }
 
   SUBCASE("should accept a valid deviceRevocation")
   {
-    CHECK_NOTHROW(Verif::verifyDeviceRevocation(
-        deviceRevocation, authorDevice, targetDevice, user));
+    CHECK_NOTHROW(Verif::verifyDeviceRevocation(deviceRevocation, user));
   }
 }
 
@@ -464,14 +460,15 @@ TEST_CASE("Verif DeviceRevocationV1")
   auto user = builder.makeUser1("alice");
   auto secondDevice = builder.makeDevice1("alice");
   auto thirdDevice = builder.makeDevice1("alice");
-  auto const authorDevice = secondDevice.device.asTankerDevice();
-  auto const targetDevice = thirdDevice.device.asTankerDevice();
+  auto finalUser = thirdDevice.user;
+  auto& authorDevice = finalUser.devices[1];
+  auto& targetDevice = finalUser.devices[2];
 
   auto const revokeEntry =
       builder.revokeDevice1(secondDevice.device, thirdDevice.device);
 
   deviceRevocationCommonChecks(
-      revokeEntry, authorDevice, targetDevice, thirdDevice.user);
+      revokeEntry, authorDevice, targetDevice, finalUser);
 
   SUBCASE("should reject a revocation for another user's device")
   {
@@ -481,10 +478,7 @@ TEST_CASE("Verif DeviceRevocationV1")
     auto const entry =
         builder.revokeDevice1(secondDevice.device, bobDevice.device, true);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(entry,
-                                      authorDevice,
-                                      bobDevice.device.asTankerDevice(),
-                                      secondDevice.user),
+        Verif::verifyDeviceRevocation(entry, secondDevice.user),
         Errc::InvalidUser);
   }
 
@@ -492,8 +486,7 @@ TEST_CASE("Verif DeviceRevocationV1")
   {
     auto fourthDevice = builder.makeDevice3("alice");
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            revokeEntry, authorDevice, targetDevice, fourthDevice.user),
+        Verif::verifyDeviceRevocation(revokeEntry, fourthDevice.user),
         Errc::InvalidUserKey);
   }
 }
@@ -505,23 +498,20 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto user = builder.makeUser3("alice");
   auto secondDevice = builder.makeDevice3("alice");
   auto thirdDevice = builder.makeDevice3("alice");
-  auto authorDevice = secondDevice.device.asTankerDevice();
-  auto targetDevice = thirdDevice.device.asTankerDevice();
-  auto aliceUser = builder.findUser("alice");
+  auto aliceUser = builder.findUser("alice")->asTankerUser();
+  auto& authorDevice = aliceUser.devices[1];
+  auto& targetDevice = aliceUser.devices[2];
   auto entry = builder.revokeDevice2(
-      secondDevice.device, thirdDevice.device, *aliceUser);
+      secondDevice.device, thirdDevice.device, *builder.findUser("alice"));
 
   auto bob = builder.makeUser1("bob");
   auto bobDevice = builder.makeDevice1("bob");
   auto bobOtherDevice = builder.makeDevice1("bob");
-  auto const authorDeviceV1 = bobDevice.device.asTankerDevice();
-  auto const targetDeviceV1 = bobOtherDevice.device.asTankerDevice();
   auto bobUser = builder.findUser("bob");
   auto entryUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
 
-  deviceRevocationCommonChecks(
-      entry, authorDevice, targetDevice, thirdDevice.user);
+  deviceRevocationCommonChecks(entry, authorDevice, targetDevice, aliceUser);
 
   SUBCASE(
       "should reject a revocation whose user has no userKey when "
@@ -531,8 +521,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     alter(dr, &DeviceRevocation2::previousPublicEncryptionKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entryUserV1, authorDeviceV1, targetDeviceV1, bobOtherDevice.user),
+        Verif::verifyDeviceRevocation(entryUserV1, bobOtherDevice.user),
         Errc::InvalidEncryptionKey);
   }
 
@@ -543,8 +532,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto& deviceRevocation = extract<DeviceRevocation>(entryUserV1.action());
     alter(deviceRevocation, &DeviceRevocation2::sealedKeyForPreviousUserKey);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entryUserV1, authorDeviceV1, targetDeviceV1, bobOtherDevice.user),
+        Verif::verifyDeviceRevocation(entryUserV1, bobOtherDevice.user),
         Errc::InvalidUserKey);
   }
 
@@ -553,8 +541,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto const revokeEntry = builder.revokeDevice2(
         secondDevice.device, bobOtherDevice.device, user.user, true);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            revokeEntry, authorDevice, targetDeviceV1, secondDevice.user),
+        Verif::verifyDeviceRevocation(revokeEntry, secondDevice.user),
         Errc::InvalidUser);
   }
 
@@ -567,8 +554,7 @@ TEST_CASE("Verif DeviceRevocationV2")
 
     REQUIRE_FALSE(authorDevice.revokedAtBlkIndex.has_value());
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
+        Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidEncryptionKey);
   }
 
@@ -582,8 +568,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
+        Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidUserKeys);
   }
 
@@ -601,8 +586,7 @@ TEST_CASE("Verif DeviceRevocationV2")
                                           sealedPrivateEncryptionKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
+        Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidUserKeys);
   }
 
@@ -621,8 +605,7 @@ TEST_CASE("Verif DeviceRevocationV2")
                                           sealedPrivateEncryptionKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
+        Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidUserKeys);
   }
 
@@ -636,8 +619,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     sealedUserKeysForDevices.push_back(*sealedUserKeysForDevices.begin());
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(
-            entry, authorDevice, targetDevice, thirdDevice.user),
+        Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidUserKeys);
   }
 }

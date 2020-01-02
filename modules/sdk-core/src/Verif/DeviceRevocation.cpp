@@ -93,41 +93,42 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 
 Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
-                             Users::Device const& author,
-                             Users::Device const& target,
                              Users::User const& user)
 {
-  assert(serverEntry.action().nature() == Nature::DeviceRevocation ||
-         serverEntry.action().nature() == Nature::DeviceRevocation2);
+  auto const dr = serverEntry.action().get_if<Actions::DeviceRevocation>();
+  assert(dr);
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
+  auto const author =
+      user.findDevice(Trustchain::DeviceId{serverEntry.author()});
+  ensures(author.has_value(),
+          Errc::InvalidUser,
+          "A device can only be revoked by another device of its user");
+
+  ensures(!author->revokedAtBlkIndex ||
+              author->revokedAtBlkIndex > serverEntry.index(),
           Errc::InvalidAuthor,
           "Author device of revocation must not be revoked");
 
-  ensures(!target.revokedAtBlkIndex,
+  auto const target = user.findDevice(dr->deviceId());
+  ensures(target.has_value(),
+          Errc::InvalidUser,
+          "The target device of a revocation must be owned by the user");
+
+  ensures(!target->revokedAtBlkIndex,
           Errc::InvalidTargetDevice,
           "The target of a revocation must not be already revoked");
-
-  ensures(std::find(user.devices.begin(), user.devices.end(), author) !=
-                  user.devices.end() &&
-              std::find(user.devices.begin(), user.devices.end(), target) !=
-                  user.devices.end(),
-          Errc::InvalidUser,
-          "A device can only be revoked by another device of its user");
 
   ensures(
       Crypto::verify(serverEntry.hash(),
                      serverEntry.signature(),
-                     author.publicSignatureKey),
+                     author->publicSignatureKey),
       Errc::InvalidSignature,
       "device revocation block must be signed by the public signature key of "
       "its author");
 
-  auto const& deviceRevocation = serverEntry.action().get<DeviceRevocation>();
-
-  deviceRevocation.visit(
-      [&](auto const& subAction) { verifySubAction(subAction, target, user); });
+  dr->visit([&](auto const& subAction) {
+    verifySubAction(subAction, *target, user);
+  });
   return Verif::makeVerifiedEntry(serverEntry);
 }
 }

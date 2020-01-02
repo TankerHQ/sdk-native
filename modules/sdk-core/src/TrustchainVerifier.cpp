@@ -90,15 +90,10 @@ tc::cotask<Entry> TrustchainVerifier::handleDeviceCreation(
 tc::cotask<Entry> TrustchainVerifier::handleDeviceRevocation(
     Trustchain::ServerEntry const& dr) const
 {
-  Users::User user;
-  std::size_t idx;
-
-  std::tie(user, idx) =
+  auto const [user, idx] =
       TC_AWAIT(getUserByDeviceId(static_cast<DeviceId>(dr.author())));
 
-  auto const& revocation = dr.action().get<DeviceRevocation>();
-  auto const targetDevice = getDevice(user, revocation.deviceId());
-  Verif::verifyDeviceRevocation(dr, user.devices[idx], targetDevice, user);
+  Verif::verifyDeviceRevocation(dr, user);
 
   TC_RETURN(Verif::makeVerifiedEntry(dr));
 }
