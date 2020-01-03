@@ -28,13 +28,6 @@ tc::cotask<void> ContactStore::putUser(User const& user)
 {
   assert(!user.devices.empty());
 
-  if (!TC_AWAIT(_db->getDevicesOf(user.id)).empty())
-  {
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           TFMT("user {:s} is already stored"),
-                           user.id);
-  }
-
   TC_AWAIT(_db->putContact(user.id, user.userKey));
   for (auto const& device : user.devices)
   {

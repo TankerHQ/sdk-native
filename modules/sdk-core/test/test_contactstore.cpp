@@ -32,13 +32,6 @@ TEST_CASE("ContactStore")
     CHECK_EQ(AWAIT(contacts.findUser(unexistentUserId)), std::nullopt);
   }
 
-  SUBCASE("it should throw when adding a user twice")
-  {
-    AWAIT_VOID(contacts.putUser(alice));
-    TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(contacts.putUser(alice)),
-                                  Errors::Errc::InternalError);
-  }
-
   SUBCASE("it should find a user that was inserted")
   {
     AWAIT_VOID(contacts.putUser(alice));
@@ -72,14 +65,26 @@ TEST_CASE("ContactStore")
     CHECK_EQ(AWAIT(contacts.findUser(alice.id)), aliceBis);
   }
 
-  SUBCASE("it should discard an existing user device id")
+  SUBCASE("it should replace an existing user")
+  {
+    AWAIT_VOID(contacts.putUser(alice));
+    auto aliceBis = alice;
+    auto const newDevice = builder.makeDevice3("alice").device.asTankerDevice();
+    aliceBis.devices.push_back(newDevice);
+    aliceBis.userKey = make<Crypto::PublicEncryptionKey>("new pubKey");
+    REQUIRE_NOTHROW(AWAIT_VOID(contacts.putUser(aliceBis)));
+
+    CHECK_EQ(*AWAIT(contacts.findUser(alice.id)), aliceBis);
+  }
+
+  SUBCASE("it should replace an existing user device id")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceDeviceBis = aliceDevice;
     ++aliceDeviceBis.createdAtBlkIndex;
     AWAIT_VOID(contacts.putUserDevice(aliceDeviceBis));
 
-    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id)), aliceDevice);
+    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id)), aliceDeviceBis);
   }
 
   SUBCASE("it should not find a non-existent device")

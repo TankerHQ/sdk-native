@@ -823,7 +823,7 @@ tc::cotask<void> Database::putDevice(Users::Device const& device)
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
 
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
+  (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
       tab.id = device.id.base(),
       tab.user_id = device.userId.base(),
       tab.created_at_block_index = device.createdAtBlkIndex,
