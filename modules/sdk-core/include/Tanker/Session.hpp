@@ -69,6 +69,7 @@ public:
     DataStore::DatabasePtr db;
     Trustchain::TrustchainId trustchainId;
     Users::LocalUser::Ptr localUser;
+    std::unique_ptr<Users::ContactStore> contactStore;
     std::unique_ptr<Client> client;
   };
   using DeviceRevokedHandler = std::function<void()>;
@@ -136,7 +137,6 @@ private:
   Trustchain::UserId const& userId() const;
   Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
-  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> onDeviceCreated(Entry const& entry);
   tc::cotask<void> onDeviceRevoked(Entry const& entry);
   void onKeyToUserReceived(Entry const& entry);
@@ -144,7 +144,6 @@ private:
   tc::cotask<void> onUserGroupEntry(Entry const& entry);
   tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
   tc::cotask<void> onKeyPublishReceived(Entry const& entry);
-  tc::cotask<void> onTrustchainCreationReceived(Entry const& entry);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
 
@@ -155,7 +154,7 @@ private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
   TrustchainStore _trustchain;
-  Users::ContactStore _contactStore;
+  std::unique_ptr<Users::ContactStore> _contactStore;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;

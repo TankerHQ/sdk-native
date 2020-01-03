@@ -26,6 +26,7 @@
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/Requester.hpp>
+#include <Tanker/Users/Updater.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -42,10 +43,14 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Opener::Opener(std::string url, Network::SdkInfo info, std::string writablePath)
+Opener::Opener(std::string url,
+               Network::SdkInfo info,
+               std::string writablePath,
+               DeviceRevokedHandler deviceRevoked)
   : _url(std::move(url)),
     _info(std::move(info)),
-    _writablePath(std::move(writablePath))
+    _writablePath(std::move(writablePath)),
+    _deviceRevoked(std::move(deviceRevoked))
 {
 }
 
@@ -54,6 +59,35 @@ Opener::~Opener() = default;
 Status Opener::status() const
 {
   return _status;
+}
+
+tc::cotask<void> Opener::fetchUser() try
+{
+  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  auto const entries = TC_AWAIT(_userRequester->getMe());
+  auto const deviceKeys = _localUser->deviceKeys();
+  auto [trustchainSignatureKey, user, userKeys] =
+      Users::Updater::processUserEntries(
+          deviceKeys, _info.trustchainId, entries);
+  _localUser->setTrustchainPublicSignatureKey(trustchainSignatureKey);
+  if (auto const selfDevice =
+          user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
+    _localUser->setDeviceId(selfDevice->id);
+
+  for (auto const& userKey : userKeys)
+    TC_AWAIT(_localUser->insertUserKey(userKey));
+  TC_AWAIT(_contactStore->putUser(user));
+}
+catch (Errors::Exception const& ex)
+{
+  if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+    _deviceRevoked();
+  throw;
+}
+
+void Opener::setDeviceRevokedHandler(DeviceRevokedHandler handler)
+{
+  _deviceRevoked = std::move(handler);
 }
 
 tc::cotask<Status> Opener::open(std::string const& b64Identity)
@@ -90,6 +124,7 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
                          _identity->delegation.userId);
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _localUser = TC_AWAIT(Users::LocalUser::open(_identity.value(), _db.get()));
+  _contactStore = std::make_unique<Users::ContactStore>(_db.get());
 
   _client->setConnectionHandler([this]() -> tc::cotask<void> {
     TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
@@ -166,6 +201,7 @@ Session::Config Opener::makeConfig()
   return {std::move(_db),
           _info.trustchainId,
           std::move(_localUser),
+          std::move(_contactStore),
           std::move(_client)};
 }
 
@@ -216,7 +252,7 @@ tc::cotask<Session::Config> Opener::createUser(
                                verification,
                                _identity->userSecret,
                                encryptVerificationKey));
-  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }
 
@@ -255,7 +291,7 @@ tc::cotask<Session::Config> Opener::createDevice(
 
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   TC_AWAIT(unlockCurrentDevice(verificationKey));
-  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }
 

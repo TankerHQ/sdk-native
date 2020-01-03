@@ -17,7 +17,6 @@
 
 namespace Tanker::Users
 {
-class ContactStore;
 class UserKeyStore;
 class LocalUser;
 }
@@ -40,26 +39,19 @@ public:
   TrustchainPuller(TrustchainStore* trustchain,
                    TrustchainVerifier* verifier,
                    DataStore::ADatabase* db,
-                   Users::LocalUser* localUser,
-                   Users::ContactStore* contactStore,
                    Client* client);
 
   tc::shared_future<void> scheduleCatchUp(
       std::vector<Trustchain::UserId> const& extraUsers = {},
       std::vector<Trustchain::GroupId> const& extraGroups = {}) override;
 
-  std::function<tc::cotask<void>(Trustchain::DeviceId const&)>
-      receivedThisDeviceId;
   std::function<tc::cotask<void>(Entry const&)> deviceCreated;
   std::function<tc::cotask<void>(Entry const&)> deviceRevoked;
-  std::function<tc::cotask<void>(Entry const&)> trustchainCreationReceived;
 
 private:
   TrustchainStore* _trustchain;
   TrustchainVerifier* _verifier;
   DataStore::ADatabase* _db;
-  Users::LocalUser* _localUser;
-  Users::ContactStore* _contactStore;
   Client* _client;
 
   std::vector<Trustchain::UserId> _extraUsers;
@@ -67,15 +59,8 @@ private:
   tc::job _pullJob;
 
   tc::cotask<void> catchUp();
-  tc::cotask<std::set<Crypto::Hash>> doInitialProcess(
-      std::vector<Trustchain::ServerEntry> const& entries);
   tc::cotask<void> verifyAndAddEntry(
       Trustchain::ServerEntry const& serverEntry);
   tc::cotask<void> triggerSignals(Entry const& entry);
-  tc::cotask<void> recoverUserKeys(
-      std::vector<std::pair<Crypto::PublicEncryptionKey,
-                            Crypto::SealedPrivateEncryptionKey>> const&
-          encryptedUserKeys,
-      std::vector<Crypto::EncryptionKeyPair>& userEncryptionKeys);
 };
 }

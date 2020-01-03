@@ -147,6 +147,8 @@ void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
   _deviceRevoked = std::move(handler);
   if (auto const session = boost::variant2::get_if<SessionType>(&_state))
     (*session)->deviceRevoked = _deviceRevoked; // we need the copy here
+  else if (auto const opener = boost::variant2::get_if<Opener>(&_state))
+    opener->setDeviceRevokedHandler(_deviceRevoked);
 }
 
 void Core::setSessionClosedHandler(SessionClosedHandler handler)
@@ -156,7 +158,7 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 
 void Core::reset()
 {
-  _state.emplace<Opener>(_url, _info, _writablePath);
+  _state.emplace<Opener>(_url, _info, _writablePath, _deviceRevoked);
 }
 
 tc::cotask<void> Core::encrypt(

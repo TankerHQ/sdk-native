@@ -10,14 +10,16 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
-#include <optional>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -31,7 +33,12 @@ namespace Tanker
 class Opener
 {
 public:
-  Opener(std::string url, Network::SdkInfo info, std::string writablePath);
+  using DeviceRevokedHandler = std::function<void()>;
+
+  Opener(std::string url,
+         Network::SdkInfo info,
+         std::string writablePath,
+         DeviceRevokedHandler deviceRevoked = DeviceRevokedHandler());
   ~Opener();
 
   Status status() const;
@@ -48,21 +55,24 @@ public:
       Unlock::Verification const& verification);
   tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods();
+  void setDeviceRevokedHandler(DeviceRevokedHandler handler);
 
 private:
   std::string _url;
   Network::SdkInfo _info;
   std::string _writablePath;
+  DeviceRevokedHandler _deviceRevoked;
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
+  std::unique_ptr<Users::ContactStore> _contactStore;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
-  Trustchain::UserId _userId;
+  Status _status = Status::Stopped;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
-  Status _status = Status::Stopped;
+  tc::cotask<void> fetchUser();
 
   tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
   Session::Config makeConfig();

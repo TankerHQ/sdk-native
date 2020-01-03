@@ -38,7 +38,7 @@ bool operator!=(SealedUserKey const& l, SealedUserKey const r)
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
-    Trustchain::ServerEntry const& serverEntry) try
+    Trustchain::ServerEntry const& serverEntry)
 {
   if (!serverEntry.action().holds_alternative<TrustchainCreation>())
     throw Errors::formatEx(Errors::Errc::InternalError,
@@ -47,10 +47,6 @@ Crypto::PublicSignatureKey extractTrustchainSignature(
   return Verif::verifyTrustchainCreation(serverEntry, trustchainId)
       .action.get<TrustchainCreation>()
       .publicSignatureKey();
-}
-catch (boost::variant2::bad_variant_access const& ex)
-{
-  throw Errors::AssertionError("Entry not a trustchainCreation block");
 }
 
 namespace

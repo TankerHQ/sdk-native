@@ -77,20 +77,16 @@ Session::Session(Config&& config)
     _client(std::move(config.client)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
     _trustchain(_db.get()),
-    _contactStore(_db.get()),
+    _contactStore(std::move(config.contactStore)),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _verifier(_trustchainId, _localUser.get(), &_contactStore),
-    _trustchainPuller(&_trustchain,
-                      &_verifier,
-                      _db.get(),
-                      _localUser.get(),
-                      &_contactStore,
-                      _client.get()),
-    _userAccessor(userId(), _client.get(), &_trustchainPuller, &_contactStore),
+    _verifier(_trustchainId, _localUser.get(), _contactStore.get()),
+    _trustchainPuller(&_trustchain, &_verifier, _db.get(), _client.get()),
+    _userAccessor(
+        userId(), _client.get(), &_trustchainPuller, _contactStore.get()),
     _provisionalUsersAccessor(_client.get(),
-                              &_contactStore,
+                              _contactStore.get(),
                               _localUser.get(),
                               &_provisionalUserKeysStore),
     _provisionalUsersManager(_localUser.get(),
@@ -100,7 +96,7 @@ Session::Session(Config&& config)
                              &_blockGenerator),
     _groupAccessor(_groupsRequester.get(),
                    &_trustchainPuller,
-                   &_contactStore,
+                   _contactStore.get(),
                    &_groupStore,
                    _localUser.get(),
                    &_provisionalUsersAccessor),
@@ -116,17 +112,9 @@ Session::Session(Config&& config)
 {
   _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
-  _trustchainPuller.receivedThisDeviceId =
-      [this](auto const& deviceId) -> tc::cotask<void> {
-    TC_AWAIT(this->setDeviceId(deviceId));
-  };
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceCreated(entry));
-  };
-  _trustchainPuller.trustchainCreationReceived =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onTrustchainCreationReceived(entry));
   };
   _trustchainPuller.deviceRevoked =
       [this](auto const& entry) -> tc::cotask<void> {
@@ -226,11 +214,6 @@ tc::cotask<std::vector<uint8_t>> Session::decrypt(
   TC_RETURN(std::move(decryptedData));
 }
 
-tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
-{
-  _blockGenerator.setDeviceId(deviceId);
-}
-
 Trustchain::DeviceId const& Session::deviceId() const
 {
   return _localUser->deviceId();
@@ -238,7 +221,7 @@ Trustchain::DeviceId const& Session::deviceId() const
 
 tc::cotask<std::vector<Users::Device>> Session::getDeviceList() const
 {
-  TC_RETURN(TC_AWAIT(_contactStore.findUserDevices(userId())));
+  TC_RETURN(TC_AWAIT(_contactStore->findUserDevices(userId())));
 }
 
 tc::cotask<void> Session::share(
@@ -350,8 +333,8 @@ tc::cotask<void> Session::catchUserKey(
   if (auto const dc3 = deviceCreation.get_if<DeviceCreation::v3>())
   {
     // you need this so that Share shares to self using the user key
-    TC_AWAIT(_contactStore.putUserKey(deviceCreation.userId(),
-                                      dc3->publicUserEncryptionKey()));
+    TC_AWAIT(_contactStore->putUserKey(deviceCreation.userId(),
+                                       dc3->publicUserEncryptionKey()));
   }
 }
 
@@ -366,7 +349,7 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
                                     deviceCreation.isGhostDevice(),
                                     deviceCreation.publicSignatureKey(),
                                     deviceCreation.publicEncryptionKey()};
-  TC_AWAIT(_contactStore.putUserDevice(createdDevice));
+  TC_AWAIT(_contactStore->putUserDevice(createdDevice));
 }
 
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
@@ -389,13 +372,7 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
   }
 
   TC_AWAIT(Revocation::onOtherDeviceRevocation(
-      deviceRevocation, entry, _contactStore, *_localUser));
-}
-
-tc::cotask<void> Session::onTrustchainCreationReceived(Entry const& entry)
-{
-  TC_AWAIT(_localUser->setTrustchainPublicSignatureKey(
-      entry.action.get<TrustchainCreation>().publicSignatureKey()));
+      deviceRevocation, entry, *_contactStore, *_localUser));
 }
 
 tc::cotask<void> Session::syncTrustchain()
@@ -407,7 +384,7 @@ tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(syncTrustchain());
   TC_AWAIT(Revocation::revokeDevice(
-      deviceId, *_localUser, _contactStore, _blockGenerator, _client));
+      deviceId, *_localUser, *_contactStore, _blockGenerator, _client));
 }
 
 tc::cotask<void> Session::nukeDatabase()

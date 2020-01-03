@@ -43,11 +43,13 @@ TEST_CASE(
           make<Crypto::PrivateSignatureKey>("a private signature key"),
           alice.user.userId),
       db.get()));
+  auto contactStore = std::make_unique<Users::ContactStore>(db.get());
   auto client = makeClient();
 
   Session session({std::move(db),
                    builder.trustchainId(),
                    std::move(localUser),
+                   std::move(contactStore),
                    std::move(client)});
 
   auto const entry = toVerifiedEntry(alice.entry);
