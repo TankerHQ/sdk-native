@@ -1,7 +1,6 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
@@ -108,10 +107,7 @@ Session::Session(Config&& config)
                          _localUser.get(),
                          &_groupAccessor,
                          &_provisionalUsersAccessor,
-                         &_resourceKeyStore),
-    _blockGenerator(_trustchainId,
-                    _localUser->deviceKeys().signatureKeyPair.privateKey,
-                    deviceId())
+                         &_resourceKeyStore)
 {
   _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 

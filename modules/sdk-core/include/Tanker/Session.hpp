@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/Accessor.hpp>
@@ -169,7 +168,6 @@ private:
   ProvisionalUsers::Manager _provisionalUsersManager;
   Groups::Accessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
-  BlockGenerator _blockGenerator;
 
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
