@@ -17,6 +17,8 @@ public:
   Requester(Client* client);
 
   tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() override;
+  tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+      gsl::span<Trustchain::UserId const> userIds) override;
   tc::cotask<void> authenticate(Trustchain::TrustchainId const& trustchainId,
                                 LocalUser const& localUser) override;
   tc::cotask<UserStatusResult> userStatus(

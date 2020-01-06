@@ -2,8 +2,11 @@
 
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
+
+#include <gsl-lite.hpp>
 
 #include <vector>
 
@@ -23,6 +26,8 @@ class IRequester
 public:
   virtual ~IRequester() = default;
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() = 0;
+  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+      gsl::span<Trustchain::UserId const> userIds) = 0;
   virtual tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,
       LocalUser const& localUser) = 0;
