@@ -26,12 +26,12 @@ Manager::Manager(Users::LocalUser* localUser,
                  Client* client,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
-                 BlockGenerator* blockGenerator)
+                 Trustchain::TrustchainId const& trustchainId)
   : _localUser(localUser),
     _client(client),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore),
-    _blockGenerator(blockGenerator)
+    _trustchainId(trustchainId)
 {
 }
 
@@ -65,7 +65,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
     if (tankerKeys)
     {
       auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
-          _blockGenerator->trustchainId(),
+          _trustchainId,
           _localUser->deviceId(),
           _localUser->deviceKeys().signatureKeyPair.privateKey,
           _localUser->userId(),
@@ -159,7 +159,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
   }
 
   auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
-      _blockGenerator->trustchainId(),
+      _trustchainId,
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey,
       _localUser->userId(),

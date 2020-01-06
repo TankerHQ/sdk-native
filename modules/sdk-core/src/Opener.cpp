@@ -1,6 +1,5 @@
 #include <Tanker/Opener.hpp>
 
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>

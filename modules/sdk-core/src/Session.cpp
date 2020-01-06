@@ -96,7 +96,7 @@ Session::Session(Config&& config)
                              _client.get(),
                              &_provisionalUsersAccessor,
                              &_provisionalUserKeysStore,
-                             &_blockGenerator),
+                             _trustchainId),
     _groupAccessor(_groupsRequester.get(),
                    &_trustchainPuller,
                    _contactStore.get(),

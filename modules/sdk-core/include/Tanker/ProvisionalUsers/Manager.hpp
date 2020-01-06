@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
@@ -25,7 +25,7 @@ public:
           Client* client,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
-          BlockGenerator* blockGenerator);
+          Trustchain::TrustchainId const& trustchainId);
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       Crypto::EncryptionKeyPair const& lastUserKey,
@@ -40,7 +40,8 @@ private:
   Client* _client;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
-  BlockGenerator* _blockGenerator;
+  Crypto::SymmetricKey _userSecret;
+  Trustchain::TrustchainId _trustchainId;
 
   std::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;
 };
