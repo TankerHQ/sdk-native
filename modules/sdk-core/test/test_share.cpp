@@ -334,8 +334,6 @@ TEST_CASE(
   auto const newUser = *builder.findUser("newUser");
   auto const keySender = *builder.findUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
-  auto const keySenderBlockGenerator =
-      builder.makeBlockGenerator(keySenderDevice);
 
   Share::ResourceKeys resourceKeys = {
       {make<Crypto::SymmetricKey>("symmkey"),
@@ -346,8 +344,8 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {newUserKeyPair.keyPair.publicKey}, {}, {}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator.trustchainId(),
-      keySenderBlockGenerator.deviceId(),
+      builder.trustchainId(),
+      keySenderDevice.id,
       keySenderDevice.keys.signatureKeyPair.privateKey,
       resourceKeys,
       keyRecipients);
@@ -368,8 +366,6 @@ TEST_CASE(
 
   auto const keySender = *builder.findUser("keySender");
   auto const keySenderDevice = keySender.devices.front();
-  auto const keySenderBlockGenerator =
-      builder.makeBlockGenerator(keySenderDevice);
 
   Share::ResourceKeys resourceKeys = {
       {make<Crypto::SymmetricKey>("symmkey"),
@@ -378,8 +374,8 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {}, {provisionalUser.publicProvisionalUser}, {}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator.trustchainId(),
-      keySenderBlockGenerator.deviceId(),
+      builder.trustchainId(),
+      keySenderDevice.id,
       keySenderDevice.keys.signatureKeyPair.privateKey,
       resourceKeys,
       keyRecipients);
@@ -400,8 +396,6 @@ TEST_CASE(
       builder.makeGroup(keySender.user.devices.at(0), {newUser.user});
 
   auto const keySenderDevice = keySender.user.devices.front();
-  auto const keySenderBlockGenerator =
-      builder.makeBlockGenerator(keySenderDevice);
 
   Share::ResourceKeys resourceKeys = {
       {make<Crypto::SymmetricKey>("symmkey"),
@@ -410,8 +404,8 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator.trustchainId(),
-      keySenderBlockGenerator.deviceId(),
+      builder.trustchainId(),
+      keySenderDevice.id,
       keySenderDevice.keys.signatureKeyPair.privateKey,
       resourceKeys,
       keyRecipients);

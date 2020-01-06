@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
@@ -170,8 +169,6 @@ public:
 
   std::optional<User> findUser(std::string const& suserId) const;
 
-  Tanker::BlockGenerator makeBlockGenerator(
-      TrustchainBuilder::Device const& device) const;
   Tanker::Users::LocalUser::Ptr makeLocalUser(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(

@@ -794,13 +794,6 @@ TrustchainBuilder::User* TrustchainBuilder::findMutableUser(
   return std::addressof(*it);
 }
 
-BlockGenerator TrustchainBuilder::makeBlockGenerator(
-    TrustchainBuilder::Device const& device) const
-{
-  return BlockGenerator(
-      _trustchainId, device.keys.signatureKeyPair.privateKey, device.id);
-}
-
 Tanker::Users::LocalUser::Ptr TrustchainBuilder::makeLocalUser(
     User const& user, Tanker::DataStore::ADatabase* conn) const
 {

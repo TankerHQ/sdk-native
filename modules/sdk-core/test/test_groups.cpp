@@ -36,20 +36,20 @@ TEST_CASE("Can't create an empty group")
 
   auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  TANKER_CHECK_THROWS_WITH_CODE(Groups::Manager::generateCreateGroupEntry(
-                                    {},
-                                    {},
-                                    groupSignatureKey,
-                                    groupEncryptionKey,
-                                    builder.trustchainId(),
-                                    userBlockGenerator.deviceId(),
-                                    userBlockGenerator.signatureKey()),
-                                Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      Groups::Manager::generateCreateGroupEntry(
+          {},
+          {},
+          groupSignatureKey,
+          groupEncryptionKey,
+          builder.trustchainId(),
+          userDevice.id,
+          userDevice.keys.signatureKeyPair.privateKey),
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Can create a group with two users")
@@ -61,7 +61,6 @@ TEST_CASE("Can create a group with two users")
   auto const user = *builder.findUser("user");
   auto const user2 = *builder.findUser("user2");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
@@ -71,9 +70,9 @@ TEST_CASE("Can create a group with two users")
       {},
       groupSignatureKey,
       groupEncryptionKey,
-      userBlockGenerator.trustchainId(),
-      userBlockGenerator.deviceId(),
-      userBlockGenerator.signatureKey());
+      builder.trustchainId(),
+      userDevice.id,
+      userDevice.keys.signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto group = serverEntry.action()
@@ -111,7 +110,6 @@ TEST_CASE("Can create a group with two provisional users")
   builder.makeUser3("user");
   auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
@@ -126,8 +124,8 @@ TEST_CASE("Can create a group with two provisional users")
       groupSignatureKey,
       groupEncryptionKey,
       builder.trustchainId(),
-      userBlockGenerator.deviceId(),
-      userBlockGenerator.signatureKey());
+      userDevice.id,
+      userDevice.keys.signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto group = serverEntry.action()
@@ -188,18 +186,18 @@ TEST_CASE("Fails to add 0 users to a group")
 
   auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   InternalGroup const group{};
 
-  TANKER_CHECK_THROWS_WITH_CODE(Groups::Manager::generateAddUserToGroupEntry(
-                                    {},
-                                    {},
-                                    group,
-                                    builder.trustchainId(),
-                                    userBlockGenerator.deviceId(),
-                                    userBlockGenerator.signatureKey()),
-                                Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      Groups::Manager::generateAddUserToGroupEntry(
+          {},
+          {},
+          group,
+          builder.trustchainId(),
+          userDevice.id,
+          userDevice.keys.signatureKeyPair.privateKey),
+      Errc::InvalidArgument);
 }
 
 TEST_CASE("Can add users to a group")
@@ -211,7 +209,6 @@ TEST_CASE("Can add users to a group")
   auto const user = *builder.findUser("user");
   auto const user2 = *builder.findUser("user2");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto const groupResult = builder.makeGroup(userDevice, {user, user2});
   auto group = groupResult.group.tankerGroup;
@@ -221,8 +218,8 @@ TEST_CASE("Can add users to a group")
       {},
       group,
       builder.trustchainId(),
-      userBlockGenerator.deviceId(),
-      userBlockGenerator.signatureKey());
+      userDevice.id,
+      userDevice.keys.signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto groupAdd = serverEntry.action()
@@ -259,7 +256,6 @@ TEST_CASE("Can add provisional users to a group")
   builder.makeUser3("user");
   auto const user = *builder.findUser("user");
   auto const userDevice = user.devices.front();
-  auto const userBlockGenerator = builder.makeBlockGenerator(userDevice);
 
   auto const groupResult = builder.makeGroup(userDevice, {user});
   auto group = groupResult.group.tankerGroup;
@@ -273,8 +269,8 @@ TEST_CASE("Can add provisional users to a group")
        provisionalUser2.publicProvisionalUser},
       group,
       builder.trustchainId(),
-      userBlockGenerator.deviceId(),
-      userBlockGenerator.signatureKey());
+      userDevice.id,
+      userDevice.keys.signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto groupAdd = serverEntry.action()
