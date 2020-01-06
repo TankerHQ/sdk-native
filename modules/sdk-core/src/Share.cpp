@@ -1,6 +1,5 @@
 #include <Tanker/Share.hpp>
 
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -35,7 +34,9 @@ namespace Share
 namespace
 {
 std::vector<uint8_t> makeKeyPublishToProvisionalUser(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     PublicProvisionalUser const& recipientProvisionalUser,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
@@ -46,9 +47,9 @@ std::vector<uint8_t> makeKeyPublishToProvisionalUser(
       encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
 
   return Serialization::serialize(Users::createKeyPublishToProvisionalUserEntry(
-      blockGenerator.trustchainId(),
-      blockGenerator.deviceId(),
-      blockGenerator.signatureKey(),
+      trustchainId,
+      deviceId,
+      signatureKey,
       recipientProvisionalUser.appSignaturePublicKey,
       recipientProvisionalUser.tankerSignaturePublicKey,
       resourceId,
@@ -56,7 +57,9 @@ std::vector<uint8_t> makeKeyPublishToProvisionalUser(
 }
 
 std::vector<uint8_t> makeKeyPublishToGroup(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
@@ -68,9 +71,9 @@ std::vector<uint8_t> makeKeyPublishToGroup(
       Groups::createKeyPublishToGroupEntry(encryptedKey,
                                            resourceId,
                                            recipientPublicEncryptionKey,
-                                           blockGenerator.trustchainId(),
-                                           blockGenerator.deviceId(),
-                                           blockGenerator.signatureKey()));
+                                           trustchainId,
+                                           deviceId,
+                                           signatureKey));
 }
 
 tc::cotask<ResourceKeys> getResourceKeys(
@@ -86,53 +89,75 @@ tc::cotask<ResourceKeys> getResourceKeys(
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocksToUsers(
-    BlockGenerator const& blockGenerator,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
   out.reserve(recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
+  {
     for (auto const& recipientKey : recipientUserKeys)
+    {
       out.push_back(
-          makeKeyPublishToUser(blockGenerator,
+          makeKeyPublishToUser(trustchainId,
+                               deviceId,
+                               signatureKey,
                                recipientKey,
                                std::get<Trustchain::ResourceId>(keyResource),
                                std::get<Crypto::SymmetricKey>(keyResource)));
+    }
+  }
   return out;
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocksToProvisionalUsers(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
     std::vector<PublicProvisionalUser> const& recipientProvisionalUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
   out.reserve(recipientProvisionalUserKeys.size());
   for (auto const& keyResource : resourceKeys)
+  {
     for (auto const& recipientKey : recipientProvisionalUserKeys)
+    {
       out.push_back(makeKeyPublishToProvisionalUser(
-          blockGenerator,
+          trustchainId,
+          deviceId,
+          signatureKey,
           recipientKey,
           std::get<ResourceId>(keyResource),
           std::get<Crypto::SymmetricKey>(keyResource)));
+    }
+  }
   return out;
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
   out.reserve(recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
+  {
     for (auto const& recipientKey : recipientUserKeys)
+    {
       out.push_back(
-          makeKeyPublishToGroup(blockGenerator,
+          makeKeyPublishToGroup(trustchainId, deviceId, signatureKey,
                                 recipientKey,
                                 std::get<Trustchain::ResourceId>(keyResource),
                                 std::get<Crypto::SymmetricKey>(keyResource)));
+    }
+  }
   return out;
 }
 
@@ -191,7 +216,9 @@ KeyRecipients toKeyRecipients(
 }
 
 std::vector<uint8_t> makeKeyPublishToUser(
-    BlockGenerator const& blockGenerator,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
@@ -200,9 +227,9 @@ std::vector<uint8_t> makeKeyPublishToUser(
       Crypto::sealEncrypt(resourceKey, recipientPublicEncryptionKey);
 
   return Serialization::serialize(
-      Users::createKeyPublishToUserEntry(blockGenerator.trustchainId(),
-                                         blockGenerator.deviceId(),
-                                         blockGenerator.signatureKey(),
+      Users::createKeyPublishToUserEntry(trustchainId,
+                                         deviceId,
+                                         signatureKey,
                                          encryptedKey,
                                          resourceId,
                                          recipientPublicEncryptionKey));
@@ -243,16 +270,30 @@ tc::cotask<KeyRecipients> generateRecipientList(
 }
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
     KeyRecipients const& keyRecipients)
 {
-  auto keyPublishesToUsers = generateShareBlocksToUsers(
-      blockGenerator, resourceKeys, keyRecipients.recipientUserKeys);
+  auto keyPublishesToUsers =
+      generateShareBlocksToUsers(trustchainId,
+                                 deviceId,
+                                 signatureKey,
+                                 resourceKeys,
+                                 keyRecipients.recipientUserKeys);
   auto keyPublishesToProvisionalUsers = generateShareBlocksToProvisionalUsers(
-      blockGenerator, resourceKeys, keyRecipients.recipientProvisionalUserKeys);
-  auto keyPublishesToGroups = generateShareBlocksToGroups(
-      blockGenerator, resourceKeys, keyRecipients.recipientGroupKeys);
+      trustchainId,
+      deviceId,
+      signatureKey,
+      resourceKeys,
+      keyRecipients.recipientProvisionalUserKeys);
+  auto keyPublishesToGroups =
+      generateShareBlocksToGroups(trustchainId,
+                                  deviceId,
+                                  signatureKey,
+                                  resourceKeys,
+                                  keyRecipients.recipientGroupKeys);
 
   auto out = keyPublishesToUsers;
   out.insert(out.end(),
@@ -265,7 +306,9 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
 
 tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
-                       BlockGenerator const& blockGenerator,
+                       Trustchain::TrustchainId const& trustchainId,
+                       Trustchain::DeviceId const& deviceId,
+                       Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
                        ResourceKeys const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
@@ -274,8 +317,8 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, publicIdentities, groupIds));
 
-  auto const ks =
-      generateShareBlocks(blockGenerator, resourceKeys, keyRecipients);
+  auto const ks = generateShareBlocks(
+      trustchainId, deviceId, signatureKey, resourceKeys, keyRecipients);
 
   if (!ks.empty())
     TC_AWAIT(client.pushKeys(ks));
@@ -284,7 +327,9 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
                        Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
-                       BlockGenerator const& blockGenerator,
+                       Trustchain::TrustchainId const& trustchainId,
+                       Trustchain::DeviceId const& deviceId,
+                       Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
                        std::vector<Trustchain::ResourceId> const& resourceIds,
                        std::vector<SPublicIdentity> const& publicIdentities,
@@ -295,7 +340,9 @@ tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
 
   TC_AWAIT(share(userAccessor,
                  groupAccessor,
-                 blockGenerator,
+                 trustchainId,
+                 deviceId,
+                 signatureKey,
                  client,
                  resourceKeys,
                  publicIdentities,

@@ -1,14 +1,19 @@
 #pragma once
 
-#include <Tanker/Users/Device.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -24,7 +29,6 @@ class IUserAccessor;
 
 namespace Tanker
 {
-class BlockGenerator;
 class Client;
 
 namespace Groups
@@ -45,7 +49,9 @@ struct KeyRecipients
 };
 
 std::vector<uint8_t> makeKeyPublishToUser(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
@@ -57,13 +63,17 @@ tc::cotask<KeyRecipients> generateRecipientList(
     std::vector<SGroupId> const& groupIds);
 
 std::vector<std::vector<uint8_t>> generateShareBlocks(
-    BlockGenerator const& blockGenerator,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
     KeyRecipients const& keyRecipients);
 
 tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
-                       BlockGenerator const& blockGenerator,
+                       Trustchain::TrustchainId const& trustchainId,
+                       Trustchain::DeviceId const& deviceId,
+                       Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
                        ResourceKeys const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
@@ -72,7 +82,9 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
 tc::cotask<void> share(ResourceKeyStore const& resourceKeyStore,
                        Users::IUserAccessor& userAccessor,
                        Groups::IAccessor& groupAccessor,
-                       BlockGenerator const& blockGenerator,
+                       Trustchain::TrustchainId const& trustchainId,
+                       Trustchain::DeviceId const& deviceId,
+                       Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
                        std::vector<Trustchain::ResourceId> const& resourceIds,
                        std::vector<SPublicIdentity> const& publicIdentities,

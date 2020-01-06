@@ -439,23 +439,21 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
 
-  auto const blockGenerator = BlockGenerator(
-      _trustchainId, author.keys.signatureKeyPair.privateKey, author.id);
-
   std::vector<Tanker::Users::User> tusers;
   for (auto const& user : users)
     tusers.push_back(user.asTankerUser());
 
-  auto const clientEntry =
-      Groups::Manager::generateCreateGroupEntry(tusers,
-                                                provisionalUsers,
-                                                signatureKeyPair,
-                                                encryptionKeyPair,
-                                                _trustchainId,
-                                                blockGenerator.deviceId(),
-                                                blockGenerator.signatureKey());
+  auto const clientEntry = Groups::Manager::generateCreateGroupEntry(
+      tusers,
+      provisionalUsers,
+      signatureKeyPair,
+      encryptionKeyPair,
+      _trustchainId,
+      author.id,
+      author.keys.signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry, _entries.size() + 1);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
   _entries.push_back(serverEntry);
 
   Tanker::InternalGroup tgroup{
@@ -613,12 +611,13 @@ ServerEntry TrustchainBuilder::shareToUser(Device const& sender,
 
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
-  auto const block = Share::makeKeyPublishToUser(
-      BlockGenerator(
-          _trustchainId, sender.keys.signatureKeyPair.privateKey, sender.id),
-      receiverPublicKey,
-      resourceId,
-      key);
+  auto const block =
+      Share::makeKeyPublishToUser(_trustchainId,
+                                  sender.id,
+                                  sender.keys.signatureKeyPair.privateKey,
+                                  receiverPublicKey,
+                                  resourceId,
+                                  key);
 
   auto entry = Serialization::deserialize<ServerEntry>(block);
   const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;

@@ -346,7 +346,11 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {newUserKeyPair.keyPair.publicKey}, {}, {}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator, resourceKeys, keyRecipients);
+      keySenderBlockGenerator.trustchainId(),
+      keySenderBlockGenerator.deviceId(),
+      keySenderDevice.keys.signatureKeyPair.privateKey,
+      resourceKeys,
+      keyRecipients);
 
   auto const keyPublishes =
       extract<Trustchain::Actions::KeyPublishToUser>(blocks);
@@ -374,7 +378,11 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {}, {provisionalUser.publicProvisionalUser}, {}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator, resourceKeys, keyRecipients);
+      keySenderBlockGenerator.trustchainId(),
+      keySenderBlockGenerator.deviceId(),
+      keySenderDevice.keys.signatureKeyPair.privateKey,
+      resourceKeys,
+      keyRecipients);
 
   auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
   assertKeyPublishToUsersTargetedAt(
@@ -402,7 +410,11 @@ TEST_CASE(
   Share::KeyRecipients keyRecipients{
       {}, {}, {newGroup.group.asExternalGroup().publicEncryptionKey}};
   auto const blocks = Share::generateShareBlocks(
-      keySenderBlockGenerator, resourceKeys, keyRecipients);
+      keySenderBlockGenerator.trustchainId(),
+      keySenderBlockGenerator.deviceId(),
+      keySenderDevice.keys.signatureKeyPair.privateKey,
+      resourceKeys,
+      keyRecipients);
 
   auto const keyPublishes =
       extract<Trustchain::Actions::KeyPublishToUserGroup>(blocks);
