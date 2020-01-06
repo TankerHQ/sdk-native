@@ -64,7 +64,6 @@ std::error_condition ServerErrcCategory::default_error_condition(int c) const
   case ServerErrc::InvalidOrigin:
   case ServerErrc::TrustchainIsNotTest:
   case ServerErrc::TrustchainNotFound:
-  case ServerErrc::DeviceRevoked:
   case ServerErrc::DeviceNotFound:
   case ServerErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
@@ -82,6 +81,8 @@ std::error_condition ServerErrcCategory::default_error_condition(int c) const
     return make_error_condition(Errors::Errc::ExpiredVerification);
   case ServerErrc::GroupTooBig:
     return make_error_condition(Errors::Errc::GroupTooBig);
+  case ServerErrc::DeviceRevoked:
+    return make_error_condition(Errors::Errc::DeviceRevoked);
   default:
     return std::error_condition(c, *this);
   }

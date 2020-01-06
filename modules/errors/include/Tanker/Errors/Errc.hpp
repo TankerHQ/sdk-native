@@ -20,6 +20,7 @@ enum class Errc
   TooManyAttempts,
   ExpiredVerification,
   IOError,
+  DeviceRevoked,
 
   Last,
 };
