@@ -1,6 +1,5 @@
 #include <Tanker/Revocation.hpp>
 
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
@@ -8,8 +7,6 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -20,7 +17,7 @@
 #include <algorithm>
 #include <vector>
 
-using Tanker::Trustchain::UserId;
+using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
@@ -29,7 +26,7 @@ namespace Tanker
 namespace Revocation
 {
 
-tc::cotask<void> ensureDeviceIsFromUser(Trustchain::DeviceId const& deviceId,
+tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
                                         UserId const& selfUserId,
                                         Users::ContactStore const& contactStore)
 {
@@ -78,7 +75,7 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
 tc::cotask<DeviceRevocation::v2::SealedKeysForDevices>
 encryptPrivateKeyForDevices(
     Users::User const& user,
-    Trustchain::DeviceId const& deviceId,
+    DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey)
 {
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
@@ -95,10 +92,10 @@ encryptPrivateKeyForDevices(
   TC_RETURN(userKeys);
 }
 
-tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
+tc::cotask<void> revokeDevice(DeviceId const& deviceId,
+                              TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::ContactStore const& contactStore,
-                              BlockGenerator const& blockGenerator,
                               std::unique_ptr<Client> const& client)
 {
   TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), contactStore));
@@ -114,15 +111,15 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
   auto const userKeys = TC_AWAIT(
       encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey));
 
-  auto const clientEntry =
-      Users::revokeDeviceEntry(blockGenerator.trustchainId(),
-                               blockGenerator.deviceId(),
-                               blockGenerator.signatureKey(),
-                               deviceId,
-                               newEncryptionKey.publicKey,
-                               encryptedKeyForPreviousUserKey,
-                               oldPublicEncryptionKey,
-                               userKeys);
+  auto const clientEntry = Users::revokeDeviceEntry(
+      trustchainId,
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey,
+      deviceId,
+      newEncryptionKey.publicKey,
+      encryptedKeyForPreviousUserKey,
+      oldPublicEncryptionKey,
+      userKeys);
 
   TC_AWAIT(client->pushBlock(Serialization::serialize(clientEntry)));
 }

@@ -385,7 +385,7 @@ tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
   TC_AWAIT(Users::Updater::updateLocalUser(
       serverEntries, trustchainId(), *_localUser, *_contactStore));
   TC_AWAIT(Revocation::revokeDevice(
-      deviceId, *_localUser, *_contactStore, _blockGenerator, _client));
+      deviceId, _trustchainId, *_localUser, *_contactStore, _client));
 }
 
 tc::cotask<void> Session::nukeDatabase()

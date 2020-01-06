@@ -3,6 +3,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <gsl-lite.hpp>
@@ -23,7 +24,6 @@ struct User;
 }
 
 struct DeviceKeys;
-class BlockGenerator;
 class Client;
 
 namespace Revocation
@@ -51,9 +51,9 @@ tc::cotask<SealedKeysForDevices> encryptPrivateKeyForDevices(
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
 tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
+                              Trustchain::TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::ContactStore const& contactStore,
-                              BlockGenerator const& blockGenerator,
                               std::unique_ptr<Client> const& client);
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
