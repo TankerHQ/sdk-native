@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
@@ -20,7 +21,9 @@ tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Crypto::init();
         const auto admin = new Admin::Admin(
-            Network::ConnectionFactory::create(url, std::nullopt), idToken);
+            Network::ConnectionFactory::create(
+                url, Network::SdkInfo{"cpp-admin-tests", {}, ""}),
+            idToken);
         TC_AWAIT(admin->start());
         TC_RETURN(static_cast<void*>(admin));
       }));
