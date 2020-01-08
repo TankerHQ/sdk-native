@@ -2,7 +2,6 @@
 
 #include <Tanker/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Helpers/Config.hpp>
@@ -19,9 +18,8 @@ namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Admin>(
-        Network::ConnectionFactory::create(
-            TestConstants::trustchainUrl(),
-            Network::SdkInfo{"cpp-functional-tests", {}, ""}),
+        Network::ConnectionFactory::create(TestConstants::trustchainUrl(),
+                                           "cpp-functional-tests"),
         TestConstants::idToken()))
 {
 }
