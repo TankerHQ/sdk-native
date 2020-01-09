@@ -25,16 +25,6 @@ TLOG_CATEGORY(UsersUpdater);
 namespace Tanker::Users::Updater
 {
 using namespace Tanker::Trustchain::Actions;
-bool operator==(SealedUserKey const& l, SealedUserKey const r)
-{
-  return std::tie(l.publicKey, l.sealedKey) ==
-         std::tie(r.publicKey, r.sealedKey);
-}
-
-bool operator!=(SealedUserKey const& l, SealedUserKey const r)
-{
-  return !(l == r);
-}
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
@@ -51,9 +41,9 @@ Crypto::PublicSignatureKey extractTrustchainSignature(
 
 namespace
 {
-
-Crypto::EncryptionKeyPair checkedDecrypt(SealedUserKey const& sealedKp,
-                                         Crypto::EncryptionKeyPair const& kp)
+Crypto::EncryptionKeyPair checkedDecrypt(
+    Crypto::SealedEncryptionKeyPair const& sealedKp,
+    Crypto::EncryptionKeyPair const& kp)
 {
   auto const& [pubKey, sealedKey] = sealedKp;
   auto const decryptedKey = Crypto::sealDecrypt(sealedKey, kp);
@@ -74,17 +64,19 @@ Users::Device extractDevice(Entry const& entry, DeviceCreation const& dc)
 }
 }
 
-std::optional<std::tuple<Crypto::PublicEncryptionKey, SealedUserKey>>
+std::optional<
+    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
 extractEncryptedUserKey(DeviceCreation const& deviceCreation)
 {
   if (auto dc3 = deviceCreation.get_if<DeviceCreation::v3>())
-    return std::make_tuple(
-        dc3->publicUserEncryptionKey(),
-        SealedUserKey{{}, dc3->sealedPrivateUserEncryptionKey()});
+    return std::make_tuple(dc3->publicUserEncryptionKey(),
+                           Crypto::SealedEncryptionKeyPair{
+                               {}, dc3->sealedPrivateUserEncryptionKey()});
   return std::nullopt;
 }
 
-std::optional<std::tuple<Crypto::PublicEncryptionKey, SealedUserKey>>
+std::optional<
+    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
 extractEncryptedUserKey(DeviceRevocation const& deviceRevocation,
                         Trustchain::DeviceId const& selfDeviceId)
 {
@@ -97,25 +89,27 @@ extractEncryptedUserKey(DeviceRevocation const& deviceRevocation,
                   selfDeviceId, dr2->sealedUserKeysForDevices()))
         return std::make_tuple(
             dr2->publicEncryptionKey(),
-            SealedUserKey{dr2->publicEncryptionKey(), *encryptedPrivateKey});
+            Crypto::SealedEncryptionKeyPair{dr2->publicEncryptionKey(),
+                                            *encryptedPrivateKey});
       if (selfDeviceId == dr2->deviceId())
         throw formatEx(Errors::Errc::DeviceRevoked,
                        "Our device has been revoked");
     }
-    return std::make_tuple(dr2->publicEncryptionKey(),
-                           SealedUserKey{dr2->previousPublicEncryptionKey(),
-                                         dr2->sealedKeyForPreviousUserKey()});
+    return std::make_tuple(
+        dr2->publicEncryptionKey(),
+        Crypto::SealedEncryptionKeyPair{dr2->previousPublicEncryptionKey(),
+                                        dr2->sealedKeyForPreviousUserKey()});
   }
   return std::nullopt;
 }
 
-std::tuple<Users::User, std::vector<SealedUserKey>> extractUserSealedKeys(
-    DeviceKeys const& deviceKeys,
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPubSigKey,
-    gsl::span<Trustchain::ServerEntry const> entries)
+std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
+extractUserSealedKeys(DeviceKeys const& deviceKeys,
+                      Trustchain::TrustchainId const& trustchainId,
+                      Crypto::PublicSignatureKey const& trustchainPubSigKey,
+                      gsl::span<Trustchain::ServerEntry const> entries)
 {
-  std::vector<SealedUserKey> sealedKeys;
+  std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
   Users::User user;
   Trustchain::DeviceId selfDeviceId;
@@ -138,7 +132,8 @@ std::tuple<Users::User, std::vector<SealedUserKey>> extractUserSealedKeys(
           selfDeviceId = device.id;
           user.id = device.userId;
           if (extractedKeys)
-            sealedKeys.push_back(std::get<SealedUserKey>(*extractedKeys));
+            sealedKeys.push_back(
+                std::get<Crypto::SealedEncryptionKeyPair>(*extractedKeys));
         }
       }
       else if (auto const deviceRevocation =
@@ -167,7 +162,7 @@ std::tuple<Users::User, std::vector<SealedUserKey>> extractUserSealedKeys(
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     Crypto::EncryptionKeyPair const& devEncKP,
-    gsl::span<SealedUserKey const> encryptedUserKeys)
+    gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys)
 {
   auto const firstEncKeys = encryptedUserKeys.begin();
   auto const lastEncKeys = encryptedUserKeys.end();
@@ -187,7 +182,7 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
 
   // Then we decrypt our user key.
   *selfUserKeyIt = Crypto::makeEncryptionKeyPair(
-      Crypto::sealDecrypt(selfEncKeyIt->sealedKey, devEncKP));
+      Crypto::sealDecrypt(selfEncKeyIt->sealedPrivateKey, devEncKP));
 
   // Second we decrypt the user keys before our device creation starting with
   // the current user key in reverse order.

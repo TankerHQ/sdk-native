@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/SealedEncryptionKeyPair.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
@@ -25,37 +26,31 @@ class ContactStore;
 
 namespace Updater
 {
-struct SealedUserKey
-{
-  Crypto::PublicEncryptionKey publicKey;
-  Crypto::SealedPrivateEncryptionKey sealedKey;
-};
-
-bool operator==(SealedUserKey const& l, SealedUserKey const r);
-bool operator!=(SealedUserKey const& l, SealedUserKey const r);
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::ServerEntry const& serverEntry);
 
-std::optional<std::tuple<Crypto::PublicEncryptionKey, SealedUserKey>>
+std::optional<
+    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
 extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
 
-std::optional<std::tuple<Crypto::PublicEncryptionKey, SealedUserKey>>
+std::optional<
+    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
 extractEncryptedUserKey(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation,
     Trustchain::DeviceId const& selfDeviceId);
 
-std::tuple<Users::User, std::vector<SealedUserKey>> extractUserSealedKeys(
-    DeviceKeys const& deviceKeys,
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPubSigKey,
-    gsl::span<Trustchain::ServerEntry const> entries);
+std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
+extractUserSealedKeys(DeviceKeys const& deviceKeys,
+                      Trustchain::TrustchainId const& trustchainId,
+                      Crypto::PublicSignatureKey const& trustchainPubSigKey,
+                      gsl::span<Trustchain::ServerEntry const> entries);
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     Crypto::EncryptionKeyPair const& devEncKP,
-    gsl::span<SealedUserKey const> encryptedUserKeys);
+    gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
 
 std::tuple<Crypto::PublicSignatureKey,
            Users::User,

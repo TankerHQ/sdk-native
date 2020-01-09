@@ -16,6 +16,8 @@
 namespace Updater = Tanker::Users::Updater;
 namespace Actions = Tanker::Trustchain::Actions;
 
+using Tanker::Crypto::SealedEncryptionKeyPair;
+
 namespace
 {
 auto revokeADeviceGetAnEntry(TrustchainBuilder& builder,
@@ -63,11 +65,12 @@ TEST_CASE("UserUpdater")
       auto const dev = selfdevice.entry.action()
                            .get<Actions::DeviceCreation>()
                            .get<Actions::DeviceCreation::v3>();
-      auto const sealedUserKey = std::get<Updater::SealedUserKey>(*encUserKey);
-      CHECK_EQ(sealedUserKey.sealedKey, dev.sealedPrivateUserEncryptionKey());
+      auto const sealedUserKey = std::get<SealedEncryptionKeyPair>(*encUserKey);
+      CHECK_EQ(sealedUserKey.sealedPrivateKey,
+               dev.sealedPrivateUserEncryptionKey());
       CHECK_EQ(
-          std::get<Updater::SealedUserKey>(encUserKey.value()),
-          Updater::SealedUserKey{{}, dev.sealedPrivateUserEncryptionKey()});
+          std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+          SealedEncryptionKeyPair{{}, dev.sealedPrivateUserEncryptionKey()});
     }
 
     SUBCASE("from a revocation before our device")
@@ -80,9 +83,9 @@ TEST_CASE("UserUpdater")
       auto const dev = revokedEntry1.action()
                            .get<Actions::DeviceRevocation>()
                            .get<Actions::DeviceRevocation::v2>();
-      CHECK_EQ(std::get<Updater::SealedUserKey>(encUserKey.value()),
-               Updater::SealedUserKey{dev.previousPublicEncryptionKey(),
-                                      dev.sealedKeyForPreviousUserKey()});
+      CHECK_EQ(std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+               SealedEncryptionKeyPair{dev.previousPublicEncryptionKey(),
+                                       dev.sealedKeyForPreviousUserKey()});
     }
 
     SUBCASE("from a revocation after our device")
@@ -100,8 +103,8 @@ TEST_CASE("UserUpdater")
           Tanker::Revocation::findUserKeyFromDeviceSealedKeys(
               selfdevice.device.id, dev.sealedUserKeysForDevices());
       CHECK_EQ(
-          std::get<Updater::SealedUserKey>(encUserKey.value()),
-          Updater::SealedUserKey{dev.publicEncryptionKey(), *encryptedKey});
+          std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+          SealedEncryptionKeyPair{dev.publicEncryptionKey(), *encryptedKey});
     }
   }
 
