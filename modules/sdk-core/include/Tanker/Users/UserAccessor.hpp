@@ -1,10 +1,9 @@
 #pragma once
 
-#include <Tanker/BasicPullResult.hpp>
-#include <Tanker/Client.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
 
 #include <gsl-lite.hpp>
@@ -26,7 +25,7 @@ class UserAccessor : public IUserAccessor
 {
 public:
   UserAccessor(Trustchain::UserId const& selfUserId,
-               Client* client,
+               Users::IRequester* requester,
                ITrustchainPuller* trustchainPuller,
                ContactStore const* contactStore);
 
@@ -47,7 +46,7 @@ private:
 private:
   Trustchain::UserId _selfUserId;
 
-  Client* _client;
+  Users::IRequester* _requester;
   ITrustchainPuller* _trustchainPuller;
   ContactStore const* _contactStore;
 };

@@ -17,11 +17,11 @@ using namespace Tanker::Errors;
 namespace Tanker::Users
 {
 UserAccessor::UserAccessor(UserId const& selfUserId,
-                           Client* client,
+                           Users::IRequester* requester,
                            ITrustchainPuller* trustchainPuller,
                            ContactStore const* contactStore)
   : _selfUserId(selfUserId),
-    _client(client),
+    _requester(requester),
     _trustchainPuller(trustchainPuller),
     _contactStore(contactStore)
 {
@@ -66,8 +66,8 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
     provisionalUserEmails.push_back(Email{appProvisionalIdentity.value});
   }
 
-  auto const tankerProvisionalIdentities =
-      TC_AWAIT(_client->getPublicProvisionalIdentities(provisionalUserEmails));
+  auto const tankerProvisionalIdentities = TC_AWAIT(
+      _requester->getPublicProvisionalIdentities(provisionalUserEmails));
 
   if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
   {
@@ -84,11 +84,12 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
                  std::back_inserter(provisionalUsers),
                  [](auto const& appProvisionalIdentity,
                     auto const& tankerProvisionalIdentity) {
+                   auto const& [sigKey, encKey] = tankerProvisionalIdentity;
                    return PublicProvisionalUser{
                        appProvisionalIdentity.appSignaturePublicKey,
                        appProvisionalIdentity.appEncryptionPublicKey,
-                       tankerProvisionalIdentity.first,
-                       tankerProvisionalIdentity.second,
+                       sigKey,
+                       encKey,
                    };
                  });
 

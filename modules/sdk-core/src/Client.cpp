@@ -244,34 +244,6 @@ tc::cotask<std::vector<std::string>> Client::getKeyPublishes(
   TC_RETURN(json.get<std::vector<std::string>>());
 }
 
-tc::cotask<std::vector<
-    std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-Client::getPublicProvisionalIdentities(gsl::span<Email const> emails)
-{
-  if (emails.empty())
-    TC_RETURN((std::vector<std::pair<Crypto::PublicSignatureKey,
-                                     Crypto::PublicEncryptionKey>>{}));
-
-  nlohmann::json message;
-  for (auto const& email : emails)
-    message.push_back({{"type", "email"}, {"hashed_email", hashField(email)}});
-
-  auto const result = TC_AWAIT(
-      emit("get public provisional identities", nlohmann::json(message)));
-
-  std::vector<
-      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
-      ret;
-  ret.reserve(result.size());
-  for (auto const& elem : result)
-  {
-    ret.emplace_back(
-        elem.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
-        elem.at("encryption_public_key").get<Crypto::PublicEncryptionKey>());
-  }
-  TC_RETURN(ret);
-}
-
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
                                    Crypto::SymmetricKey const& userSecret)

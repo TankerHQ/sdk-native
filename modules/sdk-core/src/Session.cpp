@@ -85,8 +85,10 @@ Session::Session(Config&& config)
     _verifier(_trustchainId, _localUser.get(), _contactStore.get()),
     _trustchainPuller(
         &_trustchain, _localUser.get(), &_verifier, _db.get(), _client.get()),
-    _userAccessor(
-        userId(), _client.get(), &_trustchainPuller, _contactStore.get()),
+    _userAccessor(userId(),
+                  _userRequester.get(),
+                  &_trustchainPuller,
+                  _contactStore.get()),
     _provisionalUsersAccessor(_client.get(),
                               _contactStore.get(),
                               _localUser.get(),

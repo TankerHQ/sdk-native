@@ -95,9 +95,6 @@ public:
   tc::cotask<std::vector<std::string>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds);
 
-  tc::cotask<std::vector<
-      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-  getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Verification const& verification,
                              Crypto::SymmetricKey const& userSecret);

@@ -15,6 +15,15 @@
 
 namespace Tanker::Users
 {
+namespace
+{
+template <typename T>
+Crypto::Hash hashField(T const& field)
+{
+  return Crypto::generichash(
+      gsl::make_span(field).template as_span<std::uint8_t const>());
+}
+}
 Requester::Requester(Client* client) : _client(client)
 {
 }
@@ -90,6 +99,31 @@ tc::cotask<void> Requester::authenticate(
       throw Errors::formatEx(Errors::Errc::InternalError,
                              "device authentication failed");
   }
+}
+
+tc::cotask<std::vector<
+    std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+Requester::getPublicProvisionalIdentities(gsl::span<Email const> emails)
+{
+  std::vector<
+      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
+      ret;
+  if (emails.empty())
+    TC_RETURN(ret);
+
+  nlohmann::json message;
+  for (auto const& email : emails)
+    message.push_back({{"type", "email"}, {"hashed_email", hashField(email)}});
+
+  auto const result = TC_AWAIT(_client->emit(
+      "get public provisional identities", nlohmann::json(message)));
+
+  ret.reserve(result.size());
+  for (auto const& elem : result)
+    ret.emplace_back(
+        elem.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
+        elem.at("encryption_public_key").get<Crypto::PublicEncryptionKey>());
+  TC_RETURN(ret);
 }
 
 void from_json(nlohmann::json const& j, UserStatusResult& result)

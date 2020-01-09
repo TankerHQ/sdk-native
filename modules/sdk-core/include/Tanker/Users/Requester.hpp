@@ -26,6 +26,10 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& publicSignatureKey) override;
 
+  tc::cotask<std::vector<
+      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(gsl::span<Email const> emails) override;
+
 private:
   Client* _client;
 };
