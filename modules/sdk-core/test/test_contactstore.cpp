@@ -16,6 +16,21 @@
 
 using namespace Tanker;
 
+namespace
+{
+template <typename T>
+void alter(T const& t)
+{
+  ++const_cast<T&>(t);
+}
+
+template <typename T>
+void shove(T const& t, T const& u)
+{
+  const_cast<T&>(t) = u;
+}
+}
+
 TEST_CASE("ContactStore")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
@@ -81,10 +96,10 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceDeviceBis = aliceDevice;
-    ++aliceDeviceBis.createdAtBlkIndex;
+    ++const_cast<std::uint64_t&>(aliceDeviceBis.createdAtBlkIndex());
     AWAIT_VOID(contacts.putUserDevice(aliceDeviceBis));
 
-    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id)), aliceDeviceBis);
+    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id())), aliceDeviceBis);
   }
 
   SUBCASE("it should not find a non-existent device")
@@ -97,7 +112,7 @@ TEST_CASE("ContactStore")
   SUBCASE("it should find a device that was inserted")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id)), aliceDevice);
+    CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id())), aliceDevice);
   }
 
   SUBCASE("it should find every device of a given user")
@@ -127,7 +142,7 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should throw when inserting a device with an invalid user id")
   {
-    aliceDevice.userId = make<Trustchain::UserId>("unexistent");
+    shove(aliceDevice.userId(), make<Trustchain::UserId>("unexistent"));
     CHECK_THROWS_AS(AWAIT_VOID(contacts.putUserDevice(aliceDevice)),
                     std::runtime_error);
   }
@@ -151,17 +166,17 @@ TEST_CASE("ContactStore")
   SUBCASE("it should find a userId with a deviceId")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_EQ(AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id)), alice.id);
+    CHECK_EQ(AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id())), alice.id);
   }
 
   SUBCASE("it should revoke a device")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    AWAIT_VOID(
-        contacts.revokeDevice(aliceDevice.id, aliceDevice.createdAtBlkIndex));
-    auto const device = AWAIT(contacts.findDevice(aliceDevice.id));
-    CHECK_EQ(device.value().revokedAtBlkIndex.value(),
-             aliceDevice.createdAtBlkIndex);
+    AWAIT_VOID(contacts.revokeDevice(aliceDevice.id(),
+                                     aliceDevice.createdAtBlkIndex()));
+    auto const device = AWAIT(contacts.findDevice(aliceDevice.id()));
+    CHECK_EQ(device.value().revokedAtBlkIndex().value(),
+             aliceDevice.createdAtBlkIndex());
   }
 
   SUBCASE("it should not find userId with old userPublicEncyptionKey")

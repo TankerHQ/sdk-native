@@ -39,6 +39,12 @@ T& extract(U& action)
   return const_cast<T&>(action.template get<T>());
 }
 
+template <typename T>
+T& unconstify(T const& t)
+{
+  return const_cast<T&>(t);
+}
+
 template <typename T, typename U, typename V>
 U& unconstify(T& action, U const& (V::*method)() const)
 {
@@ -62,6 +68,18 @@ template <typename T, typename U, typename V>
 void alter(T& action, U const& (V::*method)() const)
 {
   ++unconstify(action, method)[0];
+}
+
+template <typename T, typename U>
+void shove(T const& t, U const& u)
+{
+  const_cast<T&>(t) = u;
+}
+
+template <typename T>
+void alter(T const& t)
+{
+  ++unconstify(t)[0];
 }
 
 template <typename T, typename U>
@@ -119,7 +137,8 @@ void deviceCreationCommonChecks(
   SUBCASE("it should reject a device creation when author device is revoked")
   {
     auto& authorDevice = tankerUser.devices.front();
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    shove(authorDevice.revokedAtBlkIndex(),
+          authorDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
@@ -186,7 +205,8 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation from a revoked device")
   {
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    shove(authorDevice.revokedAtBlkIndex(),
+          authorDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::AuthorIsRevoked);
@@ -201,7 +221,8 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation of an already revoked device")
   {
-    targetDevice.revokedAtBlkIndex = targetDevice.createdAtBlkIndex + 1;
+    shove(targetDevice.revokedAtBlkIndex(),
+          targetDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidTargetDevice);
@@ -242,7 +263,8 @@ void testUserGroupCreationCommon(Users::Device& authorDevice,
 
   SUBCASE("should reject a UserGroupCreation from a revoked device")
   {
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    shove(authorDevice.revokedAtBlkIndex(),
+          authorDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidAuthor);
@@ -299,7 +321,8 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
 
   SUBCASE("should reject a UserGroupAddition from a revoked device")
   {
-    tankerDevice.revokedAtBlkIndex = tankerDevice.createdAtBlkIndex + 1;
+    shove(tankerDevice.revokedAtBlkIndex(),
+          tankerDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
         Errc::InvalidAuthor);
@@ -576,7 +599,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
     alter(deviceRevocation, &DeviceRevocation2::previousPublicEncryptionKey);
 
-    REQUIRE_FALSE(authorDevice.revokedAtBlkIndex.has_value());
+    REQUIRE_FALSE(authorDevice.revokedAtBlkIndex().has_value());
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidEncryptionKey);
@@ -732,7 +755,8 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
   {
-    authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
+    shove(authorDevice.revokedAtBlkIndex(),
+          authorDevice.createdAtBlkIndex() + 1);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
         Errc::InvalidAuthor);
@@ -772,7 +796,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   SUBCASE("should reject a ProvisionalIdentityClaim with an incorrect user ID")
   {
-    authorDevice.userId[0]++;
+    alter(authorDevice.userId());
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
         Errc::InvalidUserId);

@@ -85,7 +85,7 @@ Users::User* findUserOfDevice(DevicesMap const& devicesMap,
   auto const deviceIt = devicesMap.find(deviceId);
   if (deviceIt == devicesMap.end())
     return nullptr;
-  auto const userIt = usersMap.find(deviceIt->second.userId);
+  auto const userIt = usersMap.find(deviceIt->second.userId());
   if (userIt == usersMap.end())
     return nullptr;
   return &userIt->second;
@@ -114,7 +114,7 @@ auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
       usersMap[dc->userId()] = *user;
       auto const& lastDevice = usersMap[dc->userId()].devices.back();
       if (auto const [it, isInserted] =
-              devicesMap.emplace(lastDevice.id, lastDevice);
+              devicesMap.emplace(lastDevice.id(), lastDevice);
           isInserted == false)
         throw Errors::AssertionError("DeviceCreation received more than once");
     }

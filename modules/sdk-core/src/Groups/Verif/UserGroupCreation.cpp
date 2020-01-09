@@ -27,14 +27,14 @@ Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
           Verif::Errc::InvalidGroup,
           "UserGroupCreation - group already exist");
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
+  ensures(!author.revokedAtBlkIndex() ||
+              author.revokedAtBlkIndex() > serverEntry.index(),
           Errc::InvalidAuthor,
           "A revoked device must not be the author of UserGroupCreation");
 
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
-                         author.publicSignatureKey),
+                         author.publicSignatureKey()),
           Errc::InvalidSignature,
           "UserGroupCreation block must be signed by the author device");
 

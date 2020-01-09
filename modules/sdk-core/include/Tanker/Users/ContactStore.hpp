@@ -16,7 +16,7 @@ class ADatabase;
 
 namespace Users
 {
-struct Device;
+class Device;
 class ContactStore
 {
 public:

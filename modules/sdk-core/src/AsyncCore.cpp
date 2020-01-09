@@ -209,7 +209,7 @@ tc::shared_future<std::vector<Users::Device>> AsyncCore::getDeviceList()
     auto devices = TC_AWAIT(this->_core.getDeviceList());
     devices.erase(
         std::remove_if(devices.begin(), devices.end(), [](auto const& device) {
-          return device.isGhostDevice;
+          return device.isGhostDevice();
         }));
     TC_RETURN(devices);
   });

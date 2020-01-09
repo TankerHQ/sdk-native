@@ -78,7 +78,7 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
   auto const dr = entry.action.get<DeviceRevocation>();
   if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
     previousUser.userKey = v2->publicEncryptionKey();
-  previousUser.getDevice(dr.deviceId()).revokedAtBlkIndex = entry.index;
+  previousUser.getDevice(dr.deviceId()).setRevokedAtBlkIndex(entry.index);
   return previousUser;
 }
 
@@ -136,9 +136,10 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(entry, user);
         auto const& device = user->devices.back();
-        if (device.publicSignatureKey == deviceKeys.signatureKeyPair.publicKey)
+        if (device.publicSignatureKey() ==
+            deviceKeys.signatureKeyPair.publicKey)
         {
-          selfDeviceId = device.id;
+          selfDeviceId = device.id();
           if (extractedKeys)
             sealedKeys.push_back(*extractedKeys);
         }
@@ -245,7 +246,7 @@ tc::cotask<void> updateLocalUser(
   localUser.setTrustchainPublicSignatureKey(trustchainSignatureKey);
   if (auto const selfDevice =
           user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
-    localUser.setDeviceId(selfDevice->id);
+    localUser.setDeviceId(selfDevice->id());
 
   for (auto const& userKey : userKeys)
     TC_AWAIT(localUser.insertUserKey(userKey));

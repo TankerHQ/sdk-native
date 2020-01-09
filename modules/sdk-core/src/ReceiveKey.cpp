@@ -44,7 +44,7 @@ tc::cotask<void> onKeyToDeviceReceived(
 
   auto const key = Crypto::asymDecrypt<Crypto::SymmetricKey>(
       keyPublish.encryptedSymmetricKey(),
-      senderDevice.publicEncryptionKey,
+      senderDevice.publicEncryptionKey(),
       selfDevicePrivateEncryptionKey);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublish.resourceId(), key));

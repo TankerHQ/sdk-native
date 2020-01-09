@@ -9,7 +9,7 @@
 namespace Tanker::Users
 {
 struct User;
-struct Device;
+class Device;
 }
 
 namespace Tanker

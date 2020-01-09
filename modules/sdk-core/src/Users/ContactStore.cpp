@@ -31,7 +31,7 @@ tc::cotask<void> ContactStore::putUser(User const& user)
   TC_AWAIT(_db->putContact(user.id, user.userKey));
   for (auto const& device : user.devices)
   {
-    assert(user.id == device.userId);
+    assert(user.id == device.userId());
     TC_AWAIT(_db->putDevice(device));
   }
 }

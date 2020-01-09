@@ -824,14 +824,14 @@ tc::cotask<void> Database::putDevice(Users::Device const& device)
   ContactDevicesTable tab{};
 
   (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
-      tab.id = device.id.base(),
-      tab.user_id = device.userId.base(),
-      tab.created_at_block_index = device.createdAtBlkIndex,
+      tab.id = device.id().base(),
+      tab.user_id = device.userId().base(),
+      tab.created_at_block_index = device.createdAtBlkIndex(),
       tab.revoked_at_block_index =
-          sqlpp::tvin(device.revokedAtBlkIndex.value_or(0)),
-      tab.is_ghost_device = device.isGhostDevice,
-      tab.public_signature_key = device.publicSignatureKey.base(),
-      tab.public_encryption_key = device.publicEncryptionKey.base()));
+          sqlpp::tvin(device.revokedAtBlkIndex().value_or(0)),
+      tab.is_ghost_device = device.isGhostDevice(),
+      tab.public_signature_key = device.publicSignatureKey().base(),
+      tab.public_encryption_key = device.publicEncryptionKey().base()));
   TC_RETURN();
 }
 

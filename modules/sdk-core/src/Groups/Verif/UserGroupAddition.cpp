@@ -27,14 +27,14 @@ Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
           Verif::Errc::InvalidGroup,
           "UserGroupAddition references unknown group");
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
+  ensures(!author.revokedAtBlkIndex() ||
+              author.revokedAtBlkIndex() > serverEntry.index(),
           Errc::InvalidAuthor,
           "A revoked device must not be the author of a UserGroupAddition");
 
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
-                         author.publicSignatureKey),
+                         author.publicSignatureKey()),
           Errc::InvalidSignature,
           "UserGroupAddition block must be signed by the author device");
 

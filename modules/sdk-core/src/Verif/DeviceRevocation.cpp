@@ -62,7 +62,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
   }
   size_t const nbrDevicesNotRevoked = std::count_if(
       user.devices.begin(), user.devices.end(), [](auto const& device) {
-        return device.revokedAtBlkIndex == std::nullopt;
+        return device.revokedAtBlkIndex() == std::nullopt;
       });
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
               nbrDevicesNotRevoked - 1,
@@ -71,7 +71,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
           "device of the user");
   for (auto userKey : deviceRevocation.sealedUserKeysForDevices())
   {
-    ensures(userKey.first != target.id,
+    ensures(userKey.first != target.id(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have the target deviceId in the "
             "userKeys field");
@@ -79,7 +79,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
     ensures(std::find_if(user.devices.begin(),
                          user.devices.end(),
                          [&](auto const& device) {
-                           return userKey.first == device.id;
+                           return userKey.first == device.id();
                          }) != user.devices.end(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have a key for another user's device");
@@ -106,8 +106,8 @@ Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
           Errc::InvalidUser,
           "A device can only be revoked by another device of its user");
 
-  ensures(!author->revokedAtBlkIndex ||
-              author->revokedAtBlkIndex > serverEntry.index(),
+  ensures(!author->revokedAtBlkIndex() ||
+              author->revokedAtBlkIndex() > serverEntry.index(),
           Errc::AuthorIsRevoked,
           "Author device of revocation must not be revoked");
 
@@ -116,14 +116,14 @@ Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
           Errc::InvalidUser,
           "The target device of a revocation must be owned by the user");
 
-  ensures(!target->revokedAtBlkIndex,
+  ensures(!target->revokedAtBlkIndex(),
           Errc::InvalidTargetDevice,
           "The target of a revocation must not be already revoked");
 
   ensures(
       Crypto::verify(serverEntry.hash(),
                      serverEntry.signature(),
-                     author->publicSignatureKey),
+                     author->publicSignatureKey()),
       Errc::InvalidSignature,
       "device revocation block must be signed by the public signature key of "
       "its author");

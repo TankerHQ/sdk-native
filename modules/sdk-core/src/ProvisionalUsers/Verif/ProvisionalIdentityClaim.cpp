@@ -23,25 +23,25 @@ Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
 {
   assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
+  ensures(!author.revokedAtBlkIndex() ||
+              author.revokedAtBlkIndex() > serverEntry.index(),
           Errc::InvalidAuthor,
           "author device must not be revoked");
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
-                         author.publicSignatureKey),
+                         author.publicSignatureKey()),
           Errc::InvalidSignature,
           "ProvisionalIdentityClaim block must be signed by the author device");
 
   auto const& provisionalIdentityClaim =
       serverEntry.action().get<ProvisionalIdentityClaim>();
 
-  ensures(provisionalIdentityClaim.userId() == author.userId,
+  ensures(provisionalIdentityClaim.userId() == author.userId(),
           Errc::InvalidUserId,
           "ProvisionalIdentityClaim's user ID does not match the author's one");
 
   auto const multiSignedPayload =
-      provisionalIdentityClaim.signatureData(author.id);
+      provisionalIdentityClaim.signatureData(author.id());
   ensures(Crypto::verify(multiSignedPayload,
                          provisionalIdentityClaim.authorSignatureByAppKey(),
                          provisionalIdentityClaim.appSignaturePublicKey()),

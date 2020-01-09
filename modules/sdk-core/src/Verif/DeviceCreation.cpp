@@ -53,8 +53,8 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
       Errc::InvalidUserId,
       "Device creation's user id must be the same than its parent device's");
 
-  ensures(!authorDevice->revokedAtBlkIndex ||
-              authorDevice->revokedAtBlkIndex > serverEntry.index(),
+  ensures(!authorDevice->revokedAtBlkIndex() ||
+              authorDevice->revokedAtBlkIndex() > serverEntry.index(),
           Errc::InvalidAuthor,
           "author device must not be revoked");
 
@@ -69,7 +69,7 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
           Errc::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
           "signature key");
-  ensures(verifySignature(deviceCreation, authorDevice->publicSignatureKey),
+  ensures(verifySignature(deviceCreation, authorDevice->publicSignatureKey()),
           Errc::InvalidDelegationSignature,
           "device creation's delegation signature must be signed by the "
           "author's private signature key");

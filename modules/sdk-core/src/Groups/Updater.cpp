@@ -256,7 +256,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     {
       auto const authorIt =
           std::find_if(authors.begin(), authors.end(), [&](auto const& device) {
-            return serverEntry.author().base() == device.id.base();
+            return serverEntry.author().base() == device.id().base();
           });
       Verif::ensures(authorIt != authors.end(),
                      Verif::Errc::InvalidAuthor,

@@ -80,11 +80,11 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices)
   {
-    if (device.id != deviceId && device.revokedAtBlkIndex == std::nullopt)
+    if (device.id() != deviceId && device.revokedAtBlkIndex() == std::nullopt)
     {
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{Crypto::sealEncrypt(
-          encryptionPrivateKey, device.publicEncryptionKey)};
-      userKeys.emplace_back(device.id, sealedEncryptedKey);
+          encryptionPrivateKey, device.publicEncryptionKey())};
+      userKeys.emplace_back(device.id(), sealedEncryptedKey);
     }
   }
 
