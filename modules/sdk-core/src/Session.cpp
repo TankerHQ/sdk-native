@@ -40,6 +40,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Users/Requester.hpp>
+#include <Tanker/Users/Updater.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -75,6 +76,7 @@ Session::Session(Config&& config)
     _db(std::move(config.db)),
     _localUser(std::move(config.localUser)),
     _client(std::move(config.client)),
+    _userRequester(std::move(config.userRequester)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
     _trustchain(_db.get()),
     _contactStore(std::move(config.contactStore)),
@@ -82,7 +84,8 @@ Session::Session(Config&& config)
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
     _verifier(_trustchainId, _localUser.get(), _contactStore.get()),
-    _trustchainPuller(&_trustchain, &_verifier, _db.get(), _client.get()),
+    _trustchainPuller(
+        &_trustchain, _localUser.get(), &_verifier, _db.get(), _client.get()),
     _userAccessor(
         userId(), _client.get(), &_trustchainPuller, _contactStore.get()),
     _provisionalUsersAccessor(_client.get(),
@@ -355,22 +358,6 @@ tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
 tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
 {
   auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
-
-  if (deviceRevocation.deviceId() == this->deviceId())
-  {
-    TINFO("This device has been revoked");
-    if (!_ready.get_future().is_ready())
-    {
-      _ready.set_exception(std::make_exception_ptr(
-          Exception(make_error_code(Errc::OperationCanceled),
-                    "this device was revoked")));
-    }
-    TC_AWAIT(nukeDatabase());
-    if (deviceRevoked)
-      deviceRevoked();
-    TC_RETURN();
-  }
-
   TC_AWAIT(Revocation::onOtherDeviceRevocation(
       deviceRevocation, entry, *_contactStore, *_localUser));
 }
@@ -382,7 +369,9 @@ tc::cotask<void> Session::syncTrustchain()
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  TC_AWAIT(syncTrustchain());
+  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
+  TC_AWAIT(Users::Updater::updateLocalUser(
+      serverEntries, trustchainId(), *_localUser, *_contactStore));
   TC_AWAIT(Revocation::revokeDevice(
       deviceId, *_localUser, *_contactStore, _blockGenerator, _client));
 }

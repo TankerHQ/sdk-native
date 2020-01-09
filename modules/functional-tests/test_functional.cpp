@@ -509,81 +509,35 @@ TEST_CASE_FIXTURE(
       Errc::PreconditionFailed);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
-{
-  auto alice = trustchain.makeUser(Functional::UserType::New);
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto const deviceId = aliceSession->deviceId().get();
-
-  tc::promise<void> prom;
-  aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
-
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
-
-  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
-
-  REQUIRE(aliceSession->status() == Status::Stopped);
-  auto core = aliceDevice.createCore(Functional::SessionType::Cached);
-
-  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
-           Status::IdentityVerificationNeeded);
-}
-
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can revoke a device while it is disconnected")
-{
-  auto alice = trustchain.makeUser(Functional::UserType::New);
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto const deviceId = TC_AWAIT(aliceSession->deviceId());
-
-  auto aliceDevice2 = alice.makeDevice();
-  auto const aliceSession2 = TC_AWAIT(aliceDevice2.open());
-
-  TC_AWAIT(aliceSession->stop());
-
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession2->revokeDevice(deviceId)));
-
-  tc::promise<void> prom;
-  aliceSession->connectDeviceRevoked([&] { prom.set_value({}); });
-
-  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
-
-  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
-  CHECK(aliceSession->status() == Status::Stopped);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can reopen and decrypt with a revoked device")
+                  "Alice can recreate a device and decrypt after a revocation")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto aliceSecondDevice = alice.makeDevice();
-  auto otherSession = TC_AWAIT(aliceSecondDevice.open());
+  auto secondSession = TC_AWAIT(aliceSecondDevice.open());
 
-  auto const deviceId = otherSession->deviceId().get();
+  auto const secondDeviceId = secondSession->deviceId().get();
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
-  TC_AWAIT(otherSession->encrypt(encryptedData.data(), clearData));
+  TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
 
   std::vector<uint8_t> decryptedData;
   decryptedData.resize(clearData.size());
 
-  tc::promise<void> prom;
-  otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
+  bool wasEmitted = false;
+  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
 
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
 
-  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
-
-  REQUIRE(otherSession->status() == Status::Stopped);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+                                Errc::DeviceRevoked);
+  CHECK(wasEmitted);
+  CHECK(secondSession->status() == Status::Stopped);
 
   TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
@@ -591,45 +545,52 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "multiple devices can be successively revoked")
+                  "multiple devices can be successively revoked" *
+                      doctest::may_fail())
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
-  auto const deviceId = aliceSession->deviceId().get();
-
   auto aliceSecondDevice = alice.makeDevice();
-  auto const otherSession = TC_AWAIT(aliceSecondDevice.open());
-  auto const otherDeviceId = otherSession->deviceId().get();
+  auto secondSession = TC_AWAIT(aliceSecondDevice.open());
 
-  tc::promise<void> prom;
-  otherSession->connectDeviceRevoked([&] { prom.set_value({}); });
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData(
+      AsyncCore::encryptedSize(clearData.size()));
+  TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
 
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(otherDeviceId)));
+  std::vector<uint8_t> decryptedData;
+  decryptedData.resize(clearData.size());
 
-  CHECK_NOTHROW(TC_AWAIT(waitFor(prom)));
+  bool wasEmitted = false;
+  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
 
-  REQUIRE(otherSession->status() == Status::Stopped);
+  // First Revoke
+  REQUIRE_NOTHROW(
+      TC_AWAIT(aliceSession->revokeDevice(secondSession->deviceId().get())));
 
-  {
-    auto core = aliceSecondDevice.createCore(Functional::SessionType::Cached);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+                                Errc::DeviceRevoked);
+  CHECK(wasEmitted);
+  CHECK(secondSession->status() == Status::Stopped);
 
-    CHECK_EQ(TC_AWAIT(core->start(aliceSecondDevice.identity())),
-             Status::IdentityVerificationNeeded);
-  }
+  secondSession = TC_AWAIT(aliceSecondDevice.open());
+  REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
+      {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 
-  tc::promise<void> prom2;
-  aliceSession->connectDeviceRevoked([&] { prom2.set_value({}); });
+  //   Second Revoke
+  wasEmitted = false;
+  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
+  REQUIRE_NOTHROW(
+      TC_AWAIT(aliceSession->revokeDevice(secondSession->deviceId().get())));
 
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(deviceId)));
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+                                Errc::DeviceRevoked);
+  CHECK(wasEmitted);
+  CHECK(secondSession->status() == Status::Stopped);
 
-  CHECK_NOTHROW(TC_AWAIT(waitFor(prom2)));
-
-  REQUIRE(aliceSession->status() == Status::Stopped);
-
-  auto core = aliceDevice.createCore(Functional::SessionType::Cached);
-
-  CHECK_EQ(TC_AWAIT(core->start(aliceDevice.identity())),
-           Status::IdentityVerificationNeeded);
+  TC_AWAIT(aliceSecondDevice.open());
+  REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
+      {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 }

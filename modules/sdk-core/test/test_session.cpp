@@ -3,6 +3,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Session.hpp>
+#include <Tanker/Users/Requester.hpp>
 
 #include <doctest.h>
 
@@ -45,12 +46,14 @@ TEST_CASE(
       db.get()));
   auto contactStore = std::make_unique<Users::ContactStore>(db.get());
   auto client = makeClient();
+  auto userRequester = std::make_unique<Users::Requester>(client.get());
 
   Session session({std::move(db),
                    builder.trustchainId(),
                    std::move(localUser),
                    std::move(contactStore),
-                   std::move(client)});
+                   std::move(client),
+                   std::move(userRequester)});
 
   auto const entry = toVerifiedEntry(alice.entry);
   auto const deviceCreation = entry.action.get<DeviceCreation>();

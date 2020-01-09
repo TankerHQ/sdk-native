@@ -95,11 +95,12 @@ public:
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
-  void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);
 
   static Trustchain::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
+
+  tc::cotask<void> nukeDatabase();
 
 private:
   // We store the session as a unique_ptr so that open() does not
@@ -114,7 +115,6 @@ private:
 
   boost::variant2::variant<Opener, SessionType> _state;
 
-  Session::DeviceRevokedHandler _deviceRevoked;
   SessionClosedHandler _sessionClosed;
 
   void reset();

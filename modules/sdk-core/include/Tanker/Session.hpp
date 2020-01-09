@@ -37,6 +37,7 @@
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <gsl-lite.hpp>
@@ -71,6 +72,7 @@ public:
     Users::LocalUser::Ptr localUser;
     std::unique_ptr<Users::ContactStore> contactStore;
     std::unique_ptr<Client> client;
+    std::unique_ptr<Users::Requester> userRequester;
   };
   using DeviceRevokedHandler = std::function<void()>;
 
@@ -117,8 +119,6 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  DeviceRevokedHandler deviceRevoked;
-
   tc::cotask<void> catchUserKey(
       Trustchain::DeviceId const& id,
       Trustchain::Actions::DeviceCreation const& deviceCreation);
@@ -132,6 +132,8 @@ public:
 
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
+
+  tc::cotask<void> nukeDatabase();
 
 private:
   Trustchain::UserId const& userId() const;
@@ -152,6 +154,7 @@ private:
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;
+  std::unique_ptr<Users::Requester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
   TrustchainStore _trustchain;
   std::unique_ptr<Users::ContactStore> _contactStore;
@@ -171,6 +174,5 @@ private:
   tc::promise<void> _ready;
   tc::task_auto_canceler _taskCanceler;
 
-  tc::cotask<void> nukeDatabase();
 };
 }

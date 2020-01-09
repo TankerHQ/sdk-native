@@ -43,14 +43,10 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-Opener::Opener(std::string url,
-               Network::SdkInfo info,
-               std::string writablePath,
-               DeviceRevokedHandler deviceRevoked)
+Opener::Opener(std::string url, Network::SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
-    _writablePath(std::move(writablePath)),
-    _deviceRevoked(std::move(deviceRevoked))
+    _writablePath(std::move(writablePath))
 {
 }
 
@@ -61,33 +57,12 @@ Status Opener::status() const
   return _status;
 }
 
-tc::cotask<void> Opener::fetchUser() try
+tc::cotask<void> Opener::fetchUser()
 {
   TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
-  auto const entries = TC_AWAIT(_userRequester->getMe());
-  auto const deviceKeys = _localUser->deviceKeys();
-  auto [trustchainSignatureKey, user, userKeys] =
-      Users::Updater::processUserEntries(
-          deviceKeys, _info.trustchainId, entries);
-  _localUser->setTrustchainPublicSignatureKey(trustchainSignatureKey);
-  if (auto const selfDevice =
-          user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
-    _localUser->setDeviceId(selfDevice->id);
-
-  for (auto const& userKey : userKeys)
-    TC_AWAIT(_localUser->insertUserKey(userKey));
-  TC_AWAIT(_contactStore->putUser(user));
-}
-catch (Errors::Exception const& ex)
-{
-  if (ex.errorCode() == Errors::Errc::DeviceRevoked)
-    _deviceRevoked();
-  throw;
-}
-
-void Opener::setDeviceRevokedHandler(DeviceRevokedHandler handler)
-{
-  _deviceRevoked = std::move(handler);
+  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
+  Users::Updater::updateLocalUser(
+      serverEntries, _info.trustchainId, *_localUser, *_contactStore);
 }
 
 tc::cotask<Status> Opener::open(std::string const& b64Identity)
@@ -202,7 +177,8 @@ Session::Config Opener::makeConfig()
           _info.trustchainId,
           std::move(_localUser),
           std::move(_contactStore),
-          std::move(_client)};
+          std::move(_client),
+          std::move(_userRequester)};
 }
 
 tc::cotask<Session::Config> Opener::createUser(
@@ -307,5 +283,10 @@ tc::cotask<Session::Config> Opener::openDevice()
   }
   TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
   TC_RETURN(makeConfig());
+}
+
+tc::cotask<void> Opener::nukeDatabase()
+{
+  _db->nuke();
 }
 }

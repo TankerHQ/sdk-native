@@ -33,12 +33,7 @@ namespace Tanker
 class Opener
 {
 public:
-  using DeviceRevokedHandler = std::function<void()>;
-
-  Opener(std::string url,
-         Network::SdkInfo info,
-         std::string writablePath,
-         DeviceRevokedHandler deviceRevoked = DeviceRevokedHandler());
+  Opener(std::string url, Network::SdkInfo info, std::string writablePath);
   ~Opener();
 
   Status status() const;
@@ -55,13 +50,13 @@ public:
       Unlock::Verification const& verification);
   tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods();
-  void setDeviceRevokedHandler(DeviceRevokedHandler handler);
+
+  tc::cotask<void> nukeDatabase();
 
 private:
   std::string _url;
   Network::SdkInfo _info;
   std::string _writablePath;
-  DeviceRevokedHandler _deviceRevoked;
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
   DataStore::DatabasePtr _db;

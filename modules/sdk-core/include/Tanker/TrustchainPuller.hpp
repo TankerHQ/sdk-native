@@ -6,6 +6,7 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -37,6 +38,7 @@ public:
   TrustchainPuller& operator=(TrustchainPuller&&) = delete;
 
   TrustchainPuller(TrustchainStore* trustchain,
+                   Users::LocalUser const* localUser,
                    TrustchainVerifier* verifier,
                    DataStore::ADatabase* db,
                    Client* client);
@@ -50,6 +52,7 @@ public:
 
 private:
   TrustchainStore* _trustchain;
+  Users::LocalUser const* _localUser;
   TrustchainVerifier* _verifier;
   DataStore::ADatabase* _db;
   Client* _client;

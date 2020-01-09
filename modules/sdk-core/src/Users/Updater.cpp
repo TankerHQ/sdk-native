@@ -224,4 +224,25 @@ processUserEntries(DeviceKeys const& deviceKeys,
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
   return std::make_tuple(signatureKey, std::move(user), std::move(userKeys));
 }
+
+tc::cotask<void> updateLocalUser(
+    gsl::span<Trustchain::ServerEntry const> serverEntries,
+    Trustchain::TrustchainId const& trustchainId,
+    LocalUser& localUser,
+    ContactStore& contactStore)
+{
+  auto const deviceKeys = localUser.deviceKeys();
+  auto [trustchainSignatureKey, user, userKeys] =
+      Users::Updater::processUserEntries(
+          deviceKeys, trustchainId, serverEntries);
+
+  localUser.setTrustchainPublicSignatureKey(trustchainSignatureKey);
+  if (auto const selfDevice =
+          user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
+    localUser.setDeviceId(selfDevice->id);
+
+  for (auto const& userKey : userKeys)
+    TC_AWAIT(localUser.insertUserKey(userKey));
+  TC_AWAIT(contactStore.putUser(user));
+}
 }

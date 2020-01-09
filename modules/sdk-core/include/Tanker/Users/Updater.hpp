@@ -63,5 +63,11 @@ std::tuple<Crypto::PublicSignatureKey,
 processUserEntries(DeviceKeys const& deviceKeys,
                    Trustchain::TrustchainId const& trustchainId,
                    gsl::span<Trustchain::ServerEntry const> entries);
+
+tc::cotask<void> updateLocalUser(
+    gsl::span<Trustchain::ServerEntry const> serverEntries,
+    Trustchain::TrustchainId const& trustchainId,
+    LocalUser& localUser,
+    ContactStore& contactStore);
 }
 }

@@ -36,10 +36,12 @@ using namespace Tanker::Trustchain::Actions;
 namespace Tanker
 {
 TrustchainPuller::TrustchainPuller(TrustchainStore* trustchain,
+                                   Users::LocalUser const* localUser,
                                    TrustchainVerifier* verifier,
                                    DataStore::ADatabase* db,
                                    Client* client)
   : _trustchain(trustchain),
+    _localUser(localUser),
     _verifier(verifier),
     _db(db),
     _client(client),
@@ -52,6 +54,7 @@ TrustchainPuller::TrustchainPuller(TrustchainStore* trustchain,
 
 tc::shared_future<void> TrustchainPuller::scheduleCatchUp(
     std::vector<UserId> const& extraUsers,
+
     std::vector<GroupId> const& extraGroups)
 {
   _extraUsers.insert(_extraUsers.end(), extraUsers.begin(), extraUsers.end());
@@ -101,9 +104,18 @@ tc::cotask<void> TrustchainPuller::catchUp()
     TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
       std::set<Crypto::Hash> processed;
       for (auto const& serverEntry : entries)
-      {
         try
         {
+          // FIXME
+          if (auto const dc = serverEntry.action().get_if<DeviceCreation>();
+              dc && dc->userId() == _localUser->userId())
+            continue;
+          else if (auto const dr =
+                       serverEntry.action().get_if<DeviceRevocation>())
+            if (auto const dr2 = dr->get_if<DeviceRevocation2>();
+                dr2 &&
+                TC_AWAIT(_localUser->findKeyPair(dr2->publicEncryptionKey())))
+              continue;
           if (processed.count(serverEntry.hash()))
             continue;
 
@@ -120,7 +132,6 @@ tc::cotask<void> TrustchainPuller::catchUp()
           else
             throw;
         }
-      }
     }));
     TINFO("Caught up");
   }

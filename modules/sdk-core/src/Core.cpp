@@ -138,17 +138,6 @@ void Core::stop()
 void Core::initSession(Session::Config config)
 {
   _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  session->deviceRevoked = _deviceRevoked;
-}
-
-void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
-{
-  _deviceRevoked = std::move(handler);
-  if (auto const session = boost::variant2::get_if<SessionType>(&_state))
-    (*session)->deviceRevoked = _deviceRevoked; // we need the copy here
-  else if (auto const opener = boost::variant2::get_if<Opener>(&_state))
-    opener->setDeviceRevokedHandler(_deviceRevoked);
 }
 
 void Core::setSessionClosedHandler(SessionClosedHandler handler)
@@ -158,7 +147,7 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 
 void Core::reset()
 {
-  _state.emplace<Opener>(_url, _info, _writablePath, _deviceRevoked);
+  _state.emplace<Opener>(_url, _info, _writablePath);
 }
 
 tc::cotask<void> Core::encrypt(
@@ -339,5 +328,13 @@ Trustchain::ResourceId Core::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {
   return Encryptor::extractResourceId(encryptedData);
+}
+
+tc::cotask<void> Core::nukeDatabase()
+{
+  if (auto psession = boost::variant2::get_if<SessionType>(&_state))
+    (*psession)->nukeDatabase();
+  else if (auto popener = boost::variant2::get_if<Opener>(&_state))
+    popener->nukeDatabase();
 }
 }
