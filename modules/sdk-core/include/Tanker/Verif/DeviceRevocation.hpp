@@ -3,6 +3,8 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
+#include <optional>
+
 namespace Tanker::Users
 {
 struct User;
@@ -11,5 +13,5 @@ struct User;
 namespace Tanker::Verif
 {
 Entry verifyDeviceRevocation(Trustchain::ServerEntry const& serverEntry,
-                             Users::User const& user);
+                             std::optional<Users::User> const& user);
 }

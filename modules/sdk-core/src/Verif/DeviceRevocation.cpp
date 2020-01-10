@@ -93,23 +93,25 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 
 Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
-                             Users::User const& user)
+                             std::optional<Users::User> const& user)
 {
   auto const dr = serverEntry.action().get_if<Actions::DeviceRevocation>();
   assert(dr);
 
+  ensures(user.has_value(), Errc::InvalidAuthor, "Author not found");
+
   auto const author =
-      user.findDevice(Trustchain::DeviceId{serverEntry.author()});
+      user->findDevice(Trustchain::DeviceId{serverEntry.author()});
   ensures(author.has_value(),
           Errc::InvalidUser,
           "A device can only be revoked by another device of its user");
 
   ensures(!author->revokedAtBlkIndex ||
               author->revokedAtBlkIndex > serverEntry.index(),
-          Errc::InvalidAuthor,
+          Errc::AuthorIsRevoked,
           "Author device of revocation must not be revoked");
 
-  auto const target = user.findDevice(dr->deviceId());
+  auto const target = user->findDevice(dr->deviceId());
   ensures(target.has_value(),
           Errc::InvalidUser,
           "The target device of a revocation must be owned by the user");
@@ -127,7 +129,7 @@ Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
       "its author");
 
   dr->visit([&](auto const& subAction) {
-    verifySubAction(subAction, *target, user);
+    verifySubAction(subAction, *target, *user);
   });
   return Verif::makeVerifiedEntry(serverEntry);
 }

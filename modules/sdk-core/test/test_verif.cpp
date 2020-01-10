@@ -189,6 +189,13 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
     authorDevice.revokedAtBlkIndex = authorDevice.createdAtBlkIndex + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
+        Errc::AuthorIsRevoked);
+  }
+
+  SUBCASE("should reject a revocation when user is not found")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        Verif::verifyDeviceRevocation(deviceRevocation, std::nullopt),
         Errc::InvalidAuthor);
   }
 
