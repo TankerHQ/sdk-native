@@ -62,6 +62,19 @@ Users::Device extractDevice(Entry const& entry, DeviceCreation const& dc)
                        dc.publicSignatureKey(),
                        dc.publicEncryptionKey());
 }
+std::optional<Users::User> applyToDeviceCreation(
+    Users::Device const& device,
+    std::optional<ExtractedUserKeys> extractedKeys,
+    std::optional<Users::User> previousUser)
+{
+  if (!previousUser.has_value())
+    previousUser.emplace(Users::User{device.userId, {}, {}});
+  previousUser->devices.push_back(device);
+  if (extractedKeys)
+    previousUser->userKey =
+        std::get<Crypto::PublicEncryptionKey>(*extractedKeys);
+  return previousUser;
+}
 }
 
 std::optional<ExtractedUserKeys> extractEncryptedUserKey(
@@ -105,13 +118,13 @@ std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 extractUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::TrustchainId const& trustchainId,
                       Crypto::PublicSignatureKey const& trustchainPubSigKey,
-                      gsl::span<Trustchain::ServerEntry const> entries)
+                      gsl::span<Trustchain::ServerEntry const> serverEntries)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
-  Users::User user;
+  std::optional<Users::User> user;
   Trustchain::DeviceId selfDeviceId;
-  for (auto const& serverEntry : entries)
+  for (auto const& serverEntry : serverEntries)
   {
     try
     {
@@ -121,14 +134,11 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         auto const entry = Verif::verifyDeviceCreation(
             serverEntry, trustchainId, trustchainPubSigKey, user);
         auto const device = extractDevice(entry, *deviceCreation);
-        user.devices.push_back(device);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
-        if (extractedKeys)
-          user.userKey = std::get<Crypto::PublicEncryptionKey>(*extractedKeys);
+        user = applyToDeviceCreation(device, extractedKeys, user);
         if (device.publicSignatureKey == deviceKeys.signatureKeyPair.publicKey)
         {
           selfDeviceId = device.id;
-          user.id = device.userId;
           if (extractedKeys)
             sealedKeys.push_back(
                 std::get<Crypto::SealedEncryptionKeyPair>(*extractedKeys));
@@ -137,13 +147,14 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
       else if (auto const deviceRevocation =
                    serverEntry.action().get_if<DeviceRevocation>())
       {
-        auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
+        auto const entry =
+            Verif::verifyDeviceRevocation(serverEntry, user.value());
         if (auto const extractedKeys =
                 extractEncryptedUserKey(*deviceRevocation, selfDeviceId))
         {
           auto const [newPublicUserKey, sealedUserKey] = *extractedKeys;
           sealedKeys.push_back(sealedUserKey);
-          user.userKey = newPublicUserKey;
+          user->userKey = newPublicUserKey;
         }
       }
     }
@@ -155,7 +166,7 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         throw;
     }
   }
-  return std::make_tuple(user, sealedKeys);
+  return std::make_tuple(*user, sealedKeys);
 }
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
@@ -182,8 +193,8 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
   *selfUserKeyIt = Crypto::makeEncryptionKeyPair(
       Crypto::sealDecrypt(selfEncKeyIt->sealedPrivateKey, devEncKP));
 
-  // Second we decrypt the user keys before our device creation starting with
-  // the current user key in reverse order.
+  // Second we decrypt the user keys before our device creation starting
+  // with the current user key in reverse order.
   std::transform(std::make_reverse_iterator(selfEncKeyIt),
                  encryptedUserKeys.rend(),
                  std::make_reverse_iterator(selfUserKeyIt),
@@ -208,9 +219,9 @@ processUserEntries(DeviceKeys const& deviceKeys,
                    Trustchain::TrustchainId const& trustchainId,
                    gsl::span<Trustchain::ServerEntry const> entries)
 {
-  if (entries.size() == 0)
+  if (entries.size() < 2)
     throw Errors::formatEx(Errors::Errc::InternalError,
-                           "User's block list is empty");
+                           "User's block list is too short");
   auto signatureKey = extractTrustchainSignature(trustchainId, entries[0]);
   auto [user, sealedKeys] = extractUserSealedKeys(
       deviceKeys, trustchainId, signatureKey, entries.subspan(1));
