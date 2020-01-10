@@ -8,7 +8,7 @@
 
 namespace Tanker::Users
 {
-struct User;
+class User;
 class Device;
 }
 

@@ -80,14 +80,10 @@ Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
       userId,
       userKeys.empty() ? std::optional<Tanker::Crypto::PublicEncryptionKey>() :
                          userKeys.back().keyPair.publicKey,
-      std::vector<Tanker::Users::Device>()};
+      {}};
 
-  tankerUser.devices.reserve(devices.size());
-  std::transform(devices.begin(),
-                 devices.end(),
-                 std::back_inserter(tankerUser.devices),
-                 [](auto const& device) { return device.asTankerDevice(); });
-
+  for (auto const& device : devices)
+    tankerUser.addDevice(device.asTankerDevice());
   return tankerUser;
 }
 
@@ -760,9 +756,9 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
   auto const tankerUser = targetUser->asTankerUser();
   auto oldPublicEncryptionKey = Crypto::PublicEncryptionKey{};
   auto encryptedKeyForPreviousUserKey = Crypto::SealedPrivateEncryptionKey{};
-  if (tankerUser.userKey)
+  if (tankerUser.userKey())
   {
-    oldPublicEncryptionKey = *tankerUser.userKey;
+    oldPublicEncryptionKey = *tankerUser.userKey();
     encryptedKeyForPreviousUserKey =
         Crypto::sealEncrypt(targetUser->userKeys.back().keyPair.privateKey,
                             newEncryptionKey.publicKey);

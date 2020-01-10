@@ -20,7 +20,7 @@
 namespace Tanker::Users
 {
 class IUserAccessor;
-struct User;
+class User;
 }
 
 namespace Tanker::Groups::Manager

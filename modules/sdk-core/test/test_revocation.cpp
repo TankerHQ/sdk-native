@@ -70,7 +70,7 @@ TEST_CASE("Revocation tests")
   {
     auto const user = AWAIT(Revocation::getUserFromUserId(
         userResult.user.userId, *contactStore.get()));
-    CHECK(user.userKey == userResult.user.asTankerUser().userKey);
+    CHECK(user.userKey() == userResult.user.asTankerUser().userKey());
   }
 
   SUBCASE("devicePrivateKey can be encrypted & decrypted")

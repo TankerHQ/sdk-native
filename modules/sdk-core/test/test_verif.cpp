@@ -88,7 +88,7 @@ void deviceCreationCommonChecks(
 
   SUBCASE("it should reject a device creation when author device is revoked")
   {
-    auto& authorDevice = tankerUser.devices.front();
+    auto& authorDevice = tankerUser.devices().front();
     unconstify(authorDevice.revokedAtBlkIndex()) =
         authorDevice.createdAtBlkIndex() + 1;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -399,7 +399,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
   SUBCASE("should reject a device creation 3 if the user has no user key")
   {
-    tankerUser.userKey = std::nullopt;
+    unconstify(tankerUser.userKey()) = std::nullopt;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDevice.entry,
                                     builder.trustchainId(),
@@ -418,7 +418,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
     unconstify(deviceCreation)
         .sign(user.user.devices.front().keys.signatureKeyPair.privateKey);
 
-    tankerUser.userKey = secondDevice.user.userKey;
+    tankerUser.setUserKey(*secondDevice.user.userKey());
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDevice.entry,
@@ -445,7 +445,7 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
   {
     auto const keyPair = Crypto::makeEncryptionKeyPair();
     auto tankerUser = alice.user.asTankerUser();
-    tankerUser.userKey = keyPair.publicKey;
+    tankerUser.setUserKey(keyPair.publicKey);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDevice.entry,
                                     builder.trustchainId(),
@@ -463,14 +463,16 @@ TEST_CASE("Verif DeviceRevocationV1")
   auto secondDevice = builder.makeDevice1("alice");
   auto thirdDevice = builder.makeDevice1("alice");
   auto finalUser = thirdDevice.user;
-  auto& authorDevice = finalUser.devices[1];
-  auto& targetDevice = finalUser.devices[2];
+  auto& authorDevice = finalUser.devices()[1];
+  auto& targetDevice = finalUser.devices()[2];
 
   auto const revokeEntry =
       builder.revokeDevice1(secondDevice.device, thirdDevice.device);
 
-  deviceRevocationCommonChecks(
-      revokeEntry, authorDevice, targetDevice, finalUser);
+  deviceRevocationCommonChecks(revokeEntry,
+                               unconstify(authorDevice),
+                               unconstify(targetDevice),
+                               finalUser);
 
   SUBCASE("should reject a revocation for another user's device")
   {
@@ -486,7 +488,7 @@ TEST_CASE("Verif DeviceRevocationV1")
 
   SUBCASE("should reject a revocation whose user has a userKey")
   {
-    thirdDevice.user.userKey = Crypto::makeEncryptionKeyPair().publicKey;
+    thirdDevice.user.setUserKey(Crypto::makeEncryptionKeyPair().publicKey);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(revokeEntry, thirdDevice.user),
         Errc::InvalidUserKey);
@@ -501,8 +503,8 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto secondDevice = builder.makeDevice3("alice");
   auto thirdDevice = builder.makeDevice3("alice");
   auto aliceUser = builder.findUser("alice")->asTankerUser();
-  auto& authorDevice = aliceUser.devices[1];
-  auto& targetDevice = aliceUser.devices[2];
+  auto& authorDevice = aliceUser.devices()[1];
+  auto& targetDevice = aliceUser.devices()[2];
   auto entry = builder.revokeDevice2(secondDevice.device, thirdDevice.device);
 
   auto bob = builder.makeUser1("bob");
@@ -512,7 +514,8 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto entryUserV1 =
       builder.revokeDevice2(bobDevice.device, bobOtherDevice.device);
 
-  deviceRevocationCommonChecks(entry, authorDevice, targetDevice, aliceUser);
+  deviceRevocationCommonChecks(
+      entry, unconstify(authorDevice), unconstify(targetDevice), aliceUser);
 
   SUBCASE(
       "should reject a revocation whose user has no userKey when "

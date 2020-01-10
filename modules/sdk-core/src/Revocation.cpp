@@ -48,7 +48,7 @@ tc::cotask<Users::User> getUserFromUserId(
         Errc::InternalError,
         "user associated with given deviceId should be a valid user");
   }
-  if (!user->userKey)
+  if (!user->userKey())
     throw formatEx(Errc::InternalError, "user should always have a user key");
 
   TC_RETURN(*user);
@@ -60,12 +60,12 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   auto const previousEncryptionPrivateKey =
-      TC_AWAIT(localUser.findKeyPair(*user.userKey));
+      TC_AWAIT(localUser.findKeyPair(*user.userKey()));
 
   if (!previousEncryptionPrivateKey)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            TFMT("cannot find user key for public key: {:s}"),
-                           *user.userKey);
+                           *user.userKey());
   auto const encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
       previousEncryptionPrivateKey->privateKey, publicEncryptionKey);
 
@@ -78,7 +78,7 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey)
 {
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
-  for (auto const& device : user.devices)
+  for (auto const& device : user.devices())
   {
     if (device.id() != deviceId && device.revokedAtBlkIndex() == std::nullopt)
     {
@@ -102,7 +102,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
       TC_AWAIT(getUserFromUserId(localUser.userId(), contactStore));
 
   auto const newEncryptionKey = Crypto::makeEncryptionKeyPair();
-  auto const oldPublicEncryptionKey = *user.userKey;
+  auto const oldPublicEncryptionKey = *user.userKey();
 
   auto const encryptedKeyForPreviousUserKey = TC_AWAIT(
       encryptForPreviousUserKey(localUser, user, newEncryptionKey.publicKey));

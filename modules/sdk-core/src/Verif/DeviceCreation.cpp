@@ -31,7 +31,7 @@ bool verifySignature(DeviceCreation const& dc,
 void verifySubAction(DeviceCreation::v1 const& deviceCreation,
                      Users::User const& user)
 {
-  ensures(!user.userKey.has_value(),
+  ensures(!user.userKey().has_value(),
           Errc::InvalidUserKey,
           "A user must not have a user key to create a device creation v1");
 }
@@ -39,7 +39,7 @@ void verifySubAction(DeviceCreation::v1 const& deviceCreation,
 void verifySubAction(DeviceCreation::v3 const& deviceCreation,
                      Users::User const& user)
 {
-  ensures(deviceCreation.publicUserEncryptionKey() == user.userKey,
+  ensures(deviceCreation.publicUserEncryptionKey() == user.userKey(),
           Errc::InvalidUserKey,
           "DeviceCreation v3 must have the last user key");
 }
@@ -58,8 +58,9 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
           Errc::InvalidAuthor,
           "author device must not be revoked");
 
-  assert(std::find(user.devices.begin(), user.devices.end(), *authorDevice) !=
-         user.devices.end());
+  assert(std::find(user.devices().begin(),
+                   user.devices().end(),
+                   *authorDevice) != user.devices().end());
 
   auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
 

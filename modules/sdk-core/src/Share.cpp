@@ -152,7 +152,9 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
     for (auto const& recipientKey : recipientUserKeys)
     {
       out.push_back(
-          makeKeyPublishToGroup(trustchainId, deviceId, signatureKey,
+          makeKeyPublishToGroup(trustchainId,
+                                deviceId,
+                                signatureKey,
                                 recipientKey,
                                 std::get<Trustchain::ResourceId>(keyResource),
                                 std::get<Crypto::SymmetricKey>(keyResource)));
@@ -200,12 +202,12 @@ KeyRecipients toKeyRecipients(
   KeyRecipients out;
   for (auto const& user : users)
   {
-    if (!user.userKey)
+    if (!user.userKey())
     {
       throw Errors::AssertionError(
           "sharing to users without user key is not supported anymore");
     }
-    out.recipientUserKeys.push_back(*user.userKey);
+    out.recipientUserKeys.push_back(*user.userKey());
   }
 
   out.recipientProvisionalUserKeys = publicProvisionalUsers;

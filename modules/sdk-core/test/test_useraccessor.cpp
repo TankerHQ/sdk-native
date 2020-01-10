@@ -38,7 +38,7 @@ TEST_CASE("UserAccessor")
   {
     REQUIRE_CALL(requester, getUsers(ANY(gsl::span<Trustchain::UserId const>)))
         .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
-    std::vector<Trustchain::UserId> ids{bob.id, charlie.id};
+    std::vector<Trustchain::UserId> ids{bob.id(), charlie.id()};
     auto const result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.found.empty());
     CHECK_EQ(result.notFound, ids);
@@ -50,7 +50,7 @@ TEST_CASE("UserAccessor")
     AWAIT_VOID(contactStore.putUser(bob));
     AWAIT_VOID(contactStore.putUser(charlie));
 
-    std::vector<Trustchain::UserId> ids{alice.id, bob.id, charlie.id};
+    std::vector<Trustchain::UserId> ids{alice.id(), bob.id(), charlie.id()};
 
     REQUIRE_CALL(requester, getUsers(ids))
         .RETURN(makeCoTask(builder.entries()));

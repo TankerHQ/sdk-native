@@ -3,6 +3,7 @@
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -14,7 +15,7 @@ namespace Tanker::Users
 class IUserAccessor
 {
 public:
-  using PullResult = BasicPullResult<User>;
+  using PullResult = BasicPullResult<User, Trustchain::UserId>;
 
   virtual tc::cotask<PullResult> pull(
       gsl::span<Trustchain::UserId const> userIds) = 0;

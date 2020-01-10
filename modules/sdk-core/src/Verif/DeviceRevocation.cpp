@@ -32,7 +32,7 @@ void verifySubAction(DeviceRevocation1 const& deviceRevocation,
                      Users::Device const& target,
                      Users::User const& user)
 {
-  ensures(!user.userKey,
+  ensures(!user.userKey(),
           Errc::InvalidUserKey,
           "A revocation V1 cannot be used on an user with a user key");
 }
@@ -41,7 +41,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
                      Users::Device const& target,
                      Users::User const& user)
 {
-  if (!user.userKey)
+  if (!user.userKey())
   {
     ensures(deviceRevocation.previousPublicEncryptionKey().is_null(),
             Errc::InvalidEncryptionKey,
@@ -55,13 +55,13 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
   }
   else
   {
-    ensures(deviceRevocation.previousPublicEncryptionKey() == *user.userKey,
+    ensures(deviceRevocation.previousPublicEncryptionKey() == *user.userKey(),
             Errc::InvalidEncryptionKey,
             "A revocation V2 previousPublicEncryptionKey should be the same as "
             "its user userKey");
   }
   size_t const nbrDevicesNotRevoked = std::count_if(
-      user.devices.begin(), user.devices.end(), [](auto const& device) {
+      user.devices().begin(), user.devices().end(), [](auto const& device) {
         return device.revokedAtBlkIndex() == std::nullopt;
       });
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
@@ -76,11 +76,11 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
             "A revocation V2 should not have the target deviceId in the "
             "userKeys field");
 
-    ensures(std::find_if(user.devices.begin(),
-                         user.devices.end(),
+    ensures(std::find_if(user.devices().begin(),
+                         user.devices().end(),
                          [&](auto const& device) {
                            return userKey.first == device.id();
-                         }) != user.devices.end(),
+                         }) != user.devices().end(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have a key for another user's device");
   }

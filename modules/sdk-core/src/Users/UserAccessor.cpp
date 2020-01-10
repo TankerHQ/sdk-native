@@ -112,7 +112,7 @@ auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
 
       user = Updater::applyDeviceCreationToUser(entry, user);
       usersMap[dc->userId()] = *user;
-      auto const& lastDevice = usersMap[dc->userId()].devices.back();
+      auto const& lastDevice = user->devices().back();
       if (auto const [it, isInserted] =
               devicesMap.emplace(lastDevice.id(), lastDevice);
           isInserted == false)

@@ -26,12 +26,12 @@ ContactStore::ContactStore(DataStore::ADatabase* db) : _db(db)
 
 tc::cotask<void> ContactStore::putUser(User const& user)
 {
-  assert(!user.devices.empty());
+  assert(!user.devices().empty());
 
-  TC_AWAIT(_db->putContact(user.id, user.userKey));
-  for (auto const& device : user.devices)
+  TC_AWAIT(_db->putContact(user.id(), user.userKey()));
+  for (auto const& device : user.devices())
   {
-    assert(user.id == device.userId());
+    assert(user.id() == device.userId());
     TC_AWAIT(_db->putDevice(device));
   }
 }

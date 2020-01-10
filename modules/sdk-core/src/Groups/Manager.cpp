@@ -22,9 +22,9 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
+using Tanker::Trustchain::ClientEntry;
 using Tanker::Trustchain::GroupId;
 using Tanker::Trustchain::UserId;
-using Tanker::Trustchain::ClientEntry;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
@@ -66,13 +66,13 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
   UserGroupCreation::v2::Members keysForUsers;
   for (auto const& user : users)
   {
-    if (!user.userKey)
+    if (!user.userKey())
       throw AssertionError("cannot create group for users without a user key");
 
     keysForUsers.emplace_back(
-        user.id,
-        *user.userKey,
-        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey));
+        user.id(),
+        *user.userKey(),
+        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey()));
   }
   return keysForUsers;
 }
@@ -196,11 +196,10 @@ ClientEntry generateAddUserToGroupEntry(
                             std::move(provisionalMembers)};
   uga.selfSign(group.signatureKeyPair.privateKey);
 
-  return ClientEntry::create(
-      trustchainId,
-      static_cast<Crypto::Hash>(deviceId),
-      uga,
-      privateSignatureKey);
+  return ClientEntry::create(trustchainId,
+                             static_cast<Crypto::Hash>(deviceId),
+                             uga,
+                             privateSignatureKey);
 }
 
 tc::cotask<void> updateMembers(

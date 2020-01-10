@@ -24,7 +24,7 @@ TEST_CASE("ContactStore")
   Users::ContactStore contacts(dbPtr.get());
   TrustchainBuilder builder;
   auto const alice = builder.makeUser3("alice").user.asTankerUser();
-  auto aliceDevice = alice.devices.front();
+  auto aliceDevice = alice.devices().front();
 
   SUBCASE("it should not find a non-existent user")
   {
@@ -36,24 +36,24 @@ TEST_CASE("ContactStore")
   SUBCASE("it should find a user that was inserted")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_EQ(AWAIT(contacts.findUser(alice.id)), alice);
+    CHECK_EQ(AWAIT(contacts.findUser(alice.id())), alice);
   }
 
   SUBCASE("it should find a user v1 that was inserted")
   {
     auto const v1User = builder.makeUser1("v1").user.asTankerUser();
-    CHECK_UNARY_FALSE(!!v1User.userKey);
+    CHECK_UNARY_FALSE(!!v1User.userKey());
     AWAIT_VOID(contacts.putUser(v1User));
-    CHECK_EQ(AWAIT(contacts.findUser(v1User.id)), v1User);
+    CHECK_EQ(AWAIT(contacts.findUser(v1User.id())), v1User);
   }
 
   SUBCASE("it should update a user's userKey")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceBis = alice;
-    aliceBis.userKey = make<Crypto::PublicEncryptionKey>("pubkey");
-    AWAIT_VOID(contacts.putUserKey(alice.id, *aliceBis.userKey));
-    CHECK_EQ(AWAIT(contacts.findUser(alice.id)), aliceBis);
+    aliceBis.setUserKey(make<Crypto::PublicEncryptionKey>("pubkey"));
+    AWAIT_VOID(contacts.putUserKey(alice.id(), *aliceBis.userKey()));
+    CHECK_EQ(AWAIT(contacts.findUser(alice.id())), aliceBis);
   }
 
   SUBCASE("it should add a new user device")
@@ -61,9 +61,9 @@ TEST_CASE("ContactStore")
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceBis = alice;
     auto const newDevice = builder.makeDevice3("alice").device.asTankerDevice();
-    aliceBis.devices.push_back(newDevice);
+    aliceBis.addDevice(newDevice);
     AWAIT_VOID(contacts.putUserDevice(newDevice));
-    CHECK_EQ(AWAIT(contacts.findUser(alice.id)), aliceBis);
+    CHECK_EQ(AWAIT(contacts.findUser(alice.id())), aliceBis);
   }
 
   SUBCASE("it should replace an existing user")
@@ -71,18 +71,18 @@ TEST_CASE("ContactStore")
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceBis = alice;
     auto const newDevice = builder.makeDevice3("alice").device.asTankerDevice();
-    aliceBis.devices.push_back(newDevice);
-    aliceBis.userKey = make<Crypto::PublicEncryptionKey>("new pubKey");
+    aliceBis.addDevice(newDevice);
+    aliceBis.setUserKey(make<Crypto::PublicEncryptionKey>("new pubKey"));
     REQUIRE_NOTHROW(AWAIT_VOID(contacts.putUser(aliceBis)));
 
-    CHECK_EQ(*AWAIT(contacts.findUser(alice.id)), aliceBis);
+    CHECK_EQ(*AWAIT(contacts.findUser(alice.id())), aliceBis);
   }
 
   SUBCASE("it should replace an existing user device id")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceDeviceBis = aliceDevice;
-    ++const_cast<std::uint64_t&>(aliceDeviceBis.createdAtBlkIndex());
+    ++unconstify(aliceDeviceBis.createdAtBlkIndex());
     AWAIT_VOID(contacts.putUserDevice(aliceDeviceBis));
 
     CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id())), aliceDeviceBis);
@@ -105,17 +105,14 @@ TEST_CASE("ContactStore")
   {
     auto aliceBis = alice;
     for (auto i = 0; i < 3; ++i)
-    {
-      aliceBis.devices.push_back(
-          builder.makeDevice3("alice").device.asTankerDevice());
-    }
+      aliceBis.addDevice(builder.makeDevice3("alice").device.asTankerDevice());
 
     AWAIT_VOID(contacts.putUser(aliceBis));
 
-    auto const foundDevices = AWAIT(contacts.findUserDevices(alice.id));
+    auto const foundDevices = AWAIT(contacts.findUserDevices(alice.id()));
     CHECK_UNARY_FALSE(foundDevices.empty());
 
-    CHECK_EQ(foundDevices, aliceBis.devices);
+    CHECK_EQ(foundDevices, aliceBis.devices());
   }
 
   SUBCASE("it should return no devices when a given user does not exist")
@@ -137,22 +134,23 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     AWAIT_VOID(contacts.putUserKey(
-        alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
-    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
+        alice.id(), make<Crypto::PublicEncryptionKey>("pubkey")));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey())),
              std::nullopt);
   }
 
   SUBCASE("it should find a userId with a valid userPublicKey")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
-             alice.id);
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey())),
+             alice.id());
   }
 
   SUBCASE("it should find a userId with a deviceId")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    CHECK_EQ(AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id())), alice.id);
+    CHECK_EQ(AWAIT(contacts.findUserIdByDeviceId(aliceDevice.id())),
+             alice.id());
   }
 
   SUBCASE("it should revoke a device")
@@ -169,8 +167,8 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(
-        alice.id, make<Crypto::PublicEncryptionKey>("pubkey")));
-    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey)),
+        alice.id(), make<Crypto::PublicEncryptionKey>("pubkey")));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(*alice.userKey())),
              std::nullopt);
   }
 
@@ -178,7 +176,7 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto const newKey = make<Crypto::PublicEncryptionKey>("pubkey");
-    AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(alice.id, newKey));
-    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(newKey)), alice.id);
+    AWAIT_VOID(contacts.rotateContactPublicEncryptionKey(alice.id(), newKey));
+    CHECK_EQ(AWAIT(contacts.findUserIdByUserPublicKey(newKey)), alice.id());
   }
 }

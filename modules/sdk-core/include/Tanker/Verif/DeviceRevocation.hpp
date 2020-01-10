@@ -7,7 +7,7 @@
 
 namespace Tanker::Users
 {
-struct User;
+class User;
 }
 
 namespace Tanker::Verif

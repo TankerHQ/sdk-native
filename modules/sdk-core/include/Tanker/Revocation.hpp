@@ -20,7 +20,7 @@ namespace Users
 {
 class ContactStore;
 class LocalUser;
-struct User;
+class User;
 }
 
 struct DeviceKeys;
