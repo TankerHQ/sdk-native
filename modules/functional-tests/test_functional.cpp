@@ -511,7 +511,7 @@ TEST_CASE_FIXTURE(
 
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can recreate a device and decrypt after a revocation" *
-                      doctest::may_fail())
+                      doctest::skip())
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
