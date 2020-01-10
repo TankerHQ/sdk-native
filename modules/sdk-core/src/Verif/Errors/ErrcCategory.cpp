@@ -37,6 +37,8 @@ std::string ErrcCategory::message(int c) const
     return "invalid user keys";
   case Errc::InvalidTargetDevice:
     return "invalid target device";
+  case Errc::UserAlreadyExists:
+    return "user already exists";
   default:
     return "unknown error";
   }
@@ -57,6 +59,7 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   case Errc::InvalidGroup:
   case Errc::InvalidUserKeys:
   case Errc::InvalidTargetDevice:
+  case Errc::UserAlreadyExists:
     return make_error_condition(Errors::Errc::InternalError);
   default:
     return std::error_condition(c, *this);

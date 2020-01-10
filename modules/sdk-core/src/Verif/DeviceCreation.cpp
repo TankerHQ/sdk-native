@@ -47,10 +47,6 @@ void verifySubAction(DeviceCreation::v3 const& deviceCreation,
 Entry verifyDeviceCreation(ServerEntry const& serverEntry,
                            Users::User const& user)
 {
-  auto const nature = serverEntry.action().nature();
-  (void)nature;
-  assert(nature == Nature::DeviceCreation || nature == Nature::DeviceCreation3);
-
   auto authorDevice = user.findDevice(DeviceId{serverEntry.author()});
   ensures(
       authorDevice.has_value(),
@@ -88,9 +84,6 @@ Entry verifyDeviceCreation(
     ServerEntry const& serverEntry,
     Crypto::PublicSignatureKey const& trustchainPublicSignatureKey)
 {
-  assert(serverEntry.action().nature() == Nature::DeviceCreation ||
-         serverEntry.action().nature() == Nature::DeviceCreation3);
-
   auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
 
   ensures(Crypto::verify(serverEntry.hash(),
@@ -110,12 +103,23 @@ Entry verifyDeviceCreation(
     Trustchain::ServerEntry const& serverEntry,
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& trustchainPubSigKey,
-    Users::User const& user)
+    std::optional<Users::User> const& user)
 {
+  assert(serverEntry.action().nature() == Nature::DeviceCreation ||
+         serverEntry.action().nature() == Nature::DeviceCreation3);
+
   if (serverEntry.author().base() == trustchainId.base())
+  {
+    ensures(!user.has_value(),
+            Errc::UserAlreadyExists,
+            "Cannot have more than one device signed by the trustchain");
     return verifyDeviceCreation(serverEntry, trustchainPubSigKey);
+  }
   else
-    return verifyDeviceCreation(serverEntry, user);
+  {
+    ensures(user.has_value(), Errc::InvalidAuthor, "Author not found");
+    return verifyDeviceCreation(serverEntry, user.value());
+  }
 }
 }
 }

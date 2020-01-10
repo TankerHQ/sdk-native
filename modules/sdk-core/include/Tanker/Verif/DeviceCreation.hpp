@@ -4,6 +4,8 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
+#include <optional>
+
 namespace Tanker::Users
 {
 struct User;
@@ -23,6 +25,6 @@ Entry verifyDeviceCreation(
     Trustchain::ServerEntry const& serverEntry,
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& trustchainPubSigKey,
-    Users::User const& user);
+    std::optional<Users::User> const& user);
 }
 }
