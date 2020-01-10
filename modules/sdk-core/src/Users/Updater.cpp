@@ -166,6 +166,13 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         throw;
     }
   }
+  if (!user.has_value())
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "We did not find our user");
+  if (selfDeviceId.is_null())
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "We did not find our device");
+
   return std::make_tuple(*user, sealedKeys);
 }
 
