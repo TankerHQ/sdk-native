@@ -64,9 +64,8 @@ Users::Device extractDevice(Entry const& entry, DeviceCreation const& dc)
 }
 }
 
-std::optional<
-    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
-extractEncryptedUserKey(DeviceCreation const& deviceCreation)
+std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+    DeviceCreation const& deviceCreation)
 {
   if (auto dc3 = deviceCreation.get_if<DeviceCreation::v3>())
     return std::make_tuple(dc3->publicUserEncryptionKey(),
@@ -75,10 +74,9 @@ extractEncryptedUserKey(DeviceCreation const& deviceCreation)
   return std::nullopt;
 }
 
-std::optional<
-    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>>
-extractEncryptedUserKey(DeviceRevocation const& deviceRevocation,
-                        Trustchain::DeviceId const& selfDeviceId)
+std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+    DeviceRevocation const& deviceRevocation,
+    Trustchain::DeviceId const& selfDeviceId)
 {
   if (auto const dr2 = deviceRevocation.get_if<DeviceRevocation::v2>())
   {
