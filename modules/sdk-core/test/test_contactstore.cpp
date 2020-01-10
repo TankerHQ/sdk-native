@@ -6,6 +6,7 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Const.hpp>
 #include <Helpers/Errors.hpp>
 
 #include "TrustchainBuilder.hpp"
@@ -15,21 +16,6 @@
 #include <tconcurrent/coroutine.hpp>
 
 using namespace Tanker;
-
-namespace
-{
-template <typename T>
-void alter(T const& t)
-{
-  ++const_cast<T&>(t);
-}
-
-template <typename T>
-void shove(T const& t, T const& u)
-{
-  const_cast<T&>(t) = u;
-}
-}
 
 TEST_CASE("ContactStore")
 {
@@ -142,7 +128,7 @@ TEST_CASE("ContactStore")
 
   SUBCASE("it should throw when inserting a device with an invalid user id")
   {
-    shove(aliceDevice.userId(), make<Trustchain::UserId>("unexistent"));
+    unconstify(aliceDevice.userId()) = make<Trustchain::UserId>("unexistent");
     CHECK_THROWS_AS(AWAIT_VOID(contacts.putUserDevice(aliceDevice)),
                     std::runtime_error);
   }

@@ -4,6 +4,7 @@ project(tankeridentity CXX)
 add_library(tankertesthelpers STATIC
   include/Helpers/Config.hpp
   include/Helpers/TimeoutTerminate.hpp
+  include/Helpers/Const.hpp
   include/Helpers/Entries.hpp
   include/Helpers/Barrier.hpp
   include/Helpers/Errors.hpp
