@@ -149,7 +149,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 
   auto const clientEntry =
       Users::createDeviceV1Entry(_trustchainId,
-                                 {},
+                                 Crypto::Hash{_trustchainId},
                                  delegation,
                                  device.keys.signatureKeyPair.publicKey,
                                  device.keys.encryptionKeyPair.publicKey);
@@ -405,7 +405,8 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
       author.id,
       author.keys.signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry, _entries.size() + 1);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
   _entries.push_back(serverEntry);
 
   Tanker::InternalGroup tgroup{
