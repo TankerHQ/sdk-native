@@ -176,8 +176,9 @@ class TankerConan(ConanFile):
                 "tankererrors",
                 "tankerlog",
                 "tankerformat",
-                "tankercacerts",
             ])
+            if self.options.with_ssl:
+                libs.append("tankercacerts")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]

@@ -24,7 +24,6 @@ namespace Tanker
 {
 namespace Cacerts
 {
-#if TANKER_BUILD_WITH_SSL
 namespace
 {
 namespace net = boost::asio;
@@ -109,6 +108,5 @@ net::ssl::context& get_ssl_context()
   static auto context = create_ssl_context();
   return context;
 }
-#endif
 }
 }
