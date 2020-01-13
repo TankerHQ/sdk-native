@@ -65,7 +65,8 @@ Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
   return Tanker::Users::Device(id,
                                userId,
                                blockIndex,
-                               false,
+                               // This completely arbitrary...
+                               true,
                                keys.signatureKeyPair.publicKey,
                                keys.encryptionKeyPair.publicKey);
 }
