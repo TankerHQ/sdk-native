@@ -21,4 +21,5 @@ struct User
 
 bool operator==(User const& l, User const& r);
 bool operator!=(User const& l, User const& r);
+bool operator<(User const& l, User const& r);
 }

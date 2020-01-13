@@ -31,4 +31,8 @@ bool operator!=(User const& l, User const& r)
 {
   return !(l == r);
 }
+bool operator<(User const& l, User const& r)
+{
+  return l.id < r.id;
+}
 }
