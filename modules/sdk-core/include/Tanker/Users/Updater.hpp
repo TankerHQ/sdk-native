@@ -51,6 +51,9 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     Crypto::EncryptionKeyPair const& devEncKP,
     gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
 
+Users::User applyDeviceCreationToUser(
+    Tanker::Entry const& entry, std::optional<Users::User> previousUser);
+
 std::tuple<Crypto::PublicSignatureKey,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>

@@ -52,29 +52,24 @@ Crypto::EncryptionKeyPair checkedDecrypt(
                            "public and private user key do not match");
   return {pubKey, decryptedKey};
 }
+}
 
-Users::Device extractDevice(Entry const& entry, DeviceCreation const& dc)
+Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
+                                      std::optional<Users::User> previousUser)
 {
-  return Users::Device(Trustchain::DeviceId{entry.hash},
-                       dc.userId(),
-                       entry.index,
-                       dc.isGhostDevice(),
-                       dc.publicSignatureKey(),
-                       dc.publicEncryptionKey());
-}
-std::optional<Users::User> applyToDeviceCreation(
-    Users::Device const& device,
-    std::optional<ExtractedUserKeys> extractedKeys,
-    std::optional<Users::User> previousUser)
-{
+  auto const& dc = entry.action.get<DeviceCreation>();
+
   if (!previousUser.has_value())
-    previousUser.emplace(Users::User{device.userId, {}, {}});
-  previousUser->devices.push_back(device);
-  if (extractedKeys)
-    previousUser->userKey =
-        std::get<Crypto::PublicEncryptionKey>(*extractedKeys);
-  return previousUser;
-}
+    previousUser.emplace(Users::User{dc.userId(), {}, {}});
+  previousUser->devices.emplace_back(Trustchain::DeviceId{entry.hash},
+                                     dc.userId(),
+                                     entry.index,
+                                     dc.isGhostDevice(),
+                                     dc.publicSignatureKey(),
+                                     dc.publicEncryptionKey());
+  if (auto const v3 = dc.get_if<DeviceCreation::v3>())
+    previousUser->userKey = v3->publicUserEncryptionKey();
+  return *previousUser;
 }
 
 std::optional<ExtractedUserKeys> extractEncryptedUserKey(
@@ -133,9 +128,9 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
       {
         auto const entry = Verif::verifyDeviceCreation(
             serverEntry, trustchainId, trustchainPubSigKey, user);
-        auto const device = extractDevice(entry, *deviceCreation);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
-        user = applyToDeviceCreation(device, extractedKeys, user);
+        user = applyDeviceCreationToUser(entry, user);
+        auto const& device = user->devices.back();
         if (device.publicSignatureKey == deviceKeys.signatureKeyPair.publicKey)
         {
           selfDeviceId = device.id;
