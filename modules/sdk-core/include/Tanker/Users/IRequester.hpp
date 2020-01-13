@@ -30,6 +30,8 @@ public:
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() = 0;
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
+  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+      gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,
       LocalUser const& localUser) = 0;

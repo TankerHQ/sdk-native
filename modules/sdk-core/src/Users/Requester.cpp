@@ -63,6 +63,16 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
   TC_RETURN(ret);
 }
 
+tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
+    gsl::span<Trustchain::DeviceId const> deviceIds)
+{
+  auto const response =
+      TC_AWAIT(_client->emit("get users blocks", {{"device_ids", deviceIds}}));
+  auto const ret = Trustchain::fromBlocksToServerEntries(
+      response.get<std::vector<std::string>>());
+  TC_RETURN(ret);
+}
+
 tc::cotask<void> Requester::authenticate(
     Trustchain::TrustchainId const& trustchainId, LocalUser const& localUser)
 {
