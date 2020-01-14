@@ -5,7 +5,6 @@
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Groups/Updater.hpp>
-#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
@@ -18,14 +17,12 @@ using Tanker::Trustchain::GroupId;
 namespace Tanker::Groups
 {
 Accessor::Accessor(Groups::IRequester* requester,
-                   ITrustchainPuller* trustchainPuller,
-                   Users::ContactStore const* contactStore,
+                   Users::UserAccessor* accessor,
                    Store* groupStore,
                    Users::LocalUser const* localUser,
                    ProvisionalUsers::IAccessor* provisionalUserAccessor)
   : _requester(requester),
-    _trustchainPuller(trustchainPuller),
-    _contactStore(contactStore),
+    _userAccessor(accessor),
     _groupStore(groupStore),
     _localUser(localUser),
     _provisionalUserAccessor(provisionalUserAccessor)
@@ -99,9 +96,8 @@ Accessor::getEncryptionKeyPair(
     TC_RETURN(std::nullopt);
 
   auto const group =
-      TC_AWAIT(GroupUpdater::processGroupEntries(*_trustchainPuller,
-                                                 *_localUser,
-                                                 *_contactStore,
+      TC_AWAIT(GroupUpdater::processGroupEntries(*_localUser,
+                                                 *_userAccessor,
                                                  *_provisionalUserAccessor,
                                                  std::nullopt,
                                                  entries));
@@ -117,12 +113,6 @@ Accessor::getEncryptionKeyPair(
     TC_RETURN(internalGroup->encryptionKeyPair);
   else
     TC_RETURN(std::nullopt);
-}
-
-tc::cotask<void> Accessor::fetch(gsl::span<GroupId const> groupIds)
-{
-  TC_AWAIT(_trustchainPuller->scheduleCatchUp(
-      {}, std::vector<GroupId>{groupIds.begin(), groupIds.end()}));
 }
 
 namespace
@@ -165,9 +155,8 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
     else
     {
       auto const group =
-          TC_AWAIT(GroupUpdater::processGroupEntries(*_trustchainPuller,
-                                                     *_localUser,
-                                                     *_contactStore,
+          TC_AWAIT(GroupUpdater::processGroupEntries(*_localUser,
+                                                     *_userAccessor,
                                                      *_provisionalUserAccessor,
                                                      std::nullopt,
                                                      groupEntriesIt->second));

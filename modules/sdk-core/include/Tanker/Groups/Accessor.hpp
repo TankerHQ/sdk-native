@@ -11,15 +11,10 @@
 
 #include <optional>
 
-namespace Tanker
-{
-class ITrustchainPuller;
-}
-
 namespace Tanker::Users
 {
-class ContactStore;
 class LocalUser;
+class UserAccessor;
 }
 
 namespace Tanker::Groups
@@ -29,8 +24,7 @@ class Accessor : public Groups::IAccessor
 {
 public:
   Accessor(Groups::IRequester* requester,
-           ITrustchainPuller* trustchainPuller,
-           Users::ContactStore const* contactStore,
+           Users::UserAccessor* userAccessor,
            Store* groupstore,
            Users::LocalUser const* localUser,
            ProvisionalUsers::IAccessor* provisionalUserAccessor);
@@ -51,8 +45,7 @@ public:
 
 private:
   Groups::IRequester* _requester;
-  ITrustchainPuller* _trustchainPuller;
-  Users::ContactStore const* _contactStore;
+  Users::UserAccessor* _userAccessor;
   Store* _groupStore;
   Users::LocalUser const* _localUser;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;

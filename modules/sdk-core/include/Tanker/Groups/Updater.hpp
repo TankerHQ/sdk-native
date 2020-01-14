@@ -2,7 +2,6 @@
 
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -11,7 +10,7 @@
 
 namespace Tanker::Users
 {
-class ContactStore;
+class UserAccessor;
 class LocalUser;
 }
 
@@ -31,9 +30,8 @@ tc::cotask<Group> applyUserGroupAddition(
     Entry const& entry);
 
 tc::cotask<std::optional<Group>> processGroupEntries(
-    ITrustchainPuller& trustchainPuller,
     Users::LocalUser const& localUser,
-    Users::ContactStore const& contactStore,
+    Users::UserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries);

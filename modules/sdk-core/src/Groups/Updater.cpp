@@ -12,6 +12,7 @@
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -233,72 +234,17 @@ namespace
 using DeviceMap =
     boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
-tc::cotask<DeviceMap> extractAuthors(
-    ITrustchainPuller& trustchainPuller,
-    Users::ContactStore const& contactStore,
+std::vector<Trustchain::DeviceId> extractAuthors(
     std::vector<Trustchain::ServerEntry> const& entries)
 {
-  DeviceMap out;
-
-  // There is no way to pull users by device id, so for the moment we pull the
-  // whole group through a hack that gives us all authors without the
-  // groups themselves. This will disappear once we have that new route.
-  boost::container::flat_set<Trustchain::GroupId> groupsToPull;
-
+  boost::container::flat_set<Trustchain::DeviceId> deviceIds;
   for (auto const& entry : entries)
-  {
-    if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
-      continue;
-
-    auto const author =
-        TC_AWAIT(contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
-    if (author)
-    {
-      auto [it, isInserted] =
-          out.emplace(Trustchain::DeviceId{entry.author()}, *author);
-      assert(isInserted);
-    }
-    else
-    {
-      if (auto const userGroupCreation =
-              entry.action().get_if<UserGroupCreation>())
-        groupsToPull.insert(GroupId{userGroupCreation->publicSignatureKey()});
-      else if (auto const userGroupAddition =
-                   entry.action().get_if<UserGroupAddition>())
-        groupsToPull.insert(userGroupAddition->groupId());
-      else
-        throw Errors::AssertionError(
-            fmt::format("cannot handle nature: {}", entry.action().nature()));
-    }
-  }
-
-  if (!groupsToPull.empty())
-  {
-    std::vector<Trustchain::GroupId> vgroupsToPull(groupsToPull.begin(),
-                                                   groupsToPull.end());
-    TC_AWAIT(trustchainPuller.scheduleCatchUp({}, vgroupsToPull));
-
-    for (auto const& entry : entries)
-    {
-      if (out.find(Trustchain::DeviceId{entry.author()}) != out.end())
-        continue;
-
-      auto const author = TC_AWAIT(
-          contactStore.findDevice(Trustchain::DeviceId{entry.author()}));
-      if (author)
-      {
-        auto [it, isInserted] =
-            out.emplace(Trustchain::DeviceId{entry.author()}, *author);
-        assert(isInserted);
-      }
-    }
-  }
-
-  TC_RETURN(out);
+    deviceIds.insert(Trustchain::DeviceId{entry.author()});
+  return {deviceIds.begin(), deviceIds.end()};
 }
 
 tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
-    DeviceMap const& authors,
+    std::vector<Users::Device> const& authors,
     Users::LocalUser const& localUser,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
@@ -309,11 +255,13 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     try
     {
       auto const authorIt =
-          authors.find(Trustchain::DeviceId{serverEntry.author()});
+          std::find_if(authors.begin(), authors.end(), [&](auto const& device) {
+            return serverEntry.author().base() == device.id.base();
+          });
       Verif::ensures(authorIt != authors.end(),
                      Verif::Errc::InvalidAuthor,
                      "author not found");
-      auto const& author = authorIt->second;
+      auto const& author = *authorIt;
       if (serverEntry.action().holds_alternative<UserGroupCreation>())
       {
         auto const entry = Verif::verifyUserGroupCreation(
@@ -349,21 +297,25 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 }
 
 tc::cotask<std::optional<Group>> processGroupEntries(
-    ITrustchainPuller& trustchainPuller,
     Users::LocalUser const& localUser,
-    Users::ContactStore const& contactStore,
+    Users::UserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries)
 {
-  auto const authors =
-      TC_AWAIT(extractAuthors(trustchainPuller, contactStore, entries));
+  auto const authorIds = extractAuthors(entries);
+  auto const devices = TC_AWAIT(userAccessor.pull(authorIds));
+
   // We are going to process group entries in which there are provisional
-  // identities. We can't know in advance if one of these identity is us or not.
-  // That's why we pull all our claim blocks once here to know all our
-  // provisional identities so that we can find if they are in the group or not.
+  // identities. We can't know in advance if one of these identity is us or
+  // not. That's why we pull all our claim blocks once here to know all our
+  // provisional identities so that we can find if they are in the group or
+  // not.
   TC_AWAIT(provisionalUsersAccessor.refreshKeys());
-  TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(
-      authors, localUser, provisionalUsersAccessor, previousGroup, entries)));
+  TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(devices.found,
+                                                    localUser,
+                                                    provisionalUsersAccessor,
+                                                    previousGroup,
+                                                    entries)));
 }
 }

@@ -3,10 +3,10 @@
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/Groups/Store.hpp>
-#include <Tanker/ITrustchainPuller.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -14,6 +14,7 @@
 
 #include "FakeProvisionalUsersAccessor.hpp"
 #include "TrustchainBuilder.hpp"
+#include "UserRequesterStub.hpp"
 
 #include <doctest.h>
 #include <trompeloeil.hpp>
@@ -23,15 +24,6 @@ using Tanker::Trustchain::GroupId;
 
 namespace
 {
-class TrustchainPullerStub : public Tanker::ITrustchainPuller
-{
-public:
-  MAKE_MOCK2(scheduleCatchUp,
-             tc::shared_future<void>(std::vector<Trustchain::UserId> const&,
-                                     std::vector<Trustchain::GroupId> const&),
-             override);
-};
-
 class RequesterStub : public Groups::IRequester
 {
 public:
@@ -60,10 +52,14 @@ TEST_CASE("GroupAccessor")
   auto const bobGroup = builder.makeGroup(bob.user.devices.front(), {bob.user});
 
   RequesterStub requestStub;
+  UserRequesterStub userRequestStub;
 
-  TrustchainPullerStub trustchainPuller;
-  auto const aliceContactStore =
+  auto aliceContactStore =
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
+  Users::UserAccessor aliceUserAccessor(builder.trustchainId(),
+                                        builder.trustchainPublicKey(),
+                                        &userRequestStub,
+                                        aliceContactStore.get());
   auto const aliceLocalUser = builder.makeLocalUser(alice.user, dbPtr.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, dbPtr.get());
@@ -71,8 +67,7 @@ TEST_CASE("GroupAccessor")
       std::make_unique<FakeProvisionalUsersAccessor>(
           *aliceProvisionalUserKeysStore);
   Groups::Accessor groupAccessor(&requestStub,
-                                 &trustchainPuller,
-                                 aliceContactStore.get(),
+                                 &aliceUserAccessor,
                                  &groupStore,
                                  aliceLocalUser.get(),
                                  aliceProvisionalUsersAccessor.get());
@@ -120,6 +115,10 @@ TEST_CASE("GroupAccessor")
         getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
         .RETURN(
             makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
+    REQUIRE_CALL(userRequestStub,
+                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
+        // FIXME
+        .RETURN(makeCoTask(builder.entries()));
 
     auto const result = AWAIT(groupAccessor.getPublicEncryptionKeys(
         {aliceGroup.group.tankerGroup.id}));
@@ -137,6 +136,10 @@ TEST_CASE("GroupAccessor")
         getGroupBlocks(std::vector<GroupId>{bobGroup.group.tankerGroup.id}))
         .RETURN(
             makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
+    REQUIRE_CALL(userRequestStub,
+                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
+        // FIXME
+        .RETURN(makeCoTask(builder.entries()));
 
     auto const result =
         AWAIT(groupAccessor.getInternalGroups({bobGroup.group.tankerGroup.id}));
@@ -153,6 +156,10 @@ TEST_CASE("GroupAccessor")
         getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
         .RETURN(
             makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
+    REQUIRE_CALL(userRequestStub,
+                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
+        // FIXME
+        .RETURN(makeCoTask(builder.entries()));
 
     auto const result = AWAIT(
         groupAccessor.getInternalGroups({aliceGroup.group.tankerGroup.id}));
@@ -169,6 +176,10 @@ TEST_CASE("GroupAccessor")
         getGroupBlocks(bobGroup.group.tankerGroup.encryptionKeyPair.publicKey))
         .RETURN(
             makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
+    REQUIRE_CALL(userRequestStub,
+                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
+        // FIXME
+        .RETURN(makeCoTask(builder.entries()));
 
     auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
         bobGroup.group.tankerGroup.encryptionKeyPair.publicKey));
@@ -185,6 +196,10 @@ TEST_CASE("GroupAccessor")
                      aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey))
         .RETURN(
             makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
+    REQUIRE_CALL(userRequestStub,
+                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
+        // FIXME
+        .RETURN(makeCoTask(builder.entries()));
 
     auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
         aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey));
