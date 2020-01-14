@@ -27,9 +27,22 @@ namespace Tanker
 {
 namespace Network
 {
-Connection::Connection(std::string url, std::optional<SdkInfo> infos)
+Connection::Connection(std::string url, SdkInfo info)
+  : Connection(url, QueryParameters{std::move(info.sdkType),
+                                    std::move(info.trustchainId),
+                                    std::move(info.version),
+                                    std::nullopt})
+{
+}
+
+Connection::Connection(std::string url, std::string context)
+  : Connection(url, QueryParameters{"admin", std::nullopt, std::nullopt, std::move(context)})
+{
+}
+
+Connection::Connection(std::string url, QueryParameters params)
   : _url(std::move(url)),
-    _infos(std::move(infos)),
+    _params(std::move(params)),
 #if TANKER_BUILD_WITH_SSL
     _client(Cacerts::get_ssl_context())
 #else
@@ -67,15 +80,17 @@ std::string Connection::id() const
 void Connection::connect()
 {
   FUNC_BEGIN(fmt::format("connect {}", (void*)(this)), Net);
-  if (_infos)
-    this->_client.connect(
-        _url,
-        {{"type", _infos->sdkType},
-         {"version", _infos->version},
-         {"trustchainId",
-          cppcodec::base64_rfc4648::encode(_infos->trustchainId)}});
-  else
-    this->_client.connect(_url);
+
+  std::map<std::string,std::string> query = {{"type", _params.sdkType}};
+  if (_params.version)
+    query["version"] = _params.version.value();
+  if (_params.trustchainId)
+    query["trustchainId"] = cppcodec::base64_rfc4648::encode(
+      _params.trustchainId.value());
+  if (_params.context)
+    query["context"] = _params.context.value();
+
+  this->_client.connect(_url, query);
 }
 
 void Connection::on(std::string const& eventName, AConnection::Handler handler)

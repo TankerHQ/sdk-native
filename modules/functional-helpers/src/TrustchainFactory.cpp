@@ -19,7 +19,7 @@ namespace Functional
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Admin>(
         Network::ConnectionFactory::create(TestConstants::trustchainUrl(),
-                                           std::nullopt),
+                                           "cpp-functional-tests"),
         TestConstants::idToken()))
 {
 }

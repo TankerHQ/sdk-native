@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Tanker/Network/AConnection.hpp>
+#include <Tanker/Network/QueryParameters.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
-#include <optional>
 #include <sio_client.h>
 
 #include <string>
@@ -23,7 +23,8 @@ public:
   Connection& operator=(Connection const&) = delete;
   Connection& operator=(Connection&&) = delete;
 
-  Connection(std::string url, std::optional<SdkInfo>);
+  Connection(std::string url, SdkInfo);
+  Connection(std::string url, std::string context);
 
   bool isOpen() const override;
   void connect() override;
@@ -35,8 +36,10 @@ public:
   void on(std::string const& message, AConnection::Handler handler) override;
 
 private:
-  std::string _url;
-  std::optional<SdkInfo> _infos;
+  Connection(std::string url, QueryParameters);
+
+  std::string const _url;
+  QueryParameters const _params;
 
   tc::task_auto_canceler _taskCanceler;
   sio::client _client;
