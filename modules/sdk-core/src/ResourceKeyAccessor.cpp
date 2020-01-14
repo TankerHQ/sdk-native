@@ -1,19 +1,22 @@
+#include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/ReceiveKey.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
+
+TLOG_CATEGORY(ResourceKeyAccessor);
 
 namespace Tanker
 {
 ResourceKeyAccessor::ResourceKeyAccessor(
     Client* client,
-    TrustchainVerifier* verifier,
     Users::LocalUser* localUser,
     Groups::IAccessor* groupAccessor,
     ProvisionalUsers::IAccessor* provisionalUsersAccessor,
     ResourceKeyStore* resourceKeyStore)
   : _client(client),
-    _verifier(verifier),
     _localUser(localUser),
     _groupAccessor(groupAccessor),
     _provisionalUsersAccessor(provisionalUsersAccessor),
@@ -35,13 +38,21 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
         TC_AWAIT(_client->getKeyPublishes(gsl::make_span(&resourceId, 1))));
     for (auto const& entry : entries)
     {
-      auto keyEntry = TC_AWAIT(_verifier->verify(entry));
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(
-          *_resourceKeyStore,
-          *_localUser,
-          *_groupAccessor,
-          *_provisionalUsersAccessor,
-          keyEntry.action.get<Trustchain::Actions::KeyPublish>()));
+      if (auto const kp =
+              entry.action().get_if<Trustchain::Actions::KeyPublish>())
+      {
+        TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
+                                                *_localUser,
+                                                *_groupAccessor,
+                                                *_provisionalUsersAccessor,
+                                                *kp));
+      }
+      else
+      {
+        TERROR("Skipping non-keypublish block {} {}",
+               entry.hash(),
+               entry.action().nature());
+      }
     }
     key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));
   }

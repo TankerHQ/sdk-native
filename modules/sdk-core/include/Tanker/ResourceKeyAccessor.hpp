@@ -5,7 +5,6 @@
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/TrustchainVerifier.hpp>
 
 #include <optional>
 
@@ -20,7 +19,6 @@ class ResourceKeyAccessor
 {
 public:
   ResourceKeyAccessor(Client* client,
-                      TrustchainVerifier* verifier,
                       Users::LocalUser* localUser,
                       Groups::IAccessor* groupAccessor,
                       ProvisionalUsers::IAccessor* provisionalUsersAccessor,
@@ -36,7 +34,6 @@ public:
 
 private:
   Client* _client;
-  TrustchainVerifier* _verifier;
   Users::LocalUser* _localUser;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
