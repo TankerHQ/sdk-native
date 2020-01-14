@@ -77,8 +77,6 @@ public:
 
   Session(Config&&);
 
-  tc::cotask<void> startConnection();
-
   tc::cotask<void> encrypt(uint8_t* encryptedData,
                            gsl::span<uint8_t const> clearData,
                            std::vector<SPublicIdentity> const& suserIds = {},
@@ -170,7 +168,5 @@ private:
   ResourceKeyAccessor _resourceKeyAccessor;
 
   tc::promise<void> _ready;
-  tc::task_auto_canceler _taskCanceler;
-
 };
 }

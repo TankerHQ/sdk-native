@@ -32,7 +32,6 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
@@ -119,32 +118,6 @@ Session::Session(Config&& config)
       [this](auto const& entry) -> tc::cotask<void> {
     TC_AWAIT(onDeviceRevoked(entry));
   };
-}
-
-tc::cotask<void> Session::startConnection()
-{
-  FUNC_TIMER(Net);
-
-  _taskCanceler.add(tc::async_resumable([this]() -> tc::cotask<void> {
-    try
-    {
-      TC_AWAIT(syncTrustchain());
-      if (!_ready.get_future().is_ready())
-        _ready.set_value({});
-    }
-    catch (...)
-    {
-      if (!_ready.get_future().is_ready())
-        _ready.set_exception(std::current_exception());
-      throw;
-    }
-  }));
-
-  if (this->deviceId().is_null())
-  {
-    SCOPE_TIMER("wait for trustchain sync", Net);
-    TC_AWAIT(_ready.get_future());
-  }
 }
 
 UserId const& Session::userId() const

@@ -87,8 +87,6 @@ tc::cotask<Status> Core::startImpl(std::string const& identity)
   if (status == Status::Ready)
   {
     initSession(TC_AWAIT(pcore->openDevice()));
-    auto const& session = boost::variant2::get<SessionType>(_state);
-    TC_AWAIT(session->startConnection());
     TC_RETURN(Status::Ready);
   }
   TC_RETURN(status);
@@ -111,8 +109,6 @@ tc::cotask<void> Core::registerIdentity(
 
   auto openResult = TC_AWAIT(pcore->createUser(verification));
   initSession(std::move(openResult));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
 }
 
 tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
@@ -124,8 +120,6 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 
   auto openResult = TC_AWAIT(pcore->createDevice(verification));
   initSession(std::move(openResult));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
 }
 
 void Core::stop()
