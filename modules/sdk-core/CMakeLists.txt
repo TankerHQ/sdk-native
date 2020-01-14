@@ -62,7 +62,6 @@ add_library(tankercore STATIC
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
   include/Tanker/TrustchainStore.hpp
-  include/Tanker/TrustchainVerifier.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
@@ -144,7 +143,6 @@ add_library(tankercore STATIC
   src/Core.cpp
   src/Status.cpp
   src/TrustchainStore.cpp
-  src/TrustchainVerifier.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp

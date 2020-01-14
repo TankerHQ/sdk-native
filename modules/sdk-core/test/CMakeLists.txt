@@ -23,7 +23,6 @@ add_executable(test_tanker
   test_useraccessor.cpp
   test_groups.cpp
   test_verif.cpp
-  test_trustchainverifier.cpp
   test_revocation.cpp
   test_preregistration.cpp
   test_stream.cpp
