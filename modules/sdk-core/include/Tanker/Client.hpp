@@ -105,7 +105,6 @@ public:
                                   nlohmann::json const& data);
 
   std::string connectionId() const;
-  std::function<void()> blockAvailable;
 
 private:
   std::unique_ptr<Network::AConnection> _cx;

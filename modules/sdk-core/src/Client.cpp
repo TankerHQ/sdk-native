@@ -70,7 +70,6 @@ std::map<std::string, ServerErrc> const serverErrorMap{
 Client::Client(Network::ConnectionPtr cx, ConnectionHandler connectionHandler)
   : _cx(std::move(cx)), _connectionHandler(std::move(connectionHandler))
 {
-  _cx->on("new relevant block", [this](auto const& e) { blockAvailable(); });
   _cx->reconnected = [this] {
     if (_connectionHandler)
       _taskCanceler.add(tc::async_resumable(

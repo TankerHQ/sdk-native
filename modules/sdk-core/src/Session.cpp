@@ -110,7 +110,6 @@ Session::Session(Config&& config)
                          &_provisionalUsersAccessor,
                          &_resourceKeyStore)
 {
-  _client->blockAvailable = [this] { _trustchainPuller.scheduleCatchUp(); };
 
   _trustchainPuller.deviceCreated =
       [this](auto const& entry) -> tc::cotask<void> {
