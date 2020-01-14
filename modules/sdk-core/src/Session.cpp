@@ -232,8 +232,6 @@ tc::cotask<SGroupId> Session::createGroup(
       _trustchainId,
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey));
-  // Make sure group's lastBlockHash updates before the next group operation
-  TC_AWAIT(syncTrustchain());
   TC_RETURN(groupId);
 }
 
@@ -252,9 +250,6 @@ tc::cotask<void> Session::updateGroupMembers(
       _trustchainId,
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey));
-
-  // Make sure group's lastBlockHash updates before the next group operation
-  TC_AWAIT(syncTrustchain());
 }
 
 tc::cotask<void> Session::setVerificationMethod(
@@ -341,11 +336,6 @@ tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
   auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
   TC_AWAIT(Revocation::onOtherDeviceRevocation(
       deviceRevocation, entry, *_contactStore, *_localUser));
-}
-
-tc::cotask<void> Session::syncTrustchain()
-{
-  TC_AWAIT(_trustchainPuller.scheduleCatchUp());
 }
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)

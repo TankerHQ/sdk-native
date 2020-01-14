@@ -281,14 +281,6 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
   TC_AWAIT((*psession)->verifyProvisionalIdentity(verification));
 }
 
-tc::cotask<void> Core::syncTrustchain()
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(syncTrustchain);
-  TC_AWAIT((*psession)->syncTrustchain());
-}
-
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   auto psession = boost::variant2::get_if<SessionType>(&_state);

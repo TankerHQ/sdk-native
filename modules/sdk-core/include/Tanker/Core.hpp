@@ -83,8 +83,6 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
-  tc::cotask<void> syncTrustchain();
-
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   tc::cotask<Streams::EncryptionStream> makeEncryptionStream(

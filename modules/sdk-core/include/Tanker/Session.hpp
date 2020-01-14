@@ -112,8 +112,6 @@ public:
   tc::cotask<void> verifyProvisionalIdentity(
       Unlock::Verification const& verification);
 
-  tc::cotask<void> syncTrustchain();
-
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
   tc::cotask<void> catchUserKey(

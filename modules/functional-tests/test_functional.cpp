@@ -154,8 +154,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
-  TC_AWAIT(aliceSession->syncTrustchain());
-
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
@@ -228,8 +226,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
   auto bob = trustchain.makeUser();
   auto bobDevices = TC_AWAIT(bob.makeDevices(2));
 
-  TC_AWAIT(aliceSession->syncTrustchain());
-
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
@@ -245,8 +241,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
   auto alice = trustchain.makeUser();
   auto aliceDevices = TC_AWAIT(alice.makeDevices(3));
   auto const aliceSession = TC_AWAIT(aliceDevices[0].open());
-
-  TC_AWAIT(aliceSession->syncTrustchain());
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData(
@@ -314,8 +308,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
 
   auto bob = trustchain.makeUser();
   auto bobDevice = TC_AWAIT(bob.makeDevices(1));
-
-  TC_AWAIT(aliceSession->syncTrustchain());
 
   auto const clearDatas = make_clear_data(
       {"to be clear, ", "or not be clear, ", "that is the test case..."});
