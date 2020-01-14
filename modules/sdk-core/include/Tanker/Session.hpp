@@ -20,7 +20,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainPuller.hpp>
 #include <Tanker/TrustchainStore.hpp>
 #include <Tanker/TrustchainVerifier.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -158,7 +157,6 @@ private:
   ProvisionalUserKeysStore _provisionalUserKeysStore;
 
   TrustchainVerifier _verifier;
-  TrustchainPuller _trustchainPuller;
   Users::UserAccessor _userAccessor;
   ProvisionalUsers::Accessor _provisionalUsersAccessor;
   ProvisionalUsers::Manager _provisionalUsersManager;

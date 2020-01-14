@@ -82,8 +82,6 @@ Session::Session(Config&& config)
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
     _verifier(_trustchainId, _localUser.get(), _contactStore.get()),
-    _trustchainPuller(
-        &_trustchain, _localUser.get(), &_verifier, _db.get(), _client.get()),
     _userAccessor(_trustchainId,
                   _localUser->trustchainPublicSignatureKey(),
                   _userRequester.get(),
@@ -109,15 +107,6 @@ Session::Session(Config&& config)
                          &_provisionalUsersAccessor,
                          &_resourceKeyStore)
 {
-
-  _trustchainPuller.deviceCreated =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onDeviceCreated(entry));
-  };
-  _trustchainPuller.deviceRevoked =
-      [this](auto const& entry) -> tc::cotask<void> {
-    TC_AWAIT(onDeviceRevoked(entry));
-  };
 }
 
 UserId const& Session::userId() const
