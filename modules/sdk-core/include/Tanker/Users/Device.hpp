@@ -37,4 +37,5 @@ struct Device
 };
 bool operator==(Device const& l, Device const& r);
 bool operator!=(Device const& l, Device const& r);
+bool operator<(Device const& l, Device const& r);
 }

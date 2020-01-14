@@ -58,4 +58,9 @@ bool operator!=(Device const& l, Device const& r)
 {
   return !(l == r);
 }
+
+bool operator<(Device const& l, Device const& r)
+{
+  return l.id < r.id;
+}
 }
