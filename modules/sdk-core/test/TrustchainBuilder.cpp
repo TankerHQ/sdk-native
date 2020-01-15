@@ -55,7 +55,7 @@ TrustchainBuilder::Device createDevice()
       {}, // deviceId will be filled in later
       {}, // userId will be filled in later
       {}, // delegation will be filled in later
-      {}  // blockIndex will be filled in later
+      {}  // createdAtIndex will be filled in later
   };
 }
 }
@@ -64,7 +64,7 @@ Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Users::Device(id,
                                userId,
-                               blockIndex,
+                               createdAtIndex,
                                // This completely arbitrary...
                                true,
                                keys.signatureKeyPair.publicKey,
@@ -160,7 +160,7 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   user.devices[0].delegation = delegation;
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
-  user.devices[0].blockIndex = serverEntry.index();
+  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
   _entries.push_back(serverEntry);
 
@@ -197,7 +197,7 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
   user.devices[0].delegation = delegation;
-  user.devices[0].blockIndex = serverEntry.index();
+  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
 
   _entries.push_back(serverEntry);
@@ -237,7 +237,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.blockIndex = serverEntry.index();
+  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
 
   _entries.push_back(serverEntry);
@@ -277,7 +277,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.blockIndex = serverEntry.index();
+  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
 
   _entries.push_back(serverEntry);

@@ -39,7 +39,7 @@ public:
     Tanker::Trustchain::DeviceId id;
     Tanker::Trustchain::UserId userId;
     Tanker::Identity::Delegation delegation;
-    uint64_t blockIndex;
+    uint64_t createdAtIndex;
 
     Tanker::Users::Device asTankerDevice() const;
   };
