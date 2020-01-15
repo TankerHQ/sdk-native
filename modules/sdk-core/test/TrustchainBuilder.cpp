@@ -7,6 +7,7 @@
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Revocation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
@@ -767,32 +768,22 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
                             newEncryptionKey.publicKey);
   }
 
-  DeviceRevocation::v2::SealedKeysForDevices userKeys;
-  for (auto const& device : targetUser->devices)
-  {
-    if (device.id != target.id && !device.revokedAtIndex)
-    {
-      Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{
-          Crypto::sealEncrypt(newEncryptionKey.privateKey,
-                              device.keys.encryptionKeyPair.publicKey)};
-      userKeys.emplace_back(device.id, sealedEncryptedKey);
-    }
-  }
+  auto const userKeys = Revocation::encryptPrivateKeyForDevices(
+      targetUser->asTankerUser(), target.id, newEncryptionKey.privateKey);
 
-  DeviceRevocation2 const revocation{target.id,
-                                     newEncryptionKey.publicKey,
-                                     encryptedKeyForPreviousUserKey,
-                                     oldPublicEncryptionKey,
-                                     userKeys};
+  auto const clientEntry =
+      Users::revokeDeviceEntry(_trustchainId,
+                               sender.id,
+                               sender.keys.signatureKeyPair.privateKey,
+                               target.id,
+                               newEncryptionKey.publicKey,
+                               encryptedKeyForPreviousUserKey,
+                               oldPublicEncryptionKey,
+                               userKeys);
 
-  auto const nature = Nature::DeviceRevocation2;
-  auto const author = static_cast<Crypto::Hash>(sender.id);
-  auto const hash =
-      computeHash(nature, author, Serialization::serialize(revocation));
-  auto const signature =
-      Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
-  _entries.emplace_back(
-      _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
+  auto const serverEntry =
+      clientToServerEntry(clientEntry, _entries.size() + 1);
+  _entries.push_back(serverEntry);
 
   targetUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
   auto const revokedDevice =
