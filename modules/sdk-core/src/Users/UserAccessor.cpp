@@ -78,6 +78,19 @@ tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> UserAccessor::pull(
 namespace
 {
 
+Users::User* findUserOfDevice(DevicesMap const& devicesMap,
+                              UsersMap& usersMap,
+                              Trustchain::DeviceId const& deviceId)
+{
+  auto const deviceIt = devicesMap.find(deviceId);
+  if (deviceIt == devicesMap.end())
+    return nullptr;
+  auto const userIt = usersMap.find(deviceIt->second.userId);
+  if (userIt == usersMap.end())
+    return nullptr;
+  return &userIt->second;
+}
+
 auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
                         Crypto::PublicSignatureKey const& trustchainPubSigKey,
                         gsl::span<Trustchain::ServerEntry const> serverEntries)
@@ -108,16 +121,15 @@ auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
     else if (auto const deviceRevocation =
                  serverEntry.action().get_if<DeviceRevocation>())
     {
-      auto const deviceIt = devicesMap.find(deviceRevocation->deviceId());
-      if (deviceIt == devicesMap.end())
-        throw Errors::AssertionError("no such author");
-      auto const userIt = usersMap.find(deviceIt->second.userId);
-      if (userIt == usersMap.end())
-        throw Errors::AssertionError("no such user");
-      auto const entry =
-          Verif::verifyDeviceRevocation(serverEntry, userIt->second);
-      if (auto const dr2 = deviceRevocation->get_if<DeviceRevocation::v2>())
-        userIt->second.userKey = dr2->publicEncryptionKey();
+      auto const user =
+          findUserOfDevice(devicesMap, usersMap, deviceRevocation->deviceId());
+      auto const entry = Verif::verifyDeviceRevocation(
+          serverEntry, user ? std::make_optional(*user) : std::nullopt);
+      if (!user)
+        throw Errors::AssertionError(
+            "user not found, verification should have failed");
+
+      *user = Updater::applyDeviceRevocationToUser(entry, *user);
     }
     else if (serverEntry.action().holds_alternative<TrustchainCreation>())
     {
