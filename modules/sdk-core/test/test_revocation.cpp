@@ -76,10 +76,10 @@ TEST_CASE("Revocation tests")
   SUBCASE("devicePrivateKey can be encrypted & decrypted")
   {
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const encryptedPrivateKeys = AWAIT(
+    auto const encryptedPrivateKeys =
         Revocation::encryptPrivateKeyForDevices(deviceResult.user,
                                                 userResult.user.devices[0].id,
-                                                encryptionKeyPair.privateKey));
+                                                encryptionKeyPair.privateKey);
 
     REQUIRE(encryptedPrivateKeys.size() == 1);
 

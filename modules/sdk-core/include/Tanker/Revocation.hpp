@@ -45,7 +45,7 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
 using SealedKeysForDevices =
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices;
 
-tc::cotask<SealedKeysForDevices> encryptPrivateKeyForDevices(
+SealedKeysForDevices encryptPrivateKeyForDevices(
     Users::User const& user,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
@@ -62,7 +62,7 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
 
 std::optional<Crypto::SealedPrivateEncryptionKey>
 findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
-                               SealedKeysForDevices const& keyForDevices);
+                                SealedKeysForDevices const& keyForDevices);
 
 tc::cotask<void> onOtherDeviceRevocation(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation,

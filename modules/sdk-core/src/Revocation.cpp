@@ -72,8 +72,7 @@ tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
   TC_RETURN(encryptedKeyForPreviousUserKey);
 }
 
-tc::cotask<DeviceRevocation::v2::SealedKeysForDevices>
-encryptPrivateKeyForDevices(
+DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
     Users::User const& user,
     DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey)
@@ -89,7 +88,7 @@ encryptPrivateKeyForDevices(
     }
   }
 
-  TC_RETURN(userKeys);
+  return userKeys;
 }
 
 tc::cotask<void> revokeDevice(DeviceId const& deviceId,
@@ -108,8 +107,8 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
   auto const encryptedKeyForPreviousUserKey = TC_AWAIT(
       encryptForPreviousUserKey(localUser, user, newEncryptionKey.publicKey));
 
-  auto const userKeys = TC_AWAIT(
-      encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey));
+  auto const userKeys =
+      encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey);
 
   auto const clientEntry = Users::revokeDeviceEntry(
       trustchainId,
