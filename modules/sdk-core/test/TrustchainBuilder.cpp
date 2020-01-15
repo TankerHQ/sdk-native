@@ -55,7 +55,8 @@ TrustchainBuilder::Device createDevice()
       {}, // deviceId will be filled in later
       {}, // userId will be filled in later
       {}, // delegation will be filled in later
-      {}  // createdAtIndex will be filled in later
+      {}, // createdAtIndex will be filled in later
+      {}  // revokedAtIndex is none
   };
 }
 }
@@ -67,6 +68,7 @@ Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
                                createdAtIndex,
                                // This completely arbitrary...
                                true,
+                               revokedAtIndex,
                                keys.signatureKeyPair.publicKey,
                                keys.encryptionKeyPair.publicKey);
 }
@@ -726,6 +728,13 @@ ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
       _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
+
+  auto const revokedDevice =
+      std::find_if(targetUser->devices.begin(),
+                   targetUser->devices.end(),
+                   [&](auto const dev) { return dev.id == target.id; });
+  targetUser->devices.erase(revokedDevice);
+
   return _entries.back();
 }
 
@@ -761,7 +770,7 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : targetUser->devices)
   {
-    if (device.id != target.id)
+    if (device.id != target.id && !device.revokedAtIndex)
     {
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{
           Crypto::sealEncrypt(newEncryptionKey.privateKey,
@@ -784,7 +793,14 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
       _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
+
   targetUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
+  auto const revokedDevice =
+      std::find_if(targetUser->devices.begin(),
+                   targetUser->devices.end(),
+                   [&](auto const dev) { return dev.id == target.id; });
+  revokedDevice->revokedAtIndex = _entries.size();
+
   return _entries.back();
 }
 

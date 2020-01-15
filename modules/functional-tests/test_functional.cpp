@@ -537,8 +537,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "multiple devices can be successively revoked" *
-                      doctest::skip())
+                  "multiple devices can be successively revoked")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();

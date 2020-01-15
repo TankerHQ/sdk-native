@@ -507,11 +507,11 @@ TEST_CASE("Verif DeviceRevocationV1")
         Errc::InvalidUser);
   }
 
-  SUBCASE("should reject a revocation whose user has a userKey v1")
+  SUBCASE("should reject a revocation whose user has a userKey")
   {
-    auto fourthDevice = builder.makeDevice3("alice");
+    thirdDevice.user.userKey = Crypto::makeEncryptionKeyPair().publicKey;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(revokeEntry, fourthDevice.user),
+        Verif::verifyDeviceRevocation(revokeEntry, thirdDevice.user),
         Errc::InvalidUserKey);
   }
 }

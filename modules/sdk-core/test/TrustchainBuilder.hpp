@@ -40,6 +40,7 @@ public:
     Tanker::Trustchain::UserId userId;
     Tanker::Identity::Delegation delegation;
     uint64_t createdAtIndex;
+    std::optional<uint64_t> revokedAtIndex;
 
     Tanker::Users::Device asTankerDevice() const;
   };
