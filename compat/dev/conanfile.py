@@ -2,6 +2,7 @@ from conans import ConanFile, CMake
 
 class Compat(ConanFile):
     generators = "cmake", "ycm"
+    settings = "build_type"
 
     def requirements(self):
         self.requires("tanker/dev@tanker/dev")

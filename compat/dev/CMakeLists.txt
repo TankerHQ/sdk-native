@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
+message(STATUS "Building with ${CMAKE_BUILD_TYPE} settings")
 
 add_executable(compat
   main.cpp
