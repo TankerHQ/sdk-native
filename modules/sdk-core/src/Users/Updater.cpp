@@ -72,6 +72,15 @@ Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
   return *previousUser;
 }
 
+Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
+                                        Users::User previousUser)
+{
+  auto const dr = entry.action.get<DeviceRevocation>();
+  if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
+    previousUser.userKey = v2->publicEncryptionKey();
+  return previousUser;
+}
+
 std::optional<ExtractedUserKeys> extractEncryptedUserKey(
     DeviceCreation const& deviceCreation)
 {
@@ -142,14 +151,13 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
       else if (auto const deviceRevocation =
                    serverEntry.action().get_if<DeviceRevocation>())
       {
-        auto const entry =
-            Verif::verifyDeviceRevocation(serverEntry, user.value());
+        auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
         if (auto const extractedKeys =
                 extractEncryptedUserKey(*deviceRevocation, selfDeviceId))
         {
           auto const [newPublicUserKey, sealedUserKey] = *extractedKeys;
           sealedKeys.push_back(sealedUserKey);
-          user->userKey = newPublicUserKey;
+          user = applyDeviceRevocationToUser(entry, *user);
         }
       }
     }
