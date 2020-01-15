@@ -212,4 +212,5 @@ private:
   std::vector<Tanker::Trustchain::ServerEntry> _entries;
 
   User* findMutableUser(Tanker::SUserId const& suserId);
+  User* findMutableUserByDeviceId(Tanker::Trustchain::DeviceId const& deviceId);
 };

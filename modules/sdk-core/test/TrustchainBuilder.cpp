@@ -680,27 +680,37 @@ ServerEntry TrustchainBuilder::shareToProvisionalUser(
   return _entries.back();
 }
 
+TrustchainBuilder::User* TrustchainBuilder::findMutableUserByDeviceId(
+    Trustchain::DeviceId const& deviceId)
+{
+  auto const user =
+      std::find_if(_users.begin(), _users.end(), [&](auto const user) {
+        return std::find_if(user.devices.begin(),
+                            user.devices.end(),
+                            [&](Device const& device) {
+                              return device.id == deviceId;
+                            }) != user.devices.end();
+      });
+
+  if (user == _users.end())
+    return nullptr;
+
+  return &*user;
+}
+
 ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
                                              Device const& target,
                                              bool unsafe)
 {
-  auto const foundUser = std::find_if(
-      _users.begin(), _users.end(), [sender, target](auto const user) {
-        return std::find_if(user.devices.begin(),
-                            user.devices.end(),
-                            [sender](Device const& device) {
-                              return device.asTankerDevice() ==
-                                     sender.asTankerDevice();
-                            }) != user.devices.end() &&
-               std::find_if(user.devices.begin(),
-                            user.devices.end(),
-                            [target](Device const& device) {
-                              return device.asTankerDevice() ==
-                                     target.asTankerDevice();
-                            }) != user.devices.end();
-      });
+  auto senderUser = findMutableUserByDeviceId(sender.id);
+  auto targetUser = findMutableUserByDeviceId(target.id);
 
-  if (foundUser == _users.end() && !unsafe)
+  if (!senderUser)
+    throw std::runtime_error("TrustchainBuilder: revoke: unknown sender user");
+  if (!targetUser)
+    throw std::runtime_error("TrustchainBuilder: revoke: unknown target user");
+
+  if (senderUser != targetUser && !unsafe)
   {
     throw std::runtime_error(
         "TrustchainBuilder: cannot revoke a device from another user");
