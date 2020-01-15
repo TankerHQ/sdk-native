@@ -281,6 +281,7 @@ tc::cotask<Session::Config> Opener::openDevice()
                    Status::Ready);
   }
   TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }
 
