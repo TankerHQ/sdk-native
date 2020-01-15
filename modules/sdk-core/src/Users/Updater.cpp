@@ -82,17 +82,16 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
   return previousUser;
 }
 
-std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     DeviceCreation const& deviceCreation)
 {
   if (auto dc3 = deviceCreation.get_if<DeviceCreation::v3>())
-    return std::make_tuple(dc3->publicUserEncryptionKey(),
-                           Crypto::SealedEncryptionKeyPair{
-                               {}, dc3->sealedPrivateUserEncryptionKey()});
+    return Crypto::SealedEncryptionKeyPair{
+        {}, dc3->sealedPrivateUserEncryptionKey()};
   return std::nullopt;
 }
 
-std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     DeviceRevocation const& deviceRevocation,
     Trustchain::DeviceId const& selfDeviceId)
 {
@@ -103,18 +102,14 @@ std::optional<ExtractedUserKeys> extractEncryptedUserKey(
       if (auto const encryptedPrivateKey =
               Revocation::findUserKeyFromDeviceSealedKeys(
                   selfDeviceId, dr2->sealedUserKeysForDevices()))
-        return std::make_tuple(
-            dr2->publicEncryptionKey(),
-            Crypto::SealedEncryptionKeyPair{dr2->publicEncryptionKey(),
-                                            *encryptedPrivateKey});
+        return Crypto::SealedEncryptionKeyPair{dr2->publicEncryptionKey(),
+                                               *encryptedPrivateKey};
       if (selfDeviceId == dr2->deviceId())
         throw formatEx(Errors::Errc::DeviceRevoked,
                        "Our device has been revoked");
     }
-    return std::make_tuple(
-        dr2->publicEncryptionKey(),
-        Crypto::SealedEncryptionKeyPair{dr2->previousPublicEncryptionKey(),
-                                        dr2->sealedKeyForPreviousUserKey()});
+    return Crypto::SealedEncryptionKeyPair{dr2->previousPublicEncryptionKey(),
+                                           dr2->sealedKeyForPreviousUserKey()};
   }
   return std::nullopt;
 }
@@ -145,8 +140,7 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         {
           selfDeviceId = device.id;
           if (extractedKeys)
-            sealedKeys.push_back(
-                std::get<Crypto::SealedEncryptionKeyPair>(*extractedKeys));
+            sealedKeys.push_back(*extractedKeys);
         }
       }
       else if (auto const deviceRevocation =
@@ -155,10 +149,7 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
         if (auto const extractedKeys =
                 extractEncryptedUserKey(*deviceRevocation, selfDeviceId))
-        {
-          auto const [newPublicUserKey, sealedUserKey] = *extractedKeys;
-          sealedKeys.push_back(sealedUserKey);
-        }
+          sealedKeys.push_back(*extractedKeys);
         user = applyDeviceRevocationToUser(entry, *user);
       }
     }

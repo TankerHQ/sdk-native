@@ -64,11 +64,10 @@ TEST_CASE("UserUpdater")
       auto const dev = selfdevice.entry.action()
                            .get<Actions::DeviceCreation>()
                            .get<Actions::DeviceCreation::v3>();
-      auto const sealedUserKey = std::get<SealedEncryptionKeyPair>(*encUserKey);
-      CHECK_EQ(sealedUserKey.sealedPrivateKey,
-               dev.sealedPrivateUserEncryptionKey());
+      auto const [publicUserKey, sealedPrivateKey] = *encUserKey;
+      CHECK_EQ(sealedPrivateKey, dev.sealedPrivateUserEncryptionKey());
       CHECK_EQ(
-          std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+          encUserKey.value(),
           SealedEncryptionKeyPair{{}, dev.sealedPrivateUserEncryptionKey()});
     }
 
@@ -82,7 +81,7 @@ TEST_CASE("UserUpdater")
       auto const dev = revokedEntry1.action()
                            .get<Actions::DeviceRevocation>()
                            .get<Actions::DeviceRevocation::v2>();
-      CHECK_EQ(std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+      CHECK_EQ(encUserKey.value(),
                SealedEncryptionKeyPair{dev.previousPublicEncryptionKey(),
                                        dev.sealedKeyForPreviousUserKey()});
     }
@@ -102,7 +101,7 @@ TEST_CASE("UserUpdater")
           Tanker::Revocation::findUserKeyFromDeviceSealedKeys(
               selfdevice.device.id, dev.sealedUserKeysForDevices());
       CHECK_EQ(
-          std::get<SealedEncryptionKeyPair>(encUserKey.value()),
+          encUserKey.value(),
           SealedEncryptionKeyPair{dev.publicEncryptionKey(), *encryptedKey});
     }
   }

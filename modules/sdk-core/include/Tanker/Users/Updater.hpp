@@ -31,13 +31,10 @@ Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::ServerEntry const& serverEntry);
 
-using ExtractedUserKeys =
-    std::tuple<Crypto::PublicEncryptionKey, Crypto::SealedEncryptionKeyPair>;
-
-std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
 
-std::optional<ExtractedUserKeys> extractEncryptedUserKey(
+std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation,
     Trustchain::DeviceId const& selfDeviceId);
 
