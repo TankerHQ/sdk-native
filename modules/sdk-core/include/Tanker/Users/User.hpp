@@ -11,6 +11,7 @@ namespace Tanker::Users
 struct User
 {
   std::optional<Device> findDevice(Trustchain::DeviceId const& deviceId) const;
+  Device& getDevice(Trustchain::DeviceId const& deviceId);
   std::optional<Device> findDevice(
       Crypto::PublicEncryptionKey const& publicKey) const;
 

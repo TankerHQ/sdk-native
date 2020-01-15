@@ -1,3 +1,4 @@
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <tuple>
@@ -11,6 +12,14 @@ std::optional<Device> User::findDevice(
     if (device.id == deviceId)
       return device;
   return std::nullopt;
+}
+
+Device& User::getDevice(Trustchain::DeviceId const& deviceId)
+{
+  for (auto& device : devices)
+    if (device.id == deviceId)
+      return device;
+  throw Errors::AssertionError("did not find user's device");
 }
 
 std::optional<Device> User::findDevice(

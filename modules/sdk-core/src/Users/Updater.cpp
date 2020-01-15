@@ -78,6 +78,7 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
   auto const dr = entry.action.get<DeviceRevocation>();
   if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
     previousUser.userKey = v2->publicEncryptionKey();
+  previousUser.getDevice(dr.deviceId()).revokedAtBlkIndex = entry.index;
   return previousUser;
 }
 
@@ -157,8 +158,8 @@ extractUserSealedKeys(DeviceKeys const& deviceKeys,
         {
           auto const [newPublicUserKey, sealedUserKey] = *extractedKeys;
           sealedKeys.push_back(sealedUserKey);
-          user = applyDeviceRevocationToUser(entry, *user);
         }
+        user = applyDeviceRevocationToUser(entry, *user);
       }
     }
     catch (Errors::Exception const& err)
