@@ -164,7 +164,6 @@ public:
                                                 bool unsafe = false);
   Tanker::Trustchain::ServerEntry revokeDevice2(Device const& sender,
                                                 Device const& target,
-                                                User const& user,
                                                 bool unsafe = false);
 
   std::optional<User> findUser(std::string const& suserId) const;

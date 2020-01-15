@@ -24,8 +24,7 @@ auto revokeADeviceGetAnEntry(TrustchainBuilder& builder,
                              TrustchainBuilder::Device const& source)
 {
   auto const target = builder.makeDevice("Alice");
-  auto const user = builder.findUser("Alice");
-  builder.revokeDevice2(source, target.device, *user);
+  builder.revokeDevice2(source, target.device);
   return builder.entries().back();
 }
 }

@@ -731,30 +731,35 @@ ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
 
 ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
                                              Device const& target,
-                                             User const& user,
                                              bool unsafe)
 {
-  auto const userHasDevices = user.findDevice(sender.id).has_value() &&
-                              user.findDevice(target.id).has_value();
+  auto senderUser = findMutableUserByDeviceId(sender.id);
+  auto targetUser = findMutableUserByDeviceId(target.id);
 
-  if (!userHasDevices && !unsafe)
+  if (!senderUser)
+    throw std::runtime_error("TrustchainBuilder: revoke: unknown sender user");
+  if (!targetUser)
+    throw std::runtime_error("TrustchainBuilder: revoke: unknown target user");
+
+  if (senderUser != targetUser && !unsafe)
   {
     throw std::runtime_error(
         "TrustchainBuilder: cannot revoke a device from another user");
   }
   auto const newEncryptionKey = Crypto::makeEncryptionKeyPair();
-  auto const tankerUser = user.asTankerUser();
+  auto const tankerUser = targetUser->asTankerUser();
   auto oldPublicEncryptionKey = Crypto::PublicEncryptionKey{};
   auto encryptedKeyForPreviousUserKey = Crypto::SealedPrivateEncryptionKey{};
   if (tankerUser.userKey)
   {
     oldPublicEncryptionKey = *tankerUser.userKey;
-    encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-        user.userKeys.back().keyPair.privateKey, newEncryptionKey.publicKey);
+    encryptedKeyForPreviousUserKey =
+        Crypto::sealEncrypt(targetUser->userKeys.back().keyPair.privateKey,
+                            newEncryptionKey.publicKey);
   }
 
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
-  for (auto const& device : user.devices)
+  for (auto const& device : targetUser->devices)
   {
     if (device.id != target.id)
     {
@@ -779,8 +784,7 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
       _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
-  auto mutableUser = findMutableUser(user.suserId);
-  mutableUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
+  targetUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
   return _entries.back();
 }
 

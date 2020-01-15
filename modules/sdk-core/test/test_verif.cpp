@@ -526,15 +526,14 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto aliceUser = builder.findUser("alice")->asTankerUser();
   auto& authorDevice = aliceUser.devices[1];
   auto& targetDevice = aliceUser.devices[2];
-  auto entry = builder.revokeDevice2(
-      secondDevice.device, thirdDevice.device, *builder.findUser("alice"));
+  auto entry = builder.revokeDevice2(secondDevice.device, thirdDevice.device);
 
   auto bob = builder.makeUser1("bob");
   auto bobDevice = builder.makeDevice1("bob");
   auto bobOtherDevice = builder.makeDevice1("bob");
   auto bobUser = builder.findUser("bob");
   auto entryUserV1 =
-      builder.revokeDevice2(bobDevice.device, bobOtherDevice.device, *bobUser);
+      builder.revokeDevice2(bobDevice.device, bobOtherDevice.device);
 
   deviceRevocationCommonChecks(entry, authorDevice, targetDevice, aliceUser);
 
@@ -563,8 +562,8 @@ TEST_CASE("Verif DeviceRevocationV2")
 
   SUBCASE("should reject a revocation for another user's device")
   {
-    auto const revokeEntry = builder.revokeDevice2(
-        secondDevice.device, bobOtherDevice.device, user.user, true);
+    auto const revokeEntry =
+        builder.revokeDevice2(secondDevice.device, bobOtherDevice.device, true);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(revokeEntry, secondDevice.user),
         Errc::InvalidUser);
