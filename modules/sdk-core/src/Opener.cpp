@@ -145,12 +145,6 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
   _deviceKeys = TC_AWAIT(getDeviceKeys(_db.get()));
   _contactStore = std::make_unique<Users::ContactStore>(_db.get());
-  _client->setConnectionHandler([this]() -> tc::cotask<void> {
-    TC_AWAIT(_userRequester->authenticate(_info.trustchainId,
-                                          _identity->delegation.userId,
-                                          _deviceKeys.signatureKeyPair));
-  });
-
   auto const [deviceExists, userExists, unused] = TC_AWAIT(
       _userRequester->userStatus(_info.trustchainId,
                                  _identity->delegation.userId,

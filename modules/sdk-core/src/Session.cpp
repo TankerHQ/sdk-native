@@ -105,6 +105,10 @@ Session::Session(Config&& config)
                          &_provisionalUsersAccessor,
                          &_resourceKeyStore)
 {
+  _client->setConnectionHandler([this]() -> tc::cotask<void> {
+    TC_AWAIT(_userRequester->authenticate(
+        trustchainId(), userId(), _localUser->deviceKeys().signatureKeyPair));
+  });
 }
 
 UserId const& Session::userId() const
