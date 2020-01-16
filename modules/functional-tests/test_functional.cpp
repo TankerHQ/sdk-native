@@ -521,15 +521,15 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> decryptedData;
   decryptedData.resize(clearData.size());
 
-  bool wasEmitted = false;
-  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
+  tc::promise<void> wasEmitted;
+  secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
                                 Errc::DeviceRevoked);
-  CHECK(wasEmitted);
   CHECK(secondSession->status() == Status::Stopped);
+  CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
   TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
@@ -554,8 +554,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> decryptedData;
   decryptedData.resize(clearData.size());
 
-  bool wasEmitted = false;
-  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
+  tc::promise<void> wasEmitted;
+  secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
 
   // First Revoke
   REQUIRE_NOTHROW(
@@ -563,23 +563,23 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
                                 Errc::DeviceRevoked);
-  CHECK(wasEmitted);
   CHECK(secondSession->status() == Status::Stopped);
+  CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
   secondSession = TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 
   //   Second Revoke
-  wasEmitted = false;
-  secondSession->connectDeviceRevoked([&] { wasEmitted = true; });
+  wasEmitted = {};
+  secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->revokeDevice(secondSession->deviceId().get())));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
                                 Errc::DeviceRevoked);
-  CHECK(wasEmitted);
   CHECK(secondSession->status() == Status::Stopped);
+  CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
   TC_AWAIT(aliceSecondDevice.open());
   REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
