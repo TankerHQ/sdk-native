@@ -167,7 +167,8 @@ private:
         _taskCanceler.terminate();
         TC_AWAIT(_core.nukeDatabase());
         _core.stop();
-        _asyncDeviceRevoked();
+        if (_asyncDeviceRevoked)
+          _asyncDeviceRevoked();
         std::rethrow_exception(exception);
       });
     });
