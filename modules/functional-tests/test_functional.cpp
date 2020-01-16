@@ -13,6 +13,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/UniquePath.hpp>
+#include <Helpers/WaitFor.hpp>
 
 #include "CheckDecrypt.hpp"
 
@@ -46,19 +47,6 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
                  std::back_inserter(clearDatas),
                  [](auto&& clear) { return make_buffer(clear); });
   return clearDatas;
-}
-
-tc::cotask<void> waitFor(tc::promise<void> prom)
-{
-  std::vector<tc::future<void>> futures;
-  futures.push_back(prom.get_future());
-  futures.push_back(tc::async_wait(std::chrono::seconds(2)));
-  auto const result =
-      TC_AWAIT(tc::when_any(std::make_move_iterator(futures.begin()),
-                            std::make_move_iterator(futures.end()),
-                            tc::when_any_options::auto_cancel));
-  if (result.index != 0)
-    throw std::runtime_error("timeout waiting for promise");
 }
 }
 
