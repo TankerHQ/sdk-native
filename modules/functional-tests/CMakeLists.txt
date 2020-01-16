@@ -13,6 +13,7 @@ add_executable(test_functional
   test_functional.cpp
   test_verification.cpp
   test_groups.cpp
+  test_revocation.cpp
 )
 
 target_link_libraries(test_functional
