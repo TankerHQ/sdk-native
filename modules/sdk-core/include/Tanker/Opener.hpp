@@ -2,6 +2,7 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
@@ -64,10 +65,12 @@ private:
   std::unique_ptr<Users::ContactStore> _contactStore;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
+  DeviceKeys _deviceKeys;
   Status _status = Status::Stopped;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
   tc::cotask<void> fetchUser();
+  void extractIdentity(std::string const& b64Identity);
 
   tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
   Session::Config makeConfig();
