@@ -58,7 +58,10 @@ Status Opener::status() const
 
 tc::cotask<void> Opener::fetchUser()
 {
-  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  TC_AWAIT(
+      _userRequester->authenticate(_info.trustchainId,
+                                   _localUser->userId(),
+                                   _localUser->deviceKeys().signatureKeyPair));
   auto const serverEntries = TC_AWAIT(_userRequester->getMe());
   Users::Updater::updateLocalUser(
       serverEntries, _info.trustchainId, *_localUser, *_contactStore);
@@ -101,7 +104,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
   _contactStore = std::make_unique<Users::ContactStore>(_db.get());
 
   _client->setConnectionHandler([this]() -> tc::cotask<void> {
-    TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+    TC_AWAIT(_userRequester->authenticate(
+        _info.trustchainId,
+        _localUser->userId(),
+        _localUser->deviceKeys().signatureKeyPair));
   });
 
   auto const userStatusResult = TC_AWAIT(_userRequester->userStatus(
@@ -280,7 +286,10 @@ tc::cotask<Session::Config> Opener::openDevice()
                    status(),
                    Status::Ready);
   }
-  TC_AWAIT(_userRequester->authenticate(_info.trustchainId, *_localUser));
+  TC_AWAIT(
+      _userRequester->authenticate(_info.trustchainId,
+                                   _localUser->userId(),
+                                   _localUser->deviceKeys().signatureKeyPair));
   TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }

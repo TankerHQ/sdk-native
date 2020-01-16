@@ -20,10 +20,12 @@ public:
                  Trustchain::UserId const& userId,
                  Crypto::PublicSignatureKey const& publicSignatureKey),
              override);
-  MAKE_MOCK2(authenticate,
-             tc::cotask<void>(Trustchain::TrustchainId const& trustchainId,
-                              Users::LocalUser const& localUser),
-             override);
+  MAKE_MOCK3(
+      authenticate,
+      tc::cotask<void>(Trustchain::TrustchainId const& trustchainId,
+                       Trustchain::UserId const& userId,
+                       Crypto::SignatureKeyPair const& userSignatureKeyPair),
+      override);
   MAKE_MOCK1(getUsers,
              tc::cotask<std::vector<Trustchain::ServerEntry>>(
                  gsl::span<Trustchain::UserId const> userIds),

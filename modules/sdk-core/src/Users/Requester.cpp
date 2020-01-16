@@ -7,7 +7,6 @@
 #include <Tanker/Errors/ServerErrcCategory.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
-#include <Tanker/Users/LocalUser.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
@@ -74,7 +73,9 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
 }
 
 tc::cotask<void> Requester::authenticate(
-    Trustchain::TrustchainId const& trustchainId, LocalUser const& localUser)
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    Crypto::SignatureKeyPair const& userSignatureKeyPair)
 {
   FUNC_TIMER(Net);
   auto const challenge = TC_AWAIT(_client->emit("request auth challenge", {}))
@@ -92,13 +93,12 @@ tc::cotask<void> Requester::authenticate(
   }
   auto const signature =
       Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   localUser.deviceKeys().signatureKeyPair.privateKey);
+                   userSignatureKeyPair.privateKey);
   auto const request =
       nlohmann::json{{"signature", signature},
-                     {"public_signature_key",
-                      localUser.deviceKeys().signatureKeyPair.publicKey},
+                     {"public_signature_key", userSignatureKeyPair.publicKey},
                      {"trustchain_id", trustchainId},
-                     {"user_id", localUser.userId()}};
+                     {"user_id", userId}};
   try
   {
     TC_AWAIT(_client->emit("authenticate device", request));

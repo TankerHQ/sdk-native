@@ -1,11 +1,13 @@
 #pragma once
 
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
 #include <Tanker/Client.hpp>
 
 namespace Tanker
 {
+struct DeviceKeys;
 
 namespace Users
 {
@@ -21,8 +23,10 @@ public:
       gsl::span<Trustchain::UserId const> userIds) override;
   tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
-  tc::cotask<void> authenticate(Trustchain::TrustchainId const& trustchainId,
-                                LocalUser const& localUser) override;
+  tc::cotask<void> authenticate(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
   tc::cotask<UserStatusResult> userStatus(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -14,8 +15,6 @@
 
 namespace Tanker::Users
 {
-class LocalUser;
-
 struct UserStatusResult
 {
   bool deviceExists;
@@ -34,7 +33,8 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,
-      LocalUser const& localUser) = 0;
+      Trustchain::UserId const& userId,
+      Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
   virtual tc::cotask<UserStatusResult> userStatus(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
