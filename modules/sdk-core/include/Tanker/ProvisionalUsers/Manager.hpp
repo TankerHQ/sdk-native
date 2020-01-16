@@ -40,7 +40,6 @@ private:
   Client* _client;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
-  Crypto::SymmetricKey _userSecret;
   Trustchain::TrustchainId _trustchainId;
 
   std::optional<Identity::SecretProvisionalIdentity> _provisionalIdentity;

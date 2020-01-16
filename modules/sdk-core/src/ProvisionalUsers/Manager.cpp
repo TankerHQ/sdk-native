@@ -50,7 +50,6 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   }
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
   if (TC_AWAIT(_provisionalUserKeysStore
-
                    ->findProvisionalUserKeysByAppPublicEncryptionKey(
                        provisionalIdentity.appEncryptionKeyPair.publicKey)))
   {
