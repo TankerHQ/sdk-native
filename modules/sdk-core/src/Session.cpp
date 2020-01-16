@@ -186,7 +186,12 @@ Trustchain::DeviceId const& Session::deviceId() const
 
 tc::cotask<std::vector<Users::Device>> Session::getDeviceList() const
 {
-  TC_RETURN(TC_AWAIT(_contactStore->findUserDevices(userId())));
+  auto const results =
+      TC_AWAIT(_userAccessor.pull(gsl::make_span(std::addressof(userId()), 1)));
+  if (results.found.size() != 1)
+    throw Errors::AssertionError("Did not find our userId");
+
+  TC_RETURN(results.found.at(0).devices());
 }
 
 tc::cotask<void> Session::share(

@@ -155,7 +155,7 @@ private:
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
 
-  Users::UserAccessor _userAccessor;
+  mutable Users::UserAccessor _userAccessor;
   ProvisionalUsers::Accessor _provisionalUsersAccessor;
   ProvisionalUsers::Manager _provisionalUsersManager;
   Groups::Accessor _groupAccessor;
