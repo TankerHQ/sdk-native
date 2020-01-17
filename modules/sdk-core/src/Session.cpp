@@ -111,6 +111,13 @@ Session::Session(Config&& config)
   });
 }
 
+tc::cotask<void> Session::updateLocalUser()
+{
+  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
+  TC_AWAIT(Users::Updater::updateLocalUser(
+      serverEntries, trustchainId(), *_localUser, *_contactStore));
+}
+
 UserId const& Session::userId() const
 {
   return this->_localUser->userId();
@@ -160,6 +167,7 @@ tc::cotask<std::vector<uint8_t>> Session::encrypt(
       encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
   TC_RETURN(std::move(encryptedData));
 }
+
 tc::cotask<void> Session::decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData)
 {
@@ -287,6 +295,7 @@ Session::fetchVerificationMethods()
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
+  TC_AWAIT(updateLocalUser());
   TC_RETURN(TC_AWAIT(_provisionalUsersManager.attachProvisionalIdentity(
       TC_AWAIT(_localUser->currentKeyPair()), sidentity)));
 }
@@ -300,9 +309,7 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
-  TC_AWAIT(Users::Updater::updateLocalUser(
-      serverEntries, trustchainId(), *_localUser, *_contactStore));
+  TC_AWAIT(updateLocalUser());
   TC_AWAIT(Revocation::revokeDevice(
       deviceId, _trustchainId, *_localUser, *_contactStore, _client));
 }
@@ -342,6 +349,7 @@ tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
 
+  TC_AWAIT(updateLocalUser());
   auto const key = TC_AWAIT(_resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {

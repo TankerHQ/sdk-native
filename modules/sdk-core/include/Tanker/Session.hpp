@@ -126,6 +126,7 @@ public:
   tc::cotask<void> nukeDatabase();
 
 private:
+  tc::cotask<void> updateLocalUser();
   Trustchain::UserId const& userId() const;
   Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
