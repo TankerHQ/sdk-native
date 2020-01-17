@@ -298,42 +298,6 @@ tc::cotask<void> Session::verifyProvisionalIdentity(
       TC_AWAIT(_localUser->currentKeyPair()), verification));
 }
 
-tc::cotask<void> Session::catchUserKey(
-    Trustchain::DeviceId const& deviceId,
-    Trustchain::Actions::DeviceCreation const& deviceCreation)
-
-{
-  using Trustchain::Actions::DeviceCreation;
-  // no new user key (or old device < 3), no need to continue
-  if (auto const dc3 = deviceCreation.get_if<DeviceCreation::v3>())
-  {
-    // you need this so that Share shares to self using the user key
-    TC_AWAIT(_contactStore->putUserKey(deviceCreation.userId(),
-                                       dc3->publicUserEncryptionKey()));
-  }
-}
-
-tc::cotask<void> Session::onDeviceCreated(Entry const& entry)
-{
-  auto const& deviceCreation = entry.action.get<DeviceCreation>();
-  Trustchain::DeviceId const deviceId{entry.hash};
-  TC_AWAIT(catchUserKey(deviceId, deviceCreation));
-  Users::Device const createdDevice{deviceId,
-                                    deviceCreation.userId(),
-                                    entry.index,
-                                    deviceCreation.isGhostDevice(),
-                                    deviceCreation.publicSignatureKey(),
-                                    deviceCreation.publicEncryptionKey()};
-  TC_AWAIT(_contactStore->putUserDevice(createdDevice));
-}
-
-tc::cotask<void> Session::onDeviceRevoked(Entry const& entry)
-{
-  auto const& deviceRevocation = entry.action.get<DeviceRevocation>();
-  TC_AWAIT(Revocation::onOtherDeviceRevocation(
-      deviceRevocation, entry, *_contactStore, *_localUser));
-}
-
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   auto const serverEntries = TC_AWAIT(_userRequester->getMe());

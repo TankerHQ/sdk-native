@@ -112,9 +112,6 @@ public:
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
-  tc::cotask<void> catchUserKey(
-      Trustchain::DeviceId const& id,
-      Trustchain::Actions::DeviceCreation const& deviceCreation);
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
@@ -132,13 +129,6 @@ private:
   Trustchain::UserId const& userId() const;
   Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
-  tc::cotask<void> onDeviceCreated(Entry const& entry);
-  tc::cotask<void> onDeviceRevoked(Entry const& entry);
-  void onKeyToUserReceived(Entry const& entry);
-  void onKeyToUserGroupReceived(Entry const& entry);
-  tc::cotask<void> onUserGroupEntry(Entry const& entry);
-  tc::cotask<void> onProvisionalIdentityClaimEntry(Entry const& entry);
-  tc::cotask<void> onKeyPublishReceived(Entry const& entry);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
 
