@@ -39,7 +39,7 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::DeviceId const& selfDeviceId);
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
-extractUserSealedKeys(DeviceKeys const& deviceKeys,
+processUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::TrustchainId const& trustchainId,
                       Crypto::PublicSignatureKey const& trustchainPubSigKey,
                       gsl::span<Trustchain::ServerEntry const> entries);

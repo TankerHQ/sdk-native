@@ -108,7 +108,7 @@ TEST_CASE("UserUpdater")
 
   SUBCASE("processing server entries for the user")
   {
-    auto const [user, sealedKeys] = Updater::extractUserSealedKeys(
+    auto const [user, sealedKeys] = Updater::processUserSealedKeys(
         selfdevice.device.keys,
         builder.trustchainId(),
         builder.trustchainPublicKey(),

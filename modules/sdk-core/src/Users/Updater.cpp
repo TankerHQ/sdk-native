@@ -115,7 +115,7 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 }
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
-extractUserSealedKeys(DeviceKeys const& deviceKeys,
+processUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::TrustchainId const& trustchainId,
                       Crypto::PublicSignatureKey const& trustchainPubSigKey,
                       gsl::span<Trustchain::ServerEntry const> serverEntries)
@@ -226,7 +226,7 @@ processUserEntries(DeviceKeys const& deviceKeys,
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "User's block list is too short");
   auto signatureKey = extractTrustchainSignature(trustchainId, entries[0]);
-  auto [user, sealedKeys] = extractUserSealedKeys(
+  auto [user, sealedKeys] = processUserSealedKeys(
       deviceKeys, trustchainId, signatureKey, entries.subspan(1));
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
   return std::make_tuple(signatureKey, std::move(user), std::move(userKeys));
