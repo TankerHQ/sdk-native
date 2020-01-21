@@ -2,6 +2,7 @@
 
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -23,8 +24,7 @@ using DevicesMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
 class UserAccessor : public IUserAccessor
 {
 public:
-  UserAccessor(Trustchain::TrustchainId const& trustchainId,
-               Crypto::PublicSignatureKey const& trustchainPublicSignatureKey,
+  UserAccessor(Trustchain::Context trustchainCtx,
                Users::IRequester* requester,
                ContactStore const* contactStore);
 
@@ -48,8 +48,7 @@ private:
       -> tc::cotask<DevicesMap>;
 
 private:
-  Trustchain::TrustchainId _trustchainId;
-  Crypto::PublicSignatureKey _trustchainPublicSignatureKey;
+  Trustchain::Context _context;
   Users::IRequester* _requester;
   ContactStore const* _contactStore;
 };

@@ -69,7 +69,7 @@ TLOG_CATEGORY(Session);
 namespace Tanker
 {
 Session::Session(Config&& config)
-  : _trustchainId(config.trustchainId),
+  : _trustchainContext(config.trustchainContext),
     _db(std::move(config.db)),
     _localUser(std::move(config.localUser)),
     _client(std::move(config.client)),
@@ -79,10 +79,8 @@ Session::Session(Config&& config)
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _userAccessor(_trustchainId,
-                  _localUser->trustchainPublicSignatureKey(),
-                  _userRequester.get(),
-                  _contactStore.get()),
+    _userAccessor(
+        _trustchainContext, _userRequester.get(), _contactStore.get()),
     _provisionalUsersAccessor(_client.get(),
                               _contactStore.get(),
                               _localUser.get(),
@@ -91,7 +89,7 @@ Session::Session(Config&& config)
                              _client.get(),
                              &_provisionalUsersAccessor,
                              &_provisionalUserKeysStore,
-                             _trustchainId),
+                             _trustchainContext.id()),
     _groupAccessor(_groupsRequester.get(),
                    &_userAccessor,
                    &_groupStore,
@@ -123,7 +121,7 @@ UserId const& Session::userId() const
 
 Trustchain::TrustchainId const& Session::trustchainId() const
 {
-  return this->_trustchainId;
+  return this->_trustchainContext.id();
 }
 
 Crypto::SymmetricKey const& Session::userSecret() const
@@ -140,12 +138,12 @@ tc::cotask<void> Session::encrypt(
   auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
-      to_string(Identity::PublicPermanentIdentity{_trustchainId, userId()})});
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()})});
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
   TC_AWAIT(Share::share(_userAccessor,
                         _groupAccessor,
-                        _trustchainId,
+                        trustchainId(),
                         _localUser->deviceId(),
                         _localUser->deviceKeys().signatureKeyPair.privateKey,
                         *_client,
@@ -215,7 +213,7 @@ tc::cotask<void> Session::share(
   TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
                         _groupAccessor,
-                        _trustchainId,
+                        trustchainId(),
                         _localUser->deviceId(),
                         _localUser->deviceKeys().signatureKeyPair.privateKey,
                         *_client,
@@ -231,7 +229,7 @@ tc::cotask<SGroupId> Session::createGroup(
       _userAccessor,
       *_client,
       spublicIdentities,
-      _trustchainId,
+      trustchainId(),
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey));
   TC_RETURN(groupId);
@@ -249,7 +247,7 @@ tc::cotask<void> Session::updateGroupMembers(
       _groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
-      _trustchainId,
+      trustchainId(),
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey));
 }
@@ -287,7 +285,7 @@ tc::cotask<std::vector<Unlock::VerificationMethod>>
 Session::fetchVerificationMethods()
 {
   TC_RETURN(TC_AWAIT(_client->fetchVerificationMethods(
-      _trustchainId, userId(), userSecret())));
+      trustchainId(), userId(), userSecret())));
 }
 
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
@@ -309,7 +307,7 @@ tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(updateLocalUser());
   TC_AWAIT(Revocation::revokeDevice(
-      deviceId, _trustchainId, *_localUser, *_contactStore, _client));
+      deviceId, trustchainId(), *_localUser, *_contactStore, _client));
 }
 
 tc::cotask<void> Session::nukeDatabase()
@@ -326,13 +324,13 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
-      to_string(Identity::PublicPermanentIdentity{_trustchainId, userId()})});
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()})});
 
   TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
                                     encryptor.symmetricKey()));
   TC_AWAIT(Share::share(_userAccessor,
                         _groupAccessor,
-                        _trustchainId,
+                        trustchainId(),
                         _localUser->deviceId(),
                         _localUser->deviceKeys().signatureKeyPair.privateKey,
                         *_client,

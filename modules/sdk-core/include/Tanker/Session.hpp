@@ -16,6 +16,7 @@
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -64,7 +65,7 @@ public:
   struct Config
   {
     DataStore::DatabasePtr db;
-    Trustchain::TrustchainId trustchainId;
+    Trustchain::Context trustchainContext;
     Users::LocalUser::Ptr localUser;
     std::unique_ptr<Users::ContactStore> contactStore;
     std::unique_ptr<Client> client;
@@ -133,7 +134,7 @@ private:
       Trustchain::ResourceId const&);
 
 private:
-  Trustchain::TrustchainId _trustchainId;
+  Trustchain::Context _trustchainContext;
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;

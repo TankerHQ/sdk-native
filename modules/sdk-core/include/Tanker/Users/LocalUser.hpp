@@ -33,7 +33,6 @@ public:
             Trustchain::DeviceId const& deviceId,
             Crypto::SymmetricKey const& userSecret,
             DeviceKeys const& deviceKeys,
-            Crypto::PublicSignatureKey const& trustchainPublicSignatureKey,
             DataStore::ADatabase* dbCon);
 
   static tc::cotask<Ptr> open(Identity::SecretPermanentIdentity const&,
@@ -42,9 +41,6 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   DeviceKeys const& deviceKeys() const;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
-  Crypto::PublicSignatureKey const& trustchainPublicSignatureKey() const;
-  tc::cotask<void> setTrustchainPublicSignatureKey(
-      Crypto::PublicSignatureKey const&);
   Trustchain::UserId const& userId() const;
   Crypto::SymmetricKey const& userSecret() const;
   tc::cotask<Crypto::EncryptionKeyPair> currentKeyPair() const;
@@ -58,7 +54,6 @@ private:
   Trustchain::DeviceId _deviceId;
   Crypto::SymmetricKey _userSecret;
   DeviceKeys _deviceKeys;
-  Crypto::PublicSignatureKey _trustchainPublicSignatureKey;
   DataStore::ADatabase* _db;
 };
 }

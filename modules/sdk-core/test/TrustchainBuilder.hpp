@@ -10,6 +10,7 @@
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -192,6 +193,7 @@ public:
   std::vector<InternalGroup> groups() const;
   std::vector<User> const& users() const;
 
+  Tanker::Trustchain::Context const& trustchainContext() const;
   Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
   Tanker::Crypto::PublicSignatureKey const& trustchainPublicKey() const;
@@ -205,8 +207,8 @@ private:
     }
   };
 
-  Tanker::Crypto::SignatureKeyPair _trustchainKeyPair;
-  Tanker::Trustchain::TrustchainId _trustchainId;
+  Tanker::Trustchain::Context _context;
+  Tanker::Crypto::PrivateSignatureKey _trustchainPrivateSignatureKey;
 
   std::vector<User> _users;
   std::set<InternalGroup, GroupComparator> _groups;

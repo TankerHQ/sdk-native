@@ -99,21 +99,19 @@ Entry verifyDeviceCreation(
   return Verif::makeVerifiedEntry(serverEntry);
 }
 
-Entry verifyDeviceCreation(
-    Trustchain::ServerEntry const& serverEntry,
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPubSigKey,
-    std::optional<Users::User> const& user)
+Entry verifyDeviceCreation(Trustchain::ServerEntry const& serverEntry,
+                           Trustchain::Context const& context,
+                           std::optional<Users::User> const& user)
 {
   assert(serverEntry.action().nature() == Nature::DeviceCreation ||
          serverEntry.action().nature() == Nature::DeviceCreation3);
 
-  if (serverEntry.author().base() == trustchainId.base())
+  if (serverEntry.author().base() == context.id().base())
   {
     ensures(!user.has_value(),
             Errc::UserAlreadyExists,
             "Cannot have more than one device signed by the trustchain");
-    return verifyDeviceCreation(serverEntry, trustchainPubSigKey);
+    return verifyDeviceCreation(serverEntry, context.publicSignatureKey());
   }
   else
   {

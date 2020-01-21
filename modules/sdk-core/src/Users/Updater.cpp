@@ -115,8 +115,7 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
-                      Trustchain::TrustchainId const& trustchainId,
-                      Crypto::PublicSignatureKey const& trustchainPubSigKey,
+                      Trustchain::Context const& context,
                       gsl::span<Trustchain::ServerEntry const> serverEntries)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
@@ -130,8 +129,8 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
       if (auto const deviceCreation =
               serverEntry.action().get_if<DeviceCreation>())
       {
-        auto const entry = Verif::verifyDeviceCreation(
-            serverEntry, trustchainId, trustchainPubSigKey, user);
+        auto const entry =
+            Verif::verifyDeviceCreation(serverEntry, context, user);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(entry, user);
         auto const& device = user->devices().back();
@@ -214,7 +213,7 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
   return userKeys;
 }
 
-std::tuple<Crypto::PublicSignatureKey,
+std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
 processUserEntries(DeviceKeys const& deviceKeys,
@@ -224,11 +223,14 @@ processUserEntries(DeviceKeys const& deviceKeys,
   if (entries.size() < 2)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "User's block list is too short");
-  auto signatureKey = extractTrustchainSignature(trustchainId, entries[0]);
-  auto [user, sealedKeys] = processUserSealedKeys(
-      deviceKeys, trustchainId, signatureKey, entries.subspan(1));
+  auto trustchainSignatureKey =
+      extractTrustchainSignature(trustchainId, entries[0]);
+  auto const context =
+      Trustchain::Context{trustchainId, trustchainSignatureKey};
+  auto [user, sealedKeys] =
+      processUserSealedKeys(deviceKeys, context, entries.subspan(1));
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
-  return std::make_tuple(signatureKey, std::move(user), std::move(userKeys));
+  return std::make_tuple(context, std::move(user), std::move(userKeys));
 }
 
 tc::cotask<void> updateLocalUser(
@@ -242,7 +244,6 @@ tc::cotask<void> updateLocalUser(
       Users::Updater::processUserEntries(
           deviceKeys, trustchainId, serverEntries);
 
-  localUser.setTrustchainPublicSignatureKey(trustchainSignatureKey);
   if (auto const selfDevice =
           user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
     localUser.setDeviceId(selfDevice->id());

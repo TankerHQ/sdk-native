@@ -29,10 +29,8 @@ TEST_CASE("UserAccessor")
   auto const charlie = builder.makeUser3("charlie").user.asTankerUser();
 
   UserRequesterStub requester;
-  Users::UserAccessor userAccessor(builder.trustchainId(),
-                                   builder.trustchainPublicKey(),
-                                   &requester,
-                                   &contactStore);
+  Users::UserAccessor userAccessor(
+      builder.trustchainContext(), &requester, &contactStore);
 
   SUBCASE("it should return user ids it did not find")
   {

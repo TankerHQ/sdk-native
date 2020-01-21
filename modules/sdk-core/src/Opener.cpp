@@ -87,12 +87,13 @@ tc::cotask<void> Opener::fetchUser()
       TC_AWAIT(_db->findTrustchainPublicSignatureKey());
   if (deviceId && trustchainPubSigKey)
   {
+    _trustchainContext =
+        Trustchain::Context{_info.trustchainId, *trustchainPubSigKey};
     _localUser =
         std::make_unique<Users::LocalUser>(_identity->delegation.userId,
                                            *deviceId,
                                            _identity->userSecret,
                                            _deviceKeys,
-                                           *trustchainPubSigKey,
                                            _db.get());
     TC_RETURN();
   }
@@ -105,11 +106,21 @@ tc::cotask<void> Opener::fetchUser()
                                                   Trustchain::DeviceId{},
                                                   _identity->userSecret,
                                                   _deviceKeys,
-                                                  Crypto::PublicSignatureKey{},
                                                   _db.get());
   auto const serverEntries = TC_AWAIT(_userRequester->getMe());
-  TC_AWAIT(Users::Updater::updateLocalUser(
-      serverEntries, _info.trustchainId, *_localUser, *_contactStore));
+
+  auto [trustchainContext, user, userKeys] = Users::Updater::processUserEntries(
+      _deviceKeys, _info.trustchainId, serverEntries);
+
+  TC_AWAIT(_db->setTrustchainPublicSignatureKey(
+      trustchainContext.publicSignatureKey()));
+  _trustchainContext = trustchainContext;
+  if (auto const selfDevice =
+          user.findDevice(_deviceKeys.encryptionKeyPair.publicKey))
+    _localUser->setDeviceId(selfDevice->id());
+  for (auto const& userKey : userKeys)
+    TC_AWAIT(_localUser->insertUserKey(userKey));
+  TC_AWAIT(_contactStore->putUser(user));
 }
 
 void Opener::extractIdentity(std::string const& b64Identity)
@@ -214,7 +225,7 @@ tc::cotask<void> Opener::unlockCurrentDevice(
 Session::Config Opener::makeConfig()
 {
   return {std::move(_db),
-          _info.trustchainId,
+          std::move(_trustchainContext),
           std::move(_localUser),
           std::move(_contactStore),
           std::move(_client),
