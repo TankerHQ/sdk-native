@@ -45,7 +45,7 @@ Crypto::EncryptionKeyPair checkedDecrypt(
     Crypto::SealedEncryptionKeyPair const& sealedKp,
     Crypto::EncryptionKeyPair const& kp)
 {
-  auto const& [pubKey, sealedKey] = sealedKp;
+  auto const [pubKey, sealedKey] = sealedKp;
   auto const decryptedKey = Crypto::sealDecrypt(sealedKey, kp);
   if (Crypto::derivePublicKey(decryptedKey) != pubKey)
     throw Errors::formatEx(Errors::Errc::InternalError,
