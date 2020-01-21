@@ -5,6 +5,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -60,6 +61,7 @@ private:
   std::string _writablePath;
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
+  Trustchain::Context _trustchainContext;
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Users::ContactStore> _contactStore;

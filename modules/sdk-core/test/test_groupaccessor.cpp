@@ -56,10 +56,8 @@ TEST_CASE("GroupAccessor")
 
   auto aliceContactStore =
       builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
-  Users::UserAccessor aliceUserAccessor(builder.trustchainId(),
-                                        builder.trustchainPublicKey(),
-                                        &userRequestStub,
-                                        aliceContactStore.get());
+  Users::UserAccessor aliceUserAccessor(
+      builder.trustchainContext(), &userRequestStub, aliceContactStore.get());
   auto const aliceLocalUser = builder.makeLocalUser(alice.user, dbPtr.get());
   auto const aliceProvisionalUserKeysStore =
       builder.makeProvisionalUserKeysStoreWith({}, dbPtr.get());

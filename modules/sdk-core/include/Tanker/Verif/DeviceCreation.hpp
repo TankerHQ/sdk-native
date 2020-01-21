@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <optional>
@@ -23,8 +23,7 @@ Entry verifyDeviceCreation(
 
 Entry verifyDeviceCreation(
     Trustchain::ServerEntry const& serverEntry,
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPubSigKey,
+    Trustchain::Context const& context,
     std::optional<Users::User> const& user);
 }
 }

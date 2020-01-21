@@ -28,13 +28,10 @@ using namespace Tanker::Trustchain::Actions;
 namespace Tanker::Users
 {
 
-UserAccessor::UserAccessor(
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPublicSignatureKey,
-    Users::IRequester* requester,
-    ContactStore const* contactStore)
-  : _trustchainId(trustchainId),
-    _trustchainPublicSignatureKey(trustchainPublicSignatureKey),
+UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
+                           Users::IRequester* requester,
+                           ContactStore const* contactStore)
+  : _context(std::move(trustchainContext)),
     _requester(requester),
     _contactStore(contactStore)
 {
@@ -91,8 +88,7 @@ Users::User* findUserOfDevice(DevicesMap const& devicesMap,
   return &userIt->second;
 }
 
-auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
-                        Crypto::PublicSignatureKey const& trustchainPubSigKey,
+auto processUserEntries(Trustchain::Context const& context,
                         gsl::span<Trustchain::ServerEntry const> serverEntries)
 {
   UsersMap usersMap;
@@ -107,8 +103,8 @@ auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
       if (userIt != usersMap.end())
         user = userIt->second;
 
-      auto const entry = Verif::verifyDeviceCreation(
-          serverEntry, trustchainId, trustchainPubSigKey, user);
+      auto const entry =
+          Verif::verifyDeviceCreation(serverEntry, context, user);
 
       user = Updater::applyDeviceCreationToUser(entry, user);
       usersMap[dc->userId()] = *user;
@@ -200,8 +196,7 @@ auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
   if (userIds.empty())
     TC_RETURN(UsersMap{});
   auto const serverEntries = TC_AWAIT(_requester->getUsers(userIds));
-  TC_RETURN(std::get<UsersMap>(processUserEntries(
-      _trustchainId, _trustchainPublicSignatureKey, serverEntries)));
+  TC_RETURN(std::get<UsersMap>(processUserEntries(_context, serverEntries)));
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
@@ -210,7 +205,6 @@ auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
   if (deviceIds.empty())
     TC_RETURN(DevicesMap{});
   auto const serverEntries = TC_AWAIT(_requester->getUsers(deviceIds));
-  TC_RETURN(std::get<DevicesMap>(processUserEntries(
-      _trustchainId, _trustchainPublicSignatureKey, serverEntries)));
+  TC_RETURN(std::get<DevicesMap>(processUserEntries(_context, serverEntries)));
 }
 }
