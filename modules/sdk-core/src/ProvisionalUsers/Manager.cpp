@@ -150,7 +150,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
         "attachProvisionalIdentity before");
   matchProvisional(verification, _provisionalIdentity.value());
   auto const tankerKeys = TC_AWAIT(_client->getProvisionalIdentityKeys(
-      verification, _localUser->userSecret()));
+      Unlock::makeRequest(verification, _localUser->userSecret())));
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");

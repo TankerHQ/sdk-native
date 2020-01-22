@@ -173,15 +173,20 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  TC_RETURN(TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
-                                                   _identity->delegation.userId,
-                                                   verification,
-                                                   _identity->userSecret)));
+  auto const encryptedKey = TC_AWAIT(
+      _client->fetchVerificationKey(_info.trustchainId,
+                                    _identity->delegation.userId,
+                                    Unlock::makeRequest(
+                                        verification, _identity->userSecret)));
+  auto const verificationKey =
+      Crypto::decryptAead(_identity->userSecret, encryptedKey);
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Opener::fetchVerificationMethods()
 {
+
   TC_RETURN(
       TC_AWAIT(_client->fetchVerificationMethods(_info.trustchainId,
                                                  _identity->delegation.userId,
@@ -276,8 +281,8 @@ tc::cotask<Session::Config> Opener::createUser(
   TC_AWAIT(_client->createUser(*_identity,
                                Serialization::serialize(userCreationEntry),
                                Serialization::serialize(firstDeviceEntry),
-                               verification,
-                               _identity->userSecret,
+                               Unlock::makeRequest(
+                                   verification, _identity->userSecret),
                                encryptVerificationKey));
   TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());

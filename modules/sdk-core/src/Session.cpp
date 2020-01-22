@@ -265,7 +265,9 @@ tc::cotask<void> Session::setVerificationMethod(
     try
     {
       TC_AWAIT(_client->setVerificationMethod(
-          trustchainId(), userId(), method, userSecret()));
+          trustchainId(),
+          userId(),
+          Unlock::makeRequest(method, userSecret())));
     }
     catch (Errors::Exception const& e)
     {

@@ -1,10 +1,7 @@
 #include <Tanker/Client.hpp>
 
-#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
-#include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Json.hpp>
@@ -21,12 +18,12 @@
 #include <cppcodec/base64_rfc4648.hpp>
 
 #include <nlohmann/json.hpp>
-#include <optional>
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <iterator>
+#include <optional>
 #include <utility>
 
 using namespace Tanker::Errors;
@@ -38,12 +35,6 @@ namespace Tanker
 {
 namespace
 {
-template <typename T>
-Crypto::Hash hashField(T const& field)
-{
-  return Crypto::generichash(
-      gsl::make_span(field).template as_span<std::uint8_t const>());
-}
 
 std::map<std::string, ServerErrc> const serverErrorMap{
     {"internal_error", ServerErrc::InternalError},
@@ -123,8 +114,7 @@ tc::cotask<void> Client::createUser(
     Identity::SecretPermanentIdentity const& identity,
     gsl::span<uint8_t const> userCreation,
     gsl::span<uint8_t const> firstDevice,
-    Unlock::Verification const& method,
-    Crypto::SymmetricKey userSecret,
+    Unlock::Request const& verificationRequest,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   FUNC_TIMER(Proc);
@@ -135,8 +125,7 @@ tc::cotask<void> Client::createUser(
       {"first_device_block", cppcodec::base64_rfc4648::encode(firstDevice)},
       {"encrypted_unlock_key",
        cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
-      {"verification",
-       ClientHelpers::makeVerificationRequest(method, userSecret)},
+      {"verification", verificationRequest},
   };
   auto const reply = TC_AWAIT(emit("create user 2", request));
 }
@@ -144,36 +133,29 @@ tc::cotask<void> Client::createUser(
 tc::cotask<void> Client::setVerificationMethod(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
-    Unlock::Verification const& method,
-    Crypto::SymmetricKey userSecret)
+    Unlock::Request const& request)
 {
-  nlohmann::json request{
+  nlohmann::json payload{
       {"trustchain_id", trustchainId},
       {"user_id", userId},
-      {"verification",
-       ClientHelpers::makeVerificationRequest(method, userSecret)},
+      {"verification", request},
   };
-  TC_AWAIT(emit("set verification method", request));
+  TC_AWAIT(emit("set verification method", payload));
 }
 
-tc::cotask<VerificationKey> Client::fetchVerificationKey(
+tc::cotask<std::vector<std::uint8_t>> Client::fetchVerificationKey(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
-    Unlock::Verification const& method,
-    Crypto::SymmetricKey userSecret)
+    Unlock::Request const& request)
 {
-  nlohmann::json request{
+  nlohmann::json payload{
       {"trustchain_id", trustchainId},
       {"user_id", userId},
-      {"verification",
-       ClientHelpers::makeVerificationRequest(method, userSecret)},
+      {"verification", request},
   };
-  auto const response = TC_AWAIT(emit("get verification key", request));
-  auto const verificationKey = Crypto::decryptAead(
-      userSecret,
-      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
-          response.at("encrypted_verification_key").get<std::string>()));
-  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
+  auto const response = TC_AWAIT(emit("get verification key", payload));
+  TC_RETURN(cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
+      response.at("encrypted_verification_key").get<std::string>()));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
@@ -245,13 +227,10 @@ tc::cotask<std::vector<std::string>> Client::getKeyPublishes(
 }
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-Client::getProvisionalIdentityKeys(Unlock::Verification const& verification,
-                                   Crypto::SymmetricKey const& userSecret)
+Client::getProvisionalIdentityKeys(Unlock::Request const& request)
 {
-  nlohmann::json body = {
-      {"verification",
-       ClientHelpers::makeVerificationRequest(verification, userSecret)}};
-  auto const json = TC_AWAIT(emit("get provisional identity", body));
+  auto const json =
+      TC_AWAIT(emit("get provisional identity", {{"verification", request}}));
 
   if (json.empty())
     TC_RETURN(std::nullopt);
@@ -300,31 +279,5 @@ tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
     throw Errors::Exception(serverErrorIt->second, message);
   }
   TC_RETURN(message);
-}
-
-nlohmann::json ClientHelpers::makeVerificationRequest(
-    Unlock::Verification const& verification,
-    Crypto::SymmetricKey const& userSecret)
-{
-  nlohmann::json request;
-  if (auto const verif =
-          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
-  {
-    request["hashed_email"] = hashField(verif->email);
-    request["encrypted_email"] =
-        cppcodec::base64_rfc4648::encode(Crypto::encryptAead(
-            userSecret, gsl::make_span(verif->email).as_span<uint8_t const>()));
-    request["verification_code"] = verif->verificationCode;
-  }
-  else if (auto const pass = boost::variant2::get_if<Passphrase>(&verification))
-    request["hashed_passphrase"] = hashField(*pass);
-  else if (auto const oidcIdToken =
-               boost::variant2::get_if<OidcIdToken>(&verification))
-    request["oidc_id_token"] = oidcIdToken->string();
-  else if (!boost::variant2::holds_alternative<VerificationKey>(verification))
-    // as we return an empty json for verification key the only thing to do if
-    // it is NOT a verificationKey is to throw
-    throw Errors::AssertionError("unsupported verification request");
-  return request;
 }
 }
