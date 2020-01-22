@@ -265,9 +265,7 @@ tc::cotask<void> Session::setVerificationMethod(
     try
     {
       TC_AWAIT(_client->setVerificationMethod(
-          trustchainId(),
-          userId(),
-          Unlock::makeRequest(method, userSecret())));
+          trustchainId(), userId(), Unlock::makeRequest(method, userSecret())));
     }
     catch (Errors::Exception const& e)
     {
@@ -286,8 +284,10 @@ tc::cotask<void> Session::setVerificationMethod(
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Session::fetchVerificationMethods()
 {
-  TC_RETURN(TC_AWAIT(_client->fetchVerificationMethods(
-      trustchainId(), userId(), userSecret())));
+  auto methods =
+      TC_AWAIT(_client->fetchVerificationMethods(trustchainId(), userId()));
+  Unlock::decryptEmailMethods(methods, userSecret());
+  TC_RETURN(methods);
 }
 
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
