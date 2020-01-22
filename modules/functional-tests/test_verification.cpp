@@ -6,6 +6,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
+#include <Tanker/GhostDevice.hpp>
 
 #ifdef TANKER_BUILD_WITH_SSL
 #include <Tanker/Cacerts/InitSsl.hpp>

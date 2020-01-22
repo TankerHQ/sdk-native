@@ -29,19 +29,19 @@ VerificationMethod VerificationMethod::from(Verification const& v)
   return m;
 }
 
-void to_json(nlohmann::json& j, VerificationMethod const& method)
+void decryptEmailMethods(std::vector<VerificationMethod>& encryptedMethods,
+                         Crypto::SymmetricKey const& userSecret)
 {
-  if (method.holds_alternative<Passphrase>())
-    j.push_back({{"type", "passphrase"}});
-  else if (method.holds_alternative<VerificationKey>())
-    j.push_back({{"type", "verificationKey"}});
-  else if (auto const email = method.get_if<Email>())
-    j.push_back({{"type", "email"},
-                 {"email", cppcodec::base64_rfc4648::encode(*email)}});
-  else if (auto const oidcIdToken = method.get_if<OidcIdToken>())
-    j.push_back({{"type", "oidc_id_token"}});
-  else
-    throw Errors::AssertionError("use of an outdated sdk");
+  for (auto& method : encryptedMethods)
+  {
+    if (auto encryptedEmail = method.get_if<Unlock::EncryptedEmail>())
+    {
+      auto const decryptedEmail = Crypto::decryptAead(
+          userSecret,
+          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>());
+      method = Email{decryptedEmail.begin(), decryptedEmail.end()};
+    }
+  }
 }
 
 void from_json(nlohmann::json const& j, VerificationMethod& m)
@@ -57,7 +57,7 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
   {
     auto const email = j.at("encrypted_email").get<std::string>();
     auto const decodedEmail = cppcodec::base64_rfc4648::decode(email);
-    m = Email{decodedEmail.begin(), decodedEmail.end()};
+    m = EncryptedEmail{decodedEmail.begin(), decodedEmail.end()};
   }
   else
     throw Errors::AssertionError("use of an outdated sdk");

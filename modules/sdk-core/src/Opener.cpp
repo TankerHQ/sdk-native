@@ -173,11 +173,10 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  auto const encryptedKey = TC_AWAIT(
-      _client->fetchVerificationKey(_info.trustchainId,
-                                    _identity->delegation.userId,
-                                    Unlock::makeRequest(
-                                        verification, _identity->userSecret)));
+  auto const encryptedKey = TC_AWAIT(_client->fetchVerificationKey(
+      _info.trustchainId,
+      _identity->delegation.userId,
+      Unlock::makeRequest(verification, _identity->userSecret)));
   auto const verificationKey =
       Crypto::decryptAead(_identity->userSecret, encryptedKey);
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
@@ -186,11 +185,10 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Opener::fetchVerificationMethods()
 {
-
-  TC_RETURN(
-      TC_AWAIT(_client->fetchVerificationMethods(_info.trustchainId,
-                                                 _identity->delegation.userId,
-                                                 _identity->userSecret)));
+  auto encryptedMethods = TC_AWAIT(_client->fetchVerificationMethods(
+      _info.trustchainId, _identity->delegation.userId));
+  Unlock::decryptEmailMethods(encryptedMethods, _identity->userSecret);
+  TC_RETURN(encryptedMethods);
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(
@@ -278,12 +276,12 @@ tc::cotask<Session::Config> Opener::createUser(
       _identity->userSecret,
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
-  TC_AWAIT(_client->createUser(*_identity,
-                               Serialization::serialize(userCreationEntry),
-                               Serialization::serialize(firstDeviceEntry),
-                               Unlock::makeRequest(
-                                   verification, _identity->userSecret),
-                               encryptVerificationKey));
+  TC_AWAIT(_client->createUser(
+      *_identity,
+      Serialization::serialize(userCreationEntry),
+      Serialization::serialize(firstDeviceEntry),
+      Unlock::makeRequest(verification, _identity->userSecret),
+      encryptVerificationKey));
   TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }

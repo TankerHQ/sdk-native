@@ -2,15 +2,12 @@
 
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Json.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Verification.hpp>
 
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -160,8 +157,7 @@ tc::cotask<std::vector<std::uint8_t>> Client::fetchVerificationKey(
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Client::fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
-                                 Trustchain::UserId const& userId,
-                                 Crypto::SymmetricKey const& userSecret)
+                                 Trustchain::UserId const& userId)
 {
   auto const request =
       nlohmann::json{{"trustchain_id", trustchainId}, {"user_id", userId}};
@@ -169,16 +165,6 @@ Client::fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
   auto const reply = TC_AWAIT(emit("get verification methods", request));
   auto methods = reply.at("verification_methods")
                      .get<std::vector<Unlock::VerificationMethod>>();
-  for (auto& method : methods)
-  {
-    if (auto encryptedEmail = method.get_if<Email>())
-    {
-      auto const decryptedEmail = Crypto::decryptAead(
-          userSecret,
-          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>());
-      method = Email{decryptedEmail.begin(), decryptedEmail.end()};
-    }
-  }
   TC_RETURN(methods);
 }
 

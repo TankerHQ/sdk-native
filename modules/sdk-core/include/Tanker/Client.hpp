@@ -1,22 +1,16 @@
 #pragma once
 
-#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/AConnection.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Request.hpp>
-#include <Tanker/Unlock/Verification.hpp>
 
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -72,8 +66,7 @@ public:
 
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::SymmetricKey const& userSecret);
+      Trustchain::UserId const& userId);
 
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
