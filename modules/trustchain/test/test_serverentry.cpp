@@ -3,8 +3,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
-#include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
@@ -67,7 +67,7 @@ TEST_CASE("Serialization test vectors")
         2,
         author,
         Action::deserialize(nature, serializedPayload),
-        detail::computeHash(nature, author, serializedPayload),
+        computeHash(nature, author, serializedPayload),
         signature};
 
     CHECK(Serialization::deserialize<ServerEntry>(serializedServerEntry) ==

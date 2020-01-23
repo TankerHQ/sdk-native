@@ -27,13 +27,13 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupCreation/v2.hpp
   include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
+  include/Tanker/Trustchain/Context.hpp
   include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/Errors/Errc.hpp
   include/Tanker/Trustchain/Errors/ErrcCategory.hpp
   include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
-  include/Tanker/Trustchain/Block.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/Json.hpp
@@ -41,7 +41,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/UserId.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
-  include/Tanker/Trustchain/detail/ComputeHash.hpp
+  include/Tanker/Trustchain/ComputeHash.hpp
 
   src/Action.cpp
   src/Actions/DeviceCreation.cpp
@@ -67,13 +67,13 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupCreation/v2.cpp
   src/Actions/UserGroupMember2.cpp
   src/Actions/UserGroupProvisionalMember2.cpp
-  src/Block.cpp
+  src/Context.cpp
   src/Errors/Errc.cpp
   src/Errors/ErrcCategory.cpp
   src/ClientEntry.cpp
   src/ServerEntry.cpp
   src/ExternTemplates.cpp
-  src/detail/ComputeHash.cpp
+  src/ComputeHash.cpp
 )
 
 target_include_directories(tankertrustchain

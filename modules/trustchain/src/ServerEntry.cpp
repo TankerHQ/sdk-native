@@ -4,9 +4,10 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
-#include <Tanker/Trustchain/detail/ComputeHash.hpp>
 
+#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
@@ -101,7 +102,7 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
   se._action = Action::deserialize(nature, payloadSpan);
   Serialization::deserialize_to(ss, se._author);
   Serialization::deserialize_to(ss, se._signature);
-  se._hash = detail::computeHash(nature, se._author, payloadSpan);
+  se._hash = computeHash(nature, se._author, payloadSpan);
 }
 
 void to_json(nlohmann::json& j, ServerEntry const& se)
@@ -112,6 +113,21 @@ void to_json(nlohmann::json& j, ServerEntry const& se)
   j["action"] = se.action();
   j["hash"] = se.hash();
   j["signature"] = se.signature();
+}
+
+std::vector<ServerEntry> fromBlocksToServerEntries(
+    gsl::span<std::string const> blocks)
+{
+  std::vector<ServerEntry> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return (Serialization::deserialize<Trustchain::ServerEntry>(
+                       cppcodec::base64_rfc4648::decode(block)));
+                 });
+  return entries;
 }
 }
 }

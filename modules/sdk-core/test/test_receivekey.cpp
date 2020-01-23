@@ -4,7 +4,9 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Users/ContactStore.hpp>
 
+#include "FakeProvisionalUsersAccessor.hpp"
 #include "GroupAccessorMock.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
@@ -20,7 +22,7 @@
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("onKeyToDeviceReceived should process a key publish block")
+TEST_CASE("onKeyToDeviceReceived should process a key publish entry")
 {
   TrustchainBuilder builder;
 
@@ -36,11 +38,11 @@ TEST_CASE("onKeyToDeviceReceived should process a key publish block")
   auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
   auto const resourceKey = make<Crypto::SymmetricKey>("the KEY");
 
-  auto const keyPublishBlocks =
+  auto const keyPublishEntries =
       builder.shareToDevice(senderDevice, receiver, resourceMac, resourceKey);
-  assert(keyPublishBlocks.size() == 1);
+  assert(keyPublishEntries.size() == 1);
   auto const keyPublishToDeviceEntry =
-      toVerifiedEntry(blockToServerEntry(keyPublishBlocks[0]));
+      toVerifiedEntry(keyPublishEntries.front());
 
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
   ResourceKeyStore resourceKeyStore(db.get());
@@ -70,52 +72,56 @@ TEST_CASE("decryptAndStoreKey")
   auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
   auto const resourceKey = make<Crypto::SymmetricKey>("the KEY");
 
-  SUBCASE("should process a key publish to user block")
+  SUBCASE("should process a key publish to user entry")
   {
-    auto const keyPublishBlock =
+    auto const keyPublishEntry =
         builder.shareToUser(senderDevice, receiver, resourceMac, resourceKey);
-    auto const keyPublishToUserEntry =
-        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
+    auto const keyPublishToUserEntry = toVerifiedEntry(keyPublishEntry);
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
   }
 
-  SUBCASE("should process a key publish to group block")
+  SUBCASE("should process a key publish to group entry")
   {
     auto const group = builder.makeGroup(receiver.devices[0], {receiver});
 
-    auto const keyPublishBlock = builder.shareToUserGroup(
+    auto const keyPublishEntry = builder.shareToUserGroup(
         senderDevice, group.group, resourceMac, resourceKey);
-    auto const keyPublishToUserGroupEntry =
-        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
+    auto const keyPublishToUserGroupEntry = toVerifiedEntry(keyPublishEntry);
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     REQUIRE_CALL(receiverGroupAccessor, getEncryptionKeyPair(trompeloeil::_))
         .LR_RETURN(makeCoTask(
             std::make_optional(group.group.tankerGroup.encryptionKeyPair)));
     ProvisionalUserKeysStore const receiverProvisionalUserKeysStore(db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToUserGroupEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
@@ -125,26 +131,29 @@ TEST_CASE("decryptAndStoreKey")
   {
     auto const provisionalUser = builder.makeProvisionalUser("bob@gmail.com");
 
-    auto const keyPublishBlock =
+    auto const keyPublishEntry =
         builder.shareToProvisionalUser(senderDevice,
                                        provisionalUser.publicProvisionalUser,
                                        resourceMac,
                                        resourceKey);
     auto const keyPublishToProvisionalUserEntry =
-        toVerifiedEntry(blockToServerEntry(keyPublishBlock));
+        toVerifiedEntry(keyPublishEntry);
 
     auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-    auto const receiverKeyStore = builder.makeUserKeyStore(receiver, db.get());
+    auto const receiverKeyStore = builder.makeLocalUser(receiver, db.get());
     GroupAccessorMock receiverGroupAccessor;
     auto const receiverProvisionalUserKeysStore =
         builder.makeProvisionalUserKeysStoreWith({provisionalUser}, db.get());
+    auto const receiverProvisionalUsersAccessor =
+        std::make_unique<FakeProvisionalUsersAccessor>(
+            *receiverProvisionalUserKeysStore);
     ResourceKeyStore resourceKeyStore(db.get());
 
     AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
         resourceKeyStore,
         *receiverKeyStore,
         receiverGroupAccessor,
-        *receiverProvisionalUserKeysStore,
+        *receiverProvisionalUsersAccessor,
         keyPublishToProvisionalUserEntry.action.get<KeyPublish>()));
 
     CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);

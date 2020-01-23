@@ -1,9 +1,7 @@
 #include <Tanker/Groups/Requester.hpp>
 
 #include <Tanker/Client.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/coroutine.hpp>
 
@@ -17,13 +15,8 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> doBlockRequest(
     Client* client, nlohmann::json const& req)
 {
   auto const response = TC_AWAIT(client->emit("get groups blocks", req));
-  auto const sblocks = response.get<std::vector<std::string>>();
-  std::vector<Trustchain::ServerEntry> ret;
-  ret.reserve(sblocks.size());
-  for (auto const& sblock : sblocks)
-    ret.push_back(
-        blockToServerEntry(Serialization::deserialize<Trustchain::Block>(
-            cppcodec::base64_rfc4648::decode(sblock))));
+  auto const ret = Trustchain::fromBlocksToServerEntries(
+      response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }
 }

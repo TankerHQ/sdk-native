@@ -9,9 +9,9 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/AConnection.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -41,15 +41,6 @@ nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
                                        Crypto::SymmetricKey const& userSecret);
 }
 
-struct UserStatusResult
-{
-  bool deviceExists;
-  bool userExists;
-  Crypto::Hash lastReset;
-};
-
-void from_json(nlohmann::json const& j, UserStatusResult& result);
-
 class Client
 {
 public:
@@ -71,16 +62,11 @@ public:
 
   tc::cotask<void> createUser(
       Identity::SecretPermanentIdentity const& identity,
-      Trustchain::Block const& userCreation,
-      Trustchain::Block const& firstDevice,
+      gsl::span<uint8_t const> userCreation,
+      gsl::span<uint8_t const> firstDevice,
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret,
       gsl::span<uint8_t const> encryptedVerificationKey);
-
-  tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey);
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,
@@ -93,8 +79,6 @@ public:
       Unlock::Verification const& method,
       Crypto::SymmetricKey userSecret);
 
-  tc::cotask<std::string> requestAuthChallenge();
-  tc::cotask<void> authenticateDevice(nlohmann::json const& request);
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
@@ -111,9 +95,6 @@ public:
   tc::cotask<std::vector<std::string>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds);
 
-  tc::cotask<std::vector<
-      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-  getPublicProvisionalIdentities(gsl::span<Email const>);
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Verification const& verification,
                              Crypto::SymmetricKey const& userSecret);
@@ -124,7 +105,6 @@ public:
                                   nlohmann::json const& data);
 
   std::string connectionId() const;
-  std::function<void()> blockAvailable;
 
 private:
   std::unique_ptr<Network::AConnection> _cx;

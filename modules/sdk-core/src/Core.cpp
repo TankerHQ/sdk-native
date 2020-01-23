@@ -14,6 +14,7 @@
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
+#include <Tanker/Users/Requester.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -86,8 +87,6 @@ tc::cotask<Status> Core::startImpl(std::string const& identity)
   if (status == Status::Ready)
   {
     initSession(TC_AWAIT(pcore->openDevice()));
-    auto const& session = boost::variant2::get<SessionType>(_state);
-    TC_AWAIT(session->startConnection());
     TC_RETURN(Status::Ready);
   }
   TC_RETURN(status);
@@ -110,8 +109,6 @@ tc::cotask<void> Core::registerIdentity(
 
   auto openResult = TC_AWAIT(pcore->createUser(verification));
   initSession(std::move(openResult));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
 }
 
 tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
@@ -123,8 +120,6 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 
   auto openResult = TC_AWAIT(pcore->createDevice(verification));
   initSession(std::move(openResult));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  TC_AWAIT(session->startConnection());
 }
 
 void Core::stop()
@@ -137,15 +132,6 @@ void Core::stop()
 void Core::initSession(Session::Config config)
 {
   _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
-  auto const& session = boost::variant2::get<SessionType>(_state);
-  session->deviceRevoked = _deviceRevoked;
-}
-
-void Core::setDeviceRevokedHandler(Session::DeviceRevokedHandler handler)
-{
-  _deviceRevoked = std::move(handler);
-  if (auto const session = boost::variant2::get_if<SessionType>(&_state))
-    (*session)->deviceRevoked = _deviceRevoked; // we need the copy here
 }
 
 void Core::setSessionClosedHandler(SessionClosedHandler handler)
@@ -240,7 +226,7 @@ Trustchain::DeviceId const& Core::deviceId() const
   ;
 }
 
-tc::cotask<std::vector<Device>> Core::getDeviceList() const
+tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
   auto const psession = boost::variant2::get_if<SessionType>(&_state);
   if (!psession)
@@ -295,14 +281,6 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
   TC_AWAIT((*psession)->verifyProvisionalIdentity(verification));
 }
 
-tc::cotask<void> Core::syncTrustchain()
-{
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(syncTrustchain);
-  TC_AWAIT((*psession)->syncTrustchain());
-}
-
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   auto psession = boost::variant2::get_if<SessionType>(&_state);
@@ -336,5 +314,13 @@ Trustchain::ResourceId Core::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {
   return Encryptor::extractResourceId(encryptedData);
+}
+
+tc::cotask<void> Core::nukeDatabase()
+{
+  if (auto psession = boost::variant2::get_if<SessionType>(&_state))
+    (*psession)->nukeDatabase();
+  else if (auto popener = boost::variant2::get_if<Opener>(&_state))
+    popener->nukeDatabase();
 }
 }

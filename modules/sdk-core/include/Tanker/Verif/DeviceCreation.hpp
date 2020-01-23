@@ -1,21 +1,30 @@
 #pragma once
 
-#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+
+#include <optional>
+
+namespace Tanker::Users
+{
+class User;
+class Device;
+}
 
 namespace Tanker
 {
-struct Device;
-struct User;
 
 namespace Verif
 {
-void verifyDeviceCreation(
+Entry verifyDeviceCreation(
     Trustchain::ServerEntry const& serverEntry,
-    Trustchain::Actions::TrustchainCreation const& author);
+    Crypto::PublicSignatureKey const& trustchainPubSigKey);
 
-void verifyDeviceCreation(Trustchain::ServerEntry const& serverEntry,
-                          Device const& author,
-                          User const& user);
+Entry verifyDeviceCreation(
+    Trustchain::ServerEntry const& serverEntry,
+    Trustchain::TrustchainId const& trustchainId,
+    Crypto::PublicSignatureKey const& trustchainPubSigKey,
+    std::optional<Users::User> const& user);
 }
 }

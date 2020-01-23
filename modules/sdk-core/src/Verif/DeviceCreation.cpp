@@ -1,11 +1,12 @@
 #include <Tanker/Verif/DeviceCreation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -27,36 +28,39 @@ bool verifySignature(DeviceCreation const& dc,
   return Crypto::verify(toVerify, dc.delegationSignature(), publicSignatureKey);
 }
 
-void verifySubAction(DeviceCreation::v1 const& deviceCreation, User const& user)
+void verifySubAction(DeviceCreation::v1 const& deviceCreation,
+                     Users::User const& user)
 {
-  ensures(!user.userKey.has_value(),
+  ensures(!user.userKey().has_value(),
           Errc::InvalidUserKey,
           "A user must not have a user key to create a device creation v1");
 }
 
-void verifySubAction(DeviceCreation::v3 const& deviceCreation, User const& user)
+void verifySubAction(DeviceCreation::v3 const& deviceCreation,
+                     Users::User const& user)
 {
-  ensures(deviceCreation.publicUserEncryptionKey() == user.userKey,
+  ensures(deviceCreation.publicUserEncryptionKey() == user.userKey(),
           Errc::InvalidUserKey,
           "DeviceCreation v3 must have the last user key");
 }
-}
 
-void verifyDeviceCreation(ServerEntry const& serverEntry,
-                          Device const& author,
-                          User const& user)
+Entry verifyDeviceCreation(ServerEntry const& serverEntry,
+                           Users::User const& user)
 {
-  auto const nature = serverEntry.action().nature();
-  (void)nature;
-  assert(nature == Nature::DeviceCreation || nature == Nature::DeviceCreation3);
+  auto authorDevice = user.findDevice(DeviceId{serverEntry.author()});
+  ensures(
+      authorDevice.has_value(),
+      Errc::InvalidUserId,
+      "Device creation's user id must be the same than its parent device's");
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
+  ensures(!authorDevice->revokedAtBlkIndex() ||
+              authorDevice->revokedAtBlkIndex() > serverEntry.index(),
           Errc::InvalidAuthor,
           "author device must not be revoked");
 
-  assert(std::find(user.devices.begin(), user.devices.end(), author) !=
-         user.devices.end());
+  assert(std::find(user.devices().begin(),
+                   user.devices().end(),
+                   *authorDevice) != user.devices().end());
 
   auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
 
@@ -66,37 +70,57 @@ void verifyDeviceCreation(ServerEntry const& serverEntry,
           Errc::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
           "signature key");
-  ensures(verifySignature(deviceCreation, author.publicSignatureKey),
+  ensures(verifySignature(deviceCreation, authorDevice->publicSignatureKey()),
           Errc::InvalidDelegationSignature,
           "device creation's delegation signature must be signed by the "
           "author's private signature key");
 
-  ensures(
-      deviceCreation.userId() == user.id,
-      Errc::InvalidUserId,
-      "Device creation's user id must be the same than its parent device's");
   deviceCreation.visit(
       [&user](auto const& val) { verifySubAction(val, user); });
+  return Verif::makeVerifiedEntry(serverEntry);
+}
 }
 
-void verifyDeviceCreation(ServerEntry const& serverEntry,
-                          TrustchainCreation const& author)
+Entry verifyDeviceCreation(
+    ServerEntry const& serverEntry,
+    Crypto::PublicSignatureKey const& trustchainPublicSignatureKey)
+{
+  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
+
+  ensures(Crypto::verify(serverEntry.hash(),
+                         serverEntry.signature(),
+                         deviceCreation.ephemeralPublicSignatureKey()),
+          Errc::InvalidSignature,
+          "device creation block must be signed by the ephemeral private "
+          "signature key");
+  ensures(verifySignature(deviceCreation, trustchainPublicSignatureKey),
+          Errc::InvalidDelegationSignature,
+          "device creation's delegation signature must be signed by the "
+          "author's private signature key");
+  return Verif::makeVerifiedEntry(serverEntry);
+}
+
+Entry verifyDeviceCreation(
+    Trustchain::ServerEntry const& serverEntry,
+    Trustchain::TrustchainId const& trustchainId,
+    Crypto::PublicSignatureKey const& trustchainPubSigKey,
+    std::optional<Users::User> const& user)
 {
   assert(serverEntry.action().nature() == Nature::DeviceCreation ||
          serverEntry.action().nature() == Nature::DeviceCreation3);
 
-  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
-
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
-                         deviceCreation.ephemeralPublicSignatureKey()),
-          Errc::InvalidSignature,
-          "device creation block must be signed by the ephemeral private "
-          "signature key");
-  ensures(verifySignature(deviceCreation, author.publicSignatureKey()),
-          Errc::InvalidDelegationSignature,
-          "device creation's delegation signature must be signed by the "
-          "author's private signature key");
+  if (serverEntry.author().base() == trustchainId.base())
+  {
+    ensures(!user.has_value(),
+            Errc::UserAlreadyExists,
+            "Cannot have more than one device signed by the trustchain");
+    return verifyDeviceCreation(serverEntry, trustchainPubSigKey);
+  }
+  else
+  {
+    ensures(user.has_value(), Errc::InvalidAuthor, "Author not found");
+    return verifyDeviceCreation(serverEntry, user.value());
+  }
 }
 }
 }

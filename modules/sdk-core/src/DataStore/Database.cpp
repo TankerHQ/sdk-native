@@ -114,20 +114,21 @@ struct KeyPublishRecipientVisitor
 };
 
 template <typename Row>
-Device rowToDevice(Row const& row)
+Users::Device rowToDevice(Row const& row)
 {
   std::optional<uint64_t> revokedAtBlockIndex;
   if (!row.revoked_at_block_index.is_null())
     revokedAtBlockIndex = static_cast<uint64_t>(row.revoked_at_block_index);
 
   return {DataStore::extractBlob<Trustchain::DeviceId>(row.id),
+          DataStore::extractBlob<Trustchain::UserId>(row.user_id),
           static_cast<uint64_t>(row.created_at_block_index),
+          row.is_ghost_device,
           std::move(revokedAtBlockIndex),
           DataStore::extractBlob<Crypto::PublicSignatureKey>(
               row.public_signature_key),
           DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-              row.public_encryption_key),
-          row.is_ghost_device};
+              row.public_encryption_key)};
 }
 
 template <typename Row>
@@ -817,24 +818,24 @@ tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
-tc::cotask<void> Database::putDevice(UserId const& userId, Device const& device)
+tc::cotask<void> Database::putDevice(Users::Device const& device)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
 
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.id = device.id.base(),
-      tab.user_id = userId.base(),
-      tab.created_at_block_index = device.createdAtBlkIndex,
+  (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
+      tab.id = device.id().base(),
+      tab.user_id = device.userId().base(),
+      tab.created_at_block_index = device.createdAtBlkIndex(),
       tab.revoked_at_block_index =
-          sqlpp::tvin(device.revokedAtBlkIndex.value_or(0)),
-      tab.is_ghost_device = device.isGhostDevice,
-      tab.public_signature_key = device.publicSignatureKey.base(),
-      tab.public_encryption_key = device.publicEncryptionKey.base()));
+          sqlpp::tvin(device.revokedAtBlkIndex().value_or(0)),
+      tab.is_ghost_device = device.isGhostDevice(),
+      tab.public_signature_key = device.publicSignatureKey().base(),
+      tab.public_encryption_key = device.publicEncryptionKey().base()));
   TC_RETURN();
 }
 
-tc::cotask<std::optional<Device>> Database::findDevice(
+tc::cotask<std::optional<Users::Device>> Database::findDevice(
     Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
@@ -849,7 +850,7 @@ tc::cotask<std::optional<Device>> Database::findDevice(
   TC_RETURN(rowToDevice(row));
 }
 
-tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
+tc::cotask<std::vector<Users::Device>> Database::getDevicesOf(UserId const& id)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
@@ -857,7 +858,7 @@ tc::cotask<std::vector<Device>> Database::getDevicesOf(UserId const& id)
   auto rows =
       (*_db)(select(all_of(tab)).from(tab).where(tab.user_id == id.base()));
 
-  std::vector<Device> ret;
+  std::vector<Users::Device> ret;
   for (auto const& row : rows)
     ret.push_back(rowToDevice(row));
   TC_RETURN(ret);

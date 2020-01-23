@@ -1,33 +1,34 @@
 #pragma once
 
-#include <Tanker/BlockGenerator.hpp>
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
 #include <Tanker/SecretProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
-#include <Tanker/Trustchain/Block.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/User.hpp>
-#include <Tanker/UserKeyStore.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/User.hpp>
 
 #include <optional>
-
 #include <set>
 #include <string>
 #include <vector>
+
+namespace Tanker::Users
+{
+class ContactStore;
+}
 
 class TrustchainBuilder
 {
@@ -36,10 +37,12 @@ public:
   {
     Tanker::DeviceKeys keys;
     Tanker::Trustchain::DeviceId id;
+    Tanker::Trustchain::UserId userId;
     Tanker::Identity::Delegation delegation;
-    uint64_t blockIndex;
+    uint64_t createdAtIndex;
+    std::optional<uint64_t> revokedAtIndex;
 
-    Tanker::Device asTankerDevice() const;
+    Tanker::Users::Device asTankerDevice() const;
   };
 
   struct UserKey
@@ -56,7 +59,9 @@ public:
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;
 
-    Tanker::User asTankerUser() const;
+    Tanker::Users::User asTankerUser() const;
+    std::optional<Device> findDevice(
+        Tanker::Trustchain::DeviceId const& id) const;
   };
 
   struct ResultUser
@@ -68,7 +73,7 @@ public:
   struct ResultDevice
   {
     Device device;
-    Tanker::User user;
+    Tanker::Users::User user;
     Tanker::Trustchain::ServerEntry entry;
   };
 
@@ -134,50 +139,47 @@ public:
       Tanker::SecretProvisionalUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
-  std::vector<Tanker::Trustchain::Block> shareToDevice(
+  std::vector<Tanker::Trustchain::ServerEntry> shareToDevice(
       Device const& sender,
       User const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToUser(
+  Tanker::Trustchain::ServerEntry shareToUser(
       Device const& sender,
       User const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToUserGroup(
+  Tanker::Trustchain::ServerEntry shareToUserGroup(
       Device const& sender,
       InternalGroup const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
-  Tanker::Trustchain::Block shareToProvisionalUser(
+  Tanker::Trustchain::ServerEntry shareToProvisionalUser(
       Device const& sender,
       Tanker::PublicProvisionalUser const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
 
-  Tanker::Trustchain::Block revokeDevice1(Device const& sender,
-                                          Device const& target,
-                                          bool unsafe = false);
-  Tanker::Trustchain::Block revokeDevice2(Device const& sender,
-                                          Device const& target,
-                                          User const& user,
-                                          bool unsafe = false);
+  Tanker::Trustchain::ServerEntry revokeDevice1(Device const& sender,
+                                                Device const& target,
+                                                bool unsafe = false);
+  Tanker::Trustchain::ServerEntry revokeDevice2(Device const& sender,
+                                                Device const& target,
+                                                bool unsafe = false);
 
   std::optional<User> findUser(std::string const& suserId) const;
 
-  Tanker::BlockGenerator makeBlockGenerator(
-      TrustchainBuilder::Device const& device) const;
-  std::unique_ptr<Tanker::UserKeyStore> makeUserKeyStore(
+  Tanker::Users::LocalUser::Ptr makeLocalUser(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::ContactStore> makeContactStoreWith(
+  std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,
       Tanker::DataStore::ADatabase* conn) const;
   std::vector<Tanker::Group> getGroupsOfUser(
       TrustchainBuilder::User const& user) const;
-  std::unique_ptr<Tanker::GroupStore> makeGroupStore(
+  std::unique_ptr<Tanker::Groups::Store> makeGroupStore(
       TrustchainBuilder::User const& user,
       Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::GroupStore> makeGroupStore(
+  std::unique_ptr<Tanker::Groups::Store> makeGroupStore(
       std::vector<Tanker::Trustchain::GroupId> const& groups,
       Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::ProvisionalUserKeysStore>
@@ -191,6 +193,7 @@ public:
 
   Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
+  Tanker::Crypto::PublicSignatureKey const& trustchainPublicKey() const;
 
 private:
   struct GroupComparator
@@ -209,4 +212,5 @@ private:
   std::vector<Tanker::Trustchain::ServerEntry> _entries;
 
   User* findMutableUser(Tanker::SUserId const& suserId);
+  User* findMutableUserByDeviceId(Tanker::Trustchain::DeviceId const& deviceId);
 };

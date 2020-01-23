@@ -1,4 +1,4 @@
-#include <Tanker/Groups/GroupStore.hpp>
+#include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -15,7 +15,7 @@ TEST_CASE("GroupStore")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
 
-  GroupStore groupStore(dbPtr.get());
+  Groups::Store groupStore(dbPtr.get());
 
   auto const group = InternalGroup{
       make<GroupId>("group id"),

@@ -16,7 +16,7 @@ namespace Groups
 class IAccessor
 {
 public:
-  using PullResult = BasicPullResult<ExternalGroup>;
+  using PullResult = BasicPullResult<ExternalGroup, Trustchain::GroupId>;
   using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
   using InternalGroupPullResult =
       BasicPullResult<InternalGroup, Trustchain::GroupId>;

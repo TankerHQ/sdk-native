@@ -5,6 +5,7 @@ build*
 conan_ycm_flags.json
 __pycache__
 package/
+testtmp/
 
 .ycm_extra_conf.py
 .venv/

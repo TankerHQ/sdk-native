@@ -81,9 +81,7 @@ public:
       Unlock::Verification const& verification);
 
   Trustchain::DeviceId const& deviceId() const;
-  tc::cotask<std::vector<Device>> getDeviceList() const;
-
-  tc::cotask<void> syncTrustchain();
+  tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
@@ -95,11 +93,12 @@ public:
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
-  void setDeviceRevokedHandler(Session::DeviceRevokedHandler);
   void setSessionClosedHandler(SessionClosedHandler);
 
   static Trustchain::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
+
+  tc::cotask<void> nukeDatabase();
 
 private:
   // We store the session as a unique_ptr so that open() does not
@@ -114,7 +113,6 @@ private:
 
   boost::variant2::variant<Opener, SessionType> _state;
 
-  Session::DeviceRevokedHandler _deviceRevoked;
   SessionClosedHandler _sessionClosed;
 
   void reset();

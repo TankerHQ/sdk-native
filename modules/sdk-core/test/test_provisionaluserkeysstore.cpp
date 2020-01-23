@@ -1,6 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>

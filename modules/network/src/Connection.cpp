@@ -49,6 +49,7 @@ Connection::Connection(std::string url, QueryParameters params)
     _client()
 #endif
 {
+  TINFO("Connection to {}", _url);
   _client.set_socket_open_listener([this](auto const&) {
     FUNC_END(fmt::format("connected {}", reinterpret_cast<void*>(this)), Net);
     _taskCanceler.add(tc::async([this] {

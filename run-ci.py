@@ -55,7 +55,7 @@ def main() -> None:
             upload=True,
         )
     elif args.command == "mirror":
-        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native")
+        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native", force=True)
     else:
         parser.print_help()
         sys.exit(1)

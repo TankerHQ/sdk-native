@@ -106,11 +106,9 @@ public:
   void disconnectDeviceRevoked();
 
   tc::shared_future<SDeviceId> deviceId() const;
-  tc::shared_future<std::vector<Device>> getDeviceList();
+  tc::shared_future<std::vector<Users::Device>> getDeviceList();
 
   tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
-
-  tc::shared_future<void> syncTrustchain();
 
   static void setLogHandler(Log::LogHandler handler);
 
@@ -140,5 +138,40 @@ private:
   std::function<void()> _asyncDeviceRevoked;
 
   mutable task_canceler _taskCanceler;
+
+  template <typename F>
+  auto runResumable(F&& f)
+  {
+    return _taskCanceler.run([this, f = std::forward<F>(f)]() mutable {
+      return tc::async_resumable([this, f = std::move(f)] {
+        std::exception_ptr exception;
+        try
+        {
+          return f();
+        }
+        catch (Errors::Exception const& ex)
+        {
+          if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+            exception = std::make_exception_ptr(ex);
+          else
+            throw;
+        }
+        // - This device was revoked, we need to stop so that Session
+        // gets destroyed.
+        // - There might be calls in progress on this session, so we
+        // must terminate() them before going on.
+        // - We can't call this->stop() because the terminate() would
+        // cancel this coroutine too.
+        // - We must not wait on terminate() because that means waiting
+        // on ourselves and deadlocking.
+        _taskCanceler.terminate();
+        TC_AWAIT(_core.nukeDatabase());
+        _core.stop();
+        if (_asyncDeviceRevoked)
+          _asyncDeviceRevoked();
+        std::rethrow_exception(exception);
+      });
+    });
+  }
 };
 }

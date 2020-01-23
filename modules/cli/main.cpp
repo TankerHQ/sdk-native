@@ -12,7 +12,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/Block.hpp>
+#include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -55,14 +55,11 @@ using MainArgs = std::map<std::string, docopt::value>;
 
 namespace
 {
-std::string formatEntry(Block const& block, ServerEntry const& entry)
+std::string formatEntry(ServerEntry const& entry)
 {
-  nlohmann::json jblock(block);
   nlohmann::json jentry(entry);
 
-  auto merged = jblock;
-  merged.insert(jentry.begin(), jentry.end());
-  return merged.dump(4);
+  return jentry.dump(4);
 }
 
 std::string readfile(std::string const& file)
@@ -181,6 +178,24 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   return core;
 }
+
+template <typename Codec>
+ServerEntry constructEntry(MainArgs const& args)
+{
+  auto const index = static_cast<std::uint64_t>(args.at("<index>").asLong());
+  auto const nature = static_cast<Nature>(args.at("<nature>").asLong());
+  auto const payload = args.at("<payload>").asString();
+  auto const action = Action::deserialize(nature, Codec::decode(payload));
+  auto const author =
+      Codec::template decode<Crypto::Hash>(args.at("<author>").asString());
+  auto const signature = Codec::template decode<Crypto::Signature>(
+      args.at("<signature>").asString());
+  auto const hash = Trustchain::computeHash(
+      nature, author, gsl::make_span(payload).as_span<std::uint8_t const>());
+  // no trustchain id, since this is a debug tool, we don't need
+  // complete/proper info, right?
+  return {{}, index, author, action, hash, signature};
+}
 }
 
 int main(int argc, char* argv[])
@@ -193,17 +208,16 @@ int main(int argc, char* argv[])
 
   if (args.at("deserializeblock").asBool())
   {
-    Block block;
+    ServerEntry entry;
 
     if (args.at("--hex").asBool())
-      block = Serialization::deserialize<Block>(
+      entry = Serialization::deserialize<ServerEntry>(
           cppcodec::hex_lower::decode(args.at("<block>").asString()));
     else
-      block = Serialization::deserialize<Block>(
+      entry = Serialization::deserialize<ServerEntry>(
           cppcodec::base64_rfc4648::decode(args.at("<block>").asString()));
 
-    auto const entry = blockToServerEntry(block);
-    std::cout << formatEntry(block, entry) << std::endl;
+    std::cout << formatEntry(entry) << std::endl;
   }
   else if (args.at("deserializepayload").asBool())
   {
@@ -223,31 +237,16 @@ int main(int argc, char* argv[])
   }
   else if (args.at("deserializesplitblock").asBool())
   {
-    Block block;
-
-    block.index = args.at("<index>").asLong();
-    block.nature = static_cast<Nature>(args.at("<nature>").asLong());
     if (args.at("--hex").asBool())
     {
-      block.payload =
-          cppcodec::hex_lower::decode(args.at("<payload>").asString());
-      block.author = Crypto::Hash(
-          cppcodec::hex_lower::decode(args.at("<author>").asString()));
-      block.signature = Crypto::Signature(
-          cppcodec::hex_lower::decode(args.at("<signature>").asString()));
+      std::cout << formatEntry(constructEntry<cppcodec::hex_lower>(args))
+                << std::endl;
     }
     else
     {
-      block.payload =
-          cppcodec::base64_rfc4648::decode(args.at("<payload>").asString());
-      block.author = Crypto::Hash(
-          cppcodec::base64_rfc4648::decode(args.at("<author>").asString()));
-      block.signature = Crypto::Signature(
-          cppcodec::base64_rfc4648::decode(args.at("<signature>").asString()));
+      std::cout << formatEntry(constructEntry<cppcodec::base64_rfc4648>(args))
+                << std::endl;
     }
-
-    auto const entry = blockToServerEntry(block);
-    std::cout << formatEntry(block, entry) << std::endl;
   }
   else if (args.at("signup").asBool())
   {

@@ -6,14 +6,14 @@
 
 #include <optional>
 
-namespace Tanker
+namespace Tanker::Users
 {
-struct Device;
+class Device;
+}
 
-namespace Verif
+namespace Tanker::Verif
 {
 Entry verifyUserGroupCreation(Trustchain::ServerEntry const& serverEntry,
-                              Device const& author,
+                              Users::Device const& author,
                               std::optional<ExternalGroup> const& group);
-}
 }

@@ -2,6 +2,7 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
@@ -10,24 +11,31 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
-#include <optional>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
+namespace Tanker::Users
+{
+class Requester;
+}
+
 namespace Tanker
 {
-class DeviceKeyStore;
-
 class Opener
 {
 public:
   Opener(std::string url, Network::SdkInfo info, std::string writablePath);
+  ~Opener();
 
   Status status() const;
 
@@ -44,6 +52,8 @@ public:
   tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods();
 
+  tc::cotask<void> nukeDatabase();
+
 private:
   std::string _url;
   Network::SdkInfo _info;
@@ -51,12 +61,16 @@ private:
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
   DataStore::DatabasePtr _db;
-  std::unique_ptr<DeviceKeyStore> _keyStore;
+  Users::LocalUser::Ptr _localUser;
+  std::unique_ptr<Users::ContactStore> _contactStore;
   std::unique_ptr<Client> _client;
-  Trustchain::UserId _userId;
+  std::unique_ptr<Users::Requester> _userRequester;
+  DeviceKeys _deviceKeys;
+  Status _status = Status::Stopped;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);
-  Status _status = Status::Stopped;
+  tc::cotask<void> fetchUser();
+  void extractIdentity(std::string const& b64Identity);
 
   tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
   Session::Config makeConfig();

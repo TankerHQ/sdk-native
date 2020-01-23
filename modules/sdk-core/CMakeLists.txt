@@ -62,47 +62,52 @@ add_library(tankercore STATIC
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
   include/Tanker/TrustchainStore.hpp
-  include/Tanker/TrustchainPuller.hpp
-  include/Tanker/ITrustchainPuller.hpp
-  include/Tanker/TrustchainVerifier.hpp
-  include/Tanker/BlockGenerator.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
-  include/Tanker/Unlock/Create.hpp
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
   include/Tanker/Opener.hpp
-  include/Tanker/DeviceKeyStore.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
   include/Tanker/Entry.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
-  include/Tanker/Preregistration.hpp
+  include/Tanker/ProvisionalUsers/Accessor.hpp
+  include/Tanker/ProvisionalUsers/IAccessor.hpp
+  include/Tanker/ProvisionalUsers/Updater.hpp
+  include/Tanker/ProvisionalUsers/Requests.hpp
+  include/Tanker/ProvisionalUsers/Manager.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
-  include/Tanker/Groups/GroupStore.hpp
-  include/Tanker/Groups/GroupUpdater.hpp
-  include/Tanker/Groups/GroupAccessor.hpp
+  include/Tanker/Groups/Store.hpp
+  include/Tanker/Groups/Updater.hpp
+  include/Tanker/Groups/Accessor.hpp
   include/Tanker/Groups/IAccessor.hpp
   include/Tanker/Groups/Manager.hpp
   include/Tanker/Groups/Requester.hpp
+  include/Tanker/Groups/EntryGenerator.hpp
+  include/Tanker/Groups/Verif/UserGroupAddition.hpp
+  include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/UserKeyStore.hpp
-  include/Tanker/ContactStore.hpp
-  include/Tanker/ProvisionalUserKeysStore.hpp
+  include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
-  include/Tanker/Device.hpp
   include/Tanker/Revocation.hpp
-  include/Tanker/User.hpp
-  include/Tanker/UserAccessor.hpp
-  include/Tanker/IUserAccessor.hpp
+  include/Tanker/Users/User.hpp
+  include/Tanker/Users/Updater.hpp
+  include/Tanker/Users/IRequester.hpp
+  include/Tanker/Users/Requester.hpp
+  include/Tanker/Users/LocalUser.hpp
+  include/Tanker/Users/UserAccessor.hpp
+  include/Tanker/Users/IUserAccessor.hpp
+  include/Tanker/Users/ContactStore.hpp
+  include/Tanker/Users/Device.hpp
+  include/Tanker/Users/EntryGenerator.hpp
   include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/SecretProvisionalUser.hpp
   include/Tanker/PublicProvisionalUser.hpp
@@ -111,9 +116,7 @@ add_library(tankercore STATIC
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
-  include/Tanker/Groups/Verif/UserGroupAddition.hpp
-  include/Tanker/Groups/Verif/UserGroupCreation.hpp
-  include/Tanker/Verif/ProvisionalIdentityClaim.hpp
+  include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp
@@ -132,39 +135,43 @@ add_library(tankercore STATIC
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
   src/DataStore/DatabaseFactory.cpp
-  src/BlockGenerator.cpp
   src/Client.cpp
   src/GhostDevice.cpp
-  src/Unlock/Create.cpp
   src/Unlock/Verification.cpp
   src/Session.cpp
   src/Opener.cpp
   src/Core.cpp
   src/Status.cpp
   src/TrustchainStore.cpp
-  src/TrustchainPuller.cpp
-  src/TrustchainVerifier.cpp
-  src/DeviceKeyStore.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp
   src/Entry.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
-  src/UserKeyStore.cpp
-  src/ContactStore.cpp
-  src/Preregistration.cpp
-  src/ProvisionalUserKeysStore.cpp
+  src/ProvisionalUsers/Accessor.cpp
+  src/ProvisionalUsers/Updater.cpp
+  src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
+  src/ProvisionalUsers/Requests.cpp
+  src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
+  src/Groups/EntryGenerator.cpp
   src/Groups/GroupEncryptedKey.cpp
-  src/Groups/GroupStore.cpp
-  src/Groups/GroupAccessor.cpp
-  src/Groups/GroupUpdater.cpp
+  src/Groups/Store.cpp
+  src/Groups/Accessor.cpp
+  src/Groups/Updater.cpp
   src/Groups/Manager.cpp
   src/Groups/Requester.cpp
-  src/Device.cpp
-  src/User.cpp
-  src/UserAccessor.cpp
+  src/Groups/Verif/UserGroupAddition.cpp
+  src/Groups/Verif/UserGroupCreation.cpp
+  src/Users/User.cpp
+  src/Users/Updater.cpp
+  src/Users/LocalUser.cpp
+  src/Users/UserAccessor.cpp
+  src/Users/ContactStore.cpp
+  src/Users/Device.cpp
+  src/Users/EntryGenerator.cpp
+  src/Users/Requester.cpp
   src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
   src/Verif/Errors/Errc.cpp
@@ -172,9 +179,7 @@ add_library(tankercore STATIC
   src/Verif/DeviceCreation.cpp
   src/Verif/DeviceRevocation.cpp
   src/Verif/TrustchainCreation.cpp
-  src/Groups/Verif/UserGroupAddition.cpp
-  src/Groups/Verif/UserGroupCreation.cpp
-  src/Verif/ProvisionalIdentityClaim.cpp
+  src/ProvisionalUsers/Verif/ProvisionalIdentityClaim.cpp
   src/Encryptor.cpp
   src/Encryptor/v2.cpp
   src/Encryptor/v3.cpp
@@ -215,7 +220,6 @@ target_link_libraries(tankercore
   CONAN_PKG::gsl-lite
   CONAN_PKG::fmt
   CONAN_PKG::jsonformoderncpp
- 
   CONAN_PKG::enum-flags
 )
 

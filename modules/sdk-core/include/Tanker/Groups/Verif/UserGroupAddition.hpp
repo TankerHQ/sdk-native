@@ -5,15 +5,19 @@
 
 #include <optional>
 
+namespace Tanker::Users
+{
+class Device;
+}
+
 namespace Tanker
 {
-struct Device;
 struct ExternalGroup;
 
 namespace Verif
 {
 Entry verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
-                              Device const& author,
+                              Users::Device const& author,
                               std::optional<ExternalGroup> const& group);
 }
 }

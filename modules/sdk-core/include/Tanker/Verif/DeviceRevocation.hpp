@@ -1,17 +1,17 @@
 #pragma once
 
+#include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
-namespace Tanker
-{
-struct Device;
-struct User;
+#include <optional>
 
-namespace Verif
+namespace Tanker::Users
 {
-void verifyDeviceRevocation(Trustchain::ServerEntry const& serverEntry,
-                            Device const& author,
-                            Device const& target,
-                            User const& user);
+class User;
 }
+
+namespace Tanker::Verif
+{
+Entry verifyDeviceRevocation(Trustchain::ServerEntry const& serverEntry,
+                             std::optional<Users::User> const& user);
 }

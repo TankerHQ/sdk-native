@@ -3,12 +3,15 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
-#include <Tanker/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/TrustchainVerifier.hpp>
-#include <Tanker/UserKeyStore.hpp>
 
 #include <optional>
+
+namespace Tanker::Users
+{
+class LocalUser;
+}
 
 namespace Tanker
 {
@@ -16,10 +19,9 @@ class ResourceKeyAccessor
 {
 public:
   ResourceKeyAccessor(Client* client,
-                      TrustchainVerifier* verifier,
-                      UserKeyStore* userKeyStore,
+                      Users::LocalUser* localUser,
                       Groups::IAccessor* groupAccessor,
-                      ProvisionalUserKeysStore* provisionalKeyStore,
+                      ProvisionalUsers::IAccessor* provisionalUsersAccessor,
                       ResourceKeyStore* resourceKeyStore);
   ResourceKeyAccessor() = delete;
   ResourceKeyAccessor(ResourceKeyAccessor const&) = delete;
@@ -32,10 +34,9 @@ public:
 
 private:
   Client* _client;
-  TrustchainVerifier* _verifier;
-  UserKeyStore* _userKeyStore;
+  Users::LocalUser* _localUser;
   Groups::IAccessor* _groupAccessor;
-  ProvisionalUserKeysStore* _provisionalUserKeysStore;
+  ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   ResourceKeyStore* _resourceKeyStore;
 };
 }

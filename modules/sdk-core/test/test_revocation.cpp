@@ -1,11 +1,11 @@
 #include <Tanker/Revocation.hpp>
 
-#include <Tanker/ContactStore.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/DeviceKeyStore.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Groups/GroupAccessor.hpp>
+#include <Tanker/Groups/Accessor.hpp>
+#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
@@ -70,24 +70,21 @@ TEST_CASE("Revocation tests")
   {
     auto const user = AWAIT(Revocation::getUserFromUserId(
         userResult.user.userId, *contactStore.get()));
-    CHECK(user.userKey == userResult.user.asTankerUser().userKey);
+    CHECK(user.userKey() == userResult.user.asTankerUser().userKey());
   }
 
   SUBCASE("devicePrivateKey can be encrypted & decrypted")
   {
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const encryptedPrivateKeys = AWAIT(
+    auto const encryptedPrivateKeys =
         Revocation::encryptPrivateKeyForDevices(deviceResult.user,
                                                 userResult.user.devices[0].id,
-                                                encryptionKeyPair.privateKey));
+                                                encryptionKeyPair.privateKey);
 
     REQUIRE(encryptedPrivateKeys.size() == 1);
 
-    auto const deviceKeyStore =
-        AWAIT(DeviceKeyStore::open(db.get(), deviceResult.device.keys));
-
     auto const decryptedPrivateKey = Revocation::decryptPrivateKeyForDevice(
-        deviceKeyStore, encryptedPrivateKeys[0].second);
+        deviceResult.device.keys, encryptedPrivateKeys[0].second);
 
     CHECK(decryptedPrivateKey == encryptionKeyPair.privateKey);
   }

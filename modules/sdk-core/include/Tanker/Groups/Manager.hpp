@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Tanker/BlockGenerator.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
-#include <Tanker/UserAccessor.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -17,50 +17,58 @@
 #include <string>
 #include <vector>
 
-namespace Tanker
+namespace Tanker::Users
 {
-namespace Groups
-{
-namespace Manager
+class IUserAccessor;
+class User;
+}
+
+namespace Tanker::Groups::Manager
 {
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
 struct MembersToAdd
 {
-  std::vector<User> users;
+  std::vector<Users::User> users;
   std::vector<PublicProvisionalUser> provisionalUsers;
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    IUserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
 
-std::vector<uint8_t> generateCreateGroupBlock(
-    std::vector<User> const& memberUsers,
+Trustchain::ClientEntry generateCreateGroupEntry(
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
-    BlockGenerator const& blockGenerator,
-    Crypto::SignatureKeyPair const& groupSignatureKey,
-    Crypto::EncryptionKeyPair const& groupEncryptionKey);
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::EncryptionKeyPair const& groupEncryptionKeyPair,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey);
 
 tc::cotask<SGroupId> create(
-    UserAccessor& userAccessor,
-    BlockGenerator const& blockGenerator,
+    Users::IUserAccessor& userAccessor,
     Client& client,
-    std::vector<SPublicIdentity> const& spublicIdentities);
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-std::vector<uint8_t> generateAddUserToGroupBlock(
-    std::vector<User> const& memberUsers,
+Trustchain::ClientEntry generateAddUserToGroupEntry(
+    std::vector<Users::User> const& memberUsers,
     std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
-    BlockGenerator const& blockGenerator,
-    InternalGroup const& group);
+    InternalGroup const& group,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey);
 
 tc::cotask<void> updateMembers(
-    UserAccessor& userAccessor,
-    BlockGenerator const& blockGenerator,
+    Users::IUserAccessor& userAccessor,
     Client& client,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
-}
-}
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey);
 }

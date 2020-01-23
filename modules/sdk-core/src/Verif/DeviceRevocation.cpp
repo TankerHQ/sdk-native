@@ -1,12 +1,12 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Device.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
-#include <Tanker/User.hpp>
+#include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
@@ -29,19 +29,19 @@ bool has_duplicates(std::vector<T> vect)
 }
 
 void verifySubAction(DeviceRevocation1 const& deviceRevocation,
-                     Device const& target,
-                     User const& user)
+                     Users::Device const& target,
+                     Users::User const& user)
 {
-  ensures(!user.userKey,
+  ensures(!user.userKey(),
           Errc::InvalidUserKey,
           "A revocation V1 cannot be used on an user with a user key");
 }
 
 void verifySubAction(DeviceRevocation2 const& deviceRevocation,
-                     Device const& target,
-                     User const& user)
+                     Users::Device const& target,
+                     Users::User const& user)
 {
-  if (!user.userKey)
+  if (!user.userKey())
   {
     ensures(deviceRevocation.previousPublicEncryptionKey().is_null(),
             Errc::InvalidEncryptionKey,
@@ -55,14 +55,14 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
   }
   else
   {
-    ensures(deviceRevocation.previousPublicEncryptionKey() == *user.userKey,
+    ensures(deviceRevocation.previousPublicEncryptionKey() == *user.userKey(),
             Errc::InvalidEncryptionKey,
             "A revocation V2 previousPublicEncryptionKey should be the same as "
             "its user userKey");
   }
   size_t const nbrDevicesNotRevoked = std::count_if(
-      user.devices.begin(), user.devices.end(), [](auto const& device) {
-        return device.revokedAtBlkIndex == std::nullopt;
+      user.devices().begin(), user.devices().end(), [](auto const& device) {
+        return device.revokedAtBlkIndex() == std::nullopt;
       });
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
               nbrDevicesNotRevoked - 1,
@@ -71,16 +71,16 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
           "device of the user");
   for (auto userKey : deviceRevocation.sealedUserKeysForDevices())
   {
-    ensures(userKey.first != target.id,
+    ensures(userKey.first != target.id(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have the target deviceId in the "
             "userKeys field");
 
-    ensures(std::find_if(user.devices.begin(),
-                         user.devices.end(),
+    ensures(std::find_if(user.devices().begin(),
+                         user.devices().end(),
                          [&](auto const& device) {
-                           return userKey.first == device.id;
-                         }) != user.devices.end(),
+                           return userKey.first == device.id();
+                         }) != user.devices().end(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have a key for another user's device");
   }
@@ -92,42 +92,46 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
 }
 }
 
-void verifyDeviceRevocation(ServerEntry const& serverEntry,
-                            Device const& author,
-                            Device const& target,
-                            User const& user)
+Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
+                             std::optional<Users::User> const& user)
 {
-  assert(serverEntry.action().nature() == Nature::DeviceRevocation ||
-         serverEntry.action().nature() == Nature::DeviceRevocation2);
+  auto const dr = serverEntry.action().get_if<Actions::DeviceRevocation>();
+  assert(dr);
 
-  ensures(!author.revokedAtBlkIndex ||
-              author.revokedAtBlkIndex > serverEntry.index(),
-          Errc::InvalidAuthor,
-          "Author device of revocation must not be revoked");
+  ensures(user.has_value(), Errc::InvalidAuthor, "Author not found");
 
-  ensures(!target.revokedAtBlkIndex,
-          Errc::InvalidTargetDevice,
-          "The target of a revocation must not be already revoked");
-
-  ensures(std::find(user.devices.begin(), user.devices.end(), author) !=
-                  user.devices.end() &&
-              std::find(user.devices.begin(), user.devices.end(), target) !=
-                  user.devices.end(),
+  auto const author =
+      user->findDevice(Trustchain::DeviceId{serverEntry.author()});
+  ensures(author.has_value(),
           Errc::InvalidUser,
           "A device can only be revoked by another device of its user");
+
+  ensures(!author->revokedAtBlkIndex() ||
+              author->revokedAtBlkIndex() > serverEntry.index(),
+          Errc::AuthorIsRevoked,
+          "Author device of revocation must not be revoked");
+
+  auto const target = user->findDevice(dr->deviceId());
+  ensures(target.has_value(),
+          Errc::InvalidUser,
+          "The target device of a revocation must be owned by the user");
+
+  ensures(!target->revokedAtBlkIndex(),
+          Errc::InvalidTargetDevice,
+          "The target of a revocation must not be already revoked");
 
   ensures(
       Crypto::verify(serverEntry.hash(),
                      serverEntry.signature(),
-                     author.publicSignatureKey),
+                     author->publicSignatureKey()),
       Errc::InvalidSignature,
       "device revocation block must be signed by the public signature key of "
       "its author");
 
-  auto const& deviceRevocation = serverEntry.action().get<DeviceRevocation>();
-
-  deviceRevocation.visit(
-      [&](auto const& subAction) { verifySubAction(subAction, target, user); });
+  dr->visit([&](auto const& subAction) {
+    verifySubAction(subAction, *target, *user);
+  });
+  return Verif::makeVerifiedEntry(serverEntry);
 }
 }
 }

@@ -12,8 +12,10 @@ TrustchainFactory::Ptr _trustchainFactory;
 tc::cotask<void> deleteTrustchain()
 {
   assert(_trustchain);
-  TC_AWAIT(_trustchainFactory->deleteTrustchain(_trustchain->id));
+  // keep it because we will delete it
+  auto const trustchainId = _trustchain->id;
   _trustchain.reset();
+  TC_AWAIT(_trustchainFactory->deleteTrustchain(trustchainId));
 }
 
 tc::cotask<void> createTrustchain()

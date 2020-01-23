@@ -1,7 +1,7 @@
-#include <Tanker/Preregistration.hpp>
-
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/ProvisionalUsers/Updater.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
@@ -14,7 +14,7 @@
 using namespace Tanker;
 using namespace Tanker::Errors;
 
-TEST_CASE("Preregistration")
+TEST_CASE("ProvisionalUsers")
 {
   auto const db = AWAIT(DataStore::createDatabase(":memory:"));
 
@@ -26,31 +26,34 @@ TEST_CASE("Preregistration")
 
   SUBCASE("throws if the user key is not found")
   {
-    UserKeyStore userKeyStore(db.get());
-    ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    auto const userLocalUser = AWAIT(Tanker::Users::LocalUser::open(
+        Tanker::Identity::createIdentity(builder.trustchainId(),
+                                         builder.trustchainPrivateKey(),
+                                         userResult.user.userId),
+        db.get()));
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(Preregistration::applyEntry(
-            userKeyStore, provisionalUserKeysStore, picEntry)),
+        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(*userLocalUser,
+                                                                 picEntry)),
         Errc::InternalError);
   }
 
   SUBCASE("can decrypt a preregistration claim")
   {
-    auto const userKeyStore =
-        builder.makeUserKeyStore(userResult.user, db.get());
+    auto const userLocalUser = builder.makeLocalUser(userResult.user, db.get());
     ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
 
-    CHECK_NOTHROW(AWAIT_VOID(Preregistration::applyEntry(
-        *userKeyStore, provisionalUserKeysStore, picEntry)));
-    auto const gotKeys = AWAIT(provisionalUserKeysStore.findProvisionalUserKeys(
-        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey,
-        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair
-            .publicKey));
-    REQUIRE_UNARY(gotKeys);
-    CHECK_EQ(gotKeys->appKeys,
+    auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(
+        *userLocalUser, picEntry));
+    CHECK_EQ(
+        gotKeys.appSignaturePublicKey,
+        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey);
+    CHECK_EQ(
+        gotKeys.tankerSignaturePublicKey,
+        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair.publicKey);
+    CHECK_EQ(gotKeys.appEncryptionKeyPair,
              provisionalUser.secretProvisionalUser.appEncryptionKeyPair);
-    CHECK_EQ(gotKeys->tankerKeys,
+    CHECK_EQ(gotKeys.tankerEncryptionKeyPair,
              provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair);
   }
 }

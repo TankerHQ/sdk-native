@@ -3,30 +3,25 @@ if (NOT EMSCRIPTEN)
 endif()
 
 add_executable(test_tanker
-  test_serialization.cpp
   test_contactstore.cpp
-  test_devicekeystore.cpp
+  test_localuser.cpp
   test_groupstore.cpp
   test_groupaccessor.cpp
   test_groupupdater.cpp
+  test_userupdater.cpp
   test_resourcekeystore.cpp
   test_provisionaluserkeysstore.cpp
   test_trustchain.cpp
-  test_userkeystore.cpp
-  test_blockgenerator.cpp
   test_log.cpp
   test_encryptor.cpp
   test_encryptorstream.cpp
   test_receivekey.cpp
-  test_session.cpp
   test_share.cpp
   test_ghostdevice.cpp
   test_verificationkey.cpp
   test_useraccessor.cpp
-  test_entry.cpp
   test_groups.cpp
   test_verif.cpp
-  test_trustchainverifier.cpp
   test_revocation.cpp
   test_preregistration.cpp
   test_stream.cpp
