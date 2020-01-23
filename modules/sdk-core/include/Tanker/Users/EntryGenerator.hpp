@@ -77,12 +77,4 @@ Trustchain::ClientEntry createKeyPublishToUserEntry(
     Crypto::SealedSymmetricKey const& symKey,
     Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey);
-
-Trustchain::ClientEntry createKeyPublishToDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& deviceSignatureKey,
-    Crypto::EncryptedSymmetricKey const& symKey,
-    Trustchain::ResourceId const& resourceId,
-    Trustchain::DeviceId const& recipient);
 }

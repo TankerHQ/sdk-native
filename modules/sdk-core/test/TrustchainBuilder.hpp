@@ -141,11 +141,6 @@ public:
       Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
-  std::vector<Tanker::Trustchain::ServerEntry> shareToDevice(
-      Device const& sender,
-      User const& receiver,
-      Tanker::Trustchain::ResourceId const& resourceId,
-      Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::ServerEntry shareToUser(
       Device const& sender,
       User const& receiver,

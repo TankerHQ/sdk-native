@@ -563,40 +563,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   return {group, serverEntry};
 }
 
-std::vector<ServerEntry> TrustchainBuilder::shareToDevice(
-    Device const& sender,
-    User const& receiver,
-    ResourceId const& resourceId,
-    Crypto::SymmetricKey const& key)
-{
-  if (!receiver.userKeys.empty())
-    throw std::runtime_error("can't shareToDevice if the user has a user key");
-
-  std::vector<ServerEntry> result;
-
-  for (auto const& receiverDevice : receiver.devices)
-  {
-    auto const encryptedKey =
-        Crypto::asymEncrypt<Crypto::EncryptedSymmetricKey>(
-            key,
-            sender.keys.encryptionKeyPair.privateKey,
-            receiverDevice.keys.encryptionKeyPair.publicKey);
-
-    auto const clientEntry = Users::createKeyPublishToDeviceEntry(
-        trustchainId(),
-        sender.id,
-        sender.keys.signatureKeyPair.privateKey,
-        encryptedKey,
-        resourceId,
-        receiverDevice.id);
-
-    auto const serverEntry = clientToServerEntry(clientEntry);
-    _entries.push_back(serverEntry);
-    result.push_back(serverEntry);
-  }
-  return result;
-}
-
 ServerEntry TrustchainBuilder::shareToUser(Device const& sender,
                                            User const& receiver,
                                            ResourceId const& resourceId,

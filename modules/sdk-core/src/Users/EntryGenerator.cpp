@@ -1,6 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
@@ -191,22 +190,6 @@ ClientEntry createKeyPublishToUserEntry(
 {
   Trustchain::Actions::KeyPublishToUser kp{
       recipientPublicEncryptionKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
-}
-
-ClientEntry createKeyPublishToDeviceEntry(
-    TrustchainId const& trustchainId,
-    DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& deviceSignatureKey,
-    Crypto::EncryptedSymmetricKey const& symKey,
-    ResourceId const& resourceId,
-    DeviceId const& recipient)
-{
-  Trustchain::Actions::KeyPublishToDevice kp{recipient, resourceId, symKey};
 
   return ClientEntry::create(trustchainId,
                              static_cast<Crypto::Hash>(deviceId),
