@@ -13,6 +13,11 @@
 
 namespace Tanker
 {
+namespace Identity
+{
+struct SecretProvisionalIdentity;
+}
+
 namespace Unlock
 {
 struct EmailVerification
@@ -45,6 +50,10 @@ void decryptEmailMethods(std::vector<VerificationMethod>& encryptedMethods,
 
 void to_json(nlohmann::json&, VerificationMethod const&) = delete;
 void from_json(nlohmann::json const&, VerificationMethod&);
+
+void validateVerification(
+    Verification const& verification,
+    Identity::SecretProvisionalIdentity const& provisionalIdentity);
 
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {

@@ -6,7 +6,7 @@
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -33,7 +33,10 @@ public:
 
   tc::cotask<void> verifyProvisionalIdentity(
       Crypto::EncryptionKeyPair const& lastUserKey,
-      Unlock::Verification const& verification);
+      Unlock::Request const& unlockRequest);
+
+  std::optional<Identity::SecretProvisionalIdentity> const&
+  provisionalIdentity() const;
 
 private:
   Users::LocalUser* _localUser;
