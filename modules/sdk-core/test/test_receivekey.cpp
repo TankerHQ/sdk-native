@@ -22,42 +22,6 @@
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("onKeyToDeviceReceived should process a key publish entry")
-{
-  TrustchainBuilder builder;
-
-  auto user = builder.makeUser1("receiver");
-  builder.makeUser1("sender");
-
-  auto const receiver = *builder.findUser("receiver");
-  auto const receiverDevice = receiver.devices.front();
-
-  auto const sender = *builder.findUser("sender");
-  auto const senderDevice = sender.devices.front();
-
-  auto const resourceMac = make<Trustchain::ResourceId>("resource resourceId");
-  auto const resourceKey = make<Crypto::SymmetricKey>("the KEY");
-
-  auto const keyPublishEntries =
-      builder.shareToDevice(senderDevice, receiver, resourceMac, resourceKey);
-  assert(keyPublishEntries.size() == 1);
-  auto const keyPublishToDeviceEntry =
-      toVerifiedEntry(keyPublishEntries.front());
-
-  auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-  ResourceKeyStore resourceKeyStore(db.get());
-  auto const contactStore = builder.makeContactStoreWith({"sender"}, db.get());
-
-  auto const receiverPrivateKey =
-      receiverDevice.keys.encryptionKeyPair.privateKey;
-  AWAIT_VOID(ReceiveKey::onKeyToDeviceReceived(*contactStore,
-                                               resourceKeyStore,
-                                               receiverPrivateKey,
-                                               keyPublishToDeviceEntry));
-
-  CHECK(AWAIT(resourceKeyStore.getKey(resourceMac)) == resourceKey);
-}
-
 TEST_CASE("decryptAndStoreKey")
 {
   TrustchainBuilder builder;

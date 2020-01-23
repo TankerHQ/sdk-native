@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
@@ -27,14 +26,10 @@ class KeyPublish
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
       KeyPublish,
-      (KeyPublishToDevice,
-       KeyPublishToUser,
-       KeyPublishToUserGroup,
-       KeyPublishToProvisionalUser),
+      (KeyPublishToUser, KeyPublishToUserGroup, KeyPublishToProvisionalUser),
       TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_ATTRIBUTES)
 
 public:
-  using ToDevice = KeyPublishToDevice;
   using ToUser = KeyPublishToUser;
   using ToUserGroup = KeyPublishToUserGroup;
   using ToProvisionalUser = KeyPublishToProvisionalUser;

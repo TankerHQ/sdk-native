@@ -11,7 +11,6 @@
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -30,26 +29,6 @@ namespace Tanker
 {
 namespace ReceiveKey
 {
-tc::cotask<void> onKeyToDeviceReceived(
-    Users::ContactStore const& contactStore,
-    ResourceKeyStore& resourceKeyStore,
-    Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
-    Entry const& entry)
-{
-  auto const& keyPublish =
-      entry.action.get<KeyPublish>().get<KeyPublishToDevice>();
-  Trustchain::DeviceId senderId{entry.author.begin(), entry.author.end()};
-
-  auto const senderDevice = TC_AWAIT(contactStore.findDevice(senderId)).value();
-
-  auto const key = Crypto::asymDecrypt<Crypto::SymmetricKey>(
-      keyPublish.encryptedSymmetricKey(),
-      senderDevice.publicEncryptionKey(),
-      selfDevicePrivateEncryptionKey);
-
-  TC_AWAIT(resourceKeyStore.putKey(keyPublish.resourceId(), key));
-}
-
 namespace
 {
 tc::cotask<void> decryptAndStoreKey(
@@ -125,17 +104,6 @@ tc::cotask<void> decryptAndStoreKey(
 
   TC_AWAIT(
       resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
-}
-
-tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const& localUser,
-    Groups::IAccessor&,
-    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    Trustchain::Actions::KeyPublishToDevice const& keyPublishToUser)
-{
-  throw AssertionError(
-      "invalid nature in decryptAndStoreKey: KeyPublishToDevice");
 }
 }
 

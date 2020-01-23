@@ -23,8 +23,6 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   {
   case Nature::TrustchainCreation:
     return Serialization::deserialize<TrustchainCreation>(payload);
-  case Nature::KeyPublishToDevice:
-    return Serialization::deserialize<KeyPublishToDevice>(payload);
   // how does this compile and work since there is a double implicit conversion
   // which cannot compile!? you might ask. Because variant is tricky, look at
   // constructor 4: https://en.cppreference.com/w/cpp/utility/variant/variant
@@ -55,6 +53,10 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
     return Serialization::deserialize<UserGroupCreation2>(payload);
   case Nature::UserGroupAddition2:
     return Serialization::deserialize<UserGroupAddition2>(payload);
+  case Nature::KeyPublishToDevice:
+    throw Errors::formatEx(Errc::InvalidBlockNature,
+                           TFMT("{:e} is not supported anymore"),
+                           nature);
   }
   throw Errors::formatEx(
       Errc::InvalidBlockNature, TFMT("unkown action nature: {:d}"), nature);
