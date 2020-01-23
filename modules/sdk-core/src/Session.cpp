@@ -301,8 +301,16 @@ tc::cotask<AttachResult> Session::attachProvisionalIdentity(
 tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
+  auto const& identity = _provisionalUsersManager.provisionalIdentity();
+  if (!identity.has_value())
+    throw formatEx(Errors::Errc::PreconditionFailed,
+                   "cannot call verifyProvisionalIdentity "
+                   "without having called "
+                   "attachProvisionalIdentity before");
+  Unlock::validateVerification(verification, *identity);
   TC_AWAIT(_provisionalUsersManager.verifyProvisionalIdentity(
-      TC_AWAIT(_localUser->currentKeyPair()), verification));
+      TC_AWAIT(_localUser->currentKeyPair()),
+      Unlock::makeRequest(verification, userSecret())));
 }
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)

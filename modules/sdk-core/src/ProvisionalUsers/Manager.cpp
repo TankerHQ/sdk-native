@@ -11,11 +11,6 @@
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/split.hpp>
-#include <cppcodec/base64_url_unpadded.hpp>
-
 TLOG_CATEGORY(ProvisionalUsers);
 
 namespace Tanker
@@ -92,65 +87,12 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   throw Errors::AssertionError("unreachable code");
 }
 
-namespace
-{
-void matchProvisional(
-    Unlock::Verification const& verification,
-    Identity::SecretProvisionalIdentity const& provisionalIdentity)
-{
-  namespace bv = boost::variant2;
-  namespace ba = boost::algorithm;
-
-  if (!(bv::holds_alternative<Unlock::EmailVerification>(verification) ||
-        bv::holds_alternative<OidcIdToken>(verification)))
-    throw Errors::Exception(
-        make_error_code(Errors::Errc::InvalidArgument),
-        "unknown verification method for provisional identity");
-
-  if (auto const emailVerification =
-          bv::get_if<Unlock::EmailVerification>(&verification))
-  {
-    if (emailVerification->email != Email{provisionalIdentity.value})
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::InvalidArgument),
-          "verification email does not match provisional identity");
-  }
-  else if (auto const oidcIdToken = bv::get_if<OidcIdToken>(&verification))
-  {
-    std::string jwtEmail;
-    try
-    {
-      std::vector<std::string> res;
-      ba::split(res, *oidcIdToken, ba::is_any_of("."));
-      jwtEmail = nlohmann::json::parse(
-                     cppcodec::base64_url_unpadded::decode(res.at(1)))
-                     .at("email");
-    }
-    catch (...)
-    {
-      throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
-                              "Failed to parse verification oidcIdToken");
-    }
-    if (jwtEmail != provisionalIdentity.value)
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::InvalidArgument),
-          "verification does not match provisional identity");
-  }
-}
-}
-
 tc::cotask<void> Manager::verifyProvisionalIdentity(
     Crypto::EncryptionKeyPair const& lastUserKey,
-    Unlock::Verification const& verification)
+    Unlock::Request const& unlockRequest)
 {
-  if (!_provisionalIdentity.has_value())
-    throw formatEx(
-        Errors::Errc::PreconditionFailed,
-        "cannot call verifyProvisionalIdentity without having called "
-        "attachProvisionalIdentity before");
-  matchProvisional(verification, _provisionalIdentity.value());
-  auto const tankerKeys = TC_AWAIT(_client->getProvisionalIdentityKeys(
-      Unlock::makeRequest(verification, _localUser->userSecret())));
+  auto const tankerKeys =
+      TC_AWAIT(_client->getProvisionalIdentityKeys(unlockRequest));
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
@@ -173,6 +115,12 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
 
   _provisionalIdentity.reset();
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
+}
+
+std::optional<Identity::SecretProvisionalIdentity> const&
+Manager::provisionalIdentity() const
+{
+  return _provisionalIdentity;
 }
 }
 }
