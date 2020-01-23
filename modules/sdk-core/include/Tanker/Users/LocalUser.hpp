@@ -31,7 +31,6 @@ public:
 
   LocalUser(Trustchain::UserId const& userId,
             Trustchain::DeviceId const& deviceId,
-            Crypto::SymmetricKey const& userSecret,
             DeviceKeys const& deviceKeys,
             DataStore::ADatabase* dbCon);
 
@@ -42,7 +41,6 @@ public:
   DeviceKeys const& deviceKeys() const;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   Trustchain::UserId const& userId() const;
-  Crypto::SymmetricKey const& userSecret() const;
   tc::cotask<Crypto::EncryptionKeyPair> currentKeyPair() const;
   tc::cotask<void> insertUserKey(
       Crypto::EncryptionKeyPair const& userEncryptionKey);
@@ -52,7 +50,6 @@ public:
 private:
   Trustchain::UserId _userId;
   Trustchain::DeviceId _deviceId;
-  Crypto::SymmetricKey _userSecret;
   DeviceKeys _deviceKeys;
   DataStore::ADatabase* _db;
 };

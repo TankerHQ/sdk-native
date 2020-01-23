@@ -66,6 +66,7 @@ public:
   {
     DataStore::DatabasePtr db;
     Trustchain::Context trustchainContext;
+    Crypto::SymmetricKey userSecret;
     Users::LocalUser::Ptr localUser;
     std::unique_ptr<Users::ContactStore> contactStore;
     std::unique_ptr<Client> client;
@@ -135,6 +136,7 @@ private:
 
 private:
   Trustchain::Context _trustchainContext;
+  Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
   Users::LocalUser::Ptr _localUser;
   std::unique_ptr<Client> _client;

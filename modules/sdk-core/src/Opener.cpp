@@ -89,12 +89,8 @@ tc::cotask<void> Opener::fetchUser()
   {
     _trustchainContext =
         Trustchain::Context{_info.trustchainId, *trustchainPubSigKey};
-    _localUser =
-        std::make_unique<Users::LocalUser>(_identity->delegation.userId,
-                                           *deviceId,
-                                           _identity->userSecret,
-                                           _deviceKeys,
-                                           _db.get());
+    _localUser = std::make_unique<Users::LocalUser>(
+        _identity->delegation.userId, *deviceId, _deviceKeys, _db.get());
     TC_RETURN();
   }
 
@@ -104,7 +100,6 @@ tc::cotask<void> Opener::fetchUser()
   // from scratch
   _localUser = std::make_unique<Users::LocalUser>(_identity->delegation.userId,
                                                   Trustchain::DeviceId{},
-                                                  _identity->userSecret,
                                                   _deviceKeys,
                                                   _db.get());
   auto const serverEntries = TC_AWAIT(_userRequester->getMe());
@@ -229,6 +224,7 @@ Session::Config Opener::makeConfig()
 {
   return {std::move(_db),
           std::move(_trustchainContext),
+          std::move(_identity->userSecret),
           std::move(_localUser),
           std::move(_contactStore),
           std::move(_client),
