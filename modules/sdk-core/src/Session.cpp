@@ -70,6 +70,7 @@ namespace Tanker
 {
 Session::Session(Config&& config)
   : _trustchainContext(config.trustchainContext),
+    _userSecret(config.userSecret),
     _db(std::move(config.db)),
     _localUser(std::move(config.localUser)),
     _client(std::move(config.client)),
@@ -126,7 +127,7 @@ Trustchain::TrustchainId const& Session::trustchainId() const
 
 Crypto::SymmetricKey const& Session::userSecret() const
 {
-  return this->_localUser->userSecret();
+  return this->_userSecret;
 }
 
 tc::cotask<void> Session::encrypt(

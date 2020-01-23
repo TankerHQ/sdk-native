@@ -27,23 +27,15 @@ tc::cotask<LocalUser::Ptr> LocalUser::open(
   }();
   auto const deviceId =
       TC_AWAIT(dbCon->getDeviceId()).value_or(Trustchain::DeviceId{});
-  TC_RETURN(std::make_unique<LocalUser>(identity.delegation.userId,
-                                        deviceId,
-                                        identity.userSecret,
-                                        deviceKeys,
-                                        dbCon));
+  TC_RETURN(std::make_unique<LocalUser>(
+      identity.delegation.userId, deviceId, deviceKeys, dbCon));
 }
 
 LocalUser::LocalUser(Trustchain::UserId const& userId,
                      Trustchain::DeviceId const& deviceId,
-                     Crypto::SymmetricKey const& userSecret,
                      DeviceKeys const& deviceKeys,
                      DataStore::ADatabase* dbCon)
-  : _userId(userId),
-    _deviceId(deviceId),
-    _userSecret(userSecret),
-    _deviceKeys(deviceKeys),
-    _db(dbCon)
+  : _userId(userId), _deviceId(deviceId), _deviceKeys(deviceKeys), _db(dbCon)
 {
 }
 
@@ -68,11 +60,6 @@ DeviceKeys const& LocalUser::deviceKeys() const
 Trustchain::UserId const& LocalUser::userId() const
 {
   return _userId;
-}
-
-Crypto::SymmetricKey const& LocalUser::userSecret() const
-{
-  return _userSecret;
 }
 
 tc::cotask<void> LocalUser::insertUserKey(
