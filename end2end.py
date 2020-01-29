@@ -5,7 +5,6 @@ import sys
 from path import Path
 
 import ci.cpp
-import ci.dmenv
 import ci.endtoend
 
 
