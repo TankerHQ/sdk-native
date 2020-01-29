@@ -1,0 +1,13 @@
+[tool.poetry]
+name = "tanker-native-sdk"
+version = "0.1.0"
+description = "C++ client for Tanker"
+authors = ["Tanker team <tech@tanker.io>"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+ci = { git = "git+ssh://git@tanker.local/Tanker/ci", branch = "master" }
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
