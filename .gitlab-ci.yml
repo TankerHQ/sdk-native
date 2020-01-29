@@ -1,5 +1,5 @@
 before_script:
- - dmenv install
+ - poetry install
 
 stages:
   - build
@@ -19,25 +19,25 @@ build/linux:
       - package/
   tags: [linux]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 build/macos:
   extends: .build
   tags: [macos]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
 build/windows/visual:
   extends: .build
   tags: [windows]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
 build/windows/mingw:
   extends: .build
   tags: [windows]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
 
 
 .deploy:
@@ -52,26 +52,26 @@ deploy/linux:
   extends: .deploy
   tags: [linux]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home deploy
+    - poetry run python run-ci.py --isolate-conan-user-home deploy
 
 deploy/macos:
   extends: .deploy
   tags: [macos]
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home deploy
+    - poetry run python run-ci.py --isolate-conan-user-home deploy
 
 deploy/windows:
   extends: .deploy
   tags: [windows]
   script:
-    - dmenv run -- python run-ci.py deploy
+    - poetry run python run-ci.py deploy
 
 nightly/coverage:
   stage: build
   only:
     - schedules
   script:
-    - dmenv run -- python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-debug --coverage
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-debug --coverage
     - mv build/gcc8-debug/coverage coverage
   tags:
     - linux
@@ -106,7 +106,7 @@ mirror:
   except:
     - schedules
   script:
-    - dmenv run -- python run-ci.py  mirror
+    - poetry run python run-ci.py  mirror
 
 check/compat:
   stage: check
@@ -115,7 +115,7 @@ check/compat:
   except:
     - master
   script:
-    - dmenv run -- python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
+    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
 
@@ -124,7 +124,7 @@ check/e2e:
   dependencies:
     - build/linux
   script:
-    - dmenv run -- python end2end.py --isolate-conan-user-home --profile gcc8-release
+    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
   except:
