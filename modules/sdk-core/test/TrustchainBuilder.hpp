@@ -19,6 +19,7 @@
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <optional>
@@ -49,6 +50,10 @@ public:
   {
     Tanker::Crypto::EncryptionKeyPair keyPair;
     uint64_t blockIndex;
+    inline operator Tanker::Crypto::EncryptionKeyPair const&() const
+    {
+      return keyPair;
+    }
   };
 
   struct User
@@ -58,6 +63,7 @@ public:
     std::vector<Device> devices;
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;
+    std::vector<Tanker::Trustchain::ServerEntry> entries;
 
     Tanker::Users::User asTankerUser() const;
     std::optional<Device> findDevice(
@@ -166,7 +172,7 @@ public:
 
   std::optional<User> findUser(std::string const& suserId) const;
 
-  Tanker::Users::LocalUser::Ptr makeLocalUser(
+  std::unique_ptr<Tanker::Users::LocalUserStore> makeLocalUserStore(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
   std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
       std::vector<std::string> const& suserIds,

@@ -11,6 +11,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 
 TLOG_CATEGORY(ProvisionalUsers);
 
@@ -18,12 +19,12 @@ namespace Tanker
 {
 namespace ProvisionalUsers
 {
-Manager::Manager(Users::LocalUser* localUser,
+Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
                  Client* client,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
                  Trustchain::TrustchainId const& trustchainId)
-  : _localUser(localUser),
+  : _localUserAccessor(localUserAccessor),
     _client(client),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore),
@@ -32,7 +33,6 @@ Manager::Manager(Users::LocalUser* localUser,
 }
 
 tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
-    Crypto::EncryptionKeyPair const& lastUserKey,
     SSecretProvisionalIdentity const& sidentity)
 {
   auto const provisionalIdentity =
@@ -59,18 +59,19 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
             gsl::make_span(email).as_span<std::uint8_t const>())));
     if (tankerKeys)
     {
+      auto const localUser = TC_AWAIT(_localUserAccessor->pull());
       auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
           _trustchainId,
-          _localUser->deviceId(),
-          _localUser->deviceKeys().signatureKeyPair.privateKey,
-          _localUser->userId(),
+          localUser.deviceId(),
+          localUser.deviceKeys().signatureKeyPair.privateKey,
+          localUser.userId(),
           ProvisionalUsers::SecretUser{provisionalIdentity.target,
                                        provisionalIdentity.value,
                                        provisionalIdentity.appEncryptionKeyPair,
                                        tankerKeys->encryptionKeyPair,
                                        provisionalIdentity.appSignatureKeyPair,
                                        tankerKeys->signatureKeyPair},
-          lastUserKey);
+          localUser.currentKeyPair());
       TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
     }
     TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
@@ -89,7 +90,6 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
 }
 
 tc::cotask<void> Manager::verifyProvisionalIdentity(
-    Crypto::EncryptionKeyPair const& lastUserKey,
     Unlock::Request const& unlockRequest)
 {
   auto const tankerKeys =
@@ -100,18 +100,19 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
     TC_RETURN();
   }
 
+  auto const localUser = TC_AWAIT(_localUserAccessor->pull());
   auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
       _trustchainId,
-      _localUser->deviceId(),
-      _localUser->deviceKeys().signatureKeyPair.privateKey,
-      _localUser->userId(),
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey,
+      localUser.userId(),
       ProvisionalUsers::SecretUser{_provisionalIdentity->target,
                                    _provisionalIdentity->value,
                                    _provisionalIdentity->appEncryptionKeyPair,
                                    tankerKeys->encryptionKeyPair,
                                    _provisionalIdentity->appSignatureKeyPair,
                                    tankerKeys->signatureKeyPair},
-      lastUserKey);
+      localUser.currentKeyPair());
   TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
 
   _provisionalIdentity.reset();

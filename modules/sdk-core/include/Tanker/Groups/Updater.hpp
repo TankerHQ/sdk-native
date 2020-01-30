@@ -11,7 +11,7 @@
 namespace Tanker::Users
 {
 class IUserAccessor;
-class LocalUser;
+class ILocalUserAccessor;
 }
 
 namespace Tanker
@@ -19,18 +19,18 @@ namespace Tanker
 namespace GroupUpdater
 {
 tc::cotask<Group> applyUserGroupCreation(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Entry const& entry);
 
 tc::cotask<Group> applyUserGroupAddition(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     Entry const& entry);
 
 tc::cotask<std::optional<Group>> processGroupEntries(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,

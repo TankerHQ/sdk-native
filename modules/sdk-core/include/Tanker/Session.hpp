@@ -33,7 +33,7 @@
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/IRequester.hpp>
-#include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
@@ -67,8 +67,7 @@ public:
     DataStore::DatabasePtr db;
     Trustchain::Context trustchainContext;
     Crypto::SymmetricKey userSecret;
-    Users::LocalUser::Ptr localUser;
-    std::unique_ptr<Users::ContactStore> contactStore;
+    std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
     std::unique_ptr<Client> client;
     std::unique_ptr<Users::Requester> userRequester;
   };
@@ -127,7 +126,6 @@ public:
   tc::cotask<void> nukeDatabase();
 
 private:
-  tc::cotask<void> updateLocalUser();
   Trustchain::UserId const& userId() const;
   Trustchain::TrustchainId const& trustchainId() const;
   Crypto::SymmetricKey const& userSecret() const;
@@ -135,10 +133,9 @@ private:
       Trustchain::ResourceId const&);
 
 private:
-  Trustchain::Context _trustchainContext;
   Crypto::SymmetricKey _userSecret;
   DataStore::DatabasePtr _db;
-  Users::LocalUser::Ptr _localUser;
+  std::unique_ptr<Users::LocalUserAccessor> _localUserAccessor;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;

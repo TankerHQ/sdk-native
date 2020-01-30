@@ -51,10 +51,7 @@ namespace
 TrustchainBuilder::Device createDevice()
 {
   return TrustchainBuilder::Device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-      },
+      Tanker::DeviceKeys::create(),
       {}, // deviceId will be filled in later
       {}, // userId will be filled in later
       {}, // delegation will be filled in later
@@ -140,13 +137,12 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 
   auto device = createDevice();
   auto const daUserId = SUserId{suserId};
-  User user{
-      daUserId,
-      obfuscateUserId(daUserId, trustchainId()),
-      {device},
-      {},
-      _entries.size() + 1,
-  };
+  User user{daUserId,
+            obfuscateUserId(daUserId, trustchainId()),
+            {device},
+            {},
+            _entries.size() + 1,
+            {_entries.front()}};
   auto const delegation =
       Identity::makeDelegation(user.userId, trustchainPrivateKey());
 
@@ -175,13 +171,12 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
 
   auto device = createDevice();
   auto const daUserId = SUserId{suserId};
-  User user{
-      daUserId,
-      Tanker::obfuscateUserId(daUserId, trustchainId()),
-      {device},
-      {{Tanker::Crypto::makeEncryptionKeyPair(), _entries.size() + 1}},
-      _entries.size() + 1,
-  };
+  User user{daUserId,
+            Tanker::obfuscateUserId(daUserId, trustchainId()),
+            {device},
+            {{Tanker::Crypto::makeEncryptionKeyPair(), _entries.size() + 1}},
+            _entries.size() + 1,
+            {_entries.front()}};
 
   auto const delegation =
       Identity::makeDelegation(user.userId, trustchainPrivateKey());
@@ -239,6 +234,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   device.delegation = delegation;
   user->devices.push_back(device);
 
+  user->entries.push_back(serverEntry);
   _entries.push_back(serverEntry);
 
   return {device, user->asTankerUser(), serverEntry};
@@ -277,6 +273,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   device.userId = user->userId;
   device.delegation = delegation;
   user->devices.push_back(device);
+  user->entries.push_back(serverEntry);
 
   _entries.push_back(serverEntry);
 
@@ -319,19 +316,21 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
     int authorDeviceIndex)
 {
-  auto const user = findUser(suserId).value();
-  auto const& authorDevice = user.devices.at(authorDeviceIndex);
+
+  auto user = findMutableUser(SUserId{suserId});
+  auto const& authorDevice = user->devices.at(authorDeviceIndex);
 
   auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
       trustchainId(),
       authorDevice.id,
       authorDevice.keys.signatureKeyPair.privateKey,
-      user.userId,
+      user->userId,
       provisionalUser,
-      user.userKeys.back().keyPair);
+      user->userKeys.back().keyPair);
   auto const serverEntry =
       clientToServerEntry(clientEntry, _entries.size() + 1);
 
+  user->entries.push_back(serverEntry);
   _entries.push_back(serverEntry);
   return serverEntry;
 }
@@ -691,6 +690,7 @@ ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
                    targetUser->devices.end(),
                    [&](auto const dev) { return dev.id == target.id; });
   targetUser->devices.erase(revokedDevice);
+  targetUser->entries.push_back(_entries.back());
 
   return _entries.back();
 }
@@ -742,6 +742,7 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
   _entries.push_back(serverEntry);
 
   targetUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
+  targetUser->entries.push_back(serverEntry);
   auto const revokedDevice =
       std::find_if(targetUser->devices.begin(),
                    targetUser->devices.end(),
@@ -773,16 +774,17 @@ TrustchainBuilder::User* TrustchainBuilder::findMutableUser(
   return std::addressof(*it);
 }
 
-Tanker::Users::LocalUser::Ptr TrustchainBuilder::makeLocalUser(
-    User const& user, Tanker::DataStore::ADatabase* conn) const
+std::unique_ptr<Tanker::Users::LocalUserStore>
+TrustchainBuilder::makeLocalUserStore(User const& user,
+                                      Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = AWAIT(Tanker::Users::LocalUser::open(
-      Tanker::Identity::createIdentity(
-          trustchainId(), trustchainPrivateKey(), user.userId),
-      conn));
-  for (auto const& userKey : user.userKeys)
-    AWAIT_VOID(result->insertUserKey(userKey.keyPair));
-  return result;
+  auto store = std::make_unique<Users::LocalUserStore>(conn);
+  std::vector<Crypto::EncryptionKeyPair> keys(user.userKeys.begin(),
+                                              user.userKeys.end());
+  auto const& device = user.devices.front();
+  store->putLocalUser(
+      Tanker::Users::LocalUser(user.userId, device.id, device.keys, keys));
+  return store;
 }
 
 std::unique_ptr<Tanker::Users::ContactStore>

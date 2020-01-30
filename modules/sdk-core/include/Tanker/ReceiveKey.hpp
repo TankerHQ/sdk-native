@@ -16,7 +16,7 @@ class IAccessor;
 
 namespace Users
 {
-class LocalUser;
+class ILocalUserAccessor;
 }
 
 class ResourceKeyStore;
@@ -25,7 +25,7 @@ namespace ReceiveKey
 {
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& GroupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublish const& kp);
