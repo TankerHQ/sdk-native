@@ -16,7 +16,7 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -33,7 +33,7 @@ namespace
 {
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUser const& keyPublishToUser)
@@ -41,17 +41,23 @@ tc::cotask<void> decryptAndStoreKey(
   auto const& recipientPublicKey =
       keyPublishToUser.recipientPublicEncryptionKey();
   auto const userKeyPair =
-      TC_AWAIT(localUser.findKeyPair(recipientPublicKey)).value();
+      TC_AWAIT(localUserAccessor.pullUserKeyPair(recipientPublicKey));
+
+  if (!userKeyPair)
+    throw formatEx(Errc::InternalError,
+                   "received a KeyPublish for user key we do not have "
+                   "(public encryption key: {})",
+                   recipientPublicKey);
 
   auto const key =
-      Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), userKeyPair);
+      Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), *userKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
 }
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const&,
+    Users::ILocalUserAccessor&,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor&,
     Trustchain::Actions::KeyPublishToUserGroup const& keyPublishToUserGroup)
@@ -77,7 +83,7 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const&,
+    Users::ILocalUserAccessor&,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublishToProvisionalUser const& keyPublishToProvisionalUser)
@@ -109,14 +115,14 @@ tc::cotask<void> decryptAndStoreKey(
 
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublish const& kp)
 {
   TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<void> {
     TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
-                                localUser,
+                                localUserAccessor,
                                 groupAccessor,
                                 provisionalUsersAccessor,
                                 val));

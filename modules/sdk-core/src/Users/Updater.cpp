@@ -1,5 +1,6 @@
 #include <Tanker/Users/Updater.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -121,7 +122,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
   std::optional<Users::User> user;
-  Trustchain::DeviceId selfDeviceId;
+  std::optional<Trustchain::DeviceId> selfDeviceId;
   for (auto const& serverEntry : serverEntries)
   {
     try
@@ -147,7 +148,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
       {
         auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
         if (auto const extractedKeys =
-                extractEncryptedUserKey(*deviceRevocation, selfDeviceId))
+                extractEncryptedUserKey(*deviceRevocation, *selfDeviceId))
           sealedKeys.push_back(*extractedKeys);
         user = applyDeviceRevocationToUser(entry, *user);
       }
@@ -163,7 +164,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
   if (!user.has_value())
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our user");
-  if (selfDeviceId.is_null())
+  if (!selfDeviceId)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our device");
 
@@ -231,25 +232,5 @@ processUserEntries(DeviceKeys const& deviceKeys,
       processUserSealedKeys(deviceKeys, context, entries.subspan(1));
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
   return std::make_tuple(context, std::move(user), std::move(userKeys));
-}
-
-tc::cotask<void> updateLocalUser(
-    gsl::span<Trustchain::ServerEntry const> serverEntries,
-    Trustchain::TrustchainId const& trustchainId,
-    LocalUser& localUser,
-    ContactStore& contactStore)
-{
-  auto const deviceKeys = localUser.deviceKeys();
-  auto [trustchainSignatureKey, user, userKeys] =
-      Users::Updater::processUserEntries(
-          deviceKeys, trustchainId, serverEntries);
-
-  if (auto const selfDevice =
-          user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
-    localUser.setDeviceId(selfDevice->id());
-
-  for (auto const& userKey : userKeys)
-    TC_AWAIT(localUser.insertUserKey(userKey));
-  TC_AWAIT(contactStore.putUser(user));
 }
 }

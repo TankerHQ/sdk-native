@@ -18,7 +18,7 @@ namespace Tanker
 {
 namespace Users
 {
-class ContactStore;
+class IUserAccessor;
 class LocalUser;
 class User;
 }
@@ -28,19 +28,12 @@ class Client;
 
 namespace Revocation
 {
-tc::cotask<void> ensureDeviceIsFromUser(
-    Trustchain::DeviceId const& deviceId,
-    Trustchain::UserId const& selfUserId,
-    Users::ContactStore const& contactStore);
+tc::cotask<void> ensureDeviceIsFromUser(Trustchain::DeviceId const& deviceId,
+                                        Trustchain::UserId const& selfUserId,
+                                        Users::IUserAccessor& userAccessor);
 
-tc::cotask<Users::User> getUserFromUserId(
-    Trustchain::UserId const& selfUserId,
-    Users::ContactStore const& contactStore);
-
-tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
-    Users::LocalUser const& localUser,
-    Users::User const& user,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey);
+tc::cotask<Users::User> getUserFromUserId(Trustchain::UserId const& selfUserId,
+                                          Users::IUserAccessor& userAccessor);
 
 using SealedKeysForDevices =
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices;
@@ -53,7 +46,7 @@ SealedKeysForDevices encryptPrivateKeyForDevices(
 tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Trustchain::TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
-                              Users::ContactStore const& contactStore,
+                              Users::IUserAccessor& userAccessor,
                               std::unique_ptr<Client> const& client);
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
@@ -63,11 +56,5 @@ Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
 std::optional<Crypto::SealedPrivateEncryptionKey>
 findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
                                 SealedKeysForDevices const& keyForDevices);
-
-tc::cotask<void> onOtherDeviceRevocation(
-    Trustchain::Actions::DeviceRevocation const& deviceRevocation,
-    Entry const& entry,
-    Users::ContactStore& contactStore,
-    Users::LocalUser& localUser);
 }
 }

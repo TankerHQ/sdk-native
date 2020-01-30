@@ -7,12 +7,11 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/User.hpp>
-
-#include <cppcodec/base64_rfc4648.hpp>
+#include <Tanker/Users/UserAccessor.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -28,48 +27,28 @@ namespace Revocation
 
 tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
                                         UserId const& selfUserId,
-                                        Users::ContactStore const& contactStore)
+                                        Users::IUserAccessor& userAccessor)
 {
-  auto const userId = TC_AWAIT(contactStore.findUserIdByDeviceId(deviceId));
-  if (!userId || userId != selfUserId)
-  {
+  auto const result = TC_AWAIT(userAccessor.pull(gsl::make_span(&deviceId, 1)));
+  if (!result.notFound.empty() || result.found.front().userId() != selfUserId)
     throw formatEx(
         Errc::InvalidArgument, TFMT("unknown device: {:s}"), deviceId);
-  }
 }
 
-tc::cotask<Users::User> getUserFromUserId(
-    UserId const& selfUserId, Users::ContactStore const& contactStore)
+tc::cotask<Users::User> getUserFromUserId(UserId const& selfUserId,
+                                          Users::IUserAccessor& userAccessor)
 {
-  auto const user = TC_AWAIT(contactStore.findUser(selfUserId));
-  if (!user)
-  {
+  auto const result =
+      TC_AWAIT(userAccessor.pull(gsl::make_span(&selfUserId, 1)));
+  if (!result.notFound.empty())
     throw formatEx(
         Errc::InternalError,
         "user associated with given deviceId should be a valid user");
-  }
-  if (!user->userKey())
+  auto const& user = result.found.front();
+  if (!user.userKey())
     throw formatEx(Errc::InternalError, "user should always have a user key");
 
-  TC_RETURN(*user);
-}
-
-tc::cotask<Crypto::SealedPrivateEncryptionKey> encryptForPreviousUserKey(
-    Users::LocalUser const& localUser,
-    Users::User const& user,
-    Crypto::PublicEncryptionKey const& publicEncryptionKey)
-{
-  auto const previousEncryptionPrivateKey =
-      TC_AWAIT(localUser.findKeyPair(*user.userKey()));
-
-  if (!previousEncryptionPrivateKey)
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           TFMT("cannot find user key for public key: {:s}"),
-                           *user.userKey());
-  auto const encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-      previousEncryptionPrivateKey->privateKey, publicEncryptionKey);
-
-  TC_RETURN(encryptedKeyForPreviousUserKey);
+  TC_RETURN(user);
 }
 
 DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
@@ -94,18 +73,18 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
 tc::cotask<void> revokeDevice(DeviceId const& deviceId,
                               TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
-                              Users::ContactStore const& contactStore,
+                              Users::IUserAccessor& userAccessor,
                               std::unique_ptr<Client> const& client)
 {
-  TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), contactStore));
+  TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), userAccessor));
   auto const user =
-      TC_AWAIT(getUserFromUserId(localUser.userId(), contactStore));
+      TC_AWAIT(getUserFromUserId(localUser.userId(), userAccessor));
 
   auto const newEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto const oldPublicEncryptionKey = *user.userKey();
 
-  auto const encryptedKeyForPreviousUserKey = TC_AWAIT(
-      encryptForPreviousUserKey(localUser, user, newEncryptionKey.publicKey));
+  auto const encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
+      localUser.currentKeyPair().privateKey, newEncryptionKey.publicKey);
 
   auto const userKeys =
       encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey);
@@ -147,40 +126,6 @@ findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
   if (sealedPrivateUserKey == keyForDevices.end())
     return std::nullopt;
   return sealedPrivateUserKey->second;
-}
-
-tc::cotask<void> onOtherDeviceRevocation(
-    DeviceRevocation const& deviceRevocation,
-    Entry const& entry,
-    Users::ContactStore& contactStore,
-    Users::LocalUser& localUser)
-{
-  TC_AWAIT(contactStore.revokeDevice(deviceRevocation.deviceId()));
-
-  if (auto const deviceRevocation2 =
-          deviceRevocation.get_if<DeviceRevocation2>())
-  {
-    auto const userId = TC_AWAIT(
-        contactStore.findUserIdByDeviceId(deviceRevocation2->deviceId()));
-    TC_AWAIT(contactStore.rotateContactPublicEncryptionKey(
-        *userId, deviceRevocation2->publicEncryptionKey()));
-    assert(userId.has_value() &&
-           "Device revocation has been verified, userId should exists");
-    // deviceId is null for the first pass where the device has not been created
-    if (*userId == localUser.userId() && !localUser.deviceId().is_null())
-    {
-      auto decryptedUserPrivateKey = findUserKeyFromDeviceSealedKeys(
-          localUser.deviceId(), deviceRevocation2->sealedUserKeysForDevices());
-
-      assert(decryptedUserPrivateKey.has_value() &&
-             "Did not find our deviceId in sealedKeys' DeviceRevocation");
-
-      auto const privateKey = decryptPrivateKeyForDevice(
-          localUser.deviceKeys(), decryptedUserPrivateKey.value());
-      TC_AWAIT(localUser.insertUserKey(Crypto::EncryptionKeyPair{
-          deviceRevocation2->publicEncryptionKey(), privateKey}));
-    }
-  }
 }
 }
 }

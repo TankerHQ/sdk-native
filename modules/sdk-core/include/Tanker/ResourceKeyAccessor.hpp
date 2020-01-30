@@ -10,7 +10,7 @@
 
 namespace Tanker::Users
 {
-class LocalUser;
+class ILocalUserAccessor;
 }
 
 namespace Tanker
@@ -19,7 +19,7 @@ class ResourceKeyAccessor
 {
 public:
   ResourceKeyAccessor(Client* client,
-                      Users::LocalUser* localUser,
+                      Users::ILocalUserAccessor* localUserAccessor,
                       Groups::IAccessor* groupAccessor,
                       ProvisionalUsers::IAccessor* provisionalUsersAccessor,
                       ResourceKeyStore* resourceKeyStore);
@@ -34,7 +34,7 @@ public:
 
 private:
   Client* _client;
-  Users::LocalUser* _localUser;
+  Users::ILocalUserAccessor* _localUserAccessor;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   ResourceKeyStore* _resourceKeyStore;

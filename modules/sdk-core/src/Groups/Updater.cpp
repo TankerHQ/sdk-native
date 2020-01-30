@@ -11,6 +11,7 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
@@ -30,36 +31,57 @@ namespace Tanker::GroupUpdater
 {
 namespace
 {
-tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
-    Users::LocalUser const& localUser,
+std::optional<
+    std::pair<Crypto::SealedPrivateEncryptionKey, Crypto::EncryptionKeyPair>>
+findUserKeyPair(
+    std::vector<Crypto::EncryptionKeyPair> const& userKeys,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
-    if (auto const matchingUserKeyPair =
-            TC_AWAIT(localUser.findKeyPair(gek.first)))
-    {
-      auto const groupPrivateEncryptionKey =
-          Crypto::sealDecrypt(gek.second, *matchingUserKeyPair);
-      TC_RETURN(groupPrivateEncryptionKey);
-    }
+    if (auto myKeyIt = std::find_if(userKeys.begin(),
+                                    userKeys.end(),
+                                    [&](auto const& userKey) {
+                                      return gek.first == userKey.publicKey;
+                                    });
+        myKeyIt != userKeys.end())
+      return std::make_pair(gek.second, *myKeyIt);
+  }
+  return std::nullopt;
+}
+
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
+    Users::ILocalUserAccessor& localUserAccessor,
+    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
+{
+  auto userKeyPair =
+      findUserKeyPair(localUserAccessor.get().userKeys(), groupKeys);
+  if (!userKeyPair.has_value())
+    userKeyPair = findUserKeyPair(TC_AWAIT(localUserAccessor.pull()).userKeys(),
+                                  groupKeys);
+  if (userKeyPair)
+  {
+    auto const [sealedKey, matchingUserKeyPair] = userKeyPair.value();
+    auto const groupPrivateEncryptionKey =
+        Crypto::sealDecrypt(sealedKey, matchingUserKeyPair);
+    TC_RETURN(groupPrivateEncryptionKey);
   }
   TC_RETURN(std::nullopt);
 }
 
 tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     UserGroupCreation::v2::Members const& groupKeys)
 {
   auto const myKeysIt =
       std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
-        return k.userId() == localUser.userId();
+        return k.userId() == localUserAccessor.get().userId();
       });
   if (myKeysIt == groupKeys.end())
     TC_RETURN(std::nullopt);
 
   auto const userKeyPair =
-      TC_AWAIT(localUser.findKeyPair(myKeysIt->userPublicKey()));
+      TC_AWAIT(localUserAccessor.pullUserKeyPair(myKeysIt->userPublicKey()));
   if (!userKeyPair)
   {
     throw AssertionError(
@@ -151,7 +173,7 @@ InternalGroup makeInternalGroup(
 }
 
 tc::cotask<Group> applyUserGroupCreation(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Entry const& entry)
 {
@@ -159,12 +181,12 @@ tc::cotask<Group> applyUserGroupCreation(
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation::v1>())
-    groupPrivateEncryptionKey = TC_AWAIT(
-        decryptMyKey(localUser, ugc1->sealedPrivateEncryptionKeysForUsers()));
+    groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
+        localUserAccessor, ugc1->sealedPrivateEncryptionKeysForUsers()));
   else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation::v2>())
   {
     groupPrivateEncryptionKey =
-        TC_AWAIT(decryptMyKey(localUser, ugc2->members()));
+        TC_AWAIT(decryptMyKey(localUserAccessor, ugc2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
           provisionalUsersAccessor, ugc2->provisionalMembers()));
@@ -178,7 +200,7 @@ tc::cotask<Group> applyUserGroupCreation(
 }
 
 tc::cotask<Group> applyUserGroupAddition(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     Entry const& entry)
@@ -201,12 +223,12 @@ tc::cotask<Group> applyUserGroupAddition(
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const uga1 = userGroupAddition.get_if<UserGroupAddition::v1>())
-    groupPrivateEncryptionKey = TC_AWAIT(
-        decryptMyKey(localUser, uga1->sealedPrivateEncryptionKeysForUsers()));
+    groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
+        localUserAccessor, uga1->sealedPrivateEncryptionKeysForUsers()));
   else if (auto const uga2 = userGroupAddition.get_if<UserGroupAddition::v2>())
   {
     groupPrivateEncryptionKey =
-        TC_AWAIT(decryptMyKey(localUser, uga2->members()));
+        TC_AWAIT(decryptMyKey(localUserAccessor, uga2->members()));
     if (!groupPrivateEncryptionKey)
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
           provisionalUsersAccessor, uga2->provisionalMembers()));
@@ -238,7 +260,7 @@ std::vector<Trustchain::DeviceId> extractAuthors(
 
 tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
@@ -259,15 +281,15 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
       {
         auto const entry = Verif::verifyUserGroupCreation(
             serverEntry, author, extractBaseGroup(previousGroup));
-        previousGroup = TC_AWAIT(
-            applyUserGroupCreation(localUser, provisionalUsersAccessor, entry));
+        previousGroup = TC_AWAIT(applyUserGroupCreation(
+            localUserAccessor, provisionalUsersAccessor, entry));
       }
       else if (serverEntry.action().holds_alternative<UserGroupAddition>())
       {
         auto const entry = Verif::verifyUserGroupAddition(
             serverEntry, author, extractBaseGroup(previousGroup));
         previousGroup = TC_AWAIT(applyUserGroupAddition(
-            localUser, provisionalUsersAccessor, previousGroup, entry));
+            localUserAccessor, provisionalUsersAccessor, previousGroup, entry));
       }
       else
         throw Errors::AssertionError(fmt::format(
@@ -290,7 +312,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 }
 
 tc::cotask<std::optional<Group>> processGroupEntries(
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
@@ -306,7 +328,7 @@ tc::cotask<std::optional<Group>> processGroupEntries(
   // not.
   TC_AWAIT(provisionalUsersAccessor.refreshKeys());
   TC_RETURN(TC_AWAIT(processGroupEntriesWithAuthors(devices.found,
-                                                    localUser,
+                                                    localUserAccessor,
                                                     provisionalUsersAccessor,
                                                     previousGroup,
                                                     entries)));

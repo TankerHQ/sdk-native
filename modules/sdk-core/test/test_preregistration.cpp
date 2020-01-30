@@ -1,59 +1,57 @@
-#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
-#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
 #include <doctest.h>
 
+#include "LocalUserAccessorMock.hpp"
 #include "TestVerifier.hpp"
-#include "TrustchainBuilder.hpp"
+#include "TrustchainGenerator.hpp"
 
 using namespace Tanker;
 using namespace Tanker::Errors;
 
-TEST_CASE("ProvisionalUsers")
+TEST_CASE("Preregistration")
 {
-  auto const db = AWAIT(DataStore::createDatabase(":memory:"));
+  Test::Generator generator;
+  LocalUserAccessorMock userLocalAccessor;
 
-  TrustchainBuilder builder;
-  auto const userResult = builder.makeUser3("alice");
-  auto const provisionalUser = builder.makeProvisionalUser("alice@email.com");
-  auto picEntry = toVerifiedEntry(builder.claimProvisionalIdentity(
-      "alice", provisionalUser.secretProvisionalUser));
+  auto const alice = generator.makeUser("alice");
+  auto const provisionalUser = generator.makeProvisionalUser("alice@email.com");
+  auto picEntry = toVerifiedEntry(
+      generator.makeEntryList({alice.claim(provisionalUser)}).front());
 
   SUBCASE("throws if the user key is not found")
   {
-    auto const userLocalUser = AWAIT(Tanker::Users::LocalUser::open(
-        Tanker::Identity::createIdentity(builder.trustchainId(),
-                                         builder.trustchainPrivateKey(),
-                                         userResult.user.userId),
-        db.get()));
+    REQUIRE_CALL(userLocalAccessor,
+                 pullUserKeyPair(alice.userKeys().back().publicKey))
+        .RETURN(
+            makeCoTask(std::optional<Crypto::EncryptionKeyPair>(std::nullopt)));
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(*userLocalUser,
-                                                                 picEntry)),
+        AWAIT_VOID(ProvisionalUsers::Updater::extractKeysToStore(
+            userLocalAccessor, picEntry)),
         Errc::InternalError);
   }
 
   SUBCASE("can decrypt a preregistration claim")
   {
-    auto const userLocalUser = builder.makeLocalUser(userResult.user, db.get());
-    ProvisionalUserKeysStore provisionalUserKeysStore(db.get());
+    REQUIRE_CALL(userLocalAccessor,
+                 pullUserKeyPair(alice.userKeys().back().publicKey))
+        .RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
 
     auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(
-        *userLocalUser, picEntry));
-    CHECK_EQ(
-        gotKeys.appSignaturePublicKey,
-        provisionalUser.secretProvisionalUser.appSignatureKeyPair.publicKey);
-    CHECK_EQ(
-        gotKeys.tankerSignaturePublicKey,
-        provisionalUser.secretProvisionalUser.tankerSignatureKeyPair.publicKey);
+        userLocalAccessor, picEntry));
+    CHECK_EQ(gotKeys.appSignaturePublicKey,
+             provisionalUser.appSignatureKeyPair().publicKey);
+    CHECK_EQ(gotKeys.tankerSignaturePublicKey,
+             provisionalUser.tankerSignatureKeyPair().publicKey);
     CHECK_EQ(gotKeys.appEncryptionKeyPair,
-             provisionalUser.secretProvisionalUser.appEncryptionKeyPair);
+             provisionalUser.appEncryptionKeyPair());
     CHECK_EQ(gotKeys.tankerEncryptionKeyPair,
-             provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair);
+             provisionalUser.tankerEncryptionKeyPair());
   }
 }

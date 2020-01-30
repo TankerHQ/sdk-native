@@ -7,6 +7,7 @@
 #include <Tanker/Groups/Updater.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Users/ILocalUserAccessor.hpp>
 
 #include <boost/container/flat_map.hpp>
 
@@ -19,12 +20,12 @@ namespace Tanker::Groups
 Accessor::Accessor(Groups::IRequester* requester,
                    Users::IUserAccessor* accessor,
                    Store* groupStore,
-                   Users::LocalUser const* localUser,
+                   Users::ILocalUserAccessor* localUserAccessor,
                    ProvisionalUsers::IAccessor* provisionalUserAccessor)
   : _requester(requester),
     _userAccessor(accessor),
     _groupStore(groupStore),
-    _localUser(localUser),
+    _localUserAccessor(localUserAccessor),
     _provisionalUserAccessor(provisionalUserAccessor)
 {
 }
@@ -96,7 +97,7 @@ Accessor::getEncryptionKeyPair(
     TC_RETURN(std::nullopt);
 
   auto const group =
-      TC_AWAIT(GroupUpdater::processGroupEntries(*_localUser,
+      TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                  *_userAccessor,
                                                  *_provisionalUserAccessor,
                                                  std::nullopt,
@@ -155,7 +156,7 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
     else
     {
       auto const group =
-          TC_AWAIT(GroupUpdater::processGroupEntries(*_localUser,
+          TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                      *_userAccessor,
                                                      *_provisionalUserAccessor,
                                                      std::nullopt,

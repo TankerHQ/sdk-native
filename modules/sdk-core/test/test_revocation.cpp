@@ -1,91 +1,62 @@
 #include <Tanker/Revocation.hpp>
 
-#include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Groups/Accessor.hpp>
-#include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/LocalUser.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
 
-#include "TestVerifier.hpp"
-#include "TrustchainBuilder.hpp"
+#include "TrustchainGenerator.hpp"
+#include "UserAccessorMock.hpp"
 
 #include <doctest.h>
 
-#include <Helpers/Buffers.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
 
 TEST_CASE("Revocation tests")
 {
-  TrustchainBuilder builder;
-  auto const rootEntry = builder.entries().front();
+  Test::Generator generator;
 
-  auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-  auto const userResult = builder.makeUser("bob");
-  auto const deviceResult = builder.makeDevice("bob");
-  auto const aliceResult = builder.makeUser1("alice");
-
-  auto const contactStore =
-      builder.makeContactStoreWith({"bob", "alice"}, db.get());
-
-  SUBCASE("EnsureDeviceIsFromUser throws if given a bad deviceId")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
-                                      aliceResult.user.devices[0].id,
-                                      userResult.user.userId,
-                                      *contactStore.get())),
-                                  Errc::InvalidArgument);
-  }
+  UserAccessorMock userAccessorMock;
 
   SUBCASE(
-      "EnsureDeviceIsFromUser does not throws if deviceId belongs to userId")
+      "getUserFromUserId throws if userId does not have a user key (user V1)")
   {
-    CHECK_NOTHROW(AWAIT_VOID(Revocation::ensureDeviceIsFromUser(
-        deviceResult.device.id, userResult.user.userId, *contactStore.get())));
-  }
-
-  SUBCASE("getUserFromUserId throws if userId is invalid")
-  {
-    auto userId = userResult.user.userId;
-    userId[0]++;
+    auto const alice = generator.makeUser("alice");
+    auto const brokenAlice = Users::User(alice.id(), {}, {});
+    REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
+        .RETURN(
+            makeCoTask(Users::IUserAccessor::PullResult{{brokenAlice}, {}}));
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(Revocation::getUserFromUserId(userId, *contactStore.get())),
-        Errc::InternalError);
-  }
-
-  SUBCASE("getUserFromUserId throws if userId belongs to a user V1")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(Revocation::getUserFromUserId(aliceResult.user.userId,
-                                            *contactStore.get())),
+        AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock)),
         Errc::InternalError);
   }
 
   SUBCASE("getUserFromUserId correctly finds bob user")
   {
-    auto const user = AWAIT(Revocation::getUserFromUserId(
-        userResult.user.userId, *contactStore.get()));
-    CHECK(user.userKey() == userResult.user.asTankerUser().userKey());
+    auto alice = generator.makeUser("alice");
+    REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
+        .RETURN(makeCoTask(Users::IUserAccessor::PullResult{{alice}, {}}));
+    auto const user =
+        AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock));
+    CHECK_EQ(*user.userKey(), alice.userKeys().back().publicKey);
   }
 
   SUBCASE("devicePrivateKey can be encrypted & decrypted")
   {
+    auto bob = generator.makeUser("bob");
+    bob.addDevice();
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const encryptedPrivateKeys =
-        Revocation::encryptPrivateKeyForDevices(deviceResult.user,
-                                                userResult.user.devices[0].id,
-                                                encryptionKeyPair.privateKey);
+    auto const encryptedPrivateKeys = Revocation::encryptPrivateKeyForDevices(
+        bob, bob.devices().front().id(), encryptionKeyPair.privateKey);
 
-    REQUIRE(encryptedPrivateKeys.size() == 1);
+    REQUIRE_EQ(encryptedPrivateKeys.size(), 1);
 
     auto const decryptedPrivateKey = Revocation::decryptPrivateKeyForDevice(
-        deviceResult.device.keys, encryptedPrivateKeys[0].second);
+        bob.devices().back().keys(), encryptedPrivateKeys[0].second);
 
-    CHECK(decryptedPrivateKey == encryptionKeyPair.privateKey);
+    CHECK_EQ(decryptedPrivateKey, encryptionKeyPair.privateKey);
   }
 }

@@ -5,6 +5,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Users/ILocalUserAccessor.hpp>
 
 TLOG_CATEGORY(ResourceKeyAccessor);
 
@@ -12,12 +13,12 @@ namespace Tanker
 {
 ResourceKeyAccessor::ResourceKeyAccessor(
     Client* client,
-    Users::LocalUser* localUser,
+    Users::ILocalUserAccessor* localUserAccessor,
     Groups::IAccessor* groupAccessor,
     ProvisionalUsers::IAccessor* provisionalUsersAccessor,
     ResourceKeyStore* resourceKeyStore)
   : _client(client),
-    _localUser(localUser),
+    _localUserAccessor(localUserAccessor),
     _groupAccessor(groupAccessor),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _resourceKeyStore(resourceKeyStore)
@@ -42,7 +43,7 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
               entry.action().get_if<Trustchain::Actions::KeyPublish>())
       {
         TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
-                                                *_localUser,
+                                                *_localUserAccessor,
                                                 *_groupAccessor,
                                                 *_provisionalUsersAccessor,
                                                 *kp));
