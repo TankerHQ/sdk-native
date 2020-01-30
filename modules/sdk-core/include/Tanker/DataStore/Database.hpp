@@ -23,10 +23,9 @@ public:
 
   tc::cotask<void> putUserPrivateKey(
       Crypto::EncryptionKeyPair const& userKeyPair) override;
-  tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey) override;
-  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getUserOptLastKeyPair()
-      override;
+  tc::cotask<void> putUserKeyPairs(
+      gsl::span<Crypto::EncryptionKeyPair const> userKeyPair) override;
+  tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() override;
 
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() override;

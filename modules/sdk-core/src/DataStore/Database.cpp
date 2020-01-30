@@ -346,31 +346,21 @@ tc::cotask<void> Database::putUserPrivateKey(
   TC_RETURN();
 }
 
-tc::cotask<Crypto::EncryptionKeyPair> Database::getUserKeyPair(
-    Crypto::PublicEncryptionKey const& publicKey)
+tc::cotask<void> Database::putUserKeyPairs(
+    gsl::span<Crypto::EncryptionKeyPair const> userKeyPairs)
 {
   FUNC_TIMER(DB);
   UserKeysTable tab{};
-
-  auto rows = (*_db)(select(tab.private_encryption_key)
-                         .from(tab)
-                         .where(tab.public_encryption_key == publicKey.base()));
-  if (rows.empty())
-  {
-    throw Errors::formatEx(Errc::RecordNotFound,
-                           TFMT("could not find user key for {:s}"),
-                           publicKey);
-  }
-  auto const& row = *rows.begin();
-
-  TC_RETURN((Crypto::EncryptionKeyPair{
-      publicKey,
-      DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-          row.private_encryption_key)}));
+  auto multi_insert = sqlpp::sqlite3::insert_or_ignore_into(tab).columns(
+      tab.public_encryption_key, tab.private_encryption_key);
+  for (auto const& [pK, sK] : userKeyPairs)
+    multi_insert.values.add(tab.public_encryption_key = pK.base(),
+                            tab.private_encryption_key = sK.base());
+  (*_db)(multi_insert);
+  TC_RETURN();
 }
 
-tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-Database::getUserOptLastKeyPair()
+tc::cotask<std::vector<Crypto::EncryptionKeyPair>> Database::getUserKeyPairs()
 {
   FUNC_TIMER(DB);
   UserKeysTable tab{};
@@ -378,18 +368,18 @@ Database::getUserOptLastKeyPair()
   auto rows =
       (*_db)(select(tab.public_encryption_key, tab.private_encryption_key)
                  .from(tab)
-                 .order_by(tab.id.desc())
-                 .limit(1u)
                  .unconditionally());
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = *rows.begin();
-
-  TC_RETURN((std::optional<Crypto::EncryptionKeyPair>{
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-           row.public_encryption_key),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-           row.private_encryption_key)}}));
+  std::vector<Crypto::EncryptionKeyPair> keys;
+  std::transform(rows.begin(),
+                 rows.end(),
+                 std::back_inserter(keys),
+                 [](auto&& row) -> Crypto::EncryptionKeyPair {
+                   return {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+                               row.public_encryption_key),
+                           DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+                               row.private_encryption_key)};
+                 });
+  TC_RETURN(keys);
 }
 
 tc::cotask<std::optional<Crypto::PublicSignatureKey>>
