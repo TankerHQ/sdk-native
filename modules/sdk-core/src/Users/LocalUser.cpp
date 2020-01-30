@@ -66,7 +66,7 @@ tc::cotask<void> LocalUser::insertUserKey(
     Crypto::EncryptionKeyPair const& keyPair)
 {
   TINFO("Adding user key for {}", keyPair.publicKey);
-  TC_AWAIT(_db->putUserPrivateKey(keyPair.publicKey, keyPair.privateKey));
+  TC_AWAIT(_db->putUserPrivateKey(keyPair));
 }
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>> LocalUser::findKeyPair(
