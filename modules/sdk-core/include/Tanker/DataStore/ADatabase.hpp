@@ -52,10 +52,10 @@ public:
 
   virtual tc::cotask<void> putUserPrivateKey(
       Crypto::EncryptionKeyPair const& userKeyPair) = 0;
-  virtual tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey) = 0;
-  virtual tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-  getUserOptLastKeyPair() = 0;
+  virtual tc::cotask<void> putUserKeyPairs(
+      gsl::span<Crypto::EncryptionKeyPair const> userKeyPairs) = 0;
+  virtual tc::cotask<std::vector<Crypto::EncryptionKeyPair>>
+  getUserKeyPairs() = 0;
 
   virtual tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() = 0;

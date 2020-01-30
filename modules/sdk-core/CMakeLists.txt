@@ -104,6 +104,9 @@ add_library(tankercore STATIC
   include/Tanker/Users/IRequester.hpp
   include/Tanker/Users/Requester.hpp
   include/Tanker/Users/LocalUser.hpp
+  include/Tanker/Users/LocalUserStore.hpp
+  include/Tanker/Users/LocalUserAccessor.hpp
+  include/Tanker/Users/ILocalUserAccessor.hpp
   include/Tanker/Users/UserAccessor.hpp
   include/Tanker/Users/IUserAccessor.hpp
   include/Tanker/Users/ContactStore.hpp
@@ -165,6 +168,8 @@ add_library(tankercore STATIC
   src/Users/User.cpp
   src/Users/Updater.cpp
   src/Users/LocalUser.cpp
+  src/Users/LocalUserStore.cpp
+  src/Users/LocalUserAccessor.cpp
   src/Users/UserAccessor.cpp
   src/Users/ContactStore.cpp
   src/Users/Device.cpp
