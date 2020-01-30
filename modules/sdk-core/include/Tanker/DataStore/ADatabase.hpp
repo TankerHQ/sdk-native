@@ -51,8 +51,7 @@ public:
   tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f);
 
   virtual tc::cotask<void> putUserPrivateKey(
-      Crypto::PublicEncryptionKey const& publicKey,
-      Crypto::PrivateEncryptionKey const& privateKey) = 0;
+      Crypto::EncryptionKeyPair const& userKeyPair) = 0;
   virtual tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) = 0;
   virtual tc::cotask<std::optional<Crypto::EncryptionKeyPair>>

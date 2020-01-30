@@ -22,8 +22,7 @@ public:
   tc::cotask<void> migrate();
 
   tc::cotask<void> putUserPrivateKey(
-      Crypto::PublicEncryptionKey const& publicKey,
-      Crypto::PrivateEncryptionKey const& privateKey) override;
+      Crypto::EncryptionKeyPair const& userKeyPair) override;
   tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) override;
   tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getUserOptLastKeyPair()

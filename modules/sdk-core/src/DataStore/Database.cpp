@@ -338,14 +338,13 @@ tc::cotask<void> Database::rollbackTransaction()
 }
 
 tc::cotask<void> Database::putUserPrivateKey(
-    Crypto::PublicEncryptionKey const& publicKey,
-    Crypto::PrivateEncryptionKey const& privateKey)
+    Crypto::EncryptionKeyPair const& userKeyPair)
 {
   FUNC_TIMER(DB);
   UserKeysTable tab{};
   (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.public_encryption_key = publicKey.base(),
-      tab.private_encryption_key = privateKey.base()));
+      tab.public_encryption_key = userKeyPair.publicKey.base(),
+      tab.private_encryption_key = userKeyPair.privateKey.base()));
   TC_RETURN();
 }
 
