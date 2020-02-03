@@ -20,7 +20,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -140,7 +139,6 @@ private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
-  TrustchainStore _trustchain;
   std::unique_ptr<Users::ContactStore> _contactStore;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;

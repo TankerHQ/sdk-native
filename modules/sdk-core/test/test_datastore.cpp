@@ -9,7 +9,7 @@
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DbModels/Trustchain.hpp>
+#include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/Log/Log.hpp>
 
 #include <Helpers/Errors.hpp>
@@ -142,17 +142,18 @@ TEST_CASE("Table" * doctest::test_suite("DataStore"))
   Tanker::UniquePath testtmp("testtmp");
 
   auto const dbfile = fmt::format("{}/datastore.db", testtmp.path);
-  using TrustchainTable = Tanker::DbModels::trustchain::trustchain;
+  using TrustchainInfoTable =
+      Tanker::DbModels::trustchain_info::trustchain_info;
 
   auto dbPtr = createConnection(dbfile);
   auto& db = *dbPtr;
 
-  REQUIRE_FALSE(tableExists<TrustchainTable>(db));
+  REQUIRE_FALSE(tableExists<TrustchainInfoTable>(db));
 
   SUBCASE("Creating a table")
   {
-    createTable<TrustchainTable>(db);
-    CHECK(tableExists<TrustchainTable>(db));
+    createTable<TrustchainInfoTable>(db);
+    CHECK(tableExists<TrustchainInfoTable>(db));
   }
 }
 

@@ -32,7 +32,6 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -76,7 +75,6 @@ Session::Session(Config&& config)
     _client(std::move(config.client)),
     _userRequester(std::move(config.userRequester)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
-    _trustchain(_db.get()),
     _contactStore(std::move(config.contactStore)),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),

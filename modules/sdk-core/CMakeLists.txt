@@ -19,7 +19,6 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DbModels/Groups.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
-    include/Tanker/DbModels/Trustchain.hpp
     include/Tanker/DbModels/TrustchainInfo.hpp
     include/Tanker/DbModels/UserKeys.hpp
     include/Tanker/DbModels/Versions.hpp
@@ -34,7 +33,6 @@ if (NOT EMSCRIPTEN)
     src/DbModels/Groups.cpp
     src/DbModels/ResourceKeys.cpp
     src/DbModels/ProvisionalUserKeys.cpp
-    src/DbModels/Trustchain.cpp
     src/DbModels/TrustchainInfo.cpp
     src/DbModels/UserKeys.cpp
     src/DbModels/Versions.cpp
@@ -61,7 +59,6 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
-  include/Tanker/TrustchainStore.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
@@ -142,7 +139,6 @@ add_library(tankercore STATIC
   src/Opener.cpp
   src/Core.cpp
   src/Status.cpp
-  src/TrustchainStore.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp
