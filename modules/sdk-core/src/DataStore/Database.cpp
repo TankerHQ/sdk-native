@@ -12,7 +12,6 @@
 #include <Tanker/DbModels/Groups.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
-#include <Tanker/DbModels/Trustchain.hpp>
 #include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/DbModels/Version.hpp>
@@ -59,60 +58,6 @@ namespace DataStore
 {
 namespace
 {
-struct KeyPublishKeyVisitor
-{
-  template <typename T>
-  std::vector<std::uint8_t> operator()(T const& kp) const
-  {
-    auto const& key = kp.sealedSymmetricKey();
-    return {key.begin(), key.end()};
-  }
-
-  std::vector<std::uint8_t> operator()(
-      KeyPublish::ToProvisionalUser const& kp) const
-  {
-    auto const& key = kp.twoTimesSealedSymmetricKey();
-    return {key.begin(), key.end()};
-  }
-
-  std::vector<std::uint8_t> operator()(KeyPublish::ToDevice const& kp) const
-  {
-    auto const& key = kp.encryptedSymmetricKey();
-    return {key.begin(), key.end()};
-  }
-};
-
-struct KeyPublishRecipientVisitor
-{
-  template <typename T>
-  std::vector<std::uint8_t> operator()(T const& kp) const
-  {
-    auto const& recipient = kp.recipientPublicEncryptionKey();
-    return {recipient.begin(), recipient.end()};
-  }
-
-  std::vector<std::uint8_t> operator()(
-      KeyPublish::ToProvisionalUser const& kp) const
-  {
-    std::vector<std::uint8_t> buffer(Crypto::PublicSignatureKey::arraySize * 2);
-
-    auto const& appPublicSignatureKey = kp.appPublicSignatureKey();
-    auto const& tankerPublicSignatureKey = kp.tankerPublicSignatureKey();
-    auto it = std::copy(appPublicSignatureKey.begin(),
-                        appPublicSignatureKey.end(),
-                        buffer.data());
-    std::copy(
-        tankerPublicSignatureKey.begin(), tankerPublicSignatureKey.end(), it);
-    return buffer;
-  }
-
-  std::vector<std::uint8_t> operator()(KeyPublish::ToDevice const& kp) const
-  {
-    auto const& recipient = kp.recipient();
-    return {recipient.begin(), recipient.end()};
-  }
-};
-
 template <typename Row>
 Users::Device rowToDevice(Row const& row)
 {
@@ -129,22 +74,6 @@ Users::Device rowToDevice(Row const& row)
               row.public_signature_key),
           DataStore::extractBlob<Crypto::PublicEncryptionKey>(
               row.public_encryption_key)};
-}
-
-template <typename Row>
-Entry rowToEntry(Row const& row)
-{
-  using DataStore::extractBlob;
-
-  return Entry{
-      static_cast<uint64_t>(row.idx),
-      static_cast<Nature>(static_cast<unsigned>(row.nature)),
-      extractBlob<Crypto::Hash>(row.author),
-      Action::deserialize(
-          static_cast<Nature>(static_cast<unsigned>(row.nature)),
-          extractBlob(row.action)),
-      extractBlob<Crypto::Hash>(row.hash),
-  };
 }
 
 template <typename T>
@@ -194,48 +123,9 @@ Group rowToGroup(T const& row)
   else
     return rowToExternalGroup(row);
 }
-
-template <typename T>
-KeyPublish rowToKeyPublish(T const& row)
-{
-  auto const resourceId = DataStore::extractBlob<ResourceId>(row.resource_id);
-  switch (static_cast<Nature>(static_cast<unsigned>(row.nature)))
-  {
-  case Nature::KeyPublishToUser:
-    return KeyPublish::ToUser{
-        DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
-        resourceId,
-        DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
-  case Nature::KeyPublishToUserGroup:
-    return KeyPublish::ToUserGroup{
-        DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.recipient),
-        resourceId,
-        DataStore::extractBlob<Crypto::SealedSymmetricKey>(row.key)};
-  case Nature::KeyPublishToDevice:
-    return KeyPublish::ToDevice{
-        DataStore::extractBlob<DeviceId>(row.recipient),
-        resourceId,
-        DataStore::extractBlob<Crypto::EncryptedSymmetricKey>(row.key)};
-  case Nature::KeyPublishToProvisionalUser:
-  {
-    auto const sp = DataStore::extractBlob(row.recipient);
-    return KeyPublish::ToProvisionalUser{
-        Crypto::PublicSignatureKey{
-            sp.subspan(0, Crypto::PublicSignatureKey::arraySize)},
-        resourceId,
-        Crypto::PublicSignatureKey{
-            sp.subspan(Crypto::PublicSignatureKey::arraySize)},
-        DataStore::extractBlob<Crypto::TwoTimesSealedSymmetricKey>(row.key)};
-  }
-  default:
-    throw Errors::AssertionError(
-        "unreachable code. Invalid nature for KeyPublish");
-  }
-}
 }
 
 using UserKeysTable = DbModels::user_keys::user_keys;
-using TrustchainTable = DbModels::trustchain::trustchain;
 using TrustchainInfoTable = DbModels::trustchain_info::trustchain_info;
 using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
@@ -307,7 +197,6 @@ void Database::performUnifiedMigration()
     case 0:
       createTable<GroupsTable>(*_db);
       createTable<ResourceKeysTable>(*_db);
-      createTable<TrustchainTable>(*_db);
       createTable<UserKeysTable>(*_db);
       createTable<ContactDevicesTable>(*_db);
       createTable<ContactUserKeysTable>(*_db);
@@ -325,6 +214,9 @@ void Database::performUnifiedMigration()
       [[fallthrough]];
     case 5:
       flushAllCaches();
+      [[fallthrough]];
+    case 6:
+      _db->execute("DROP TABLE IF EXISTS trustchain");
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
@@ -343,7 +235,6 @@ void Database::performOldMigration()
   createOrMigrateTable<GroupsTable>(currentTableVersion<GroupsTable>());
   createOrMigrateTable<ResourceKeysTable>(
       currentTableVersion<ResourceKeysTable>());
-  createOrMigrateTable<TrustchainTable>(currentTableVersion<TrustchainTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
   createOrMigrateTable<ContactDevicesTable>(
       currentTableVersion<ContactDevicesTable>());
@@ -389,7 +280,6 @@ void Database::flushAllCaches()
   // Order matter for foreign key constraints
   flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
-  flushTable(TrustchainTable{});
   flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeysTable{});
@@ -510,22 +400,6 @@ Database::getUserOptLastKeyPair()
            row.private_encryption_key)}}));
 }
 
-tc::cotask<std::optional<uint64_t>> Database::findTrustchainLastIndex()
-{
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-
-  auto rows = (*_db)(select(tab.last_index).from(tab).unconditionally());
-  if (rows.empty())
-  {
-    throw Errors::AssertionError(
-        "trustchain_info table must have a single row");
-  }
-  if (rows.front().last_index.is_null())
-    TC_RETURN(std::nullopt);
-  TC_RETURN(static_cast<uint64_t>(rows.front().last_index));
-}
-
 tc::cotask<std::optional<Crypto::PublicSignatureKey>>
 Database::findTrustchainPublicSignatureKey()
 {
@@ -544,14 +418,6 @@ Database::findTrustchainPublicSignatureKey()
       rows.front().trustchain_public_signature_key));
 }
 
-tc::cotask<void> Database::setTrustchainLastIndex(uint64_t index)
-{
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-  (*_db)(update(tab).set(tab.last_index = index).unconditionally());
-  TC_RETURN();
-}
-
 tc::cotask<void> Database::setTrustchainPublicSignatureKey(
     Crypto::PublicSignatureKey const& key)
 {
@@ -561,33 +427,6 @@ tc::cotask<void> Database::setTrustchainPublicSignatureKey(
              .set(tab.trustchain_public_signature_key = key.base())
              .unconditionally());
   TC_RETURN();
-}
-
-tc::cotask<void> Database::addTrustchainEntry(Entry const& entry)
-{
-  FUNC_TIMER(DB);
-  TrustchainTable tab{};
-  (*_db)(insert_into(tab).set(
-      tab.idx = entry.index,
-      tab.nature = static_cast<unsigned>(entry.action.nature()),
-      tab.author = entry.author.base(),
-      tab.action = Serialization::serialize(entry.action),
-      tab.hash = entry.hash.base()));
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Entry>> Database::findTrustchainEntry(
-    Crypto::Hash const& hash)
-{
-  FUNC_TIMER(DB);
-  TrustchainTable tab{};
-
-  auto rows =
-      (*_db)(select(all_of(tab)).from(tab).where(tab.hash == hash.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  TC_RETURN(rowToEntry(*rows.begin()));
 }
 
 tc::cotask<void> Database::putContact(

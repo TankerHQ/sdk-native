@@ -15,7 +15,6 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
 #include <Tanker/Utils.hpp>
