@@ -18,7 +18,6 @@ TESTS = {
         "provisional-user-group-old-claim",
         "claim-provisional-self",
     ],
-    "v1.10.1": ["encrypt", "group", "unlock"],
 }
 
 CURRENT = "dev"
