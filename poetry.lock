@@ -63,26 +63,27 @@ version = "3.0.4"
 
 [[package]]
 category = "main"
-description = ""
+description = "Tanker CI library"
 name = "ci"
 optional = false
-python-versions = "^3.7"
-version = "0.1.0"
+python-versions = ">=3.7,<4.0"
+version = "2020.2.2093"
 
 [package.dependencies]
-appdirs = "^1.4.3"
-cli-ui = "^0.10.0"
+appdirs = ">=1.4.3,<2.0.0"
+cli-ui = ">=0.10.0,<0.11.0"
 conan = "1.19.2"
-path = "^13.1.0"
-psutil = "^5.6.7"
-python-gitlab = "^2.0.0"
+path = ">=13.1.0,<14.0.0"
+psutil = ">=5.6.7,<6.0.0"
+python-gitlab = ">=2.0.0,<3.0.0"
 "ruamel.yaml" = "0.16.5"
-tbump = "^6.0.5"
+tbump = ">=6.0.5,<7.0.0"
+tomlkit = ">=0.5.8,<0.6.0"
 
 [package.source]
-reference = "20fe72f12a62d7794f5a98ffd9129f693d88e84f"
-type = "git"
-url = "git+ssh://git@tanker.local/Tanker/ci"
+reference = "tanker.local"
+url = "http://tanker.local:8181"
+
 [[package]]
 category = "main"
 description = "Build Nice User Interfaces In The Terminal"
@@ -527,6 +528,14 @@ version = "0.10.0"
 
 [[package]]
 category = "main"
+description = "Style preserving TOML library"
+name = "tomlkit"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.5.8"
+
+[[package]]
+category = "main"
 description = "Fast, Extensible Progress Meter"
 name = "tqdm"
 optional = false
@@ -588,7 +597,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "2c5414d2988dbb936023c95b63a8971e93132c917ff8dcc0ed93700657256e5c"
+content-hash = "30ed7ff2917d92f6c5c0b9cca228763bb608605a1889bbea4baa014a0201b882"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -616,7 +625,10 @@ chardet = [
     {file = "chardet-3.0.4-py2.py3-none-any.whl", hash = "sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"},
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
-ci = []
+ci = [
+    {file = "ci-2020.2.2093-py3-none-any.whl", hash = "md5:d26199b5b9ae38cf4c1e13ce519e8438"},
+    {file = "ci-2020.2.2093.tar.gz", hash = "md5:ee633057ebfb8df0db9ea7a4990a86ed"},
+]
 cli-ui = [
     {file = "cli-ui-0.10.0.tar.gz", hash = "sha256:9f767e3ffe14e38afc836dee49247128116bc0aafb672b223d87235799a2c20f"},
     {file = "cli_ui-0.10.0-py3-none-any.whl", hash = "sha256:cfc3b6c1192f625f5a02f8f522df5b748ecc464d15a2cba8853506e486ff87f9"},
@@ -848,6 +860,10 @@ toml = [
     {file = "toml-0.10.0-py2.7.egg", hash = "sha256:f1db651f9657708513243e61e6cc67d101a39bad662eaa9b5546f789338e07a3"},
     {file = "toml-0.10.0-py2.py3-none-any.whl", hash = "sha256:235682dd292d5899d361a811df37e04a8828a5b1da3115886b73cf81ebc9100e"},
     {file = "toml-0.10.0.tar.gz", hash = "sha256:229f81c57791a41d65e399fc06bf0848bab550a9dfd5ed66df18ce5f05e73d5c"},
+]
+tomlkit = [
+    {file = "tomlkit-0.5.8-py2.py3-none-any.whl", hash = "sha256:96e6369288571799a3052c1ef93b9de440e1ab751aa045f435b55e9d3bcd0690"},
+    {file = "tomlkit-0.5.8.tar.gz", hash = "sha256:32c10cc16ded7e4101c79f269910658cc2a0be5913f1252121c3cd603051c269"},
 ]
 tqdm = [
     {file = "tqdm-4.42.0-py2.py3-none-any.whl", hash = "sha256:01464d5950e9a07a8e463c2767883d9616c099c6502f6c7ef4e2e11d3065bd35"},
