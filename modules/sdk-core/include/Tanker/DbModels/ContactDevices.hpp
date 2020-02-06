@@ -15,11 +15,10 @@ SQLPP_DECLARE_TABLE(
   ,
   (id                     , blob  , SQLPP_PRIMARY_KEY )
   (user_id                , blob  , SQLPP_NOT_NULL    )
-  (created_at_block_index , int   , SQLPP_NOT_NULL    )
-  (revoked_at_block_index , int   , SQLPP_NULL        )
   (public_signature_key   , blob  , SQLPP_NOT_NULL    )
   (public_encryption_key  , blob  , SQLPP_NOT_NULL    )
   (is_ghost_device        , bool  , SQLPP_NOT_NULL    )
+  (is_revoked             , bool  , SQLPP_NOT_NULL    )
 )
 // clang-format on
 

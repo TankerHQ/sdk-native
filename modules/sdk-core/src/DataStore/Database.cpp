@@ -61,19 +61,14 @@ namespace
 template <typename Row>
 Users::Device rowToDevice(Row const& row)
 {
-  std::optional<uint64_t> revokedAtBlockIndex;
-  if (!row.revoked_at_block_index.is_null())
-    revokedAtBlockIndex = static_cast<uint64_t>(row.revoked_at_block_index);
-
   return {DataStore::extractBlob<Trustchain::DeviceId>(row.id),
           DataStore::extractBlob<Trustchain::UserId>(row.user_id),
-          static_cast<uint64_t>(row.created_at_block_index),
-          row.is_ghost_device,
-          std::move(revokedAtBlockIndex),
           DataStore::extractBlob<Crypto::PublicSignatureKey>(
               row.public_signature_key),
           DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-              row.public_encryption_key)};
+              row.public_encryption_key),
+          row.is_ghost_device,
+          row.is_revoked};
 }
 
 template <typename T>
@@ -217,6 +212,8 @@ void Database::performUnifiedMigration()
       [[fallthrough]];
     case 6:
       _db->execute("DROP TABLE IF EXISTS trustchain");
+      _db->execute(fmt::format("DROP TABLE IF EXISTS contact_devices"));
+      createTable<ContactDevicesTable>(*_db);
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
@@ -665,12 +662,10 @@ tc::cotask<void> Database::putDevice(Users::Device const& device)
   (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
       tab.id = device.id().base(),
       tab.user_id = device.userId().base(),
-      tab.created_at_block_index = device.createdAtBlkIndex(),
-      tab.revoked_at_block_index =
-          sqlpp::tvin(device.revokedAtBlkIndex().value_or(0)),
-      tab.is_ghost_device = device.isGhostDevice(),
       tab.public_signature_key = device.publicSignatureKey().base(),
-      tab.public_encryption_key = device.publicEncryptionKey().base()));
+      tab.public_encryption_key = device.publicEncryptionKey().base(),
+      tab.is_ghost_device = device.isGhostDevice(),
+      tab.is_revoked = device.isRevoked()));
   TC_RETURN();
 }
 
@@ -718,15 +713,12 @@ tc::cotask<std::optional<UserId>> Database::findDeviceUserId(
   TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
 }
 
-tc::cotask<void> Database::updateDeviceRevokedAt(Trustchain::DeviceId const& id,
-                                                 uint64_t revokedAtBlkIndex)
+tc::cotask<void> Database::setDeviceRevoked(Trustchain::DeviceId const& id)
 {
   FUNC_TIMER(DB);
   ContactDevicesTable tab{};
 
-  (*_db)(update(tab)
-             .set(tab.revoked_at_block_index = revokedAtBlkIndex)
-             .where(tab.id == id.base()));
+  (*_db)(update(tab).set(tab.is_revoked = true).where(tab.id == id.base()));
 
   TC_RETURN();
 }

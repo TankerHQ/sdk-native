@@ -56,8 +56,6 @@ TrustchainBuilder::Device createDevice()
       {}, // deviceId will be filled in later
       {}, // userId will be filled in later
       {}, // delegation will be filled in later
-      {}, // createdAtIndex will be filled in later
-      {}  // revokedAtIndex is none
   };
 }
 }
@@ -66,12 +64,11 @@ Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Users::Device(id,
                                userId,
-                               createdAtIndex,
+                               keys.signatureKeyPair.publicKey,
+                               keys.encryptionKeyPair.publicKey,
                                // This completely arbitrary...
                                true,
-                               revokedAtIndex,
-                               keys.signatureKeyPair.publicKey,
-                               keys.encryptionKeyPair.publicKey);
+                               isRevoked);
 }
 
 Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
@@ -159,7 +156,6 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   user.devices[0].delegation = delegation;
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
-  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
   _entries.push_back(serverEntry);
 
@@ -196,7 +192,6 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
   user.devices[0].delegation = delegation;
-  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
 
   _entries.push_back(serverEntry);
@@ -236,7 +231,6 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
 
   _entries.push_back(serverEntry);
@@ -276,7 +270,6 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
 
   _entries.push_back(serverEntry);
@@ -786,7 +779,7 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       std::find_if(targetUser->devices.begin(),
                    targetUser->devices.end(),
                    [&](auto const dev) { return dev.id == target.id; });
-  revokedDevice->revokedAtIndex = _entries.size();
+  revokedDevice->isRevoked = true;
 
   return _entries.back();
 }

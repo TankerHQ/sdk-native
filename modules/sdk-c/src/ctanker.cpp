@@ -357,7 +357,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
         {
           cDevice->device_id =
               duplicateString(cppcodec::base64_rfc4648::encode(device.id()));
-          cDevice->is_revoked = device.revokedAtBlkIndex().has_value();
+          cDevice->is_revoked = device.isRevoked();
           cDevice++;
         }
         return reinterpret_cast<void*>(cDeviceList);

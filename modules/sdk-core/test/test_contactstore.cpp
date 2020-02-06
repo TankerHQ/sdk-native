@@ -82,7 +82,7 @@ TEST_CASE("ContactStore")
   {
     AWAIT_VOID(contacts.putUser(alice));
     auto aliceDeviceBis = aliceDevice;
-    ++unconstify(aliceDeviceBis.createdAtBlkIndex());
+    aliceDeviceBis.setRevoked();
     AWAIT_VOID(contacts.putUserDevice(aliceDeviceBis));
 
     CHECK_EQ(AWAIT(contacts.findDevice(aliceDevice.id())), aliceDeviceBis);
@@ -156,11 +156,9 @@ TEST_CASE("ContactStore")
   SUBCASE("it should revoke a device")
   {
     AWAIT_VOID(contacts.putUser(alice));
-    AWAIT_VOID(contacts.revokeDevice(aliceDevice.id(),
-                                     aliceDevice.createdAtBlkIndex()));
+    AWAIT_VOID(contacts.revokeDevice(aliceDevice.id()));
     auto const device = AWAIT(contacts.findDevice(aliceDevice.id()));
-    CHECK_EQ(device.value().revokedAtBlkIndex().value(),
-             aliceDevice.createdAtBlkIndex());
+    CHECK_UNARY(device.value().isRevoked());
   }
 
   SUBCASE("it should not find userId with old userPublicEncyptionKey")

@@ -21,11 +21,10 @@ void createTable(DataStore::Connection& db, contact_devices const&)
         CREATE TABLE IF NOT EXISTS contact_devices (
           id BLOB PRIMARY KEY,
           user_id BLOB NOT NULL,
-          created_at_block_index INTEGER NOT NULL,
-          revoked_at_block_index INTEGER,
           public_signature_key BLOB NOT NULL,
           public_encryption_key BLOB NOT NULL,
           is_ghost_device INTEGER NOT NULL,
+          is_revoked INTEGER NOT NULL,
           FOREIGN KEY(user_id) REFERENCES {}(user_id)
         );
   )"),

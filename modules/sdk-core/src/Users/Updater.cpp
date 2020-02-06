@@ -61,12 +61,11 @@ Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
 
   if (!previousUser.has_value())
     previousUser.emplace(Users::User{dc.userId(), {}, {}});
-  previousUser->addDevice(Device(Trustchain::DeviceId{entry.hash},
-                                 dc.userId(),
-                                 entry.index,
-                                 dc.isGhostDevice(),
-                                 dc.publicSignatureKey(),
-                                 dc.publicEncryptionKey()));
+  previousUser->addDevice({Trustchain::DeviceId{entry.hash},
+                           dc.userId(),
+                           dc.publicSignatureKey(),
+                           dc.publicEncryptionKey(),
+                           dc.isGhostDevice()});
   if (auto const v3 = dc.get_if<DeviceCreation::v3>())
     previousUser->setUserKey(v3->publicUserEncryptionKey());
   return *previousUser;
@@ -78,7 +77,7 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
   auto const dr = entry.action.get<DeviceRevocation>();
   if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
     previousUser.setUserKey(v2->publicEncryptionKey());
-  previousUser.getDevice(dr.deviceId()).setRevokedAtBlkIndex(entry.index);
+  previousUser.getDevice(dr.deviceId()).setRevoked();
   return previousUser;
 }
 

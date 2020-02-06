@@ -44,8 +44,7 @@ public:
   tc::cotask<std::optional<Trustchain::UserId>> findUserIdByDeviceId(
       Trustchain::DeviceId const& id) const;
 
-  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& id,
-                                uint64_t revokedAtBlkIndex) const;
+  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& id) const;
   tc::cotask<void> rotateContactPublicEncryptionKey(
       Trustchain::UserId const& userId,
       Crypto::PublicEncryptionKey const& userPublicKey) const;
