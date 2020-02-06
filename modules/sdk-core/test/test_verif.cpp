@@ -89,8 +89,7 @@ void deviceCreationCommonChecks(
   SUBCASE("it should reject a device creation when author device is revoked")
   {
     auto& authorDevice = tankerUser.devices().front();
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
+    unconstify(authorDevice).setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
             secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
@@ -157,8 +156,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation from a revoked device")
   {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
+    authorDevice.setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::AuthorIsRevoked);
@@ -173,8 +171,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation of an already revoked device")
   {
-    unconstify(targetDevice.revokedAtBlkIndex()) =
-        targetDevice.createdAtBlkIndex() + 1;
+    targetDevice.setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidTargetDevice);
@@ -211,15 +208,6 @@ void testUserGroupCreationCommon(Users::Device& authorDevice,
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupCreation from a revoked device")
-  {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
-        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupCreation")
@@ -270,15 +258,6 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
         Errc::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupAddition from a revoked device")
-  {
-    unconstify(tankerDevice.revokedAtBlkIndex()) =
-        tankerDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupAddition")
@@ -559,7 +538,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
     unconstify(dr2.previousPublicEncryptionKey())[0]++;
 
-    REQUIRE_FALSE(authorDevice.revokedAtBlkIndex().has_value());
+    REQUIRE_FALSE(authorDevice.isRevoked());
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidEncryptionKey);
@@ -712,15 +691,6 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   auto authorDevice = alice.user.devices[0].asTankerDevice();
   auto authorUser = alice.user.asTankerUser();
-
-  SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
-  {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
-        Errc::InvalidAuthor);
-  }
 
   SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
   {

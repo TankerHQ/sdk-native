@@ -6,34 +6,16 @@ namespace Tanker::Users
 {
 Device::Device(Trustchain::DeviceId const& id,
                Trustchain::UserId const& userId,
-               std::uint64_t createdAtBlkIndex,
-               bool isGhostDevice,
                Crypto::PublicSignatureKey const& publicSignatureKey,
-               Crypto::PublicEncryptionKey const& publicEncryptionKey)
-  : Device(id,
-           userId,
-           createdAtBlkIndex,
-           isGhostDevice,
-           std::nullopt,
-           publicSignatureKey,
-           publicEncryptionKey)
-{
-}
-
-Device::Device(Trustchain::DeviceId const& id,
-               Trustchain::UserId const& userId,
-               std::uint64_t createdAtBlkIndex,
+               Crypto::PublicEncryptionKey const& publicEncryptionKey,
                bool isGhostDevice,
-               std::optional<std::uint64_t> revokedAtBlkIndex,
-               Crypto::PublicSignatureKey const& publicSignatureKey,
-               Crypto::PublicEncryptionKey const& publicEncryptionKey)
+               bool isRevoked)
   : _id(id),
     _userId(userId),
-    _createdAtBlkIndex(createdAtBlkIndex),
-    _isGhostDevice(isGhostDevice),
-    _revokedAtBlkIndex(revokedAtBlkIndex),
     _publicSignatureKey(publicSignatureKey),
-    _publicEncryptionKey(publicEncryptionKey)
+    _publicEncryptionKey(publicEncryptionKey),
+    _isGhostDevice(isGhostDevice),
+    _isRevoked(isRevoked)
 {
 }
 
@@ -47,23 +29,19 @@ Trustchain::UserId const& Device::userId() const
   return _userId;
 }
 
-std::uint64_t const& Device::createdAtBlkIndex() const
-{
-  return _createdAtBlkIndex;
-}
-
 bool const& Device::isGhostDevice() const
 {
   return _isGhostDevice;
 }
 
-std::optional<std::uint64_t> const& Device::revokedAtBlkIndex() const
+void Device::setRevoked()
 {
-  return _revokedAtBlkIndex;
+  _isRevoked = true;
 }
-void Device::setRevokedAtBlkIndex(std::uint64_t index)
+
+bool const& Device::isRevoked() const
 {
-  _revokedAtBlkIndex = index;
+  return _isRevoked;
 }
 
 Crypto::PublicSignatureKey const& Device::publicSignatureKey() const
@@ -80,17 +58,15 @@ bool operator==(Device const& l, Device const& r)
 {
   return std::tie(l.id(),
                   l.userId(),
-                  l.createdAtBlkIndex(),
-                  l.revokedAtBlkIndex(),
                   l.publicSignatureKey(),
                   l.publicEncryptionKey(),
-                  l.isGhostDevice()) == std::tie(r.id(),
-                                                 r.userId(),
-                                                 r.createdAtBlkIndex(),
-                                                 r.revokedAtBlkIndex(),
-                                                 r.publicSignatureKey(),
-                                                 r.publicEncryptionKey(),
-                                                 r.isGhostDevice());
+                  l.isGhostDevice(),
+                  l.isRevoked()) == std::tie(r.id(),
+                                             r.userId(),
+                                             r.publicSignatureKey(),
+                                             r.publicEncryptionKey(),
+                                             r.isGhostDevice(),
+                                             r.isRevoked());
 }
 
 bool operator!=(Device const& l, Device const& r)

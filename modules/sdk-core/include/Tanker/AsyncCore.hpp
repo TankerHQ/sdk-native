@@ -75,6 +75,7 @@ public:
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
+
   tc::shared_future<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);
 

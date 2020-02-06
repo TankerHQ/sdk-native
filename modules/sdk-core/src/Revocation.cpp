@@ -80,7 +80,7 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
   for (auto const& device : user.devices())
   {
-    if (device.id() != deviceId && device.revokedAtBlkIndex() == std::nullopt)
+    if (device.id() != deviceId && !device.isRevoked())
     {
       Crypto::SealedPrivateEncryptionKey sealedEncryptedKey{Crypto::sealEncrypt(
           encryptionPrivateKey, device.publicEncryptionKey())};
@@ -155,7 +155,7 @@ tc::cotask<void> onOtherDeviceRevocation(
     Users::ContactStore& contactStore,
     Users::LocalUser& localUser)
 {
-  TC_AWAIT(contactStore.revokeDevice(deviceRevocation.deviceId(), entry.index));
+  TC_AWAIT(contactStore.revokeDevice(deviceRevocation.deviceId()));
 
   if (auto const deviceRevocation2 =
           deviceRevocation.get_if<DeviceRevocation2>())

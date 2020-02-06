@@ -49,7 +49,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
                base64DecodeArgument<Trustchain::DeviceId>(secondDeviceId);
       });
   REQUIRE(secondDeviceInList != devices.end());
-  CHECK(secondDeviceInList->revokedAtBlkIndex().has_value());
+  CHECK(secondDeviceInList->isRevoked());
 
   TC_AWAIT(aliceSecondDevice.open());
 }

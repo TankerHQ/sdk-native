@@ -107,8 +107,7 @@ public:
       Trustchain::UserId const& id) = 0;
   virtual tc::cotask<std::optional<Trustchain::UserId>> findDeviceUserId(
       Trustchain::DeviceId const& id) = 0;
-  virtual tc::cotask<void> updateDeviceRevokedAt(
-      Trustchain::DeviceId const& id, uint64_t revokedAtBlkIndex) = 0;
+  virtual tc::cotask<void> setDeviceRevoked(Trustchain::DeviceId const& id) = 0;
 
   virtual tc::cotask<void> putInternalGroup(InternalGroup const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;

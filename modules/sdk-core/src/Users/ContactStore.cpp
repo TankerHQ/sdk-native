@@ -81,10 +81,10 @@ tc::cotask<std::optional<UserId>> ContactStore::findUserIdByDeviceId(
   TC_RETURN(TC_AWAIT(_db->findDeviceUserId(id)));
 }
 
-tc::cotask<void> ContactStore::revokeDevice(Trustchain::DeviceId const& id,
-                                            uint64_t revokedAtBlkIndex) const
+tc::cotask<void> ContactStore::revokeDevice(
+    Trustchain::DeviceId const& id) const
 {
-  TC_AWAIT(_db->updateDeviceRevokedAt(id, revokedAtBlkIndex));
+  TC_AWAIT(_db->setDeviceRevoked(id));
 }
 
 tc::cotask<void> ContactStore::rotateContactPublicEncryptionKey(

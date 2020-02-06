@@ -53,8 +53,7 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
       Errc::InvalidUserId,
       "Device creation's user id must be the same than its parent device's");
 
-  ensures(!authorDevice->revokedAtBlkIndex() ||
-              authorDevice->revokedAtBlkIndex() > serverEntry.index(),
+  ensures(!authorDevice->isRevoked(),
           Errc::InvalidAuthor,
           "author device must not be revoked");
 
