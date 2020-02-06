@@ -28,6 +28,8 @@ add_executable(test_tanker
   TestVerifier.cpp
   MockConnection.cpp
   TrustchainBuilder.cpp
+  TrustchainGenerator.hpp
+  TrustchainGenerator.cpp
 
   main.cpp
 
