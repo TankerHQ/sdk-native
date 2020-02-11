@@ -22,7 +22,6 @@ TEST_CASE("GroupStore")
       Crypto::makeSignatureKeyPair(),
       Crypto::makeEncryptionKeyPair(),
       make<Crypto::Hash>("last block hash"),
-      1234,
   };
   auto const externalGroup = ExternalGroup{
       make<GroupId>("group id"),
@@ -30,7 +29,6 @@ TEST_CASE("GroupStore")
       std::nullopt,
       group.encryptionKeyPair.publicKey,
       make<Crypto::Hash>("last block hash"),
-      1234,
   };
   auto externalGroupWithKey = externalGroup;
   externalGroupWithKey.encryptedPrivateSignatureKey =
@@ -84,7 +82,6 @@ TEST_CASE("GroupStore")
     group2.signatureKeyPair = Crypto::makeSignatureKeyPair();
     group2.encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     group2.lastBlockHash = make<Crypto::Hash>("other last");
-    group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
     CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
@@ -98,7 +95,6 @@ TEST_CASE("GroupStore")
     group2.signatureKeyPair = Crypto::makeSignatureKeyPair();
     group2.encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     group2.lastBlockHash = make<Crypto::Hash>("other last");
-    group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
     CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
@@ -114,7 +110,6 @@ TEST_CASE("GroupStore")
     externalGroup2.publicEncryptionKey =
         Crypto::makeEncryptionKeyPair().publicKey;
     externalGroup2.lastBlockHash = make<Crypto::Hash>("other last");
-    externalGroup2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(externalGroup2));
     CHECK_EQ(AWAIT(groupStore.findById(externalGroup2.id)).value(),
              Group{externalGroup2});

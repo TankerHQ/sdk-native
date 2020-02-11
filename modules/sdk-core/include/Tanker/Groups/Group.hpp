@@ -21,7 +21,6 @@ struct InternalGroup
   Crypto::SignatureKeyPair signatureKeyPair;
   Crypto::EncryptionKeyPair encryptionKeyPair;
   Crypto::Hash lastBlockHash;
-  uint64_t lastBlockIndex;
 };
 
 bool operator==(InternalGroup const& l, InternalGroup const& r);
@@ -38,17 +37,14 @@ struct ExternalGroup
                 Crypto::PublicSignatureKey const&,
                 std::optional<Crypto::SealedPrivateSignatureKey> const&,
                 Crypto::PublicEncryptionKey const&,
-                Crypto::Hash const&,
-                uint64_t lastBlockIndex);
+                Crypto::Hash const&);
   ExternalGroup(InternalGroup const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
-  std::optional<Crypto::SealedPrivateSignatureKey>
-      encryptedPrivateSignatureKey;
+  std::optional<Crypto::SealedPrivateSignatureKey> encryptedPrivateSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
-  uint64_t lastBlockIndex;
 };
 
 bool operator==(ExternalGroup const& l, ExternalGroup const& r);

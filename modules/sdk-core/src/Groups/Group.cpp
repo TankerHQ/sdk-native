@@ -8,15 +8,10 @@ namespace Tanker
 {
 bool operator==(InternalGroup const& l, InternalGroup const& r)
 {
-  return std::tie(l.id,
-                  l.signatureKeyPair,
-                  l.encryptionKeyPair,
-                  l.lastBlockHash,
-                  l.lastBlockIndex) == std::tie(r.id,
-                                                r.signatureKeyPair,
-                                                r.encryptionKeyPair,
-                                                r.lastBlockHash,
-                                                r.lastBlockIndex);
+  return std::tie(
+             l.id, l.signatureKeyPair, l.encryptionKeyPair, l.lastBlockHash) ==
+         std::tie(
+             r.id, r.signatureKeyPair, r.encryptionKeyPair, r.lastBlockHash);
 }
 
 bool operator!=(InternalGroup const& l, InternalGroup const& r)
@@ -29,14 +24,12 @@ ExternalGroup::ExternalGroup(
     Crypto::PublicSignatureKey const& publicSignatureKey,
     std::optional<Crypto::SealedPrivateSignatureKey> const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::Hash const& lastBlockHash,
-    uint64_t lastBlockIndex)
+    Crypto::Hash const& lastBlockHash)
   : id(id),
     publicSignatureKey(publicSignatureKey),
     encryptedPrivateSignatureKey(enc),
     publicEncryptionKey(publicEncryptionKey),
-    lastBlockHash(lastBlockHash),
-    lastBlockIndex(lastBlockIndex)
+    lastBlockHash(lastBlockHash)
 {
 }
 
@@ -45,8 +38,7 @@ ExternalGroup::ExternalGroup(InternalGroup const& group)
     publicSignatureKey(group.signatureKeyPair.publicKey),
     encryptedPrivateSignatureKey(std::nullopt),
     publicEncryptionKey(group.encryptionKeyPair.publicKey),
-    lastBlockHash(group.lastBlockHash),
-    lastBlockIndex(group.lastBlockIndex)
+    lastBlockHash(group.lastBlockHash)
 {
 }
 
@@ -56,13 +48,11 @@ bool operator==(ExternalGroup const& l, ExternalGroup const& r)
                   l.publicSignatureKey,
                   l.encryptedPrivateSignatureKey,
                   l.publicEncryptionKey,
-                  l.lastBlockHash,
-                  l.lastBlockIndex) == std::tie(r.id,
-                                                r.publicSignatureKey,
-                                                r.encryptedPrivateSignatureKey,
-                                                r.publicEncryptionKey,
-                                                r.lastBlockHash,
-                                                r.lastBlockIndex);
+                  l.lastBlockHash) == std::tie(r.id,
+                                               r.publicSignatureKey,
+                                               r.encryptedPrivateSignatureKey,
+                                               r.publicEncryptionKey,
+                                               r.lastBlockHash);
 }
 
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r)
@@ -81,12 +71,8 @@ void updateLastGroupBlock(Group& group,
                           Crypto::Hash const& lastBlockHash,
                           uint64_t lastBlockIndex)
 {
-  boost::variant2::visit(
-      [&](auto& g) {
-        g.lastBlockHash = lastBlockHash;
-        g.lastBlockIndex = lastBlockIndex;
-      },
-      group);
+  boost::variant2::visit([&](auto& g) { g.lastBlockHash = lastBlockHash; },
+                         group);
 }
 
 Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group)

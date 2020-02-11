@@ -87,9 +87,7 @@ InternalGroup rowToInternalGroup(T const& row)
            row.public_encryption_key),
        DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
            row.private_encryption_key)},
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
-      // sqlpp uses int64_t
-      static_cast<uint64_t>(row.last_group_block_index)};
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
 }
 
 template <typename T>
@@ -105,9 +103,7 @@ ExternalGroup rowToExternalGroup(T const& row)
               row.encrypted_private_signature_key),
       DataStore::extractBlob<Crypto::PublicEncryptionKey>(
           row.public_encryption_key),
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
-      // sqlpp uses int64_t
-      static_cast<uint64_t>(row.last_group_block_index)};
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
 }
 
 template <typename T>
@@ -212,8 +208,10 @@ void Database::performUnifiedMigration()
       [[fallthrough]];
     case 6:
       _db->execute("DROP TABLE IF EXISTS trustchain");
-      _db->execute(fmt::format("DROP TABLE IF EXISTS contact_devices"));
+      _db->execute("DROP TABLE IF EXISTS contact_devices");
       createTable<ContactDevicesTable>(*_db);
+      _db->execute("DROP TABLE IF EXISTS groups");
+      createTable<GroupsTable>(*_db);
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
@@ -735,8 +733,7 @@ tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
       groups.encrypted_private_signature_key = sqlpp::null,
       groups.public_encryption_key = group.encryptionKeyPair.publicKey.base(),
       groups.private_encryption_key = group.encryptionKeyPair.privateKey.base(),
-      groups.last_group_block_hash = group.lastBlockHash.base(),
-      groups.last_group_block_index = group.lastBlockIndex));
+      groups.last_group_block_hash = group.lastBlockHash.base()));
   TC_RETURN();
 }
 
@@ -760,8 +757,7 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
           group.encryptedPrivateSignatureKey->base(),
       groups.public_encryption_key = group.publicEncryptionKey.base(),
       groups.private_encryption_key = sqlpp::null,
-      groups.last_group_block_hash = group.lastBlockHash.base(),
-      groups.last_group_block_index = group.lastBlockIndex));
+      groups.last_group_block_hash = group.lastBlockHash.base()));
 
   TC_RETURN();
 }
