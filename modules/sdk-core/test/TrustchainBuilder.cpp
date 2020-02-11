@@ -101,7 +101,6 @@ Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
       encryptedPrivateSignatureKey,
       tankerGroup.encryptionKeyPair.publicKey,
       tankerGroup.lastBlockHash,
-      tankerGroup.lastBlockIndex,
   };
   return extGroup;
 }
@@ -407,7 +406,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
       signatureKeyPair,
       encryptionKeyPair,
       serverEntry.hash(),
-      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
@@ -455,7 +453,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
       signatureKeyPair,
       encryptionKeyPair,
       serverEntry.hash(),
-      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
@@ -500,7 +497,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   _entries.push_back(serverEntry);
 
   group.tankerGroup.lastBlockHash = serverEntry.hash();
-  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -547,7 +543,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
                                   newProvisionalMembers.begin(),
                                   newProvisionalMembers.end());
   group.tankerGroup.lastBlockHash = serverEntry.hash();
-  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),

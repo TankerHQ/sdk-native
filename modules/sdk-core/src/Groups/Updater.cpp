@@ -94,14 +94,11 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyProvisionalKey(
 ExternalGroup makeExternalGroup(Entry const& entry,
                                 UserGroupCreation const& userGroupCreation)
 {
-  return ExternalGroup{
-      GroupId{userGroupCreation.publicSignatureKey()},
-      userGroupCreation.publicSignatureKey(),
-      userGroupCreation.sealedPrivateSignatureKey(),
-      userGroupCreation.publicEncryptionKey(),
-      entry.hash,
-      entry.index,
-  };
+  return ExternalGroup{GroupId{userGroupCreation.publicSignatureKey()},
+                       userGroupCreation.publicSignatureKey(),
+                       userGroupCreation.sealedPrivateSignatureKey(),
+                       userGroupCreation.publicEncryptionKey(),
+                       entry.hash};
 }
 
 InternalGroup makeInternalGroup(
@@ -115,19 +112,16 @@ InternalGroup makeInternalGroup(
                               userGroupCreation.publicEncryptionKey(),
                               groupPrivateEncryptionKey,
                           });
-  return InternalGroup{
-      GroupId{userGroupCreation.publicSignatureKey()},
-      Crypto::SignatureKeyPair{
-          userGroupCreation.publicSignatureKey(),
-          groupPrivateSignatureKey,
-      },
-      Crypto::EncryptionKeyPair{
-          userGroupCreation.publicEncryptionKey(),
-          groupPrivateEncryptionKey,
-      },
-      entry.hash,
-      entry.index,
-  };
+  return InternalGroup{GroupId{userGroupCreation.publicSignatureKey()},
+                       Crypto::SignatureKeyPair{
+                           userGroupCreation.publicSignatureKey(),
+                           groupPrivateSignatureKey,
+                       },
+                       Crypto::EncryptionKeyPair{
+                           userGroupCreation.publicEncryptionKey(),
+                           groupPrivateEncryptionKey,
+                       },
+                       entry.hash};
 }
 
 InternalGroup makeInternalGroup(
@@ -152,7 +146,6 @@ InternalGroup makeInternalGroup(
           groupPrivateEncryptionKey,
       },
       entry.hash,
-      entry.index,
   };
 }
 }
