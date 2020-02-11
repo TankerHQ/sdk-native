@@ -435,7 +435,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   for (auto const& user : users)
     tusers.push_back(user.asTankerUser());
 
-  auto const clientEntry = Groups::Manager::generateCreateGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
       tusers,
       provisionalUsers,
       signatureKeyPair,
@@ -522,7 +522,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   for (auto const& user : newUsers)
     tusers.push_back(user.asTankerUser());
 
-  auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
       tusers,
       provisionalUsers,
       group.tankerGroup,
