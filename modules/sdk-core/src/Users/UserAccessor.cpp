@@ -144,12 +144,13 @@ auto processUserEntries(Trustchain::TrustchainId const& trustchainId,
 }
 }
 
-tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
+tc::cotask<std::vector<ProvisionalUsers::PublicUser>>
+UserAccessor::pullProvisional(
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
   if (appProvisionalIdentities.empty())
-    TC_RETURN(std::vector<PublicProvisionalUser>{});
+    TC_RETURN(std::vector<ProvisionalUsers::PublicUser>{});
 
   std::vector<Email> provisionalUserEmails;
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
@@ -173,7 +174,7 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
         "getPublicProvisionalIdentities returned a list of different size");
   }
 
-  std::vector<PublicProvisionalUser> provisionalUsers;
+  std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
   provisionalUsers.reserve(appProvisionalIdentities.size());
   std::transform(appProvisionalIdentities.begin(),
                  appProvisionalIdentities.end(),
@@ -182,7 +183,7 @@ tc::cotask<std::vector<PublicProvisionalUser>> UserAccessor::pullProvisional(
                  [](auto const& appProvisionalIdentity,
                     auto const& tankerProvisionalIdentity) {
                    auto const& [sigKey, encKey] = tankerProvisionalIdentity;
-                   return PublicProvisionalUser{
+                   return ProvisionalUsers::PublicUser{
                        appProvisionalIdentity.appSignaturePublicKey,
                        appProvisionalIdentity.appEncryptionPublicKey,
                        sigKey,

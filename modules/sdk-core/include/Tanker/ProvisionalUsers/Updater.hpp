@@ -2,6 +2,7 @@
 
 #include <Tanker/Entry.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -14,7 +15,8 @@ class ContactStore;
 
 namespace Tanker::ProvisionalUsers::Updater
 {
-struct SecretProvisionalUser
+
+struct UsedSecretUser
 {
   Crypto::PublicSignatureKey appSignaturePublicKey;
   Crypto::PublicSignatureKey tankerSignaturePublicKey;
@@ -22,10 +24,10 @@ struct SecretProvisionalUser
   Crypto::EncryptionKeyPair tankerEncryptionKeyPair;
 };
 
-tc::cotask<SecretProvisionalUser> extractKeysToStore(
-    Users::LocalUser const& localUser, Entry const& entry);
+tc::cotask<UsedSecretUser> extractKeysToStore(Users::LocalUser const& localUser,
+                                              Entry const& entry);
 
-tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
+tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::LocalUser const& userKeyStore,
     Users::ContactStore const& contactStore,
     std::vector<Trustchain::ServerEntry> const& serverEntries);

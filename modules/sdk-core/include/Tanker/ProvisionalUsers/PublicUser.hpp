@@ -3,9 +3,9 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 
-namespace Tanker
+namespace Tanker::ProvisionalUsers
 {
-struct PublicProvisionalUser
+struct PublicUser
 {
   Crypto::PublicSignatureKey appSignaturePublicKey;
   Crypto::PublicEncryptionKey appEncryptionPublicKey;

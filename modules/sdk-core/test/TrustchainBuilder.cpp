@@ -279,7 +279,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
 TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
     std::string const& email)
 {
-  auto const secretProvisionalUser = SecretProvisionalUser{
+  auto const secretProvisionalUser = ProvisionalUsers::SecretUser{
       Tanker::Identity::TargetType::Email,
       email,
       Crypto::makeEncryptionKeyPair(),
@@ -287,7 +287,7 @@ TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
       Crypto::makeSignatureKeyPair(),
       Crypto::makeSignatureKeyPair(),
   };
-  auto const publicProvisionalUser = PublicProvisionalUser{
+  auto const publicProvisionalUser = ProvisionalUsers::PublicUser{
       secretProvisionalUser.appSignatureKeyPair.publicKey,
       secretProvisionalUser.appEncryptionKeyPair.publicKey,
       secretProvisionalUser.tankerSignatureKeyPair.publicKey,
@@ -309,7 +309,7 @@ TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
 
 ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     std::string const& suserId,
-    Tanker::SecretProvisionalUser const& provisionalUser,
+    Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
     int authorDeviceIndex)
 {
   auto const user = findUser(suserId).value();
@@ -332,7 +332,7 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   return makeGroup2(author, users, provisionalUsers);
 }
@@ -426,7 +426,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
@@ -514,7 +514,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
     Device const& author,
     InternalGroup group,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
@@ -641,7 +641,7 @@ ServerEntry TrustchainBuilder::shareToUserGroup(Device const& sender,
 
 ServerEntry TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
-    PublicProvisionalUser const& receiver,
+    ProvisionalUsers::PublicUser const& receiver,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {

@@ -80,7 +80,7 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
 
 UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<PublicProvisionalUser> const& users)
+    std::vector<ProvisionalUsers::PublicUser> const& users)
 {
   UserGroupCreation::v2::ProvisionalMembers keysForUsers;
   for (auto const& user : users)
@@ -100,7 +100,7 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 
 ClientEntry makeUserGroupCreationEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::EncryptionKeyPair const& groupEncryptionKeyPair,
     Trustchain::TrustchainId const& trustchainId,
@@ -159,7 +159,7 @@ tc::cotask<SGroupId> create(
 
 ClientEntry makeUserGroupAdditionEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,

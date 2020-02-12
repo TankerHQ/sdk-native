@@ -5,9 +5,9 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
-namespace Tanker
+namespace Tanker::ProvisionalUsers
 {
-struct SecretProvisionalUser
+struct SecretUser
 {
   Identity::TargetType target;
   std::string value;

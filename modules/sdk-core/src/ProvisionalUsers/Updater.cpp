@@ -59,8 +59,8 @@ tc::cotask<DeviceMap> extractAuthors(
 }
 }
 
-tc::cotask<SecretProvisionalUser> extractKeysToStore(
-    Users::LocalUser const& localUser, Entry const& entry)
+tc::cotask<UsedSecretUser> extractKeysToStore(Users::LocalUser const& localUser,
+                                              Entry const& entry)
 {
   auto const& provisionalIdentityClaim =
       entry.action.get<ProvisionalIdentityClaim>();
@@ -88,21 +88,20 @@ tc::cotask<SecretProvisionalUser> extractKeysToStore(
           gsl::make_span(provisionalIdentityKeys)
               .subspan(Crypto::PrivateEncryptionKey::arraySize)));
 
-  TC_RETURN((
-      SecretProvisionalUser{provisionalIdentityClaim.appSignaturePublicKey(),
+  TC_RETURN((UsedSecretUser{provisionalIdentityClaim.appSignaturePublicKey(),
                             provisionalIdentityClaim.tankerSignaturePublicKey(),
                             appEncryptionKeyPair,
                             tankerEncryptionKeyPair}));
 }
 
-tc::cotask<std::vector<SecretProvisionalUser>> processClaimEntries(
+tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::LocalUser const& localUser,
     Users::ContactStore const& contactStore,
     std::vector<Trustchain::ServerEntry> const& serverEntries)
 {
   auto const authors = TC_AWAIT(extractAuthors(contactStore, serverEntries));
 
-  std::vector<SecretProvisionalUser> out;
+  std::vector<UsedSecretUser> out;
   for (auto const& serverEntry : serverEntries)
   {
     try

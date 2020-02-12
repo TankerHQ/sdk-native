@@ -68,12 +68,12 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
           _localUser->deviceId(),
           _localUser->deviceKeys().signatureKeyPair.privateKey,
           _localUser->userId(),
-          SecretProvisionalUser{provisionalIdentity.target,
-                                provisionalIdentity.value,
-                                provisionalIdentity.appEncryptionKeyPair,
-                                tankerKeys->encryptionKeyPair,
-                                provisionalIdentity.appSignatureKeyPair,
-                                tankerKeys->signatureKeyPair},
+          ProvisionalUsers::SecretUser{provisionalIdentity.target,
+                                       provisionalIdentity.value,
+                                       provisionalIdentity.appEncryptionKeyPair,
+                                       tankerKeys->encryptionKeyPair,
+                                       provisionalIdentity.appSignatureKeyPair,
+                                       tankerKeys->signatureKeyPair},
           lastUserKey);
       TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
     }
@@ -162,12 +162,12 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
       _localUser->deviceId(),
       _localUser->deviceKeys().signatureKeyPair.privateKey,
       _localUser->userId(),
-      SecretProvisionalUser{_provisionalIdentity->target,
-                            _provisionalIdentity->value,
-                            _provisionalIdentity->appEncryptionKeyPair,
-                            tankerKeys->encryptionKeyPair,
-                            _provisionalIdentity->appSignatureKeyPair,
-                            tankerKeys->signatureKeyPair},
+      ProvisionalUsers::SecretUser{_provisionalIdentity->target,
+                                   _provisionalIdentity->value,
+                                   _provisionalIdentity->appEncryptionKeyPair,
+                                   tankerKeys->encryptionKeyPair,
+                                   _provisionalIdentity->appSignatureKeyPair,
+                                   tankerKeys->signatureKeyPair},
       lastUserKey);
   TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
 

@@ -57,10 +57,13 @@ tc::cotask<void> Accessor::refreshKeys()
   auto const toStore = TC_AWAIT(
       Updater::processClaimEntries(*_localUser, *_contactStore, blocks));
 
-  for (auto const& keys : toStore)
+  for (auto const& [appSignaturePublicKey,
+                    tankerSignaturePublicKey,
+                    appEncryptionKeyPair,
+                    tankerEncryptionKeyPair] : toStore)
     TC_AWAIT(_provisionalUserKeysStore->putProvisionalUserKeys(
-        keys.appSignaturePublicKey,
-        keys.tankerSignaturePublicKey,
-        {keys.appEncryptionKeyPair, keys.tankerEncryptionKeyPair}));
+        appSignaturePublicKey,
+        tankerSignaturePublicKey,
+        {appEncryptionKeyPair, tankerEncryptionKeyPair}));
 }
 }

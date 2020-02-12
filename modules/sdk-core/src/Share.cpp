@@ -36,7 +36,7 @@ std::vector<uint8_t> makeKeyPublishToProvisionalUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    PublicProvisionalUser const& recipientProvisionalUser,
+    ProvisionalUsers::PublicUser const& recipientProvisionalUser,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey)
 {
@@ -117,7 +117,8 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToProvisionalUsers(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys const& resourceKeys,
-    std::vector<PublicProvisionalUser> const& recipientProvisionalUserKeys)
+    std::vector<ProvisionalUsers::PublicUser> const&
+        recipientProvisionalUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
   out.reserve(recipientProvisionalUserKeys.size());
@@ -195,7 +196,7 @@ void handleNotFound(
 
 KeyRecipients toKeyRecipients(
     std::vector<Users::User> const& users,
-    std::vector<PublicProvisionalUser> const& publicProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& publicProvisionalUsers,
     std::vector<Crypto::PublicEncryptionKey> const& groupEncryptionKeys)
 {
   KeyRecipients out;

@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -30,7 +30,7 @@ static constexpr size_t MAX_GROUP_SIZE = 1000;
 struct MembersToAdd
 {
   std::vector<Users::User> users;
-  std::vector<PublicProvisionalUser> provisionalUsers;
+  std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
@@ -39,7 +39,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
 
 Trustchain::ClientEntry makeUserGroupCreationEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::EncryptionKeyPair const& groupEncryptionKeyPair,
     Trustchain::TrustchainId const& trustchainId,
@@ -56,7 +56,7 @@ tc::cotask<SGroupId> create(
 
 Trustchain::ClientEntry makeUserGroupAdditionEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,

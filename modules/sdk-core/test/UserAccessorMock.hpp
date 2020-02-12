@@ -13,7 +13,7 @@ public:
                  gsl::span<Tanker::Trustchain::UserId const>),
              override);
   MAKE_MOCK1(pullProvisional,
-             tc::cotask<std::vector<Tanker::PublicProvisionalUser>>(
+             tc::cotask<std::vector<Tanker::ProvisionalUsers::PublicUser>>(
                  gsl::span<Tanker::Identity::PublicProvisionalIdentity const>),
              override);
 };
