@@ -2,7 +2,7 @@
 
 #include <Tanker/BasicPullResult.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/User.hpp>
 
@@ -19,7 +19,7 @@ public:
 
   virtual tc::cotask<PullResult> pull(
       gsl::span<Trustchain::UserId const> userIds) = 0;
-  virtual tc::cotask<std::vector<PublicProvisionalUser>> pullProvisional(
+  virtual tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       gsl::span<Identity::PublicProvisionalIdentity const>
           appProvisionalIdentities) = 0;
 };

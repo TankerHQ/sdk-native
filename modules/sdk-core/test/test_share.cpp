@@ -75,7 +75,7 @@ void assertKeyPublishToUsersTargetedAt(
 void assertKeyPublishToUsersTargetedAt(
     Share::ResourceKey const& resourceKey,
     std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
-    std::vector<SecretProvisionalUser> const& provisionalUsers)
+    std::vector<ProvisionalUsers::SecretUser> const& provisionalUsers)
 {
   REQUIRE(keyPublishes.size() == provisionalUsers.size());
 
@@ -137,7 +137,8 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
           Tanker::makeCoTask(UsersPullResult{{newUser.asTankerUser()}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
+      .LR_RETURN(
+          Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
@@ -176,7 +177,8 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
+      .LR_RETURN(
+          Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(
@@ -214,7 +216,7 @@ TEST_CASE(
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{
+      .LR_RETURN(Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{
           provisionalUser.publicProvisionalUser}));
 
   REQUIRE_CALL(groupAccessor,
@@ -257,7 +259,8 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {newUser.userId}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
+      .LR_RETURN(
+          Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(std::vector<GroupId>{})))
@@ -291,7 +294,8 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-      .LR_RETURN(Tanker::makeCoTask(std::vector<PublicProvisionalUser>{}));
+      .LR_RETURN(
+          Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
   REQUIRE_CALL(groupAccessor,
                getPublicEncryptionKeys(trompeloeil::eq(

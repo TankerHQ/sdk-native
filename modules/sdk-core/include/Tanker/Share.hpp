@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -43,7 +43,7 @@ using ResourceKeys = std::vector<ResourceKey>;
 struct KeyRecipients
 {
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
-  std::vector<PublicProvisionalUser> recipientProvisionalUserKeys;
+  std::vector<ProvisionalUsers::PublicUser> recipientProvisionalUserKeys;
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
 };
 

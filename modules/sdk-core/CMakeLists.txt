@@ -72,9 +72,13 @@ add_library(tankercore STATIC
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
   include/Tanker/ProvisionalUsers/IAccessor.hpp
+  include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/ProvisionalUsers/Updater.hpp
   include/Tanker/ProvisionalUsers/Requests.hpp
   include/Tanker/ProvisionalUsers/Manager.hpp
+  include/Tanker/ProvisionalUsers/SecretUser.hpp
+  include/Tanker/ProvisionalUsers/PublicUser.hpp
+  include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
@@ -90,7 +94,6 @@ add_library(tankercore STATIC
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
@@ -106,14 +109,11 @@ add_library(tankercore STATIC
   include/Tanker/Users/Device.hpp
   include/Tanker/Users/EntryGenerator.hpp
   include/Tanker/ResourceKeyAccessor.hpp
-  include/Tanker/SecretProvisionalUser.hpp
-  include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/IdentityUtils.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
-  include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -37,7 +37,7 @@ public:
   tc::cotask<PullResult> pull(gsl::span<Trustchain::UserId const> userIds);
   tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
       gsl::span<Trustchain::DeviceId const> deviceIds);
-  tc::cotask<std::vector<PublicProvisionalUser>> pullProvisional(
+  tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       gsl::span<Identity::PublicProvisionalIdentity const>
           appProvisionalIdentities);
 

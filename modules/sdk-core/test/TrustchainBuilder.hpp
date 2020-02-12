@@ -7,8 +7,8 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
-#include <Tanker/SecretProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
+#include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -78,8 +78,8 @@ public:
 
   struct ProvisionalUser
   {
-    Tanker::SecretProvisionalUser secretProvisionalUser;
-    Tanker::PublicProvisionalUser publicProvisionalUser;
+    Tanker::ProvisionalUsers::SecretUser secretProvisionalUser;
+    Tanker::ProvisionalUsers::PublicUser publicProvisionalUser;
     Tanker::SPublicIdentity spublicIdentity;
   };
 
@@ -112,15 +112,16 @@ public:
   ResultDevice makeDevice3(std::string const& suserId,
                            int validatorDeviceIndex = 0);
 
-  ResultGroup makeGroup(
-      Device const& author,
-      std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers = {});
+  ResultGroup makeGroup(Device const& author,
+                        std::vector<User> const& users,
+                        std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+                            provisionalUsers = {});
   ResultGroup makeGroup1(Device const& author, std::vector<User> const& users);
   ResultGroup makeGroup2(
       Device const& author,
       std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
+      std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+          provisionalUsers);
   ResultGroup addUserToGroup(Device const& author,
                              InternalGroup group,
                              std::vector<User> const& users);
@@ -128,14 +129,15 @@ public:
       Device const& author,
       InternalGroup group,
       std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
+      std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+          provisionalUsers);
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
-  Tanker::PublicProvisionalUser toPublicProvisionalUser(
-      Tanker::SecretProvisionalUser const& u) const;
+  Tanker::ProvisionalUsers::PublicUser toPublicProvisionalUser(
+      Tanker::ProvisionalUsers::SecretUser const& u) const;
   Tanker::Trustchain::ServerEntry claimProvisionalIdentity(
       std::string const& userId,
-      Tanker::SecretProvisionalUser const& provisionalUser,
+      Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
   std::vector<Tanker::Trustchain::ServerEntry> shareToDevice(
@@ -155,7 +157,7 @@ public:
       Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::ServerEntry shareToProvisionalUser(
       Device const& sender,
-      Tanker::PublicProvisionalUser const& receiver,
+      Tanker::ProvisionalUsers::PublicUser const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
 

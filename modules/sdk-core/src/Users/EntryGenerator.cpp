@@ -129,7 +129,7 @@ ClientEntry createProvisionalIdentityClaimEntry(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
     UserId const& userId,
-    SecretProvisionalUser const& provisionalUser,
+    ProvisionalUsers::SecretUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair)
 {
   std::vector<std::uint8_t> keysToEncrypt(
