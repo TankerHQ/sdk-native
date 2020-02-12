@@ -17,7 +17,7 @@ using Tanker::Trustchain::GroupId;
 namespace Tanker::Groups
 {
 Accessor::Accessor(Groups::IRequester* requester,
-                   Users::UserAccessor* accessor,
+                   Users::IUserAccessor* accessor,
                    Store* groupStore,
                    Users::LocalUser const* localUser,
                    ProvisionalUsers::IAccessor* provisionalUserAccessor)

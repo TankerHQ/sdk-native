@@ -170,7 +170,7 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   UserAccessorMock userAccessor;
 
-  REQUIRE_CALL(userAccessor, pull(trompeloeil::_))
+  REQUIRE_CALL(userAccessor, pull(ANY(gsl::span<Trustchain::UserId const>)))
       .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(

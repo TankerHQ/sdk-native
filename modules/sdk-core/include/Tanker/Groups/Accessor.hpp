@@ -14,7 +14,7 @@
 namespace Tanker::Users
 {
 class LocalUser;
-class UserAccessor;
+class IUserAccessor;
 }
 
 namespace Tanker::Groups
@@ -24,7 +24,7 @@ class Accessor : public Groups::IAccessor
 {
 public:
   Accessor(Groups::IRequester* requester,
-           Users::UserAccessor* userAccessor,
+           Users::IUserAccessor* userAccessor,
            Store* groupstore,
            Users::LocalUser const* localUser,
            ProvisionalUsers::IAccessor* provisionalUserAccessor);
@@ -45,7 +45,7 @@ public:
 
 private:
   Groups::IRequester* _requester;
-  Users::UserAccessor* _userAccessor;
+  Users::IUserAccessor* _userAccessor;
   Store* _groupStore;
   Users::LocalUser const* _localUser;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
