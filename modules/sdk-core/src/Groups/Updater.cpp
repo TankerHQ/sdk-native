@@ -291,7 +291,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 
 tc::cotask<std::optional<Group>> processGroupEntries(
     Users::LocalUser const& localUser,
-    Users::UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries)

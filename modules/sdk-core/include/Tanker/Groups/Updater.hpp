@@ -10,7 +10,7 @@
 
 namespace Tanker::Users
 {
-class UserAccessor;
+class IUserAccessor;
 class LocalUser;
 }
 
@@ -31,7 +31,7 @@ tc::cotask<Group> applyUserGroupAddition(
 
 tc::cotask<std::optional<Group>> processGroupEntries(
     Users::LocalUser const& localUser,
-    Users::UserAccessor& userAccessor,
+    Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
     std::vector<Trustchain::ServerEntry> const& entries);

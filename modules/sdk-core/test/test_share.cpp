@@ -131,7 +131,7 @@ TEST_CASE("generateRecipientList of a new user should return their user key")
   GroupAccessorMock groupAccessor;
 
   REQUIRE_CALL(userAccessor,
-               pull(trompeloeil::eq(
+               pull(trompeloeil::eq<gsl::span<Trustchain::UserId const>>(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
       .LR_RETURN(
           Tanker::makeCoTask(UsersPullResult{{newUser.asTankerUser()}, {}}));
@@ -173,7 +173,8 @@ TEST_CASE("generateRecipientList of a new group should return their group key")
   GroupAccessorMock groupAccessor;
 
   REQUIRE_CALL(userAccessor,
-               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
+               pull(trompeloeil::eq<gsl::span<Trustchain::UserId const>>(
+                   gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -212,7 +213,8 @@ TEST_CASE(
   GroupAccessorMock groupAccessor;
 
   REQUIRE_CALL(userAccessor,
-               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
+               pull(trompeloeil::eq<gsl::span<Trustchain::UserId const>>(
+                   gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -254,7 +256,7 @@ TEST_CASE("generateRecipientList of a not-found user should throw")
   GroupAccessorMock groupAccessor;
 
   REQUIRE_CALL(userAccessor,
-               pull(trompeloeil::eq(
+               pull(trompeloeil::eq<gsl::span<Trustchain::UserId const>>(
                    gsl::span<Trustchain::UserId const>{newUser.userId})))
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {newUser.userId}}));
 
@@ -290,7 +292,8 @@ TEST_CASE("generateRecipientList of a not-found group should throw")
   GroupAccessorMock groupAccessor;
 
   REQUIRE_CALL(userAccessor,
-               pull(trompeloeil::eq(gsl::span<Trustchain::UserId const>{})))
+               pull(trompeloeil::eq<gsl::span<Trustchain::UserId const>>(
+                   gsl::span<Trustchain::UserId const>{})))
       .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
   REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
