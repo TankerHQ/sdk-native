@@ -67,7 +67,7 @@ description = "Tanker CI library"
 name = "ci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.2.2093"
+version = "2020.2.2118"
 
 [package.dependencies]
 appdirs = ">=1.4.3,<2.0.0"
@@ -597,7 +597,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "30ed7ff2917d92f6c5c0b9cca228763bb608605a1889bbea4baa014a0201b882"
+content-hash = "46589f64f7fb41c5c6afd6669aff0f8e90faeebf2df775318a52d80312201f37"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -626,8 +626,8 @@ chardet = [
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
 ]
 ci = [
-    {file = "ci-2020.2.2093-py3-none-any.whl", hash = "md5:d26199b5b9ae38cf4c1e13ce519e8438"},
-    {file = "ci-2020.2.2093.tar.gz", hash = "md5:ee633057ebfb8df0db9ea7a4990a86ed"},
+    {file = "ci-2020.2.2118-py3-none-any.whl", hash = "md5:4d44761c7d01030c3d4d0afedea52d8e"},
+    {file = "ci-2020.2.2118.tar.gz", hash = "md5:f81fe422bf93582b79c54fee90fe4e11"},
 ]
 cli-ui = [
     {file = "cli-ui-0.10.0.tar.gz", hash = "sha256:9f767e3ffe14e38afc836dee49247128116bc0aafb672b223d87235799a2c20f"},
