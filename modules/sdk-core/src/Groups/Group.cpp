@@ -22,7 +22,7 @@ bool operator!=(InternalGroup const& l, InternalGroup const& r)
 ExternalGroup::ExternalGroup(
     GroupId const& id,
     Crypto::PublicSignatureKey const& publicSignatureKey,
-    std::optional<Crypto::SealedPrivateSignatureKey> const& enc,
+    Crypto::SealedPrivateSignatureKey const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::Hash const& lastBlockHash)
   : id(id),

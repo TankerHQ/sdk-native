@@ -130,7 +130,7 @@ InternalGroup makeInternalGroup(
     Entry const& entry)
 {
   auto const groupPrivateSignatureKey =
-      Crypto::sealDecrypt(*previousGroup.encryptedPrivateSignatureKey,
+      Crypto::sealDecrypt(previousGroup.encryptedPrivateSignatureKey,
                           Crypto::EncryptionKeyPair{
                               previousGroup.publicEncryptionKey,
                               groupPrivateEncryptionKey,

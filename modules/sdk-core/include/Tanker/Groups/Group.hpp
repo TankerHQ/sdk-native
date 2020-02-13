@@ -36,14 +36,14 @@ struct ExternalGroup
   ExternalGroup& operator=(ExternalGroup&&) = default;
   ExternalGroup(Trustchain::GroupId const&,
                 Crypto::PublicSignatureKey const&,
-                std::optional<Crypto::SealedPrivateSignatureKey> const&,
+                Crypto::SealedPrivateSignatureKey const&,
                 Crypto::PublicEncryptionKey const&,
                 Crypto::Hash const&);
   ExternalGroup(InternalGroup const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
-  std::optional<Crypto::SealedPrivateSignatureKey> encryptedPrivateSignatureKey;
+  Crypto::SealedPrivateSignatureKey encryptedPrivateSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
 };
