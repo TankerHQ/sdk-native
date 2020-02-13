@@ -7,6 +7,7 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
