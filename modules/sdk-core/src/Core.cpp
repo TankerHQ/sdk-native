@@ -62,6 +62,13 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   {
     TC_RETURN(TC_AWAIT(f()));
   }
+  catch (Errors::Exception const& ex)
+  {
+    // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
+    if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+      throw;
+    exception = std::make_exception_ptr(ex);
+  }
   catch (...)
   {
     exception = std::current_exception();
