@@ -206,7 +206,7 @@ void testUserGroupCreationCommon(Users::Device& authorDevice,
 
 void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
                                  ServerEntry& gaEntry,
-                                 ExternalGroup const& group)
+                                 BaseGroup const& group)
 {
   auto tankerDevice = authorDevice.asTankerDevice();
 

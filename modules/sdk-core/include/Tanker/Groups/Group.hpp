@@ -15,6 +15,7 @@
 
 namespace Tanker
 {
+
 struct InternalGroup
 {
   Trustchain::GroupId id;
@@ -47,20 +48,38 @@ struct ExternalGroup
   Crypto::Hash lastBlockHash;
 };
 
+class BaseGroup final
+{
+public:
+  BaseGroup(InternalGroup const&);
+  BaseGroup(ExternalGroup const&);
+
+  Trustchain::GroupId const& id() const;
+  Crypto::Hash const& lastBlockHash() const;
+  Crypto::PublicSignatureKey const& publicSignatureKey() const;
+  Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
+
+private:
+  Trustchain::GroupId _id;
+  Crypto::Hash _lastBlockHash;
+  Crypto::PublicSignatureKey _publicSignatureKey;
+  Crypto::PublicEncryptionKey _publicEncryptionKey;
+};
+
 bool operator==(ExternalGroup const& l, ExternalGroup const& r);
 bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
 
 using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
 
-ExternalGroup extractExternalGroup(Group const& group);
+BaseGroup extractBaseGroup(Group const& group);
 
 // optional has no .map()
-inline std::optional<ExternalGroup> extractExternalGroup(
+inline std::optional<BaseGroup> extractBaseGroup(
     std::optional<Group> const& group)
 {
   if (!group)
     return std::nullopt;
-  return extractExternalGroup(*group);
+  return extractBaseGroup(*group);
 }
 
 void updateLastGroupBlock(Group& group,
