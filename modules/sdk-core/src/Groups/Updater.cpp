@@ -258,14 +258,14 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
       if (serverEntry.action().holds_alternative<UserGroupCreation>())
       {
         auto const entry = Verif::verifyUserGroupCreation(
-            serverEntry, author, extractExternalGroup(previousGroup));
+            serverEntry, author, extractBaseGroup(previousGroup));
         previousGroup = TC_AWAIT(
             applyUserGroupCreation(localUser, provisionalUsersAccessor, entry));
       }
       else if (serverEntry.action().holds_alternative<UserGroupAddition>())
       {
         auto const entry = Verif::verifyUserGroupAddition(
-            serverEntry, author, extractExternalGroup(previousGroup));
+            serverEntry, author, extractBaseGroup(previousGroup));
         previousGroup = TC_AWAIT(applyUserGroupAddition(
             localUser, provisionalUsersAccessor, previousGroup, entry));
       }

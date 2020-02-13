@@ -42,6 +42,42 @@ ExternalGroup::ExternalGroup(InternalGroup const& group)
 {
 }
 
+BaseGroup::BaseGroup(InternalGroup const& g)
+  : _id(g.id),
+    _lastBlockHash(g.lastBlockHash),
+    _publicSignatureKey(g.signatureKeyPair.publicKey),
+    _publicEncryptionKey(g.encryptionKeyPair.publicKey)
+{
+}
+
+BaseGroup::BaseGroup(ExternalGroup const& g)
+  : _id(g.id),
+    _lastBlockHash(g.lastBlockHash),
+    _publicSignatureKey(g.publicSignatureKey),
+    _publicEncryptionKey(g.publicEncryptionKey)
+{
+}
+
+Trustchain::GroupId const& BaseGroup::id() const
+{
+  return _id;
+}
+
+Crypto::Hash const& BaseGroup::lastBlockHash() const
+{
+  return _lastBlockHash;
+}
+
+Crypto::PublicSignatureKey const& BaseGroup::publicSignatureKey() const
+{
+  return _publicSignatureKey;
+}
+
+Crypto::PublicEncryptionKey const& BaseGroup::publicEncryptionKey() const
+{
+  return _publicEncryptionKey;
+}
+
 bool operator==(ExternalGroup const& l, ExternalGroup const& r)
 {
   return std::tie(l.id,
@@ -60,11 +96,10 @@ bool operator!=(ExternalGroup const& l, ExternalGroup const& r)
   return !(l == r);
 }
 
-ExternalGroup extractExternalGroup(Group const& group)
+BaseGroup extractBaseGroup(Group const& group)
 {
   return boost::variant2::visit(
-      [](auto&& g) { return ExternalGroup(std::forward<decltype(g)>(g)); },
-      group);
+      [](auto&& g) { return BaseGroup{std::forward<decltype(g)>(g)}; }, group);
 }
 
 void updateLastGroupBlock(Group& group,

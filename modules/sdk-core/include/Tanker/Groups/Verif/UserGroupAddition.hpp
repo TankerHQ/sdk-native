@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/Entry.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <optional>
 
@@ -12,12 +11,17 @@ class Device;
 
 namespace Tanker
 {
-struct ExternalGroup;
+class BaseGroup;
+
+namespace Trustchain
+{
+class ServerEntry;
+}
 
 namespace Verif
 {
 Entry verifyUserGroupAddition(Trustchain::ServerEntry const& serverEntry,
                               Users::Device const& author,
-                              std::optional<ExternalGroup> const& group);
+                              std::optional<BaseGroup> const& group);
 }
 }
