@@ -2,7 +2,8 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/Types/ProvisionalUserKeys.hpp>
+#include <Tanker/Users/IUserAccessor.hpp>
 
 namespace Tanker::Users
 {
@@ -10,8 +11,14 @@ class ContactStore;
 class LocalUser;
 }
 
+namespace Tanker
+{
+class ProvisionalUserKeysStore;
+}
+
 namespace Tanker::ProvisionalUsers
 {
+
 class Accessor : public IAccessor
 {
 public:
