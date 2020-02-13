@@ -97,10 +97,8 @@ ExternalGroup rowToExternalGroup(T const& row)
       DataStore::extractBlob<GroupId>(row.group_id),
       DataStore::extractBlob<Crypto::PublicSignatureKey>(
           row.public_signature_key),
-      row.encrypted_private_signature_key.is_null() ?
-          std::optional<Crypto::SealedPrivateSignatureKey>{} :
-          DataStore::extractBlob<Crypto::SealedPrivateSignatureKey>(
-              row.encrypted_private_signature_key),
+      DataStore::extractBlob<Crypto::SealedPrivateSignatureKey>(
+          row.encrypted_private_signature_key),
       DataStore::extractBlob<Crypto::PublicEncryptionKey>(
           row.public_encryption_key),
       DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
@@ -739,12 +737,6 @@ tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
 tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
 {
   FUNC_TIMER(DB);
-  if (!group.encryptedPrivateSignatureKey)
-  {
-    throw Errors::AssertionError(
-        "external groups must be inserted with their sealed private signature "
-        "key");
-  }
 
   GroupsTable groups;
 
@@ -753,7 +745,7 @@ tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
       groups.public_signature_key = group.publicSignatureKey.base(),
       groups.private_signature_key = sqlpp::null,
       groups.encrypted_private_signature_key =
-          group.encryptedPrivateSignatureKey->base(),
+          group.encryptedPrivateSignatureKey.base(),
       groups.public_encryption_key = group.publicEncryptionKey.base(),
       groups.private_encryption_key = sqlpp::null,
       groups.last_group_block_hash = group.lastBlockHash.base()));
