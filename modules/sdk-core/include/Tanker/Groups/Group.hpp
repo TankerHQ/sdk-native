@@ -39,7 +39,6 @@ struct ExternalGroup
                 Crypto::SealedPrivateSignatureKey const&,
                 Crypto::PublicEncryptionKey const&,
                 Crypto::Hash const&);
-  ExternalGroup(InternalGroup const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;

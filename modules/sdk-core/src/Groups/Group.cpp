@@ -33,15 +33,6 @@ ExternalGroup::ExternalGroup(
 {
 }
 
-ExternalGroup::ExternalGroup(InternalGroup const& group)
-  : id(group.id),
-    publicSignatureKey(group.signatureKeyPair.publicKey),
-    encryptedPrivateSignatureKey(std::nullopt),
-    publicEncryptionKey(group.encryptionKeyPair.publicKey),
-    lastBlockHash(group.lastBlockHash)
-{
-}
-
 BaseGroup::BaseGroup(InternalGroup const& g)
   : _id(g.id),
     _lastBlockHash(g.lastBlockHash),
