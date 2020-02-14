@@ -123,7 +123,7 @@ auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
     "JDTGpkND0iLCJ0YXJnZXQiOiJlbWFpbCIsInZhbHVlIjoiYnJlbmRhbi5laWNoQHRhbmtlci5p"
     "byIsInB1YmxpY19lbmNyeXB0aW9uX2tleSI6Ii8yajRkSTNyOFBsdkNOM3VXNEhoQTV3QnRNS0"
     "9jQUNkMzhLNk4wcSttRlU9IiwicHVibGljX3NpZ25hdHVyZV9rZXkiOiJXN1FFUUJ1OUZYY1hJ"
-    "cE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSJ9Cg=="s;
+    "cE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSJ9"s;
 
 auto const userEmail = "brendan.eich@tanker.io";
 
