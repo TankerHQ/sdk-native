@@ -38,7 +38,7 @@
 
 using namespace Tanker::Errors;
 
-TLOG_CATEGORY(Core);
+TLOG_CATEGORY(Opener);
 
 namespace Tanker
 {
