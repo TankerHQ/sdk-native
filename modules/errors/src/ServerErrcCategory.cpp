@@ -49,9 +49,10 @@ std::string ServerErrcCategory::message(int c) const
     return "invalid delegation signature";
   case ServerErrc::UnknownError:
     return "unknown server error";
-  default:
-    return "unknown error";
+  case ServerErrc::Conflict:
+    return "conflict";
   }
+  return "unknown error";
 }
 
 std::error_condition ServerErrcCategory::default_error_condition(int c) const
@@ -83,9 +84,12 @@ std::error_condition ServerErrcCategory::default_error_condition(int c) const
     return make_error_condition(Errors::Errc::GroupTooBig);
   case ServerErrc::DeviceRevoked:
     return make_error_condition(Errors::Errc::DeviceRevoked);
-  default:
-    return std::error_condition(c, *this);
+  case ServerErrc::Conflict:
+    return make_error_condition(Errors::Errc::Conflict);
+  case ServerErrc::VerificationNeeded: // Handled internally
+    break;
   }
+  return std::error_condition(c, *this);
 }
 }
 }

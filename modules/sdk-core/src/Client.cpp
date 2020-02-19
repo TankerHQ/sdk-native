@@ -64,6 +64,7 @@ std::map<std::string, ServerErrc> const serverErrorMap{
     {"group_too_big", ServerErrc::GroupTooBig},
     {"invalid_delegation_signature", ServerErrc::InvalidDelegationSignature},
     {"invalid_oidc_id_token", ServerErrc::InvalidVerificationCode},
+    {"conflict", ServerErrc::Conflict},
 };
 }
 

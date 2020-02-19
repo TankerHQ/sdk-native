@@ -21,6 +21,7 @@ enum class Errc
   ExpiredVerification,
   IOError,
   DeviceRevoked,
+  Conflict,
 
   Last,
 };

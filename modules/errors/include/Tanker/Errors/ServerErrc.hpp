@@ -26,7 +26,8 @@ enum class ServerErrc
   VerificationKeyNotFound,
   GroupTooBig,
   InvalidDelegationSignature,
-  UnknownError
+  UnknownError,
+  Conflict,
 };
 
 std::error_code make_error_code(ServerErrc c) noexcept;
