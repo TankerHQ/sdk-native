@@ -6,6 +6,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -47,11 +48,27 @@ struct KeyRecipients
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
 };
 
-std::vector<uint8_t> makeKeyPublishToUser(
+Trustchain::ClientEntry makeKeyPublishToUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey);
+
+Trustchain::ClientEntry makeKeyPublishToGroup(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey);
+
+Trustchain::ClientEntry makeKeyPublishToProvisionalUser(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    ProvisionalUsers::PublicUser const& recipientProvisionalUser,
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
