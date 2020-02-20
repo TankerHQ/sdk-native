@@ -573,19 +573,18 @@ ServerEntry TrustchainBuilder::shareToUser(Device const& sender,
 
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
-  auto const block =
+  auto const serverEntry = clientToServerEntry(
       Share::makeKeyPublishToUser(trustchainId(),
                                   sender.id,
                                   sender.keys.signatureKeyPair.privateKey,
                                   receiverPublicKey,
                                   resourceId,
-                                  key);
+                                  key),
+      _entries.size() + 1);
 
-  auto entry = Serialization::deserialize<ServerEntry>(block);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-  _entries.push_back(entry);
+  _entries.push_back(serverEntry);
 
-  return entry;
+  return serverEntry;
 }
 
 ServerEntry TrustchainBuilder::shareToUserGroup(Device const& sender,
