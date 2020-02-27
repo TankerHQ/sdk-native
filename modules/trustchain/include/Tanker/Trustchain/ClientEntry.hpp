@@ -18,7 +18,7 @@ namespace Trustchain
 {
 class Action;
 
-class ClientEntry
+class [[nodiscard]] ClientEntry
 {
 public:
   ClientEntry() = default;
