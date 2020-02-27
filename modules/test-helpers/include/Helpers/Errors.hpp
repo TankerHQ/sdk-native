@@ -9,7 +9,7 @@
   {                                               \
     try                                           \
     {                                             \
-      expr;                                       \
+      (void)(expr);                               \
       CHECK(false);                               \
     }                                             \
     catch (::Tanker::Errors::Exception const& e)  \
@@ -23,7 +23,7 @@
   {                                                                        \
     try                                                                    \
     {                                                                      \
-      expr;                                                                \
+      (void)(expr);                                                        \
       CHECK(false);                                                        \
     }                                                                      \
     catch (::Tanker::Errors::Exception const& e)                           \
