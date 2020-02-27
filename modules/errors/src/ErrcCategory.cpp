@@ -36,9 +36,12 @@ std::string ErrcCategory::message(int c) const
     return "input/output error";
   case Errc::DeviceRevoked:
     return "device was revoked";
-  default:
-    return "unknown error";
+  case Errc::Conflict:
+    return "conflict";
+  case Errc::Last:
+    break;
   }
+  return "unknown error";
 }
 }
 }
