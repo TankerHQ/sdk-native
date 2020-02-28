@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/BasicHash.hpp>
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Errors/Errc.hpp>
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
@@ -252,5 +253,7 @@ T sealDecrypt(Sealed<T> const& cipherData,
   detail::sealDecryptImpl(cipherData, res, recipientKeyPair);
   return res;
 }
+
+Hash hashPassphrase(std::string passphrase);
 }
 }

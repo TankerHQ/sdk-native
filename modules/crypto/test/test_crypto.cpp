@@ -275,6 +275,35 @@ TEST_CASE("asymmetric seal")
   }
 }
 
+TEST_CASE("hashPassphrase")
+{
+  SUBCASE("throw on empty passphrase")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(hashPassphrase(""), Errc::InvalidBufferSize);
+  }
+
+  SUBCASE("should match our test vector")
+  {
+    auto const input = "super secretive password";
+    auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
+        "UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
+
+    CHECK_EQ(hashPassphrase(input), expected);
+  }
+
+  SUBCASE("should match our test vector")
+  {
+    // "test éå 한국어 😃"
+    char const input[] =
+        "\x74\x65\x73\x74\x20\xc3\xa9\xc3\xa5\x20\xed\x95\x9c\xea\xb5\xad\xec"
+        "\x96\xb4\x20\xf0\x9f\x98\x83";
+    auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
+        "Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
+
+    CHECK_EQ(hashPassphrase(input), expected);
+  }
+}
+
 template <typename T>
 void test_format(T const& var)
 {
