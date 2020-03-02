@@ -32,19 +32,6 @@ public:
   tc::cotask<void> setTrustchainPublicSignatureKey(
       Crypto::PublicSignatureKey const&) override;
 
-  tc::cotask<void> putContact(
-      Trustchain::UserId const& userId,
-      std::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
-
-  tc::cotask<std::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
-      Trustchain::UserId const& userId) override;
-  tc::cotask<std::optional<Trustchain::UserId>>
-  findContactUserIdByPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& userPublicKey) override;
-  tc::cotask<void> setContactPublicEncryptionKey(
-      Trustchain::UserId const& userId,
-      Crypto::PublicEncryptionKey const& userPublicKey) override;
-
   tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
                                   Crypto::SymmetricKey const& key) override;
   tc::cotask<std::optional<Crypto::SymmetricKey>> findResourceKey(
@@ -65,15 +52,6 @@ public:
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
   tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() override;
-
-  tc::cotask<void> putDevice(Users::Device const& device) override;
-  tc::cotask<std::optional<Users::Device>> findDevice(
-      Trustchain::DeviceId const& id) override;
-  tc::cotask<std::vector<Users::Device>> getDevicesOf(
-      Trustchain::UserId const& id) override;
-  tc::cotask<std::optional<Trustchain::UserId>> findDeviceUserId(
-      Trustchain::DeviceId const& id) override;
-  tc::cotask<void> setDeviceRevoked(Trustchain::DeviceId const& id) override;
 
   tc::cotask<void> putInternalGroup(InternalGroup const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;

@@ -6,7 +6,6 @@
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requests.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 

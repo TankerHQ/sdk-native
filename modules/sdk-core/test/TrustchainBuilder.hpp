@@ -27,11 +27,6 @@
 #include <string>
 #include <vector>
 
-namespace Tanker::Users
-{
-class ContactStore;
-}
-
 class TrustchainBuilder
 {
 public:
@@ -174,9 +169,6 @@ public:
 
   std::unique_ptr<Tanker::Users::LocalUserStore> makeLocalUserStore(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
-      std::vector<std::string> const& suserIds,
-      Tanker::DataStore::ADatabase* conn) const;
   std::vector<Tanker::Group> getGroupsOfUser(
       TrustchainBuilder::User const& user) const;
   std::unique_ptr<Tanker::Groups::Store> makeGroupStore(

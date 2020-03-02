@@ -15,7 +15,6 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>

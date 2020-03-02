@@ -15,7 +15,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
@@ -785,25 +784,6 @@ TrustchainBuilder::makeLocalUserStore(User const& user,
   store->putLocalUser(
       Tanker::Users::LocalUser(user.userId, device.id, device.keys, keys));
   return store;
-}
-
-std::unique_ptr<Tanker::Users::ContactStore>
-TrustchainBuilder::makeContactStoreWith(
-    std::vector<std::string> const& suserIds,
-    Tanker::DataStore::ADatabase* conn) const
-{
-  auto contactStore = std::make_unique<Tanker::Users::ContactStore>(conn);
-  for (auto const& suserId : suserIds)
-  {
-    auto const optUser = findUser(suserId);
-    if (!optUser)
-    {
-      throw Errors::AssertionError("makeContactStoreWith: no user named " +
-                                   suserId);
-    }
-    AWAIT_VOID(contactStore->putUser(optUser->asTankerUser()));
-  }
-  return contactStore;
 }
 
 std::unique_ptr<Tanker::ProvisionalUserKeysStore>

@@ -13,8 +13,6 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DataStore/Version.hpp
     include/Tanker/DataStore/Errors/Errc.hpp
     include/Tanker/DataStore/Errors/ErrcCategory.hpp
-    include/Tanker/DbModels/ContactDevices.hpp
-    include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
     include/Tanker/DbModels/Groups.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
@@ -27,8 +25,6 @@ if (NOT EMSCRIPTEN)
     src/DataStore/Connection.cpp
     src/DataStore/Database.cpp
     src/DataStore/Table.cpp
-    src/DbModels/ContactDevices.cpp
-    src/DbModels/ContactUserKeys.cpp
     src/DbModels/DeviceKeyStore.cpp
     src/DbModels/Groups.cpp
     src/DbModels/ResourceKeys.cpp
@@ -109,7 +105,6 @@ add_library(tankercore STATIC
   include/Tanker/Users/ILocalUserAccessor.hpp
   include/Tanker/Users/UserAccessor.hpp
   include/Tanker/Users/IUserAccessor.hpp
-  include/Tanker/Users/ContactStore.hpp
   include/Tanker/Users/Device.hpp
   include/Tanker/Users/EntryGenerator.hpp
   include/Tanker/ResourceKeyAccessor.hpp
@@ -171,7 +166,6 @@ add_library(tankercore STATIC
   src/Users/LocalUserStore.cpp
   src/Users/LocalUserAccessor.cpp
   src/Users/UserAccessor.cpp
-  src/Users/ContactStore.cpp
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp
   src/Users/Requester.cpp

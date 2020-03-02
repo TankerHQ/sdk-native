@@ -6,7 +6,6 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Types/Email.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Updater.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
@@ -29,13 +28,9 @@ namespace Tanker::Users
 {
 
 UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
-                           Users::IRequester* requester,
-                           ContactStore const* contactStore)
-  : _context(std::move(trustchainContext)),
-    _requester(requester),
-    _contactStore(contactStore)
+                           Users::IRequester* requester)
+  : _context(std::move(trustchainContext)), _requester(requester)
 {
-  (void)_contactStore;
 }
 
 auto UserAccessor::pull(gsl::span<UserId const> userIds)
