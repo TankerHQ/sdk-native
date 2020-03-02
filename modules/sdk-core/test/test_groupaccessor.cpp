@@ -5,7 +5,6 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 

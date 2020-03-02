@@ -12,7 +12,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 
@@ -67,7 +66,6 @@ private:
   DataStore::DatabasePtr _db;
   std::unique_ptr<Users::LocalUserStore> _localUserStore;
   std::unique_ptr<Users::LocalUserAccessor> _localUserAccessor;
-  std::unique_ptr<Users::ContactStore> _contactStore;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
   Status _status = Status::Stopped;

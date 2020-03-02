@@ -17,16 +17,13 @@
 
 namespace Tanker::Users
 {
-class ContactStore;
 using UsersMap = boost::container::flat_map<Trustchain::UserId, Users::User>;
 using DevicesMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
 
 class UserAccessor : public IUserAccessor
 {
 public:
-  UserAccessor(Trustchain::Context trustchainCtx,
-               Users::IRequester* requester,
-               ContactStore const* contactStore);
+  UserAccessor(Trustchain::Context trustchainCtx, Users::IRequester* requester);
 
   UserAccessor() = delete;
   UserAccessor(UserAccessor const&) = delete;
@@ -51,6 +48,5 @@ private:
 private:
   Trustchain::Context _context;
   Users::IRequester* _requester;
-  ContactStore const* _contactStore;
 };
 }

@@ -62,19 +62,6 @@ public:
   virtual tc::cotask<void> setTrustchainPublicSignatureKey(
       Crypto::PublicSignatureKey const&) = 0;
 
-  virtual tc::cotask<void> putContact(
-      Trustchain::UserId const& userId,
-      std::optional<Crypto::PublicEncryptionKey> const& publicKey) = 0;
-
-  virtual tc::cotask<std::optional<Crypto::PublicEncryptionKey>>
-  findContactUserKey(Trustchain::UserId const& userId) = 0;
-  virtual tc::cotask<std::optional<Trustchain::UserId>>
-  findContactUserIdByPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& userPublicKey) = 0;
-  virtual tc::cotask<void> setContactPublicEncryptionKey(
-      Trustchain::UserId const& userId,
-      Crypto::PublicEncryptionKey const& userPublicKey) = 0;
-
   virtual tc::cotask<void> putResourceKey(
       Trustchain::ResourceId const& resourceId,
       Crypto::SymmetricKey const& key) = 0;
@@ -98,15 +85,6 @@ public:
   virtual tc::cotask<void> setDeviceId(
       Trustchain::DeviceId const& deviceId) = 0;
   virtual tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() = 0;
-
-  virtual tc::cotask<void> putDevice(Users::Device const& device) = 0;
-  virtual tc::cotask<std::optional<Users::Device>> findDevice(
-      Trustchain::DeviceId const& id) = 0;
-  virtual tc::cotask<std::vector<Users::Device>> getDevicesOf(
-      Trustchain::UserId const& id) = 0;
-  virtual tc::cotask<std::optional<Trustchain::UserId>> findDeviceUserId(
-      Trustchain::DeviceId const& id) = 0;
-  virtual tc::cotask<void> setDeviceRevoked(Trustchain::DeviceId const& id) = 0;
 
   virtual tc::cotask<void> putInternalGroup(InternalGroup const& group) = 0;
   virtual tc::cotask<void> putExternalGroup(ExternalGroup const& group) = 0;
