@@ -6,8 +6,6 @@
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
-#include <Tanker/DbModels/ContactDevices.hpp>
-#include <Tanker/DbModels/ContactUserKeys.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/Groups.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
@@ -116,12 +114,10 @@ Group rowToGroup(T const& row)
 
 using UserKeysTable = DbModels::user_keys::user_keys;
 using TrustchainInfoTable = DbModels::trustchain_info::trustchain_info;
-using ContactUserKeysTable = DbModels::contact_user_keys::contact_user_keys;
 using ResourceKeysTable = DbModels::resource_keys::resource_keys;
 using ProvisionalUserKeysTable =
     DbModels::provisional_user_keys::provisional_user_keys;
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
-using ContactDevicesTable = DbModels::contact_devices::contact_devices;
 using GroupsTable = DbModels::groups::groups;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
@@ -187,8 +183,6 @@ void Database::performUnifiedMigration()
       createTable<GroupsTable>(*_db);
       createTable<ResourceKeysTable>(*_db);
       createTable<UserKeysTable>(*_db);
-      createTable<ContactDevicesTable>(*_db);
-      createTable<ContactUserKeysTable>(*_db);
       createTable<DeviceKeysTable>(*_db);
       createTable<VersionTable>(*_db);
       [[fallthrough]];
@@ -207,7 +201,7 @@ void Database::performUnifiedMigration()
     case 6:
       _db->execute("DROP TABLE IF EXISTS trustchain");
       _db->execute("DROP TABLE IF EXISTS contact_devices");
-      createTable<ContactDevicesTable>(*_db);
+      _db->execute("DROP TABLE IF EXISTS contact_user_keys");
       _db->execute("DROP TABLE IF EXISTS groups");
       createTable<GroupsTable>(*_db);
       break;
@@ -229,10 +223,6 @@ void Database::performOldMigration()
   createOrMigrateTable<ResourceKeysTable>(
       currentTableVersion<ResourceKeysTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
-  createOrMigrateTable<ContactDevicesTable>(
-      currentTableVersion<ContactDevicesTable>());
-  createOrMigrateTable<ContactUserKeysTable>(
-      currentTableVersion<ContactUserKeysTable>());
   createTable<VersionTable>(*_db);
 
   setDatabaseVersion(3);
@@ -271,9 +261,7 @@ void Database::flushAllCaches()
 
   // flush all tables but DeviceKeysTable
   // Order matter for foreign key constraints
-  flushTable(ContactDevicesTable{});
   flushTable(UserKeysTable{});
-  flushTable(ContactUserKeysTable{});
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
@@ -408,79 +396,6 @@ tc::cotask<void> Database::setTrustchainPublicSignatureKey(
   (*_db)(update(tab)
              .set(tab.trustchain_public_signature_key = key.base())
              .unconditionally());
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::putContact(
-    UserId const& userId,
-    std::optional<Crypto::PublicEncryptionKey> const& publicKey)
-{
-  FUNC_TIMER(DB);
-  ContactUserKeysTable tab{};
-
-  if (publicKey)
-  {
-    (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
-        tab.user_id = userId.base(),
-        tab.public_encryption_key = publicKey->base()));
-  }
-  else
-  {
-    // We do not want to delete a user key, so use insert_into, not
-    // insert_or_*
-    (*_db)(insert_into(tab).set(tab.user_id = userId.base(),
-                                tab.public_encryption_key = sqlpp::null));
-  }
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Crypto::PublicEncryptionKey>>
-Database::findContactUserKey(UserId const& userId)
-{
-  FUNC_TIMER(DB);
-  ContactUserKeysTable tab{};
-  auto rows = (*_db)(select(tab.public_encryption_key)
-                         .from(tab)
-                         .where(tab.user_id == userId.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-  if (row.public_encryption_key.is_null())
-    TC_RETURN(std::nullopt);
-
-  TC_RETURN(DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-      row.public_encryption_key));
-}
-
-tc::cotask<std::optional<UserId>>
-Database::findContactUserIdByPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& userPublicKey)
-{
-  FUNC_TIMER(DB);
-  ContactUserKeysTable tab{};
-  auto rows =
-      (*_db)(select(tab.user_id)
-                 .from(tab)
-                 .where(tab.public_encryption_key == userPublicKey.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
-}
-
-tc::cotask<void> Database::setContactPublicEncryptionKey(
-    UserId const& userId, Crypto::PublicEncryptionKey const& userPublicKey)
-{
-  FUNC_TIMER(DB);
-  ContactUserKeysTable tab{};
-  (*_db)(update(tab)
-             .set(tab.public_encryption_key = userPublicKey.base())
-             .where(tab.user_id == userId.base()));
   TC_RETURN();
 }
 
@@ -637,75 +552,6 @@ tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
   if (row.device_id.len == 0)
     TC_RETURN(std::nullopt);
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
-}
-
-tc::cotask<void> Database::putDevice(Users::Device const& device)
-{
-  FUNC_TIMER(DB);
-  ContactDevicesTable tab{};
-
-  (*_db)(sqlpp::sqlite3::insert_or_replace_into(tab).set(
-      tab.id = device.id().base(),
-      tab.user_id = device.userId().base(),
-      tab.public_signature_key = device.publicSignatureKey().base(),
-      tab.public_encryption_key = device.publicEncryptionKey().base(),
-      tab.is_ghost_device = device.isGhostDevice(),
-      tab.is_revoked = device.isRevoked()));
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Users::Device>> Database::findDevice(
-    Trustchain::DeviceId const& id)
-{
-  FUNC_TIMER(DB);
-  ContactDevicesTable tab{};
-
-  auto rows = (*_db)(select(all_of(tab)).from(tab).where(tab.id == id.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToDevice(row));
-}
-
-tc::cotask<std::vector<Users::Device>> Database::getDevicesOf(UserId const& id)
-{
-  FUNC_TIMER(DB);
-  ContactDevicesTable tab{};
-
-  auto rows =
-      (*_db)(select(all_of(tab)).from(tab).where(tab.user_id == id.base()));
-
-  std::vector<Users::Device> ret;
-  for (auto const& row : rows)
-    ret.push_back(rowToDevice(row));
-  TC_RETURN(ret);
-}
-
-tc::cotask<std::optional<UserId>> Database::findDeviceUserId(
-    Trustchain::DeviceId const& id)
-{
-  FUNC_TIMER(DB);
-  ContactDevicesTable tab{};
-
-  auto rows = (*_db)(select(tab.user_id).from(tab).where(tab.id == id.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(DataStore::extractBlob<UserId>(row.user_id));
-}
-
-tc::cotask<void> Database::setDeviceRevoked(Trustchain::DeviceId const& id)
-{
-  FUNC_TIMER(DB);
-  ContactDevicesTable tab{};
-
-  (*_db)(update(tab).set(tab.is_revoked = true).where(tab.id == id.base()));
-
-  TC_RETURN();
 }
 
 tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)

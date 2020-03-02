@@ -9,7 +9,6 @@
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUser.hpp>

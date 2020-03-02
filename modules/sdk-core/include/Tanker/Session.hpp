@@ -30,7 +30,6 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -139,7 +138,6 @@ private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
-  std::unique_ptr<Users::ContactStore> _contactStore;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;
