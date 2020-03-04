@@ -1,6 +1,7 @@
 #include <ctanker.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -567,4 +568,14 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
     delete result->method;
   }
   delete result;
+}
+
+tanker_expected_t* tanker_hash_passphrase(char const* passphrase)
+{
+  return makeFuture(tc::sync([&] {
+    if (!passphrase)
+      throw formatEx(Errc::InvalidArgument, "passphrase is null");
+    return static_cast<void*>(duplicateString(
+        cppcodec::base64_rfc4648::encode(Crypto::hashPassphrase(passphrase))));
+  }));
 }
