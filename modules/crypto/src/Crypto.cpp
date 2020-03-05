@@ -295,17 +295,17 @@ AeadIv deriveIv(AeadIv const& ivSeed, uint64_t const number)
   return generichash<AeadIv>(gsl::make_span(toHash.data(), toHash.size()));
 }
 
-Hash hashPassphrase(std::string passphrase)
+Hash prehashPassword(std::string password)
 {
-  if (passphrase.empty())
+  if (password.empty())
     throw Errors::formatEx(Errc::InvalidBufferSize,
-                           "cannot hash an empty passphrase");
+                           "cannot hash an empty password");
 
-  static constexpr char PASSPHRASE_PEPPER[] = "2NsxLuBPL7JanD2SIjb9erBgVHjMFh";
+  static constexpr char PASSWORD_PEPPER[] = "2NsxLuBPL7JanD2SIjb9erBgVHjMFh";
 
-  passphrase += PASSPHRASE_PEPPER;
+  password += PASSWORD_PEPPER;
   return generichash(gsl::span(
-      reinterpret_cast<uint8_t const*>(passphrase.data()), passphrase.size()));
+      reinterpret_cast<uint8_t const*>(password.data()), password.size()));
 }
 }
 }

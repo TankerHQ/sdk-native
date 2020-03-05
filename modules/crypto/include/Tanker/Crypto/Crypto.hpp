@@ -254,6 +254,6 @@ T sealDecrypt(Sealed<T> const& cipherData,
   return res;
 }
 
-Hash hashPassphrase(std::string passphrase);
+Hash prehashPassword(std::string password);
 }
 }
