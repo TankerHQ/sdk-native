@@ -275,11 +275,11 @@ TEST_CASE("asymmetric seal")
   }
 }
 
-TEST_CASE("hashPassphrase")
+TEST_CASE("prehashPassword")
 {
-  SUBCASE("throw on empty passphrase")
+  SUBCASE("throw on empty password")
   {
-    TANKER_CHECK_THROWS_WITH_CODE(hashPassphrase(""), Errc::InvalidBufferSize);
+    TANKER_CHECK_THROWS_WITH_CODE(prehashPassword(""), Errc::InvalidBufferSize);
   }
 
   SUBCASE("should match our test vector")
@@ -288,7 +288,7 @@ TEST_CASE("hashPassphrase")
     auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
         "UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
 
-    CHECK_EQ(hashPassphrase(input), expected);
+    CHECK_EQ(prehashPassword(input), expected);
   }
 
   SUBCASE("should match our test vector")
@@ -300,7 +300,7 @@ TEST_CASE("hashPassphrase")
     auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
         "Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
 
-    CHECK_EQ(hashPassphrase(input), expected);
+    CHECK_EQ(prehashPassword(input), expected);
   }
 }
 

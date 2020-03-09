@@ -537,7 +537,8 @@ CTANKER_EXPORT void tanker_free_verification_method_list(
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
 
 /*!
- * Hash a passphrase before sending it to the application server.
+ * Hash a password before sending it to the application server where it will
+ * be hashed again.
  *
  * If you decide to synchronize the Tanker passphrase with the user password,
  * you will need to hash it client-side (in addition to hashing it server-side,
@@ -549,15 +550,14 @@ CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
  * proper password hash function is still needed server-side. Please read the
  * documentation for more detail.
  *
- * \param passphrase the passphrase to hash
+ * \param password the password to prehash
  *
- * \return an expected of the hashed passphrase which must be freed with
+ * \return an expected of the prehashed password which must be freed with
  * tanker_free_buffer
  *
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p passphrase is null or empty
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p password is null or empty
  */
-CTANKER_EXPORT tanker_expected_t* tanker_hash_passphrase(
-    char const* passphrase);
+CTANKER_EXPORT tanker_expected_t* tanker_prehash_password(char const* password);
 
 #ifdef __cplusplus
 }

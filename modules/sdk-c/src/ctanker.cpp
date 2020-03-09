@@ -570,12 +570,12 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
   delete result;
 }
 
-tanker_expected_t* tanker_hash_passphrase(char const* passphrase)
+tanker_expected_t* tanker_prehash_password(char const* password)
 {
   return makeFuture(tc::sync([&] {
-    if (!passphrase)
-      throw formatEx(Errc::InvalidArgument, "passphrase is null");
+    if (!password)
+      throw formatEx(Errc::InvalidArgument, "password is null");
     return static_cast<void*>(duplicateString(
-        cppcodec::base64_rfc4648::encode(Crypto::hashPassphrase(passphrase))));
+        cppcodec::base64_rfc4648::encode(Crypto::prehashPassword(password))));
   }));
 }
