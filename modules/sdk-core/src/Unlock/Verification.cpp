@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Encryptor.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
@@ -34,16 +35,17 @@ VerificationMethod VerificationMethod::from(Verification const& v)
   return m;
 }
 
-void decryptEmailMethods(std::vector<VerificationMethod>& encryptedMethods,
-                         Crypto::SymmetricKey const& userSecret)
+tc::cotask<void> decryptEmailMethods(
+    std::vector<VerificationMethod>& encryptedMethods,
+    Crypto::SymmetricKey const& userSecret)
 {
   for (auto& method : encryptedMethods)
   {
     if (auto encryptedEmail = method.get_if<Unlock::EncryptedEmail>())
     {
-      auto const decryptedEmail = Crypto::decryptAead(
+      auto const decryptedEmail = TC_AWAIT(Encryptor::decryptFallbackAead(
           userSecret,
-          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>());
+          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>()));
       method = Email{decryptedEmail.begin(), decryptedEmail.end()};
     }
   }
