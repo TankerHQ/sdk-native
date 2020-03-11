@@ -77,7 +77,7 @@ tc::cotask<void> Requester::createUser(
       {"user_id", userId},
       {"ghost_device_creation", mgs::base64::encode(userCreation)},
       {"first_device_creation", mgs::base64::encode(firstDevice)},
-      {"encrypted_verification_key",
+      {"v2_encrypted_verification_key",
        mgs::base64::encode(encryptedVerificationKey)},
       {"verification", verificationRequest},
   };

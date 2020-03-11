@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -260,9 +261,13 @@ tc::cotask<void> Core::registerIdentity(
       deviceKeys.encryptionKeyPair.publicKey,
       userKeyPair);
 
-  auto const encryptVerificationKey = Crypto::encryptAead(
-      _session->userSecret(),
-      gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
+  auto const verificationKeyToSend = ghostDevice.toVerificationKey();
+  std::vector<uint8_t> encryptedVerificationKey(
+      EncryptorV2::encryptedSize(verificationKeyToSend.size()));
+  EncryptorV2::encryptSync(
+      encryptedVerificationKey.data(),
+      gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
+      _session->userSecret());
 
   auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
 
@@ -272,7 +277,7 @@ tc::cotask<void> Core::registerIdentity(
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
-      encryptVerificationKey));
+      encryptedVerificationKey));
   TC_AWAIT(
       _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
   TC_AWAIT(_session->setDeviceId(deviceId));
