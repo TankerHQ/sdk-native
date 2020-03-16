@@ -41,16 +41,14 @@ auto& extract(U& action)
 }
 
 void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
-                                Trustchain::TrustchainId const& trustchainId,
-                                Crypto::PublicSignatureKey const& pubSigKey)
+                                Trustchain::Context const& context)
 {
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
     auto& deviceCreation = extract<DeviceCreation>(user.entry.action());
     unconstify(deviceCreation.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            user.entry, trustchainId, pubSigKey, std::nullopt),
+        Verif::verifyDeviceCreation(user.entry, context, std::nullopt),
         Errc::InvalidDelegationSignature);
   }
 
@@ -58,42 +56,36 @@ void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
   {
     unconstify(user.entry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            user.entry, trustchainId, pubSigKey, std::nullopt),
+        Verif::verifyDeviceCreation(user.entry, context, std::nullopt),
         Errc::InvalidSignature);
   }
 
   SUBCASE("should accept a valid DeviceCreation")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            user.entry, trustchainId, pubSigKey, Tanker::Users::User{}),
+        Verif::verifyDeviceCreation(user.entry, context, Tanker::Users::User{}),
         Errc::UserAlreadyExists);
   }
 
   SUBCASE("should accept a valid DeviceCreation")
   {
-    CHECK_NOTHROW(Verif::verifyDeviceCreation(
-        user.entry, trustchainId, pubSigKey, std::nullopt));
+    CHECK_NOTHROW(
+        Verif::verifyDeviceCreation(user.entry, context, std::nullopt));
   }
 }
 
-void deviceCreationCommonChecks(
-    TrustchainBuilder::ResultUser user,
-    Trustchain::TrustchainId const& trustchainId,
-    Crypto::PublicSignatureKey const& trustchainPublicKey,
-    TrustchainBuilder::ResultDevice secondDevice)
+void deviceCreationCommonChecks(TrustchainBuilder::ResultUser user,
+                                Trustchain::Context const& context,
+                                TrustchainBuilder::ResultDevice secondDevice)
 {
   auto tankerUser = user.user.asTankerUser();
 
   SUBCASE("it should reject a device creation when author device is revoked")
   {
     auto& authorDevice = tankerUser.devices().front();
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
+    unconstify(authorDevice).setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
+        Verif::verifyDeviceCreation(secondDevice.entry, context, tankerUser),
         Errc::InvalidAuthor);
   }
 
@@ -102,8 +94,7 @@ void deviceCreationCommonChecks(
     auto& deviceCreation = extract<DeviceCreation>(secondDevice.entry.action());
     unconstify(deviceCreation.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
+        Verif::verifyDeviceCreation(secondDevice.entry, context, tankerUser),
         Errc::InvalidDelegationSignature);
   }
 
@@ -111,8 +102,7 @@ void deviceCreationCommonChecks(
   {
     unconstify(secondDevice.entry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
+        Verif::verifyDeviceCreation(secondDevice.entry, context, tankerUser),
         Errc::InvalidSignature);
   }
 
@@ -120,25 +110,21 @@ void deviceCreationCommonChecks(
   {
     unconstify(secondDevice.entry.author())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(
-            secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser),
+        Verif::verifyDeviceCreation(secondDevice.entry, context, tankerUser),
         Errc::InvalidUserId);
   }
 
   SUBCASE("should reject a DeviceCreation with a missing author")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(secondDevice.entry,
-                                    trustchainId,
-                                    trustchainPublicKey,
-                                    std::nullopt),
+        Verif::verifyDeviceCreation(secondDevice.entry, context, std::nullopt),
         Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid DeviceCreation")
   {
-    CHECK_NOTHROW(Verif::verifyDeviceCreation(
-        secondDevice.entry, trustchainId, trustchainPublicKey, tankerUser));
+    CHECK_NOTHROW(
+        Verif::verifyDeviceCreation(secondDevice.entry, context, tankerUser));
   }
 }
 
@@ -157,8 +143,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation from a revoked device")
   {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
+    authorDevice.setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::AuthorIsRevoked);
@@ -173,8 +158,7 @@ void deviceRevocationCommonChecks(ServerEntry deviceRevocation,
 
   SUBCASE("should reject a revocation of an already revoked device")
   {
-    unconstify(targetDevice.revokedAtBlkIndex()) =
-        targetDevice.createdAtBlkIndex() + 1;
+    targetDevice.setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, user),
         Errc::InvalidTargetDevice);
@@ -213,15 +197,6 @@ void testUserGroupCreationCommon(Users::Device& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a UserGroupCreation from a revoked device")
-  {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
-        Errc::InvalidAuthor);
-  }
-
   SUBCASE("should accept a valid UserGroupCreation")
   {
     CHECK_NOTHROW(
@@ -231,7 +206,7 @@ void testUserGroupCreationCommon(Users::Device& authorDevice,
 
 void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
                                  ServerEntry& gaEntry,
-                                 ExternalGroup const& group)
+                                 BaseGroup const& group)
 {
   auto tankerDevice = authorDevice.asTankerDevice();
 
@@ -270,15 +245,6 @@ void testUserGroupAdditionCommon(TrustchainBuilder::Device const& authorDevice,
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
         Errc::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupAddition from a revoked device")
-  {
-    unconstify(tankerDevice.revokedAtBlkIndex()) =
-        tankerDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, tankerDevice, group),
-        Errc::InvalidAuthor);
   }
 
   SUBCASE("should accept a valid UserGroupAddition")
@@ -345,8 +311,7 @@ TEST_CASE("Verif DeviceCreation v3 - Trustchain author")
 
   auto user = builder.makeUser3("alice");
 
-  deviceCreationCommonChecks(
-      user, builder.trustchainId(), builder.trustchainPublicKey());
+  deviceCreationCommonChecks(user, builder.trustchainContext());
 }
 
 TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
@@ -355,8 +320,7 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
 
   auto user = builder.makeUser1("alice");
 
-  deviceCreationCommonChecks(
-      user, builder.trustchainId(), builder.trustchainPublicKey());
+  deviceCreationCommonChecks(user, builder.trustchainContext());
 }
 
 TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
@@ -366,10 +330,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
   auto user = builder.makeUser3("alice");
   auto secondDevice = builder.makeDevice3("alice");
 
-  deviceCreationCommonChecks(user,
-                             builder.trustchainId(),
-                             builder.trustchainPublicKey(),
-                             secondDevice);
+  deviceCreationCommonChecks(user, builder.trustchainContext(), secondDevice);
 
   SUBCASE("should reject an incorrect userKey")
   {
@@ -382,8 +343,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDevice.entry,
-                                    builder.trustchainId(),
-                                    builder.trustchainPublicKey(),
+                                    builder.trustchainContext(),
                                     user.user.asTankerUser()),
         Errc::InvalidUserKey);
   }
@@ -401,10 +361,8 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
   {
     unconstify(tankerUser.userKey()) = std::nullopt;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(secondDevice.entry,
-                                    builder.trustchainId(),
-                                    builder.trustchainPublicKey(),
-                                    tankerUser),
+        Verif::verifyDeviceCreation(
+            secondDevice.entry, builder.trustchainContext(), tankerUser),
         Errc::InvalidUserKey);
   }
 
@@ -421,10 +379,8 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
     tankerUser.setUserKey(*secondDevice.user.userKey());
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(secondDevice.entry,
-                                    builder.trustchainId(),
-                                    builder.trustchainPublicKey(),
-                                    tankerUser),
+        Verif::verifyDeviceCreation(
+            secondDevice.entry, builder.trustchainContext(), tankerUser),
         Errc::InvalidUserKey);
   }
 }
@@ -436,10 +392,7 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
   auto alice = builder.makeUser1("alice");
   auto secondDevice = builder.makeDevice1("alice");
 
-  deviceCreationCommonChecks(alice,
-                             builder.trustchainId(),
-                             builder.trustchainPublicKey(),
-                             secondDevice);
+  deviceCreationCommonChecks(alice, builder.trustchainContext(), secondDevice);
 
   SUBCASE("should reject a device creation v1 if the user has a userKey")
   {
@@ -447,10 +400,8 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
     auto tankerUser = alice.user.asTankerUser();
     tankerUser.setUserKey(keyPair.publicKey);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceCreation(secondDevice.entry,
-                                    builder.trustchainId(),
-                                    builder.trustchainPublicKey(),
-                                    tankerUser),
+        Verif::verifyDeviceCreation(
+            secondDevice.entry, builder.trustchainContext(), tankerUser),
         Errc::InvalidUserKey);
   }
 }
@@ -559,7 +510,7 @@ TEST_CASE("Verif DeviceRevocationV2")
     auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
     unconstify(dr2.previousPublicEncryptionKey())[0]++;
 
-    REQUIRE_FALSE(authorDevice.revokedAtBlkIndex().has_value());
+    REQUIRE_FALSE(authorDevice.isRevoked());
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entry, thirdDevice.user),
         Errc::InvalidEncryptionKey);
@@ -712,15 +663,6 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   auto authorDevice = alice.user.devices[0].asTankerDevice();
   auto authorUser = alice.user.asTankerUser();
-
-  SUBCASE("should reject a ProvisionalIdentityClaim from a revoked device")
-  {
-    unconstify(authorDevice.revokedAtBlkIndex()) =
-        authorDevice.createdAtBlkIndex() + 1;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyProvisionalIdentityClaim(picEntry, authorDevice),
-        Errc::InvalidAuthor);
-  }
 
   SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
   {

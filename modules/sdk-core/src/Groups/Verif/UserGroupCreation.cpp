@@ -18,7 +18,7 @@ namespace Verif
 {
 Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
                               Users::Device const& author,
-                              std::optional<ExternalGroup> const& previousGroup)
+                              std::optional<BaseGroup> const& previousGroup)
 {
   assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
          serverEntry.action().nature() == Nature::UserGroupCreation2);
@@ -26,11 +26,6 @@ Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
   ensures(!previousGroup,
           Verif::Errc::InvalidGroup,
           "UserGroupCreation - group already exist");
-
-  ensures(!author.revokedAtBlkIndex() ||
-              author.revokedAtBlkIndex() > serverEntry.index(),
-          Errc::InvalidAuthor,
-          "A revoked device must not be the author of UserGroupCreation");
 
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),

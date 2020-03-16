@@ -13,7 +13,6 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/DeviceRevocation/v2.hpp
   include/Tanker/Trustchain/Actions/Nature.hpp
   include/Tanker/Trustchain/Actions/KeyPublish.hpp
-  include/Tanker/Trustchain/Actions/KeyPublish/ToDevice.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp
@@ -40,6 +39,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/UserId.hpp
+  include/Tanker/Trustchain/HashedPassphrase.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/ComputeHash.hpp
 
@@ -53,7 +53,6 @@ add_library(tankertrustchain STATIC
   src/Actions/DeviceRevocation/v2.cpp
   src/Actions/Nature.cpp
   src/Actions/KeyPublish.cpp
-  src/Actions/KeyPublish/ToDevice.cpp
   src/Actions/KeyPublish/ToProvisionalUser.cpp
   src/Actions/KeyPublish/ToUser.cpp
   src/Actions/KeyPublish/ToUserGroup.cpp

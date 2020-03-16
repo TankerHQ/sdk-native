@@ -5,15 +5,19 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Users/ContactStore.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
-#include "FakeProvisionalUsersAccessor.hpp"
-#include "TrustchainBuilder.hpp"
+#include "GroupRequesterStub.hpp"
+#include "LocalUserAccessorMock.hpp"
+#include "ProvisionalUsersAccessorMock.hpp"
+#include "TestVerifier.hpp"
+#include "TrustchainGenerator.hpp"
+#include "UserAccessorMock.hpp"
 #include "UserRequesterStub.hpp"
 
 #include <doctest.h>
@@ -24,17 +28,10 @@ using Tanker::Trustchain::GroupId;
 
 namespace
 {
-class RequesterStub : public Groups::IRequester
-{
-public:
-  MAKE_MOCK1(getGroupBlocks,
-             tc::cotask<std::vector<Trustchain::ServerEntry>>(
-                 std::vector<Trustchain::GroupId> const&),
-             override);
-  MAKE_MOCK1(getGroupBlocks,
-             tc::cotask<std::vector<Trustchain::ServerEntry>>(
-                 Crypto::PublicEncryptionKey const&),
-             override);
+auto makeEntries = [](auto const& item) {
+  std::vector<Entry> verifiedEntries;
+  auto entries = Test::Generator::makeEntryList(item.entries());
+  return entries;
 };
 }
 
@@ -43,168 +40,146 @@ TEST_CASE("GroupAccessor")
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
   Groups::Store groupStore(dbPtr.get());
 
-  TrustchainBuilder builder;
-  auto const alice = builder.makeUser3("alice");
-  auto const bob = builder.makeUser3("bob");
+  Test::Generator generator;
 
-  auto const aliceGroup =
-      builder.makeGroup(alice.user.devices.front(), {alice.user});
-  auto const bobGroup = builder.makeGroup(bob.user.devices.front(), {bob.user});
+  auto const alice = generator.makeUser("alice");
+  auto const aliceGroup = alice.makeGroup();
+  auto const bob = generator.makeUser("bob");
+  auto const bobGroup = bob.makeGroup();
 
-  RequesterStub requestStub;
-  UserRequesterStub userRequestStub;
+  GroupRequesterStub requestStub;
+  UserAccessorMock aliceUserAccessorMock;
+  ProvisionalUsersAccessorMock aliceProvisionalUsersAccessor{};
+  LocalUserAccessorMock aliceLocalAccessorMock{};
 
-  auto aliceContactStore =
-      builder.makeContactStoreWith({"alice", "bob"}, dbPtr.get());
-  Users::UserAccessor aliceUserAccessor(builder.trustchainId(),
-                                        builder.trustchainPublicKey(),
-                                        &userRequestStub,
-                                        aliceContactStore.get());
-  auto const aliceLocalUser = builder.makeLocalUser(alice.user, dbPtr.get());
-  auto const aliceProvisionalUserKeysStore =
-      builder.makeProvisionalUserKeysStoreWith({}, dbPtr.get());
-  auto const aliceProvisionalUsersAccessor =
-      std::make_unique<FakeProvisionalUsersAccessor>(
-          *aliceProvisionalUserKeysStore);
   Groups::Accessor groupAccessor(&requestStub,
-                                 &aliceUserAccessor,
+                                 &aliceUserAccessorMock,
                                  &groupStore,
-                                 aliceLocalUser.get(),
-                                 aliceProvisionalUsersAccessor.get());
+                                 &aliceLocalAccessorMock,
+                                 &aliceProvisionalUsersAccessor);
 
-  SUBCASE("it should return cached public encryption keys")
+  SUBCASE("request groups in cache")
   {
-    AWAIT_VOID(groupStore.put(aliceGroup.group.asExternalGroup()));
+    SUBCASE("it should return cached encryption keys")
+    {
 
-    auto const result = AWAIT(groupAccessor.getPublicEncryptionKeys(
-        {aliceGroup.group.tankerGroup.id}));
+      AWAIT_VOID(groupStore.put(static_cast<InternalGroup>(aliceGroup)));
 
-    CHECK_EQ(result.found.at(0),
-             aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey);
+      auto const result1 =
+          AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
+      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
+
+      auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
+          {aliceGroup.currentEncKp().publicKey}));
+      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
+    }
+
+    SUBCASE("it can request group public keys by invalid groupId")
+    {
+      auto const unknownGroupId = make<GroupId>("unknownGroup");
+      REQUIRE_CALL(requestStub,
+                   getGroupBlocks(std::vector<GroupId>{unknownGroupId}))
+          .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
+
+      auto const result =
+          AWAIT(groupAccessor.getPublicEncryptionKeys({unknownGroupId}));
+
+      CHECK(result.found.empty());
+      REQUIRE_EQ(result.notFound.size(), 1);
+      CHECK_EQ(result.notFound[0], unknownGroupId);
+    }
   }
 
-  SUBCASE("it should return cached encryption key pairs")
+  SUBCASE("request groups *NOT* in cache")
   {
-    AWAIT_VOID(groupStore.put(aliceGroup.group.tankerGroup));
+    auto const la = static_cast<Users::LocalUser>(alice);
+    REQUIRE_CALL(aliceLocalAccessorMock, get()).LR_RETURN(la);
+    REQUIRE_CALL(aliceProvisionalUsersAccessor, refreshKeys());
 
-    auto const result = AWAIT(groupAccessor.getEncryptionKeyPair(
-        {aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey}));
+    SUBCASE("request group we are member of")
+    {
+      REQUIRE_CALL(aliceUserAccessorMock,
+                   pull(std::vector{alice.devices().back().id()}))
+          .RETURN(
+              makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
+                  {alice.devices().front()}, {}}));
+      REQUIRE_CALL(aliceLocalAccessorMock,
+                   pullUserKeyPair(alice.userKeys().back().publicKey))
+          .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
 
-    CHECK_EQ(result.value(), aliceGroup.group.tankerGroup.encryptionKeyPair);
-  }
+      SUBCASE("request group by Id")
+      {
+        REQUIRE_CALL(requestStub,
+                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}))
+            .RETURN(makeCoTask(makeEntries(aliceGroup)));
+        SUBCASE(
+            "it should request group public keys by groupId if not in store")
+        {
+          auto const result =
+              AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
 
-  SUBCASE("it can request group public keys by invalid groupId")
-  {
-    auto const unknownGroupId = make<GroupId>("unknownGroup");
-    REQUIRE_CALL(requestStub,
-                 getGroupBlocks(std::vector<GroupId>{unknownGroupId}))
-        .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
+          CHECK(result.notFound.empty());
+          REQUIRE_EQ(result.found.size(), 1);
+          CHECK_EQ(result.found[0], aliceGroup.currentEncKp().publicKey);
+        }
 
-    auto const result =
-        AWAIT(groupAccessor.getPublicEncryptionKeys({unknownGroupId}));
+        SUBCASE("it should request internal groups by groupId if not in store")
+        {
+          auto const result =
+              AWAIT(groupAccessor.getInternalGroups({aliceGroup.id()}));
 
-    CHECK(result.found.empty());
-    REQUIRE_EQ(result.notFound.size(), 1);
-    CHECK_EQ(result.notFound[0], unknownGroupId);
-  }
+          CHECK(result.notFound.empty());
+          REQUIRE_EQ(result.found.size(), 1);
+          CHECK_EQ(result.found[0], aliceGroup);
+        }
+      }
 
-  SUBCASE("it should request group public keys by groupId if not in store")
-  {
-    REQUIRE_CALL(
-        requestStub,
-        getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
-        .RETURN(
-            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
-    REQUIRE_CALL(userRequestStub,
-                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
-        // FIXME
-        .RETURN(makeCoTask(builder.entries()));
+      SUBCASE(
+          "it should request group encryption key pairs by publicEncryptionKey "
+          "if not in store")
+      {
+        REQUIRE_CALL(requestStub,
+                     getGroupBlocks(aliceGroup.currentEncKp().publicKey))
+            .RETURN(makeCoTask(makeEntries(aliceGroup)));
 
-    auto const result = AWAIT(groupAccessor.getPublicEncryptionKeys(
-        {aliceGroup.group.tankerGroup.id}));
+        auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
+            aliceGroup.currentEncKp().publicKey));
 
-    CHECK(result.notFound.empty());
-    REQUIRE_EQ(result.found.size(), 1);
-    CHECK_EQ(result.found[0],
-             aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey);
-  }
+        CHECK_EQ(encryptionKeyPair.value(), aliceGroup.currentEncKp());
+      }
+    }
 
-  SUBCASE("it fails request internal groups when are not part of")
-  {
-    REQUIRE_CALL(
-        requestStub,
-        getGroupBlocks(std::vector<GroupId>{bobGroup.group.tankerGroup.id}))
-        .RETURN(
-            makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
-    REQUIRE_CALL(userRequestStub,
-                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
-        // FIXME
-        .RETURN(makeCoTask(builder.entries()));
+    SUBCASE("Request group we are *NOT* part of")
+    {
+      REQUIRE_CALL(aliceUserAccessorMock,
+                   pull(std::vector{bob.devices().back().id()}))
+          .RETURN(
+              makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
+                  {bob.devices().front()}, {}}));
+      SUBCASE("it fails request internal groups when are not part of")
+      {
+        REQUIRE_CALL(requestStub,
+                     getGroupBlocks(std::vector<GroupId>{bobGroup.id()}))
+            .RETURN(makeCoTask(makeEntries(bobGroup)));
+        auto const result =
+            AWAIT(groupAccessor.getInternalGroups({bobGroup.id()}));
 
-    auto const result =
-        AWAIT(groupAccessor.getInternalGroups({bobGroup.group.tankerGroup.id}));
+        CHECK(result.found.empty());
+        REQUIRE_EQ(result.notFound.size(), 1);
+        CHECK_EQ(result.notFound[0], bobGroup.id());
+      }
 
-    CHECK(result.found.empty());
-    REQUIRE_EQ(result.notFound.size(), 1);
-    CHECK_EQ(result.notFound[0], bobGroup.group.tankerGroup.id);
-  }
+      SUBCASE("it fails to get group encryption key pairs if not in group")
+      {
+        REQUIRE_CALL(requestStub,
+                     getGroupBlocks(bobGroup.currentEncKp().publicKey))
+            .RETURN(makeCoTask(makeEntries(bobGroup)));
 
-  SUBCASE("it should request internal groups by groupId if not in store")
-  {
-    REQUIRE_CALL(
-        requestStub,
-        getGroupBlocks(std::vector<GroupId>{aliceGroup.group.tankerGroup.id}))
-        .RETURN(
-            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
-    REQUIRE_CALL(userRequestStub,
-                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
-        // FIXME
-        .RETURN(makeCoTask(builder.entries()));
+        auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
+            bobGroup.currentEncKp().publicKey));
 
-    auto const result = AWAIT(
-        groupAccessor.getInternalGroups({aliceGroup.group.tankerGroup.id}));
-
-    CHECK(result.notFound.empty());
-    REQUIRE_EQ(result.found.size(), 1);
-    CHECK_EQ(result.found[0], aliceGroup.group.tankerGroup);
-  }
-
-  SUBCASE("it fails to get group encryption key pairs if not in group")
-  {
-    REQUIRE_CALL(
-        requestStub,
-        getGroupBlocks(bobGroup.group.tankerGroup.encryptionKeyPair.publicKey))
-        .RETURN(
-            makeCoTask(std::vector<Trustchain::ServerEntry>{bobGroup.entry}));
-    REQUIRE_CALL(userRequestStub,
-                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
-        // FIXME
-        .RETURN(makeCoTask(builder.entries()));
-
-    auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
-        bobGroup.group.tankerGroup.encryptionKeyPair.publicKey));
-
-    CHECK_EQ(encryptionKeyPair, std::nullopt);
-  }
-
-  SUBCASE(
-      "it should request group encryption key pairs by publicEncryptionKey if "
-      "not in store")
-  {
-    REQUIRE_CALL(requestStub,
-                 getGroupBlocks(
-                     aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey))
-        .RETURN(
-            makeCoTask(std::vector<Trustchain::ServerEntry>{aliceGroup.entry}));
-    REQUIRE_CALL(userRequestStub,
-                 getUsers(ANY(gsl::span<Trustchain::DeviceId const>)))
-        // FIXME
-        .RETURN(makeCoTask(builder.entries()));
-
-    auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
-        aliceGroup.group.tankerGroup.encryptionKeyPair.publicKey));
-
-    CHECK_EQ(encryptionKeyPair.value(),
-             aliceGroup.group.tankerGroup.encryptionKeyPair);
+        CHECK_EQ(encryptionKeyPair, std::nullopt);
+      }
+    }
   }
 }

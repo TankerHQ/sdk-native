@@ -1,14 +1,17 @@
 #include <Tanker/Groups/Updater.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
 
 #include <Helpers/Await.hpp>
-#include <Helpers/Buffers.hpp>
+#include <Helpers/MakeCoTask.hpp>
 
-#include "FakeProvisionalUsersAccessor.hpp"
+#include "LocalUserAccessorMock.hpp"
+#include "ProvisionalUsersAccessorMock.hpp"
+
 #include "TestVerifier.hpp"
-#include "TrustchainBuilder.hpp"
+#include "TrustchainGenerator.hpp"
+
+#include <boost/variant2/variant.hpp>
 
 #include <doctest.h>
 
@@ -16,230 +19,256 @@ using namespace Tanker;
 
 namespace
 {
-void testUserGroupCreationCommon(
-    std::function<TrustchainBuilder::ResultGroup(
-        TrustchainBuilder&,
-        TrustchainBuilder::Device const&,
-        std::vector<TrustchainBuilder::User> const&)> const& makeGroup)
+auto makeEntries = [](auto const& item) {
+  std::vector<Entry> verifiedEntries;
+  auto const& entries = Test::Generator::makeEntryList(item.entries());
+  std::transform(std::begin(entries),
+                 std::end(entries),
+                 std::back_inserter(verifiedEntries),
+                 toVerifiedEntry);
+  return verifiedEntries;
+};
+
+template <typename R>
+void GroupMatcher(Group const& resultGroup, Test::Group const& testGroup)
 {
-  auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
-
-  TrustchainBuilder builder;
-  auto const alice = builder.makeUser3("alice");
-  auto const aliceLocalUser = builder.makeLocalUser(alice.user, aliceDb.get());
-  auto const aliceProvisionalUserKeysStore =
-      builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
-  auto const aliceProvisionalUsersAccessor =
-      std::make_unique<FakeProvisionalUsersAccessor>(
-          *aliceProvisionalUserKeysStore);
-
-  SUBCASE("handles creation of a group I am part of")
+  auto const group = boost::variant2::get_if<R>(&resultGroup);
+  REQUIRE_UNARY(group);
+  CHECK_EQ(group->lastBlockHash, testGroup.lastBlockHash());
+  CHECK_EQ(group->id, testGroup.id());
+  if constexpr (std::is_same_v<R, InternalGroup>)
   {
-    auto const group = makeGroup(builder, alice.user.devices[0], {alice.user});
-    auto const resultGroup = AWAIT(
-        GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
-                                             *aliceProvisionalUsersAccessor,
-                                             toVerifiedEntry(group.entry)));
-    CHECK_EQ(resultGroup, Group{group.group.tankerGroup});
+    CHECK_EQ(group->encryptionKeyPair, testGroup.currentEncKp());
+    CHECK_EQ(group->signatureKeyPair, testGroup.currentSigKp());
   }
-
-  SUBCASE("handles creation of a group I am *not* part of")
+  else if constexpr (std::is_same_v<R, ExternalGroup>)
   {
-    auto const bob = builder.makeUser3("bob");
-
-    auto const group = makeGroup(builder, bob.user.devices[0], {bob.user});
-    auto const resultGroup = AWAIT(
-        GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
-                                             *aliceProvisionalUsersAccessor,
-                                             toVerifiedEntry(group.entry)));
-
-    CHECK_EQ(resultGroup, Group{group.group.asExternalGroup()});
+    CHECK_EQ(group->publicEncryptionKey, testGroup.currentEncKp().publicKey);
+    CHECK_EQ(group->publicSignatureKey, testGroup.currentSigKp().publicKey);
+    auto const decrypted = Crypto::sealDecrypt(
+        group->encryptedPrivateSignatureKey, testGroup.currentEncKp());
+    CHECK_EQ(decrypted, testGroup.currentSigKp().privateKey);
   }
-}
-
-void testUserGroupAdditionCommon(
-    std::function<TrustchainBuilder::ResultGroup(
-        TrustchainBuilder&,
-        TrustchainBuilder::Device const&,
-        TrustchainBuilder::InternalGroup const&,
-        std::vector<TrustchainBuilder::User> const&)> const& addUserToGroup)
-{
-  auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
-
-  TrustchainBuilder builder;
-  auto const alice = builder.makeUser3("alice");
-  auto const bob = builder.makeUser3("bob");
-  auto const aliceLocalUser = builder.makeLocalUser(alice.user, aliceDb.get());
-  auto const aliceProvisionalUserKeysStore =
-      builder.makeProvisionalUserKeysStoreWith({}, aliceDb.get());
-  auto const aliceProvisionalUsersAccessor =
-      std::make_unique<FakeProvisionalUsersAccessor>(
-          *aliceProvisionalUserKeysStore);
-
-  SUBCASE("Alice sees Bob being added to her group")
-  {
-    auto const aliceGroup =
-        builder.makeGroup2(alice.user.devices[0], {alice.user}, {});
-    auto const updatedGroup = addUserToGroup(
-        builder, alice.user.devices[0], aliceGroup.group, {bob.user});
-    auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        *aliceLocalUser,
-        *aliceProvisionalUsersAccessor,
-        aliceGroup.group.tankerGroup,
-        toVerifiedEntry(updatedGroup.entry)));
-    CHECK_EQ(resultGroup, Group{updatedGroup.group.tankerGroup});
-  }
-
-  SUBCASE("Alice sees herself being added to Bob's group")
-  {
-    auto const bobGroup =
-        builder.makeGroup2(bob.user.devices[0], {bob.user}, {});
-    auto const updatedGroup = addUserToGroup(
-        builder, bob.user.devices[0], bobGroup.group, {alice.user});
-    auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        *aliceLocalUser,
-        *aliceProvisionalUsersAccessor,
-        bobGroup.group.asExternalGroup(),
-        toVerifiedEntry(updatedGroup.entry)));
-    CHECK_EQ(resultGroup, Group{updatedGroup.group.tankerGroup});
-  }
-
-  SUBCASE("Alice sees Charly being added to Bob's group")
-  {
-    auto const bobGroup =
-        builder.makeGroup2(bob.user.devices[0], {bob.user}, {});
-    auto const charly = builder.makeUser3("charly");
-    auto const updatedGroup = addUserToGroup(
-        builder, bob.user.devices[0], bobGroup.group, {charly.user});
-    auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-        *aliceLocalUser,
-        *aliceProvisionalUsersAccessor,
-        bobGroup.group.asExternalGroup(),
-        toVerifiedEntry(updatedGroup.entry)));
-
-    CHECK_EQ(resultGroup, Group{updatedGroup.group.asExternalGroup()});
-  }
+  else
+    static_assert(sizeof(R) && false, "please add the new group type");
 }
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation::v1")
+TEST_SUITE_BEGIN("GroupUpdater");
+
+TEST_CASE("Group V1")
 {
-  testUserGroupCreationCommon(
-      [](TrustchainBuilder& builder,
-         TrustchainBuilder::Device const& authorDevice,
-         std::vector<TrustchainBuilder::User> const& members) {
-        return builder.makeGroup1(authorDevice, members);
-      });
+  Test::Generator generator;
+  auto const alice = generator.makeUser("alice");
+  auto const bob = generator.makeUser("bob");
+  auto aliceLocalUserAccessor = LocalUserAccessorMock{};
+  auto aliceProvisionalUsersAccessor = ProvisionalUsersAccessorMock{};
+
+  auto aliceLocalUser = static_cast<Users::LocalUser>(alice);
+
+  SUBCASE("GroupCreation")
+  {
+    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+
+    SUBCASE("handles creation of a group I am part of")
+    {
+      auto const testGroup =
+          generator.makeGroupV1(alice.devices().front(), {alice});
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(testGroup).front()));
+
+      GroupMatcher<InternalGroup>(resultGroup, testGroup);
+    }
+
+    SUBCASE("handles creation of a group I am *not* part of")
+    {
+      auto const group = generator.makeGroupV1(bob.devices().front(), {bob});
+      REQUIRE_CALL(aliceLocalUserAccessor, pull())
+          .LR_RETURN(makeCoTask<Users::LocalUser const&>(aliceLocalUser));
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(group).front()));
+
+      GroupMatcher<ExternalGroup>(resultGroup, group);
+    }
+  }
+  SUBCASE("GroupAddition")
+  {
+    SUBCASE("Alice sees Bob being added to her group")
+    {
+      auto aliceGroup = generator.makeGroupV1(alice.devices()[0], {alice});
+      aliceGroup.addUsersV1(alice.devices()[0], {bob});
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupAddition(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               aliceGroup,
+                                               makeEntries(aliceGroup).back()));
+      GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
+    }
+
+    SUBCASE("Alice sees herself being added to Bob's group")
+    {
+      auto const bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsersV1(bob.devices()[0], {alice});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
+    }
+
+    SUBCASE("Alice sees Charly being added to Bob's group")
+    {
+      auto bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
+      auto const charly = generator.makeUser("charly");
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsersV1(bob.devices()[0], {charly});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      REQUIRE_CALL(aliceLocalUserAccessor, pull())
+          .LR_RETURN(makeCoTask<Users::LocalUser const&>(aliceLocalUser));
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
+    }
+  }
 }
 
-TEST_CASE("GroupUpdater UserGroupCreation::v2")
+TEST_CASE("Group V2")
 {
-  SUBCASE("Common checks")
-  {
-    testUserGroupCreationCommon(
-        [](TrustchainBuilder& builder,
-           TrustchainBuilder::Device const& authorDevice,
-           std::vector<TrustchainBuilder::User> const& members) {
-          return builder.makeGroup2(authorDevice, members, {});
-        });
-  }
+  Test::Generator generator;
+  auto const alice = generator.makeUser("alice");
+  auto aliceLocalUserAccessor = LocalUserAccessorMock{};
+  auto aliceProvisionalUsersAccessor = ProvisionalUsersAccessorMock{};
+  auto const aliceProvisionalUser =
+      generator.makeProvisionalUser("alice@tanker");
+  auto const bob = generator.makeUser("bob");
 
-  SUBCASE("Specific checks")
-  {
-    auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
+  auto const aliceLocalUser = static_cast<Users::LocalUser>(alice);
 
-    TrustchainBuilder builder;
-    auto const alice = builder.makeUser3("alice");
-    auto const aliceLocalUser =
-        builder.makeLocalUser(alice.user, aliceDb.get());
-    auto const aliceProvisionalUser =
-        builder.makeProvisionalUser("alice@tanker");
-    auto const aliceProvisionalUserKeysStore =
-        builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
-                                                 aliceDb.get());
-    auto const aliceProvisionalUsersAccessor =
-        std::make_unique<FakeProvisionalUsersAccessor>(
-            *aliceProvisionalUserKeysStore);
+  SUBCASE("GroupCreation")
+  {
+    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+
+    SUBCASE("handles creation of a group I am part of")
+    {
+      REQUIRE_CALL(aliceLocalUserAccessor,
+                   pullUserKeyPair(alice.userKeys().back().publicKey))
+          .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
+      auto const group = alice.makeGroup();
+
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(group).front()));
+
+      GroupMatcher<InternalGroup>(resultGroup, group);
+    }
+
+    SUBCASE("handles creation of a group I am *not* part of")
+    {
+      auto const bobGroup = bob.makeGroup();
+
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(bobGroup).front()));
+
+      GroupMatcher<ExternalGroup>(resultGroup, bobGroup);
+    }
 
     SUBCASE(
         "handles creation of a group I am part of through a provisional "
         "identity")
     {
-      auto const bob = builder.makeUser3("bob");
+      auto const bobGroup = bob.makeGroup({}, {aliceProvisionalUser});
+      REQUIRE_CALL(aliceProvisionalUsersAccessor,
+                   findEncryptionKeysFromCache(trompeloeil::_, trompeloeil::_))
+          .RETURN(makeCoTask(
+              std::make_optional<ProvisionalUserKeys>(aliceProvisionalUser)));
 
-      auto const group =
-          builder.makeGroup2(bob.user.devices[0],
-                             {},
-                             {aliceProvisionalUser.publicProvisionalUser});
       auto const resultGroup = AWAIT(
-          GroupUpdater::applyUserGroupCreation(*aliceLocalUser,
-                                               *aliceProvisionalUsersAccessor,
-                                               toVerifiedEntry(group.entry)));
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(bobGroup).front()));
 
-      CHECK_EQ(resultGroup, Group{group.group.tankerGroup});
+      GroupMatcher<InternalGroup>(resultGroup, bobGroup);
     }
   }
-}
 
-TEST_CASE("GroupUpdater UserGroupAddition1")
-{
-  testUserGroupAdditionCommon(
-      [](TrustchainBuilder& builder,
-         TrustchainBuilder::Device const& authorDevice,
-         TrustchainBuilder::InternalGroup const& group,
-         std::vector<TrustchainBuilder::User> const& members) {
-        return builder.addUserToGroup(authorDevice, group, members);
-      });
-}
-
-TEST_CASE("GroupUpdater UserGroupAddition2")
-{
-  SUBCASE("Common checks")
+  SUBCASE("GroupAddition")
   {
-    testUserGroupAdditionCommon(
-        [](TrustchainBuilder& builder,
-           TrustchainBuilder::Device const& authorDevice,
-           TrustchainBuilder::InternalGroup const& group,
-           std::vector<TrustchainBuilder::User> const& members) {
-          return builder.addUserToGroup2(authorDevice, group, members, {});
-        });
-  }
 
-  SUBCASE("Specific checks")
-  {
-    auto const aliceDb = AWAIT(DataStore::createDatabase(":memory:"));
+    SUBCASE("Alice sees Bob being added to her group")
+    {
+      auto aliceGroup = generator.makeGroup(alice.devices()[0], {alice});
+      aliceGroup.addUsers(alice.devices()[0], {bob});
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupAddition(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               aliceGroup,
+                                               makeEntries(aliceGroup).back()));
+      GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
+    }
 
-    TrustchainBuilder builder;
-    auto const alice = builder.makeUser3("alice");
-    auto const bob = builder.makeUser3("bob");
-    auto const aliceLocalUser =
-        builder.makeLocalUser(alice.user, aliceDb.get());
-    auto const aliceProvisionalUser =
-        builder.makeProvisionalUser("alice@tanker");
-    auto const aliceProvisionalUserKeysStore =
-        builder.makeProvisionalUserKeysStoreWith({aliceProvisionalUser},
-                                                 aliceDb.get());
-    auto const aliceProvisionalUsersAccessor =
-        std::make_unique<FakeProvisionalUsersAccessor>(
-            *aliceProvisionalUserKeysStore);
+    SUBCASE("Alice sees herself being added to Bob's group")
+    {
+      auto const bobGroup = generator.makeGroup(bob.devices()[0], {bob});
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsers(bob.devices()[0], {alice});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      REQUIRE_CALL(aliceLocalUserAccessor,
+                   pullUserKeyPair(alice.userKeys().back().publicKey))
+          .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
+    }
+
+    SUBCASE("Alice sees Charly being added to Bob's group")
+    {
+      auto bobGroup = generator.makeGroup(bob.devices()[0], {bob});
+      auto const charly = generator.makeUser("charly");
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsers(bob.devices()[0], {charly});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
+    }
 
     SUBCASE(
         "Alice sees herself being added to Bob's group as a provisional user")
     {
-      auto const bobGroup =
-          builder.makeGroup2(bob.user.devices[0], {bob.user}, {});
-      auto const updatedGroup =
-          builder.addUserToGroup2(bob.user.devices[0],
-                                  bobGroup.group,
-                                  {},
-                                  {aliceProvisionalUser.publicProvisionalUser});
+      auto bobGroup = generator.makeGroup(bob.devices()[0], {bob}, {});
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsers(bob.devices()[0], {}, {aliceProvisionalUser});
+      REQUIRE_CALL(aliceProvisionalUsersAccessor,
+                   findEncryptionKeysFromCache(trompeloeil::_, trompeloeil::_))
+          .RETURN(makeCoTask(
+              std::make_optional<ProvisionalUserKeys>(aliceProvisionalUser)));
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
-          *aliceLocalUser,
-          *aliceProvisionalUsersAccessor,
-          bobGroup.group.asExternalGroup(),
-          toVerifiedEntry(updatedGroup.entry)));
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
 
-      CHECK_EQ(resultGroup, Group{updatedGroup.group.tankerGroup});
+      GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
   }
 }
+TEST_SUITE_END();

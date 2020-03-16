@@ -16,24 +16,16 @@ class IAccessor;
 
 namespace Users
 {
-class ContactStore;
-class LocalUser;
+class ILocalUserAccessor;
 }
 
 class ResourceKeyStore;
-struct Entry;
 
 namespace ReceiveKey
 {
-tc::cotask<void> onKeyToDeviceReceived(
-    Users::ContactStore const& contactDeviceStore,
-    ResourceKeyStore& resourceKeyStore,
-    Crypto::PrivateEncryptionKey const& selfDevicePrivateEncryptionKey,
-    Entry const& entry);
-
 tc::cotask<void> decryptAndStoreKey(
     ResourceKeyStore& resourceKeyStore,
-    Users::LocalUser const& localUser,
+    Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& GroupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     Trustchain::Actions::KeyPublish const& kp);

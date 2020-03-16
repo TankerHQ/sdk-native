@@ -20,7 +20,6 @@ SQLPP_DECLARE_TABLE(
   (public_encryption_key  , blob  , SQLPP_NOT_NULL    )
   (private_encryption_key , blob  , SQLPP_NULL        )
   (last_group_block_hash  , blob  , SQLPP_NOT_NULL    )
-  (last_group_block_index , int   , SQLPP_NOT_NULL    )
 )
 // clang-format on
 

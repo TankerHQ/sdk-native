@@ -15,7 +15,6 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
@@ -30,18 +29,20 @@ using namespace Tanker::Trustchain;
 using namespace Tanker;
 
 TrustchainBuilder::TrustchainBuilder()
-  : _trustchainKeyPair(Tanker::Crypto::makeSignatureKeyPair())
 {
+  auto const keyPair = Tanker::Crypto::makeSignatureKeyPair();
   auto const nature = Nature::TrustchainCreation;
   Crypto::Hash const author{};
-  TrustchainCreation const action{_trustchainKeyPair.publicKey};
+  TrustchainCreation const action{keyPair.publicKey};
   auto const hash =
       computeHash(nature, author, Serialization::serialize(action));
-  _trustchainId = static_cast<TrustchainId>(hash);
+  _context =
+      Trustchain::Context{static_cast<TrustchainId>(hash), keyPair.publicKey};
+  _trustchainPrivateSignatureKey = keyPair.privateKey;
 
   // root block is not signed
   _entries.emplace_back(
-      _trustchainId, 1, author, action, hash, Crypto::Signature{});
+      _context.id(), 1, author, action, hash, Crypto::Signature{});
 }
 
 namespace
@@ -49,15 +50,10 @@ namespace
 TrustchainBuilder::Device createDevice()
 {
   return TrustchainBuilder::Device{
-      {
-          Tanker::Crypto::makeSignatureKeyPair(),
-          Tanker::Crypto::makeEncryptionKeyPair(),
-      },
+      Tanker::DeviceKeys::create(),
       {}, // deviceId will be filled in later
       {}, // userId will be filled in later
       {}, // delegation will be filled in later
-      {}, // createdAtIndex will be filled in later
-      {}  // revokedAtIndex is none
   };
 }
 }
@@ -66,12 +62,11 @@ Tanker::Users::Device TrustchainBuilder::Device::asTankerDevice() const
 {
   return Tanker::Users::Device(id,
                                userId,
-                               createdAtIndex,
+                               keys.signatureKeyPair.publicKey,
+                               keys.encryptionKeyPair.publicKey,
                                // This completely arbitrary...
                                true,
-                               revokedAtIndex,
-                               keys.signatureKeyPair.publicKey,
-                               keys.encryptionKeyPair.publicKey);
+                               isRevoked);
 }
 
 Tanker::Users::User TrustchainBuilder::User::asTankerUser() const
@@ -104,25 +99,29 @@ Tanker::ExternalGroup TrustchainBuilder::InternalGroup::asExternalGroup() const
       encryptedPrivateSignatureKey,
       tankerGroup.encryptionKeyPair.publicKey,
       tankerGroup.lastBlockHash,
-      tankerGroup.lastBlockIndex,
   };
   return extGroup;
 }
 
+Tanker::Trustchain::Context const& TrustchainBuilder::trustchainContext() const
+{
+  return _context;
+}
+
 TrustchainId const& TrustchainBuilder::trustchainId() const
 {
-  return _trustchainId;
+  return trustchainContext().id();
 }
 
 Crypto::PrivateSignatureKey const& TrustchainBuilder::trustchainPrivateKey()
     const
 {
-  return _trustchainKeyPair.privateKey;
+  return _trustchainPrivateSignatureKey;
 }
 
 Crypto::PublicSignatureKey const& TrustchainBuilder::trustchainPublicKey() const
 {
-  return _trustchainKeyPair.publicKey;
+  return trustchainContext().publicSignatureKey();
 }
 
 auto TrustchainBuilder::makeUser(std::string const& suserId) -> ResultUser
@@ -137,19 +136,18 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
 
   auto device = createDevice();
   auto const daUserId = SUserId{suserId};
-  User user{
-      daUserId,
-      obfuscateUserId(daUserId, _trustchainId),
-      {device},
-      {},
-      _entries.size() + 1,
-  };
+  User user{daUserId,
+            obfuscateUserId(daUserId, trustchainId()),
+            {device},
+            {},
+            _entries.size() + 1,
+            {_entries.front()}};
   auto const delegation =
-      Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
+      Identity::makeDelegation(user.userId, trustchainPrivateKey());
 
   auto const clientEntry =
-      Users::createDeviceV1Entry(_trustchainId,
-                                 Crypto::Hash{_trustchainId},
+      Users::createDeviceV1Entry(trustchainId(),
+                                 Crypto::Hash{trustchainId()},
                                  delegation,
                                  device.keys.signatureKeyPair.publicKey,
                                  device.keys.encryptionKeyPair.publicKey);
@@ -159,7 +157,6 @@ auto TrustchainBuilder::makeUser1(std::string const& suserId) -> ResultUser
   user.devices[0].delegation = delegation;
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
-  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
   _entries.push_back(serverEntry);
 
@@ -173,19 +170,18 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
 
   auto device = createDevice();
   auto const daUserId = SUserId{suserId};
-  User user{
-      daUserId,
-      Tanker::obfuscateUserId(daUserId, _trustchainId),
-      {device},
-      {{Tanker::Crypto::makeEncryptionKeyPair(), _entries.size() + 1}},
-      _entries.size() + 1,
-  };
+  User user{daUserId,
+            Tanker::obfuscateUserId(daUserId, trustchainId()),
+            {device},
+            {{Tanker::Crypto::makeEncryptionKeyPair(), _entries.size() + 1}},
+            _entries.size() + 1,
+            {_entries.front()}};
 
   auto const delegation =
-      Identity::makeDelegation(user.userId, _trustchainKeyPair.privateKey);
+      Identity::makeDelegation(user.userId, trustchainPrivateKey());
 
   auto const clientEntry =
-      Users::createNewUserEntry(_trustchainId,
+      Users::createNewUserEntry(trustchainId(),
                                 delegation,
                                 device.keys.signatureKeyPair.publicKey,
                                 device.keys.encryptionKeyPair.publicKey,
@@ -196,7 +192,6 @@ auto TrustchainBuilder::makeUser3(std::string const& suserId) -> ResultUser
   user.devices[0].id = static_cast<DeviceId>(serverEntry.hash());
   user.devices[0].userId = user.userId;
   user.devices[0].delegation = delegation;
-  user.devices[0].createdAtIndex = serverEntry.index();
   _users.push_back(user);
 
   _entries.push_back(serverEntry);
@@ -225,7 +220,7 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
       user->userId, validatorDevice.keys.signatureKeyPair.privateKey);
 
   auto const clientEntry =
-      Users::createDeviceV1Entry(_trustchainId,
+      Users::createDeviceV1Entry(trustchainId(),
                                  static_cast<Crypto::Hash>(validatorDevice.id),
                                  delegation,
                                  device.keys.signatureKeyPair.publicKey,
@@ -236,9 +231,9 @@ auto TrustchainBuilder::makeDevice1(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
 
+  user->entries.push_back(serverEntry);
   _entries.push_back(serverEntry);
 
   return {device, user->asTankerUser(), serverEntry};
@@ -264,7 +259,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   auto const delegation = Identity::makeDelegation(
       user->userId, validatorDevice.keys.signatureKeyPair.privateKey);
   auto const clientEntry =
-      Users::createNewDeviceEntry(_trustchainId,
+      Users::createNewDeviceEntry(trustchainId(),
                                   validatorDevice.id,
                                   delegation,
                                   device.keys.signatureKeyPair.publicKey,
@@ -276,8 +271,8 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
   device.id = static_cast<DeviceId>(serverEntry.hash());
   device.userId = user->userId;
   device.delegation = delegation;
-  device.createdAtIndex = serverEntry.index();
   user->devices.push_back(device);
+  user->entries.push_back(serverEntry);
 
   _entries.push_back(serverEntry);
 
@@ -287,7 +282,7 @@ auto TrustchainBuilder::makeDevice3(std::string const& p,
 TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
     std::string const& email)
 {
-  auto const secretProvisionalUser = SecretProvisionalUser{
+  auto const secretProvisionalUser = ProvisionalUsers::SecretUser{
       Tanker::Identity::TargetType::Email,
       email,
       Crypto::makeEncryptionKeyPair(),
@@ -295,14 +290,14 @@ TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
       Crypto::makeSignatureKeyPair(),
       Crypto::makeSignatureKeyPair(),
   };
-  auto const publicProvisionalUser = PublicProvisionalUser{
+  auto const publicProvisionalUser = ProvisionalUsers::PublicUser{
       secretProvisionalUser.appSignatureKeyPair.publicKey,
       secretProvisionalUser.appEncryptionKeyPair.publicKey,
       secretProvisionalUser.tankerSignatureKeyPair.publicKey,
       secretProvisionalUser.tankerEncryptionKeyPair.publicKey,
   };
   auto const publicProvisionalIdentity = Identity::PublicProvisionalIdentity{
-      _trustchainId,
+      trustchainId(),
       secretProvisionalUser.target,
       secretProvisionalUser.value,
       secretProvisionalUser.appSignatureKeyPair.publicKey,
@@ -317,22 +312,24 @@ TrustchainBuilder::ProvisionalUser TrustchainBuilder::makeProvisionalUser(
 
 ServerEntry TrustchainBuilder::claimProvisionalIdentity(
     std::string const& suserId,
-    Tanker::SecretProvisionalUser const& provisionalUser,
+    Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
     int authorDeviceIndex)
 {
-  auto const user = findUser(suserId).value();
-  auto const& authorDevice = user.devices.at(authorDeviceIndex);
+
+  auto user = findMutableUser(SUserId{suserId});
+  auto const& authorDevice = user->devices.at(authorDeviceIndex);
 
   auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
-      _trustchainId,
+      trustchainId(),
       authorDevice.id,
       authorDevice.keys.signatureKeyPair.privateKey,
-      user.userId,
+      user->userId,
       provisionalUser,
-      user.userKeys.back().keyPair);
+      user->userKeys.back().keyPair);
   auto const serverEntry =
       clientToServerEntry(clientEntry, _entries.size() + 1);
 
+  user->entries.push_back(serverEntry);
   _entries.push_back(serverEntry);
   return serverEntry;
 }
@@ -340,7 +337,7 @@ ServerEntry TrustchainBuilder::claimProvisionalIdentity(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   return makeGroup2(author, users, provisionalUsers);
 }
@@ -401,7 +398,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
       signatureKeyPair,
       encryptionKeyPair.publicKey,
       keysForUsers,
-      _trustchainId,
+      trustchainId(),
       author.id,
       author.keys.signatureKeyPair.privateKey);
 
@@ -414,7 +411,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
       signatureKeyPair,
       encryptionKeyPair,
       serverEntry.hash(),
-      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
@@ -435,7 +431,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup1(
 TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
     Device const& author,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
   auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
@@ -444,12 +440,12 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
   for (auto const& user : users)
     tusers.push_back(user.asTankerUser());
 
-  auto const clientEntry = Groups::Manager::generateCreateGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
       tusers,
       provisionalUsers,
       signatureKeyPair,
       encryptionKeyPair,
-      _trustchainId,
+      trustchainId(),
       author.id,
       author.keys.signatureKeyPair.privateKey);
 
@@ -462,7 +458,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::makeGroup2(
       signatureKeyPair,
       encryptionKeyPair,
       serverEntry.hash(),
-      serverEntry.index(),
   };
 
   std::vector<SUserId> members;
@@ -498,7 +493,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
       group.tankerGroup.signatureKeyPair,
       group.tankerGroup.lastBlockHash,
       keysForUsers,
-      _trustchainId,
+      trustchainId(),
       author.id,
       author.keys.signatureKeyPair.privateKey);
 
@@ -507,7 +502,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup(
   _entries.push_back(serverEntry);
 
   group.tankerGroup.lastBlockHash = serverEntry.hash();
-  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -525,7 +519,7 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
     Device const& author,
     InternalGroup group,
     std::vector<User> const& users,
-    std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers)
+    std::vector<Tanker::ProvisionalUsers::PublicUser> const& provisionalUsers)
 {
   auto const newUsers = getOnlyNewMembers(group.members, users);
 
@@ -533,11 +527,11 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   for (auto const& user : newUsers)
     tusers.push_back(user.asTankerUser());
 
-  auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
       tusers,
       provisionalUsers,
       group.tankerGroup,
-      _trustchainId,
+      trustchainId(),
       author.id,
       author.keys.signatureKeyPair.privateKey);
 
@@ -554,7 +548,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
                                   newProvisionalMembers.begin(),
                                   newProvisionalMembers.end());
   group.tankerGroup.lastBlockHash = serverEntry.hash();
-  group.tankerGroup.lastBlockIndex = serverEntry.index();
 
   std::transform(newUsers.begin(),
                  newUsers.end(),
@@ -568,40 +561,6 @@ TrustchainBuilder::ResultGroup TrustchainBuilder::addUserToGroup2(
   return {group, serverEntry};
 }
 
-std::vector<ServerEntry> TrustchainBuilder::shareToDevice(
-    Device const& sender,
-    User const& receiver,
-    ResourceId const& resourceId,
-    Crypto::SymmetricKey const& key)
-{
-  if (!receiver.userKeys.empty())
-    throw std::runtime_error("can't shareToDevice if the user has a user key");
-
-  std::vector<ServerEntry> result;
-
-  for (auto const& receiverDevice : receiver.devices)
-  {
-    auto const encryptedKey =
-        Crypto::asymEncrypt<Crypto::EncryptedSymmetricKey>(
-            key,
-            sender.keys.encryptionKeyPair.privateKey,
-            receiverDevice.keys.encryptionKeyPair.publicKey);
-
-    auto const clientEntry = Users::createKeyPublishToDeviceEntry(
-        _trustchainId,
-        sender.id,
-        sender.keys.signatureKeyPair.privateKey,
-        encryptedKey,
-        resourceId,
-        receiverDevice.id);
-
-    auto const serverEntry = clientToServerEntry(clientEntry);
-    _entries.push_back(serverEntry);
-    result.push_back(serverEntry);
-  }
-  return result;
-}
-
 ServerEntry TrustchainBuilder::shareToUser(Device const& sender,
                                            User const& receiver,
                                            ResourceId const& resourceId,
@@ -612,19 +571,18 @@ ServerEntry TrustchainBuilder::shareToUser(Device const& sender,
 
   auto const receiverPublicKey = receiver.userKeys.back().keyPair.publicKey;
 
-  auto const block =
-      Share::makeKeyPublishToUser(_trustchainId,
+  auto const serverEntry = clientToServerEntry(
+      Share::makeKeyPublishToUser(trustchainId(),
                                   sender.id,
                                   sender.keys.signatureKeyPair.privateKey,
                                   receiverPublicKey,
                                   resourceId,
-                                  key);
+                                  key),
+      _entries.size() + 1);
 
-  auto entry = Serialization::deserialize<ServerEntry>(block);
-  const_cast<std::uint64_t&>(entry.index()) = _entries.size() + 1;
-  _entries.push_back(entry);
+  _entries.push_back(serverEntry);
 
-  return entry;
+  return serverEntry;
 }
 
 ServerEntry TrustchainBuilder::shareToUserGroup(Device const& sender,
@@ -646,14 +604,14 @@ ServerEntry TrustchainBuilder::shareToUserGroup(Device const& sender,
   auto const signature =
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
-      _trustchainId, _entries.size() + 1, author, keyPublish, hash, signature);
+      trustchainId(), _entries.size() + 1, author, keyPublish, hash, signature);
 
   return _entries.back();
 }
 
 ServerEntry TrustchainBuilder::shareToProvisionalUser(
     Device const& sender,
-    PublicProvisionalUser const& receiver,
+    ProvisionalUsers::PublicUser const& receiver,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
@@ -674,7 +632,7 @@ ServerEntry TrustchainBuilder::shareToProvisionalUser(
   auto const signature =
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
-      _trustchainId, _entries.size() + 1, author, keyPublish, hash, signature);
+      trustchainId(), _entries.size() + 1, author, keyPublish, hash, signature);
 
   return _entries.back();
 }
@@ -724,13 +682,14 @@ ServerEntry TrustchainBuilder::revokeDevice1(Device const& sender,
   auto const signature =
       Crypto::sign(hash, sender.keys.signatureKeyPair.privateKey);
   _entries.emplace_back(
-      _trustchainId, _entries.size() + 1, author, revocation, hash, signature);
+      trustchainId(), _entries.size() + 1, author, revocation, hash, signature);
 
   auto const revokedDevice =
       std::find_if(targetUser->devices.begin(),
                    targetUser->devices.end(),
                    [&](auto const dev) { return dev.id == target.id; });
   targetUser->devices.erase(revokedDevice);
+  targetUser->entries.push_back(_entries.back());
 
   return _entries.back();
 }
@@ -768,7 +727,7 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
       targetUser->asTankerUser(), target.id, newEncryptionKey.privateKey);
 
   auto const clientEntry =
-      Users::revokeDeviceEntry(_trustchainId,
+      Users::revokeDeviceEntry(trustchainId(),
                                sender.id,
                                sender.keys.signatureKeyPair.privateKey,
                                target.id,
@@ -782,11 +741,12 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
   _entries.push_back(serverEntry);
 
   targetUser->userKeys.push_back(UserKey{newEncryptionKey, _entries.size()});
+  targetUser->entries.push_back(serverEntry);
   auto const revokedDevice =
       std::find_if(targetUser->devices.begin(),
                    targetUser->devices.end(),
                    [&](auto const dev) { return dev.id == target.id; });
-  revokedDevice->revokedAtIndex = _entries.size();
+  revokedDevice->isRevoked = true;
 
   return _entries.back();
 }
@@ -813,35 +773,17 @@ TrustchainBuilder::User* TrustchainBuilder::findMutableUser(
   return std::addressof(*it);
 }
 
-Tanker::Users::LocalUser::Ptr TrustchainBuilder::makeLocalUser(
-    User const& user, Tanker::DataStore::ADatabase* conn) const
+std::unique_ptr<Tanker::Users::LocalUserStore>
+TrustchainBuilder::makeLocalUserStore(User const& user,
+                                      Tanker::DataStore::ADatabase* conn) const
 {
-  auto result = AWAIT(Tanker::Users::LocalUser::open(
-      Tanker::Identity::createIdentity(
-          _trustchainId, _trustchainKeyPair.privateKey, user.userId),
-      conn));
-  for (auto const& userKey : user.userKeys)
-    AWAIT_VOID(result->insertUserKey(userKey.keyPair));
-  return result;
-}
-
-std::unique_ptr<Tanker::Users::ContactStore>
-TrustchainBuilder::makeContactStoreWith(
-    std::vector<std::string> const& suserIds,
-    Tanker::DataStore::ADatabase* conn) const
-{
-  auto contactStore = std::make_unique<Tanker::Users::ContactStore>(conn);
-  for (auto const& suserId : suserIds)
-  {
-    auto const optUser = findUser(suserId);
-    if (!optUser)
-    {
-      throw Errors::AssertionError("makeContactStoreWith: no user named " +
-                                   suserId);
-    }
-    AWAIT_VOID(contactStore->putUser(optUser->asTankerUser()));
-  }
-  return contactStore;
+  auto store = std::make_unique<Users::LocalUserStore>(conn);
+  std::vector<Crypto::EncryptionKeyPair> keys(user.userKeys.begin(),
+                                              user.userKeys.end());
+  auto const& device = user.devices.front();
+  store->putLocalUser(
+      Tanker::Users::LocalUser(user.userId, device.id, device.keys, keys));
+  return store;
 }
 
 std::unique_ptr<Tanker::ProvisionalUserKeysStore>

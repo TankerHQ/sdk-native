@@ -5,6 +5,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/User.hpp>
 
@@ -40,8 +41,7 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
-                      Trustchain::TrustchainId const& trustchainId,
-                      Crypto::PublicSignatureKey const& trustchainPubSigKey,
+                      Trustchain::Context const& trustchainContext,
                       gsl::span<Trustchain::ServerEntry const> entries);
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
@@ -54,17 +54,11 @@ Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
 Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
                                         Users::User previousUser);
 
-std::tuple<Crypto::PublicSignatureKey,
+std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
 processUserEntries(DeviceKeys const& deviceKeys,
                    Trustchain::TrustchainId const& trustchainId,
                    gsl::span<Trustchain::ServerEntry const> entries);
-
-tc::cotask<void> updateLocalUser(
-    gsl::span<Trustchain::ServerEntry const> serverEntries,
-    Trustchain::TrustchainId const& trustchainId,
-    LocalUser& localUser,
-    ContactStore& contactStore);
 }
 }

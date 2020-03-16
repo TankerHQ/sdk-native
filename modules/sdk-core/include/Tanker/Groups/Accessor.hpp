@@ -13,8 +13,8 @@
 
 namespace Tanker::Users
 {
-class LocalUser;
-class UserAccessor;
+class ILocalUserAccessor;
+class IUserAccessor;
 }
 
 namespace Tanker::Groups
@@ -24,9 +24,9 @@ class Accessor : public Groups::IAccessor
 {
 public:
   Accessor(Groups::IRequester* requester,
-           Users::UserAccessor* userAccessor,
+           Users::IUserAccessor* userAccessor,
            Store* groupstore,
-           Users::LocalUser const* localUser,
+           Users::ILocalUserAccessor* localUserAccessor,
            ProvisionalUsers::IAccessor* provisionalUserAccessor);
 
   Accessor() = delete;
@@ -45,9 +45,9 @@ public:
 
 private:
   Groups::IRequester* _requester;
-  Users::UserAccessor* _userAccessor;
+  Users::IUserAccessor* _userAccessor;
   Store* _groupStore;
-  Users::LocalUser const* _localUser;
+  Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);

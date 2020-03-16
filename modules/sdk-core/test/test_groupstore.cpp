@@ -22,20 +22,14 @@ TEST_CASE("GroupStore")
       Crypto::makeSignatureKeyPair(),
       Crypto::makeEncryptionKeyPair(),
       make<Crypto::Hash>("last block hash"),
-      1234,
   };
   auto const externalGroup = ExternalGroup{
       make<GroupId>("group id"),
       group.signatureKeyPair.publicKey,
-      std::nullopt,
+      make<Crypto::SealedPrivateSignatureKey>("encrypted private key"),
       group.encryptionKeyPair.publicKey,
       make<Crypto::Hash>("last block hash"),
-      1234,
   };
-  auto externalGroupWithKey = externalGroup;
-  externalGroupWithKey.encryptedPrivateSignatureKey =
-      make<Crypto::SealedPrivateSignatureKey>("encrypted private key");
-
   SUBCASE("it should not find a non-existent group")
   {
     auto const unexistentGroupId = make<GroupId>("unexistent");
@@ -66,12 +60,12 @@ TEST_CASE("GroupStore")
 
   SUBCASE("it should find an external group that was inserted")
   {
-    AWAIT_VOID(groupStore.put(externalGroupWithKey));
+    AWAIT_VOID(groupStore.put(externalGroup));
     CHECK_EQ(AWAIT(groupStore.findById(group.id)).value(),
-             Group{externalGroupWithKey});
+             Group{externalGroup});
     CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
-             Group{externalGroupWithKey});
+             Group{externalGroup});
     CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
                  group.encryptionKeyPair.publicKey)),
              std::nullopt);
@@ -84,7 +78,6 @@ TEST_CASE("GroupStore")
     group2.signatureKeyPair = Crypto::makeSignatureKeyPair();
     group2.encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     group2.lastBlockHash = make<Crypto::Hash>("other last");
-    group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
     CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
@@ -93,12 +86,11 @@ TEST_CASE("GroupStore")
       "it should overwrite an external group with a fullgroup (we got added to "
       "a group)")
   {
-    AWAIT_VOID(groupStore.put(externalGroupWithKey));
+    AWAIT_VOID(groupStore.put(externalGroup));
     auto group2 = group;
     group2.signatureKeyPair = Crypto::makeSignatureKeyPair();
     group2.encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     group2.lastBlockHash = make<Crypto::Hash>("other last");
-    group2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(group2));
     CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
   }
@@ -108,13 +100,12 @@ TEST_CASE("GroupStore")
       "from the group)")
   {
     AWAIT_VOID(groupStore.put(group));
-    auto externalGroup2 = externalGroupWithKey;
+    auto externalGroup2 = externalGroup;
     externalGroup2.publicSignatureKey =
         Crypto::makeSignatureKeyPair().publicKey;
     externalGroup2.publicEncryptionKey =
         Crypto::makeEncryptionKeyPair().publicKey;
     externalGroup2.lastBlockHash = make<Crypto::Hash>("other last");
-    externalGroup2.lastBlockIndex = 9999;
     AWAIT_VOID(groupStore.put(externalGroup2));
     CHECK_EQ(AWAIT(groupStore.findById(externalGroup2.id)).value(),
              Group{externalGroup2});

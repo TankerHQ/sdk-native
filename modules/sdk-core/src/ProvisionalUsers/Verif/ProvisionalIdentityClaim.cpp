@@ -23,10 +23,6 @@ Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
 {
   assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
 
-  ensures(!author.revokedAtBlkIndex() ||
-              author.revokedAtBlkIndex() > serverEntry.index(),
-          Errc::InvalidAuthor,
-          "author device must not be revoked");
   ensures(Crypto::verify(serverEntry.hash(),
                          serverEntry.signature(),
                          author.publicSignatureKey()),

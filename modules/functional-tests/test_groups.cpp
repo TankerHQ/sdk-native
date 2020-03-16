@@ -300,4 +300,23 @@ TEST_SUITE("Groups")
     REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
     CHECK(decrypted == clearData);
   }
+
+  TEST_CASE_FIXTURE(TrustchainFixture,
+                    "It should share with a group after the device that "
+                    "created the group has been revoked")
+  {
+    auto alice = trustchain.makeUser(Functional::UserType::New);
+    auto aliceDevice = alice.makeDevice();
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+    auto bob = trustchain.makeUser(Functional::UserType::New);
+    auto bobDevice = bob.makeDevice();
+    auto bobSession = TC_AWAIT(bobDevice.open());
+
+    auto myGroup =
+        TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+    TC_AWAIT(aliceSession->revokeDevice(TC_AWAIT(aliceSession->deviceId())));
+    REQUIRE_NOTHROW(
+        TC_AWAIT(bobSession->encrypt(make_buffer("paf"), {}, {myGroup})));
+  }
 }

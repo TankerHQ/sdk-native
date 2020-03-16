@@ -13,13 +13,10 @@ if (NOT EMSCRIPTEN)
     include/Tanker/DataStore/Version.hpp
     include/Tanker/DataStore/Errors/Errc.hpp
     include/Tanker/DataStore/Errors/ErrcCategory.hpp
-    include/Tanker/DbModels/ContactDevices.hpp
-    include/Tanker/DbModels/ContactUserKeys.hpp
     include/Tanker/DbModels/DeviceKeyStore.hpp
     include/Tanker/DbModels/Groups.hpp
     include/Tanker/DbModels/ResourceKeys.hpp
     include/Tanker/DbModels/ProvisionalUserKeys.hpp
-    include/Tanker/DbModels/Trustchain.hpp
     include/Tanker/DbModels/TrustchainInfo.hpp
     include/Tanker/DbModels/UserKeys.hpp
     include/Tanker/DbModels/Versions.hpp
@@ -28,13 +25,10 @@ if (NOT EMSCRIPTEN)
     src/DataStore/Connection.cpp
     src/DataStore/Database.cpp
     src/DataStore/Table.cpp
-    src/DbModels/ContactDevices.cpp
-    src/DbModels/ContactUserKeys.cpp
     src/DbModels/DeviceKeyStore.cpp
     src/DbModels/Groups.cpp
     src/DbModels/ResourceKeys.cpp
     src/DbModels/ProvisionalUserKeys.cpp
-    src/DbModels/Trustchain.cpp
     src/DbModels/TrustchainInfo.cpp
     src/DbModels/UserKeys.cpp
     src/DbModels/Versions.cpp
@@ -61,12 +55,12 @@ add_library(tankercore STATIC
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
-  include/Tanker/TrustchainStore.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
+  include/Tanker/Unlock/Request.hpp
   include/Tanker/Opener.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
@@ -75,9 +69,13 @@ add_library(tankercore STATIC
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
   include/Tanker/ProvisionalUsers/IAccessor.hpp
+  include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/ProvisionalUsers/Updater.hpp
   include/Tanker/ProvisionalUsers/Requests.hpp
   include/Tanker/ProvisionalUsers/Manager.hpp
+  include/Tanker/ProvisionalUsers/SecretUser.hpp
+  include/Tanker/ProvisionalUsers/PublicUser.hpp
+  include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
   include/Tanker/Groups/GroupEncryptedKey.hpp
@@ -93,7 +91,6 @@ add_library(tankercore STATIC
   include/Tanker/ResourceKeyStore.hpp
   include/Tanker/Session.hpp
   include/Tanker/Core.hpp
-  include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
@@ -103,20 +100,19 @@ add_library(tankercore STATIC
   include/Tanker/Users/IRequester.hpp
   include/Tanker/Users/Requester.hpp
   include/Tanker/Users/LocalUser.hpp
+  include/Tanker/Users/LocalUserStore.hpp
+  include/Tanker/Users/LocalUserAccessor.hpp
+  include/Tanker/Users/ILocalUserAccessor.hpp
   include/Tanker/Users/UserAccessor.hpp
   include/Tanker/Users/IUserAccessor.hpp
-  include/Tanker/Users/ContactStore.hpp
   include/Tanker/Users/Device.hpp
   include/Tanker/Users/EntryGenerator.hpp
   include/Tanker/ResourceKeyAccessor.hpp
-  include/Tanker/SecretProvisionalUser.hpp
-  include/Tanker/PublicProvisionalUser.hpp
   include/Tanker/IdentityUtils.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
   include/Tanker/Verif/DeviceRevocation.hpp
   include/Tanker/Verif/TrustchainCreation.hpp
-  include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Verif/Helpers.hpp
   include/Tanker/Verif/Errors/Errc.hpp
   include/Tanker/Verif/Errors/ErrcCategory.hpp
@@ -138,11 +134,11 @@ add_library(tankercore STATIC
   src/Client.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
+  src/Unlock/Request.cpp
   src/Session.cpp
   src/Opener.cpp
   src/Core.cpp
   src/Status.cpp
-  src/TrustchainStore.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
   src/ResourceKeyStore.cpp
@@ -167,8 +163,9 @@ add_library(tankercore STATIC
   src/Users/User.cpp
   src/Users/Updater.cpp
   src/Users/LocalUser.cpp
+  src/Users/LocalUserStore.cpp
+  src/Users/LocalUserAccessor.cpp
   src/Users/UserAccessor.cpp
-  src/Users/ContactStore.cpp
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp
   src/Users/Requester.cpp

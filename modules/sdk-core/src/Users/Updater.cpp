@@ -1,5 +1,6 @@
 #include <Tanker/Users/Updater.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -9,7 +10,6 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
@@ -61,12 +61,11 @@ Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
 
   if (!previousUser.has_value())
     previousUser.emplace(Users::User{dc.userId(), {}, {}});
-  previousUser->addDevice(Device(Trustchain::DeviceId{entry.hash},
-                                 dc.userId(),
-                                 entry.index,
-                                 dc.isGhostDevice(),
-                                 dc.publicSignatureKey(),
-                                 dc.publicEncryptionKey()));
+  previousUser->addDevice({Trustchain::DeviceId{entry.hash},
+                           dc.userId(),
+                           dc.publicSignatureKey(),
+                           dc.publicEncryptionKey(),
+                           dc.isGhostDevice()});
   if (auto const v3 = dc.get_if<DeviceCreation::v3>())
     previousUser->setUserKey(v3->publicUserEncryptionKey());
   return *previousUser;
@@ -78,7 +77,7 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
   auto const dr = entry.action.get<DeviceRevocation>();
   if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
     previousUser.setUserKey(v2->publicEncryptionKey());
-  previousUser.getDevice(dr.deviceId()).setRevokedAtBlkIndex(entry.index);
+  previousUser.getDevice(dr.deviceId()).setRevoked();
   return previousUser;
 }
 
@@ -116,14 +115,13 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
-                      Trustchain::TrustchainId const& trustchainId,
-                      Crypto::PublicSignatureKey const& trustchainPubSigKey,
+                      Trustchain::Context const& context,
                       gsl::span<Trustchain::ServerEntry const> serverEntries)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
   std::optional<Users::User> user;
-  Trustchain::DeviceId selfDeviceId;
+  std::optional<Trustchain::DeviceId> selfDeviceId;
   for (auto const& serverEntry : serverEntries)
   {
     try
@@ -131,8 +129,8 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
       if (auto const deviceCreation =
               serverEntry.action().get_if<DeviceCreation>())
       {
-        auto const entry = Verif::verifyDeviceCreation(
-            serverEntry, trustchainId, trustchainPubSigKey, user);
+        auto const entry =
+            Verif::verifyDeviceCreation(serverEntry, context, user);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(entry, user);
         auto const& device = user->devices().back();
@@ -149,7 +147,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
       {
         auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
         if (auto const extractedKeys =
-                extractEncryptedUserKey(*deviceRevocation, selfDeviceId))
+                extractEncryptedUserKey(*deviceRevocation, *selfDeviceId))
           sealedKeys.push_back(*extractedKeys);
         user = applyDeviceRevocationToUser(entry, *user);
       }
@@ -165,7 +163,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
   if (!user.has_value())
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our user");
-  if (selfDeviceId.is_null())
+  if (!selfDeviceId)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our device");
 
@@ -215,7 +213,7 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
   return userKeys;
 }
 
-std::tuple<Crypto::PublicSignatureKey,
+std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
 processUserEntries(DeviceKeys const& deviceKeys,
@@ -225,31 +223,13 @@ processUserEntries(DeviceKeys const& deviceKeys,
   if (entries.size() < 2)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "User's block list is too short");
-  auto signatureKey = extractTrustchainSignature(trustchainId, entries[0]);
-  auto [user, sealedKeys] = processUserSealedKeys(
-      deviceKeys, trustchainId, signatureKey, entries.subspan(1));
+  auto trustchainSignatureKey =
+      extractTrustchainSignature(trustchainId, entries[0]);
+  auto const context =
+      Trustchain::Context{trustchainId, trustchainSignatureKey};
+  auto [user, sealedKeys] =
+      processUserSealedKeys(deviceKeys, context, entries.subspan(1));
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
-  return std::make_tuple(signatureKey, std::move(user), std::move(userKeys));
-}
-
-tc::cotask<void> updateLocalUser(
-    gsl::span<Trustchain::ServerEntry const> serverEntries,
-    Trustchain::TrustchainId const& trustchainId,
-    LocalUser& localUser,
-    ContactStore& contactStore)
-{
-  auto const deviceKeys = localUser.deviceKeys();
-  auto [trustchainSignatureKey, user, userKeys] =
-      Users::Updater::processUserEntries(
-          deviceKeys, trustchainId, serverEntries);
-
-  localUser.setTrustchainPublicSignatureKey(trustchainSignatureKey);
-  if (auto const selfDevice =
-          user.findDevice(deviceKeys.encryptionKeyPair.publicKey))
-    localUser.setDeviceId(selfDevice->id());
-
-  for (auto const& userKey : userKeys)
-    TC_AWAIT(localUser.insertUserKey(userKey));
-  TC_AWAIT(contactStore.putUser(user));
+  return std::make_tuple(context, std::move(user), std::move(userKeys));
 }
 }

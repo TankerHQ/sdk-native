@@ -7,12 +7,13 @@
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Unlock/Verification.hpp>
-#include <Tanker/Users/ContactStore.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/future.hpp>
@@ -60,12 +61,13 @@ private:
   std::string _writablePath;
 
   std::optional<Identity::SecretPermanentIdentity> _identity;
+  Trustchain::Context _trustchainContext;
+  std::optional<DeviceKeys> _deviceKeys;
   DataStore::DatabasePtr _db;
-  Users::LocalUser::Ptr _localUser;
-  std::unique_ptr<Users::ContactStore> _contactStore;
+  std::unique_ptr<Users::LocalUserStore> _localUserStore;
+  std::unique_ptr<Users::LocalUserAccessor> _localUserAccessor;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
-  DeviceKeys _deviceKeys;
   Status _status = Status::Stopped;
 
   tc::cotask<void> unlockCurrentDevice(VerificationKey const& verificationKey);

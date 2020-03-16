@@ -22,35 +22,15 @@ public:
   tc::cotask<void> migrate();
 
   tc::cotask<void> putUserPrivateKey(
-      Crypto::PublicEncryptionKey const& publicKey,
-      Crypto::PrivateEncryptionKey const& privateKey) override;
-  tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
-      Crypto::PublicEncryptionKey const& publicKey) override;
-  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getUserOptLastKeyPair()
-      override;
+      Crypto::EncryptionKeyPair const& userKeyPair) override;
+  tc::cotask<void> putUserKeyPairs(
+      gsl::span<Crypto::EncryptionKeyPair const> userKeyPair) override;
+  tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() override;
 
-  tc::cotask<std::optional<uint64_t>> findTrustchainLastIndex() override;
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() override;
-  tc::cotask<void> setTrustchainLastIndex(uint64_t) override;
   tc::cotask<void> setTrustchainPublicSignatureKey(
       Crypto::PublicSignatureKey const&) override;
-  tc::cotask<void> addTrustchainEntry(Entry const& Entry) override;
-  tc::cotask<std::optional<Entry>> findTrustchainEntry(
-      Crypto::Hash const& hash) override;
-
-  tc::cotask<void> putContact(
-      Trustchain::UserId const& userId,
-      std::optional<Crypto::PublicEncryptionKey> const& publicKey) override;
-
-  tc::cotask<std::optional<Crypto::PublicEncryptionKey>> findContactUserKey(
-      Trustchain::UserId const& userId) override;
-  tc::cotask<std::optional<Trustchain::UserId>>
-  findContactUserIdByPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& userPublicKey) override;
-  tc::cotask<void> setContactPublicEncryptionKey(
-      Trustchain::UserId const& userId,
-      Crypto::PublicEncryptionKey const& userPublicKey) override;
 
   tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
                                   Crypto::SymmetricKey const& key) override;
@@ -72,16 +52,6 @@ public:
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
   tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() override;
-
-  tc::cotask<void> putDevice(Users::Device const& device) override;
-  tc::cotask<std::optional<Users::Device>> findDevice(
-      Trustchain::DeviceId const& id) override;
-  tc::cotask<std::vector<Users::Device>> getDevicesOf(
-      Trustchain::UserId const& id) override;
-  tc::cotask<std::optional<Trustchain::UserId>> findDeviceUserId(
-      Trustchain::DeviceId const& id) override;
-  tc::cotask<void> updateDeviceRevokedAt(Trustchain::DeviceId const& id,
-                                         uint64_t revokedAtBlkIndex) override;
 
   tc::cotask<void> putInternalGroup(InternalGroup const& group) override;
   tc::cotask<void> putExternalGroup(ExternalGroup const& group) override;

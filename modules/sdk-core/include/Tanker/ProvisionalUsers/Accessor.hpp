@@ -2,22 +2,28 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
-#include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/Types/ProvisionalUserKeys.hpp>
+#include <Tanker/Users/IUserAccessor.hpp>
 
 namespace Tanker::Users
 {
-class ContactStore;
-class LocalUser;
+class ILocalUserAccessor;
+}
+
+namespace Tanker
+{
+class ProvisionalUserKeysStore;
 }
 
 namespace Tanker::ProvisionalUsers
 {
+
 class Accessor : public IAccessor
 {
 public:
   Accessor(Client* client,
-           Users::ContactStore const* contactStore,
-           Users::LocalUser const* localUser,
+           Users::IUserAccessor* userAccessor,
+           Users::ILocalUserAccessor* localUser,
            ProvisionalUserKeysStore* provisionalUserKeysStore);
 
   Accessor() = delete;
@@ -37,8 +43,8 @@ public:
 
 private:
   Client* _client;
-  Users::ContactStore const* _contactStore;
-  Users::LocalUser const* _localUser;
+  Users::IUserAccessor* _userAccessor;
+  Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
 };
 }

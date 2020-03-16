@@ -6,6 +6,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
+#include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -79,7 +80,7 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
 
 UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<PublicProvisionalUser> const& users)
+    std::vector<ProvisionalUsers::PublicUser> const& users)
 {
   UserGroupCreation::v2::ProvisionalMembers keysForUsers;
   for (auto const& user : users)
@@ -97,14 +98,14 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 }
 }
 
-ClientEntry generateCreateGroupEntry(
+ClientEntry makeUserGroupCreationEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::EncryptionKeyPair const& groupEncryptionKeyPair,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
@@ -117,23 +118,17 @@ ClientEntry generateCreateGroupEntry(
                    MAX_GROUP_SIZE);
   }
 
-  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
-      groupSignatureKeyPair.privateKey, groupEncryptionKeyPair.publicKey);
   auto groupMembers = generateGroupKeysForUsers2(
       groupEncryptionKeyPair.privateKey, memberUsers);
   auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers(
       groupEncryptionKeyPair.privateKey, memberProvisionalUsers);
-
-  UserGroupCreation::v2 ugc{groupSignatureKeyPair.publicKey,
-                            groupEncryptionKeyPair.publicKey,
-                            encryptedPrivateSignatureKey,
-                            groupMembers,
-                            groupProvisionalMembers};
-  ugc.selfSign(groupSignatureKeyPair.privateKey);
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             ugc,
-                             privateSignatureKey);
+  return createUserGroupCreationV2Entry(groupSignatureKeyPair,
+                                        groupEncryptionKeyPair.publicKey,
+                                        groupMembers,
+                                        groupProvisionalMembers,
+                                        trustchainId,
+                                        deviceId,
+                                        deviceSignatureKey);
 }
 
 tc::cotask<SGroupId> create(
@@ -150,21 +145,21 @@ tc::cotask<SGroupId> create(
   auto const groupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const groupSignatureKeyPair = Crypto::makeSignatureKeyPair();
 
-  auto const groupEntry = generateCreateGroupEntry(members.users,
-                                                   members.provisionalUsers,
-                                                   groupSignatureKeyPair,
-                                                   groupEncryptionKeyPair,
-                                                   trustchainId,
-                                                   deviceId,
-                                                   privateSignatureKey);
+  auto const groupEntry = makeUserGroupCreationEntry(members.users,
+                                                     members.provisionalUsers,
+                                                     groupSignatureKeyPair,
+                                                     groupEncryptionKeyPair,
+                                                     trustchainId,
+                                                     deviceId,
+                                                     privateSignatureKey);
   TC_AWAIT(client.pushBlock(Serialization::serialize(groupEntry)));
 
   TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKeyPair.publicKey));
 }
 
-ClientEntry generateAddUserToGroupEntry(
+ClientEntry makeUserGroupAdditionEntry(
     std::vector<Users::User> const& memberUsers,
-    std::vector<PublicProvisionalUser> const& memberProvisionalUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
@@ -184,22 +179,17 @@ ClientEntry generateAddUserToGroupEntry(
                    MAX_GROUP_SIZE);
   }
 
-  Trustchain::GroupId const groupId{group.signatureKeyPair.publicKey.base()};
   auto members = generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
                                             memberUsers);
   auto provisionalMembers = generateGroupKeysForProvisionalUsers(
       group.encryptionKeyPair.privateKey, memberProvisionalUsers);
-
-  UserGroupAddition::v2 uga{groupId,
-                            group.lastBlockHash,
-                            std::move(members),
-                            std::move(provisionalMembers)};
-  uga.selfSign(group.signatureKeyPair.privateKey);
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             uga,
-                             privateSignatureKey);
+  return createUserGroupAdditionV2Entry(group.signatureKeyPair,
+                                        group.lastBlockHash,
+                                        members,
+                                        provisionalMembers,
+                                        trustchainId,
+                                        deviceId,
+                                        privateSignatureKey);
 }
 
 tc::cotask<void> updateMembers(
@@ -219,12 +209,12 @@ tc::cotask<void> updateMembers(
   if (groups.found.empty())
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
-  auto const groupEntry = generateAddUserToGroupEntry(members.users,
-                                                      members.provisionalUsers,
-                                                      groups.found[0],
-                                                      trustchainId,
-                                                      deviceId,
-                                                      privateSignatureKey);
+  auto const groupEntry = makeUserGroupAdditionEntry(members.users,
+                                                     members.provisionalUsers,
+                                                     groups.found[0],
+                                                     trustchainId,
+                                                     deviceId,
+                                                     privateSignatureKey);
   TC_AWAIT(client.pushBlock(Serialization::serialize(groupEntry)));
 }
 }

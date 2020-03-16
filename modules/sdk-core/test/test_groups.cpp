@@ -41,7 +41,7 @@ TEST_CASE("Can't create an empty group")
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::generateCreateGroupEntry(
+      Groups::Manager::makeUserGroupCreationEntry(
           {},
           {},
           groupSignatureKey,
@@ -65,7 +65,7 @@ TEST_CASE("Can create a group with two users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::generateCreateGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
       {user.asTankerUser(), user2.asTankerUser()},
       {},
       groupSignatureKey,
@@ -117,7 +117,7 @@ TEST_CASE("Can create a group with two provisional users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::generateCreateGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
       {},
       {provisionalUser.publicProvisionalUser,
        provisionalUser2.publicProvisionalUser},
@@ -170,7 +170,7 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   UserAccessorMock userAccessor;
 
-  REQUIRE_CALL(userAccessor, pull(trompeloeil::_))
+  REQUIRE_CALL(userAccessor, pull(ANY(gsl::span<Trustchain::UserId const>)))
       .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
@@ -190,7 +190,7 @@ TEST_CASE("Fails to add 0 users to a group")
   InternalGroup const group{};
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::generateAddUserToGroupEntry(
+      Groups::Manager::makeUserGroupAdditionEntry(
           {},
           {},
           group,
@@ -213,7 +213,7 @@ TEST_CASE("Can add users to a group")
   auto const groupResult = builder.makeGroup(userDevice, {user, user2});
   auto group = groupResult.group.tankerGroup;
 
-  auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
       {user.asTankerUser(), user2.asTankerUser()},
       {},
       group,
@@ -263,7 +263,7 @@ TEST_CASE("Can add provisional users to a group")
   auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
 
-  auto const clientEntry = Groups::Manager::generateAddUserToGroupEntry(
+  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
       {},
       {provisionalUser.publicProvisionalUser,
        provisionalUser2.publicProvisionalUser},

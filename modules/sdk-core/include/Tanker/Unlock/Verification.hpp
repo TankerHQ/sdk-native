@@ -13,6 +13,11 @@
 
 namespace Tanker
 {
+namespace Identity
+{
+struct SecretProvisionalIdentity;
+}
+
 namespace Unlock
 {
 struct EmailVerification
@@ -24,10 +29,13 @@ struct EmailVerification
 using Verification = boost::variant2::
     variant<VerificationKey, EmailVerification, Passphrase, OidcIdToken>;
 
+using EncryptedEmail = std::vector<std::uint8_t>;
+
 class VerificationMethod
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
-      VerificationMethod, (VerificationKey, Email, Passphrase, OidcIdToken))
+      VerificationMethod,
+      (VerificationKey, EncryptedEmail, Email, Passphrase, OidcIdToken))
 
   static VerificationMethod from(Verification const& v);
 
@@ -37,8 +45,15 @@ private:
                         VerificationMethod const& b);
 };
 
-void to_json(nlohmann::json&, VerificationMethod const&);
+void decryptEmailMethods(std::vector<VerificationMethod>& encryptedMethods,
+                         Crypto::SymmetricKey const& userSecret);
+
+void to_json(nlohmann::json&, VerificationMethod const&) = delete;
 void from_json(nlohmann::json const&, VerificationMethod&);
+
+void validateVerification(
+    Verification const& verification,
+    Identity::SecretProvisionalIdentity const& provisionalIdentity);
 
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {

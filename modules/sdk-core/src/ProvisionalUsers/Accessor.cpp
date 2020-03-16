@@ -6,8 +6,6 @@
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requests.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
-#include <Tanker/Users/ContactStore.hpp>
-#include <Tanker/Users/LocalUser.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 
@@ -16,12 +14,12 @@ using Tanker::Trustchain::GroupId;
 namespace Tanker::ProvisionalUsers
 {
 Accessor::Accessor(Client* client,
-                   Users::ContactStore const* contactStore,
-                   Users::LocalUser const* localUser,
+                   Users::IUserAccessor* userAccessor,
+                   Users::ILocalUserAccessor* localUserAccessor,
                    ProvisionalUserKeysStore* provisionalUserKeysStore)
   : _client(client),
-    _contactStore(contactStore),
-    _localUser(localUser),
+    _userAccessor(userAccessor),
+    _localUserAccessor(localUserAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore)
 {
 }
@@ -54,13 +52,16 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::pullEncryptionKeys(
 tc::cotask<void> Accessor::refreshKeys()
 {
   auto const blocks = TC_AWAIT(Requests::getClaimBlocks(_client));
-  auto const toStore = TC_AWAIT(
-      Updater::processClaimEntries(*_localUser, *_contactStore, blocks));
+  auto const toStore = TC_AWAIT(Updater::processClaimEntries(
+      *_localUserAccessor, *_userAccessor, blocks));
 
-  for (auto const& keys : toStore)
+  for (auto const& [appSignaturePublicKey,
+                    tankerSignaturePublicKey,
+                    appEncryptionKeyPair,
+                    tankerEncryptionKeyPair] : toStore)
     TC_AWAIT(_provisionalUserKeysStore->putProvisionalUserKeys(
-        keys.appSignaturePublicKey,
-        keys.tankerSignaturePublicKey,
-        {keys.appEncryptionKeyPair, keys.tankerEncryptionKeyPair}));
+        appSignaturePublicKey,
+        tankerSignaturePublicKey,
+        {appEncryptionKeyPair, tankerEncryptionKeyPair}));
 }
 }

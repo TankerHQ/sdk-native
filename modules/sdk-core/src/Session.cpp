@@ -32,7 +32,6 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
@@ -70,67 +69,57 @@ TLOG_CATEGORY(Session);
 namespace Tanker
 {
 Session::Session(Config&& config)
-  : _trustchainId(config.trustchainId),
+  : _userSecret(config.userSecret),
     _db(std::move(config.db)),
-    _localUser(std::move(config.localUser)),
+    _localUserAccessor(std::move(config.localUserAccessor)),
     _client(std::move(config.client)),
     _userRequester(std::move(config.userRequester)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
-    _trustchain(_db.get()),
-    _contactStore(std::move(config.contactStore)),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
-    _userAccessor(_trustchainId,
-                  _localUser->trustchainPublicSignatureKey(),
-                  _userRequester.get(),
-                  _contactStore.get()),
+    _userAccessor(_localUserAccessor->getContext(), _userRequester.get()),
     _provisionalUsersAccessor(_client.get(),
-                              _contactStore.get(),
-                              _localUser.get(),
+                              &_userAccessor,
+                              _localUserAccessor.get(),
                               &_provisionalUserKeysStore),
-    _provisionalUsersManager(_localUser.get(),
+    _provisionalUsersManager(_localUserAccessor.get(),
                              _client.get(),
                              &_provisionalUsersAccessor,
                              &_provisionalUserKeysStore,
-                             _trustchainId),
+                             _localUserAccessor->getContext().id()),
     _groupAccessor(_groupsRequester.get(),
                    &_userAccessor,
                    &_groupStore,
-                   _localUser.get(),
+                   _localUserAccessor.get(),
                    &_provisionalUsersAccessor),
     _resourceKeyAccessor(_client.get(),
-                         _localUser.get(),
+                         _localUserAccessor.get(),
                          &_groupAccessor,
                          &_provisionalUsersAccessor,
                          &_resourceKeyStore)
 {
   _client->setConnectionHandler([this]() -> tc::cotask<void> {
     TC_AWAIT(_userRequester->authenticate(
-        trustchainId(), userId(), _localUser->deviceKeys().signatureKeyPair));
+        trustchainId(),
+        userId(),
+        TC_AWAIT(_localUserAccessor->pull()).deviceKeys().signatureKeyPair));
   });
-}
-
-tc::cotask<void> Session::updateLocalUser()
-{
-  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
-  TC_AWAIT(Users::Updater::updateLocalUser(
-      serverEntries, trustchainId(), *_localUser, *_contactStore));
 }
 
 UserId const& Session::userId() const
 {
-  return this->_localUser->userId();
+  return this->_localUserAccessor->get().userId();
 }
 
 Trustchain::TrustchainId const& Session::trustchainId() const
 {
-  return this->_trustchainId;
+  return this->_localUserAccessor->getContext().id();
 }
 
 Crypto::SymmetricKey const& Session::userSecret() const
 {
-  return this->_localUser->userSecret();
+  return this->_userSecret;
 }
 
 tc::cotask<void> Session::encrypt(
@@ -142,14 +131,15 @@ tc::cotask<void> Session::encrypt(
   auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
-      to_string(Identity::PublicPermanentIdentity{_trustchainId, userId()})});
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()})});
 
   TC_AWAIT(_resourceKeyStore.putKey(metadata.resourceId, metadata.key));
+  auto const& localUser = _localUserAccessor->get();
   TC_AWAIT(Share::share(_userAccessor,
                         _groupAccessor,
-                        _trustchainId,
-                        _localUser->deviceId(),
-                        _localUser->deviceKeys().signatureKeyPair.privateKey,
+                        trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
                         *_client,
                         {{metadata.key, metadata.resourceId}},
                         spublicIdentitiesWithUs,
@@ -189,7 +179,7 @@ tc::cotask<std::vector<uint8_t>> Session::decrypt(
 
 Trustchain::DeviceId const& Session::deviceId() const
 {
-  return _localUser->deviceId();
+  return _localUserAccessor->get().deviceId();
 }
 
 tc::cotask<std::vector<Users::Device>> Session::getDeviceList() const
@@ -214,12 +204,13 @@ tc::cotask<void> Session::share(
     return base64DecodeArgument<ResourceId>(resourceId);
   });
 
+  auto const localUser = _localUserAccessor->get();
   TC_AWAIT(Share::share(_resourceKeyStore,
                         _userAccessor,
                         _groupAccessor,
-                        _trustchainId,
-                        _localUser->deviceId(),
-                        _localUser->deviceKeys().signatureKeyPair.privateKey,
+                        trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
                         *_client,
                         resourceIds,
                         spublicIdentities,
@@ -229,13 +220,14 @@ tc::cotask<void> Session::share(
 tc::cotask<SGroupId> Session::createGroup(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
+  auto const& localUser = _localUserAccessor->get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
       _userAccessor,
       *_client,
       spublicIdentities,
-      _trustchainId,
-      _localUser->deviceId(),
-      _localUser->deviceKeys().signatureKeyPair.privateKey));
+      trustchainId(),
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey));
   TC_RETURN(groupId);
 }
 
@@ -245,15 +237,16 @@ tc::cotask<void> Session::updateGroupMembers(
 {
   auto const groupId = base64DecodeArgument<GroupId>(groupIdString);
 
+  auto const& localUser = _localUserAccessor->get();
   TC_AWAIT(Groups::Manager::updateMembers(
       _userAccessor,
       *_client,
       _groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
-      _trustchainId,
-      _localUser->deviceId(),
-      _localUser->deviceKeys().signatureKeyPair.privateKey));
+      trustchainId(),
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
 tc::cotask<void> Session::setVerificationMethod(
@@ -269,7 +262,7 @@ tc::cotask<void> Session::setVerificationMethod(
     try
     {
       TC_AWAIT(_client->setVerificationMethod(
-          trustchainId(), userId(), method, userSecret()));
+          trustchainId(), userId(), Unlock::makeRequest(method, userSecret())));
     }
     catch (Errors::Exception const& e)
     {
@@ -288,30 +281,38 @@ tc::cotask<void> Session::setVerificationMethod(
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Session::fetchVerificationMethods()
 {
-  TC_RETURN(TC_AWAIT(_client->fetchVerificationMethods(
-      _trustchainId, userId(), userSecret())));
+  auto methods =
+      TC_AWAIT(_client->fetchVerificationMethods(trustchainId(), userId()));
+  Unlock::decryptEmailMethods(methods, userSecret());
+  TC_RETURN(methods);
 }
 
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  TC_AWAIT(updateLocalUser());
-  TC_RETURN(TC_AWAIT(_provisionalUsersManager.attachProvisionalIdentity(
-      TC_AWAIT(_localUser->currentKeyPair()), sidentity)));
+  TC_RETURN(
+      TC_AWAIT(_provisionalUsersManager.attachProvisionalIdentity(sidentity)));
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
+  auto const& identity = _provisionalUsersManager.provisionalIdentity();
+  if (!identity.has_value())
+    throw formatEx(Errors::Errc::PreconditionFailed,
+                   "cannot call verifyProvisionalIdentity "
+                   "without having called "
+                   "attachProvisionalIdentity before");
+  Unlock::validateVerification(verification, *identity);
   TC_AWAIT(_provisionalUsersManager.verifyProvisionalIdentity(
-      TC_AWAIT(_localUser->currentKeyPair()), verification));
+      Unlock::makeRequest(verification, userSecret())));
 }
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  TC_AWAIT(updateLocalUser());
+  auto const& localUser = TC_AWAIT(_localUserAccessor->pull());
   TC_AWAIT(Revocation::revokeDevice(
-      deviceId, _trustchainId, *_localUser, *_contactStore, _client));
+      deviceId, trustchainId(), localUser, _userAccessor, _client));
 }
 
 tc::cotask<void> Session::nukeDatabase()
@@ -328,15 +329,16 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(SPublicIdentity{
-      to_string(Identity::PublicPermanentIdentity{_trustchainId, userId()})});
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()})});
 
   TC_AWAIT(_resourceKeyStore.putKey(encryptor.resourceId(),
                                     encryptor.symmetricKey()));
+  auto const& localUser = TC_AWAIT(_localUserAccessor->pull());
   TC_AWAIT(Share::share(_userAccessor,
                         _groupAccessor,
-                        _trustchainId,
-                        _localUser->deviceId(),
-                        _localUser->deviceKeys().signatureKeyPair.privateKey,
+                        trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
                         *_client,
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},
                         spublicIdentitiesWithUs,
@@ -348,8 +350,6 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
 tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
-
-  TC_AWAIT(updateLocalUser());
   auto const key = TC_AWAIT(_resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {

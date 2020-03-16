@@ -110,8 +110,7 @@ TEST_CASE("UserUpdater")
   {
     auto const [user, sealedKeys] = Updater::processUserSealedKeys(
         selfdevice.device.keys,
-        builder.trustchainId(),
-        builder.trustchainPublicKey(),
+        builder.trustchainContext(),
         gsl::make_span(builder.entries())
             .as_span<Tanker::Trustchain::ServerEntry const>()
             .subspan(1));

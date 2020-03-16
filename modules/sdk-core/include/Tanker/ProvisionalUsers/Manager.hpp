@@ -6,7 +6,7 @@
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -14,29 +14,30 @@ namespace Tanker
 {
 namespace Users
 {
-class LocalUser;
+class ILocalUserAccessor;
 }
 namespace ProvisionalUsers
 {
 class Manager
 {
 public:
-  Manager(Users::LocalUser* localUser,
+  Manager(Users::ILocalUserAccessor* localUserAccessor,
           Client* client,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
           Trustchain::TrustchainId const& trustchainId);
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
-      Crypto::EncryptionKeyPair const& lastUserKey,
       SSecretProvisionalIdentity const& sidentity);
 
   tc::cotask<void> verifyProvisionalIdentity(
-      Crypto::EncryptionKeyPair const& lastUserKey,
-      Unlock::Verification const& verification);
+      Unlock::Request const& unlockRequest);
+
+  std::optional<Identity::SecretProvisionalIdentity> const&
+  provisionalIdentity() const;
 
 private:
-  Users::LocalUser* _localUser;
+  Users::ILocalUserAccessor* _localUserAccessor;
   Client* _client;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;

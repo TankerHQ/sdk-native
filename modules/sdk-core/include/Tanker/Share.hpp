@@ -4,13 +4,13 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/TrustchainStore.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Users/Device.hpp>
@@ -44,15 +44,31 @@ using ResourceKeys = std::vector<ResourceKey>;
 struct KeyRecipients
 {
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
-  std::vector<PublicProvisionalUser> recipientProvisionalUserKeys;
+  std::vector<ProvisionalUsers::PublicUser> recipientProvisionalUserKeys;
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
 };
 
-std::vector<uint8_t> makeKeyPublishToUser(
+Trustchain::ClientEntry makeKeyPublishToUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey);
+
+Trustchain::ClientEntry makeKeyPublishToGroup(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& resourceKey);
+
+Trustchain::ClientEntry makeKeyPublishToProvisionalUser(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    ProvisionalUsers::PublicUser const& recipientProvisionalUser,
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 

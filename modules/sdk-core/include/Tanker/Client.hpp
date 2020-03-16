@@ -1,45 +1,32 @@
 #pragma once
 
-#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/EncryptedUserKey.hpp>
-#include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/AConnection.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
-#include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Unlock/Request.hpp>
 
-#include <boost/variant2/variant.hpp>
 #include <gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>
 
-#include <optional>
-
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace Tanker
 {
-namespace ClientHelpers
-{
-nlohmann::json makeVerificationRequest(Unlock::Verification const& verification,
-                                       Crypto::SymmetricKey const& userSecret);
-}
 
 class Client
 {
@@ -64,25 +51,23 @@ public:
       Identity::SecretPermanentIdentity const& identity,
       gsl::span<uint8_t const> userCreation,
       gsl::span<uint8_t const> firstDevice,
-      Unlock::Verification const& method,
-      Crypto::SymmetricKey userSecret,
+      Unlock::Request const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
-      Unlock::Verification const& method,
-      Crypto::SymmetricKey userSecret);
-  tc::cotask<VerificationKey> fetchVerificationKey(
+      Unlock::Request const& verificationRequest);
+
+  tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
-      Unlock::Verification const& method,
-      Crypto::SymmetricKey userSecret);
+      Unlock::Request const& verificationRequest);
 
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::SymmetricKey const& userSecret);
+      Trustchain::UserId const& userId);
+
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);
@@ -96,8 +81,8 @@ public:
       gsl::span<Trustchain::ResourceId const> resourceIds);
 
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-  getProvisionalIdentityKeys(Unlock::Verification const& verification,
-                             Crypto::SymmetricKey const& userSecret);
+  getProvisionalIdentityKeys(Unlock::Request const& request);
+
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail);
 

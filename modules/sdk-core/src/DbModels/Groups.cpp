@@ -26,8 +26,7 @@ void createTable(DataStore::Connection& db, groups const&)
       encrypted_private_signature_key BLOB NULL,
       public_encryption_key BLOB NOT NULL UNIQUE,
       private_encryption_key BLOB NULL,
-      last_group_block_hash BLOB NOT NULL,
-      last_group_block_index INTEGER NOT NULL
+      last_group_block_hash BLOB NOT NULL
     );
   )");
 }

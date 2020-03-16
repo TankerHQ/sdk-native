@@ -24,6 +24,7 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/Updater.hpp>
 
@@ -38,7 +39,7 @@
 
 using namespace Tanker::Errors;
 
-TLOG_CATEGORY(Core);
+TLOG_CATEGORY(Opener);
 
 namespace Tanker
 {
@@ -50,16 +51,6 @@ std::string getDbPath(std::string const& writablePath,
   if (writablePath == ":memory:")
     return writablePath;
   return fmt::format(TFMT("{:s}/tanker-{:S}.db"), writablePath, userId);
-}
-
-tc::cotask<DeviceKeys> getDeviceKeys(DataStore::ADatabase* db)
-{
-  auto const keys = TC_AWAIT(db->getDeviceKeys());
-  if (keys)
-    TC_RETURN(*keys);
-  auto ret = DeviceKeys::create();
-  TC_AWAIT(db->setDeviceKeys(ret));
-  TC_RETURN(ret);
 }
 }
 
@@ -79,37 +70,14 @@ Status Opener::status() const
 
 tc::cotask<void> Opener::fetchUser()
 {
-  TC_AWAIT(_userRequester->authenticate(_info.trustchainId,
+  TC_AWAIT(_userRequester->authenticate(_identity->trustchainId,
                                         _identity->delegation.userId,
-                                        _deviceKeys.signatureKeyPair));
-  auto const deviceId = TC_AWAIT(_db->getDeviceId());
-  auto const trustchainPubSigKey =
-      TC_AWAIT(_db->findTrustchainPublicSignatureKey());
-  if (deviceId && trustchainPubSigKey)
-  {
-    _localUser =
-        std::make_unique<Users::LocalUser>(_identity->delegation.userId,
-                                           *deviceId,
-                                           _identity->userSecret,
-                                           _deviceKeys,
-                                           *trustchainPubSigKey,
-                                           _db.get());
-    TC_RETURN();
-  }
-
-  // FIXME
-  // - do not pass db to LocalUser
-  // - refactor&rename Users::Updater::updateLocalUser to construct a localUser
-  // from scratch
-  _localUser = std::make_unique<Users::LocalUser>(_identity->delegation.userId,
-                                                  Trustchain::DeviceId{},
-                                                  _identity->userSecret,
-                                                  _deviceKeys,
-                                                  Crypto::PublicSignatureKey{},
-                                                  _db.get());
-  auto const serverEntries = TC_AWAIT(_userRequester->getMe());
-  TC_AWAIT(Users::Updater::updateLocalUser(
-      serverEntries, _info.trustchainId, *_localUser, *_contactStore));
+                                        _deviceKeys->signatureKeyPair));
+  _localUserAccessor =
+      TC_AWAIT(Users::LocalUserAccessor::create(_identity->delegation.userId,
+                                                _identity->trustchainId,
+                                                _userRequester.get(),
+                                                std::move(_localUserStore)));
 }
 
 void Opener::extractIdentity(std::string const& b64Identity)
@@ -143,12 +111,12 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 
   auto const dbPath = getDbPath(_writablePath, _identity->delegation.userId);
   _db = TC_AWAIT(DataStore::createDatabase(dbPath, _identity->userSecret));
-  _deviceKeys = TC_AWAIT(getDeviceKeys(_db.get()));
-  _contactStore = std::make_unique<Users::ContactStore>(_db.get());
+  _localUserStore = std::make_unique<Users::LocalUserStore>(_db.get());
+  _deviceKeys = TC_AWAIT(_localUserStore->getDeviceKeys());
   auto const [deviceExists, userExists, unused] = TC_AWAIT(
       _userRequester->userStatus(_info.trustchainId,
                                  _identity->delegation.userId,
-                                 _deviceKeys.signatureKeyPair.publicKey));
+                                 _deviceKeys->signatureKeyPair.publicKey));
 
   if (deviceExists)
     _status = Status::Ready;
@@ -162,19 +130,22 @@ tc::cotask<Status> Opener::open(std::string const& b64Identity)
 tc::cotask<VerificationKey> Opener::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  TC_RETURN(TC_AWAIT(_client->fetchVerificationKey(_info.trustchainId,
-                                                   _identity->delegation.userId,
-                                                   verification,
-                                                   _identity->userSecret)));
+  auto const encryptedKey = TC_AWAIT(_client->fetchVerificationKey(
+      _info.trustchainId,
+      _identity->delegation.userId,
+      Unlock::makeRequest(verification, _identity->userSecret)));
+  auto const verificationKey =
+      Crypto::decryptAead(_identity->userSecret, encryptedKey);
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Opener::fetchVerificationMethods()
 {
-  TC_RETURN(
-      TC_AWAIT(_client->fetchVerificationMethods(_info.trustchainId,
-                                                 _identity->delegation.userId,
-                                                 _identity->userSecret)));
+  auto encryptedMethods = TC_AWAIT(_client->fetchVerificationMethods(
+      _info.trustchainId, _identity->delegation.userId));
+  Unlock::decryptEmailMethods(encryptedMethods, _identity->userSecret);
+  TC_RETURN(encryptedMethods);
 }
 
 tc::cotask<void> Opener::unlockCurrentDevice(
@@ -197,8 +168,8 @@ tc::cotask<void> Opener::unlockCurrentDevice(
         encryptedUserKey.deviceId,
         Identity::makeDelegation(_identity->delegation.userId,
                                  ghostDeviceKeys.signatureKeyPair.privateKey),
-        _deviceKeys.signatureKeyPair.publicKey,
-        _deviceKeys.encryptionKeyPair.publicKey,
+        _deviceKeys->signatureKeyPair.publicKey,
+        _deviceKeys->encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
     TC_AWAIT(_client->pushBlock(Serialization::serialize(entry)));
   }
@@ -214,9 +185,9 @@ tc::cotask<void> Opener::unlockCurrentDevice(
 Session::Config Opener::makeConfig()
 {
   return {std::move(_db),
-          _info.trustchainId,
-          std::move(_localUser),
-          std::move(_contactStore),
+          std::move(_trustchainContext),
+          std::move(_identity->userSecret),
+          std::move(_localUserAccessor),
           std::move(_client),
           std::move(_userRequester)};
 }
@@ -254,20 +225,20 @@ tc::cotask<Session::Config> Opener::createUser(
       Trustchain::DeviceId{userCreationEntry.hash()},
       Identity::makeDelegation(_identity->delegation.userId,
                                ghostDevice.privateSignatureKey),
-      _deviceKeys.signatureKeyPair.publicKey,
-      _deviceKeys.encryptionKeyPair.publicKey,
+      _deviceKeys->signatureKeyPair.publicKey,
+      _deviceKeys->encryptionKeyPair.publicKey,
       userKeyPair);
 
   auto const encryptVerificationKey = Crypto::encryptAead(
       _identity->userSecret,
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
-  TC_AWAIT(_client->createUser(*_identity,
-                               Serialization::serialize(userCreationEntry),
-                               Serialization::serialize(firstDeviceEntry),
-                               verification,
-                               _identity->userSecret,
-                               encryptVerificationKey));
+  TC_AWAIT(_client->createUser(
+      *_identity,
+      Serialization::serialize(userCreationEntry),
+      Serialization::serialize(firstDeviceEntry),
+      Unlock::makeRequest(verification, _identity->userSecret),
+      encryptVerificationKey));
   TC_AWAIT(fetchUser());
   TC_RETURN(makeConfig());
 }

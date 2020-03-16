@@ -29,5 +29,11 @@ bool operator!=(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
 {
   return !(a == b);
 }
+
+template <KeyUsage Usage>
+bool operator<(KeyPair<Usage> const& a, KeyPair<Usage> const& b)
+{
+  return a.publicKey() < b.publicKey();
+}
 }
 }

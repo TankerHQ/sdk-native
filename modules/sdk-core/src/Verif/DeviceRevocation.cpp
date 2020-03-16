@@ -62,7 +62,7 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
   }
   size_t const nbrDevicesNotRevoked = std::count_if(
       user.devices().begin(), user.devices().end(), [](auto const& device) {
-        return device.revokedAtBlkIndex() == std::nullopt;
+        return !device.isRevoked();
       });
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
               nbrDevicesNotRevoked - 1,
@@ -106,8 +106,7 @@ Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
           Errc::InvalidUser,
           "A device can only be revoked by another device of its user");
 
-  ensures(!author->revokedAtBlkIndex() ||
-              author->revokedAtBlkIndex() > serverEntry.index(),
+  ensures(!author->isRevoked(),
           Errc::AuthorIsRevoked,
           "Author device of revocation must not be revoked");
 
@@ -116,7 +115,7 @@ Entry verifyDeviceRevocation(ServerEntry const& serverEntry,
           Errc::InvalidUser,
           "The target device of a revocation must be owned by the user");
 
-  ensures(!target->revokedAtBlkIndex(),
+  ensures(!target->isRevoked(),
           Errc::InvalidTargetDevice,
           "The target of a revocation must not be already revoked");
 

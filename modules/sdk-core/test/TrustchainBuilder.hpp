@@ -7,9 +7,10 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/PublicProvisionalUser.hpp>
-#include <Tanker/SecretProvisionalUser.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
+#include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
+#include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -18,17 +19,13 @@
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/LocalUser.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <optional>
 #include <set>
 #include <string>
 #include <vector>
-
-namespace Tanker::Users
-{
-class ContactStore;
-}
 
 class TrustchainBuilder
 {
@@ -39,8 +36,7 @@ public:
     Tanker::Trustchain::DeviceId id;
     Tanker::Trustchain::UserId userId;
     Tanker::Identity::Delegation delegation;
-    uint64_t createdAtIndex;
-    std::optional<uint64_t> revokedAtIndex;
+    bool isRevoked = false;
 
     Tanker::Users::Device asTankerDevice() const;
   };
@@ -49,6 +45,10 @@ public:
   {
     Tanker::Crypto::EncryptionKeyPair keyPair;
     uint64_t blockIndex;
+    inline operator Tanker::Crypto::EncryptionKeyPair const&() const
+    {
+      return keyPair;
+    }
   };
 
   struct User
@@ -58,6 +58,7 @@ public:
     std::vector<Device> devices;
     std::vector<UserKey> userKeys;
     uint64_t blockIndex;
+    std::vector<Tanker::Trustchain::ServerEntry> entries;
 
     Tanker::Users::User asTankerUser() const;
     std::optional<Device> findDevice(
@@ -79,8 +80,8 @@ public:
 
   struct ProvisionalUser
   {
-    Tanker::SecretProvisionalUser secretProvisionalUser;
-    Tanker::PublicProvisionalUser publicProvisionalUser;
+    Tanker::ProvisionalUsers::SecretUser secretProvisionalUser;
+    Tanker::ProvisionalUsers::PublicUser publicProvisionalUser;
     Tanker::SPublicIdentity spublicIdentity;
   };
 
@@ -113,15 +114,16 @@ public:
   ResultDevice makeDevice3(std::string const& suserId,
                            int validatorDeviceIndex = 0);
 
-  ResultGroup makeGroup(
-      Device const& author,
-      std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers = {});
+  ResultGroup makeGroup(Device const& author,
+                        std::vector<User> const& users,
+                        std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+                            provisionalUsers = {});
   ResultGroup makeGroup1(Device const& author, std::vector<User> const& users);
   ResultGroup makeGroup2(
       Device const& author,
       std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
+      std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+          provisionalUsers);
   ResultGroup addUserToGroup(Device const& author,
                              InternalGroup group,
                              std::vector<User> const& users);
@@ -129,21 +131,17 @@ public:
       Device const& author,
       InternalGroup group,
       std::vector<User> const& users,
-      std::vector<Tanker::PublicProvisionalUser> const& provisionalUsers);
+      std::vector<Tanker::ProvisionalUsers::PublicUser> const&
+          provisionalUsers);
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
-  Tanker::PublicProvisionalUser toPublicProvisionalUser(
-      Tanker::SecretProvisionalUser const& u) const;
+  Tanker::ProvisionalUsers::PublicUser toPublicProvisionalUser(
+      Tanker::ProvisionalUsers::SecretUser const& u) const;
   Tanker::Trustchain::ServerEntry claimProvisionalIdentity(
       std::string const& userId,
-      Tanker::SecretProvisionalUser const& provisionalUser,
+      Tanker::ProvisionalUsers::SecretUser const& provisionalUser,
       int authorDeviceIndex = 0);
 
-  std::vector<Tanker::Trustchain::ServerEntry> shareToDevice(
-      Device const& sender,
-      User const& receiver,
-      Tanker::Trustchain::ResourceId const& resourceId,
-      Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::ServerEntry shareToUser(
       Device const& sender,
       User const& receiver,
@@ -156,7 +154,7 @@ public:
       Tanker::Crypto::SymmetricKey const& key);
   Tanker::Trustchain::ServerEntry shareToProvisionalUser(
       Device const& sender,
-      Tanker::PublicProvisionalUser const& receiver,
+      Tanker::ProvisionalUsers::PublicUser const& receiver,
       Tanker::Trustchain::ResourceId const& resourceId,
       Tanker::Crypto::SymmetricKey const& key);
 
@@ -169,11 +167,8 @@ public:
 
   std::optional<User> findUser(std::string const& suserId) const;
 
-  Tanker::Users::LocalUser::Ptr makeLocalUser(
+  std::unique_ptr<Tanker::Users::LocalUserStore> makeLocalUserStore(
       User const& user, Tanker::DataStore::ADatabase* conn) const;
-  std::unique_ptr<Tanker::Users::ContactStore> makeContactStoreWith(
-      std::vector<std::string> const& suserIds,
-      Tanker::DataStore::ADatabase* conn) const;
   std::vector<Tanker::Group> getGroupsOfUser(
       TrustchainBuilder::User const& user) const;
   std::unique_ptr<Tanker::Groups::Store> makeGroupStore(
@@ -191,6 +186,7 @@ public:
   std::vector<InternalGroup> groups() const;
   std::vector<User> const& users() const;
 
+  Tanker::Trustchain::Context const& trustchainContext() const;
   Tanker::Trustchain::TrustchainId const& trustchainId() const;
   Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey() const;
   Tanker::Crypto::PublicSignatureKey const& trustchainPublicKey() const;
@@ -204,8 +200,8 @@ private:
     }
   };
 
-  Tanker::Crypto::SignatureKeyPair _trustchainKeyPair;
-  Tanker::Trustchain::TrustchainId _trustchainId;
+  Tanker::Trustchain::Context _context;
+  Tanker::Crypto::PrivateSignatureKey _trustchainPrivateSignatureKey;
 
   std::vector<User> _users;
   std::set<InternalGroup, GroupComparator> _groups;

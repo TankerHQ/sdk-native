@@ -16,36 +16,26 @@ public:
   Device() = default;
   Device(Trustchain::DeviceId const& id,
          Trustchain::UserId const& userId,
-         std::uint64_t createdAtBlkIndex,
-         bool isGhostDevice,
          Crypto::PublicSignatureKey const& publicSignatureKey,
-         Crypto::PublicEncryptionKey const& publicEncryptionKey);
-
-  Device(Trustchain::DeviceId const& id,
-         Trustchain::UserId const& userId,
-         std::uint64_t createdAtBlkIndex,
+         Crypto::PublicEncryptionKey const& publicEncryptionKey,
          bool isGhostDevice,
-         std::optional<std::uint64_t> revokedAtBlkIndex,
-         Crypto::PublicSignatureKey const& publicSignatureKey,
-         Crypto::PublicEncryptionKey const& publicEncryptionKey);
+         bool isRevoked = false);
 
   Trustchain::DeviceId const& id() const;
   Trustchain::UserId const& userId() const;
-  std::uint64_t const& createdAtBlkIndex() const;
   bool const& isGhostDevice() const;
-  std::optional<std::uint64_t> const& revokedAtBlkIndex() const;
-  void setRevokedAtBlkIndex(std::uint64_t index);
+  bool const& isRevoked() const;
+  void setRevoked();
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
 
 private:
   Trustchain::DeviceId _id;
   Trustchain::UserId _userId;
-  std::uint64_t _createdAtBlkIndex;
-  bool _isGhostDevice;
-  std::optional<std::uint64_t> _revokedAtBlkIndex;
   Crypto::PublicSignatureKey _publicSignatureKey;
   Crypto::PublicEncryptionKey _publicEncryptionKey;
+  bool _isGhostDevice;
+  bool _isRevoked;
 };
 
 bool operator==(Device const& l, Device const& r);
