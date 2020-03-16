@@ -3,6 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Encryptor.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -134,8 +135,8 @@ tc::cotask<VerificationKey> Opener::fetchVerificationKey(
       _info.trustchainId,
       _identity->delegation.userId,
       Unlock::makeRequest(verification, _identity->userSecret)));
-  auto const verificationKey =
-      Crypto::decryptAead(_identity->userSecret, encryptedKey);
+  auto const verificationKey = TC_AWAIT(
+      Encryptor::decryptFallbackAead(_identity->userSecret, encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
@@ -144,7 +145,8 @@ Opener::fetchVerificationMethods()
 {
   auto encryptedMethods = TC_AWAIT(_client->fetchVerificationMethods(
       _info.trustchainId, _identity->delegation.userId));
-  Unlock::decryptEmailMethods(encryptedMethods, _identity->userSecret);
+  TC_AWAIT(
+      Unlock::decryptEmailMethods(encryptedMethods, _identity->userSecret));
   TC_RETURN(encryptedMethods);
 }
 

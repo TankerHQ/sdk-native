@@ -21,5 +21,8 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
                          gsl::span<uint8_t const> encryptedData);
 Trustchain::ResourceId extractResourceId(
     gsl::span<uint8_t const> encryptedData);
+
+tc::cotask<std::vector<uint8_t>> decryptFallbackAead(
+    Crypto::SymmetricKey const& key, gsl::span<uint8_t const> encryptedData);
 }
 }

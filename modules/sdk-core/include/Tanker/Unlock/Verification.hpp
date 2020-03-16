@@ -10,6 +10,7 @@
 
 #include <boost/variant2/variant.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
 {
@@ -45,8 +46,9 @@ private:
                         VerificationMethod const& b);
 };
 
-void decryptEmailMethods(std::vector<VerificationMethod>& encryptedMethods,
-                         Crypto::SymmetricKey const& userSecret);
+tc::cotask<void> decryptEmailMethods(
+    std::vector<VerificationMethod>& encryptedMethods,
+    Crypto::SymmetricKey const& userSecret);
 
 void to_json(nlohmann::json&, VerificationMethod const&) = delete;
 void from_json(nlohmann::json const&, VerificationMethod&);
