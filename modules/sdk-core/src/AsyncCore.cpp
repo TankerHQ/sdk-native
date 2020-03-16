@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -251,8 +252,42 @@ void AsyncCore::setLogHandler(Log::LogHandler handler)
   static tc::thread_pool tp;
   if (!tp.is_running())
     tp.start(1);
-  Log::setLogHandler(
-      [=](auto... args) { tc::async(tp, [=] { handler(args...); }).get(); });
+
+  // We may execute static destruction before all tanker instances are
+  // destroyed, especially when using tanker in a gc-ed language.
+  // That's why we try/catch exception in the callback, and we try to unset it
+  // before dying. This is a best effort and is still unsafe. I don't think this
+  // is properly fixable, the only way not to crash is to destroy all Tanker
+  // instances before executing static de-init.
+
+  struct LogHandlerGuard
+  {
+    ~LogHandlerGuard()
+    {
+      Log::setLogHandler(nullptr);
+    }
+  };
+  static LogHandlerGuard g;
+
+  Log::setLogHandler([handler](Log::Record const& record) {
+    try
+    {
+      tc::async(tp, [=] { handler(record); }).get();
+    }
+    // see comment above
+    catch (std::exception const& e)
+    {
+      std::cerr << "Tanker: failed to log: " << record.category << " "
+                << record.message << std::endl;
+      std::cerr << "Because of " << typeid(e).name() << ": " << e.what()
+                << std::endl;
+    }
+    catch (...)
+    {
+      std::cerr << "Tanker: failed to log: " << record.category << " "
+                << record.message << std::endl;
+    }
+  });
 }
 
 uint64_t AsyncCore::encryptedSize(uint64_t clearSize)
