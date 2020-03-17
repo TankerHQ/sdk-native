@@ -3,6 +3,7 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
@@ -121,6 +122,10 @@ public:
 
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
+
+  tc::cotask<EncryptionSession*> makeEncryptionSession(
+      std::vector<SPublicIdentity> const& spublicIdentities,
+      std::vector<SGroupId> const& sgroupIds);
 
   tc::cotask<void> nukeDatabase();
 

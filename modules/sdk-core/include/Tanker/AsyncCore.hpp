@@ -2,6 +2,7 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
+#include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
@@ -126,6 +127,10 @@ public:
 
   tc::shared_future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
+
+  tc::shared_future<EncryptionSession*> makeEncryptionSession(
+      std::vector<SPublicIdentity> const& publicIdentities = {},
+      std::vector<SGroupId> const& groupIds = {});
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);
