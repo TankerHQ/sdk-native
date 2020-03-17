@@ -1,4 +1,4 @@
-let g:clang_format_path='clang-format-6.0'
+let g:clang_format_path='clang-format-8'
 function! Formatonsave()
   "let l:formatdiff = 0
   let l:lines = 'all'
