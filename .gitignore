@@ -1,5 +1,6 @@
 build*
 .tags
+.idea/
 .DS_Store
 ._*
 conan_ycm_flags.json
