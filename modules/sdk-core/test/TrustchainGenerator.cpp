@@ -14,7 +14,6 @@
 
 #include <Helpers/Entries.hpp>
 
-#include <algorithm>
 #include <functional>
 #include <iterator>
 

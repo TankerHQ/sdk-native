@@ -3,7 +3,6 @@
 
 #include <doctest.h>
 
-#include <cstddef>
 #include <ostream>
 #include <string>
 #include <vector>

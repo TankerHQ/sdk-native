@@ -4,8 +4,6 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Utils.hpp>
 
-#include <stdexcept>
-
 namespace Tanker
 {
 std::vector<Identity::PublicIdentity> extractPublicIdentities(

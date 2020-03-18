@@ -1,6 +1,5 @@
 #include <Tanker/DataStore/Database.hpp>
 
-#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Table.hpp>
@@ -19,29 +18,21 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Index.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <optional>
-#include <sqlite3.h>
-#include <sqlpp11/functions.h>
 #include <sqlpp11/insert.h>
 #include <sqlpp11/select.h>
 #include <sqlpp11/sqlite3/insert_or.h>
-#include <sqlpp11/verbatim.h>
 
 #include <algorithm>
-#include <array>
 #include <cassert>
-#include <memory>
 #include <string>
 #include <vector>
 

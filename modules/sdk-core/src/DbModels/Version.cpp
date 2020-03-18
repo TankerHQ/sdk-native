@@ -1,12 +1,6 @@
 #include <Tanker/DbModels/Version.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Version.hpp>
-
-#include <sqlpp11/insert.h>
-#include <sqlpp11/sqlite3/insert_or.h>
-
-#include <cassert>
 
 namespace Tanker
 {

@@ -1,7 +1,6 @@
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>

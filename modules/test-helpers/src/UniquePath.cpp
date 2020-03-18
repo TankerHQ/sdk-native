@@ -1,7 +1,5 @@
 #include <Helpers/UniquePath.hpp>
 
-#include <fmt/core.h>
-
 #include <boost/filesystem/operations.hpp>
 
 namespace Tanker

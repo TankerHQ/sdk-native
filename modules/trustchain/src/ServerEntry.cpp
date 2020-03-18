@@ -11,7 +11,6 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 

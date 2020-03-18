@@ -6,7 +6,6 @@
 #include <tconcurrent/executor.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
-#include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Init.hpp>

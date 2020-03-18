@@ -1,7 +1,5 @@
 #include <Tanker/Identity/SecretIdentity.hpp>
 
-#include <Tanker/Identity/Extract.hpp>
-
 #include <nlohmann/json.hpp>
 
 namespace Tanker

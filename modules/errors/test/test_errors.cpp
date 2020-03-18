@@ -1,6 +1,8 @@
 #include <Tanker/Errors/Errc.hpp>
 
 #include <doctest.h>
+// VERY IMPORTANT to include this:
+// https://github.com/onqtam/doctest/issues/183
 #include <ostream>
 
 using namespace Tanker::Errors;

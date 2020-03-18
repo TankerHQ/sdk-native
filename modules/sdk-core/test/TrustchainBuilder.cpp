@@ -6,7 +6,6 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
@@ -22,7 +21,6 @@
 #include <Helpers/Entries.hpp>
 
 #include <algorithm>
-#include <cstring>
 
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Trustchain;

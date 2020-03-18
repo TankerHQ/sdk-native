@@ -9,7 +9,6 @@
 #include <Helpers/Errors.hpp>
 
 #include <doctest.h>
-#include <iostream>
 
 using namespace Tanker;
 using namespace Tanker::Errors;

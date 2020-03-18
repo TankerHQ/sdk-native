@@ -3,18 +3,11 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/GhostDevice.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
-#include <Helpers/UniquePath.hpp>
-
-#include <nlohmann/json.hpp>
 
 #include <doctest.h>
-
-#include "TestVerifier.hpp"
 
 using namespace std::string_literals;
 

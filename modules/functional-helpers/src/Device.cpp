@@ -5,7 +5,6 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <fmt/core.h>
 #include <tconcurrent/coroutine.hpp>
 
 #include <string>

@@ -1,7 +1,6 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Users/User.hpp>
 
-#include <cassert>
 #include <tuple>
 
 namespace Tanker::Users

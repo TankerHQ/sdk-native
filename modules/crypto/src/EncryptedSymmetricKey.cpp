@@ -2,9 +2,6 @@
 
 #include <Tanker/Crypto/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-
-#include <algorithm>
 
 namespace Tanker
 {

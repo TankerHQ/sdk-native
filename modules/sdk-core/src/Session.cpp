@@ -4,57 +4,32 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
-#include <Tanker/Format/Enum.hpp>
-#include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
-#include <Tanker/Groups/Updater.hpp>
-#include <Tanker/Identity/Delegation.hpp>
-#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/ReceiveKey.hpp>
-#include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Streams/DecryptionStream.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Registration.hpp>
-#include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/Updater.hpp>
 #include <Tanker/Utils.hpp>
 
-#include <Tanker/Tracer/ScopeTimer.hpp>
-
 #include <boost/variant2/variant.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/base64_url_unpadded.hpp>
 #include <fmt/format.h>
-#include <nlohmann/json.hpp>
-#include <tconcurrent/async_wait.hpp>
-#include <tconcurrent/future.hpp>
-#include <tconcurrent/promise.hpp>
-#include <tconcurrent/when.hpp>
 
-#include <algorithm>
-#include <cassert>
-#include <iterator>
 #include <stdexcept>
 #include <utility>
 

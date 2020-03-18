@@ -3,7 +3,6 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
 
-#include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
 #include <doctest.h>

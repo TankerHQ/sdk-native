@@ -1,6 +1,5 @@
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 
-#include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 
 TLOG_CATEGORY(provisional_user_keys);

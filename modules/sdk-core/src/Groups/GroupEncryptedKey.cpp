@@ -3,8 +3,6 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <nlohmann/json.hpp>
 
-#include <cstddef>
-
 namespace Tanker
 {
 void from_serialized(Serialization::SerializedSource& ss,

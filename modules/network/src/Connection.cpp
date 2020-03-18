@@ -10,12 +10,9 @@
 #include <sio_message.h>
 #include <sio_socket.h>
 #include <tconcurrent/async.hpp>
-#include <tconcurrent/future.hpp>
 #include <tconcurrent/promise.hpp>
 
 #include <exception>
-#include <memory>
-#include <stdexcept>
 #include <utility>
 
 #include <Tanker/Tracer/FuncTracer.hpp>

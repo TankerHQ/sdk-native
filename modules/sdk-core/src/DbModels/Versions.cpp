@@ -2,8 +2,6 @@
 
 #include <Tanker/DataStore/Connection.hpp>
 
-#include <cassert>
-
 namespace Tanker
 {
 namespace DbModels

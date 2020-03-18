@@ -1,7 +1,5 @@
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 
-#include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requests.hpp>
