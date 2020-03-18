@@ -3,8 +3,6 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 

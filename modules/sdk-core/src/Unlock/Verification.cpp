@@ -7,7 +7,6 @@
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url_unpadded.hpp>

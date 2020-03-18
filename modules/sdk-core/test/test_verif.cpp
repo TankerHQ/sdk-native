@@ -1,16 +1,10 @@
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
-#include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
-#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>

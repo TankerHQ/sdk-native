@@ -1,13 +1,8 @@
 #include <Tanker/Users/LocalUser.hpp>
 
-#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Log/Log.hpp>
-
-#include <fmt/format.h>
-#include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY(LocalUser);
 

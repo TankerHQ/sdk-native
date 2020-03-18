@@ -3,7 +3,6 @@
 #include <Tanker/Trustchain/Actions/DeviceRevocation/v2.hpp>
 
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Buffers.hpp>
 

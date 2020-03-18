@@ -1,6 +1,5 @@
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
-#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>

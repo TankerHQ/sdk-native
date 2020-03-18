@@ -1,7 +1,6 @@
 #include <Tanker/DbModels/Groups.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 

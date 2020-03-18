@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>

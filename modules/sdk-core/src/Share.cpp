@@ -9,11 +9,9 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
-#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -22,7 +20,6 @@
 #include <boost/variant2/variant.hpp>
 
 #include <algorithm>
-#include <iterator>
 
 using namespace Tanker::Trustchain;
 

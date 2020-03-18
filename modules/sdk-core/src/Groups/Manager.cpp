@@ -8,12 +8,10 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
-#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>

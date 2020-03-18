@@ -12,8 +12,6 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <algorithm>
-
 using Tanker::Trustchain::ResourceId;
 
 using namespace Tanker::Errors;

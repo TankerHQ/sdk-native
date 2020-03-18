@@ -3,18 +3,14 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Entry.hpp>
-#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeyStore.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>

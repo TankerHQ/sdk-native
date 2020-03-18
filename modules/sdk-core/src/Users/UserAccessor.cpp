@@ -12,8 +12,6 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 
-#include <fmt/format.h>
-
 #include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY(UserAccessor);

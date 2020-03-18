@@ -2,8 +2,6 @@
 
 #include <Tanker/Errors/AssertionError.hpp>
 
-#include <nlohmann/json.hpp>
-
 using Tanker::Trustchain::UserId;
 
 namespace Tanker

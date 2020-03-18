@@ -7,14 +7,8 @@
 
 #include <optional>
 
-#include <algorithm>
-#include <array>
 #include <cstdlib>
-#include <fstream>
-#include <iterator>
-#include <sstream>
 #include <stdexcept>
-#include <utility>
 
 namespace Tanker
 {

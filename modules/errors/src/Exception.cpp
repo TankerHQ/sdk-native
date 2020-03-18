@@ -22,14 +22,12 @@
 
 #include <Tanker/Errors/Exception.hpp>
 
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 
 #include <boost/stacktrace/frame.hpp>
 #include <boost/stacktrace/stacktrace.hpp>
 #include <fmt/format.h>
 
-#include <cassert>
 #include <sstream>
 #include <utility>
 

@@ -15,7 +15,6 @@
 #include <Helpers/MakeCoTask.hpp>
 
 #include "GroupAccessorMock.hpp"
-#include "MockConnection.hpp"
 #include "TestVerifier.hpp"
 #include "TrustchainBuilder.hpp"
 #include "UserAccessorMock.hpp"

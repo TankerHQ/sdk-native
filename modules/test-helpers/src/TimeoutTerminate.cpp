@@ -2,7 +2,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <type_traits>
 
 namespace Tanker
 {

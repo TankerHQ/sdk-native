@@ -1,7 +1,5 @@
 #include <doctest.h>
 
-#include <optional>
-
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlpp11.h>
 

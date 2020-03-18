@@ -1,11 +1,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/Groups/Accessor.hpp>
-#include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <Helpers/Await.hpp>
@@ -18,7 +15,6 @@
 #include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
-#include "UserRequesterStub.hpp"
 
 #include <doctest.h>
 #include <trompeloeil.hpp>

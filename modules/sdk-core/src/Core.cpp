@@ -4,27 +4,20 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Registration.hpp>
 #include <Tanker/Users/Requester.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <nlohmann/json.hpp>
 
-#include <algorithm>
-#include <cassert>
 #include <exception>
-#include <iterator>
 
 #define INVALID_STATUS(action)                               \
   Errors::formatEx(Errors::Errc::PreconditionFailed,         \

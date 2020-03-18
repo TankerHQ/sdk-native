@@ -13,7 +13,6 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Delegation.hpp>
 #include <Tanker/Identity/Extract.hpp>
-#include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -27,10 +26,8 @@
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
-#include <Tanker/Users/Updater.hpp>
 
 #include <gsl-lite.hpp>
-#include <nlohmann/json.hpp>
 #include <tconcurrent/promise.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>

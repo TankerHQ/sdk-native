@@ -1,7 +1,6 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 

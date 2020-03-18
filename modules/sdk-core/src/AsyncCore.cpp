@@ -2,9 +2,6 @@
 
 #include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
-#include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Log/Log.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -17,9 +14,6 @@
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
-#include <Tanker/Tracer/ScopeTimer.hpp>
-
-#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <string>

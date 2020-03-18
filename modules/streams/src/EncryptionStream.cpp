@@ -3,11 +3,8 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Streams/Header.hpp>
-
-#include <algorithm>
 
 using namespace Tanker::Errors;
 
