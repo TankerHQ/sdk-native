@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -21,6 +22,7 @@ namespace Users
 class IUserAccessor;
 class LocalUser;
 class User;
+class Device;
 }
 
 struct DeviceKeys;
@@ -39,7 +41,7 @@ using SealedKeysForDevices =
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices;
 
 SealedKeysForDevices encryptPrivateKeyForDevices(
-    Users::User const& user,
+    gsl::span<Users::Device const> devices,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
@@ -48,6 +50,13 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
                               std::unique_ptr<Client> const& client);
+
+Trustchain::ClientEntry makeRevokeDeviceEntry(
+    Trustchain::DeviceId const& targetDeviceId,
+    Trustchain::TrustchainId const& trustchainId,
+    Users::LocalUser const& localUser,
+    gsl::span<Users::Device const> userDevices,
+    Crypto::EncryptionKeyPair const& newUserKey);
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
     DeviceKeys const& deviceKeys,

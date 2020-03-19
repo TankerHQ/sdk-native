@@ -722,7 +722,9 @@ ServerEntry TrustchainBuilder::revokeDevice2(Device const& sender,
   }
 
   auto const userKeys = Revocation::encryptPrivateKeyForDevices(
-      targetUser->asTankerUser(), target.id, newEncryptionKey.privateKey);
+      targetUser->asTankerUser().devices(),
+      target.id,
+      newEncryptionKey.privateKey);
 
   auto const clientEntry =
       Users::revokeDeviceEntry(trustchainId(),
