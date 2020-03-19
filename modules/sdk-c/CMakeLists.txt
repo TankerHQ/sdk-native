@@ -19,11 +19,13 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/stream.h
   include/ctanker/identity.h
   include/ctanker/groups.h
+  include/ctanker/encryptionsession.h
 
   src/stream.cpp
   src/ctanker.cpp
   src/identity.cpp
   src/groups.cpp
+  src/encryptionsession.cpp
 )
 
 generate_export_header(ctanker
