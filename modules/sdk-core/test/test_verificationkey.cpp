@@ -1,5 +1,3 @@
-#include "TrustchainBuilder.hpp"
-
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/GhostDevice.hpp>
@@ -13,7 +11,6 @@ using namespace std::string_literals;
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
-using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("it can convert a ghost device to unlock key")
 {
@@ -42,9 +39,6 @@ TEST_CASE("verificationKey")
                                   Errors::Errc::InvalidVerification);
   }
 
-  TrustchainBuilder builder;
-  builder.makeUser("alice");
-  auto const alice = builder.findUser("alice").value();
   auto ghostDeviceKeys = DeviceKeys::create();
   auto const verificationKey =
       GhostDevice::create(ghostDeviceKeys).toVerificationKey();
