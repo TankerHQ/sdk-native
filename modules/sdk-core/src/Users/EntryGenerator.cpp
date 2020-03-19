@@ -9,6 +9,7 @@ namespace Tanker::Users
 using namespace Tanker::Trustchain;
 using Trustchain::Actions::DeviceCreation;
 using Trustchain::Actions::DeviceRevocation;
+using Trustchain::Actions::DeviceRevocation1;
 using Trustchain::Actions::DeviceRevocation2;
 
 namespace
@@ -121,6 +122,16 @@ ClientEntry revokeDeviceEntry(
                         userKeys};
   return ClientEntry::create(
       trustchainId, static_cast<Crypto::Hash>(author), dr2, signatureKey);
+}
+
+ClientEntry revokeDeviceV1Entry(TrustchainId const& trustchainId,
+                                DeviceId const& author,
+                                Crypto::PrivateSignatureKey const& signatureKey,
+                                DeviceId const& toBeRevoked)
+{
+  DeviceRevocation1 dr1{toBeRevoked};
+  return ClientEntry::create(
+      trustchainId, static_cast<Crypto::Hash>(author), dr1, signatureKey);
 }
 
 ClientEntry createProvisionalIdentityClaimEntry(

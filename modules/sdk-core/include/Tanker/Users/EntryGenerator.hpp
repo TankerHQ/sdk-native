@@ -53,6 +53,12 @@ Trustchain::ClientEntry revokeDeviceEntry(
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
         userKeys);
 
+Trustchain::ClientEntry revokeDeviceV1Entry(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& author,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    Trustchain::DeviceId const& toBeRevoked);
+
 Trustchain::ClientEntry createProvisionalIdentityClaimEntry(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
