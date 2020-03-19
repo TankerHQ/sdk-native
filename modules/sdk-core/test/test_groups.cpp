@@ -1,9 +1,7 @@
 #include <Tanker/Groups/Manager.hpp>
 
-#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
@@ -12,11 +10,10 @@
 #include <Helpers/MakeCoTask.hpp>
 
 #include "TestVerifier.hpp"
-#include "TrustchainBuilder.hpp"
+#include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
 #include <doctest.h>
-
 #include <trompeloeil.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -29,48 +26,41 @@ using UsersPullResult = Tanker::Users::IUserAccessor::PullResult;
 
 TEST_CASE("Can't create an empty group")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
-
-  auto const user = *builder.findUser("user");
-  auto const userDevice = user.devices.front();
-
-  auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
-  auto groupSignatureKey = Crypto::makeSignatureKeyPair();
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
+  auto const userDevice = user.devices().front();
 
   TANKER_CHECK_THROWS_WITH_CODE(
       Groups::Manager::makeUserGroupCreationEntry(
           {},
           {},
-          groupSignatureKey,
-          groupEncryptionKey,
-          builder.trustchainId(),
-          userDevice.id,
-          userDevice.keys.signatureKeyPair.privateKey),
+          Crypto::makeSignatureKeyPair(),
+          Crypto::makeEncryptionKeyPair(),
+          generator.context().id(),
+          userDevice.id(),
+          userDevice.keys().signatureKeyPair.privateKey),
       Errc::InvalidArgument);
 }
 
 TEST_CASE("Can create a group with two users")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
-  builder.makeUser3("user2");
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
+  auto const user2 = generator.makeUser("user2");
 
-  auto const user = *builder.findUser("user");
-  auto const user2 = *builder.findUser("user2");
-  auto const userDevice = user.devices.front();
+  auto const userDevice = user.devices().front();
 
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
   auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
-      {user.asTankerUser(), user2.asTankerUser()},
+      {user, user2},
       {},
       groupSignatureKey,
       groupEncryptionKey,
-      builder.trustchainId(),
-      userDevice.id,
-      userDevice.keys.signatureKeyPair.privateKey);
+      generator.context().id(),
+      userDevice.id(),
+      userDevice.keys().signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto group = serverEntry.action()
@@ -91,39 +81,36 @@ TEST_CASE("Can create a group with two users")
       std::find_if(group.members().begin(),
                    group.members().end(),
                    [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.userId() == user.userId;
+                     return groupEncryptedKey.userId() == user.id();
                    });
   REQUIRE(groupEncryptedKey != group.members().end());
-  CHECK(groupEncryptedKey->userPublicKey() ==
-        user.userKeys.back().keyPair.publicKey);
+  CHECK(groupEncryptedKey->userPublicKey() == user.userKeys().back().publicKey);
   CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                            user.userKeys.back().keyPair) ==
+                            user.userKeys().back()) ==
         groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
 
 TEST_CASE("Can create a group with two provisional users")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
-  auto const user = *builder.findUser("user");
-  auto const userDevice = user.devices.front();
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
+  auto const userDevice = user.devices().front();
 
-  auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
-  auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
+  auto const provisionalUser = generator.makeProvisionalUser("bob@tanker");
+  auto const provisionalUser2 = generator.makeProvisionalUser("charlie@tanker");
 
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
   auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
       {},
-      {provisionalUser.publicProvisionalUser,
-       provisionalUser2.publicProvisionalUser},
+      {provisionalUser, provisionalUser2},
       groupSignatureKey,
       groupEncryptionKey,
-      builder.trustchainId(),
-      userDevice.id,
-      userDevice.keys.signatureKeyPair.privateKey);
+      generator.context().id(),
+      userDevice.id(),
+      userDevice.keys().signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto group = serverEntry.action()
@@ -140,21 +127,21 @@ TEST_CASE("Can create a group with two provisional users")
         groupSignatureKey.privateKey);
   REQUIRE(group.members().size() == 0);
   REQUIRE(group.provisionalMembers().size() == 2);
-  auto const groupEncryptedKey = std::find_if(
-      group.provisionalMembers().begin(),
-      group.provisionalMembers().end(),
-      [&](auto const& groupEncryptedKey) {
-        return groupEncryptedKey.appPublicSignatureKey() ==
-               provisionalUser.publicProvisionalUser.appSignaturePublicKey;
-      });
+  auto const groupEncryptedKey =
+      std::find_if(group.provisionalMembers().begin(),
+                   group.provisionalMembers().end(),
+                   [&](auto const& groupEncryptedKey) {
+                     return groupEncryptedKey.appPublicSignatureKey() ==
+                            provisionalUser.appSignatureKeyPair().publicKey;
+                   });
   REQUIRE(groupEncryptedKey != group.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
-        provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
+        provisionalUser.tankerSignatureKeyPair().publicKey);
   CHECK(Crypto::sealDecrypt(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),
-            provisionalUser.secretProvisionalUser.appEncryptionKeyPair) ==
+                provisionalUser.tankerEncryptionKeyPair()),
+            provisionalUser.appEncryptionKeyPair()) ==
         groupEncryptionKey.privateKey);
   CHECK(selfSignature == group.selfSignature());
 }
@@ -179,11 +166,10 @@ TEST_CASE("throws when getting keys of an unknown member")
 
 TEST_CASE("Fails to add 0 users to a group")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
 
-  auto const user = *builder.findUser("user");
-  auto const userDevice = user.devices.front();
+  auto const userDevice = user.devices().front();
 
   InternalGroup const group{};
 
@@ -192,32 +178,29 @@ TEST_CASE("Fails to add 0 users to a group")
           {},
           {},
           group,
-          builder.trustchainId(),
-          userDevice.id,
-          userDevice.keys.signatureKeyPair.privateKey),
+          generator.context().id(),
+          userDevice.id(),
+          userDevice.keys().signatureKeyPair.privateKey),
       Errc::InvalidArgument);
 }
 
 TEST_CASE("Can add users to a group")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
-  builder.makeUser3("user2");
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
+  auto const user2 = generator.makeUser("user2");
 
-  auto const user = *builder.findUser("user");
-  auto const user2 = *builder.findUser("user2");
-  auto const userDevice = user.devices.front();
+  auto const userDevice = user.devices().front();
 
-  auto const groupResult = builder.makeGroup(userDevice, {user, user2});
-  auto group = groupResult.group.tankerGroup;
+  auto const group = user.makeGroup({user2});
 
   auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
-      {user.asTankerUser(), user2.asTankerUser()},
+      {user, user2},
       {},
       group,
-      builder.trustchainId(),
-      userDevice.id,
-      userDevice.keys.signatureKeyPair.privateKey);
+      generator.context().id(),
+      userDevice.id(),
+      userDevice.keys().signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto groupAdd = serverEntry.action()
@@ -225,11 +208,11 @@ TEST_CASE("Can add users to a group")
                       .get<UserGroupAddition::v2>();
 
   auto const selfSignature =
-      Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
+      Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
 
   CHECK(groupAdd.groupId() ==
-        Trustchain::GroupId{group.signatureKeyPair.publicKey});
-  CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash);
+        Trustchain::GroupId{group.currentSigKp().publicKey});
+  CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash());
   REQUIRE(groupAdd.members().size() == 2);
   REQUIRE(groupAdd.provisionalMembers().size() == 0);
 
@@ -237,38 +220,34 @@ TEST_CASE("Can add users to a group")
       std::find_if(groupAdd.members().begin(),
                    groupAdd.members().end(),
                    [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.userId() == user.userId;
+                     return groupEncryptedKey.userId() == user.id();
                    });
   REQUIRE(groupEncryptedKey != groupAdd.members().end());
-  CHECK(groupEncryptedKey->userPublicKey() ==
-        user.userKeys.back().keyPair.publicKey);
+  CHECK(groupEncryptedKey->userPublicKey() == user.userKeys().back().publicKey);
   CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                            user.userKeys.back().keyPair) ==
-        group.encryptionKeyPair.privateKey);
+                            user.userKeys().back()) ==
+        group.currentEncKp().privateKey);
   CHECK(selfSignature == groupAdd.selfSignature());
 }
 
 TEST_CASE("Can add provisional users to a group")
 {
-  TrustchainBuilder builder;
-  builder.makeUser3("user");
-  auto const user = *builder.findUser("user");
-  auto const userDevice = user.devices.front();
+  Test::Generator generator;
+  auto const user = generator.makeUser("user");
+  auto const userDevice = user.devices().front();
 
-  auto const groupResult = builder.makeGroup(userDevice, {user});
-  auto group = groupResult.group.tankerGroup;
+  auto const group = user.makeGroup({});
 
-  auto const provisionalUser = builder.makeProvisionalUser("bob@tanker");
-  auto const provisionalUser2 = builder.makeProvisionalUser("charlie@tanker");
+  auto const provisionalUser = generator.makeProvisionalUser("bob@tanker");
+  auto const provisionalUser2 = generator.makeProvisionalUser("charlie@tanker");
 
   auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
       {},
-      {provisionalUser.publicProvisionalUser,
-       provisionalUser2.publicProvisionalUser},
+      {provisionalUser, provisionalUser2},
       group,
-      builder.trustchainId(),
-      userDevice.id,
-      userDevice.keys.signatureKeyPair.privateKey);
+      generator.context().id(),
+      userDevice.id(),
+      userDevice.keys().signatureKeyPair.privateKey);
 
   auto const serverEntry = clientToServerEntry(clientEntry);
   auto groupAdd = serverEntry.action()
@@ -276,29 +255,28 @@ TEST_CASE("Can add provisional users to a group")
                       .get<UserGroupAddition::v2>();
 
   auto const selfSignature =
-      Crypto::sign(groupAdd.signatureData(), group.signatureKeyPair.privateKey);
+      Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
 
-  CHECK(groupAdd.groupId() ==
-        Trustchain::GroupId{group.signatureKeyPair.publicKey});
-  CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash);
+  CHECK(groupAdd.groupId() == group.id());
+  CHECK(groupAdd.previousGroupBlockHash() == group.lastBlockHash());
   REQUIRE(groupAdd.members().size() == 0);
   REQUIRE(groupAdd.provisionalMembers().size() == 2);
 
-  auto const groupEncryptedKey = std::find_if(
-      groupAdd.provisionalMembers().begin(),
-      groupAdd.provisionalMembers().end(),
-      [&](auto const& groupEncryptedKey) {
-        return groupEncryptedKey.appPublicSignatureKey() ==
-               provisionalUser.publicProvisionalUser.appSignaturePublicKey;
-      });
+  auto const groupEncryptedKey =
+      std::find_if(groupAdd.provisionalMembers().begin(),
+                   groupAdd.provisionalMembers().end(),
+                   [&](auto const& groupEncryptedKey) {
+                     return groupEncryptedKey.appPublicSignatureKey() ==
+                            provisionalUser.appSignatureKeyPair().publicKey;
+                   });
   REQUIRE(groupEncryptedKey != groupAdd.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
-        provisionalUser.publicProvisionalUser.tankerSignaturePublicKey);
+        provisionalUser.tankerSignatureKeyPair().publicKey);
   CHECK(Crypto::sealDecrypt(
             Crypto::sealDecrypt(
                 groupEncryptedKey->encryptedPrivateEncryptionKey(),
-                provisionalUser.secretProvisionalUser.tankerEncryptionKeyPair),
-            provisionalUser.secretProvisionalUser.appEncryptionKeyPair) ==
-        group.encryptionKeyPair.privateKey);
+                provisionalUser.tankerEncryptionKeyPair()),
+            provisionalUser.appEncryptionKeyPair()) ==
+        group.currentEncKp().privateKey);
   CHECK(selfSignature == groupAdd.selfSignature());
 }
