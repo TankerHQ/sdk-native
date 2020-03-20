@@ -334,6 +334,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         Errc::PreconditionFailed);
   }
 
+  SUBCASE("it fails to set a verification key after a verification method ")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(
+        Unlock::Verification{Passphrase{"new password"}})));
+
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core1->generateVerificationKey()),
+                                  Errc::PreconditionFailed);
+  }
+
   SUBCASE("it throws when trying to verify with an invalid password")
   {
     REQUIRE_NOTHROW(
