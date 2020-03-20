@@ -4,6 +4,7 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/MakeCoTask.hpp>
+#include <Helpers/TransformTo.hpp>
 
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
@@ -20,13 +21,8 @@ using namespace Tanker;
 namespace
 {
 auto makeEntries = [](auto const& item) {
-  std::vector<Entry> verifiedEntries;
-  auto const& entries = Test::Generator::makeEntryList(item.entries());
-  std::transform(std::begin(entries),
-                 std::end(entries),
-                 std::back_inserter(verifiedEntries),
-                 toVerifiedEntry);
-  return verifiedEntries;
+  return Test::transformTo<std::vector<Entry>>(
+      Test::Generator::makeEntryList(item.entries()), toVerifiedEntry);
 };
 
 template <typename R>

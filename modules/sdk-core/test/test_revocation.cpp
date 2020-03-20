@@ -4,13 +4,13 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
+#include <Helpers/MakeCoTask.hpp>
+#include <Helpers/TransformTo.hpp>
 
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
 #include <doctest.h>
-
-#include <Helpers/MakeCoTask.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -50,7 +50,9 @@ TEST_CASE("Revocation tests")
     bob.addDevice();
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     auto const encryptedPrivateKeys = Revocation::encryptPrivateKeyForDevices(
-        bob, bob.devices().front().id(), encryptionKeyPair.privateKey);
+        Test::transformTo<std::vector<Users::Device>>(bob.devices()),
+        bob.devices().front().id(),
+        encryptionKeyPair.privateKey);
 
     REQUIRE_EQ(encryptedPrivateKeys.size(), 1);
 

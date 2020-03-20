@@ -5,8 +5,7 @@
 
 #include <cstdint>
 
-namespace Tanker
+namespace Tanker::Trustchain
 {
-Trustchain::ServerEntry clientToServerEntry(Trustchain::ClientEntry const& e,
-                                            std::uint64_t index = 0);
+ServerEntry clientToServerEntry(ClientEntry const& e, std::uint64_t index = 0);
 }

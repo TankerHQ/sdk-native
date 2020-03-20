@@ -2,10 +2,9 @@
 
 #include <Tanker/Trustchain/Action.hpp>
 
-namespace Tanker
+namespace Tanker::Trustchain
 {
-Trustchain::ServerEntry clientToServerEntry(Trustchain::ClientEntry const& e,
-                                            std::uint64_t index)
+ServerEntry clientToServerEntry(ClientEntry const& e, std::uint64_t index)
 {
   return {e.trustchainId(),
           index,
@@ -14,4 +13,5 @@ Trustchain::ServerEntry clientToServerEntry(Trustchain::ClientEntry const& e,
           e.hash(),
           e.signature()};
 }
+
 }

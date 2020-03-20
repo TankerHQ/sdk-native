@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Groups/Group.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
@@ -12,10 +13,11 @@
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
-#include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 
+#include <deque>
+#include <optional>
 #include <vector>
 
 namespace Tanker::Test
@@ -23,6 +25,10 @@ namespace Tanker::Test
 
 struct Device : Users::Device
 {
+  Device(Trustchain::ClientEntry entry,
+         Trustchain::UserId const& uid,
+         DeviceKeys const& deviceKeys,
+         bool isGhostDevice = true);
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   Crypto::PrivateSignatureKey privateSignatureKey;
   Trustchain::ClientEntry entry;
@@ -56,11 +62,13 @@ struct Group
 
   std::vector<Trustchain::ClientEntry> const& entries() const;
 
-  void addUsers(Device const& author,
-                std::vector<User> const& users = {},
-                std::vector<ProvisionalUser> const& provisionalUsers = {});
+  Trustchain::ClientEntry const& addUsers(
+      Device const& author,
+      std::vector<User> const& users = {},
+      std::vector<ProvisionalUser> const& provisionalUsers = {});
 
-  void addUsersV1(Device const& author, std::vector<User> const& users);
+  Trustchain::ClientEntry const& addUsersV1(Device const& author,
+                                            std::vector<User> const& users);
 
 private:
   Trustchain::TrustchainId _tid;
@@ -74,8 +82,8 @@ struct User
 {
   User(Trustchain::UserId const& id,
        Trustchain::TrustchainId const& tid,
-       Crypto::EncryptionKeyPair const& userKeys,
-       std::vector<Device> devices);
+       std::optional<Crypto::EncryptionKeyPair> userKey,
+       gsl::span<Device const> devices);
 
   User(User const&) = default;
   User& operator=(User const&) = default;
@@ -88,10 +96,18 @@ struct User
   Trustchain::UserId const& id() const;
   std::vector<Crypto::EncryptionKeyPair> const& userKeys() const;
   std::vector<Trustchain::ClientEntry> entries() const;
-  std::vector<Device> const& devices() const;
+  std::deque<Device> const& devices() const;
+  std::deque<Device>& devices();
+  Trustchain::ClientEntry revokeDevice(Device& target);
+  Trustchain::ClientEntry revokeDeviceV1(Device& target);
+  Trustchain::ClientEntry revokeDeviceForMigration(Device const& sender,
+                                                   Device& target);
 
   [[nodiscard]] Device makeDevice() const;
-  Device const& addDevice();
+  Device& addDevice();
+
+  [[nodiscard]] Device makeDeviceV1() const;
+  Device& addDeviceV1();
 
   Group makeGroup(
       std::vector<User> const& users = {},
@@ -99,30 +115,26 @@ struct User
 
   Trustchain::ClientEntry claim(ProvisionalUser const& provisionalUser) const;
 
-  [[nodiscard]] Crypto::EncryptionKeyPair const& addUserKey();
+  Crypto::EncryptionKeyPair const& addUserKey();
   void addUserKey(Crypto::EncryptionKeyPair const& userKp);
 
 private:
   Trustchain::UserId _id;
   Trustchain::TrustchainId _tid;
   std::vector<Crypto::EncryptionKeyPair> _userKeys;
-  std::vector<Device> _devices;
+  std::deque<Device> _devices;
 };
 
 class ProvisionalUser
 {
+
 public:
-  ProvisionalUser(Identity::TargetType target,
-                  std::string value,
-                  Crypto::EncryptionKeyPair const& appEncKp,
-                  Crypto::EncryptionKeyPair const& tankerEncKp,
-                  Crypto::SignatureKeyPair const& appSigKp,
-                  Crypto::SignatureKeyPair const& tankerSigKp);
-  ProvisionalUser(std::string value);
+  ProvisionalUser(Trustchain::TrustchainId const& tid, std::string value);
 
   operator ProvisionalUsers::PublicUser() const;
   operator ProvisionalUsers::SecretUser() const;
   operator ProvisionalUserKeys() const;
+  operator Identity::SecretProvisionalIdentity() const;
 
   Crypto::EncryptionKeyPair const& appEncryptionKeyPair() const;
   Crypto::EncryptionKeyPair const& tankerEncryptionKeyPair() const;
@@ -130,6 +142,7 @@ public:
   Crypto::SignatureKeyPair const& tankerSignatureKeyPair() const;
 
 private:
+  Trustchain::TrustchainId _tid;
   Identity::TargetType _target;
   std::string _value;
   Crypto::EncryptionKeyPair _appEncKp;
@@ -171,6 +184,7 @@ public:
   Generator();
 
   User makeUser(std::string const& suserId) const;
+  User makeUserV1(std::string const& suserId) const;
 
   Group makeGroup(
       Device const& author,
@@ -179,7 +193,7 @@ public:
 
   Group makeGroupV1(Device const& author, std::vector<User> const& users) const;
 
-  static ProvisionalUser makeProvisionalUser(std::string const& email);
+  ProvisionalUser makeProvisionalUser(std::string const& email);
 
   Trustchain::ClientEntry shareWith(Device const& sender,
                                     User const& receiver,
@@ -192,11 +206,14 @@ public:
                                     Resource const& res);
 
   Trustchain::Context const& context() const;
+  Trustchain::ServerEntry const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
   static std::vector<Trustchain::ServerEntry> makeEntryList(
-      std::vector<Trustchain::ClientEntry> entries);
+      std::vector<Trustchain::ClientEntry> const& entries);
+  static std::vector<Trustchain::ServerEntry> makeEntryList(
+      std::initializer_list<Device> devices);
   std::vector<Trustchain::ServerEntry> makeEntryList(
-      std::initializer_list<User const> users) const;
+      std::initializer_list<User> users) const;
 
 private:
   Crypto::SignatureKeyPair _trustchainKeyPair;

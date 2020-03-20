@@ -52,12 +52,12 @@ tc::cotask<Users::User> getUserFromUserId(UserId const& selfUserId,
 }
 
 DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
-    Users::User const& user,
+    gsl::span<Users::Device const> devices,
     DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey)
 {
   DeviceRevocation::v2::SealedKeysForDevices userKeys;
-  for (auto const& device : user.devices())
+  for (auto const& device : devices)
   {
     if (device.id() != deviceId && !device.isRevoked())
     {
@@ -70,6 +70,30 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
   return userKeys;
 }
 
+Trustchain::ClientEntry makeRevokeDeviceEntry(
+    Trustchain::DeviceId const& targetDeviceId,
+    Trustchain::TrustchainId const& trustchainId,
+    Users::LocalUser const& localUser,
+    gsl::span<Users::Device const> userDevices,
+    Crypto::EncryptionKeyPair const& newUserKey)
+{
+  auto const& oldUserKey = localUser.currentKeyPair();
+  auto const encryptedKeyForPreviousUserKey =
+      Crypto::sealEncrypt(oldUserKey.privateKey, newUserKey.publicKey);
+
+  auto const sealedUserKeys = encryptPrivateKeyForDevices(
+      userDevices, targetDeviceId, newUserKey.privateKey);
+  return Users::revokeDeviceEntry(
+      trustchainId,
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey,
+      targetDeviceId,
+      newUserKey.publicKey,
+      encryptedKeyForPreviousUserKey,
+      oldUserKey.publicKey,
+      sealedUserKeys);
+}
+
 tc::cotask<void> revokeDevice(DeviceId const& deviceId,
                               TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
@@ -80,25 +104,10 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
   auto const user =
       TC_AWAIT(getUserFromUserId(localUser.userId(), userAccessor));
 
-  auto const newEncryptionKey = Crypto::makeEncryptionKeyPair();
-  auto const oldPublicEncryptionKey = *user.userKey();
+  auto const newUserKey = Crypto::makeEncryptionKeyPair();
 
-  auto const encryptedKeyForPreviousUserKey = Crypto::sealEncrypt(
-      localUser.currentKeyPair().privateKey, newEncryptionKey.publicKey);
-
-  auto const userKeys =
-      encryptPrivateKeyForDevices(user, deviceId, newEncryptionKey.privateKey);
-
-  auto const clientEntry = Users::revokeDeviceEntry(
-      trustchainId,
-      localUser.deviceId(),
-      localUser.deviceKeys().signatureKeyPair.privateKey,
-      deviceId,
-      newEncryptionKey.publicKey,
-      encryptedKeyForPreviousUserKey,
-      oldPublicEncryptionKey,
-      userKeys);
-
+  auto clientEntry = makeRevokeDeviceEntry(
+      deviceId, trustchainId, localUser, user.devices(), newUserKey);
   TC_AWAIT(client->pushBlock(Serialization::serialize(clientEntry)));
 }
 
