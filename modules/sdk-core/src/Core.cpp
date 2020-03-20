@@ -4,6 +4,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Opener.hpp>
