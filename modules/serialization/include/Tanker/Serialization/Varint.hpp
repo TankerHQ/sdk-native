@@ -22,7 +22,7 @@ namespace Serialization
 {
 // https://developers.google.com/protocol-buffers/docs/encoding#varints
 
-constexpr std::size_t varint_size(std::size_t value)
+constexpr std::size_t varint_size(std::uint32_t value)
 {
   std::size_t n = 1;
   while (value > 127)
@@ -33,9 +33,9 @@ constexpr std::size_t varint_size(std::size_t value)
   return n;
 }
 
-std::pair<std::size_t, gsl::span<uint8_t const>> varint_read(
+std::pair<std::uint32_t, gsl::span<uint8_t const>> varint_read(
     gsl::span<uint8_t const> data);
 
-std::uint8_t* varint_write(std::uint8_t* it, std::size_t value);
+std::uint8_t* varint_write(std::uint8_t* it, std::uint32_t value);
 }
 }
