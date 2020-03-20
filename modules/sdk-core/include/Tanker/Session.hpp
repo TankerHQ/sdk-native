@@ -152,7 +152,5 @@ private:
   ProvisionalUsers::Manager _provisionalUsersManager;
   Groups::Accessor _groupAccessor;
   ResourceKeyAccessor _resourceKeyAccessor;
-
-  tc::promise<void> _ready;
 };
 }
