@@ -15,19 +15,6 @@ using Tanker::Functional::TrustchainFixture;
 
 TEST_SUITE("Encryption sessions")
 {
-  TEST_CASE_FIXTURE(TrustchainFixture, "Alice can create a session with Bob")
-  {
-    auto alice = trustchain.makeUser();
-    auto aliceDevice = alice.makeDevice();
-    auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-    auto bob = trustchain.makeUser();
-    auto bobDevices = TC_AWAIT(bob.makeDevices(1));
-
-    REQUIRE_NOTHROW(TC_AWAIT(aliceSession->makeEncryptionSession(
-        {bob.spublicIdentity(), alice.spublicIdentity()})));
-  }
-
   TEST_CASE_FIXTURE(TrustchainFixture,
                     "Alice's session can encrypt for herself")
   {

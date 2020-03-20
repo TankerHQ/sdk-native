@@ -6,7 +6,8 @@
 namespace Tanker
 {
 EncryptionSession::EncryptionSession()
-  : _sessionKey{Crypto::makeSymmetricKey()},
+  : _taskCanceler{std::make_shared<task_canceler>()},
+    _sessionKey{Crypto::makeSymmetricKey()},
     _resourceId{Crypto::getRandom<Trustchain::ResourceId>()}
 {
 }
@@ -19,6 +20,11 @@ Trustchain::ResourceId const& EncryptionSession::resourceId() const
 Crypto::SymmetricKey const& EncryptionSession::sessionKey() const
 {
   return _sessionKey;
+}
+
+std::shared_ptr<task_canceler> EncryptionSession::canceler() const
+{
+  return _taskCanceler;
 }
 
 std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
