@@ -35,18 +35,16 @@ TEST_SUITE("Encryption sessions")
     auto aliceDevice = alice.makeDevice();
     auto aliceSession = TC_AWAIT(aliceDevice.open());
 
-    auto encSessPtr =
-        TC_AWAIT(aliceSession->makeEncryptionSession());
-    auto encSess = std::unique_ptr<EncryptionSession>(encSessPtr);
+    auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
 
     auto const clearData = make_buffer("my clear data is clear");
     std::vector<uint8_t> encryptedData(
         EncryptionSession::encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
-        TC_AWAIT(encSess->encrypt(encryptedData.data(), clearData)));
+        TC_AWAIT(encSess.encrypt(encryptedData.data(), clearData)));
 
     REQUIRE(TC_AWAIT(checkDecrypt(
-        {aliceDevice}, {std::make_tuple(clearData, encryptedData)})));
+        {aliceDevice}, {{clearData, encryptedData}})));
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
@@ -58,15 +56,14 @@ TEST_SUITE("Encryption sessions")
     auto bob = trustchain.makeUser();
     auto bobDevices = TC_AWAIT(bob.makeDevices(1));
 
-    auto encSessPtr =
+    auto encSess =
         TC_AWAIT(aliceSession->makeEncryptionSession({bob.spublicIdentity()}));
-    auto encSess = std::unique_ptr<EncryptionSession>(encSessPtr);
 
     auto const clearData = make_buffer("my clear data is clear");
     std::vector<uint8_t> encryptedData(
         EncryptionSession::encryptedSize(clearData.size()));
     REQUIRE_NOTHROW(
-        TC_AWAIT(encSess->encrypt(encryptedData.data(), clearData)));
+        TC_AWAIT(encSess.encrypt(encryptedData.data(), clearData)));
 
     REQUIRE(TC_AWAIT(
         checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));

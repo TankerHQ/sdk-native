@@ -128,7 +128,7 @@ public:
   tc::shared_future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
-  tc::shared_future<EncryptionSession*> makeEncryptionSession(
+  tc::future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {});
 

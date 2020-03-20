@@ -94,7 +94,7 @@ public:
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
-  tc::cotask<EncryptionSession*> makeEncryptionSession(
+  tc::cotask<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities,
       std::vector<SGroupId> const& groupIds);
 

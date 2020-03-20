@@ -305,14 +305,15 @@ AsyncCore::makeDecryptionStream(Streams::InputSource cb)
   });
 }
 
-tc::shared_future<EncryptionSession*> AsyncCore::makeEncryptionSession(
+tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  return runResumable([=]() -> tc::cotask<EncryptionSession*> {
-    TC_RETURN(TC_AWAIT(
-        this->_core.makeEncryptionSession(publicIdentities, groupIds)));
-  });
+  return tc::async_resumable(
+      [=]() -> tc::cotask<EncryptionSession> {
+        TC_RETURN(TC_AWAIT(
+            this->_core.makeEncryptionSession(publicIdentities, groupIds)));
+      });
 }
 
 std::string const& AsyncCore::version()

@@ -24,9 +24,12 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
   auto sessFuture = tanker->makeEncryptionSession(spublicIdentities, sgroupIds);
-  return makeFuture(sessFuture.and_then(
-      tc::get_synchronous_executor(),
-      [](auto sess) { return reinterpret_cast<void*>(sess); }));
+  return makeFuture(
+      sessFuture.and_then(tc::get_synchronous_executor(), [](auto const& sess) {
+        // Horribly unsafe, but we have no way std::move from a shared_future
+        auto sessPtr = new EncryptionSession(sess);
+        return reinterpret_cast<void*>(sessPtr);
+      }));
 }
 
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
