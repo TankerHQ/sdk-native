@@ -33,9 +33,7 @@
 #include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/Device.hpp>
-#include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
-#include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <gsl-lite.hpp>
@@ -60,6 +58,11 @@ namespace Groups
 class IRequester;
 }
 
+namespace Users
+{
+class IRequester;
+}
+
 class Session
 {
 public:
@@ -70,8 +73,30 @@ public:
     Crypto::SymmetricKey userSecret;
     std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
     std::unique_ptr<Client> client;
-    std::unique_ptr<Users::Requester> userRequester;
+    std::unique_ptr<Users::IRequester> userRequester;
   };
+
+  struct Storage
+  {
+    Storage(DataStore::DatabasePtr db,
+            Users::IRequester* userRequester,
+            Groups::IRequester* groupsRequester,
+            ProvisionalUsers::IRequester* provisionalRequester,
+            std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor);
+
+    DataStore::DatabasePtr db;
+    Groups::Store groupStore;
+    ResourceKeyStore resourceKeyStore;
+    ProvisionalUserKeysStore provisionalUserKeysStore;
+
+    std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
+    mutable Users::UserAccessor userAccessor;
+    ProvisionalUsers::Accessor provisionalUsersAccessor;
+    ProvisionalUsers::Manager provisionalUsersManager;
+    Groups::Accessor groupAccessor;
+    ResourceKeyAccessor resourceKeyAccessor;
+  };
+
   using DeviceRevokedHandler = std::function<void()>;
 
   Session(Config&&);
@@ -139,20 +164,10 @@ private:
 
 private:
   Crypto::SymmetricKey _userSecret;
-  DataStore::DatabasePtr _db;
-  std::unique_ptr<Users::LocalUserAccessor> _localUserAccessor;
   std::unique_ptr<Client> _client;
-  std::unique_ptr<Users::Requester> _userRequester;
+  std::unique_ptr<Users::IRequester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
   std::unique_ptr<ProvisionalUsers::IRequester> _provisionalRequester;
-  Groups::Store _groupStore;
-  ResourceKeyStore _resourceKeyStore;
-  ProvisionalUserKeysStore _provisionalUserKeysStore;
-
-  mutable Users::UserAccessor _userAccessor;
-  ProvisionalUsers::Accessor _provisionalUsersAccessor;
-  ProvisionalUsers::Manager _provisionalUsersManager;
-  Groups::Accessor _groupAccessor;
-  ResourceKeyAccessor _resourceKeyAccessor;
+  std::unique_ptr<Storage> _storage;
 };
 }
