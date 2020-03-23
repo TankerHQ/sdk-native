@@ -218,6 +218,9 @@ CTANKER_EXPORT char const* tanker_version_string(void);
  * Set the log handler of the API with a function pointer
  * \param handler the function pointer, it must have the prototype of
  *        tanker_log_handler_t.
+ *
+ * This function is not thread-safe. Also it must not be called after at least
+ * one Tanker has been instantiated.
  */
 CTANKER_EXPORT void tanker_set_log_handler(tanker_log_handler_t handler);
 
