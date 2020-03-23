@@ -71,7 +71,7 @@ Session::Session(Config&& config)
                    &_groupStore,
                    _localUserAccessor.get(),
                    &_provisionalUsersAccessor),
-    _resourceKeyAccessor(_client.get(),
+    _resourceKeyAccessor(_userRequester.get(),
                          _localUserAccessor.get(),
                          &_groupAccessor,
                          &_provisionalUsersAccessor,

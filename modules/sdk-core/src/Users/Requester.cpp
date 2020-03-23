@@ -73,6 +73,14 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
   TC_RETURN(ret);
 }
 
+tc::cotask<std::vector<std::string>> Requester::getKeyPublishes(
+    gsl::span<Trustchain::ResourceId const> resourceIds)
+{
+  auto const json = TC_AWAIT(
+      _client->emit("get key publishes", {{"resource_ids", resourceIds}}));
+  TC_RETURN(json.get<std::vector<std::string>>());
+}
+
 tc::cotask<void> Requester::authenticate(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,

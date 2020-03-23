@@ -77,9 +77,6 @@ public:
       std::vector<Trustchain::UserId> const& extra_users,
       std::vector<Trustchain::GroupId> const& extra_groups);
 
-  tc::cotask<std::vector<std::string>> getKeyPublishes(
-      gsl::span<Trustchain::ResourceId const> resourceIds);
-
   tc::cotask<nlohmann::json> emit(std::string const& event,
                                   nlohmann::json const& data);
 

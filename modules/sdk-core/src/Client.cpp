@@ -203,14 +203,6 @@ tc::cotask<std::vector<std::string>> Client::getBlocks(
   TC_RETURN(json.get<std::vector<std::string>>());
 }
 
-tc::cotask<std::vector<std::string>> Client::getKeyPublishes(
-    gsl::span<Trustchain::ResourceId const> resourceIds)
-{
-  auto const json =
-      TC_AWAIT(emit("get key publishes", {{"resource_ids", resourceIds}}));
-  TC_RETURN(json.get<std::vector<std::string>>());
-}
-
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
                                         nlohmann::json const& data)
 {
