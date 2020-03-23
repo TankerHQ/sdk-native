@@ -27,7 +27,7 @@ constexpr bool isHugeClearData(uint64_t dataSize)
 }
 
 template <typename Callable>
-decltype(auto) performEncryptorAction(std::uint8_t version, Callable&& cb)
+decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 {
   switch (version)
   {

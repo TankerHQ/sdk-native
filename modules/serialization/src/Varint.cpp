@@ -7,11 +7,12 @@ namespace Tanker
 {
 namespace Serialization
 {
-std::pair<std::size_t, gsl::span<uint8_t const>> varint_read(
-    gsl::span<uint8_t const> data) try
+std::pair<std::uint32_t, gsl::span<uint8_t const>> varint_read(
+    gsl::span<uint8_t const> data)
+try
 {
-  std::size_t value = 0;
-  std::size_t factor = 1;
+  std::uint32_t value = 0;
+  std::uint32_t factor = 1;
   while ((data.at(0) & 0x80) != 0)
   {
     value += (data.at(0) & 0x7f) * factor;
@@ -27,7 +28,7 @@ catch (gsl::fail_fast const&)
   throw Errors::Exception(Errc::TruncatedInput, "Could not read varint");
 }
 
-std::uint8_t* varint_write(std::uint8_t* it, std::size_t value)
+std::uint8_t* varint_write(std::uint8_t* it, std::uint32_t value)
 {
   while (value > 127)
   {
