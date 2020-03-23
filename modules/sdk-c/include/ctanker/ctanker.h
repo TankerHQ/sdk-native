@@ -540,6 +540,17 @@ CTANKER_EXPORT void tanker_free_verification_method_list(
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
 
 /*!
+ * Skip destruction of risky static objects
+ *
+ * This is useful when tanker is embedded into a garbage collected language
+ * like Java. A Java program may quit and execute static destruction even if the
+ * GC hasn't run and tanker instances are still running. This usually leads to a
+ * deadlock or a crash, so call this method during initialization so that
+ * statics are not destroyed and threads are not stopped.
+ */
+CTANKER_EXPORT void tanker_leak_statics(void);
+
+/*!
  * Hash a password before sending it to the application server where it will
  * be hashed again.
  *

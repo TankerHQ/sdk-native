@@ -566,6 +566,12 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
   delete result;
 }
 
+void tanker_leak_statics()
+{
+  tc::get_global_single_thread().prevent_destruction();
+  AsyncCore::getLogHandlerThreadPool().prevent_destruction();
+}
+
 tanker_expected_t* tanker_prehash_password(char const* password)
 {
   return makeFuture(tc::sync([&] {
