@@ -9,6 +9,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
+#include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
@@ -143,6 +144,7 @@ private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::Requester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
+  std::unique_ptr<ProvisionalUsers::IRequester> _provisionalRequester;
   Groups::Store _groupStore;
   ResourceKeyStore _resourceKeyStore;
   ProvisionalUserKeysStore _provisionalUserKeysStore;

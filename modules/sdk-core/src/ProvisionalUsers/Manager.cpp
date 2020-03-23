@@ -7,6 +7,7 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
@@ -20,12 +21,12 @@ namespace Tanker
 namespace ProvisionalUsers
 {
 Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
-                 Client* client,
+                 IRequester* requester,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
                  Trustchain::TrustchainId const& trustchainId)
   : _localUserAccessor(localUserAccessor),
-    _client(client),
+    _requester(requester),
     _provisionalUsersAccessor(provisionalUsersAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore),
     _trustchainId(trustchainId)
@@ -55,7 +56,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   try
   {
     auto const tankerKeys = TC_AWAIT(
-        _client->getVerifiedProvisionalIdentityKeys(Crypto::generichash(
+        _requester->getVerifiedProvisionalIdentityKeys(Crypto::generichash(
             gsl::make_span(email).as_span<std::uint8_t const>())));
     if (tankerKeys)
     {
@@ -72,7 +73,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
                                        provisionalIdentity.appSignatureKeyPair,
                                        tankerKeys->signatureKeyPair},
           localUser.currentKeyPair());
-      TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
+      TC_AWAIT(_requester->pushBlock(Serialization::serialize(clientEntry)));
     }
     TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
@@ -93,7 +94,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
     Unlock::Request const& unlockRequest)
 {
   auto const tankerKeys =
-      TC_AWAIT(_client->getProvisionalIdentityKeys(unlockRequest));
+      TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));
   if (!tankerKeys)
   {
     TINFO("Nothing to claim");
@@ -113,7 +114,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
                                    _provisionalIdentity->appSignatureKeyPair,
                                    tankerKeys->signatureKeyPair},
       localUser.currentKeyPair());
-  TC_AWAIT(_client->pushBlock(Serialization::serialize(clientEntry)));
+  TC_AWAIT(_requester->pushBlock(Serialization::serialize(clientEntry)));
 
   _provisionalIdentity.reset();
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());

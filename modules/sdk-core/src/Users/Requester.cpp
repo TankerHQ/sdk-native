@@ -23,6 +23,7 @@ Crypto::Hash hashField(T const& field)
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
 }
+
 Requester::Requester(Client* client) : _client(client)
 {
 }

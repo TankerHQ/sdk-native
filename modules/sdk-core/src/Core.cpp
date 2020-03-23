@@ -8,6 +8,7 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Opener.hpp>
+#include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
