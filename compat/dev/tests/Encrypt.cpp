@@ -3,6 +3,7 @@
 #include <Compat/States.hpp>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
 
 #include <Helpers/JsonFile.hpp>
 #include <nlohmann/json.hpp>

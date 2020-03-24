@@ -8,6 +8,7 @@
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Session.hpp>
