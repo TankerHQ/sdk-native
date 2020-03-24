@@ -307,8 +307,7 @@ tanker_future_t* tanker_register_identity(
                       auto const verification =
                           cverificationToVerification(cverification);
                       return tanker->registerIdentity(verification);
-                    })
-                        .unwrap());
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_verify_identity(
@@ -319,8 +318,7 @@ tanker_future_t* tanker_verify_identity(
                       auto const verification =
                           cverificationToVerification(cverification);
                       return tanker->verifyIdentity(verification);
-                    })
-                        .unwrap());
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_stop(tanker_t* ctanker)
@@ -382,8 +380,7 @@ tanker_future_t* tanker_set_verification_method(
                       auto const verification =
                           cverificationToVerification(cverification);
                       return tanker->setVerificationMethod(verification);
-                    })
-                        .unwrap());
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
@@ -522,8 +519,7 @@ tanker_future_t* tanker_verify_provisional_identity(
                       auto const verification =
                           cverificationToVerification(cverification);
                       return tanker->verifyProvisionalIdentity(verification);
-                    })
-                        .unwrap());
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_revoke_device(tanker_t* ctanker, char const* device_id)
