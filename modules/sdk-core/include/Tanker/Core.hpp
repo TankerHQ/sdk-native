@@ -3,7 +3,6 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
-#include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
@@ -19,6 +18,7 @@
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <boost/variant2/variant.hpp>
 #include <gsl-lite.hpp>
@@ -37,6 +37,7 @@ class Core
 public:
   using SessionClosedHandler = std::function<void()>;
 
+  ~Core();
   Core(std::string url, Network::SdkInfo infos, std::string writablePath);
   Tanker::Status status() const;
 
@@ -106,22 +107,15 @@ public:
   tc::cotask<void> nukeDatabase();
 
 private:
-  // We store the session as a unique_ptr so that open() does not
-  // emplace<Session>. The Session constructor is asynchronous, so the user
-  // could try to observe the variant state while it is emplacing. variant is
-  // not reentrant so the observation would trigger undefined behavior.
-  using SessionType = std::unique_ptr<Session>;
-
   std::string _url;
   Network::SdkInfo _info;
   std::string _writablePath;
-
-  boost::variant2::variant<Opener, SessionType> _state;
+  std::unique_ptr<class Session> _session;
 
   SessionClosedHandler _sessionClosed;
 
   void reset();
-  void initSession(Session::Config openResult);
+  void assertStatus(Status wanted, std::string const& string) const;
 
   template <typename F>
   decltype(std::declval<F>()()) resetOnFailure(F&& f);

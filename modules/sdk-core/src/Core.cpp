@@ -1,13 +1,14 @@
 #include <Tanker/Core.hpp>
 
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Opener.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
@@ -21,32 +22,40 @@
 
 #include <exception>
 
-#define INVALID_STATUS(action)                               \
-  Errors::formatEx(Errors::Errc::PreconditionFailed,         \
-                   TFMT("invalid status {:e} for " #action), \
-                   status())
+#define checkStatus(wanted, action) this->assertStatus(wanted, #action)
 
 TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
+namespace
+{
+}
+Core::~Core() = default;
+
 Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _state(boost::variant2::in_place_type<Opener>, _url, _info, _writablePath)
+    _session(std::make_unique<Session>(_url, _info))
 {
 }
 
 Status Core::status() const
 {
-  if (_state.valueless_by_exception())
-    throw Errors::AssertionError("_state variant must not be valueless");
-  if (auto core = boost::variant2::get_if<Opener>(&_state))
-    return core->status();
-  else if (boost::variant2::get_if<SessionType>(&_state))
-    return Status::Ready;
-  throw Errors::AssertionError("unreachable code: invalid Tanker status");
+  if (!_session)
+    return Status::Stopped;
+  else
+    return _session->status();
+}
+
+void Core::assertStatus(Status wanted, std::string const& action) const
+{
+  if (auto const s = status(); s != wanted)
+    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
+                           TFMT("invalid session status {:e} for {:s}"),
+                           s,
+                           action);
 }
 
 template <typename F>
@@ -79,19 +88,19 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
-tc::cotask<Status> Core::startImpl(std::string const& identity)
+tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
-  auto pcore = boost::variant2::get_if<Opener>(&_state);
-  if (!pcore)
-    throw INVALID_STATUS(start);
+  checkStatus(Status::Stopped, start);
 
-  auto status = TC_AWAIT(pcore->open(identity));
-  if (status == Status::Ready)
-  {
-    initSession(TC_AWAIT(pcore->openDevice()));
-    TC_RETURN(Status::Ready);
-  }
-  TC_RETURN(status);
+  auto identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+  if (identity.trustchainId != _info.trustchainId)
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   TFMT("identity's trustchain is {:s}, expected {:s}"),
+                   identity.trustchainId,
+                   _info.trustchainId);
+
+  TC_RETURN(TC_AWAIT(_session->open(identity, _writablePath)));
 }
 
 tc::cotask<Status> Core::start(std::string const& identity)
@@ -105,23 +114,13 @@ tc::cotask<Status> Core::start(std::string const& identity)
 tc::cotask<void> Core::registerIdentity(
     Unlock::Verification const& verification)
 {
-  auto pcore = boost::variant2::get_if<Opener>(&_state);
-  if (!pcore)
-    throw INVALID_STATUS(start);
-
-  auto openResult = TC_AWAIT(pcore->createUser(verification));
-  initSession(std::move(openResult));
+  TC_AWAIT(_session->createUser(verification));
 }
 
 tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 {
   SCOPE_TIMER("verify_identity", Proc);
-  auto pcore = boost::variant2::get_if<Opener>(&_state);
-  if (!pcore)
-    throw INVALID_STATUS(verifyIdentity);
-
-  auto openResult = TC_AWAIT(pcore->createDevice(verification));
-  initSession(std::move(openResult));
+  TC_AWAIT(_session->createDevice(verification));
 }
 
 void Core::stop()
@@ -131,11 +130,6 @@ void Core::stop()
     _sessionClosed();
 }
 
-void Core::initSession(Session::Config config)
-{
-  _state.emplace<SessionType>(std::make_unique<Session>(std::move(config)));
-}
-
 void Core::setSessionClosedHandler(SessionClosedHandler handler)
 {
   _sessionClosed = std::move(handler);
@@ -143,7 +137,7 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 
 void Core::reset()
 {
-  _state.emplace<Opener>(_url, _info, _writablePath);
+  _session.reset(new Session{_url, _info});
 }
 
 tc::cotask<void> Core::encrypt(
@@ -152,11 +146,9 @@ tc::cotask<void> Core::encrypt(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(encrypt);
-  TC_AWAIT((*psession)->encrypt(
-      encryptedData, clearData, publicIdentities, groupIds));
+  checkStatus(Status::Ready, encrypt);
+  TC_AWAIT(
+      _session->encrypt(encryptedData, clearData, publicIdentities, groupIds));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
@@ -164,29 +156,22 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(encrypt);
-  TC_RETURN(
-      TC_AWAIT((*psession)->encrypt(clearData, publicIdentities, groupIds)));
+  checkStatus(Status::Ready, encrypt);
+  TC_RETURN(TC_AWAIT(_session->encrypt(clearData, publicIdentities, groupIds)));
 }
 
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(decrypt);
-  TC_AWAIT((*psession)->decrypt(decryptedData, encryptedData));
+  checkStatus(Status::Ready, decrypt);
+  TC_AWAIT(_session->decrypt(decryptedData, encryptedData));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
     gsl::span<uint8_t const> encryptedData)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(decrypt);
-  TC_RETURN(TC_AWAIT((*psession)->decrypt(encryptedData)));
+  checkStatus(Status::Ready, decrypt);
+  TC_RETURN(TC_AWAIT(_session->decrypt(encryptedData)));
 }
 
 tc::cotask<void> Core::share(
@@ -194,101 +179,81 @@ tc::cotask<void> Core::share(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(share);
-  TC_AWAIT((*psession)->share(sresourceIds, publicIdentities, groupIds));
+  checkStatus(Status::Ready, share);
+  TC_AWAIT(_session->share(sresourceIds, publicIdentities, groupIds));
 }
 
 tc::cotask<SGroupId> Core::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
-  auto const psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(createGroup);
-  return (*psession)->createGroup(members);
+  checkStatus(Status::Ready, createGroup);
+  return _session->createGroup(members);
 }
 
 tc::cotask<void> Core::updateGroupMembers(
     SGroupId const& groupIdString,
     std::vector<SPublicIdentity> const& usersToAdd)
 {
-  auto const psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(updateGroupMembers);
-  return (*psession)->updateGroupMembers(groupIdString, usersToAdd);
+  checkStatus(Status::Ready, updateGroupMembers);
+  return _session->updateGroupMembers(groupIdString, usersToAdd);
 }
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
-  auto const psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(deviceId);
-  return (*psession)->deviceId();
+  checkStatus(Status::Ready, deviceId);
+  return _session->deviceId();
   ;
 }
 
 tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
-  auto const psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(getDeviceList);
-  return (*psession)->getDeviceList();
+  checkStatus(Status::Ready, getDeviceList);
+  return (_session)->getDeviceList();
 }
 
 tc::cotask<VerificationKey> Core::generateVerificationKey()
 {
-  auto pcore = boost::variant2::get_if<Opener>(&_state);
-  if (!pcore)
-    throw INVALID_STATUS(generateVerificationKey);
-  TC_RETURN(TC_AWAIT(pcore->generateVerificationKey()));
+  checkStatus(Status::IdentityRegistrationNeeded, generateVerificationKey);
+  TC_RETURN(TC_AWAIT(_session->generateVerificationKey()));
 }
 
 tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(setVerificationMethod);
-  TC_AWAIT((*psession)->setVerificationMethod(method));
+  checkStatus(Status::Ready, setVerificationMethod);
+  TC_AWAIT(_session->setVerificationMethod(method));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Core::getVerificationMethods()
 {
-  auto const st = status();
-  if (st != Status::Ready && st != Status::IdentityVerificationNeeded)
-    throw INVALID_STATUS(getVerificationMethods);
-  if (auto psession = boost::variant2::get_if<SessionType>(&_state))
-    TC_RETURN(TC_AWAIT((*psession)->fetchVerificationMethods()));
-  else if (auto pcore = boost::variant2::get_if<Opener>(&_state))
-    TC_RETURN(TC_AWAIT(pcore->fetchVerificationMethods()));
-  throw Errors::AssertionError("unreachable code: getVerificationMethods");
+  if (_session->status() == Status::Ready ||
+      _session->status() == Status::IdentityVerificationNeeded)
+    TC_RETURN(TC_AWAIT(_session->fetchVerificationMethods()));
+  else
+  {
+    // fixme
+    throw Errors::formatEx(Errors::Errc::PreconditionFailed, "");
+  }
 }
 
 tc::cotask<AttachResult> Core::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(attachProvisionalIdentity);
-  TC_RETURN(TC_AWAIT((*psession)->attachProvisionalIdentity(sidentity)));
+  checkStatus(Status::Ready, attachProvisionalIdentity);
+  TC_RETURN(TC_AWAIT(_session->attachProvisionalIdentity(sidentity)));
 }
 
 tc::cotask<void> Core::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(verifyProvisionalIdentity);
-  TC_AWAIT((*psession)->verifyProvisionalIdentity(verification));
+  checkStatus(Status::Ready, verifyProvisionalIdentity);
+  TC_AWAIT(_session->verifyProvisionalIdentity(verification));
 }
 
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(revokeDevice);
-  TC_AWAIT((*psession)->revokeDevice(deviceId));
+  checkStatus(Status::Ready, revokeDevice);
+  TC_AWAIT(_session->revokeDevice(deviceId));
 }
 
 tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
@@ -296,31 +261,25 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(makeEncryptionStream);
+  checkStatus(Status::Ready, makeEncryptionStream);
   TC_RETURN(TC_AWAIT(
-      (*psession)->makeEncryptionStream(std::move(cb), suserIds, sgroupIds)));
+      _session->makeEncryptionStream(std::move(cb), suserIds, sgroupIds)));
 }
 
 tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
     Streams::InputSource cb)
 {
-  auto psession = boost::variant2::get_if<SessionType>(&_state);
-  if (!psession)
-    throw INVALID_STATUS(makeDecryptionStream);
-  TC_RETURN(TC_AWAIT((*psession)->makeDecryptionStream(std::move(cb))));
+  checkStatus(Status::Ready, makeDecryptionStream);
+  TC_RETURN(TC_AWAIT(_session->makeDecryptionStream(std::move(cb))));
 }
 
 tc::cotask<EncryptionSession> Core::makeEncryptionSession(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
 {
-  if (auto sess = boost::variant2::get_if<SessionType>(&_state); sess)
-    TC_RETURN(TC_AWAIT(
-        sess->get()->makeEncryptionSession(publicIdentities, groupIds)));
-  else
-    throw INVALID_STATUS(makeEncryptionSession);
+  checkStatus(Status::Ready, makeEncryptionSession);
+  TC_RETURN(
+      TC_AWAIT(_session->makeEncryptionSession(publicIdentities, groupIds)));
 }
 
 Trustchain::ResourceId Core::getResourceId(
@@ -331,9 +290,7 @@ Trustchain::ResourceId Core::getResourceId(
 
 tc::cotask<void> Core::nukeDatabase()
 {
-  if (auto psession = boost::variant2::get_if<SessionType>(&_state))
-    (*psession)->nukeDatabase();
-  else if (auto popener = boost::variant2::get_if<Opener>(&_state))
-    popener->nukeDatabase();
+  checkStatus(Status::Ready, nukeDatabase);
+  _session->nukeDatabase();
 }
 }

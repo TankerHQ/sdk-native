@@ -8,6 +8,7 @@
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
@@ -66,25 +67,14 @@ class IRequester;
 class Session
 {
 public:
-  struct Config
-  {
-    DataStore::DatabasePtr db;
-    Trustchain::Context trustchainContext;
-    Crypto::SymmetricKey userSecret;
-    std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
-    std::unique_ptr<Client> client;
-    std::unique_ptr<Users::IRequester> userRequester;
-  };
-
   struct Storage
   {
-    Storage(DataStore::DatabasePtr db,
+    Storage(DataStore::DatabasePtr& db,
             Users::IRequester* userRequester,
             Groups::IRequester* groupsRequester,
             ProvisionalUsers::IRequester* provisionalRequester,
             std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor);
 
-    DataStore::DatabasePtr db;
     Groups::Store groupStore;
     ResourceKeyStore resourceKeyStore;
     ProvisionalUserKeysStore provisionalUserKeysStore;
@@ -99,7 +89,13 @@ public:
 
   using DeviceRevokedHandler = std::function<void()>;
 
-  Session(Config&&);
+  ~Session();
+  Session(std::string url, Network::SdkInfo info);
+
+  tc::cotask<Status> open(Identity::SecretPermanentIdentity const& identity,
+                          std::string const& writablePath);
+  tc::cotask<void> createDevice(Unlock::Verification const& verification);
+  tc::cotask<void> createUser(Unlock::Verification const& verification);
 
   tc::cotask<void> encrypt(uint8_t* encryptedData,
                            gsl::span<uint8_t const> clearData,
@@ -130,6 +126,10 @@ public:
   tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
   tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods();
+  tc::cotask<VerificationKey> fetchVerificationKey(
+      Unlock::Verification const& verification);
+  tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
+  tc::cotask<VerificationKey> generateVerificationKey() const;
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
@@ -153,6 +153,11 @@ public:
       std::vector<SPublicIdentity> const& spublicIdentities,
       std::vector<SGroupId> const& sgroupIds);
 
+  inline Status status() const
+  {
+    return _status;
+  }
+
   tc::cotask<void> nukeDatabase();
 
 private:
@@ -161,13 +166,17 @@ private:
   Crypto::SymmetricKey const& userSecret() const;
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
+  tc::cotask<void> finalizeSessionOpening(
+      std::unique_ptr<Users::LocalUserStore> localUserStore);
 
 private:
-  Crypto::SymmetricKey _userSecret;
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::IRequester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
   std::unique_ptr<ProvisionalUsers::IRequester> _provisionalRequester;
+  DataStore::DatabasePtr _db;
+  std::optional<Identity::SecretPermanentIdentity> _identity;
+  Status _status;
   std::unique_ptr<Storage> _storage;
 };
 }
