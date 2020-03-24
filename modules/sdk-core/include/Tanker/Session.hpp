@@ -1,16 +1,12 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/Client.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Store.hpp>
-#include <Tanker/Identity/PublicIdentity.hpp>
-#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
-#include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
@@ -18,33 +14,23 @@
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
-#include <Tanker/Types/Email.hpp>
-#include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Methods.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/Device.hpp>
-#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
-#include <tconcurrent/future.hpp>
-#include <tconcurrent/promise.hpp>
-#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -53,8 +39,14 @@ namespace Tanker
 {
 struct Entry;
 struct UnverifiedEntry;
+class Client;
 
 namespace Groups
+{
+class IRequester;
+}
+
+namespace ProvisionalUsers
 {
 class IRequester;
 }
@@ -62,6 +54,7 @@ class IRequester;
 namespace Users
 {
 class IRequester;
+class LocalUserAccessor;
 }
 
 class Session
