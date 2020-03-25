@@ -50,36 +50,42 @@ std::string getDbPath(std::string const& writablePath,
 }
 }
 
-Session::Storage::Storage(
-    DataStore::DatabasePtr& db,
+Session::Storage::Storage(DataStore::DatabasePtr pdb)
+  : db(std::move(pdb)),
+    localUserStore(db.get()),
+    groupStore(db.get()),
+    resourceKeyStore(db.get()),
+    provisionalUserKeysStore(db.get())
+{
+}
+
+Session::Accessors::Accessors(
+    Storage& storage,
     Users::IRequester* userRequester,
     Groups::IRequester* groupsRequester,
     ProvisionalUsers::IRequester* provisionalRequester,
     std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor)
-  : groupStore(db.get()),
-    resourceKeyStore(db.get()),
-    provisionalUserKeysStore(db.get()),
-    localUserAccessor(std::move(plocalUserAccessor)),
+  : localUserAccessor(std::move(plocalUserAccessor)),
     userAccessor(localUserAccessor->getContext(), userRequester),
     provisionalUsersAccessor(provisionalRequester,
                              &userAccessor,
                              localUserAccessor.get(),
-                             &provisionalUserKeysStore),
+                             &storage.provisionalUserKeysStore),
     provisionalUsersManager(localUserAccessor.get(),
                             provisionalRequester,
                             &provisionalUsersAccessor,
-                            &provisionalUserKeysStore,
+                            &storage.provisionalUserKeysStore,
                             localUserAccessor->getContext().id()),
     groupAccessor(groupsRequester,
                   &userAccessor,
-                  &groupStore,
+                  &storage.groupStore,
                   localUserAccessor.get(),
                   &provisionalUsersAccessor),
     resourceKeyAccessor(userRequester,
                         localUserAccessor.get(),
                         &groupAccessor,
                         &provisionalUsersAccessor,
-                        &resourceKeyStore)
+                        &storage.resourceKeyStore)
 {
 }
 
@@ -95,31 +101,33 @@ Session::Session(std::string url, Network::SdkInfo info)
     _status(Status::Stopped)
 {
   _client->setConnectionHandler([this]() -> tc::cotask<void> {
-    TC_AWAIT(_userRequester->authenticate(
-        trustchainId(),
-        userId(),
-        TC_AWAIT(_storage->localUserAccessor->pull())
-            .deviceKeys()
-            .signatureKeyPair));
+    if (_accessors)
+    {
+      TC_AWAIT(_userRequester->authenticate(
+          trustchainId(),
+          userId(),
+          TC_AWAIT(_accessors->localUserAccessor->pull())
+              .deviceKeys()
+              .signatureKeyPair));
+    }
   });
 }
 
-tc::cotask<void> Session::finalizeSessionOpening(
-    std::unique_ptr<Users::LocalUserStore> localUserStore)
+tc::cotask<void> Session::finalizeSessionOpening()
 {
   TC_AWAIT(_userRequester->authenticate(
       _identity->trustchainId,
       _identity->delegation.userId,
-      TC_AWAIT(localUserStore->getDeviceKeys()).signatureKeyPair));
-  _storage = std::make_unique<Session::Storage>(
-      _db,
+      TC_AWAIT(_storage->localUserStore.getDeviceKeys()).signatureKeyPair));
+  _accessors = std::make_unique<Session::Accessors>(
+      *_storage,
       _userRequester.get(),
       _groupsRequester.get(),
       _provisionalRequester.get(),
       TC_AWAIT(Users::LocalUserAccessor::create(_identity->delegation.userId,
                                                 _identity->trustchainId,
                                                 _userRequester.get(),
-                                                std::move(localUserStore))));
+                                                &_storage->localUserStore)));
   _status = Status::Ready;
 }
 
@@ -129,17 +137,16 @@ tc::cotask<Status> Session::open(
 {
   _client->start();
   _identity = identity;
-  _db = TC_AWAIT(DataStore::createDatabase(
+  _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
       getDbPath(writablePath, identity.delegation.userId),
-      identity.userSecret));
-  auto localUserStore = std::make_unique<Users::LocalUserStore>(_db.get());
-  auto const deviceKeys = TC_AWAIT(localUserStore->getDeviceKeys());
+      identity.userSecret)));
+  auto const deviceKeys = TC_AWAIT(_storage->localUserStore.getDeviceKeys());
   auto const [deviceExists, userExists, unused] = TC_AWAIT(
       _userRequester->userStatus(identity.trustchainId,
                                  identity.delegation.userId,
                                  deviceKeys.signatureKeyPair.publicKey));
   if (deviceExists)
-    TC_AWAIT(finalizeSessionOpening(std::move(localUserStore)));
+    TC_AWAIT(finalizeSessionOpening());
   else if (userExists)
     _status = Status::IdentityVerificationNeeded;
   else
@@ -159,8 +166,7 @@ tc::cotask<void> Session::createDevice(Unlock::Verification const& verification)
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
   {
-    auto localUserStore = std::make_unique<Users::LocalUserStore>(_db.get());
-    auto const deviceKeys = TC_AWAIT(localUserStore->getDeviceKeys());
+    auto const deviceKeys = TC_AWAIT(_storage->localUserStore.getDeviceKeys());
     auto const ghostDeviceKeys =
         GhostDevice::create(verificationKey).toDeviceKeys();
     auto const encryptedUserKey = TC_AWAIT(_client->getLastUserKey(
@@ -177,7 +183,7 @@ tc::cotask<void> Session::createDevice(Unlock::Verification const& verification)
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
     TC_AWAIT(_client->pushBlock(Serialization::serialize(entry)));
-    TC_AWAIT(finalizeSessionOpening(std::move(localUserStore)));
+    TC_AWAIT(finalizeSessionOpening());
   }
   catch (Exception const& e)
   {
@@ -213,8 +219,7 @@ tc::cotask<void> Session::createUser(Unlock::Verification const& verification)
                                 ghostDeviceKeys.signatureKeyPair.publicKey,
                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
                                 userKeyPair);
-  auto localUserStore = std::make_unique<Users::LocalUserStore>(_db.get());
-  auto const deviceKeys = TC_AWAIT(localUserStore->getDeviceKeys());
+  auto const deviceKeys = TC_AWAIT(_storage->localUserStore.getDeviceKeys());
 
   auto const firstDeviceEntry = Users::createNewDeviceEntry(
       _identity->trustchainId,
@@ -235,7 +240,7 @@ tc::cotask<void> Session::createUser(Unlock::Verification const& verification)
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _identity->userSecret),
       encryptVerificationKey));
-  TC_AWAIT(finalizeSessionOpening(std::move(localUserStore)));
+  TC_AWAIT(finalizeSessionOpening());
 }
 
 Trustchain::UserId const& Session::userId() const
@@ -266,9 +271,9 @@ tc::cotask<void> Session::encrypt(
 
   TC_AWAIT(
       _storage->resourceKeyStore.putKey(metadata.resourceId, metadata.key));
-  auto const& localUser = _storage->localUserAccessor->get();
-  TC_AWAIT(Share::share(_storage->userAccessor,
-                        _storage->groupAccessor,
+  auto const& localUser = _accessors->localUserAccessor->get();
+  TC_AWAIT(Share::share(_accessors->userAccessor,
+                        _accessors->groupAccessor,
                         trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
@@ -311,13 +316,13 @@ tc::cotask<std::vector<uint8_t>> Session::decrypt(
 
 Trustchain::DeviceId const& Session::deviceId() const
 {
-  return _storage->localUserAccessor->get().deviceId();
+  return _accessors->localUserAccessor->get().deviceId();
 }
 
 tc::cotask<std::vector<Users::Device>> Session::getDeviceList() const
 {
-  auto const results = TC_AWAIT(
-      _storage->userAccessor.pull(gsl::make_span(std::addressof(userId()), 1)));
+  auto const results = TC_AWAIT(_accessors->userAccessor.pull(
+      gsl::make_span(std::addressof(userId()), 1)));
   if (results.found.size() != 1)
     throw Errors::AssertionError("Did not find our userId");
 
@@ -336,10 +341,10 @@ tc::cotask<void> Session::share(
     return base64DecodeArgument<Trustchain::ResourceId>(resourceId);
   });
 
-  auto const localUser = _storage->localUserAccessor->get();
+  auto const localUser = _accessors->localUserAccessor->get();
   TC_AWAIT(Share::share(_storage->resourceKeyStore,
-                        _storage->userAccessor,
-                        _storage->groupAccessor,
+                        _accessors->userAccessor,
+                        _accessors->groupAccessor,
                         trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
@@ -352,9 +357,9 @@ tc::cotask<void> Session::share(
 tc::cotask<SGroupId> Session::createGroup(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
-  auto const& localUser = _storage->localUserAccessor->get();
+  auto const& localUser = _accessors->localUserAccessor->get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
-      _storage->userAccessor,
+      _accessors->userAccessor,
       *_client,
       spublicIdentities,
       trustchainId(),
@@ -369,11 +374,11 @@ tc::cotask<void> Session::updateGroupMembers(
 {
   auto const groupId = base64DecodeArgument<Trustchain::GroupId>(groupIdString);
 
-  auto const& localUser = _storage->localUserAccessor->get();
+  auto const& localUser = _accessors->localUserAccessor->get();
   TC_AWAIT(Groups::Manager::updateMembers(
-      _storage->userAccessor,
+      _accessors->userAccessor,
       *_client,
-      _storage->groupAccessor,
+      _accessors->groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
       trustchainId(),
@@ -454,35 +459,36 @@ tc::cotask<VerificationKey> Session::generateVerificationKey() const
 tc::cotask<AttachResult> Session::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  TC_RETURN(TC_AWAIT(
-      _storage->provisionalUsersManager.attachProvisionalIdentity(sidentity)));
+  TC_RETURN(
+      TC_AWAIT(_accessors->provisionalUsersManager.attachProvisionalIdentity(
+          sidentity)));
 }
 
 tc::cotask<void> Session::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
   auto const& identity =
-      _storage->provisionalUsersManager.provisionalIdentity();
+      _accessors->provisionalUsersManager.provisionalIdentity();
   if (!identity.has_value())
     throw formatEx(Errors::Errc::PreconditionFailed,
                    "cannot call verifyProvisionalIdentity "
                    "without having called "
                    "attachProvisionalIdentity before");
   Unlock::validateVerification(verification, *identity);
-  TC_AWAIT(_storage->provisionalUsersManager.verifyProvisionalIdentity(
+  TC_AWAIT(_accessors->provisionalUsersManager.verifyProvisionalIdentity(
       Unlock::makeRequest(verification, userSecret())));
 }
 
 tc::cotask<void> Session::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  auto const& localUser = TC_AWAIT(_storage->localUserAccessor->pull());
+  auto const& localUser = TC_AWAIT(_accessors->localUserAccessor->pull());
   TC_AWAIT(Revocation::revokeDevice(
-      deviceId, trustchainId(), localUser, _storage->userAccessor, _client));
+      deviceId, trustchainId(), localUser, _accessors->userAccessor, _client));
 }
 
 tc::cotask<void> Session::nukeDatabase()
 {
-  TC_AWAIT(_db->nuke());
+  TC_AWAIT(_storage->db->nuke());
 }
 
 tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
@@ -498,9 +504,9 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
 
   TC_AWAIT(_storage->resourceKeyStore.putKey(encryptor.resourceId(),
                                              encryptor.symmetricKey()));
-  auto const& localUser = TC_AWAIT(_storage->localUserAccessor->pull());
-  TC_AWAIT(Share::share(_storage->userAccessor,
-                        _storage->groupAccessor,
+  auto const& localUser = TC_AWAIT(_accessors->localUserAccessor->pull());
+  TC_AWAIT(Share::share(_accessors->userAccessor,
+                        _accessors->groupAccessor,
                         trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
@@ -515,7 +521,8 @@ tc::cotask<Streams::EncryptionStream> Session::makeEncryptionStream(
 tc::cotask<Crypto::SymmetricKey> Session::getResourceKey(
     Trustchain::ResourceId const& resourceId)
 {
-  auto const key = TC_AWAIT(_storage->resourceKeyAccessor.findKey(resourceId));
+  auto const key =
+      TC_AWAIT(_accessors->resourceKeyAccessor.findKey(resourceId));
   if (!key)
   {
     throw formatEx(
@@ -567,9 +574,9 @@ tc::cotask<EncryptionSession> Session::makeEncryptionSession(
   TC_AWAIT(
       _storage->resourceKeyStore.putKey(sess.resourceId(), sess.sessionKey()));
 
-  auto const& localUser = _storage->localUserAccessor->get();
-  TC_AWAIT(Share::share(_storage->userAccessor,
-                        _storage->groupAccessor,
+  auto const& localUser = _accessors->localUserAccessor->get();
+  TC_AWAIT(Share::share(_accessors->userAccessor,
+                        _accessors->groupAccessor,
                         trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,

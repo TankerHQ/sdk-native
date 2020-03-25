@@ -25,6 +25,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <gsl-lite.hpp>
@@ -62,16 +63,22 @@ class Session
 public:
   struct Storage
   {
-    Storage(DataStore::DatabasePtr& db,
-            Users::IRequester* userRequester,
-            Groups::IRequester* groupsRequester,
-            ProvisionalUsers::IRequester* provisionalRequester,
-            std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor);
+    Storage(DataStore::DatabasePtr db);
 
+    DataStore::DatabasePtr db;
+    Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
     ResourceKeyStore resourceKeyStore;
     ProvisionalUserKeysStore provisionalUserKeysStore;
+  };
 
+  struct Accessors
+  {
+    Accessors(Storage& storage,
+              Users::IRequester* userRequester,
+              Groups::IRequester* groupsRequester,
+              ProvisionalUsers::IRequester* provisionalRequester,
+              std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor);
     std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
     mutable Users::UserAccessor userAccessor;
     ProvisionalUsers::Accessor provisionalUsersAccessor;
@@ -159,17 +166,16 @@ private:
   Crypto::SymmetricKey const& userSecret() const;
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
-  tc::cotask<void> finalizeSessionOpening(
-      std::unique_ptr<Users::LocalUserStore> localUserStore);
+  tc::cotask<void> finalizeSessionOpening();
 
 private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<Users::IRequester> _userRequester;
   std::unique_ptr<Groups::IRequester> _groupsRequester;
   std::unique_ptr<ProvisionalUsers::IRequester> _provisionalRequester;
-  DataStore::DatabasePtr _db;
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
   std::unique_ptr<Storage> _storage;
+  std::unique_ptr<Accessors> _accessors;
 };
 }
