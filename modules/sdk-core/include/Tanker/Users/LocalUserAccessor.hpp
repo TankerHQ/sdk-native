@@ -26,11 +26,12 @@ class LocalUserAccessor : public ILocalUserAccessor
   LocalUserAccessor() = delete;
   LocalUserAccessor(LocalUserAccessor const&) = delete;
   LocalUserAccessor& operator=(LocalUserAccessor const&) = delete;
-  LocalUserAccessor(LocalUserAccessor&&) = delete;
   LocalUserAccessor& operator=(LocalUserAccessor&&) = delete;
 
 public:
-  static tc::cotask<std::unique_ptr<LocalUserAccessor>> create(
+  LocalUserAccessor(LocalUserAccessor&&) = default;
+
+  static tc::cotask<LocalUserAccessor> create(
       Trustchain::UserId const& userId,
       Trustchain::TrustchainId const& trustchainId,
       IRequester* requester,

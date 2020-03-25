@@ -25,6 +25,7 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
@@ -55,7 +56,6 @@ class IRequester;
 namespace Users
 {
 class IRequester;
-class LocalUserAccessor;
 }
 
 class Session
@@ -78,8 +78,8 @@ public:
               Users::IRequester* userRequester,
               Groups::IRequester* groupsRequester,
               ProvisionalUsers::IRequester* provisionalRequester,
-              std::unique_ptr<Users::LocalUserAccessor> plocalUserAccessor);
-    std::unique_ptr<Users::LocalUserAccessor> localUserAccessor;
+              Users::LocalUserAccessor plocalUserAccessor);
+    Users::LocalUserAccessor localUserAccessor;
     mutable Users::UserAccessor userAccessor;
     ProvisionalUsers::Accessor provisionalUsersAccessor;
     ProvisionalUsers::Manager provisionalUsersManager;
