@@ -240,47 +240,21 @@ void AsyncCore::disconnectDeviceRevoked()
   this->_asyncDeviceRevoked = nullptr;
 }
 
-void AsyncCore::setLogHandler(Log::LogHandler handler)
+tc::thread_pool& AsyncCore::getLogHandlerThreadPool()
 {
-  // android's libart doesn't like it when we call java from a coroutine
+  // Android's libart doesn't like it when we call java from a coroutine, so we
+  // make a thread pool here.
   static tc::thread_pool tp;
   if (!tp.is_running())
     tp.start(1);
+  return tp;
+}
 
-  // We may execute static destruction before all tanker instances are
-  // destroyed, especially when using tanker in a gc-ed language.
-  // That's why we try/catch exception in the callback, and we try to unset it
-  // before dying. This is a best effort and is still unsafe. I don't think this
-  // is properly fixable, the only way not to crash is to destroy all Tanker
-  // instances before executing static de-init.
-
-  struct LogHandlerGuard
-  {
-    ~LogHandlerGuard()
-    {
-      Log::setLogHandler(nullptr);
-    }
-  };
-  static LogHandlerGuard g;
-
-  Log::setLogHandler([handler](Log::Record const& record) {
-    try
-    {
-      tc::async(tp, [=] { handler(record); }).get();
-    }
-    // see comment above
-    catch (std::exception const& e)
-    {
-      std::cerr << "Tanker: failed to log: " << record.category << " "
-                << record.message << std::endl;
-      std::cerr << "Because of " << typeid(e).name() << ": " << e.what()
-                << std::endl;
-    }
-    catch (...)
-    {
-      std::cerr << "Tanker: failed to log: " << record.category << " "
-                << record.message << std::endl;
-    }
+void AsyncCore::setLogHandler(Log::LogHandler handler)
+{
+  auto& tp = getLogHandlerThreadPool();
+  Log::setLogHandler([handler, &tp](Log::Record const& record) {
+    tc::async(tp, [=] { handler(record); }).get();
   });
 }
 

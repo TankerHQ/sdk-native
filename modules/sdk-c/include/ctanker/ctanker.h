@@ -218,6 +218,9 @@ CTANKER_EXPORT char const* tanker_version_string(void);
  * Set the log handler of the API with a function pointer
  * \param handler the function pointer, it must have the prototype of
  *        tanker_log_handler_t.
+ *
+ * This function is not thread-safe. Also it must not be called after at least
+ * one Tanker has been instantiated.
  */
 CTANKER_EXPORT void tanker_set_log_handler(tanker_log_handler_t handler);
 
@@ -535,6 +538,17 @@ CTANKER_EXPORT void tanker_free_verification_method_list(
     tanker_verification_method_list_t* list);
 
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
+
+/*!
+ * Skip destruction of risky static objects
+ *
+ * This is useful when tanker is embedded into a garbage collected language
+ * like Java. A Java program may quit and execute static destruction even if the
+ * GC hasn't run and tanker instances are still running. This usually leads to a
+ * deadlock or a crash, so call this method during initialization so that
+ * statics are not destroyed and threads are not stopped.
+ */
+CTANKER_EXPORT void tanker_leak_statics(void);
 
 /*!
  * Hash a password before sending it to the application server where it will

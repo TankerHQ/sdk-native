@@ -111,6 +111,7 @@ public:
 
   tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
 
+  static tc::thread_pool& getLogHandlerThreadPool();
   static void setLogHandler(Log::LogHandler handler);
 
   static uint64_t encryptedSize(uint64_t clearSize);
