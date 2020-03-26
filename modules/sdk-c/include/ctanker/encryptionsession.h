@@ -44,6 +44,16 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
     tanker_encryption_session_t* session);
 
 /*!
+ * Get the encrypted size from the clear size.
+ * Must be called before encrypt to allocate the encrypted buffer.
+ *
+ * \remark There is no tanker_encryption_session_decrypted_size, use
+ * tanker_decrypted_size for the inverse operation
+ */
+CTANKER_EXPORT uint64_t
+tanker_encryption_session_encrypted_size(uint64_t clear_size);
+
+/*!
  * Get the session's permanent resource id
  * \param session an encryption session
  * \return an already ready future of a char* that must be freed with
