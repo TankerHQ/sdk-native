@@ -25,15 +25,18 @@ namespace Tanker
 namespace Network
 {
 Connection::Connection(std::string url, SdkInfo info)
-  : Connection(url, QueryParameters{std::move(info.sdkType),
-                                    std::move(info.trustchainId),
-                                    std::move(info.version),
-                                    std::nullopt})
+  : Connection(url,
+               QueryParameters{std::move(info.sdkType),
+                               std::move(info.trustchainId),
+                               std::move(info.version),
+                               std::nullopt})
 {
 }
 
 Connection::Connection(std::string url, std::string context)
-  : Connection(url, QueryParameters{"admin", std::nullopt, std::nullopt, std::move(context)})
+  : Connection(url,
+               QueryParameters{
+                   "admin", std::nullopt, std::nullopt, std::move(context)})
 {
 }
 
@@ -79,16 +82,21 @@ void Connection::connect()
 {
   FUNC_BEGIN(fmt::format("connect {}", (void*)(this)), Net);
 
-  std::map<std::string,std::string> query = {{"type", _params.sdkType}};
+  std::map<std::string, std::string> query = {{"type", _params.sdkType}};
   if (_params.version)
     query["version"] = _params.version.value();
   if (_params.trustchainId)
-    query["trustchainId"] = cppcodec::base64_rfc4648::encode(
-      _params.trustchainId.value());
+    query["trustchainId"] =
+        cppcodec::base64_rfc4648::encode(_params.trustchainId.value());
   if (_params.context)
     query["context"] = _params.context.value();
 
   this->_client.connect(_url, query);
+}
+
+void Connection::close()
+{
+  _client.close();
 }
 
 void Connection::on(std::string const& eventName, AConnection::Handler handler)

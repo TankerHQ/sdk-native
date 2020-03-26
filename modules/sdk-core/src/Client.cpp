@@ -71,6 +71,11 @@ void Client::start()
   _cx->connect();
 }
 
+void Client::close()
+{
+  _cx->close();
+}
+
 std::string Client::connectionId() const
 {
   return this->_cx->id();
