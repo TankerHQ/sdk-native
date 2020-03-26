@@ -23,6 +23,9 @@ class EncryptionStream : BufferedStream<EncryptionStream>
 public:
   explicit EncryptionStream(InputSource);
   EncryptionStream(InputSource, std::uint32_t encryptedChunkSize);
+  EncryptionStream(InputSource,
+                   Trustchain::ResourceId const& resourceId,
+                   Crypto::SymmetricKey const& key);
 
   using BufferedStream<EncryptionStream>::operator();
 

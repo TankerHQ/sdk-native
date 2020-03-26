@@ -4,6 +4,7 @@
 #include <ctanker/async.h>
 #include <ctanker/ctanker.h>
 #include <ctanker/export.h>
+#include <ctanker/stream.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,16 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
     tanker_encryption_session_t* session);
 
 /*!
+ * Get the encrypted size from the clear size.
+ * Must be called before encrypt to allocate the encrypted buffer.
+ *
+ * \remark There is no tanker_encryption_session_decrypted_size, use
+ * tanker_decrypted_size for the inverse operation
+ */
+CTANKER_EXPORT uint64_t
+tanker_encryption_session_encrypted_size(uint64_t clear_size);
+
+/*!
  * Get the session's permanent resource id
  * \param session an encryption session
  * \return an already ready future of a char* that must be freed with
@@ -68,6 +79,21 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
     uint8_t* encrypted_data,
     uint8_t const* data,
     uint64_t data_size);
+
+/*!
+ * Create an encryption stream for an encryption session
+ * Use this stream with the tanker_stream_* APIs
+ *
+ * \param session An encryption session
+ * \param cb The input callback
+ * \param additional_data Additional data to give to cb
+ *
+ * \return A new stream encryptor, to be closed with tanker_stream_close
+ */
+CTANKER_EXPORT tanker_future_t* tanker_encryption_session_stream_encrypt(
+    tanker_encryption_session_t* session,
+    tanker_stream_input_source_t cb,
+    void* additional_data);
 
 #ifdef __cplusplus
 }
