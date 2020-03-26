@@ -98,7 +98,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
                               TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              std::unique_ptr<Client> const& client)
+                              Client& client)
 {
   TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), userAccessor));
   auto const user =
@@ -108,7 +108,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
 
   auto clientEntry = makeRevokeDeviceEntry(
       deviceId, trustchainId, localUser, user.devices(), newUserKey);
-  TC_AWAIT(client->pushBlock(Serialization::serialize(clientEntry)));
+  TC_AWAIT(client.pushBlock(Serialization::serialize(clientEntry)));
 }
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(

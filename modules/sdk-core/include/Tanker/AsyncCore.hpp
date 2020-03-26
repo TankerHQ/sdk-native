@@ -2,7 +2,6 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/Core.hpp>
-#include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Status.hpp>

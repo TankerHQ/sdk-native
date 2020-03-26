@@ -1,37 +1,49 @@
 #include <Tanker/Core.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/Format/Format.hpp>
+#include <Tanker/GhostDevice.hpp>
+#include <Tanker/Groups/Manager.hpp>
+#include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Identity/Extract.hpp>
-#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
+#include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
-#include <Tanker/Status.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Users/Requester.hpp>
-
+#include <Tanker/Share.hpp>
+#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
+#include <Tanker/Trustchain/ResourceId.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
+#include <Tanker/Users/LocalUserAccessor.hpp>
+#include <Tanker/Users/LocalUserStore.hpp>
+#include <Tanker/Users/Requester.hpp>
+#include <Tanker/Utils.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <boost/variant2/variant.hpp>
 
-#include <exception>
+#include <fmt/format.h>
 
-#define checkStatus(wanted, action) this->assertStatus(wanted, #action)
+#include <stdexcept>
+#include <utility>
+
+using namespace Tanker::Errors;
 
 TLOG_CATEGORY(Core);
 
+#define checkStatus(wanted, action) this->assertStatus(wanted, #action)
+
 namespace Tanker
 {
-namespace
-{
-}
+
 Core::~Core() = default;
 
 Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
@@ -40,14 +52,14 @@ Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
     _writablePath(std::move(writablePath)),
     _session(std::make_unique<Session>(_url, _info))
 {
-}
-
-Status Core::status() const
-{
-  if (!_session)
-    return Status::Stopped;
-  else
-    return _session->status();
+  _session->client().setConnectionHandler([this]() -> tc::cotask<void> {
+    TC_AWAIT(_session->userRequester->authenticate(
+        _session->trustchainId(),
+        _session->userId(),
+        TC_AWAIT(_session->accessors().localUserAccessor.pull())
+            .deviceKeys()
+            .signatureKeyPair));
+  });
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const
@@ -57,6 +69,16 @@ void Core::assertStatus(Status wanted, std::string const& action) const
                            TFMT("invalid session status {:e} for {:s}"),
                            s,
                            action);
+}
+
+Status Core::status() const
+{
+  return _session->status();
+}
+
+void Core::reset()
+{
+  _session = std::make_unique<Session>(_url, _info);
 }
 
 template <typename F>
@@ -89,19 +111,44 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
+tc::cotask<void> Core::finalizeSessionOpening()
+{
+  TC_AWAIT(_session->userRequester->authenticate(
+      _session->trustchainId(),
+      _session->userId(),
+      TC_AWAIT(_session->storage().localUserStore.getDeviceKeys())
+          .signatureKeyPair));
+  TC_AWAIT(_session->createAccessors());
+  _session->setStatus(Status::Ready);
+}
+
+void Core::stop()
+{
+  reset();
+  if (_sessionClosed)
+    _sessionClosed();
+}
+
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
-  checkStatus(Status::Stopped, start);
-
-  auto identity =
-      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
-  if (identity.trustchainId != _info.trustchainId)
-    throw formatEx(Errors::Errc::InvalidArgument,
-                   TFMT("identity's trustchain is {:s}, expected {:s}"),
-                   identity.trustchainId,
-                   _info.trustchainId);
-
-  TC_RETURN(TC_AWAIT(_session->open(identity, _writablePath)));
+  _session->client().start();
+  _session->setIdentity(
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity));
+  _session->createStorage(_writablePath);
+  auto const deviceKeys =
+      TC_AWAIT(_session->storage().localUserStore.getDeviceKeys());
+  auto const [deviceExists, userExists, unused] =
+      TC_AWAIT(_session->userRequester->userStatus(
+          _session->trustchainId(),
+          _session->userId(),
+          deviceKeys.signatureKeyPair.publicKey));
+  if (deviceExists)
+    TC_AWAIT(finalizeSessionOpening());
+  else if (userExists)
+    _session->setStatus(Status::IdentityVerificationNeeded);
+  else
+    _session->setStatus(Status::IdentityRegistrationNeeded);
+  TC_RETURN(status());
 }
 
 tc::cotask<Status> Core::start(std::string const& identity)
@@ -112,175 +159,348 @@ tc::cotask<Status> Core::start(std::string const& identity)
   })));
 }
 
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+{
+  TINFO("verifyIdentity");
+  FUNC_TIMER(Proc);
+  checkStatus(Status::IdentityVerificationNeeded, registerIdentity);
+  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
+  try
+  {
+    auto const deviceKeys =
+        TC_AWAIT(_session->storage().localUserStore.getDeviceKeys());
+    auto const ghostDeviceKeys =
+        GhostDevice::create(verificationKey).toDeviceKeys();
+    auto const encryptedUserKey = TC_AWAIT(_session->client().getLastUserKey(
+        _session->trustchainId(), ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const privateUserEncryptionKey =
+        Crypto::sealDecrypt(encryptedUserKey.encryptedPrivateKey,
+                            ghostDeviceKeys.encryptionKeyPair);
+    auto const entry = Users::createNewDeviceEntry(
+        _session->trustchainId(),
+        encryptedUserKey.deviceId,
+        Identity::makeDelegation(_session->userId(),
+                                 ghostDeviceKeys.signatureKeyPair.privateKey),
+        deviceKeys.signatureKeyPair.publicKey,
+        deviceKeys.encryptionKeyPair.publicKey,
+        Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
+    TC_AWAIT(_session->client().pushBlock(Serialization::serialize(entry)));
+    TC_AWAIT(finalizeSessionOpening());
+  }
+  catch (Exception const& e)
+  {
+    if (e.errorCode() == ServerErrc::DeviceNotFound ||
+        e.errorCode() == Errc::DecryptionFailed)
+      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
+    throw;
+  }
+}
+
 tc::cotask<void> Core::registerIdentity(
     Unlock::Verification const& verification)
 {
-  TC_AWAIT(_session->createUser(verification));
-}
+  TINFO("registerIdentity");
+  FUNC_TIMER(Proc);
+  checkStatus(Status::IdentityRegistrationNeeded, registerIdentity);
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
-{
-  SCOPE_TIMER("verify_identity", Proc);
-  TC_AWAIT(_session->createDevice(verification));
-}
+  auto const verificationKey =
+      boost::variant2::get_if<VerificationKey>(&verification);
+  auto const ghostDeviceKeys =
+      verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
+                        DeviceKeys::create();
+  auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
 
-void Core::stop()
-{
-  reset();
-  if (_sessionClosed)
-    _sessionClosed();
-}
+  auto const userKeyPair = Crypto::makeEncryptionKeyPair();
+  auto const userCreationEntry =
+      Users::createNewUserEntry(_session->trustchainId(),
+                                _session->identity().delegation,
+                                ghostDeviceKeys.signatureKeyPair.publicKey,
+                                ghostDeviceKeys.encryptionKeyPair.publicKey,
+                                userKeyPair);
+  auto const deviceKeys =
+      TC_AWAIT(_session->storage().localUserStore.getDeviceKeys());
 
-void Core::setSessionClosedHandler(SessionClosedHandler handler)
-{
-  _sessionClosed = std::move(handler);
-}
+  auto const firstDeviceEntry = Users::createNewDeviceEntry(
+      _session->trustchainId(),
+      Trustchain::DeviceId{userCreationEntry.hash()},
+      Identity::makeDelegation(_session->userId(),
+                               ghostDevice.privateSignatureKey),
+      deviceKeys.signatureKeyPair.publicKey,
+      deviceKeys.encryptionKeyPair.publicKey,
+      userKeyPair);
 
-void Core::reset()
-{
-  _session.reset(new Session{_url, _info});
+  auto const encryptVerificationKey = Crypto::encryptAead(
+      _session->userSecret(),
+      gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
+
+  TC_AWAIT(_session->client().createUser(
+      _session->identity(),
+      Serialization::serialize(userCreationEntry),
+      Serialization::serialize(firstDeviceEntry),
+      Unlock::makeRequest(verification, _session->userSecret()),
+      encryptVerificationKey));
+  TC_AWAIT(finalizeSessionOpening());
 }
 
 tc::cotask<void> Core::encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
   checkStatus(Status::Ready, encrypt);
-  TC_AWAIT(
-      _session->encrypt(encryptedData, clearData, publicIdentities, groupIds));
+  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(
+      SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+          _session->trustchainId(), _session->userId()})});
+
+  TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
+                                                       metadata.key));
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  TC_AWAIT(Share::share(_session->accessors().userAccessor,
+                        _session->accessors().groupAccessor,
+                        _session->trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        _session->client(),
+                        {{metadata.key, metadata.resourceId}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
     gsl::span<uint8_t const> clearData,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
   checkStatus(Status::Ready, encrypt);
-  TC_RETURN(TC_AWAIT(_session->encrypt(clearData, publicIdentities, groupIds)));
+  std::vector<uint8_t> encryptedData(
+      Encryptor::encryptedSize(clearData.size()));
+  TC_AWAIT(
+      encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
+  TC_RETURN(std::move(encryptedData));
 }
 
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {
   checkStatus(Status::Ready, decrypt);
-  TC_AWAIT(_session->decrypt(decryptedData, encryptedData));
+  auto const resourceId = Encryptor::extractResourceId(encryptedData);
+
+  auto const key = TC_AWAIT(getResourceKey(resourceId));
+
+  TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
     gsl::span<uint8_t const> encryptedData)
 {
   checkStatus(Status::Ready, decrypt);
-  TC_RETURN(TC_AWAIT(_session->decrypt(encryptedData)));
-}
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  TC_AWAIT(decrypt(decryptedData.data(), encryptedData));
 
-tc::cotask<void> Core::share(
-    std::vector<SResourceId> const& sresourceIds,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  checkStatus(Status::Ready, share);
-  TC_AWAIT(_session->share(sresourceIds, publicIdentities, groupIds));
-}
-
-tc::cotask<SGroupId> Core::createGroup(
-    std::vector<SPublicIdentity> const& members)
-{
-  checkStatus(Status::Ready, createGroup);
-  return _session->createGroup(members);
-}
-
-tc::cotask<void> Core::updateGroupMembers(
-    SGroupId const& groupIdString,
-    std::vector<SPublicIdentity> const& usersToAdd)
-{
-  checkStatus(Status::Ready, updateGroupMembers);
-  return _session->updateGroupMembers(groupIdString, usersToAdd);
+  TC_RETURN(std::move(decryptedData));
 }
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
   checkStatus(Status::Ready, deviceId);
-  return _session->deviceId();
-  ;
+  return _session->accessors().localUserAccessor.get().deviceId();
 }
 
 tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
   checkStatus(Status::Ready, getDeviceList);
-  return (_session)->getDeviceList();
+  auto const results = TC_AWAIT(_session->accessors().userAccessor.pull(
+      gsl::make_span(std::addressof(_session->userId()), 1)));
+  if (results.found.size() != 1)
+    throw Errors::AssertionError("Did not find our userId");
+
+  TC_RETURN(results.found.at(0).devices());
 }
 
-tc::cotask<VerificationKey> Core::generateVerificationKey()
+tc::cotask<void> Core::share(
+    std::vector<SResourceId> const& sresourceIds,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::IdentityRegistrationNeeded, generateVerificationKey);
-  TC_RETURN(TC_AWAIT(_session->generateVerificationKey()));
+  checkStatus(Status::Ready, share);
+  if (spublicIdentities.empty() && sgroupIds.empty())
+    TC_RETURN();
+
+  auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
+    return base64DecodeArgument<Trustchain::ResourceId>(resourceId);
+  });
+
+  auto const localUser = _session->accessors().localUserAccessor.get();
+  TC_AWAIT(Share::share(_session->storage().resourceKeyStore,
+                        _session->accessors().userAccessor,
+                        _session->accessors().groupAccessor,
+                        _session->trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        _session->client(),
+                        resourceIds,
+                        spublicIdentities,
+                        sgroupIds));
+}
+
+tc::cotask<SGroupId> Core::createGroup(
+    std::vector<SPublicIdentity> const& spublicIdentities)
+{
+  checkStatus(Status::Ready, createGroup);
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  auto const groupId = TC_AWAIT(Groups::Manager::create(
+      _session->accessors().userAccessor,
+      _session->client(),
+      spublicIdentities,
+      _session->trustchainId(),
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey));
+  TC_RETURN(groupId);
+}
+
+tc::cotask<void> Core::updateGroupMembers(
+    SGroupId const& groupIdString,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
+{
+  checkStatus(Status::Ready, updateGroupMembers);
+  auto const groupId = base64DecodeArgument<Trustchain::GroupId>(groupIdString);
+
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  TC_AWAIT(Groups::Manager::updateMembers(
+      _session->accessors().userAccessor,
+      _session->client(),
+      _session->accessors().groupAccessor,
+      groupId,
+      spublicIdentitiesToAdd,
+      _session->trustchainId(),
+      localUser.deviceId(),
+      localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
 tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
 {
   checkStatus(Status::Ready, setVerificationMethod);
-  TC_AWAIT(_session->setVerificationMethod(method));
+  if (boost::variant2::holds_alternative<VerificationKey>(method))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot call setVerificationMethod with a verification key");
+  }
+  else
+  {
+    try
+    {
+      TC_AWAIT(_session->client().setVerificationMethod(
+          _session->trustchainId(),
+          _session->userId(),
+          Unlock::makeRequest(method, _session->userSecret())));
+    }
+    catch (Errors::Exception const& e)
+    {
+      if (e.errorCode() == ServerErrc::VerificationKeyNotFound)
+      {
+        // the server does not send an error message
+        throw Errors::Exception(make_error_code(Errc::PreconditionFailed),
+                                "cannot call setVerificationMethod after a "
+                                "verification key has been used");
+      }
+      throw;
+    }
+  }
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
 Core::getVerificationMethods()
 {
-  if (_session->status() == Status::Ready ||
-      _session->status() == Status::IdentityVerificationNeeded)
-    TC_RETURN(TC_AWAIT(_session->fetchVerificationMethods()));
-  else
-  {
-    // fixme
-    throw Errors::formatEx(Errors::Errc::PreconditionFailed, "");
-  }
+  if (!(status() == Status::Ready ||
+        status() == Status::IdentityVerificationNeeded))
+    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
+                           TFMT("invalid session status {:e} for {:s}"),
+                           status(),
+                           "getVerificationMethods");
+  auto methods = TC_AWAIT(_session->client().fetchVerificationMethods(
+      _session->trustchainId(), _session->userId()));
+  Unlock::decryptEmailMethods(methods, _session->userSecret());
+  TC_RETURN(methods);
+}
+
+tc::cotask<VerificationKey> Core::fetchVerificationKey(
+    Unlock::Verification const& verification)
+{
+  auto const encryptedKey = TC_AWAIT(_session->client().fetchVerificationKey(
+      _session->trustchainId(),
+      _session->userId(),
+      Unlock::makeRequest(verification, _session->userSecret())));
+  auto const verificationKey = TC_AWAIT(
+      Encryptor::decryptFallbackAead(_session->userSecret(), encryptedKey));
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
+}
+
+tc::cotask<VerificationKey> Core::getVerificationKey(
+    Unlock::Verification const& verification)
+{
+  using boost::variant2::get_if;
+  using boost::variant2::holds_alternative;
+
+  if (auto const verificationKey = get_if<VerificationKey>(&verification))
+    TC_RETURN(*verificationKey);
+  else if (holds_alternative<Unlock::EmailVerification>(verification) ||
+           holds_alternative<Passphrase>(verification) ||
+           holds_alternative<OidcIdToken>(verification))
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
+  throw AssertionError("invalid verification, unreachable code");
+}
+
+tc::cotask<VerificationKey> Core::generateVerificationKey() const
+{
+  checkStatus(Status::IdentityRegistrationNeeded, generateVerificationKey);
+  TC_RETURN(GhostDevice::create().toVerificationKey());
 }
 
 tc::cotask<AttachResult> Core::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
   checkStatus(Status::Ready, attachProvisionalIdentity);
-  TC_RETURN(TC_AWAIT(_session->attachProvisionalIdentity(sidentity)));
+  TC_RETURN(TC_AWAIT(
+      _session->accessors().provisionalUsersManager.attachProvisionalIdentity(
+          sidentity)));
 }
 
 tc::cotask<void> Core::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
   checkStatus(Status::Ready, verifyProvisionalIdentity);
-  TC_AWAIT(_session->verifyProvisionalIdentity(verification));
+  auto const& identity =
+      _session->accessors().provisionalUsersManager.provisionalIdentity();
+  if (!identity.has_value())
+    throw formatEx(Errors::Errc::PreconditionFailed,
+                   "cannot call verifyProvisionalIdentity "
+                   "without having called "
+                   "attachProvisionalIdentity before");
+  Unlock::validateVerification(verification, *identity);
+  TC_AWAIT(
+      _session->accessors().provisionalUsersManager.verifyProvisionalIdentity(
+          Unlock::makeRequest(verification, _session->userSecret())));
 }
 
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
   checkStatus(Status::Ready, revokeDevice);
-  TC_AWAIT(_session->revokeDevice(deviceId));
+  auto const& localUser =
+      TC_AWAIT(_session->accessors().localUserAccessor.pull());
+  TC_AWAIT(Revocation::revokeDevice(deviceId,
+                                    _session->trustchainId(),
+                                    localUser,
+                                    _session->accessors().userAccessor,
+                                    _session->client()));
 }
 
-tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
-    Streams::InputSource cb,
-    std::vector<SPublicIdentity> const& suserIds,
-    std::vector<SGroupId> const& sgroupIds)
+tc::cotask<void> Core::nukeDatabase()
 {
-  checkStatus(Status::Ready, makeEncryptionStream);
-  TC_RETURN(TC_AWAIT(
-      _session->makeEncryptionStream(std::move(cb), suserIds, sgroupIds)));
-}
-
-tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
-    Streams::InputSource cb)
-{
-  checkStatus(Status::Ready, makeDecryptionStream);
-  TC_RETURN(TC_AWAIT(_session->makeDecryptionStream(std::move(cb))));
-}
-
-tc::cotask<EncryptionSession> Core::makeEncryptionSession(
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
-{
-  checkStatus(Status::Ready, makeEncryptionSession);
-  TC_RETURN(
-      TC_AWAIT(_session->makeEncryptionSession(publicIdentities, groupIds)));
+  checkStatus(Status::Ready, nukeDatabase);
+  TC_AWAIT(_session->storage().db->nuke());
 }
 
 Trustchain::ResourceId Core::getResourceId(
@@ -289,9 +509,109 @@ Trustchain::ResourceId Core::getResourceId(
   return Encryptor::extractResourceId(encryptedData);
 }
 
-tc::cotask<void> Core::nukeDatabase()
+void Core::setSessionClosedHandler(SessionClosedHandler handler)
 {
-  checkStatus(Status::Ready, nukeDatabase);
-  _session->nukeDatabase();
+  _sessionClosed = std::move(handler);
+}
+
+tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
+    Streams::InputSource cb,
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  checkStatus(Status::Ready, makeEncryptionStream);
+  Streams::EncryptionStream encryptor(std::move(cb));
+
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.push_back(
+      SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+          _session->trustchainId(), _session->userId()})});
+
+  TC_AWAIT(_session->storage().resourceKeyStore.putKey(
+      encryptor.resourceId(), encryptor.symmetricKey()));
+  auto const& localUser =
+      TC_AWAIT(_session->accessors().localUserAccessor.pull());
+  TC_AWAIT(Share::share(_session->accessors().userAccessor,
+                        _session->accessors().groupAccessor,
+                        _session->trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        _session->client(),
+                        {{encryptor.symmetricKey(), encryptor.resourceId()}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
+
+  TC_RETURN(std::move(encryptor));
+}
+
+tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto const key =
+      TC_AWAIT(_session->accessors().resourceKeyAccessor.findKey(resourceId));
+  if (!key)
+  {
+    throw formatEx(
+        Errc::InvalidArgument, "key not found for resource: {:s}", resourceId);
+  }
+  TC_RETURN(*key);
+}
+
+tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
+    Streams::InputSource cb)
+{
+  checkStatus(Status::Ready, makeDecryptionStream);
+  auto peekableSource = Streams::PeekableInputSource(std::move(cb));
+  auto const version = TC_AWAIT(peekableSource.peek(1));
+  if (version.empty())
+    throw formatEx(Errc::InvalidArgument, "empty stream");
+  if (version[0] == 4)
+  {
+    auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+        -> tc::cotask<Crypto::SymmetricKey> {
+      TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+    };
+
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
+        std::move(peekableSource), std::move(resourceKeyFinder)));
+    TC_RETURN(Streams::DecryptionStreamAdapter(std::move(streamDecryptor),
+                                               streamDecryptor.resourceId()));
+  }
+  else
+  {
+    auto encryptedData =
+        TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
+    auto const resourceId = Encryptor::extractResourceId(encryptedData);
+    TC_RETURN(Streams::DecryptionStreamAdapter(
+        Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
+        resourceId));
+  }
+  throw AssertionError("makeDecryptionStream: unreachable code");
+}
+
+tc::cotask<EncryptionSession> Core::makeEncryptionSession(
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  checkStatus(Status::Ready, makeEncryptionSession);
+  EncryptionSession sess;
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.emplace_back(
+      to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
+                                                  _session->userId()}));
+  TC_AWAIT(_session->storage().resourceKeyStore.putKey(sess.resourceId(),
+                                                       sess.sessionKey()));
+
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  TC_AWAIT(Share::share(_session->accessors().userAccessor,
+                        _session->accessors().groupAccessor,
+                        _session->trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        _session->client(),
+                        {{sess.sessionKey(), sess.resourceId()}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
+  TC_RETURN(sess);
 }
 }

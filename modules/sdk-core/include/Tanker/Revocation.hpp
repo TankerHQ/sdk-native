@@ -49,7 +49,7 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Trustchain::TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              std::unique_ptr<Client> const& client);
+                              Client& client);
 
 Trustchain::ClientEntry makeRevokeDeviceEntry(
     Trustchain::DeviceId const& targetDeviceId,
