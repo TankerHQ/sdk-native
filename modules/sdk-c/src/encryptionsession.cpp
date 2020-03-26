@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 
+#include "Stream.hpp"
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
 
@@ -67,5 +68,25 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
       TC_AWAIT(
           session->encrypt(encrypted_data, gsl::make_span(data, data_size)));
     });
+  }));
+}
+
+tanker_future_t* tanker_encryption_session_stream_encrypt(
+    tanker_encryption_session_t* csession,
+    tanker_stream_input_source_t cb,
+    void* additional_data)
+{
+  auto session = reinterpret_cast<EncryptionSession*>(csession);
+  return makeFuture(tc::sync([&] {
+    auto resourceId = session->resourceId();
+    auto key = session->sessionKey();
+    auto wrappedCb = wrapCallback(cb, additional_data);
+    Streams::EncryptionStream encryptor(std::move(wrappedCb), resourceId, key);
+
+    auto c_stream = new tanker_stream;
+    c_stream->resourceId =
+        SResourceId{cppcodec::base64_rfc4648::encode(encryptor.resourceId())};
+    c_stream->inputSource = std::move(encryptor);
+    return static_cast<void*>(c_stream);
   }));
 }

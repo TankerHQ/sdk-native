@@ -35,6 +35,16 @@ EncryptionStream::EncryptionStream(InputSource cb,
   _key = Crypto::makeSymmetricKey();
 }
 
+EncryptionStream::EncryptionStream(InputSource cb,
+                                   Trustchain::ResourceId const& resourceId,
+                                   Crypto::SymmetricKey const& key)
+  : BufferedStream(std::move(cb)),
+    _encryptedChunkSize(Header::defaultEncryptedChunkSize),
+    _resourceId{resourceId},
+    _key{key}
+{
+}
+
 Trustchain::ResourceId const& EncryptionStream::resourceId() const
 {
   return _resourceId;
