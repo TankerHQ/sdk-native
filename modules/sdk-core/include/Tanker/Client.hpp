@@ -59,11 +59,6 @@ public:
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);
 
-  tc::cotask<std::vector<std::string>> getBlocks(
-      int index,
-      std::vector<Trustchain::UserId> const& extra_users,
-      std::vector<Trustchain::GroupId> const& extra_groups);
-
   tc::cotask<nlohmann::json> emit(std::string const& event,
                                   nlohmann::json const& data);
 

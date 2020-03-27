@@ -150,23 +150,6 @@ tc::cotask<EncryptedUserKey> Client::getLastUserKey(
   TC_RETURN(encryptedUserKey);
 }
 
-tc::cotask<std::vector<std::string>> Client::getBlocks(
-    int lastIndex,
-    std::vector<UserId> const& extra_users,
-    std::vector<GroupId> const& extra_groups)
-{
-  auto const json = TC_AWAIT(emit("get blocks 2",
-                                  {
-                                      {"index", lastIndex},
-                                      {"extra_users", extra_users},
-                                      {"extra_groups", extra_groups},
-                                      {"on_demand_key_publishes", true},
-                                      {"on_demand_user_groups", true},
-                                      {"on_demand_claims", true},
-                                  }));
-  TC_RETURN(json.get<std::vector<std::string>>());
-}
-
 tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
                                         nlohmann::json const& data)
 {
