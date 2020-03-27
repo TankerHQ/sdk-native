@@ -365,4 +365,27 @@ tc::cotask<Streams::DecryptionStreamAdapter> Session::makeDecryptionStream(
   }
   throw AssertionError("makeDecryptionStream: unreachable code");
 }
+
+tc::cotask<EncryptionSession> Session::makeEncryptionSession(
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SGroupId> const& sgroupIds)
+{
+  EncryptionSession sess;
+  auto spublicIdentitiesWithUs = spublicIdentities;
+  spublicIdentitiesWithUs.emplace_back(
+      to_string(Identity::PublicPermanentIdentity{trustchainId(), userId()}));
+  TC_AWAIT(_resourceKeyStore.putKey(sess.resourceId(), sess.sessionKey()));
+
+  auto const& localUser = _localUserAccessor->get();
+  TC_AWAIT(Share::share(_userAccessor,
+                        _groupAccessor,
+                        trustchainId(),
+                        localUser.deviceId(),
+                        localUser.deviceKeys().signatureKeyPair.privateKey,
+                        *_client,
+                        {{sess.sessionKey(), sess.resourceId()}},
+                        spublicIdentitiesWithUs,
+                        sgroupIds));
+  TC_RETURN(sess);
+}
 }

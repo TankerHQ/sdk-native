@@ -38,7 +38,7 @@ typedef void (*tanker_stream_input_source_t)(
  *
  * \pre tanker_status == TANKER_STATUS_READY
  *
- * \return A new stream encryptor
+ * \return A new stream encryptor, to be closed with tanker_stream_close
  */
 CTANKER_EXPORT tanker_future_t* tanker_stream_encrypt(
     tanker_t* tanker,
@@ -54,7 +54,7 @@ CTANKER_EXPORT tanker_future_t* tanker_stream_encrypt(
  * \param additional_data Additional data to give to cb
  *
  * \pre tanker_status == TANKER_STATUS_READY
- * \return A new stream encryptor
+ * \return A new stream encryptor, to be closed with tanker_stream_close
  */
 CTANKER_EXPORT tanker_future_t* tanker_stream_decrypt(
     tanker_t* tanker, tanker_stream_input_source_t cb, void* additional_data);

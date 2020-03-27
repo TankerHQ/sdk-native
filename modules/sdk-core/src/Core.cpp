@@ -311,6 +311,17 @@ tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
   TC_RETURN(TC_AWAIT((*psession)->makeDecryptionStream(std::move(cb))));
 }
 
+tc::cotask<EncryptionSession> Core::makeEncryptionSession(
+    std::vector<SPublicIdentity> const& publicIdentities,
+    std::vector<SGroupId> const& groupIds)
+{
+  if (auto sess = boost::variant2::get_if<SessionType>(&_state); sess)
+    TC_RETURN(TC_AWAIT(
+        sess->get()->makeEncryptionSession(publicIdentities, groupIds)));
+  else
+    throw INVALID_STATUS(makeEncryptionSession);
+}
+
 Trustchain::ResourceId Core::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {

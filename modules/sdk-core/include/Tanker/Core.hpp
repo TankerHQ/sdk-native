@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Opener.hpp>
 #include <Tanker/Session.hpp>
@@ -92,6 +93,10 @@ public:
 
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
+
+  tc::cotask<EncryptionSession> makeEncryptionSession(
+      std::vector<SPublicIdentity> const& publicIdentities,
+      std::vector<SGroupId> const& groupIds);
 
   void setSessionClosedHandler(SessionClosedHandler);
 
