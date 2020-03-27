@@ -56,8 +56,7 @@ Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
     TC_AWAIT(_session->userRequester->authenticate(
         _session->trustchainId(),
         _session->userId(),
-        TC_AWAIT(_session->accessors().localUserAccessor.pull())
-            .deviceKeys()
+        TC_AWAIT(_session->storage().localUserStore.getDeviceKeys())
             .signatureKeyPair));
   });
 }
