@@ -2,6 +2,9 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
@@ -29,7 +32,6 @@ using Tanker::Functional::TrustchainFixture;
 
 namespace
 {
-
 void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
                               std::vector<Unlock::VerificationMethod> expected)
 {

@@ -1,6 +1,5 @@
 #include <Tanker/AsyncCore.hpp>
 
-#include <Tanker/Core.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>

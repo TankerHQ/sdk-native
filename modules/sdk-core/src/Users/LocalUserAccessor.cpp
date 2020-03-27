@@ -23,20 +23,19 @@ tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
 }
 }
 
-tc::cotask<std::unique_ptr<LocalUserAccessor>> LocalUserAccessor::create(
+tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
     Trustchain::UserId const& userId,
     Trustchain::TrustchainId const& trustchainId,
     IRequester* requester,
-    std::unique_ptr<LocalUserStore> store)
+    LocalUserStore* store)
 {
   auto optLocalUser = TC_AWAIT(store->findLocalUser(userId));
   auto optPubKey = TC_AWAIT(store->findTrustchainPublicSignatureKey());
   if (optLocalUser && optPubKey)
-    TC_RETURN(std::make_unique<LocalUserAccessor>(
-        *optLocalUser,
-        Trustchain::Context{trustchainId, *optPubKey},
-        requester,
-        std::move(store)));
+    TC_RETURN(LocalUserAccessor(*optLocalUser,
+                                Trustchain::Context{trustchainId, *optPubKey},
+                                requester,
+                                store));
   auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
   auto const [localUser, context] =
       TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId));
@@ -44,19 +43,17 @@ tc::cotask<std::unique_ptr<LocalUserAccessor>> LocalUserAccessor::create(
       store->setTrustchainPublicSignatureKey(context.publicSignatureKey()));
   TC_AWAIT(store->putLocalUser(localUser));
 
-  TC_RETURN(std::make_unique<LocalUserAccessor>(
-      localUser, context, requester, std::move(store)));
+  TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
 }
 
-LocalUserAccessor::LocalUserAccessor(
-    LocalUser localUser,
-    Trustchain::Context context,
-    IRequester* requester,
-    std::unique_ptr<LocalUserStore> localUserStore)
+LocalUserAccessor::LocalUserAccessor(LocalUser localUser,
+                                     Trustchain::Context context,
+                                     IRequester* requester,
+                                     LocalUserStore* localUserStore)
   : _localUser(std::move(localUser)),
     _context(std::move(context)),
     _requester(requester),
-    _store(std::move(localUserStore))
+    _store(localUserStore)
 {
 }
 

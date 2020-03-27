@@ -4,6 +4,8 @@
 #include <Compat/States.hpp>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <Helpers/JsonFile.hpp>
 #include <nlohmann/json.hpp>

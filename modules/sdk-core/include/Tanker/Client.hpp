@@ -41,6 +41,7 @@ public:
   Client(Network::ConnectionPtr conn, ConnectionHandler connectionHandler = {});
 
   void start();
+  void close();
   void setConnectionHandler(ConnectionHandler handler);
   tc::cotask<void> handleConnection();
 

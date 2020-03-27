@@ -26,20 +26,21 @@ class LocalUserAccessor : public ILocalUserAccessor
   LocalUserAccessor() = delete;
   LocalUserAccessor(LocalUserAccessor const&) = delete;
   LocalUserAccessor& operator=(LocalUserAccessor const&) = delete;
-  LocalUserAccessor(LocalUserAccessor&&) = delete;
   LocalUserAccessor& operator=(LocalUserAccessor&&) = delete;
 
 public:
-  static tc::cotask<std::unique_ptr<LocalUserAccessor>> create(
+  LocalUserAccessor(LocalUserAccessor&&) = default;
+
+  static tc::cotask<LocalUserAccessor> create(
       Trustchain::UserId const& userId,
       Trustchain::TrustchainId const& trustchainId,
       IRequester* requester,
-      std::unique_ptr<LocalUserStore> store);
+      LocalUserStore* store);
 
   LocalUserAccessor(LocalUser localUser,
                     Trustchain::Context context,
                     IRequester* requester,
-                    std::unique_ptr<LocalUserStore> localUserStore);
+                    LocalUserStore* localUserStore);
 
   ~LocalUserAccessor() override;
 
@@ -57,6 +58,6 @@ private:
   LocalUser _localUser;
   Trustchain::Context _context;
   IRequester* _requester;
-  std::unique_ptr<LocalUserStore> _store;
+  LocalUserStore* _store;
 };
 }

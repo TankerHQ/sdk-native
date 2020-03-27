@@ -51,6 +51,8 @@ add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/AttachResult.hpp
   include/Tanker/BasicPullResult.hpp
+  include/Tanker/Core.hpp
+  include/Tanker/Session.hpp
   include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
@@ -61,7 +63,6 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Verification.hpp
   include/Tanker/Unlock/Methods.hpp
   include/Tanker/Unlock/Request.hpp
-  include/Tanker/Opener.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
   include/Tanker/Entry.hpp
@@ -90,8 +91,6 @@ add_library(tankercore STATIC
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
   include/Tanker/ResourceKeyStore.hpp
-  include/Tanker/Session.hpp
-  include/Tanker/Core.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
@@ -128,6 +127,8 @@ add_library(tankercore STATIC
 
   src/AsyncCore.cpp
   src/AttachResult.cpp
+  src/Core.cpp
+  src/Session.cpp
   src/Init.cpp
   src/DataStore/ADatabase.cpp
   src/DataStore/Errors/Errc.cpp
@@ -137,9 +138,6 @@ add_library(tankercore STATIC
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
   src/Unlock/Request.cpp
-  src/Session.cpp
-  src/Opener.cpp
-  src/Core.cpp
   src/Status.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp

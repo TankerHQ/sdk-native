@@ -2,6 +2,7 @@
 
 #include <Helpers/Buffers.hpp>
 #include <Tanker/Functional/TrustchainFactory.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>

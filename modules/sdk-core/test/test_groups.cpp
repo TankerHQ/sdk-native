@@ -2,6 +2,7 @@
 
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
