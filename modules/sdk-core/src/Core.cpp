@@ -44,7 +44,6 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
-
 Core::~Core() = default;
 
 Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
@@ -120,11 +119,10 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
       Identity::extract<Identity::SecretPermanentIdentity>(b64Identity));
   _session->createStorage(_writablePath);
   auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
-  auto const [deviceExists, userExists, unused] =
-      TC_AWAIT(_session->userRequester->userStatus(
-          _session->trustchainId(),
-          _session->userId(),
-          deviceKeys.signatureKeyPair.publicKey));
+  auto const [deviceExists, userExists, unused] = TC_AWAIT(
+      _session->requesters().userStatus(_session->trustchainId(),
+                                        _session->userId(),
+                                        deviceKeys.signatureKeyPair.publicKey));
   if (deviceExists)
     TC_AWAIT(_session->finalizeOpening());
   else if (userExists)
@@ -373,7 +371,7 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
   {
     try
     {
-      TC_AWAIT(_session->unlockRequester->setVerificationMethod(
+      TC_AWAIT(_session->requesters().setVerificationMethod(
           _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(method, _session->userSecret())));
@@ -401,7 +399,7 @@ Core::getVerificationMethods()
                            TFMT("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
-  auto methods = TC_AWAIT(_session->unlockRequester->fetchVerificationMethods(
+  auto methods = TC_AWAIT(_session->requesters().fetchVerificationMethods(
       _session->trustchainId(), _session->userId()));
   Unlock::decryptEmailMethods(methods, _session->userSecret());
   TC_RETURN(methods);
@@ -411,7 +409,7 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
   auto const encryptedKey =
-      TC_AWAIT(_session->unlockRequester->fetchVerificationKey(
+      TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(verification, _session->userSecret())));
