@@ -38,6 +38,11 @@ namespace Users
 class IRequester;
 }
 
+namespace Unlock
+{
+class IRequester;
+}
+
 class Session
 {
 public:
@@ -101,6 +106,7 @@ public:
   std::unique_ptr<Users::IRequester> userRequester;
   std::unique_ptr<Groups::IRequester> groupsRequester;
   std::unique_ptr<ProvisionalUsers::IRequester> provisionalRequester;
+  std::unique_ptr<Unlock::IRequester> unlockRequester;
 
 private:
   std::unique_ptr<Storage> _storage;

@@ -22,6 +22,7 @@
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
+#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -372,7 +373,7 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
   {
     try
     {
-      TC_AWAIT(_session->client().setVerificationMethod(
+      TC_AWAIT(_session->unlockRequester->setVerificationMethod(
           _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(method, _session->userSecret())));
@@ -400,7 +401,7 @@ Core::getVerificationMethods()
                            TFMT("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
-  auto methods = TC_AWAIT(_session->client().fetchVerificationMethods(
+  auto methods = TC_AWAIT(_session->unlockRequester->fetchVerificationMethods(
       _session->trustchainId(), _session->userId()));
   Unlock::decryptEmailMethods(methods, _session->userSecret());
   TC_RETURN(methods);
@@ -409,10 +410,11 @@ Core::getVerificationMethods()
 tc::cotask<VerificationKey> Core::fetchVerificationKey(
     Unlock::Verification const& verification)
 {
-  auto const encryptedKey = TC_AWAIT(_session->client().fetchVerificationKey(
-      _session->trustchainId(),
-      _session->userId(),
-      Unlock::makeRequest(verification, _session->userSecret())));
+  auto const encryptedKey =
+      TC_AWAIT(_session->unlockRequester->fetchVerificationKey(
+          _session->trustchainId(),
+          _session->userId(),
+          Unlock::makeRequest(verification, _session->userSecret())));
   auto const verificationKey = TC_AWAIT(
       Encryptor::decryptFallbackAead(_session->userSecret(), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));

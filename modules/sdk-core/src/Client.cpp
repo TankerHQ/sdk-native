@@ -131,47 +131,6 @@ tc::cotask<void> Client::createUser(
   auto const reply = TC_AWAIT(emit("create user 2", request));
 }
 
-tc::cotask<void> Client::setVerificationMethod(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Unlock::Request const& request)
-{
-  nlohmann::json payload{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"verification", request},
-  };
-  TC_AWAIT(emit("set verification method", payload));
-}
-
-tc::cotask<std::vector<std::uint8_t>> Client::fetchVerificationKey(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Unlock::Request const& request)
-{
-  nlohmann::json payload{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"verification", request},
-  };
-  auto const response = TC_AWAIT(emit("get verification key", payload));
-  TC_RETURN(cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
-      response.at("encrypted_verification_key").get<std::string>()));
-}
-
-tc::cotask<std::vector<Unlock::VerificationMethod>>
-Client::fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
-                                 Trustchain::UserId const& userId)
-{
-  auto const request =
-      nlohmann::json{{"trustchain_id", trustchainId}, {"user_id", userId}};
-
-  auto const reply = TC_AWAIT(emit("get verification methods", request));
-  auto methods = reply.at("verification_methods")
-                     .get<std::vector<Unlock::VerificationMethod>>();
-  TC_RETURN(methods);
-}
-
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& devicePublicSignatureKey)

@@ -55,20 +55,6 @@ public:
       Unlock::Request const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey);
 
-  tc::cotask<void> setVerificationMethod(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Unlock::Request const& verificationRequest);
-
-  tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Unlock::Request const& verificationRequest);
-
-  tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId);
-
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);

@@ -5,6 +5,7 @@
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
+#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
@@ -75,6 +76,7 @@ Session::Session(std::string url, Network::SdkInfo info)
     groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
     provisionalRequester(
         std::make_unique<ProvisionalUsers::Requester>(_client.get())),
+    unlockRequester(std::make_unique<Unlock::Requester>(_client.get())),
     _storage(nullptr),
     _accessors(nullptr),
     _identity(std::nullopt),
