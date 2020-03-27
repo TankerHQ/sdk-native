@@ -103,7 +103,6 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
-  tc::cotask<void> finalizeSessionOpening();
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::Verification const& verification);

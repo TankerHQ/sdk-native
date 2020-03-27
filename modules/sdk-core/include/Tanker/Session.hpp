@@ -89,6 +89,11 @@ public:
   Identity::SecretPermanentIdentity const& identity() const;
   void setIdentity(Identity::SecretPermanentIdentity const&);
 
+  tc::cotask<DeviceKeys> getDeviceKeys();
+
+  tc::cotask<void> authenticate();
+  tc::cotask<void> finalizeOpening();
+
 private:
   std::unique_ptr<Client> _client;
 

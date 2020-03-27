@@ -80,6 +80,8 @@ Session::Session(std::string url, Network::SdkInfo info)
     _identity(std::nullopt),
     _status(Status::Stopped)
 {
+  _client->setConnectionHandler(
+      [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); });
 }
 
 void Session::createStorage(std::string const& writablePath)
@@ -161,4 +163,25 @@ void Session::setStatus(Status s)
 {
   _status = s;
 }
+
+tc::cotask<DeviceKeys> Session::getDeviceKeys()
+{
+  TC_RETURN(TC_AWAIT(storage().localUserStore.getDeviceKeys()));
+}
+
+tc::cotask<void> Session::authenticate()
+{
+  TC_AWAIT(userRequester->authenticate(
+      trustchainId(),
+      userId(),
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
+}
+
+tc::cotask<void> Session::finalizeOpening()
+{
+  TC_AWAIT(authenticate());
+  TC_AWAIT(createAccessors());
+  setStatus(Status::Ready);
+}
+
 }
