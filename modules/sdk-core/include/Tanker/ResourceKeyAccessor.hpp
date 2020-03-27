@@ -11,6 +11,7 @@
 namespace Tanker::Users
 {
 class ILocalUserAccessor;
+class IRequester;
 }
 
 namespace Tanker
@@ -18,7 +19,7 @@ namespace Tanker
 class ResourceKeyAccessor
 {
 public:
-  ResourceKeyAccessor(Client* client,
+  ResourceKeyAccessor(Users::IRequester* client,
                       Users::ILocalUserAccessor* localUserAccessor,
                       Groups::IAccessor* groupAccessor,
                       ProvisionalUsers::IAccessor* provisionalUsersAccessor,
@@ -33,7 +34,7 @@ public:
       Trustchain::ResourceId const& resourceId);
 
 private:
-  Client* _client;
+  Users::IRequester* _requester;
   Users::ILocalUserAccessor* _localUserAccessor;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;

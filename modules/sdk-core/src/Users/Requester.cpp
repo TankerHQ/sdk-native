@@ -23,6 +23,7 @@ Crypto::Hash hashField(T const& field)
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
 }
+
 Requester::Requester(Client* client) : _client(client)
 {
 }
@@ -70,6 +71,14 @@ tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
   auto const ret = Trustchain::fromBlocksToServerEntries(
       response.get<std::vector<std::string>>());
   TC_RETURN(ret);
+}
+
+tc::cotask<std::vector<std::string>> Requester::getKeyPublishes(
+    gsl::span<Trustchain::ResourceId const> resourceIds)
+{
+  auto const json = TC_AWAIT(
+      _client->emit("get key publishes", {{"resource_ids", resourceIds}}));
+  TC_RETURN(json.get<std::vector<std::string>>());
 }
 
 tc::cotask<void> Requester::authenticate(

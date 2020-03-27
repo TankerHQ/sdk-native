@@ -1,8 +1,8 @@
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/ProvisionalUsers/Requests.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
@@ -11,11 +11,11 @@ using Tanker::Trustchain::GroupId;
 
 namespace Tanker::ProvisionalUsers
 {
-Accessor::Accessor(Client* client,
+Accessor::Accessor(IRequester* requester,
                    Users::IUserAccessor* userAccessor,
                    Users::ILocalUserAccessor* localUserAccessor,
                    ProvisionalUserKeysStore* provisionalUserKeysStore)
-  : _client(client),
+  : _requester(requester),
     _userAccessor(userAccessor),
     _localUserAccessor(localUserAccessor),
     _provisionalUserKeysStore(provisionalUserKeysStore)
@@ -49,7 +49,7 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::pullEncryptionKeys(
 
 tc::cotask<void> Accessor::refreshKeys()
 {
-  auto const blocks = TC_AWAIT(Requests::getClaimBlocks(_client));
+  auto const blocks = TC_AWAIT(_requester->getClaimBlocks());
   auto const toStore = TC_AWAIT(Updater::processClaimEntries(
       *_localUserAccessor, *_userAccessor, blocks));
 

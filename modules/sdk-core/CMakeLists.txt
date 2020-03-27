@@ -69,9 +69,10 @@ add_library(tankercore STATIC
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
   include/Tanker/ProvisionalUsers/IAccessor.hpp
+  include/Tanker/ProvisionalUsers/IRequester.hpp
+  include/Tanker/ProvisionalUsers/Requester.hpp
   include/Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp
   include/Tanker/ProvisionalUsers/Updater.hpp
-  include/Tanker/ProvisionalUsers/Requests.hpp
   include/Tanker/ProvisionalUsers/Manager.hpp
   include/Tanker/ProvisionalUsers/SecretUser.hpp
   include/Tanker/ProvisionalUsers/PublicUser.hpp
@@ -147,9 +148,9 @@ add_library(tankercore STATIC
   src/Share.cpp
   src/IdentityUtils.cpp
   src/ProvisionalUsers/Accessor.cpp
+  src/ProvisionalUsers/Requester.cpp
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
-  src/ProvisionalUsers/Requests.cpp
   src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
   src/Groups/EntryGenerator.cpp

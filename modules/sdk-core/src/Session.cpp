@@ -13,6 +13,7 @@
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Retry.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Share.hpp>
@@ -50,16 +51,18 @@ Session::Session(Config&& config)
     _client(std::move(config.client)),
     _userRequester(std::move(config.userRequester)),
     _groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
+    _provisionalRequester(
+        std::make_unique<ProvisionalUsers::Requester>(_client.get())),
     _groupStore(_db.get()),
     _resourceKeyStore(_db.get()),
     _provisionalUserKeysStore(_db.get()),
     _userAccessor(_localUserAccessor->getContext(), _userRequester.get()),
-    _provisionalUsersAccessor(_client.get(),
+    _provisionalUsersAccessor(_provisionalRequester.get(),
                               &_userAccessor,
                               _localUserAccessor.get(),
                               &_provisionalUserKeysStore),
     _provisionalUsersManager(_localUserAccessor.get(),
-                             _client.get(),
+                             _provisionalRequester.get(),
                              &_provisionalUsersAccessor,
                              &_provisionalUserKeysStore,
                              _localUserAccessor->getContext().id()),
@@ -68,7 +71,7 @@ Session::Session(Config&& config)
                    &_groupStore,
                    _localUserAccessor.get(),
                    &_provisionalUsersAccessor),
-    _resourceKeyAccessor(_client.get(),
+    _resourceKeyAccessor(_userRequester.get(),
                          _localUserAccessor.get(),
                          &_groupAccessor,
                          &_provisionalUsersAccessor,

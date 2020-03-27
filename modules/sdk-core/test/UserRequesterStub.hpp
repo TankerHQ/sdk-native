@@ -34,6 +34,10 @@ public:
              tc::cotask<std::vector<Trustchain::ServerEntry>>(
                  gsl::span<Trustchain::DeviceId const> deviceIds),
              override);
+  MAKE_MOCK1(getKeyPublishes,
+             tc::cotask<std::vector<std::string>>(
+                 gsl::span<Trustchain::ResourceId const> resourceIds),
+             override);
   MAKE_MOCK1(getPublicProvisionalIdentities,
              (tc::cotask<std::vector<std::tuple<Crypto::PublicSignatureKey,
                                                 Crypto::PublicEncryptionKey>>>(

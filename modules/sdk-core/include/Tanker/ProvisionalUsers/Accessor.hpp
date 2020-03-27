@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Client.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -17,11 +16,12 @@ class ProvisionalUserKeysStore;
 
 namespace Tanker::ProvisionalUsers
 {
+class IRequester;
 
 class Accessor : public IAccessor
 {
 public:
-  Accessor(Client* client,
+  Accessor(IRequester* request,
            Users::IUserAccessor* userAccessor,
            Users::ILocalUserAccessor* localUser,
            ProvisionalUserKeysStore* provisionalUserKeysStore);
@@ -42,7 +42,7 @@ public:
   tc::cotask<void> refreshKeys() override;
 
 private:
-  Client* _client;
+  IRequester* _requester;
   Users::IUserAccessor* _userAccessor;
   Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;

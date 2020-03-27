@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
-#include <Tanker/Client.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -18,11 +17,13 @@ class ILocalUserAccessor;
 }
 namespace ProvisionalUsers
 {
+class IRequester;
+
 class Manager
 {
 public:
   Manager(Users::ILocalUserAccessor* localUserAccessor,
-          Client* client,
+          IRequester* requester,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
           Trustchain::TrustchainId const& trustchainId);
@@ -38,7 +39,7 @@ public:
 
 private:
   Users::ILocalUserAccessor* _localUserAccessor;
-  Client* _client;
+  IRequester* _requester;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
   Trustchain::TrustchainId _trustchainId;
