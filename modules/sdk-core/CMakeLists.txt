@@ -92,6 +92,7 @@ add_library(tankercore STATIC
   include/Tanker/Groups/EntryGenerator.hpp
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
+  include/Tanker/ResourceKeys/KeysResult.hpp
   include/Tanker/ResourceKeys/Store.hpp
   include/Tanker/ResourceKeys/Accessor.hpp
   include/Tanker/Version.hpp

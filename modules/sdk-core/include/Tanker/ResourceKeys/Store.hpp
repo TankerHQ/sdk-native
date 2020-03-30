@@ -1,10 +1,13 @@
 #pragma once
 
+#include <Tanker/ResourceKeys/KeysResult.hpp>
+
 #include <tconcurrent/coroutine.hpp>
 
-#include <optional>
+#include <gsl-lite.hpp>
 
 #include <memory>
+#include <optional>
 
 namespace Tanker
 {
@@ -26,6 +29,7 @@ class ADatabase;
 
 namespace Tanker::ResourceKeys
 {
+
 class Store
 {
 public:
@@ -38,9 +42,13 @@ public:
 
   tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
-  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
-      Trustchain::ResourceId const& resourceId) const;
+
   tc::cotask<Crypto::SymmetricKey> getKey(
+      Trustchain::ResourceId const& resourceId) const;
+  tc::cotask<KeysResult> getKeys(
+      gsl::span<Trustchain::ResourceId const> resourceIds) const;
+
+  tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId) const;
 
 private:

@@ -5,6 +5,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
+#include <Tanker/ResourceKeys/KeysResult.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -42,9 +43,6 @@ class Store;
 
 namespace Share
 {
-using ResourceKeyPairs =
-    std::vector<std::tuple<Crypto::SymmetricKey, Trustchain::ResourceId>>;
-
 struct KeyRecipients
 {
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
@@ -86,7 +84,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeyPairs const& resourceKeys,
+    ResourceKeys::KeysResult const& resourceKeys,
     KeyRecipients const& keyRecipients);
 
 tc::cotask<void> share(Users::IUserAccessor& userAccessor,
@@ -95,7 +93,7 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Trustchain::DeviceId const& deviceId,
                        Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
-                       ResourceKeyPairs const& resourceKeys,
+                       ResourceKeys::KeysResult const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds);
 

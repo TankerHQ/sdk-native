@@ -29,23 +29,11 @@ namespace Share
 {
 namespace
 {
-tc::cotask<ResourceKeyPairs> getResourceKeys(
-    ResourceKeys::Store const& resourceKeyStore,
-    gsl::span<ResourceId const> resourceIds)
-{
-  ResourceKeyPairs resourceKeys;
-  resourceKeys.reserve(resourceIds.size());
-  for (auto const& resourceId : resourceIds)
-    resourceKeys.emplace_back(std::make_tuple(
-        TC_AWAIT(resourceKeyStore.getKey(resourceId)), resourceId));
-  TC_RETURN(resourceKeys);
-}
-
 std::vector<std::vector<uint8_t>> generateShareBlocksToUsers(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeyPairs const& resourceKeys,
+    ResourceKeys::KeysResult const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
@@ -70,7 +58,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToProvisionalUsers(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeyPairs const& resourceKeys,
+    ResourceKeys::KeysResult const& resourceKeys,
     std::vector<ProvisionalUsers::PublicUser> const&
         recipientProvisionalUserKeys)
 {
@@ -96,7 +84,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocksToGroups(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeyPairs const& resourceKeys,
+    ResourceKeys::KeysResult const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
   std::vector<std::vector<uint8_t>> out;
@@ -270,7 +258,7 @@ std::vector<std::vector<uint8_t>> generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
-    ResourceKeyPairs const& resourceKeys,
+    ResourceKeys::KeysResult const& resourceKeys,
     KeyRecipients const& keyRecipients)
 {
   auto keyPublishesToUsers =
@@ -307,7 +295,7 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Trustchain::DeviceId const& deviceId,
                        Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
-                       ResourceKeyPairs const& resourceKeys,
+                       ResourceKeys::KeysResult const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds)
 {
@@ -332,8 +320,7 @@ tc::cotask<void> share(ResourceKeys::Store const& resourceKeyStore,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds)
 {
-  auto const resourceKeys =
-      TC_AWAIT(getResourceKeys(resourceKeyStore, resourceIds));
+  auto const resourceKeys = TC_AWAIT(resourceKeyStore.getKeys(resourceIds));
 
   TC_AWAIT(share(userAccessor,
                  groupAccessor,
