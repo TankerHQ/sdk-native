@@ -22,16 +22,19 @@ namespace DataStore
 {
 class ADatabase;
 }
+}
 
-class ResourceKeyStore
+namespace Tanker::ResourceKeys
+{
+class Store
 {
 public:
-  ResourceKeyStore(ResourceKeyStore const&) = delete;
-  ResourceKeyStore(ResourceKeyStore&&) = delete;
-  ResourceKeyStore& operator=(ResourceKeyStore const&) = delete;
-  ResourceKeyStore& operator=(ResourceKeyStore&&) = delete;
+  Store(Store const&) = delete;
+  Store(Store&&) = delete;
+  Store& operator=(Store const&) = delete;
+  Store& operator=(Store&&) = delete;
 
-  ResourceKeyStore(DataStore::ADatabase* dbConn);
+  Store(DataStore::ADatabase* dbConn);
 
   tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);

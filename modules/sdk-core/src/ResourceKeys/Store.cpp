@@ -1,4 +1,4 @@
-#include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -7,26 +7,24 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <fmt/format.h>
-
-TLOG_CATEGORY(ResourceKeyStore);
+TLOG_CATEGORY(ResourceKeys::Store);
 
 using Tanker::Trustchain::ResourceId;
 
-namespace Tanker
+namespace Tanker::ResourceKeys
 {
-ResourceKeyStore::ResourceKeyStore(DataStore::ADatabase* dbConn) : _db(dbConn)
+Store::Store(DataStore::ADatabase* dbConn) : _db(dbConn)
 {
 }
 
-tc::cotask<void> ResourceKeyStore::putKey(ResourceId const& resourceId,
-                                          Crypto::SymmetricKey const& key)
+tc::cotask<void> Store::putKey(ResourceId const& resourceId,
+                               Crypto::SymmetricKey const& key)
 {
   TINFO("Adding key for {}", resourceId);
   TC_AWAIT(_db->putResourceKey(resourceId, key));
 }
 
-tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
+tc::cotask<Crypto::SymmetricKey> Store::getKey(
     ResourceId const& resourceId) const
 {
   auto const key = TC_AWAIT(findKey(resourceId));
@@ -39,7 +37,7 @@ tc::cotask<Crypto::SymmetricKey> ResourceKeyStore::getKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyStore::findKey(
+tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     ResourceId const& resourceId) const
 {
   TC_RETURN(TC_AWAIT(_db->findResourceKey(resourceId)));
