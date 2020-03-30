@@ -2,24 +2,19 @@
 
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
-#include <Tanker/Entry.hpp>
-#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeys/KeysResult.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
-#include <Tanker/Users/Device.hpp>
 
-#include <gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
-#include <cstdint>
-#include <tuple>
+#include <gsl-lite.hpp>
+
 #include <vector>
 
 namespace Tanker::Users
