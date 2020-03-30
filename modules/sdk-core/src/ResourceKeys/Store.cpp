@@ -37,6 +37,17 @@ tc::cotask<Crypto::SymmetricKey> Store::getKey(
   TC_RETURN(*key);
 }
 
+tc::cotask<KeysResult> Store::getKeys(
+    gsl::span<ResourceId const> resourceIds) const
+{
+  KeysResult result;
+  result.reserve(resourceIds.size());
+  for (auto const& resourceId : resourceIds)
+    result.emplace_back(
+        std::make_tuple(TC_AWAIT(getKey(resourceId)), resourceId));
+  TC_RETURN(result);
+}
+
 tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     ResourceId const& resourceId) const
 {
