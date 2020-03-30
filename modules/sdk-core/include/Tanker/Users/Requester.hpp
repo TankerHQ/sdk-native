@@ -27,10 +27,6 @@ public:
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
-  tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey) override;
 
   tc::cotask<std::vector<
       std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>

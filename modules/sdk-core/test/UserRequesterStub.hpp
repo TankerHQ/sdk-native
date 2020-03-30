@@ -14,12 +14,6 @@ public:
   MAKE_MOCK0(getMe,
              tc::cotask<std::vector<Trustchain::ServerEntry>>(),
              override);
-  MAKE_MOCK3(userStatus,
-             tc::cotask<Users::UserStatusResult>(
-                 Trustchain::TrustchainId const& trustchainId,
-                 Trustchain::UserId const& userId,
-                 Crypto::PublicSignatureKey const& publicSignatureKey),
-             override);
   MAKE_MOCK3(
       authenticate,
       tc::cotask<void>(Trustchain::TrustchainId const& trustchainId,

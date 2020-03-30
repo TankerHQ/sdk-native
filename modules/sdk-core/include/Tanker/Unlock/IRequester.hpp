@@ -4,9 +4,21 @@
 
 namespace Tanker::Unlock
 {
+struct UserStatusResult
+{
+  bool deviceExists;
+  bool userExists;
+  Crypto::Hash lastReset;
+};
+
 class IRequester
 {
 public:
+  virtual tc::cotask<UserStatusResult> userStatus(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      Crypto::PublicSignatureKey const& publicSignatureKey) = 0;
+
   virtual tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

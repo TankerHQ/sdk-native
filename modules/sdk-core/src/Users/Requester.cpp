@@ -14,8 +14,6 @@
 
 namespace Tanker::Users
 {
-void from_json(nlohmann::json const& j, UserStatusResult& result);
-
 namespace
 {
 template <typename T>
@@ -28,23 +26,6 @@ Crypto::Hash hashField(T const& field)
 
 Requester::Requester(Client* client) : _client(client)
 {
-}
-
-tc::cotask<UserStatusResult> Requester::userStatus(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Crypto::PublicSignatureKey const& publicSignatureKey)
-{
-  FUNC_TIMER(Proc);
-  nlohmann::json request{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"device_public_signature_key", publicSignatureKey},
-  };
-
-  auto const reply = TC_AWAIT(_client->emit("get user status", request));
-
-  TC_RETURN(reply.get<UserStatusResult>());
 }
 
 tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getMe()
@@ -147,15 +128,4 @@ Requester::getPublicProvisionalIdentities(gsl::span<Email const> emails)
   TC_RETURN(ret);
 }
 
-void from_json(nlohmann::json const& j, UserStatusResult& result)
-{
-  j.at("device_exists").get_to(result.deviceExists);
-  result.userExists = j.at("user_exists").get<bool>();
-  auto const lastReset = j.at("last_reset").get<std::string>();
-  if (!lastReset.empty())
-    result.lastReset =
-        cppcodec::base64_rfc4648::decode<Crypto::Hash>(lastReset);
-  else
-    result.lastReset = Crypto::Hash{};
-}
 }
