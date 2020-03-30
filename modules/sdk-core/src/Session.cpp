@@ -5,6 +5,7 @@
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
+#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
@@ -33,33 +34,38 @@ Session::Storage::Storage(DataStore::DatabasePtr pdb)
 {
 }
 
-Session::Accessors::Accessors(
-    Storage& storage,
-    Users::IRequester* userRequester,
-    Groups::IRequester* groupsRequester,
-    ProvisionalUsers::IRequester* provisionalRequester,
-    Users::LocalUserAccessor plocalUserAccessor)
+Session::Accessors::Accessors(Storage& storage,
+                              Requesters* requesters,
+                              Users::LocalUserAccessor plocalUserAccessor)
   : localUserAccessor(std::move(plocalUserAccessor)),
-    userAccessor(localUserAccessor.getContext(), userRequester),
-    provisionalUsersAccessor(provisionalRequester,
+    userAccessor(localUserAccessor.getContext(), requesters),
+    provisionalUsersAccessor(requesters,
                              &userAccessor,
                              &localUserAccessor,
                              &storage.provisionalUserKeysStore),
     provisionalUsersManager(&localUserAccessor,
-                            provisionalRequester,
+                            requesters,
                             &provisionalUsersAccessor,
                             &storage.provisionalUserKeysStore,
                             localUserAccessor.getContext().id()),
-    groupAccessor(groupsRequester,
+    groupAccessor(requesters,
                   &userAccessor,
                   &storage.groupStore,
                   &localUserAccessor,
                   &provisionalUsersAccessor),
-    resourceKeyAccessor(userRequester,
+    resourceKeyAccessor(requesters,
                         &localUserAccessor,
                         &groupAccessor,
                         &provisionalUsersAccessor,
                         &storage.resourceKeyStore)
+{
+}
+
+Session::Requesters::Requesters(Client* client)
+  : Users::Requester(client),
+    Groups::Requester(client),
+    ProvisionalUsers::Requester(client),
+    Unlock::Requester(client)
 {
 }
 
@@ -71,10 +77,7 @@ Client& Session::client()
 Session::Session(std::string url, Network::SdkInfo info)
   : _client(std::make_unique<Client>(
         Network::ConnectionFactory::create(std::move(url), std::move(info)))),
-    userRequester(std::make_unique<Users::Requester>(_client.get())),
-    groupsRequester(std::make_unique<Groups::Requester>(_client.get())),
-    provisionalRequester(
-        std::make_unique<ProvisionalUsers::Requester>(_client.get())),
+    _requesters(_client.get()),
     _storage(nullptr),
     _accessors(nullptr),
     _identity(std::nullopt),
@@ -102,17 +105,23 @@ Session::Storage& Session::storage()
   return *_storage;
 }
 
+Session::Requesters const& Session::requesters() const
+{
+  return _requesters;
+}
+
+Session::Requesters& Session::requesters()
+{
+  return _requesters;
+}
+
 tc::cotask<void> Session::createAccessors()
 {
   _accessors = std::make_unique<Accessors>(
       storage(),
-      userRequester.get(),
-      groupsRequester.get(),
-      provisionalRequester.get(),
-      TC_AWAIT(Users::LocalUserAccessor::create(userId(),
-                                                trustchainId(),
-                                                userRequester.get(),
-                                                &storage().localUserStore)));
+      &_requesters,
+      TC_AWAIT(Users::LocalUserAccessor::create(
+          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
 }
 
 Session::Accessors const& Session::accessors() const
@@ -171,7 +180,7 @@ tc::cotask<DeviceKeys> Session::getDeviceKeys()
 
 tc::cotask<void> Session::authenticate()
 {
-  TC_AWAIT(userRequester->authenticate(
+  TC_AWAIT(_requesters.authenticate(
       trustchainId(),
       userId(),
       TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));

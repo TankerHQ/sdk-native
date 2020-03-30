@@ -16,13 +16,6 @@
 
 namespace Tanker::Users
 {
-struct UserStatusResult
-{
-  bool deviceExists;
-  bool userExists;
-  Crypto::Hash lastReset;
-};
-
 class IRequester
 {
 public:
@@ -38,10 +31,6 @@ public:
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
-  virtual tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey) = 0;
   virtual tc::cotask<std::vector<
       std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<Email const>) = 0;

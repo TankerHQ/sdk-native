@@ -3,14 +3,18 @@
 #include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
+#include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
+#include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeyAccessor.hpp>
+#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
+#include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -23,24 +27,17 @@ namespace Tanker
 {
 class Client;
 
-namespace Groups
-{
-class IRequester;
-}
-
-namespace ProvisionalUsers
-{
-class IRequester;
-}
-
-namespace Users
-{
-class IRequester;
-}
-
 class Session
 {
 public:
+  struct Requesters : Users::Requester,
+                      Groups::Requester,
+                      ProvisionalUsers::Requester,
+                      Unlock::Requester
+  {
+    Requesters(Client*);
+  };
+
   struct Storage
   {
     Storage(DataStore::DatabasePtr db);
@@ -55,9 +52,7 @@ public:
   struct Accessors
   {
     Accessors(Storage& storage,
-              Users::IRequester* userRequester,
-              Groups::IRequester* groupsRequester,
-              ProvisionalUsers::IRequester* provisionalRequester,
+              Requesters* requesters,
               Users::LocalUserAccessor plocalUserAccessor);
     Users::LocalUserAccessor localUserAccessor;
     mutable Users::UserAccessor userAccessor;
@@ -70,6 +65,9 @@ public:
   Session(std::string url, Network::SdkInfo info);
 
   Client& client();
+
+  Requesters const& requesters() const;
+  Requesters& requesters();
 
   void createStorage(std::string const& writablePath);
   Storage const& storage() const;
@@ -96,13 +94,7 @@ public:
 
 private:
   std::unique_ptr<Client> _client;
-
-public:
-  std::unique_ptr<Users::IRequester> userRequester;
-  std::unique_ptr<Groups::IRequester> groupsRequester;
-  std::unique_ptr<ProvisionalUsers::IRequester> provisionalRequester;
-
-private:
+  Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;
   std::optional<Identity::SecretPermanentIdentity> _identity;

@@ -3,15 +3,13 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
-#include <Tanker/Client.hpp>
-
 namespace Tanker
 {
 struct DeviceKeys;
+class Client;
 
 namespace Users
 {
-void from_json(nlohmann::json const& j, UserStatusResult& result);
 
 class Requester : public IRequester
 {
@@ -29,10 +27,6 @@ public:
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
-  tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey) override;
 
   tc::cotask<std::vector<
       std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
