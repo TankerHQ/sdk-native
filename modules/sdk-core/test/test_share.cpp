@@ -53,7 +53,7 @@ void assertEqual(std::vector<T> aa, std::vector<U> bb)
 }
 
 void assertKeyPublishToUsersTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    Share::ResourceKeyPairs::value_type const& resourceKey,
     std::vector<Trustchain::Actions::KeyPublishToUser> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
@@ -72,7 +72,7 @@ void assertKeyPublishToUsersTargetedAt(
 }
 
 void assertKeyPublishToUsersTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    Share::ResourceKeyPairs::value_type const& resourceKey,
     std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
     std::vector<ProvisionalUsers::SecretUser> const& provisionalUsers)
 {
@@ -96,7 +96,7 @@ void assertKeyPublishToUsersTargetedAt(
 }
 
 void assertKeyPublishToGroupTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    Share::ResourceKeyPairs::value_type const& resourceKey,
     std::vector<Trustchain::Actions::KeyPublishToUserGroup> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
@@ -295,7 +295,7 @@ TEST_CASE("generateShareBlocks")
 
   SUBCASE("for a user should generate one KeyPublishToUser block")
   {
-    Share::ResourceKeys resourceKeys = {
+    Share::ResourceKeyPairs resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource resourceId")}};
 
@@ -319,7 +319,7 @@ TEST_CASE("generateShareBlocks")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
-    Share::ResourceKeys resourceKeys = {
+    Share::ResourceKeyPairs resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource mac")}};
 
@@ -340,7 +340,7 @@ TEST_CASE("generateShareBlocks")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
-    Share::ResourceKeys resourceKeys = {
+    Share::ResourceKeyPairs resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource resourceId")}};
 

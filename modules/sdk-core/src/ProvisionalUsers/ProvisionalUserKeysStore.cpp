@@ -3,7 +3,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 
-TLOG_CATEGORY(ResourceKeyStore);
+TLOG_CATEGORY(ProvisionalUserKeysStore);
 
 namespace Tanker
 {

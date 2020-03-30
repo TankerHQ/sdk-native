@@ -19,12 +19,15 @@ namespace Users
 class ILocalUserAccessor;
 }
 
-class ResourceKeyStore;
+namespace ResourceKeys
+{
+class Store;
+}
 
 namespace ReceiveKey
 {
 tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
+    ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& GroupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,

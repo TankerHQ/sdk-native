@@ -10,7 +10,7 @@
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/ResourceKeyAccessor.hpp>
+#include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -45,7 +45,7 @@ public:
     DataStore::DatabasePtr db;
     Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
-    ResourceKeyStore resourceKeyStore;
+    ResourceKeys::Store resourceKeyStore;
     ProvisionalUserKeysStore provisionalUserKeysStore;
   };
 
@@ -59,7 +59,7 @@ public:
     ProvisionalUsers::Accessor provisionalUsersAccessor;
     ProvisionalUsers::Manager provisionalUsersManager;
     Groups::Accessor groupAccessor;
-    ResourceKeyAccessor resourceKeyAccessor;
+    ResourceKeys::Accessor resourceKeyAccessor;
   };
 
   Session(std::string url, Network::SdkInfo info);

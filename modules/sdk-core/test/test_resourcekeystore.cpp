@@ -1,4 +1,4 @@
-#include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -56,16 +56,12 @@ TEST_CASE("resource keys")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
 
-  SUBCASE("it should create and destroy a ResourceKeyStore")
-  {
-    ResourceKeyStore keys(dbPtr.get());
-  }
+  ResourceKeys::Store keys(dbPtr.get());
 
   SUBCASE("it should not find a non-existent key")
   {
     auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
 
-    ResourceKeyStore keys(dbPtr.get());
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
                                   Errors::Errc::InvalidArgument);
   }
@@ -74,8 +70,6 @@ TEST_CASE("resource keys")
   {
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
-
-    ResourceKeyStore keys(dbPtr.get());
 
     AWAIT_VOID(keys.putKey(resourceId, key));
     auto const key2 = AWAIT(keys.getKey(resourceId));
@@ -88,8 +82,6 @@ TEST_CASE("resource keys")
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
     auto const key2 = make<Crypto::SymmetricKey>("mykey2");
-
-    ResourceKeyStore keys(dbPtr.get());
 
     AWAIT_VOID(keys.putKey(resourceId, key));
     AWAIT_VOID(keys.putKey(resourceId, key2));

@@ -1,23 +1,22 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ReceiveKey.hpp>
-#include <Tanker/ResourceKeyAccessor.hpp>
+#include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
-TLOG_CATEGORY(ResourceKeyAccessor);
+TLOG_CATEGORY(ResourceKeys::Accessor);
 
-namespace Tanker
+namespace Tanker::ResourceKeys
 {
-ResourceKeyAccessor::ResourceKeyAccessor(
-    Users::IRequester* requester,
-    Users::ILocalUserAccessor* localUserAccessor,
-    Groups::IAccessor* groupAccessor,
-    ProvisionalUsers::IAccessor* provisionalUsersAccessor,
-    ResourceKeyStore* resourceKeyStore)
+Accessor::Accessor(Users::IRequester* requester,
+                   Users::ILocalUserAccessor* localUserAccessor,
+                   Groups::IAccessor* groupAccessor,
+                   ProvisionalUsers::IAccessor* provisionalUsersAccessor,
+                   Store* resourceKeyStore)
   : _requester(requester),
     _localUserAccessor(localUserAccessor),
     _groupAccessor(groupAccessor),
@@ -30,7 +29,7 @@ ResourceKeyAccessor::ResourceKeyAccessor(
 // - from the resource key store
 // - from the tanker server
 // In all cases, we put the key in the resource key store
-tc::cotask<std::optional<Crypto::SymmetricKey>> ResourceKeyAccessor::findKey(
+tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
     Trustchain::ResourceId const& resourceId)
 {
   auto key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));

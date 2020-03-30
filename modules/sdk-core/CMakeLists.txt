@@ -92,7 +92,8 @@ add_library(tankercore STATIC
   include/Tanker/Groups/EntryGenerator.hpp
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
-  include/Tanker/ResourceKeyStore.hpp
+  include/Tanker/ResourceKeys/Store.hpp
+  include/Tanker/ResourceKeys/Accessor.hpp
   include/Tanker/Version.hpp
   include/Tanker/Share.hpp
   include/Tanker/Status.hpp
@@ -109,7 +110,6 @@ add_library(tankercore STATIC
   include/Tanker/Users/IUserAccessor.hpp
   include/Tanker/Users/Device.hpp
   include/Tanker/Users/EntryGenerator.hpp
-  include/Tanker/ResourceKeyAccessor.hpp
   include/Tanker/IdentityUtils.hpp
   include/Tanker/Utils.hpp
   include/Tanker/Verif/DeviceCreation.hpp
@@ -144,7 +144,8 @@ add_library(tankercore STATIC
   src/Status.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp
-  src/ResourceKeyStore.cpp
+  src/ResourceKeys/Store.cpp
+  src/ResourceKeys/Accessor.cpp
   src/Entry.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
@@ -172,7 +173,6 @@ add_library(tankercore STATIC
   src/Users/Device.cpp
   src/Users/EntryGenerator.cpp
   src/Users/Requester.cpp
-  src/ResourceKeyAccessor.cpp
   src/Revocation.cpp
   src/Verif/Errors/Errc.cpp
   src/Verif/Errors/ErrcCategory.cpp
