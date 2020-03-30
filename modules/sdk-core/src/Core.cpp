@@ -314,14 +314,15 @@ tc::cotask<void> Core::share(
   });
 
   auto const localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Share::share(_session->storage().resourceKeyStore,
-                        _session->accessors().userAccessor,
+  auto const resourceKeys =
+      TC_AWAIT(_session->storage().resourceKeyStore.getKeys(resourceIds));
+  TC_AWAIT(Share::share(_session->accessors().userAccessor,
                         _session->accessors().groupAccessor,
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
                         _session->client(),
-                        resourceIds,
+                        resourceKeys,
                         spublicIdentities,
                         sgroupIds));
 }

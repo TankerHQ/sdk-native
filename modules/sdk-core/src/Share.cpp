@@ -309,28 +309,5 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
     TC_AWAIT(client.pushKeys(ks));
 }
 
-tc::cotask<void> share(ResourceKeys::Store const& resourceKeyStore,
-                       Users::IUserAccessor& userAccessor,
-                       Groups::IAccessor& groupAccessor,
-                       Trustchain::TrustchainId const& trustchainId,
-                       Trustchain::DeviceId const& deviceId,
-                       Crypto::PrivateSignatureKey const& signatureKey,
-                       Client& client,
-                       std::vector<Trustchain::ResourceId> const& resourceIds,
-                       std::vector<SPublicIdentity> const& publicIdentities,
-                       std::vector<SGroupId> const& groupIds)
-{
-  auto const resourceKeys = TC_AWAIT(resourceKeyStore.getKeys(resourceIds));
-
-  TC_AWAIT(share(userAccessor,
-                 groupAccessor,
-                 trustchainId,
-                 deviceId,
-                 signatureKey,
-                 client,
-                 resourceKeys,
-                 publicIdentities,
-                 groupIds));
-}
 }
 }
