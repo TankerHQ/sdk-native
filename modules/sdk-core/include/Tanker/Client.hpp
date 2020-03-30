@@ -48,13 +48,6 @@ public:
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
   tc::cotask<void> pushKeys(gsl::span<std::vector<uint8_t> const> block);
 
-  tc::cotask<void> createUser(
-      Identity::SecretPermanentIdentity const& identity,
-      gsl::span<uint8_t const> userCreation,
-      gsl::span<uint8_t const> firstDevice,
-      Unlock::Request const& verificationRequest,
-      gsl::span<uint8_t const> encryptedVerificationKey);
-
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& devicePublicUserKey);

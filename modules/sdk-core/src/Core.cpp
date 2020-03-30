@@ -212,8 +212,9 @@ tc::cotask<void> Core::registerIdentity(
       _session->userSecret(),
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
-  TC_AWAIT(_session->client().createUser(
-      _session->identity(),
+  TC_AWAIT(_session->requesters().createUser(
+      _session->trustchainId(),
+      _session->userId(),
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),

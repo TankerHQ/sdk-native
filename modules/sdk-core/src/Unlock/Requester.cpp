@@ -53,5 +53,24 @@ Requester::fetchVerificationMethods(
                      .get<std::vector<Unlock::VerificationMethod>>();
   TC_RETURN(methods);
 }
+tc::cotask<void> Requester::createUser(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    gsl::span<uint8_t const> userCreation,
+    gsl::span<uint8_t const> firstDevice,
+    Unlock::Request const& verificationRequest,
+    gsl::span<uint8_t const> encryptedVerificationKey)
+{
+  nlohmann::json request{
+      {"trustchain_id", trustchainId},
+      {"user_id", userId},
+      {"user_creation_block", cppcodec::base64_rfc4648::encode(userCreation)},
+      {"first_device_block", cppcodec::base64_rfc4648::encode(firstDevice)},
+      {"encrypted_unlock_key",
+       cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
+      {"verification", verificationRequest},
+  };
+  auto const reply = TC_AWAIT(_client->emit("create user 2", request));
+}
 
 }

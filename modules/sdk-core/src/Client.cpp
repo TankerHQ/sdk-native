@@ -111,26 +111,6 @@ tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
   TC_AWAIT(emit("push keys", sb));
 }
 
-tc::cotask<void> Client::createUser(
-    Identity::SecretPermanentIdentity const& identity,
-    gsl::span<uint8_t const> userCreation,
-    gsl::span<uint8_t const> firstDevice,
-    Unlock::Request const& verificationRequest,
-    gsl::span<uint8_t const> encryptedVerificationKey)
-{
-  FUNC_TIMER(Proc);
-  nlohmann::json request{
-      {"trustchain_id", identity.trustchainId},
-      {"user_id", identity.delegation.userId},
-      {"user_creation_block", cppcodec::base64_rfc4648::encode(userCreation)},
-      {"first_device_block", cppcodec::base64_rfc4648::encode(firstDevice)},
-      {"encrypted_unlock_key",
-       cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
-      {"verification", verificationRequest},
-  };
-  auto const reply = TC_AWAIT(emit("create user 2", request));
-}
-
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& devicePublicSignatureKey)

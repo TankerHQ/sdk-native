@@ -14,6 +14,8 @@
 
 namespace Tanker::Users
 {
+void from_json(nlohmann::json const& j, UserStatusResult& result);
+
 namespace
 {
 template <typename T>

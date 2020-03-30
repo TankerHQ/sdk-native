@@ -21,6 +21,14 @@ public:
   fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
                            Trustchain::UserId const& userId) = 0;
 
+  virtual tc::cotask<void> createUser(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      gsl::span<uint8_t const> userCreation,
+      gsl::span<uint8_t const> firstDevice,
+      Unlock::Request const& verificationRequest,
+      gsl::span<uint8_t const> encryptedVerificationKey) = 0;
+
   virtual ~IRequester() = default;
 };
 
