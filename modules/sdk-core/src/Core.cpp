@@ -12,6 +12,7 @@
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
