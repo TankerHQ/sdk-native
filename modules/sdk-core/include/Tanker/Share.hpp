@@ -36,11 +36,6 @@ namespace Groups
 class IAccessor;
 }
 
-namespace ResourceKeys
-{
-class Store;
-}
-
 namespace Share
 {
 struct KeyRecipients
@@ -94,17 +89,6 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Crypto::PrivateSignatureKey const& signatureKey,
                        Client& client,
                        ResourceKeys::KeysResult const& resourceKeys,
-                       std::vector<SPublicIdentity> const& publicIdentities,
-                       std::vector<SGroupId> const& groupIds);
-
-tc::cotask<void> share(ResourceKeys::Store const& resourceKeyStore,
-                       Users::IUserAccessor& userAccessor,
-                       Groups::IAccessor& groupAccessor,
-                       Trustchain::TrustchainId const& trustchainId,
-                       Trustchain::DeviceId const& deviceId,
-                       Crypto::PrivateSignatureKey const& signatureKey,
-                       Client& client,
-                       std::vector<Trustchain::ResourceId> const& resourceIds,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds);
 }
