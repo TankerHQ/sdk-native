@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Client.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
@@ -16,6 +15,11 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+
+namespace Tanker
+{
+class Pusher;
+}
 
 namespace Tanker::Users
 {
@@ -48,7 +52,7 @@ Trustchain::ClientEntry makeUserGroupCreationEntry(
 
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
-    Client& client,
+    Pusher& pusher,
     std::vector<SPublicIdentity> const& spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
@@ -64,7 +68,7 @@ Trustchain::ClientEntry makeUserGroupAdditionEntry(
 
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
-    Client& client,
+    Pusher& pusher,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
