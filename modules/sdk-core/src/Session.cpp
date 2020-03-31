@@ -35,6 +35,7 @@ Session::Storage::Storage(DataStore::DatabasePtr pdb)
 }
 
 Session::Accessors::Accessors(Storage& storage,
+                              Pusher* pusher,
                               Requesters* requesters,
                               Users::LocalUserAccessor plocalUserAccessor)
   : localUserAccessor(std::move(plocalUserAccessor)),
@@ -44,6 +45,7 @@ Session::Accessors::Accessors(Storage& storage,
                              &localUserAccessor,
                              &storage.provisionalUserKeysStore),
     provisionalUsersManager(&localUserAccessor,
+                            pusher,
                             requesters,
                             &provisionalUsersAccessor,
                             &storage.provisionalUserKeysStore,
@@ -77,6 +79,7 @@ Client& Session::client()
 Session::Session(std::string url, Network::SdkInfo info)
   : _client(std::make_unique<Client>(
         Network::ConnectionFactory::create(std::move(url), std::move(info)))),
+    _pusher(_client.get()),
     _requesters(_client.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -105,6 +108,11 @@ Session::Storage& Session::storage()
   return *_storage;
 }
 
+Pusher& Session::pusher()
+{
+  return _pusher;
+}
+
 Session::Requesters const& Session::requesters() const
 {
   return _requesters;
@@ -119,7 +127,8 @@ tc::cotask<void> Session::createAccessors()
 {
   _accessors = std::make_unique<Accessors>(
       storage(),
-      &_requesters,
+      &pusher(),
+      &requesters(),
       TC_AWAIT(Users::LocalUserAccessor::create(
           userId(), trustchainId(), &_requesters, &storage().localUserStore)));
 }

@@ -11,6 +11,11 @@ namespace Tanker::ProvisionalUsers
 {
 class Requester : public IRequester
 {
+  Requester(Requester const&) = delete;
+  Requester& operator=(Requester const&) = delete;
+  Requester(Requester&&) = delete;
+  Requester& operator=(Requester&&) = delete;
+
 public:
   Requester(Client* client);
 
@@ -19,7 +24,6 @@ public:
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail) override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Request const& request) override;
-  tc::cotask<void> pushBlock(gsl::span<uint8_t const> block) override;
 
 private:
   Client* _client;

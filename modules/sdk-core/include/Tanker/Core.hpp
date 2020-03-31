@@ -3,7 +3,7 @@
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
-#include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>

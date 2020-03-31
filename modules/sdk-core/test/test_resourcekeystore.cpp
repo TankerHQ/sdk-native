@@ -1,4 +1,4 @@
-#include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/ADatabase.hpp>
@@ -52,20 +52,16 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
 }
 #endif
 
-TEST_CASE("resource keys")
+TEST_CASE("Resource Keys Store")
 {
   auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
 
-  SUBCASE("it should create and destroy a ResourceKeyStore")
-  {
-    ResourceKeyStore keys(dbPtr.get());
-  }
+  ResourceKeys::Store keys(dbPtr.get());
 
   SUBCASE("it should not find a non-existent key")
   {
     auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
 
-    ResourceKeyStore keys(dbPtr.get());
     TANKER_CHECK_THROWS_WITH_CODE(AWAIT(keys.getKey(unexistentMac)),
                                   Errors::Errc::InvalidArgument);
   }
@@ -75,12 +71,39 @@ TEST_CASE("resource keys")
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
 
-    ResourceKeyStore keys(dbPtr.get());
-
     AWAIT_VOID(keys.putKey(resourceId, key));
     auto const key2 = AWAIT(keys.getKey(resourceId));
 
     CHECK(key == key2);
+  }
+
+  SUBCASE("passing a list of resourceIds")
+  {
+    auto const resourceId1 = make<Trustchain::ResourceId>("mymac1");
+    auto const key1 = make<Crypto::SymmetricKey>("mykey1");
+    AWAIT_VOID(keys.putKey(resourceId1, key1));
+
+    auto const resourceId2 = make<Trustchain::ResourceId>("mymac2");
+    auto const key2 = make<Crypto::SymmetricKey>("mykey2");
+    AWAIT_VOID(keys.putKey(resourceId2, key2));
+
+    SUBCASE("should return a list of keys")
+    {
+      auto const result =
+          AWAIT(keys.getKeys(std::vector{resourceId1, resourceId2}));
+      CHECK(result.size() == 2);
+      CHECK(result.at(0) == std::tie(key1, resourceId1));
+      CHECK(result.at(1) == std::tie(key2, resourceId2));
+    }
+    SUBCASE("should throw if some doesn't exist")
+    {
+      TANKER_CHECK_THROWS_WITH_CODE(
+          AWAIT(keys.getKeys(
+              std::vector{resourceId1,
+                          resourceId2,
+                          make<Trustchain::ResourceId>("notmymac")})),
+          Errors::Errc::InvalidArgument);
+    }
   }
 
   SUBCASE("it should ignore a duplicate key and keep the first")
@@ -88,8 +111,6 @@ TEST_CASE("resource keys")
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
     auto const key2 = make<Crypto::SymmetricKey>("mykey2");
-
-    ResourceKeyStore keys(dbPtr.get());
 
     AWAIT_VOID(keys.putKey(resourceId, key));
     AWAIT_VOID(keys.putKey(resourceId, key2));

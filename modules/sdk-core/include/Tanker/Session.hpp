@@ -10,7 +10,8 @@
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/ResourceKeyAccessor.hpp>
+#include <Tanker/Pusher.hpp>
+#include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -34,6 +35,7 @@ public:
                       Groups::Requester,
                       ProvisionalUsers::Requester,
                       Unlock::Requester
+
   {
     Requesters(Client*);
   };
@@ -45,13 +47,14 @@ public:
     DataStore::DatabasePtr db;
     Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
-    ResourceKeyStore resourceKeyStore;
+    ResourceKeys::Store resourceKeyStore;
     ProvisionalUserKeysStore provisionalUserKeysStore;
   };
 
   struct Accessors
   {
     Accessors(Storage& storage,
+              Pusher* pusher,
               Requesters* requesters,
               Users::LocalUserAccessor plocalUserAccessor);
     Users::LocalUserAccessor localUserAccessor;
@@ -59,12 +62,14 @@ public:
     ProvisionalUsers::Accessor provisionalUsersAccessor;
     ProvisionalUsers::Manager provisionalUsersManager;
     Groups::Accessor groupAccessor;
-    ResourceKeyAccessor resourceKeyAccessor;
+    ResourceKeys::Accessor resourceKeyAccessor;
   };
 
   Session(std::string url, Network::SdkInfo info);
 
   Client& client();
+
+  Pusher& pusher();
 
   Requesters const& requesters() const;
   Requesters& requesters();
@@ -94,6 +99,7 @@ public:
 
 private:
   std::unique_ptr<Client> _client;
+  Pusher _pusher;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;

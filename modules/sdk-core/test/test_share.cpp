@@ -3,6 +3,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/Accessor.hpp>
+#include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
@@ -53,7 +55,7 @@ void assertEqual(std::vector<T> aa, std::vector<U> bb)
 }
 
 void assertKeyPublishToUsersTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    ResourceKeys::KeysResult::value_type const& resourceKey,
     std::vector<Trustchain::Actions::KeyPublishToUser> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
@@ -72,7 +74,7 @@ void assertKeyPublishToUsersTargetedAt(
 }
 
 void assertKeyPublishToUsersTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    ResourceKeys::KeysResult::value_type const& resourceKey,
     std::vector<KeyPublishToProvisionalUser> const& keyPublishes,
     std::vector<ProvisionalUsers::SecretUser> const& provisionalUsers)
 {
@@ -96,7 +98,7 @@ void assertKeyPublishToUsersTargetedAt(
 }
 
 void assertKeyPublishToGroupTargetedAt(
-    Share::ResourceKey const& resourceKey,
+    ResourceKeys::KeysResult::value_type const& resourceKey,
     std::vector<Trustchain::Actions::KeyPublishToUserGroup> const& keyPublishes,
     std::vector<Tanker::Crypto::EncryptionKeyPair> const& userKeyPairs)
 {
@@ -272,15 +274,15 @@ TEST_CASE("generateRecipientList")
 }
 
 template <typename T>
-std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
+std::vector<T> extract(gsl::span<Trustchain::ClientEntry const> entries)
 {
   std::vector<T> keyPublishes;
-  for (auto const& block : blocks)
+  for (auto const& entry : entries)
   {
-    auto const entry = Serialization::deserialize<ServerEntry>(block);
-    auto const keyPublish = entry.action().get_if<KeyPublish>();
-    REQUIRE(keyPublish);
-    auto const keyPublishTo = keyPublish->get_if<T>();
+    auto const keyPublish = Trustchain::Action::deserialize(
+                                entry.nature(), entry.serializedPayload())
+                                .get<KeyPublish>();
+    auto const keyPublishTo = keyPublish.get_if<T>();
     keyPublishes.push_back(*keyPublishTo);
   }
   return keyPublishes;
@@ -295,7 +297,7 @@ TEST_CASE("generateShareBlocks")
 
   SUBCASE("for a user should generate one KeyPublishToUser block")
   {
-    Share::ResourceKeys resourceKeys = {
+    ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource resourceId")}};
 
@@ -319,7 +321,7 @@ TEST_CASE("generateShareBlocks")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
-    Share::ResourceKeys resourceKeys = {
+    ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource mac")}};
 
@@ -340,7 +342,7 @@ TEST_CASE("generateShareBlocks")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
-    Share::ResourceKeys resourceKeys = {
+    ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
          make<Trustchain::ResourceId>("resource resourceId")}};
 

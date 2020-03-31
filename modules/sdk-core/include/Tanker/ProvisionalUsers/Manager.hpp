@@ -11,6 +11,7 @@
 
 namespace Tanker
 {
+class Pusher;
 namespace Users
 {
 class ILocalUserAccessor;
@@ -23,6 +24,7 @@ class Manager
 {
 public:
   Manager(Users::ILocalUserAccessor* localUserAccessor,
+          Pusher* pusher,
           IRequester* requester,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
@@ -39,6 +41,7 @@ public:
 
 private:
   Users::ILocalUserAccessor* _localUserAccessor;
+  Pusher* _pusher;
   IRequester* _requester;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;

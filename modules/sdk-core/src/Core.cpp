@@ -12,6 +12,7 @@
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Identity/Extract.hpp>
+#include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
@@ -164,7 +165,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
-    TC_AWAIT(_session->client().pushBlock(Serialization::serialize(entry)));
+    TC_AWAIT(_session->pusher().pushBlock(entry));
     TC_AWAIT(_session->finalizeOpening());
   }
   catch (Exception const& e)
@@ -243,7 +244,7 @@ tc::cotask<void> Core::encrypt(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->client(),
+                        _session->pusher(),
                         {{metadata.key, metadata.resourceId}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -314,14 +315,15 @@ tc::cotask<void> Core::share(
   });
 
   auto const localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Share::share(_session->storage().resourceKeyStore,
-                        _session->accessors().userAccessor,
+  auto const resourceKeys =
+      TC_AWAIT(_session->storage().resourceKeyStore.getKeys(resourceIds));
+  TC_AWAIT(Share::share(_session->accessors().userAccessor,
                         _session->accessors().groupAccessor,
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->client(),
-                        resourceIds,
+                        _session->pusher(),
+                        resourceKeys,
                         spublicIdentities,
                         sgroupIds));
 }
@@ -333,7 +335,7 @@ tc::cotask<SGroupId> Core::createGroup(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
       _session->accessors().userAccessor,
-      _session->client(),
+      _session->pusher(),
       spublicIdentities,
       _session->trustchainId(),
       localUser.deviceId(),
@@ -351,7 +353,7 @@ tc::cotask<void> Core::updateGroupMembers(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(
       _session->accessors().userAccessor,
-      _session->client(),
+      _session->pusher(),
       _session->accessors().groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
@@ -475,7 +477,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
                                     _session->trustchainId(),
                                     localUser,
                                     _session->accessors().userAccessor,
-                                    _session->client()));
+                                    _session->pusher()));
 }
 
 tc::cotask<void> Core::nukeDatabase()
@@ -517,7 +519,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->client(),
+                        _session->pusher(),
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -589,7 +591,7 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->client(),
+                        _session->pusher(),
                         {{sess.sessionKey(), sess.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));

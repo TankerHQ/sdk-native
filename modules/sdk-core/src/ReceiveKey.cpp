@@ -8,7 +8,7 @@
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
-#include <Tanker/ResourceKeyStore.hpp>
+#include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -27,7 +27,7 @@ namespace ReceiveKey
 namespace
 {
 tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
+    ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor&,
@@ -51,7 +51,7 @@ tc::cotask<void> decryptAndStoreKey(
 }
 
 tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
+    ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor&,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor&,
@@ -77,7 +77,7 @@ tc::cotask<void> decryptAndStoreKey(
 }
 
 tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
+    ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor&,
     Groups::IAccessor&,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
@@ -109,7 +109,7 @@ tc::cotask<void> decryptAndStoreKey(
 }
 
 tc::cotask<void> decryptAndStoreKey(
-    ResourceKeyStore& resourceKeyStore,
+    ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,

@@ -15,6 +15,11 @@ namespace Unlock
 {
 class Requester : public IRequester
 {
+  Requester(Requester const&) = delete;
+  Requester& operator=(Requester const&) = delete;
+  Requester(Requester&&) = delete;
+  Requester& operator=(Requester&&) = delete;
+
 public:
   Requester(Client* client);
 
