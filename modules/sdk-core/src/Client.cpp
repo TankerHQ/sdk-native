@@ -94,11 +94,6 @@ tc::cotask<void> Client::handleConnection()
   FUNC_END("client connection", Net);
 }
 
-tc::cotask<void> Client::pushBlock(gsl::span<uint8_t const> block)
-{
-  TC_AWAIT(emit("push block", cppcodec::base64_rfc4648::encode(block)));
-}
-
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& devicePublicSignatureKey)

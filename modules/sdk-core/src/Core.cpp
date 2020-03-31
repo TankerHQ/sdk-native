@@ -165,7 +165,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
-    TC_AWAIT(_session->client().pushBlock(Serialization::serialize(entry)));
+    TC_AWAIT(_session->pusher().pushBlock(entry));
     TC_AWAIT(_session->finalizeOpening());
   }
   catch (Exception const& e)
