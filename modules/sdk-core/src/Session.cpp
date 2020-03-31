@@ -77,6 +77,7 @@ Client& Session::client()
 Session::Session(std::string url, Network::SdkInfo info)
   : _client(std::make_unique<Client>(
         Network::ConnectionFactory::create(std::move(url), std::move(info)))),
+    _pusher(_client.get()),
     _requesters(_client.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -103,6 +104,11 @@ Session::Storage& Session::storage()
 {
   assert(_storage);
   return *_storage;
+}
+
+Pusher& Session::pusher()
+{
+  return _pusher;
 }
 
 Session::Requesters const& Session::requesters() const
