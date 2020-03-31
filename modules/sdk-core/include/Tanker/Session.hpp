@@ -10,6 +10,7 @@
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
+#include <Tanker/Pusher.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -34,6 +35,7 @@ public:
                       Groups::Requester,
                       ProvisionalUsers::Requester,
                       Unlock::Requester
+
   {
     Requesters(Client*);
   };
@@ -66,6 +68,8 @@ public:
 
   Client& client();
 
+  Pusher& pusher();
+
   Requesters const& requesters() const;
   Requesters& requesters();
 
@@ -94,6 +98,7 @@ public:
 
 private:
   std::unique_ptr<Client> _client;
+  Pusher _pusher;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;
