@@ -7,11 +7,8 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
-#include <Tanker/Groups/GroupEncryptedKey.hpp>
-#include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Pusher.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -21,9 +18,6 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 
-using Tanker::Trustchain::ClientEntry;
-using Tanker::Trustchain::GroupId;
-using Tanker::Trustchain::UserId;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
@@ -96,7 +90,7 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 }
 }
 
-ClientEntry makeUserGroupCreationEntry(
+Trustchain::ClientEntry makeUserGroupCreationEntry(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
@@ -155,7 +149,7 @@ tc::cotask<SGroupId> create(
   TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKeyPair.publicKey));
 }
 
-ClientEntry makeUserGroupAdditionEntry(
+Trustchain::ClientEntry makeUserGroupAdditionEntry(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,
@@ -194,7 +188,7 @@ tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     Pusher& pusher,
     IAccessor& groupAccessor,
-    GroupId const& groupId,
+    Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
