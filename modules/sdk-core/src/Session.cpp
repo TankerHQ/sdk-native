@@ -35,6 +35,7 @@ Session::Storage::Storage(DataStore::DatabasePtr pdb)
 }
 
 Session::Accessors::Accessors(Storage& storage,
+                              Pusher* pusher,
                               Requesters* requesters,
                               Users::LocalUserAccessor plocalUserAccessor)
   : localUserAccessor(std::move(plocalUserAccessor)),
@@ -44,6 +45,7 @@ Session::Accessors::Accessors(Storage& storage,
                              &localUserAccessor,
                              &storage.provisionalUserKeysStore),
     provisionalUsersManager(&localUserAccessor,
+                            pusher,
                             requesters,
                             &provisionalUsersAccessor,
                             &storage.provisionalUserKeysStore,
@@ -125,7 +127,8 @@ tc::cotask<void> Session::createAccessors()
 {
   _accessors = std::make_unique<Accessors>(
       storage(),
-      &_requesters,
+      &pusher(),
+      &requesters(),
       TC_AWAIT(Users::LocalUserAccessor::create(
           userId(), trustchainId(), &_requesters, &storage().localUserStore)));
 }

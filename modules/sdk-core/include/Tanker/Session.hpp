@@ -54,6 +54,7 @@ public:
   struct Accessors
   {
     Accessors(Storage& storage,
+              Pusher* pusher,
               Requesters* requesters,
               Users::LocalUserAccessor plocalUserAccessor);
     Users::LocalUserAccessor localUserAccessor;

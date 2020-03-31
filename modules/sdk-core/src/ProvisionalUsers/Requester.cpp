@@ -53,10 +53,4 @@ Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
       {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
        json.at("signature_private_key").get<Crypto::PrivateSignatureKey>()}}));
 }
-
-tc::cotask<void> Requester::pushBlock(gsl::span<uint8_t const> block)
-{
-  TC_AWAIT(
-      _client->emit("push block", cppcodec::base64_rfc4648::encode(block)));
-}
 }
