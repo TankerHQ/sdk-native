@@ -477,7 +477,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
                                     _session->trustchainId(),
                                     localUser,
                                     _session->accessors().userAccessor,
-                                    _session->client()));
+                                    _session->pusher()));
 }
 
 tc::cotask<void> Core::nukeDatabase()
