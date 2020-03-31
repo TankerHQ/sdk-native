@@ -274,15 +274,15 @@ TEST_CASE("generateRecipientList")
 }
 
 template <typename T>
-std::vector<T> extract(std::vector<std::vector<uint8_t>> const& blocks)
+std::vector<T> extract(gsl::span<Trustchain::ClientEntry const> entries)
 {
   std::vector<T> keyPublishes;
-  for (auto const& block : blocks)
+  for (auto const& entry : entries)
   {
-    auto const entry = Serialization::deserialize<ServerEntry>(block);
-    auto const keyPublish = entry.action().get_if<KeyPublish>();
-    REQUIRE(keyPublish);
-    auto const keyPublishTo = keyPublish->get_if<T>();
+    auto const keyPublish = Trustchain::Action::deserialize(
+                                entry.nature(), entry.serializedPayload())
+                                .get<KeyPublish>();
+    auto const keyPublishTo = keyPublish.get_if<T>();
     keyPublishes.push_back(*keyPublishTo);
   }
   return keyPublishes;

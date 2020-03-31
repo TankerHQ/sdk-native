@@ -24,7 +24,7 @@ class IUserAccessor;
 
 namespace Tanker
 {
-class Client;
+class Pusher;
 
 namespace Groups
 {
@@ -70,7 +70,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds);
 
-std::vector<std::vector<uint8_t>> generateShareBlocks(
+std::vector<Trustchain::ClientEntry> generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -82,9 +82,10 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Trustchain::TrustchainId const& trustchainId,
                        Trustchain::DeviceId const& deviceId,
                        Crypto::PrivateSignatureKey const& signatureKey,
-                       Client& client,
+                       Pusher& pusher,
                        ResourceKeys::KeysResult const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds);
+
 }
 }
