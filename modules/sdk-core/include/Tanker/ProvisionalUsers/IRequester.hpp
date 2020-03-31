@@ -20,7 +20,6 @@ public:
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail) = 0;
   virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Request const& request) = 0;
-  virtual tc::cotask<void> pushBlock(gsl::span<uint8_t const> block) = 0;
   virtual ~IRequester() = default;
 };
 }
