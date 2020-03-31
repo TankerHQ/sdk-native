@@ -46,7 +46,6 @@ public:
   tc::cotask<void> handleConnection();
 
   tc::cotask<void> pushBlock(gsl::span<uint8_t const> block);
-  tc::cotask<void> pushKeys(gsl::span<std::vector<uint8_t> const> block);
 
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,

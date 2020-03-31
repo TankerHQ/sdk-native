@@ -99,18 +99,6 @@ tc::cotask<void> Client::pushBlock(gsl::span<uint8_t const> block)
   TC_AWAIT(emit("push block", cppcodec::base64_rfc4648::encode(block)));
 }
 
-tc::cotask<void> Client::pushKeys(gsl::span<std::vector<uint8_t> const> blocks)
-{
-  std::vector<std::string> sb;
-  sb.reserve(blocks.size());
-  std::transform(
-      begin(blocks), end(blocks), std::back_inserter(sb), [](auto&& block) {
-        return cppcodec::base64_rfc4648::encode(block);
-      });
-
-  TC_AWAIT(emit("push keys", sb));
-}
-
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& devicePublicSignatureKey)
