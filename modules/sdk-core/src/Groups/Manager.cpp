@@ -10,7 +10,7 @@
 #include <Tanker/Groups/GroupEncryptedKey.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/IdentityUtils.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Pusher.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -131,7 +131,7 @@ ClientEntry makeUserGroupCreationEntry(
 
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
-    Client& client,
+    Pusher& pusher,
     std::vector<SPublicIdentity> const& spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
@@ -150,7 +150,7 @@ tc::cotask<SGroupId> create(
                                                      trustchainId,
                                                      deviceId,
                                                      privateSignatureKey);
-  TC_AWAIT(client.pushBlock(Serialization::serialize(groupEntry)));
+  TC_AWAIT(pusher.pushBlock(groupEntry));
 
   TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKeyPair.publicKey));
 }
@@ -192,7 +192,7 @@ ClientEntry makeUserGroupAdditionEntry(
 
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
-    Client& client,
+    Pusher& pusher,
     IAccessor& groupAccessor,
     GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
@@ -213,6 +213,6 @@ tc::cotask<void> updateMembers(
                                                      trustchainId,
                                                      deviceId,
                                                      privateSignatureKey);
-  TC_AWAIT(client.pushBlock(Serialization::serialize(groupEntry)));
+  TC_AWAIT(pusher.pushBlock(groupEntry));
 }
 }
