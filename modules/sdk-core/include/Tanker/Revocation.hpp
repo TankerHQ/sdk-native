@@ -26,7 +26,7 @@ class Device;
 }
 
 struct DeviceKeys;
-class Client;
+class Pusher;
 
 namespace Revocation
 {
@@ -49,7 +49,7 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Trustchain::TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              Client& client);
+                              Pusher& client);
 
 Trustchain::ClientEntry makeRevokeDeviceEntry(
     Trustchain::DeviceId const& targetDeviceId,

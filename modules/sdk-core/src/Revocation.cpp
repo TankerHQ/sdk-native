@@ -6,7 +6,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Pusher.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -98,7 +98,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
                               TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              Client& client)
+                              Pusher& pusher)
 {
   TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), userAccessor));
   auto const user =
@@ -108,7 +108,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
 
   auto clientEntry = makeRevokeDeviceEntry(
       deviceId, trustchainId, localUser, user.devices(), newUserKey);
-  TC_AWAIT(client.pushBlock(Serialization::serialize(clientEntry)));
+  TC_AWAIT(pusher.pushBlock(clientEntry));
 }
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
