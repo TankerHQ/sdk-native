@@ -14,7 +14,7 @@ EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession)
 {
 }
 
-void EncryptionSession::assertSession(std::string const& action) const
+void EncryptionSession::assertSession(char const* action) const
 {
   if (_tankerSession.expired())
     throw Errors::formatEx(Errors::Errc::PreconditionFailed,

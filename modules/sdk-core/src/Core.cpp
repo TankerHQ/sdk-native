@@ -41,8 +41,6 @@ using namespace Tanker::Errors;
 
 TLOG_CATEGORY(Core);
 
-#define checkStatus(wanted, action) this->assertStatus(wanted, #action)
-
 namespace Tanker
 {
 Core::~Core() = default;
@@ -145,7 +143,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 {
   TINFO("verifyIdentity");
   FUNC_TIMER(Proc);
-  checkStatus(Status::IdentityVerificationNeeded, registerIdentity);
+  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
   {
@@ -182,7 +180,7 @@ tc::cotask<void> Core::registerIdentity(
 {
   TINFO("registerIdentity");
   FUNC_TIMER(Proc);
-  checkStatus(Status::IdentityRegistrationNeeded, registerIdentity);
+  assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
 
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
@@ -229,7 +227,7 @@ tc::cotask<void> Core::encrypt(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::Ready, encrypt);
+  assertStatus(Status::Ready, "encrypt");
   auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.push_back(
@@ -255,7 +253,7 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::Ready, encrypt);
+  assertStatus(Status::Ready, "encrypt");
   std::vector<uint8_t> encryptedData(
       Encryptor::encryptedSize(clearData.size()));
   TC_AWAIT(
@@ -266,7 +264,7 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
 tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {
-  checkStatus(Status::Ready, decrypt);
+  assertStatus(Status::Ready, "decrypt");
   auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
   auto const key = TC_AWAIT(getResourceKey(resourceId));
@@ -277,7 +275,7 @@ tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
     gsl::span<uint8_t const> encryptedData)
 {
-  checkStatus(Status::Ready, decrypt);
+  assertStatus(Status::Ready, "decrypt");
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
   TC_AWAIT(decrypt(decryptedData.data(), encryptedData));
 
@@ -286,13 +284,13 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
 
 Trustchain::DeviceId const& Core::deviceId() const
 {
-  checkStatus(Status::Ready, deviceId);
+  assertStatus(Status::Ready, "deviceId");
   return _session->accessors().localUserAccessor.get().deviceId();
 }
 
 tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
-  checkStatus(Status::Ready, getDeviceList);
+  assertStatus(Status::Ready, "getDeviceList");
   auto const results = TC_AWAIT(_session->accessors().userAccessor.pull(
       gsl::make_span(std::addressof(_session->userId()), 1)));
   if (results.found.size() != 1)
@@ -306,7 +304,7 @@ tc::cotask<void> Core::share(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::Ready, share);
+  assertStatus(Status::Ready, "share");
   if (spublicIdentities.empty() && sgroupIds.empty())
     TC_RETURN();
 
@@ -331,7 +329,7 @@ tc::cotask<void> Core::share(
 tc::cotask<SGroupId> Core::createGroup(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
-  checkStatus(Status::Ready, createGroup);
+  assertStatus(Status::Ready, "createGroup");
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
       _session->accessors().userAccessor,
@@ -347,7 +345,7 @@ tc::cotask<void> Core::updateGroupMembers(
     SGroupId const& groupIdString,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
-  checkStatus(Status::Ready, updateGroupMembers);
+  assertStatus(Status::Ready, "updateGroupMembers");
   auto const groupId = base64DecodeArgument<Trustchain::GroupId>(groupIdString);
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
@@ -364,7 +362,7 @@ tc::cotask<void> Core::updateGroupMembers(
 
 tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
 {
-  checkStatus(Status::Ready, setVerificationMethod);
+  assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
   {
     throw formatEx(Errc::InvalidArgument,
@@ -438,14 +436,14 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
 
 tc::cotask<VerificationKey> Core::generateVerificationKey() const
 {
-  checkStatus(Status::IdentityRegistrationNeeded, generateVerificationKey);
+  assertStatus(Status::IdentityRegistrationNeeded, "generateVerificationKey");
   TC_RETURN(GhostDevice::create().toVerificationKey());
 }
 
 tc::cotask<AttachResult> Core::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
-  checkStatus(Status::Ready, attachProvisionalIdentity);
+  assertStatus(Status::Ready, "attachProvisionalIdentity");
   TC_RETURN(TC_AWAIT(
       _session->accessors().provisionalUsersManager.attachProvisionalIdentity(
           sidentity)));
@@ -454,7 +452,7 @@ tc::cotask<AttachResult> Core::attachProvisionalIdentity(
 tc::cotask<void> Core::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
-  checkStatus(Status::Ready, verifyProvisionalIdentity);
+  assertStatus(Status::Ready, "verifyProvisionalIdentity");
   auto const& identity =
       _session->accessors().provisionalUsersManager.provisionalIdentity();
   if (!identity.has_value())
@@ -470,7 +468,7 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
 
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 {
-  checkStatus(Status::Ready, revokeDevice);
+  assertStatus(Status::Ready, "revokeDevice");
   auto const& localUser =
       TC_AWAIT(_session->accessors().localUserAccessor.pull());
   TC_AWAIT(Revocation::revokeDevice(deviceId,
@@ -482,7 +480,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 
 tc::cotask<void> Core::nukeDatabase()
 {
-  checkStatus(Status::Ready, nukeDatabase);
+  assertStatus(Status::Ready, "nukeDatabase");
   TC_AWAIT(_session->storage().db->nuke());
 }
 
@@ -502,7 +500,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::Ready, makeEncryptionStream);
+  assertStatus(Status::Ready, "makeEncryptionStream");
   Streams::EncryptionStream encryptor(std::move(cb));
 
   auto spublicIdentitiesWithUs = spublicIdentities;
@@ -543,7 +541,7 @@ tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
 tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
     Streams::InputSource cb)
 {
-  checkStatus(Status::Ready, makeDecryptionStream);
+  assertStatus(Status::Ready, "makeDecryptionStream");
   auto peekableSource = Streams::PeekableInputSource(std::move(cb));
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
@@ -576,7 +574,7 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds)
 {
-  checkStatus(Status::Ready, makeEncryptionSession);
+  assertStatus(Status::Ready, "makeEncryptionSession");
   EncryptionSession sess{_session};
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.emplace_back(

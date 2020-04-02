@@ -31,7 +31,7 @@ public:
       std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
 
 private:
-  void assertSession(std::string const& string) const;
+  void assertSession(const char* action) const;
 
   std::weak_ptr<Session> _tankerSession;
   std::shared_ptr<task_canceler> _taskCanceler;
