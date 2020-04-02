@@ -120,6 +120,6 @@ private:
   Network::SdkInfo _info;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
-  std::unique_ptr<Session> _session;
+  std::shared_ptr<Session> _session;
 };
 }

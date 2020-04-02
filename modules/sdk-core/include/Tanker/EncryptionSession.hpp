@@ -9,10 +9,12 @@
 
 namespace Tanker
 {
+class Session;
+
 class EncryptionSession
 {
 public:
-  EncryptionSession();
+  EncryptionSession(std::weak_ptr<Session> tankerSession);
 
   static constexpr std::uint32_t version()
   {
@@ -29,6 +31,9 @@ public:
       std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
 
 private:
+  void assertSession(std::string const& string) const;
+
+  std::weak_ptr<Session> _tankerSession;
   std::shared_ptr<task_canceler> _taskCanceler;
   Crypto::SymmetricKey _sessionKey;
   Trustchain::ResourceId _resourceId;

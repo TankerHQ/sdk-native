@@ -51,7 +51,7 @@ Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_unique<Session>(_url, _info))
+    _session(std::make_shared<Session>(_url, _info))
 {
   _session->client().setConnectionHandler(
       [this]() -> tc::cotask<void> { TC_AWAIT(_session->authenticate()); });
@@ -73,7 +73,7 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_unique<Session>(_url, _info);
+  _session = std::make_shared<Session>(_url, _info);
 }
 
 template <typename F>
@@ -577,7 +577,7 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
     std::vector<SGroupId> const& sgroupIds)
 {
   checkStatus(Status::Ready, makeEncryptionSession);
-  EncryptionSession sess;
+  EncryptionSession sess{_session};
   auto spublicIdentitiesWithUs = spublicIdentities;
   spublicIdentitiesWithUs.emplace_back(
       to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
