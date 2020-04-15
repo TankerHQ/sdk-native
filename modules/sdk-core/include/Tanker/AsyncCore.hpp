@@ -149,11 +149,19 @@ private:
   auto runResumable(F&& f)
   {
     return _taskCanceler.run([this, f = std::forward<F>(f)]() mutable {
-      return tc::async_resumable([this, f = std::move(f)] {
+      return tc::async_resumable([this, f = std::move(f)]() -> decltype(f()) {
         std::exception_ptr exception;
         try
         {
-          return f();
+          if constexpr (std::is_same_v<decltype(f()), void>)
+          {
+            TC_AWAIT(f());
+            TC_RETURN();
+          }
+          else
+          {
+            TC_RETURN(TC_AWAIT(f()));
+          }
         }
         catch (Errors::Exception const& ex)
         {
