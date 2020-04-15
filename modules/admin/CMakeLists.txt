@@ -4,8 +4,10 @@ project(Admin)
 
 add_library(tankeradmin STATIC
   include/Tanker/Admin/Admin.hpp
+  include/Tanker/Admin/Client.hpp
 
   src/Admin.cpp
+  src/Client.cpp
 )
 
 target_include_directories(tankeradmin
@@ -25,6 +27,7 @@ target_link_libraries(tankeradmin
   CONAN_PKG::cppcodec
   CONAN_PKG::tconcurrent
   CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::fetchpp
 )
 
 install(DIRECTORY include DESTINATION .)
