@@ -60,8 +60,7 @@ Client::Client(Network::ConnectionPtr cx, ConnectionHandler connectionHandler)
 {
   _cx->reconnected = [this] {
     if (_connectionHandler)
-      _taskCanceler.add(tc::async_resumable(
-          [this]() -> tc::cotask<void> { TC_AWAIT(handleConnection()); }));
+      _taskCanceler.add(tc::async([this]() { _connectionHandler(); }));
   };
 }
 
@@ -85,13 +84,6 @@ void Client::setConnectionHandler(ConnectionHandler handler)
 {
   assert(handler);
   _connectionHandler = std::move(handler);
-}
-
-tc::cotask<void> Client::handleConnection()
-{
-  FUNC_TIMER(Net);
-  TC_AWAIT(_connectionHandler());
-  FUNC_END("client connection", Net);
 }
 
 tc::cotask<EncryptedUserKey> Client::getLastUserKey(
