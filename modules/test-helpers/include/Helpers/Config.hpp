@@ -1,19 +1,13 @@
 #pragma once
 
-#include <nlohmann/json_fwd.hpp>
-
+#include <map>
 #include <string>
+#include <string_view>
 
 namespace Tanker
 {
 namespace TestConstants
 {
-struct ServerConfig
-{
-  std::string url;
-  std::string idToken;
-};
-
 struct User
 {
   std::string email;
@@ -28,10 +22,9 @@ struct OidcConfig
   std::map<std::string, User> users;
 };
 
-void setConfig(std::string const& cfg, std::string const& env);
 std::string const& trustchainUrl();
+std::string_view admindUrl();
 std::string const& idToken();
-ServerConfig const& serverConfig();
 OidcConfig const& oidcConfig();
 }
 }
