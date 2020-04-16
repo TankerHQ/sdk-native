@@ -3,10 +3,8 @@ cmake_minimum_required(VERSION 3.4)
 project(Admin)
 
 add_library(tankeradmin STATIC
-  include/Tanker/Admin/Admin.hpp
   include/Tanker/Admin/Client.hpp
 
-  src/Admin.cpp
   src/Client.cpp
 )
 
@@ -17,10 +15,10 @@ target_include_directories(tankeradmin
 )
 
 target_link_libraries(tankeradmin
-  tankernetwork
   tankercrypto
   tankertypes
   tankererrors
+  tankercacerts
   ttracer
   
   CONAN_PKG::gsl-lite
