@@ -86,8 +86,10 @@ Session::Session(std::string url, Network::SdkInfo info)
     _identity(std::nullopt),
     _status(Status::Stopped)
 {
-  _client->setConnectionHandler(
-      [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); });
+  _client->setConnectionHandler([this]() -> tc::cotask<void> {
+    _taskCanceler.add(tc::async_resumable(
+        [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); }));
+  });
 }
 
 void Session::createStorage(std::string const& writablePath)

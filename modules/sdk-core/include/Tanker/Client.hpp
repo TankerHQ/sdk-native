@@ -36,14 +36,14 @@ public:
   Client& operator=(Client const&) = delete;
   Client& operator=(Client&&) = delete;
 
-  using ConnectionHandler = std::function<tc::cotask<void>()>;
+  using ConnectionHandler = std::function<void()>;
 
   Client(Network::ConnectionPtr conn, ConnectionHandler connectionHandler = {});
 
   void start();
   void close();
   void setConnectionHandler(ConnectionHandler handler);
-  tc::cotask<void> handleConnection();
+  void handleConnection();
 
   tc::cotask<EncryptedUserKey> getLastUserKey(
       Trustchain::TrustchainId const& trustchainId,

@@ -51,8 +51,6 @@ Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
     _writablePath(std::move(writablePath)),
     _session(std::make_shared<Session>(_url, _info))
 {
-  _session->client().setConnectionHandler(
-      [this]() -> tc::cotask<void> { TC_AWAIT(_session->authenticate()); });
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const
