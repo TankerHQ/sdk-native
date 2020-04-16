@@ -2,11 +2,12 @@
 
 #include <Tanker/Admin/Admin.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Init.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <fmt/format.h>
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
@@ -35,13 +36,12 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
         const auto appSignatureKeyPair(Crypto::makeSignatureKeyPair());
         const auto appId = TC_AWAIT(
             admin->createTrustchain(name, appSignatureKeyPair, true, true));
+        using fmt::to_string;
         TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
             duplicateString(name),
-            duplicateString(cppcodec::base64_rfc4648::encode(appId)),
-            duplicateString(cppcodec::base64_rfc4648::encode(
-                appSignatureKeyPair.privateKey)),
-            duplicateString(cppcodec::base64_rfc4648::encode(
-                appSignatureKeyPair.publicKey)),
+            duplicateString(to_string(appId)),
+            duplicateString(to_string(appSignatureKeyPair.privateKey)),
+            duplicateString(to_string(appSignatureKeyPair.publicKey)),
         }));
       }));
 }
