@@ -1,25 +1,28 @@
 #include <Compat/Helpers.hpp>
 
 #include <Helpers/Buffers.hpp>
-#include <Tanker/Functional/TrustchainFactory.hpp>
+
+#include <Tanker/Admin/Client.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
 
-using Tanker::Functional::TrustchainFactory;
 using Tanker::Functional::User;
 using Tanker::Trustchain::TrustchainId;
 
 namespace
 {
 tc::future<Tanker::VerificationCode> getVerificationCode(
-    TrustchainId const& id, Tanker::Email const& email)
+    std::string const& url,
+    Tanker::Trustchain::TrustchainId const& id,
+    std::string const& authToken,
+    Tanker::Email const& email)
 {
   return tc::async_resumable([=]() -> tc::cotask<Tanker::VerificationCode> {
-    auto tf = TC_AWAIT(TrustchainFactory::create());
-    TC_RETURN(TC_AWAIT(tf->getVerificationCode(id, email)));
+    TC_RETURN(TC_AWAIT(
+        Tanker::Admin::getVerificationCode(url, id, authToken, email)));
   });
 }
 }
@@ -52,7 +55,10 @@ void claim(CorePtr& core,
            std::string const& semail)
 {
   auto const email = Tanker::Email{semail};
-  auto const verifCode = getVerificationCode(trustchain.id, email).get();
+  auto const verifCode =
+      getVerificationCode(
+          trustchain.url, trustchain.id, trustchain.authToken, email)
+          .get();
   core->attachProvisionalIdentity(provisionalIdentity).get();
   core->verifyProvisionalIdentity(
           Tanker::Unlock::EmailVerification{email, verifCode})

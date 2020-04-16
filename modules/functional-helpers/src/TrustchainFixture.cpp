@@ -1,5 +1,11 @@
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
+#include <Tanker/Trustchain/TrustchainId.hpp>
+
+#include <Helpers/Config.hpp>
+
+#include <Tanker/Admin/Client.hpp>
+
 namespace Tanker
 {
 namespace Functional
@@ -58,8 +64,10 @@ tc::cotask<void> TrustchainFixture::tearDown()
 tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
     Email const& email)
 {
-  TC_RETURN(
-      TC_AWAIT(trustchainFactory().getVerificationCode(trustchain.id, email)));
+  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchainUrl(),
+                                                _trustchain->id,
+                                                _trustchain->authToken,
+                                                email)));
 }
 
 tc::cotask<void> TrustchainFixture::enableOidc()
