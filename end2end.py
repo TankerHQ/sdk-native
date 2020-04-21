@@ -1,6 +1,4 @@
 import argparse
-import os
-import sys
 
 from path import Path
 
@@ -61,7 +59,6 @@ def main() -> None:
         tanker_conan_ref="tanker/dev@tanker/dev",
         profile=args.profile,
         base_path=base_path,
-        project_config="dev",
     )
 
 
