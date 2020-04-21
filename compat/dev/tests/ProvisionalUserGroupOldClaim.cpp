@@ -55,9 +55,9 @@ struct ProvisionalUserGroupOldClaim : Tanker::Compat::Command
   {
     auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
     auto bobCore = signInUser(state.identity, trustchain, tankerPath);
-    decrypt(bobCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bobCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 

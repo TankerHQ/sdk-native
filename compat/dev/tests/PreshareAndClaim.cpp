@@ -50,7 +50,8 @@ struct PreshareAndClaim : Tanker::Compat::Command
                               trustchain,
                               tankerPath);
     auto const encryptState = json.at("encrypt_state").get<EncryptState>();
-    decrypt(bob.core, encryptState.encryptedData, encryptState.clearData);
+    decryptAndCheck(
+        bob.core, encryptState.encryptedData, encryptState.clearData);
   }
 };
 

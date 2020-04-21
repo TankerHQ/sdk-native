@@ -79,9 +79,9 @@ CorePtr signInUser(std::string const& identity,
   return core;
 }
 
-void decrypt(CorePtr const& core,
-             std::vector<uint8_t> const& encryptedData,
-             std::string const& expectedData)
+void decryptAndCheck(CorePtr const& core,
+                     std::vector<uint8_t> const& encryptedData,
+                     std::string const& expectedData)
 {
   auto decryptedData = core->decrypt(encryptedData).get();
   fmt::print(">> {}\n",

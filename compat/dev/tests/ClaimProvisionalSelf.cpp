@@ -65,9 +65,9 @@ struct ClaimProvisionalSelf : Tanker::Compat::Command
             .get<Tanker::SSecretProvisionalIdentity>();
     auto bobCore = signInUser(state.identity, trustchain, tankerPath);
     claim(bobCore, trustchain, provisionalIdentity, "bob@tanker.io");
-    decrypt(bobCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bobCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 

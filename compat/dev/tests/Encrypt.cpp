@@ -45,14 +45,14 @@ struct EncryptCompat : Command
     auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
     auto bobCore = signInUser(bob.identity, trustchain, tankerPath);
-    decrypt(bobCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bobCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
 
     auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
-    decrypt(aliceCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(aliceCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 REGISTER_CMD(EncryptCompat,

@@ -52,9 +52,9 @@ struct ProvisionalUserGroupClaim : Tanker::Compat::Command
                        "bob@tanker.io",
                        trustchain,
                        tankerPath);
-    decrypt(bob.core,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bob.core,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 
