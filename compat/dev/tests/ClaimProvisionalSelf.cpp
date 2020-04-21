@@ -7,6 +7,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
 #include <nlohmann/json.hpp>
@@ -38,10 +39,12 @@ struct ClaimProvisionalSelf : Tanker::Compat::Command
     auto bob = signUpUser(trustchain, tankerPath);
 
     auto const clearData = "My statement to the world";
-    auto const encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
+    auto const encryptedData =
+        alice.core->encrypt(Tanker::make_buffer(clearData), {}, {sgroupId})
+            .get();
 
     // Force group verification
-    encrypt(bob.core, "", {}, {sgroupId});
+    bob.core->encrypt(Tanker::make_buffer(""), {}, {sgroupId}).get();
 
     Tanker::saveJson(
         statePath,

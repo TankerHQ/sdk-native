@@ -5,7 +5,9 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
+
 #include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
@@ -31,7 +33,9 @@ struct GroupCompat : Tanker::Compat::Command
             .get();
 
     auto clearData = "my little speech"s;
-    auto encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
+    auto encryptedData =
+        alice.core->encrypt(Tanker::make_buffer(clearData), {}, {sgroupId})
+            .get();
 
     Tanker::saveJson(statePath,
                      ShareState{alice.user,
@@ -59,7 +63,10 @@ struct GroupCompat : Tanker::Compat::Command
 
     auto clearData = "my updated speech"s;
     auto encryptedData =
-        encrypt(aliceCore, clearData, {}, {state.groupId.value()});
+        aliceCore
+            ->encrypt(
+                Tanker::make_buffer(clearData), {}, {state.groupId.value()})
+            .get();
     decrypt(bobCore, encryptedData, clearData);
   }
 };

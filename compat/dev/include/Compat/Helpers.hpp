@@ -47,11 +47,6 @@ void decrypt(CorePtr const& core,
              std::vector<uint8_t> const& encryptedData,
              std::string const& expectedData);
 
-std::vector<uint8_t> encrypt(CorePtr& core,
-                             std::string clearData,
-                             std::vector<Tanker::SPublicIdentity> users,
-                             std::vector<Tanker::SGroupId> groups);
-
 Tanker::Functional::User upgradeToIdentity(
     Tanker::Trustchain::TrustchainId const& trustchainId,
     Tanker::Functional::User user);
