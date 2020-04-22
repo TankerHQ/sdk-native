@@ -79,30 +79,15 @@ CorePtr signInUser(std::string const& identity,
   return core;
 }
 
-void decrypt(CorePtr const& core,
-             std::vector<uint8_t> const& encryptedData,
-             std::string const& expectedData)
+void decryptAndCheck(CorePtr const& core,
+                     std::vector<uint8_t> const& encryptedData,
+                     std::string const& expectedData)
 {
-  auto decryptedData = std::vector<uint8_t>(
-      Tanker::AsyncCore::decryptedSize(encryptedData).get());
-  core->decrypt(decryptedData.data(), encryptedData).get();
+  auto decryptedData = core->decrypt(encryptedData).get();
   fmt::print(">> {}\n",
              std::string(decryptedData.begin(), decryptedData.end()));
   if (std::string(decryptedData.begin(), decryptedData.end()) != expectedData)
     throw std::runtime_error("failed to decrypt");
-}
-
-std::vector<uint8_t> encrypt(CorePtr& core,
-                             std::string clearData,
-                             std::vector<Tanker::SPublicIdentity> users,
-                             std::vector<Tanker::SGroupId> groups)
-{
-  auto const buffer = Tanker::make_buffer(clearData);
-  auto encryptedData =
-      std::vector<uint8_t>(Tanker::AsyncCore::encryptedSize(clearData.size()));
-
-  core->encrypt(encryptedData.data(), buffer, users, groups).get();
-  return encryptedData;
 }
 
 User upgradeToIdentity(Tanker::Trustchain::TrustchainId const& trustchainId,

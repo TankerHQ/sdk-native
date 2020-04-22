@@ -6,6 +6,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
 #include <nlohmann/json.hpp>
@@ -27,8 +28,11 @@ struct DecryptOldClaim : Tanker::Compat::Command
     auto const bobPublicProvisionalIdentity = Tanker::SPublicIdentity{
         Tanker::Identity::getPublicIdentity(bobProvisionalIdentity)};
     auto const clearData = "my love letter to bob"s;
-    auto const encryptedData =
-        encrypt(alice.core, clearData, {bobPublicProvisionalIdentity}, {});
+    auto const encryptedData = alice.core
+                                   ->encrypt(Tanker::make_buffer(clearData),
+                                             {bobPublicProvisionalIdentity},
+                                             {})
+                                   .get();
 
     auto bob = signUpAndClaim(
         Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
@@ -46,9 +50,9 @@ struct DecryptOldClaim : Tanker::Compat::Command
   {
     auto const state = Tanker::loadJson(statePath).get<IdentityShareState>();
     auto bobCore = signInUser(state.identity, trustchain, tankerPath);
-    decrypt(bobCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bobCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 

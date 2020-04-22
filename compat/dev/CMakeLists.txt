@@ -16,6 +16,7 @@ add_executable(compat
   src/Helpers.cpp
 
   tests/Encrypt.cpp
+  tests/EncryptSession.cpp
   tests/Group.cpp
   tests/Unlock.cpp
   tests/PreshareAndClaim.cpp

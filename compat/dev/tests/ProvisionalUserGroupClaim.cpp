@@ -6,7 +6,9 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
+
 #include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
@@ -32,7 +34,9 @@ struct ProvisionalUserGroupClaim : Tanker::Compat::Command
                      bobProvisionalIdentity)}})
             .get();
     auto const clearData = "My allocution to the world";
-    auto const encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
+    auto const encryptedData =
+        alice.core->encrypt(Tanker::make_buffer(clearData), {}, {sgroupId})
+            .get();
 
     Tanker::saveJson(
         statePath,
@@ -48,9 +52,9 @@ struct ProvisionalUserGroupClaim : Tanker::Compat::Command
                        "bob@tanker.io",
                        trustchain,
                        tankerPath);
-    decrypt(bob.core,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bob.core,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
   }
 };
 

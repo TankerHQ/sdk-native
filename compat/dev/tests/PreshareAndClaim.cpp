@@ -6,6 +6,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
 #include <nlohmann/json.hpp>
@@ -29,8 +30,11 @@ struct PreshareAndClaim : Tanker::Compat::Command
         Tanker::Identity::getPublicIdentity(bobProvisionalIdentity)};
 
     auto const clearData = "my love letter to bob "s;
-    auto const encryptedData =
-        encrypt(alice.core, clearData, {bobPublicProvisionalIdentity}, {});
+    auto const encryptedData = alice.core
+                                   ->encrypt(Tanker::make_buffer(clearData),
+                                             {bobPublicProvisionalIdentity},
+                                             {})
+                                   .get();
 
     Tanker::saveJson(
         statePath,
@@ -46,7 +50,8 @@ struct PreshareAndClaim : Tanker::Compat::Command
                               trustchain,
                               tankerPath);
     auto const encryptState = json.at("encrypt_state").get<EncryptState>();
-    decrypt(bob.core, encryptState.encryptedData, encryptState.clearData);
+    decryptAndCheck(
+        bob.core, encryptState.encryptedData, encryptState.clearData);
   }
 };
 

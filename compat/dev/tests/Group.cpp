@@ -5,7 +5,9 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 
+#include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
+
 #include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
@@ -31,7 +33,9 @@ struct GroupCompat : Tanker::Compat::Command
             .get();
 
     auto clearData = "my little speech"s;
-    auto encryptedData = encrypt(alice.core, clearData, {}, {sgroupId});
+    auto encryptedData =
+        alice.core->encrypt(Tanker::make_buffer(clearData), {}, {sgroupId})
+            .get();
 
     Tanker::saveJson(statePath,
                      ShareState{alice.user,
@@ -48,19 +52,22 @@ struct GroupCompat : Tanker::Compat::Command
     auto bob = upgradeToIdentity(trustchain.id, state.bob);
 
     auto bobCore = signInUser(bob.identity, trustchain, tankerPath);
-    decrypt(bobCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(bobCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
 
     auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
-    decrypt(aliceCore,
-            state.encryptState.encryptedData,
-            state.encryptState.clearData);
+    decryptAndCheck(aliceCore,
+                    state.encryptState.encryptedData,
+                    state.encryptState.clearData);
 
     auto clearData = "my updated speech"s;
     auto encryptedData =
-        encrypt(aliceCore, clearData, {}, {state.groupId.value()});
-    decrypt(bobCore, encryptedData, clearData);
+        aliceCore
+            ->encrypt(
+                Tanker::make_buffer(clearData), {}, {state.groupId.value()})
+            .get();
+    decryptAndCheck(bobCore, encryptedData, clearData);
   }
 };
 
