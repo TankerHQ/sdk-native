@@ -24,6 +24,11 @@ namespace Tanker
 {
 namespace Cacerts
 {
+void init()
+{
+  SSL_load_error_strings(); /* readable error messages */
+  SSL_library_init();       /* initialize library */
+}
 namespace
 {
 namespace net = boost::asio;

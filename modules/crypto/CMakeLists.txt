@@ -9,6 +9,7 @@ add_library(tankercrypto STATIC
     src/Errors/Errc.cpp
     src/Errors/ErrcCategory.cpp
     src/EncryptedSymmetricKey.cpp
+    src/Format.cpp
 
     include/Tanker/Crypto/IsCryptographicType.hpp
     include/Tanker/Crypto/PublicSignatureKey.hpp
