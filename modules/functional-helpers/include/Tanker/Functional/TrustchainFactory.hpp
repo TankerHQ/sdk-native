@@ -2,7 +2,7 @@
 
 #include <Tanker/Functional/Trustchain.hpp>
 
-#include <Tanker/Admin/Admin.hpp>
+#include <Tanker/Admin/Client.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -28,12 +28,10 @@ public:
       bool isTest = true,
       bool storePrivateKey = true);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
-  tc::cotask<VerificationCode> getVerificationCode(
-      Tanker::Trustchain::TrustchainId const& trustchainId, Email const& email);
   tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
 
 private:
-  std::unique_ptr<Admin::Admin> _admin;
+  std::unique_ptr<Admin::Client> _admin;
 
   TrustchainFactory();
   TrustchainFactory(TrustchainFactory&&) = delete;

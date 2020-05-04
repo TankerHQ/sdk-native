@@ -24,5 +24,11 @@ target_link_libraries(test_functional
   tankercore
   CONAN_PKG::doctest-async
 )
+if (TANKER_BUILD_WITH_SSL)
+  target_link_libraries(test_functional
+  CONAN_PKG::fetchpp
+)
+endif()
+
 
 add_test(NAME test_functional COMMAND test_functional --duration=true)

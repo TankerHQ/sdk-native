@@ -64,7 +64,7 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
 int main(int argc, char* argv[])
 {
   tanker_admin_t* admin = future_get(
-      tanker_admin_connect(get_config_app_url(), get_config_id_token()));
+      tanker_admin_connect(get_config_admin_url(), get_config_id_token()));
   tanker_app_descriptor_t* app =
       future_get(tanker_admin_create_app(admin, "functest"));
 

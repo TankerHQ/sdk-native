@@ -13,18 +13,22 @@
 
 #ifdef TANKER_BUILD_WITH_SSL
 #include <Tanker/Cacerts/InitSsl.hpp>
-#include <Tanker/Functional/Fetcher.hpp>
 #endif
+
+#include <cppcodec/base64_url_unpadded.hpp>
+
+#include <fetchpp/fetch.hpp>
+#include <fetchpp/http/json_body.hpp>
+
+#include <tconcurrent/asio_use_future.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <cppcodec/base64_url_unpadded.hpp>
+
 #include <doctest.h>
-
-#include <boost/asio/use_future.hpp>
-
-#include <nlohmann/json.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -65,30 +69,24 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
       {"refresh_token", oidcConfig.users.at(userName).refreshToken},
   };
 
-  fetch::request<> req(fetch::http::verb::post, "/oauth2/v4/token", 11);
-  req.body() = payload.dump();
+  using namespace fetchpp::http::http_literals;
+  using namespace fetchpp;
 
-  req.set(fetch::http::field::host, "www.googleapis.com");
-  req.set(fetch::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  req.prepare_payload();
+  auto const url = "www.googleapis.com/oauth2/v4/token"_https;
+  auto req = http::make_request<http::request<http::json_body>>(
+      http::verb::post, url, {}, std::move(payload));
+  auto response =
+      TC_AWAIT(fetchpp::async_fetch(tc::get_default_executor().get_io_service(),
+                                    Cacerts::get_ssl_context(),
+                                    std::move(req),
+                                    tc::asio::use_future));
+  if (response.result() != http::status::ok)
+    throw Errors::formatEx(Errors::Errc::NetworkError,
+                           "invalid status google id token request: {}: {}",
+                           response.result_int(),
+                           http::obsolete_reason(response.result()));
 
-  auto& ctx = Tanker::Cacerts::get_ssl_context();
-  fetch::beast::ssl_stream<fetch::beast::tcp_stream> stream(
-      tc::get_default_executor().get_io_service(), ctx);
-
-  fetch::response<> res;
-  fetch::async_get(
-      stream, "www.googleapis.com", req, res, boost::asio::use_future)
-      .get();
-  if (res.result() != fetch::http::status::ok)
-    throw Errors::formatEx(
-        Errors::Errc::NetworkError,
-        "invalid status google id token request: {}: {}",
-        res.result_int(),
-        fetch::http::obsolete_reason(res.result()).to_string());
-
-  auto const json = nlohmann::json::parse(res.body().begin(), res.body().end());
-  TC_RETURN(json.at("id_token").get<OidcIdToken>());
+  TC_RETURN(response.json().at("id_token").get<OidcIdToken>());
 }
 #endif
 }

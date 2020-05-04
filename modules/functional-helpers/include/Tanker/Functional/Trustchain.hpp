@@ -16,6 +16,7 @@ struct TrustchainConfig
 {
   std::string url;
   Tanker::Trustchain::TrustchainId id;
+  std::string authToken;
   Crypto::PrivateSignatureKey privateKey;
 };
 
@@ -38,16 +39,19 @@ public:
 
   std::string url;
   Tanker::Trustchain::TrustchainId id;
+  std::string authToken;
   Crypto::SignatureKeyPair keyPair;
 
   static Ptr make(TrustchainConfig const& config);
   static Ptr make(std::string url,
                   Tanker::Trustchain::TrustchainId id,
+                  std::string authToken,
                   Crypto::SignatureKeyPair keypair);
 
   Trustchain(TrustchainConfig const& config);
   Trustchain(std::string url,
              Tanker::Trustchain::TrustchainId id,
+             std::string authToken,
              Crypto::SignatureKeyPair keypair);
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
