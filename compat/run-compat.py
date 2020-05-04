@@ -146,8 +146,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.home_isolation:
         ci.conan.set_home_isolation()
+        ci.conan.update_config()
 
-    ci.cpp.update_conan_config()
 
     if args.export_tanker_dev:
         export_tanker_dev(Path.getcwd(), args.profile)
