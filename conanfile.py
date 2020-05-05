@@ -15,7 +15,7 @@ class TankerConan(ConanFile):
         "coverage": [True, False],
         "coroutinests": [True, False],
         }
-    default_options = "tankerlib_shared=False", "fPIC=True", "with_ssl=True", "with_tracer=False", "warn_as_error=False", "sanitizer=None", "coverage=False", "coroutinests=False"
+    default_options = {"tankerlib_shared": False, "fPIC": True, "with_ssl": True, "with_tracer": False, "warn_as_error": False, "sanitizer": None, "coverage": False, "coroutinests": False}
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
     build_policy = "missing"
@@ -75,7 +75,7 @@ class TankerConan(ConanFile):
         if self.settings.os != "Emscripten":
             if self.options.with_ssl:
                 self.requires("LibreSSL/2.9.2@tanker/testing", private=private)
-                self.requires("fetchpp/0.4.0@tanker/stable")
+                self.requires("fetchpp/0.4.1@tanker/stable")
             self.requires("socket.io-client-cpp/1.6.3@tanker/testing", private=private)
             self.requires("sqlpp11/0.58@tanker/testing", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
@@ -102,6 +102,7 @@ class TankerConan(ConanFile):
         if self.settings.os == "Emscripten":
             self.options["Boost"].header_only = True
             self.options["emscripten-toolchain"].filesystem = False
+        self.options["*"].fPIC = self.options.fPIC
 
     def build_requirements(self):
         if self.should_build_tests:
