@@ -24,7 +24,7 @@ struct PreshareAndClaim : Tanker::Compat::Command
     auto const bobProvisionalIdentity =
         Tanker::Identity::createProvisionalIdentity(
             cppcodec::base64_rfc4648::encode(trustchain.id),
-            Tanker::Email{"bob@tanker.io"});
+            Tanker::Email{bobEmail});
 
     auto const bobPublicProvisionalIdentity = Tanker::SPublicIdentity{
         Tanker::Identity::getPublicIdentity(bobProvisionalIdentity)};
@@ -46,7 +46,8 @@ struct PreshareAndClaim : Tanker::Compat::Command
   {
     auto const json = Tanker::loadJson(statePath);
     auto bob = signUpAndClaim(json.at("bob_provisional_identity"),
-                              "bob@tanker.io",
+                              bobEmail,
+                              bobCode,
                               trustchain,
                               tankerPath);
     auto const encryptState = json.at("encrypt_state").get<EncryptState>();

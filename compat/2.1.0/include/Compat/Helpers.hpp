@@ -31,11 +31,13 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
 void claim(CorePtr& core,
            Tanker::Test::Trustchain& trustchain,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
-           std::string const& email);
+           std::string const& email,
+           std::string const& verifCode);
 
 UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
+    std::string const& verifCode,
     Tanker::Test::Trustchain& trustchain,
     std::string const& tankerPath);
 

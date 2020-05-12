@@ -22,7 +22,7 @@ struct ClaimProvisionalSelf : Tanker::Compat::Command
     auto const bobProvisionalIdentity =
         Tanker::Identity::createProvisionalIdentity(
             cppcodec::base64_rfc4648::encode(trustchain.id),
-            Tanker::Email{"bob@tanker.io"});
+            Tanker::Email{bobEmail});
 
     auto const sgroupId =
         alice.core
@@ -59,7 +59,7 @@ struct ClaimProvisionalSelf : Tanker::Compat::Command
         json.at("provisional_identity")
             .get<Tanker::SSecretProvisionalIdentity>();
     auto bobCore = signInUser(state.identity, trustchain, tankerPath);
-    claim(bobCore, trustchain, provisionalIdentity, "bob@tanker.io");
+    claim(bobCore, trustchain, provisionalIdentity, bobEmail, bobCode);
     decrypt(bobCore,
             state.encryptState.encryptedData,
             state.encryptState.clearData);

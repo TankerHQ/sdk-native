@@ -21,36 +21,36 @@ TESTS = {
         "provisional-user-group-old-claim",
         "claim-provisional-self",
     ],
-    # "2.2.0": [
-    # "encrypt",
-    # "group",
-    # "unlock",
-    # "preshare-and-claim",
-    # "decrypt-old-claim",
-    # "provisional-user-group-claim",
-    # "provisional-user-group-old-claim",
-    # "claim-provisional-self",
-    # ],
-    # "2.1.0": [
-    # "encrypt",
-    # "group",
-    # "unlock",
-    # "preshare-and-claim",
-    # "decrypt-old-claim",
-    # "provisional-user-group-claim",
-    # "provisional-user-group-old-claim",
-    # "claim-provisional-self",
-    # ],
-    # "2.0.0": [
-    # "encrypt",
-    # "group",
-    # "unlock",
-    # "preshare-and-claim",
-    # "decrypt-old-claim",
-    # "provisional-user-group-claim",
-    # "provisional-user-group-old-claim",
-    # "claim-provisional-self",
-    # ],
+    "2.2.0": [
+        "encrypt",
+        "group",
+        "unlock",
+        "preshare-and-claim",
+        "decrypt-old-claim",
+        "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
+        "claim-provisional-self",
+    ],
+    "2.1.0": [
+        "encrypt",
+        "group",
+        "unlock",
+        "preshare-and-claim",
+        "decrypt-old-claim",
+        "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
+        "claim-provisional-self",
+    ],
+    "2.0.0": [
+        "encrypt",
+        "group",
+        "unlock",
+        "preshare-and-claim",
+        "decrypt-old-claim",
+        "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
+        "claim-provisional-self",
+    ],
 }
 
 CURRENT = "dev"
@@ -81,12 +81,22 @@ def build_all(profile):
     return built_binary
 
 
+def get_verification_code(app, email):
+    return tankeradminsdk.get_verification_code(
+        url=assert_env("TANKER_TRUSTCHAIND_URL"),
+        app_id=app["id"],
+        auth_token=app["auth_token"],
+        email=email,
+    )
+
+
 def run_test(base_path, next_path, version, command):
     with tempfile.TemporaryDirectory(prefix=f"{command}-") as tanker_dir:
         admin = tankeradminsdk.Admin(
             url=assert_env("TANKER_ADMIND_URL"), id_token=assert_env("TANKER_ID_TOKEN")
         )
         app = admin.create_app("compat-native", is_test=True)
+        bob_code = get_verification_code(app, "bob@tanker.io")
         tc_config = {
             "trustchainId": app["id"],
             "url": assert_env("TANKER_TRUSTCHAIND_URL"),
@@ -95,11 +105,13 @@ def run_test(base_path, next_path, version, command):
         }
         tc_config_file = Path(tanker_dir) / "trustchain-config.json"
         tc_config_file.write_text(json.dumps(tc_config))
+
         state_file = Path(tanker_dir) / "state.json"
         args = [
             command,
             f"--path={tanker_dir}",
             f"--state={state_file}",
+            f"--bob-code={bob_code}",
             f"--tc-temp-config={tc_config_file}",
         ]
         base_command = [str(base_path), *args, "--base"]

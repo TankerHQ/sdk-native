@@ -24,7 +24,7 @@ struct DecryptOldClaim : Tanker::Compat::Command
     auto const bobProvisionalIdentity =
         Tanker::Identity::createProvisionalIdentity(
             cppcodec::base64_rfc4648::encode(trustchain.id),
-            Tanker::Email{"bob@tanker.io"});
+            Tanker::Email{bobEmail});
     auto const bobPublicProvisionalIdentity = Tanker::SPublicIdentity{
         Tanker::Identity::getPublicIdentity(bobProvisionalIdentity)};
     auto const clearData = "my love letter to bob"s;
@@ -36,7 +36,8 @@ struct DecryptOldClaim : Tanker::Compat::Command
 
     auto bob = signUpAndClaim(
         Tanker::SSecretProvisionalIdentity{bobProvisionalIdentity},
-        "bob@tanker.io",
+        bobEmail,
+        bobCode,
         trustchain,
         tankerPath);
 

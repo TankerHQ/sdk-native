@@ -15,9 +15,11 @@ class Command
 public:
   Command(Functional::Trustchain& tc,
           std::string tankerPath,
-          std::string statePath)
+          std::string statePath,
+          std::string bobCode)
     : tankerPath(std::move(tankerPath)),
       statePath(std::move(statePath)),
+      bobCode(std::move(bobCode)),
       trustchain(tc)
   {
   }
@@ -27,13 +29,19 @@ public:
   virtual ~Command() = default;
 
 protected:
+  static constexpr auto bobEmail = "bob@tanker.io";
+
   std::string tankerPath;
   std::string statePath;
+  std::string bobCode;
   Functional::Trustchain& trustchain;
 };
 
-using CreateFn = std::function<std::unique_ptr<Command>(
-    Functional::Trustchain& tc, std::string tankerPath, std::string satePate)>;
+using CreateFn =
+    std::function<std::unique_ptr<Command>(Functional::Trustchain& tc,
+                                           std::string tankerPath,
+                                           std::string satePate,
+                                           std::string bobCode)>;
 
 struct CommandInfo
 {
@@ -51,9 +59,12 @@ bool registerCommand(std::string name, std::string description)
                   std::move(description),
                   [](Tanker::Functional::Trustchain& tc,
                      std::string tankerPath,
-                     std::string statePath) {
-                    return std::make_unique<C>(
-                        tc, std::move(tankerPath), std::move(statePath));
+                     std::string statePath,
+                     std::string bobCode) {
+                    return std::make_unique<C>(tc,
+                                               std::move(tankerPath),
+                                               std::move(statePath),
+                                               std::move(bobCode));
                   });
   return true;
 }
