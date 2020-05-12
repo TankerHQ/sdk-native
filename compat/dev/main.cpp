@@ -39,21 +39,10 @@ auto getRunner(std::string const& command,
       trustchain, std::move(tankerPath), std::move(statePath));
 }
 
-using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
-
-tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
-    std::string const& command, std::string const& path, bool create)
+Trustchain::Ptr getTrustchain(std::string const& path)
 {
-  auto tf = TC_AWAIT(Tanker::Functional::TrustchainFactory::create());
-  if (create)
-  {
-    auto trustchain = TC_AWAIT(tf->createTrustchain(
-        fmt::format("compat-{}-{}", command, TANKER_VERSION), true));
-    tf->saveTrustchainConfig(path, trustchain->toConfig());
-    TC_RETURN(std::make_tuple(std::move(tf), std::move(trustchain)));
-  }
-  TC_RETURN(std::make_tuple(std::move(tf),
-                            std::move(TC_AWAIT(tf->useTrustchain(path)))));
+  using namespace Tanker::Functional;
+  return Trustchain::make(TrustchainFactory::loadTrustchainConfig(path));
 }
 
 int main(int argc, char** argv)
@@ -71,29 +60,11 @@ int main(int argc, char** argv)
   auto const statePath = args.at("--state").asString();
   auto const command = args.at("<command>").asString();
 
-  auto compatFixture =
-      tc::async_resumable([&]() -> tc::cotask<std::tuple<TrustchainFactory::Ptr,
-                                                         Trustchain::Ptr>> {
-        TC_RETURN(TC_AWAIT(getTrustchain(command,
-                                         args.at("--tc-temp-config").asString(),
-                                         args.at("--base").asBool())));
-      })
-          .get();
+  auto trustchain = getTrustchain(args.at("--tc-temp-config").asString());
 
-  auto runner = getRunner(command,
-                          *std::get<Trustchain::Ptr>(compatFixture),
-                          tankerPath,
-                          statePath);
+  auto runner = getRunner(command, *trustchain, tankerPath, statePath);
   if (args.at("--base").asBool())
     runner->base();
   else if (args.at("--next").asBool())
-  {
     runner->next();
-    tc::async_resumable([&]() -> tc::cotask<void> {
-      TC_AWAIT(
-          std::get<TrustchainFactory::Ptr>(compatFixture)
-              ->deleteTrustchain(std::get<Trustchain::Ptr>(compatFixture)->id));
-    })
-        .get();
-  }
 }

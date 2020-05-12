@@ -4,6 +4,9 @@ from path import Path
 import tempfile
 import ci.cpp
 import ci.conan
+import tankeradminsdk
+import os
+import json
 
 import subprocess
 
@@ -19,38 +22,44 @@ TESTS = {
         "claim-provisional-self",
     ],
     # "2.2.0": [
-        # "encrypt",
-        # "group",
-        # "unlock",
-        # "preshare-and-claim",
-        # "decrypt-old-claim",
-        # "provisional-user-group-claim",
-        # "provisional-user-group-old-claim",
-        # "claim-provisional-self",
+    # "encrypt",
+    # "group",
+    # "unlock",
+    # "preshare-and-claim",
+    # "decrypt-old-claim",
+    # "provisional-user-group-claim",
+    # "provisional-user-group-old-claim",
+    # "claim-provisional-self",
     # ],
     # "2.1.0": [
-        # "encrypt",
-        # "group",
-        # "unlock",
-        # "preshare-and-claim",
-        # "decrypt-old-claim",
-        # "provisional-user-group-claim",
-        # "provisional-user-group-old-claim",
-        # "claim-provisional-self",
+    # "encrypt",
+    # "group",
+    # "unlock",
+    # "preshare-and-claim",
+    # "decrypt-old-claim",
+    # "provisional-user-group-claim",
+    # "provisional-user-group-old-claim",
+    # "claim-provisional-self",
     # ],
     # "2.0.0": [
-        # "encrypt",
-        # "group",
-        # "unlock",
-        # "preshare-and-claim",
-        # "decrypt-old-claim",
-        # "provisional-user-group-claim",
-        # "provisional-user-group-old-claim",
-        # "claim-provisional-self",
+    # "encrypt",
+    # "group",
+    # "unlock",
+    # "preshare-and-claim",
+    # "decrypt-old-claim",
+    # "provisional-user-group-claim",
+    # "provisional-user-group-old-claim",
+    # "claim-provisional-self",
     # ],
 }
 
 CURRENT = "dev"
+
+
+def assert_env(name: str) -> str:
+    value = os.environ.get(name)
+    assert value, f"{name} should be set before running tests"
+    return value
 
 
 def build_all(profile):
@@ -74,13 +83,24 @@ def build_all(profile):
 
 def run_test(base_path, next_path, version, command):
     with tempfile.TemporaryDirectory(prefix=f"{command}-") as tanker_dir:
+        admin = tankeradminsdk.Admin(
+            url=assert_env("TANKER_ADMIND_URL"), id_token=assert_env("TANKER_ID_TOKEN")
+        )
+        app = admin.create_app("compat-native", is_test=True)
+        tc_config = {
+            "trustchainId": app["id"],
+            "url": assert_env("TANKER_TRUSTCHAIND_URL"),
+            "authToken": app["auth_token"],
+            "trustchainPrivateKey": app["app_secret"],
+        }
+        tc_config_file = Path(tanker_dir) / "trustchain-config.json"
+        tc_config_file.write_text(json.dumps(tc_config))
         state_file = Path(tanker_dir) / "state.json"
-        tc_config = Path(tanker_dir) / "trustchain-config.json"
         args = [
             command,
             f"--path={tanker_dir}",
             f"--state={state_file}",
-            f"--tc-temp-config={tc_config}",
+            f"--tc-temp-config={tc_config_file}",
         ]
         base_command = [str(base_path), *args, "--base"]
         next_command = [str(next_path), *args, "--next"]
@@ -99,6 +119,8 @@ def run_test(base_path, next_path, version, command):
             CURRENT,
             "success",
         )
+
+        admin.delete_app(app["id"])
 
 
 def compat(profile: str) -> None:
@@ -147,7 +169,6 @@ def main() -> None:
     if args.home_isolation:
         ci.conan.set_home_isolation()
         ci.conan.update_config()
-
 
     if args.export_tanker_dev:
         export_tanker_dev(Path.getcwd(), args.profile)
