@@ -49,5 +49,5 @@ struct EncryptSession : Command
   }
 };
 REGISTER_CMD(EncryptSession,
-             "encryptSession",
+             "encryption-session",
              "encrypt in a session then decrypt");

@@ -13,6 +13,7 @@ import subprocess
 TESTS = {
     "dev": [
         "encrypt",
+        "encryption-session",
         "group",
         "unlock",
         "preshare-and-claim",
