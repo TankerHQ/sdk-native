@@ -10,18 +10,6 @@ using Tanker::Test::TrustchainFactory;
 using Tanker::Test::User;
 using Tanker::Trustchain::TrustchainId;
 
-namespace
-{
-tc::future<Tanker::VerificationCode> getVerificationCode(
-    TrustchainId const& id, Tanker::Email const& email)
-{
-  return tc::async_resumable([=]() -> tc::cotask<Tanker::VerificationCode> {
-    auto tf = TC_AWAIT(TrustchainFactory::create());
-    TC_RETURN(TC_AWAIT(tf->getVerificationCode(id, email)));
-  });
-}
-}
-
 CorePtr createCore(std::string const& url,
                    Tanker::Trustchain::TrustchainId const& id,
                    std::string const& tankerPath)
@@ -45,24 +33,26 @@ UserSession signUpUser(Tanker::Test::Trustchain& trustchain,
 void claim(CorePtr& core,
            Tanker::Test::Trustchain& trustchain,
            Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
-           std::string const& semail)
+           std::string const& semail,
+           std::string const& verifCode)
 {
   auto const email = Tanker::Email{semail};
-  auto const verifCode = getVerificationCode(trustchain.id, email).get();
   core->attachProvisionalIdentity(provisionalIdentity).get();
-  core->verifyProvisionalIdentity(
-          Tanker::Unlock::EmailVerification{email, verifCode})
+  core
+      ->verifyProvisionalIdentity(Tanker::Unlock::EmailVerification{
+          email, Tanker::VerificationCode{verifCode}})
       .get();
 }
 
 UserSession signUpAndClaim(
     Tanker::SSecretProvisionalIdentity const& provisionalIdentity,
     std::string const& email,
+    std::string const& verifCode,
     Tanker::Test::Trustchain& trustchain,
     std::string const& tankerPath)
 {
   auto session = signUpUser(trustchain, tankerPath);
-  claim(session.core, trustchain, provisionalIdentity, email);
+  claim(session.core, trustchain, provisionalIdentity, email, verifCode);
   return session;
 }
 

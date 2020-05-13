@@ -17,14 +17,15 @@ using Tanker::Functional::TrustchainFactory;
 
 static const char USAGE[] = R"(compat cli
   Usage:
-    compat <command> [--path=<basePath>] (--state=<statePath>) (--tc-temp-config=<trustchainPath>) (--base | --next) 
+    compat <command> [--path=<basePath>] (--state=<statePath>) (--bob-code=<bobCode>) (--tc-temp-config=<trustchainPath>) (--base | --next)
 
   Commands:
 {}
 
   Options:
-    --path=<filePath>   directory path to store devices [default: /tmp]
-    --state=<filePath>  file path to store/load serialized state
+    --path=<filePath>    directory path to store devices [default: /tmp]
+    --state=<filePath>   file path to store/load serialized state
+    --bob-code=<bobCode> bob's verification code
     (--base|--next)      use base or new code scenario
 
 )";
@@ -32,28 +33,20 @@ static const char USAGE[] = R"(compat cli
 auto getRunner(std::string const& command,
                Trustchain& trustchain,
                std::string tankerPath,
-               std::string statePath)
+               std::string statePath,
+               std::string bobCode)
 {
   auto runner = Tanker::Compat::getCommand(command);
-  return runner.creator(
-      trustchain, std::move(tankerPath), std::move(statePath));
+  return runner.creator(trustchain,
+                        std::move(tankerPath),
+                        std::move(statePath),
+                        std::move(bobCode));
 }
 
-using CompatFixture = std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>;
-
-tc::cotask<std::tuple<TrustchainFactory::Ptr, Trustchain::Ptr>> getTrustchain(
-    std::string const& command, std::string const& path, bool create)
+Trustchain::Ptr getTrustchain(std::string const& path)
 {
-  auto tf = TC_AWAIT(Tanker::Functional::TrustchainFactory::create());
-  if (create)
-  {
-    auto trustchain = TC_AWAIT(tf->createTrustchain(
-        fmt::format("compat-{}-{}", command, TANKER_VERSION), true));
-    tf->saveTrustchainConfig(path, trustchain->toConfig());
-    TC_RETURN(std::make_tuple(std::move(tf), std::move(trustchain)));
-  }
-  TC_RETURN(std::make_tuple(std::move(tf),
-                            std::move(TC_AWAIT(tf->useTrustchain(path)))));
+  using namespace Tanker::Functional;
+  return Trustchain::make(TrustchainFactory::loadTrustchainConfig(path));
 }
 
 int main(int argc, char** argv)
@@ -69,31 +62,14 @@ int main(int argc, char** argv)
 
   auto const tankerPath = args.at("--path").asString();
   auto const statePath = args.at("--state").asString();
+  auto const bobCode = args.at("--bob-code").asString();
   auto const command = args.at("<command>").asString();
 
-  auto compatFixture =
-      tc::async_resumable([&]() -> tc::cotask<std::tuple<TrustchainFactory::Ptr,
-                                                         Trustchain::Ptr>> {
-        TC_RETURN(TC_AWAIT(getTrustchain(command,
-                                         args.at("--tc-temp-config").asString(),
-                                         args.at("--base").asBool())));
-      })
-          .get();
+  auto trustchain = getTrustchain(args.at("--tc-temp-config").asString());
 
-  auto runner = getRunner(command,
-                          *std::get<Trustchain::Ptr>(compatFixture),
-                          tankerPath,
-                          statePath);
+  auto runner = getRunner(command, *trustchain, tankerPath, statePath, bobCode);
   if (args.at("--base").asBool())
     runner->base();
   else if (args.at("--next").asBool())
-  {
     runner->next();
-    tc::async_resumable([&]() -> tc::cotask<void> {
-      TC_AWAIT(
-          std::get<TrustchainFactory::Ptr>(compatFixture)
-              ->deleteTrustchain(std::get<Trustchain::Ptr>(compatFixture)->id));
-    })
-        .get();
-  }
 }
