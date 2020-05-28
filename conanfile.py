@@ -14,8 +14,17 @@ class TankerConan(ConanFile):
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         "coroutinests": [True, False],
-        }
-    default_options = {"tankerlib_shared": False, "fPIC": True, "with_ssl": True, "with_tracer": False, "warn_as_error": False, "sanitizer": None, "coverage": False, "coroutinests": False}
+    }
+    default_options = {
+        "tankerlib_shared": False,
+        "fPIC": True,
+        "with_ssl": True,
+        "with_tracer": False,
+        "warn_as_error": False,
+        "sanitizer": None,
+        "coverage": False,
+        "coroutinests": False,
+    }
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
     build_policy = "missing"
@@ -78,7 +87,9 @@ class TankerConan(ConanFile):
                 self.requires("fetchpp/0.4.1@tanker/stable")
             self.requires("socket.io-client-cpp/1.6.6@tanker/testing", private=private)
             self.requires("sqlpp11/0.58@tanker/testing", private=private)
-            self.requires("sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private)
+            self.requires(
+                "sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private
+            )
         self.requires("cppcodec/edf46ab@tanker/testing", private=private)
         self.requires("enum-flags/0.1a@tanker/testing", private=private)
         self.requires("fmt/6.0.0", private=private)
@@ -163,22 +174,24 @@ class TankerConan(ConanFile):
             "ctanker",
         ]
         if not self.options.tankerlib_shared:
-            libs.extend([
-                "tanker_async",
-                "tankerfunctionalhelpers",
-                "tankeradmin",
-                "tankertesthelpers",
-                "tankercore",
-                "tankerstreams",
-                "tankernetwork",
-                "tankertrustchain",
-                "tankeridentity",
-                "tankercrypto",
-                "tankerserialization",
-                "tankererrors",
-                "tankerlog",
-                "tankerformat",
-            ])
+            libs.extend(
+                [
+                    "tanker_async",
+                    "tankerfunctionalhelpers",
+                    "tankeradmin",
+                    "tankertesthelpers",
+                    "tankercore",
+                    "tankerstreams",
+                    "tankernetwork",
+                    "tankertrustchain",
+                    "tankeridentity",
+                    "tankercrypto",
+                    "tankerserialization",
+                    "tankererrors",
+                    "tankerlog",
+                    "tankerformat",
+                ]
+            )
             if self.options.with_ssl:
                 libs.append("tankercacerts")
 
@@ -186,7 +199,11 @@ class TankerConan(ConanFile):
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
 
-        if self.settings.os == "Windows" and self.options.with_ssl and not self.options.tankerlib_shared:
+        if (
+            self.settings.os == "Windows"
+            and self.options.with_ssl
+            and not self.options.tankerlib_shared
+        ):
             libs.append("crypt32")
 
         self.cpp_info.libs = libs
