@@ -21,7 +21,7 @@ class Requester : public IRequester
 public:
   Requester(Client* client);
 
-  tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() override;
+  tc::cotask<GetMeResult> getMe() override;
   tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
   tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(

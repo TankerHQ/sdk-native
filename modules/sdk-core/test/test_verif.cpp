@@ -261,22 +261,6 @@ TEST_CASE("Verif TrustchainCreation")
 
   SUBCASE("Entry level")
   {
-    SUBCASE("Invalid author")
-    {
-      unconstify(rootEntry.author())[0]++;
-      TANKER_CHECK_THROWS_WITH_CODE(
-          Verif::verifyTrustchainCreation(rootEntry, trustchainId),
-          Errc::InvalidAuthor);
-    }
-
-    SUBCASE("Invalid signature")
-    {
-      unconstify(rootEntry.signature())[0]++;
-      TANKER_CHECK_THROWS_WITH_CODE(
-          Verif::verifyTrustchainCreation(rootEntry, trustchainId),
-          Errc::InvalidSignature);
-    }
-
     SUBCASE("Valid TrustchainCreation block")
     {
       CHECK_NOTHROW(Verif::verifyTrustchainCreation(rootEntry, trustchainId));

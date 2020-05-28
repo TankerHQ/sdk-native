@@ -514,24 +514,15 @@ bool Resource::operator==(Resource const& rhs) const noexcept
 namespace
 {
 using namespace Trustchain;
-auto contextFromRootBlock(ServerEntry const& entry)
+auto contextFromRootBlock(Actions::TrustchainCreation const& tc)
 {
-  auto const& tc = entry.action().get<Actions::TrustchainCreation>();
-  return Context{entry.trustchainId(), tc.publicSignatureKey()};
+  return Context{TrustchainId{tc.hash()}, tc.publicSignatureKey()};
 }
 
-ServerEntry createRootBlock(Crypto::SignatureKeyPair const& keyPair)
+Actions::TrustchainCreation createRootBlock(
+    Crypto::SignatureKeyPair const& keyPair)
 {
-  auto const nature = Actions::Nature::TrustchainCreation;
-  Crypto::Hash const author{};
-  Actions::TrustchainCreation const action{keyPair.publicKey};
-  auto const hash =
-      computeHash(nature, author, Serialization::serialize(action));
-  return {static_cast<TrustchainId>(hash),
-          author,
-          action,
-          hash,
-          Crypto::Signature{}};
+  return Actions::TrustchainCreation{keyPair.publicKey};
 }
 }
 
@@ -547,7 +538,7 @@ Trustchain::Context const& Generator::context() const
   return _context;
 }
 
-Trustchain::ServerEntry const& Generator::rootBlock() const
+Trustchain::Actions::TrustchainCreation const& Generator::rootBlock() const
 {
   return _rootBlock;
 }
@@ -660,7 +651,7 @@ std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
 std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
     std::initializer_list<User> users) const
 {
-  std::vector entries{this->_rootBlock};
+  std::vector<Trustchain::ServerEntry> entries;
   auto index = 0ul;
   for (auto&& user : users)
   {

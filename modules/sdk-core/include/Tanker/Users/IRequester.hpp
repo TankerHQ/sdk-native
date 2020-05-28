@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -19,8 +20,14 @@ namespace Tanker::Users
 class IRequester
 {
 public:
+  struct GetMeResult
+  {
+    Trustchain::Actions::TrustchainCreation trustchainCreation;
+    std::vector<Trustchain::ServerEntry> userEntries;
+  };
+
   virtual ~IRequester() = default;
-  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() = 0;
+  virtual tc::cotask<GetMeResult> getMe() = 0;
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
   virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(

@@ -1,6 +1,9 @@
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Trustchain/Errors/Errc.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -12,40 +15,29 @@ namespace Actions
 {
 TrustchainCreation::TrustchainCreation(
     Crypto::PublicSignatureKey const& publicSignatureKey)
-  : _publicSignatureKey(publicSignatureKey)
+  : _publicSignatureKey(publicSignatureKey),
+    _author(),
+    _hash(computeHash()),
+    _signature()
 {
+  std::copy(_hash.begin(), _hash.end(), _trustchainId.begin());
 }
 
-Crypto::PublicSignatureKey const& TrustchainCreation::publicSignatureKey() const
-{
-  return _publicSignatureKey;
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    TrustchainCreation,
+    TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
 
-bool operator==(TrustchainCreation const& lhs, TrustchainCreation const& rhs)
-{
-  return lhs.publicSignatureKey() == rhs.publicSignatureKey();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    TrustchainCreation,
+    TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
 
-bool operator!=(TrustchainCreation const& lhs, TrustchainCreation const& rhs)
-{
-  return !(lhs == rhs);
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
+    TrustchainCreation,
+    TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
 
-void from_serialized(Serialization::SerializedSource& ss,
-                     TrustchainCreation& tc)
-{
-  Serialization::deserialize_to(ss, tc._publicSignatureKey);
-}
-
-std::uint8_t* to_serialized(std::uint8_t* it, TrustchainCreation const& tc)
-{
-  return Serialization::serialize(it, tc.publicSignatureKey());
-}
-
-void to_json(nlohmann::json& j, TrustchainCreation const& tc)
-{
-  j["publicSignatureKey"] = tc.publicSignatureKey();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
+    TrustchainCreation,
+    TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
 }
 }
 }

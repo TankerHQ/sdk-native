@@ -9,7 +9,6 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
-#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
@@ -28,14 +27,9 @@ using namespace Tanker::Trustchain::Actions;
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
-    Trustchain::ServerEntry const& serverEntry)
+    Trustchain::Actions::TrustchainCreation const& trustchainCreation)
 {
-  if (!serverEntry.action().holds_alternative<TrustchainCreation>())
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "Entry not a trustchainCreation block");
-
-  return Verif::verifyTrustchainCreation(serverEntry, trustchainId)
-      .action.get<TrustchainCreation>()
+  return Verif::verifyTrustchainCreation(trustchainCreation, trustchainId)
       .publicSignatureKey();
 }
 
@@ -216,19 +210,20 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
 std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
-processUserEntries(DeviceKeys const& deviceKeys,
-                   Trustchain::TrustchainId const& trustchainId,
-                   gsl::span<Trustchain::ServerEntry const> entries)
+processUserEntries(
+    DeviceKeys const& deviceKeys,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::Actions::TrustchainCreation const& trustchainCreation,
+    gsl::span<Trustchain::ServerEntry const> entries)
 {
-  if (entries.size() < 2)
+  if (entries.size() < 1)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "User's block list is too short");
   auto trustchainSignatureKey =
-      extractTrustchainSignature(trustchainId, entries[0]);
+      extractTrustchainSignature(trustchainId, trustchainCreation);
   auto const context =
       Trustchain::Context{trustchainId, trustchainSignatureKey};
-  auto [user, sealedKeys] =
-      processUserSealedKeys(deviceKeys, context, entries.subspan(1));
+  auto [user, sealedKeys] = processUserSealedKeys(deviceKeys, context, entries);
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
   return std::make_tuple(context, std::move(user), std::move(userKeys));
 }

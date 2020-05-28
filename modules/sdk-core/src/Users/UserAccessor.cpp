@@ -120,10 +120,6 @@ auto processUserEntries(Trustchain::Context const& context,
 
       *user = Updater::applyDeviceRevocationToUser(entry, *user);
     }
-    else if (serverEntry.action().holds_alternative<TrustchainCreation>())
-    {
-      // do nothing here.
-    }
     else
     {
       TERROR("Expected user blocks but got {}", serverEntry.action().nature());

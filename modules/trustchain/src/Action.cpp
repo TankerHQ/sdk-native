@@ -1,5 +1,6 @@
 #include <Tanker/Trustchain/Action.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -21,7 +22,8 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   switch (nature)
   {
   case Nature::TrustchainCreation:
-    return Serialization::deserialize<TrustchainCreation>(payload);
+    throw Errors::AssertionError(fmt::format(
+        "{:e} is not supported through this code path anymore", nature));
   // how does this compile and work since there is a double implicit conversion
   // which cannot compile!? you might ask. Because variant is tricky, look at
   // constructor 4: https://en.cppreference.com/w/cpp/utility/variant/variant

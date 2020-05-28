@@ -28,12 +28,19 @@ Requester::Requester(Client* client) : _client(client)
 {
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getMe()
+tc::cotask<Requester::GetMeResult> Requester::getMe()
 {
   auto const response = TC_AWAIT(_client->emit("get my user blocks", {}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
-  TC_RETURN(ret);
+  auto const blocks = response.get<std::vector<std::string>>();
+  if (blocks.size() < 1)
+    throw formatEx(Errors::Errc::InternalError,
+                   "received too few blocks for \"get my user blocks\"");
+  auto const trustchainCreation =
+      Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
+          cppcodec::base64_rfc4648::decode(blocks[0]));
+  auto const entries = Trustchain::fromBlocksToServerEntries(
+      std::vector(blocks.begin() + 1, blocks.end()));
+  TC_RETURN((GetMeResult{trustchainCreation, entries}));
 }
 
 tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(

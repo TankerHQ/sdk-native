@@ -2,6 +2,7 @@
 
 #include <Tanker/Entry.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <fmt/format.h>
 

@@ -11,7 +11,6 @@
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>
 
 #include <fetchpp/fetch.hpp>
@@ -120,20 +119,12 @@ tc::cotask<App> Client::createTrustchain(
 {
   using namespace Tanker::Trustchain;
   Actions::TrustchainCreation const action(keyPair.publicKey);
-  auto const serializedPayload = Serialization::serialize(action);
-  auto const trustchainId = static_cast<TrustchainId>(
-      computeHash(action.nature(), {}, serializedPayload));
-  auto const entry = ClientEntry(trustchainId,
-                                 {},
-                                 Actions::Nature::TrustchainCreation,
-                                 serializedPayload,
-                                 Crypto::Hash{trustchainId},
-                                 {});
+  TrustchainId const trustchainId{action.hash()};
 
   auto message = nlohmann::json{
       {"name", name},
       {"root_block",
-       cppcodec::base64_rfc4648::encode(Serialization::serialize(entry))},
+       cppcodec::base64_rfc4648::encode(Serialization::serialize(action))},
   };
   if (isTest)
     message["private_signature_key"] = keyPair.privateKey;

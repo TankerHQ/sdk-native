@@ -42,6 +42,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/HashedPassphrase.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/ComputeHash.hpp
+  include/Tanker/Trustchain/Serialization.hpp
 
   src/Action.cpp
   src/Actions/DeviceCreation.cpp
@@ -73,6 +74,7 @@ add_library(tankertrustchain STATIC
   src/ServerEntry.cpp
   src/ExternTemplates.cpp
   src/ComputeHash.cpp
+  src/Serialization.cpp
 )
 
 target_include_directories(tankertrustchain

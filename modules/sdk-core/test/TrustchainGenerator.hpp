@@ -7,6 +7,7 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -206,7 +207,7 @@ public:
                                     Resource const& res);
 
   Trustchain::Context const& context() const;
-  Trustchain::ServerEntry const& rootBlock() const;
+  Trustchain::Actions::TrustchainCreation const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
   static std::vector<Trustchain::ServerEntry> makeEntryList(
       std::vector<Trustchain::ClientEntry> const& entries);
@@ -217,7 +218,7 @@ public:
 
 private:
   Crypto::SignatureKeyPair _trustchainKeyPair;
-  Trustchain::ServerEntry _rootBlock;
+  Trustchain::Actions::TrustchainCreation _rootBlock;
   Trustchain::Context _context;
 };
 }

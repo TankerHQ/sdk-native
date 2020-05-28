@@ -5,7 +5,6 @@
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
@@ -27,7 +26,6 @@ class Action
                                              Actions::DeviceRevocation,
                                              Actions::KeyPublish,
                                              Actions::ProvisionalIdentityClaim,
-                                             Actions::TrustchainCreation,
                                              Actions::UserGroupAddition,
                                              Actions::UserGroupCreation>;
 

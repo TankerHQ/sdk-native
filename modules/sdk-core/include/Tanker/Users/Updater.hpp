@@ -5,6 +5,7 @@
 #include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/User.hpp>
@@ -30,7 +31,7 @@ namespace Updater
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
-    Trustchain::ServerEntry const& serverEntry);
+    Trustchain::Actions::TrustchainCreation const& serverEntry);
 
 std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
@@ -57,8 +58,10 @@ Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
 std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
-processUserEntries(DeviceKeys const& deviceKeys,
-                   Trustchain::TrustchainId const& trustchainId,
-                   gsl::span<Trustchain::ServerEntry const> entries);
+processUserEntries(
+    DeviceKeys const& deviceKeys,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::Actions::TrustchainCreation const& trustchainCreation,
+    gsl::span<Trustchain::ServerEntry const> entries);
 }
 }

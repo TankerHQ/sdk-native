@@ -13,9 +13,9 @@ tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& tId)
 {
-  auto const serverEntries = TC_AWAIT(requester->getMe());
-  auto const [context, user, userKeys] =
-      Updater::processUserEntries(deviceKeys, tId, serverEntries);
+  auto const [trustchainCreation, serverEntries] = TC_AWAIT(requester->getMe());
+  auto const [context, user, userKeys] = Updater::processUserEntries(
+      deviceKeys, tId, trustchainCreation, serverEntries);
   auto const selfDevice =
       user.findDevice(deviceKeys.encryptionKeyPair.publicKey);
   TC_RETURN(std::make_tuple(
