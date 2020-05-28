@@ -528,7 +528,6 @@ ServerEntry createRootBlock(Crypto::SignatureKeyPair const& keyPair)
   auto const hash =
       computeHash(nature, author, Serialization::serialize(action));
   return {static_cast<TrustchainId>(hash),
-          1,
           author,
           action,
           hash,

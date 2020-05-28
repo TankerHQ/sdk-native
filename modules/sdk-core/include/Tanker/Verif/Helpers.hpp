@@ -30,8 +30,7 @@ void ensures(bool condition,
 // This method should never be used outside the verification code
 inline Entry makeVerifiedEntry(Trustchain::ServerEntry const& se)
 {
-  return {
-      se.index(), se.action().nature(), se.author(), se.action(), se.hash()};
+  return {se.action().nature(), se.author(), se.action(), se.hash()};
 }
 }
 }

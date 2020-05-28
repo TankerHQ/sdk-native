@@ -11,7 +11,6 @@ namespace Tanker
 {
 struct Entry
 {
-  uint64_t index;
   Trustchain::Actions::Nature nature;
   Crypto::Hash author;
   Trustchain::Action action;

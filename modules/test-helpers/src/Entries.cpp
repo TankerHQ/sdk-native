@@ -7,7 +7,6 @@ namespace Tanker::Trustchain
 ServerEntry clientToServerEntry(ClientEntry const& e, std::uint64_t index)
 {
   return {e.trustchainId(),
-          index,
           e.author(),
           Trustchain::Action::deserialize(e.nature(), e.serializedPayload()),
           e.hash(),

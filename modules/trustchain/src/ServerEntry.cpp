@@ -19,13 +19,11 @@ namespace Tanker
 namespace Trustchain
 {
 ServerEntry::ServerEntry(TrustchainId const& trustchainId,
-                         std::uint64_t index,
                          Crypto::Hash const& author,
                          Action const& action,
                          Crypto::Hash const& hash,
                          Crypto::Signature const& signature)
   : _trustchainId(trustchainId),
-    _index(index),
     _author(author),
     _action(action),
     _hash(hash),
@@ -36,11 +34,6 @@ ServerEntry::ServerEntry(TrustchainId const& trustchainId,
 TrustchainId const& ServerEntry::trustchainId() const
 {
   return _trustchainId;
-}
-
-std::uint64_t const& ServerEntry::index() const
-{
-  return _index;
 }
 
 Crypto::Hash const& ServerEntry::author() const
@@ -65,8 +58,7 @@ Crypto::Hash const& ServerEntry::hash() const
 
 bool operator==(ServerEntry const& lhs, ServerEntry const& rhs)
 {
-  return lhs.index() == rhs.index() &&
-         std::tie(lhs.trustchainId(),
+  return std::tie(lhs.trustchainId(),
                   lhs.author(),
                   lhs.action(),
                   lhs.hash(),
@@ -91,7 +83,7 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
     throw Errors::formatEx(
         Errc::InvalidBlockVersion, "unsupported block version: {}", version);
   }
-  se._index = ss.read_varint();
+  ss.read_varint(); // index is ignored
   Serialization::deserialize_to(ss, se._trustchainId);
   auto const nature = static_cast<Actions::Nature>(ss.read_varint());
 
@@ -107,7 +99,6 @@ void from_serialized(Serialization::SerializedSource& ss, ServerEntry& se)
 void to_json(nlohmann::json& j, ServerEntry const& se)
 {
   j["trustchainId"] = se.trustchainId();
-  j["index"] = se.index();
   j["author"] = se.author();
   j["action"] = se.action();
   j["hash"] = se.hash();

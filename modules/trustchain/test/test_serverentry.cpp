@@ -64,7 +64,6 @@ TEST_CASE("Serialization test vectors")
 
     ServerEntry const serverEntry{
         trustchainId,
-        2,
         author,
         Action::deserialize(nature, serializedPayload),
         computeHash(nature, author, serializedPayload),

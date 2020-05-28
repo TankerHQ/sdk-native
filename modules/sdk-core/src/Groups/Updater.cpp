@@ -213,7 +213,7 @@ tc::cotask<Group> applyUserGroupAddition(
                     userGroupAddition.groupId()));
   }
 
-  updateLastGroupBlock(*previousGroup, entry.hash, entry.index);
+  updateLastGroupBlock(*previousGroup, entry.hash);
 
   // I am already member of this group, ignore
   if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))

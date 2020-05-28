@@ -10,8 +10,8 @@ namespace Tanker
 {
 bool operator==(Entry const& l, Entry const& r)
 {
-  return std::tie(l.index, l.author, l.action, l.hash) ==
-         std::tie(r.index, r.author, r.action, r.hash);
+  return std::tie(l.author, l.action, l.hash) ==
+         std::tie(r.author, r.action, r.hash);
 }
 
 bool operator!=(Entry const& l, Entry const& r)
@@ -21,7 +21,6 @@ bool operator!=(Entry const& l, Entry const& r)
 
 void to_json(nlohmann::json& j, Entry const& e)
 {
-  j["index"] = e.index;
   j["nature"] = e.nature;
   j["author"] = e.author;
   j["action_type"] = e.action.nature();

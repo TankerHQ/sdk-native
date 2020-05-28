@@ -38,7 +38,7 @@ static const char USAGE[] =
     Usage:
       tcli deserializeblock [-x] <block>
       tcli deserializepayload [-x] <nature-int> <block>
-      tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
+      tcli deserializesplitblock [-x] <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
@@ -182,7 +182,6 @@ AsyncCorePtr signIn(MainArgs const& args)
 template <typename Codec>
 ServerEntry constructEntry(MainArgs const& args)
 {
-  auto const index = static_cast<std::uint64_t>(args.at("<index>").asLong());
   auto const nature = static_cast<Nature>(args.at("<nature>").asLong());
   auto const payload = args.at("<payload>").asString();
   auto const action = Action::deserialize(nature, Codec::decode(payload));
@@ -194,7 +193,7 @@ ServerEntry constructEntry(MainArgs const& args)
       nature, author, gsl::make_span(payload).as_span<std::uint8_t const>());
   // no trustchain id, since this is a debug tool, we don't need
   // complete/proper info, right?
-  return {{}, index, author, action, hash, signature};
+  return {{}, author, action, hash, signature};
 }
 }
 

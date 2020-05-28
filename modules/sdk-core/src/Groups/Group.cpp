@@ -93,9 +93,7 @@ BaseGroup extractBaseGroup(Group const& group)
       [](auto&& g) { return BaseGroup{std::forward<decltype(g)>(g)}; }, group);
 }
 
-void updateLastGroupBlock(Group& group,
-                          Crypto::Hash const& lastBlockHash,
-                          uint64_t lastBlockIndex)
+void updateLastGroupBlock(Group& group, Crypto::Hash const& lastBlockHash)
 {
   boost::variant2::visit([&](auto& g) { g.lastBlockHash = lastBlockHash; },
                          group);
