@@ -59,7 +59,7 @@ void from_json(nlohmann::json const& j, ServerErrorMessage& msg)
   j.at("code").get_to(msg.code);
   msg.status = fetchpp::http::int_to_status(j.at("status").get<int>());
   j.at("message").get_to(msg.message);
-  j.at("request_id").get_to(msg.requestId);
+  j.at("trace_id").get_to(msg.requestId);
 }
 
 auto errorReport(Errors::ServerErrc err_code,
