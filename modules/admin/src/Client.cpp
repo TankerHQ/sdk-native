@@ -64,19 +64,23 @@ void from_json(nlohmann::json const& j, ServerErrorMessage& msg)
 
 auto errorReport(Errors::ServerErrc err_code,
                  std::string_view customMessage,
-                 nlohmann::json const& body)
+                 fetchpp::http::response const& response)
 {
-  if (auto const err = body.find("error"); err != body.end())
+  try
   {
-    auto const serverMsg = err->get<ServerErrorMessage>();
+    auto const serverMsg =
+        response.json().at("error").get<ServerErrorMessage>();
     return Errors::formatEx(err_code,
                             "{}: {} {}",
                             customMessage,
                             serverMsg.code,
                             serverMsg.message);
   }
-  else
-    return Errors::formatEx(err_code, "{}: <malformed message>", customMessage);
+  catch (...)
+  {
+    return Errors::formatEx(
+        err_code, "{}: invalid error: {}", customMessage, response.text());
+  }
 }
 }
 void from_json(nlohmann::json const& j, App& app)
@@ -145,7 +149,7 @@ tc::cotask<App> Client::createTrustchain(
     TC_RETURN(response.json().at("app"));
   throw errorReport(Errors::ServerErrc::InternalError,
                     "could not delete trustchain",
-                    response.json());
+                    response);
 }
 
 tc::cotask<void> Client::deleteTrustchain(
@@ -161,7 +165,7 @@ tc::cotask<void> Client::deleteTrustchain(
     return;
   throw errorReport(Errors::ServerErrc::InternalError,
                     "could not delete trustchain",
-                    response.json());
+                    response);
 }
 
 tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
@@ -185,7 +189,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 
   throw errorReport(Errors::ServerErrc::InternalError,
                     "could not update trustchain",
-                    response.json());
+                    response);
 }
 
 tc::cotask<VerificationCode> getVerificationCode(
