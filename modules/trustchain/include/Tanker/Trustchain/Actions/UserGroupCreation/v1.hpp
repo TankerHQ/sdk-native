@@ -9,6 +9,8 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -23,6 +25,14 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES   \
+  (publicSignatureKey, Crypto::PublicSignatureKey),                   \
+      (publicEncryptionKey, Crypto::PublicEncryptionKey),             \
+      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey), \
+      (sealedPrivateEncryptionKeysForUsers,                           \
+       SealedPrivateEncryptionKeysForUsers),                          \
+      (selfSignature, Crypto::Signature)
+
 class UserGroupCreation1
 {
 public:
@@ -32,12 +42,7 @@ public:
 
   TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
       UserGroupCreation1,
-      (publicSignatureKey, Crypto::PublicSignatureKey),
-      (publicEncryptionKey, Crypto::PublicEncryptionKey),
-      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),
-      (sealedPrivateEncryptionKeysForUsers,
-       SealedPrivateEncryptionKeysForUsers),
-      (selfSignature, Crypto::Signature))
+      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES)
 
 public:
   static constexpr Nature nature();
@@ -56,16 +61,13 @@ private:
                               UserGroupCreation1&);
 };
 
-void from_serialized(Serialization::SerializedSource&, UserGroupCreation1&);
-std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation1 const&);
-std::size_t serialized_size(UserGroupCreation1 const&);
-
-void to_json(nlohmann::json&, UserGroupCreation1 const&);
-
 constexpr Nature UserGroupCreation1::nature()
 {
   return Nature::UserGroupCreation;
 }
+
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupCreation1)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupCreation1)
 }
 }
 }
