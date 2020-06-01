@@ -5,8 +5,6 @@
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <boost/variant2/variant.hpp>
 #include <gsl-lite.hpp>
@@ -25,9 +23,7 @@ class Action
   using variant_t = boost::variant2::variant<Actions::DeviceCreation,
                                              Actions::DeviceRevocation,
                                              Actions::KeyPublish,
-                                             Actions::ProvisionalIdentityClaim,
-                                             Actions::UserGroupAddition,
-                                             Actions::UserGroupCreation>;
+                                             Actions::ProvisionalIdentityClaim>;
 
 public:
   Action() = default;

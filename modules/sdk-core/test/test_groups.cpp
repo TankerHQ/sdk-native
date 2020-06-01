@@ -54,7 +54,7 @@ TEST_CASE("Can create a group with two users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const entry = Groups::Manager::makeUserGroupCreationEntry(
       {user, user2},
       {},
       groupSignatureKey,
@@ -63,10 +63,7 @@ TEST_CASE("Can create a group with two users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto group = serverEntry.action()
-                   .get<UserGroupCreation>()
-                   .get<UserGroupCreation::v2>();
+  auto group = entry.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -104,7 +101,7 @@ TEST_CASE("Can create a group with two provisional users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const entry = Groups::Manager::makeUserGroupCreationEntry(
       {},
       {provisionalUser, provisionalUser2},
       groupSignatureKey,
@@ -113,10 +110,7 @@ TEST_CASE("Can create a group with two provisional users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto group = serverEntry.action()
-                   .get<UserGroupCreation>()
-                   .get<UserGroupCreation::v2>();
+  auto group = entry.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -195,7 +189,7 @@ TEST_CASE("Can add users to a group")
 
   auto const group = user.makeGroup({user2});
 
-  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const entry = Groups::Manager::makeUserGroupAdditionEntry(
       {user, user2},
       {},
       group,
@@ -203,10 +197,7 @@ TEST_CASE("Can add users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto groupAdd = serverEntry.action()
-                      .get<UserGroupAddition>()
-                      .get<UserGroupAddition::v2>();
+  auto groupAdd = entry.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
@@ -242,7 +233,7 @@ TEST_CASE("Can add provisional users to a group")
   auto const provisionalUser = generator.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = generator.makeProvisionalUser("charlie@tanker");
 
-  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const entry = Groups::Manager::makeUserGroupAdditionEntry(
       {},
       {provisionalUser, provisionalUser2},
       group,
@@ -250,10 +241,7 @@ TEST_CASE("Can add provisional users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto groupAdd = serverEntry.action()
-                      .get<UserGroupAddition>()
-                      .get<UserGroupAddition::v2>();
+  auto groupAdd = entry.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);

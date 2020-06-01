@@ -24,13 +24,6 @@ std::vector<std::uint8_t> UserGroupCreation::signatureData() const
       [&](auto const& val) { return val.signatureData(); }, _variant);
 }
 
-Crypto::Signature const& UserGroupCreation::selfSign(
-    Crypto::PrivateSignatureKey const& key)
-{
-  return boost::variant2::visit(
-      [&](auto& val) -> decltype(auto) { return val.selfSign(key); }, _variant);
-}
-
 std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation const& dc)
 {
   return Serialization::serialize(it, dc._variant);

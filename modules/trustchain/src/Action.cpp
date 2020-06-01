@@ -2,6 +2,7 @@
 
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Format/Enum.hpp>
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
@@ -21,9 +22,13 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
 {
   switch (nature)
   {
+  case Nature::UserGroupCreation:
+  case Nature::UserGroupAddition:
+  case Nature::UserGroupCreation2:
+  case Nature::UserGroupAddition2:
   case Nature::TrustchainCreation:
     throw Errors::AssertionError(fmt::format(
-        "{:e} is not supported through this code path anymore", nature));
+        "{} is not supported through this code path anymore", nature));
   // how does this compile and work since there is a double implicit conversion
   // which cannot compile!? you might ask. Because variant is tricky, look at
   // constructor 4: https://en.cppreference.com/w/cpp/utility/variant/variant
@@ -42,22 +47,13 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
     return Serialization::deserialize<DeviceRevocation1>(payload);
   case Nature::DeviceRevocation2:
     return Serialization::deserialize<DeviceRevocation2>(payload);
-  case Nature::UserGroupCreation:
-    return Serialization::deserialize<UserGroupCreation1>(payload);
   case Nature::KeyPublishToUserGroup:
     return Serialization::deserialize<KeyPublishToUserGroup>(payload);
-  case Nature::UserGroupAddition:
-    return Serialization::deserialize<UserGroupAddition1>(payload);
   case Nature::ProvisionalIdentityClaim:
     return Serialization::deserialize<ProvisionalIdentityClaim>(payload);
-  case Nature::UserGroupCreation2:
-    return Serialization::deserialize<UserGroupCreation2>(payload);
-  case Nature::UserGroupAddition2:
-    return Serialization::deserialize<UserGroupAddition2>(payload);
   case Nature::KeyPublishToDevice:
-    throw Errors::formatEx(Errc::InvalidBlockNature,
-                           TFMT("{:e} is not supported anymore"),
-                           nature);
+    throw Errors::formatEx(
+        Errc::InvalidBlockNature, TFMT("{} is not supported anymore"), nature);
   }
   throw Errors::formatEx(
       Errc::InvalidBlockNature, TFMT("unkown action nature: {:d}"), nature);

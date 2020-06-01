@@ -4,6 +4,7 @@
 #include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 

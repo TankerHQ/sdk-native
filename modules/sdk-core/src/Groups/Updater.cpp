@@ -111,19 +111,17 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyProvisionalKey(
   TC_RETURN(std::nullopt);
 }
 
-ExternalGroup makeExternalGroup(Entry const& entry,
-                                UserGroupCreation const& userGroupCreation)
+ExternalGroup makeExternalGroup(UserGroupCreation const& userGroupCreation)
 {
   return ExternalGroup{GroupId{userGroupCreation.publicSignatureKey()},
                        userGroupCreation.publicSignatureKey(),
                        userGroupCreation.sealedPrivateSignatureKey(),
                        userGroupCreation.publicEncryptionKey(),
-                       entry.hash};
+                       Trustchain::getHash(userGroupCreation)};
 }
 
 InternalGroup makeInternalGroup(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    Entry const& entry,
     UserGroupCreation const& userGroupCreation)
 {
   auto const groupPrivateSignatureKey =
@@ -141,13 +139,13 @@ InternalGroup makeInternalGroup(
                            userGroupCreation.publicEncryptionKey(),
                            groupPrivateEncryptionKey,
                        },
-                       entry.hash};
+                       Trustchain::getHash(userGroupCreation)};
 }
 
 InternalGroup makeInternalGroup(
     ExternalGroup const& previousGroup,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    Entry const& entry)
+    Trustchain::GroupAction const& entry)
 {
   auto const groupPrivateSignatureKey =
       Crypto::sealDecrypt(previousGroup.encryptedPrivateSignatureKey,
@@ -165,7 +163,7 @@ InternalGroup makeInternalGroup(
           previousGroup.publicEncryptionKey,
           groupPrivateEncryptionKey,
       },
-      entry.hash,
+      Trustchain::getHash(entry),
   };
 }
 }
@@ -173,9 +171,10 @@ InternalGroup makeInternalGroup(
 tc::cotask<Group> applyUserGroupCreation(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    Entry const& entry)
+    Trustchain::GroupAction const& entry)
 {
-  auto const& userGroupCreation = entry.action.get<UserGroupCreation>();
+  auto const& userGroupCreation =
+      boost::variant2::get<UserGroupCreation>(entry);
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation::v1>())
@@ -191,19 +190,19 @@ tc::cotask<Group> applyUserGroupCreation(
   }
 
   if (groupPrivateEncryptionKey)
-    TC_RETURN(makeInternalGroup(
-        *groupPrivateEncryptionKey, entry, userGroupCreation));
+    TC_RETURN(makeInternalGroup(*groupPrivateEncryptionKey, userGroupCreation));
   else
-    TC_RETURN(makeExternalGroup(entry, userGroupCreation));
+    TC_RETURN(makeExternalGroup(userGroupCreation));
 }
 
 tc::cotask<Group> applyUserGroupAddition(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
-    Entry const& entry)
+    Trustchain::GroupAction const& entry)
 {
-  auto const& userGroupAddition = entry.action.get<UserGroupAddition>();
+  auto const& userGroupAddition =
+      boost::variant2::get<UserGroupAddition>(entry);
 
   if (!previousGroup)
   {
@@ -213,7 +212,7 @@ tc::cotask<Group> applyUserGroupAddition(
                     userGroupAddition.groupId()));
   }
 
-  updateLastGroupBlock(*previousGroup, entry.hash);
+  updateLastGroupBlock(*previousGroup, Trustchain::getHash(entry));
 
   // I am already member of this group, ignore
   if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
@@ -248,11 +247,11 @@ using DeviceMap =
     boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
 std::vector<Trustchain::DeviceId> extractAuthors(
-    std::vector<Trustchain::ServerEntry> const& entries)
+    std::vector<Trustchain::GroupAction> const& entries)
 {
   boost::container::flat_set<Trustchain::DeviceId> deviceIds;
   for (auto const& entry : entries)
-    deviceIds.insert(Trustchain::DeviceId{entry.author()});
+    deviceIds.insert(Trustchain::DeviceId(Trustchain::getAuthor(entry)));
   return {deviceIds.begin(), deviceIds.end()};
 }
 
@@ -261,7 +260,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
-    std::vector<Trustchain::ServerEntry> const& serverEntries)
+    std::vector<Trustchain::GroupAction> const& serverEntries)
 {
   for (auto const& serverEntry : serverEntries)
   {
@@ -269,20 +268,22 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     {
       auto const authorIt =
           std::find_if(authors.begin(), authors.end(), [&](auto const& device) {
-            return serverEntry.author().base() == device.id().base();
+            return Trustchain::getAuthor(serverEntry).base() ==
+                   device.id().base();
           });
       Verif::ensures(authorIt != authors.end(),
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = *authorIt;
-      if (serverEntry.action().holds_alternative<UserGroupCreation>())
+      if (boost::variant2::holds_alternative<UserGroupCreation>(serverEntry))
       {
         auto const entry = Verif::verifyUserGroupCreation(
             serverEntry, author, extractBaseGroup(previousGroup));
         previousGroup = TC_AWAIT(applyUserGroupCreation(
             localUserAccessor, provisionalUsersAccessor, entry));
       }
-      else if (serverEntry.action().holds_alternative<UserGroupAddition>())
+      else if (boost::variant2::holds_alternative<UserGroupAddition>(
+                   serverEntry))
       {
         auto const entry = Verif::verifyUserGroupAddition(
             serverEntry, author, extractBaseGroup(previousGroup));
@@ -291,14 +292,14 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
       }
       else
         throw Errors::AssertionError(fmt::format(
-            "cannot handle nature: {}", serverEntry.action().nature()));
+            "cannot handle nature: {}", Trustchain::getNature(serverEntry)));
     }
     catch (Errors::Exception const& err)
     {
       if (err.errorCode().category() == Verif::ErrcCategory())
       {
         TERROR("skipping invalid group block {}: {}",
-               serverEntry.hash(),
+               Trustchain::getHash(serverEntry),
                err.what());
       }
       else
@@ -314,7 +315,7 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
-    std::vector<Trustchain::ServerEntry> const& entries)
+    std::vector<Trustchain::GroupAction> const& entries)
 {
   auto const authorIds = extractAuthors(entries);
   auto const devices = TC_AWAIT(userAccessor.pull(authorIds));

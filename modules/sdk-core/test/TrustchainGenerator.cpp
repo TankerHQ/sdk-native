@@ -361,10 +361,10 @@ Crypto::SealedPrivateSignatureKey Group::encryptedSignatureKey() const
 
 Crypto::Hash Group::lastBlockHash() const
 {
-  return entries().back().hash();
+  return Trustchain::getHash(entries().back());
 }
 
-std::vector<Trustchain::ClientEntry> const& Group::entries() const
+std::vector<Trustchain::GroupAction> const& Group::entries() const
 {
   return _entries;
 }
@@ -390,33 +390,37 @@ Group::operator Tanker::ExternalGroup() const
   };
 }
 
-Trustchain::ClientEntry const& Group::addUsers(
+Trustchain::Actions::UserGroupAddition Group::addUsers(
     Device const& author,
     std::vector<User> const& newUsers,
     std::vector<ProvisionalUser> const& provisionalUsers)
 {
-  return _entries.emplace_back(Groups::Manager::makeUserGroupAdditionEntry(
+  auto const groupAddition = Groups::Manager::makeUserGroupAdditionEntry(
       transformTo<std::vector<Users::User>>(newUsers),
       transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers),
       *this,
       _tid,
       author.id(),
-      author.keys().signatureKeyPair.privateKey));
+      author.keys().signatureKeyPair.privateKey);
+  _entries.emplace_back(groupAddition);
+  return groupAddition;
 }
 
-Trustchain::ClientEntry const& Group::addUsersV1(Device const& author,
-                                                 std::vector<User> const& users)
+Trustchain::Actions::UserGroupAddition Group::addUsersV1(
+    Device const& author, std::vector<User> const& users)
 {
   auto const keysForUsers =
       generateGroupKeysForUsers(currentEncKp().privateKey, users);
 
-  return _entries.emplace_back(Groups::createUserGroupAdditionV1Entry(
+  auto const groupAddition = Groups::createUserGroupAdditionV1Entry(
       currentSigKp(),
       lastBlockHash(),
       keysForUsers,
       _tid,
       author.id(),
-      author.keys().signatureKeyPair.privateKey));
+      author.keys().signatureKeyPair.privateKey);
+  _entries.emplace_back(groupAddition);
+  return groupAddition;
 }
 
 // ================ ProvisionalUser

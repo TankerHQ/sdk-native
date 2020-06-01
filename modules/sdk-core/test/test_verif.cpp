@@ -164,7 +164,7 @@ void deviceRevocationCommonChecks(ServerEntry const& deviceRevocation,
 }
 
 void testUserGroupCreationCommon(Users::Device const& authorDevice,
-                                 ServerEntry const& gcEntry)
+                                 UserGroupCreation const& gcEntry)
 {
   SUBCASE("should reject a UserGroupCreation if the group already exists")
   {
@@ -183,8 +183,7 @@ void testUserGroupCreationCommon(Users::Device const& authorDevice,
 
   SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
   {
-    auto& userGroupCreation = extract<UserGroupCreation>(gcEntry.action());
-    unconstify(userGroupCreation.selfSignature())[0]++;
+    unconstify(gcEntry.selfSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt),
         Errc::InvalidSignature);
@@ -198,7 +197,7 @@ void testUserGroupCreationCommon(Users::Device const& authorDevice,
 }
 
 void testUserGroupAdditionCommon(Test::Device const& authorDevice,
-                                 ServerEntry const& gaEntry,
+                                 UserGroupAddition const& gaEntry,
                                  Test::Group const& group)
 {
   auto const baseGroup = BaseGroup{group};
@@ -222,9 +221,11 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
       "should reject a UserGroupAddition where previousGroupBlock is not the "
       "hash of last modification")
   {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
-    unconstify(userGroupAddition.previousGroupBlockHash())[0]++;
-    unconstify(userGroupAddition).selfSign(group.currentSigKp().privateKey);
+    unconstify(gaEntry.previousGroupBlockHash())[0]++;
+    unconstify(gaEntry.selfSignature()) =
+        Crypto::sign(gaEntry.signatureData(), group.currentSigKp().privateKey);
+    unconstify(gaEntry.signature()) = Crypto::sign(
+        getHash(gaEntry), authorDevice.keys().signatureKeyPair.privateKey);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
         Errc::InvalidGroup);
@@ -232,8 +233,7 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
 
   SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
   {
-    auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
-    unconstify(userGroupAddition.selfSignature())[0]++;
+    unconstify(gaEntry.selfSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
         Errc::InvalidSignature);
@@ -564,14 +564,16 @@ TEST_CASE("Verif UserGroupCreation")
   SUBCASE("V1")
   {
     auto const aliceGroup = generator.makeGroupV1(firstDevice, {alice});
-    testUserGroupCreationCommon(firstDevice,
-                                makeEntry(aliceGroup.entries().front()));
+    testUserGroupCreationCommon(
+        firstDevice,
+        boost::variant2::get<UserGroupCreation>(aliceGroup.entries().front()));
   }
   SUBCASE("V2")
   {
     auto const aliceGroup = generator.makeGroup(firstDevice, {alice});
-    testUserGroupCreationCommon(firstDevice,
-                                makeEntry(aliceGroup.entries().front()));
+    testUserGroupCreationCommon(
+        firstDevice,
+        boost::variant2::get<UserGroupCreation>(aliceGroup.entries().front()));
   }
 }
 
@@ -588,9 +590,7 @@ TEST_CASE("Verif UserGroupAddition")
     auto const previousGroup = aliceGroup;
 
     testUserGroupAdditionCommon(
-        aliceDevice,
-        makeEntry(aliceGroup.addUsersV1(aliceDevice, {bob})),
-        previousGroup);
+        aliceDevice, aliceGroup.addUsersV1(aliceDevice, {bob}), previousGroup);
   }
   SUBCASE("V2")
   {
@@ -598,9 +598,7 @@ TEST_CASE("Verif UserGroupAddition")
     auto const previousGroup = aliceGroup;
 
     testUserGroupAdditionCommon(
-        aliceDevice,
-        makeEntry(aliceGroup.addUsers(aliceDevice, {bob})),
-        previousGroup);
+        aliceDevice, aliceGroup.addUsers(aliceDevice, {bob}), previousGroup);
   }
 }
 

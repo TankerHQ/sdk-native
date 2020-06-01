@@ -27,9 +27,11 @@ namespace Trustchain
 {
 namespace Actions
 {
-#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES \
-  (groupId, GroupId), (previousGroupBlockHash, Crypto::Hash),    \
-      (selfSignature, Crypto::Signature)
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES  \
+  (trustchainId, TrustchainId), (groupId, GroupId),               \
+      (previousGroupBlockHash, Crypto::Hash),                     \
+      (selfSignature, Crypto::Signature), (author, Crypto::Hash), \
+      (signature, Crypto::Signature)
 
 class UserGroupAddition
 {
@@ -44,7 +46,6 @@ public:
 
   Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;
-  Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 };
 
 // The nature is not present in the wired payload.

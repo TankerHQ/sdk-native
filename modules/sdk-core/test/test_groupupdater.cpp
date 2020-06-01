@@ -20,10 +20,7 @@ using namespace Tanker;
 
 namespace
 {
-auto makeEntries = [](auto const& item) {
-  return Test::transformTo<std::vector<Entry>>(
-      Test::Generator::makeEntryList(item.entries()), toVerifiedEntry);
-};
+auto makeEntries = [](auto const& item) { return item.entries(); };
 
 template <typename R>
 void GroupMatcher(Group const& resultGroup, Test::Group const& testGroup)

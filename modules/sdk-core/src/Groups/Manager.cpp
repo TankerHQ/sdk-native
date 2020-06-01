@@ -90,7 +90,7 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 }
 }
 
-Trustchain::ClientEntry makeUserGroupCreationEntry(
+Trustchain::Actions::UserGroupCreation makeUserGroupCreationEntry(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
@@ -149,7 +149,7 @@ tc::cotask<SGroupId> create(
   TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKeyPair.publicKey));
 }
 
-Trustchain::ClientEntry makeUserGroupAdditionEntry(
+Trustchain::Actions::UserGroupAddition makeUserGroupAdditionEntry(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,

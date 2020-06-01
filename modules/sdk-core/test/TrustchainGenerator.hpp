@@ -10,6 +10,7 @@
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/Context.hpp>
+#include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -61,22 +62,22 @@ struct Group
   Crypto::SealedPrivateSignatureKey encryptedSignatureKey() const;
   Crypto::Hash lastBlockHash() const;
 
-  std::vector<Trustchain::ClientEntry> const& entries() const;
+  std::vector<Trustchain::GroupAction> const& entries() const;
 
-  Trustchain::ClientEntry const& addUsers(
+  Trustchain::Actions::UserGroupAddition addUsers(
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});
 
-  Trustchain::ClientEntry const& addUsersV1(Device const& author,
-                                            std::vector<User> const& users);
+  Trustchain::Actions::UserGroupAddition addUsersV1(
+      Device const& author, std::vector<User> const& users);
 
 private:
   Trustchain::TrustchainId _tid;
   Crypto::EncryptionKeyPair _currentEncKp;
   Crypto::SignatureKeyPair _currentSigKp;
   Trustchain::GroupId _id;
-  std::vector<Trustchain::ClientEntry> _entries;
+  std::vector<Trustchain::GroupAction> _entries;
 };
 
 struct User

@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -12,13 +13,22 @@ namespace Trustchain
 namespace Actions
 {
 UserGroupAddition1::UserGroupAddition1(
+    TrustchainId const& trustchainId,
     GroupId const& groupId,
     Crypto::Hash const& previousGroupBlockHash,
     SealedPrivateEncryptionKeysForUsers const&
-        sealedPrivateEncryptionKeysForUsers)
-  : _groupId(groupId),
+        sealedPrivateEncryptionKeysForUsers,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _groupId(groupId),
     _previousGroupBlockHash(previousGroupBlockHash),
-    _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers)
+    _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers),
+    _selfSignature(Crypto::sign(signatureData(), groupPrivateSignatureKey)),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, devicePrivateSignatureKey))
 {
 }
 
@@ -41,15 +51,15 @@ std::vector<std::uint8_t> UserGroupAddition1::signatureData() const
   return signatureData;
 }
 
-Crypto::Signature const& UserGroupAddition1::selfSign(
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
-{
-  auto const toSign = signatureData();
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    UserGroupAddition1,
+    TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION1_ATTRIBUTES)
 
-  return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    UserGroupAddition1,
+    TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION1_ATTRIBUTES)
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
     UserGroupAddition1,
     TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION1_ATTRIBUTES)
 
