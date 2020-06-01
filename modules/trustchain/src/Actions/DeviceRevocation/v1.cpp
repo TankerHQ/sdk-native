@@ -10,40 +10,12 @@ namespace Trustchain
 {
 namespace Actions
 {
-DeviceRevocation1::DeviceRevocation1(DeviceId const& deviceId)
-  : _deviceId(deviceId)
-{
-}
-
-DeviceId const& DeviceRevocation1::deviceId() const
-{
-  return _deviceId;
-}
-
-bool operator==(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs)
-{
-  return lhs.deviceId() == rhs.deviceId();
-}
-
-bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs)
-{
-  return !(lhs == rhs);
-}
-
-void from_serialized(Serialization::SerializedSource& ss, DeviceRevocation1& dr)
-{
-  Serialization::deserialize_to(ss, dr._deviceId);
-}
-
-std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation1 const& dr)
-{
-  return Serialization::serialize(it, dr.deviceId());
-}
-
-void to_json(nlohmann::json& j, DeviceRevocation1 const& dr)
-{
-  j["deviceId"] = dr.deviceId();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+    DeviceRevocation1,
+    TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
+    DeviceRevocation1,
+    TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES)
 }
 }
 }

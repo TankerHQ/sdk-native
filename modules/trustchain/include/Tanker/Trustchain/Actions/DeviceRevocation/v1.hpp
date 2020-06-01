@@ -3,6 +3,9 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -15,41 +18,30 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES \
+  (deviceId, DeviceId)
+
 class DeviceRevocation1
 {
 public:
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+      DeviceRevocation1,
+      TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES)
+public:
   static constexpr Nature nature();
 
-  DeviceRevocation1() = default;
-  explicit DeviceRevocation1(DeviceId const&);
-
-  DeviceId const& deviceId() const;
-
 private:
-  DeviceId _deviceId;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceRevocation1&);
 };
-
-bool operator==(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs);
-bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs);
-
-void from_serialized(Serialization::SerializedSource&, DeviceRevocation1&);
-
-std::uint8_t* to_serialized(std::uint8_t*, DeviceRevocation1 const&);
-
-constexpr std::size_t serialized_size(DeviceRevocation1 const&)
-{
-  return DeviceId::arraySize;
-}
-
-void to_json(nlohmann::json&, DeviceRevocation1 const&);
 
 constexpr Nature DeviceRevocation1::nature()
 {
   return Nature::DeviceRevocation;
 }
+
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceRevocation1)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceRevocation1)
 }
 }
 }
