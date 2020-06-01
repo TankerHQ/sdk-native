@@ -7,6 +7,9 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v1.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -19,12 +22,17 @@ namespace Trustchain
 {
 namespace Actions
 {
-class DeviceCreation3 : private DeviceCreation1
-{
-  // GCC 8.1 fails to build when base_t is used...
-  // Eldritch compiler bug
-  using base_type = DeviceCreation1;
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES                \
+  (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey), (userId, UserId), \
+      (delegationSignature, Crypto::Signature),                                \
+      (publicSignatureKey, Crypto::PublicSignatureKey),                        \
+      (publicEncryptionKey, Crypto::PublicEncryptionKey),                      \
+      (publicUserEncryptionKey, Crypto::PublicEncryptionKey),                  \
+      (sealedPrivateUserEncryptionKey, Crypto::SealedPrivateEncryptionKey),    \
+      (isGhostDevice, bool)
 
+class DeviceCreation3
+{
 public:
   enum class DeviceType
   {
@@ -32,76 +40,27 @@ public:
     GhostDevice,
   };
 
-  DeviceCreation3() = default;
-  DeviceCreation3(
-      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-      UserId const& userId,
-      Crypto::Signature const& delegationSignature,
-      Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-      Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
-      Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
-      Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey,
-      DeviceType type);
-  DeviceCreation3(
-      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-      UserId const& userId,
-      Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-      Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
-      Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
-      Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey,
-      DeviceType type);
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+      DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
 
+public:
   static constexpr Nature nature();
 
-  using base_type::delegationSignature;
-  using base_type::ephemeralPublicSignatureKey;
-  using base_type::publicEncryptionKey;
-  using base_type::publicSignatureKey;
-  using base_type::sign;
-  using base_type::signatureData;
-  using base_type::userId;
-
-  Crypto::PublicEncryptionKey const& publicUserEncryptionKey() const;
-  Crypto::SealedPrivateEncryptionKey const& sealedPrivateUserEncryptionKey()
-      const;
-  bool isGhostDevice() const;
+  std::vector<std::uint8_t> signatureData() const;
+  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 private:
-  Crypto::PublicEncryptionKey _publicUserEncryptionKey;
-  Crypto::SealedPrivateEncryptionKey _sealedPrivateUserEncryptionKey;
-  bool _isGhostDevice;
-
-  // friend so that they can cast to the private base class
-  friend bool operator==(DeviceCreation3 const& lhs,
-                         DeviceCreation3 const& rhs);
-  friend std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation3 const&);
-  friend void to_json(nlohmann::json&, DeviceCreation3 const&);
-  friend constexpr std::size_t serialized_size(DeviceCreation3 const&);
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceCreation3&);
 };
-
-bool operator==(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
-bool operator!=(DeviceCreation3 const& lhs, DeviceCreation3 const& rhs);
-
-void from_serialized(Serialization::SerializedSource&, DeviceCreation3&);
-
-std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation3 const&);
-
-constexpr std::size_t serialized_size(DeviceCreation3 const&)
-{
-  return (Crypto::PublicSignatureKey::arraySize * 2) + UserId::arraySize +
-         Crypto::Signature::arraySize +
-         (Crypto::PublicEncryptionKey::arraySize * 2) +
-         Crypto::SealedPrivateEncryptionKey::arraySize + sizeof(bool);
-}
-
-void to_json(nlohmann::json&, DeviceCreation3 const&);
 
 constexpr Nature DeviceCreation3::nature()
 {
   return Nature::DeviceCreation3;
 }
+
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation3)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceCreation3)
 }
 }
 }

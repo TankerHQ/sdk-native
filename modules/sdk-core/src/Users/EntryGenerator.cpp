@@ -33,7 +33,7 @@ ClientEntry createDeviceEntry(
                          encryptionKey,
                          userEncryptionKeys.publicKey,
                          sealedPrivateEncryptionKey,
-                         deviceType};
+                         deviceType == DeviceCreation::DeviceType::GhostDevice};
   return ClientEntry::create(
       trustchainId, author, dc3, delegation.ephemeralKeyPair.privateKey);
 }

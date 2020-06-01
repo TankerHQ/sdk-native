@@ -251,7 +251,7 @@ TEST_CASE("Serialization test vectors")
                                  publicEncryptionKey,
                                  publicUserEncryptionKey,
                                  sealedPrivateUserEncryptionKey,
-                                 DeviceCreation::DeviceType::GhostDevice);
+                                 true);
 
     CHECK(Serialization::serialize(dc3) == serializedDevice);
     CHECK(Serialization::deserialize<DeviceCreation::v3>(serializedDevice) ==
