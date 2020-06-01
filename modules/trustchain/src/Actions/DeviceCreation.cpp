@@ -12,55 +12,10 @@ namespace Trustchain
 {
 namespace Actions
 {
-DeviceCreation::DeviceCreation(v1 const& dc1) : _variant(dc1)
-{
-}
-
-DeviceCreation::DeviceCreation(v3 const& dc3) : _variant(dc3)
-{
-}
-
 Nature DeviceCreation::nature() const
 {
   return boost::variant2::visit([](auto const& a) { return a.nature(); },
                                 _variant);
-}
-
-Crypto::PublicSignatureKey const& DeviceCreation::ephemeralPublicSignatureKey()
-    const
-{
-  return boost::variant2::visit(
-      [](auto const& a) -> decltype(auto) {
-        return a.ephemeralPublicSignatureKey();
-      },
-      _variant);
-}
-
-UserId const& DeviceCreation::userId() const
-{
-  return boost::variant2::visit(
-      [](auto const& a) -> decltype(auto) { return a.userId(); }, _variant);
-}
-
-Crypto::Signature const& DeviceCreation::delegationSignature() const
-{
-  return boost::variant2::visit(
-      [](auto const& a) -> decltype(auto) { return a.delegationSignature(); },
-      _variant);
-}
-
-Crypto::PublicSignatureKey const& DeviceCreation::publicSignatureKey() const
-{
-  return boost::variant2::visit(
-      [](auto const& a) -> decltype(auto) { return a.publicSignatureKey(); },
-      _variant);
-}
-
-Crypto::PublicEncryptionKey const& DeviceCreation::publicEncryptionKey() const
-{
-  return boost::variant2::visit(
-      [](auto const& a) -> decltype(auto) { return a.publicEncryptionKey(); },
-      _variant);
 }
 
 bool DeviceCreation::isGhostDevice() const
@@ -81,16 +36,6 @@ Crypto::Signature const& DeviceCreation::sign(
 {
   return boost::variant2::visit(
       [&](auto& val) -> decltype(auto) { return val.sign(key); }, _variant);
-}
-
-bool operator==(DeviceCreation const& lhs, DeviceCreation const& rhs)
-{
-  return lhs._variant == rhs._variant;
-}
-
-bool operator!=(DeviceCreation const& lhs, DeviceCreation const& rhs)
-{
-  return !(lhs == rhs);
 }
 
 std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation const& dc)
