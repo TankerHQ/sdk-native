@@ -51,6 +51,76 @@
   TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(                \
       name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
+#define TANKER_DETAIL_PAYLOAD_SIZE(unused1, size, idx, elem) \
+  BOOST_PP_IF(idx, +, BOOST_PP_EMPTY())                      \
+  Serialization::serialized_size(k.TANKER_DETAIL_PARAMETER_NAME(elem)())
+
+#define TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(name, ...)            \
+  namespace                                                                \
+  {                                                                        \
+  unsigned int payload_size(name const& k)                                 \
+  {                                                                        \
+    return BOOST_PP_SEQ_FOR_EACH_I(TANKER_DETAIL_PAYLOAD_SIZE,             \
+                                   BOOST_PP_EMPTY(),                       \
+                                   BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)); \
+  }                                                                        \
+  }
+
+// TODO remove uses of all other macros above and rename these _2 macros
+
+#define TANKER_DETAIL_DEFINE_ACTION_DESERIALIZATION_2(name, list)            \
+  void from_serialized(Serialization::SerializedSource& ss, name& k)         \
+  {                                                                          \
+    deserializeBlockVersion(ss);                                             \
+    ss.read_varint(); /* index is ignored */                                 \
+    Serialization::deserialize_to(ss, k._trustchainId);                      \
+    deserializeBlockNature(ss, name::nature());                              \
+    ss.read_varint(); /* payload size is ignored */                          \
+                                                                             \
+    BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_DESERIALIZE, BOOST_PP_EMPTY(), list) \
+                                                                             \
+    k._hash = k.computeHash();                                               \
+  }
+
+#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_2(name, list)            \
+  std::uint8_t* to_serialized(std::uint8_t* it, name const& k)             \
+  {                                                                        \
+    it = Serialization::varint_write(it, 1); /* block version */           \
+    it = Serialization::varint_write(it, 0); /* block index */             \
+    it = Serialization::serialize(it, k.trustchainId());                   \
+    it = Serialization::varint_write(it, static_cast<int>(k.nature()));    \
+    it = Serialization::varint_write(it, payload_size(k));                 \
+                                                                           \
+    BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_SERIALIZE, BOOST_PP_EMPTY(), list) \
+    return it;                                                             \
+  }
+
+#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE_2(name)     \
+  std::size_t serialized_size(name const& k)                       \
+  {                                                                \
+    auto const payloadSize = payload_size(k);                      \
+    return 1 +                       /* version */                 \
+           1 +                       /* index */                   \
+           TrustchainId::arraySize + /* */                         \
+           1 +                       /* nature */                  \
+           Serialization::varint_size(payloadSize) + payloadSize + \
+           Crypto::Hash::arraySize + /* author */                  \
+           Crypto::Signature::arraySize;                           \
+  }
+
+#define TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(name, ...) \
+  TANKER_DETAIL_DEFINE_ACTION_DESERIALIZATION_2(                   \
+      name,                                                        \
+      BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__,                        \
+                               (author, Crypto::Hash),             \
+                               (signature, Crypto::Signature)))    \
+  TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_2(                     \
+      name,                                                        \
+      BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__,                        \
+                               (author, Crypto::Hash),             \
+                               (signature, Crypto::Signature)))    \
+  TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE_2(name)
+
 #define TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(name)          \
   void from_serialized(Serialization::SerializedSource& ss, name& k); \
   std::uint8_t* to_serialized(std::uint8_t* it, name const& k);       \

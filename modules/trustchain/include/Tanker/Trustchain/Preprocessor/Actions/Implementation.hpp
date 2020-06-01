@@ -62,3 +62,39 @@ protected:                                                                   \
 
 #define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(name, ...) \
   TANKER_DETAIL_DEFINE_ACTION(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+// TODO replace the above macro by this one
+
+#define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(name, ...)  \
+  TANKER_DETAIL_DEFINE_ACTION(                                  \
+      name,                                                     \
+      BOOST_PP_VARIADIC_TO_SEQ((trustchainId, TrustchainId),    \
+                               __VA_ARGS__,                     \
+                               (author, Crypto::Hash),          \
+                               (hash, Crypto::Hash),            \
+                               (signature, Crypto::Signature))) \
+private:                                                        \
+  Crypto::Hash computeHash() const;
+
+#define TANKER_DETAIL_HASH(unused1, unused2, elem) \
+  it = Serialization::serialize(it, TANKER_DETAIL_PARAMETER_NAME(elem)());
+
+#define TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(name, ...)                    \
+  Crypto::Hash name::computeHash() const                                   \
+  {                                                                        \
+    auto const payloadSize = payload_size(*this);                          \
+    std::vector<std::uint8_t> signatureData(1 /* nature */ + payloadSize + \
+                                            Crypto::Hash::arraySize);      \
+                                                                           \
+    auto it = signatureData.data();                                        \
+                                                                           \
+    it = Serialization::varint_write(it, static_cast<int>(nature()));      \
+    it = Serialization::serialize(it, author());                           \
+    BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_HASH,                              \
+                          BOOST_PP_EMPTY(),                                \
+                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))           \
+                                                                           \
+    assert(it == signatureData.data() + signatureData.size());             \
+                                                                           \
+    return Crypto::generichash(signatureData);                             \
+  }
