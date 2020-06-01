@@ -199,8 +199,10 @@ void testUserGroupCreationCommon(Users::Device const& authorDevice,
 
 void testUserGroupAdditionCommon(Test::Device const& authorDevice,
                                  ServerEntry const& gaEntry,
-                                 BaseGroup const& group)
+                                 Test::Group const& group)
 {
+  auto const baseGroup = BaseGroup{group};
+
   SUBCASE("should reject a UserGroupAddition for an unknown group")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -212,7 +214,7 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
   {
     unconstify(gaEntry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
+        Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
         Errc::InvalidSignature);
   }
 
@@ -222,10 +224,9 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
   {
     auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     unconstify(userGroupAddition.previousGroupBlockHash())[0]++;
-    unconstify(userGroupAddition)
-        .selfSign(authorDevice.keys().signatureKeyPair.privateKey);
+    unconstify(userGroupAddition).selfSign(group.currentSigKp().privateKey);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
+        Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
         Errc::InvalidGroup);
   }
 
@@ -234,13 +235,14 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
     auto& userGroupAddition = extract<UserGroupAddition>(gaEntry.action());
     unconstify(userGroupAddition.selfSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, group),
+        Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
         Errc::InvalidSignature);
   }
 
   SUBCASE("should accept a valid UserGroupAddition")
   {
-    CHECK_NOTHROW(Verif::verifyUserGroupAddition(gaEntry, authorDevice, group));
+    CHECK_NOTHROW(
+        Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup));
   }
 }
 
@@ -599,22 +601,22 @@ TEST_CASE("Verif UserGroupAddition")
   SUBCASE("V1")
   {
     auto aliceGroup = generator.makeGroupV1(aliceDevice, {alice});
-    auto const aliceBaseGroup = BaseGroup{aliceGroup};
+    auto const previousGroup = aliceGroup;
 
     testUserGroupAdditionCommon(
         aliceDevice,
         makeEntry(aliceGroup.addUsersV1(aliceDevice, {bob})),
-        aliceBaseGroup);
+        previousGroup);
   }
   SUBCASE("V2")
   {
     auto aliceGroup = generator.makeGroup(aliceDevice, {alice});
-    auto const aliceBaseGroup = BaseGroup{aliceGroup};
+    auto const previousGroup = aliceGroup;
 
     testUserGroupAdditionCommon(
         aliceDevice,
         makeEntry(aliceGroup.addUsers(aliceDevice, {bob})),
-        aliceBaseGroup);
+        previousGroup);
   }
 }
 
