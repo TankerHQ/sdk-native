@@ -22,6 +22,22 @@ Crypto::Hash hashField(T const& field)
   return Crypto::generichash(
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
+
+std::vector<Trustchain::UserAction> fromBlocksToUserActions(
+    std::vector<std::string> const& blocks)
+{
+  std::vector<Trustchain::UserAction> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return Trustchain::deserializeUserAction(
+                       cppcodec::base64_rfc4648::decode(block));
+                 });
+
+  return entries;
+}
 }
 
 Requester::Requester(Client* client) : _client(client)
@@ -38,28 +54,28 @@ tc::cotask<Requester::GetMeResult> Requester::getMe()
   auto const trustchainCreation =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
           cppcodec::base64_rfc4648::decode(blocks[0]));
-  auto const entries = Trustchain::fromBlocksToServerEntries(
-      std::vector(blocks.begin() + 1, blocks.end()));
+  auto const entries =
+      fromBlocksToUserActions(std::vector(blocks.begin() + 1, blocks.end()));
   TC_RETURN((GetMeResult{trustchainCreation, entries}));
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
+tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds)
 {
   auto const response =
       TC_AWAIT(_client->emit("get users blocks", {{"user_ids", userIds}}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToUserActions(response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
+tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
     gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   auto const response =
       TC_AWAIT(_client->emit("get users blocks", {{"device_ids", deviceIds}}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToUserActions(response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }
 

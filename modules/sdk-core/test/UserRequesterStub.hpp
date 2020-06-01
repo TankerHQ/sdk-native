@@ -19,11 +19,11 @@ public:
                        Crypto::SignatureKeyPair const& userSignatureKeyPair),
       override);
   MAKE_MOCK1(getUsers,
-             tc::cotask<std::vector<Trustchain::ServerEntry>>(
+             tc::cotask<std::vector<Trustchain::UserAction>>(
                  gsl::span<Trustchain::UserId const> userIds),
              override);
   MAKE_MOCK1(getUsers,
-             tc::cotask<std::vector<Trustchain::ServerEntry>>(
+             tc::cotask<std::vector<Trustchain::UserAction>>(
                  gsl::span<Trustchain::DeviceId const> deviceIds),
              override);
   MAKE_MOCK1(getKeyPublishes,

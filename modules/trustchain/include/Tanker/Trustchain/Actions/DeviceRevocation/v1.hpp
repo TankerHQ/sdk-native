@@ -1,11 +1,15 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -24,10 +28,17 @@ namespace Actions
 class DeviceRevocation1
 {
 public:
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
       DeviceRevocation1,
       TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES)
+
 public:
+  DeviceRevocation1(
+      TrustchainId const& trustchainId,
+      DeviceId const& deviceId,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& authorPrivateSignatureKey);
+
   static constexpr Nature nature();
 
 private:

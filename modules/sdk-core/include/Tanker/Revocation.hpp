@@ -51,7 +51,7 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Users::IUserAccessor& userAccessor,
                               Pusher& client);
 
-Trustchain::ClientEntry makeRevokeDeviceEntry(
+Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceEntry(
     Trustchain::DeviceId const& targetDeviceId,
     Trustchain::TrustchainId const& trustchainId,
     Users::LocalUser const& localUser,

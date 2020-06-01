@@ -13,6 +13,7 @@
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -27,13 +28,13 @@ namespace Tanker::Test
 
 struct Device : Users::Device
 {
-  Device(Trustchain::ClientEntry entry,
+  Device(Trustchain::Actions::DeviceCreation entry,
          Trustchain::UserId const& uid,
          DeviceKeys const& deviceKeys,
          bool isGhostDevice = true);
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   Crypto::PrivateSignatureKey privateSignatureKey;
-  Trustchain::ClientEntry entry;
+  Trustchain::Actions::DeviceCreation entry;
   DeviceKeys keys() const;
 };
 
@@ -97,13 +98,14 @@ struct User
 
   Trustchain::UserId const& id() const;
   std::vector<Crypto::EncryptionKeyPair> const& userKeys() const;
-  std::vector<Trustchain::ClientEntry> entries() const;
+  /// this does not contains revocation entries
+  std::vector<Trustchain::Actions::DeviceCreation> entries() const;
   std::deque<Device> const& devices() const;
   std::deque<Device>& devices();
-  Trustchain::ClientEntry revokeDevice(Device& target);
-  Trustchain::ClientEntry revokeDeviceV1(Device& target);
-  Trustchain::ClientEntry revokeDeviceForMigration(Device const& sender,
-                                                   Device& target);
+  Trustchain::Actions::DeviceRevocation2 revokeDevice(Device& target);
+  Trustchain::Actions::DeviceRevocation1 revokeDeviceV1(Device& target);
+  Trustchain::Actions::DeviceRevocation2 revokeDeviceForMigration(
+      Device const& sender, Device& target);
 
   [[nodiscard]] Device makeDevice() const;
   Device& addDevice();
@@ -212,9 +214,10 @@ public:
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
   static std::vector<Trustchain::ServerEntry> makeEntryList(
       std::vector<Trustchain::ClientEntry> const& entries);
-  static std::vector<Trustchain::ServerEntry> makeEntryList(
+  // This does not contain revocation entries
+  static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(
       std::initializer_list<Device> devices);
-  std::vector<Trustchain::ServerEntry> makeEntryList(
+  std::vector<Trustchain::UserAction> makeEntryList(
       std::initializer_list<User> users) const;
 
 private:

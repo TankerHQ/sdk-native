@@ -5,6 +5,7 @@
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
 
@@ -23,14 +24,14 @@ public:
   struct GetMeResult
   {
     Trustchain::Actions::TrustchainCreation trustchainCreation;
-    std::vector<Trustchain::ServerEntry> userEntries;
+    std::vector<Trustchain::UserAction> userEntries;
   };
 
   virtual ~IRequester() = default;
   virtual tc::cotask<GetMeResult> getMe() = 0;
-  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+  virtual tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
-  virtual tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+  virtual tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<std::vector<std::string>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;

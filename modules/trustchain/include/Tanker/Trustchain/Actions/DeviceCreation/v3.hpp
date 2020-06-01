@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
@@ -10,6 +11,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -40,10 +42,23 @@ public:
     GhostDevice,
   };
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
       DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
 
 public:
+  DeviceCreation3(
+      TrustchainId const& trustchainId,
+      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+      UserId const& userId,
+      Crypto::Signature const& delegationSignature,
+      Crypto::PublicSignatureKey const& publicSignatureKey,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
+      Crypto::SealedPrivateEncryptionKey const& sealedPrivateEncryptionKey,
+      bool isGhostDevice,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey);
+
   static constexpr Nature nature();
 
   std::vector<std::uint8_t> signatureData() const;

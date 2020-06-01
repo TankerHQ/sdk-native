@@ -48,14 +48,13 @@ Crypto::EncryptionKeyPair checkedDecrypt(
 }
 }
 
-Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
-                                      std::optional<Users::User> previousUser)
+Users::User applyDeviceCreationToUser(
+    Trustchain::Actions::DeviceCreation const& dc,
+    std::optional<Users::User> previousUser)
 {
-  auto const& dc = entry.action.get<DeviceCreation>();
-
   if (!previousUser.has_value())
     previousUser.emplace(Users::User{dc.userId(), {}, {}});
-  previousUser->addDevice({Trustchain::DeviceId{entry.hash},
+  previousUser->addDevice({Trustchain::DeviceId{dc.hash()},
                            dc.userId(),
                            dc.publicSignatureKey(),
                            dc.publicEncryptionKey(),
@@ -65,10 +64,9 @@ Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
   return *previousUser;
 }
 
-Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
-                                        Users::User previousUser)
+Users::User applyDeviceRevocationToUser(
+    Trustchain::Actions::DeviceRevocation const& dr, Users::User previousUser)
 {
-  auto const dr = entry.action.get<DeviceRevocation>();
   if (auto const v2 = dr.get_if<DeviceRevocation::v2>())
     previousUser.setUserKey(v2->publicEncryptionKey());
   previousUser.getDevice(dr.deviceId()).setRevoked();
@@ -110,7 +108,7 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::Context const& context,
-                      gsl::span<Trustchain::ServerEntry const> serverEntries)
+                      gsl::span<Trustchain::UserAction const> serverEntries)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
@@ -121,10 +119,10 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
     try
     {
       if (auto const deviceCreation =
-              serverEntry.action().get_if<DeviceCreation>())
+              boost::variant2::get_if<DeviceCreation>(&serverEntry))
       {
         auto const entry =
-            Verif::verifyDeviceCreation(serverEntry, context, user);
+            Verif::verifyDeviceCreation(*deviceCreation, context, user);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(entry, user);
         auto const& device = user->devices().back();
@@ -137,9 +135,10 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
         }
       }
       else if (auto const deviceRevocation =
-                   serverEntry.action().get_if<DeviceRevocation>())
+                   boost::variant2::get_if<DeviceRevocation>(&serverEntry))
       {
-        auto const entry = Verif::verifyDeviceRevocation(serverEntry, user);
+        auto const entry =
+            Verif::verifyDeviceRevocation(*deviceRevocation, user);
         if (auto const extractedKeys =
                 extractEncryptedUserKey(*deviceRevocation, *selfDeviceId))
           sealedKeys.push_back(*extractedKeys);
@@ -149,7 +148,9 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
     catch (Errors::Exception const& err)
     {
       if (err.errorCode().category() == Tanker::Verif::ErrcCategory())
-        TERROR("skipping invalid block {}: {}", serverEntry.hash(), err.what());
+        TERROR("skipping invalid block {}: {}",
+               Trustchain::getHash(serverEntry),
+               err.what());
       else
         throw;
     }
@@ -214,7 +215,7 @@ processUserEntries(
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::Actions::TrustchainCreation const& trustchainCreation,
-    gsl::span<Trustchain::ServerEntry const> entries)
+    gsl::span<Trustchain::UserAction const> entries)
 {
   if (entries.size() < 1)
     throw Errors::formatEx(Errors::Errc::InternalError,

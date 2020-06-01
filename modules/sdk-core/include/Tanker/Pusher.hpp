@@ -2,6 +2,7 @@
 
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -24,6 +25,7 @@ public:
   Pusher(Pusher&&) = delete;
   Pusher& operator=(Pusher&&) = delete;
 
+  tc::cotask<void> pushBlock(Trustchain::UserAction const& action);
   tc::cotask<void> pushBlock(Trustchain::GroupAction const& action);
   tc::cotask<void> pushBlock(Trustchain::ClientEntry const& entry);
   tc::cotask<void> pushKeys(gsl::span<Trustchain::ClientEntry const> entries);

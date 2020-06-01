@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -15,14 +16,23 @@ namespace Trustchain
 namespace Actions
 {
 DeviceCreation1::DeviceCreation1(
+    TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
     UserId const& userId,
-    Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-    Crypto::PublicEncryptionKey const& devicePublicEncryptionKey)
-  : _ephemeralPublicSignatureKey(ephemeralPublicSignatureKey),
+    Crypto::Signature const& delegationSignature,
+    Crypto::PublicSignatureKey const& publicSignatureKey,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _ephemeralPublicSignatureKey(ephemeralPublicSignatureKey),
     _userId(userId),
-    _publicSignatureKey(devicePublicSignatureKey),
-    _publicEncryptionKey(devicePublicEncryptionKey)
+    _delegationSignature(delegationSignature),
+    _publicSignatureKey(publicSignatureKey),
+    _publicEncryptionKey(publicEncryptionKey),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, delegationPrivateSignatureKey))
 {
 }
 
@@ -45,7 +55,11 @@ Crypto::Signature const& DeviceCreation1::sign(
   return _delegationSignature = Crypto::sign(toSign, key);
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
     DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
 TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
     DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)

@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -13,6 +14,33 @@ namespace Trustchain
 {
 namespace Actions
 {
+DeviceCreation3::DeviceCreation3(
+    TrustchainId const& trustchainId,
+    Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+    UserId const& userId,
+    Crypto::Signature const& delegationSignature,
+    Crypto::PublicSignatureKey const& publicSignatureKey,
+    Crypto::PublicEncryptionKey const& publicEncryptionKey,
+    Crypto::PublicEncryptionKey const& publicUserEncryptionKey,
+    Crypto::SealedPrivateEncryptionKey const& sealedPrivateEncryptionKey,
+    bool isGhostDevice,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _ephemeralPublicSignatureKey(ephemeralPublicSignatureKey),
+    _userId(userId),
+    _delegationSignature(delegationSignature),
+    _publicSignatureKey(publicSignatureKey),
+    _publicEncryptionKey(publicEncryptionKey),
+    _publicUserEncryptionKey(publicUserEncryptionKey),
+    _sealedPrivateUserEncryptionKey(sealedPrivateEncryptionKey),
+    _isGhostDevice(isGhostDevice),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, delegationPrivateSignatureKey))
+{
+}
+
 std::vector<std::uint8_t> DeviceCreation3::signatureData() const
 {
   std::vector<std::uint8_t> toSign(Crypto::PublicSignatureKey::arraySize +
@@ -32,7 +60,11 @@ Crypto::Signature const& DeviceCreation3::sign(
   return _delegationSignature = Crypto::sign(toSign, key);
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
     DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
 TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
     DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)

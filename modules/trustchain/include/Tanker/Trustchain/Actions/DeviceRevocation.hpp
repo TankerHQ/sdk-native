@@ -28,7 +28,12 @@ class DeviceRevocation
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(DeviceRevocation,
                                                   (DeviceRevocation1,
                                                    DeviceRevocation2),
-                                                  (deviceId, DeviceId))
+                                                  (trustchainId, TrustchainId),
+                                                  (deviceId, DeviceId),
+                                                  (author, Crypto::Hash),
+                                                  (hash, Crypto::Hash),
+                                                  (signature,
+                                                   Crypto::Signature))
 
 public:
   using v1 = DeviceRevocation1;

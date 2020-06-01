@@ -1,8 +1,10 @@
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -25,15 +27,23 @@ DeviceCreation1 DeviceCreation2::asDeviceCreation1() const
         "not zero-filled");
   }
   return DeviceCreation1{
+      _trustchainId,
       _ephemeralPublicSignatureKey,
       _userId,
       _delegationSignature,
       _publicSignatureKey,
       _publicEncryptionKey,
+      _author,
+      _hash,
+      _signature,
   };
 }
 
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
     DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
     DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)

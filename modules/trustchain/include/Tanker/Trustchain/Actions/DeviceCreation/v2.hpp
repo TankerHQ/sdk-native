@@ -8,6 +8,7 @@
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v1.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -30,7 +31,7 @@ namespace Actions
 class DeviceCreation2
 {
 public:
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
       DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 
 public:

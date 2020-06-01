@@ -27,26 +27,20 @@ Action Action::deserialize(Nature nature, gsl::span<std::uint8_t const> payload)
   case Nature::UserGroupCreation2:
   case Nature::UserGroupAddition2:
   case Nature::TrustchainCreation:
+  case Nature::DeviceCreation:
+  case Nature::DeviceCreation2:
+  case Nature::DeviceCreation3:
+  case Nature::DeviceRevocation:
+  case Nature::DeviceRevocation2:
     throw Errors::AssertionError(fmt::format(
         "{} is not supported through this code path anymore", nature));
   // how does this compile and work since there is a double implicit conversion
   // which cannot compile!? you might ask. Because variant is tricky, look at
   // constructor 4: https://en.cppreference.com/w/cpp/utility/variant/variant
-  case Nature::DeviceCreation:
-    return Serialization::deserialize<DeviceCreation::v1>(payload);
-  case Nature::DeviceCreation2:
-    return Serialization::deserialize<DeviceCreation2>(payload)
-        .asDeviceCreation1();
-  case Nature::DeviceCreation3:
-    return Serialization::deserialize<DeviceCreation::v3>(payload);
   case Nature::KeyPublishToUser:
     return Serialization::deserialize<KeyPublishToUser>(payload);
   case Nature::KeyPublishToProvisionalUser:
     return Serialization::deserialize<KeyPublishToProvisionalUser>(payload);
-  case Nature::DeviceRevocation:
-    return Serialization::deserialize<DeviceRevocation1>(payload);
-  case Nature::DeviceRevocation2:
-    return Serialization::deserialize<DeviceRevocation2>(payload);
   case Nature::KeyPublishToUserGroup:
     return Serialization::deserialize<KeyPublishToUserGroup>(payload);
   case Nature::ProvisionalIdentityClaim:

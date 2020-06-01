@@ -73,7 +73,7 @@ Device createDevice(Trustchain::TrustchainId const& tid,
 }
 }
 
-Device::Device(Trustchain::ClientEntry entry,
+Device::Device(Trustchain::Actions::DeviceCreation entry,
                Trustchain::UserId const& uid,
                DeviceKeys const& deviceKeys,
                bool isGhostDevice)
@@ -188,10 +188,9 @@ void User::addUserKey(Crypto::EncryptionKeyPair const& userKp)
   _userKeys.push_back(userKp);
 }
 
-/// this does not contains revocation entries
-std::vector<Trustchain::ClientEntry> User::entries() const
+std::vector<Trustchain::Actions::DeviceCreation> User::entries() const
 {
-  return transformTo<std::vector<Trustchain::ClientEntry>>(
+  return transformTo<std::vector<Trustchain::Actions::DeviceCreation>>(
       devices(), [](auto&& device) { return device.entry; });
 }
 
@@ -205,7 +204,7 @@ std::deque<Device>& User::devices()
   return _devices;
 }
 
-Trustchain::ClientEntry User::revokeDevice(Device& target)
+Trustchain::Actions::DeviceRevocation2 User::revokeDevice(Device& target)
 {
   auto const newUserKey = Crypto::makeEncryptionKeyPair();
   target.setRevoked();
@@ -219,7 +218,7 @@ Trustchain::ClientEntry User::revokeDevice(Device& target)
   return entry;
 }
 
-Trustchain::ClientEntry User::revokeDeviceV1(Device& target)
+Trustchain::Actions::DeviceRevocation1 User::revokeDeviceV1(Device& target)
 {
   target.setRevoked();
   auto const& source = devices().front();
@@ -229,8 +228,8 @@ Trustchain::ClientEntry User::revokeDeviceV1(Device& target)
                                     target.id());
 }
 
-Trustchain::ClientEntry User::revokeDeviceForMigration(Device const& sender,
-                                                       Device& target)
+Trustchain::Actions::DeviceRevocation2 User::revokeDeviceForMigration(
+    Device const& sender, Device& target)
 {
   auto const user = Users::User{*this};
   assert(user.findDevice(sender.id()));
@@ -638,31 +637,26 @@ std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
       [&](auto&& e) mutable { return clientToServerEntry(e, ++index); });
 }
 
-std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
+std::vector<Trustchain::Actions::DeviceCreation> Generator::makeEntryList(
     std::initializer_list<Device> devices)
 {
-  std::vector<Trustchain::ServerEntry> entries;
+  std::vector<Trustchain::Actions::DeviceCreation> entries;
   entries.reserve(devices.size());
-  auto index = 0ul;
-  std::transform(
-      std::begin(devices),
-      std::end(devices),
-      std::back_inserter(entries),
-      [&](auto&& e) { return clientToServerEntry(e.entry, ++index); });
+  std::transform(std::begin(devices),
+                 std::end(devices),
+                 std::back_inserter(entries),
+                 [&](auto&& e) { return e.entry; });
   return entries;
 }
 
-std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
+std::vector<Trustchain::UserAction> Generator::makeEntryList(
     std::initializer_list<User> users) const
 {
-  std::vector<Trustchain::ServerEntry> entries;
-  auto index = 0ul;
+  std::vector<Trustchain::UserAction> entries;
   for (auto&& user : users)
   {
-    entries = transformTo<std::vector<Trustchain::ServerEntry>>(
-        user.entries(), entries, [&](auto&& e) {
-          return clientToServerEntry(e, ++index);
-        });
+    auto const& userEntries = user.entries();
+    entries.insert(entries.end(), userEntries.begin(), userEntries.end());
   }
   return entries;
 }

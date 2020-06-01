@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
@@ -20,9 +18,7 @@ namespace Trustchain
 {
 class Action
 {
-  using variant_t = boost::variant2::variant<Actions::DeviceCreation,
-                                             Actions::DeviceRevocation,
-                                             Actions::KeyPublish,
+  using variant_t = boost::variant2::variant<Actions::KeyPublish,
                                              Actions::ProvisionalIdentityClaim>;
 
 public:

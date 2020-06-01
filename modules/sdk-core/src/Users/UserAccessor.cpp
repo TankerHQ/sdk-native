@@ -82,13 +82,13 @@ Users::User* findUserOfDevice(DevicesMap const& devicesMap,
 }
 
 auto processUserEntries(Trustchain::Context const& context,
-                        gsl::span<Trustchain::ServerEntry const> serverEntries)
+                        gsl::span<Trustchain::UserAction const> serverEntries)
 {
   UsersMap usersMap;
   DevicesMap devicesMap;
   for (auto const& serverEntry : serverEntries)
   {
-    if (auto const dc = serverEntry.action().get_if<DeviceCreation>())
+    if (auto const dc = boost::variant2::get_if<DeviceCreation>(&serverEntry))
     {
       std::optional<Users::User> user;
       auto const userIt = usersMap.find(dc->userId());
@@ -96,8 +96,7 @@ auto processUserEntries(Trustchain::Context const& context,
       if (userIt != usersMap.end())
         user = userIt->second;
 
-      auto const entry =
-          Verif::verifyDeviceCreation(serverEntry, context, user);
+      auto const entry = Verif::verifyDeviceCreation(*dc, context, user);
 
       user = Updater::applyDeviceCreationToUser(entry, user);
       usersMap[dc->userId()] = *user;
@@ -108,12 +107,12 @@ auto processUserEntries(Trustchain::Context const& context,
         throw Errors::AssertionError("DeviceCreation received more than once");
     }
     else if (auto const deviceRevocation =
-                 serverEntry.action().get_if<DeviceRevocation>())
+                 boost::variant2::get_if<DeviceRevocation>(&serverEntry))
     {
       auto const user =
           findUserOfDevice(devicesMap, usersMap, deviceRevocation->deviceId());
       auto const entry = Verif::verifyDeviceRevocation(
-          serverEntry, user ? std::make_optional(*user) : std::nullopt);
+          *deviceRevocation, user ? std::make_optional(*user) : std::nullopt);
       if (!user)
         throw Errors::AssertionError(
             "user not found, verification should have failed");
@@ -122,7 +121,8 @@ auto processUserEntries(Trustchain::Context const& context,
     }
     else
     {
-      TERROR("Expected user blocks but got {}", serverEntry.action().nature());
+      TERROR("Expected user blocks but got {}",
+             Trustchain::getNature(serverEntry));
     }
   }
   return std::make_tuple(usersMap, devicesMap);

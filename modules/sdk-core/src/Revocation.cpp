@@ -70,7 +70,7 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
   return userKeys;
 }
 
-Trustchain::ClientEntry makeRevokeDeviceEntry(
+Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceEntry(
     Trustchain::DeviceId const& targetDeviceId,
     Trustchain::TrustchainId const& trustchainId,
     Users::LocalUser const& localUser,

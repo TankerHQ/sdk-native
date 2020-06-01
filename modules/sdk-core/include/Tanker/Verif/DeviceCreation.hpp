@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 
 #include <optional>
 
@@ -17,12 +16,12 @@ namespace Tanker
 
 namespace Verif
 {
-Entry verifyDeviceCreation(
-    Trustchain::ServerEntry const& serverEntry,
+Trustchain::Actions::DeviceCreation verifyDeviceCreation(
+    Trustchain::Actions::DeviceCreation const& serverEntry,
     Crypto::PublicSignatureKey const& trustchainPubSigKey);
 
-Entry verifyDeviceCreation(
-    Trustchain::ServerEntry const& serverEntry,
+Trustchain::Actions::DeviceCreation verifyDeviceCreation(
+    Trustchain::Actions::DeviceCreation const& serverEntry,
     Trustchain::Context const& context,
     std::optional<Users::User> const& user);
 }

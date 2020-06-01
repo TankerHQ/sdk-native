@@ -7,7 +7,7 @@
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Users/User.hpp>
 
 #include <gsl-lite.hpp>
@@ -43,17 +43,19 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::Context const& trustchainContext,
-                      gsl::span<Trustchain::ServerEntry const> entries);
+                      gsl::span<Trustchain::UserAction const> entries);
 
 std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     Crypto::EncryptionKeyPair const& devEncKP,
     gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
 
-Users::User applyDeviceCreationToUser(Tanker::Entry const& entry,
-                                      std::optional<Users::User> previousUser);
+Users::User applyDeviceCreationToUser(
+    Trustchain::Actions::DeviceCreation const& entry,
+    std::optional<Users::User> previousUser);
 
-Users::User applyDeviceRevocationToUser(Tanker::Entry const& entry,
-                                        Users::User previousUser);
+Users::User applyDeviceRevocationToUser(
+    Trustchain::Actions::DeviceRevocation const& entry,
+    Users::User previousUser);
 
 std::tuple<Trustchain::Context,
            Users::User,
@@ -62,6 +64,6 @@ processUserEntries(
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::Actions::TrustchainCreation const& trustchainCreation,
-    gsl::span<Trustchain::ServerEntry const> entries);
+    gsl::span<Trustchain::UserAction const> entries);
 }
 }

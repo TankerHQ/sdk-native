@@ -43,10 +43,10 @@ void verifySubAction(DeviceCreation::v3 const& deviceCreation,
           "DeviceCreation v3 must have the last user key");
 }
 
-Entry verifyDeviceCreation(ServerEntry const& serverEntry,
-                           Users::User const& user)
+DeviceCreation verifyDeviceCreation(DeviceCreation const& deviceCreation,
+                                    Users::User const& user)
 {
-  auto authorDevice = user.findDevice(DeviceId{serverEntry.author()});
+  auto authorDevice = user.findDevice(DeviceId{deviceCreation.author()});
   ensures(
       authorDevice.has_value(),
       Errc::InvalidUserId,
@@ -60,10 +60,8 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
                    user.devices().end(),
                    *authorDevice) != user.devices().end());
 
-  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
-
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
+  ensures(Crypto::verify(deviceCreation.hash(),
+                         deviceCreation.signature(),
                          deviceCreation.ephemeralPublicSignatureKey()),
           Errc::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
@@ -75,18 +73,16 @@ Entry verifyDeviceCreation(ServerEntry const& serverEntry,
 
   deviceCreation.visit(
       [&user](auto const& val) { verifySubAction(val, user); });
-  return Verif::makeVerifiedEntry(serverEntry);
+  return deviceCreation;
 }
 }
 
-Entry verifyDeviceCreation(
-    ServerEntry const& serverEntry,
+DeviceCreation verifyDeviceCreation(
+    DeviceCreation const& deviceCreation,
     Crypto::PublicSignatureKey const& trustchainPublicSignatureKey)
 {
-  auto const& deviceCreation = serverEntry.action().get<DeviceCreation>();
-
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
+  ensures(Crypto::verify(deviceCreation.hash(),
+                         deviceCreation.signature(),
                          deviceCreation.ephemeralPublicSignatureKey()),
           Errc::InvalidSignature,
           "device creation block must be signed by the ephemeral private "
@@ -95,16 +91,13 @@ Entry verifyDeviceCreation(
           Errc::InvalidDelegationSignature,
           "device creation's delegation signature must be signed by the "
           "author's private signature key");
-  return Verif::makeVerifiedEntry(serverEntry);
+  return deviceCreation;
 }
 
-Entry verifyDeviceCreation(Trustchain::ServerEntry const& serverEntry,
-                           Trustchain::Context const& context,
-                           std::optional<Users::User> const& user)
+DeviceCreation verifyDeviceCreation(DeviceCreation const& serverEntry,
+                                    Trustchain::Context const& context,
+                                    std::optional<Users::User> const& user)
 {
-  assert(serverEntry.action().nature() == Nature::DeviceCreation ||
-         serverEntry.action().nature() == Nature::DeviceCreation3);
-
   if (serverEntry.author().base() == context.id().base())
   {
     ensures(!user.has_value(),

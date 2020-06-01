@@ -35,13 +35,12 @@ auto& extract(U& action)
   return action.template get<T>();
 }
 
-void deviceCreationCommonChecks(Trustchain::ServerEntry const& deviceEntry,
+void deviceCreationCommonChecks(DeviceCreation const& deviceEntry,
                                 Trustchain::Context const& context)
 {
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto& deviceCreation = extract<DeviceCreation>(deviceEntry.action());
-    unconstify(deviceCreation.delegationSignature())[0]++;
+    unconstify(deviceEntry.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, context, std::nullopt),
         Errc::InvalidDelegationSignature);
@@ -70,10 +69,9 @@ void deviceCreationCommonChecks(Trustchain::ServerEntry const& deviceEntry,
   }
 }
 
-void deviceCreationCommonChecks(
-    Users::User const& tankerUser,
-    Trustchain::Context const& context,
-    Trustchain::ServerEntry const& secondDeviceEntry)
+void deviceCreationCommonChecks(Users::User const& tankerUser,
+                                Trustchain::Context const& context,
+                                DeviceCreation const& secondDeviceEntry)
 {
   SUBCASE("it should reject a device creation when author device is revoked")
   {
@@ -86,8 +84,7 @@ void deviceCreationCommonChecks(
 
   SUBCASE("it should reject an incorrectly signed delegation for a device")
   {
-    auto& deviceCreation = extract<DeviceCreation>(secondDeviceEntry.action());
-    unconstify(deviceCreation.delegationSignature())[0]++;
+    unconstify(secondDeviceEntry.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDeviceEntry, context, tankerUser),
         Errc::InvalidDelegationSignature);
@@ -123,7 +120,7 @@ void deviceCreationCommonChecks(
   }
 }
 
-void deviceRevocationCommonChecks(ServerEntry const& deviceRevocation,
+void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
                                   Users::User& user)
 {
   SUBCASE("should reject an incorrectly signed DeviceRevocation")
@@ -293,8 +290,7 @@ TEST_CASE("Verif DeviceCreation v3 - Trustchain author")
   Test::Generator generator;
   auto const user = generator.makeUser("alice");
 
-  deviceCreationCommonChecks(makeEntry(user.entries().front()),
-                             generator.context());
+  deviceCreationCommonChecks(user.entries().front(), generator.context());
 }
 
 TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
@@ -302,8 +298,7 @@ TEST_CASE("Verif DeviceCreation v1 - Trustchain author")
   Test::Generator generator;
   auto const user = generator.makeUserV1("alice");
 
-  deviceCreationCommonChecks(makeEntry(user.entries().front()),
-                             generator.context());
+  deviceCreationCommonChecks(user.entries().front(), generator.context());
 }
 
 TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
@@ -313,18 +308,16 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
   auto user = generator.makeUser("alice");
   auto& firstDevice = user.devices().front();
   auto& secondDevice = user.addDevice();
-  auto deviceEntry = makeEntry(secondDevice.entry);
+  auto deviceEntry = secondDevice.entry;
 
   deviceCreationCommonChecks(user, generator.context(), deviceEntry);
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto& deviceCreation = extract<DeviceCreation>(deviceEntry.action());
-    auto& dc3 = extract<DeviceCreation3>(deviceCreation);
+    auto& dc3 = extract<DeviceCreation3>(deviceEntry);
 
     unconstify(dc3.publicUserEncryptionKey())[0]++;
-    unconstify(deviceCreation)
-        .sign(firstDevice.keys().signatureKeyPair.privateKey);
+    deviceEntry.sign(firstDevice.keys().signatureKeyPair.privateKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, generator.context(), user),
@@ -341,7 +334,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
   // otherwise we can't create a deviceV3
   user.addUserKey();
   auto& secondDevice = user.addDevice();
-  auto const deviceEntry = makeEntry(secondDevice.entry);
+  auto const deviceEntry = secondDevice.entry;
 
   SUBCASE("should reject a device creation 3 if the user has no user key")
   {
@@ -356,13 +349,11 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
   SUBCASE("should reject an incorrect userKey")
   {
-    auto& deviceCreation = extract<DeviceCreation>(deviceEntry.action());
-    auto& dc3 = extract<DeviceCreation3>(deviceCreation);
+    auto& dc3 = extract<DeviceCreation3>(deviceEntry);
 
     unconstify(dc3.publicUserEncryptionKey())[0]++;
 
-    unconstify(deviceCreation)
-        .sign(firstDevice.keys().signatureKeyPair.privateKey);
+    unconstify(dc3).sign(firstDevice.keys().signatureKeyPair.privateKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, generator.context(), user),
@@ -376,7 +367,7 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
 
   auto alice = generator.makeUserV1("alice");
   auto secondDevice = alice.addDeviceV1();
-  auto const deviceEntry = makeEntry(secondDevice.entry);
+  auto const deviceEntry = secondDevice.entry;
 
   deviceCreationCommonChecks(alice, generator.context(), deviceEntry);
 
@@ -398,7 +389,7 @@ TEST_CASE("Verif DeviceRevocationV1")
   auto& secondDevice = alice.addDeviceV1();
   auto aliceUser = Users::User{alice};
 
-  auto const revokeEntry = makeEntry(alice.revokeDeviceV1(secondDevice));
+  auto const revokeEntry = alice.revokeDeviceV1(secondDevice);
 
   SUBCASE("common")
   {
@@ -410,7 +401,7 @@ TEST_CASE("Verif DeviceRevocationV1")
     auto bob = generator.makeUserV1("bob");
     auto bobDevice = bob.makeDeviceV1();
 
-    auto const entry = makeEntry(alice.revokeDeviceV1(bobDevice));
+    auto const entry = alice.revokeDeviceV1(bobDevice);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entry, aliceUser), Errc::InvalidUser);
   }
@@ -432,7 +423,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto& secondDevice = alice.addDevice();
   alice.addDevice();
   auto aliceUser = Users::User{alice};
-  auto const entry = makeEntry(alice.revokeDevice(secondDevice));
+  auto const entry = alice.revokeDevice(secondDevice);
 
   SUBCASE("common")
   {
@@ -443,16 +434,13 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto& bobDevice = bob.addDeviceV1();
   auto& bobOtherDevice = bob.addDeviceV1();
   auto const bobUser = Users::User{bob};
-  auto entryUserV1 =
-      makeEntry(bob.revokeDeviceForMigration(bobDevice, bobOtherDevice));
+  auto entryUserV1 = bob.revokeDeviceForMigration(bobDevice, bobOtherDevice);
 
   SUBCASE(
       "should reject a revocation whose user has no userKey when "
       "PreviousPublicEncryptionKey is not a zero array")
   {
-    auto& dr = extract<DeviceRevocation>(entryUserV1.action());
-    auto& dr2 = extract<DeviceRevocation2>(dr);
-    unconstify(dr2.previousPublicEncryptionKey())[0]++;
+    unconstify(entryUserV1.previousPublicEncryptionKey())[0]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entryUserV1, bobUser),
@@ -463,9 +451,7 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a revocation whose user has no userKey when the "
       "EncryptedKeyForPreviousUserKey is not a zero array")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entryUserV1.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    unconstify(dr2.sealedKeyForPreviousUserKey())[0]++;
+    unconstify(entryUserV1.sealedKeyForPreviousUserKey())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entryUserV1, bobUser),
         Errc::InvalidUserKey);
@@ -475,17 +461,14 @@ TEST_CASE("Verif DeviceRevocationV2")
   {
     auto const revokeEntry = alice.revokeDevice(bobOtherDevice);
     TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyDeviceRevocation(makeEntry(revokeEntry), bobUser),
-        Errc::InvalidUser);
+        Verif::verifyDeviceRevocation(revokeEntry, bobUser), Errc::InvalidUser);
   }
 
   SUBCASE(
       "should reject a revocation whose user has a userKey when the "
       "previousEncryptedKey does not match the userKey")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    unconstify(dr2.previousPublicEncryptionKey())[0]++;
+    unconstify(entry.previousPublicEncryptionKey())[0]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(entry, aliceUser),
@@ -496,9 +479,8 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation2 whose userKeys field does not have "
       "exactly one element per device")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    auto& sealedUserKeysForDevices = unconstify(dr2.sealedUserKeysForDevices());
+    auto& sealedUserKeysForDevices =
+        unconstify(entry.sealedUserKeysForDevices());
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
 
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -509,9 +491,8 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceCreationV2 with a userKey fields that contains "
       "the target device of the revocation")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    auto& sealedUserKeysForDevices = unconstify(dr2.sealedUserKeysForDevices());
+    auto& sealedUserKeysForDevices =
+        unconstify(entry.sealedUserKeysForDevices());
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
     auto const sealedPrivateEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("encrypted private key");
@@ -526,9 +507,8 @@ TEST_CASE("Verif DeviceRevocationV2")
       "should reject a DeviceRevocation whose userKeys fields has a device "
       "that does not belong to the author's devices")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    auto& sealedUserKeysForDevices = unconstify(dr2.sealedUserKeysForDevices());
+    auto& sealedUserKeysForDevices =
+        unconstify(entry.sealedUserKeysForDevices());
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
 
     auto const sealedPrivateEncryptionKey =
@@ -543,9 +523,8 @@ TEST_CASE("Verif DeviceRevocationV2")
   SUBCASE(
       "should reject a DeviceRevocation whose userKeys fields has a duplicates")
   {
-    auto& deviceRevocation = extract<DeviceRevocation>(entry.action());
-    auto& dr2 = extract<DeviceRevocation2>(deviceRevocation);
-    auto& sealedUserKeysForDevices = unconstify(dr2.sealedUserKeysForDevices());
+    auto& sealedUserKeysForDevices =
+        unconstify(entry.sealedUserKeysForDevices());
     sealedUserKeysForDevices.erase(sealedUserKeysForDevices.begin());
     sealedUserKeysForDevices.push_back(*sealedUserKeysForDevices.begin());
 

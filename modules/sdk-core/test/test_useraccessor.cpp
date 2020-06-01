@@ -26,7 +26,7 @@ TEST_CASE("UserAccessor")
   SUBCASE("it should return user ids it did not find")
   {
     REQUIRE_CALL(requester, getUsers(ANY(gsl::span<Trustchain::UserId const>)))
-        .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
+        .RETURN(makeCoTask(std::vector<Trustchain::UserAction>{}));
 
     std::vector ids{bob.id(), charlie.id()};
     auto const result = AWAIT(userAccessor.pull(ids));
