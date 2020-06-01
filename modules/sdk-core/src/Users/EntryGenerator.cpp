@@ -117,8 +117,8 @@ ClientEntry revokeDeviceEntry(
 {
   DeviceRevocation2 dr2{toBeRevoked,
                         publicEncryptionKey,
-                        encryptedKeyForPreviousUserKey,
                         previousPublicEncryptionKey,
+                        encryptedKeyForPreviousUserKey,
                         userKeys};
   return ClientEntry::create(
       trustchainId, static_cast<Crypto::Hash>(author), dr2, signatureKey);

@@ -149,8 +149,8 @@ TEST_CASE("Serialization test vectors")
     DeviceRevocation::v2 const dr2{
         DeviceId{serializedDeviceId},
         Crypto::PublicEncryptionKey{serializedPublicEncryptionKey},
-        Crypto::SealedPrivateEncryptionKey{serializedSealedKeyForPreviousUser},
         Crypto::PublicEncryptionKey{serializedPreviousPublicEncryptionKey},
+        Crypto::SealedPrivateEncryptionKey{serializedSealedKeyForPreviousUser},
         sealedKeysForDevices};
 
     CHECK(Serialization::deserialize<DeviceRevocation::v2>(
