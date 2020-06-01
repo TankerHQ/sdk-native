@@ -46,12 +46,12 @@ TEST_CASE("DeviceCreation tests")
 
     SUBCASE("can convert with a zero-filled lastReset field")
     {
-      DeviceCreation2 dc2(ephemeralPublicSignatureKey,
+      DeviceCreation2 dc2(lastReset,
+                          ephemeralPublicSignatureKey,
                           userId,
                           delegationSignature,
                           publicSignatureKey,
-                          publicEncryptionKey,
-                          lastReset);
+                          publicEncryptionKey);
 
       CHECK_NOTHROW(dc2.asDeviceCreation1());
     }
@@ -59,12 +59,12 @@ TEST_CASE("DeviceCreation tests")
     SUBCASE("throws if lastReset is not zero-filled")
     {
       lastReset[0]++;
-      DeviceCreation2 dc2(ephemeralPublicSignatureKey,
+      DeviceCreation2 dc2(lastReset,
+                          ephemeralPublicSignatureKey,
                           userId,
                           delegationSignature,
                           publicSignatureKey,
-                          publicEncryptionKey,
-                          lastReset);
+                          publicEncryptionKey);
 
       TANKER_CHECK_THROWS_WITH_CODE(dc2.asDeviceCreation1(),
                                     Errc::InvalidLastResetField);
@@ -176,12 +176,12 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicEncryptionKey>("public enc key");
     auto const lastReset = make<Crypto::Hash>("reset block");
 
-    DeviceCreation2 const dc2(ephemeralPublicSignatureKey,
+    DeviceCreation2 const dc2(lastReset,
+                              ephemeralPublicSignatureKey,
                               userId,
                               delegationSignature,
                               publicSignatureKey,
-                              publicEncryptionKey,
-                              lastReset);
+                              publicEncryptionKey);
 
     CHECK(Serialization::serialize(dc2) == serializedDevice);
     CHECK(Serialization::deserialize<DeviceCreation2>(serializedDevice) == dc2);

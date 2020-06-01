@@ -20,71 +20,36 @@ namespace Trustchain
 {
 namespace Actions
 {
-class DeviceCreation2 : private DeviceCreation1
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES   \
+  (lastReset, Crypto::Hash),                                      \
+      (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey),  \
+      (userId, UserId), (delegationSignature, Crypto::Signature), \
+      (publicSignatureKey, Crypto::PublicSignatureKey),           \
+      (publicEncryptionKey, Crypto::PublicEncryptionKey)
+
+class DeviceCreation2
 {
-  // GCC 8.1 fails to build when base_t is used...
-  // Eldritch compiler bug
-  using base_type = DeviceCreation1;
+public:
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+      DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 
 public:
-  DeviceCreation2() = default;
-  DeviceCreation2(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-                  UserId const& userId,
-                  Crypto::Signature const& delegationSignature,
-                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
-                  Crypto::Hash const& lastReset);
-  DeviceCreation2(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-                  UserId const& userId,
-                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey,
-                  Crypto::Hash const& lastReset);
-
   static constexpr Nature nature();
 
-  using base_type::delegationSignature;
-  using base_type::ephemeralPublicSignatureKey;
-  using base_type::publicEncryptionKey;
-  using base_type::publicSignatureKey;
-  using base_type::sign;
-  using base_type::signatureData;
-  using base_type::userId;
-
-  Crypto::Hash const& lastReset() const;
-
-  // throws if !lastReset().is_null()
-  DeviceCreation1 const& asDeviceCreation1() const;
+  DeviceCreation1 asDeviceCreation1() const;
 
 private:
-  Crypto::Hash _lastReset;
-
-  friend bool operator==(DeviceCreation2 const& lhs,
-                         DeviceCreation2 const& rhs);
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceCreation2&);
-  friend void to_json(nlohmann::json&, DeviceCreation2 const&);
-  friend std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation2 const&);
 };
-
-bool operator==(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
-bool operator!=(DeviceCreation2 const& lhs, DeviceCreation2 const& rhs);
-
-void to_json(nlohmann::json&, DeviceCreation2 const&);
-
-void from_serialized(Serialization::SerializedSource&, DeviceCreation2&);
-std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation2 const&);
-
-constexpr std::size_t serialized_size(DeviceCreation2 const&)
-{
-  return (Crypto::PublicSignatureKey::arraySize * 2) + UserId::arraySize +
-         Crypto::Signature::arraySize + Crypto::PublicEncryptionKey::arraySize +
-         Crypto::Hash::arraySize;
-}
 
 constexpr Nature DeviceCreation2::nature()
 {
   return Nature::DeviceCreation2;
 }
+
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation2)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceCreation2)
 }
 }
 }
