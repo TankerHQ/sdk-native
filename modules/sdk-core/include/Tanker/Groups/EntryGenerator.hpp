@@ -2,9 +2,9 @@
 
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -55,7 +55,7 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-Trustchain::ClientEntry createKeyPublishToGroupEntry(
+Trustchain::Actions::KeyPublishToUserGroup createKeyPublishToGroupEntry(
     Crypto::SealedSymmetricKey const& symKey,
     Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,

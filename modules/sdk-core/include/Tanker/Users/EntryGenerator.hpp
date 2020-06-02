@@ -8,6 +8,8 @@
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -68,7 +70,8 @@ Trustchain::ClientEntry createProvisionalIdentityClaimEntry(
     ProvisionalUsers::SecretUser const& provisionalUser,
     Crypto::EncryptionKeyPair const& userKeyPair);
 
-Trustchain::ClientEntry createKeyPublishToProvisionalUserEntry(
+Trustchain::Actions::KeyPublishToProvisionalUser
+createKeyPublishToProvisionalUserEntry(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -77,7 +80,7 @@ Trustchain::ClientEntry createKeyPublishToProvisionalUserEntry(
     Trustchain::ResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey);
 
-Trustchain::ClientEntry createKeyPublishToUserEntry(
+Trustchain::Actions::KeyPublishToUser createKeyPublishToUserEntry(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,

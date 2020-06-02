@@ -11,6 +11,7 @@
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
+#include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserAction.hpp>
@@ -199,15 +200,16 @@ public:
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
 
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    User const& receiver,
-                                    Resource const& res);
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    Group const& receiver,
-                                    Resource const& res);
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    ProvisionalUser const& receiver,
-                                    Resource const& res);
+  Trustchain::Actions::KeyPublishToUser shareWith(Device const& sender,
+                                                  User const& receiver,
+                                                  Resource const& res);
+  Trustchain::Actions::KeyPublishToUserGroup shareWith(Device const& sender,
+                                                       Group const& receiver,
+                                                       Resource const& res);
+  Trustchain::Actions::KeyPublishToProvisionalUser shareWith(
+      Device const& sender,
+      ProvisionalUser const& receiver,
+      Resource const& res);
 
   Trustchain::Context const& context() const;
   Trustchain::Actions::TrustchainCreation const& rootBlock() const;

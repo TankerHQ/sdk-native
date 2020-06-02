@@ -1,7 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
 namespace Tanker::Users
@@ -186,7 +185,8 @@ ClientEntry createProvisionalIdentityClaimEntry(
                              deviceSignatureKey);
 }
 
-ClientEntry createKeyPublishToProvisionalUserEntry(
+Trustchain::Actions::KeyPublishToProvisionalUser
+createKeyPublishToProvisionalUserEntry(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -195,16 +195,18 @@ ClientEntry createKeyPublishToProvisionalUserEntry(
     ResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey)
 {
-  Trustchain::Actions::KeyPublishToProvisionalUser kp{
-      appPublicSignatureKey, tankerPublicSignatureKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return Trustchain::Actions::KeyPublishToProvisionalUser{
+      trustchainId,
+      appPublicSignatureKey,
+      tankerPublicSignatureKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey,
+  };
 }
 
-ClientEntry createKeyPublishToUserEntry(
+Trustchain::Actions::KeyPublishToUser createKeyPublishToUserEntry(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -212,12 +214,12 @@ ClientEntry createKeyPublishToUserEntry(
     ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey)
 {
-  Trustchain::Actions::KeyPublishToUser kp{
-      recipientPublicEncryptionKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return Trustchain::Actions::KeyPublishToUser{
+      trustchainId,
+      recipientPublicEncryptionKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey};
 }
 }

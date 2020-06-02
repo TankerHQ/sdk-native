@@ -99,7 +99,7 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
   };
 }
 
-ClientEntry createKeyPublishToGroupEntry(
+KeyPublishToUserGroup createKeyPublishToGroupEntry(
     Crypto::SealedSymmetricKey const& symKey,
     ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
@@ -107,11 +107,13 @@ ClientEntry createKeyPublishToGroupEntry(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
-  KeyPublishToUserGroup kp{recipientPublicEncryptionKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return KeyPublishToUserGroup{
+      trustchainId,
+      recipientPublicEncryptionKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey,
+  };
 }
 }

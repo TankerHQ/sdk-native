@@ -45,6 +45,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Serialization.hpp
   include/Tanker/Trustchain/GroupAction.hpp
   include/Tanker/Trustchain/UserAction.hpp
+  include/Tanker/Trustchain/KeyPublishAction.hpp
 
   src/Action.cpp
   src/Actions/DeviceCreation.cpp
@@ -79,6 +80,7 @@ add_library(tankertrustchain STATIC
   src/Serialization.cpp
   src/GroupAction.cpp
   src/UserAction.cpp
+  src/KeyPublishAction.cpp
 )
 
 target_include_directories(tankertrustchain

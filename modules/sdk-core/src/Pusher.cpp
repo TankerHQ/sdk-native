@@ -34,7 +34,7 @@ tc::cotask<void> Pusher::pushBlock(Trustchain::ClientEntry const& entry)
 }
 
 tc::cotask<void> Pusher::pushKeys(
-    gsl::span<Trustchain::ClientEntry const> entries)
+    gsl::span<Trustchain::KeyPublishAction const> entries)
 {
   std::vector<std::string> sb;
   sb.reserve(entries.size());

@@ -38,6 +38,22 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
 
   return entries;
 }
+
+std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
+    std::vector<std::string> const& blocks)
+{
+  std::vector<Trustchain::KeyPublishAction> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return Trustchain::deserializeKeyPublishAction(
+                       cppcodec::base64_rfc4648::decode(block));
+                 });
+
+  return entries;
+}
 }
 
 Requester::Requester(Client* client) : _client(client)
@@ -79,12 +95,14 @@ tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
   TC_RETURN(ret);
 }
 
-tc::cotask<std::vector<std::string>> Requester::getKeyPublishes(
-    gsl::span<Trustchain::ResourceId const> resourceIds)
+tc::cotask<std::vector<Trustchain::KeyPublishAction>>
+Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  auto const json = TC_AWAIT(
+  auto const response = TC_AWAIT(
       _client->emit("get key publishes", {{"resource_ids", resourceIds}}));
-  TC_RETURN(json.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToKeyPublishActions(response.get<std::vector<std::string>>());
+  TC_RETURN(ret);
 }
 
 tc::cotask<void> Requester::authenticate(

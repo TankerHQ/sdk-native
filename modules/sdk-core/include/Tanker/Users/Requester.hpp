@@ -26,7 +26,7 @@ public:
       gsl::span<Trustchain::UserId const> userIds) override;
   tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
-  tc::cotask<std::vector<std::string>> getKeyPublishes(
+  tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
   tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,

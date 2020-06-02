@@ -27,7 +27,7 @@ public:
                  gsl::span<Trustchain::DeviceId const> deviceIds),
              override);
   MAKE_MOCK1(getKeyPublishes,
-             tc::cotask<std::vector<std::string>>(
+             tc::cotask<std::vector<Trustchain::KeyPublishAction>>(
                  gsl::span<Trustchain::ResourceId const> resourceIds),
              override);
   MAKE_MOCK1(getPublicProvisionalIdentities,

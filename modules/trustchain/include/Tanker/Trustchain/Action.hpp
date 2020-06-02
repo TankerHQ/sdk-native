@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
@@ -18,8 +17,7 @@ namespace Trustchain
 {
 class Action
 {
-  using variant_t = boost::variant2::variant<Actions::KeyPublish,
-                                             Actions::ProvisionalIdentityClaim>;
+  using variant_t = boost::variant2::variant<Actions::ProvisionalIdentityClaim>;
 
 public:
   Action() = default;

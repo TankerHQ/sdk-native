@@ -586,9 +586,9 @@ Group Generator::makeGroupV1(Device const& author,
   return {context().id(), author, users};
 }
 
-Trustchain::ClientEntry Generator::shareWith(Device const& sender,
-                                             User const& receiver,
-                                             Resource const& res)
+Trustchain::Actions::KeyPublishToUser Generator::shareWith(Device const& sender,
+                                                           User const& receiver,
+                                                           Resource const& res)
 {
   return Share::makeKeyPublishToUser(context().id(),
                                      sender.id(),
@@ -598,9 +598,8 @@ Trustchain::ClientEntry Generator::shareWith(Device const& sender,
                                      res.key());
 }
 
-Trustchain::ClientEntry Generator::shareWith(Device const& sender,
-                                             Group const& receiver,
-                                             Resource const& res)
+Trustchain::Actions::KeyPublishToUserGroup Generator::shareWith(
+    Device const& sender, Group const& receiver, Resource const& res)
 {
   return Share::makeKeyPublishToGroup(context().id(),
                                       sender.id(),
@@ -610,9 +609,8 @@ Trustchain::ClientEntry Generator::shareWith(Device const& sender,
                                       res.key());
 }
 
-Trustchain::ClientEntry Generator::shareWith(Device const& sender,
-                                             ProvisionalUser const& receiver,
-                                             Resource const& res)
+Trustchain::Actions::KeyPublishToProvisionalUser Generator::shareWith(
+    Device const& sender, ProvisionalUser const& receiver, Resource const& res)
 {
   return Share::makeKeyPublishToProvisionalUser(
       context().id(),
