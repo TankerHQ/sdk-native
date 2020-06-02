@@ -4,6 +4,9 @@
 #include <Tanker/Crypto/SealedSymmetricKey.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <nlohmann/json_fwd.hpp>
@@ -17,47 +20,33 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_GROUP_ATTRIBUTES \
+  (recipientPublicEncryptionKey, Crypto::PublicEncryptionKey),         \
+      (resourceId, ResourceId),                                        \
+      (sealedSymmetricKey, Crypto::SealedSymmetricKey)
+
 class KeyPublishToUserGroup
 {
 public:
-  KeyPublishToUserGroup() = default;
-  KeyPublishToUserGroup(Crypto::PublicEncryptionKey const&,
-                        ResourceId const&,
-                        Crypto::SealedSymmetricKey const&);
+  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+      KeyPublishToUserGroup,
+      TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_GROUP_ATTRIBUTES)
 
+public:
   static constexpr Nature nature();
 
-  Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey() const;
-  ResourceId const& resourceId() const;
-  Crypto::SealedSymmetricKey const& sealedSymmetricKey() const;
-
 private:
-  Crypto::PublicEncryptionKey _recipientPublicEncryptionKey;
-  ResourceId _resourceId;
-  Crypto::SealedSymmetricKey _sealedSymmetricKey;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               KeyPublishToUserGroup&);
 };
-
-bool operator==(KeyPublishToUserGroup const&, KeyPublishToUserGroup const&);
-bool operator!=(KeyPublishToUserGroup const&, KeyPublishToUserGroup const&);
-
-void from_serialized(Serialization::SerializedSource&, KeyPublishToUserGroup&);
-std::uint8_t* to_serialized(std::uint8_t*, KeyPublishToUserGroup const&);
-
-constexpr std::size_t serialized_size(KeyPublishToUserGroup const&)
-{
-  return Crypto::PublicEncryptionKey::arraySize + ResourceId::arraySize +
-         Crypto::SealedSymmetricKey::arraySize;
-}
-
-void to_json(nlohmann::json&, KeyPublishToUserGroup const&);
 
 constexpr Nature KeyPublishToUserGroup::nature()
 {
   return Nature::KeyPublishToUserGroup;
 }
+
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(KeyPublishToUserGroup)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(KeyPublishToUserGroup)
 }
 }
 }
