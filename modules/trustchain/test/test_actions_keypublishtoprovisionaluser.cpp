@@ -17,7 +17,7 @@ TEST_CASE("KeyPublishToProvisionalUser tests")
   Crypto::PublicSignatureKey const tankerPublicSignatureKey{};
   Crypto::TwoTimesSealedSymmetricKey const key{};
   KeyPublishToProvisionalUser kp(
-      appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key);
+      appPublicSignatureKey, tankerPublicSignatureKey, resourceId, key);
 
   CHECK(kp.nature() == Nature::KeyPublishToProvisionalUser);
 }
@@ -61,7 +61,7 @@ TEST_CASE("Serialization test vectors")
     auto const key =
         make<Crypto::TwoTimesSealedSymmetricKey>("encrypted key...");
     KeyPublishToProvisionalUser const kp(
-        appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key);
+        appPublicSignatureKey, tankerPublicSignatureKey, resourceId, key);
 
     CHECK(Serialization::serialize(kp) ==
           serializedKeyPublishToProvisionalUser);

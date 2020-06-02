@@ -196,7 +196,7 @@ ClientEntry createKeyPublishToProvisionalUserEntry(
     Crypto::TwoTimesSealedSymmetricKey const& symKey)
 {
   Trustchain::Actions::KeyPublishToProvisionalUser kp{
-      appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey};
+      appPublicSignatureKey, tankerPublicSignatureKey, resourceId, symKey};
 
   return ClientEntry::create(trustchainId,
                              static_cast<Crypto::Hash>(deviceId),
