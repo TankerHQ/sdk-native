@@ -17,25 +17,25 @@ namespace Tanker
 namespace Verif
 {
 Trustchain::GroupAction verifyUserGroupCreation(
-    Trustchain::GroupAction const& serverEntry,
+    Trustchain::GroupAction const& action,
     Users::Device const& author,
     std::optional<BaseGroup> const& previousGroup)
 {
-  assert(getNature(serverEntry) == Nature::UserGroupCreation1 ||
-         getNature(serverEntry) == Nature::UserGroupCreation2);
+  assert(getNature(action) == Nature::UserGroupCreation1 ||
+         getNature(action) == Nature::UserGroupCreation2);
 
   ensures(!previousGroup,
           Verif::Errc::InvalidGroup,
           "UserGroupCreation - group already exist");
 
-  ensures(Crypto::verify(getHash(serverEntry),
-                         getSignature(serverEntry),
-                         author.publicSignatureKey()),
-          Errc::InvalidSignature,
-          "UserGroupCreation block must be signed by the author device");
+  ensures(
+      Crypto::verify(
+          getHash(action), getSignature(action), author.publicSignatureKey()),
+      Errc::InvalidSignature,
+      "UserGroupCreation block must be signed by the author device");
 
   auto const& userGroupCreation =
-      boost::variant2::get<UserGroupCreation>(serverEntry);
+      boost::variant2::get<UserGroupCreation>(action);
 
   ensures(Crypto::verify(userGroupCreation.signatureData(),
                          userGroupCreation.selfSignature(),
@@ -44,7 +44,7 @@ Trustchain::GroupAction verifyUserGroupCreation(
           "UserGroupCreation signature data must be signed with the group "
           "public key");
 
-  return serverEntry;
+  return action;
 }
 }
 }

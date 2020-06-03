@@ -15,29 +15,21 @@
 
 namespace Tanker::Users
 {
-Trustchain::Actions::DeviceCreation1 createDeviceV1Entry(
+Trustchain::Actions::DeviceCreation1 createDeviceV1Action(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::Hash const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey);
 
-Trustchain::Actions::DeviceCreation3 createNewUserEntry(
+Trustchain::Actions::DeviceCreation3 createNewUserAction(
     Trustchain::TrustchainId const& trustchainId,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys);
 
-Trustchain::Actions::DeviceCreation3 createNewDeviceEntry(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys);
-
-Trustchain::Actions::DeviceCreation3 createNewGhostDeviceEntry(
+Trustchain::Actions::DeviceCreation3 createNewDeviceAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& author,
     Identity::Delegation const& delegation,
@@ -45,7 +37,15 @@ Trustchain::Actions::DeviceCreation3 createNewGhostDeviceEntry(
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys);
 
-Trustchain::Actions::DeviceRevocation2 revokeDeviceEntry(
+Trustchain::Actions::DeviceCreation3 createNewGhostDeviceAction(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& author,
+    Identity::Delegation const& delegation,
+    Crypto::PublicSignatureKey const& signatureKey,
+    Crypto::PublicEncryptionKey const& encryptionKey,
+    Crypto::EncryptionKeyPair const& userEncryptionKeys);
+
+Trustchain::Actions::DeviceRevocation2 createRevokeDeviceAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& author,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -56,14 +56,14 @@ Trustchain::Actions::DeviceRevocation2 revokeDeviceEntry(
     Trustchain::Actions::DeviceRevocation::v2::SealedKeysForDevices const&
         userKeys);
 
-Trustchain::Actions::DeviceRevocation1 revokeDeviceV1Entry(
+Trustchain::Actions::DeviceRevocation1 createRevokeDeviceV1Action(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& author,
     Crypto::PrivateSignatureKey const& signatureKey,
     Trustchain::DeviceId const& toBeRevoked);
 
 Trustchain::Actions::ProvisionalIdentityClaim
-createProvisionalIdentityClaimEntry(
+createProvisionalIdentityClaimAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -72,7 +72,7 @@ createProvisionalIdentityClaimEntry(
     Crypto::EncryptionKeyPair const& userKeyPair);
 
 Trustchain::Actions::KeyPublishToProvisionalUser
-createKeyPublishToProvisionalUserEntry(
+createKeyPublishToProvisionalUserAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -81,7 +81,7 @@ createKeyPublishToProvisionalUserEntry(
     Trustchain::ResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey);
 
-Trustchain::Actions::KeyPublishToUser createKeyPublishToUserEntry(
+Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,

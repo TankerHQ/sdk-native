@@ -36,7 +36,7 @@ public:
       emscripten::val const& idx) = 0;
   virtual emscripten::val setTrustchainPublicSignatureKey(
       emscripten::val const& idx) = 0;
-  virtual emscripten::val addTrustchainEntry(emscripten::val const& entry) = 0;
+  virtual emscripten::val addTrustchainEntry(emscripten::val const& action) = 0;
   virtual emscripten::val findTrustchainEntry(
       emscripten::val const& resourceId) = 0;
 
@@ -375,14 +375,14 @@ struct toVal
 };
 }
 
-tc::cotask<void> JsDatabase::addTrustchainEntry(Entry const& entry)
+tc::cotask<void> JsDatabase::addTrustchainEntry(Entry const& action)
 {
   auto val = emscripten::val::object();
-  val.set("index", emscripten::val(static_cast<double>(entry.index)));
-  val.set("nature", emscripten::val(static_cast<int>(entry.nature)));
-  val.set("author", emscripten::val(containerToJs(entry.author)));
-  val.set("action", entry.action.visit(toVal{}));
-  val.set("hash", emscripten::val(containerToJs(entry.hash)));
+  val.set("index", emscripten::val(static_cast<double>(action.index)));
+  val.set("nature", emscripten::val(static_cast<int>(action.nature)));
+  val.set("author", emscripten::val(containerToJs(action.author)));
+  val.set("action", action.action.visit(toVal{}));
+  val.set("hash", emscripten::val(containerToJs(action.hash)));
   TC_AWAIT(jsPromiseToFuture(_db->addTrustchainEntry(val)));
 }
 
@@ -390,20 +390,20 @@ namespace
 {
 Entry jsEntryToEntry(emscripten::val const& jsEntry)
 {
-  Entry entry{};
-  entry.index = static_cast<uint64_t>(jsEntry["index"].as<double>());
-  entry.nature = static_cast<Nature>(jsEntry["nature"].as<int>());
-  entry.author = Crypto::Hash{copyToVector(jsEntry["author"])};
-  entry.hash = Crypto::Hash{copyToVector(jsEntry["hash"])};
+  Entry action{};
+  action.index = static_cast<uint64_t>(jsEntry["index"].as<double>());
+  action.nature = static_cast<Nature>(jsEntry["nature"].as<int>());
+  action.author = Crypto::Hash{copyToVector(jsEntry["author"])};
+  action.hash = Crypto::Hash{copyToVector(jsEntry["hash"])};
 
-  if (entry.nature == Nature::TrustchainCreation)
+  if (action.nature == Nature::TrustchainCreation)
   {
-    entry.action = TrustchainCreation{Crypto::PublicSignatureKey{
+    action.action = TrustchainCreation{Crypto::PublicSignatureKey{
         copyToVector(jsEntry["action"]["publicSignatureKey"])}};
   }
-  else if (entry.nature == Nature::DeviceCreation ||
-           entry.nature == Nature::DeviceCreation2 ||
-           entry.nature == Nature::DeviceCreation3)
+  else if (action.nature == Nature::DeviceCreation ||
+           action.nature == Nature::DeviceCreation2 ||
+           action.nature == Nature::DeviceCreation3)
   {
     Crypto::PublicSignatureKey ephemeralPublicSignatureKey(
         copyToVector(jsEntry["action"]["ephemeralPublicSignatureKey"]));
@@ -435,7 +435,7 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
           sealedPrivateEncryptionKey,
           (isGhostDevice ? DeviceCreation::DeviceType::GhostDevice :
                            DeviceCreation::DeviceType::Device));
-      entry.action = dc;
+      action.action = dc;
     }
     else
     {
@@ -444,39 +444,39 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
                             delegationSignature,
                             publicSignatureKey,
                             publicEncryptionKey);
-      entry.action = dc;
+      action.action = dc;
     }
   }
-  else if (entry.nature == Nature::KeyPublishToDevice)
+  else if (action.nature == Nature::KeyPublishToDevice)
   {
     KeyPublishToDevice kp(
         DeviceId{copyToVector(jsEntry["action"]["recipient"])},
         ResourceId{copyToVector(jsEntry["action"]["resourceId"])},
         Crypto::EncryptedSymmetricKey{
             copyToVector(jsEntry["action"]["resourceKey"])});
-    entry.action = kp;
+    action.action = kp;
   }
-  else if (entry.nature == Nature::KeyPublishToUser)
+  else if (action.nature == Nature::KeyPublishToUser)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
     ResourceId const resourceId(copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = KeyPublishToUser{
+    action.action = KeyPublishToUser{
         recipientPublicEncryptionKey, resourceId, sealedSymmetricKey};
   }
-  else if (entry.nature == Nature::KeyPublishToUserGroup)
+  else if (action.nature == Nature::KeyPublishToUserGroup)
   {
     Crypto::PublicEncryptionKey const recipientPublicEncryptionKey(
         copyToVector(jsEntry["action"]["recipientPublicEncryptionKey"]));
     ResourceId const resourceId(copyToVector(jsEntry["action"]["resourceId"]));
     Crypto::SealedSymmetricKey const sealedSymmetricKey(
         copyToVector(jsEntry["action"]["resourceKey"]));
-    entry.action = KeyPublishToUserGroup{
+    action.action = KeyPublishToUserGroup{
         recipientPublicEncryptionKey, resourceId, sealedSymmetricKey};
   }
-  else if (entry.nature == Nature::KeyPublishToProvisionalUser)
+  else if (action.nature == Nature::KeyPublishToProvisionalUser)
   {
     Crypto::PublicSignatureKey const appPublicSignatureKey{
         copyToVector(jsEntry["action"]["appPublicSignatureKey"])};
@@ -485,23 +485,23 @@ Entry jsEntryToEntry(emscripten::val const& jsEntry)
     ResourceId const resourceId{copyToVector(jsEntry["action"]["resourceId"])};
     Crypto::TwoTimesSealedSymmetricKey const key{
         copyToVector(jsEntry["action"]["resourceKey"])};
-    entry.action = KeyPublishToProvisionalUser{
+    action.action = KeyPublishToProvisionalUser{
         appPublicSignatureKey, resourceId, tankerPublicSignatureKey, key};
   }
 
-  return entry;
+  return action;
 }
 }
 
 tc::cotask<std::optional<Entry>> JsDatabase::findTrustchainEntry(
     Crypto::Hash const& hash)
 {
-  auto const entry = TC_AWAIT(
+  auto const action = TC_AWAIT(
       jsPromiseToFuture(_db->findTrustchainEntry(containerToJs(hash))));
-  if (entry.isNull() || entry.isUndefined())
+  if (action.isNull() || action.isUndefined())
     TC_RETURN(std::nullopt);
 
-  TC_RETURN(jsEntryToEntry(entry));
+  TC_RETURN(jsEntryToEntry(action));
 }
 
 tc::cotask<void> JsDatabase::putContact(

@@ -36,13 +36,13 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
   {
     auto const entries =
         TC_AWAIT(_requester->getKeyPublishes(gsl::make_span(&resourceId, 1)));
-    for (auto const& entry : entries)
+    for (auto const& action : entries)
     {
       TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
                                               *_localUserAccessor,
                                               *_groupAccessor,
                                               *_provisionalUsersAccessor,
-                                              entry));
+                                              action));
     }
     key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));
   }

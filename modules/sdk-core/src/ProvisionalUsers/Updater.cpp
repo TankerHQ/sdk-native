@@ -46,7 +46,7 @@ tc::cotask<DeviceMap> extractAuthors(
       std::begin(entries),
       std::end(entries),
       std::begin(authors),
-      [](auto const& entry) { return Trustchain::DeviceId{entry.author()}; });
+      [](auto const& action) { return Trustchain::DeviceId{action.author()}; });
   auto const pullResult = TC_AWAIT(contactAccessor.pull(authors));
   if (!pullResult.notFound.empty())
   {
@@ -99,35 +99,33 @@ tc::cotask<UsedSecretUser> extractKeysToStore(
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& contactAccessor,
-    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const>
-        serverEntries)
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions)
 {
-  auto const authors = TC_AWAIT(extractAuthors(contactAccessor, serverEntries));
+  auto const authors = TC_AWAIT(extractAuthors(contactAccessor, actions));
 
   std::vector<UsedSecretUser> out;
-  for (auto const& serverEntry : serverEntries)
+  for (auto const& action : actions)
   {
     try
     {
-      auto const authorIt =
-          authors.find(Trustchain::DeviceId{serverEntry.author()});
+      auto const authorIt = authors.find(Trustchain::DeviceId{action.author()});
       Verif::ensures(authorIt != authors.end(),
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = authorIt->second;
 
-      auto const entry =
-          Verif::verifyProvisionalIdentityClaim(serverEntry, author);
+      auto const verifiedAction =
+          Verif::verifyProvisionalIdentityClaim(action, author);
 
-      out.push_back(TC_AWAIT(extractKeysToStore(localUserAccessor, entry)));
+      out.push_back(
+          TC_AWAIT(extractKeysToStore(localUserAccessor, verifiedAction)));
     }
     catch (Errors::Exception const& err)
     {
       if (err.errorCode().category() == Verif::ErrcCategory())
       {
-        TERROR("skipping invalid claim block {}: {}",
-               serverEntry.hash(),
-               err.what());
+        TERROR(
+            "skipping invalid claim block {}: {}", action.hash(), err.what());
       }
       else
         throw;

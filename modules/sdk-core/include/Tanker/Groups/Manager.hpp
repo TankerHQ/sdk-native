@@ -42,7 +42,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
     Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
 
-Trustchain::Actions::UserGroupCreation makeUserGroupCreationEntry(
+Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
@@ -59,7 +59,7 @@ tc::cotask<SGroupId> create(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-Trustchain::Actions::UserGroupAddition makeUserGroupAdditionEntry(
+Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,

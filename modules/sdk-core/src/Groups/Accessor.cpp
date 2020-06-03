@@ -125,17 +125,17 @@ using GroupMap =
 GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
 {
   GroupMap out;
-  for (auto const& entry : entries)
+  for (auto const& action : entries)
   {
     if (auto const userGroupCreation =
             boost::variant2::get_if<Trustchain::Actions::UserGroupCreation>(
-                &entry))
-      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(entry);
+                &action))
+      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(action);
     else if (auto const userGroupAddition = boost::variant2::get_if<
-                 Trustchain::Actions::UserGroupAddition>(&entry))
-      out[userGroupAddition->groupId()].push_back(entry);
+                 Trustchain::Actions::UserGroupAddition>(&action))
+      out[userGroupAddition->groupId()].push_back(action);
     else
-      TERROR("Expected group blocks but got {}", Trustchain::getNature(entry));
+      TERROR("Expected group blocks but got {}", Trustchain::getNature(action));
   }
   return out;
 }

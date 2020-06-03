@@ -16,7 +16,7 @@ class BaseGroup;
 namespace Verif
 {
 Trustchain::GroupAction verifyUserGroupAddition(
-    Trustchain::GroupAction const& serverEntry,
+    Trustchain::GroupAction const& action,
     Users::Device const& author,
     std::optional<BaseGroup> const& group);
 }

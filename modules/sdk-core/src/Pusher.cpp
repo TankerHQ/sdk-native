@@ -39,9 +39,9 @@ tc::cotask<void> Pusher::pushKeys(
 {
   std::vector<std::string> sb;
   sb.reserve(entries.size());
-  for (auto const& entry : entries)
+  for (auto const& action : entries)
     sb.push_back(
-        cppcodec::base64_rfc4648::encode(Serialization::serialize(entry)));
+        cppcodec::base64_rfc4648::encode(Serialization::serialize(action)));
   TC_AWAIT(_client->emit("push keys", sb));
 }
 

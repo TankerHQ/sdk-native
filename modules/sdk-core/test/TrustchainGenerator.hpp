@@ -28,13 +28,13 @@ namespace Tanker::Test
 
 struct Device : Users::Device
 {
-  Device(Trustchain::Actions::DeviceCreation entry,
+  Device(Trustchain::Actions::DeviceCreation action,
          Trustchain::UserId const& uid,
          DeviceKeys const& deviceKeys,
          bool isGhostDevice = true);
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   Crypto::PrivateSignatureKey privateSignatureKey;
-  Trustchain::Actions::DeviceCreation entry;
+  Trustchain::Actions::DeviceCreation action;
   DeviceKeys keys() const;
 };
 

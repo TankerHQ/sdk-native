@@ -160,12 +160,12 @@ Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
   auto const encryptedKey =
       Crypto::sealEncrypt(resourceKey, recipientPublicEncryptionKey);
 
-  return Users::createKeyPublishToUserEntry(trustchainId,
-                                            deviceId,
-                                            signatureKey,
-                                            encryptedKey,
-                                            resourceId,
-                                            recipientPublicEncryptionKey);
+  return Users::createKeyPublishToUserAction(trustchainId,
+                                             deviceId,
+                                             signatureKey,
+                                             encryptedKey,
+                                             resourceId,
+                                             recipientPublicEncryptionKey);
 }
 
 Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
@@ -179,12 +179,12 @@ Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
       resourceKey, recipientPublicEncryptionKey);
 
-  return Groups::createKeyPublishToGroupEntry(encryptedKey,
-                                              resourceId,
-                                              recipientPublicEncryptionKey,
-                                              trustchainId,
-                                              deviceId,
-                                              signatureKey);
+  return Groups::createKeyPublishToGroupAction(encryptedKey,
+                                               resourceId,
+                                               recipientPublicEncryptionKey,
+                                               trustchainId,
+                                               deviceId,
+                                               signatureKey);
 }
 
 Trustchain::Actions::KeyPublishToProvisionalUser
@@ -201,7 +201,7 @@ makeKeyPublishToProvisionalUser(
   auto const encryptedKeyTwice = Crypto::sealEncrypt(
       encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
 
-  return Users::createKeyPublishToProvisionalUserEntry(
+  return Users::createKeyPublishToProvisionalUserAction(
       trustchainId,
       deviceId,
       signatureKey,

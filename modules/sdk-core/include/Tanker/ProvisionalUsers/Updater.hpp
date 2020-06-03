@@ -27,11 +27,10 @@ struct UsedSecretUser
 
 tc::cotask<UsedSecretUser> extractKeysToStore(
     Users::ILocalUserAccessor& localUserAccessor,
-    Trustchain::Actions::ProvisionalIdentityClaim const& entry);
+    Trustchain::Actions::ProvisionalIdentityClaim const& action);
 
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& contactAccessor,
-    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const>
-        serverEntries);
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions);
 }

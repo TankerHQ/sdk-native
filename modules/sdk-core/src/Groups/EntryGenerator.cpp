@@ -7,7 +7,7 @@ using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker::Groups
 {
-Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Entry(
+Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const&
@@ -29,7 +29,7 @@ Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Entry(
                                deviceSignatureKey};
 }
 
-Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Entry(
+Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     UserGroupCreation::v2::Members const& groupMembers,
@@ -54,7 +54,7 @@ Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Entry(
   };
 }
 
-Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Entry(
+Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const&
@@ -75,7 +75,7 @@ Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Entry(
   };
 }
 
-Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
+Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     std::vector<UserGroupAddition::v2::Member> const& members,
@@ -98,7 +98,7 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
   };
 }
 
-KeyPublishToUserGroup createKeyPublishToGroupEntry(
+KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
     ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,

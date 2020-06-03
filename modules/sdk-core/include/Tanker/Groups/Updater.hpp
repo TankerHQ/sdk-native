@@ -20,13 +20,13 @@ namespace GroupUpdater
 tc::cotask<Group> applyUserGroupCreation(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    Trustchain::GroupAction const& entry);
+    Trustchain::GroupAction const& action);
 
 tc::cotask<Group> applyUserGroupAddition(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
-    Trustchain::GroupAction const& entry);
+    Trustchain::GroupAction const& action);
 
 tc::cotask<std::optional<Group>> processGroupEntries(
     Users::ILocalUserAccessor& localUserAccessor,

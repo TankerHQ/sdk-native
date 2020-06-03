@@ -30,7 +30,7 @@ TEST_CASE("Can't create an empty group")
   auto const userDevice = user.devices().front();
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::makeUserGroupCreationEntry(
+      Groups::Manager::makeUserGroupCreationAction(
           {},
           {},
           Crypto::makeSignatureKeyPair(),
@@ -52,7 +52,7 @@ TEST_CASE("Can create a group with two users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const entry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const action = Groups::Manager::makeUserGroupCreationAction(
       {user, user2},
       {},
       groupSignatureKey,
@@ -61,7 +61,7 @@ TEST_CASE("Can create a group with two users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto group = entry.get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -99,7 +99,7 @@ TEST_CASE("Can create a group with two provisional users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const entry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const action = Groups::Manager::makeUserGroupCreationAction(
       {},
       {provisionalUser, provisionalUser2},
       groupSignatureKey,
@@ -108,7 +108,7 @@ TEST_CASE("Can create a group with two provisional users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto group = entry.get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -167,7 +167,7 @@ TEST_CASE("Fails to add 0 users to a group")
   InternalGroup const group{};
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::makeUserGroupAdditionEntry(
+      Groups::Manager::makeUserGroupAdditionAction(
           {},
           {},
           group,
@@ -187,7 +187,7 @@ TEST_CASE("Can add users to a group")
 
   auto const group = user.makeGroup({user2});
 
-  auto const entry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const action = Groups::Manager::makeUserGroupAdditionAction(
       {user, user2},
       {},
       group,
@@ -195,7 +195,7 @@ TEST_CASE("Can add users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto groupAdd = entry.get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
@@ -231,7 +231,7 @@ TEST_CASE("Can add provisional users to a group")
   auto const provisionalUser = generator.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = generator.makeProvisionalUser("charlie@tanker");
 
-  auto const entry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const action = Groups::Manager::makeUserGroupAdditionAction(
       {},
       {provisionalUser, provisionalUser2},
       group,
@@ -239,7 +239,7 @@ TEST_CASE("Can add provisional users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto groupAdd = entry.get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);

@@ -10,6 +10,6 @@ class Device;
 namespace Tanker::Verif
 {
 Trustchain::Actions::ProvisionalIdentityClaim verifyProvisionalIdentityClaim(
-    Trustchain::Actions::ProvisionalIdentityClaim const& serverEntry,
+    Trustchain::Actions::ProvisionalIdentityClaim const& action,
     Users::Device const& author);
 }

@@ -17,11 +17,11 @@ namespace Tanker
 namespace Verif
 {
 Trustchain::Actions::DeviceCreation verifyDeviceCreation(
-    Trustchain::Actions::DeviceCreation const& serverEntry,
+    Trustchain::Actions::DeviceCreation const& action,
     Crypto::PublicSignatureKey const& trustchainPubSigKey);
 
 Trustchain::Actions::DeviceCreation verifyDeviceCreation(
-    Trustchain::Actions::DeviceCreation const& serverEntry,
+    Trustchain::Actions::DeviceCreation const& action,
     Trustchain::Context const& context,
     std::optional<Users::User> const& user);
 }

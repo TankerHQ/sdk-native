@@ -275,8 +275,8 @@ template <typename T>
 std::vector<T> extract(gsl::span<Trustchain::KeyPublishAction const> entries)
 {
   std::vector<T> keyPublishes;
-  for (auto const& entry : entries)
-    keyPublishes.push_back(boost::variant2::get<T>(entry));
+  for (auto const& action : entries)
+    keyPublishes.push_back(boost::variant2::get<T>(action));
   return keyPublishes;
 }
 

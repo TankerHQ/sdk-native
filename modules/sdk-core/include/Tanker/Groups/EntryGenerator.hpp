@@ -13,7 +13,7 @@
 
 namespace Tanker::Groups
 {
-Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Entry(
+Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Trustchain::Actions::UserGroupCreation::v1::
@@ -23,7 +23,7 @@ Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Entry(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Entry(
+Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     Trustchain::Actions::UserGroupCreation::v2::Members const& groupMembers,
@@ -33,7 +33,7 @@ Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Entry(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Entry(
+Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
     Crypto::SignatureKeyPair const& signatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     Trustchain::Actions::UserGroupAddition::v1::
@@ -43,7 +43,7 @@ Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Entry(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
+Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     std::vector<Trustchain::Actions::UserGroupAddition::v2::Member> const&
@@ -55,7 +55,7 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Entry(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
-Trustchain::Actions::KeyPublishToUserGroup createKeyPublishToGroupEntry(
+Trustchain::Actions::KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
     Trustchain::ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,

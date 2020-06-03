@@ -94,21 +94,21 @@ DeviceCreation verifyDeviceCreation(
   return deviceCreation;
 }
 
-DeviceCreation verifyDeviceCreation(DeviceCreation const& serverEntry,
+DeviceCreation verifyDeviceCreation(DeviceCreation const& action,
                                     Trustchain::Context const& context,
                                     std::optional<Users::User> const& user)
 {
-  if (serverEntry.author().base() == context.id().base())
+  if (action.author().base() == context.id().base())
   {
     ensures(!user.has_value(),
             Errc::UserAlreadyExists,
             "Cannot have more than one device signed by the trustchain");
-    return verifyDeviceCreation(serverEntry, context.publicSignatureKey());
+    return verifyDeviceCreation(action, context.publicSignatureKey());
   }
   else
   {
     ensures(user.has_value(), Errc::InvalidAuthor, "Author not found");
-    return verifyDeviceCreation(serverEntry, user.value());
+    return verifyDeviceCreation(action, user.value());
   }
 }
 }

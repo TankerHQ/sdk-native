@@ -34,7 +34,7 @@ TEST_CASE("decryptAndStoreKey")
   LocalUserAccessorMock receiverLocalUserAccessor;
   ProvisionalUsersAccessorMock receiverProvisionalUsersAccessor;
 
-  SUBCASE("should process a key publish to user entry")
+  SUBCASE("should process a key publish to user action")
   {
     auto const keyPublishEntry =
         generator.shareWith(senderDevice, receiver, resource);
@@ -50,7 +50,7 @@ TEST_CASE("decryptAndStoreKey")
                                               keyPublishEntry));
   }
 
-  SUBCASE("should process a key publish to group entry")
+  SUBCASE("should process a key publish to group action")
   {
     auto const group = receiver.makeGroup();
     auto const keyPublishEntry =

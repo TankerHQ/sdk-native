@@ -12,6 +12,6 @@ class User;
 namespace Tanker::Verif
 {
 Trustchain::Actions::DeviceRevocation verifyDeviceRevocation(
-    Trustchain::Actions::DeviceRevocation const& serverEntry,
+    Trustchain::Actions::DeviceRevocation const& action,
     std::optional<Users::User> const& user);
 }

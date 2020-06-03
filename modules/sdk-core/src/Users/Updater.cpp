@@ -108,23 +108,23 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
 processUserSealedKeys(DeviceKeys const& deviceKeys,
                       Trustchain::Context const& context,
-                      gsl::span<Trustchain::UserAction const> serverEntries)
+                      gsl::span<Trustchain::UserAction const> actions)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
   std::optional<Users::User> user;
   std::optional<Trustchain::DeviceId> selfDeviceId;
-  for (auto const& serverEntry : serverEntries)
+  for (auto const& action : actions)
   {
     try
     {
       if (auto const deviceCreation =
-              boost::variant2::get_if<DeviceCreation>(&serverEntry))
+              boost::variant2::get_if<DeviceCreation>(&action))
       {
-        auto const entry =
+        auto const action =
             Verif::verifyDeviceCreation(*deviceCreation, context, user);
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
-        user = applyDeviceCreationToUser(entry, user);
+        user = applyDeviceCreationToUser(action, user);
         auto const& device = user->devices().back();
         if (device.publicSignatureKey() ==
             deviceKeys.signatureKeyPair.publicKey)
@@ -135,21 +135,21 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
         }
       }
       else if (auto const deviceRevocation =
-                   boost::variant2::get_if<DeviceRevocation>(&serverEntry))
+                   boost::variant2::get_if<DeviceRevocation>(&action))
       {
-        auto const entry =
+        auto const action =
             Verif::verifyDeviceRevocation(*deviceRevocation, user);
         if (auto const extractedKeys =
                 extractEncryptedUserKey(*deviceRevocation, *selfDeviceId))
           sealedKeys.push_back(*extractedKeys);
-        user = applyDeviceRevocationToUser(entry, *user);
+        user = applyDeviceRevocationToUser(action, *user);
       }
     }
     catch (Errors::Exception const& err)
     {
       if (err.errorCode().category() == Tanker::Verif::ErrcCategory())
         TERROR("skipping invalid block {}: {}",
-               Trustchain::getHash(serverEntry),
+               Trustchain::getHash(action),
                err.what());
       else
         throw;

@@ -29,7 +29,7 @@ auto revokeADeviceGetAnEntry(std::vector<Trustchain::UserAction>& entries,
                              Tanker::Test::User& user)
 {
   auto& target = user.addDevice();
-  entries.push_back(target.entry);
+  entries.push_back(target.action);
   return user.revokeDevice(target);
 }
 }
@@ -44,10 +44,10 @@ TEST_CASE("UserUpdater")
   aliceEntries.push_back(revokedEntry1);
   aliceEntries.push_back(revokeADeviceGetAnEntry(aliceEntries, alice));
   auto const selfdevice = alice.addDevice();
-  aliceEntries.push_back(selfdevice.entry);
+  aliceEntries.push_back(selfdevice.action);
   auto const revokedEntry2 = revokeADeviceGetAnEntry(aliceEntries, alice);
   aliceEntries.push_back(revokedEntry2);
-  aliceEntries.push_back(alice.addDevice().entry);
+  aliceEntries.push_back(alice.addDevice().action);
   aliceEntries.push_back(revokeADeviceGetAnEntry(aliceEntries, alice));
 
   SUBCASE("Should find the trustchainID")
@@ -64,9 +64,9 @@ TEST_CASE("UserUpdater")
     SUBCASE("from our device")
     {
       auto const encUserKey =
-          Updater::extractEncryptedUserKey(selfdevice.entry);
+          Updater::extractEncryptedUserKey(selfdevice.action);
       REQUIRE_UNARY(encUserKey.has_value());
-      auto const dev = selfdevice.entry.get<Actions::DeviceCreation::v3>();
+      auto const dev = selfdevice.action.get<Actions::DeviceCreation::v3>();
       auto const [publicUserKey, sealedPrivateKey] = *encUserKey;
       CHECK_EQ(sealedPrivateKey, dev.sealedPrivateUserEncryptionKey());
       CHECK_EQ(

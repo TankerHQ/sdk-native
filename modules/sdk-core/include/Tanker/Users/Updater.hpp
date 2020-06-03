@@ -30,7 +30,7 @@ namespace Updater
 
 Crypto::PublicSignatureKey extractTrustchainSignature(
     Trustchain::TrustchainId const& trustchainId,
-    Trustchain::Actions::TrustchainCreation const& serverEntry);
+    Trustchain::Actions::TrustchainCreation const& action);
 
 std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
     Trustchain::Actions::DeviceCreation const& deviceCreation);
@@ -49,11 +49,11 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys);
 
 Users::User applyDeviceCreationToUser(
-    Trustchain::Actions::DeviceCreation const& entry,
+    Trustchain::Actions::DeviceCreation const& action,
     std::optional<Users::User> previousUser);
 
 Users::User applyDeviceRevocationToUser(
-    Trustchain::Actions::DeviceRevocation const& entry,
+    Trustchain::Actions::DeviceRevocation const& action,
     Users::User previousUser);
 
 std::tuple<Trustchain::Context,

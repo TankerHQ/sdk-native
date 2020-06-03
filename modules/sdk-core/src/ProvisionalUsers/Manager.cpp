@@ -63,7 +63,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
     if (tankerKeys)
     {
       auto const localUser = TC_AWAIT(_localUserAccessor->pull());
-      auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
+      auto const clientEntry = Users::createProvisionalIdentityClaimAction(
           _trustchainId,
           localUser.deviceId(),
           localUser.deviceKeys().signatureKeyPair.privateKey,
@@ -104,7 +104,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
   }
 
   auto const localUser = TC_AWAIT(_localUserAccessor->pull());
-  auto const clientEntry = Users::createProvisionalIdentityClaimEntry(
+  auto const clientEntry = Users::createProvisionalIdentityClaimAction(
       _trustchainId,
       localUser.deviceId(),
       localUser.deviceKeys().signatureKeyPair.privateKey,
