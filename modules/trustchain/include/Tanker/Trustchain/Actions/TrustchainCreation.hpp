@@ -34,17 +34,10 @@ public:
 public:
   explicit TrustchainCreation(Crypto::PublicSignatureKey const&);
 
-  static constexpr Nature nature();
-
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               TrustchainCreation&);
 };
-
-constexpr Nature TrustchainCreation::nature()
-{
-  return Nature::TrustchainCreation;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(TrustchainCreation)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(TrustchainCreation)

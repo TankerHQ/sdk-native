@@ -46,6 +46,7 @@ public:                                                                      \
   name() = default;                                                          \
   TANKER_DETAIL_DEFINE_CONSTRUCTOR(name, list)                               \
   BOOST_PP_SEQ_FOR_EACH(TANKER_DETAIL_DEFINE_GETTER, BOOST_PP_EMPTY(), list) \
+                                                                             \
 protected:                                                                   \
   BOOST_PP_SEQ_FOR_EACH(                                                     \
       TANKER_DETAIL_DEFINE_ATTRIBUTE, BOOST_PP_EMPTY(), list)                \
@@ -66,6 +67,12 @@ protected:                                                                   \
 // TODO replace the above macro by this one
 
 #define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(name, ...)  \
+public:                                                         \
+  static constexpr Nature nature()                              \
+  {                                                             \
+    return Nature::name;                                        \
+  }                                                             \
+                                                                \
   TANKER_DETAIL_DEFINE_ACTION(                                  \
       name,                                                     \
       BOOST_PP_VARIADIC_TO_SEQ((trustchainId, TrustchainId),    \

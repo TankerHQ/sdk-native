@@ -87,21 +87,21 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
   {
   case Nature::TrustchainCreation:
     return Serialization::deserialize<TrustchainCreation>(block);
-  case Nature::DeviceCreation:
+  case Nature::DeviceCreation1:
     return Serialization::deserialize<DeviceCreation1>(block);
   case Nature::DeviceCreation2:
     return Serialization::deserialize<DeviceCreation2>(block);
   case Nature::DeviceCreation3:
     return Serialization::deserialize<DeviceCreation3>(block);
-  case Nature::DeviceRevocation:
+  case Nature::DeviceRevocation1:
     return Serialization::deserialize<DeviceRevocation1>(block);
   case Nature::DeviceRevocation2:
     return Serialization::deserialize<DeviceRevocation2>(block);
-  case Nature::UserGroupCreation:
+  case Nature::UserGroupCreation1:
     return Serialization::deserialize<UserGroupCreation1>(block);
   case Nature::UserGroupCreation2:
     return Serialization::deserialize<UserGroupCreation2>(block);
-  case Nature::UserGroupAddition:
+  case Nature::UserGroupAddition1:
     return Serialization::deserialize<UserGroupAddition1>(block);
   case Nature::UserGroupAddition2:
     return Serialization::deserialize<UserGroupAddition2>(block);

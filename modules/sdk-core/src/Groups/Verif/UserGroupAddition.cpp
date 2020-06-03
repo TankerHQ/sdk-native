@@ -21,7 +21,7 @@ Trustchain::GroupAction verifyUserGroupAddition(
     Users::Device const& author,
     std::optional<BaseGroup> const& group)
 {
-  assert(getNature(serverEntry) == Nature::UserGroupAddition ||
+  assert(getNature(serverEntry) == Nature::UserGroupAddition1 ||
          getNature(serverEntry) == Nature::UserGroupAddition2);
 
   ensures(group.has_value(),

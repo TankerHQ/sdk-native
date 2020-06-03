@@ -46,17 +46,10 @@ public:
       Crypto::Hash const& author,
       Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);
 
-  static constexpr Nature nature();
-
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               KeyPublishToUserGroup&);
 };
-
-constexpr Nature KeyPublishToUserGroup::nature()
-{
-  return Nature::KeyPublishToUserGroup;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(KeyPublishToUserGroup)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(KeyPublishToUserGroup)

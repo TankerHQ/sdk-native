@@ -57,8 +57,6 @@ public:
       TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES)
 
 public:
-  static constexpr Nature nature();
-
   ProvisionalIdentityClaim(
       TrustchainId const& trustchainId,
       UserId const& userId,
@@ -75,11 +73,6 @@ private:
   friend void from_serialized(Serialization::SerializedSource&,
                               ProvisionalIdentityClaim&);
 };
-
-constexpr Nature ProvisionalIdentityClaim::nature()
-{
-  return Nature::ProvisionalIdentityClaim;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(ProvisionalIdentityClaim)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(ProvisionalIdentityClaim)

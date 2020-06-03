@@ -15,16 +15,16 @@ std::string to_string(Nature n)
   switch (n)
   {
     NATURE_CASE(TrustchainCreation);
-    NATURE_CASE(DeviceCreation);
+    NATURE_CASE(DeviceCreation1);
     NATURE_CASE(KeyPublishToDevice);
-    NATURE_CASE(DeviceRevocation);
+    NATURE_CASE(DeviceRevocation1);
     NATURE_CASE(DeviceCreation2);
     NATURE_CASE(DeviceCreation3);
     NATURE_CASE(KeyPublishToUser);
     NATURE_CASE(DeviceRevocation2);
-    NATURE_CASE(UserGroupCreation);
+    NATURE_CASE(UserGroupCreation1);
     NATURE_CASE(KeyPublishToUserGroup);
-    NATURE_CASE(UserGroupAddition);
+    NATURE_CASE(UserGroupAddition1);
     NATURE_CASE(KeyPublishToProvisionalUser);
     NATURE_CASE(ProvisionalIdentityClaim);
     NATURE_CASE(UserGroupCreation2);

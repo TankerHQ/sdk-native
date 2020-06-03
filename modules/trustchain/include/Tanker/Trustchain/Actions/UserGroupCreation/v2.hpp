@@ -46,8 +46,6 @@ public:
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V2_ATTRIBUTES)
 
 public:
-  static constexpr Nature nature();
-
   UserGroupCreation2(
       TrustchainId const& trustchainId,
       Crypto::PublicSignatureKey const& publicSignatureKey,
@@ -65,11 +63,6 @@ private:
   friend void from_serialized(Serialization::SerializedSource&,
                               UserGroupCreation2&);
 };
-
-constexpr Nature UserGroupCreation2::nature()
-{
-  return Nature::UserGroupCreation2;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupCreation2)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupCreation2)

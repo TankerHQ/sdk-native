@@ -39,17 +39,10 @@ public:
       Crypto::Hash const& author,
       Crypto::PrivateSignatureKey const& authorPrivateSignatureKey);
 
-  static constexpr Nature nature();
-
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceRevocation1&);
 };
-
-constexpr Nature DeviceRevocation1::nature()
-{
-  return Nature::DeviceRevocation;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceRevocation1)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceRevocation1)

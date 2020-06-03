@@ -59,19 +59,12 @@ public:
       Crypto::Hash const& author,
       Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey);
 
-  static constexpr Nature nature();
-
   std::vector<std::uint8_t> delegationSignatureData() const;
 
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceCreation3&);
 };
-
-constexpr Nature DeviceCreation3::nature()
-{
-  return Nature::DeviceCreation3;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation3)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceCreation3)

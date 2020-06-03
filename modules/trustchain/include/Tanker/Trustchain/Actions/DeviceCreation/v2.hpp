@@ -35,19 +35,12 @@ public:
       DeviceCreation2, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V2_ATTRIBUTES)
 
 public:
-  static constexpr Nature nature();
-
   DeviceCreation1 asDeviceCreation1() const;
 
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceCreation2&);
 };
-
-constexpr Nature DeviceCreation2::nature()
-{
-  return Nature::DeviceCreation2;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation2)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceCreation2)

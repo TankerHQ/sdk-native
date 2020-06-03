@@ -57,14 +57,14 @@ UserAction deserializeUserAction(gsl::span<std::uint8_t const> block)
 
   switch (nature)
   {
-  case Nature::DeviceCreation:
+  case Nature::DeviceCreation1:
     return Serialization::deserialize<DeviceCreation1>(block);
   case Nature::DeviceCreation2:
     return Serialization::deserialize<DeviceCreation2>(block)
         .asDeviceCreation1();
   case Nature::DeviceCreation3:
     return Serialization::deserialize<DeviceCreation3>(block);
-  case Nature::DeviceRevocation:
+  case Nature::DeviceRevocation1:
     return Serialization::deserialize<DeviceRevocation1>(block);
   case Nature::DeviceRevocation2:
     return Serialization::deserialize<DeviceRevocation2>(block);

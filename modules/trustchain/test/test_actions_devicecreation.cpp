@@ -30,7 +30,7 @@ TEST_CASE("DeviceCreation tests")
     CHECK_THROWS_AS(dc.get<DeviceCreation::v3>(),
                     boost::variant2::bad_variant_access);
     CHECK(dc.visit([](auto const& val) { return val.nature(); }) ==
-          Nature::DeviceCreation);
+          Nature::DeviceCreation1);
   }
 
   SUBCASE("DeviceCreation v2 conversion to v1")

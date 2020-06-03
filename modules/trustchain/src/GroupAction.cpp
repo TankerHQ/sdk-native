@@ -56,11 +56,11 @@ GroupAction deserializeGroupAction(gsl::span<std::uint8_t const> block)
 
   switch (nature)
   {
-  case Nature::UserGroupCreation:
+  case Nature::UserGroupCreation1:
     return Serialization::deserialize<UserGroupCreation1>(block);
   case Nature::UserGroupCreation2:
     return Serialization::deserialize<UserGroupCreation2>(block);
-  case Nature::UserGroupAddition:
+  case Nature::UserGroupAddition1:
     return Serialization::deserialize<UserGroupAddition1>(block);
   case Nature::UserGroupAddition2:
     return Serialization::deserialize<UserGroupAddition2>(block);

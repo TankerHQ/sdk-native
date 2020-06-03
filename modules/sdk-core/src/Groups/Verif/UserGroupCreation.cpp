@@ -21,7 +21,7 @@ Trustchain::GroupAction verifyUserGroupCreation(
     Users::Device const& author,
     std::optional<BaseGroup> const& previousGroup)
 {
-  assert(getNature(serverEntry) == Nature::UserGroupCreation ||
+  assert(getNature(serverEntry) == Nature::UserGroupCreation1 ||
          getNature(serverEntry) == Nature::UserGroupCreation2);
 
   ensures(!previousGroup,

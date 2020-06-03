@@ -54,8 +54,6 @@ public:
       Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
       Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);
 
-  static constexpr Nature nature();
-
   std::vector<std::uint8_t> signatureData() const;
 
 private:
@@ -65,11 +63,6 @@ private:
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupAddition1)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupAddition1)
-
-constexpr Nature UserGroupAddition1::nature()
-{
-  return Nature::UserGroupAddition;
-}
 }
 }
 }
