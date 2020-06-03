@@ -95,8 +95,8 @@ TEST_CASE("Serialization test vectors")
 
     ProvisionalIdentityClaim const pic{userId,
                                        appPublicSignatureKey,
-                                       signatureByAppKey,
                                        tankerPublicSignatureKey,
+                                       signatureByAppKey,
                                        signatureByTankerKey,
                                        userPublicEncryptionKey,
                                        sealedPrivateKeys};
