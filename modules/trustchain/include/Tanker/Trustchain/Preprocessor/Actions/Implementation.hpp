@@ -64,9 +64,7 @@ protected:                                                                   \
 #define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(name, ...) \
   TANKER_DETAIL_DEFINE_ACTION(name, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-// TODO replace the above macro by this one
-
-#define TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(name, ...)  \
+#define TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(name, ...)       \
 public:                                                         \
   static constexpr Nature nature()                              \
   {                                                             \
@@ -105,3 +103,13 @@ private:                                                        \
                                                                            \
     return Crypto::generichash(signatureData);                             \
   }
+
+#define TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(name, ...)            \
+  TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(name, __VA_ARGS__)    \
+  TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(name, __VA_ARGS__)             \
+  TANKER_TRUSTCHAIN_DATA_DEFINE_TO_JSON(name,                         \
+                                        (trustchainId, TrustchainId), \
+                                        __VA_ARGS__,                  \
+                                        (author, Crypto::Hash),       \
+                                        (hash, Crypto::Hash),         \
+                                        (signature, Crypto::Signature))

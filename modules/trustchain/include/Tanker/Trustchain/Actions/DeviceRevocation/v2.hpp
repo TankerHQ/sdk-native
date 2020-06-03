@@ -38,7 +38,7 @@ public:
   using SealedKeysForDevices =
       std::vector<std::pair<DeviceId, Crypto::SealedPrivateEncryptionKey>>;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       DeviceRevocation2,
       TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V2_ATTRIBUTES)
 

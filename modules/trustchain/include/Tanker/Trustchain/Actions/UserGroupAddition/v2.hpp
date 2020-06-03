@@ -40,7 +40,7 @@ public:
   using Member = UserGroupMember2;
   using ProvisionalMember = UserGroupProvisionalMember2;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       UserGroupAddition2,
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION2_ATTRIBUTES)
 

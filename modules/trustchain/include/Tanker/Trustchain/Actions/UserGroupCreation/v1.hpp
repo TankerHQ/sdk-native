@@ -42,7 +42,7 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       UserGroupCreation1,
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES)
 

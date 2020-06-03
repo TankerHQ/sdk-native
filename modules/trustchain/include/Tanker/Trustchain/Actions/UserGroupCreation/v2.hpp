@@ -41,7 +41,7 @@ public:
   using Members = std::vector<UserGroupMember2>;
   using ProvisionalMembers = std::vector<UserGroupProvisionalMember2>;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION_2(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       UserGroupCreation2,
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V2_ATTRIBUTES)
 
