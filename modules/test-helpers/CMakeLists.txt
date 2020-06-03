@@ -5,7 +5,6 @@ add_library(tankertesthelpers STATIC
   include/Helpers/Config.hpp
   include/Helpers/TimeoutTerminate.hpp
   include/Helpers/Const.hpp
-  include/Helpers/Entries.hpp
   include/Helpers/Barrier.hpp
   include/Helpers/Errors.hpp
   include/Helpers/MakeCoTask.hpp
@@ -21,7 +20,6 @@ add_library(tankertesthelpers STATIC
   src/TimeoutTerminate.cpp
   src/Barrier.cpp
   src/Stepper.cpp
-  src/Entries.cpp
   src/UniquePath.cpp
   src/JsonFile.cpp
 )

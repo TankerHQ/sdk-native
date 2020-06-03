@@ -14,7 +14,6 @@
 #include <Tanker/DbModels/Version.hpp>
 #include <Tanker/DbModels/Versions.hpp>
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>

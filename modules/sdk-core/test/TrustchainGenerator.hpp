@@ -9,12 +9,10 @@
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/Context.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
@@ -216,8 +214,6 @@ public:
   Trustchain::Context const& context() const;
   Trustchain::Actions::TrustchainCreation const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
-  static std::vector<Trustchain::ServerEntry> makeEntryList(
-      std::vector<Trustchain::ClientEntry> const& entries);
   // This does not contain revocation entries
   static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(
       std::initializer_list<Device> devices);

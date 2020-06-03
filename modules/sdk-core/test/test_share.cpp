@@ -7,7 +7,6 @@
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
@@ -17,7 +16,6 @@
 #include <Helpers/MakeCoTask.hpp>
 
 #include "GroupAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 

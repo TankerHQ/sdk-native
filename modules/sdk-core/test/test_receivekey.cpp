@@ -1,13 +1,11 @@
 #include <Tanker/ReceiveKey.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include "GroupAccessorMock.hpp"
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 #include <Helpers/Await.hpp>

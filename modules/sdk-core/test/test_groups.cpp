@@ -6,11 +6,9 @@
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
-#include <Helpers/Entries.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 

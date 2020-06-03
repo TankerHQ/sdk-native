@@ -17,7 +17,6 @@
 #include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserAction.hpp>
 

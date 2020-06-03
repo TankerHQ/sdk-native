@@ -12,7 +12,6 @@
 #include "GroupRequesterStub.hpp"
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 

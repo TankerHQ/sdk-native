@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>

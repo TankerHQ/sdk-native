@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/SealedEncryptionKeyPair.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>

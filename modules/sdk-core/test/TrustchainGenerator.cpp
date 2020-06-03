@@ -13,7 +13,6 @@
 #include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
-#include <Helpers/Entries.hpp>
 #include <Helpers/TransformTo.hpp>
 
 #include <functional>
@@ -624,15 +623,6 @@ Trustchain::Actions::KeyPublishToProvisionalUser Generator::shareWith(
 ProvisionalUser Generator::makeProvisionalUser(std::string const& email)
 {
   return {context().id(), email};
-}
-
-std::vector<Trustchain::ServerEntry> Generator::makeEntryList(
-    std::vector<Trustchain::ClientEntry> const& clientEntries)
-{
-  auto index = 0ul;
-  return transformTo<std::vector<Trustchain::ServerEntry>>(
-      clientEntries,
-      [&](auto&& e) mutable { return clientToServerEntry(e, ++index); });
 }
 
 std::vector<Trustchain::Actions::DeviceCreation> Generator::makeEntryList(

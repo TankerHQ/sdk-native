@@ -1,9 +1,7 @@
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
@@ -12,14 +10,12 @@
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Const.hpp>
-#include <Helpers/Entries.hpp>
 #include <Helpers/Errors.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 
 #include <doctest.h>
 
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 using namespace Tanker::Trustchain;

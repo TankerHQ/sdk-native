@@ -8,7 +8,6 @@
 #include <doctest.h>
 
 #include "LocalUserAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 using namespace Tanker;

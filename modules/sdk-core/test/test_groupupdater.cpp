@@ -9,7 +9,6 @@
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
 
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 #include <boost/variant2/variant.hpp>

@@ -1,7 +1,6 @@
 #include <Tanker/Groups/EntryGenerator.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;

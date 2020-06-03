@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/GroupProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>

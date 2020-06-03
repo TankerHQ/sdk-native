@@ -8,7 +8,6 @@
 #include <Tanker/Format/Format.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>

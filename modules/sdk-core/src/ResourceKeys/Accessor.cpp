@@ -4,7 +4,6 @@
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/IRequester.hpp>
 

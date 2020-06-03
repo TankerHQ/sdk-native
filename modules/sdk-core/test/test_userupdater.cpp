@@ -9,7 +9,6 @@
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <Helpers/Await.hpp>
-#include <Helpers/Entries.hpp>
 #include <Helpers/TransformTo.hpp>
 
 #include <gsl-lite.hpp>
@@ -51,7 +50,6 @@ TEST_CASE("UserUpdater")
   aliceEntries.push_back(alice.addDevice().entry);
   aliceEntries.push_back(revokeADeviceGetAnEntry(aliceEntries, alice));
 
-  using Tanker::Verif::makeVerifiedEntry;
   SUBCASE("Should find the trustchainID")
   {
     REQUIRE_NOTHROW(Updater::extractTrustchainSignature(

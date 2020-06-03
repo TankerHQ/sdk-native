@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>

@@ -68,7 +68,6 @@ add_library(tankercore STATIC
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
   include/Tanker/Pusher.hpp
-  include/Tanker/Entry.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -149,7 +148,6 @@ add_library(tankercore STATIC
   src/ReceiveKey.cpp
   src/ResourceKeys/Store.cpp
   src/ResourceKeys/Accessor.cpp
-  src/Entry.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
   src/ProvisionalUsers/Accessor.cpp
