@@ -34,13 +34,6 @@ tc::cotask<void> Pusher::pushBlock(
       cppcodec::base64_rfc4648::encode(Serialization::serialize(action))));
 }
 
-tc::cotask<void> Pusher::pushBlock(Trustchain::ClientEntry const& entry)
-{
-  TC_AWAIT(_client->emit(
-      "push block",
-      cppcodec::base64_rfc4648::encode(Serialization::serialize(entry))));
-}
-
 tc::cotask<void> Pusher::pushKeys(
     gsl::span<Trustchain::KeyPublishAction const> entries)
 {
