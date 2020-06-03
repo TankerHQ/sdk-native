@@ -41,7 +41,7 @@ DeviceCreation3::DeviceCreation3(
 {
 }
 
-std::vector<std::uint8_t> DeviceCreation3::signatureData() const
+std::vector<std::uint8_t> DeviceCreation3::delegationSignatureData() const
 {
   std::vector<std::uint8_t> toSign(Crypto::PublicSignatureKey::arraySize +
                                    UserId::arraySize);

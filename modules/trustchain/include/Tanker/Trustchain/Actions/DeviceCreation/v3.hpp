@@ -61,7 +61,7 @@ public:
 
   static constexpr Nature nature();
 
-  std::vector<std::uint8_t> signatureData() const;
+  std::vector<std::uint8_t> delegationSignatureData() const;
 
 private:
   friend void from_serialized(Serialization::SerializedSource&,

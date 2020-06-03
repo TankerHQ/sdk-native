@@ -23,7 +23,7 @@ namespace
 bool verifySignature(DeviceCreation const& dc,
                      Crypto::PublicSignatureKey const& publicSignatureKey)
 {
-  auto const toVerify = dc.signatureData();
+  auto const toVerify = dc.delegationSignatureData();
   return Crypto::verify(toVerify, dc.delegationSignature(), publicSignatureKey);
 }
 

@@ -25,10 +25,10 @@ bool DeviceCreation::isGhostDevice() const
   return false;
 }
 
-std::vector<std::uint8_t> DeviceCreation::signatureData() const
+std::vector<std::uint8_t> DeviceCreation::delegationSignatureData() const
 {
   return boost::variant2::visit(
-      [&](auto const& val) { return val.signatureData(); }, _variant);
+      [&](auto const& val) { return val.delegationSignatureData(); }, _variant);
 }
 
 std::uint8_t* to_serialized(std::uint8_t* it, DeviceCreation const& dc)

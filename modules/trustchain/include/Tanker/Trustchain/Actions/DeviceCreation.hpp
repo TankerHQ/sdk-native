@@ -53,7 +53,7 @@ public:
   Nature nature() const;
   bool isGhostDevice() const;
 
-  std::vector<std::uint8_t> signatureData() const;
+  std::vector<std::uint8_t> delegationSignatureData() const;
 
 private:
   friend std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation const&);
