@@ -155,7 +155,7 @@ Device& User::addDeviceV1()
   return _devices.emplace_back(makeDeviceV1());
 }
 
-Trustchain::ClientEntry User::claim(
+Trustchain::Actions::ProvisionalIdentityClaim User::claim(
     ProvisionalUser const& provisionalUser) const
 {
   auto const& lastDevice = devices().back();

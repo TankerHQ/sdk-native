@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
 namespace Tanker::Users
 {
@@ -10,6 +9,7 @@ class Device;
 
 namespace Tanker::Verif
 {
-Entry verifyProvisionalIdentityClaim(Trustchain::ServerEntry const& serverEntry,
-                                     Users::Device const& author);
+Trustchain::Actions::ProvisionalIdentityClaim verifyProvisionalIdentityClaim(
+    Trustchain::Actions::ProvisionalIdentityClaim const& serverEntry,
+    Users::Device const& author);
 }

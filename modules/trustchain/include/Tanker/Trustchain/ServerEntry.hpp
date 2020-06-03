@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Action.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>

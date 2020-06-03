@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -14,16 +15,27 @@ namespace Trustchain
 namespace Actions
 {
 ProvisionalIdentityClaim::ProvisionalIdentityClaim(
+    TrustchainId const& trustchainId,
     UserId const& userId,
-    Crypto::PublicSignatureKey const& appSignaturePublicKey,
-    Crypto::PublicSignatureKey const& tankerSignaturePublicKey,
+    Crypto::SignatureKeyPair const& appSignatureKeyPair,
+    Crypto::SignatureKeyPair const& tankerSignatureKeyPair,
     Crypto::PublicEncryptionKey const& userPublicEncryptionKey,
-    SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys)
-  : _userId(userId),
-    _appSignaturePublicKey(appSignaturePublicKey),
-    _tankerSignaturePublicKey(tankerSignaturePublicKey),
+    SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys,
+    DeviceId const& author,
+    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _userId(userId),
+    _appSignaturePublicKey(appSignatureKeyPair.publicKey),
+    _tankerSignaturePublicKey(tankerSignatureKeyPair.publicKey),
+    _authorSignatureByAppKey(
+        Crypto::sign(signatureData(author), appSignatureKeyPair.privateKey)),
+    _authorSignatureByTankerKey(
+        Crypto::sign(signatureData(author), tankerSignatureKeyPair.privateKey)),
     _userPublicEncryptionKey(userPublicEncryptionKey),
-    _sealedPrivateEncryptionKeys(sealedPrivateEncryptionKeys)
+    _sealedPrivateEncryptionKeys(sealedPrivateEncryptionKeys),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, devicePrivateSignatureKey))
 {
 }
 
@@ -41,23 +53,13 @@ std::vector<std::uint8_t> ProvisionalIdentityClaim::signatureData(
   return signatureData;
 }
 
-Crypto::Signature const& ProvisionalIdentityClaim::signWithAppKey(
-    Crypto::PrivateSignatureKey const& privateKey, DeviceId const& authorId)
-{
-  auto const toSign = signatureData(authorId);
-
-  return _authorSignatureByAppKey = Crypto::sign(toSign, privateKey);
-}
-
-Crypto::Signature const& ProvisionalIdentityClaim::signWithTankerKey(
-    Crypto::PrivateSignatureKey const& privateKey, DeviceId const& authorId)
-{
-  auto const toSign = signatureData(authorId);
-
-  return _authorSignatureByTankerKey = Crypto::sign(toSign, privateKey);
-}
-
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
+    ProvisionalIdentityClaim,
+    TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(
+    ProvisionalIdentityClaim,
+    TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES)
+TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION_2(
     ProvisionalIdentityClaim,
     TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES)
 TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(

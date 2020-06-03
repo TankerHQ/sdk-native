@@ -7,6 +7,7 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/Context.hpp>
@@ -118,7 +119,8 @@ struct User
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
 
-  Trustchain::ClientEntry claim(ProvisionalUser const& provisionalUser) const;
+  Trustchain::Actions::ProvisionalIdentityClaim claim(
+      ProvisionalUser const& provisionalUser) const;
 
   Crypto::EncryptionKeyPair const& addUserKey();
   void addUserKey(Crypto::EncryptionKeyPair const& userKp);

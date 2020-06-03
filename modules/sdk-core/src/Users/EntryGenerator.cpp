@@ -146,7 +146,7 @@ DeviceRevocation1 revokeDeviceV1Entry(
   };
 }
 
-ClientEntry createProvisionalIdentityClaimEntry(
+Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimEntry(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -164,25 +164,18 @@ ClientEntry createProvisionalIdentityClaimEntry(
             provisionalUser.tankerEncryptionKeyPair.privateKey.end(),
             it);
 
-  Actions::ProvisionalIdentityClaim claim{
+  return Actions::ProvisionalIdentityClaim{
+      trustchainId,
       userId,
-      provisionalUser.appSignatureKeyPair.publicKey,
-      provisionalUser.tankerSignatureKeyPair.publicKey,
+      provisionalUser.appSignatureKeyPair,
+      provisionalUser.tankerSignatureKeyPair,
       userKeyPair.publicKey,
       Crypto::sealEncrypt<
           Actions::ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
           keysToEncrypt, userKeyPair.publicKey),
+      deviceId,
+      deviceSignatureKey,
   };
-
-  claim.signWithAppKey(provisionalUser.appSignatureKeyPair.privateKey,
-                       deviceId);
-  claim.signWithTankerKey(provisionalUser.tankerSignatureKeyPair.privateKey,
-                          deviceId);
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             claim,
-                             deviceSignatureKey);
 }
 
 Trustchain::Actions::KeyPublishToProvisionalUser

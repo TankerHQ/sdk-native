@@ -37,7 +37,7 @@ using DeviceMap =
 
 tc::cotask<DeviceMap> extractAuthors(
     Users::IUserAccessor& contactAccessor,
-    gsl::span<Trustchain::ServerEntry const> entries)
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> entries)
 {
   DeviceMap out;
 
@@ -64,11 +64,9 @@ tc::cotask<DeviceMap> extractAuthors(
 }
 
 tc::cotask<UsedSecretUser> extractKeysToStore(
-    Users::ILocalUserAccessor& localUserAccessor, Entry const& entry)
+    Users::ILocalUserAccessor& localUserAccessor,
+    ProvisionalIdentityClaim const& provisionalIdentityClaim)
 {
-  auto const& provisionalIdentityClaim =
-      entry.action.get<ProvisionalIdentityClaim>();
-
   auto const userKeyPair = TC_AWAIT(localUserAccessor.pullUserKeyPair(
       provisionalIdentityClaim.userPublicEncryptionKey()));
 
@@ -101,7 +99,8 @@ tc::cotask<UsedSecretUser> extractKeysToStore(
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& contactAccessor,
-    gsl::span<Trustchain::ServerEntry const> serverEntries)
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const>
+        serverEntries)
 {
   auto const authors = TC_AWAIT(extractAuthors(contactAccessor, serverEntries));
 
@@ -116,9 +115,6 @@ tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = authorIt->second;
-      if (!serverEntry.action().holds_alternative<ProvisionalIdentityClaim>())
-        throw Errors::AssertionError(fmt::format(
-            "cannot handle nature: {}", serverEntry.action().nature()));
 
       auto const entry =
           Verif::verifyProvisionalIdentityClaim(serverEntry, author);

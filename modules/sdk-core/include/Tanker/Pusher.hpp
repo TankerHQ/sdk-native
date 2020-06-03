@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
@@ -28,6 +29,8 @@ public:
 
   tc::cotask<void> pushBlock(Trustchain::UserAction const& action);
   tc::cotask<void> pushBlock(Trustchain::GroupAction const& action);
+  tc::cotask<void> pushBlock(
+      Trustchain::Actions::ProvisionalIdentityClaim const& action);
   tc::cotask<void> pushBlock(Trustchain::ClientEntry const& entry);
   tc::cotask<void> pushKeys(
       gsl::span<Trustchain::KeyPublishAction const> entries);

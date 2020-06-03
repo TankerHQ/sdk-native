@@ -16,19 +16,15 @@ namespace Tanker
 {
 namespace Verif
 {
-Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
-                                     Users::Device const& author)
+ProvisionalIdentityClaim verifyProvisionalIdentityClaim(
+    ProvisionalIdentityClaim const& provisionalIdentityClaim,
+    Users::Device const& author)
 {
-  assert(serverEntry.action().nature() == Nature::ProvisionalIdentityClaim);
-
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
+  ensures(Crypto::verify(provisionalIdentityClaim.hash(),
+                         provisionalIdentityClaim.signature(),
                          author.publicSignatureKey()),
           Errc::InvalidSignature,
           "ProvisionalIdentityClaim block must be signed by the author device");
-
-  auto const& provisionalIdentityClaim =
-      serverEntry.action().get<ProvisionalIdentityClaim>();
 
   ensures(provisionalIdentityClaim.userId() == author.userId(),
           Errc::InvalidUserId,
@@ -49,7 +45,7 @@ Entry verifyProvisionalIdentityClaim(ServerEntry const& serverEntry,
           "ProvisionalIdentityClaim block must be signed by the provisional "
           "Tanker signature key");
 
-  return makeVerifiedEntry(serverEntry);
+  return provisionalIdentityClaim;
 }
 }
 }

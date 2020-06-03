@@ -10,7 +10,7 @@
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 namespace Tanker::Users
@@ -62,7 +62,8 @@ Trustchain::Actions::DeviceRevocation1 revokeDeviceV1Entry(
     Crypto::PrivateSignatureKey const& signatureKey,
     Trustchain::DeviceId const& toBeRevoked);
 
-Trustchain::ClientEntry createProvisionalIdentityClaimEntry(
+Trustchain::Actions::ProvisionalIdentityClaim
+createProvisionalIdentityClaimEntry(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
