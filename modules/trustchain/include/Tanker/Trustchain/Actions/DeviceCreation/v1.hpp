@@ -51,7 +51,6 @@ public:
   static constexpr Nature nature();
 
   std::vector<std::uint8_t> signatureData() const;
-  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 protected:
   friend void from_serialized(Serialization::SerializedSource&,

@@ -78,14 +78,6 @@ TEST_CASE("DeviceCreation tests")
                                     Errc::InvalidLastResetField);
     }
   }
-
-  SUBCASE("sign should return the delegationSignature")
-  {
-    auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    DeviceCreation dc{};
-    auto const& signature = dc.sign(signatureKeyPair.privateKey);
-    CHECK(signature == dc.delegationSignature());
-  }
 }
 
 TEST_CASE("Serialization test vectors")

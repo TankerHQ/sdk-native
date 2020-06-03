@@ -48,13 +48,6 @@ std::vector<std::uint8_t> DeviceCreation1::signatureData() const
   return toSign;
 }
 
-Crypto::Signature const& DeviceCreation1::sign(
-    Crypto::PrivateSignatureKey const& key)
-{
-  auto const toSign = signatureData();
-  return _delegationSignature = Crypto::sign(toSign, key);
-}
-
 TANKER_TRUSTCHAIN_ACTION_DEFINE_PAYLOAD_SIZE(
     DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
 TANKER_TRUSTCHAIN_ACTION_DEFINE_HASH(

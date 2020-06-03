@@ -54,7 +54,6 @@ public:
   bool isGhostDevice() const;
 
   std::vector<std::uint8_t> signatureData() const;
-  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
 
 private:
   friend std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation const&);

@@ -317,7 +317,8 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
     auto& dc3 = extract<DeviceCreation3>(deviceEntry);
 
     unconstify(dc3.publicUserEncryptionKey())[0]++;
-    deviceEntry.sign(firstDevice.keys().signatureKeyPair.privateKey);
+    unconstify(dc3.delegationSignature()) = Crypto::sign(
+        dc3.signatureData(), firstDevice.keys().signatureKeyPair.privateKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, generator.context(), user),
@@ -353,7 +354,8 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
 
     unconstify(dc3.publicUserEncryptionKey())[0]++;
 
-    unconstify(dc3).sign(firstDevice.keys().signatureKeyPair.privateKey);
+    unconstify(dc3.delegationSignature()) = Crypto::sign(
+        dc3.signatureData(), firstDevice.keys().signatureKeyPair.privateKey);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(deviceEntry, generator.context(), user),
