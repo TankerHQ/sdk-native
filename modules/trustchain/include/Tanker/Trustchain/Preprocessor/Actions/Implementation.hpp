@@ -1,6 +1,13 @@
 #pragma once
 
+#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 #include <Tanker/Trustchain/Preprocessor/detail/Common.hpp>
+
+#include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/Signature.hpp>
+#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <boost/preprocessor/empty.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>

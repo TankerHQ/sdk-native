@@ -2,6 +2,8 @@
 
 #include <Tanker/Trustchain/Preprocessor/detail/Common.hpp>
 
+#include <Tanker/Serialization/SerializedSource.hpp>
+
 #include <boost/preprocessor/arithmetic/add.hpp>
 #include <boost/preprocessor/comparison/less.hpp>
 #include <boost/preprocessor/empty.hpp>

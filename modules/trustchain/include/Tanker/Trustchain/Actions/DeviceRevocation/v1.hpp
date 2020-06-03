@@ -1,20 +1,8 @@
 #pragma once
 
-#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
-
-#include <nlohmann/json_fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
 
 namespace Tanker
 {

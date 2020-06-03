@@ -1,24 +1,16 @@
 #pragma once
 
-#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/TwoTimesSealedPrivateEncryptionKey.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupMember2.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <cstdint>
 #include <utility>
 #include <vector>
 

@@ -1,30 +1,20 @@
 #pragma once
 
 #include <Tanker/Crypto/BasicCryptographicType.hpp>
-#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/TwoTimesSealedPrivateEncryptionKey.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <nlohmann/json_fwd.hpp>
 // TODO remove it once Crypto::Sealed<> is added
 #include <sodium/crypto_box.h>
 
-#include <cstddef>
-#include <cstdint>
 #include <tuple>
 
 namespace Tanker

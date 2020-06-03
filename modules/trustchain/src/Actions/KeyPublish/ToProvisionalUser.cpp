@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 

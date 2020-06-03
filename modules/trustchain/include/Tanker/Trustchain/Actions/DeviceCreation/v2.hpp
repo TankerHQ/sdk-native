@@ -1,16 +1,10 @@
 #pragma once
 
-#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v1.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
-#include <Tanker/Trustchain/TrustchainId.hpp>
-
-#include <nlohmann/json_fwd.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 
 #include <cstddef>
 #include <cstdint>
