@@ -521,17 +521,11 @@ auto contextFromRootBlock(Actions::TrustchainCreation const& tc)
 {
   return Context{TrustchainId{tc.hash()}, tc.publicSignatureKey()};
 }
-
-Actions::TrustchainCreation createRootBlock(
-    Crypto::SignatureKeyPair const& keyPair)
-{
-  return Actions::TrustchainCreation{keyPair.publicKey};
-}
 }
 
 Generator::Generator()
   : _trustchainKeyPair(Crypto::makeSignatureKeyPair()),
-    _rootBlock(createRootBlock(_trustchainKeyPair)),
+    _rootBlock(Actions::TrustchainCreation{_trustchainKeyPair.publicKey}),
     _context(contextFromRootBlock(_rootBlock))
 {
 }
