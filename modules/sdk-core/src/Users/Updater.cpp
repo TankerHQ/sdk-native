@@ -217,7 +217,7 @@ processUserEntries(
     Trustchain::Actions::TrustchainCreation const& trustchainCreation,
     gsl::span<Trustchain::UserAction const> entries)
 {
-  if (entries.size() < 1)
+  if (entries.empty())
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "User's block list is too short");
   auto trustchainSignatureKey =

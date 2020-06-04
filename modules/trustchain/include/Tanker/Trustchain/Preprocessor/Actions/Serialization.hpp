@@ -90,17 +90,17 @@
     return it;                                                             \
   }
 
-#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(name)       \
-  std::size_t serialized_size(name const& k)                       \
-  {                                                                \
-    auto const payloadSize = payload_size(k);                      \
-    return 1 +                       /* version */                 \
-           1 +                       /* index */                   \
-           TrustchainId::arraySize + /* */                         \
-           1 +                       /* nature */                  \
-           Serialization::varint_size(payloadSize) + payloadSize + \
-           Crypto::Hash::arraySize + /* author */                  \
-           Crypto::Signature::arraySize;                           \
+#define TANKER_DETAIL_DEFINE_ACTION_SERIALIZATION_SIZE(name)              \
+  std::size_t serialized_size(name const& k)                              \
+  {                                                                       \
+    auto const payloadSize = payload_size(k);                             \
+    return 1 + /* version */                                              \
+           1 + /* index */                                                \
+           TrustchainId::arraySize +                                      \
+           Serialization::varint_size(static_cast<int>(name::nature())) + \
+           Serialization::varint_size(payloadSize) + payloadSize +        \
+           Crypto::Hash::arraySize + /* author */                         \
+           Crypto::Signature::arraySize;                                  \
   }
 
 #define TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(name, ...)           \

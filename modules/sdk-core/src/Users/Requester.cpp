@@ -24,7 +24,7 @@ Crypto::Hash hashField(T const& field)
 }
 
 std::vector<Trustchain::UserAction> fromBlocksToUserActions(
-    std::vector<std::string> const& blocks)
+    gsl::span<const std::string> const& blocks)
 {
   std::vector<Trustchain::UserAction> entries;
   entries.reserve(blocks.size());
@@ -40,7 +40,7 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
 }
 
 std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
-    std::vector<std::string> const& blocks)
+    gsl::span<const std::string> const& blocks)
 {
   std::vector<Trustchain::KeyPublishAction> entries;
   entries.reserve(blocks.size());
@@ -64,14 +64,14 @@ tc::cotask<Requester::GetMeResult> Requester::getMe()
 {
   auto const response = TC_AWAIT(_client->emit("get my user blocks", {}));
   auto const blocks = response.get<std::vector<std::string>>();
-  if (blocks.size() < 1)
+  if (blocks.empty())
     throw formatEx(Errors::Errc::InternalError,
                    "received too few blocks for \"get my user blocks\"");
   auto const trustchainCreation =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
           cppcodec::base64_rfc4648::decode(blocks[0]));
   auto const entries =
-      fromBlocksToUserActions(std::vector(blocks.begin() + 1, blocks.end()));
+      fromBlocksToUserActions(gsl::make_span(blocks).subspan(1));
   TC_RETURN((GetMeResult{trustchainCreation, entries}));
 }
 
