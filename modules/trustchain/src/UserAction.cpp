@@ -6,6 +6,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -45,14 +46,7 @@ Crypto::Signature const& getSignature(UserAction const& action)
 
 UserAction deserializeUserAction(gsl::span<std::uint8_t const> block)
 {
-  if (block.size() < 2)
-    throw Errors::formatEx(Errc::InvalidBlockVersion, "block too small");
-  if (block[0] != 1)
-    throw Errors::formatEx(
-        Errc::InvalidBlockVersion, "unsupported block version: {}", block[0]);
-
-  auto rest = Serialization::varint_read(block.subspan(1)).second;
-  auto const nature = static_cast<Nature>(rest[32]);
+  auto const nature = getBlockNature(block);
 
   switch (nature)
   {
