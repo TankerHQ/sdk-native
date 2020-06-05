@@ -3,7 +3,8 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -41,7 +42,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
     Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
 
-Trustchain::ClientEntry makeUserGroupCreationEntry(
+Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
@@ -58,7 +59,7 @@ tc::cotask<SGroupId> create(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-Trustchain::ClientEntry makeUserGroupAdditionEntry(
+Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
     InternalGroup const& group,

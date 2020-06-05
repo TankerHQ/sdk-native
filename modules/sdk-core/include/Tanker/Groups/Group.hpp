@@ -81,8 +81,6 @@ inline std::optional<BaseGroup> extractBaseGroup(
   return extractBaseGroup(*group);
 }
 
-void updateLastGroupBlock(Group& group,
-                          Crypto::Hash const& lastBlockHash,
-                          uint64_t lastBlockIndex);
+void updateLastGroupBlock(Group& group, Crypto::Hash const& lastBlockHash);
 Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 }

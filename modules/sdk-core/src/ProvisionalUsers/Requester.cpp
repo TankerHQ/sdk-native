@@ -1,6 +1,7 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 
 #include <Tanker/Client.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
 
@@ -8,14 +9,35 @@
 
 namespace Tanker::ProvisionalUsers
 {
+namespace
+{
+std::vector<Trustchain::Actions::ProvisionalIdentityClaim>
+fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
+{
+  std::vector<Trustchain::Actions::ProvisionalIdentityClaim> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return Serialization::deserialize<
+                       Trustchain::Actions::ProvisionalIdentityClaim>(
+                       cppcodec::base64_rfc4648::decode(block));
+                 });
+
+  return entries;
+}
+}
+
 Requester::Requester(Client* client) : _client(client)
 {
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getClaimBlocks()
+tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
+Requester::getClaimBlocks()
 {
   auto const response = TC_AWAIT(_client->emit("get my claim blocks", {}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
+  auto const ret = fromBlocksToProvisionalIdentityClaims(
       response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }

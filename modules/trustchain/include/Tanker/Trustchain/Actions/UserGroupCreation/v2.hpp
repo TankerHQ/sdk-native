@@ -5,18 +5,12 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
 #include <Tanker/Crypto/TwoTimesSealedPrivateEncryptionKey.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupMember2.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
-#include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -39,32 +33,28 @@ public:
   using Members = std::vector<UserGroupMember2>;
   using ProvisionalMembers = std::vector<UserGroupProvisionalMember2>;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       UserGroupCreation2,
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V2_ATTRIBUTES)
 
 public:
-  constexpr Nature nature() const;
-
-  UserGroupCreation2(Crypto::PublicSignatureKey const&,
-                     Crypto::PublicEncryptionKey const&,
-                     Crypto::SealedPrivateSignatureKey const&,
-                     Members const&,
-                     ProvisionalMembers const&);
+  UserGroupCreation2(
+      TrustchainId const& trustchainId,
+      Crypto::PublicSignatureKey const& publicSignatureKey,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
+      Members const& members,
+      ProvisionalMembers const& provisionalMembers,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+      Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);
 
   std::vector<std::uint8_t> signatureData() const;
-
-  Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               UserGroupCreation2&);
 };
-
-constexpr Nature UserGroupCreation2::nature() const
-{
-  return Nature::UserGroupCreation2;
-}
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupCreation2)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupCreation2)

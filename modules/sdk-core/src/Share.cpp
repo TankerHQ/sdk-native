@@ -29,14 +29,14 @@ namespace Share
 {
 namespace
 {
-std::vector<Trustchain::ClientEntry> generateShareBlocksToUsers(
+std::vector<Trustchain::KeyPublishAction> generateShareBlocksToUsers(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys::KeysResult const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
-  std::vector<Trustchain::ClientEntry> out;
+  std::vector<Trustchain::KeyPublishAction> out;
   out.reserve(resourceKeys.size() * recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
@@ -50,7 +50,8 @@ std::vector<Trustchain::ClientEntry> generateShareBlocksToUsers(
   return out;
 }
 
-std::vector<Trustchain::ClientEntry> generateShareBlocksToProvisionalUsers(
+std::vector<Trustchain::Actions::KeyPublishToProvisionalUser>
+generateShareBlocksToProvisionalUsers(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -58,7 +59,7 @@ std::vector<Trustchain::ClientEntry> generateShareBlocksToProvisionalUsers(
     std::vector<ProvisionalUsers::PublicUser> const&
         recipientProvisionalUserKeys)
 {
-  std::vector<Trustchain::ClientEntry> out;
+  std::vector<Trustchain::Actions::KeyPublishToProvisionalUser> out;
   out.reserve(resourceKeys.size() * recipientProvisionalUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientProvisionalUserKeys)
@@ -72,14 +73,15 @@ std::vector<Trustchain::ClientEntry> generateShareBlocksToProvisionalUsers(
   return out;
 }
 
-std::vector<Trustchain::ClientEntry> generateShareBlocksToGroups(
+std::vector<Trustchain::Actions::KeyPublishToUserGroup>
+generateShareBlocksToGroups(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys::KeysResult const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
-  std::vector<Trustchain::ClientEntry> out;
+  std::vector<Trustchain::Actions::KeyPublishToUserGroup> out;
   out.reserve(resourceKeys.size() * recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
@@ -147,7 +149,7 @@ KeyRecipients toKeyRecipients(
 }
 }
 
-Trustchain::ClientEntry makeKeyPublishToUser(
+Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -158,15 +160,15 @@ Trustchain::ClientEntry makeKeyPublishToUser(
   auto const encryptedKey =
       Crypto::sealEncrypt(resourceKey, recipientPublicEncryptionKey);
 
-  return Users::createKeyPublishToUserEntry(trustchainId,
-                                            deviceId,
-                                            signatureKey,
-                                            encryptedKey,
-                                            resourceId,
-                                            recipientPublicEncryptionKey);
+  return Users::createKeyPublishToUserAction(trustchainId,
+                                             deviceId,
+                                             signatureKey,
+                                             encryptedKey,
+                                             resourceId,
+                                             recipientPublicEncryptionKey);
 }
 
-Trustchain::ClientEntry makeKeyPublishToGroup(
+Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -177,15 +179,16 @@ Trustchain::ClientEntry makeKeyPublishToGroup(
   auto const encryptedKey = Crypto::sealEncrypt<Crypto::SealedSymmetricKey>(
       resourceKey, recipientPublicEncryptionKey);
 
-  return Groups::createKeyPublishToGroupEntry(encryptedKey,
-                                              resourceId,
-                                              recipientPublicEncryptionKey,
-                                              trustchainId,
-                                              deviceId,
-                                              signatureKey);
+  return Groups::createKeyPublishToGroupAction(encryptedKey,
+                                               resourceId,
+                                               recipientPublicEncryptionKey,
+                                               trustchainId,
+                                               deviceId,
+                                               signatureKey);
 }
 
-Trustchain::ClientEntry makeKeyPublishToProvisionalUser(
+Trustchain::Actions::KeyPublishToProvisionalUser
+makeKeyPublishToProvisionalUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -198,7 +201,7 @@ Trustchain::ClientEntry makeKeyPublishToProvisionalUser(
   auto const encryptedKeyTwice = Crypto::sealEncrypt(
       encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
 
-  return Users::createKeyPublishToProvisionalUserEntry(
+  return Users::createKeyPublishToProvisionalUserAction(
       trustchainId,
       deviceId,
       signatureKey,
@@ -242,7 +245,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
       toKeyRecipients(userResult.found, provisionalUsers, groupResult.found));
 }
 
-std::vector<Trustchain::ClientEntry> generateShareBlocks(
+std::vector<Trustchain::KeyPublishAction> generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,

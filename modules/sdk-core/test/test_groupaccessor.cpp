@@ -12,7 +12,6 @@
 #include "GroupRequesterStub.hpp"
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
@@ -24,11 +23,7 @@ using Tanker::Trustchain::GroupId;
 
 namespace
 {
-auto makeEntries = [](auto const& item) {
-  std::vector<Entry> verifiedEntries;
-  auto entries = Test::Generator::makeEntryList(item.entries());
-  return entries;
-};
+auto makeEntries = [](auto const& item) { return item.entries(); };
 }
 
 TEST_CASE("GroupAccessor")
@@ -75,7 +70,7 @@ TEST_CASE("GroupAccessor")
       auto const unknownGroupId = make<GroupId>("unknownGroup");
       REQUIRE_CALL(requestStub,
                    getGroupBlocks(std::vector<GroupId>{unknownGroupId}))
-          .RETURN(makeCoTask(std::vector<Trustchain::ServerEntry>{}));
+          .RETURN(makeCoTask(std::vector<Trustchain::GroupAction>{}));
 
       auto const result =
           AWAIT(groupAccessor.getPublicEncryptionKeys({unknownGroupId}));

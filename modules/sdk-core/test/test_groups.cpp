@@ -6,11 +6,9 @@
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Helpers/Await.hpp>
-#include <Helpers/Entries.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
@@ -32,7 +30,7 @@ TEST_CASE("Can't create an empty group")
   auto const userDevice = user.devices().front();
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::makeUserGroupCreationEntry(
+      Groups::Manager::makeUserGroupCreationAction(
           {},
           {},
           Crypto::makeSignatureKeyPair(),
@@ -54,7 +52,7 @@ TEST_CASE("Can create a group with two users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const action = Groups::Manager::makeUserGroupCreationAction(
       {user, user2},
       {},
       groupSignatureKey,
@@ -63,10 +61,7 @@ TEST_CASE("Can create a group with two users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto group = serverEntry.action()
-                   .get<UserGroupCreation>()
-                   .get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -104,7 +99,7 @@ TEST_CASE("Can create a group with two provisional users")
   auto groupEncryptionKey = Crypto::makeEncryptionKeyPair();
   auto groupSignatureKey = Crypto::makeSignatureKeyPair();
 
-  auto const clientEntry = Groups::Manager::makeUserGroupCreationEntry(
+  auto const action = Groups::Manager::makeUserGroupCreationAction(
       {},
       {provisionalUser, provisionalUser2},
       groupSignatureKey,
@@ -113,10 +108,7 @@ TEST_CASE("Can create a group with two provisional users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto group = serverEntry.action()
-                   .get<UserGroupCreation>()
-                   .get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v2>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -175,7 +167,7 @@ TEST_CASE("Fails to add 0 users to a group")
   InternalGroup const group{};
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      Groups::Manager::makeUserGroupAdditionEntry(
+      Groups::Manager::makeUserGroupAdditionAction(
           {},
           {},
           group,
@@ -195,7 +187,7 @@ TEST_CASE("Can add users to a group")
 
   auto const group = user.makeGroup({user2});
 
-  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const action = Groups::Manager::makeUserGroupAdditionAction(
       {user, user2},
       {},
       group,
@@ -203,10 +195,7 @@ TEST_CASE("Can add users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto groupAdd = serverEntry.action()
-                      .get<UserGroupAddition>()
-                      .get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
@@ -242,7 +231,7 @@ TEST_CASE("Can add provisional users to a group")
   auto const provisionalUser = generator.makeProvisionalUser("bob@tanker");
   auto const provisionalUser2 = generator.makeProvisionalUser("charlie@tanker");
 
-  auto const clientEntry = Groups::Manager::makeUserGroupAdditionEntry(
+  auto const action = Groups::Manager::makeUserGroupAdditionAction(
       {},
       {provisionalUser, provisionalUser2},
       group,
@@ -250,10 +239,7 @@ TEST_CASE("Can add provisional users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto const serverEntry = clientToServerEntry(clientEntry);
-  auto groupAdd = serverEntry.action()
-                      .get<UserGroupAddition>()
-                      .get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v2>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);

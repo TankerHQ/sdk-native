@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -14,16 +15,24 @@ namespace Trustchain
 namespace Actions
 {
 UserGroupCreation1::UserGroupCreation1(
+    TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
     SealedPrivateEncryptionKeysForUsers const&
-        sealedPrivateEncryptionKeysForUsers)
-  : _publicSignatureKey(publicSignatureKey),
+        sealedPrivateEncryptionKeysForUsers,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _publicSignatureKey(publicSignatureKey),
     _publicEncryptionKey(publicEncryptionKey),
     _sealedPrivateSignatureKey(sealedPrivateSignatureKey),
     _sealedPrivateEncryptionKeysForUsers(sealedPrivateEncryptionKeysForUsers),
-    _selfSignature{}
+    _selfSignature(Crypto::sign(signatureData(), groupPrivateSignatureKey)),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, devicePrivateSignatureKey))
 {
 }
 
@@ -50,52 +59,9 @@ std::vector<std::uint8_t> UserGroupCreation1::signatureData() const
   return signatureData;
 }
 
-Crypto::Signature const& UserGroupCreation1::selfSign(
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
-{
-  auto const toSign = signatureData();
-
-  return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
-}
-
-void from_serialized(Serialization::SerializedSource& ss,
-                     UserGroupCreation1& ugc)
-{
-  Serialization::deserialize_to(ss, ugc._publicSignatureKey);
-  Serialization::deserialize_to(ss, ugc._publicEncryptionKey);
-  Serialization::deserialize_to(ss, ugc._sealedPrivateSignatureKey);
-  Serialization::deserialize_to(ss, ugc._sealedPrivateEncryptionKeysForUsers);
-  Serialization::deserialize_to(ss, ugc._selfSignature);
-}
-
-std::uint8_t* to_serialized(std::uint8_t* it, UserGroupCreation1 const& ugc)
-{
-  it = Serialization::serialize(it, ugc.publicSignatureKey());
-  it = Serialization::serialize(it, ugc.publicEncryptionKey());
-  it = Serialization::serialize(it, ugc.sealedPrivateSignatureKey());
-  it = Serialization::serialize(it, ugc.sealedPrivateEncryptionKeysForUsers());
-  return Serialization::serialize(it, ugc.selfSignature());
-}
-
-std::size_t serialized_size(UserGroupCreation1 const& ugc)
-{
-  return Crypto::PublicSignatureKey::arraySize +
-         Crypto::PublicEncryptionKey::arraySize +
-         Crypto::SealedPrivateSignatureKey::arraySize +
-         Serialization::serialized_size(
-             ugc.sealedPrivateEncryptionKeysForUsers()) +
-         Crypto::Signature::arraySize;
-}
-
-void to_json(nlohmann::json& j, UserGroupCreation1 const& ugc)
-{
-  j["publicSignatureKey"] = ugc.publicSignatureKey();
-  j["publicEncryptionKey"] = ugc.publicEncryptionKey();
-  j["sealedPrivateSignatureKey"] = ugc.sealedPrivateSignatureKey();
-  j["sealedPrivateEncryptionKeysForUsers"] =
-      ugc.sealedPrivateEncryptionKeysForUsers();
-  j["selfSignature"] = ugc.selfSignature();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
+    UserGroupCreation1,
+    TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES)
 }
 }
 }

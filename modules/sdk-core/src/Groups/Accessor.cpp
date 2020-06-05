@@ -120,22 +120,22 @@ namespace
 {
 using GroupMap =
     boost::container::flat_map<Trustchain::GroupId,
-                               std::vector<Trustchain::ServerEntry>>;
+                               std::vector<Trustchain::GroupAction>>;
 
-GroupMap partitionGroups(std::vector<Trustchain::ServerEntry> const& entries)
+GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
 {
   GroupMap out;
-  for (auto const& entry : entries)
+  for (auto const& action : entries)
   {
     if (auto const userGroupCreation =
-            entry.action().get_if<Trustchain::Actions::UserGroupCreation>())
-      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(entry);
-    else if (auto const userGroupAddition =
-                 entry.action()
-                     .get_if<Trustchain::Actions::UserGroupAddition>())
-      out[userGroupAddition->groupId()].push_back(entry);
+            boost::variant2::get_if<Trustchain::Actions::UserGroupCreation>(
+                &action))
+      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(action);
+    else if (auto const userGroupAddition = boost::variant2::get_if<
+                 Trustchain::Actions::UserGroupAddition>(&action))
+      out[userGroupAddition->groupId()].push_back(action);
     else
-      TERROR("Expected group blocks but got {}", entry.action().nature());
+      TERROR("Expected group blocks but got {}", Trustchain::getNature(action));
   }
   return out;
 }

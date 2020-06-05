@@ -1,13 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
-
-#include <nlohmann/json_fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 
 namespace Tanker
 {
@@ -15,39 +9,26 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES \
+  (publicSignatureKey, Crypto::PublicSignatureKey)
+
 class TrustchainCreation
 {
 public:
-  TrustchainCreation() = default;
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
+      TrustchainCreation,
+      TANKER_TRUSTCHAIN_ACTIONS_TRUSTCHAIN_CREATION_ATTRIBUTES)
+
+public:
   explicit TrustchainCreation(Crypto::PublicSignatureKey const&);
 
-  static constexpr Nature nature();
-  Crypto::PublicSignatureKey const& publicSignatureKey() const;
-
 private:
-  Crypto::PublicSignatureKey _publicSignatureKey;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               TrustchainCreation&);
 };
 
-bool operator==(TrustchainCreation const& lhs, TrustchainCreation const& rhs);
-bool operator!=(TrustchainCreation const& lhs, TrustchainCreation const& rhs);
-
-void from_serialized(Serialization::SerializedSource&, TrustchainCreation&);
-std::uint8_t* to_serialized(std::uint8_t*, TrustchainCreation const&);
-
-constexpr std::size_t serialized_size(TrustchainCreation const&)
-{
-  return Crypto::PublicSignatureKey::arraySize;
-}
-
-void to_json(nlohmann::json&, TrustchainCreation const&);
-
-constexpr Nature TrustchainCreation::nature()
-{
-  return Nature::TrustchainCreation;
-}
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(TrustchainCreation)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(TrustchainCreation)
 }
 }
 }

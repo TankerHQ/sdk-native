@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.4)
 project(tankertrustchain)
 
 add_library(tankertrustchain STATIC
-  include/Tanker/Trustchain/Action.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v1.hpp
   include/Tanker/Trustchain/Actions/DeviceCreation/v2.hpp
@@ -27,10 +26,8 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
   include/Tanker/Trustchain/Context.hpp
-  include/Tanker/Trustchain/ClientEntry.hpp
   include/Tanker/Trustchain/Errors/Errc.hpp
   include/Tanker/Trustchain/Errors/ErrcCategory.hpp
-  include/Tanker/Trustchain/ServerEntry.hpp
   include/Tanker/Trustchain/DeviceId.hpp
   include/Tanker/Trustchain/GroupId.hpp
   include/Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp
@@ -42,8 +39,11 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/HashedPassphrase.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/ComputeHash.hpp
+  include/Tanker/Trustchain/Serialization.hpp
+  include/Tanker/Trustchain/GroupAction.hpp
+  include/Tanker/Trustchain/UserAction.hpp
+  include/Tanker/Trustchain/KeyPublishAction.hpp
 
-  src/Action.cpp
   src/Actions/DeviceCreation.cpp
   src/Actions/DeviceCreation/v1.cpp
   src/Actions/DeviceCreation/v2.cpp
@@ -69,10 +69,12 @@ add_library(tankertrustchain STATIC
   src/Context.cpp
   src/Errors/Errc.cpp
   src/Errors/ErrcCategory.cpp
-  src/ClientEntry.cpp
-  src/ServerEntry.cpp
   src/ExternTemplates.cpp
   src/ComputeHash.cpp
+  src/Serialization.cpp
+  src/GroupAction.cpp
+  src/UserAction.cpp
+  src/KeyPublishAction.cpp
 )
 
 target_include_directories(tankertrustchain

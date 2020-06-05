@@ -1,13 +1,11 @@
 #include <Tanker/ReceiveKey.hpp>
 
 #include <Tanker/DataStore/ADatabase.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include "GroupAccessorMock.hpp"
 #include "LocalUserAccessorMock.hpp"
 #include "ProvisionalUsersAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 #include <Helpers/Await.hpp>
@@ -20,13 +18,6 @@
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
-
-namespace
-{
-auto makeEntry = [](Trustchain::ClientEntry const& clientEntry) {
-  return toVerifiedEntry(Test::Generator::makeEntryList({clientEntry}).front());
-};
-}
 
 TEST_CASE("decryptAndStoreKey")
 {
@@ -43,38 +34,36 @@ TEST_CASE("decryptAndStoreKey")
   LocalUserAccessorMock receiverLocalUserAccessor;
   ProvisionalUsersAccessorMock receiverProvisionalUsersAccessor;
 
-  SUBCASE("should process a key publish to user entry")
+  SUBCASE("should process a key publish to user action")
   {
     auto const keyPublishEntry =
-        makeEntry(generator.shareWith(senderDevice, receiver, resource));
+        generator.shareWith(senderDevice, receiver, resource);
 
     REQUIRE_CALL(receiverLocalUserAccessor,
                  pullUserKeyPair(receiver.userKeys().back().publicKey))
         .RETURN(makeCoTask(std::make_optional(receiver.userKeys().back())));
 
-    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
-        resourceKeyStore,
-        receiverLocalUserAccessor,
-        receiverGroupAccessor,
-        receiverProvisionalUsersAccessor,
-        keyPublishEntry.action.get<KeyPublish>()));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
+                                              receiverLocalUserAccessor,
+                                              receiverGroupAccessor,
+                                              receiverProvisionalUsersAccessor,
+                                              keyPublishEntry));
   }
 
-  SUBCASE("should process a key publish to group entry")
+  SUBCASE("should process a key publish to group action")
   {
     auto const group = receiver.makeGroup();
     auto const keyPublishEntry =
-        makeEntry(generator.shareWith(senderDevice, group, resource));
+        generator.shareWith(senderDevice, group, resource);
 
     REQUIRE_CALL(receiverGroupAccessor, getEncryptionKeyPair(trompeloeil::_))
         .LR_RETURN(makeCoTask(std::make_optional(group.currentEncKp())));
 
-    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
-        resourceKeyStore,
-        receiverLocalUserAccessor,
-        receiverGroupAccessor,
-        receiverProvisionalUsersAccessor,
-        keyPublishEntry.action.get<KeyPublish>()));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
+                                              receiverLocalUserAccessor,
+                                              receiverGroupAccessor,
+                                              receiverProvisionalUsersAccessor,
+                                              keyPublishEntry));
   }
 
   SUBCASE("should process a key publish to provisional user")
@@ -82,7 +71,7 @@ TEST_CASE("decryptAndStoreKey")
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail.com");
 
     auto const keyPublishEntry =
-        makeEntry(generator.shareWith(senderDevice, provisionalUser, resource));
+        generator.shareWith(senderDevice, provisionalUser, resource);
 
     REQUIRE_CALL(
         receiverProvisionalUsersAccessor,
@@ -91,12 +80,11 @@ TEST_CASE("decryptAndStoreKey")
         .LR_RETURN(makeCoTask(
             std::make_optional<ProvisionalUserKeys>(provisionalUser)));
 
-    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(
-        resourceKeyStore,
-        receiverLocalUserAccessor,
-        receiverGroupAccessor,
-        receiverProvisionalUsersAccessor,
-        keyPublishEntry.action.get<KeyPublish>()));
+    AWAIT_VOID(ReceiveKey::decryptAndStoreKey(resourceKeyStore,
+                                              receiverLocalUserAccessor,
+                                              receiverGroupAccessor,
+                                              receiverProvisionalUsersAccessor,
+                                              keyPublishEntry));
   }
   CHECK_EQ(AWAIT(resourceKeyStore.getKey(resource.id())), resource.key());
 }

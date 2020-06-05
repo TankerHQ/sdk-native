@@ -20,13 +20,6 @@ std::vector<std::uint8_t> UserGroupAddition::signatureData() const
   return visit([](auto const& val) { return val.signatureData(); });
 }
 
-Crypto::Signature const& UserGroupAddition::selfSign(
-    Crypto::PrivateSignatureKey const& key)
-{
-  return boost::variant2::visit(
-      [&](auto& val) -> decltype(auto) { return val.selfSign(key); }, _variant);
-}
-
 std::uint8_t* to_serialized(std::uint8_t* it, UserGroupAddition const& uga)
 {
   return uga.visit(

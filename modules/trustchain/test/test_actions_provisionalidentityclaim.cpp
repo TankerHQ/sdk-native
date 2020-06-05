@@ -11,29 +11,24 @@ using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("ProvisionalIdentityClaim tests")
-{
-  SUBCASE("sign functions should return the corresponding signature")
-  {
-    ProvisionalIdentityClaim pic{};
-    DeviceId const authorId{};
-    auto const appSignatureKeyPair = Crypto::makeSignatureKeyPair();
-    auto const tankerSignatureKeyPair = Crypto::makeSignatureKeyPair();
-    auto const& appSignature =
-        pic.signWithAppKey(appSignatureKeyPair.privateKey, authorId);
-    auto const& tankerSignature =
-        pic.signWithTankerKey(tankerSignatureKeyPair.privateKey, authorId);
-    CHECK(appSignature == pic.authorSignatureByAppKey());
-    CHECK(tankerSignature == pic.authorSignatureByTankerKey());
-  }
-}
-
 TEST_CASE("Serialization test vectors")
 {
   SUBCASE("it should serialize/deserialize a ProvisionalIdentityClaim")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedProvisionalIdentityClaim = {
+      // varint version
+      0x01,
+      // varint index
+      0x00,
+      // trustchain id
+      0x74, 0x72, 0x75, 0x73, 0x74, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x20, 0x69,
+      0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // varint nature
+      0x0e,
+      // varint payload size
+      0xf0, 0x02,
       // UserID
       0x74, 0x68, 0x65, 0x20, 0x75, 0x73, 0x65, 0x72, 0x20, 0x69, 0x64, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -76,8 +71,24 @@ TEST_CASE("Serialization test vectors")
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // author
+      0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // signature
+      0x73, 0x69, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
     };
     // clang-format on
+
+    auto const trustchainId = make<TrustchainId>("trustchain id");
+    auto const author = make<Crypto::Hash>("author");
+    auto const signature = make<Crypto::Signature>("sig");
+
     auto const userId = make<UserId>("the user id");
     auto const appPublicSignatureKey =
         make<Crypto::PublicSignatureKey>("the app sig pub key");
@@ -92,14 +103,20 @@ TEST_CASE("Serialization test vectors")
     auto const sealedPrivateKeys =
         make<ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
             "both encrypted private keys");
+    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+        "5BRkVAft4f79uIVCQX8D98+wqDEAQqQKdB3gFOw/clQ=");
 
-    ProvisionalIdentityClaim const pic{userId,
+    ProvisionalIdentityClaim const pic{trustchainId,
+                                       userId,
                                        appPublicSignatureKey,
-                                       signatureByAppKey,
                                        tankerPublicSignatureKey,
+                                       signatureByAppKey,
                                        signatureByTankerKey,
                                        userPublicEncryptionKey,
-                                       sealedPrivateKeys};
+                                       sealedPrivateKeys,
+                                       author,
+                                       hash,
+                                       signature};
 
     CHECK(Serialization::deserialize<ProvisionalIdentityClaim>(
               serializedProvisionalIdentityClaim) == pic);

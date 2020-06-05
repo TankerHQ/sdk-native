@@ -16,24 +16,26 @@ namespace Tanker
 {
 namespace Verif
 {
-Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
-                              Users::Device const& author,
-                              std::optional<BaseGroup> const& previousGroup)
+Trustchain::GroupAction verifyUserGroupCreation(
+    Trustchain::GroupAction const& action,
+    Users::Device const& author,
+    std::optional<BaseGroup> const& previousGroup)
 {
-  assert(serverEntry.action().nature() == Nature::UserGroupCreation ||
-         serverEntry.action().nature() == Nature::UserGroupCreation2);
+  assert(getNature(action) == Nature::UserGroupCreation1 ||
+         getNature(action) == Nature::UserGroupCreation2);
 
   ensures(!previousGroup,
           Verif::Errc::InvalidGroup,
           "UserGroupCreation - group already exist");
 
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
-                         author.publicSignatureKey()),
-          Errc::InvalidSignature,
-          "UserGroupCreation block must be signed by the author device");
+  ensures(
+      Crypto::verify(
+          getHash(action), getSignature(action), author.publicSignatureKey()),
+      Errc::InvalidSignature,
+      "UserGroupCreation block must be signed by the author device");
 
-  auto const& userGroupCreation = serverEntry.action().get<UserGroupCreation>();
+  auto const& userGroupCreation =
+      boost::variant2::get<UserGroupCreation>(action);
 
   ensures(Crypto::verify(userGroupCreation.signatureData(),
                          userGroupCreation.selfSignature(),
@@ -42,7 +44,7 @@ Entry verifyUserGroupCreation(ServerEntry const& serverEntry,
           "UserGroupCreation signature data must be signed with the group "
           "public key");
 
-  return makeVerifiedEntry(serverEntry);
+  return action;
 }
 }
 }

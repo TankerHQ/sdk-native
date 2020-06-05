@@ -8,7 +8,6 @@
 #include <doctest.h>
 
 #include "LocalUserAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 
 using namespace Tanker;
@@ -21,8 +20,7 @@ TEST_CASE("Preregistration")
 
   auto const alice = generator.makeUser("alice");
   auto const provisionalUser = generator.makeProvisionalUser("alice@email.com");
-  auto picEntry = toVerifiedEntry(
-      generator.makeEntryList({alice.claim(provisionalUser)}).front());
+  auto picEntry = alice.claim(provisionalUser);
 
   SUBCASE("throws if the user key is not found")
   {

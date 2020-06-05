@@ -1,6 +1,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 
-#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -11,70 +12,25 @@ namespace Trustchain
 namespace Actions
 {
 KeyPublishToUserGroup::KeyPublishToUserGroup(
+    TrustchainId const& trustchainId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
     ResourceId const& resourceId,
-    Crypto::SealedSymmetricKey const& sealedSymmetricKey)
-  : _recipientPublicEncryptionKey(recipientPublicEncryptionKey),
+    Crypto::SealedSymmetricKey const& sealedSymmetricKey,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _recipientPublicEncryptionKey(recipientPublicEncryptionKey),
     _resourceId(resourceId),
-    _sealedSymmetricKey(sealedSymmetricKey)
+    _sealedSymmetricKey(sealedSymmetricKey),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, devicePrivateSignatureKey))
 {
 }
 
-Crypto::PublicEncryptionKey const&
-KeyPublishToUserGroup::recipientPublicEncryptionKey() const
-{
-  return _recipientPublicEncryptionKey;
-}
-
-ResourceId const& KeyPublishToUserGroup::resourceId() const
-{
-  return _resourceId;
-}
-
-Crypto::SealedSymmetricKey const& KeyPublishToUserGroup::sealedSymmetricKey()
-    const
-{
-  return _sealedSymmetricKey;
-}
-
-bool operator==(KeyPublishToUserGroup const& lhs,
-                KeyPublishToUserGroup const& rhs)
-{
-  return std::tie(lhs.recipientPublicEncryptionKey(),
-                  lhs.resourceId(),
-                  lhs.sealedSymmetricKey()) ==
-         std::tie(rhs.recipientPublicEncryptionKey(),
-                  rhs.resourceId(),
-                  rhs.sealedSymmetricKey());
-}
-
-bool operator!=(KeyPublishToUserGroup const& lhs,
-                KeyPublishToUserGroup const& rhs)
-{
-  return !(lhs == rhs);
-}
-
-void from_serialized(Serialization::SerializedSource& ss,
-                     KeyPublishToUserGroup& kp)
-{
-  Serialization::deserialize_to(ss, kp._recipientPublicEncryptionKey);
-  Serialization::deserialize_to(ss, kp._resourceId);
-  Serialization::deserialize_to(ss, kp._sealedSymmetricKey);
-}
-
-std::uint8_t* to_serialized(std::uint8_t* it, KeyPublishToUserGroup const& kp)
-{
-  it = Serialization::serialize(it, kp.recipientPublicEncryptionKey());
-  it = Serialization::serialize(it, kp.resourceId());
-  return Serialization::serialize(it, kp.sealedSymmetricKey());
-}
-
-void to_json(nlohmann::json& j, KeyPublishToUserGroup const& kp)
-{
-  j["recipientPublicEncryptionKey"] = kp.recipientPublicEncryptionKey();
-  j["resourceId"] = kp.resourceId();
-  j["key"] = kp.sealedSymmetricKey();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
+    KeyPublishToUserGroup,
+    TANKER_TRUSTCHAIN_ACTIONS_KEY_PUBLISH_TO_USER_GROUP_ATTRIBUTES)
 }
 }
 }

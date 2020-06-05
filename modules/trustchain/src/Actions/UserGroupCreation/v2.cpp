@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -14,17 +15,25 @@ namespace Trustchain
 namespace Actions
 {
 UserGroupCreation2::UserGroupCreation2(
+    TrustchainId const& trustchainId,
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
     Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
     Members const& members,
-    ProvisionalMembers const& provisionalMembers)
-  : _publicSignatureKey(publicSignatureKey),
+    ProvisionalMembers const& provisionalMembers,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+    Crypto::PrivateSignatureKey const& devicePrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _publicSignatureKey(publicSignatureKey),
     _publicEncryptionKey(publicEncryptionKey),
     _sealedPrivateSignatureKey(sealedPrivateSignatureKey),
     _members(members),
     _provisionalMembers(provisionalMembers),
-    _selfSignature{}
+    _selfSignature(Crypto::sign(signatureData(), groupPrivateSignatureKey)),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, devicePrivateSignatureKey))
 {
 }
 
@@ -70,18 +79,7 @@ std::vector<std::uint8_t> UserGroupCreation2::signatureData() const
   return signatureData;
 }
 
-Crypto::Signature const& UserGroupCreation2::selfSign(
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
-{
-  auto const toSign = signatureData();
-
-  return _selfSignature = Crypto::sign(toSign, privateSignatureKey);
-}
-
-TANKER_TRUSTCHAIN_ACTION_DEFINE_SERIALIZATION(
-    UserGroupCreation2,
-    TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V2_ATTRIBUTES)
-TANKER_TRUSTCHAIN_ACTION_DEFINE_TO_JSON(
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
     UserGroupCreation2,
     TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V2_ATTRIBUTES)
 }

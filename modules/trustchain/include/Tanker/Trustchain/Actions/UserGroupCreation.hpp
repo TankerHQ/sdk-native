@@ -32,10 +32,13 @@ class UserGroupCreation
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
       UserGroupCreation,
       (UserGroupCreation1, UserGroupCreation2),
+      (trustchainId, TrustchainId),
       (publicSignatureKey, Crypto::PublicSignatureKey),
       (publicEncryptionKey, Crypto::PublicEncryptionKey),
       (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),
-      (selfSignature, Crypto::Signature))
+      (selfSignature, Crypto::Signature),
+      (author, Crypto::Hash),
+      (signature, Crypto::Signature))
 
 public:
   using v1 = UserGroupCreation1;
@@ -43,7 +46,6 @@ public:
 
   Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;
-  Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
 private:
   friend std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation const&);

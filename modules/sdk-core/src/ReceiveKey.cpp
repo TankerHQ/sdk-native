@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/Entry.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Groups/IAccessor.hpp>

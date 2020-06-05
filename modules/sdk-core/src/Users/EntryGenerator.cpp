@@ -1,20 +1,19 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Trustchain/Action.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToProvisionalUser.hpp>
-#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
 namespace Tanker::Users
 {
 using namespace Tanker::Trustchain;
 using Trustchain::Actions::DeviceCreation;
+using Trustchain::Actions::DeviceCreation1;
+using Trustchain::Actions::DeviceCreation3;
 using Trustchain::Actions::DeviceRevocation;
 using Trustchain::Actions::DeviceRevocation1;
 using Trustchain::Actions::DeviceRevocation2;
 
 namespace
 {
-ClientEntry createDeviceEntry(
+DeviceCreation3 createDeviceAction(
     TrustchainId const& trustchainId,
     Crypto::Hash const& author,
     Identity::Delegation const& delegation,
@@ -26,69 +25,56 @@ ClientEntry createDeviceEntry(
   auto const sealedPrivateEncryptionKey =
       Crypto::sealEncrypt(userEncryptionKeys.privateKey, encryptionKey);
 
-  DeviceCreation::v3 dc3{delegation.ephemeralKeyPair.publicKey,
-                         delegation.userId,
-                         delegation.signature,
-                         signatureKey,
-                         encryptionKey,
-                         userEncryptionKeys.publicKey,
-                         sealedPrivateEncryptionKey,
-                         deviceType};
-  return ClientEntry::create(
-      trustchainId, author, dc3, delegation.ephemeralKeyPair.privateKey);
+  return DeviceCreation::v3{
+      trustchainId,
+      delegation.ephemeralKeyPair.publicKey,
+      delegation.userId,
+      delegation.signature,
+      signatureKey,
+      encryptionKey,
+      userEncryptionKeys.publicKey,
+      sealedPrivateEncryptionKey,
+      deviceType == DeviceCreation::DeviceType::GhostDevice,
+      author,
+      delegation.ephemeralKeyPair.privateKey,
+  };
 }
 }
 
-ClientEntry createDeviceV1Entry(
+DeviceCreation1 createDeviceV1Action(
     TrustchainId const& trustchainId,
     Crypto::Hash const& author,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey)
 {
-  auto const dc1 = DeviceCreation::v1{delegation.ephemeralKeyPair.publicKey,
-                                      delegation.userId,
-                                      delegation.signature,
-                                      signatureKey,
-                                      encryptionKey};
-  return ClientEntry::create(
-      trustchainId, author, dc1, delegation.ephemeralKeyPair.privateKey);
+  return DeviceCreation::v1{trustchainId,
+                            delegation.ephemeralKeyPair.publicKey,
+                            delegation.userId,
+                            delegation.signature,
+                            signatureKey,
+                            encryptionKey,
+                            author,
+                            delegation.ephemeralKeyPair.privateKey};
 }
 
-ClientEntry createNewUserEntry(
+DeviceCreation3 createNewUserAction(
     TrustchainId const& trustchainId,
     Identity::Delegation const& delegation,
     Crypto::PublicSignatureKey const& signatureKey,
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys)
 {
-  return createDeviceEntry(trustchainId,
-                           static_cast<Crypto::Hash>(trustchainId),
-                           delegation,
-                           signatureKey,
-                           encryptionKey,
-                           userEncryptionKeys,
-                           DeviceCreation::DeviceType::GhostDevice);
+  return createDeviceAction(trustchainId,
+                            static_cast<Crypto::Hash>(trustchainId),
+                            delegation,
+                            signatureKey,
+                            encryptionKey,
+                            userEncryptionKeys,
+                            DeviceCreation::DeviceType::GhostDevice);
 }
 
-ClientEntry createNewDeviceEntry(
-    TrustchainId const& trustchainId,
-    DeviceId const& author,
-    Identity::Delegation const& delegation,
-    Crypto::PublicSignatureKey const& signatureKey,
-    Crypto::PublicEncryptionKey const& encryptionKey,
-    Crypto::EncryptionKeyPair const& userEncryptionKeys)
-{
-  return createDeviceEntry(trustchainId,
-                           static_cast<Crypto::Hash>(author),
-                           delegation,
-                           signatureKey,
-                           encryptionKey,
-                           userEncryptionKeys,
-                           DeviceCreation::DeviceType::Device);
-}
-
-ClientEntry createNewGhostDeviceEntry(
+DeviceCreation3 createNewDeviceAction(
     TrustchainId const& trustchainId,
     DeviceId const& author,
     Identity::Delegation const& delegation,
@@ -96,16 +82,33 @@ ClientEntry createNewGhostDeviceEntry(
     Crypto::PublicEncryptionKey const& encryptionKey,
     Crypto::EncryptionKeyPair const& userEncryptionKeys)
 {
-  return createDeviceEntry(trustchainId,
-                           static_cast<Crypto::Hash>(author),
-                           delegation,
-                           signatureKey,
-                           encryptionKey,
-                           userEncryptionKeys,
-                           DeviceCreation::DeviceType::GhostDevice);
+  return createDeviceAction(trustchainId,
+                            static_cast<Crypto::Hash>(author),
+                            delegation,
+                            signatureKey,
+                            encryptionKey,
+                            userEncryptionKeys,
+                            DeviceCreation::DeviceType::Device);
 }
 
-ClientEntry revokeDeviceEntry(
+DeviceCreation3 createNewGhostDeviceAction(
+    TrustchainId const& trustchainId,
+    DeviceId const& author,
+    Identity::Delegation const& delegation,
+    Crypto::PublicSignatureKey const& signatureKey,
+    Crypto::PublicEncryptionKey const& encryptionKey,
+    Crypto::EncryptionKeyPair const& userEncryptionKeys)
+{
+  return createDeviceAction(trustchainId,
+                            static_cast<Crypto::Hash>(author),
+                            delegation,
+                            signatureKey,
+                            encryptionKey,
+                            userEncryptionKeys,
+                            DeviceCreation::DeviceType::GhostDevice);
+}
+
+DeviceRevocation2 createRevokeDeviceAction(
     TrustchainId const& trustchainId,
     DeviceId const& author,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -115,26 +118,33 @@ ClientEntry revokeDeviceEntry(
     Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
     DeviceRevocation::v2::SealedKeysForDevices const& userKeys)
 {
-  DeviceRevocation2 dr2{toBeRevoked,
-                        publicEncryptionKey,
-                        encryptedKeyForPreviousUserKey,
-                        previousPublicEncryptionKey,
-                        userKeys};
-  return ClientEntry::create(
-      trustchainId, static_cast<Crypto::Hash>(author), dr2, signatureKey);
+  return DeviceRevocation2{
+      trustchainId,
+      toBeRevoked,
+      publicEncryptionKey,
+      previousPublicEncryptionKey,
+      encryptedKeyForPreviousUserKey,
+      userKeys,
+      static_cast<Crypto::Hash>(author),
+      signatureKey,
+  };
 }
 
-ClientEntry revokeDeviceV1Entry(TrustchainId const& trustchainId,
-                                DeviceId const& author,
-                                Crypto::PrivateSignatureKey const& signatureKey,
-                                DeviceId const& toBeRevoked)
+DeviceRevocation1 createRevokeDeviceV1Action(
+    TrustchainId const& trustchainId,
+    DeviceId const& author,
+    Crypto::PrivateSignatureKey const& signatureKey,
+    DeviceId const& toBeRevoked)
 {
-  DeviceRevocation1 dr1{toBeRevoked};
-  return ClientEntry::create(
-      trustchainId, static_cast<Crypto::Hash>(author), dr1, signatureKey);
+  return DeviceRevocation1{
+      trustchainId,
+      toBeRevoked,
+      static_cast<Crypto::Hash>(author),
+      signatureKey,
+  };
 }
 
-ClientEntry createProvisionalIdentityClaimEntry(
+Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimAction(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -152,28 +162,22 @@ ClientEntry createProvisionalIdentityClaimEntry(
             provisionalUser.tankerEncryptionKeyPair.privateKey.end(),
             it);
 
-  Actions::ProvisionalIdentityClaim claim{
+  return Actions::ProvisionalIdentityClaim{
+      trustchainId,
       userId,
-      provisionalUser.appSignatureKeyPair.publicKey,
-      provisionalUser.tankerSignatureKeyPair.publicKey,
+      provisionalUser.appSignatureKeyPair,
+      provisionalUser.tankerSignatureKeyPair,
       userKeyPair.publicKey,
       Crypto::sealEncrypt<
           Actions::ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
           keysToEncrypt, userKeyPair.publicKey),
+      deviceId,
+      deviceSignatureKey,
   };
-
-  claim.signWithAppKey(provisionalUser.appSignatureKeyPair.privateKey,
-                       deviceId);
-  claim.signWithTankerKey(provisionalUser.tankerSignatureKeyPair.privateKey,
-                          deviceId);
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             claim,
-                             deviceSignatureKey);
 }
 
-ClientEntry createKeyPublishToProvisionalUserEntry(
+Trustchain::Actions::KeyPublishToProvisionalUser
+createKeyPublishToProvisionalUserAction(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -182,16 +186,18 @@ ClientEntry createKeyPublishToProvisionalUserEntry(
     ResourceId const& resourceId,
     Crypto::TwoTimesSealedSymmetricKey const& symKey)
 {
-  Trustchain::Actions::KeyPublishToProvisionalUser kp{
-      appPublicSignatureKey, resourceId, tankerPublicSignatureKey, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return Trustchain::Actions::KeyPublishToProvisionalUser{
+      trustchainId,
+      appPublicSignatureKey,
+      tankerPublicSignatureKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey,
+  };
 }
 
-ClientEntry createKeyPublishToUserEntry(
+Trustchain::Actions::KeyPublishToUser createKeyPublishToUserAction(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey,
@@ -199,12 +205,12 @@ ClientEntry createKeyPublishToUserEntry(
     ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey)
 {
-  Trustchain::Actions::KeyPublishToUser kp{
-      recipientPublicEncryptionKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return Trustchain::Actions::KeyPublishToUser{
+      trustchainId,
+      recipientPublicEncryptionKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey};
 }
 }

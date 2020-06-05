@@ -24,7 +24,6 @@ add_executable(test_tanker
   test_preregistration.cpp
   test_stream.cpp
 
-  TestVerifier.cpp
   MockConnection.cpp
   TrustchainGenerator.hpp
   TrustchainGenerator.cpp

@@ -1,6 +1,8 @@
 #include <Tanker/Trustchain/Actions/DeviceRevocation/v1.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Trustchain/Serialization.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -10,40 +12,22 @@ namespace Trustchain
 {
 namespace Actions
 {
-DeviceRevocation1::DeviceRevocation1(DeviceId const& deviceId)
-  : _deviceId(deviceId)
+DeviceRevocation1::DeviceRevocation1(
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::Hash const& author,
+    Crypto::PrivateSignatureKey const& authorPrivateSignatureKey)
+  : _trustchainId(trustchainId),
+    _deviceId(deviceId),
+    _author(author),
+    _hash(computeHash()),
+    _signature(Crypto::sign(_hash, authorPrivateSignatureKey))
 {
 }
 
-DeviceId const& DeviceRevocation1::deviceId() const
-{
-  return _deviceId;
-}
-
-bool operator==(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs)
-{
-  return lhs.deviceId() == rhs.deviceId();
-}
-
-bool operator!=(DeviceRevocation1 const& lhs, DeviceRevocation1 const& rhs)
-{
-  return !(lhs == rhs);
-}
-
-void from_serialized(Serialization::SerializedSource& ss, DeviceRevocation1& dr)
-{
-  Serialization::deserialize_to(ss, dr._deviceId);
-}
-
-std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation1 const& dr)
-{
-  return Serialization::serialize(it, dr.deviceId());
-}
-
-void to_json(nlohmann::json& j, DeviceRevocation1 const& dr)
-{
-  j["deviceId"] = dr.deviceId();
-}
+TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
+    DeviceRevocation1,
+    TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V1_ATTRIBUTES)
 }
 }
 }

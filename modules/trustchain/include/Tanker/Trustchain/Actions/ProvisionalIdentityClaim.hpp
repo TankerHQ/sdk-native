@@ -4,19 +4,17 @@
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
-#include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
+#include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Crypto/TwoTimesSealedPrivateEncryptionKey.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 // TODO remove it once Crypto::Sealed<> is added
-#include <nlohmann/json_fwd.hpp>
 #include <sodium/crypto_box.h>
 
-#include <cstddef>
-#include <cstdint>
 #include <tuple>
 
 namespace Tanker
@@ -25,6 +23,14 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES  \
+  (userId, UserId), (appSignaturePublicKey, Crypto::PublicSignatureKey), \
+      (tankerSignaturePublicKey, Crypto::PublicSignatureKey),            \
+      (authorSignatureByAppKey, Crypto::Signature),                      \
+      (authorSignatureByTankerKey, Crypto::Signature),                   \
+      (userPublicEncryptionKey, Crypto::PublicEncryptionKey),            \
+      (sealedPrivateEncryptionKeys, SealedPrivateEncryptionKeys)
+
 class ProvisionalIdentityClaim
 {
 public:
@@ -36,76 +42,30 @@ public:
     using base_t::base_t;
   };
 
-  static constexpr Nature nature();
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
+      ProvisionalIdentityClaim,
+      TANKER_TRUSTCHAIN_ACTIONS_PROVISIONAL_IDENTITY_CLAIM_ATTRIBUTES)
 
-  ProvisionalIdentityClaim() = default;
+public:
   ProvisionalIdentityClaim(
+      TrustchainId const& trustchainId,
       UserId const& userId,
-      Crypto::PublicSignatureKey const& appSignaturePublicKey,
-      Crypto::Signature const& authorSignatureByAppKey,
-      Crypto::PublicSignatureKey const& tankerSignaturePublicKey,
-      Crypto::Signature const& authorSignatureByTankerKey,
+      Crypto::SignatureKeyPair const& appSignatureKeyPair,
+      Crypto::SignatureKeyPair const& tankerSignatureKeyPair,
       Crypto::PublicEncryptionKey const& userPublicEncryptionKey,
-      SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys);
-  ProvisionalIdentityClaim(
-      UserId const& userId,
-      Crypto::PublicSignatureKey const& appSignaturePublicKey,
-      Crypto::PublicSignatureKey const& tankerSignaturePublicKey,
-      Crypto::PublicEncryptionKey const& userPublicEncryptionKey,
-      SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys);
-
-  UserId const& userId() const;
-  Crypto::PublicSignatureKey const& appSignaturePublicKey() const;
-  Crypto::PublicSignatureKey const& tankerSignaturePublicKey() const;
-  Crypto::Signature const& authorSignatureByAppKey() const;
-  Crypto::Signature const& authorSignatureByTankerKey() const;
-  Crypto::PublicEncryptionKey const& userPublicEncryptionKey() const;
-  SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys() const;
+      SealedPrivateEncryptionKeys const& sealedPrivateEncryptionKeys,
+      DeviceId const& author,
+      Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);
 
   std::vector<std::uint8_t> signatureData(DeviceId const& authorId) const;
 
-  Crypto::Signature const& signWithAppKey(Crypto::PrivateSignatureKey const&,
-                                          DeviceId const&);
-  Crypto::Signature const& signWithTankerKey(Crypto::PrivateSignatureKey const&,
-                                             DeviceId const&);
-
 private:
-  UserId _userId;
-  Crypto::PublicSignatureKey _appSignaturePublicKey;
-  Crypto::PublicSignatureKey _tankerSignaturePublicKey;
-  Crypto::Signature _authorSignatureByAppKey;
-  Crypto::Signature _authorSignatureByTankerKey;
-  Crypto::PublicEncryptionKey _userPublicEncryptionKey;
-  SealedPrivateEncryptionKeys _sealedPrivateEncryptionKeys;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               ProvisionalIdentityClaim&);
 };
 
-bool operator==(ProvisionalIdentityClaim const& lhs,
-                ProvisionalIdentityClaim const& rhs);
-
-bool operator!=(ProvisionalIdentityClaim const& lhs,
-                ProvisionalIdentityClaim const& rhs);
-
-void from_serialized(Serialization::SerializedSource&,
-                     ProvisionalIdentityClaim&);
-std::uint8_t* to_serialized(std::uint8_t*, ProvisionalIdentityClaim const&);
-
-constexpr std::size_t serialized_size(ProvisionalIdentityClaim const&)
-{
-  return UserId::arraySize + (Crypto::PublicSignatureKey::arraySize * 2) +
-         (Crypto::Signature::arraySize * 2) +
-         Crypto::PublicEncryptionKey::arraySize +
-         ProvisionalIdentityClaim::SealedPrivateEncryptionKeys::arraySize;
-}
-
-void to_json(nlohmann::json&, ProvisionalIdentityClaim const&);
-
-constexpr Nature ProvisionalIdentityClaim::nature()
-{
-  return Nature::ProvisionalIdentityClaim;
-}
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(ProvisionalIdentityClaim)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(ProvisionalIdentityClaim)
 }
 }
 }

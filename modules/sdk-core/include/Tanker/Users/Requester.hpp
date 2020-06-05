@@ -21,12 +21,12 @@ class Requester : public IRequester
 public:
   Requester(Client* client);
 
-  tc::cotask<std::vector<Trustchain::ServerEntry>> getMe() override;
-  tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+  tc::cotask<GetMeResult> getMe() override;
+  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
-  tc::cotask<std::vector<Trustchain::ServerEntry>> getUsers(
+  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
-  tc::cotask<std::vector<std::string>> getKeyPublishes(
+  tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
   tc::cotask<void> authenticate(
       Trustchain::TrustchainId const& trustchainId,

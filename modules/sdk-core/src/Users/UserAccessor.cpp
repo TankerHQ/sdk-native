@@ -1,6 +1,5 @@
 #include <Tanker/Users/UserAccessor.hpp>
 
-#include <Tanker/Entry.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -82,13 +81,13 @@ Users::User* findUserOfDevice(DevicesMap const& devicesMap,
 }
 
 auto processUserEntries(Trustchain::Context const& context,
-                        gsl::span<Trustchain::ServerEntry const> serverEntries)
+                        gsl::span<Trustchain::UserAction const> actions)
 {
   UsersMap usersMap;
   DevicesMap devicesMap;
-  for (auto const& serverEntry : serverEntries)
+  for (auto const& action : actions)
   {
-    if (auto const dc = serverEntry.action().get_if<DeviceCreation>())
+    if (auto const dc = boost::variant2::get_if<DeviceCreation>(&action))
     {
       std::optional<Users::User> user;
       auto const userIt = usersMap.find(dc->userId());
@@ -96,10 +95,9 @@ auto processUserEntries(Trustchain::Context const& context,
       if (userIt != usersMap.end())
         user = userIt->second;
 
-      auto const entry =
-          Verif::verifyDeviceCreation(serverEntry, context, user);
+      auto const action = Verif::verifyDeviceCreation(*dc, context, user);
 
-      user = Updater::applyDeviceCreationToUser(entry, user);
+      user = Updater::applyDeviceCreationToUser(action, user);
       usersMap[dc->userId()] = *user;
       auto const& lastDevice = user->devices().back();
       if (auto const [it, isInserted] =
@@ -108,25 +106,21 @@ auto processUserEntries(Trustchain::Context const& context,
         throw Errors::AssertionError("DeviceCreation received more than once");
     }
     else if (auto const deviceRevocation =
-                 serverEntry.action().get_if<DeviceRevocation>())
+                 boost::variant2::get_if<DeviceRevocation>(&action))
     {
       auto const user =
           findUserOfDevice(devicesMap, usersMap, deviceRevocation->deviceId());
-      auto const entry = Verif::verifyDeviceRevocation(
-          serverEntry, user ? std::make_optional(*user) : std::nullopt);
+      auto const action = Verif::verifyDeviceRevocation(
+          *deviceRevocation, user ? std::make_optional(*user) : std::nullopt);
       if (!user)
         throw Errors::AssertionError(
             "user not found, verification should have failed");
 
-      *user = Updater::applyDeviceRevocationToUser(entry, *user);
-    }
-    else if (serverEntry.action().holds_alternative<TrustchainCreation>())
-    {
-      // do nothing here.
+      *user = Updater::applyDeviceRevocationToUser(action, *user);
     }
     else
     {
-      TERROR("Expected user blocks but got {}", serverEntry.action().nature());
+      TERROR("Expected user blocks but got {}", Trustchain::getNature(action));
     }
   }
   return std::make_tuple(usersMap, devicesMap);
@@ -188,8 +182,8 @@ auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
 {
   if (userIds.empty())
     TC_RETURN(UsersMap{});
-  auto const serverEntries = TC_AWAIT(_requester->getUsers(userIds));
-  TC_RETURN(std::get<UsersMap>(processUserEntries(_context, serverEntries)));
+  auto const actions = TC_AWAIT(_requester->getUsers(userIds));
+  TC_RETURN(std::get<UsersMap>(processUserEntries(_context, actions)));
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
@@ -197,7 +191,7 @@ auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   if (deviceIds.empty())
     TC_RETURN(DevicesMap{});
-  auto const serverEntries = TC_AWAIT(_requester->getUsers(deviceIds));
-  TC_RETURN(std::get<DevicesMap>(processUserEntries(_context, serverEntries)));
+  auto const actions = TC_AWAIT(_requester->getUsers(deviceIds));
+  TC_RETURN(std::get<DevicesMap>(processUserEntries(_context, actions)));
 }
 }

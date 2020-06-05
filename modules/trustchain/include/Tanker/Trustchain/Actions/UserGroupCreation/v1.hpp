@@ -5,15 +5,8 @@
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 
-#include <nlohmann/json_fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -23,6 +16,14 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES   \
+  (publicSignatureKey, Crypto::PublicSignatureKey),                   \
+      (publicEncryptionKey, Crypto::PublicEncryptionKey),             \
+      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey), \
+      (sealedPrivateEncryptionKeysForUsers,                           \
+       SealedPrivateEncryptionKeysForUsers),                          \
+      (selfSignature, Crypto::Signature)
+
 class UserGroupCreation1
 {
 public:
@@ -30,42 +31,31 @@ public:
       std::vector<std::pair<Crypto::PublicEncryptionKey,
                             Crypto::SealedPrivateEncryptionKey>>;
 
-  TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
       UserGroupCreation1,
-      (publicSignatureKey, Crypto::PublicSignatureKey),
-      (publicEncryptionKey, Crypto::PublicEncryptionKey),
-      (sealedPrivateSignatureKey, Crypto::SealedPrivateSignatureKey),
-      (sealedPrivateEncryptionKeysForUsers,
-       SealedPrivateEncryptionKeysForUsers),
-      (selfSignature, Crypto::Signature))
+      TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_CREATION_V1_ATTRIBUTES)
 
 public:
-  static constexpr Nature nature();
-
-  UserGroupCreation1(Crypto::PublicSignatureKey const&,
-                     Crypto::PublicEncryptionKey const&,
-                     Crypto::SealedPrivateSignatureKey const&,
-                     SealedPrivateEncryptionKeysForUsers const&);
+  UserGroupCreation1(
+      TrustchainId const& trustchainId,
+      Crypto::PublicSignatureKey const& publicSignatureKey,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::SealedPrivateSignatureKey const& sealedPrivateSignatureKey,
+      SealedPrivateEncryptionKeysForUsers const&
+          sealedPrivateEncryptionKeysForUsers,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& groupPrivateSignatureKey,
+      Crypto::PrivateSignatureKey const& devicePrivateSignatureKey);
 
   std::vector<std::uint8_t> signatureData() const;
-
-  Crypto::Signature const& selfSign(Crypto::PrivateSignatureKey const&);
 
 private:
   friend void from_serialized(Serialization::SerializedSource&,
                               UserGroupCreation1&);
 };
 
-void from_serialized(Serialization::SerializedSource&, UserGroupCreation1&);
-std::uint8_t* to_serialized(std::uint8_t*, UserGroupCreation1 const&);
-std::size_t serialized_size(UserGroupCreation1 const&);
-
-void to_json(nlohmann::json&, UserGroupCreation1 const&);
-
-constexpr Nature UserGroupCreation1::nature()
-{
-  return Nature::UserGroupCreation;
-}
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupCreation1)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupCreation1)
 }
 }
 }

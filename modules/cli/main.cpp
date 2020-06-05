@@ -11,10 +11,14 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Trustchain/Action.hpp>
+#include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/GroupAction.hpp>
+#include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
@@ -37,8 +41,6 @@ static const char USAGE[] =
 
     Usage:
       tcli deserializeblock [-x] <block>
-      tcli deserializepayload [-x] <nature-int> <block>
-      tcli deserializesplitblock [-x] <index> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
@@ -55,11 +57,73 @@ using MainArgs = std::map<std::string, docopt::value>;
 
 namespace
 {
-std::string formatEntry(ServerEntry const& entry)
-{
-  nlohmann::json jentry(entry);
+using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
+                                           Actions::DeviceCreation1,
+                                           Actions::DeviceCreation2,
+                                           Actions::DeviceCreation3,
+                                           Actions::DeviceRevocation1,
+                                           Actions::DeviceRevocation2,
+                                           Actions::UserGroupCreation1,
+                                           Actions::UserGroupCreation2,
+                                           Actions::UserGroupAddition1,
+                                           Actions::UserGroupAddition2,
+                                           Actions::KeyPublishToUser,
+                                           Actions::KeyPublishToUserGroup,
+                                           Actions::KeyPublishToProvisionalUser,
+                                           Actions::ProvisionalIdentityClaim>;
 
-  return jentry.dump(4);
+CliAction deserializeAction(gsl::span<std::uint8_t const> block)
+{
+  if (block.size() < 2)
+    throw std::runtime_error("block too small");
+  if (block[0] != 1)
+    throw std::runtime_error(
+        fmt::format("unsupported block version: {}", block[0]));
+
+  auto rest = Serialization::varint_read(block.subspan(1)).second;
+  auto const nature = static_cast<Nature>(rest[32]);
+
+  switch (nature)
+  {
+  case Nature::TrustchainCreation:
+    return Serialization::deserialize<TrustchainCreation>(block);
+  case Nature::DeviceCreation1:
+    return Serialization::deserialize<DeviceCreation1>(block);
+  case Nature::DeviceCreation2:
+    return Serialization::deserialize<DeviceCreation2>(block);
+  case Nature::DeviceCreation3:
+    return Serialization::deserialize<DeviceCreation3>(block);
+  case Nature::DeviceRevocation1:
+    return Serialization::deserialize<DeviceRevocation1>(block);
+  case Nature::DeviceRevocation2:
+    return Serialization::deserialize<DeviceRevocation2>(block);
+  case Nature::UserGroupCreation1:
+    return Serialization::deserialize<UserGroupCreation1>(block);
+  case Nature::UserGroupCreation2:
+    return Serialization::deserialize<UserGroupCreation2>(block);
+  case Nature::UserGroupAddition1:
+    return Serialization::deserialize<UserGroupAddition1>(block);
+  case Nature::UserGroupAddition2:
+    return Serialization::deserialize<UserGroupAddition2>(block);
+  case Nature::KeyPublishToDevice:
+    throw std::runtime_error("key publish to device are not supported anymore");
+  case Nature::KeyPublishToUser:
+    return Serialization::deserialize<KeyPublishToUser>(block);
+  case Nature::KeyPublishToUserGroup:
+    return Serialization::deserialize<KeyPublishToUserGroup>(block);
+  case Nature::KeyPublishToProvisionalUser:
+    return Serialization::deserialize<KeyPublishToProvisionalUser>(block);
+  case Nature::ProvisionalIdentityClaim:
+    return Serialization::deserialize<ProvisionalIdentityClaim>(block);
+  }
+  throw std::runtime_error(
+      fmt::format(TFMT("unknown nature: {}"), static_cast<int>(nature)));
+}
+
+std::string formatAction(CliAction const& action)
+{
+  return boost::variant2::visit(
+      [](auto const& e) { return nlohmann::json(e).dump(4); }, action);
 }
 
 std::string readfile(std::string const& file)
@@ -178,24 +242,6 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   return core;
 }
-
-template <typename Codec>
-ServerEntry constructEntry(MainArgs const& args)
-{
-  auto const index = static_cast<std::uint64_t>(args.at("<index>").asLong());
-  auto const nature = static_cast<Nature>(args.at("<nature>").asLong());
-  auto const payload = args.at("<payload>").asString();
-  auto const action = Action::deserialize(nature, Codec::decode(payload));
-  auto const author =
-      Codec::template decode<Crypto::Hash>(args.at("<author>").asString());
-  auto const signature = Codec::template decode<Crypto::Signature>(
-      args.at("<signature>").asString());
-  auto const hash = Trustchain::computeHash(
-      nature, author, gsl::make_span(payload).as_span<std::uint8_t const>());
-  // no trustchain id, since this is a debug tool, we don't need
-  // complete/proper info, right?
-  return {{}, index, author, action, hash, signature};
-}
 }
 
 int main(int argc, char* argv[])
@@ -208,45 +254,16 @@ int main(int argc, char* argv[])
 
   if (args.at("deserializeblock").asBool())
   {
-    ServerEntry entry;
+    CliAction action;
 
     if (args.at("--hex").asBool())
-      entry = Serialization::deserialize<ServerEntry>(
+      action = deserializeAction(
           cppcodec::hex_lower::decode(args.at("<block>").asString()));
     else
-      entry = Serialization::deserialize<ServerEntry>(
+      action = deserializeAction(
           cppcodec::base64_rfc4648::decode(args.at("<block>").asString()));
 
-    std::cout << formatEntry(entry) << std::endl;
-  }
-  else if (args.at("deserializepayload").asBool())
-  {
-    std::vector<uint8_t> payload;
-
-    if (args.at("--hex").asBool())
-      payload = cppcodec::hex_lower::decode(args.at("<block>").asString());
-    else
-      payload = cppcodec::base64_rfc4648::decode(args.at("<block>").asString());
-
-    auto const nature = args.at("<nature-int>").asLong();
-
-    auto const action =
-        Action::deserialize(static_cast<Nature>(nature), payload);
-    nlohmann::json jaction(action);
-    std::cout << jaction.dump(4) << std::endl;
-  }
-  else if (args.at("deserializesplitblock").asBool())
-  {
-    if (args.at("--hex").asBool())
-    {
-      std::cout << formatEntry(constructEntry<cppcodec::hex_lower>(args))
-                << std::endl;
-    }
-    else
-    {
-      std::cout << formatEntry(constructEntry<cppcodec::base64_rfc4648>(args))
-                << std::endl;
-    }
+    std::cout << formatAction(action) << std::endl;
   }
   else if (args.at("signup").asBool())
   {

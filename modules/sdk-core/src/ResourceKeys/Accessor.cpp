@@ -4,7 +4,6 @@
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
@@ -35,25 +34,15 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
   auto key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));
   if (!key)
   {
-    auto const entries = Trustchain::fromBlocksToServerEntries(
-        TC_AWAIT(_requester->getKeyPublishes(gsl::make_span(&resourceId, 1))));
-    for (auto const& entry : entries)
+    auto const entries =
+        TC_AWAIT(_requester->getKeyPublishes(gsl::make_span(&resourceId, 1)));
+    for (auto const& action : entries)
     {
-      if (auto const kp =
-              entry.action().get_if<Trustchain::Actions::KeyPublish>())
-      {
-        TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
-                                                *_localUserAccessor,
-                                                *_groupAccessor,
-                                                *_provisionalUsersAccessor,
-                                                *kp));
-      }
-      else
-      {
-        TERROR("Skipping non-keypublish block {} {}",
-               entry.hash(),
-               entry.action().nature());
-      }
+      TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
+                                              *_localUserAccessor,
+                                              *_groupAccessor,
+                                              *_provisionalUsersAccessor,
+                                              action));
     }
     key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));
   }

@@ -22,46 +22,87 @@ Crypto::Hash hashField(T const& field)
   return Crypto::generichash(
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
+
+std::vector<Trustchain::UserAction> fromBlocksToUserActions(
+    gsl::span<const std::string> const& blocks)
+{
+  std::vector<Trustchain::UserAction> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return Trustchain::deserializeUserAction(
+                       cppcodec::base64_rfc4648::decode(block));
+                 });
+
+  return entries;
+}
+
+std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
+    gsl::span<const std::string> const& blocks)
+{
+  std::vector<Trustchain::KeyPublishAction> entries;
+  entries.reserve(blocks.size());
+  std::transform(std::begin(blocks),
+                 std::end(blocks),
+                 std::back_inserter(entries),
+                 [](auto const& block) {
+                   return Trustchain::deserializeKeyPublishAction(
+                       cppcodec::base64_rfc4648::decode(block));
+                 });
+
+  return entries;
+}
 }
 
 Requester::Requester(Client* client) : _client(client)
 {
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getMe()
+tc::cotask<Requester::GetMeResult> Requester::getMe()
 {
   auto const response = TC_AWAIT(_client->emit("get my user blocks", {}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
-  TC_RETURN(ret);
+  auto const blocks = response.get<std::vector<std::string>>();
+  if (blocks.empty())
+    throw formatEx(Errors::Errc::InternalError,
+                   "received too few blocks for \"get my user blocks\"");
+  auto const trustchainCreation =
+      Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
+          cppcodec::base64_rfc4648::decode(blocks[0]));
+  auto const entries =
+      fromBlocksToUserActions(gsl::make_span(blocks).subspan(1));
+  TC_RETURN((GetMeResult{trustchainCreation, entries}));
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
+tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds)
 {
   auto const response =
       TC_AWAIT(_client->emit("get users blocks", {{"user_ids", userIds}}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToUserActions(response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }
 
-tc::cotask<std::vector<Trustchain::ServerEntry>> Requester::getUsers(
+tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
     gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   auto const response =
       TC_AWAIT(_client->emit("get users blocks", {{"device_ids", deviceIds}}));
-  auto const ret = Trustchain::fromBlocksToServerEntries(
-      response.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToUserActions(response.get<std::vector<std::string>>());
   TC_RETURN(ret);
 }
 
-tc::cotask<std::vector<std::string>> Requester::getKeyPublishes(
-    gsl::span<Trustchain::ResourceId const> resourceIds)
+tc::cotask<std::vector<Trustchain::KeyPublishAction>>
+Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  auto const json = TC_AWAIT(
+  auto const response = TC_AWAIT(
       _client->emit("get key publishes", {{"resource_ids", resourceIds}}));
-  TC_RETURN(json.get<std::vector<std::string>>());
+  auto const ret =
+      fromBlocksToKeyPublishActions(response.get<std::vector<std::string>>());
+  TC_RETURN(ret);
 }
 
 tc::cotask<void> Requester::authenticate(

@@ -7,7 +7,6 @@
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
@@ -17,7 +16,6 @@
 #include <Helpers/MakeCoTask.hpp>
 
 #include "GroupAccessorMock.hpp"
-#include "TestVerifier.hpp"
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
@@ -274,17 +272,11 @@ TEST_CASE("generateRecipientList")
 }
 
 template <typename T>
-std::vector<T> extract(gsl::span<Trustchain::ClientEntry const> entries)
+std::vector<T> extract(gsl::span<Trustchain::KeyPublishAction const> entries)
 {
   std::vector<T> keyPublishes;
-  for (auto const& entry : entries)
-  {
-    auto const keyPublish = Trustchain::Action::deserialize(
-                                entry.nature(), entry.serializedPayload())
-                                .get<KeyPublish>();
-    auto const keyPublishTo = keyPublish.get_if<T>();
-    keyPublishes.push_back(*keyPublishTo);
-  }
+  for (auto const& action : entries)
+    keyPublishes.push_back(boost::variant2::get<T>(action));
   return keyPublishes;
 }
 

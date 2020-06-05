@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -51,7 +50,7 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Users::IUserAccessor& userAccessor,
                               Pusher& client);
 
-Trustchain::ClientEntry makeRevokeDeviceEntry(
+Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceAction(
     Trustchain::DeviceId const& targetDeviceId,
     Trustchain::TrustchainId const& trustchainId,
     Users::LocalUser const& localUser,

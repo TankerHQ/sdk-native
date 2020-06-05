@@ -19,7 +19,8 @@ class Requester : public IRequester
 public:
   Requester(Client* client);
 
-  tc::cotask<std::vector<Trustchain::ServerEntry>> getClaimBlocks() override;
+  tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
+  getClaimBlocks() override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail) override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>

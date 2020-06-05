@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/Actions/DeviceRevocation.hpp>
 
 #include <optional>
 
@@ -12,6 +11,7 @@ class User;
 
 namespace Tanker::Verif
 {
-Entry verifyDeviceRevocation(Trustchain::ServerEntry const& serverEntry,
-                             std::optional<Users::User> const& user);
+Trustchain::Actions::DeviceRevocation verifyDeviceRevocation(
+    Trustchain::Actions::DeviceRevocation const& action,
+    std::optional<Users::User> const& user);
 }

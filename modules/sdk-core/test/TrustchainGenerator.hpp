@@ -7,10 +7,13 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+#include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/Context.hpp>
+#include <Tanker/Trustchain/GroupAction.hpp>
+#include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -25,13 +28,13 @@ namespace Tanker::Test
 
 struct Device : Users::Device
 {
-  Device(Trustchain::ClientEntry entry,
+  Device(Trustchain::Actions::DeviceCreation action,
          Trustchain::UserId const& uid,
          DeviceKeys const& deviceKeys,
          bool isGhostDevice = true);
   Crypto::PrivateEncryptionKey privateEncryptionKey;
   Crypto::PrivateSignatureKey privateSignatureKey;
-  Trustchain::ClientEntry entry;
+  Trustchain::Actions::DeviceCreation action;
   DeviceKeys keys() const;
 };
 
@@ -60,22 +63,22 @@ struct Group
   Crypto::SealedPrivateSignatureKey encryptedSignatureKey() const;
   Crypto::Hash lastBlockHash() const;
 
-  std::vector<Trustchain::ClientEntry> const& entries() const;
+  std::vector<Trustchain::GroupAction> const& entries() const;
 
-  Trustchain::ClientEntry const& addUsers(
+  Trustchain::Actions::UserGroupAddition addUsers(
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});
 
-  Trustchain::ClientEntry const& addUsersV1(Device const& author,
-                                            std::vector<User> const& users);
+  Trustchain::Actions::UserGroupAddition addUsersV1(
+      Device const& author, std::vector<User> const& users);
 
 private:
   Trustchain::TrustchainId _tid;
   Crypto::EncryptionKeyPair _currentEncKp;
   Crypto::SignatureKeyPair _currentSigKp;
   Trustchain::GroupId _id;
-  std::vector<Trustchain::ClientEntry> _entries;
+  std::vector<Trustchain::GroupAction> _entries;
 };
 
 struct User
@@ -95,13 +98,14 @@ struct User
 
   Trustchain::UserId const& id() const;
   std::vector<Crypto::EncryptionKeyPair> const& userKeys() const;
-  std::vector<Trustchain::ClientEntry> entries() const;
+  /// this does not contains revocation entries
+  std::vector<Trustchain::Actions::DeviceCreation> entries() const;
   std::deque<Device> const& devices() const;
   std::deque<Device>& devices();
-  Trustchain::ClientEntry revokeDevice(Device& target);
-  Trustchain::ClientEntry revokeDeviceV1(Device& target);
-  Trustchain::ClientEntry revokeDeviceForMigration(Device const& sender,
-                                                   Device& target);
+  Trustchain::Actions::DeviceRevocation2 revokeDevice(Device& target);
+  Trustchain::Actions::DeviceRevocation1 revokeDeviceV1(Device& target);
+  Trustchain::Actions::DeviceRevocation2 revokeDeviceForMigration(
+      Device const& sender, Device& target);
 
   [[nodiscard]] Device makeDevice() const;
   Device& addDevice();
@@ -113,7 +117,8 @@ struct User
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
 
-  Trustchain::ClientEntry claim(ProvisionalUser const& provisionalUser) const;
+  Trustchain::Actions::ProvisionalIdentityClaim claim(
+      ProvisionalUser const& provisionalUser) const;
 
   Crypto::EncryptionKeyPair const& addUserKey();
   void addUserKey(Crypto::EncryptionKeyPair const& userKp);
@@ -195,29 +200,29 @@ public:
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
 
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    User const& receiver,
-                                    Resource const& res);
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    Group const& receiver,
-                                    Resource const& res);
-  Trustchain::ClientEntry shareWith(Device const& sender,
-                                    ProvisionalUser const& receiver,
-                                    Resource const& res);
+  Trustchain::Actions::KeyPublishToUser shareWith(Device const& sender,
+                                                  User const& receiver,
+                                                  Resource const& res);
+  Trustchain::Actions::KeyPublishToUserGroup shareWith(Device const& sender,
+                                                       Group const& receiver,
+                                                       Resource const& res);
+  Trustchain::Actions::KeyPublishToProvisionalUser shareWith(
+      Device const& sender,
+      ProvisionalUser const& receiver,
+      Resource const& res);
 
   Trustchain::Context const& context() const;
-  Trustchain::ServerEntry const& rootBlock() const;
+  Trustchain::Actions::TrustchainCreation const& rootBlock() const;
   Crypto::SignatureKeyPair const& trustchainSigKp() const;
-  static std::vector<Trustchain::ServerEntry> makeEntryList(
-      std::vector<Trustchain::ClientEntry> const& entries);
-  static std::vector<Trustchain::ServerEntry> makeEntryList(
+  // This does not contain revocation entries
+  static std::vector<Trustchain::Actions::DeviceCreation> makeEntryList(
       std::initializer_list<Device> devices);
-  std::vector<Trustchain::ServerEntry> makeEntryList(
+  std::vector<Trustchain::UserAction> makeEntryList(
       std::initializer_list<User> users) const;
 
 private:
   Crypto::SignatureKeyPair _trustchainKeyPair;
-  Trustchain::ServerEntry _rootBlock;
+  Trustchain::Actions::TrustchainCreation _rootBlock;
   Trustchain::Context _context;
 };
 }

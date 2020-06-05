@@ -30,7 +30,7 @@ TEST_CASE("DeviceCreation tests")
     CHECK_THROWS_AS(dc.get<DeviceCreation::v3>(),
                     boost::variant2::bad_variant_access);
     CHECK(dc.visit([](auto const& val) { return val.nature(); }) ==
-          Nature::DeviceCreation);
+          Nature::DeviceCreation1);
   }
 
   SUBCASE("DeviceCreation v2 conversion to v1")
@@ -46,12 +46,16 @@ TEST_CASE("DeviceCreation tests")
 
     SUBCASE("can convert with a zero-filled lastReset field")
     {
-      DeviceCreation2 dc2(ephemeralPublicSignatureKey,
+      DeviceCreation2 dc2({},
+                          lastReset,
+                          ephemeralPublicSignatureKey,
                           userId,
                           delegationSignature,
                           publicSignatureKey,
                           publicEncryptionKey,
-                          lastReset);
+                          {},
+                          {},
+                          {});
 
       CHECK_NOTHROW(dc2.asDeviceCreation1());
     }
@@ -59,24 +63,20 @@ TEST_CASE("DeviceCreation tests")
     SUBCASE("throws if lastReset is not zero-filled")
     {
       lastReset[0]++;
-      DeviceCreation2 dc2(ephemeralPublicSignatureKey,
+      DeviceCreation2 dc2({},
+                          lastReset,
+                          ephemeralPublicSignatureKey,
                           userId,
                           delegationSignature,
                           publicSignatureKey,
                           publicEncryptionKey,
-                          lastReset);
+                          {},
+                          {},
+                          {});
 
       TANKER_CHECK_THROWS_WITH_CODE(dc2.asDeviceCreation1(),
                                     Errc::InvalidLastResetField);
     }
-  }
-
-  SUBCASE("sign should return the delegationSignature")
-  {
-    auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
-    DeviceCreation dc{};
-    auto const& signature = dc.sign(signatureKeyPair.privateKey);
-    CHECK(signature == dc.delegationSignature());
   }
 }
 
@@ -86,6 +86,18 @@ TEST_CASE("Serialization test vectors")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
+      // varint version
+      0x01,
+      // varint index
+      0x00,
+      // trustchain id
+      0x74, 0x72, 0x75, 0x73, 0x74, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x20, 0x69,
+      0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // varint nature
+      0x02,
+      // varint payload size
+      0xc0, 0x01,
       // ephemeral public key
       0x65, 0x70, 0x68, 0x20, 0x70, 0x75, 0x62, 0x20, 0x6b, 0x65, 0x79, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -108,9 +120,24 @@ TEST_CASE("Serialization test vectors")
       // public encryption key
       0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x20, 0x65, 0x6e, 0x63, 0x20, 0x6b,
       0x65, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // author
+      0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // signature
+      0x73, 0x69, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
     };
     // clang-format on
+
+    auto const trustchainId = make<TrustchainId>("trustchain id");
+    auto const author = make<Crypto::Hash>("author");
+    auto const signature = make<Crypto::Signature>("sig");
 
     auto const ephemeralPublicSignatureKey =
         make<Crypto::PublicSignatureKey>("eph pub key");
@@ -120,12 +147,18 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicSignatureKey>("public signature key");
     auto const publicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("public enc key");
+    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+        "nPmcskd1KiuDywCkM0ltRXk2e5eTpy+GxlKKhdRWq8s=");
 
-    DeviceCreation::v1 const dc1(ephemeralPublicSignatureKey,
+    DeviceCreation::v1 const dc1(trustchainId,
+                                 ephemeralPublicSignatureKey,
                                  userId,
                                  delegationSignature,
                                  publicSignatureKey,
-                                 publicEncryptionKey);
+                                 publicEncryptionKey,
+                                 author,
+                                 hash,
+                                 signature);
 
     CHECK(Serialization::serialize(dc1) == serializedDevice);
     CHECK(Serialization::deserialize<DeviceCreation::v1>(serializedDevice) ==
@@ -136,6 +169,18 @@ TEST_CASE("Serialization test vectors")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
+      // varint version
+      0x01,
+      // varint index
+      0x00,
+      // trustchain id
+      0x74, 0x72, 0x75, 0x73, 0x74, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x20, 0x69,
+      0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // varint nature
+      0x06,
+      // varint payload size
+      0xe0, 0x01,
       // last reset
       0x72, 0x65, 0x73, 0x65, 0x74, 0x20, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -162,9 +207,24 @@ TEST_CASE("Serialization test vectors")
       // public encryption key
       0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x20, 0x65, 0x6e, 0x63, 0x20, 0x6b,
       0x65, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // author
+      0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // signature
+      0x73, 0x69, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
     };
     // clang-format on
+
+    auto const trustchainId = make<TrustchainId>("trustchain id");
+    auto const author = make<Crypto::Hash>("author");
+    auto const signature = make<Crypto::Signature>("sig");
 
     auto const ephemeralPublicSignatureKey =
         make<Crypto::PublicSignatureKey>("eph pub key");
@@ -175,13 +235,19 @@ TEST_CASE("Serialization test vectors")
     auto const publicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("public enc key");
     auto const lastReset = make<Crypto::Hash>("reset block");
+    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+        "Hy0ykBdASXL5eigQ22Bb6rYEqe6vMfHkqU8o+BdyF4k=");
 
-    DeviceCreation2 const dc2(ephemeralPublicSignatureKey,
+    DeviceCreation2 const dc2(trustchainId,
+                              lastReset,
+                              ephemeralPublicSignatureKey,
                               userId,
                               delegationSignature,
                               publicSignatureKey,
                               publicEncryptionKey,
-                              lastReset);
+                              author,
+                              hash,
+                              signature);
 
     CHECK(Serialization::serialize(dc2) == serializedDevice);
     CHECK(Serialization::deserialize<DeviceCreation2>(serializedDevice) == dc2);
@@ -191,6 +257,18 @@ TEST_CASE("Serialization test vectors")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
+      // varint version
+      0x01,
+      // varint index
+      0x00,
+      // trustchain id
+      0x74, 0x72, 0x75, 0x73, 0x74, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x20, 0x69,
+      0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // varint nature
+      0x07,
+      // varint payload size
+      0xb1, 0x02,
       // eph pub key
       0x65, 0x70, 0x68, 0x20, 0x70, 0x75, 0x62, 0x20, 0x6b, 0x65, 0x79, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -228,8 +306,23 @@ TEST_CASE("Serialization test vectors")
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       // IsGhostDevice
       0x01,
+      // author
+      0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // signature
+      0x73, 0x69, 0x67, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
     };
     // clang-format on
+
+    auto const trustchainId = make<TrustchainId>("trustchain id");
+    auto const author = make<Crypto::Hash>("author");
+    auto const signature = make<Crypto::Signature>("sig");
 
     auto const ephemeralPublicSignatureKey =
         make<Crypto::PublicSignatureKey>("eph pub key");
@@ -243,15 +336,21 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicEncryptionKey>("user pub enc key");
     auto const sealedPrivateUserEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("key");
+    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+        "AEYXc2xMBM/E0xk3zLLMxSMkUPh4/iSuEurrQ3mrQiw=");
 
-    DeviceCreation::v3 const dc3(ephemeralPublicSignatureKey,
+    DeviceCreation::v3 const dc3(trustchainId,
+                                 ephemeralPublicSignatureKey,
                                  userId,
                                  delegationSignature,
                                  publicSignatureKey,
                                  publicEncryptionKey,
                                  publicUserEncryptionKey,
                                  sealedPrivateUserEncryptionKey,
-                                 DeviceCreation::DeviceType::GhostDevice);
+                                 true,
+                                 author,
+                                 hash,
+                                 signature);
 
     CHECK(Serialization::serialize(dc3) == serializedDevice);
     CHECK(Serialization::deserialize<DeviceCreation::v3>(serializedDevice) ==

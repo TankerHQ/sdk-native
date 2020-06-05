@@ -70,7 +70,7 @@ DeviceRevocation::v2::SealedKeysForDevices encryptPrivateKeyForDevices(
   return userKeys;
 }
 
-Trustchain::ClientEntry makeRevokeDeviceEntry(
+Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceAction(
     Trustchain::DeviceId const& targetDeviceId,
     Trustchain::TrustchainId const& trustchainId,
     Users::LocalUser const& localUser,
@@ -83,7 +83,7 @@ Trustchain::ClientEntry makeRevokeDeviceEntry(
 
   auto const sealedUserKeys = encryptPrivateKeyForDevices(
       userDevices, targetDeviceId, newUserKey.privateKey);
-  return Users::revokeDeviceEntry(
+  return Users::createRevokeDeviceAction(
       trustchainId,
       localUser.deviceId(),
       localUser.deviceKeys().signatureKeyPair.privateKey,
@@ -106,7 +106,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
 
   auto const newUserKey = Crypto::makeEncryptionKeyPair();
 
-  auto clientEntry = makeRevokeDeviceEntry(
+  auto clientEntry = makeRevokeDeviceAction(
       deviceId, trustchainId, localUser, user.devices(), newUserKey);
   TC_AWAIT(pusher.pushBlock(clientEntry));
 }

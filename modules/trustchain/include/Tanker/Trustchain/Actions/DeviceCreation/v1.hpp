@@ -3,15 +3,9 @@
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
-#include <Tanker/Crypto/Signature.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <nlohmann/json_fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
 #include <vector>
 
 namespace Tanker
@@ -20,60 +14,38 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES                \
+  (ephemeralPublicSignatureKey, Crypto::PublicSignatureKey), (userId, UserId), \
+      (delegationSignature, Crypto::Signature),                                \
+      (publicSignatureKey, Crypto::PublicSignatureKey),                        \
+      (publicEncryptionKey, Crypto::PublicEncryptionKey)
+
 class DeviceCreation1
 {
 public:
-  DeviceCreation1() = default;
-  DeviceCreation1(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-                  UserId const& userId,
-                  Crypto::Signature const& delegationSignature,
-                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey);
-  DeviceCreation1(Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
-                  UserId const& userId,
-                  Crypto::PublicSignatureKey const& devicePublicSignatureKey,
-                  Crypto::PublicEncryptionKey const& devicePublicEncryptionKey);
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
+      DeviceCreation1, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V1_ATTRIBUTES)
 
-  static constexpr Nature nature();
+public:
+  DeviceCreation1(
+      TrustchainId const& trustchainId,
+      Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey,
+      UserId const& userId,
+      Crypto::Signature const& delegationSignature,
+      Crypto::PublicSignatureKey const& publicSignatureKey,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& delegationPrivateSignatureKey);
 
-  Crypto::PublicSignatureKey const& ephemeralPublicSignatureKey() const;
-  UserId const& userId() const;
-  Crypto::Signature const& delegationSignature() const;
-  Crypto::PublicSignatureKey const& publicSignatureKey() const;
-  Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
-
-  std::vector<std::uint8_t> signatureData() const;
-  Crypto::Signature const& sign(Crypto::PrivateSignatureKey const&);
+  std::vector<std::uint8_t> delegationSignatureData() const;
 
 protected:
-  Crypto::PublicSignatureKey _ephemeralPublicSignatureKey;
-  UserId _userId;
-  Crypto::Signature _delegationSignature;
-  Crypto::PublicSignatureKey _publicSignatureKey;
-  Crypto::PublicEncryptionKey _publicEncryptionKey;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceCreation1&);
 };
 
-bool operator==(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs);
-bool operator!=(DeviceCreation1 const& lhs, DeviceCreation1 const& rhs);
-
-void from_serialized(Serialization::SerializedSource&, DeviceCreation1&);
-std::uint8_t* to_serialized(std::uint8_t*, DeviceCreation1 const&);
-
-constexpr std::size_t serialized_size(DeviceCreation1 const&)
-{
-  return (Crypto::PublicSignatureKey::arraySize * 2) + UserId::arraySize +
-         Crypto::Signature::arraySize + Crypto::PublicEncryptionKey::arraySize;
-}
-
-void to_json(nlohmann::json&, DeviceCreation1 const&);
-
-constexpr Nature DeviceCreation1::nature()
-{
-  return Nature::DeviceCreation;
-}
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceCreation1)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceCreation1)
 }
 }
 }

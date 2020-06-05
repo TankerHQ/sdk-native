@@ -4,8 +4,9 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/ResourceKeys/KeysResult.hpp>
-#include <Tanker/Trustchain/ClientEntry.hpp>
+#include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -40,7 +41,7 @@ struct KeyRecipients
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
 };
 
-Trustchain::ClientEntry makeKeyPublishToUser(
+Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -48,7 +49,7 @@ Trustchain::ClientEntry makeKeyPublishToUser(
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-Trustchain::ClientEntry makeKeyPublishToGroup(
+Trustchain::Actions::KeyPublishToUserGroup makeKeyPublishToGroup(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -56,7 +57,8 @@ Trustchain::ClientEntry makeKeyPublishToGroup(
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& resourceKey);
 
-Trustchain::ClientEntry makeKeyPublishToProvisionalUser(
+Trustchain::Actions::KeyPublishToProvisionalUser
+makeKeyPublishToProvisionalUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -70,7 +72,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds);
 
-std::vector<Trustchain::ClientEntry> generateShareBlocks(
+std::vector<Trustchain::KeyPublishAction> generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,

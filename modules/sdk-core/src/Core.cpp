@@ -153,7 +153,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
     auto const privateUserEncryptionKey =
         Crypto::sealDecrypt(encryptedUserKey.encryptedPrivateKey,
                             ghostDeviceKeys.encryptionKeyPair);
-    auto const entry = Users::createNewDeviceEntry(
+    auto const action = Users::createNewDeviceAction(
         _session->trustchainId(),
         encryptedUserKey.deviceId,
         Identity::makeDelegation(_session->userId(),
@@ -161,7 +161,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
-    TC_AWAIT(_session->pusher().pushBlock(entry));
+    TC_AWAIT(_session->pusher().pushBlock(action));
     TC_AWAIT(_session->finalizeOpening());
   }
   catch (Exception const& e)
@@ -189,14 +189,14 @@ tc::cotask<void> Core::registerIdentity(
 
   auto const userKeyPair = Crypto::makeEncryptionKeyPair();
   auto const userCreationEntry =
-      Users::createNewUserEntry(_session->trustchainId(),
-                                _session->identity().delegation,
-                                ghostDeviceKeys.signatureKeyPair.publicKey,
-                                ghostDeviceKeys.encryptionKeyPair.publicKey,
-                                userKeyPair);
+      Users::createNewUserAction(_session->trustchainId(),
+                                 _session->identity().delegation,
+                                 ghostDeviceKeys.signatureKeyPair.publicKey,
+                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
+                                 userKeyPair);
   auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
 
-  auto const firstDeviceEntry = Users::createNewDeviceEntry(
+  auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
       Trustchain::DeviceId{userCreationEntry.hash()},
       Identity::makeDelegation(_session->userId(),

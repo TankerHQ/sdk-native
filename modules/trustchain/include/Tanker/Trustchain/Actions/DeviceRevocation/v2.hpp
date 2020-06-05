@@ -1,15 +1,11 @@
 #pragma once
 
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
-#include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 
-#include <nlohmann/json_fwd.hpp>
-
-#include <cstddef>
-#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -19,52 +15,40 @@ namespace Trustchain
 {
 namespace Actions
 {
+#define TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V2_ATTRIBUTES           \
+  (deviceId, DeviceId), (publicEncryptionKey, Crypto::PublicEncryptionKey), \
+      (previousPublicEncryptionKey, Crypto::PublicEncryptionKey),           \
+      (sealedKeyForPreviousUserKey, Crypto::SealedPrivateEncryptionKey),    \
+      (sealedUserKeysForDevices, SealedKeysForDevices)
+
 class DeviceRevocation2
 {
 public:
   using SealedKeysForDevices =
       std::vector<std::pair<DeviceId, Crypto::SealedPrivateEncryptionKey>>;
 
-  static constexpr Nature nature();
+  TANKER_IMMUTABLE_ACTION_IMPLEMENTATION(
+      DeviceRevocation2,
+      TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V2_ATTRIBUTES)
 
-  DeviceRevocation2() = default;
-  DeviceRevocation2(DeviceId const&,
-                    Crypto::PublicEncryptionKey const&,
-                    Crypto::SealedPrivateEncryptionKey const&,
-                    Crypto::PublicEncryptionKey const&,
-                    SealedKeysForDevices const&);
-
-  DeviceId const& deviceId() const;
-  Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
-  Crypto::SealedPrivateEncryptionKey const& sealedKeyForPreviousUserKey() const;
-  Crypto::PublicEncryptionKey const& previousPublicEncryptionKey() const;
-  SealedKeysForDevices const& sealedUserKeysForDevices() const;
+public:
+  DeviceRevocation2(
+      TrustchainId const& trustchainId,
+      DeviceId const& deviceId,
+      Crypto::PublicEncryptionKey const& publicEncryptionKey,
+      Crypto::PublicEncryptionKey const& previousPublicEncryptionKey,
+      Crypto::SealedPrivateEncryptionKey const& sealedKeyForPreviousUserKey,
+      SealedKeysForDevices const& sealedUserKeysForDevices,
+      Crypto::Hash const& author,
+      Crypto::PrivateSignatureKey const& authorPrivateSignatureKey);
 
 private:
-  DeviceId _deviceId;
-  Crypto::PublicEncryptionKey _publicEncryptionKey;
-  Crypto::PublicEncryptionKey _previousPublicEncryptionKey;
-  Crypto::SealedPrivateEncryptionKey _sealedKeyForPreviousUserKey;
-  SealedKeysForDevices _sealedUserKeysForDevices;
-
   friend void from_serialized(Serialization::SerializedSource&,
                               DeviceRevocation2&);
 };
 
-bool operator==(DeviceRevocation2 const& lhs, DeviceRevocation2 const& rhs);
-bool operator!=(DeviceRevocation2 const& lhs, DeviceRevocation2 const& rhs);
-
-void from_serialized(Serialization::SerializedSource& ss,
-                     DeviceRevocation2& dr);
-std::uint8_t* to_serialized(std::uint8_t* it, DeviceRevocation2 const& dr);
-std::size_t serialized_size(DeviceRevocation2 const& dr);
-
-void to_json(nlohmann::json& j, DeviceRevocation2 const& dr);
-
-constexpr Nature DeviceRevocation2::nature()
-{
-  return Nature::DeviceRevocation2;
-}
+TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(DeviceRevocation2)
+TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(DeviceRevocation2)
 }
 }
 }

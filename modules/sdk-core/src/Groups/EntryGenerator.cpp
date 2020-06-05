@@ -1,14 +1,13 @@
 #include <Tanker/Groups/EntryGenerator.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Trustchain/Action.hpp>
 
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker::Groups
 {
-ClientEntry createUserGroupCreationV1Entry(
+Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const&
@@ -20,18 +19,17 @@ ClientEntry createUserGroupCreationV1Entry(
   auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
       groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
 
-  UserGroupCreation::v1 ugc{groupSignatureKeyPair.publicKey,
-                            groupPublicEncryptionKey,
-                            encryptedPrivateSignatureKey,
-                            sealedPrivateEncryptionKeysForUsers};
-  ugc.selfSign(groupSignatureKeyPair.privateKey);
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             ugc,
-                             deviceSignatureKey);
+  return UserGroupCreation::v1{trustchainId,
+                               groupSignatureKeyPair.publicKey,
+                               groupPublicEncryptionKey,
+                               encryptedPrivateSignatureKey,
+                               sealedPrivateEncryptionKeysForUsers,
+                               static_cast<Crypto::Hash>(deviceId),
+                               groupSignatureKeyPair.privateKey,
+                               deviceSignatureKey};
 }
 
-ClientEntry createUserGroupCreationV2Entry(
+Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     UserGroupCreation::v2::Members const& groupMembers,
@@ -43,19 +41,20 @@ ClientEntry createUserGroupCreationV2Entry(
   auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
       groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
 
-  UserGroupCreation::v2 ugc{groupSignatureKeyPair.publicKey,
-                            groupPublicEncryptionKey,
-                            encryptedPrivateSignatureKey,
-                            groupMembers,
-                            groupProvisionalMembers};
-  ugc.selfSign(groupSignatureKeyPair.privateKey);
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             ugc,
-                             deviceSignatureKey);
+  return UserGroupCreation::v2{
+      trustchainId,
+      groupSignatureKeyPair.publicKey,
+      groupPublicEncryptionKey,
+      encryptedPrivateSignatureKey,
+      groupMembers,
+      groupProvisionalMembers,
+      static_cast<Crypto::Hash>(deviceId),
+      groupSignatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
 }
 
-ClientEntry createUserGroupAdditionV1Entry(
+Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     UserGroupAddition::v1::SealedPrivateEncryptionKeysForUsers const&
@@ -65,17 +64,18 @@ ClientEntry createUserGroupAdditionV1Entry(
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
   GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
-  UserGroupAddition::v1 uga{
-      groupId, previousGroupBlockHash, sealedPrivateEncryptionKeysForUsers};
-  uga.selfSign(groupSignatureKeyPair.privateKey);
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             uga,
-                             deviceSignatureKey);
+  return UserGroupAddition::v1{
+      trustchainId,
+      groupId,
+      previousGroupBlockHash,
+      sealedPrivateEncryptionKeysForUsers,
+      static_cast<Crypto::Hash>(deviceId),
+      groupSignatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
 }
 
-ClientEntry createUserGroupAdditionV2Entry(
+Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     std::vector<UserGroupAddition::v2::Member> const& members,
@@ -86,17 +86,19 @@ ClientEntry createUserGroupAdditionV2Entry(
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
   GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
-  UserGroupAddition::v2 uga{
-      groupId, previousGroupBlockHash, members, provisionalMembers};
-  uga.selfSign(groupSignatureKeyPair.privateKey);
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             uga,
-                             deviceSignatureKey);
+  return UserGroupAddition::v2{
+      trustchainId,
+      groupId,
+      previousGroupBlockHash,
+      members,
+      provisionalMembers,
+      static_cast<Crypto::Hash>(deviceId),
+      groupSignatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
 }
 
-ClientEntry createKeyPublishToGroupEntry(
+KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
     ResourceId const& resourceId,
     Crypto::PublicEncryptionKey const& recipientPublicEncryptionKey,
@@ -104,11 +106,13 @@ ClientEntry createKeyPublishToGroupEntry(
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
-  KeyPublishToUserGroup kp{recipientPublicEncryptionKey, resourceId, symKey};
-
-  return ClientEntry::create(trustchainId,
-                             static_cast<Crypto::Hash>(deviceId),
-                             kp,
-                             deviceSignatureKey);
+  return KeyPublishToUserGroup{
+      trustchainId,
+      recipientPublicEncryptionKey,
+      resourceId,
+      symKey,
+      static_cast<Crypto::Hash>(deviceId),
+      deviceSignatureKey,
+  };
 }
 }

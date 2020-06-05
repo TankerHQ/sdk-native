@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
@@ -17,24 +16,26 @@ namespace Tanker
 {
 namespace Verif
 {
-Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
-                              Users::Device const& author,
-                              std::optional<BaseGroup> const& group)
+Trustchain::GroupAction verifyUserGroupAddition(
+    Trustchain::GroupAction const& action,
+    Users::Device const& author,
+    std::optional<BaseGroup> const& group)
 {
-  assert(serverEntry.action().nature() == Nature::UserGroupAddition ||
-         serverEntry.action().nature() == Nature::UserGroupAddition2);
+  assert(getNature(action) == Nature::UserGroupAddition1 ||
+         getNature(action) == Nature::UserGroupAddition2);
 
   ensures(group.has_value(),
           Verif::Errc::InvalidGroup,
           "UserGroupAddition references unknown group");
 
-  ensures(Crypto::verify(serverEntry.hash(),
-                         serverEntry.signature(),
-                         author.publicSignatureKey()),
-          Errc::InvalidSignature,
-          "UserGroupAddition block must be signed by the author device");
+  ensures(
+      Crypto::verify(
+          getHash(action), getSignature(action), author.publicSignatureKey()),
+      Errc::InvalidSignature,
+      "UserGroupAddition block must be signed by the author device");
 
-  auto const& userGroupAddition = serverEntry.action().get<UserGroupAddition>();
+  auto const& userGroupAddition =
+      boost::variant2::get<UserGroupAddition>(action);
 
   ensures(userGroupAddition.previousGroupBlockHash() == group->lastBlockHash(),
           Errc::InvalidGroup,
@@ -48,7 +49,7 @@ Entry verifyUserGroupAddition(ServerEntry const& serverEntry,
           "UserGroupAddition signature data must be signed with the group "
           "public key");
 
-  return makeVerifiedEntry(serverEntry);
+  return action;
 }
 }
 }

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/GroupAction.hpp>
 
 #include <optional>
 
@@ -16,7 +15,8 @@ class Device;
 
 namespace Tanker::Verif
 {
-Entry verifyUserGroupCreation(Trustchain::ServerEntry const& serverEntry,
-                              Users::Device const& author,
-                              std::optional<BaseGroup> const& group);
+Trustchain::GroupAction verifyUserGroupCreation(
+    Trustchain::GroupAction const& action,
+    Users::Device const& author,
+    std::optional<BaseGroup> const& group);
 }

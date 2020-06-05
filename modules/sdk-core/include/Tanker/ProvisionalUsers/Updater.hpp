@@ -1,9 +1,8 @@
 #pragma once
 
-#include <Tanker/Entry.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
-#include <Tanker/Trustchain/ServerEntry.hpp>
+#include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -27,10 +26,11 @@ struct UsedSecretUser
 };
 
 tc::cotask<UsedSecretUser> extractKeysToStore(
-    Users::ILocalUserAccessor& localUserAccessor, Entry const& entry);
+    Users::ILocalUserAccessor& localUserAccessor,
+    Trustchain::Actions::ProvisionalIdentityClaim const& action);
 
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
-    Users::IUserAccessor& contactsAccessor,
-    gsl::span<Trustchain::ServerEntry const> serverEntries);
+    Users::IUserAccessor& contactAccessor,
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions);
 }

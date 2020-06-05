@@ -1,5 +1,4 @@
 add_executable(test_trustchain
-  test_action.cpp
   test_actions_devicecreation.cpp
   test_actions_trustchaincreation.cpp
   test_actions_keypublishtouser.cpp
@@ -9,9 +8,7 @@ add_executable(test_trustchain
   test_actions_devicerevocation.cpp
   test_actions_usergroupcreation.cpp
   test_actions_usergroupaddition.cpp
-  test_cliententry.cpp
   test_preprocessor_actions.cpp
-  test_serverentry.cpp
 
   main.cpp
 )
