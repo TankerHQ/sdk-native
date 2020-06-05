@@ -121,7 +121,6 @@ check/compat:
 
 check/e2e:
   stage: check
-  when: manual
   dependencies:
     - build/linux
   script:
