@@ -38,10 +38,11 @@ namespace
 template <typename Request>
 tc::future<fetchpp::http::response> execute(Request req)
 {
-  return fetchpp::async_fetch(tc::get_default_executor().get_io_service(),
-                              Cacerts::get_ssl_context(),
-                              std::move(req),
-                              tc::asio::use_future);
+  return fetchpp::async_fetch(
+      tc::get_default_executor().get_io_service().get_executor(),
+      Cacerts::get_ssl_context(),
+      std::move(req),
+      tc::asio::use_future);
 }
 
 struct ServerErrorMessage
@@ -196,11 +197,11 @@ tc::cotask<VerificationCode> getVerificationCode(
       nlohmann::json(
           {{"email", email}, {"app_id", appId}, {"auth_token", authToken}}));
   req.set(field::accept, "application/json");
-  auto const response =
-      TC_AWAIT(fetchpp::async_fetch(tc::get_default_executor().get_io_service(),
-                                    Cacerts::get_ssl_context(),
-                                    std::move(req),
-                                    tc::asio::use_future));
+  auto const response = TC_AWAIT(fetchpp::async_fetch(
+      tc::get_default_executor().get_io_service().get_executor(),
+      Cacerts::get_ssl_context(),
+      std::move(req),
+      tc::asio::use_future));
   if (response.result() != status::ok)
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "could not retrieve verificaiton code for {}",

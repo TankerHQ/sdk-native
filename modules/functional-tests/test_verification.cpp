@@ -75,11 +75,11 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
   auto const url = "www.googleapis.com/oauth2/v4/token"_https;
   auto req = http::make_request<http::request<http::json_body>>(
       http::verb::post, url, {}, std::move(payload));
-  auto response =
-      TC_AWAIT(fetchpp::async_fetch(tc::get_default_executor().get_io_service(),
-                                    Cacerts::get_ssl_context(),
-                                    std::move(req),
-                                    tc::asio::use_future));
+  auto response = TC_AWAIT(fetchpp::async_fetch(
+      tc::get_default_executor().get_io_service().get_executor(),
+      Cacerts::get_ssl_context(),
+      std::move(req),
+      tc::asio::use_future));
   if (response.result() != http::status::ok)
     throw Errors::formatEx(Errors::Errc::NetworkError,
                            "invalid status google id token request: {}: {}",
