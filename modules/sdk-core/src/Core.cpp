@@ -132,6 +132,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 tc::cotask<Status> Core::start(std::string const& identity)
 {
   SCOPE_TIMER("core_start", Proc);
+  assertStatus(Status::Stopped, "start");
   TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
     TC_RETURN(TC_AWAIT(startImpl(identity)));
   })));
