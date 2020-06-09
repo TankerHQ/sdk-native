@@ -1,3 +1,4 @@
 {
     global: tanker_*;
+    local: *;
 };
