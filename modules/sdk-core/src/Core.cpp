@@ -104,6 +104,9 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
 
 void Core::stop()
 {
+  if (status() == Status::Stopped)
+    return;
+
   reset();
   if (_sessionClosed)
     _sessionClosed();
@@ -132,6 +135,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 tc::cotask<Status> Core::start(std::string const& identity)
 {
   SCOPE_TIMER("core_start", Proc);
+  assertStatus(Status::Stopped, "start");
   TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
     TC_RETURN(TC_AWAIT(startImpl(identity)));
   })));
