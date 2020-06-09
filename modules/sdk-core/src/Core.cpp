@@ -104,6 +104,9 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
 
 void Core::stop()
 {
+  if (status() == Status::Stopped)
+    return;
+
   reset();
   if (_sessionClosed)
     _sessionClosed();
