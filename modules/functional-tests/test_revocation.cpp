@@ -189,7 +189,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can claim a resource after a revoke")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
-  auto const aliceEmail = Email{"alice1@mail.com"};
+  auto const aliceEmail = Email{"alice1.test@tanker.io"};
   auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), aliceEmail);
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
@@ -227,7 +227,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
-  auto const aliceEmail = Email{"alice1@mail.com"};
+  auto const aliceEmail = Email{"alice1.test@tanker.io"};
   auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), aliceEmail);
   auto const aliceSession = TC_AWAIT(aliceDevice.open());

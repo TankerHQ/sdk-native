@@ -321,7 +321,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {
-  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -359,7 +359,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim the same provisional identity twice")
 {
-  auto const bobEmail = Email{"bob5@mail.com"};
+  auto const bobEmail = Email{"bob5.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -396,7 +396,7 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob can decrypt a provisional share claimed by a revoked device")
 {
-  auto const bobEmail = Email{"alice5@mail.com"};
+  auto const bobEmail = Email{"alice5.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -430,7 +430,7 @@ TEST_CASE_FIXTURE(
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim when there is nothing to claim")
 {
-  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -451,7 +451,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can attach a provisional identity without verification")
 {
-  auto const bobEmail = Email{"bob1@mail.com"};
+  auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -486,7 +486,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Handles incorrect verification codes when verifying "
                   "provisional identity")
 {
-  auto const bobEmail = Email{"bob2@mail.com"};
+  auto const bobEmail = Email{"bob2.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -509,7 +509,7 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob cannot verify a provisionalIdentity without attaching it first")
 {
-  auto const bobEmail = Email{"bob3@mail.com"};
+  auto const bobEmail = Email{"bob3.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 

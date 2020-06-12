@@ -19,7 +19,7 @@ TEST_CASE("Preregistration")
   LocalUserAccessorMock userLocalAccessor;
 
   auto const alice = generator.makeUser("alice");
-  auto const provisionalUser = generator.makeProvisionalUser("alice@email.com");
+  auto const provisionalUser = generator.makeProvisionalUser("alice.test@tanker.io");
   auto picEntry = alice.claim(provisionalUser);
 
   SUBCASE("throws if the user key is not found")

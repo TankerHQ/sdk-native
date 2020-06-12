@@ -103,7 +103,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto core2 = device2.createCore(Functional::SessionType::New);
 
   auto const password = Passphrase{"my password"};
-  auto const email = Email{"kirby@dreamland.nes"};
+  auto const email = Email{"kirby@tanker.io"};
 
   SUBCASE(
       "registerIdentity throws adequate exception when verificationKey public "
@@ -409,7 +409,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         Unlock::EmailVerification{email, verificationCode}}));
 
     // update email
-    auto const newEmail = Email{"alice@yoohoo.fr"};
+    auto const newEmail = Email{"alice.test@tanker.io"};
     verificationCode = TC_AWAIT(getVerificationCode(newEmail));
     TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
         Unlock::EmailVerification{newEmail, verificationCode}}));
