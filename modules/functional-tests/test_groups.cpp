@@ -144,7 +144,7 @@ TEST_SUITE("Groups")
   TEST_CASE_FIXTURE(TrustchainFixture,
                     "Alice shares with a group with Bob as a provisional user")
   {
-    auto const bobEmail = Email{"bob1@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob1.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -181,7 +181,7 @@ TEST_SUITE("Groups")
       TrustchainFixture,
       "Alice shares with a group with Bob later added as a provisional user")
   {
-    auto const bobEmail = Email{"bob2@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob2.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -223,7 +223,7 @@ TEST_SUITE("Groups")
                     "Alice shares with a group with Bob as a provisional user "
                     "when Bob has already verified the group")
   {
-    auto const bobEmail = Email{"bob3@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob3.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
@@ -262,7 +262,7 @@ TEST_SUITE("Groups")
                     "Alice shares with a group with Bob later added as a "
                     "provisional user when Bob has already verified the group")
   {
-    auto const bobEmail = Email{"bob4@my-box-of-emai.ls"};
+    auto const bobEmail = Email{"bob4.tanker@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
 
