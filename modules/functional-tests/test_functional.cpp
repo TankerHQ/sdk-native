@@ -142,14 +142,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
-  std::vector<uint8_t> decryptedData(
-      AsyncCore::decryptedSize(encryptedData).get());
-  REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->decrypt(decryptedData.data(), encryptedData)));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
   REQUIRE_EQ(decryptedData, clearData);
 }
@@ -214,10 +211,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
   auto bobDevices = TC_AWAIT(bob.makeDevices(2));
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
-      encryptedData.data(), clearData, {bob.spublicIdentity()})));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
+                      clearData, {bob.spublicIdentity()})));
 
   REQUIRE(TC_AWAIT(
       checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
@@ -230,10 +226,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
   auto const aliceSession = TC_AWAIT(aliceDevices[0].open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData)));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
   TC_AWAIT(aliceSession->stop());
   REQUIRE(TC_AWAIT(
       checkDecrypt(aliceDevices, {std::make_tuple(clearData, encryptedData)})));
@@ -247,10 +241,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const aliceFirstSession = TC_AWAIT(aliceFirstDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(
-      TC_AWAIT(aliceFirstSession->encrypt(encryptedData.data(), clearData)));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData =
+                      TC_AWAIT(aliceFirstSession->encrypt(clearData)));
 
   auto aliceSecondDevice = alice.makeDevice();
   auto const aliceSecondSession = TC_AWAIT(aliceSecondDevice.open());
@@ -261,8 +254,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob will timeout when trying to decrypt without the key")
+TEST_CASE_FIXTURE(TrustchainFixture, "Bob will fail to decrypt without the key")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -273,17 +265,14 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData));
+  std::vector<uint8_t> encryptedData;
+  encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
 
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
 
   std::vector<uint8_t> decryptedData;
-  decryptedData.resize(clearData.size());
-
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(bobSession->decrypt(decryptedData.data(), encryptedData)),
+      decryptedData = TC_AWAIT(bobSession->decrypt(encryptedData)),
       Errc::InvalidArgument);
 }
 
@@ -306,9 +295,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
   resourceIds.reserve(clearDatas.size());
   for (auto const& clearData : clearDatas)
   {
-    std::vector<uint8_t> encryptedData(
-        AsyncCore::encryptedSize(clearData.size()));
-    TC_AWAIT(aliceSession->encrypt(encryptedData.data(), clearData));
+    std::vector<uint8_t> encryptedData;
+    encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
     resourceIds.emplace_back(AsyncCore::getResourceId(encryptedData).get());
     metaResources.emplace_back(std::move(clearData), std::move(encryptedData));
   }
@@ -330,12 +318,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
-      encryptedData.data(),
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
+                      clearData,
+                      {SPublicIdentity{Identity::getPublicIdentity(
+                          bobProvisionalIdentity)}})));
 
   auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
@@ -350,9 +337,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 
-  std::vector<uint8_t> decrypted(
-      bobSession->decryptedSize(encryptedData).get());
-  TC_AWAIT(bobSession->decrypt(decrypted.data(), encryptedData));
+  std::vector<uint8_t> decrypted;
+  decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
   CHECK(decrypted == clearData);
 }
 
@@ -368,12 +354,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
-      encryptedData.data(),
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
+                      clearData,
+                      {SPublicIdentity{Identity::getPublicIdentity(
+                          bobProvisionalIdentity)}})));
 
   auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
@@ -460,12 +445,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
-      encryptedData.data(),
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
+                      clearData,
+                      {SPublicIdentity{Identity::getPublicIdentity(
+                          bobProvisionalIdentity)}})));
 
   auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
   auto bobDevice = bob.makeDevice();
