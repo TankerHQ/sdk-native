@@ -37,10 +37,11 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
 {
   std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
+  bool shareWithSelf = true;
 
   if (options)
   {
-    if (options->version != 2)
+    if (options->version != 3)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,
@@ -51,13 +52,17 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
                                    options->nb_recipient_public_identities);
     sgroupIds = to_vector<SGroupId>(options->recipient_gids,
                                     options->nb_recipient_gids);
+    shareWithSelf = options->share_with_self;
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
       tanker
-          ->makeEncryptionStream(
-              wrapCallback(cb, additional_data), spublicIdentities, sgroupIds)
+          ->makeEncryptionStream(wrapCallback(cb, additional_data),
+                                 spublicIdentities,
+                                 sgroupIds,
+                                 shareWithSelf ? Core::ShareWithSelf::Yes :
+                                                 Core::ShareWithSelf::No)
           .and_then(tc::get_synchronous_executor(),
                     [](Streams::EncryptionStream encryptor) {
                       auto c_stream = new tanker_stream;

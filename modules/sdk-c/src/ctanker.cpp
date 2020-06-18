@@ -435,9 +435,10 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
 {
   std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
+  bool shareWithSelf = true;
   if (options)
   {
-    if (options->version != 2)
+    if (options->version != 3)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,
@@ -448,12 +449,15 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
                                    options->nb_recipient_public_identities);
     sgroupIds = to_vector<SGroupId>(options->recipient_gids,
                                     options->nb_recipient_gids);
+    shareWithSelf = options->share_with_self;
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(encrypted_data,
-                                    gsl::make_span(data, data_size),
-                                    spublicIdentities,
-                                    sgroupIds));
+  return makeFuture(tanker->encrypt(
+      encrypted_data,
+      gsl::make_span(data, data_size),
+      spublicIdentities,
+      sgroupIds,
+      shareWithSelf ? Core::ShareWithSelf::Yes : Core::ShareWithSelf::No));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,

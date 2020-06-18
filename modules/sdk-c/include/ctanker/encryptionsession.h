@@ -30,11 +30,7 @@ typedef struct tanker_encryption_session tanker_encryption_session_t;
  * server returned an error
  */
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
-    tanker_t* tanker,
-    char const* const* recipient_public_identities,
-    uint64_t nb_recipient_public_identities,
-    char const* const* recipient_gids,
-    uint64_t nb_recipient_gids);
+    tanker_t* tanker, tanker_encrypt_options_t const* options);
 
 /*!
  * Closes an encryption session instance

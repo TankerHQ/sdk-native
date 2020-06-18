@@ -182,11 +182,12 @@ struct tanker_encrypt_options
   uint32_t nb_recipient_public_identities;
   char const* const* recipient_gids;
   uint32_t nb_recipient_gids;
+  bool share_with_self;
 };
 
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
-    2, NULL, 0, NULL, 0             \
+    3, NULL, 0, NULL, 0, true       \
   }
 
 /*!
