@@ -67,14 +67,16 @@ public:
       uint8_t* encryptedData,
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
+      std::vector<SGroupId> const& groupIds = {},
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
   tc::shared_future<void> decrypt(uint8_t* decryptedData,
                                   gsl::span<uint8_t const> encryptedData);
 
   tc::shared_future<std::vector<uint8_t>> encrypt(
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
+      std::vector<SGroupId> const& groupIds = {},
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
   tc::shared_future<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);
@@ -122,14 +124,16 @@ public:
   tc::shared_future<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
-      std::vector<SGroupId> const& sgroupIds = {});
+      std::vector<SGroupId> const& sgroupIds = {},
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
   tc::shared_future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
   tc::shared_future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},
-      std::vector<SGroupId> const& groupIds = {});
+      std::vector<SGroupId> const& groupIds = {},
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
   static expected<SResourceId> getResourceId(
       gsl::span<uint8_t const> encryptedData);

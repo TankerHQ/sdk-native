@@ -30,6 +30,12 @@ class Session;
 class Core
 {
 public:
+  enum class ShareWithSelf
+  {
+    No,
+    Yes,
+  };
+
   using SessionClosedHandler = std::function<void()>;
 
   ~Core();
@@ -42,13 +48,15 @@ public:
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
       gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& spublicIdentities = {},
-      std::vector<SGroupId> const& sgroupIds = {});
+      std::vector<SPublicIdentity> const& spublicIdentities,
+      std::vector<SGroupId> const& sgroupIds,
+      ShareWithSelf shareWithSelf);
 
   tc::cotask<std::vector<uint8_t>> encrypt(
       gsl::span<uint8_t const> clearData,
-      std::vector<SPublicIdentity> const& spublicIdentities = {},
-      std::vector<SGroupId> const& sgroupIds = {});
+      std::vector<SPublicIdentity> const& spublicIdentities,
+      std::vector<SGroupId> const& sgroupIds,
+      ShareWithSelf shareWithSelf);
 
   tc::cotask<void> decrypt(uint8_t* decryptedData,
                            gsl::span<uint8_t const> encryptedData);
@@ -82,15 +90,17 @@ public:
 
   tc::cotask<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
-      std::vector<SPublicIdentity> const& suserIds = {},
-      std::vector<SGroupId> const& sgroupIds = {});
+      std::vector<SPublicIdentity> const& suserIds,
+      std::vector<SGroupId> const& sgroupIds,
+      ShareWithSelf shareWithSelf);
 
   tc::cotask<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
   tc::cotask<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& spublicIdentities,
-      std::vector<SGroupId> const& sgroupIds);
+      std::vector<SGroupId> const& sgroupIds,
+      ShareWithSelf shareWithSelf);
 
   Status status() const;
 

@@ -86,11 +86,12 @@ tc::shared_future<void> AsyncCore::encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    std::vector<SGroupId> const& groupIds,
+    Core::ShareWithSelf shareWithSelf)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.encrypt(
-        encryptedData, clearData, publicIdentities, groupIds));
+        encryptedData, clearData, publicIdentities, groupIds, shareWithSelf));
   });
 }
 
@@ -105,10 +106,12 @@ tc::shared_future<void> AsyncCore::decrypt(
 tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    std::vector<SGroupId> const& groupIds,
+    Core::ShareWithSelf shareWithSelf)
 {
   return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
-    TC_RETURN(TC_AWAIT(_core.encrypt(clearData, publicIdentities, groupIds)));
+    TC_RETURN(TC_AWAIT(
+        _core.encrypt(clearData, publicIdentities, groupIds, shareWithSelf)));
   });
 }
 
@@ -280,14 +283,15 @@ expected<SResourceId> AsyncCore::getResourceId(
 tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SGroupId> const& sgroupIds,
+    Core::ShareWithSelf shareWithSelf)
 {
   // mutable so that we can move cb (otherwise it will be a const&&)
   return _taskCanceler.run([&]() mutable {
     return tc::async_resumable(
         [=, cb = std::move(cb)]() -> tc::cotask<Streams::EncryptionStream> {
           TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
-              std::move(cb), suserIds, sgroupIds)));
+              std::move(cb), suserIds, sgroupIds, shareWithSelf)));
         });
   });
 }
@@ -306,11 +310,12 @@ AsyncCore::makeDecryptionStream(Streams::InputSource cb)
 
 tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(
     std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds)
+    std::vector<SGroupId> const& groupIds,
+    Core::ShareWithSelf shareWithSelf)
 {
   return runResumable([=]() -> tc::cotask<EncryptionSession> {
-    TC_RETURN(TC_AWAIT(
-        this->_core.makeEncryptionSession(publicIdentities, groupIds)));
+    TC_RETURN(TC_AWAIT(this->_core.makeEncryptionSession(
+        publicIdentities, groupIds, shareWithSelf)));
   });
 }
 

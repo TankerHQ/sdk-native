@@ -219,6 +219,79 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
       checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can encrypt without sharing with self")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(
+      encryptedData = TC_AWAIT(aliceSession->encrypt(
+          clearData, {bob.spublicIdentity()}, {}, Core::ShareWithSelf::No)));
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
+                                Errc::InvalidArgument);
+  REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice cannot encrypt without sharing with anybody")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(
+          aliceSession->encrypt(clearData, {}, {}, Core::ShareWithSelf::No)),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can stream-encrypt without sharing with self")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
+      Streams::bufferViewToInputSource(clearData),
+      {bob.spublicIdentity()},
+      {},
+      Core::ShareWithSelf::No));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
+                                Errc::InvalidArgument);
+  REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice cannot stream-encrypt without sharing with anybody")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->makeEncryptionStream(
+                                    Streams::bufferViewToInputSource(clearData),
+                                    {},
+                                    {},
+                                    Core::ShareWithSelf::No)),
+                                Errc::InvalidArgument);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
 {
   auto alice = trustchain.makeUser();

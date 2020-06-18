@@ -227,17 +227,27 @@ tc::cotask<void> Core::encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SGroupId> const& sgroupIds,
+    ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "encrypt");
   auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
-  spublicIdentitiesWithUs.push_back(
-      SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-          _session->trustchainId(), _session->userId()})});
+  if (shareWithSelf == ShareWithSelf::Yes)
+  {
+    spublicIdentitiesWithUs.push_back(
+        SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+            _session->trustchainId(), _session->userId()})});
 
-  TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
-                                                       metadata.key));
+    TC_AWAIT(_session->storage().resourceKeyStore.putKey(metadata.resourceId,
+                                                         metadata.key));
+  }
+  else if (spublicIdentities.empty() && sgroupIds.empty())
+  {
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           TFMT("cannot encrypt without sharing with anybody"));
+  }
+
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Share::share(_session->accessors().userAccessor,
                         _session->accessors().groupAccessor,
@@ -253,13 +263,17 @@ tc::cotask<void> Core::encrypt(
 tc::cotask<std::vector<uint8_t>> Core::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SGroupId> const& sgroupIds,
+    ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "encrypt");
   std::vector<uint8_t> encryptedData(
       Encryptor::encryptedSize(clearData.size()));
-  TC_AWAIT(
-      encrypt(encryptedData.data(), clearData, spublicIdentities, sgroupIds));
+  TC_AWAIT(encrypt(encryptedData.data(),
+                   clearData,
+                   spublicIdentities,
+                   sgroupIds,
+                   shareWithSelf));
   TC_RETURN(std::move(encryptedData));
 }
 
@@ -500,18 +514,28 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
 tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SGroupId> const& sgroupIds,
+    ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
   Streams::EncryptionStream encryptor(std::move(cb));
 
   auto spublicIdentitiesWithUs = spublicIdentities;
-  spublicIdentitiesWithUs.push_back(
-      SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-          _session->trustchainId(), _session->userId()})});
+  if (shareWithSelf == ShareWithSelf::Yes)
+  {
+    spublicIdentitiesWithUs.push_back(
+        SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+            _session->trustchainId(), _session->userId()})});
 
-  TC_AWAIT(_session->storage().resourceKeyStore.putKey(
-      encryptor.resourceId(), encryptor.symmetricKey()));
+    TC_AWAIT(_session->storage().resourceKeyStore.putKey(
+        encryptor.resourceId(), encryptor.symmetricKey()));
+  }
+  else if (spublicIdentities.empty() && sgroupIds.empty())
+  {
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           TFMT("cannot encrypt without sharing with anybody"));
+  }
+
   auto const& localUser =
       TC_AWAIT(_session->accessors().localUserAccessor.pull());
   TC_AWAIT(Share::share(_session->accessors().userAccessor,
@@ -574,16 +598,25 @@ tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
 
 tc::cotask<EncryptionSession> Core::makeEncryptionSession(
     std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<SGroupId> const& sgroupIds)
+    std::vector<SGroupId> const& sgroupIds,
+    ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "makeEncryptionSession");
   EncryptionSession sess{_session};
   auto spublicIdentitiesWithUs = spublicIdentities;
-  spublicIdentitiesWithUs.emplace_back(
-      to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
-                                                  _session->userId()}));
-  TC_AWAIT(_session->storage().resourceKeyStore.putKey(sess.resourceId(),
-                                                       sess.sessionKey()));
+  if (shareWithSelf == ShareWithSelf::Yes)
+  {
+    spublicIdentitiesWithUs.emplace_back(
+        to_string(Identity::PublicPermanentIdentity{_session->trustchainId(),
+                                                    _session->userId()}));
+    TC_AWAIT(_session->storage().resourceKeyStore.putKey(sess.resourceId(),
+                                                         sess.sessionKey()));
+  }
+  else if (spublicIdentities.empty() && sgroupIds.empty())
+  {
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           TFMT("cannot encrypt without sharing with anybody"));
+  }
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Share::share(_session->accessors().userAccessor,
