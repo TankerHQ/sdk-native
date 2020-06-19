@@ -80,26 +80,24 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("Boost/1.71.0@tanker/testing", private=private)
-        if self.settings.os != "Emscripten":
-            if self.options.with_ssl:
-                self.requires("LibreSSL/2.9.2@tanker/testing", private=private)
-                self.requires("fetchpp/0.5.0@tanker/stable")
-            self.requires("socket.io-client-cpp/1.6.6@tanker/testing", private=private)
-            self.requires("sqlpp11/0.58@tanker/testing", private=private)
+        self.requires("boost/1.71.0", private=private)
+        if self.options.with_ssl:
+            self.requires("libressl/3.2.0", private=private)
+            self.requires("fetchpp/0.6.0")
+            self.requires("socket.io-client-cpp/1.6.6", private=private)
+            self.requires("sqlpp11/0.59", private=private)
             self.requires(
-                "sqlpp11-connector-sqlite3/0.29@tanker/testing", private=private
-            )
-        self.requires("cppcodec/edf46ab@tanker/testing", private=private)
-        self.requires("enum-flags/0.1a@tanker/testing", private=private)
-        self.requires("fmt/6.0.0", private=private)
-        self.requires("gsl-lite/0.32.0@tanker/testing", private=private)
-        self.requires("jsonformoderncpp/3.4.0@tanker/testing", private=private)
-        self.requires("libsodium/1.0.18@tanker/testing", private=private)
-        self.requires("tconcurrent/0.30.0@tanker/stable", private=private)
+                "sqlpp11-connector-sqlite3/0.29", private=private)
+        self.requires("cppcodec/edf46ab", private=private)
+        self.requires("enum-flags/0.1a", private=private)
+        self.requires("fmt/6.2.1", private=private)
+        self.requires("gsl-lite/0.36.0", private=private)
+        self.requires("nlohmann_json/3.8.0", private=private)
+        self.requires("libsodium/1.0.18", private=private)
+        self.requires("tconcurrent/0.30.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os == "iOS":
-            self.requires("libc++/9.0@tanker/testing", private=private)
+            self.requires("libcxx/9.0", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
@@ -117,12 +115,12 @@ class TankerConan(ConanFile):
 
     def build_requirements(self):
         if self.should_build_tests:
-            self.build_requires("docopt.cpp/0.6.2@tanker/testing")
-            self.build_requires("doctest/2.3.5@tanker/testing")
-            self.build_requires("doctest-async/2.3.5-tanker2-r2@tanker/testing")
-            self.build_requires("trompeloeil/v37@tanker/testing")
+            self.build_requires("docopt.cpp/0.6.2")
+            self.build_requires("doctest/2.3.8")
+            self.build_requires("doctest-async/2.3.8")
+            self.build_requires("trompeloeil/38")
             if self.should_build_bench:
-                self.build_requires("google-benchmark/1.4.1@tanker/testing")
+                self.build_requires("benchmark/1.5.0")
 
     def init_cmake(self):
         if self.cmake:
