@@ -12,7 +12,7 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/WaitFor.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include "CheckDecrypt.hpp"
 

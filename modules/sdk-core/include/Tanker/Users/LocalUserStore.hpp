@@ -6,7 +6,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <optional>

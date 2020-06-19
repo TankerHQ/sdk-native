@@ -23,7 +23,7 @@
 
 #include <tconcurrent/future.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <cstdint>
 #include <functional>

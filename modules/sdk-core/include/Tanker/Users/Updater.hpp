@@ -9,7 +9,7 @@
 #include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Users/User.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <optional>

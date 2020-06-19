@@ -3,7 +3,7 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/Device.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <cstddef>
 #include <optional>

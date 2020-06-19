@@ -12,7 +12,7 @@
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
 #include <Tanker/Unlock/Request.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_auto_canceler.hpp>

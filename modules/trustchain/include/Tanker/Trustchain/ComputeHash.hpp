@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <cstdint>
 

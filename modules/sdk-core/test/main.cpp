@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
 #include <Helpers/TimeoutTerminate.hpp>

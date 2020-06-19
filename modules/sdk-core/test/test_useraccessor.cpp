@@ -8,7 +8,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserRequesterStub.hpp"
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
 using namespace Tanker;

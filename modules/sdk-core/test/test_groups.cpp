@@ -12,7 +12,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
 #include <Helpers/Buffers.hpp>
