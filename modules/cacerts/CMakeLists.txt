@@ -30,6 +30,7 @@ target_link_libraries(tankercacerts
   tankerlog
   tankererrors
   CONAN_PKG::boost
+  CONAN_PKG::libressl
 )
 
 target_compile_definitions(tankercacerts PUBLIC TANKER_BUILD_WITH_SSL)
