@@ -2,7 +2,8 @@ import argparse
 import os
 import sys
 
-from path import Path
+from path import Path, TempDir
+from conans import __version__ as conan_version
 
 import ci
 import ci.conan
@@ -39,7 +40,7 @@ def main() -> None:
     if args.home_isolation:
         ci.conan.set_home_isolation()
 
-    ci.cpp.update_conan_config()
+    ci.conan.update_config()
 
     if args.command == "build-and-test":
         build_and_check(args.profile, args.coverage)
