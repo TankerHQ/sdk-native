@@ -49,7 +49,7 @@ target_link_libraries(
   tankercrypto
   tankererrors
 
-  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::nlohmann_json
   CONAN_PKG::gsl-lite
   CONAN_PKG::cppcodec
 )

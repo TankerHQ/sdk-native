@@ -11,9 +11,9 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/TransformTo.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include "TrustchainGenerator.hpp"
 

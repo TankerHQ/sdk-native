@@ -4,7 +4,7 @@
 
 #include <tconcurrent/coroutine.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <memory>
 #include <optional>

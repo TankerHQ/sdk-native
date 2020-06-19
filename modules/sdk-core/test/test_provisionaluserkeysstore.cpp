@@ -5,7 +5,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 

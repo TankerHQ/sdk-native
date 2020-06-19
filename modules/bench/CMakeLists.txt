@@ -11,7 +11,7 @@ target_link_libraries(bench_tanker
   tankercore
   tankerfunctionalhelpers
   tankertesthelpers
-  CONAN_PKG::google-benchmark
+  CONAN_PKG::benchmark
 )
 
 add_test(NAME bench_tanker COMMAND bench_tanker)

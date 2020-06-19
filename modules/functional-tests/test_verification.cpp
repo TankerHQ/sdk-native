@@ -28,7 +28,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 using namespace Tanker::Errors;

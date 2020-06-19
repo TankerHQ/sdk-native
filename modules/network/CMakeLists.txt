@@ -41,7 +41,7 @@ target_link_libraries(tankernetwork
   CONAN_PKG::fmt
   CONAN_PKG::cppcodec
  
-  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::nlohmann_json
 )
 
 

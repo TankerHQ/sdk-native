@@ -10,7 +10,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
