@@ -2,7 +2,7 @@
 
 #include <Tanker/Streams/InputSource.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <cstdint>

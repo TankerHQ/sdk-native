@@ -7,7 +7,7 @@
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <cstdint>

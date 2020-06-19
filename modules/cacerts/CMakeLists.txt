@@ -29,7 +29,7 @@ target_include_directories(tankercacerts PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(tankercacerts
   tankerlog
   tankererrors
-  CONAN_PKG::Boost
+  CONAN_PKG::boost
 )
 
 target_compile_definitions(tankercacerts PUBLIC TANKER_BUILD_WITH_SSL)

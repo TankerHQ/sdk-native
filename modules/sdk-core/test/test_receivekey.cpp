@@ -14,7 +14,7 @@
 
 #include <trompeloeil.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;

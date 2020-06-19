@@ -13,7 +13,7 @@
 
 #include <boost/variant2/variant.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 

@@ -12,7 +12,7 @@
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 #include <Tanker/Users/Device.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <optional>
 #include <tconcurrent/coroutine.hpp>
 

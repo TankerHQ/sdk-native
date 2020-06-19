@@ -4,7 +4,7 @@
 
 #include <Helpers/Errors.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <cstdint>

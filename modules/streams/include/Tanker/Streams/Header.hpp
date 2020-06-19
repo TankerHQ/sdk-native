@@ -5,7 +5,7 @@
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <cstddef>
 #include <cstdint>
