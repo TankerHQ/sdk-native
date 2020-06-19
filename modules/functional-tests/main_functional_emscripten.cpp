@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #define DOCTEST_CONFIG_NO_POSIX_SIGNALS
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/executor.hpp>

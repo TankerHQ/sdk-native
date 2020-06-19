@@ -98,8 +98,8 @@ target_link_libraries(tankertrustchain
   tankererrors
   tankerformat
 
-  CONAN_PKG::jsonformoderncpp
-  CONAN_PKG::Boost
+  CONAN_PKG::nlohmann_json
+  CONAN_PKG::boost
 )
 
 if(BUILD_TESTS)

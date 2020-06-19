@@ -216,12 +216,12 @@ target_link_libraries(tankercore
   tankerconfig
   tankeradmin
   ttracer
-  CONAN_PKG::Boost
+  CONAN_PKG::boost
   CONAN_PKG::tconcurrent
   CONAN_PKG::cppcodec
   CONAN_PKG::gsl-lite
   CONAN_PKG::fmt
-  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::nlohmann_json
   CONAN_PKG::enum-flags
 )
 

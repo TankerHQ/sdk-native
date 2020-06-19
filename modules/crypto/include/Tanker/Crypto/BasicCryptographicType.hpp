@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <array>
 #include <cstddef>

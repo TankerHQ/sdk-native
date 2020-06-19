@@ -1,6 +1,6 @@
 #include <Tanker/Format/Enum.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <fmt/core.h>
 
 // VERY IMPORTANT to include this:

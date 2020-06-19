@@ -24,7 +24,7 @@ target_include_directories(tankererrors
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(tankererrors PUBLIC tankerformat tankerlog CONAN_PKG::Boost CONAN_PKG::fmt)
+target_link_libraries(tankererrors PUBLIC tankerformat tankerlog CONAN_PKG::boost CONAN_PKG::fmt)
 
 install(DIRECTORY include DESTINATION .)
 install(TARGETS tankererrors

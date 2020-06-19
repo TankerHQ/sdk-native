@@ -1,6 +1,6 @@
 #include <Tanker/Format/Json.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <fmt/core.h>
 #include <nlohmann/json.hpp>
 

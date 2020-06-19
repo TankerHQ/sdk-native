@@ -64,7 +64,7 @@ target_link_libraries(
   CONAN_PKG::libsodium
   CONAN_PKG::cppcodec
   CONAN_PKG::gsl-lite
-  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::nlohmann_json
   CONAN_PKG::fmt
 )
 

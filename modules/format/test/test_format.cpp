@@ -1,6 +1,6 @@
 #include <Tanker/Format/Width.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker::Format;
 

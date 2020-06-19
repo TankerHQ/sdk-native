@@ -24,7 +24,7 @@ target_link_libraries(tankeradmin
   CONAN_PKG::gsl-lite
   CONAN_PKG::cppcodec
   CONAN_PKG::tconcurrent
-  CONAN_PKG::jsonformoderncpp
+  CONAN_PKG::nlohmann_json
   CONAN_PKG::fetchpp
 )
 

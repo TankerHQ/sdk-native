@@ -5,7 +5,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace std::string_literals;
 

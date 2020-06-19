@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include <ostream>
 #include <string>
