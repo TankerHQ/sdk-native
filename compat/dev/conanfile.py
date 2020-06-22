@@ -6,9 +6,9 @@ class Compat(ConanFile):
 
     def requirements(self):
         self.requires("tanker/dev@tanker/dev")
-        self.requires("docopt.cpp/0.6.2@tanker/testing")
-        self.requires("Boost/1.71.0@tanker/testing")
-        self.requires("cppcodec/edf46ab@tanker/testing")
+        self.requires("docopt.cpp/0.6.2")
+        self.requires("boost/1.71.0")
+        self.requires("cppcodec/edf46ab")
 
     def build(self):
         cmake = CMake(self)
