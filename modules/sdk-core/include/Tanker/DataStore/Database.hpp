@@ -50,6 +50,8 @@ public:
 
   tc::cotask<std::optional<DeviceKeys>> getDeviceKeys() override;
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) override;
+  tc::cotask<void> setDeviceInitialized() override;
+  tc::cotask<bool> isDeviceInitialized() override;
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId) override;
   tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() override;
 

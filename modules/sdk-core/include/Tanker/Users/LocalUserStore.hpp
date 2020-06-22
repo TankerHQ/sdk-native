@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/DeviceKeys.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
@@ -26,6 +27,9 @@ class LocalUserStore
 {
 public:
   LocalUserStore(DataStore::ADatabase* dbCon);
+
+  tc::cotask<bool> isInitialized();
+  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
 
   tc::cotask<void> putLocalUser(LocalUser const& user);
   tc::cotask<void> putUserKeys(

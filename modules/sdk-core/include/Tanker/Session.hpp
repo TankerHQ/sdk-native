@@ -92,6 +92,8 @@ public:
   Identity::SecretPermanentIdentity const& identity() const;
   void setIdentity(Identity::SecretPermanentIdentity const&);
 
+  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
+
   tc::cotask<DeviceKeys> getDeviceKeys();
 
   tc::cotask<void> authenticate();
