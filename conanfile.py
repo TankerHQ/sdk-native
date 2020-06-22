@@ -59,6 +59,18 @@ class TankerConan(ConanFile):
         return True
 
     @property
+    def should_build_tools(self):
+        # develop is false when the package is used as a requirement,
+        # so don't bother compiling tools in that case
+        if not self.develop:
+            return False
+
+        if self.cross_building:
+            return False
+
+        return True
+
+    @property
     def should_build_bench(self):
         # develop is false when the package is used as a requirement.
         return self.develop and not self.cross_building and self.settings.os == "Linux"
@@ -114,8 +126,9 @@ class TankerConan(ConanFile):
         self.options["*"].fPIC = self.options.fPIC
 
     def build_requirements(self):
-        if self.should_build_tests:
+        if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
+        if self.should_build_tests:
             self.build_requires("doctest/2.3.8")
             self.build_requires("doctest-async/2.3.8")
             self.build_requires("trompeloeil/38")
@@ -142,7 +155,7 @@ class TankerConan(ConanFile):
         self.cmake.definitions["BUILD_BENCH"] = self.should_build_bench
         self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
-        self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tests
+        self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tools
         self.cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
         if self.settings.os not in ["Windows", "Emscripten"]:
             # On Android and iOS OpenSSL can't use system ca-certificates, so we
