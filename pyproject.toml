@@ -6,8 +6,8 @@ authors = ["Tanker team <tech@tanker.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-ci = "2020.6.2456"
 tankeradminsdk = "0.1.0"
+ci = "2020.6.2535"
 
 [[tool.poetry.source]]
 name = "tanker.local"
