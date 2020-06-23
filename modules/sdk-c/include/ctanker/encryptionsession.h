@@ -82,7 +82,9 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
 
 /*!
  * Create an encryption stream for an encryption session
- * Use this stream with the tanker_stream_* APIs
+ *
+ * Use the returned stream with the tanker_stream_* APIs. See
+ * tanker_stream_encrypt for more details about this API.
  *
  * \param session An encryption session
  * \param cb The input callback
