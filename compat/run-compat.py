@@ -84,22 +84,24 @@ def assert_env(name: str) -> str:
     return value
 
 
-def build_all(profile):
+def compat_conan_home_path(version: str) -> str:
+    return Path.getcwd() / "compat" / "conan" / version
+
+
+def build_all(do_export_tanker_dev, profile):
     built_binary = {}
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
         src_path = Path.getcwd() / "compat" / version
-        builder = ci.cpp.Builder(
-            src_path,
-            profile=profile,
-            coverage=False,
-            make_package=False,
-            warn_as_error=False,
-        )
-        builder.install_deps()
-        builder.configure()
-        builder.build()
-        built_binary[version] = builder.get_build_path() / "bin" / "compat"
+        ci.conan.set_home_isolation(compat_conan_home_path(version))
+        ci.conan.config_install(src_path / "config")
+        if version == "dev":
+            if do_export_tanker_dev:
+                export_tanker_dev(Path.getcwd(), profile)
+            else:
+                use_packaged_tanker(Path.getcwd(), profile)
+        built_path = ci.cpp.build(profile, src_path=src_path)
+        built_binary[version] = built_path / "bin" / "compat"
     return built_binary
 
 
@@ -157,8 +159,8 @@ def run_test(base_path, next_path, version, command):
         admin.delete_app(app["id"])
 
 
-def compat(profile: str) -> None:
-    built_binary = build_all(profile=profile)
+def compat(args: str) -> None:
+    built_binary = build_all(do_export_tanker_dev=args.export_tanker_dev, profile=args.profile)
 
     ci.cpp.set_test_env()
     for version, commands in TESTS.items():
@@ -200,16 +202,8 @@ def main() -> None:
     parser.add_argument("--profile", required=True)
 
     args = parser.parse_args()
-    if args.home_isolation:
-        ci.conan.set_home_isolation()
-        ci.conan.update_config()
 
-    if args.export_tanker_dev:
-        export_tanker_dev(Path.getcwd(), args.profile)
-    else:
-        use_packaged_tanker(Path.getcwd(), args.profile)
-
-    compat(args.profile)
+    compat(args)
 
 
 if __name__ == "__main__":
