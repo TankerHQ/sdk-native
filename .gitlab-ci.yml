@@ -64,7 +64,7 @@ deploy/windows:
   extends: .deploy
   tags: [windows]
   script:
-    - poetry run python run-ci.py deploy
+    - poetry run python run-ci.py --isolate-conan-user-home deploy
 
 nightly/coverage:
   stage: build
