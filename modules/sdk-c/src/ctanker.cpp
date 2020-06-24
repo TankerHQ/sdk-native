@@ -471,16 +471,27 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,
-                              char const* const* recipient_public_identities,
-                              uint64_t nb_recipient_public_identities,
-                              char const* const* recipient_gids,
-                              uint64_t nb_recipient_gids,
                               char const* const* resource_ids,
-                              uint64_t nb_resource_ids)
+                              uint64_t nb_resource_ids,
+                              tanker_sharing_options_t* options)
 {
-  auto const spublicIdentities = to_vector<SPublicIdentity>(
-      recipient_public_identities, nb_recipient_public_identities);
-  auto const sgroupIds = to_vector<SGroupId>(recipient_gids, nb_recipient_gids);
+  if (!options)
+  {
+    return makeFuture(tc::make_exceptional_future<void>(formatEx(
+        Errc::InvalidArgument, "tanker_sharing_options must not be NULL")));
+  }
+
+  if (options->version != 1)
+  {
+    return makeFuture(tc::make_exceptional_future<void>(
+        formatEx(Errc::InvalidArgument,
+                 "unsupported tanker_sharing_options struct version")));
+  }
+
+  auto const spublicIdentities =
+      to_vector<SPublicIdentity>(options->share_with_users, options->nb_users);
+  auto const sgroupIds =
+      to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
   auto const resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 

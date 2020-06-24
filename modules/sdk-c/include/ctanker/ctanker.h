@@ -53,6 +53,7 @@ typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
+typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
 typedef struct tanker_device_list_elem tanker_device_list_elem_t;
 typedef struct tanker_device_list tanker_device_list_t;
@@ -188,6 +189,20 @@ struct tanker_encrypt_options
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
     3, NULL, 0, NULL, 0, true       \
+  }
+
+struct tanker_sharing_options
+{
+  uint8_t version;
+  char const* const* share_with_users;
+  uint32_t nb_users;
+  char const* const* share_with_groups;
+  uint32_t nb_groups;
+};
+
+#define TANKER_SHARING_OPTIONS_INIT \
+  {                                 \
+    1, NULL, 0, NULL, 0             \
   }
 
 /*!
@@ -460,14 +475,9 @@ CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
  *
  * \param session A tanker tanker_t* instance.
  * \pre tanker_status == TANKER_STATUS_READY
- * \param recipient_public_identities Array containing the recipients' public
- * identities.
- * \param nb_recipient_public_identities The number of recipients in
- * recipient_public_identities.
- * \param recipient_gids Array of strings describing the recipient groups.
- * \param nb_recipient_gids The number of groups in recipient_gids.
  * \param resource_ids Array of string describing the resources.
  * \param nb_resource_ids The number of resources in resource_ids.
+ * \param options The users and groups to share with.
  *
  * \return An empty future.
  * \throws TANKER_ERROR_RECIPIENT_NOT_FOUND One of the recipients was not found,
@@ -477,14 +487,10 @@ CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_share(
-    tanker_t* session,
-    char const* const* recipient_public_identities,
-    uint64_t nb_recipient_public_identities,
-    char const* const* recipient_gids,
-    uint64_t nb_recipient_gids,
-    char const* const* resource_ids,
-    uint64_t nb_resource_ids);
+CTANKER_EXPORT tanker_future_t* tanker_share(tanker_t* session,
+                                             char const* const* resource_ids,
+                                             uint64_t nb_resource_ids,
+                                             tanker_sharing_options_t* options);
 
 /*!
  * Attach a provisional identity to the current user
