@@ -30,11 +30,15 @@ class Session;
 class Core
 {
 public:
-  enum class ShareWithSelf
+  enum class ShareWithSelf : bool
   {
     No,
     Yes,
   };
+
+  // There are hidden casts of this enum, so grep them if you change the enum
+  static_assert(static_cast<int>(ShareWithSelf::No) == 0);
+  static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
 
   using SessionClosedHandler = std::function<void()>;
 

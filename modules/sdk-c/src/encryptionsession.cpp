@@ -35,7 +35,7 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
   auto sessFuture = tanker->makeEncryptionSession(
       spublicIdentities,
       sgroupIds,
-      shareWithSelf ? Core::ShareWithSelf::Yes : Core::ShareWithSelf::No);
+      static_cast<Core::ShareWithSelf>(shareWithSelf));
   return makeFuture(
       sessFuture.and_then(tc::get_synchronous_executor(), [](auto const& sess) {
         // Horribly unsafe, but we have no way std::move from a shared_future

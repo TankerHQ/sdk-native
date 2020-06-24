@@ -61,14 +61,12 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
           ->makeEncryptionStream(wrapCallback(cb, additional_data),
                                  spublicIdentities,
                                  sgroupIds,
-                                 shareWithSelf ? Core::ShareWithSelf::Yes :
-                                                 Core::ShareWithSelf::No)
+                                 Core::ShareWithSelf{shareWithSelf})
           .and_then(tc::get_synchronous_executor(),
                     [](Streams::EncryptionStream encryptor) {
                       auto c_stream = new tanker_stream;
-                      c_stream->resourceId =
-                          SResourceId{mgs::base64::encode(
-                              encryptor.resourceId())};
+                      c_stream->resourceId = SResourceId{
+                          mgs::base64::encode(encryptor.resourceId())};
                       c_stream->inputSource = std::move(encryptor);
                       return static_cast<void*>(c_stream);
                     }));
@@ -84,9 +82,8 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
           .and_then(tc::get_synchronous_executor(),
                     [](Streams::DecryptionStreamAdapter decryptor) {
                       auto c_stream = new tanker_stream;
-                      c_stream->resourceId =
-                          SResourceId{mgs::base64::encode(
-                              decryptor.resourceId())};
+                      c_stream->resourceId = SResourceId{
+                          mgs::base64::encode(decryptor.resourceId())};
                       c_stream->inputSource = std::move(decryptor);
                       return static_cast<void*>(c_stream);
                     }));

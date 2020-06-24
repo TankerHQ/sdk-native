@@ -452,12 +452,11 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
     shareWithSelf = options->share_with_self;
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(
-      encrypted_data,
-      gsl::make_span(data, data_size),
-      spublicIdentities,
-      sgroupIds,
-      shareWithSelf ? Core::ShareWithSelf::Yes : Core::ShareWithSelf::No));
+  return makeFuture(tanker->encrypt(encrypted_data,
+                                    gsl::make_span(data, data_size),
+                                    spublicIdentities,
+                                    sgroupIds,
+                                    Core::ShareWithSelf{shareWithSelf}));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
