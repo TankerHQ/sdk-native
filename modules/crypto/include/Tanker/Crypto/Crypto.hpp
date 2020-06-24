@@ -16,7 +16,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <sodium/crypto_box.h>
 
 #include <cstddef>

@@ -5,7 +5,7 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include "LocalUserAccessorMock.hpp"
 #include "TrustchainGenerator.hpp"

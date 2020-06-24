@@ -14,7 +14,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include "TrustchainGenerator.hpp"
 

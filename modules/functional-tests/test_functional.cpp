@@ -9,7 +9,7 @@
 
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>

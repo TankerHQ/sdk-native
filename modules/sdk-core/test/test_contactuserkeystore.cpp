@@ -16,7 +16,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/UniquePath.hpp>
 
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 

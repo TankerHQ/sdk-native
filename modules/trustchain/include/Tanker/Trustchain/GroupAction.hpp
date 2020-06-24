@@ -5,7 +5,7 @@
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 
 #include <boost/variant2/variant.hpp>
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <cstddef>

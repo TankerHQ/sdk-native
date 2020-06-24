@@ -1,6 +1,7 @@
 import argparse
 
 from path import Path
+from conans import __version__ as conan_version
 
 import ci.cpp
 import ci.endtoend
@@ -42,7 +43,7 @@ def main() -> None:
     if args.home_isolation:
         ci.conan.set_home_isolation()
 
-    ci.cpp.update_conan_config()
+    ci.conan.update_config()
 
     if args.export_tanker_dev:
         export_tanker_dev(Path.getcwd())

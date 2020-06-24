@@ -9,8 +9,8 @@
 
 #include <cppcodec/base64_rfc4648.hpp>
 #include <cppcodec/base64_url.hpp>
-#include <doctest.h>
-#include <gsl-lite.hpp>
+#include <doctest/doctest.h>
+#include <gsl/gsl-lite.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>

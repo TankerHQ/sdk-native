@@ -9,7 +9,7 @@
 #include <Helpers/Errors.hpp>
 
 #include <cppcodec/base64_rfc4648.hpp>
-#include <doctest.h>
+#include <doctest/doctest.h>
 
 using namespace Tanker;
 

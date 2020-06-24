@@ -7,7 +7,7 @@
 #include <Tanker/Users/IRequester.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <boost/container/flat_map.hpp>

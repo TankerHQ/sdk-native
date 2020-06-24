@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <gsl-lite.hpp>
+#include <gsl/gsl-lite.hpp>
 
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Errors/Errc.hpp>
