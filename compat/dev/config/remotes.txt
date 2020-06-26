@@ -1,1 +1,1 @@
-ci-playground http://ci-playground.tanker.io:9300 False
+godzilla http://10.100.0.1:9300 False
