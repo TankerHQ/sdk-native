@@ -47,11 +47,10 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
           formatEx(Errc::InvalidArgument,
                    "unsupported tanker_encrypt_options struct version")));
     }
-    spublicIdentities =
-        to_vector<SPublicIdentity>(options->recipient_public_identities,
-                                   options->nb_recipient_public_identities);
-    sgroupIds = to_vector<SGroupId>(options->recipient_gids,
-                                    options->nb_recipient_gids);
+    spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
+                                                   options->nb_users);
+    sgroupIds =
+        to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
     shareWithSelf = options->share_with_self;
   }
 

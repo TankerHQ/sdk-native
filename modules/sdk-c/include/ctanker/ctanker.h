@@ -179,10 +179,10 @@ struct tanker_verification_method
 struct tanker_encrypt_options
 {
   uint8_t version;
-  char const* const* recipient_public_identities;
-  uint32_t nb_recipient_public_identities;
-  char const* const* recipient_gids;
-  uint32_t nb_recipient_gids;
+  char const* const* share_with_users;
+  uint32_t nb_users;
+  char const* const* share_with_groups;
+  uint32_t nb_groups;
   bool share_with_self;
 };
 
