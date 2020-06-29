@@ -71,8 +71,9 @@ nightly/coverage:
   only:
     - schedules
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-debug --coverage
-    - mv build/gcc8-debug/coverage coverage
+    # Using gcc8-release profile, but CI script will force debug for Tanker only
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release --coverage
+    - mv build/gcc8-release/coverage coverage
   tags:
     - linux
   artifacts:
