@@ -4,7 +4,7 @@
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 #include <boost/variant2/variant.hpp>
@@ -58,7 +58,7 @@ void adl_serializer<Tanker::Unlock::Request>::to_json(
             std::tie(
                 j["hashed_email"], encrypted_email, j["verification_code"]) = e;
             j["encrypted_email"] =
-                cppcodec::base64_rfc4648::encode(encrypted_email);
+                mgs::base64::encode(encrypted_email);
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;

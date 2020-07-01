@@ -3,7 +3,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -26,7 +26,7 @@ I extract(std::string const& token)
   {
     throw Errors::formatEx(Errc::InvalidFormat, "json deserialization failed");
   }
-  catch (cppcodec::parse_error const&)
+  catch (mgs::exceptions::exception const&)
   {
     throw Errors::formatEx(Errc::InvalidFormat,
                            "base64 deserialization failed");

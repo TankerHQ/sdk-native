@@ -24,8 +24,7 @@ struct ProvisionalUserGroupOldClaim : Tanker::Compat::Command
 
     auto const bobProvisionalIdentity =
         Tanker::Identity::createProvisionalIdentity(
-            cppcodec::base64_rfc4648::encode(trustchain.id),
-            Tanker::Email{bobEmail});
+            mgs::base64::encode(trustchain.id), Tanker::Email{bobEmail});
     auto const sgroupId =
         alice.core
             ->createGroup(

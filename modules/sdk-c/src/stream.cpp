@@ -7,7 +7,7 @@
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include "Stream.hpp"
 #include <ctanker/private/Utils.hpp>
@@ -62,7 +62,7 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
                     [](Streams::EncryptionStream encryptor) {
                       auto c_stream = new tanker_stream;
                       c_stream->resourceId =
-                          SResourceId{cppcodec::base64_rfc4648::encode(
+                          SResourceId{mgs::base64::encode(
                               encryptor.resourceId())};
                       c_stream->inputSource = std::move(encryptor);
                       return static_cast<void*>(c_stream);
@@ -80,7 +80,7 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
                     [](Streams::DecryptionStreamAdapter decryptor) {
                       auto c_stream = new tanker_stream;
                       c_stream->resourceId =
-                          SResourceId{cppcodec::base64_rfc4648::encode(
+                          SResourceId{mgs::base64::encode(
                               decryptor.resourceId())};
                       c_stream->inputSource = std::move(decryptor);
                       return static_cast<void*>(c_stream);

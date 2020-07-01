@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -22,7 +22,7 @@ fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
                  [](auto const& block) {
                    return Serialization::deserialize<
                        Trustchain::Actions::ProvisionalIdentityClaim>(
-                       cppcodec::base64_rfc4648::decode(block));
+                       mgs::base64::decode(block));
                  });
 
   return entries;

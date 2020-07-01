@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/IsCryptographicType.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include <string>
@@ -18,13 +18,13 @@ struct adl_serializer<
   template <typename Json>
   static void to_json(Json& j, CryptoType const& value)
   {
-    j = cppcodec::base64_rfc4648::encode(value);
+    j = mgs::base64::encode(value);
   }
 
   template <typename Json>
   static CryptoType from_json(Json const& j)
   {
-    return cppcodec::base64_rfc4648::decode<CryptoType>(
+    return mgs::base64::decode<CryptoType>(
         j.template get<std::string>());
   }
 

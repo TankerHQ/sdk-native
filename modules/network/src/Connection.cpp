@@ -6,7 +6,7 @@
 
 #include <Tanker/Log/Log.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <sio_message.h>
 #include <sio_socket.h>
 #include <tconcurrent/async.hpp>
@@ -87,7 +87,7 @@ void Connection::connect()
     query["version"] = _params.version.value();
   if (_params.trustchainId)
     query["trustchainId"] =
-        cppcodec::base64_rfc4648::encode(_params.trustchainId.value());
+        mgs::base64::encode(_params.trustchainId.value());
   if (_params.context)
     query["context"] = _params.context.value();
 

@@ -6,4 +6,4 @@ add_executable(tcli
   main.cpp
 )
 
-target_link_libraries(tcli tankercore CONAN_PKG::docopt.cpp CONAN_PKG::cppcodec)
+target_link_libraries(tcli tankercore CONAN_PKG::docopt.cpp CONAN_PKG::mgs)

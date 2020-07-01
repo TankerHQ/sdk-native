@@ -3,7 +3,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -40,7 +40,7 @@ void to_json(nlohmann::json& j, PublicPermanentIdentity const& identity)
 
 std::string to_string(PublicPermanentIdentity const& identity)
 {
-  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::json(identity).dump());
 }
 }
 }

@@ -75,7 +75,7 @@ TEST_CASE("Serialization test vectors")
     auto const resourceId = make<ResourceId>("resource mac");
     auto const key =
         make<Crypto::TwoTimesSealedSymmetricKey>("encrypted key...");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "gYchdTY/TBXC4U0rlK0RrxbqiKHfahLW/FteMvcXLzk=");
     KeyPublishToProvisionalUser const kp(trustchainId,
                                          appPublicSignatureKey,

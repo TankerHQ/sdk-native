@@ -7,7 +7,7 @@
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <cassert>
 #include <exception>
@@ -31,10 +31,10 @@ void migrate1To2(DataStore::Connection& db)
   for (auto const& row : rows)
   {
     auto const pubK =
-        cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+        mgs::base64::decode<Crypto::PublicEncryptionKey>(
             extractBlob(row.public_encryption_key));
     auto const privK =
-        cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
+        mgs::base64::decode<Crypto::PrivateEncryptionKey>(
             extractBlob(row.private_encryption_key));
 
     db(update(tab)

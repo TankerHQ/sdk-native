@@ -30,7 +30,6 @@ class ResourceId
 }
 }
 
-// Required for cppcodec array-like types support
 namespace std
 {
 template <>

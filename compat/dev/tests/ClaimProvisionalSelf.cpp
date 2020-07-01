@@ -6,10 +6,12 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Types/Email.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/JsonFile.hpp>
 
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 using namespace std::string_literals;
@@ -24,8 +26,7 @@ struct ClaimProvisionalSelf : Tanker::Compat::Command
 
     auto const bobProvisionalIdentity =
         Tanker::Identity::createProvisionalIdentity(
-            cppcodec::base64_rfc4648::encode(trustchain.id),
-            Tanker::Email{bobEmail});
+            mgs::base64::encode(trustchain.id), Tanker::Email{bobEmail});
 
     auto const sgroupId =
         alice.core

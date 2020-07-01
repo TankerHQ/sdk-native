@@ -8,7 +8,7 @@
 #include <Tanker/Utils.hpp>
 #include <Tanker/Version.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/thread_pool.hpp>
@@ -192,7 +192,7 @@ tc::shared_future<SDeviceId> AsyncCore::deviceId() const
 {
   return _taskCanceler.run([&] {
     return tc::async([this] {
-      return SDeviceId(cppcodec::base64_rfc4648::encode(_core.deviceId()));
+      return SDeviceId(mgs::base64::encode(_core.deviceId()));
     });
   });
 }
@@ -272,7 +272,7 @@ expected<SResourceId> AsyncCore::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {
   return tc::sync([&] {
-    return cppcodec::base64_rfc4648::encode<SResourceId>(
+    return mgs::base64::encode<SResourceId>(
         Core::getResourceId(encryptedData));
   });
 }

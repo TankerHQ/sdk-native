@@ -7,10 +7,10 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/base64_url.hpp>
 #include <doctest/doctest.h>
 #include <gsl/gsl-lite.hpp>
+#include <mgs/base64.hpp>
+#include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
@@ -283,7 +283,7 @@ TEST_CASE("prehashPassword")
   SUBCASE("should match our test vector")
   {
     auto const input = "super secretive password";
-    auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
+    auto const expected = mgs::base64::decode<Hash>(
         "UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
 
     CHECK_EQ(prehashPassword(input), expected);
@@ -295,7 +295,7 @@ TEST_CASE("prehashPassword")
     char const input[] =
         "\x74\x65\x73\x74\x20\xc3\xa9\xc3\xa5\x20\xed\x95\x9c\xea\xb5\xad\xec"
         "\x96\xb4\x20\xf0\x9f\x98\x83";
-    auto const expected = cppcodec::base64_rfc4648::decode<Hash>(
+    auto const expected = mgs::base64::decode<Hash>(
         "Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
 
     CHECK_EQ(prehashPassword(input), expected);
@@ -308,26 +308,26 @@ void test_format(T const& var)
   SUBCASE("be implicitly encoded")
   {
     auto formated = fmt::format("{}", var);
-    REQUIRE_EQ(formated, cppcodec::base64_rfc4648::encode(var));
+    REQUIRE_EQ(formated, mgs::base64::encode(var));
   }
   SUBCASE("be annoyingly encoded")
   {
     auto formated = fmt::format("{:}", var);
-    REQUIRE_EQ(formated, cppcodec::base64_rfc4648::encode(var));
+    REQUIRE_EQ(formated, mgs::base64::encode(var));
   }
   SUBCASE("be safely encoded")
   {
     auto formated = fmt::format("{:S}", var);
-    REQUIRE_EQ(formated, cppcodec::base64_url::encode(var));
+    REQUIRE_EQ(formated, mgs::base64url::encode(var));
   }
   SUBCASE("be explicitly encoded")
   {
     auto formated = fmt::format("{:s}", var);
-    REQUIRE_EQ(formated, cppcodec::base64_rfc4648::encode(var));
+    REQUIRE_EQ(formated, mgs::base64::encode(var));
   }
   SUBCASE("be jsonifiyed")
   {
-    REQUIRE_EQ(nlohmann::json(var), cppcodec::base64_rfc4648::encode(var));
+    REQUIRE_EQ(nlohmann::json(var), mgs::base64::encode(var));
   }
   SUBCASE("complain")
   {

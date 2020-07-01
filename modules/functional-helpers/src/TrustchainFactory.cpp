@@ -7,7 +7,7 @@
 #include <Helpers/Config.hpp>
 
 #include <boost/filesystem/string_file.hpp>
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 #include <memory>
@@ -45,7 +45,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
   Crypto::randomFill(trustchainDefault);
   auto app = TC_AWAIT(_admin->createTrustchain(
       trustchainName.value_or(
-          cppcodec::base64_rfc4648::encode(trustchainDefault)),
+          mgs::base64::encode(trustchainDefault)),
       kp,
       isTest));
   TC_RETURN(Trustchain::make(TestConstants::trustchainUrl(),

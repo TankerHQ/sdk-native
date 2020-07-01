@@ -4,7 +4,7 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <string>
@@ -58,7 +58,7 @@ std::unique_ptr<AsyncCore> Device::createAsyncCore()
       _trustchainUrl,
       Network::SdkInfo{
           "sdk-native-test",
-          cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
+          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(
               _trustchainId),
           "0.0.1"},
       _storage->path);

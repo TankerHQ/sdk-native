@@ -6,7 +6,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <cassert>
 #include <exception>
@@ -30,10 +30,10 @@ void migrate1To2(DataStore::Connection& db)
   for (auto const& row : rows)
   {
     auto const resourceId =
-        cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+        mgs::base64::decode<Trustchain::ResourceId>(
             extractBlob(row.mac));
     auto const resourceKey =
-        cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
+        mgs::base64::decode<Crypto::SymmetricKey>(
             extractBlob(row.resource_key));
 
     db(update(tab)

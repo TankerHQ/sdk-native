@@ -51,7 +51,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(
 {
   auto const session = reinterpret_cast<EncryptionSession*>(csession);
   auto resourceId =
-      cppcodec::base64_rfc4648::encode<SResourceId>(session->resourceId());
+      mgs::base64::encode<SResourceId>(session->resourceId());
   return makeFuture(tc::make_ready_future(
       static_cast<void*>(duplicateString(resourceId.string()))));
 }
@@ -85,7 +85,7 @@ tanker_future_t* tanker_encryption_session_stream_encrypt(
 
     auto c_stream = new tanker_stream;
     c_stream->resourceId =
-        SResourceId{cppcodec::base64_rfc4648::encode(encryptor.resourceId())};
+        SResourceId{mgs::base64::encode(encryptor.resourceId())};
     c_stream->inputSource = std::move(encryptor);
     return static_cast<void*>(c_stream);
   }));

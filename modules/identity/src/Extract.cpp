@@ -10,7 +10,7 @@ namespace detail
 {
 nlohmann::json extract(std::string const& token)
 {
-  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(token));
+  return nlohmann::json::parse(mgs::base64::decode(token));
 }
 }
 }

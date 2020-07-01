@@ -51,7 +51,7 @@ target_link_libraries(
 
   CONAN_PKG::nlohmann_json
   CONAN_PKG::gsl-lite
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
 )
 
 install(TARGETS tankeridentity

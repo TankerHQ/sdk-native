@@ -8,7 +8,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <doctest/doctest.h>
 
 using namespace Tanker;
@@ -32,8 +32,8 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
   auto const resourceKey = Crypto::makeSymmetricKey();
 
   auto const b64Mac =
-      cppcodec::base64_rfc4648::encode(make<Trustchain::ResourceId>("michel"));
-  auto const b64ResourceKey = cppcodec::base64_rfc4648::encode(resourceKey);
+      mgs::base64::encode(make<Trustchain::ResourceId>("michel"));
+  auto const b64ResourceKey = mgs::base64::encode(resourceKey);
 
   db.execute(R"(
     CREATE TABLE resource_keys (
@@ -144,10 +144,10 @@ TEST_CASE("Migration")
         DataStore::extractBlob<Crypto::SymmetricKey>(resourceKeys.resource_key);
 
     CHECK_EQ(resourceId,
-             cppcodec::base64_rfc4648::decode<Trustchain::ResourceId>(
+             mgs::base64::decode<Trustchain::ResourceId>(
                  oldKeys.b64Mac));
     CHECK_EQ(key,
-             cppcodec::base64_rfc4648::decode<Crypto::SymmetricKey>(
+             mgs::base64::decode<Crypto::SymmetricKey>(
                  oldKeys.b64ResourceKey));
   }
 }

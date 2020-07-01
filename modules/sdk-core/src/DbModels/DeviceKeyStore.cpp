@@ -9,7 +9,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <cassert>
 #include <exception>
@@ -33,19 +33,19 @@ void migrate1To2(DataStore::Connection& db)
   for (auto const& row : rows)
   {
     auto const privSigK =
-        cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+        mgs::base64::decode<Crypto::PrivateSignatureKey>(
             extractBlob(row.private_signature_key));
     auto const pubSigK =
-        cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
+        mgs::base64::decode<Crypto::PublicSignatureKey>(
             extractBlob(row.public_signature_key));
     auto const privEncK =
-        cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
+        mgs::base64::decode<Crypto::PrivateEncryptionKey>(
             extractBlob(row.private_encryption_key));
     auto const pubEncK =
-        cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+        mgs::base64::decode<Crypto::PublicEncryptionKey>(
             extractBlob(row.public_encryption_key));
     auto const deviceId =
-        cppcodec::base64_rfc4648::decode<Trustchain::DeviceId>(
+        mgs::base64::decode<Trustchain::DeviceId>(
             extractBlob(row.device_id));
 
     db(update(tab)

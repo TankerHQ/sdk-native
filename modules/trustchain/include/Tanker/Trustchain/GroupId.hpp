@@ -31,7 +31,6 @@ class GroupId
 }
 }
 
-// Required for cppcodec array-like types support
 namespace std
 {
 template <>

@@ -106,7 +106,6 @@ bool operator!=(BasicCryptographicType<T, S> const& lhs,
 }
 }
 
-// Required for cppcodec array-like types support
 namespace std
 {
 template <typename T, std::size_t S>

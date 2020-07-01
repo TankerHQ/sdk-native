@@ -119,7 +119,7 @@ TEST_CASE("Serialization test vectors")
              make<Crypto::SealedPrivateEncryptionKey>(
                  "second encrypted group priv key")}};
     auto const selfSignature = make<Crypto::Signature>("self signature");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "SKeSWc4BdOBuGY31q5IzhIBEzUy7veyLTbtNyHK8twE=");
 
     UserGroupCreation1 const ugc{trustchainId,
@@ -172,7 +172,7 @@ TEST_CASE("Serialization test vectors")
         },
         make<Crypto::Signature>("self signature"),
         make<Crypto::Hash>("author"),
-        cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+        mgs::base64::decode<Crypto::Hash>(
             "GYTC0cvLKOYIwxn8RY9QpFUTYeybjIHUPy8x40EjFH0="),
         make<Crypto::Signature>("sig"),
     };

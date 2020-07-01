@@ -1,20 +1,19 @@
 #include <Compat/States.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 void to_json(nlohmann::json& j, EncryptState const& state)
 {
   j["clear_data"] = state.clearData;
-  j["encrypted_data"] = cppcodec::base64_rfc4648::encode(state.encryptedData);
+  j["encrypted_data"] = mgs::base64::encode(state.encryptedData);
 }
 
 void from_json(nlohmann::json const& j, EncryptState& state)
 {
   j.at("clear_data").get_to(state.clearData);
   auto const str = j.at("encrypted_data").get<std::string>();
-  state.encryptedData =
-      cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(str);
+  state.encryptedData = mgs::base64::decode<std::vector<uint8_t>>(str);
 }
 
 void to_json(nlohmann::json& j, ShareState const& state)

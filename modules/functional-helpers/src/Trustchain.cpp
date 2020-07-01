@@ -1,6 +1,6 @@
 #include <Tanker/Functional/Trustchain.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <Helpers/Config.hpp>
 
@@ -58,9 +58,9 @@ void Trustchain::reuseCache()
 
 User Trustchain::makeUser(UserType type)
 {
-  auto const trustchainIdString = cppcodec::base64_rfc4648::encode(id);
+  auto const trustchainIdString = mgs::base64::encode(id);
   auto const trustchainPrivateKeyString =
-      cppcodec::base64_rfc4648::encode(keyPair.privateKey);
+      mgs::base64::encode(keyPair.privateKey);
 
   if (type == UserType::New)
     return User(url, trustchainIdString, trustchainPrivateKeyString);

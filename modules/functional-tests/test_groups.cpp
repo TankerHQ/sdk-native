@@ -146,7 +146,7 @@ TEST_SUITE("Groups")
   {
     auto const bobEmail = Email{"bob1.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-        cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+        mgs::base64::encode(trustchain.id), bobEmail);
 
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();
@@ -183,7 +183,7 @@ TEST_SUITE("Groups")
   {
     auto const bobEmail = Email{"bob2.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-        cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+        mgs::base64::encode(trustchain.id), bobEmail);
 
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();
@@ -225,7 +225,7 @@ TEST_SUITE("Groups")
   {
     auto const bobEmail = Email{"bob3.test@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-        cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+        mgs::base64::encode(trustchain.id), bobEmail);
 
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();
@@ -264,7 +264,7 @@ TEST_SUITE("Groups")
   {
     auto const bobEmail = Email{"bob4.tanker@tanker.io"};
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-        cppcodec::base64_rfc4648::encode(trustchain.id), bobEmail);
+        mgs::base64::encode(trustchain.id), bobEmail);
 
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();

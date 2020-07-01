@@ -4,7 +4,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -17,7 +17,7 @@ auto createRandomUserId()
 {
   auto rdm = std::array<std::uint8_t, 10>{};
   Crypto::randomFill(rdm);
-  return SUserId{cppcodec::base64_rfc4648::encode(rdm)};
+  return SUserId{mgs::base64::encode(rdm)};
 }
 }
 
