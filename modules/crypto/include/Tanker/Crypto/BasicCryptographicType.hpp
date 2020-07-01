@@ -106,24 +106,6 @@ bool operator!=(BasicCryptographicType<T, S> const& lhs,
 }
 }
 
-namespace std
-{
-template <typename T, std::size_t S>
-class tuple_size<::Tanker::Crypto::BasicCryptographicType<T, S>>
-  : public tuple_size<
-        typename ::Tanker::Crypto::BasicCryptographicType<T, S>::array_t>
-{
-};
-
-template <std::size_t I, typename T, std::size_t S>
-class tuple_element<I, ::Tanker::Crypto::BasicCryptographicType<T, S>>
-  : public tuple_element<
-        I,
-        typename ::Tanker::Crypto::BasicCryptographicType<T, S>::array_t>
-{
-};
-}
-
 #define TANKER_CRYPTO_INCLUDED_BY_BASIC_CRYPTOGRAPHIC_TYPE
 #include <Tanker/Crypto/detail/BasicCryptographicTypeImpl.hpp>
 #undef TANKER_CRYPTO_INCLUDED_BY_BASIC_CRYPTOGRAPHIC_TYPE
