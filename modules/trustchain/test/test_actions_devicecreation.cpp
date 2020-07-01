@@ -35,11 +35,11 @@ TEST_CASE("DeviceCreation tests")
 
   SUBCASE("DeviceCreation v2 conversion to v1")
   {
-    Crypto::PublicSignatureKey ephemeralPublicSignatureKey;
-    UserId userId;
-    Crypto::Signature delegationSignature;
-    Crypto::PublicSignatureKey publicSignatureKey;
-    Crypto::PublicEncryptionKey publicEncryptionKey;
+    Crypto::PublicSignatureKey ephemeralPublicSignatureKey{};
+    UserId userId{};
+    Crypto::Signature delegationSignature{};
+    Crypto::PublicSignatureKey publicSignatureKey{};
+    Crypto::PublicEncryptionKey publicEncryptionKey{};
     Crypto::Hash lastReset{};
 
     REQUIRE(lastReset.is_null());
