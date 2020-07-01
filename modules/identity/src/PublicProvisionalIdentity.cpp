@@ -4,7 +4,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
 
@@ -33,9 +33,9 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
       TargetType::Email,
       j.at("value").get<std::string>(),
-      cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
+      mgs::base64::decode<Crypto::PublicSignatureKey>(
           j.at("public_signature_key").get<std::string>()),
-      cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+      mgs::base64::decode<Crypto::PublicEncryptionKey>(
           j.at("public_encryption_key").get<std::string>()),
   };
 }
@@ -53,14 +53,14 @@ void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "email";
   j["public_signature_key"] =
-      cppcodec::base64_rfc4648::encode(identity.appSignaturePublicKey);
+      mgs::base64::encode(identity.appSignaturePublicKey);
   j["public_encryption_key"] =
-      cppcodec::base64_rfc4648::encode(identity.appEncryptionPublicKey);
+      mgs::base64::encode(identity.appEncryptionPublicKey);
 }
 
 std::string to_string(PublicProvisionalIdentity const& identity)
 {
-  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::json(identity).dump());
 }
 }
 }

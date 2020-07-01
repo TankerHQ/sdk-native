@@ -84,10 +84,10 @@ User upgradeToIdentity(Tanker::Trustchain::TrustchainId const& trustchainId,
 {
   if (user.userToken)
   {
-    user.identity = Tanker::Identity::upgradeUserToken(
-        cppcodec::base64_rfc4648::encode(trustchainId),
-        user.suserId,
-        user.userToken.value());
+    user.identity =
+        Tanker::Identity::upgradeUserToken(mgs::base64::encode(trustchainId),
+                                           user.suserId,
+                                           user.userToken.value());
     user.userToken.reset();
   }
   return user;

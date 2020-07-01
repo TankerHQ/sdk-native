@@ -12,7 +12,7 @@ static void from_json(nlohmann::json const& j, UserStatusResult& result)
   auto const lastReset = j.at("last_reset").get<std::string>();
   if (!lastReset.empty())
     result.lastReset =
-        cppcodec::base64_rfc4648::decode<Crypto::Hash>(lastReset);
+        mgs::base64::decode<Crypto::Hash>(lastReset);
   else
     result.lastReset = Crypto::Hash{};
 }
@@ -62,7 +62,7 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
   };
   auto const response =
       TC_AWAIT(_client->emit("get verification key", payload));
-  TC_RETURN(cppcodec::base64_rfc4648::decode<std::vector<uint8_t>>(
+  TC_RETURN(mgs::base64::decode<std::vector<uint8_t>>(
       response.at("encrypted_verification_key").get<std::string>()));
 }
 
@@ -92,10 +92,10 @@ tc::cotask<void> Requester::createUser(
   nlohmann::json request{
       {"trustchain_id", trustchainId},
       {"user_id", userId},
-      {"user_creation_block", cppcodec::base64_rfc4648::encode(userCreation)},
-      {"first_device_block", cppcodec::base64_rfc4648::encode(firstDevice)},
+      {"user_creation_block", mgs::base64::encode(userCreation)},
+      {"first_device_block", mgs::base64::encode(firstDevice)},
       {"encrypted_unlock_key",
-       cppcodec::base64_rfc4648::encode(encryptedVerificationKey)},
+       mgs::base64::encode(encryptedVerificationKey)},
       {"verification", verificationRequest},
   };
   auto const reply = TC_AWAIT(_client->emit("create user 2", request));

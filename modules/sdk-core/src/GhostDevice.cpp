@@ -11,7 +11,7 @@ namespace Tanker
 {
 GhostDevice GhostDevice::create(VerificationKey const& key) try
 {
-  return nlohmann::json::parse(cppcodec::base64_rfc4648::decode(key))
+  return nlohmann::json::parse(mgs::base64::decode(key))
       .get<GhostDevice>();
 }
 catch (std::exception const& e)
@@ -34,7 +34,7 @@ DeviceKeys GhostDevice::toDeviceKeys() const
 
 VerificationKey GhostDevice::toVerificationKey() const
 {
-  return cppcodec::base64_rfc4648::encode<VerificationKey>(
+  return mgs::base64::encode<VerificationKey>(
       nlohmann::json(*this).dump());
 }
 

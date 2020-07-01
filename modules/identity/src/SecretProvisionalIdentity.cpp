@@ -3,7 +3,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 using namespace Tanker::Trustchain;
@@ -33,7 +33,7 @@ std::string createProvisionalIdentity(std::string const& trustchainIdParam,
     throw Errors::Exception(Errc::InvalidTrustchainId);
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<TrustchainId>(trustchainIdParam);
+      mgs::base64::decode<TrustchainId>(trustchainIdParam);
   return to_string(createProvisionalIdentity(trustchainId, email));
 }
 
@@ -51,13 +51,13 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
       j.at("trustchain_id").get<TrustchainId>(),
       TargetType::Email,
       j.at("value").get<std::string>(),
-      {cppcodec::base64_rfc4648::decode<Crypto::PublicSignatureKey>(
+      {mgs::base64::decode<Crypto::PublicSignatureKey>(
            j.at("public_signature_key").get<std::string>()),
-       cppcodec::base64_rfc4648::decode<Crypto::PrivateSignatureKey>(
+       mgs::base64::decode<Crypto::PrivateSignatureKey>(
            j.at("private_signature_key").get<std::string>())},
-      {cppcodec::base64_rfc4648::decode<Crypto::PublicEncryptionKey>(
+      {mgs::base64::decode<Crypto::PublicEncryptionKey>(
            j.at("public_encryption_key").get<std::string>()),
-       cppcodec::base64_rfc4648::decode<Crypto::PrivateEncryptionKey>(
+       mgs::base64::decode<Crypto::PrivateEncryptionKey>(
            j.at("private_encryption_key").get<std::string>())},
   };
 }
@@ -75,18 +75,18 @@ void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity)
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "email";
   j["public_signature_key"] =
-      cppcodec::base64_rfc4648::encode(identity.appSignatureKeyPair.publicKey);
+      mgs::base64::encode(identity.appSignatureKeyPair.publicKey);
   j["private_signature_key"] =
-      cppcodec::base64_rfc4648::encode(identity.appSignatureKeyPair.privateKey);
+      mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
   j["public_encryption_key"] =
-      cppcodec::base64_rfc4648::encode(identity.appEncryptionKeyPair.publicKey);
-  j["private_encryption_key"] = cppcodec::base64_rfc4648::encode(
+      mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
+  j["private_encryption_key"] = mgs::base64::encode(
       identity.appEncryptionKeyPair.privateKey);
 }
 
 std::string to_string(SecretProvisionalIdentity const& identity)
 {
-  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::json(identity).dump());
 }
 }
 }

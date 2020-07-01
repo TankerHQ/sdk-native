@@ -39,7 +39,7 @@ target_link_libraries(tankernetwork
 
   CONAN_PKG::tconcurrent
   CONAN_PKG::fmt
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
  
   CONAN_PKG::nlohmann_json
 )

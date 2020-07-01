@@ -36,26 +36,3 @@ auto const& get(Context const& c)
     return c.publicSignatureKey();
 }
 }
-
-namespace std
-{
-template <>
-class tuple_size<::Tanker::Trustchain::Context>
-  : public std::integral_constant<std::size_t, 2>
-{
-};
-
-template <>
-class tuple_element<0, ::Tanker::Trustchain::Context>
-{
-public:
-  using type = ::Tanker::Trustchain::TrustchainId const&;
-};
-
-template <>
-class tuple_element<1, ::Tanker::Trustchain::Context>
-{
-public:
-  using type = ::Tanker::Crypto::PublicSignatureKey const&;
-};
-}

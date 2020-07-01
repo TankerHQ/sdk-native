@@ -41,22 +41,5 @@ constexpr std::size_t serialized_size(EncryptedSymmetricKey const&)
 }
 }
 
-namespace std
-{
-template <>
-class tuple_size<::Tanker::Crypto::EncryptedSymmetricKey>
-  : public integral_constant<size_t,
-                             crypto_aead_xchacha20poly1305_ietf_KEYBYTES +
-                                 crypto_box_MACBYTES + crypto_box_NONCEBYTES>
-{
-};
-
-template <size_t I>
-class tuple_element<I, ::Tanker::Crypto::EncryptedSymmetricKey>
-  : public tuple_element<I, ::Tanker::Crypto::EncryptedSymmetricKey::base_t>
-{
-};
-}
-
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Crypto/Serialization/Serialization.hpp>

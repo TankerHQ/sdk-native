@@ -48,7 +48,7 @@ tanker_link_libraries(ctanker PUBLIC
   tankercrypto
   tankeridentity
 
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
 
   ${_additional_link_flags}
 

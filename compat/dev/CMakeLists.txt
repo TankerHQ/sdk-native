@@ -34,4 +34,4 @@ target_include_directories(compat
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(compat CONAN_PKG::docopt.cpp CONAN_PKG::tanker CONAN_PKG::cppcodec)
+target_link_libraries(compat CONAN_PKG::docopt.cpp CONAN_PKG::tanker CONAN_PKG::mgs)

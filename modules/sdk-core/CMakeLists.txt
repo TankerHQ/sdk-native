@@ -218,7 +218,7 @@ target_link_libraries(tankercore
   ttracer
   CONAN_PKG::boost
   CONAN_PKG::tconcurrent
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
   CONAN_PKG::gsl-lite
   CONAN_PKG::fmt
   CONAN_PKG::nlohmann_json

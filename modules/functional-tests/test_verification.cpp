@@ -15,7 +15,7 @@
 #include <Tanker/Cacerts/InitSsl.hpp>
 #endif
 
-#include <cppcodec/base64_url_unpadded.hpp>
+#include <mgs/base64url.hpp>
 
 #include <fetchpp/fetch.hpp>
 #include <fetchpp/http/json_body.hpp>
@@ -111,12 +111,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     auto ghostDevice =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+        nlohmann::json::parse(mgs::base64::decode(verificationKey))
             .get<GhostDevice>();
     // Corrupt the public signature key
     ghostDevice.privateSignatureKey[2]++;
     verificationKey = VerificationKey{
-        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+        mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
@@ -129,12 +129,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     auto ghostDevice =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+        nlohmann::json::parse(mgs::base64::decode(verificationKey))
             .get<GhostDevice>();
     // Corrupt the private signature key
     ghostDevice.privateSignatureKey[60]++;
     verificationKey = VerificationKey{
-        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+        mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
@@ -149,18 +149,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TC_AWAIT(core1->registerIdentity(verificationKey));
 
     auto ghostDevice =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+        nlohmann::json::parse(mgs::base64::decode(verificationKey))
             .get<GhostDevice>();
     // Corrupt the public signature key
     ghostDevice.privateSignatureKey[2]++;
     verificationKey = VerificationKey{
-        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+        mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
     auto aliceIdentity =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+        nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity =
-        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);
@@ -177,18 +176,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TC_AWAIT(core1->registerIdentity(verificationKey));
 
     auto ghostDevice =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+        nlohmann::json::parse(mgs::base64::decode(verificationKey))
             .get<GhostDevice>();
     // Corrupt the private signature key
     ghostDevice.privateSignatureKey[60]++;
     verificationKey = VerificationKey{
-        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+        mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
     auto aliceIdentity =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+        nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity =
-        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);
@@ -205,18 +203,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TC_AWAIT(core1->registerIdentity(verificationKey));
 
     auto ghostDevice =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(verificationKey))
+        nlohmann::json::parse(mgs::base64::decode(verificationKey))
             .get<GhostDevice>();
     // Corrupt the private encryption key
     ghostDevice.privateEncryptionKey[2]++;
     verificationKey = VerificationKey{
-        cppcodec::base64_rfc4648::encode(nlohmann::json(ghostDevice).dump())};
+        mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
     auto aliceIdentity =
-        nlohmann::json::parse(cppcodec::base64_rfc4648::decode(alice.identity))
+        nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity =
-        cppcodec::base64_rfc4648::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);
@@ -464,7 +461,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     SUBCASE("fails to verify a token with incorrect signature")
     {
       namespace ba = boost::algorithm;
-      using b64 = cppcodec::base64_url_unpadded;
+      using b64 = mgs::base64url_nopad;
 
       std::vector<std::string> res;
       auto itSig = ba::split(res, martineIdToken, ba::is_any_of(".")).rbegin();
@@ -508,7 +505,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
       auto const email = Email{"the-ceo@tanker.io"};
       auto const martineProvisionalIdentity =
           Identity::createProvisionalIdentity(
-              cppcodec::base64_rfc4648::encode(trustchain.id), email);
+              mgs::base64::encode(trustchain.id), email);
       auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
           SSecretProvisionalIdentity{martineProvisionalIdentity}));
       REQUIRE_EQ(result.status, Tanker::Status::IdentityVerificationNeeded);
@@ -527,7 +524,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
       auto const martineEmail = Email{oidcConfig.users.at("martine").email};
       auto const martineProvisionalIdentity =
           Identity::createProvisionalIdentity(
-              cppcodec::base64_rfc4648::encode(trustchain.id), martineEmail);
+              mgs::base64::encode(trustchain.id), martineEmail);
 
       auto const publicProvisionalId = SPublicIdentity{
           Identity::getPublicIdentity(martineProvisionalIdentity)};

@@ -2,8 +2,8 @@
 #include <iostream>
 #include <sstream>
 
-#include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/hex_lower.hpp>
+#include <mgs/base16.hpp>
+#include <mgs/base64.hpp>
 
 #include <fmt/format.h>
 
@@ -197,8 +197,7 @@ AsyncCorePtr signUp(MainArgs const& args)
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
       {sdkType,
-       cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
-           trustchainId),
+       mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
        sdkVersion},
       ".")};
 
@@ -222,8 +221,7 @@ AsyncCorePtr signIn(MainArgs const& args)
   auto core = AsyncCorePtr{new AsyncCore(
       args.at("<trustchainurl>").asString(),
       {sdkType,
-       cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
-           trustchainId),
+       mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
        sdkVersion},
       ".")};
 
@@ -257,11 +255,11 @@ int main(int argc, char* argv[])
     CliAction action;
 
     if (args.at("--hex").asBool())
-      action = deserializeAction(
-          cppcodec::hex_lower::decode(args.at("<block>").asString()));
+      action =
+          deserializeAction(mgs::base16::decode(args.at("<block>").asString()));
     else
-      action = deserializeAction(
-          cppcodec::base64_rfc4648::decode(args.at("<block>").asString()));
+      action =
+          deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
 
     std::cout << formatAction(action) << std::endl;
   }
@@ -280,7 +278,7 @@ int main(int argc, char* argv[])
   else if (args.at("encrypt").asBool())
   {
     auto const trustchainId =
-        cppcodec::base64_rfc4648::decode<Tanker::Trustchain::TrustchainId>(
+        mgs::base64::decode<Tanker::Trustchain::TrustchainId>(
             args.at("<trustchainid>").asString());
 
     auto const core = signIn(args);
@@ -302,14 +300,14 @@ int main(int argc, char* argv[])
                   gsl::make_span(cleartext).as_span<uint8_t const>(),
                   shareToPublicIdentities)
         .get();
-    fmt::print("encrypted: {}\n", cppcodec::base64_rfc4648::encode(encrypted));
+    fmt::print("encrypted: {}\n", mgs::base64::encode(encrypted));
   }
   else if (args.at("decrypt").asBool())
   {
     auto const core = signIn(args);
 
     auto const encrypteddata =
-        cppcodec::base64_rfc4648::decode(args.at("<encrypteddata>").asString());
+        mgs::base64::decode(args.at("<encrypteddata>").asString());
     std::vector<uint8_t> decrypted(
         AsyncCore::decryptedSize(encrypteddata).get());
 

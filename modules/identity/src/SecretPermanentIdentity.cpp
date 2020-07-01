@@ -8,7 +8,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 namespace Tanker
 {
@@ -42,11 +42,11 @@ std::string createIdentity(std::string const& trustchainIdParam,
     throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+      mgs::base64::decode<Trustchain::TrustchainId>(
           trustchainIdParam);
   return to_string(createIdentity(
       trustchainId,
-      cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+      mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
           trustchainPrivateKey),
       Tanker::obfuscateUserId(userId, trustchainId)));
 }
@@ -66,7 +66,7 @@ std::string upgradeUserToken(std::string const& strustchainId,
                              std::string const& suserToken)
 {
   auto const trustchainId =
-      cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(strustchainId);
+      mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
   auto const userId = Tanker::obfuscateUserId(suserId, trustchainId);
   auto const userToken = extract<UserToken>(suserToken);
   return to_string(upgradeUserToken(trustchainId, userId, userToken));
@@ -106,7 +106,7 @@ void to_json(nlohmann::json& j, SecretPermanentIdentity const& identity)
 
 std::string to_string(SecretPermanentIdentity const& identity)
 {
-  return cppcodec::base64_rfc4648::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::json(identity).dump());
 }
 }
 }

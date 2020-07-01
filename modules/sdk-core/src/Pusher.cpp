@@ -3,7 +3,7 @@
 #include <Tanker/Client.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -16,14 +16,14 @@ tc::cotask<void> Pusher::pushBlock(Trustchain::UserAction const& action)
 {
   TC_AWAIT(_client->emit(
       "push block",
-      cppcodec::base64_rfc4648::encode(Serialization::serialize(action))));
+      mgs::base64::encode(Serialization::serialize(action))));
 }
 
 tc::cotask<void> Pusher::pushBlock(Trustchain::GroupAction const& action)
 {
   TC_AWAIT(_client->emit(
       "push block",
-      cppcodec::base64_rfc4648::encode(Serialization::serialize(action))));
+      mgs::base64::encode(Serialization::serialize(action))));
 }
 
 tc::cotask<void> Pusher::pushBlock(
@@ -31,7 +31,7 @@ tc::cotask<void> Pusher::pushBlock(
 {
   TC_AWAIT(_client->emit(
       "push block",
-      cppcodec::base64_rfc4648::encode(Serialization::serialize(action))));
+      mgs::base64::encode(Serialization::serialize(action))));
 }
 
 tc::cotask<void> Pusher::pushKeys(
@@ -41,7 +41,7 @@ tc::cotask<void> Pusher::pushKeys(
   sb.reserve(entries.size());
   for (auto const& action : entries)
     sb.push_back(
-        cppcodec::base64_rfc4648::encode(Serialization::serialize(action)));
+        mgs::base64::encode(Serialization::serialize(action)));
   TC_AWAIT(_client->emit("push keys", sb));
 }
 

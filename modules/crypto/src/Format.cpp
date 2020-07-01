@@ -1,8 +1,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/base64_url.hpp>
-#include <cppcodec/base64_url_unpadded.hpp>
+#include <mgs/base64.hpp>
+#include <mgs/base64url.hpp>
 
 namespace Tanker::Crypto::Format
 {
@@ -12,10 +11,10 @@ std::string format_crypto_array(bool useSafe,
                                 std::size_t size)
 {
   return useSafe ?
-             (padded ? cppcodec::base64_url::encode<std::string>(beg, size) :
-                       cppcodec::base64_url_unpadded::encode<std::string>(
-                           beg, size)) :
-             cppcodec::base64_rfc4648::encode<std::string>(beg, size);
+             (padded ?
+                  mgs::base64url::encode<std::string>(beg, beg + size) :
+                  mgs::base64url_nopad::encode<std::string>(beg, beg + size)) :
+             mgs::base64::encode<std::string>(beg, beg + size);
 }
 
 }

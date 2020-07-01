@@ -124,7 +124,7 @@ tc::cotask<App> Client::createTrustchain(
   auto message = nlohmann::json{
       {"name", name},
       {"root_block",
-       cppcodec::base64_rfc4648::encode(Serialization::serialize(action))},
+       mgs::base64::encode(Serialization::serialize(action))},
   };
   if (isTest)
     message["private_signature_key"] = keyPair.privateKey;

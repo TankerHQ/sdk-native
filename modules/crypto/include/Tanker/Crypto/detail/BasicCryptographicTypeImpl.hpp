@@ -9,6 +9,13 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Format.hpp>
 
+#include <mgs/codecs/concepts/input_source.hpp>
+#include <mgs/codecs/iterator_sentinel_source.hpp>
+#include <mgs/meta/concepts/input_iterator.hpp>
+#include <mgs/meta/concepts/output_iterator.hpp>
+#include <mgs/meta/concepts/sentinel_for.hpp>
+#include <mgs/ssize_t.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <string>
@@ -18,6 +25,28 @@ namespace Tanker
 {
 namespace Crypto
 {
+namespace detail
+{
+template <typename IS, typename O>
+std::pair<O, mgs::ssize_t> read_at_most(
+    mgs::codecs::input_source<IS, O>& is,
+    mgs::meta::output_iterator<O, typename IS::element_type> o,
+    mgs::ssize_t n)
+{
+  auto total_read = static_cast<mgs::ssize_t>(0);
+  while (n != 0)
+  {
+    auto const res = is.read(o, n);
+    o = res.first;
+    if (res.second == 0)
+      break;
+    total_read += res.second;
+    n -= res.second;
+  }
+  return {o, total_read};
+}
+}
+
 template <typename T, std::size_t S>
 BasicCryptographicType<T, S>::BasicCryptographicType(
     gsl::span<std::uint8_t const> data)
@@ -27,21 +56,30 @@ BasicCryptographicType<T, S>::BasicCryptographicType(
 
 template <typename T, std::size_t S>
 template <typename InputIterator, typename Sentinel>
-BasicCryptographicType<T, S>::BasicCryptographicType(InputIterator begin,
-                                                     Sentinel end)
+BasicCryptographicType<T, S>::BasicCryptographicType(
+    mgs::meta::input_iterator<InputIterator> begin,
+    mgs::meta::sentinel_for<Sentinel, InputIterator> end)
 {
-  auto const dist =
-      static_cast<BasicCryptographicType::size_type>(std::distance(begin, end));
-  if (dist != this->size())
+  auto is = mgs::codecs::make_iterator_sentinel_source(begin, end);
+  auto const [it, total_read] = detail::read_at_most(is, this->data(), S);
+  if (total_read < static_cast<mgs::ssize_t>(S))
   {
     throw Errors::formatEx(
         Errc::InvalidBufferSize,
         TFMT("invalid size for {:s}: got {:d}, expected {:d}"),
         typeid(T).name(),
-        dist,
+        total_read,
         this->size());
   }
-  std::copy(begin, end, this->data());
+  // make sure there is no additional data
+  if (detail::read_at_most(is, this->data(), 1).second != 0)
+  {
+    throw Errors::formatEx(
+        Errc::InvalidBufferSize,
+        TFMT("invalid size for {:s}: larger than expected {:d}"),
+        typeid(T).name(),
+        this->size());
+  }
 }
 
 template <typename T, std::size_t S>

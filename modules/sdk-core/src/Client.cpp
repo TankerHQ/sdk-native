@@ -12,7 +12,7 @@
 #include <Tanker/Tracer/FuncTracer.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <nlohmann/json.hpp>
 

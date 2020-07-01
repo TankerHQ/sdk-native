@@ -65,7 +65,7 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicEncryptionKey>("recipient user");
     auto const resourceId = make<ResourceId>("resource mac");
     auto const key = make<Crypto::SealedSymmetricKey>("encrypted key...");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "lul/hcBQqE1G6HNuKBZyBorI4WAH9K/rgve4mR/cwCw=");
     KeyPublishToUser const kp(trustchainId,
                               recipientPublicEncryptionKey,

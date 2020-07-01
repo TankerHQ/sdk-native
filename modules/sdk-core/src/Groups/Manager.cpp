@@ -16,7 +16,7 @@
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Utils.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
@@ -146,7 +146,7 @@ tc::cotask<SGroupId> create(
                                                       privateSignatureKey);
   TC_AWAIT(pusher.pushBlock(groupEntry));
 
-  TC_RETURN(cppcodec::base64_rfc4648::encode(groupSignatureKeyPair.publicKey));
+  TC_RETURN(mgs::base64::encode(groupSignatureKeyPair.publicKey));
 }
 
 Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(

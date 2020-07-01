@@ -147,7 +147,7 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicSignatureKey>("public signature key");
     auto const publicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("public enc key");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "nPmcskd1KiuDywCkM0ltRXk2e5eTpy+GxlKKhdRWq8s=");
 
     DeviceCreation::v1 const dc1(trustchainId,
@@ -235,7 +235,7 @@ TEST_CASE("Serialization test vectors")
     auto const publicEncryptionKey =
         make<Crypto::PublicEncryptionKey>("public enc key");
     auto const lastReset = make<Crypto::Hash>("reset block");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "Hy0ykBdASXL5eigQ22Bb6rYEqe6vMfHkqU8o+BdyF4k=");
 
     DeviceCreation2 const dc2(trustchainId,
@@ -336,7 +336,7 @@ TEST_CASE("Serialization test vectors")
         make<Crypto::PublicEncryptionKey>("user pub enc key");
     auto const sealedPrivateUserEncryptionKey =
         make<Crypto::SealedPrivateEncryptionKey>("key");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "AEYXc2xMBM/E0xk3zLLMxSMkUPh4/iSuEurrQ3mrQiw=");
 
     DeviceCreation::v3 const dc3(trustchainId,

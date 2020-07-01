@@ -22,7 +22,7 @@ target_link_libraries(tankeradmin
   ttracer
   
   CONAN_PKG::gsl-lite
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
   CONAN_PKG::tconcurrent
   CONAN_PKG::nlohmann_json
   CONAN_PKG::fetchpp

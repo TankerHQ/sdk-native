@@ -103,7 +103,7 @@ TEST_CASE("Serialization test vectors")
     auto const sealedPrivateKeys =
         make<ProvisionalIdentityClaim::SealedPrivateEncryptionKeys>(
             "both encrypted private keys");
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "5BRkVAft4f79uIVCQX8D98+wqDEAQqQKdB3gFOw/clQ=");
 
     ProvisionalIdentityClaim const pic{trustchainId,

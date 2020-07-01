@@ -69,27 +69,3 @@ TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(ProvisionalIdentityClaim)
 }
 }
 }
-
-namespace std
-{
-template <>
-class tuple_size<::Tanker::Trustchain::Actions::ProvisionalIdentityClaim::
-                     SealedPrivateEncryptionKeys>
-  : public integral_constant<
-        size_t,
-        ::Tanker::Trustchain::Actions::ProvisionalIdentityClaim::
-            SealedPrivateEncryptionKeys::arraySize>
-{
-};
-
-template <size_t I>
-class tuple_element<I,
-                    ::Tanker::Trustchain::Actions::ProvisionalIdentityClaim::
-                        SealedPrivateEncryptionKeys>
-  : public tuple_element<
-        I,
-        ::Tanker::Trustchain::Actions::ProvisionalIdentityClaim::
-            SealedPrivateEncryptionKeys::base_t>
-{
-};
-}

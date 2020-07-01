@@ -75,7 +75,7 @@ TEST_CASE("Serialization test vectors")
     auto const author = make<Crypto::Hash>("author");
     auto const signature = make<Crypto::Signature>("sig");
 
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "7NOsOy/pH82JfCai35KUFZshxeqolvTCrydl9XIZdEg=");
 
     DeviceRevocation::v1 const dr1{
@@ -211,7 +211,7 @@ TEST_CASE("Serialization test vectors")
         {DeviceId{serializedRecipientDeviceId},
          Crypto::SealedPrivateEncryptionKey{
              serializedSealedUserKeyForRecipient}}};
-    auto const hash = cppcodec::base64_rfc4648::decode<Crypto::Hash>(
+    auto const hash = mgs::base64::decode<Crypto::Hash>(
         "1dp0PUCdphmQzBa6SvmRvY19FJZ4MhLYvdzGAuCG+WU=");
     DeviceRevocation::v2 const dr2{
         trustchainId,

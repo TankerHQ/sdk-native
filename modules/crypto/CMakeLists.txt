@@ -62,7 +62,7 @@ target_link_libraries(
   tankererrors
 
   CONAN_PKG::libsodium
-  CONAN_PKG::cppcodec
+  CONAN_PKG::mgs
   CONAN_PKG::gsl-lite
   CONAN_PKG::nlohmann_json
   CONAN_PKG::fmt

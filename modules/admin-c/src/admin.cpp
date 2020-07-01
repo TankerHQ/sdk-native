@@ -53,8 +53,7 @@ tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
       tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
                            appId = std::string(app_id)]() -> tc::cotask<void> {
         TC_AWAIT(admin->deleteTrustchain(
-            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-                {appId})));
+            mgs::base64::decode<Trustchain::TrustchainId>(appId)));
       }));
 }
 
@@ -85,7 +84,7 @@ tanker_future_t* tanker_get_verification_code(char const* url,
        email = std::string(user_email)]() -> tc::cotask<void*> {
         auto verifCode = TC_AWAIT(Admin::getVerificationCode(
             url,
-            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>({appId}),
+            mgs::base64::decode<Trustchain::TrustchainId>(appId),
             authToken,
             Email{email}));
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
@@ -102,9 +101,9 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
        appID = std::string(app_id),
        oidcClientId = std::string(oidc_client_id),
        oidcProvider = std::string(oidc_provier)]() -> tc::cotask<void> {
-        TC_AWAIT(admin->update(
-            cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(appID),
-            oidcClientId,
-            oidcProvider));
+        TC_AWAIT(
+            admin->update(mgs::base64::decode<Trustchain::TrustchainId>(appID),
+                          oidcClientId,
+                          oidcProvider));
       }));
 }

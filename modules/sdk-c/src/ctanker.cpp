@@ -10,7 +10,7 @@
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <tconcurrent/async.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
@@ -204,16 +204,15 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
 
     try
     {
-      auto const trustchainId =
-          cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
-              std::string(options->app_id));
+      auto const trustchainId = mgs::base64::decode<Trustchain::TrustchainId>(
+          std::string(options->app_id));
 
       return static_cast<void*>(
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
                         options->writable_path));
     }
-    catch (cppcodec::parse_error const&)
+    catch (mgs::exceptions::exception const&)
     {
       throw Exception(make_error_code(Errc::InvalidArgument),
                       "base64 deserialization failed");
@@ -355,7 +354,7 @@ tanker_future_t* tanker_get_device_list(tanker_t* ctanker)
         for (auto const& device : deviceList)
         {
           cDevice->device_id =
-              duplicateString(cppcodec::base64_rfc4648::encode(device.id()));
+              duplicateString(mgs::base64::encode(device.id()));
           cDevice->is_revoked = device.isRevoked();
           cDevice++;
         }
@@ -578,6 +577,6 @@ tanker_expected_t* tanker_prehash_password(char const* password)
     if (!password)
       throw formatEx(Errc::InvalidArgument, "password is null");
     return static_cast<void*>(duplicateString(
-        cppcodec::base64_rfc4648::encode(Crypto::prehashPassword(password))));
+        mgs::base64::encode(Crypto::prehashPassword(password))));
   }));
 }

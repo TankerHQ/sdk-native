@@ -11,7 +11,7 @@
 
 #include <Helpers/Errors.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <doctest/doctest.h>
 #include <gsl/gsl-lite.hpp>
 #include <nlohmann/json.hpp>
@@ -61,42 +61,42 @@ auto const trustchainPrivateKeyString =
     "CZC/e4ZI7+MQ=="s;
 
 auto const trustchainId =
-    cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+    mgs::base64::decode<Trustchain::TrustchainId>(
         trustchainIdString);
 auto const trustchainPrivateKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);
 
 auto const suserId = "b_eich"_uid;
 auto const obfuscatedUserId = obfuscateUserId(suserId, trustchainId);
 
 auto const userSecret =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::SymmetricKey>(
+    mgs::base64::decode<Tanker::Crypto::SymmetricKey>(
         "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
 
 auto const publicEphemeralKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
         "Xh3i0xDTpr3HXtB2Q517QKv3azNzXLLXMdJDTSH4bd4=");
 auto const privateEphemeralKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
         "jEDT4wQCc1DFwodXNPHFClndTPnFuFmXhBt+isKU4ZpeHeLTENOmvcde0HZDnXtAq/"
         "drM3Ncstcx0kNNIfht3g==");
-auto const delegation_signature = cppcodec::base64_rfc4648::decode<
+auto const delegation_signature = mgs::base64::decode<
     Tanker::Crypto::Signature>(
     "U9WQolCvRyjT8oR2PQmd1WXNCi0qmL12hNrtGabYREWiry52kWx1AgYzkLxH6gpo3MiA9r++"
     "zhnmoYdEJ0+JCw==");
 
 auto const appSignatureKeyPair = Crypto::SignatureKeyPair{
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
         "W7QEQBu9FXcXIpOgq62tPwBiyFAbpT1rAruD0h/NrTA="),
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
         "UmnYuvdTaLYG0a+JaDpY6ojw4/2Ll8zsmramVC4fuqRbtARAG70Vdxcik6Crra0/"
         "AGLIUBulPWsCu4PSH82tMA=="),
 };
 auto const appEncryptionKeyPair = Crypto::EncryptionKeyPair{
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicEncryptionKey>(
+    mgs::base64::decode<Tanker::Crypto::PublicEncryptionKey>(
         "4QB5TWmvcBrgeyDDLhULINU6tbqAOEQ8v9pjDkPcybA="),
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateEncryptionKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateEncryptionKey>(
         "/2j4dI3r8PlvCN3uW4HhA5wBtMKOcACd38K6N0q+mFU="),
 };
 
@@ -126,17 +126,17 @@ auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
 auto const userEmail = "brendan.eich@tanker.io";
 
 auto const appSignaturePublicKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
         "W7QEQBu9FXcXIpOgq62tPwBiyFAbpT1rAruD0h/NrTA=");
 auto const appSignaturePrivateKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateSignatureKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
         "UmnYuvdTaLYG0a+JaDpY6ojw4/2Ll8zsmramVC4fuqRbtARAG70Vdxcik6Crra0/"
         "AGLIUBulPWsCu4PSH82tMA==");
 auto const appEncryptionPublicKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PublicEncryptionKey>(
+    mgs::base64::decode<Tanker::Crypto::PublicEncryptionKey>(
         "/2j4dI3r8PlvCN3uW4HhA5wBtMKOcACd38K6N0q+mFU=");
 auto const appEncryptionPrivateKey =
-    cppcodec::base64_rfc4648::decode<Tanker::Crypto::PrivateEncryptionKey>(
+    mgs::base64::decode<Tanker::Crypto::PrivateEncryptionKey>(
         "4QB5TWmvcBrgeyDDLhULINU6tbqAOEQ8v9pjDkPcybA=");
 
 void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
@@ -362,7 +362,7 @@ TEST_SUITE("Generate user token")
   {
     auto const userTokenString = generateUserToken(
         trustchainIdString, trustchainPrivateKeyString, suserId);
-    auto const clearStr = cppcodec::base64_rfc4648::decode(userTokenString);
+    auto const clearStr = mgs::base64::decode(userTokenString);
     CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
   }
 
@@ -380,7 +380,7 @@ TEST_SUITE("Generate user token")
   {
     SUBCASE("json")
     {
-      auto const invalidIdentity = cppcodec::base64_rfc4648::encode("}");
+      auto const invalidIdentity = mgs::base64::encode("}");
       TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>(invalidIdentity),
                                     Errc::InvalidFormat);
     }

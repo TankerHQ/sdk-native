@@ -9,7 +9,7 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker::Users
@@ -33,7 +33,7 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
                  std::back_inserter(entries),
                  [](auto const& block) {
                    return Trustchain::deserializeUserAction(
-                       cppcodec::base64_rfc4648::decode(block));
+                       mgs::base64::decode(block));
                  });
 
   return entries;
@@ -49,7 +49,7 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
                  std::back_inserter(entries),
                  [](auto const& block) {
                    return Trustchain::deserializeKeyPublishAction(
-                       cppcodec::base64_rfc4648::decode(block));
+                       mgs::base64::decode(block));
                  });
 
   return entries;
@@ -69,7 +69,7 @@ tc::cotask<Requester::GetMeResult> Requester::getMe()
                    "received too few blocks for \"get my user blocks\"");
   auto const trustchainCreation =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
-          cppcodec::base64_rfc4648::decode(blocks[0]));
+          mgs::base64::decode(blocks[0]));
   auto const entries =
       fromBlocksToUserActions(gsl::make_span(blocks).subspan(1));
   TC_RETURN((GetMeResult{trustchainCreation, entries}));

@@ -5,7 +5,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 using OneArgFunction = std::function<void(emscripten::val const&)>;
 using PromiseCallback = std::function<void(emscripten::val, emscripten::val)>;

@@ -13,7 +13,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 #include <sodium/randombytes.h>
 
 #include <iostream>
@@ -33,7 +33,7 @@ AsyncCore* makeCore(std::string trustchainId,
     return new AsyncCore(
         std::move(url),
         SdkInfo{"client-emscripten",
-                cppcodec::base64_rfc4648::decode<Trustchain::TrustchainId>(
+                mgs::base64::decode<Trustchain::TrustchainId>(
                     std::move(trustchainId)),
                 "0.0.1"},
         std::move(writablePath));
@@ -266,7 +266,7 @@ emscripten::val CoreGetDeviceList(AsyncCore& core)
         for (auto const& device : devices)
         {
           auto jdevice = emscripten::val::object();
-          jdevice.set("id", cppcodec::base64_rfc4648::encode(device.id));
+          jdevice.set("id", mgs::base64::encode(device.id));
           jdevice.set("isRevoked", device.revokedAtBlkIndex.has_value());
           ret.call<void>("push", jdevice);
         }

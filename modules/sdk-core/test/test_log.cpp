@@ -9,7 +9,7 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <iostream>
 
@@ -92,7 +92,7 @@ TEST_CASE("print a formated log")
     auto resourceId =
         Tanker::make<Tanker::Trustchain::ResourceId>("awesome, isn't it?");
     REQUIRE(fmt::format("my resourceId is {}",
-                        cppcodec::base64_rfc4648::encode(resourceId)) ==
+                        mgs::base64::encode(resourceId)) ==
             fmt::format("my resourceId is {}", resourceId));
   }
 }

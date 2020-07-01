@@ -8,8 +8,8 @@
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include <cppcodec/base64_rfc4648.hpp>
-#include <cppcodec/base64_url_unpadded.hpp>
+#include <mgs/base64.hpp>
+#include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker
@@ -62,7 +62,7 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
   else if (value == "email")
   {
     auto const email = j.at("encrypted_email").get<std::string>();
-    auto const decodedEmail = cppcodec::base64_rfc4648::decode(email);
+    auto const decodedEmail = mgs::base64::decode(email);
     m = EncryptedEmail{decodedEmail.begin(), decodedEmail.end()};
   }
   else
@@ -96,8 +96,7 @@ void validateVerification(
     {
       std::vector<std::string> res;
       ba::split(res, *oidcIdToken, ba::is_any_of("."));
-      jwtEmail = nlohmann::json::parse(
-                     cppcodec::base64_url_unpadded::decode(res.at(1)))
+      jwtEmail = nlohmann::json::parse(mgs::base64url_nopad::decode(res.at(1)))
                      .at("email");
     }
     catch (...)

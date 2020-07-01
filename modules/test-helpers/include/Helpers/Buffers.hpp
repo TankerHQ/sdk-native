@@ -17,7 +17,7 @@ template <typename T>
 T make(std::string const& id)
 {
   std::vector<uint8_t> v(id.begin(), id.end());
-  v.resize(std::tuple_size<T>::value);
+  v.resize(T::arraySize);
   return T(gsl::make_span(v));
 }
 

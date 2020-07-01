@@ -2,8 +2,9 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
+#include <iostream>
 
-#include <cppcodec/base64_rfc4648.hpp>
+#include <mgs/base64.hpp>
 
 #include <algorithm>
 #include <type_traits>
@@ -18,9 +19,9 @@ T base64DecodeArgument(String const& b64)
 
   try
   {
-    return cppcodec::base64_rfc4648::decode<T>(b64);
+    return mgs::base64::decode<T>(b64);
   }
-  catch (cppcodec::parse_error const&)
+  catch (mgs::exceptions::exception const&)
   {
     throw Exception(make_error_code(Errc::InvalidArgument),
                     "base64 deserialization failed");

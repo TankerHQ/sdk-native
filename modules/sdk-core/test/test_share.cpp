@@ -176,7 +176,7 @@ TEST_CASE("generateRecipientList")
         userAccessor,
         groupAccessor,
         {},
-        {cppcodec::base64_rfc4648::encode<SGroupId>(newGroup.id())}));
+        {mgs::base64::encode<SGroupId>(newGroup.id())}));
 
     // there should be only group keys
     CHECK(recipients.recipientUserKeys.size() == 0);
@@ -266,7 +266,7 @@ TEST_CASE("generateRecipientList")
             userAccessor,
             groupAccessor,
             {},
-            {cppcodec::base64_rfc4648::encode<SGroupId>(newGroup.id())})),
+            {mgs::base64::encode<SGroupId>(newGroup.id())})),
         make_error_code(Errc::InvalidArgument));
   }
 }
