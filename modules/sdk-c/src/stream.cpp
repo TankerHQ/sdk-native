@@ -37,33 +37,35 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
 {
   std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
+  bool shareWithSelf = true;
 
   if (options)
   {
-    if (options->version != 2)
+    if (options->version != 3)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,
                    "unsupported tanker_encrypt_options struct version")));
     }
-    spublicIdentities =
-        to_vector<SPublicIdentity>(options->recipient_public_identities,
-                                   options->nb_recipient_public_identities);
-    sgroupIds = to_vector<SGroupId>(options->recipient_gids,
-                                    options->nb_recipient_gids);
+    spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
+                                                   options->nb_users);
+    sgroupIds =
+        to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
+    shareWithSelf = options->share_with_self;
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
       tanker
-          ->makeEncryptionStream(
-              wrapCallback(cb, additional_data), spublicIdentities, sgroupIds)
+          ->makeEncryptionStream(wrapCallback(cb, additional_data),
+                                 spublicIdentities,
+                                 sgroupIds,
+                                 Core::ShareWithSelf{shareWithSelf})
           .and_then(tc::get_synchronous_executor(),
                     [](Streams::EncryptionStream encryptor) {
                       auto c_stream = new tanker_stream;
-                      c_stream->resourceId =
-                          SResourceId{mgs::base64::encode(
-                              encryptor.resourceId())};
+                      c_stream->resourceId = SResourceId{
+                          mgs::base64::encode(encryptor.resourceId())};
                       c_stream->inputSource = std::move(encryptor);
                       return static_cast<void*>(c_stream);
                     }));
@@ -79,9 +81,8 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
           .and_then(tc::get_synchronous_executor(),
                     [](Streams::DecryptionStreamAdapter decryptor) {
                       auto c_stream = new tanker_stream;
-                      c_stream->resourceId =
-                          SResourceId{mgs::base64::encode(
-                              decryptor.resourceId())};
+                      c_stream->resourceId = SResourceId{
+                          mgs::base64::encode(decryptor.resourceId())};
                       c_stream->inputSource = std::move(decryptor);
                       return static_cast<void*>(c_stream);
                     }));
