@@ -32,21 +32,16 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const privSigK =
-        mgs::base64::decode<Crypto::PrivateSignatureKey>(
-            extractBlob(row.private_signature_key));
-    auto const pubSigK =
-        mgs::base64::decode<Crypto::PublicSignatureKey>(
-            extractBlob(row.public_signature_key));
-    auto const privEncK =
-        mgs::base64::decode<Crypto::PrivateEncryptionKey>(
-            extractBlob(row.private_encryption_key));
-    auto const pubEncK =
-        mgs::base64::decode<Crypto::PublicEncryptionKey>(
-            extractBlob(row.public_encryption_key));
+    auto const privSigK = mgs::base64::decode<Crypto::PrivateSignatureKey>(
+        extractBlob(row.private_signature_key));
+    auto const pubSigK = mgs::base64::decode<Crypto::PublicSignatureKey>(
+        extractBlob(row.public_signature_key));
+    auto const privEncK = mgs::base64::decode<Crypto::PrivateEncryptionKey>(
+        extractBlob(row.private_encryption_key));
+    auto const pubEncK = mgs::base64::decode<Crypto::PublicEncryptionKey>(
+        extractBlob(row.public_encryption_key));
     auto const deviceId =
-        mgs::base64::decode<Trustchain::DeviceId>(
-            extractBlob(row.device_id));
+        mgs::base64::decode<Trustchain::DeviceId>(extractBlob(row.device_id));
 
     db(update(tab)
            .set(tab.private_signature_key = privSigK.base(),
@@ -68,7 +63,8 @@ void createTable(DataStore::Connection& db, device_key_store const&)
       public_signature_key BLOB NOT NULL,
       private_encryption_key BLOB NOT NULL,
       public_encryption_key BLOB NOT NULL,
-      device_id BLOB
+      device_id BLOB,
+      device_initialized BOOL NOT NULL
     );
   )");
 }

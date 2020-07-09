@@ -194,6 +194,18 @@ void Database::performUnifiedMigration()
       _db->execute("DROP TABLE IF EXISTS contact_user_keys");
       _db->execute("DROP TABLE IF EXISTS groups");
       createTable<GroupsTable>(*_db);
+      [[fallthrough]];
+    case 7:
+      if (currentVersion != 0)
+      {
+        // this database wasn't just created, we need to upgrade it
+        _db->execute(
+            "ALTER TABLE device_key_store "
+            "ADD COLUMN device_initialized BOOL");
+        _db->execute(
+            "UPDATE device_key_store "
+            "SET device_initialized = (device_id IS NOT NULL)");
+      }
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
@@ -202,6 +214,8 @@ void Database::performUnifiedMigration()
     }
 
     setDatabaseVersion(DataStore::latestVersion());
+
+    TINFO("Migration complete");
   }
 }
 
@@ -518,9 +532,29 @@ tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
       tab.private_encryption_key =
           deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key =
-          deviceKeys.encryptionKeyPair.publicKey.base()));
+      tab.public_encryption_key = deviceKeys.encryptionKeyPair.publicKey.base(),
+      tab.device_initialized = 0));
   TC_RETURN();
+}
+
+tc::cotask<void> Database::setDeviceInitialized()
+{
+  FUNC_TIMER(DB);
+  DeviceKeysTable tab{};
+  (*_db)(update(tab).set(tab.device_initialized = 1).unconditionally());
+  TC_RETURN();
+}
+
+tc::cotask<bool> Database::isDeviceInitialized()
+{
+  FUNC_TIMER(DB);
+  DeviceKeysTable tab{};
+  auto rows =
+      (*_db)(select(tab.device_initialized).from(tab).unconditionally());
+  if (rows.empty())
+    TC_RETURN(false);
+  auto const& row = rows.front();
+  TC_RETURN(row.device_initialized);
 }
 
 tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)

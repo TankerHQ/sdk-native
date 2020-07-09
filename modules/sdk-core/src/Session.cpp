@@ -159,6 +159,11 @@ Identity::SecretPermanentIdentity const& Session::identity() const
   return *_identity;
 }
 
+tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
+{
+  TC_AWAIT(storage().localUserStore.setDeviceId(deviceId));
+}
+
 Trustchain::TrustchainId const& Session::trustchainId() const
 {
   return identity().trustchainId;

@@ -232,10 +232,10 @@ AsyncCorePtr signIn(MainArgs const& args)
     verification = Passphrase{args.at(UnlockPasswordOpt).asString()};
 
   auto const status = core->start(identity).get();
+  if (status == Tanker::Status::Ready)
+    return core;
   if (status != Tanker::Status::IdentityVerificationNeeded)
-    throw std::runtime_error(
-        "Failed to sign in: "
-        "identity not registered");
+    throw std::runtime_error("Failed to sign in: identity not registered");
   core->verifyIdentity(verification).get();
 
   return core;

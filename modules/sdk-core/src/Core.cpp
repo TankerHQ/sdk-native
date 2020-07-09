@@ -165,6 +165,9 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
+
+    TC_AWAIT(_session->setDeviceId(Trustchain::DeviceId{action.hash()}));
+
     TC_AWAIT(_session->pusher().pushBlock(action));
     TC_AWAIT(_session->finalizeOpening());
   }
@@ -212,6 +215,9 @@ tc::cotask<void> Core::registerIdentity(
   auto const encryptVerificationKey = Crypto::encryptAead(
       _session->userSecret(),
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
+
+  TC_AWAIT(
+      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
 
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),

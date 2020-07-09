@@ -81,6 +81,8 @@ public:
 
   virtual tc::cotask<std::optional<DeviceKeys>> getDeviceKeys() = 0;
   virtual tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) = 0;
+  virtual tc::cotask<void> setDeviceInitialized() = 0;
+  virtual tc::cotask<bool> isDeviceInitialized() = 0;
   virtual tc::cotask<void> setDeviceId(
       Trustchain::DeviceId const& deviceId) = 0;
   virtual tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() = 0;

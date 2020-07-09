@@ -13,11 +13,21 @@ LocalUserStore::LocalUserStore(DataStore::ADatabase* db) : _dbCon(db)
 {
 }
 
+tc::cotask<bool> LocalUserStore::isInitialized()
+{
+  TC_RETURN(TC_AWAIT(_dbCon->isDeviceInitialized()));
+}
+
+tc::cotask<void> LocalUserStore::setDeviceId(
+    Trustchain::DeviceId const& deviceId)
+{
+  TC_AWAIT(_dbCon->setDeviceId(deviceId));
+}
+
 tc::cotask<void> LocalUserStore::putLocalUser(LocalUser const& user)
 {
-  if (!TC_AWAIT(_dbCon->getDeviceId()))
-    TC_AWAIT(_dbCon->setDeviceId(user.deviceId()));
   TC_AWAIT(putUserKeys(user.userKeys()));
+  TC_AWAIT(_dbCon->setDeviceInitialized());
 }
 
 tc::cotask<void> LocalUserStore::putUserKeys(
@@ -51,9 +61,10 @@ tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
     Trustchain::UserId const& userId) const
 {
   auto const keys = TC_AWAIT(getDeviceKeys());
-  auto const deviceId = TC_AWAIT(_dbCon->getDeviceId());
-  if (!deviceId)
+  auto const initialized = TC_AWAIT(_dbCon->isDeviceInitialized());
+  if (!initialized)
     TC_RETURN(std::nullopt);
+  auto const deviceId = TC_AWAIT(_dbCon->getDeviceId());
   auto const userKeys = TC_AWAIT(_dbCon->getUserKeyPairs());
   TC_RETURN(std::make_optional(LocalUser(userId, *deviceId, keys, userKeys)));
 }
