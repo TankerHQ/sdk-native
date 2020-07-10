@@ -92,7 +92,7 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("boost/1.71.0", private=private)
+        self.requires("boost/1.73.0", private=private)
         if self.options.with_ssl:
             self.requires("libressl/3.2.0", private=private)
             self.requires("fetchpp/0.6.0")
@@ -106,7 +106,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.36.0", private=private)
         self.requires("nlohmann_json/3.8.0", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.30.0", private=private)
+        self.requires("tconcurrent/0.31.2", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os == "iOS":
             self.requires("libcxx/9.0", private=private)
