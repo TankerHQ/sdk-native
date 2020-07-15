@@ -17,8 +17,10 @@ namespace Tanker
 namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
-  : _admin(std::make_unique<Admin::Client>(TestConstants::admindUrl(),
-                                           TestConstants::idToken()))
+  : _admin(std::make_unique<Admin::Client>(
+        TestConstants::admindUrl(),
+        TestConstants::idToken(),
+        tc::get_default_executor().get_io_service().get_executor()))
 {
 }
 
@@ -44,8 +46,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
   auto trustchainDefault = Tanker::Trustchain::TrustchainId{};
   Crypto::randomFill(trustchainDefault);
   auto app = TC_AWAIT(_admin->createTrustchain(
-      trustchainName.value_or(
-          mgs::base64::encode(trustchainDefault)),
+      trustchainName.value_or(mgs::base64::encode(trustchainDefault)),
       kp,
       isTest));
   TC_RETURN(Trustchain::make(TestConstants::trustchainUrl(),

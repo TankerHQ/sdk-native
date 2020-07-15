@@ -4,8 +4,6 @@
 
 #include <Helpers/Config.hpp>
 
-#include <Tanker/Admin/Client.hpp>
-
 namespace Tanker
 {
 namespace Functional

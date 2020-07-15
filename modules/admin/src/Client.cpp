@@ -23,6 +23,8 @@
 
 #include <tconcurrent/asio_use_future.hpp>
 
+#include <chrono>
+
 TLOG_CATEGORY(Admin);
 
 namespace Tanker::Admin
@@ -35,16 +37,6 @@ using namespace Tanker::Errors;
 
 namespace
 {
-template <typename Request>
-tc::future<fetchpp::http::response> execute(Request req)
-{
-  return fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      Cacerts::get_ssl_context(),
-      std::move(req),
-      tc::asio::use_future);
-}
-
 struct ServerErrorMessage
 {
   std::string code;
@@ -92,8 +84,12 @@ void from_json(nlohmann::json const& j, App& app)
     app.oidcProvider = value;
 }
 
-Client::Client(std::string_view host_url, std::string_view idToken)
-  : _baseUrl("/apps", fetchpp::http::url(host_url)), _idToken{idToken}
+Client::Client(std::string_view host_url,
+               std::string_view idToken,
+               fetchpp::net::executor ex)
+  : _baseUrl("/apps", fetchpp::http::url(host_url)),
+    _idToken{idToken},
+    _client(ex, std::chrono::seconds(10))
 {
 }
 
@@ -131,7 +127,8 @@ tc::cotask<App> Client::createTrustchain(
   request.set(field::accept, "application/json");
   TINFO("creating trustchain {} {:#S}", name, trustchainId);
 
-  auto const response = TC_AWAIT(execute(std::move(request)));
+  auto const response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::created)
     TC_RETURN(response.json().at("app"));
   throw errorReport(Errors::ServerErrc::InternalError,
@@ -147,7 +144,8 @@ tc::cotask<void> Client::deleteTrustchain(
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   TINFO("deleting trustchain {:#S}", trustchainId);
-  auto response = TC_AWAIT(execute(std::move(request)));
+  auto response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
     return;
   throw errorReport(Errors::ServerErrc::InternalError,
@@ -170,7 +168,8 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
       verb::patch, make_url(trustchainId), {}, std::move(body));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
-  auto const response = TC_AWAIT(execute(std::move(request)));
+  auto const response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
     TC_RETURN(response.json().at("app"));
 
