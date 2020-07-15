@@ -43,7 +43,7 @@ public:
       Trustchain::TrustchainId const& trustchainId);
 
 private:
-  fetchpp::http::url url(
+  fetchpp::http::url make_url(
       std::optional<Trustchain::TrustchainId> id = std::nullopt) const;
   fetchpp::http::url const _baseUrl;
   std::string _idToken;

@@ -92,9 +92,8 @@ void from_json(nlohmann::json const& j, App& app)
     app.oidcProvider = value;
 }
 
-Client::Client(std::string_view url, std::string_view idToken)
-  : _baseUrl(fetchpp::http::url::parse(fmt::format("{}/apps", url))),
-    _idToken{idToken}
+Client::Client(std::string_view host_url, std::string_view idToken)
+  : _baseUrl("/apps", fetchpp::http::url(host_url)), _idToken{idToken}
 {
 }
 
@@ -103,14 +102,12 @@ void Client::setIdToken(std::string_view idToken)
   _idToken = idToken;
 }
 
-fetchpp::http::url Client::url(std::optional<Trustchain::TrustchainId> id) const
+fetchpp::http::url Client::make_url(
+    std::optional<Trustchain::TrustchainId> id) const
 {
+  using fetchpp::http::url;
   if (id)
-  {
-    auto ret = _baseUrl;
-    ret.target(fmt::format(TFMT("/apps/{:#S}"), id.value()));
-    return ret;
-  }
+    return url(fmt::format("/apps/{:#S}", id.value()), _baseUrl);
   return _baseUrl;
 }
 
@@ -123,14 +120,13 @@ tc::cotask<App> Client::createTrustchain(
 
   auto message = nlohmann::json{
       {"name", name},
-      {"root_block",
-       mgs::base64::encode(Serialization::serialize(action))},
+      {"root_block", mgs::base64::encode(Serialization::serialize(action))},
   };
   if (isTest)
     message["private_signature_key"] = keyPair.privateKey;
 
   auto request = fetchpp::http::make_request<JsonRequest>(
-      verb::post, url(), {}, std::move(message));
+      verb::post, make_url(), {}, std::move(message));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   TINFO("creating trustchain {} {:#S}", name, trustchainId);
@@ -147,7 +143,7 @@ tc::cotask<void> Client::deleteTrustchain(
     Trustchain::TrustchainId const& trustchainId)
 {
   auto request = fetchpp::http::make_request(fetchpp::http::verb::delete_,
-                                             url(trustchainId));
+                                             make_url(trustchainId));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   TINFO("deleting trustchain {:#S}", trustchainId);
@@ -171,7 +167,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
   if (oidcProvider)
     body["oidc_provider"] = *oidcProvider;
   auto request = fetchpp::http::make_request<JsonRequest>(
-      verb::patch, url(trustchainId), {}, std::move(body));
+      verb::patch, make_url(trustchainId), {}, std::move(body));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   auto const response = TC_AWAIT(execute(std::move(request)));
@@ -184,7 +180,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 }
 
 tc::cotask<VerificationCode> getVerificationCode(
-    std::string_view url,
+    std::string_view host_url,
     Tanker::Trustchain::TrustchainId const& appId,
     std::string const& authToken,
     Email const& email)
@@ -192,7 +188,8 @@ tc::cotask<VerificationCode> getVerificationCode(
   using namespace fetchpp::http;
   auto req = make_request<fetchpp::http::request<json_body>>(
       verb::post,
-      url::parse(fmt::format("{}/verification/email/code", url)),
+      fetchpp::http::url("/verification/email/code",
+                         fetchpp::http::url(host_url)),
       {},
       nlohmann::json(
           {{"email", email}, {"app_id", appId}, {"auth_token", authToken}}));
