@@ -1,4 +1,0 @@
-godzilla http://10.100.0.1:9300 False
-conan-center https://conan.bintray.com True
-nonstd-lite https://api.bintray.com/conan/agauniyal/nonstd-lite True
-bincrafters https://api.bintray.com/conan/bincrafters/public-conan True
