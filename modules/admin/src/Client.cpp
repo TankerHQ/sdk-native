@@ -23,6 +23,8 @@
 
 #include <tconcurrent/asio_use_future.hpp>
 
+#include <chrono>
+
 TLOG_CATEGORY(Admin);
 
 namespace Tanker::Admin
@@ -35,16 +37,6 @@ using namespace Tanker::Errors;
 
 namespace
 {
-template <typename Request>
-tc::future<fetchpp::http::response> execute(Request req)
-{
-  return fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      Cacerts::get_ssl_context(),
-      std::move(req),
-      tc::asio::use_future);
-}
-
 struct ServerErrorMessage
 {
   std::string code;
@@ -92,9 +84,12 @@ void from_json(nlohmann::json const& j, App& app)
     app.oidcProvider = value;
 }
 
-Client::Client(std::string_view url, std::string_view idToken)
-  : _baseUrl(fetchpp::http::url::parse(fmt::format("{}/apps", url))),
-    _idToken{idToken}
+Client::Client(std::string_view host_url,
+               std::string_view idToken,
+               fetchpp::net::executor ex)
+  : _baseUrl("/apps", fetchpp::http::url(host_url)),
+    _idToken{idToken},
+    _client(ex, std::chrono::seconds(10))
 {
 }
 
@@ -103,14 +98,12 @@ void Client::setIdToken(std::string_view idToken)
   _idToken = idToken;
 }
 
-fetchpp::http::url Client::url(std::optional<Trustchain::TrustchainId> id) const
+fetchpp::http::url Client::make_url(
+    std::optional<Trustchain::TrustchainId> id) const
 {
+  using fetchpp::http::url;
   if (id)
-  {
-    auto ret = _baseUrl;
-    ret.target(fmt::format(TFMT("/apps/{:#S}"), id.value()));
-    return ret;
-  }
+    return url(fmt::format("/apps/{:#S}", id.value()), _baseUrl);
   return _baseUrl;
 }
 
@@ -123,19 +116,19 @@ tc::cotask<App> Client::createTrustchain(
 
   auto message = nlohmann::json{
       {"name", name},
-      {"root_block",
-       mgs::base64::encode(Serialization::serialize(action))},
+      {"root_block", mgs::base64::encode(Serialization::serialize(action))},
   };
   if (isTest)
     message["private_signature_key"] = keyPair.privateKey;
 
   auto request = fetchpp::http::make_request<JsonRequest>(
-      verb::post, url(), {}, std::move(message));
+      verb::post, make_url(), {}, std::move(message));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   TINFO("creating trustchain {} {:#S}", name, trustchainId);
 
-  auto const response = TC_AWAIT(execute(std::move(request)));
+  auto const response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::created)
     TC_RETURN(response.json().at("app"));
   throw errorReport(Errors::ServerErrc::InternalError,
@@ -147,11 +140,12 @@ tc::cotask<void> Client::deleteTrustchain(
     Trustchain::TrustchainId const& trustchainId)
 {
   auto request = fetchpp::http::make_request(fetchpp::http::verb::delete_,
-                                             url(trustchainId));
+                                             make_url(trustchainId));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
   TINFO("deleting trustchain {:#S}", trustchainId);
-  auto response = TC_AWAIT(execute(std::move(request)));
+  auto response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
     return;
   throw errorReport(Errors::ServerErrc::InternalError,
@@ -171,10 +165,11 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
   if (oidcProvider)
     body["oidc_provider"] = *oidcProvider;
   auto request = fetchpp::http::make_request<JsonRequest>(
-      verb::patch, url(trustchainId), {}, std::move(body));
+      verb::patch, make_url(trustchainId), {}, std::move(body));
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
-  auto const response = TC_AWAIT(execute(std::move(request)));
+  auto const response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
     TC_RETURN(response.json().at("app"));
 
@@ -184,7 +179,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
 }
 
 tc::cotask<VerificationCode> getVerificationCode(
-    std::string_view url,
+    std::string_view host_url,
     Tanker::Trustchain::TrustchainId const& appId,
     std::string const& authToken,
     Email const& email)
@@ -192,7 +187,8 @@ tc::cotask<VerificationCode> getVerificationCode(
   using namespace fetchpp::http;
   auto req = make_request<fetchpp::http::request<json_body>>(
       verb::post,
-      url::parse(fmt::format("{}/verification/email/code", url)),
+      fetchpp::http::url("/verification/email/code",
+                         fetchpp::http::url(host_url)),
       {},
       nlohmann::json(
           {{"email", email}, {"app_id", appId}, {"auth_token", authToken}}));

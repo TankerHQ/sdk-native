@@ -5,6 +5,7 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
+#include <fetchpp/client.hpp>
 #include <fetchpp/http/url.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -30,7 +31,9 @@ void from_json(nlohmann::json const& j, App& app);
 class Client
 {
 public:
-  Client(std::string_view url, std::string_view idToken);
+  Client(std::string_view url,
+         std::string_view idToken,
+         fetchpp::net::executor ex);
   void setIdToken(std::string_view idToken);
 
   tc::cotask<App> createTrustchain(std::string_view name,
@@ -43,10 +46,11 @@ public:
       Trustchain::TrustchainId const& trustchainId);
 
 private:
-  fetchpp::http::url url(
+  fetchpp::http::url make_url(
       std::optional<Trustchain::TrustchainId> id = std::nullopt) const;
   fetchpp::http::url const _baseUrl;
   std::string _idToken;
+  fetchpp::client _client;
 };
 
 [[nodiscard]] tc::cotask<VerificationCode> getVerificationCode(

@@ -69,10 +69,9 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
       {"refresh_token", oidcConfig.users.at(userName).refreshToken},
   };
 
-  using namespace fetchpp::http::http_literals;
   using namespace fetchpp;
 
-  auto const url = "www.googleapis.com/oauth2/v4/token"_https;
+  auto const url = http::url("https://www.googleapis.com/oauth2/v4/token");
   auto req = http::make_request<http::request<http::json_body>>(
       http::verb::post, url, {}, std::move(payload));
   auto response = TC_AWAIT(fetchpp::async_fetch(

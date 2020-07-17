@@ -21,7 +21,10 @@ tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
        idToken = std::string(id_token)]() -> tc::cotask<void*> {
         Crypto::init();
         Cacerts::init();
-        const auto admin = new Admin::Client(url, idToken);
+        const auto admin = new Admin::Client(
+            url,
+            idToken,
+            tc::get_default_executor().get_io_service().get_executor());
         TC_RETURN(static_cast<void*>(admin));
       }));
 }
