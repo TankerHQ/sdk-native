@@ -40,7 +40,8 @@ static const char USAGE[] =
     R"(Tanker CLI
 
     Usage:
-      tcli deserializeblock [-x] <block>
+      tcli deserializeblock <block>
+      tcli deserializeblockparts <trustchainId> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
@@ -51,6 +52,10 @@ static const char USAGE[] =
     Options:
       -h --help     Show this screen.
       -x --hex      Input is in hex (default: b64)
+
+    Notes:
+      deserializeblockparts takes hex
+      deserializeblock takes base64
 )";
 
 using MainArgs = std::map<std::string, docopt::value>;
@@ -118,6 +123,37 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
   }
   throw std::runtime_error(
       fmt::format(TFMT("unknown nature: {}"), static_cast<int>(nature)));
+}
+
+std::vector<uint8_t> constructBlockFromParts(MainArgs const& args)
+{
+  auto const trustchainId =
+      mgs::base16::decode<Tanker::Trustchain::TrustchainId>(
+          args.at("<trustchainId>").asString());
+  auto const nature = args.at("<nature>").asLong();
+  auto const payload = mgs::base16::decode(args.at("<payload>").asString());
+  auto const author =
+      mgs::base16::decode<Tanker::Crypto::Hash>(args.at("<author>").asString());
+  auto const signature = mgs::base16::decode<Tanker::Crypto::Signature>(
+      args.at("<signature>").asString());
+
+  std::vector<uint8_t> buffer(
+      1 + 1 + trustchainId.size() + Serialization::varint_size(nature) +
+      Serialization::varint_size(payload.size()) + payload.size() +
+      author.size() + signature.size());
+  auto it = buffer.data();
+  it = Serialization::varint_write(it, 1); /* block version */
+  it = Serialization::varint_write(it, 0); /* block index */
+  it = Serialization::serialize(it, trustchainId);
+  it = Serialization::varint_write(it, nature);
+  it = Serialization::varint_write(it, payload.size());
+  std::copy(payload.begin(), payload.end(), it);
+  it += payload.size();
+  it = Serialization::serialize(it, author);
+  it = Serialization::serialize(it, signature);
+  assert(it == buffer.data() + buffer.size());
+
+  return buffer;
 }
 
 std::string formatAction(CliAction const& action)
@@ -252,14 +288,14 @@ int main(int argc, char* argv[])
 
   if (args.at("deserializeblock").asBool())
   {
-    CliAction action;
+    CliAction action =
+        deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
 
-    if (args.at("--hex").asBool())
-      action =
-          deserializeAction(mgs::base16::decode(args.at("<block>").asString()));
-    else
-      action =
-          deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
+    std::cout << formatAction(action) << std::endl;
+  }
+  else if (args.at("deserializeblockparts").asBool())
+  {
+    CliAction action = deserializeAction(constructBlockFromParts(args));
 
     std::cout << formatAction(action) << std::endl;
   }
