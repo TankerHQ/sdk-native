@@ -3,16 +3,16 @@ import argparse
 from path import Path
 from conans import __version__ as conan_version
 
-import ci.cpp
-import ci.endtoend
+import tankerci.cpp
+import tankerci.endtoend
 
 
 def export_tanker_dev(src_path: Path) -> None:
-    ci.conan.export(src_path=src_path, ref_or_channel="tanker/dev")
+    tankerci.conan.export(src_path=src_path, ref_or_channel="tanker/dev")
 
 
 def use_packaged_tanker(src_path: Path, profile: str) -> None:
-    builder = ci.cpp.Builder(
+    builder = tankerci.cpp.Builder(
         src_path,
         profile=profile,
         make_package=False,
@@ -41,9 +41,9 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.home_isolation:
-        ci.conan.set_home_isolation()
+        tankerci.conan.set_home_isolation()
 
-    ci.conan.update_config()
+    tankerci.conan.update_config()
 
     if args.export_tanker_dev:
         export_tanker_dev(Path.getcwd())
@@ -53,10 +53,10 @@ def main() -> None:
     if args.use_local_sources:
         base_path = Path.getcwd().parent
     else:
-        base_path = ci.git.prepare_sources(
+        base_path = tankerci.git.prepare_sources(
             repos=["sdk-python", "sdk-js", "qa-python-js"]
         )
-    ci.endtoend.test(
+    tankerci.endtoend.test(
         tanker_conan_ref="tanker/dev@tanker/dev",
         profile=args.profile,
         base_path=base_path,

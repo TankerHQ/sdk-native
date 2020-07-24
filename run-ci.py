@@ -5,17 +5,17 @@ import sys
 from path import Path, TempDir
 from conans import __version__ as conan_version
 
-import ci
-import ci.conan
-import ci.cpp
-import ci.git
+import tankerci
+import tankerci.conan
+import tankerci.cpp
+import tankerci.git
 
 
 def build_and_check(profile: str, coverage: bool) -> None:
-    built_path = ci.cpp.build(
+    built_path = tankerci.cpp.build(
         profile, make_package=True, coverage=coverage,
     )
-    ci.cpp.check(built_path, coverage=coverage)
+    tankerci.cpp.check(built_path, coverage=coverage)
 
 
 def main() -> None:
@@ -38,25 +38,25 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.home_isolation:
-        ci.conan.set_home_isolation()
+        tankerci.conan.set_home_isolation()
 
-    ci.conan.update_config()
+    tankerci.conan.update_config()
 
     if args.command == "build-and-test":
         build_and_check(args.profile, args.coverage)
     elif args.command == "nightly-build-emscripten":
-        ci.cpp.build("emscripten")
+        tankerci.cpp.build("emscripten")
     elif args.command == "deploy":
         git_tag = os.environ["CI_COMMIT_TAG"]
-        version = ci.version_from_git_tag(git_tag)
-        ci.bump_files(version)
-        ci.cpp.build_recipe(
+        version = tankerci.version_from_git_tag(git_tag)
+        tankerci.bump_files(version)
+        tankerci.cpp.build_recipe(
             Path.getcwd(),
             conan_reference=f"tanker/{version}@tanker/stable",
             upload=True,
         )
     elif args.command == "mirror":
-        ci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native", force=True)
+        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native", force=True)
     else:
         parser.print_help()
         sys.exit(1)
