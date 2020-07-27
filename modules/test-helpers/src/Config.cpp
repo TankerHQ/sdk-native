@@ -42,6 +42,12 @@ std::string const& trustchainUrl()
   return value;
 }
 
+std::string_view appdUrl()
+{
+  static auto value = getSafeEnv("TANKER_APPD_URL");
+  return value;
+}
+
 std::string_view admindUrl()
 {
   static auto value = getSafeEnv("TANKER_ADMIND_URL");
