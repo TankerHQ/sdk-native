@@ -1,3 +1,5 @@
+image: tanker.local:5000/ci-native:latest
+
 before_script:
  - poetry install
 
@@ -121,6 +123,7 @@ check/compat:
     - linux
 
 check/e2e:
+  image: tanker.local:5000/ci-base:latest
   stage: check
   dependencies:
     - build/linux
