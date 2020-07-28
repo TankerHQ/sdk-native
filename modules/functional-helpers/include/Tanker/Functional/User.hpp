@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Functional/Device.hpp>
-#include <Tanker/Identity/UserToken.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -24,8 +24,8 @@ class User
 public:
   std::string trustchainUrl;
   std::string trustchainId;
-  SUserId suserId;
-  std::string identity;
+  Tanker::Trustchain::UserId userId;
+  Identity::SecretPermanentIdentity identity;
   std::optional<std::string> userToken;
 
   User() = default;
@@ -41,6 +41,14 @@ public:
   tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
 
   SPublicIdentity spublicIdentity() const;
+
+  std::string sidentity() const;
+
+  template <typename Codec = mgs::base64>
+  SUserId suserId() const
+  {
+    return Codec::template encode<SUserId>(userId);
+  }
 
 private:
   unsigned int _currentDevice = 0;

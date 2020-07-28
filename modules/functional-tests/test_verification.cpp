@@ -95,7 +95,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore(Functional::SessionType::New);
-  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
+  REQUIRE_EQ(TC_AWAIT(core1->start(alice.sidentity())),
              Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
@@ -155,12 +155,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     verificationKey = VerificationKey{
         mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
-    auto aliceIdentity =
-        nlohmann::json::parse(mgs::base64::decode(alice.identity))
-            .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
-
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+    CHECK_EQ(TC_AWAIT(core2->start(alice.sidentity())),
              Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
@@ -182,12 +177,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     verificationKey = VerificationKey{
         mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
-    auto aliceIdentity =
-        nlohmann::json::parse(mgs::base64::decode(alice.identity))
-            .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
-
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+    CHECK_EQ(TC_AWAIT(core2->start(alice.sidentity())),
              Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
@@ -209,12 +199,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     verificationKey = VerificationKey{
         mgs::base64::encode(nlohmann::json(ghostDevice).dump())};
 
-    auto aliceIdentity =
-        nlohmann::json::parse(mgs::base64::decode(alice.identity))
-            .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
-
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
+    CHECK_EQ(TC_AWAIT(core2->start(alice.sidentity())),
              Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
@@ -229,7 +214,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {VerificationKey{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(verificationKey)));
 
@@ -245,7 +230,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {Passphrase{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(password)));
 
@@ -258,7 +243,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(
         TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
 
     CHECK_NOTHROW(checkVerificationMethods(
@@ -274,7 +259,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
@@ -293,7 +278,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->setVerificationMethod(Unlock::Verification{newPassphrase})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(newPassphrase)));
   }
@@ -310,7 +295,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email, Passphrase{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(password)));
 
@@ -344,7 +329,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(
         TC_AWAIT(core1->registerIdentity(Unlock::Verification{password})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(Passphrase{"wrongPass"})),
@@ -357,7 +342,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
         Unlock::EmailVerification{email, verificationCode}})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
@@ -375,7 +360,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
     auto const code = TC_AWAIT(getVerificationCode(email));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.sidentity())),
                Status::IdentityVerificationNeeded);
     for (int i = 0; i < 3; ++i)
     {
@@ -417,7 +402,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
     // reconnect
     TC_AWAIT(core1->stop());
-    TC_AWAIT(core1->start(alice.identity));
+    TC_AWAIT(core1->start(alice.sidentity()));
 
     // check that email is ok
     methods = TC_AWAIT(core1->getVerificationMethods());
@@ -434,7 +419,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
   auto martine = trustchain.makeUser(Functional::UserType::New);
   auto martineDevice = martine.makeDevice();
   auto martineLaptop = martineDevice.createCore(Functional::SessionType::New);
-  REQUIRE_EQ(TC_AWAIT(martineLaptop->start(martine.identity)),
+  REQUIRE_EQ(TC_AWAIT(martineLaptop->start(martine.sidentity())),
              Status::IdentityRegistrationNeeded);
 
   auto martineDevice2 = martine.makeDevice();
@@ -454,8 +439,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 
     SUBCASE("registers and verifies identity with an oidc id token")
     {
-      REQUIRE_NOTHROW(TC_AWAIT(
-          expectVerification(martinePhone, martine.identity, martineIdToken)));
+      REQUIRE_NOTHROW(TC_AWAIT(expectVerification(
+          martinePhone, martine.sidentity(), martineIdToken)));
     }
     SUBCASE("fails to verify a token with incorrect signature")
     {
@@ -470,15 +455,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 
       auto const alteredToken = OidcIdToken{ba::join(res, ".")};
       TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(
-              expectVerification(martinePhone, martine.identity, alteredToken)),
+          TC_AWAIT(expectVerification(
+              martinePhone, martine.sidentity(), alteredToken)),
           Errc::InvalidVerification);
     }
     SUBCASE("fails to verify a valid token for the wrong user")
     {
       TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(
-              expectVerification(martinePhone, martine.identity, kevinIdToken)),
+          TC_AWAIT(expectVerification(
+              martinePhone, martine.sidentity(), kevinIdToken)),
           Errc::InvalidVerification);
     }
   }
@@ -491,7 +476,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     {
       REQUIRE_NOTHROW(
           TC_AWAIT(martineLaptop->setVerificationMethod(martineIdToken)));
-      REQUIRE_EQ(TC_AWAIT(martinePhone->start(martine.identity)),
+      REQUIRE_EQ(TC_AWAIT(martinePhone->start(martine.sidentity())),
                  Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
       REQUIRE_NOTHROW(checkVerificationMethods(
