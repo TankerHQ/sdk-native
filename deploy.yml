@@ -8,6 +8,7 @@ profiles:
     - android-armv8-release
   darwin:
     - macos-release
+    - macos-release-shared
     - ios-x86-release
     - ios-x86_64-release
     - ios-armv7-release
