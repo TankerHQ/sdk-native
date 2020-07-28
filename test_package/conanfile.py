@@ -27,13 +27,5 @@ class TankerNativeTestPackage(ConanFile):
         self.copy("*.so", dst="bin", src="lib")
 
     def test(self):
-        if tools.cross_building(self.settings):
-            return
-        env = ""
-        if self.options.tankerlib_shared:
-            if self.settings.os == "Macos":
-                env = "DYLD_FALLBACK_LIBRARY_PATH= DYLD_LIBRARY_PATH=./bin"
-            elif self.settings.os == "Linux":
-                env = "LD_LIBRARY_PATH=./bin"
-        exec_path = os.path.join('bin', 'example')
-        self.run("%s %s" % (env, exec_path))
+        if not tools.cross_building(self.settings):
+            self.run(os.path.join("bin","example"), run_environment=True)
