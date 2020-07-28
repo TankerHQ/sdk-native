@@ -129,7 +129,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  CHECK_EQ(TC_AWAIT(core->start(alice.identity)), Status::Ready);
+  CHECK_EQ(TC_AWAIT(core->start(alice.sidentity())), Status::Ready);
   CHECK_EQ(core->status(), Status::Ready);
 }
 
@@ -142,7 +142,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Functional::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
+  REQUIRE_THROWS(TC_AWAIT(core2->start(alice.sidentity())));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
@@ -576,7 +576,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto bobDevice = bob.makeDevice();
   auto const bobSession =
       bobDevice.createCore(Tanker::Functional::SessionType::New);
-  TC_AWAIT(bobSession->start(bob.identity));
+  TC_AWAIT(bobSession->start(bob.sidentity()));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const emailVerif = Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}};
