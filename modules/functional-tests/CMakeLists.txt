@@ -11,6 +11,7 @@ add_executable(test_functional
   test_groups.cpp
   test_revocation.cpp
   test_encryption_session.cpp
+  test_http
 )
 
 target_link_libraries(test_functional

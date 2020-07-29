@@ -53,6 +53,7 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Request.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Client.hpp
+  include/Tanker/HttpClient.hpp
   include/Tanker/Pusher.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
@@ -122,6 +123,7 @@ add_library(tankercore STATIC
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
   src/Client.cpp
+  src/HttpClient.cpp
   src/Pusher.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
