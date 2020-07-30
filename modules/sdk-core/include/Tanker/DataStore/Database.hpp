@@ -7,7 +7,6 @@
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
 
@@ -56,17 +55,6 @@ public:
                                   Crypto::SymmetricKey const& key);
   tc::cotask<std::optional<Crypto::SymmetricKey>> findResourceKey(
       Trustchain::ResourceId const& resourceId);
-
-  tc::cotask<void> putProvisionalUserKeys(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey,
-      ProvisionalUserKeys const& provisionalUserKeys);
-  tc::cotask<std::optional<ProvisionalUserKeys>> findProvisionalUserKeys(
-      Crypto::PublicSignatureKey const& appPublicSigKey,
-      Crypto::PublicSignatureKey const& tankerPublicSigKey);
-  tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-  findProvisionalUserKeysByAppPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& appPublicEncryptionKey);
 
   tc::cotask<std::optional<DeviceKeys>> getDeviceKeys();
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
