@@ -503,7 +503,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 tc::cotask<void> Core::nukeDatabase()
 {
   assertStatus(Status::Ready, "nukeDatabase");
-  TC_AWAIT(_session->storage().db->nuke());
+  TC_AWAIT(_session->storage().db.nuke());
 }
 
 Trustchain::ResourceId Core::getResourceId(

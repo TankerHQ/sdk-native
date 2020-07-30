@@ -18,7 +18,7 @@ struct DeviceKeys;
 
 namespace DataStore
 {
-class ADatabase;
+class Database;
 }
 
 namespace Users
@@ -26,7 +26,7 @@ namespace Users
 class LocalUserStore
 {
 public:
-  LocalUserStore(DataStore::ADatabase* dbCon);
+  LocalUserStore(DataStore::Database* dbCon);
 
   tc::cotask<bool> isInitialized();
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
@@ -44,7 +44,7 @@ public:
   tc::cotask<DeviceKeys> getDeviceKeys() const;
 
 private:
-  DataStore::ADatabase* _dbCon;
+  DataStore::Database* _dbCon;
 };
 }
 }

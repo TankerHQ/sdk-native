@@ -1,6 +1,7 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
@@ -25,12 +26,12 @@ std::string getDbPath(std::string const& writablePath,
 }
 }
 
-Session::Storage::Storage(DataStore::DatabasePtr pdb)
+Session::Storage::Storage(DataStore::Database pdb)
   : db(std::move(pdb)),
-    localUserStore(db.get()),
-    groupStore(db.get()),
-    resourceKeyStore(db.get()),
-    provisionalUserKeysStore(db.get())
+    localUserStore(&db),
+    groupStore(&db),
+    resourceKeyStore(&db),
+    provisionalUserKeysStore(&db)
 {
 }
 

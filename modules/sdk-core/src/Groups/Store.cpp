@@ -1,7 +1,7 @@
 #include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Log/Log.hpp>
 
 #include <optional>
@@ -13,7 +13,7 @@ using Tanker::Trustchain::GroupId;
 
 namespace Tanker::Groups
 {
-Store::Store(DataStore::ADatabase* dbConn) : _db(dbConn)
+Store::Store(DataStore::Database* dbConn) : _db(dbConn)
 {
 }
 

@@ -22,6 +22,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -40,9 +41,7 @@ TLOG_CATEGORY(Database);
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-namespace Tanker
-{
-namespace DataStore
+namespace Tanker::DataStore
 {
 namespace
 {
@@ -233,6 +232,43 @@ void Database::performOldMigration()
   dropTable<OldVersionsTable>();
 }
 
+tc::cotask<void> Database::inTransaction(
+    std::function<tc::cotask<void>()> const& f)
+{
+  TC_AWAIT(startTransaction());
+  bool transaction = true;
+  std::exception_ptr exc;
+  try
+  {
+    TC_AWAIT(f());
+    transaction = false;
+    TC_AWAIT(commitTransaction());
+  }
+  catch (...)
+  {
+    exc = std::current_exception();
+  }
+  if (exc)
+  {
+    if (transaction)
+    {
+      try
+      {
+        TC_AWAIT(rollbackTransaction());
+      }
+      catch (std::exception const& e)
+      {
+        TERROR("Failed to rollback transaction: {}", e.what());
+      }
+      catch (...)
+      {
+        TERROR("Failed to rollback transaction: unknown error");
+      }
+    }
+    std::rethrow_exception(exc);
+  }
+}
+
 tc::cotask<void> Database::migrate()
 {
   TC_AWAIT(inTransaction([&]() -> tc::cotask<void> {
@@ -305,7 +341,7 @@ tc::cotask<void> Database::nuke()
 tc::cotask<void> Database::startTransaction()
 {
   FUNC_TIMER(DB);
-  _transactions.push_back(start_transaction(*_db));
+  _transactions.push_back(sqlpp::start_transaction(*_db));
   TC_RETURN();
 }
 
@@ -649,5 +685,15 @@ tc::cotask<std::optional<Group>> Database::findGroupByGroupPublicEncryptionKey(
 
   TC_RETURN(rowToGroup(row));
 }
+
+tc::cotask<Database> createDatabase(
+    std::string const& dbPath,
+    std::optional<Crypto::SymmetricKey> const& userSecret,
+    bool exclusive)
+{
+  FUNC_TIMER(DB);
+  Database db(dbPath, userSecret, exclusive);
+  TC_AWAIT(db.migrate());
+  TC_RETURN(std::move(db));
 }
 }

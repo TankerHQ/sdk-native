@@ -1,6 +1,6 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include "GroupAccessorMock.hpp"
@@ -28,8 +28,8 @@ TEST_CASE("decryptAndStoreKey")
 
   auto const resource = Test::Resource();
 
-  auto const db = AWAIT(DataStore::createDatabase(":memory:"));
-  ResourceKeys::Store resourceKeyStore(db.get());
+  auto db = AWAIT(DataStore::createDatabase(":memory:"));
+  ResourceKeys::Store resourceKeyStore(&db);
   GroupAccessorMock receiverGroupAccessor;
   LocalUserAccessorMock receiverLocalUserAccessor;
   ProvisionalUsersAccessorMock receiverProvisionalUsersAccessor;

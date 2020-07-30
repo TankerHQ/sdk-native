@@ -1,7 +1,7 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -13,7 +13,7 @@ using Tanker::Trustchain::ResourceId;
 
 namespace Tanker::ResourceKeys
 {
-Store::Store(DataStore::ADatabase* dbConn) : _db(dbConn)
+Store::Store(DataStore::Database* dbConn) : _db(dbConn)
 {
 }
 

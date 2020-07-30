@@ -23,13 +23,12 @@ class SymmetricKey;
 
 namespace DataStore
 {
-class ADatabase;
+class Database;
 }
 }
 
 namespace Tanker::ResourceKeys
 {
-
 class Store
 {
 public:
@@ -38,7 +37,7 @@ public:
   Store& operator=(Store const&) = delete;
   Store& operator=(Store&&) = delete;
 
-  Store(DataStore::ADatabase* dbConn);
+  Store(DataStore::Database* dbConn);
 
   tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
@@ -52,6 +51,6 @@ public:
       Trustchain::ResourceId const& resourceId) const;
 
 private:
-  DataStore::ADatabase* _db;
+  DataStore::Database* _db;
 };
 }

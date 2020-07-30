@@ -1,6 +1,6 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
@@ -9,7 +9,7 @@ TLOG_CATEGORY(LocalUserStore);
 namespace Tanker::Users
 {
 
-LocalUserStore::LocalUserStore(DataStore::ADatabase* db) : _dbCon(db)
+LocalUserStore::LocalUserStore(DataStore::Database* db) : _dbCon(db)
 {
 }
 

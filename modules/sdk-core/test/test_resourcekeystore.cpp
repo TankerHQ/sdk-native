@@ -1,7 +1,7 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
@@ -52,9 +52,9 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
 
 TEST_CASE("Resource Keys Store")
 {
-  auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
+  auto db = AWAIT(DataStore::createDatabase(":memory:"));
 
-  ResourceKeys::Store keys(dbPtr.get());
+  ResourceKeys::Store keys(&db);
 
   SUBCASE("it should not find a non-existent key")
   {

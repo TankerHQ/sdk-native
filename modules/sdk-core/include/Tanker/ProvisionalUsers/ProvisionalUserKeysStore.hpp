@@ -10,7 +10,7 @@ namespace Tanker
 {
 namespace DataStore
 {
-class ADatabase;
+class Database;
 }
 
 class ProvisionalUserKeysStore
@@ -21,7 +21,7 @@ public:
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore const&) = delete;
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore&&) = delete;
 
-  ProvisionalUserKeysStore(DataStore::ADatabase* dbConn);
+  ProvisionalUserKeysStore(DataStore::Database* dbConn);
 
   tc::cotask<void> putProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
@@ -35,6 +35,6 @@ public:
       Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const;
 
 private:
-  DataStore::ADatabase* _db;
+  DataStore::Database* _db;
 };
 }

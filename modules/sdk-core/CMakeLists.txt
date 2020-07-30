@@ -40,7 +40,6 @@ add_library(tankercore STATIC
   include/Tanker/BasicPullResult.hpp
   include/Tanker/Core.hpp
   include/Tanker/Session.hpp
-  include/Tanker/DataStore/ADatabase.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
   include/Tanker/Retry.hpp
@@ -120,10 +119,8 @@ add_library(tankercore STATIC
   src/Core.cpp
   src/Session.cpp
   src/Init.cpp
-  src/DataStore/ADatabase.cpp
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
-  src/DataStore/DatabaseFactory.cpp
   src/Client.cpp
   src/Pusher.cpp
   src/GhostDevice.cpp

@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 
@@ -7,7 +7,7 @@ TLOG_CATEGORY(ProvisionalUserKeysStore);
 
 namespace Tanker
 {
-ProvisionalUserKeysStore::ProvisionalUserKeysStore(DataStore::ADatabase* dbConn)
+ProvisionalUserKeysStore::ProvisionalUserKeysStore(DataStore::Database* dbConn)
   : _db(dbConn)
 {
 }
