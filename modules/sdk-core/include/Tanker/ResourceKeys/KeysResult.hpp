@@ -8,6 +8,6 @@
 
 namespace Tanker::ResourceKeys
 {
-using KeysResult =
-    std::vector<std::tuple<Crypto::SymmetricKey, Trustchain::ResourceId>>;
+using KeyResult = std::tuple<Crypto::SymmetricKey, Trustchain::ResourceId>;
+using KeysResult = std::vector<KeyResult>;
 }

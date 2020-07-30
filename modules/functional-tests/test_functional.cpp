@@ -220,6 +220,34 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can share a key he hasn't received yet")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto charlie = trustchain.makeUser();
+  auto charlieDevices = TC_AWAIT(charlie.makeDevices(1));
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
+                      clearData, {bob.spublicIdentity()})));
+
+  TC_AWAIT(
+      bobSession->share({TC_AWAIT(AsyncCore::getResourceId(encryptedData))},
+                        {charlie.spublicIdentity()},
+                        {}));
+
+  REQUIRE(TC_AWAIT(checkDecrypt(charlieDevices,
+                                {std::make_tuple(clearData, encryptedData)})));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt without sharing with self")
 {
   auto alice = trustchain.makeUser();

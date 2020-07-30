@@ -25,7 +25,7 @@ namespace ReceiveKey
 {
 namespace
 {
-tc::cotask<void> decryptAndStoreKey(
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor&,
@@ -47,9 +47,11 @@ tc::cotask<void> decryptAndStoreKey(
       Crypto::sealDecrypt(keyPublishToUser.sealedSymmetricKey(), *userKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUser.resourceId(), key));
+
+  TC_RETURN((ResourceKeys::KeyResult{key, keyPublishToUser.resourceId()}));
 }
 
-tc::cotask<void> decryptAndStoreKey(
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor&,
     Groups::IAccessor& groupAccessor,
@@ -73,9 +75,11 @@ tc::cotask<void> decryptAndStoreKey(
       keyPublishToUserGroup.sealedSymmetricKey(), *encryptionKeyPair);
 
   TC_AWAIT(resourceKeyStore.putKey(keyPublishToUserGroup.resourceId(), key));
+
+  TC_RETURN((ResourceKeys::KeyResult{key, keyPublishToUserGroup.resourceId()}));
 }
 
-tc::cotask<void> decryptAndStoreKey(
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor&,
     Groups::IAccessor&,
@@ -104,23 +108,27 @@ tc::cotask<void> decryptAndStoreKey(
 
   TC_AWAIT(
       resourceKeyStore.putKey(keyPublishToProvisionalUser.resourceId(), key));
+
+  TC_RETURN(
+      (ResourceKeys::KeyResult{key, keyPublishToProvisionalUser.resourceId()}));
 }
 }
 
-tc::cotask<void> decryptAndStoreKey(
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& groupAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     KeyPublish const& kp)
 {
-  TC_AWAIT(kp.visit([&](auto const& val) -> tc::cotask<void> {
-    TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
-                                localUserAccessor,
-                                groupAccessor,
-                                provisionalUsersAccessor,
-                                val));
-  }));
+  TC_RETURN(TC_AWAIT(
+      kp.visit([&](auto const& val) -> tc::cotask<ResourceKeys::KeyResult> {
+        TC_RETURN(TC_AWAIT(decryptAndStoreKey(resourceKeyStore,
+                                              localUserAccessor,
+                                              groupAccessor,
+                                              provisionalUsersAccessor,
+                                              val)));
+      })));
 }
 }
 }

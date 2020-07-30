@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
+#include <Tanker/ResourceKeys/KeysResult.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -26,7 +27,7 @@ class Store;
 
 namespace ReceiveKey
 {
-tc::cotask<void> decryptAndStoreKey(
+tc::cotask<ResourceKeys::KeyResult> decryptAndStoreKey(
     ResourceKeys::Store& resourceKeyStore,
     Users::ILocalUserAccessor& localUserAccessor,
     Groups::IAccessor& GroupAccessor,

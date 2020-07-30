@@ -32,6 +32,8 @@ public:
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId);
+  tc::cotask<ResourceKeys::KeysResult> findKeys(
+      std::vector<Trustchain::ResourceId> const& resourceId);
 
 private:
   Users::IRequester* _requester;

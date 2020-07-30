@@ -23,29 +23,75 @@ Accessor::Accessor(Users::IRequester* requester,
     _resourceKeyStore(resourceKeyStore)
 {
 }
+tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
+    Trustchain::ResourceId const& resourceId)
+{
+  auto const result = TC_AWAIT(findKeys({resourceId}));
+  if (result.empty())
+    TC_RETURN(std::nullopt);
+  TC_RETURN(std::get<Crypto::SymmetricKey>(result[0]));
+}
 
 // Try to get the key, in order:
 // - from the resource key store
 // - from the tanker server
 // In all cases, we put the key in the resource key store
-tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
-    Trustchain::ResourceId const& resourceId)
+tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
+    std::vector<Trustchain::ResourceId> const& resourceIds)
 {
-  auto key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));
-  if (!key)
+  ResourceKeys::KeysResult out;
+  std::vector<Trustchain::ResourceId> notFound;
+  for (auto const& resourceId : resourceIds)
   {
-    auto const entries =
-        TC_AWAIT(_requester->getKeyPublishes(gsl::make_span(&resourceId, 1)));
+    auto const key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));
+    if (key)
+      out.push_back({*key, resourceId});
+    else
+      notFound.push_back(resourceId);
+  }
+
+  if (!notFound.empty())
+  {
+    auto const entries = TC_AWAIT(_requester->getKeyPublishes(notFound));
     for (auto const& action : entries)
     {
-      TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
-                                              *_localUserAccessor,
-                                              *_groupAccessor,
-                                              *_provisionalUsersAccessor,
-                                              action));
+      auto const result =
+          TC_AWAIT(ReceiveKey::decryptAndStoreKey(*_resourceKeyStore,
+                                                  *_localUserAccessor,
+                                                  *_groupAccessor,
+                                                  *_provisionalUsersAccessor,
+                                                  action));
+      out.push_back(result);
     }
-    key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));
   }
-  TC_RETURN(key);
+
+  if (out.size() != resourceIds.size())
+  {
+    std::vector<Trustchain::ResourceId> requested = resourceIds;
+    std::vector<Trustchain::ResourceId> got;
+    std::vector<Trustchain::ResourceId> missing;
+
+    std::transform(out.begin(),
+                   out.end(),
+                   std::back_inserter(got),
+                   [](auto const& result) {
+                     return std::get<Trustchain::ResourceId>(result);
+                   });
+
+    std::sort(requested.begin(), requested.end());
+    std::sort(got.begin(), got.end());
+
+    std::set_difference(requested.begin(),
+                        requested.end(),
+                        got.begin(),
+                        got.end(),
+                        std::back_inserter(missing));
+
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "can't find keys for resource IDs: {:s}",
+                   fmt::join(missing, ", "));
+  }
+
+  TC_RETURN(out);
 }
 }
