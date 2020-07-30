@@ -397,31 +397,6 @@ tc::cotask<void> Database::setTrustchainPublicSignatureKey(
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putResourceKey(ResourceId const& resourceId,
-                                          Crypto::SymmetricKey const& key)
-{
-  FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
-
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.mac = resourceId.base(), tab.resource_key = key.base()));
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Crypto::SymmetricKey>> Database::findResourceKey(
-    ResourceId const& resourceId)
-{
-  FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
-  auto rows = (*_db)(
-      select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
-
-  TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
-}
-
 tc::cotask<std::optional<DeviceKeys>> Database::getDeviceKeys()
 {
   FUNC_TIMER(DB);

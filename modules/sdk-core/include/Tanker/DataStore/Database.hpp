@@ -3,8 +3,6 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/ResourceId.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DeviceKeys.hpp>
 
@@ -50,11 +48,6 @@ public:
   findTrustchainPublicSignatureKey();
   tc::cotask<void> setTrustchainPublicSignatureKey(
       Crypto::PublicSignatureKey const&);
-
-  tc::cotask<void> putResourceKey(Trustchain::ResourceId const& resourceId,
-                                  Crypto::SymmetricKey const& key);
-  tc::cotask<std::optional<Crypto::SymmetricKey>> findResourceKey(
-      Trustchain::ResourceId const& resourceId);
 
   tc::cotask<std::optional<DeviceKeys>> getDeviceKeys();
   tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
