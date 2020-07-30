@@ -34,7 +34,6 @@ def main() -> None:
 
     subparsers.add_parser("deploy")
     subparsers.add_parser("mirror")
-    subparsers.add_parser("nightly-build-emscripten")
 
     args = parser.parse_args()
     if args.home_isolation:
@@ -44,8 +43,6 @@ def main() -> None:
 
     if args.command == "build-and-test":
         build_and_check(args.profile, args.coverage)
-    elif args.command == "nightly-build-emscripten":
-        tankerci.cpp.build("emscripten")
     elif args.command == "deploy":
         git_tag = os.environ["CI_COMMIT_TAG"]
         version = tankerci.version_from_git_tag(git_tag)

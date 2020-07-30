@@ -1,6 +1,5 @@
 #include <Tanker/Users/LocalUser.hpp>
 
-#include <Tanker/DataStore/ADatabase.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Log/Log.hpp>
 

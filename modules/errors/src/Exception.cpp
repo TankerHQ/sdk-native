@@ -16,10 +16,6 @@
 #endif
 #endif
 
-#ifdef EMSCRIPTEN
-#define BOOST_STACKTRACE_USE_NOOP
-#endif
-
 #include <Tanker/Errors/Exception.hpp>
 
 #include <Tanker/Format/Format.hpp>

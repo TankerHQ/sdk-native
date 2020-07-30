@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
@@ -42,9 +42,9 @@ public:
 
   struct Storage
   {
-    Storage(DataStore::DatabasePtr db);
+    Storage(DataStore::Database db);
 
-    DataStore::DatabasePtr db;
+    DataStore::Database db;
     Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
     ResourceKeys::Store resourceKeyStore;

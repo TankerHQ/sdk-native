@@ -1,7 +1,7 @@
 #include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -13,9 +13,9 @@ using Tanker::Trustchain::GroupId;
 
 TEST_CASE("GroupStore")
 {
-  auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
+  auto db = AWAIT(DataStore::createDatabase(":memory:"));
 
-  Groups::Store groupStore(dbPtr.get());
+  Groups::Store groupStore(&db);
 
   auto const group = InternalGroup{
       make<GroupId>("group id"),

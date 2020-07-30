@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
@@ -28,8 +28,8 @@ auto makeEntries = [](auto const& item) { return item.entries(); };
 
 TEST_CASE("GroupAccessor")
 {
-  auto const dbPtr = AWAIT(DataStore::createDatabase(":memory:"));
-  Groups::Store groupStore(dbPtr.get());
+  auto db = AWAIT(DataStore::createDatabase(":memory:"));
+  Groups::Store groupStore(&db);
 
   Test::Generator generator;
 

@@ -22,6 +22,7 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Users/Device.hpp>
 
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -40,9 +41,7 @@ TLOG_CATEGORY(Database);
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-namespace Tanker
-{
-namespace DataStore
+namespace Tanker::DataStore
 {
 namespace
 {
@@ -57,48 +56,6 @@ Users::Device rowToDevice(Row const& row)
               row.public_encryption_key),
           row.is_ghost_device,
           row.is_revoked};
-}
-
-template <typename T>
-InternalGroup rowToInternalGroup(T const& row)
-{
-  assert(!row.private_signature_key.is_null() &&
-         !row.private_encryption_key.is_null());
-
-  return InternalGroup{
-      DataStore::extractBlob<GroupId>(row.group_id),
-      {DataStore::extractBlob<Crypto::PublicSignatureKey>(
-           row.public_signature_key),
-       DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-           row.private_signature_key)},
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-           row.public_encryption_key),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-           row.private_encryption_key)},
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
-}
-
-template <typename T>
-ExternalGroup rowToExternalGroup(T const& row)
-{
-  return ExternalGroup{
-      DataStore::extractBlob<GroupId>(row.group_id),
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.public_signature_key),
-      DataStore::extractBlob<Crypto::SealedPrivateSignatureKey>(
-          row.encrypted_private_signature_key),
-      DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-          row.public_encryption_key),
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
-}
-
-template <typename T>
-Group rowToGroup(T const& row)
-{
-  if (row.encrypted_private_signature_key.is_null())
-    return rowToInternalGroup(row);
-  else
-    return rowToExternalGroup(row);
 }
 }
 
@@ -233,6 +190,43 @@ void Database::performOldMigration()
   dropTable<OldVersionsTable>();
 }
 
+tc::cotask<void> Database::inTransaction(
+    std::function<tc::cotask<void>()> const& f)
+{
+  TC_AWAIT(startTransaction());
+  bool transaction = true;
+  std::exception_ptr exc;
+  try
+  {
+    TC_AWAIT(f());
+    transaction = false;
+    TC_AWAIT(commitTransaction());
+  }
+  catch (...)
+  {
+    exc = std::current_exception();
+  }
+  if (exc)
+  {
+    if (transaction)
+    {
+      try
+      {
+        TC_AWAIT(rollbackTransaction());
+      }
+      catch (std::exception const& e)
+      {
+        TERROR("Failed to rollback transaction: {}", e.what());
+      }
+      catch (...)
+      {
+        TERROR("Failed to rollback transaction: unknown error");
+      }
+    }
+    std::rethrow_exception(exc);
+  }
+}
+
 tc::cotask<void> Database::migrate()
 {
   TC_AWAIT(inTransaction([&]() -> tc::cotask<void> {
@@ -305,7 +299,7 @@ tc::cotask<void> Database::nuke()
 tc::cotask<void> Database::startTransaction()
 {
   FUNC_TIMER(DB);
-  _transactions.push_back(start_transaction(*_db));
+  _transactions.push_back(sqlpp::start_transaction(*_db));
   TC_RETURN();
 }
 
@@ -327,327 +321,19 @@ tc::cotask<void> Database::rollbackTransaction()
   TC_RETURN();
 }
 
-tc::cotask<void> Database::putUserPrivateKey(
-    Crypto::EncryptionKeyPair const& userKeyPair)
+sqlpp::sqlite3::connection* Database::connection()
 {
-  FUNC_TIMER(DB);
-  UserKeysTable tab{};
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.public_encryption_key = userKeyPair.publicKey.base(),
-      tab.private_encryption_key = userKeyPair.privateKey.base()));
-  TC_RETURN();
+  return _db.get();
 }
 
-tc::cotask<void> Database::putUserKeyPairs(
-    gsl::span<Crypto::EncryptionKeyPair const> userKeyPairs)
+tc::cotask<Database> createDatabase(
+    std::string const& dbPath,
+    std::optional<Crypto::SymmetricKey> const& userSecret,
+    bool exclusive)
 {
   FUNC_TIMER(DB);
-  UserKeysTable tab{};
-  auto multi_insert = sqlpp::sqlite3::insert_or_ignore_into(tab).columns(
-      tab.public_encryption_key, tab.private_encryption_key);
-  for (auto const& [pK, sK] : userKeyPairs)
-    multi_insert.values.add(tab.public_encryption_key = pK.base(),
-                            tab.private_encryption_key = sK.base());
-  (*_db)(multi_insert);
-  TC_RETURN();
-}
-
-tc::cotask<std::vector<Crypto::EncryptionKeyPair>> Database::getUserKeyPairs()
-{
-  FUNC_TIMER(DB);
-  UserKeysTable tab{};
-
-  auto rows =
-      (*_db)(select(tab.public_encryption_key, tab.private_encryption_key)
-                 .from(tab)
-                 .unconditionally());
-  std::vector<Crypto::EncryptionKeyPair> keys;
-  std::transform(rows.begin(),
-                 rows.end(),
-                 std::back_inserter(keys),
-                 [](auto&& row) -> Crypto::EncryptionKeyPair {
-                   return {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                               row.public_encryption_key),
-                           DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                               row.private_encryption_key)};
-                 });
-  TC_RETURN(keys);
-}
-
-tc::cotask<std::optional<Crypto::PublicSignatureKey>>
-Database::findTrustchainPublicSignatureKey()
-{
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-  auto rows = (*_db)(
-      select(tab.trustchain_public_signature_key).from(tab).unconditionally());
-  if (rows.empty())
-  {
-    throw Errors::AssertionError(
-        "trustchain_info table must have a single row");
-  }
-  if (rows.front().trustchain_public_signature_key.is_null())
-    TC_RETURN(std::nullopt);
-  TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
-      rows.front().trustchain_public_signature_key));
-}
-
-tc::cotask<void> Database::setTrustchainPublicSignatureKey(
-    Crypto::PublicSignatureKey const& key)
-{
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-  (*_db)(update(tab)
-             .set(tab.trustchain_public_signature_key = key.base())
-             .unconditionally());
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::putResourceKey(ResourceId const& resourceId,
-                                          Crypto::SymmetricKey const& key)
-{
-  FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
-
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.mac = resourceId.base(), tab.resource_key = key.base()));
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Crypto::SymmetricKey>> Database::findResourceKey(
-    ResourceId const& resourceId)
-{
-  FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
-  auto rows = (*_db)(
-      select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
-
-  TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
-}
-
-tc::cotask<void> Database::putProvisionalUserKeys(
-    Crypto::PublicSignatureKey const& appPublicSigKey,
-    Crypto::PublicSignatureKey const& tankerPublicSigKey,
-    Tanker::ProvisionalUserKeys const& provisionalUserKeys)
-{
-  FUNC_TIMER(DB);
-  ProvisionalUserKeysTable tab{};
-
-  (*_db)(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.app_pub_sig_key = appPublicSigKey.base(),
-      tab.tanker_pub_sig_key = tankerPublicSigKey.base(),
-      tab.app_enc_priv = provisionalUserKeys.appKeys.privateKey.base(),
-      tab.app_enc_pub = provisionalUserKeys.appKeys.publicKey.base(),
-      tab.tanker_enc_priv = provisionalUserKeys.tankerKeys.privateKey.base(),
-      tab.tanker_enc_pub = provisionalUserKeys.tankerKeys.publicKey.base()));
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-Database::findProvisionalUserKeys(
-    Crypto::PublicSignatureKey const& appPublicSigKey,
-    Crypto::PublicSignatureKey const& tankerPublicSigKey)
-{
-  FUNC_TIMER(DB);
-  ProvisionalUserKeysTable tab{};
-  auto rows =
-      (*_db)(select(tab.app_enc_priv,
-                    tab.app_enc_pub,
-                    tab.tanker_enc_priv,
-                    tab.tanker_enc_pub)
-                 .from(tab)
-                 .where(tab.app_pub_sig_key == appPublicSigKey.base() and
-                        tab.tanker_pub_sig_key == tankerPublicSigKey.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
-  Tanker::ProvisionalUserKeys ret{
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(row.app_enc_priv)},
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.tanker_enc_pub),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-           row.tanker_enc_priv)}};
-  TC_RETURN(ret);
-}
-
-tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-Database::findProvisionalUserKeysByAppPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& appPublicEncryptionKey)
-{
-  FUNC_TIMER(DB);
-  ProvisionalUserKeysTable tab{};
-  auto rows =
-      (*_db)(select(tab.app_enc_priv,
-                    tab.app_enc_pub,
-                    tab.tanker_enc_priv,
-                    tab.tanker_enc_pub)
-                 .from(tab)
-                 .where(tab.app_enc_pub == appPublicEncryptionKey.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
-  Tanker::ProvisionalUserKeys ret{
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.app_enc_pub),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(row.app_enc_priv)},
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(row.tanker_enc_pub),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-           row.tanker_enc_priv)}};
-  TC_RETURN(ret);
-}
-
-tc::cotask<std::optional<DeviceKeys>> Database::getDeviceKeys()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows = (*_db)(select(tab.private_signature_key,
-                            tab.public_signature_key,
-                            tab.private_encryption_key,
-                            tab.public_encryption_key,
-                            tab.device_id)
-                         .from(tab)
-                         .unconditionally());
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = rows.front();
-  TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                             row.public_signature_key),
-                         DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                             row.private_signature_key)},
-                        {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                             row.public_encryption_key),
-                         DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                             row.private_encryption_key)}}));
-}
-
-tc::cotask<void> Database::setDeviceKeys(DeviceKeys const& deviceKeys)
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db)(insert_into(tab).set(
-      tab.private_signature_key = deviceKeys.signatureKeyPair.privateKey.base(),
-      tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
-      tab.private_encryption_key =
-          deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key = deviceKeys.encryptionKeyPair.publicKey.base(),
-      tab.device_initialized = 0));
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::setDeviceInitialized()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db)(update(tab).set(tab.device_initialized = 1).unconditionally());
-  TC_RETURN();
-}
-
-tc::cotask<bool> Database::isDeviceInitialized()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows =
-      (*_db)(select(tab.device_initialized).from(tab).unconditionally());
-  if (rows.empty())
-    TC_RETURN(false);
-  auto const& row = rows.front();
-  TC_RETURN(row.device_initialized);
-}
-
-tc::cotask<void> Database::setDeviceId(Trustchain::DeviceId const& deviceId)
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db)(update(tab).set(tab.device_id = deviceId.base()).unconditionally());
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows = (*_db)(select(tab.device_id).from(tab).unconditionally());
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
-  if (row.device_id.len == 0)
-    TC_RETURN(std::nullopt);
-  TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
-}
-
-tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups;
-
-  (*_db)(sqlpp::sqlite3::insert_or_replace_into(groups).set(
-      groups.group_id = group.id.base(),
-      groups.public_signature_key = group.signatureKeyPair.publicKey.base(),
-      groups.private_signature_key = group.signatureKeyPair.privateKey.base(),
-      groups.encrypted_private_signature_key = sqlpp::null,
-      groups.public_encryption_key = group.encryptionKeyPair.publicKey.base(),
-      groups.private_encryption_key = group.encryptionKeyPair.privateKey.base(),
-      groups.last_group_block_hash = group.lastBlockHash.base()));
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
-{
-  FUNC_TIMER(DB);
-
-  GroupsTable groups;
-
-  (*_db)(sqlpp::sqlite3::insert_or_replace_into(groups).set(
-      groups.group_id = group.id.base(),
-      groups.public_signature_key = group.publicSignatureKey.base(),
-      groups.private_signature_key = sqlpp::null,
-      groups.encrypted_private_signature_key =
-          group.encryptedPrivateSignatureKey.base(),
-      groups.public_encryption_key = group.publicEncryptionKey.base(),
-      groups.private_encryption_key = sqlpp::null,
-      groups.last_group_block_hash = group.lastBlockHash.base()));
-
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Group>> Database::findGroupByGroupId(
-    GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToGroup(row));
-}
-
-tc::cotask<std::optional<Group>> Database::findGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(
-      select(all_of(groups))
-          .from(groups)
-          .where(groups.public_encryption_key == publicEncryptionKey.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToGroup(row));
-}
+  Database db(dbPath, userSecret, exclusive);
+  TC_AWAIT(db.migrate());
+  TC_RETURN(std::move(db));
 }
 }

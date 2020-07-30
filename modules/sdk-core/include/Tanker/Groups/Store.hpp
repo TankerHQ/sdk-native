@@ -4,11 +4,12 @@
 #include <Tanker/Trustchain/GroupId.hpp>
 
 #include <optional>
+
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker::DataStore
 {
-class ADatabase;
+class Database;
 }
 
 namespace Tanker::Groups
@@ -21,7 +22,7 @@ public:
   Store& operator=(Store const&) = delete;
   Store& operator=(Store&&) = delete;
 
-  Store(DataStore::ADatabase* dbConn);
+  Store(DataStore::Database* dbConn);
 
   tc::cotask<void> put(Group const& group);
   tc::cotask<void> put(InternalGroup const& group);
@@ -35,6 +36,6 @@ public:
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
 
 private:
-  DataStore::ADatabase* _db;
+  DataStore::Database* _db;
 };
 }

@@ -1,19 +1,25 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/ADatabase.hpp>
+#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
+
+#include <sqlpp11/sqlite3/insert_or.h>
 
 TLOG_CATEGORY(ResourceKeys::Store);
 
 using Tanker::Trustchain::ResourceId;
+using ResourceKeysTable = Tanker::DbModels::resource_keys::resource_keys;
 
 namespace Tanker::ResourceKeys
 {
-Store::Store(DataStore::ADatabase* dbConn) : _db(dbConn)
+Store::Store(DataStore::Database* dbConn) : _db(dbConn)
 {
 }
 
@@ -21,7 +27,12 @@ tc::cotask<void> Store::putKey(ResourceId const& resourceId,
                                Crypto::SymmetricKey const& key)
 {
   TINFO("Adding key for {}", resourceId);
-  TC_AWAIT(_db->putResourceKey(resourceId, key));
+  FUNC_TIMER(DB);
+  ResourceKeysTable tab{};
+
+  (*_db->connection())(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
+      tab.mac = resourceId.base(), tab.resource_key = key.base()));
+  TC_RETURN();
 }
 
 tc::cotask<Crypto::SymmetricKey> Store::getKey(
@@ -51,6 +62,14 @@ tc::cotask<KeysResult> Store::getKeys(
 tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     ResourceId const& resourceId) const
 {
-  TC_RETURN(TC_AWAIT(_db->findResourceKey(resourceId)));
+  FUNC_TIMER(DB);
+  ResourceKeysTable tab{};
+  auto rows = (*_db->connection())(
+      select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
+  if (rows.empty())
+    TC_RETURN(std::nullopt);
+  auto const& row = rows.front();
+
+  TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
 }
 }

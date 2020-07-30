@@ -2,17 +2,11 @@ cmake_minimum_required(VERSION 3.4)
 
 project(Network)
 
-if (NOT EMSCRIPTEN)
-  set(TANKER_NETWORK_CONNECTION_SRC
-    include/Tanker/Network/Connection.hpp
-    src/Connection.cpp
-  )
-else ()
-  set(TANKER_NETWORK_CONNECTION_SRC
-    include/Tanker/Network/JsConnection.hpp
-    src/JsConnection.cpp
-  )
-endif()
+set(TANKER_NETWORK_CONNECTION_SRC
+  include/Tanker/Network/Connection.hpp
+  src/Connection.cpp
+)
+
 add_library(tankernetwork STATIC
   include/Tanker/Network/AConnection.hpp
   include/Tanker/Network/ConnectionFactory.hpp
@@ -45,11 +39,9 @@ target_link_libraries(tankernetwork
 )
 
 
-if (NOT EMSCRIPTEN)
-  target_link_libraries(tankernetwork
-    CONAN_PKG::socket.io-client-cpp
-  )
-endif()
+target_link_libraries(tankernetwork
+  CONAN_PKG::socket.io-client-cpp
+)
 
 install(DIRECTORY include DESTINATION .)
 install(TARGETS tankernetwork

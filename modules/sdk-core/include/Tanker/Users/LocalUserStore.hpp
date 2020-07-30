@@ -18,7 +18,7 @@ struct DeviceKeys;
 
 namespace DataStore
 {
-class ADatabase;
+class Database;
 }
 
 namespace Users
@@ -26,7 +26,7 @@ namespace Users
 class LocalUserStore
 {
 public:
-  LocalUserStore(DataStore::ADatabase* dbCon);
+  LocalUserStore(DataStore::Database* dbCon);
 
   tc::cotask<bool> isInitialized();
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
@@ -44,7 +44,15 @@ public:
   tc::cotask<DeviceKeys> getDeviceKeys() const;
 
 private:
-  DataStore::ADatabase* _dbCon;
+  tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
+  tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() const;
+  tc::cotask<void> setDeviceInitialized();
+  // hack, is called in getDeviceKeys... This will be removed very soon with the
+  // new http server
+  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) const;
+  tc::cotask<bool> isDeviceInitialized() const;
+
+  DataStore::Database* _db;
 };
 }
 }
