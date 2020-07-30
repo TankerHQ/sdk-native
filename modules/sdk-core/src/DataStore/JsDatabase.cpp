@@ -921,8 +921,8 @@ tc::cotask<std::optional<InternalGroup>> JsDatabase::findInternalGroupByGroupId(
   TC_RETURN(fromJsInternalGroup(jsgroup));
 }
 
-tc::cotask<std::optional<ExternalGroup>>
-JsDatabase::findExternalGroupByGroupId(GroupId const& id)
+tc::cotask<std::optional<ExternalGroup>> JsDatabase::findExternalGroupByGroupId(
+    GroupId const& id)
 {
   auto const jsgroup = TC_AWAIT(
       jsPromiseToFuture(_db->findExternalGroupByGroupId(containerToJs(id))));
@@ -953,8 +953,8 @@ tc::cotask<std::optional<InternalGroup>>
 JsDatabase::findInternalGroupByGroupPublicEncryptionKey(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
-  auto const jsgroup =
-      TC_AWAIT(jsPromiseToFuture(_db->findInternalGroupByGroupPublicEncryptionKey(
+  auto const jsgroup = TC_AWAIT(
+      jsPromiseToFuture(_db->findInternalGroupByGroupPublicEncryptionKey(
           containerToJs(publicEncryptionKey))));
   if (jsgroup.isNull() || jsgroup.isUndefined())
     TC_RETURN(std::nullopt);
@@ -1158,9 +1158,10 @@ EMSCRIPTEN_BINDINGS(jsdatabaseinterface)
       .function("findExternalGroupByGroupId",
                 &JsDatabaseInterface::findExternalGroupByGroupId,
                 emscripten::pure_virtual())
-      .function("findInternalGroupByGroupPublicEncryptionKey",
-                &JsDatabaseInterface::findInternalGroupByGroupPublicEncryptionKey,
-                emscripten::pure_virtual())
+      .function(
+          "findInternalGroupByGroupPublicEncryptionKey",
+          &JsDatabaseInterface::findInternalGroupByGroupPublicEncryptionKey,
+          emscripten::pure_virtual())
       .function(
           "findExternalGroupByGroupPublicEncryptionKey",
           &JsDatabaseInterface::findExternalGroupByGroupPublicEncryptionKey,

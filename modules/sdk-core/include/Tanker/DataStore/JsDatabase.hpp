@@ -30,8 +30,8 @@ public:
       Crypto::PrivateEncryptionKey const& privateKey) override;
   tc::cotask<Crypto::EncryptionKeyPair> getUserKeyPair(
       Crypto::PublicEncryptionKey const& publicKey) override;
-  tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
-  getUserOptLastKeyPair() override;
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>> getUserOptLastKeyPair()
+      override;
 
   tc::cotask<std::optional<uint64_t>> findTrustchainLastIndex() override;
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
@@ -98,7 +98,8 @@ public:
   tc::cotask<std::vector<ExternalGroup>> findExternalGroupsByProvisionalUser(
       Crypto::PublicSignatureKey const& appPublicSignatureKey,
       Crypto::PublicSignatureKey const& tankerPublicSignatureKey) override;
-  tc::cotask<std::optional<InternalGroup>> findInternalGroupByGroupPublicEncryptionKey(
+  tc::cotask<std::optional<InternalGroup>>
+  findInternalGroupByGroupPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) override;
   tc::cotask<std::optional<ExternalGroup>>
   findExternalGroupByGroupPublicEncryptionKey(

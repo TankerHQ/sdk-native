@@ -57,8 +57,7 @@ void adl_serializer<Tanker::Unlock::Request>::to_json(
             std::vector<std::uint8_t> encrypted_email;
             std::tie(
                 j["hashed_email"], encrypted_email, j["verification_code"]) = e;
-            j["encrypted_email"] =
-                mgs::base64::encode(encrypted_email);
+            j["encrypted_email"] = mgs::base64::encode(encrypted_email);
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;

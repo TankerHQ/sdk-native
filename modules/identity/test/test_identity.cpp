@@ -11,9 +11,9 @@
 
 #include <Helpers/Errors.hpp>
 
-#include <mgs/base64.hpp>
 #include <doctest/doctest.h>
 #include <gsl/gsl-lite.hpp>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
@@ -61,8 +61,7 @@ auto const trustchainPrivateKeyString =
     "CZC/e4ZI7+MQ=="s;
 
 auto const trustchainId =
-    mgs::base64::decode<Trustchain::TrustchainId>(
-        trustchainIdString);
+    mgs::base64::decode<Trustchain::TrustchainId>(trustchainIdString);
 auto const trustchainPrivateKey =
     mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
         trustchainPrivateKeyString);
@@ -70,9 +69,8 @@ auto const trustchainPrivateKey =
 auto const suserId = "b_eich"_uid;
 auto const obfuscatedUserId = obfuscateUserId(suserId, trustchainId);
 
-auto const userSecret =
-    mgs::base64::decode<Tanker::Crypto::SymmetricKey>(
-        "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
+auto const userSecret = mgs::base64::decode<Tanker::Crypto::SymmetricKey>(
+    "7FSf/n0e76QT3s0DkvetRVVJhXZGEjOxj5EWAFexvjI=");
 
 auto const publicEphemeralKey =
     mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(

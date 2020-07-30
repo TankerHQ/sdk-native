@@ -86,8 +86,7 @@ void Connection::connect()
   if (_params.version)
     query["version"] = _params.version.value();
   if (_params.trustchainId)
-    query["trustchainId"] =
-        mgs::base64::encode(_params.trustchainId.value());
+    query["trustchainId"] = mgs::base64::encode(_params.trustchainId.value());
   if (_params.context)
     query["context"] = _params.context.value();
 

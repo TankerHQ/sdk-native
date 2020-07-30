@@ -68,8 +68,7 @@ bool isEncryptedDb(std::string const& dbPath)
   return hasCipher() && buffer != clearMagic;
 }
 
-std::string hexUserSecret(
-    std::optional<Crypto::SymmetricKey> const& userSecret)
+std::string hexUserSecret(std::optional<Crypto::SymmetricKey> const& userSecret)
 {
   if (!userSecret)
     return {};

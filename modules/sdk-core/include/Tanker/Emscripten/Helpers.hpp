@@ -22,7 +22,7 @@ inline bool isNone(emscripten::val const& v)
 
 template <typename T>
 std::optional<T> optionalStringFromValue(emscripten::val const& val,
-                                            std::string const& key)
+                                         std::string const& key)
 {
   if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
     return std::nullopt;
@@ -32,7 +32,7 @@ std::optional<T> optionalStringFromValue(emscripten::val const& val,
 
 template <typename T>
 std::optional<T> optionalFromValue(emscripten::val const& val,
-                                      std::string const& key)
+                                   std::string const& key)
 {
   if (Emscripten::isNone(val) || Emscripten::isNone(val[key]))
     return std::nullopt;

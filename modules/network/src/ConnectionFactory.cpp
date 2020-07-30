@@ -10,8 +10,7 @@ namespace Tanker
 {
 namespace Network
 {
-ConnectionPtr ConnectionFactory::create(std::string url,
-                                        SdkInfo info)
+ConnectionPtr ConnectionFactory::create(std::string url, SdkInfo info)
 {
 #ifndef EMSCRIPTEN
   return std::make_unique<Connection>(std::move(url), std::move(info));
@@ -20,8 +19,7 @@ ConnectionPtr ConnectionFactory::create(std::string url,
 #endif
 }
 
-ConnectionPtr ConnectionFactory::create(std::string url,
-                                        std::string context)
+ConnectionPtr ConnectionFactory::create(std::string url, std::string context)
 {
 #ifndef EMSCRIPTEN
   return std::make_unique<Connection>(std::move(url), std::move(context));

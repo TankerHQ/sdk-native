@@ -8,8 +8,8 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <mgs/base64.hpp>
 #include <doctest/doctest.h>
+#include <mgs/base64.hpp>
 
 using namespace Tanker;
 
@@ -144,11 +144,9 @@ TEST_CASE("Migration")
         DataStore::extractBlob<Crypto::SymmetricKey>(resourceKeys.resource_key);
 
     CHECK_EQ(resourceId,
-             mgs::base64::decode<Trustchain::ResourceId>(
-                 oldKeys.b64Mac));
+             mgs::base64::decode<Trustchain::ResourceId>(oldKeys.b64Mac));
     CHECK_EQ(key,
-             mgs::base64::decode<Crypto::SymmetricKey>(
-                 oldKeys.b64ResourceKey));
+             mgs::base64::decode<Crypto::SymmetricKey>(oldKeys.b64ResourceKey));
   }
 }
 #endif

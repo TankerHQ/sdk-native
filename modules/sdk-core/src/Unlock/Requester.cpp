@@ -11,8 +11,7 @@ static void from_json(nlohmann::json const& j, UserStatusResult& result)
   result.userExists = j.at("user_exists").get<bool>();
   auto const lastReset = j.at("last_reset").get<std::string>();
   if (!lastReset.empty())
-    result.lastReset =
-        mgs::base64::decode<Crypto::Hash>(lastReset);
+    result.lastReset = mgs::base64::decode<Crypto::Hash>(lastReset);
   else
     result.lastReset = Crypto::Hash{};
 }
@@ -94,8 +93,7 @@ tc::cotask<void> Requester::createUser(
       {"user_id", userId},
       {"user_creation_block", mgs::base64::encode(userCreation)},
       {"first_device_block", mgs::base64::encode(firstDevice)},
-      {"encrypted_unlock_key",
-       mgs::base64::encode(encryptedVerificationKey)},
+      {"encrypted_unlock_key", mgs::base64::encode(encryptedVerificationKey)},
       {"verification", verificationRequest},
   };
   auto const reply = TC_AWAIT(_client->emit("create user 2", request));

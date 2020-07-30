@@ -194,9 +194,8 @@ tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
 tc::shared_future<SDeviceId> AsyncCore::deviceId() const
 {
   return _taskCanceler.run([&] {
-    return tc::async([this] {
-      return SDeviceId(mgs::base64::encode(_core.deviceId()));
-    });
+    return tc::async(
+        [this] { return SDeviceId(mgs::base64::encode(_core.deviceId())); });
   });
 }
 
@@ -275,8 +274,7 @@ expected<SResourceId> AsyncCore::getResourceId(
     gsl::span<uint8_t const> encryptedData)
 {
   return tc::sync([&] {
-    return mgs::base64::encode<SResourceId>(
-        Core::getResourceId(encryptedData));
+    return mgs::base64::encode<SResourceId>(Core::getResourceId(encryptedData));
   });
 }
 

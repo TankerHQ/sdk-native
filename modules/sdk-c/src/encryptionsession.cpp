@@ -60,8 +60,7 @@ CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(
     tanker_encryption_session_t* csession)
 {
   auto const session = reinterpret_cast<EncryptionSession*>(csession);
-  auto resourceId =
-      mgs::base64::encode<SResourceId>(session->resourceId());
+  auto resourceId = mgs::base64::encode<SResourceId>(session->resourceId());
   return makeFuture(tc::make_ready_future(
       static_cast<void*>(duplicateString(resourceId.string()))));
 }

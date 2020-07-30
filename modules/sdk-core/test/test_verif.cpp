@@ -584,7 +584,8 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
   Test::Generator generator;
 
   auto const alice = generator.makeUser("alice");
-  auto const provisionalUser = generator.makeProvisionalUser("alice.test@tanker.io");
+  auto const provisionalUser =
+      generator.makeProvisionalUser("alice.test@tanker.io");
   auto const provisionalIdentityClaim = alice.claim(provisionalUser);
 
   auto& authorDevice = alice.devices().front();

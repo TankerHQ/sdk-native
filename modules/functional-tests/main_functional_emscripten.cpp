@@ -27,17 +27,16 @@ void runTests(std::string const& config, std::string const& env)
     auto const ret = TC_AWAIT(context.run());
     TC_AWAIT(TrustchainFixture::tearDown());
     TC_RETURN(ret);
-  })
-      .then([](auto fut) {
-        try
-        {
-          fut.get();
-        }
-        catch (std::exception& e)
-        {
-          printf("error: %s\n", e.what());
-        }
-      });
+  }).then([](auto fut) {
+    try
+    {
+      fut.get();
+    }
+    catch (std::exception& e)
+    {
+      printf("error: %s\n", e.what());
+    }
+  });
 }
 
 EMSCRIPTEN_BINDINGS(jstestmain)

@@ -42,13 +42,12 @@ std::string createIdentity(std::string const& trustchainIdParam,
     throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
   auto const trustchainId =
-      mgs::base64::decode<Trustchain::TrustchainId>(
-          trustchainIdParam);
-  return to_string(createIdentity(
-      trustchainId,
-      mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
-          trustchainPrivateKey),
-      Tanker::obfuscateUserId(userId, trustchainId)));
+      mgs::base64::decode<Trustchain::TrustchainId>(trustchainIdParam);
+  return to_string(
+      createIdentity(trustchainId,
+                     mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+                         trustchainPrivateKey),
+                     Tanker::obfuscateUserId(userId, trustchainId)));
 }
 
 SecretPermanentIdentity upgradeUserToken(
