@@ -27,6 +27,7 @@
 namespace Tanker
 {
 class Client;
+class HttpClient;
 
 class Session
 {
@@ -66,8 +67,10 @@ public:
   };
 
   Session(std::string url, Network::SdkInfo info);
+  ~Session();
 
   Client& client();
+  HttpClient& httpClient();
 
   Pusher& pusher();
 
@@ -101,6 +104,7 @@ public:
 
 private:
   std::unique_ptr<Client> _client;
+  std::unique_ptr<HttpClient> _httpClient;
   Pusher _pusher;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
