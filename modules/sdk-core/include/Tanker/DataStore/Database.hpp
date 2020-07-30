@@ -1,11 +1,6 @@
 #pragma once
 
-#include <Tanker/Crypto/EncryptionKeyPair.hpp>
-#include <Tanker/Crypto/Hash.hpp>
-#include <Tanker/Trustchain/DeviceId.hpp>
-
-#include <Tanker/DeviceKeys.hpp>
-
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/DataStore/Connection.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -36,26 +31,8 @@ public:
   explicit Database(std::string const& dbPath,
                     std::optional<Crypto::SymmetricKey> const& userSecret,
                     bool exclusive);
+
   tc::cotask<void> migrate();
-
-  tc::cotask<void> putUserPrivateKey(
-      Crypto::EncryptionKeyPair const& userKeyPair);
-  tc::cotask<void> putUserKeyPairs(
-      gsl::span<Crypto::EncryptionKeyPair const> userKeyPair);
-  tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs();
-
-  tc::cotask<std::optional<Crypto::PublicSignatureKey>>
-  findTrustchainPublicSignatureKey();
-  tc::cotask<void> setTrustchainPublicSignatureKey(
-      Crypto::PublicSignatureKey const&);
-
-  tc::cotask<std::optional<DeviceKeys>> getDeviceKeys();
-  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
-  tc::cotask<void> setDeviceInitialized();
-  tc::cotask<bool> isDeviceInitialized();
-  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
-  tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId();
-
   tc::cotask<void> nuke();
 
   sqlpp::sqlite3::connection* connection();
