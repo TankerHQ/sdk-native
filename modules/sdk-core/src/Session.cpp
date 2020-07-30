@@ -4,6 +4,7 @@
 #include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Unlock/Requester.hpp>
@@ -72,6 +73,8 @@ Session::Requesters::Requesters(Client* client)
 {
 }
 
+Session::~Session() = default;
+
 Client& Session::client()
 {
   return *_client;
@@ -79,7 +82,11 @@ Client& Session::client()
 
 Session::Session(std::string url, Network::SdkInfo info)
   : _client(std::make_unique<Client>(
-        Network::ConnectionFactory::create(std::move(url), std::move(info)))),
+        Network::ConnectionFactory::create(url, info))),
+    _httpClient(std::make_unique<HttpClient>(
+        fetchpp::http::url(url),
+        info,
+        tc::get_default_executor().get_io_service().get_executor())),
     _pusher(_client.get()),
     _requesters(_client.get()),
     _storage(nullptr),
