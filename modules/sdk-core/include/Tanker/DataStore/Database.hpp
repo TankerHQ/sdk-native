@@ -3,12 +3,10 @@
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-#include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
 #include <Tanker/DeviceKeys.hpp>
-#include <Tanker/Groups/Group.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
@@ -77,14 +75,9 @@ public:
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId();
 
-  tc::cotask<void> putInternalGroup(InternalGroup const& group);
-  tc::cotask<void> putExternalGroup(ExternalGroup const& group);
-  tc::cotask<std::optional<Group>> findGroupByGroupId(
-      Trustchain::GroupId const& groupId);
-  tc::cotask<std::optional<Group>> findGroupByGroupPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey);
-
   tc::cotask<void> nuke();
+
+  sqlpp::sqlite3::connection* connection();
 
 private:
   ConnPtr _db;

@@ -57,48 +57,6 @@ Users::Device rowToDevice(Row const& row)
           row.is_ghost_device,
           row.is_revoked};
 }
-
-template <typename T>
-InternalGroup rowToInternalGroup(T const& row)
-{
-  assert(!row.private_signature_key.is_null() &&
-         !row.private_encryption_key.is_null());
-
-  return InternalGroup{
-      DataStore::extractBlob<GroupId>(row.group_id),
-      {DataStore::extractBlob<Crypto::PublicSignatureKey>(
-           row.public_signature_key),
-       DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-           row.private_signature_key)},
-      {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-           row.public_encryption_key),
-       DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-           row.private_encryption_key)},
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
-}
-
-template <typename T>
-ExternalGroup rowToExternalGroup(T const& row)
-{
-  return ExternalGroup{
-      DataStore::extractBlob<GroupId>(row.group_id),
-      DataStore::extractBlob<Crypto::PublicSignatureKey>(
-          row.public_signature_key),
-      DataStore::extractBlob<Crypto::SealedPrivateSignatureKey>(
-          row.encrypted_private_signature_key),
-      DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-          row.public_encryption_key),
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
-}
-
-template <typename T>
-Group rowToGroup(T const& row)
-{
-  if (row.encrypted_private_signature_key.is_null())
-    return rowToInternalGroup(row);
-  else
-    return rowToExternalGroup(row);
-}
 }
 
 using UserKeysTable = DbModels::user_keys::user_keys;
@@ -614,76 +572,9 @@ tc::cotask<std::optional<Trustchain::DeviceId>> Database::getDeviceId()
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
-tc::cotask<void> Database::putInternalGroup(InternalGroup const& group)
+sqlpp::sqlite3::connection* Database::connection()
 {
-  FUNC_TIMER(DB);
-  GroupsTable groups;
-
-  (*_db)(sqlpp::sqlite3::insert_or_replace_into(groups).set(
-      groups.group_id = group.id.base(),
-      groups.public_signature_key = group.signatureKeyPair.publicKey.base(),
-      groups.private_signature_key = group.signatureKeyPair.privateKey.base(),
-      groups.encrypted_private_signature_key = sqlpp::null,
-      groups.public_encryption_key = group.encryptionKeyPair.publicKey.base(),
-      groups.private_encryption_key = group.encryptionKeyPair.privateKey.base(),
-      groups.last_group_block_hash = group.lastBlockHash.base()));
-  TC_RETURN();
-}
-
-tc::cotask<void> Database::putExternalGroup(ExternalGroup const& group)
-{
-  FUNC_TIMER(DB);
-
-  GroupsTable groups;
-
-  (*_db)(sqlpp::sqlite3::insert_or_replace_into(groups).set(
-      groups.group_id = group.id.base(),
-      groups.public_signature_key = group.publicSignatureKey.base(),
-      groups.private_signature_key = sqlpp::null,
-      groups.encrypted_private_signature_key =
-          group.encryptedPrivateSignatureKey.base(),
-      groups.public_encryption_key = group.publicEncryptionKey.base(),
-      groups.private_encryption_key = sqlpp::null,
-      groups.last_group_block_hash = group.lastBlockHash.base()));
-
-  TC_RETURN();
-}
-
-tc::cotask<std::optional<Group>> Database::findGroupByGroupId(
-    GroupId const& groupId)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(select(all_of(groups))
-                         .from(groups)
-                         .where(groups.group_id == groupId.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToGroup(row));
-}
-
-tc::cotask<std::optional<Group>> Database::findGroupByGroupPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& publicEncryptionKey)
-{
-  FUNC_TIMER(DB);
-  GroupsTable groups{};
-
-  auto rows = (*_db)(
-      select(all_of(groups))
-          .from(groups)
-          .where(groups.public_encryption_key == publicEncryptionKey.base()));
-
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-
-  auto const& row = *rows.begin();
-
-  TC_RETURN(rowToGroup(row));
+  return _db.get();
 }
 
 tc::cotask<Database> createDatabase(
