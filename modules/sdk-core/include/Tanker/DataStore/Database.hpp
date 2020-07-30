@@ -9,22 +9,6 @@ namespace Tanker
 {
 namespace DataStore
 {
-class RecordNotFound : public std::exception
-{
-public:
-  RecordNotFound(std::string msg) : _msg(std::move(msg))
-  {
-  }
-
-  char const* what() const noexcept override
-  {
-    return _msg.c_str();
-  }
-
-private:
-  std::string _msg;
-};
-
 class Database
 {
 public:
