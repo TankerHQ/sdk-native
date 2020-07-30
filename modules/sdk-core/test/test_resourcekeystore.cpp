@@ -13,7 +13,6 @@
 
 using namespace Tanker;
 
-#ifndef EMSCRIPTEN
 #include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
@@ -50,7 +49,6 @@ OldResourceKeys setupResourceKeysMigration(DataStore::Connection& db)
   return {b64Mac, b64ResourceKey};
 }
 }
-#endif
 
 TEST_CASE("Resource Keys Store")
 {
@@ -120,7 +118,6 @@ TEST_CASE("Resource Keys Store")
   }
 }
 
-#ifndef EMSCRIPTEN
 TEST_CASE("Migration")
 {
   auto const dbPtr = DataStore::createConnection(":memory:");
@@ -149,4 +146,3 @@ TEST_CASE("Migration")
              mgs::base64::decode<Crypto::SymmetricKey>(oldKeys.b64ResourceKey));
   }
 }
-#endif

@@ -41,11 +41,6 @@ class TankerConan(ConanFile):
         if not self.develop:
             return False
 
-        # Code generated with emscripten must be tested with
-        # Javascript code, not C++
-        if self.settings.os == "Emscripten":
-            return False
-
         # Usually, tests cannot be run when cross-compiling,
         # _except_ when cross-compiling from win64 to win32 with mingw
         # on Windows, so check for the special use case before
@@ -119,12 +114,6 @@ class TankerConan(ConanFile):
         self.copy("license*", dst="licenses", folder=True, ignore_case=True)
         self.copy("copying", dst="licenses", folder=True, ignore_case=True)
 
-    def configure(self):
-        if self.settings.os == "Emscripten":
-            self.options["Boost"].header_only = True
-            self.options["emscripten-toolchain"].filesystem = False
-        self.options["*"].fPIC = self.options.fPIC
-
     def build_requirements(self):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
@@ -157,7 +146,7 @@ class TankerConan(ConanFile):
         self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
         self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tools
         self.cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
-        if self.settings.os not in ["Windows", "Emscripten"]:
+        if self.settings.os != "Windows":
             # On Android and iOS OpenSSL can't use system ca-certificates, so we
             # ship mozilla's cacert.pem instead on all platforms but windows
             self.cmake.definitions["TANKER_EMBED_CERTIFICATES"] = True

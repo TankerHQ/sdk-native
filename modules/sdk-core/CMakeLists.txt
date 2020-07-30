@@ -4,48 +4,35 @@ project(TankerSDK-Core)
 
 option(TANKER_BUILD_WITH_SSL "Tanker uses ssl" ON)
 
-if (NOT EMSCRIPTEN)
-  set(TANKER_CORE_DATASTORE_SRC
-    include/Tanker/DataStore/Connection.hpp
-    include/Tanker/DataStore/Database.hpp
-    include/Tanker/DataStore/Table.hpp
-    include/Tanker/DataStore/Utils.hpp
-    include/Tanker/DataStore/Version.hpp
-    include/Tanker/DataStore/Errors/Errc.hpp
-    include/Tanker/DataStore/Errors/ErrcCategory.hpp
-    include/Tanker/DbModels/DeviceKeyStore.hpp
-    include/Tanker/DbModels/Groups.hpp
-    include/Tanker/DbModels/ResourceKeys.hpp
-    include/Tanker/DbModels/ProvisionalUserKeys.hpp
-    include/Tanker/DbModels/TrustchainInfo.hpp
-    include/Tanker/DbModels/UserKeys.hpp
-    include/Tanker/DbModels/Versions.hpp
-    include/Tanker/DbModels/Version.hpp
+set(TANKER_CORE_DATASTORE_SRC
+  include/Tanker/DataStore/Connection.hpp
+  include/Tanker/DataStore/Database.hpp
+  include/Tanker/DataStore/Table.hpp
+  include/Tanker/DataStore/Utils.hpp
+  include/Tanker/DataStore/Version.hpp
+  include/Tanker/DataStore/Errors/Errc.hpp
+  include/Tanker/DataStore/Errors/ErrcCategory.hpp
+  include/Tanker/DbModels/DeviceKeyStore.hpp
+  include/Tanker/DbModels/Groups.hpp
+  include/Tanker/DbModels/ResourceKeys.hpp
+  include/Tanker/DbModels/ProvisionalUserKeys.hpp
+  include/Tanker/DbModels/TrustchainInfo.hpp
+  include/Tanker/DbModels/UserKeys.hpp
+  include/Tanker/DbModels/Versions.hpp
+  include/Tanker/DbModels/Version.hpp
 
-    src/DataStore/Connection.cpp
-    src/DataStore/Database.cpp
-    src/DataStore/Table.cpp
-    src/DbModels/DeviceKeyStore.cpp
-    src/DbModels/Groups.cpp
-    src/DbModels/ResourceKeys.cpp
-    src/DbModels/ProvisionalUserKeys.cpp
-    src/DbModels/TrustchainInfo.cpp
-    src/DbModels/UserKeys.cpp
-    src/DbModels/Versions.cpp
-    src/DbModels/Version.cpp
-  )
-else()
-  set(TANKER_CORE_DATASTORE_SRC
-    include/Tanker/DataStore/JsDatabase.hpp
-    src/DataStore/JsDatabase.cpp
-  )
-  set(TANKER_CORE_EXTRA_SRC
-    include/Tanker/Emscripten/Error.hpp
-    include/Tanker/Emscripten/Helpers.hpp
-    src/Emscripten/Error.cpp
-    src/Emscripten/Helpers.cpp
-  )
-endif()
+  src/DataStore/Connection.cpp
+  src/DataStore/Database.cpp
+  src/DataStore/Table.cpp
+  src/DbModels/DeviceKeyStore.cpp
+  src/DbModels/Groups.cpp
+  src/DbModels/ResourceKeys.cpp
+  src/DbModels/ProvisionalUserKeys.cpp
+  src/DbModels/TrustchainInfo.cpp
+  src/DbModels/UserKeys.cpp
+  src/DbModels/Versions.cpp
+  src/DbModels/Version.cpp
+)
 
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
@@ -230,12 +217,10 @@ if(TANKER_BUILD_WITH_SSL)
   target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
 endif()
 
-if (NOT EMSCRIPTEN)
-  target_link_libraries(tankercore
-    CONAN_PKG::socket.io-client-cpp
-    CONAN_PKG::sqlpp11-connector-sqlite3
-  )
-endif()
+target_link_libraries(tankercore
+  CONAN_PKG::socket.io-client-cpp
+  CONAN_PKG::sqlpp11-connector-sqlite3
+)
 
 install(TARGETS tankercore
   EXPORT tanker
@@ -244,14 +229,6 @@ install(TARGETS tankercore
   ARCHIVE DESTINATION lib
 )
 
-
 if(BUILD_TESTS)
   add_subdirectory(test)
-endif()
-
-if(EMSCRIPTEN)
-  add_executable(emtanker
-    src/emtanker.cpp
-    )
-  target_link_libraries(emtanker tankercore)
 endif()

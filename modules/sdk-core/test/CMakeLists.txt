@@ -1,6 +1,4 @@
-if (NOT EMSCRIPTEN)
-  set(TEST_TANKER_EXTRA_SRC test_datastore.cpp)
-endif()
+set(TEST_TANKER_EXTRA_SRC test_datastore.cpp)
 
 add_executable(test_tanker
   test_groupstore.cpp

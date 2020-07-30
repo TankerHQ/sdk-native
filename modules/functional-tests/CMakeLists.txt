@@ -2,11 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 
 project(functional-tests)
 
-if (NOT EMSCRIPTEN)
-  set(_main_cpp main_functional.cpp)
-else ()
-  set(_main_cpp main_functional_emscripten.cpp)
-endif()
+set(_main_cpp main_functional.cpp)
 
 add_executable(test_functional
   ${_main_cpp}
