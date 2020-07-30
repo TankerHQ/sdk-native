@@ -30,13 +30,12 @@ AsyncCore* makeCore(std::string trustchainId,
 {
   try
   {
-    return new AsyncCore(
-        std::move(url),
-        SdkInfo{"client-emscripten",
-                mgs::base64::decode<Trustchain::TrustchainId>(
-                    std::move(trustchainId)),
-                "0.0.1"},
-        std::move(writablePath));
+    return new AsyncCore(std::move(url),
+                         SdkInfo{"client-emscripten",
+                                 mgs::base64::decode<Trustchain::TrustchainId>(
+                                     std::move(trustchainId)),
+                                 "0.0.1"},
+                         std::move(writablePath));
   }
   catch (std::exception const& e)
   {
@@ -100,8 +99,7 @@ emscripten::val CoreRegisterIdentity(AsyncCore& core,
       tc::sync([&] {
         return core.registerIdentity(
             jverificationToVerification(jverification));
-      })
-          .unwrap());
+      }).unwrap());
 }
 
 emscripten::val CoreVerifyIdentity(AsyncCore& core,
@@ -110,8 +108,7 @@ emscripten::val CoreVerifyIdentity(AsyncCore& core,
   return Emscripten::tcFutureToJsPromise(
       tc::sync([&] {
         return core.verifyIdentity(jverificationToVerification(jverification));
-      })
-          .unwrap());
+      }).unwrap());
 }
 
 emscripten::val CoreStatus(AsyncCore& core)
@@ -210,8 +207,7 @@ emscripten::val CoreVerifyProvisionalIdentity(
       tc::sync([&] {
         return core.verifyProvisionalIdentity(
             jverificationToVerification(jverification));
-      })
-          .unwrap());
+      }).unwrap());
 }
 
 emscripten::val CoreGenerateVerificationKey(AsyncCore& core)
@@ -230,8 +226,7 @@ emscripten::val CoreSetVerificationMethod(AsyncCore& core,
       tc::sync([&] {
         return core.setVerificationMethod(
             jverificationToVerification(jverification));
-      })
-          .unwrap());
+      }).unwrap());
 }
 
 emscripten::val CoreGetVerificationMethods(AsyncCore& core)

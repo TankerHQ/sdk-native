@@ -30,13 +30,12 @@ std::string generateUserToken(std::string const& trustchainIdString,
     throw Errors::Exception(Errc::InvalidTrustchainPrivateKey);
 
   auto const trustchainId =
-      mgs::base64::decode<Trustchain::TrustchainId>(
-          trustchainIdString);
+      mgs::base64::decode<Trustchain::TrustchainId>(trustchainIdString);
   return mgs::base64::encode(
       nlohmann::json(
           generateUserToken(
-              mgs::base64::decode<
-                  Tanker::Crypto::PrivateSignatureKey>(trustchainPrivateKey),
+              mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+                  trustchainPrivateKey),
               Tanker::obfuscateUserId(userId, trustchainId)))
           .dump());
 }

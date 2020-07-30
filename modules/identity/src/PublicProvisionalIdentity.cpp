@@ -4,8 +4,8 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 
-#include <mgs/base64.hpp>
 #include <fmt/format.h>
+#include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker

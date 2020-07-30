@@ -28,13 +28,13 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
 {
   std::vector<Trustchain::UserAction> entries;
   entries.reserve(blocks.size());
-  std::transform(std::begin(blocks),
-                 std::end(blocks),
-                 std::back_inserter(entries),
-                 [](auto const& block) {
-                   return Trustchain::deserializeUserAction(
-                       mgs::base64::decode(block));
-                 });
+  std::transform(
+      std::begin(blocks),
+      std::end(blocks),
+      std::back_inserter(entries),
+      [](auto const& block) {
+        return Trustchain::deserializeUserAction(mgs::base64::decode(block));
+      });
 
   return entries;
 }

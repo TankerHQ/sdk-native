@@ -124,8 +124,7 @@ TEST_CASE("contact user keys migration")
         contactUserKeys.public_encryption_key);
 
     CHECK_EQ(userId,
-             mgs::base64::decode<Trustchain::UserId>(
-                 oldKeys.b64UserId));
+             mgs::base64::decode<Trustchain::UserId>(oldKeys.b64UserId));
     CHECK_EQ(pubK,
              mgs::base64::decode<Crypto::PublicEncryptionKey>(
                  oldKeys.b64PublicEncryptionKey));

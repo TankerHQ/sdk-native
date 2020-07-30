@@ -91,8 +91,8 @@ TEST_CASE("print a formated log")
   {
     auto resourceId =
         Tanker::make<Tanker::Trustchain::ResourceId>("awesome, isn't it?");
-    REQUIRE(fmt::format("my resourceId is {}",
-                        mgs::base64::encode(resourceId)) ==
-            fmt::format("my resourceId is {}", resourceId));
+    REQUIRE(
+        fmt::format("my resourceId is {}", mgs::base64::encode(resourceId)) ==
+        fmt::format("my resourceId is {}", resourceId));
   }
 }

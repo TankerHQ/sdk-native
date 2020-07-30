@@ -90,8 +90,7 @@ static void signup(benchmark::State& state)
       core.reset();
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(signup)->Unit(benchmark::kMillisecond)->UseRealTime();
 
@@ -116,8 +115,7 @@ static void signup_signout(benchmark::State& state)
       core.reset();
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(signup_signout)->Unit(benchmark::kMillisecond)->UseRealTime();
 
@@ -142,8 +140,7 @@ static void signin(benchmark::State& state)
       TC_AWAIT(core->stop());
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(signin)->Unit(benchmark::kMillisecond)->UseRealTime();
 
@@ -172,8 +169,7 @@ static void multi(benchmark::State& state)
       TC_AWAIT(core->stop());
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(multi)->Unit(benchmark::kMillisecond)->UseRealTime();
 
@@ -193,8 +189,7 @@ static void encrypt(benchmark::State& state)
     for (auto _ : state)
       for (auto i = 0; i < state.range(0); ++i)
         TC_AWAIT(core->encrypt(&p.second[0], p.first));
-  })
-      .get();
+  }).get();
   AWAIT_VOID(core->stop());
 }
 BENCHMARK(encrypt)
@@ -221,8 +216,7 @@ static void create_group(benchmark::State& state)
     TC_AWAIT(laptop->createGroup(users));
     for (auto _ : state)
       TC_AWAIT(laptop->createGroup(users));
-  })
-      .get();
+  }).get();
   AWAIT_VOID(laptop->stop());
 }
 BENCHMARK(create_group)
@@ -255,8 +249,7 @@ static void pull_and_create_group(benchmark::State& state)
       laptop.reset();
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(pull_and_create_group)
     ->Arg(1)
@@ -289,8 +282,7 @@ static void share_to_unverified_users(benchmark::State& state)
       laptop.reset();
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(share_to_unverified_users)
     ->Arg(1)
@@ -319,8 +311,7 @@ static void share_to_users(benchmark::State& state)
     for (auto _ : state)
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, publicIdentities));
     TC_AWAIT(laptop->stop());
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(share_to_users)
     ->Arg(1)
@@ -349,8 +340,7 @@ static void share_to_group(benchmark::State& state)
     TC_AWAIT(laptop->encrypt(&p.second[0], p.first, {}, {sgroupId}));
     for (auto _ : state)
       TC_AWAIT(laptop->encrypt(&p.second[0], p.first, {}, {sgroupId}));
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(share_to_group)
     ->Arg(1)
@@ -385,8 +375,7 @@ static void share_to_unverified_group(benchmark::State& state)
       laptop.reset();
       state.ResumeTiming();
     }
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(share_to_unverified_group)
     ->Arg(1)
@@ -415,8 +404,7 @@ static void add_to_group(benchmark::State& state)
 
     for (auto _ : state)
       TC_AWAIT(laptop->updateGroupMembers(sgroupId, users));
-  })
-      .get();
+  }).get();
 }
 BENCHMARK(add_to_group)
     ->Arg(1)

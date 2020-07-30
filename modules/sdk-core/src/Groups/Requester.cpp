@@ -19,13 +19,13 @@ tc::cotask<std::vector<Trustchain::GroupAction>> doBlockRequest(
 
   std::vector<Trustchain::GroupAction> entries;
   entries.reserve(blocks.size());
-  std::transform(std::begin(blocks),
-                 std::end(blocks),
-                 std::back_inserter(entries),
-                 [](auto const& block) {
-                   return Trustchain::deserializeGroupAction(
-                       mgs::base64::decode(block));
-                 });
+  std::transform(
+      std::begin(blocks),
+      std::end(blocks),
+      std::back_inserter(entries),
+      [](auto const& block) {
+        return Trustchain::deserializeGroupAction(mgs::base64::decode(block));
+      });
 
   TC_RETURN(entries);
 }

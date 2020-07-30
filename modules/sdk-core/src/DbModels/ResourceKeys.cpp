@@ -30,11 +30,9 @@ void migrate1To2(DataStore::Connection& db)
   for (auto const& row : rows)
   {
     auto const resourceId =
-        mgs::base64::decode<Trustchain::ResourceId>(
-            extractBlob(row.mac));
-    auto const resourceKey =
-        mgs::base64::decode<Crypto::SymmetricKey>(
-            extractBlob(row.resource_key));
+        mgs::base64::decode<Trustchain::ResourceId>(extractBlob(row.mac));
+    auto const resourceKey = mgs::base64::decode<Crypto::SymmetricKey>(
+        extractBlob(row.resource_key));
 
     db(update(tab)
            .set(tab.mac = resourceId.base(),

@@ -80,8 +80,8 @@ void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity)
       mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
   j["public_encryption_key"] =
       mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
-  j["private_encryption_key"] = mgs::base64::encode(
-      identity.appEncryptionKeyPair.privateKey);
+  j["private_encryption_key"] =
+      mgs::base64::encode(identity.appEncryptionKeyPair.privateKey);
 }
 
 std::string to_string(SecretProvisionalIdentity const& identity)

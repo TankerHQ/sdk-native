@@ -24,8 +24,7 @@ struct adl_serializer<
   template <typename Json>
   static CryptoType from_json(Json const& j)
   {
-    return mgs::base64::decode<CryptoType>(
-        j.template get<std::string>());
+    return mgs::base64::decode<CryptoType>(j.template get<std::string>());
   }
 
   template <typename Json>

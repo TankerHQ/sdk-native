@@ -30,12 +30,10 @@ void migrate1To2(DataStore::Connection& db)
   auto rows = db(select(all_of(tab)).from(tab).unconditionally());
   for (auto const& row : rows)
   {
-    auto const pubK =
-        mgs::base64::decode<Crypto::PublicEncryptionKey>(
-            extractBlob(row.public_encryption_key));
-    auto const privK =
-        mgs::base64::decode<Crypto::PrivateEncryptionKey>(
-            extractBlob(row.private_encryption_key));
+    auto const pubK = mgs::base64::decode<Crypto::PublicEncryptionKey>(
+        extractBlob(row.public_encryption_key));
+    auto const privK = mgs::base64::decode<Crypto::PrivateEncryptionKey>(
+        extractBlob(row.private_encryption_key));
 
     db(update(tab)
            .set(tab.public_encryption_key = pubK.base(),
