@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Tanker/Config/Config.hpp>
-#include <Tanker/Log/LogHandler.hpp>
+#include <Tanker/Log/Level.hpp>
 
 #include <fmt/core.h>
 
@@ -10,11 +10,17 @@
 #define TLOG_CATEGORY(name) \
   static constexpr auto TANKER_LOG_CATEGORY TANKER_MAYBE_UNUSED = #name
 
-namespace Tanker
+namespace Tanker::Log
 {
-namespace Log
-{
+void format(Log::Level level,
+            char const* cat,
+            char const* file,
+            std::uint32_t line,
+            fmt::string_view format,
+            fmt::format_args args);
 
+namespace detail
+{
 template <typename... Args>
 void format(Log::Level level,
             char const* cat,
@@ -23,25 +29,18 @@ void format(Log::Level level,
             fmt::string_view format,
             Args const&... args)
 {
-  auto const message = fmt::vformat(format, {fmt::make_format_args(args...)});
-  auto const record = Record{
-      cat,
-      level,
-      file,
-      line,
-      message.c_str(),
-  };
-  detail::currentHandler(record);
+  Tanker::Log::format(
+      level, cat, file, line, format, fmt::make_format_args(args...));
 }
 }
 }
 
-#define TLOG(LEVEL, ...)                           \
-  Tanker::Log::format((Tanker::Log::Level::LEVEL), \
-                      (TANKER_LOG_CATEGORY),       \
-                      __FILE__,                    \
-                      __LINE__,                    \
-                      __VA_ARGS__)
+#define TLOG(LEVEL, ...)                                   \
+  Tanker::Log::detail::format((Tanker::Log::Level::LEVEL), \
+                              (TANKER_LOG_CATEGORY),       \
+                              __FILE__,                    \
+                              __LINE__,                    \
+                              __VA_ARGS__)
 
 #define TDEBUG(...) TLOG(Debug, __VA_ARGS__)
 
