@@ -9,7 +9,6 @@
 #include <string>
 #include <system_error>
 #include <type_traits>
-#include <vector>
 
 namespace Tanker
 {
@@ -36,13 +35,18 @@ private:
   static std::string backtraceAsString();
 };
 
+TANKER_WARN_UNUSED_RESULT Exception formatEx(std::error_code ec,
+                                             fmt::string_view format,
+                                             fmt::format_args args);
+
 template <typename Code, typename... Args>
 TANKER_WARN_UNUSED_RESULT auto formatEx(Code c,
                                         fmt::string_view format,
                                         Args const&... args)
     -> std::enable_if_t<std::is_error_code_enum<Code>::value, Exception>
 {
-  return Exception(c, fmt::vformat(format, {fmt::make_format_args(args...)}));
+  return formatEx(
+      static_cast<std::error_code>(c), format, fmt::make_format_args(args...));
 }
 
 template <typename... Args>
@@ -50,8 +54,7 @@ TANKER_WARN_UNUSED_RESULT Exception formatEx(Errc c,
                                              fmt::string_view format,
                                              Args const&... args)
 {
-  return Exception(make_error_code(c),
-                   fmt::vformat(format, {fmt::make_format_args(args...)}));
+  return formatEx(make_error_code(c), format, fmt::make_format_args(args...));
 }
 }
 }
