@@ -140,7 +140,8 @@ tc::cotask<void> Requester::authenticate(
   {
     if (ex.errorCode().category() == Errors::ServerErrcCategory())
       throw Errors::formatEx(Errors::Errc::InternalError,
-                             "device authentication failed");
+                             "device authentication failed {}",
+                             ex.what());
   }
 }
 

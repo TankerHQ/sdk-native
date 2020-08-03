@@ -118,11 +118,18 @@ tc::cotask<nlohmann::json> Client::emit(std::string const& eventName,
   {
     auto const message = error_it->at("message").get<std::string>();
     auto const code = error_it->at("code").get<std::string>();
+    auto const traceId = error_it->at("trace_id").get<std::string>();
     auto const serverErrorIt = serverErrorMap.find(code);
     if (serverErrorIt == serverErrorMap.end())
-      throw Errors::formatEx(
-          ServerErrc::UnknownError, "code: {}, message: {}", code, message);
-    throw Errors::Exception(serverErrorIt->second, message);
+      throw Errors::formatEx(ServerErrc::UnknownError,
+                             R"=(code: {}, message: "{}", trace_id "{})=",
+                             code,
+                             message,
+                             traceId);
+    throw Errors::formatEx(serverErrorIt->second,
+                           R"=(message "{}", trace_id "{}")=",
+                           message,
+                           traceId);
   }
   TC_RETURN(message);
 }

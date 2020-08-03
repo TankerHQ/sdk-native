@@ -404,9 +404,10 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
       if (e.errorCode() == ServerErrc::VerificationKeyNotFound)
       {
         // the server does not send an error message
-        throw Errors::Exception(make_error_code(Errc::PreconditionFailed),
-                                "cannot call setVerificationMethod after a "
-                                "verification key has been used");
+        throw Errors::formatEx(Errc::PreconditionFailed,
+                               "Cannot call setVerificationMethod after a "
+                               "verification key has been used. {}",
+                               e.what());
       }
       throw;
     }
