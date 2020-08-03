@@ -45,9 +45,10 @@ Exception::Exception(std::error_code ec, std::string const& message)
 std::string Exception::formatError(std::error_code ec,
                                    std::string const& message)
 {
-  return fmt::format(TFMT("{:s}/{:s}: {:s}"),
+  return fmt::format(TFMT("{:s}::{:s}({:s}): {:s}"),
                      ec.default_error_condition().category().name(),
                      ec.category().name(),
+                     ec.message(),
                      message);
 }
 
