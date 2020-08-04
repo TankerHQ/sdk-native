@@ -11,7 +11,6 @@ add_executable(test_functional
   test_groups.cpp
   test_revocation.cpp
   test_encryption_session.cpp
-  test_http
 )
 
 target_link_libraries(test_functional
@@ -21,11 +20,5 @@ target_link_libraries(test_functional
   tankercore
   CONAN_PKG::doctest-async
 )
-if (TANKER_BUILD_WITH_SSL)
-  target_link_libraries(test_functional
-  CONAN_PKG::fetchpp
-)
-endif()
-
 
 add_test(NAME test_functional COMMAND test_functional --duration=true)
