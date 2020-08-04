@@ -5,7 +5,10 @@ project(Log)
 add_library(tankerlog STATIC
   ${PROJECT_SOURCE_DIR}/include/Tanker/Log/Log.hpp
   ${PROJECT_SOURCE_DIR}/include/Tanker/Log/LogHandler.hpp
+  ${PROJECT_SOURCE_DIR}/include/Tanker/Log/Record.hpp
+  ${PROJECT_SOURCE_DIR}/include/Tanker/Log/Level.hpp
 
+  src/Log.cpp
   src/LogHandler.cpp
 )
 

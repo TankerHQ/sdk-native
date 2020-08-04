@@ -15,7 +15,7 @@ TEST_CASE("Serialization test vectors")
   SUBCASE("it should serialize/deserialize a KeyPublishToProvisionalUser")
   {
     // clang-format off
-    std::vector<std::uint8_t> const serializedKeyPublishToProvisionalUser = {
+    std::array<std::uint8_t const, 341> constexpr serializedKeyPublishToProvisionalUser = {
       // varint version
       0x01,
       // varint index
@@ -86,9 +86,11 @@ TEST_CASE("Serialization test vectors")
                                          hash,
                                          signature);
 
-    CHECK(Serialization::serialize(kp) ==
-          serializedKeyPublishToProvisionalUser);
-    CHECK(Serialization::deserialize<KeyPublishToProvisionalUser>(
-              serializedKeyPublishToProvisionalUser) == kp);
+    auto const skp = Serialization::serialize(kp);
+    CHECK(std::equal(
+        skp.begin(), skp.end(), serializedKeyPublishToProvisionalUser.begin()));
+    CHECK_EQ(Serialization::deserialize<KeyPublishToProvisionalUser>(
+                 serializedKeyPublishToProvisionalUser),
+             kp);
   }
 }
