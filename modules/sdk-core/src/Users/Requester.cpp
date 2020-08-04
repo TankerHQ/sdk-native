@@ -2,13 +2,16 @@
 #include <Tanker/Users/Requester.hpp>
 
 #include <Tanker/Client.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Errors/ServerErrcCategory.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <fmt/format.h>
 #include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
@@ -56,7 +59,8 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
 }
 }
 
-Requester::Requester(Client* client) : _client(client)
+Requester::Requester(Client* client, HttpClient* httpClient)
+  : _client(client), _httpClient(httpClient)
 {
 }
 
@@ -105,7 +109,7 @@ Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
   TC_RETURN(ret);
 }
 
-tc::cotask<void> Requester::authenticate(
+tc::cotask<void> Requester::authenticateSocketIO(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
     Crypto::SignatureKeyPair const& userSignatureKeyPair)
@@ -119,8 +123,8 @@ tc::cotask<void> Requester::authenticate(
   if (!boost::algorithm::starts_with(
           challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
   {
-    throw formatEx(
-        Errors::Errc::InternalError,
+    throw Errors::Exception(
+        make_error_code(Errors::Errc::InternalError),
         "received auth challenge does not contain mandatory prefix, server "
         "may not be up to date, or we may be under attack.");
   }
@@ -143,6 +147,41 @@ tc::cotask<void> Requester::authenticate(
                              "device authentication failed {}",
                              ex.what());
   }
+}
+
+tc::cotask<void> Requester::authenticate(
+    Trustchain::DeviceId const& deviceId,
+    Crypto::SignatureKeyPair const& userSignatureKeyPair)
+{
+  FUNC_TIMER(Net);
+  auto const baseTarget =
+      fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", deviceId));
+  auto const challenge =
+      TC_AWAIT(_httpClient->asyncPost(fmt::format("{}/challenges", baseTarget)))
+          .value()
+          .at("challenge")
+          .get<std::string>();
+  // NOTE: It is MANDATORY to check this prefix is valid, or the server
+  // could get us to sign anything!
+  if (!boost::algorithm::starts_with(
+          challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
+  {
+    throw formatEx(
+        Errors::Errc::InternalError,
+        "received auth challenge does not contain mandatory prefix, server "
+        "may not be up to date, or we may be under attack.");
+  }
+  auto const signature =
+      Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
+                   userSignatureKeyPair.privateKey);
+  auto accessToken =
+      TC_AWAIT(_httpClient->asyncPost(
+                   fmt::format("{}/sessions", baseTarget),
+                   {{"signature", signature}, {"challenge", challenge}}))
+          .value()
+          .at("access_token")
+          .get<std::string>();
+  _httpClient->setAccessToken(std::move(accessToken));
 }
 
 tc::cotask<std::vector<

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Unlock/IRequester.hpp>
@@ -10,6 +11,7 @@
 namespace Tanker
 {
 class Client;
+class HttpClient;
 
 namespace Unlock
 {
@@ -21,7 +23,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client);
+  Requester(Client* client, HttpClient* httpClient);
 
   tc::cotask<UserStatusResult> userStatus(
       Trustchain::TrustchainId const& trustchainId,
@@ -50,8 +52,13 @@ public:
       Unlock::Request const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey) override;
 
+  tc::cotask<void> createDevice(
+      Trustchain::TrustchainId const& trustchainId,
+      gsl::span<uint8_t const> deviceCreation) override;
+
 private:
   Client* _client;
+  HttpClient* _httpClient;
 };
 }
 }

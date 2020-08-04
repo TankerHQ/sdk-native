@@ -42,8 +42,8 @@ public:
 
   using SessionClosedHandler = std::function<void()>;
 
-  ~Core();
   Core(std::string url, Network::SdkInfo info, std::string writablePath);
+  ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
   tc::cotask<void> registerIdentity(Unlock::Verification const& verification);

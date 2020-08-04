@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
@@ -13,9 +14,14 @@ class UserRequesterStub : public Users::IRequester
 public:
   MAKE_MOCK0(getMe, tc::cotask<GetMeResult>(), override);
   MAKE_MOCK3(
-      authenticate,
+      authenticateSocketIO,
       tc::cotask<void>(Trustchain::TrustchainId const& trustchainId,
                        Trustchain::UserId const& userId,
+                       Crypto::SignatureKeyPair const& userSignatureKeyPair),
+      override);
+  MAKE_MOCK2(
+      authenticate,
+      tc::cotask<void>(Trustchain::DeviceId const& userId,
                        Crypto::SignatureKeyPair const& userSignatureKeyPair),
       override);
   MAKE_MOCK1(getUsers,

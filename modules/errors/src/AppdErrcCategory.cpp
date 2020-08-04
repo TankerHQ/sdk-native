@@ -34,6 +34,8 @@ std::string AppdErrcCategory::message(int c) const
     return "invalid passphrase";
   case AppdErrc::InvalidVerificationCode:
     return "invalid verification code";
+  case AppdErrc::InvalidToken:
+    return "invalid token";
   case AppdErrc::VerificationCodeExpired:
     return "verification code expired";
   case AppdErrc::VerificationCodeNotFound:

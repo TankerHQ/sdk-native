@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
 namespace Tanker
 {
 struct DeviceKeys;
 class Client;
+class HttpClient;
 
 namespace Users
 {
@@ -19,7 +19,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client);
+  Requester(Client* client, HttpClient* httpClient);
 
   tc::cotask<GetMeResult> getMe() override;
   tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
@@ -28,9 +28,12 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
-  tc::cotask<void> authenticate(
+  tc::cotask<void> authenticateSocketIO(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
+      Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
+  tc::cotask<void> authenticate(
+      Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
 
   tc::cotask<std::vector<
@@ -39,6 +42,7 @@ public:
 
 private:
   Client* _client;
+  HttpClient* _httpClient;
 };
 }
 }

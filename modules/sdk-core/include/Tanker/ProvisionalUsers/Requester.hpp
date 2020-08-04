@@ -5,6 +5,7 @@
 namespace Tanker
 {
 class Client;
+class HttpClient;
 }
 
 namespace Tanker::ProvisionalUsers
@@ -17,16 +18,20 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client);
+  Requester(Client* client, HttpClient* httpClient);
 
   tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
-  getClaimBlocks() override;
+  getClaimBlocks(Trustchain::UserId const& userId) override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-  getVerifiedProvisionalIdentityKeys(Crypto::Hash const& hashedEmail) override;
+  getVerifiedProvisionalIdentityKeys() override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getProvisionalIdentityKeys(Unlock::Request const& request) override;
+  tc::cotask<void> claimProvisionalIdentity(
+      Trustchain::Actions::ProvisionalIdentityClaim const& claimAction)
+      override;
 
 private:
   Client* _client;
+  HttpClient* _httpClient;
 };
 }
