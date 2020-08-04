@@ -97,7 +97,7 @@ class TankerConan(ConanFile):
                 "sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
-        self.requires("fmt/6.2.1", private=private)
+        self.requires("fmt/7.0.2", private=private)
         self.requires("gsl-lite/0.36.0", private=private)
         self.requires("nlohmann_json/3.8.0", private=private)
         self.requires("libsodium/1.0.18", private=private)

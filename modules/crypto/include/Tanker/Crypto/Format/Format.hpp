@@ -29,7 +29,7 @@ struct formatter<
   constexpr auto parse(ParserContext& ctx)
   {
     auto it = ctx.begin();
-    if (*it == ':')
+    if (it != ctx.end() && *it == ':')
       ++it;
     auto end = it;
     while (end != ctx.end() && *end != '}')

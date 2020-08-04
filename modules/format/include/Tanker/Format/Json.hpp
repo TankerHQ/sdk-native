@@ -28,6 +28,8 @@ struct formatter<nlohmann::json, char, void>
   template <typename ParseContext>
   constexpr auto parse(ParseContext& ctx)
   {
+    if (ctx.begin() == ctx.end())
+      return ctx.end();
     auto it = ctx.begin();
     if (*it == ':')
       ++it;
