@@ -49,6 +49,7 @@ tc::cotask<void> LocalUserStore::setDeviceId(
 tc::cotask<void> LocalUserStore::putLocalUser(LocalUser const& user)
 {
   TC_AWAIT(putUserKeys(user.userKeys()));
+  TC_AWAIT(setDeviceKeys(user.deviceKeys()));
   TC_AWAIT(setDeviceInitialized());
 }
 
@@ -68,6 +69,15 @@ tc::cotask<void> LocalUserStore::putUserKeys(
 
 tc::cotask<DeviceKeys> LocalUserStore::getDeviceKeys() const
 {
+  auto res = TC_AWAIT(findDeviceKeys());
+  if (!res)
+    throw Errors::AssertionError("no device_keys in database");
+
+  TC_RETURN(std::move(*res));
+}
+
+tc::cotask<std::optional<DeviceKeys>> LocalUserStore::findDeviceKeys() const
+{
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
   auto rows = (*_db->connection())(select(tab.private_signature_key,
@@ -78,11 +88,7 @@ tc::cotask<DeviceKeys> LocalUserStore::getDeviceKeys() const
                                        .from(tab)
                                        .unconditionally());
   if (rows.empty())
-  {
-    auto ret = DeviceKeys::create();
-    TC_AWAIT(setDeviceKeys(ret));
-    TC_RETURN(ret);
-  }
+    TC_RETURN(std::nullopt);
 
   auto const& row = rows.front();
   TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -134,7 +140,7 @@ tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
     TC_RETURN(std::nullopt);
   auto const deviceId = TC_AWAIT(getDeviceId());
   auto const userKeys = TC_AWAIT(getUserKeyPairs());
-  TC_RETURN(std::make_optional(LocalUser(userId, *deviceId, keys, userKeys)));
+  TC_RETURN(std::make_optional(LocalUser(userId, deviceId, keys, userKeys)));
 }
 
 tc::cotask<std::vector<Crypto::EncryptionKeyPair>>
@@ -160,18 +166,17 @@ LocalUserStore::getUserKeyPairs() const
   TC_RETURN(keys);
 }
 
-tc::cotask<std::optional<Trustchain::DeviceId>> LocalUserStore::getDeviceId()
-    const
+tc::cotask<Trustchain::DeviceId> LocalUserStore::getDeviceId() const
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
   auto rows =
       (*_db->connection())(select(tab.device_id).from(tab).unconditionally());
   if (rows.empty())
-    TC_RETURN(std::nullopt);
+    throw Errors::AssertionError("no device_id in database");
   auto const& row = rows.front();
   if (row.device_id.len == 0)
-    TC_RETURN(std::nullopt);
+    throw Errors::AssertionError("empty device_id in database");
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
@@ -184,8 +189,7 @@ tc::cotask<void> LocalUserStore::setDeviceInitialized()
   TC_RETURN();
 }
 
-tc::cotask<void> LocalUserStore::setDeviceKeys(
-    DeviceKeys const& deviceKeys) const
+tc::cotask<void> LocalUserStore::setDeviceKeys(DeviceKeys const& deviceKeys)
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};

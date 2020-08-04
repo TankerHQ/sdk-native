@@ -12,6 +12,8 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 
+#include <boost/algorithm/string/replace.hpp>
+
 #include <fmt/format.h>
 
 namespace Tanker
@@ -49,6 +51,7 @@ Session::Accessors::Accessors(Storage& storage,
     provisionalUsersManager(&localUserAccessor,
                             pusher,
                             requesters,
+                            requesters,
                             &provisionalUsersAccessor,
                             &storage.provisionalUserKeysStore,
                             localUserAccessor.getContext().id()),
@@ -65,11 +68,11 @@ Session::Accessors::Accessors(Storage& storage,
 {
 }
 
-Session::Requesters::Requesters(Client* client)
-  : Users::Requester(client),
+Session::Requesters::Requesters(Client* client, HttpClient* httpClient)
+  : Users::Requester(client, httpClient),
     Groups::Requester(client),
-    ProvisionalUsers::Requester(client),
-    Unlock::Requester(client)
+    ProvisionalUsers::Requester(client, httpClient),
+    Unlock::Requester(client, httpClient)
 {
 }
 
@@ -84,11 +87,13 @@ Session::Session(std::string url, Network::SdkInfo info)
   : _client(std::make_unique<Client>(
         Network::ConnectionFactory::create(url, info))),
     _httpClient(std::make_unique<HttpClient>(
-        fetchpp::http::url(url),
+        fetchpp::http::url(
+            // TODO remove once socket io is removed
+            boost::algorithm::replace_all_copy(url, "api.", "appd.")),
         info,
         tc::get_default_executor().get_io_service().get_executor())),
     _pusher(_client.get()),
-    _requesters(_client.get()),
+    _requesters(_client.get(), _httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
     _identity(std::nullopt),
@@ -197,22 +202,25 @@ void Session::setStatus(Status s)
   _status = s;
 }
 
-tc::cotask<DeviceKeys> Session::getDeviceKeys()
+tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
 {
-  TC_RETURN(TC_AWAIT(storage().localUserStore.getDeviceKeys()));
+  TC_RETURN(TC_AWAIT(storage().localUserStore.findDeviceKeys()));
 }
 
 tc::cotask<void> Session::authenticate()
 {
   TC_AWAIT(_requesters.authenticate(
-      trustchainId(),
-      userId(),
+      TC_AWAIT(storage().localUserStore.getDeviceId()),
       TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
 }
 
 tc::cotask<void> Session::finalizeOpening()
 {
-  TC_AWAIT(authenticate());
+  // TODO temporary, remove once HTTP is used everywhere
+  TC_AWAIT(_requesters.authenticateSocketIO(
+      trustchainId(),
+      userId(),
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
   TC_AWAIT(createAccessors());
   setStatus(Status::Ready);
 }

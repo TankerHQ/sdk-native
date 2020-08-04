@@ -38,7 +38,7 @@ public:
                       Unlock::Requester
 
   {
-    Requesters(Client*);
+    Requesters(Client*, HttpClient*);
   };
 
   struct Storage
@@ -97,7 +97,7 @@ public:
 
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
 
-  tc::cotask<DeviceKeys> getDeviceKeys();
+  tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
   tc::cotask<void> authenticate();
   tc::cotask<void> finalizeOpening();

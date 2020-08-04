@@ -1,5 +1,8 @@
-#include <Tanker/Client.hpp>
 #include <Tanker/Unlock/Requester.hpp>
+
+#include <Tanker/Client.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/HttpClient.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -16,7 +19,8 @@ static void from_json(nlohmann::json const& j, UserStatusResult& result)
     result.lastReset = Crypto::Hash{};
 }
 
-Requester::Requester(Client* client) : _client(client)
+Requester::Requester(Client* client, HttpClient* httpClient)
+  : _client(client), _httpClient(httpClient)
 {
 }
 
@@ -41,12 +45,11 @@ tc::cotask<void> Requester::setVerificationMethod(
     Trustchain::UserId const& userId,
     Unlock::Request const& request)
 {
-  nlohmann::json payload{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"verification", request},
-  };
-  TC_AWAIT(_client->emit("set verification method", payload));
+  nlohmann::json payload{{"verification", request}};
+  auto const target = fmt::format("users/{userId:#S}/verification-methods",
+                                  fmt::arg("userId", userId));
+  TC_AWAIT(_httpClient->asyncPost(target, std::move(payload))).value();
+  TC_RETURN();
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
@@ -88,14 +91,31 @@ tc::cotask<void> Requester::createUser(
     Unlock::Request const& verificationRequest,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
-  nlohmann::json request{
-      {"trustchain_id", trustchainId},
+  nlohmann::json body{
+      {"app_id", trustchainId},
       {"user_id", userId},
-      {"user_creation_block", mgs::base64::encode(userCreation)},
-      {"first_device_block", mgs::base64::encode(firstDevice)},
-      {"encrypted_unlock_key", mgs::base64::encode(encryptedVerificationKey)},
+      {"ghost_device_creation", mgs::base64::encode(userCreation)},
+      {"first_device_creation", mgs::base64::encode(firstDevice)},
+      {"encrypted_verification_key",
+       mgs::base64::encode(encryptedVerificationKey)},
       {"verification", verificationRequest},
   };
-  auto const reply = TC_AWAIT(_client->emit("create user 2", request));
+  auto const target =
+      fmt::format("users/{userId:#S}", fmt::arg("userId", userId));
+
+  auto const res = TC_AWAIT(_httpClient->asyncPost(target, std::move(body)));
+  auto accessToken = res.value().at("access_token").get<std::string>();
+  _httpClient->setAccessToken(std::move(accessToken));
+}
+
+tc::cotask<void> Requester::createDevice(
+    Trustchain::TrustchainId const& trustchainId,
+    gsl::span<uint8_t const> deviceCreation)
+{
+  nlohmann::json body{{"device_creation", mgs::base64::encode(deviceCreation)}};
+
+  auto const res = TC_AWAIT(_httpClient->asyncPost("devices", std::move(body)));
+  auto accessToken = res.value().at("access_token").get<std::string>();
+  _httpClient->setAccessToken(std::move(accessToken));
 }
 }

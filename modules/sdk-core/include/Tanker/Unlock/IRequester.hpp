@@ -1,5 +1,11 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Unlock/Request.hpp>
+
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker::Unlock
@@ -40,6 +46,10 @@ public:
       gsl::span<uint8_t const> firstDevice,
       Unlock::Request const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey) = 0;
+
+  virtual tc::cotask<void> createDevice(
+      Trustchain::TrustchainId const& trustchainId,
+      gsl::span<uint8_t const> deviceCreation) = 0;
 
   virtual ~IRequester() = default;
 };
