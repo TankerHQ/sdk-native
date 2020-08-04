@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Errors/AppdErrc.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 
 #include <fetchpp/client.hpp>
@@ -7,6 +9,8 @@
 #include <fetchpp/http/json_body.hpp>
 #include <fetchpp/http/request.hpp>
 #include <fetchpp/http/url.hpp>
+
+#include <boost/outcome/result.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -17,6 +21,34 @@
 
 namespace Tanker
 {
+struct HttpError
+{
+  int status;
+  Errors::AppdErrc ec;
+  std::string message;
+  std::string traceId;
+};
+}
+
+// This is a hack needed to workaround a GCC 8 bug... remove it when we migrate
+// to GCC 9
+namespace boost::outcome_v2::trait
+{
+template <>
+struct is_error_code_available<::Tanker::HttpError> : std::true_type
+{
+};
+}
+
+namespace Tanker
+{
+void from_json(nlohmann::json const& j, HttpError& e);
+
+std::error_code make_error_code(HttpError const& e);
+[[noreturn]] void outcome_throw_as_system_error_with_payload(HttpError e);
+
+using HttpResult = boost::outcome_v2::result<nlohmann::json, HttpError>;
+
 class HttpClient
 {
 public:
@@ -31,13 +63,13 @@ public:
 
   ~HttpClient();
 
-  tc::cotask<nlohmann::json> asyncGet(std::string_view target);
-  tc::cotask<nlohmann::json> asyncPost(std::string_view target,
-                                       nlohmann::json data);
-  tc::cotask<nlohmann::json> asyncPost(std::string_view target);
-  tc::cotask<nlohmann::json> asyncDelete(std::string_view target);
+  tc::cotask<HttpResult> asyncGet(std::string_view target);
+  tc::cotask<HttpResult> asyncPost(std::string_view target,
+                                   nlohmann::json data);
+  tc::cotask<HttpResult> asyncPost(std::string_view target);
+  tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
-  void setAccessToken(fetchpp::http::authorization::methods const& m);
+  void setAccessToken(std::string accessToken);
 
 private:
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;

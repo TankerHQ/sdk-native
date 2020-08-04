@@ -4,6 +4,8 @@
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Network/SdkInfo.hpp>
 
+#include <fetchpp/http/authorization.hpp>
+#include <fetchpp/http/json_body.hpp>
 #include <tconcurrent/asio_use_future.hpp>
 
 #include <Tanker/Log/Log.hpp>
@@ -16,7 +18,6 @@ namespace Tanker
 {
 using namespace Tanker::Errors;
 namespace http = fetchpp::http;
-using JsonRequest = http::request<http::json_body>;
 
 namespace
 {
@@ -42,6 +43,14 @@ std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"user_not_found", AppdErrc::UserNotFound},
 };
 
+template <typename Request, typename Header>
+void assignHeader(Request& request, Header const& header)
+{
+  for (auto const& field : header)
+    request.set(field.name_string(), field.value());
+  request.set("Accept", "application/json");
+}
+
 AppdErrc getErrorFromCode(std::string_view code)
 {
   if (auto it = appdErrorMap.find(code); it != appdErrorMap.end())
@@ -49,74 +58,94 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-nlohmann::json handleResponse(http::response res)
+HttpResult handleResponse(http::response res)
 {
+  TLOG_CATEGORY(HttpClient);
+
   if (http::to_status_class(res.result()) != http::status_class::successful)
   {
-    if (!(res.result() == http::status::not_found && res.is_json()))
+    if (res.is_json())
     {
-      assert(res.is_json());
       auto const& json = res.json();
-      auto const code =
-          getErrorFromCode(json.at("error").at("code").get<std::string>());
-      throw Errors::formatEx(code,
-                             "status: {}, message: {}",
-                             res.result_int(),
-                             json.at("error").at("message").get<std::string>());
+      return boost::outcome_v2::failure(json.at("error").get<HttpError>());
+    }
+    else
+    {
+      throw Errors::formatEx(
+          Errors::AppdErrc::InternalError, "status: {}", res.result_int());
     }
   }
 
   try
   {
     if (res.result() != http::status::no_content)
-      return res.json();
+      return boost::outcome_v2::success(res.json());
     else
-      return {};
+      return boost::outcome_v2::success(nlohmann::json(nullptr));
   }
   catch (nlohmann::json::exception const& ex)
   {
-    throw Errors::formatEx(Tanker::AppdErrc::InvalidBody,
+    throw Errors::formatEx(Errors::AppdErrc::InternalError,
                            "invalid http response format");
   }
 }
 
-template <typename Request>
-tc::cotask<nlohmann::json> asyncFetch(fetchpp::client& cl, Request req)
+fetchpp::http::request<fetchpp::http::json_body> makeRequest(
+    fetchpp::http::verb verb,
+    fetchpp::http::url url,
+    fetchpp::http::request_header<> const& header,
+    nlohmann::json const& data)
 {
-  TINFO("{} {}", req.method_string(), req.uri().href());
-  // TDEBUG("\n{}", req);
+  auto request = http::make_request<http::request<http::json_body>>(
+      verb, std::move(url), {}, data);
+  assignHeader(request, header);
+  return request;
+}
+
+fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
+    fetchpp::http::verb verb,
+    fetchpp::http::url url,
+    fetchpp::http::request_header<> const& header)
+{
+  auto req = http::make_request(verb, std::move(url));
+  req.prepare_payload();
+  assignHeader(req, header);
+  return req;
+}
+
+template <typename Request>
+tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
+{
+  TLOG_CATEGORY(HttpClient);
+  TINFO("{} {}", req, req.uri().href());
   auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
   TINFO("{} {}", res.result_int(), http::obsolete_reason(res.result()));
-  // TDEBUG("\n{}\n", res);
   TC_RETURN(handleResponse(res));
 }
-
-template <typename Request, typename Header>
-Request&& assignHeader(Request&& request, Header const& header)
-{
-  for (auto const& field : header)
-    request.set(field.name_string(), field.value());
-  request.set("Accept", "application/json");
-  return std::forward<Request>(request);
 }
 
-template <http::verb Verb>
-JsonRequest makeRequest(http::url url,
-                        http::request_header<> const& header,
-                        nlohmann::json data)
+void from_json(nlohmann::json const& j, HttpError& e)
 {
-  return assignHeader(http::make_request<JsonRequest>(
-                          Verb, std::move(url), {}, std::move(data)),
-                      header);
+  auto const strCode = j.at("code").get<std::string>();
+
+  e.ec = getErrorFromCode(strCode);
+  j.at("message").get_to(e.message);
+  j.at("status").get_to(e.status);
+  j.at("trace_id").get_to(e.traceId);
 }
 
-template <http::verb Verb>
-auto makeRequest(http::url url, http::request_header<> const& header)
+std::error_code make_error_code(HttpError const& e)
 {
-  auto req = http::make_request(Verb, std::move(url));
-  req.prepare_payload();
-  return assignHeader(req, header);
+  return e.ec;
 }
+
+[[noreturn]] void outcome_throw_as_system_error_with_payload(HttpError e)
+{
+  throw Errors::formatEx(e.ec,
+                         "HTTP error occurred: {} {}, traceID: {}",
+                         e.status,
+                         e.message,
+                         e.traceId);
 }
 
 HttpClient::HttpClient(http::url const& baseUrl,
@@ -132,9 +161,10 @@ HttpClient::HttpClient(http::url const& baseUrl,
   _headers.set("X-Tanker-SdkVersion", info.version);
 }
 
-void HttpClient::setAccessToken(http::authorization::methods const& m)
+void HttpClient::setAccessToken(std::string accessToken)
 {
-  _headers.set(fetchpp::http::field::authorization, m);
+  _headers.set(fetchpp::http::field::authorization,
+               fetchpp::http::authorization::bearer{std::move(accessToken)});
 }
 
 http::url HttpClient::makeUrl(std::string_view target) const
@@ -142,29 +172,30 @@ http::url HttpClient::makeUrl(std::string_view target) const
   return http::url(target, _baseUrl);
 }
 
-tc::cotask<nlohmann::json> HttpClient::asyncGet(std::string_view target)
+tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest<http::verb::get>(makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target), _headers);
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
-tc::cotask<nlohmann::json> HttpClient::asyncPost(std::string_view target,
-                                                 nlohmann::json data)
+tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
+{
+  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target), _headers);
+  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+}
+
+tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
+                                             nlohmann::json data)
+{
+  auto req = makeRequest(
+      fetchpp::http::verb::post, makeUrl(target), _headers, std::move(data));
+  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+}
+
+tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req =
-      makeRequest<http::verb::post>(makeUrl(target), _headers, std::move(data));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
-}
-
-tc::cotask<nlohmann::json> HttpClient::asyncPost(std::string_view target)
-{
-  auto req = makeRequest<http::verb::post>(makeUrl(target), _headers);
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
-}
-
-tc::cotask<nlohmann::json> HttpClient::asyncDelete(std::string_view target)
-{
-  auto req = makeRequest<http::verb::delete_>(makeUrl(target), _headers);
+      makeRequest(fetchpp::http::verb::delete_, makeUrl(target), _headers);
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
