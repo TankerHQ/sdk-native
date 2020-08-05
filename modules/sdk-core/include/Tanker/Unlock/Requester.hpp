@@ -25,10 +25,8 @@ class Requester : public IRequester
 public:
   Requester(Client* client, HttpClient* httpClient);
 
-  tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey) override;
+  tc::cotask<std::optional<Crypto::PublicEncryptionKey>> userStatus(
+      Trustchain::UserId const& userId) override;
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,

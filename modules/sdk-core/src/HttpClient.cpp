@@ -117,7 +117,7 @@ template <typename Request>
 tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
 {
   TLOG_CATEGORY(HttpClient);
-  TINFO("{} {}", req, req.uri().href());
+  TINFO("{} {}", req.method(), req.uri().href());
   auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
   TINFO("{} {}", res.result_int(), http::obsolete_reason(res.result()));
   TC_RETURN(handleResponse(res));
