@@ -7,7 +7,6 @@
 
 #include <Tanker/Crypto/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
 
 #include <mgs/codecs/concepts/input_source.hpp>
 #include <mgs/codecs/iterator_sentinel_source.hpp>
@@ -66,7 +65,7 @@ BasicCryptographicType<T, S>::BasicCryptographicType(
   {
     throw Errors::formatEx(
         Errc::InvalidBufferSize,
-        TFMT("invalid size for {:s}: got {:d}, expected {:d}"),
+        FMT_STRING("invalid size for {:s}: got {:d}, expected {:d}"),
         typeid(T).name(),
         total_read,
         this->size());
@@ -76,7 +75,7 @@ BasicCryptographicType<T, S>::BasicCryptographicType(
   {
     throw Errors::formatEx(
         Errc::InvalidBufferSize,
-        TFMT("invalid size for {:s}: larger than expected {:d}"),
+        FMT_STRING("invalid size for {:s}: larger than expected {:d}"),
         typeid(T).name(),
         this->size());
   }

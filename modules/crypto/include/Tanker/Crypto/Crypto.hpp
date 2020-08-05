@@ -14,7 +14,6 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <sodium/crypto_box.h>
@@ -46,8 +45,8 @@ struct container_resizer<T, std::enable_if_t<IsCryptographicType<T>::value>>
     if (containerSize != size)
     {
       throw Errors::formatEx(Errc::InvalidBufferSize,
-                             TFMT("invalid size for {:s} while preparing "
-                                  "buffer: got {:d}, expected {:d}"),
+                             FMT_STRING("invalid size for {:s} while preparing "
+                                        "buffer: got {:d}, expected {:d}"),
                              typeid(T).name(),
                              size,
                              containerSize);

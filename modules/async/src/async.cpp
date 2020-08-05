@@ -3,7 +3,6 @@
 
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
 
 #include <tconcurrent/promise.hpp>
 
@@ -125,8 +124,8 @@ tanker_error_t* tanker_future_get_error(tanker_future_t* cfuture)
   {
     cfuture->error.reset(new tanker_error_t{
         TANKER_ERROR_INTERNAL_ERROR,
-        duplicateString(
-            fmt::format(TFMT("{:s}: {:s}"), typeid(e).name(), e.what()))});
+        duplicateString(fmt::format(
+            FMT_STRING("{:s}: {:s}"), typeid(e).name(), e.what()))});
   }
   catch (...)
   {

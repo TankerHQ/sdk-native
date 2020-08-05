@@ -37,11 +37,13 @@ struct formatter<
     std::enable_if_t<std::is_enum<EnumType>::value&& ::Tanker::Format::detail::
                          HasToString<EnumType>::value>>
 {
-  int flag = 0;
+  int flag = 0x3;
 
   template <typename ParseContext>
   constexpr auto parse(ParseContext& ctx)
   {
+    if (ctx.begin() == ctx.end())
+      return ctx.end();
     auto it = ctx.begin();
     if (*it == ':')
       ++it;
@@ -52,9 +54,9 @@ struct formatter<
       throw fmt::format_error("invalid specifier");
 
     if (*it == 'd')
-      flag |= 0x1;
+      flag ^= 0x2;
     else if (*it == 's')
-      flag |= 0x2;
+      flag ^= 0x1;
     else if (*it == 'e' || it == end)
       flag |= 0x3;
     else

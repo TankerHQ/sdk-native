@@ -122,7 +122,7 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<ProvisionalIdentityClaim>(block);
   }
   throw std::runtime_error(
-      fmt::format(TFMT("unknown nature: {}"), static_cast<int>(nature)));
+      fmt::format(FMT_STRING("unknown nature: {}"), static_cast<int>(nature)));
 }
 
 std::vector<uint8_t> constructBlockFromParts(MainArgs const& args)

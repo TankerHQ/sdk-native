@@ -5,7 +5,7 @@
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>

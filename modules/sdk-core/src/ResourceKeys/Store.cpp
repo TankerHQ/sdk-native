@@ -42,7 +42,7 @@ tc::cotask<Crypto::SymmetricKey> Store::getKey(
   if (!key)
   {
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           TFMT("key not found for resource {:s}"),
+                           FMT_STRING("key not found for resource {:s}"),
                            resourceId);
   }
   TC_RETURN(*key);
