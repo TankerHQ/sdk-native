@@ -29,7 +29,6 @@ public:
       Trustchain::UserId const& userId) override;
 
   tc::cotask<void> setVerificationMethod(
-      Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Unlock::Request const& request) override;
 

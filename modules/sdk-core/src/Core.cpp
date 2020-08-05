@@ -420,7 +420,6 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
     try
     {
       TC_AWAIT(_session->requesters().setVerificationMethod(
-          _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(method, _session->userSecret())));
     }
