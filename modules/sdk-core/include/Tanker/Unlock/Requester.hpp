@@ -48,7 +48,6 @@ public:
       gsl::span<uint8_t const> encryptedVerificationKey) override;
 
   tc::cotask<void> createDevice(
-      Trustchain::TrustchainId const& trustchainId,
       gsl::span<uint8_t const> deviceCreation) override;
 
 private:

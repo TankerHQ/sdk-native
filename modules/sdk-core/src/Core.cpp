@@ -187,8 +187,8 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
 
-    TC_AWAIT(_session->requesters().createDevice(
-        _session->trustchainId(), Serialization::serialize(action)));
+    TC_AWAIT(
+        _session->requesters().createDevice(Serialization::serialize(action)));
     TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
     TC_AWAIT(_session->setDeviceId(Trustchain::DeviceId{action.hash()}));
     TC_AWAIT(_session->finalizeOpening());

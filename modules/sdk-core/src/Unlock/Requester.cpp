@@ -90,7 +90,6 @@ tc::cotask<void> Requester::createUser(
 }
 
 tc::cotask<void> Requester::createDevice(
-    Trustchain::TrustchainId const& trustchainId,
     gsl::span<uint8_t const> deviceCreation)
 {
   nlohmann::json body{{"device_creation", mgs::base64::encode(deviceCreation)}};
