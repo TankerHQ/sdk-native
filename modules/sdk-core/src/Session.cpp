@@ -72,7 +72,7 @@ Session::Requesters::Requesters(Client* client, HttpClient* httpClient)
   : Users::Requester(client, httpClient),
     Groups::Requester(client),
     ProvisionalUsers::Requester(client, httpClient),
-    Unlock::Requester(client, httpClient)
+    Unlock::Requester(httpClient)
 {
 }
 

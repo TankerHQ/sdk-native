@@ -1,6 +1,5 @@
 #include <Tanker/Unlock/Requester.hpp>
 
-#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/HttpClient.hpp>
@@ -15,8 +14,7 @@
 
 namespace Tanker::Unlock
 {
-Requester::Requester(Client* client, HttpClient* httpClient)
-  : _client(client), _httpClient(httpClient)
+Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
