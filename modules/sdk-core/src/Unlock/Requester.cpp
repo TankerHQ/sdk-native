@@ -2,42 +2,35 @@
 
 #include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/HttpClient.hpp>
+
+#include <mgs/base64url.hpp>
+
+#include <fmt/format.h>
 
 #include <nlohmann/json.hpp>
 
+#include <optional>
+
 namespace Tanker::Unlock
 {
-static void from_json(nlohmann::json const& j, UserStatusResult& result)
-{
-  j.at("device_exists").get_to(result.deviceExists);
-  result.userExists = j.at("user_exists").get<bool>();
-  auto const lastReset = j.at("last_reset").get<std::string>();
-  if (!lastReset.empty())
-    result.lastReset = mgs::base64::decode<Crypto::Hash>(lastReset);
-  else
-    result.lastReset = Crypto::Hash{};
-}
-
 Requester::Requester(Client* client, HttpClient* httpClient)
   : _client(client), _httpClient(httpClient)
 {
 }
 
-tc::cotask<UserStatusResult> Requester::userStatus(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Crypto::PublicSignatureKey const& publicSignatureKey)
+tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
+    Trustchain::UserId const& userId)
 {
-  nlohmann::json request{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"device_public_signature_key", publicSignatureKey},
-  };
+  using namespace fmt::literals;
+  auto res = TC_AWAIT(_httpClient->asyncGet(
+      fmt::format("users/{userId:#S}", "userId"_a = userId)));
+  if (res.has_error() && res.error().ec == Errors::AppdErrc::UserNotFound)
+    TC_RETURN(std::nullopt);
 
-  auto const reply = TC_AWAIT(_client->emit("get user status", request));
-
-  TC_RETURN(reply.get<UserStatusResult>());
+  TC_RETURN(mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
+      res.value().at("user").at("public_encryption_key").get<std::string>()));
 }
 
 tc::cotask<void> Requester::setVerificationMethod(

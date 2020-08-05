@@ -1,29 +1,21 @@
 #pragma once
 
-#include <Tanker/Crypto/Hash.hpp>
-#include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Unlock/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
+#include <optional>
+
 namespace Tanker::Unlock
 {
-struct UserStatusResult
-{
-  bool deviceExists;
-  bool userExists;
-  Crypto::Hash lastReset;
-};
-
 class IRequester
 {
 public:
-  virtual tc::cotask<UserStatusResult> userStatus(
-      Trustchain::TrustchainId const& trustchainId,
-      Trustchain::UserId const& userId,
-      Crypto::PublicSignatureKey const& publicSignatureKey) = 0;
+  virtual tc::cotask<std::optional<Crypto::PublicEncryptionKey>> userStatus(
+      Trustchain::UserId const& userId) = 0;
 
   virtual tc::cotask<void> setVerificationMethod(
       Trustchain::TrustchainId const& trustchainId,

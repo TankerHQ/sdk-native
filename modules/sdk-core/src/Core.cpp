@@ -137,26 +137,18 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
   _session->client().start();
   _session->setIdentity(identity);
   _session->createStorage(_writablePath);
-  auto optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
-  if (!optDeviceKeys)
-  {
-    optDeviceKeys = DeviceKeys::create();
-    TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(*optDeviceKeys));
-  }
-  auto const [deviceExists, userExists, unused] =
-      TC_AWAIT(_session->requesters().userStatus(
-          _session->trustchainId(),
-          _session->userId(),
-          optDeviceKeys->signatureKeyPair.publicKey));
-  if (deviceExists)
+  auto const optPubUserEncKey =
+      TC_AWAIT(_session->requesters().userStatus(_session->userId()));
+  if (!optPubUserEncKey)
+    _session->setStatus(Status::IdentityRegistrationNeeded);
+  else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
+           !optDeviceKeys.has_value())
+    _session->setStatus(Status::IdentityVerificationNeeded);
+  else
   {
     TC_AWAIT(_session->authenticate());
     TC_AWAIT(_session->finalizeOpening());
   }
-  else if (userExists)
-    _session->setStatus(Status::IdentityVerificationNeeded);
-  else
-    _session->setStatus(Status::IdentityRegistrationNeeded);
   TC_RETURN(status());
 }
 
@@ -177,7 +169,8 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
   {
-    auto const deviceKeys = TC_AWAIT(_session->findDeviceKeys()).value();
+    auto const deviceKeys = DeviceKeys::create();
+
     auto const ghostDeviceKeys =
         GhostDevice::create(verificationKey).toDeviceKeys();
     auto const encryptedUserKey = TC_AWAIT(_session->client().getLastUserKey(
@@ -196,6 +189,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 
     TC_AWAIT(_session->requesters().createDevice(
         _session->trustchainId(), Serialization::serialize(action)));
+    TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
     TC_AWAIT(_session->setDeviceId(Trustchain::DeviceId{action.hash()}));
     TC_AWAIT(_session->finalizeOpening());
   }
@@ -229,7 +223,7 @@ tc::cotask<void> Core::registerIdentity(
                                  ghostDeviceKeys.signatureKeyPair.publicKey,
                                  ghostDeviceKeys.encryptionKeyPair.publicKey,
                                  userKeyPair);
-  auto const deviceKeys = TC_AWAIT(_session->findDeviceKeys()).value();
+  auto const deviceKeys = DeviceKeys::create();
 
   auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
@@ -244,9 +238,6 @@ tc::cotask<void> Core::registerIdentity(
       _session->userSecret(),
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
-  TC_AWAIT(
-      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
-
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),
       _session->userId(),
@@ -254,6 +245,9 @@ tc::cotask<void> Core::registerIdentity(
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
       encryptVerificationKey));
+  TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
+  TC_AWAIT(
+      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
   TC_AWAIT(_session->finalizeOpening());
 }
 
