@@ -36,7 +36,6 @@ public:
       gsl::span<uint8_t const> encryptedVerificationKey) = 0;
 
   virtual tc::cotask<void> createDevice(
-      Trustchain::TrustchainId const& trustchainId,
       gsl::span<uint8_t const> deviceCreation) = 0;
 
   virtual ~IRequester() = default;
