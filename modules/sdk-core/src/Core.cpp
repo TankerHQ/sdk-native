@@ -426,9 +426,12 @@ Core::getVerificationMethods()
                            FMT_STRING("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
-  auto methods = TC_AWAIT(_session->requesters().fetchVerificationMethods(
-      _session->trustchainId(), _session->userId()));
-  Unlock::decryptEmailMethods(methods, _session->userSecret());
+  auto methods = TC_AWAIT(
+      _session->requesters().fetchVerificationMethods(_session->userId()));
+  if (methods.empty())
+    methods.emplace_back(Tanker::VerificationKey{});
+  else
+    Unlock::decryptEmailMethods(methods, _session->userSecret());
   TC_RETURN(methods);
 }
 

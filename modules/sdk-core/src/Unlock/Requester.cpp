@@ -54,18 +54,14 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
-Requester::fetchVerificationMethods(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId)
+Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
 {
-  auto const request =
-      nlohmann::json{{"trustchain_id", trustchainId}, {"user_id", userId}};
-
-  auto const reply =
-      TC_AWAIT(_client->emit("get verification methods", request));
-  auto methods = reply.at("verification_methods")
-                     .get<std::vector<Unlock::VerificationMethod>>();
-  TC_RETURN(methods);
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncGet(fmt::format(
+      "users/{userId:#S}/verification-methods", "userId"_a = userId)));
+  TC_RETURN(res.value()
+                .at("verification_methods")
+                .get<std::vector<Unlock::VerificationMethod>>());
 }
 
 tc::cotask<void> Requester::createUser(

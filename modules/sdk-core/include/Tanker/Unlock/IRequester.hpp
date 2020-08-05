@@ -25,8 +25,7 @@ public:
       Unlock::Request const& verificationRequest) = 0;
 
   virtual tc::cotask<std::vector<Unlock::VerificationMethod>>
-  fetchVerificationMethods(Trustchain::TrustchainId const& trustchainId,
-                           Trustchain::UserId const& userId) = 0;
+  fetchVerificationMethods(Trustchain::UserId const& userId) = 0;
 
   virtual tc::cotask<void> createUser(
       Trustchain::TrustchainId const& trustchainId,
