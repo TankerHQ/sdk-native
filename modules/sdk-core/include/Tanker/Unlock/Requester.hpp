@@ -37,7 +37,6 @@ public:
       Unlock::Request const& verificationRequest) override;
 
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
-      Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId) override;
 
   tc::cotask<void> createUser(
