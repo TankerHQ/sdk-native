@@ -459,7 +459,6 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
 {
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
-          _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(verification, _session->userSecret())));
   auto const verificationKey = TC_AWAIT(

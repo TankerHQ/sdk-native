@@ -46,19 +46,14 @@ tc::cotask<void> Requester::setVerificationMethod(
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Unlock::Request const& request)
+    Trustchain::UserId const& userId, Unlock::Request const& request)
 {
-  nlohmann::json payload{
-      {"trustchain_id", trustchainId},
-      {"user_id", userId},
-      {"verification", request},
-  };
-  auto const response =
-      TC_AWAIT(_client->emit("get verification key", payload));
-  TC_RETURN(mgs::base64::decode<std::vector<uint8_t>>(
-      response.at("encrypted_verification_key").get<std::string>()));
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      fmt::format("users/{userId:#S}/verification-key", "userId"_a = userId),
+      {{"verification", request}}));
+  TC_RETURN(mgs::base64url_nopad::decode<std::vector<uint8_t>>(
+      res.value().at("encrypted_verification_key").get<std::string>()));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
