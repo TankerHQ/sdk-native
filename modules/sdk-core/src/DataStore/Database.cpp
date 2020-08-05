@@ -16,7 +16,7 @@
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp>
@@ -282,7 +282,7 @@ void Database::flushAllCaches()
 template <typename Table>
 void Database::dropTable()
 {
-  _db->execute(fmt::format(TFMT("DROP TABLE {:s}"), tableName<Table>()));
+  _db->execute(fmt::format(FMT_STRING("DROP TABLE {:s}"), tableName<Table>()));
 }
 
 tc::cotask<void> Database::nuke()

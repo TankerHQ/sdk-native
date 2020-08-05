@@ -22,7 +22,7 @@ std::string getDbPath(std::string const& writablePath,
 {
   if (writablePath == ":memory:")
     return writablePath;
-  return fmt::format(TFMT("{:s}/tanker-{:S}.db"), writablePath, userId);
+  return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
 }
 }
 

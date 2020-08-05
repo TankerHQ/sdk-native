@@ -7,7 +7,7 @@
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Streams/Header.hpp>
 

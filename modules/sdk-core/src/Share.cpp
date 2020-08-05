@@ -5,7 +5,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/IdentityUtils.hpp>
@@ -120,7 +120,7 @@ void handleNotFound(
     auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
-        TFMT("unknown public identities: [{:s}], unknown groups: [{:s}]"),
+        FMT_STRING("unknown public identities: [{:s}], unknown groups: [{:s}]"),
         fmt::join(clearPublicIdentities, ", "),
         fmt::join(clearGids, ", "));
   }

@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -208,7 +208,7 @@ tc::cotask<Group> applyUserGroupAddition(
   {
     // this block should never have passed verification
     throw AssertionError(
-        fmt::format(TFMT("cannot find previous group block for {:s}"),
+        fmt::format(FMT_STRING("cannot find previous group block for {:s}"),
                     userGroupAddition.groupId()));
   }
 

@@ -5,7 +5,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Pusher.hpp>
@@ -104,10 +104,11 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     throw formatEx(Errc::InvalidArgument, "cannot create an empty group");
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::GroupTooBig,
-                   TFMT("cannot create a group with {:d} members, max is {:d}"),
-                   groupSize,
-                   MAX_GROUP_SIZE);
+    throw formatEx(
+        Errc::GroupTooBig,
+        FMT_STRING("cannot create a group with {:d} members, max is {:d}"),
+        groupSize,
+        MAX_GROUP_SIZE);
   }
 
   auto groupMembers = generateGroupKeysForUsers2(
@@ -165,10 +166,11 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
   }
   else if (groupSize > MAX_GROUP_SIZE)
   {
-    throw formatEx(Errc::GroupTooBig,
-                   TFMT("cannot add {:d} members to a group, max is {:d}"),
-                   groupSize,
-                   MAX_GROUP_SIZE);
+    throw formatEx(
+        Errc::GroupTooBig,
+        FMT_STRING("cannot add {:d} members to a group, max is {:d}"),
+        groupSize,
+        MAX_GROUP_SIZE);
   }
 
   auto members = generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,

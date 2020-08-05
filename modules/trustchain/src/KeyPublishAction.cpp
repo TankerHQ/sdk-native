@@ -2,7 +2,7 @@
 
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Errors/Errc.hpp>
 #include <Tanker/Trustchain/Serialization.hpp>
@@ -57,7 +57,7 @@ KeyPublishAction deserializeKeyPublishAction(
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals
     throw Errors::AssertionError(fmt::format(
-        TFMT("{} is not a key publish block"), static_cast<int>(nature)));
+        FMT_STRING("{} is not a key publish block"), static_cast<int>(nature)));
   }
 }
 }

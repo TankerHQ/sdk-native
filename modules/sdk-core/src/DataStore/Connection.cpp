@@ -3,7 +3,7 @@
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Log/Log.hpp>
 
 #include <boost/algorithm/hex.hpp>
@@ -144,7 +144,7 @@ ConnPtr createConnection(std::string const& dbPath,
   catch (std::exception const& e)
   {
     throw Errors::formatEx(Errors::Errc::InternalError,
-                           TFMT("could not open database: {:s}: {:s}"),
+                           FMT_STRING("could not open database: {:s}: {:s}"),
                            dbPath,
                            e.what());
   }

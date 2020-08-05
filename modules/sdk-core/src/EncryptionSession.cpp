@@ -17,9 +17,10 @@ EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession)
 void EncryptionSession::assertSession(char const* action) const
 {
   if (_tankerSession.expired())
-    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                           TFMT("invalid session for EncryptionSession::{:s}"),
-                           action);
+    throw Errors::formatEx(
+        Errors::Errc::PreconditionFailed,
+        FMT_STRING("invalid session for EncryptionSession::{:s}"),
+        action);
 }
 
 Trustchain::ResourceId const& EncryptionSession::resourceId() const

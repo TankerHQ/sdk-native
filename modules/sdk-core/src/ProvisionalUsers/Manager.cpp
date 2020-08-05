@@ -4,7 +4,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/IRequester.hpp>
@@ -44,7 +44,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   if (provisionalIdentity.target != Identity::TargetType::Email)
   {
     throw Errors::AssertionError(
-        fmt::format(TFMT("unsupported provisional identity target {:s}"),
+        fmt::format(FMT_STRING("unsupported provisional identity target {:s}"),
                     provisionalIdentity.target));
   }
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());

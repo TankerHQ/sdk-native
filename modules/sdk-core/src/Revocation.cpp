@@ -5,7 +5,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Pusher.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -32,7 +32,7 @@ tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
   auto const result = TC_AWAIT(userAccessor.pull(gsl::make_span(&deviceId, 1)));
   if (!result.notFound.empty() || result.found.front().userId() != selfUserId)
     throw formatEx(
-        Errc::InvalidArgument, TFMT("unknown device: {:s}"), deviceId);
+        Errc::InvalidArgument, FMT_STRING("unknown device: {:s}"), deviceId);
 }
 
 tc::cotask<Users::User> getUserFromUserId(UserId const& selfUserId,

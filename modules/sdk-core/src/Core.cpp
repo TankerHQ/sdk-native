@@ -57,7 +57,7 @@ void Core::assertStatus(Status wanted, std::string const& action) const
 {
   if (auto const s = status(); s != wanted)
     throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                           TFMT("invalid session status {:e} for {:s}"),
+                           FMT_STRING("invalid session status {:e} for {:s}"),
                            s,
                            action);
 }
@@ -250,8 +250,9 @@ tc::cotask<void> Core::encrypt(
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           TFMT("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        FMT_STRING("cannot encrypt without sharing with anybody"));
   }
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
@@ -420,7 +421,7 @@ Core::getVerificationMethods()
   if (!(status() == Status::Ready ||
         status() == Status::IdentityVerificationNeeded))
     throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                           TFMT("invalid session status {:e} for {:s}"),
+                           FMT_STRING("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
   auto methods = TC_AWAIT(_session->requesters().fetchVerificationMethods(
@@ -539,8 +540,9 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           TFMT("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        FMT_STRING("cannot encrypt without sharing with anybody"));
   }
 
   auto const& localUser =
@@ -621,8 +623,9 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
-    throw Errors::formatEx(Errors::Errc::InvalidArgument,
-                           TFMT("cannot encrypt without sharing with anybody"));
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        FMT_STRING("cannot encrypt without sharing with anybody"));
   }
 
   auto const& localUser = _session->accessors().localUserAccessor.get();

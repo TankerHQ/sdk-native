@@ -5,7 +5,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Format/Format.hpp>
+
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Unlock/Methods.hpp>
@@ -257,7 +257,7 @@ tanker_expected_t* tanker_event_connect(tanker_t* ctanker,
           [=, cb = std::move(cb)] { cb(nullptr, data); });
     default:
       throw formatEx(Errc::InvalidArgument,
-                     TFMT("unknown event: {:d}"),
+                     FMT_STRING("unknown event: {:d}"),
                      static_cast<int>(event));
     }
   }));
@@ -278,7 +278,7 @@ tanker_expected_t* tanker_event_disconnect(tanker_t* ctanker,
       break;
     default:
       throw formatEx(Errc::InvalidArgument,
-                     TFMT("unknown event: {:d}"),
+                     FMT_STRING("unknown event: {:d}"),
                      static_cast<int>(event));
     }
   }));
