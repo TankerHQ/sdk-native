@@ -34,7 +34,6 @@ public:
       Unlock::Request const& request) override;
 
   tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
-      Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
       Unlock::Request const& verificationRequest) override;
 
