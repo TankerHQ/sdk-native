@@ -14,6 +14,7 @@ enum class AppdErrc
   TrustchainIsNotTest,
   AppNotFound,
   DeviceNotFound,
+  ProvisionalIdentityNotFound,
   DeviceRevoked,
   TooManyAttempts,
   InvalidToken,
