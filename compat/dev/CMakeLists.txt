@@ -13,6 +13,7 @@ add_executable(compat
   main.cpp
   src/Command.cpp
   src/States.cpp
+  src/User.cpp
   src/Helpers.cpp
 
   tests/Encrypt.cpp
