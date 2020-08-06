@@ -7,6 +7,8 @@ add_library(tankererrors STATIC
   include/Tanker/Errors/ErrcCategory.hpp
   include/Tanker/Errors/ServerErrc.hpp
   include/Tanker/Errors/ServerErrcCategory.hpp
+  include/Tanker/Errors/AppdErrc.hpp
+  include/Tanker/Errors/AppdErrcCategory.hpp
   include/Tanker/Errors/Exception.hpp
   include/Tanker/Errors/AssertionError.hpp
 
@@ -15,6 +17,8 @@ add_library(tankererrors STATIC
   src/ErrcCategory.cpp
   src/ServerErrc.cpp
   src/ServerErrcCategory.cpp
+  src/AppdErrc.cpp
+  src/AppdErrcCategory.cpp
   src/Exception.cpp
 )
 

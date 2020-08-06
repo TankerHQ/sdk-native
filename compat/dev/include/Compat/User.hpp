@@ -1,31 +1,32 @@
 #pragma once
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Functional/Device.hpp>
-#include <Tanker/Identity/SecretPermanentIdentity.hpp>
-#include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
 #include <optional>
 #include <string>
 
-namespace Tanker
-{
-namespace Functional
-{
 enum class DeviceType
 {
   Cached,
   New,
 };
 
+namespace Tanker::Functional
+{
+  struct Trustchain;
+}
+
 class User
 {
 public:
   std::string trustchainUrl;
   std::string trustchainId;
-  Tanker::Trustchain::UserId userId;
-  Identity::SecretPermanentIdentity identity;
+  Tanker::SUserId suserId;
+  std::string identity;
   std::optional<std::string> userToken;
 
   User() = default;
@@ -36,27 +37,19 @@ public:
 
   void reuseCache();
 
-  Device makeDevice(DeviceType type = DeviceType::Cached);
+  Tanker::Functional::Device makeDevice(DeviceType type = DeviceType::Cached);
 
-  tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
+  tc::cotask<std::vector<Tanker::Functional::Device>> makeDevices(std::size_t nb);
 
-  SPublicIdentity spublicIdentity() const;
-
-  std::string sidentity() const;
-
-  template <typename Codec = mgs::base64>
-  SUserId suserId() const
-  {
-    return Codec::template encode<SUserId>(userId);
-  }
+  Tanker::SPublicIdentity spublicIdentity() const;
 
 private:
   unsigned int _currentDevice = 0;
-  std::shared_ptr<std::vector<Device>> _cachedDevices =
-      std::make_shared<std::vector<Device>>();
+  std::shared_ptr<std::vector<Tanker::Functional::Device>> _cachedDevices =
+      std::make_shared<std::vector<Tanker::Functional::Device>>();
 };
+
+User makeUser(Tanker::Functional::Trustchain const &tr);
 
 void to_json(nlohmann::json& j, User const& state);
 void from_json(nlohmann::json const& j, User& state);
-}
-}

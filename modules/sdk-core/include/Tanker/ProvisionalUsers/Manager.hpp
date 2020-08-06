@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -16,6 +17,10 @@ namespace Users
 {
 class ILocalUserAccessor;
 }
+namespace Unlock
+{
+class Requester;
+}
 namespace ProvisionalUsers
 {
 class IRequester;
@@ -26,12 +31,14 @@ public:
   Manager(Users::ILocalUserAccessor* localUserAccessor,
           Pusher* pusher,
           IRequester* requester,
+          Unlock::Requester* unlockRequester,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
           Trustchain::TrustchainId const& trustchainId);
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
-      SSecretProvisionalIdentity const& sidentity);
+      SSecretProvisionalIdentity const& sidentity,
+      Crypto::SymmetricKey const& userSecret);
 
   tc::cotask<void> verifyProvisionalIdentity(
       Unlock::Request const& unlockRequest);
@@ -43,6 +50,7 @@ private:
   Users::ILocalUserAccessor* _localUserAccessor;
   Pusher* _pusher;
   IRequester* _requester;
+  Unlock::Requester* _unlockRequester;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
   Trustchain::TrustchainId _trustchainId;

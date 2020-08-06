@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -35,9 +36,12 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;
-  virtual tc::cotask<void> authenticate(
+  virtual tc::cotask<void> authenticateSocketIO(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
+      Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
+  virtual tc::cotask<void> authenticate(
+      Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
   virtual tc::cotask<std::vector<
       std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>

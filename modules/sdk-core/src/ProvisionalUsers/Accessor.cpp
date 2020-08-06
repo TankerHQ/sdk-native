@@ -5,6 +5,8 @@
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Updater.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Users/ILocalUserAccessor.hpp>
+#include <Tanker/Users/LocalUser.hpp>
 
 TLOG_CATEGORY("ProvisionalUsersAccessor");
 
@@ -50,7 +52,8 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::pullEncryptionKeys(
 
 tc::cotask<void> Accessor::refreshKeys()
 {
-  auto const blocks = TC_AWAIT(_requester->getClaimBlocks());
+  auto const blocks =
+      TC_AWAIT(_requester->getClaimBlocks(_localUserAccessor->get().userId()));
   auto const toStore = TC_AWAIT(Updater::processClaimEntries(
       *_localUserAccessor, *_userAccessor, blocks));
 
