@@ -71,7 +71,7 @@ Session::Accessors::Accessors(Storage& storage,
 Session::Requesters::Requesters(Client* client, HttpClient* httpClient)
   : Users::Requester(client, httpClient),
     Groups::Requester(client),
-    ProvisionalUsers::Requester(client, httpClient),
+    ProvisionalUsers::Requester(httpClient),
     Unlock::Requester(httpClient)
 {
 }

@@ -1,6 +1,5 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 
-#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -31,8 +30,7 @@ fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
 }
 }
 
-Requester::Requester(Client* client, HttpClient* httpClient)
-  : _client(client), _httpClient(httpClient)
+Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
@@ -61,30 +59,37 @@ Requester::getVerifiedProvisionalIdentityKeys()
 
   auto& jProvisional = j.at("provisional_identity");
   TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
-      mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
-          jProvisional.at("public_encryption_key").get<std::string>()),
-      mgs::base64url_nopad::decode<Crypto::PrivateEncryptionKey>(
-          jProvisional.at("private_encryption_key").get<std::string>()),
-      mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
-          jProvisional.at("public_signature_key").get<std::string>()),
-      mgs::base64url_nopad::decode<Crypto::PrivateSignatureKey>(
-          jProvisional.at("private_signature_key").get<std::string>())}));
+      {mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
+           jProvisional.at("public_encryption_key").get<std::string>()),
+       mgs::base64url_nopad::decode<Crypto::PrivateEncryptionKey>(
+           jProvisional.at("private_encryption_key").get<std::string>())},
+      {mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
+           jProvisional.at("public_signature_key").get<std::string>()),
+       mgs::base64url_nopad::decode<Crypto::PrivateSignatureKey>(
+           jProvisional.at("private_signature_key").get<std::string>())}}));
 }
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
 {
-  auto const json = TC_AWAIT(
-      _client->emit("get provisional identity", {{"verification", request}}));
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      "provisional-identities", {{"verification", request}}));
 
-  if (json.empty())
+  if (res.has_error() &&
+      res.error().ec == Errors::AppdErrc::ProvisionalIdentityNotFound)
     TC_RETURN(std::nullopt);
+  auto const json = res.value();
 
+  auto& jProvisional = json.at("provisional_identity");
   TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
-      {json.at("encryption_public_key").get<Crypto::PublicEncryptionKey>(),
-       json.at("encryption_private_key").get<Crypto::PrivateEncryptionKey>()},
-      {json.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
-       json.at("signature_private_key").get<Crypto::PrivateSignatureKey>()}}));
+      {mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
+           jProvisional.at("public_encryption_key").get<std::string>()),
+       mgs::base64url_nopad::decode<Crypto::PrivateEncryptionKey>(
+           jProvisional.at("private_encryption_key").get<std::string>())},
+      {mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
+           jProvisional.at("public_signature_key").get<std::string>()),
+       mgs::base64url_nopad::decode<Crypto::PrivateSignatureKey>(
+           jProvisional.at("private_signature_key").get<std::string>())}}));
 }
 
 tc::cotask<void> Requester::claimProvisionalIdentity(
