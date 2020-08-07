@@ -9,6 +9,7 @@
 #include <Tanker/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
+#include <Tanker/Utils.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <fmt/format.h>
@@ -51,16 +52,6 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
 
   return entries;
 }
-
-template <typename T>
-std::vector<std::string> toBase64URL(gsl::span<T> cryptoTypes)
-{
-  std::vector<std::string> ret;
-  ret.reserve(cryptoTypes.size());
-  for (auto const& elem : cryptoTypes)
-    ret.push_back(mgs::base64url_nopad::encode(elem));
-  return ret;
-}
 }
 
 Requester::Requester(Client* client, HttpClient* httpClient)
@@ -86,22 +77,24 @@ tc::cotask<Requester::GetResult> Requester::getUsersImpl(
 tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds)
 {
-  auto const query = nlohmann::json{{"user_ids[]", toBase64URL(userIds)}};
+  auto const query = nlohmann::json{
+      {"user_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(userIds)}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
 tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::DeviceId const> deviceIds)
 {
-  auto const query = nlohmann::json{{"device_ids[]", toBase64URL(deviceIds)}};
+  auto const query = nlohmann::json{
+      {"device_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(deviceIds)}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
 tc::cotask<std::vector<Trustchain::KeyPublishAction>>
 Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  auto const query =
-      nlohmann::json{{"resource_ids[]", toBase64URL(resourceIds)}};
+  auto const query = nlohmann::json{
+      {"resource_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(resourceIds)}};
   auto url = _httpClient->makeUrl("resource-keys");
   url.set_search(fetchpp::http::encode_query(query));
   auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
@@ -196,7 +189,9 @@ Requester::getPublicProvisionalIdentities(
   if (hashedEmails.empty())
     TC_RETURN(ret);
 
-  auto query = nlohmann::json{{"hashed_emails[]", toBase64URL(hashedEmails)}};
+  auto query =
+      nlohmann::json{{"hashed_emails[]",
+                      encodeCryptoTypes<mgs::base64url_nopad>(hashedEmails)}};
   auto url = _httpClient->makeUrl("public-provisional-identities");
   url.set_search(fetchpp::http::encode_query(query));
   auto const result = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
