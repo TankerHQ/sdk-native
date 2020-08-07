@@ -37,9 +37,10 @@ public:
                  gsl::span<Trustchain::ResourceId const> resourceIds),
              override);
   MAKE_MOCK1(getPublicProvisionalIdentities,
-             (tc::cotask<std::vector<std::tuple<Crypto::PublicSignatureKey,
-                                                Crypto::PublicEncryptionKey>>>(
-                 gsl::span<Email const>)),
+             (tc::cotask<std::map<Crypto::Hash,
+                                  std::pair<Crypto::PublicSignatureKey,
+                                            Crypto::PublicEncryptionKey>>>(
+                 gsl::span<Crypto::Hash const>)),
              override);
 };
 }

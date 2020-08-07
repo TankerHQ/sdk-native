@@ -71,7 +71,6 @@ public:
 
   void setAccessToken(std::string accessToken);
 
-private:
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
 
 private:

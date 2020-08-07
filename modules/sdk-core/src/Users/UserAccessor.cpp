@@ -66,7 +66,6 @@ tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> UserAccessor::pull(
 
 namespace
 {
-
 Users::User* findUserOfDevice(DevicesMap const& devicesMap,
                               UsersMap& usersMap,
                               Trustchain::DeviceId const& deviceId)
@@ -125,17 +124,19 @@ auto processUserEntries(Trustchain::Context const& context,
   }
   return std::make_tuple(usersMap, devicesMap);
 }
+
+Crypto::Hash hashEmail(Email const& email)
+{
+  return Crypto::generichash(
+      gsl::make_span(email).template as_span<std::uint8_t const>());
 }
 
-tc::cotask<std::vector<ProvisionalUsers::PublicUser>>
-UserAccessor::pullProvisional(
+std::vector<Crypto::Hash> hashProvisionalUserEmails(
+
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
-  if (appProvisionalIdentities.empty())
-    TC_RETURN(std::vector<ProvisionalUsers::PublicUser>{});
-
-  std::vector<Email> provisionalUserEmails;
+  std::vector<Crypto::Hash> hashedProvisionalUserEmails;
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
   {
     if (appProvisionalIdentity.target != Identity::TargetType::Email)
@@ -144,11 +145,26 @@ UserAccessor::pullProvisional(
           fmt::format("unsupported target type: {}",
                       static_cast<int>(appProvisionalIdentity.target)));
     }
-    provisionalUserEmails.push_back(Email{appProvisionalIdentity.value});
+    hashedProvisionalUserEmails.push_back(
+        hashEmail(Email{appProvisionalIdentity.value}));
   }
+  return hashedProvisionalUserEmails;
+}
+}
 
-  auto const tankerProvisionalIdentities = TC_AWAIT(
-      _requester->getPublicProvisionalIdentities(provisionalUserEmails));
+tc::cotask<std::vector<ProvisionalUsers::PublicUser>>
+UserAccessor::pullProvisional(
+    gsl::span<Identity::PublicProvisionalIdentity const>
+        appProvisionalIdentities)
+{
+  std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
+  if (appProvisionalIdentities.empty())
+    TC_RETURN(provisionalUsers);
+
+  auto const hashedEmails = hashProvisionalUserEmails(appProvisionalIdentities);
+
+  auto const tankerProvisionalIdentities =
+      TC_AWAIT(_requester->getPublicProvisionalIdentities(hashedEmails));
 
   if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
   {
@@ -157,22 +173,17 @@ UserAccessor::pullProvisional(
         "getPublicProvisionalIdentities returned a list of different size");
   }
 
-  std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
   provisionalUsers.reserve(appProvisionalIdentities.size());
-  std::transform(appProvisionalIdentities.begin(),
-                 appProvisionalIdentities.end(),
-                 tankerProvisionalIdentities.begin(),
-                 std::back_inserter(provisionalUsers),
-                 [](auto const& appProvisionalIdentity,
-                    auto const& tankerProvisionalIdentity) {
-                   auto const& [sigKey, encKey] = tankerProvisionalIdentity;
-                   return ProvisionalUsers::PublicUser{
-                       appProvisionalIdentity.appSignaturePublicKey,
-                       appProvisionalIdentity.appEncryptionPublicKey,
-                       sigKey,
-                       encKey,
-                   };
-                 });
+  for (auto i = 0u; i < appProvisionalIdentities.size(); ++i)
+  {
+    auto const& [tankerSigKey, tankerEncKey] =
+        tankerProvisionalIdentities.at(hashedEmails[i]);
+    provisionalUsers.push_back(
+        {appProvisionalIdentities[i].appSignaturePublicKey,
+         appProvisionalIdentities[i].appEncryptionPublicKey,
+         tankerSigKey,
+         tankerEncKey});
+  }
 
   TC_RETURN(provisionalUsers);
 }
