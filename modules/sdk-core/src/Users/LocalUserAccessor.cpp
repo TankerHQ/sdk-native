@@ -11,9 +11,11 @@ namespace
 tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
     IRequester* requester,
     DeviceKeys const& deviceKeys,
-    Trustchain::TrustchainId const& tId)
+    Trustchain::TrustchainId const& tId,
+    Trustchain::UserId const& userId)
 {
-  auto const [trustchainCreation, actions] = TC_AWAIT(requester->getMe());
+  auto const [trustchainCreation, actions] =
+      TC_AWAIT(requester->getUsers(gsl::make_span(&userId, 1)));
   auto const [context, user, userKeys] =
       Updater::processUserEntries(deviceKeys, tId, trustchainCreation, actions);
   auto const selfDevice =
@@ -38,7 +40,7 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
                                 store));
   auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
   auto const [localUser, context] =
-      TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId));
+      TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId, userId));
   TC_AWAIT(
       store->setTrustchainPublicSignatureKey(context.publicSignatureKey()));
   TC_AWAIT(store->putLocalUser(localUser));
@@ -61,8 +63,8 @@ LocalUserAccessor::~LocalUserAccessor() = default;
 
 tc::cotask<void> LocalUserAccessor::update()
 {
-  std::tie(_localUser, _context) =
-      TC_AWAIT(fetchUser(_requester, _localUser.deviceKeys(), _context.id()));
+  std::tie(_localUser, _context) = TC_AWAIT(fetchUser(
+      _requester, _localUser.deviceKeys(), _context.id(), _localUser.userId()));
   TC_AWAIT(_store->putLocalUser(_localUser));
 }
 
