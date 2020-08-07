@@ -12,7 +12,6 @@ namespace Tanker
 class UserRequesterStub : public Users::IRequester
 {
 public:
-  MAKE_MOCK0(getMe, tc::cotask<GetMeResult>(), override);
   MAKE_MOCK3(
       authenticateSocketIO,
       tc::cotask<void>(Trustchain::TrustchainId const& trustchainId,
@@ -25,11 +24,11 @@ public:
                        Crypto::SignatureKeyPair const& userSignatureKeyPair),
       override);
   MAKE_MOCK1(getUsers,
-             tc::cotask<std::vector<Trustchain::UserAction>>(
+             tc::cotask<Users::IRequester::GetResult>(
                  gsl::span<Trustchain::UserId const> userIds),
              override);
   MAKE_MOCK1(getUsers,
-             tc::cotask<std::vector<Trustchain::UserAction>>(
+             tc::cotask<Users::IRequester::GetResult>(
                  gsl::span<Trustchain::DeviceId const> deviceIds),
              override);
   MAKE_MOCK1(getKeyPublishes,

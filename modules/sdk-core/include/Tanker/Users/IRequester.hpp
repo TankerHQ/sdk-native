@@ -23,17 +23,16 @@ namespace Tanker::Users
 class IRequester
 {
 public:
-  struct GetMeResult
+  struct GetResult
   {
     Trustchain::Actions::TrustchainCreation trustchainCreation;
     std::vector<Trustchain::UserAction> userEntries;
   };
 
   virtual ~IRequester() = default;
-  virtual tc::cotask<GetMeResult> getMe() = 0;
-  virtual tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  virtual tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
-  virtual tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  virtual tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;

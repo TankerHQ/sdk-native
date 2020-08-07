@@ -20,8 +20,9 @@ namespace Tanker::Users
 {
 namespace
 {
+template <typename Codec = mgs::base64>
 std::vector<Trustchain::UserAction> fromBlocksToUserActions(
-    gsl::span<const std::string> const& blocks)
+    gsl::span<std::string const> blocks)
 {
   std::vector<Trustchain::UserAction> entries;
   entries.reserve(blocks.size());
@@ -30,14 +31,15 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
       std::end(blocks),
       std::back_inserter(entries),
       [](auto const& block) {
-        return Trustchain::deserializeUserAction(mgs::base64::decode(block));
+        return Trustchain::deserializeUserAction(Codec::template decode(block));
       });
 
   return entries;
 }
 
+template <typename Codec = mgs::base64>
 std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
-    gsl::span<const std::string> const& blocks)
+    gsl::span<std::string const> blocks)
 {
   std::vector<Trustchain::KeyPublishAction> entries;
   entries.reserve(blocks.size());
@@ -46,17 +48,18 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
                  std::back_inserter(entries),
                  [](auto const& block) {
                    return Trustchain::deserializeKeyPublishAction(
-                       mgs::base64::decode(block));
+                       Codec::template decode(block));
                  });
 
   return entries;
 }
 
-std::vector<std::string> toBase64URL(gsl::span<Crypto::Hash const> hashedEmails)
+template <typename T>
+std::vector<std::string> toBase64URL(gsl::span<T> cryptoTypes)
 {
   std::vector<std::string> ret;
-  ret.reserve(hashedEmails.size());
-  for (auto const& elem : hashedEmails)
+  ret.reserve(cryptoTypes.size());
+  for (auto const& elem : cryptoTypes)
     ret.push_back(mgs::base64url_nopad::encode(elem));
   return ret;
 }
@@ -67,39 +70,33 @@ Requester::Requester(Client* client, HttpClient* httpClient)
 {
 }
 
-tc::cotask<Requester::GetMeResult> Requester::getMe()
+tc::cotask<Requester::GetResult> Requester::getUsersImpl(
+    nlohmann::json const& query)
 {
-  auto const response = TC_AWAIT(_client->emit("get my user blocks", {}));
-  auto const blocks = response.get<std::vector<std::string>>();
-  if (blocks.empty())
-    throw formatEx(Errors::Errc::InternalError,
-                   "received too few blocks for \"get my user blocks\"");
-  auto const trustchainCreation =
+  auto url = _httpClient->makeUrl("user-histories");
+  url.set_search(fetchpp::http::encode_query(query));
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto rootBlock =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
-          mgs::base64::decode(blocks[0]));
-  auto const entries =
-      fromBlocksToUserActions(gsl::make_span(blocks).subspan(1));
-  TC_RETURN((GetMeResult{trustchainCreation, entries}));
+          mgs::base64url_nopad::decode(response.at("root").get<std::string>()));
+  TC_RETURN((GetResult{
+      std::move(rootBlock),
+      fromBlocksToUserActions<mgs::base64url_nopad>(
+          response.at("histories").get<std::vector<std::string>>())}));
 }
 
-tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
+tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds)
 {
-  auto const response =
-      TC_AWAIT(_client->emit("get users blocks", {{"user_ids", userIds}}));
-  auto const ret =
-      fromBlocksToUserActions(response.get<std::vector<std::string>>());
-  TC_RETURN(ret);
+  auto const query = nlohmann::json{{"user_ids[]", toBase64URL(userIds)}};
+  TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
-tc::cotask<std::vector<Trustchain::UserAction>> Requester::getUsers(
+tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::DeviceId const> deviceIds)
 {
-  auto const response =
-      TC_AWAIT(_client->emit("get users blocks", {{"device_ids", deviceIds}}));
-  auto const ret =
-      fromBlocksToUserActions(response.get<std::vector<std::string>>());
-  TC_RETURN(ret);
+  auto const query = nlohmann::json{{"device_ids[]", toBase64URL(deviceIds)}};
+  TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
 tc::cotask<std::vector<Trustchain::KeyPublishAction>>

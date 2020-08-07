@@ -193,7 +193,8 @@ auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
 {
   if (userIds.empty())
     TC_RETURN(UsersMap{});
-  auto const actions = TC_AWAIT(_requester->getUsers(userIds));
+  auto const [trustchainCreation, actions] =
+      TC_AWAIT(_requester->getUsers(userIds));
   TC_RETURN(std::get<UsersMap>(processUserEntries(_context, actions)));
 }
 
@@ -202,7 +203,8 @@ auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   if (deviceIds.empty())
     TC_RETURN(DevicesMap{});
-  auto const actions = TC_AWAIT(_requester->getUsers(deviceIds));
+  auto const [trustchainCreation, actions] =
+      TC_AWAIT(_requester->getUsers(deviceIds));
   TC_RETURN(std::get<DevicesMap>(processUserEntries(_context, actions)));
 }
 }

@@ -21,10 +21,9 @@ class Requester : public IRequester
 public:
   Requester(Client* client, HttpClient* httpClient);
 
-  tc::cotask<GetMeResult> getMe() override;
-  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
-  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
@@ -43,6 +42,8 @@ public:
       gsl::span<Crypto::Hash const> hashedEmails) override;
 
 private:
+  tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);
+
   Client* _client;
   HttpClient* _httpClient;
 };
