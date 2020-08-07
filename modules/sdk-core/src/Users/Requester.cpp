@@ -100,11 +100,13 @@ tc::cotask<Requester::GetResult> Requester::getUsers(
 tc::cotask<std::vector<Trustchain::KeyPublishAction>>
 Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  auto const response = TC_AWAIT(
-      _client->emit("get key publishes", {{"resource_ids", resourceIds}}));
-  auto const ret =
-      fromBlocksToKeyPublishActions(response.get<std::vector<std::string>>());
-  TC_RETURN(ret);
+  auto const query =
+      nlohmann::json{{"resource_ids[]", toBase64URL(resourceIds)}};
+  auto url = _httpClient->makeUrl("resource-keys");
+  url.set_search(fetchpp::http::encode_query(query));
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  TC_RETURN(fromBlocksToKeyPublishActions(
+      response.at("resource_keys").get<std::vector<std::string>>()));
 }
 
 tc::cotask<void> Requester::authenticateSocketIO(
