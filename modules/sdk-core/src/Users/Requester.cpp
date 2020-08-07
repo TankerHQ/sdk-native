@@ -20,7 +20,6 @@ namespace Tanker::Users
 {
 namespace
 {
-template <typename Codec = mgs::base64>
 std::vector<Trustchain::UserAction> fromBlocksToUserActions(
     gsl::span<std::string const> blocks)
 {
@@ -31,13 +30,12 @@ std::vector<Trustchain::UserAction> fromBlocksToUserActions(
       std::end(blocks),
       std::back_inserter(entries),
       [](auto const& block) {
-        return Trustchain::deserializeUserAction(Codec::template decode(block));
+        return Trustchain::deserializeUserAction(mgs::base64::decode(block));
       });
 
   return entries;
 }
 
-template <typename Codec = mgs::base64>
 std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
     gsl::span<std::string const> blocks)
 {
@@ -48,7 +46,7 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
                  std::back_inserter(entries),
                  [](auto const& block) {
                    return Trustchain::deserializeKeyPublishAction(
-                       Codec::template decode(block));
+                       mgs::base64::decode(block));
                  });
 
   return entries;
@@ -78,10 +76,10 @@ tc::cotask<Requester::GetResult> Requester::getUsersImpl(
   auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
   auto rootBlock =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
-          mgs::base64url_nopad::decode(response.at("root").get<std::string>()));
+          mgs::base64::decode(response.at("root").get<std::string>()));
   TC_RETURN((GetResult{
       std::move(rootBlock),
-      fromBlocksToUserActions<mgs::base64url_nopad>(
+      fromBlocksToUserActions(
           response.at("histories").get<std::vector<std::string>>())}));
 }
 
@@ -203,14 +201,11 @@ Requester::getPublicProvisionalIdentities(
 
   for (auto const& elem : result.at("public_provisional_identities"))
   {
-    auto const hashedEmail = mgs::base64url_nopad::decode<Crypto::Hash>(
-        elem.at("hashed_email").get<std::string>());
+    auto const hashedEmail = elem.at("hashed_email").get<Crypto::Hash>();
     auto const publicSignatureKey =
-        mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
-            elem.at("public_signature_key").get<std::string>());
+        elem.at("public_signature_key").get<Crypto::PublicSignatureKey>();
     auto const publicEncryptionKey =
-        mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
-            elem.at("public_encryption_key").get<std::string>());
+        elem.at("public_encryption_key").get<Crypto::PublicEncryptionKey>();
     ret[hashedEmail] = {publicSignatureKey, publicEncryptionKey};
   }
   TC_RETURN(ret);
