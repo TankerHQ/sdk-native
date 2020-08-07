@@ -13,19 +13,13 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <fmt/format.h>
 #include <mgs/base64.hpp>
+#include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Tanker::Users
 {
 namespace
 {
-template <typename T>
-Crypto::Hash hashField(T const& field)
-{
-  return Crypto::generichash(
-      gsl::make_span(field).template as_span<std::uint8_t const>());
-}
-
 std::vector<Trustchain::UserAction> fromBlocksToUserActions(
     gsl::span<const std::string> const& blocks)
 {
@@ -56,6 +50,15 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
                  });
 
   return entries;
+}
+
+std::vector<std::string> toBase64URL(gsl::span<Crypto::Hash const> hashedEmails)
+{
+  std::vector<std::string> ret;
+  ret.reserve(hashedEmails.size());
+  for (auto const& elem : hashedEmails)
+    ret.push_back(mgs::base64url_nopad::encode(elem));
+  return ret;
 }
 }
 
@@ -184,29 +187,35 @@ tc::cotask<void> Requester::authenticate(
   _httpClient->setAccessToken(std::move(accessToken));
 }
 
-tc::cotask<std::vector<
-    std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-Requester::getPublicProvisionalIdentities(gsl::span<Email const> emails)
+tc::cotask<std::map<
+    Crypto::Hash,
+    std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+Requester::getPublicProvisionalIdentities(
+    gsl::span<Crypto::Hash const> hashedEmails)
 {
-  std::vector<
-      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
+  std::map<Crypto::Hash,
+           std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
       ret;
-  if (emails.empty())
+  if (hashedEmails.empty())
     TC_RETURN(ret);
 
-  nlohmann::json message;
-  for (auto const& email : emails)
-    message.push_back({{"type", "email"}, {"hashed_email", hashField(email)}});
+  auto query = nlohmann::json{{"hashed_emails[]", toBase64URL(hashedEmails)}};
+  auto url = _httpClient->makeUrl("public-provisional-identities");
+  url.set_search(fetchpp::http::encode_query(query));
+  auto const result = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
 
-  auto const result = TC_AWAIT(_client->emit(
-      "get public provisional identities", nlohmann::json(message)));
-
-  ret.reserve(result.size());
-  for (auto const& elem : result)
-    ret.emplace_back(
-        elem.at("signature_public_key").get<Crypto::PublicSignatureKey>(),
-        elem.at("encryption_public_key").get<Crypto::PublicEncryptionKey>());
+  for (auto const& elem : result.at("public_provisional_identities"))
+  {
+    auto const hashedEmail = mgs::base64url_nopad::decode<Crypto::Hash>(
+        elem.at("hashed_email").get<std::string>());
+    auto const publicSignatureKey =
+        mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
+            elem.at("public_signature_key").get<std::string>());
+    auto const publicEncryptionKey =
+        mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
+            elem.at("public_encryption_key").get<std::string>());
+    ret[hashedEmail] = {publicSignatureKey, publicEncryptionKey};
+  }
   TC_RETURN(ret);
 }
-
 }

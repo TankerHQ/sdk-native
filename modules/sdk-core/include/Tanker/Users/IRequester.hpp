@@ -14,7 +14,8 @@
 
 #include <gsl/gsl-lite.hpp>
 
-#include <tuple>
+#include <map>
+#include <utility>
 #include <vector>
 
 namespace Tanker::Users
@@ -43,8 +44,10 @@ public:
   virtual tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
-  virtual tc::cotask<std::vector<
-      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-  getPublicProvisionalIdentities(gsl::span<Email const>) = 0;
+  virtual tc::cotask<std::map<
+      Crypto::Hash,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(
+      gsl::span<Crypto::Hash const> hashedEmails) = 0;
 };
 }

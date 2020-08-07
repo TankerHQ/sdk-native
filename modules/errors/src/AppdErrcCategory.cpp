@@ -24,6 +24,8 @@ std::string AppdErrcCategory::message(int c) const
     return "trustchain not found";
   case AppdErrc::DeviceNotFound:
     return "device not found";
+  case AppdErrc::ProvisionalIdentityNotFound:
+    return "provisional identity not found";
   case AppdErrc::DeviceRevoked:
     return "device revoked";
   case AppdErrc::TooManyAttempts:
@@ -67,6 +69,7 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const
   case AppdErrc::TrustchainIsNotTest:
   case AppdErrc::AppNotFound:
   case AppdErrc::DeviceNotFound:
+  case AppdErrc::ProvisionalIdentityNotFound:
   case AppdErrc::UserNotFound:
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);

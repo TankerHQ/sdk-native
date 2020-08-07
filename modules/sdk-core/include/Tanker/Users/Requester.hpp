@@ -36,9 +36,11 @@ public:
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
 
-  tc::cotask<std::vector<
-      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-  getPublicProvisionalIdentities(gsl::span<Email const> emails) override;
+  tc::cotask<std::map<
+      Crypto::Hash,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(
+      gsl::span<Crypto::Hash const> hashedEmails) override;
 
 private:
   Client* _client;
