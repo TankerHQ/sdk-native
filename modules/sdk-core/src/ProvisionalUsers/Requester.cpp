@@ -4,7 +4,7 @@
 #include <Tanker/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
-#include <mgs/base64url.hpp>
+#include <mgs/base64.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -23,7 +23,7 @@ fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
                  [](auto const& block) {
                    return Serialization::deserialize<
                        Trustchain::Actions::ProvisionalIdentityClaim>(
-                       mgs::base64url_nopad::decode(block));
+                       mgs::base64::decode(block));
                  });
 
   return entries;
@@ -59,14 +59,14 @@ Requester::getVerifiedProvisionalIdentityKeys()
 
   auto& jProvisional = j.at("provisional_identity");
   TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
-      {mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
-           jProvisional.at("public_encryption_key").get<std::string>()),
-       mgs::base64url_nopad::decode<Crypto::PrivateEncryptionKey>(
-           jProvisional.at("private_encryption_key").get<std::string>())},
-      {mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
-           jProvisional.at("public_signature_key").get<std::string>()),
-       mgs::base64url_nopad::decode<Crypto::PrivateSignatureKey>(
-           jProvisional.at("private_signature_key").get<std::string>())}}));
+      {jProvisional.at("public_encryption_key")
+           .get<Crypto::PublicEncryptionKey>(),
+       jProvisional.at("private_encryption_key")
+           .get<Crypto::PrivateEncryptionKey>()},
+      {jProvisional.at("public_signature_key")
+           .get<Crypto::PublicSignatureKey>(),
+       jProvisional.at("private_signature_key")
+           .get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
@@ -82,14 +82,14 @@ Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
 
   auto& jProvisional = json.at("provisional_identity");
   TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
-      {mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
-           jProvisional.at("public_encryption_key").get<std::string>()),
-       mgs::base64url_nopad::decode<Crypto::PrivateEncryptionKey>(
-           jProvisional.at("private_encryption_key").get<std::string>())},
-      {mgs::base64url_nopad::decode<Crypto::PublicSignatureKey>(
-           jProvisional.at("public_signature_key").get<std::string>()),
-       mgs::base64url_nopad::decode<Crypto::PrivateSignatureKey>(
-           jProvisional.at("private_signature_key").get<std::string>())}}));
+      {jProvisional.at("public_encryption_key")
+           .get<Crypto::PublicEncryptionKey>(),
+       jProvisional.at("private_encryption_key")
+           .get<Crypto::PrivateEncryptionKey>()},
+      {jProvisional.at("public_signature_key")
+           .get<Crypto::PublicSignatureKey>(),
+       jProvisional.at("private_signature_key")
+           .get<Crypto::PrivateSignatureKey>()}}));
 }
 
 tc::cotask<void> Requester::claimProvisionalIdentity(

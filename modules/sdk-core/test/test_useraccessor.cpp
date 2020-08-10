@@ -26,7 +26,8 @@ TEST_CASE("UserAccessor")
   SUBCASE("it should return user ids it did not find")
   {
     REQUIRE_CALL(requester, getUsers(ANY(gsl::span<Trustchain::UserId const>)))
-        .RETURN(makeCoTask(std::vector<Trustchain::UserAction>{}));
+        .RETURN(makeCoTask(
+            Tanker::Users::IRequester::GetResult{generator.rootBlock(), {}}));
 
     std::vector ids{bob.id(), charlie.id()};
     auto const result = AWAIT(userAccessor.pull(ids));
@@ -39,7 +40,9 @@ TEST_CASE("UserAccessor")
     std::vector ids{alice.id(), bob.id(), charlie.id()};
 
     REQUIRE_CALL(requester, getUsers(ids))
-        .RETURN(makeCoTask(generator.makeEntryList({alice, bob, charlie})));
+        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{
+            generator.rootBlock(),
+            generator.makeEntryList({alice, bob, charlie})}));
     auto result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.notFound.empty());
     auto expectedUsers = std::vector<Users::User>{alice, bob, charlie};

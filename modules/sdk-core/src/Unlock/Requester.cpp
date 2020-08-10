@@ -4,7 +4,7 @@
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/HttpClient.hpp>
 
-#include <mgs/base64url.hpp>
+#include <mgs/base64.hpp>
 
 #include <fmt/format.h>
 
@@ -27,8 +27,10 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
   if (res.has_error() && res.error().ec == Errors::AppdErrc::UserNotFound)
     TC_RETURN(std::nullopt);
 
-  TC_RETURN(mgs::base64url_nopad::decode<Crypto::PublicEncryptionKey>(
-      res.value().at("user").at("public_encryption_key").get<std::string>()));
+  TC_RETURN(res.value()
+                .at("user")
+                .at("public_encryption_key")
+                .get<Crypto::PublicEncryptionKey>());
 }
 
 tc::cotask<void> Requester::setVerificationMethod(
@@ -47,7 +49,7 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
   auto const res = TC_AWAIT(_httpClient->asyncPost(
       fmt::format("users/{userId:#S}/verification-key", "userId"_a = userId),
       {{"verification", request}}));
-  TC_RETURN(mgs::base64url_nopad::decode<std::vector<uint8_t>>(
+  TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
       res.value().at("encrypted_verification_key").get<std::string>()));
 }
 

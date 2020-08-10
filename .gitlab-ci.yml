@@ -126,6 +126,8 @@ check/compat:
 check/e2e:
   image: tanker.local:5000/ci-base:latest
   stage: check
+  # FIXME remove once HTTP migration is done
+  when: manual
   dependencies:
     - build/linux
   script:
