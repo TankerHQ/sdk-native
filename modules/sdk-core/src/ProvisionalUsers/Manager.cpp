@@ -1,8 +1,8 @@
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
 
 #include <Tanker/Identity/Extract.hpp>
@@ -120,7 +120,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   }
   catch (Tanker::Errors::Exception const& e)
   {
-    if (e.errorCode() != Errors::ServerErrc::VerificationNeeded)
+    if (e.errorCode() != Errors::AppdErrc::VerificationNeeded)
       throw;
   }
   _provisionalIdentity = provisionalIdentity;

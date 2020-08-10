@@ -3,7 +3,7 @@
 #include <Helpers/Buffers.hpp>
 
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
@@ -16,9 +16,7 @@ CorePtr createCore(std::string const& url,
 {
   return std::unique_ptr<Tanker::AsyncCore, AsyncCoreDeleter>(
       new Tanker::AsyncCore(
-          url,
-          Tanker::Network::SdkInfo{"test", id, TANKER_VERSION},
-          tankerPath),
+          url, Tanker::SdkInfo{"test", id, TANKER_VERSION}, tankerPath),
       AsyncCoreDeleter{});
 }
 

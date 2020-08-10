@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/SdkInfo.hpp>
 
 #include <fetchpp/http/authorization.hpp>
 #include <fetchpp/http/json_body.hpp>
@@ -150,7 +150,7 @@ std::error_code make_error_code(HttpError const& e)
 }
 
 HttpClient::HttpClient(http::url const& baseUrl,
-                       Network::SdkInfo const& info,
+                       SdkInfo const& info,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
   : _baseUrl(

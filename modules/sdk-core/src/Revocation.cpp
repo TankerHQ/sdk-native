@@ -1,6 +1,5 @@
 #include <Tanker/Revocation.hpp>
 
-#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>

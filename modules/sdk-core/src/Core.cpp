@@ -14,7 +14,6 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
@@ -45,7 +44,7 @@ namespace Tanker
 {
 Core::~Core() = default;
 
-Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
+Core::Core(std::string url, SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
