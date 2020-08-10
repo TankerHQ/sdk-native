@@ -34,6 +34,8 @@ public:
   tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
+  tc::cotask<void> revokeDevice(
+      Trustchain::Actions::DeviceRevocation const& deviceRevocation) override;
 
   tc::cotask<std::map<
       Crypto::Hash,

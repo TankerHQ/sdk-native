@@ -43,6 +43,8 @@ public:
   virtual tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
+  virtual tc::cotask<void> revokeDevice(
+      Trustchain::Actions::DeviceRevocation const& deviceRevocation) = 0;
   virtual tc::cotask<std::map<
       Crypto::Hash,
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
