@@ -177,6 +177,18 @@ tc::cotask<void> Requester::authenticate(
   _httpClient->setAccessToken(std::move(accessToken));
 }
 
+tc::cotask<void> Requester::revokeDevice(
+    Trustchain::Actions::DeviceRevocation const& deviceRevocation)
+{
+  auto const url = _httpClient->makeUrl("device-revocations");
+  TC_AWAIT(
+      _httpClient->asyncPost(
+          url.href(),
+          {{"device_revocation",
+            mgs::base64::encode(Serialization::serialize(deviceRevocation))}}))
+      .value();
+}
+
 tc::cotask<std::map<
     Crypto::Hash,
     std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>

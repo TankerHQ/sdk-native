@@ -6,7 +6,6 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
-#include <Tanker/Pusher.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -98,7 +97,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
                               TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              Pusher& pusher)
+                              Users::IRequester& requester)
 {
   TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), userAccessor));
   auto const user =
@@ -108,7 +107,7 @@ tc::cotask<void> revokeDevice(DeviceId const& deviceId,
 
   auto clientEntry = makeRevokeDeviceAction(
       deviceId, trustchainId, localUser, user.devices(), newUserKey);
-  TC_AWAIT(pusher.pushBlock(clientEntry));
+  TC_AWAIT(requester.revokeDevice(clientEntry));
 }
 
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
