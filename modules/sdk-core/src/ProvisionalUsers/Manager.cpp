@@ -9,7 +9,6 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/Pusher.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -42,14 +41,12 @@ std::optional<Unlock::VerificationMethod> findVerificationMethod(
 }
 
 Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
-                 Pusher* pusher,
                  IRequester* requester,
                  Unlock::Requester* unlockRequester,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
                  Trustchain::TrustchainId const& trustchainId)
   : _localUserAccessor(localUserAccessor),
-    _pusher(pusher),
     _requester(requester),
     _unlockRequester(unlockRequester),
     _provisionalUsersAccessor(provisionalUsersAccessor),
@@ -154,7 +151,7 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
                                    _provisionalIdentity->appSignatureKeyPair,
                                    tankerKeys->signatureKeyPair},
       localUser.currentKeyPair());
-  TC_AWAIT(_pusher->pushBlock(clientEntry));
+  TC_AWAIT(_requester->claimProvisionalIdentity(clientEntry));
 
   _provisionalIdentity.reset();
   TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
