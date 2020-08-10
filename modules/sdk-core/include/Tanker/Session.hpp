@@ -5,12 +5,13 @@
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Groups/Store.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -18,6 +19,7 @@
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
+#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <memory>
 #include <string>
@@ -63,7 +65,7 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::string url, Network::SdkInfo info);
+  Session(std::string url, SdkInfo info);
   ~Session();
 
   HttpClient& httpClient();

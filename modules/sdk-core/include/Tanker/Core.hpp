@@ -2,8 +2,8 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/EncryptionSession.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
@@ -42,7 +42,7 @@ public:
 
   using SessionClosedHandler = std::function<void()>;
 
-  Core(std::string url, Network::SdkInfo info, std::string writablePath);
+  Core(std::string url, SdkInfo info, std::string writablePath);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
@@ -131,7 +131,7 @@ private:
 
 private:
   std::string _url;
-  Network::SdkInfo _info;
+  SdkInfo _info;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
   std::shared_ptr<Session> _session;

@@ -31,9 +31,7 @@ auto makeEventHandler(task_canceler& tc, std::function<void()> cb)
 }
 }
 
-AsyncCore::AsyncCore(std::string url,
-                     Network::SdkInfo info,
-                     std::string writablePath)
+AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
   : _core(std::move(url), std::move(info), std::move(writablePath))
 {
 }

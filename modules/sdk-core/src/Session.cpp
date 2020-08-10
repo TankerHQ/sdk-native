@@ -5,7 +5,6 @@
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/HttpClient.hpp>
-#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -76,7 +75,7 @@ Session::Requesters::Requesters(HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::string url, Network::SdkInfo info)
+Session::Session(std::string url, SdkInfo info)
   : _httpClient(std::make_unique<HttpClient>(
         fetchpp::http::url(
             // TODO remove once socket io is removed
