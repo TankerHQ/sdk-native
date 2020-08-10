@@ -1,6 +1,7 @@
 #include <Tanker/Groups/Requester.hpp>
 
 #include <Tanker/HttpClient.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Utils.hpp>
 
 #include <mgs/base64url.hpp>
@@ -61,6 +62,18 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
       nlohmann::json{{"user_group_public_encryption_key",
                       mgs::base64url_nopad::encode(groupEncryptionKey)}};
   TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
+}
+
+tc::cotask<void> Requester::createGroup(
+    Trustchain::Actions::UserGroupCreation const& groupCreation)
+{
+  auto const url = _httpClient->makeUrl("user-groups");
+  TC_AWAIT(
+      _httpClient->asyncPost(
+          url.href(),
+          {{"user_group_creation",
+            mgs::base64::encode(Serialization::serialize(groupCreation))}}))
+      .value();
 }
 }
 }

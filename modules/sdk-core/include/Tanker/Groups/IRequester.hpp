@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
@@ -18,6 +19,9 @@ public:
 
   virtual tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) = 0;
+
+  virtual tc::cotask<void> createGroup(
+      Trustchain::Actions::UserGroupCreation const& groupCreation) = 0;
   virtual ~IRequester() = default;
 };
 }
