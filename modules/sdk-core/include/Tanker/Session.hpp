@@ -25,7 +25,6 @@
 
 namespace Tanker
 {
-class Client;
 class HttpClient;
 
 class Session
@@ -37,7 +36,7 @@ public:
                       Unlock::Requester
 
   {
-    Requesters(Client*, HttpClient*);
+    Requesters(HttpClient*);
   };
 
   struct Storage
@@ -67,7 +66,6 @@ public:
   Session(std::string url, Network::SdkInfo info);
   ~Session();
 
-  Client& client();
   HttpClient& httpClient();
 
   Requesters const& requesters() const;
@@ -99,7 +97,6 @@ public:
   tc::cotask<void> finalizeOpening();
 
 private:
-  std::unique_ptr<Client> _client;
   std::unique_ptr<HttpClient> _httpClient;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;

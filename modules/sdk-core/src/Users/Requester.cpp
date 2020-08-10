@@ -1,7 +1,7 @@
 
 #include <Tanker/Users/Requester.hpp>
 
-#include <Tanker/Client.hpp>
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -69,8 +69,7 @@ std::vector<std::string> base64KeyPublishActions(std::vector<T> const& actions)
 }
 }
 
-Requester::Requester(Client* client, HttpClient* httpClient)
-  : _client(client), _httpClient(httpClient)
+Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
@@ -133,46 +132,6 @@ tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
           .value();
 }
 
-tc::cotask<void> Requester::authenticateSocketIO(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    Crypto::SignatureKeyPair const& userSignatureKeyPair)
-{
-  FUNC_TIMER(Net);
-  auto const challenge = TC_AWAIT(_client->emit("request auth challenge", {}))
-                             .at("challenge")
-                             .get<std::string>();
-  // NOTE: It is MANDATORY to check this prefix is valid, or the server could
-  // get us to sign anything!
-  if (!boost::algorithm::starts_with(
-          challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
-  {
-    throw Errors::Exception(
-        make_error_code(Errors::Errc::InternalError),
-        "received auth challenge does not contain mandatory prefix, server "
-        "may not be up to date, or we may be under attack.");
-  }
-  auto const signature =
-      Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   userSignatureKeyPair.privateKey);
-  auto const request =
-      nlohmann::json{{"signature", signature},
-                     {"public_signature_key", userSignatureKeyPair.publicKey},
-                     {"trustchain_id", trustchainId},
-                     {"user_id", userId}};
-  try
-  {
-    TC_AWAIT(_client->emit("authenticate device", request));
-  }
-  catch (Errors::Exception const& ex)
-  {
-    if (ex.errorCode().category() == Errors::ServerErrcCategory())
-      throw Errors::formatEx(Errors::Errc::InternalError,
-                             "device authentication failed {}",
-                             ex.what());
-  }
-}
-
 tc::cotask<void> Requester::authenticate(
     Trustchain::DeviceId const& deviceId,
     Crypto::SignatureKeyPair const& userSignatureKeyPair)
@@ -218,6 +177,25 @@ tc::cotask<void> Requester::revokeDevice(
           {{"device_revocation",
             mgs::base64::encode(Serialization::serialize(deviceRevocation))}}))
       .value();
+}
+
+tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
+    Trustchain::UserId const& userId,
+    Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey)
+{
+  using namespace fmt::literals;
+
+  auto query = nlohmann::json{
+      {"ghost_device_public_signature_key",
+       mgs::base64url_nopad::encode(ghostDevicePublicSignatureKey)}};
+  auto url = _httpClient->makeUrl(
+      fmt::format("users/{userId:#S}/encryption-key", "userId"_a = userId));
+  url.set_search(fetchpp::http::encode_query(query));
+  auto const res = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  TC_RETURN((GetEncryptionKeyResult{
+      res.at("encrypted_user_private_encryption_key")
+          .get<Crypto::SealedPrivateEncryptionKey>(),
+      res.at("ghost_device_id").get<Trustchain::DeviceId>()}));
 }
 
 tc::cotask<std::map<
