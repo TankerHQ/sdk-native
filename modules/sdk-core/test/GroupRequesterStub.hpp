@@ -18,5 +18,8 @@ public:
              tc::cotask<std::vector<Trustchain::GroupAction>>(
                  Crypto::PublicEncryptionKey const&),
              override);
+  MAKE_MOCK1(createGroup,
+             tc::cotask<void>(Trustchain::Actions::UserGroupCreation const&),
+             override);
 };
 }

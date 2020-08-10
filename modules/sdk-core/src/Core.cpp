@@ -379,7 +379,7 @@ tc::cotask<SGroupId> Core::createGroup(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
       _session->accessors().userAccessor,
-      _session->pusher(),
+      _session->requesters(),
       spublicIdentities,
       _session->trustchainId(),
       localUser.deviceId(),
