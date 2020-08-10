@@ -188,7 +188,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
-    Pusher& pusher,
+    IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
@@ -209,6 +209,6 @@ tc::cotask<void> updateMembers(
                                                       trustchainId,
                                                       deviceId,
                                                       privateSignatureKey);
-  TC_AWAIT(pusher.pushBlock(groupEntry));
+  TC_AWAIT(requester.updateGroup(groupEntry));
 }
 }

@@ -75,5 +75,17 @@ tc::cotask<void> Requester::createGroup(
             mgs::base64::encode(Serialization::serialize(groupCreation))}}))
       .value();
 }
+
+tc::cotask<void> Requester::updateGroup(
+    Trustchain::Actions::UserGroupAddition const& groupAddition)
+{
+  auto const url = _httpClient->makeUrl("user-groups");
+  TC_AWAIT(
+      _httpClient->asyncPatch(
+          url.href(),
+          {{"user_group_addition",
+            mgs::base64::encode(Serialization::serialize(groupAddition))}}))
+      .value();
+}
 }
 }

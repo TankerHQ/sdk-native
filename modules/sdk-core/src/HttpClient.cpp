@@ -193,6 +193,14 @@ tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
+tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
+                                              nlohmann::json data)
+{
+  auto req = makeRequest(
+      fetchpp::http::verb::patch, makeUrl(target), _headers, std::move(data));
+  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+}
+
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req =
