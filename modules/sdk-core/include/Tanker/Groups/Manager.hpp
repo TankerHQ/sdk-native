@@ -18,11 +18,6 @@
 #include <string>
 #include <vector>
 
-namespace Tanker
-{
-class Pusher;
-}
-
 namespace Tanker::Users
 {
 class IUserAccessor;
@@ -70,7 +65,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
-    Pusher& pusher,
+    IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
