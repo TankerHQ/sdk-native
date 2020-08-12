@@ -12,12 +12,6 @@ namespace Tanker
 class UserRequesterStub : public Users::IRequester
 {
 public:
-  MAKE_MOCK2(
-      authenticate,
-      tc::cotask<void>(Trustchain::DeviceId const& userId,
-                       Crypto::SignatureKeyPair const& userSignatureKeyPair),
-      override);
-
   MAKE_MOCK1(postResourceKeys,
              tc::cotask<void>(Share::ShareActions const&),
              override);

@@ -32,9 +32,6 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) override;
 
-  tc::cotask<void> authenticate(
-      Trustchain::DeviceId const& deviceId,
-      Crypto::SignatureKeyPair const& deviceSignatureKeyPair) override;
   tc::cotask<void> revokeDevice(
       Trustchain::Actions::DeviceRevocation const& deviceRevocation) override;
 

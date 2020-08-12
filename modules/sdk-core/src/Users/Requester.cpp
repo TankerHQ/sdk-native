@@ -131,41 +131,6 @@ tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
           .value();
 }
 
-tc::cotask<void> Requester::authenticate(
-    Trustchain::DeviceId const& deviceId,
-    Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
-{
-  FUNC_TIMER(Net);
-  auto const baseTarget =
-      fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", deviceId));
-  auto const challenge =
-      TC_AWAIT(_httpClient->asyncPost(fmt::format("{}/challenges", baseTarget)))
-          .value()
-          .at("challenge")
-          .get<std::string>();
-  // NOTE: It is MANDATORY to check this prefix is valid, or the server
-  // could get us to sign anything!
-  if (!boost::algorithm::starts_with(
-          challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
-  {
-    throw formatEx(
-        Errors::Errc::InternalError,
-        "received auth challenge does not contain mandatory prefix, server "
-        "may not be up to date, or we may be under attack.");
-  }
-  auto const signature =
-      Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   deviceSignatureKeyPair.privateKey);
-  auto accessToken =
-      TC_AWAIT(_httpClient->asyncPost(
-                   fmt::format("{}/sessions", baseTarget),
-                   {{"signature", signature}, {"challenge", challenge}}))
-          .value()
-          .at("access_token")
-          .get<std::string>();
-  _httpClient->setAccessToken(std::move(accessToken));
-}
-
 tc::cotask<void> Requester::revokeDevice(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation)
 {

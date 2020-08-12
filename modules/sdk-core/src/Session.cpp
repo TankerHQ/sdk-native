@@ -188,7 +188,7 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
 
 tc::cotask<void> Session::authenticate()
 {
-  TC_AWAIT(_requesters.authenticate(
+  TC_AWAIT(_httpClient->authenticate(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
       TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
 }
