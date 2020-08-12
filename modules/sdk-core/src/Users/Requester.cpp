@@ -133,7 +133,7 @@ tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
 
 tc::cotask<void> Requester::authenticate(
     Trustchain::DeviceId const& deviceId,
-    Crypto::SignatureKeyPair const& userSignatureKeyPair)
+    Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
 {
   FUNC_TIMER(Net);
   auto const baseTarget =
@@ -155,7 +155,7 @@ tc::cotask<void> Requester::authenticate(
   }
   auto const signature =
       Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   userSignatureKeyPair.privateKey);
+                   deviceSignatureKeyPair.privateKey);
   auto accessToken =
       TC_AWAIT(_httpClient->asyncPost(
                    fmt::format("{}/sessions", baseTarget),
