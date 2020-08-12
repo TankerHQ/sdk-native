@@ -27,6 +27,8 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
+  tc::cotask<void> postResourceKeys(
+      Share::ShareActions const& resourceKeys) override;
   tc::cotask<void> authenticateSocketIO(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,
@@ -34,6 +36,8 @@ public:
   tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
+  tc::cotask<void> revokeDevice(
+      Trustchain::Actions::DeviceRevocation const& deviceRevocation) override;
 
   tc::cotask<std::map<
       Crypto::Hash,

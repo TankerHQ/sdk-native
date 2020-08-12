@@ -8,7 +8,6 @@
 
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/IdentityUtils.hpp>
-#include <Tanker/Pusher.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>

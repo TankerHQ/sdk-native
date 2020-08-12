@@ -23,6 +23,14 @@ public:
       tc::cotask<void>(Trustchain::DeviceId const& userId,
                        Crypto::SignatureKeyPair const& userSignatureKeyPair),
       override);
+
+  MAKE_MOCK1(postResourceKeys,
+             tc::cotask<void>(Share::ShareActions const&),
+             override);
+  MAKE_MOCK1(revokeDevice,
+             tc::cotask<void>(
+                 Trustchain::Actions::DeviceRevocation const& deviceRevocation),
+             override);
   MAKE_MOCK1(getUsers,
              tc::cotask<Users::IRequester::GetResult>(
                  gsl::span<Trustchain::UserId const> userIds),
