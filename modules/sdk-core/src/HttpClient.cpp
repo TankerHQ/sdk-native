@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/SdkInfo.hpp>
 
 #include <fetchpp/http/authorization.hpp>
 #include <fetchpp/http/json_body.hpp>
@@ -120,7 +120,11 @@ tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
   TLOG_CATEGORY(HttpClient);
   TINFO("{} {}", req.method(), req.uri().href());
   auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
-  TINFO("{} {}", res.result_int(), http::obsolete_reason(res.result()));
+  TINFO("{} {}, {} {}",
+        req.method(),
+        req.uri().href(),
+        res.result_int(),
+        http::obsolete_reason(res.result()));
   TC_RETURN(handleResponse(res));
 }
 }
@@ -150,7 +154,7 @@ std::error_code make_error_code(HttpError const& e)
 }
 
 HttpClient::HttpClient(http::url const& baseUrl,
-                       Network::SdkInfo const& info,
+                       SdkInfo const& info,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
   : _baseUrl(

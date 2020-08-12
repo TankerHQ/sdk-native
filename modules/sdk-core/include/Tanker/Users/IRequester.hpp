@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -34,6 +35,12 @@ public:
     std::vector<Trustchain::UserAction> userEntries;
   };
 
+  struct GetEncryptionKeyResult
+  {
+    Crypto::SealedPrivateEncryptionKey encryptedUserPrivateEncryptionKey;
+    Trustchain::DeviceId ghostDeviceId;
+  };
+
   virtual ~IRequester() = default;
   virtual tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
@@ -43,10 +50,9 @@ public:
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;
   virtual tc::cotask<void> postResourceKeys(
       Share::ShareActions const& resourceKeys) = 0;
-  virtual tc::cotask<void> authenticateSocketIO(
-      Trustchain::TrustchainId const& trustchainId,
+  virtual tc::cotask<GetEncryptionKeyResult> getEncryptionKey(
       Trustchain::UserId const& userId,
-      Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
+      Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) = 0;
   virtual tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;

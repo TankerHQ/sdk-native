@@ -56,7 +56,7 @@ std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
   return std::make_unique<AsyncCore>(
       _trustchainUrl,
-      Network::SdkInfo{
+      SdkInfo{
           "sdk-native-test",
           mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
           "0.0.1"},

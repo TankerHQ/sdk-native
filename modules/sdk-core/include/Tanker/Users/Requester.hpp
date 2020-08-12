@@ -5,7 +5,6 @@
 namespace Tanker
 {
 struct DeviceKeys;
-class Client;
 class HttpClient;
 
 namespace Users
@@ -19,7 +18,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client, HttpClient* httpClient);
+  Requester(HttpClient* httpClient);
 
   tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
@@ -29,10 +28,10 @@ public:
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
   tc::cotask<void> postResourceKeys(
       Share::ShareActions const& resourceKeys) override;
-  tc::cotask<void> authenticateSocketIO(
-      Trustchain::TrustchainId const& trustchainId,
+  tc::cotask<GetEncryptionKeyResult> getEncryptionKey(
       Trustchain::UserId const& userId,
-      Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
+      Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) override;
+
   tc::cotask<void> authenticate(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
@@ -48,7 +47,6 @@ public:
 private:
   tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);
 
-  Client* _client;
   HttpClient* _httpClient;
 };
 }

@@ -2,7 +2,7 @@
 
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/SdkInfo.hpp>
 
 #include <fetchpp/client.hpp>
 #include <fetchpp/http/authorization.hpp>
@@ -53,7 +53,7 @@ class HttpClient
 {
 public:
   HttpClient(fetchpp::http::url const& baseUrl,
-             Network::SdkInfo const& info,
+             SdkInfo const& info,
              fetchpp::net::executor ex,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;

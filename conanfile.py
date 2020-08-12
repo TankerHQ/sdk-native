@@ -91,7 +91,6 @@ class TankerConan(ConanFile):
         if self.options.with_ssl:
             self.requires("libressl/3.2.0", private=private)
             self.requires("fetchpp/0.9.0")
-            self.requires("socket.io-client-cpp/1.6.6", private=private)
             self.requires("sqlpp11/0.59", private=private)
             self.requires(
                 "sqlpp11-connector-sqlite3/0.29", private=private)
@@ -182,7 +181,6 @@ class TankerConan(ConanFile):
                     "tankertesthelpers",
                     "tankercore",
                     "tankerstreams",
-                    "tankernetwork",
                     "tankertrustchain",
                     "tankeridentity",
                     "tankercrypto",
