@@ -18,6 +18,11 @@
 #include <utility>
 #include <vector>
 
+namespace Tanker::Share
+{
+struct ShareActions;
+}
+
 namespace Tanker::Users
 {
 class IRequester
@@ -36,6 +41,8 @@ public:
       gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
   virtual tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;
+  virtual tc::cotask<void> postResourceKeys(
+      Share::ShareActions const& resourceKeys) = 0;
   virtual tc::cotask<void> authenticateSocketIO(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

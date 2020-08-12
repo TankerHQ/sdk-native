@@ -264,7 +264,7 @@ tc::cotask<void> Core::encrypt(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{metadata.key, metadata.resourceId}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -346,7 +346,7 @@ tc::cotask<void> Core::share(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         resourceKeys,
                         spublicIdentities,
                         sgroupIds));
@@ -556,7 +556,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -638,7 +638,7 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{sess.sessionKey(), sess.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
