@@ -128,7 +128,7 @@ fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
 }
 
 template <typename Request>
-tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
+tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, Request req)
 {
   TLOG_CATEGORY(HttpClient);
   TINFO("{} {}", req.method(), req.uri().href());
@@ -195,16 +195,22 @@ void HttpClient::setDeviceAuthData(
   _deviceSignaturePrivateKey = deviceSignaturePrivateKey;
 }
 
+// Do not call anything else than asyncFetchBase here to avoid recursive calls
 tc::cotask<void> HttpClient::authenticate()
 {
   FUNC_TIMER(Net);
+
+  _headers.erase(fetchpp::http::field::authorization);
+
   auto const baseTarget =
       fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-  auto const challenge =
-      TC_AWAIT(asyncPost(fmt::format("{}/challenges", baseTarget)))
-          .value()
-          .at("challenge")
-          .get<std::string>();
+  auto req = makeRequest(fetchpp::http::verb::post,
+                         makeUrl(fmt::format("{}/challenges", baseTarget)),
+                         _headers);
+  auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
+                             .value()
+                             .at("challenge")
+                             .get<std::string>();
   // NOTE: It is MANDATORY to check this prefix is valid, or the server
   // could get us to sign anything!
   if (!boost::algorithm::starts_with(
@@ -218,12 +224,14 @@ tc::cotask<void> HttpClient::authenticate()
   auto const signature =
       Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
                    _deviceSignaturePrivateKey);
-  auto accessToken =
-      TC_AWAIT(asyncPost(fmt::format("{}/sessions", baseTarget),
-                         {{"signature", signature}, {"challenge", challenge}}))
-          .value()
-          .at("access_token")
-          .get<std::string>();
+  auto req2 = makeRequest(fetchpp::http::verb::post,
+                          makeUrl(fmt::format("{}/sessions", baseTarget)),
+                          _headers,
+                          {{"signature", signature}, {"challenge", challenge}});
+  auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
+                         .value()
+                         .at("access_token")
+                         .get<std::string>();
 
   _headers.set(fetchpp::http::field::authorization,
                fetchpp::http::authorization::bearer{std::move(accessToken)});
@@ -267,6 +275,12 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
   auto req =
       makeRequest(fetchpp::http::verb::delete_, makeUrl(target), _headers);
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+}
+
+template <typename Request>
+tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
+{
+  TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
 }
 
 HttpClient::~HttpClient() = default;
