@@ -39,7 +39,6 @@ Session::Storage::Storage(DataStore::Database pdb)
 }
 
 Session::Accessors::Accessors(Storage& storage,
-                              Pusher* pusher,
                               Requesters* requesters,
                               Users::LocalUserAccessor plocalUserAccessor)
   : localUserAccessor(std::move(plocalUserAccessor)),
@@ -91,7 +90,6 @@ Session::Session(std::string url, Network::SdkInfo info)
             boost::algorithm::replace_all_copy(url, "api.", "appd.")),
         info,
         tc::get_default_executor().get_io_service().get_executor())),
-    _pusher(_client.get()),
     _requesters(_client.get(), _httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -122,11 +120,6 @@ Session::Storage& Session::storage()
   return *_storage;
 }
 
-Pusher& Session::pusher()
-{
-  return _pusher;
-}
-
 Session::Requesters const& Session::requesters() const
 {
   return _requesters;
@@ -141,7 +134,6 @@ tc::cotask<void> Session::createAccessors()
 {
   _accessors = std::make_unique<Accessors>(
       storage(),
-      &pusher(),
       &requesters(),
       TC_AWAIT(Users::LocalUserAccessor::create(
           userId(), trustchainId(), &_requesters, &storage().localUserStore)));
