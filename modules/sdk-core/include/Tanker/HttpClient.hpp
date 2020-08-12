@@ -90,5 +90,8 @@ private:
 
   Trustchain::DeviceId _deviceId;
   Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
+
+  template <typename Request>
+  tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req);
 };
 }
