@@ -187,13 +187,19 @@ void HttpClient::setAccessToken(std::string accessToken)
                fetchpp::http::authorization::bearer{std::move(accessToken)});
 }
 
-tc::cotask<void> HttpClient::authenticate(
+void HttpClient::setDeviceAuthData(
     Trustchain::DeviceId const& deviceId,
-    Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
+    Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey)
+{
+  _deviceId = deviceId;
+  _deviceSignaturePrivateKey = deviceSignaturePrivateKey;
+}
+
+tc::cotask<void> HttpClient::authenticate()
 {
   FUNC_TIMER(Net);
   auto const baseTarget =
-      fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", deviceId));
+      fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
   auto const challenge =
       TC_AWAIT(asyncPost(fmt::format("{}/challenges", baseTarget)))
           .value()
@@ -211,7 +217,7 @@ tc::cotask<void> HttpClient::authenticate(
   }
   auto const signature =
       Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   deviceSignatureKeyPair.privateKey);
+                   _deviceSignaturePrivateKey);
   auto accessToken =
       TC_AWAIT(asyncPost(fmt::format("{}/sessions", baseTarget),
                          {{"signature", signature}, {"challenge", challenge}}))

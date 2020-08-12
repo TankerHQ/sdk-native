@@ -77,14 +77,18 @@ public:
 
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
 
-  tc::cotask<void> authenticate(
-      Trustchain::DeviceId const& deviceId,
-      Crypto::SignatureKeyPair const& deviceSignatureKeyPair);
+  tc::cotask<void> authenticate();
   void setAccessToken(std::string accessToken);
+  void setDeviceAuthData(
+      Trustchain::DeviceId const& deviceId,
+      Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey);
 
 private:
   fetchpp::http::url _baseUrl;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
+
+  Trustchain::DeviceId _deviceId;
+  Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
 };
 }
