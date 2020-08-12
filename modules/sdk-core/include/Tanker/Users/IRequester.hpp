@@ -53,9 +53,6 @@ public:
   virtual tc::cotask<GetEncryptionKeyResult> getEncryptionKey(
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) = 0;
-  virtual tc::cotask<void> authenticate(
-      Trustchain::DeviceId const& deviceId,
-      Crypto::SignatureKeyPair const& userSignatureKeyPair) = 0;
   virtual tc::cotask<void> revokeDevice(
       Trustchain::Actions::DeviceRevocation const& deviceRevocation) = 0;
   virtual tc::cotask<std::map<
