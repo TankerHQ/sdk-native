@@ -66,8 +66,8 @@ Session::Accessors::Accessors(Storage& storage,
 {
 }
 
-Session::Requesters::Requesters(Client* client, HttpClient* httpClient)
-  : Users::Requester(client, httpClient),
+Session::Requesters::Requesters(HttpClient* httpClient)
+  : Users::Requester(httpClient),
     Groups::Requester(httpClient),
     ProvisionalUsers::Requester(httpClient),
     Unlock::Requester(httpClient)
@@ -76,30 +76,19 @@ Session::Requesters::Requesters(Client* client, HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Client& Session::client()
-{
-  return *_client;
-}
-
 Session::Session(std::string url, Network::SdkInfo info)
-  : _client(std::make_unique<Client>(
-        Network::ConnectionFactory::create(url, info))),
-    _httpClient(std::make_unique<HttpClient>(
+  : _httpClient(std::make_unique<HttpClient>(
         fetchpp::http::url(
             // TODO remove once socket io is removed
             boost::algorithm::replace_all_copy(url, "api.", "appd.")),
         info,
         tc::get_default_executor().get_io_service().get_executor())),
-    _requesters(_client.get(), _httpClient.get()),
+    _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
     _identity(std::nullopt),
     _status(Status::Stopped)
 {
-  _client->setConnectionHandler([this]() -> tc::cotask<void> {
-    _taskCanceler.add(tc::async_resumable(
-        [this]() -> tc::cotask<void> { TC_AWAIT(authenticate()); }));
-  });
 }
 
 void Session::createStorage(std::string const& writablePath)
@@ -207,11 +196,6 @@ tc::cotask<void> Session::authenticate()
 
 tc::cotask<void> Session::finalizeOpening()
 {
-  // TODO temporary, remove once HTTP is used everywhere
-  TC_AWAIT(_requesters.authenticateSocketIO(
-      trustchainId(),
-      userId(),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
   TC_AWAIT(createAccessors());
   setStatus(Status::Ready);
 }

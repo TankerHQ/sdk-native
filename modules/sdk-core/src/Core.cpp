@@ -3,10 +3,10 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Groups/Manager.hpp>
@@ -134,7 +134,6 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  _session->client().start();
   _session->setIdentity(identity);
   _session->createStorage(_writablePath);
   auto const optPubUserEncKey =
@@ -173,14 +172,15 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 
     auto const ghostDeviceKeys =
         GhostDevice::create(verificationKey).toDeviceKeys();
-    auto const encryptedUserKey = TC_AWAIT(_session->client().getLastUserKey(
-        _session->trustchainId(), ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const encryptedUserKey =
+        TC_AWAIT(_session->requesters().getEncryptionKey(
+            _session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
     auto const privateUserEncryptionKey =
-        Crypto::sealDecrypt(encryptedUserKey.encryptedPrivateKey,
+        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey,
                             ghostDeviceKeys.encryptionKeyPair);
     auto const action = Users::createNewDeviceAction(
         _session->trustchainId(),
-        encryptedUserKey.deviceId,
+        encryptedUserKey.ghostDeviceId,
         Identity::makeDelegation(_session->userId(),
                                  ghostDeviceKeys.signatureKeyPair.privateKey),
         deviceKeys.signatureKeyPair.publicKey,
@@ -195,7 +195,7 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
   }
   catch (Exception const& e)
   {
-    if (e.errorCode() == ServerErrc::DeviceNotFound ||
+    if (e.errorCode() == AppdErrc::DeviceNotFound ||
         e.errorCode() == Errc::DecryptionFailed)
       throw Exception(make_error_code(Errc::InvalidVerification), e.what());
     throw;
@@ -425,7 +425,7 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
     }
     catch (Errors::Exception const& e)
     {
-      if (e.errorCode() == ServerErrc::VerificationKeyNotFound)
+      if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
       {
         // the server does not send an error message
         throw Errors::formatEx(Errc::PreconditionFailed,
