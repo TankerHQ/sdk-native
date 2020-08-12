@@ -23,6 +23,8 @@ namespace Tanker
 {
 struct HttpError
 {
+  fetchpp::http::verb method;
+  std::string href;
   int status;
   Errors::AppdErrc ec;
   std::string message;
