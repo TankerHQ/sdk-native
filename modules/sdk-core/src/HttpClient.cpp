@@ -42,6 +42,7 @@ std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_delegation_signature", AppdErrc::InvalidDelegationSignature},
     {"invalid_oidc_id_token", AppdErrc::InvalidVerificationCode},
     {"user_not_found", AppdErrc::UserNotFound},
+    {"invalid_token", AppdErrc::InvalidToken},
 };
 
 template <typename Request, typename Header>
