@@ -271,15 +271,6 @@ TEST_CASE("generateRecipientList")
   }
 }
 
-template <typename T>
-std::vector<T> extract(gsl::span<Trustchain::KeyPublishAction const> entries)
-{
-  std::vector<T> keyPublishes;
-  for (auto const& action : entries)
-    keyPublishes.push_back(boost::variant2::get<T>(action));
-  return keyPublishes;
-}
-
 TEST_CASE("generateShareBlocks")
 {
   Test::Generator generator;
@@ -303,10 +294,8 @@ TEST_CASE("generateShareBlocks")
         resourceKeys,
         keyRecipients);
 
-    auto const keyPublishes =
-        extract<Trustchain::Actions::KeyPublishToUser>(blocks);
     assertKeyPublishToUsersTargetedAt(
-        resourceKeys[0], keyPublishes, {newUserKeyPair});
+        resourceKeys[0], blocks.keyPublishesToUsers, {newUserKeyPair});
   }
 
   SUBCASE("for a user should generate one KeyPublishToProvisionalUser block")
@@ -325,9 +314,9 @@ TEST_CASE("generateShareBlocks")
         resourceKeys,
         keyRecipients);
 
-    auto const keyPublishes = extract<KeyPublishToProvisionalUser>(blocks);
-    assertKeyPublishToUsersTargetedAt(
-        resourceKeys[0], keyPublishes, {provisionalUser});
+    assertKeyPublishToUsersTargetedAt(resourceKeys[0],
+                                      blocks.keyPublishesToProvisionalUsers,
+                                      {provisionalUser});
   }
 
   SUBCASE("for a group should generate one KeyPublishToGroup block")
@@ -347,9 +336,8 @@ TEST_CASE("generateShareBlocks")
         resourceKeys,
         keyRecipients);
 
-    auto const keyPublishes =
-        extract<Trustchain::Actions::KeyPublishToUserGroup>(blocks);
-    assertKeyPublishToGroupTargetedAt(
-        resourceKeys[0], keyPublishes, {newGroup.currentEncKp()});
+    assertKeyPublishToGroupTargetedAt(resourceKeys[0],
+                                      blocks.keyPublishesToUserGroups,
+                                      {newGroup.currentEncKp()});
   }
 }

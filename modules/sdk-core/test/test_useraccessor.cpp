@@ -1,3 +1,4 @@
+#include <Tanker/Share.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Users/UserAccessor.hpp>

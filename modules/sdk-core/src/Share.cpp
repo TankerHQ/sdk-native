@@ -5,11 +5,11 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Users/IRequester.hpp>
 
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/IdentityUtils.hpp>
-#include <Tanker/Pusher.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -29,14 +29,14 @@ namespace Share
 {
 namespace
 {
-std::vector<Trustchain::KeyPublishAction> generateShareBlocksToUsers(
+std::vector<Trustchain::Actions::KeyPublishToUser> generateShareBlocksToUsers(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
     ResourceKeys::KeysResult const& resourceKeys,
     std::vector<Crypto::PublicEncryptionKey> const& recipientUserKeys)
 {
-  std::vector<Trustchain::KeyPublishAction> out;
+  std::vector<Trustchain::Actions::KeyPublishToUser> out;
   out.reserve(resourceKeys.size() * recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
@@ -245,7 +245,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
       toKeyRecipients(userResult.found, provisionalUsers, groupResult.found));
 }
 
-std::vector<Trustchain::KeyPublishAction> generateShareBlocks(
+ShareActions generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -271,13 +271,9 @@ std::vector<Trustchain::KeyPublishAction> generateShareBlocks(
                                   resourceKeys,
                                   keyRecipients.recipientGroupKeys);
 
-  auto out = keyPublishesToUsers;
-  out.insert(out.end(),
-             keyPublishesToProvisionalUsers.begin(),
-             keyPublishesToProvisionalUsers.end());
-  out.insert(
-      out.end(), keyPublishesToGroups.begin(), keyPublishesToGroups.end());
-  return out;
+  return {std::move(keyPublishesToUsers),
+          std::move(keyPublishesToGroups),
+          std::move(keyPublishesToProvisionalUsers)};
 }
 
 tc::cotask<void> share(Users::IUserAccessor& userAccessor,
@@ -285,19 +281,20 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Trustchain::TrustchainId const& trustchainId,
                        Trustchain::DeviceId const& deviceId,
                        Crypto::PrivateSignatureKey const& signatureKey,
-                       Pusher& pusher,
+                       Users::IRequester& requester,
                        ResourceKeys::KeysResult const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds)
 {
+  if (resourceKeys.empty())
+    throw Errors::AssertionError("no keys to share");
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, publicIdentities, groupIds));
 
-  auto const ks = generateShareBlocks(
+  auto const actions = generateShareBlocks(
       trustchainId, deviceId, signatureKey, resourceKeys, keyRecipients);
 
-  if (!ks.empty())
-    TC_AWAIT(pusher.pushKeys(ks));
+  TC_AWAIT(requester.postResourceKeys(actions));
 }
 
 }

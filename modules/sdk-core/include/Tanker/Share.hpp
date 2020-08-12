@@ -21,12 +21,11 @@
 namespace Tanker::Users
 {
 class IUserAccessor;
+class IRequester;
 }
 
 namespace Tanker
 {
-class Pusher;
-
 namespace Groups
 {
 class IAccessor;
@@ -39,6 +38,15 @@ struct KeyRecipients
   std::vector<Crypto::PublicEncryptionKey> recipientUserKeys;
   std::vector<ProvisionalUsers::PublicUser> recipientProvisionalUserKeys;
   std::vector<Crypto::PublicEncryptionKey> recipientGroupKeys;
+};
+
+struct ShareActions
+{
+  std::vector<Trustchain::Actions::KeyPublishToUser> keyPublishesToUsers;
+  std::vector<Trustchain::Actions::KeyPublishToUserGroup>
+      keyPublishesToUserGroups;
+  std::vector<Trustchain::Actions::KeyPublishToProvisionalUser>
+      keyPublishesToProvisionalUsers;
 };
 
 Trustchain::Actions::KeyPublishToUser makeKeyPublishToUser(
@@ -72,7 +80,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds);
 
-std::vector<Trustchain::KeyPublishAction> generateShareBlocks(
+ShareActions generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& signatureKey,
@@ -84,7 +92,7 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                        Trustchain::TrustchainId const& trustchainId,
                        Trustchain::DeviceId const& deviceId,
                        Crypto::PrivateSignatureKey const& signatureKey,
-                       Pusher& pusher,
+                       Users::IRequester& requester,
                        ResourceKeys::KeysResult const& resourceKeys,
                        std::vector<SPublicIdentity> const& publicIdentities,
                        std::vector<SGroupId> const& groupIds);

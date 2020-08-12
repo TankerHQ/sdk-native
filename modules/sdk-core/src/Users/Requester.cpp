@@ -8,6 +8,7 @@
 #include <Tanker/Errors/ServerErrcCategory.hpp>
 #include <Tanker/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Share.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Utils.hpp>
 
@@ -51,6 +52,20 @@ std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
                  });
 
   return entries;
+}
+
+template <typename T>
+std::vector<std::string> base64KeyPublishActions(std::vector<T> const& actions)
+{
+  std::vector<std::string> ret;
+  ret.reserve(actions.size());
+  std::transform(std::begin(actions),
+                 std::end(actions),
+                 std::back_inserter(ret),
+                 [](auto const& block) {
+                   return mgs::base64::encode(Serialization::serialize(block));
+                 });
+  return ret;
 }
 }
 
@@ -100,6 +115,22 @@ Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
   auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
   TC_RETURN(fromBlocksToKeyPublishActions(
       response.at("resource_keys").get<std::vector<std::string>>()));
+}
+
+tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
+{
+  auto const url = _httpClient->makeUrl("resource-keys");
+  auto const response =
+      TC_AWAIT(_httpClient->asyncPost(
+                   url.href(),
+                   {{"key_publishes_to_user",
+                     base64KeyPublishActions(actions.keyPublishesToUsers)},
+                    {"key_publishes_to_user_group",
+                     base64KeyPublishActions(actions.keyPublishesToUserGroups)},
+                    {"key_publishes_to_provisional_user",
+                     base64KeyPublishActions(
+                         actions.keyPublishesToProvisionalUsers)}}))
+          .value();
 }
 
 tc::cotask<void> Requester::authenticateSocketIO(
