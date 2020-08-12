@@ -10,7 +10,6 @@
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/Pusher.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -55,7 +54,6 @@ public:
   struct Accessors
   {
     Accessors(Storage& storage,
-              Pusher* pusher,
               Requesters* requesters,
               Users::LocalUserAccessor plocalUserAccessor);
     Users::LocalUserAccessor localUserAccessor;
@@ -71,8 +69,6 @@ public:
 
   Client& client();
   HttpClient& httpClient();
-
-  Pusher& pusher();
 
   Requesters const& requesters() const;
   Requesters& requesters();
@@ -105,7 +101,6 @@ public:
 private:
   std::unique_ptr<Client> _client;
   std::unique_ptr<HttpClient> _httpClient;
-  Pusher _pusher;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;
