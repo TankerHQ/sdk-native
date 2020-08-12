@@ -59,21 +59,30 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-HttpResult handleResponse(http::response res)
+template <typename Request>
+HttpResult handleResponse(http::response res, Request const& req)
 {
   TLOG_CATEGORY(HttpClient);
 
   if (http::to_status_class(res.result()) != http::status_class::successful)
   {
+    auto const method = req.method();
+    auto const href = req.uri().href();
     if (res.is_json())
     {
       auto const& json = res.json();
-      return boost::outcome_v2::failure(json.at("error").get<HttpError>());
+      auto error = json.at("error").get<HttpError>();
+      error.method = method;
+      error.href = href;
+      return boost::outcome_v2::failure(std::move(error));
     }
     else
     {
-      throw Errors::formatEx(
-          Errors::AppdErrc::InternalError, "status: {}", res.result_int());
+      throw Errors::formatEx(Errors::AppdErrc::InternalError,
+                             "{} {}, status: {}",
+                             method,
+                             href,
+                             res.result_int());
     }
   }
 
@@ -125,7 +134,7 @@ tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
         req.uri().href(),
         res.result_int(),
         http::obsolete_reason(res.result()));
-  TC_RETURN(handleResponse(res));
+  TC_RETURN(handleResponse(res, req));
 }
 }
 
@@ -147,7 +156,9 @@ std::error_code make_error_code(HttpError const& e)
 [[noreturn]] void outcome_throw_as_system_error_with_payload(HttpError e)
 {
   throw Errors::formatEx(e.ec,
-                         "HTTP error occurred: {} {}, traceID: {}",
+                         "HTTP error occurred: {} {}: {} {}, traceID: {}",
+                         e.method,
+                         e.href,
                          e.status,
                          e.message,
                          e.traceId);
