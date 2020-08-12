@@ -2,6 +2,12 @@
 
 #include <Tanker/Errors/Exception.hpp>
 
+// with GCC10, system_error defines an operator<< for ostream, but it doesn't
+// include ostream, which results in:
+// /usr/bin/../lib/gcc/x86_64-linux-gnu/10/../../../../include/c++/10/system_error:263:20:
+// error: invalid operands to binary expression ('basic_ostream<char,
+// std::char_traits<char> >' and 'const char *')
+#include <ostream>
 #include <system_error>
 
 #define TANKER_CHECK_THROWS_WITH_CODE(expr, code) \
