@@ -193,43 +193,56 @@ void HttpClient::setDeviceAuthData(
 // Do not call anything else than asyncFetchBase here to avoid recursive calls
 tc::cotask<void> HttpClient::authenticate()
 {
-  FUNC_TIMER(Net);
+  if (!_authenticating.is_ready())
+  {
+    TC_AWAIT(_authenticating);
+    TC_RETURN();
+  }
 
   _headers.erase(fetchpp::http::field::authorization);
 
-  auto const baseTarget =
-      fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-  auto req = makeRequest(fetchpp::http::verb::post,
-                         makeUrl(fmt::format("{}/challenges", baseTarget)));
-  assignHeader(req, _headers);
-  auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
-                             .value()
-                             .at("challenge")
-                             .get<std::string>();
-  // NOTE: It is MANDATORY to check this prefix is valid, or the server
-  // could get us to sign anything!
-  if (!boost::algorithm::starts_with(
-          challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
-  {
-    throw formatEx(
-        Errors::Errc::InternalError,
-        "received auth challenge does not contain mandatory prefix, server "
-        "may not be up to date, or we may be under attack.");
-  }
-  auto const signature =
-      Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                   _deviceSignaturePrivateKey);
-  auto req2 = makeRequest(fetchpp::http::verb::post,
-                          makeUrl(fmt::format("{}/sessions", baseTarget)),
-                          {{"signature", signature}, {"challenge", challenge}});
-  assignHeader(req2, _headers);
-  auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
-                         .value()
-                         .at("access_token")
-                         .get<std::string>();
+  auto const doAuth = [&]() -> tc::cotask<void> {
+    FUNC_TIMER(Net);
 
-  _headers.set(fetchpp::http::field::authorization,
-               fetchpp::http::authorization::bearer{std::move(accessToken)});
+    auto const baseTarget =
+        fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
+    auto req = makeRequest(fetchpp::http::verb::post,
+                           makeUrl(fmt::format("{}/challenges", baseTarget)));
+    assignHeader(req, _headers);
+    auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
+                               .value()
+                               .at("challenge")
+                               .get<std::string>();
+    // NOTE: It is MANDATORY to check this prefix is valid, or the server
+    // could get us to sign anything!
+    if (!boost::algorithm::starts_with(
+            challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
+    {
+      throw formatEx(
+          Errors::Errc::InternalError,
+          "received auth challenge does not contain mandatory prefix, server "
+          "may not be up to date, or we may be under attack.");
+    }
+    auto const signature =
+        Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
+                     _deviceSignaturePrivateKey);
+    auto req2 =
+        makeRequest(fetchpp::http::verb::post,
+                    makeUrl(fmt::format("{}/sessions", baseTarget)),
+                    {{"signature", signature}, {"challenge", challenge}});
+    assignHeader(req2, _headers);
+    auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
+                           .value()
+                           .at("access_token")
+                           .get<std::string>();
+
+    _headers.set(fetchpp::http::field::authorization,
+                 fetchpp::http::authorization::bearer{std::move(accessToken)});
+  };
+
+  _authenticating = tc::async_resumable(doAuth).to_shared();
+
+  TC_AWAIT(_authenticating);
 }
 
 http::url HttpClient::makeUrl(std::string_view target) const
@@ -274,8 +287,17 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 template <typename Request>
 tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
 {
+  TC_AWAIT(_authenticating);
   assignHeader(req, _headers);
-  TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
+
+  auto response = TC_AWAIT(asyncFetchBase(cl, req));
+  if (!response && response.error().ec == AppdErrc::InvalidToken)
+  {
+    TC_AWAIT(authenticate());
+    assignHeader(req, _headers);
+    TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
+  }
+  TC_RETURN(response);
 }
 
 HttpClient::~HttpClient() = default;

@@ -91,6 +91,8 @@ private:
   Trustchain::DeviceId _deviceId;
   Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
 
+  tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
+
   template <typename Request>
   tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req);
 };
