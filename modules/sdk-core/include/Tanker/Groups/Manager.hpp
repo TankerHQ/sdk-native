@@ -2,6 +2,7 @@
 
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
+#include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
@@ -16,11 +17,6 @@
 #include <cstddef>
 #include <string>
 #include <vector>
-
-namespace Tanker
-{
-class Pusher;
-}
 
 namespace Tanker::Users
 {
@@ -53,7 +49,7 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
-    Pusher& pusher,
+    IRequester& requester,
     std::vector<SPublicIdentity> const& spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
@@ -69,7 +65,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
-    Pusher& pusher,
+    IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,

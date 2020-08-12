@@ -12,11 +12,17 @@ class GroupRequesterStub
 public:
   MAKE_MOCK1(getGroupBlocks,
              tc::cotask<std::vector<Trustchain::GroupAction>>(
-                 std::vector<Trustchain::GroupId> const&),
+                 gsl::span<Trustchain::GroupId const>),
              override);
   MAKE_MOCK1(getGroupBlocks,
              tc::cotask<std::vector<Trustchain::GroupAction>>(
                  Crypto::PublicEncryptionKey const&),
+             override);
+  MAKE_MOCK1(createGroup,
+             tc::cotask<void>(Trustchain::Actions::UserGroupCreation const&),
+             override);
+  MAKE_MOCK1(updateGroup,
+             tc::cotask<void>(Trustchain::Actions::UserGroupAddition const&),
              override);
 };
 }
