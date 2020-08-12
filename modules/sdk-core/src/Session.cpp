@@ -154,6 +154,10 @@ Identity::SecretPermanentIdentity const& Session::identity() const
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(storage().localUserStore.setDeviceId(deviceId));
+  _httpClient->setDeviceAuthData(
+      TC_AWAIT(storage().localUserStore.getDeviceId()),
+      TC_AWAIT(storage().localUserStore.getDeviceKeys())
+          .signatureKeyPair.privateKey);
 }
 
 Trustchain::TrustchainId const& Session::trustchainId() const
@@ -188,9 +192,11 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
 
 tc::cotask<void> Session::authenticate()
 {
-  TC_AWAIT(_httpClient->authenticate(
+  _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
+      TC_AWAIT(storage().localUserStore.getDeviceKeys())
+          .signatureKeyPair.privateKey);
+  TC_AWAIT(_httpClient->authenticate());
 }
 
 tc::cotask<void> Session::finalizeOpening()
