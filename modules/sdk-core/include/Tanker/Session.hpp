@@ -65,7 +65,7 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::string url, SdkInfo info);
+  Session(std::unique_ptr<HttpClient> client);
   ~Session();
 
   HttpClient& httpClient();
