@@ -90,6 +90,11 @@ Session::Session(std::string url, SdkInfo info)
 {
 }
 
+HttpClient& Session::httpClient()
+{
+  return *_httpClient;
+}
+
 void Session::createStorage(std::string const& writablePath)
 {
   _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
