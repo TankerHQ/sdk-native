@@ -90,17 +90,16 @@ class TankerConan(ConanFile):
         self.requires("boost/1.73.0", private=private)
         if self.options.with_ssl:
             self.requires("libressl/3.2.0", private=private)
-            self.requires("fetchpp/0.9.0")
+            self.requires("fetchpp/0.9.1")
             self.requires("sqlpp11/0.59", private=private)
-            self.requires(
-                "sqlpp11-connector-sqlite3/0.29", private=private)
+            self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("fmt/7.0.2", private=private)
         self.requires("gsl-lite/0.36.0", private=private)
         self.requires("nlohmann_json/3.8.0", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.31.2", private=private)
+        self.requires("tconcurrent/0.32.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os == "iOS":
             self.requires("libcxx/9.0", private=private)
