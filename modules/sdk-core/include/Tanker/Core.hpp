@@ -2,6 +2,7 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/EncryptionSession.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
@@ -40,9 +41,11 @@ public:
   static_assert(static_cast<int>(ShareWithSelf::No) == 0);
   static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
 
+  using HttpClientFactory = std::function<std::unique_ptr<HttpClient>()>;
   using SessionClosedHandler = std::function<void()>;
 
   Core(std::string url, SdkInfo info, std::string writablePath);
+  Core(HttpClientFactory httpClientFactory, std::string writablePath);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
@@ -130,8 +133,7 @@ private:
   decltype(std::declval<F>()()) resetOnFailure(F&& f);
 
 private:
-  std::string _url;
-  SdkInfo _info;
+  HttpClientFactory _httpClientFactory;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
   std::shared_ptr<Session> _session;

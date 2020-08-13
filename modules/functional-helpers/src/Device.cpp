@@ -14,7 +14,7 @@ namespace Tanker
 {
 namespace Functional
 {
-static auto const STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
+Passphrase const Device::STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
 
 namespace
@@ -55,12 +55,15 @@ AsyncCorePtr Device::createCore(SessionType type)
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
   return std::make_unique<AsyncCore>(
-      _trustchainUrl,
-      SdkInfo{
-          "sdk-native-test",
-          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
-          "0.0.1"},
-      _storage->path);
+      _trustchainUrl, getSdkInfo(), _storage->path);
+}
+
+SdkInfo Device::getSdkInfo()
+{
+  return SdkInfo{
+      "sdk-native-test",
+      mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
+      "0.0.1"};
 }
 
 SUserId const& Device::suserId() const
@@ -71,6 +74,11 @@ SUserId const& Device::suserId() const
 std::string const& Device::identity() const
 {
   return this->_identity;
+}
+
+std::string Device::writablePath() const
+{
+  return _storage->path;
 }
 
 tc::cotask<AsyncCorePtr> Device::open(SessionType sessionType)

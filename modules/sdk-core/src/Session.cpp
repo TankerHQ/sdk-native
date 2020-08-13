@@ -75,13 +75,8 @@ Session::Requesters::Requesters(HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::string url, SdkInfo info)
-  : _httpClient(std::make_unique<HttpClient>(
-        fetchpp::http::url(
-            // TODO remove once socket io is removed
-            boost::algorithm::replace_all_copy(url, "api.", "appd.")),
-        info,
-        tc::get_default_executor().get_io_service().get_executor())),
+Session::Session(std::unique_ptr<HttpClient> httpClient)
+  : _httpClient(std::move(httpClient)),
     _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),

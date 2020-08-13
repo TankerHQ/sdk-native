@@ -36,6 +36,12 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
 {
 }
 
+AsyncCore::AsyncCore(Core::HttpClientFactory httpClientFactory,
+                     std::string writablePath)
+  : _core(std::move(httpClientFactory), std::move(writablePath))
+{
+}
+
 AsyncCore::~AsyncCore() = default;
 
 tc::future<void> AsyncCore::destroy()
