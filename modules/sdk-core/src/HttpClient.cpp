@@ -107,23 +107,18 @@ HttpResult handleResponse(http::response res, Request const& req)
 fetchpp::http::request<fetchpp::http::json_body> makeRequest(
     fetchpp::http::verb verb,
     fetchpp::http::url url,
-    fetchpp::http::request_header<> const& header,
     nlohmann::json const& data)
 {
   auto request = http::make_request<http::request<http::json_body>>(
       verb, std::move(url), {}, data);
-  assignHeader(request, header);
   return request;
 }
 
 fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
-    fetchpp::http::verb verb,
-    fetchpp::http::url url,
-    fetchpp::http::request_header<> const& header)
+    fetchpp::http::verb verb, fetchpp::http::url url)
 {
   auto req = http::make_request(verb, std::move(url));
   req.prepare_payload();
-  assignHeader(req, header);
   return req;
 }
 
@@ -205,8 +200,8 @@ tc::cotask<void> HttpClient::authenticate()
   auto const baseTarget =
       fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
   auto req = makeRequest(fetchpp::http::verb::post,
-                         makeUrl(fmt::format("{}/challenges", baseTarget)),
-                         _headers);
+                         makeUrl(fmt::format("{}/challenges", baseTarget)));
+  assignHeader(req, _headers);
   auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
                              .value()
                              .at("challenge")
@@ -226,8 +221,8 @@ tc::cotask<void> HttpClient::authenticate()
                    _deviceSignaturePrivateKey);
   auto req2 = makeRequest(fetchpp::http::verb::post,
                           makeUrl(fmt::format("{}/sessions", baseTarget)),
-                          _headers,
                           {{"signature", signature}, {"challenge", challenge}});
+  assignHeader(req2, _headers);
   auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
                          .value()
                          .at("access_token")
@@ -244,42 +239,42 @@ http::url HttpClient::makeUrl(std::string_view target) const
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
-  auto req = makeRequest(
-      fetchpp::http::verb::post, makeUrl(target), _headers, std::move(data));
+  auto req =
+      makeRequest(fetchpp::http::verb::post, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
-  auto req = makeRequest(
-      fetchpp::http::verb::patch, makeUrl(target), _headers, std::move(data));
+  auto req =
+      makeRequest(fetchpp::http::verb::patch, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
-  auto req =
-      makeRequest(fetchpp::http::verb::delete_, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::delete_, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 template <typename Request>
 tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
 {
+  assignHeader(req, _headers);
   TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
 }
 
