@@ -50,9 +50,7 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
         info,
         [url, info] {
           return std::make_unique<HttpClient>(
-              fetchpp::http::url(
-                  // TODO remove once socket io is removed
-                  boost::algorithm::replace_all_copy(url, "api.", "appd.")),
+              fetchpp::http::url(url),
               info,
               tc::get_default_executor().get_io_service().get_executor());
         },

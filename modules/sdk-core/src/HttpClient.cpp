@@ -167,9 +167,9 @@ HttpClient::HttpClient(http::url const& baseUrl,
                        SdkInfo const& info,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
-  : _baseUrl(
-        fmt::format("/apps/{appId:#S}/", fmt::arg("appId", info.trustchainId)),
-        baseUrl),
+  : _baseUrl(fmt::format("/v2/apps/{appId:#S}/",
+                         fmt::arg("appId", info.trustchainId)),
+             baseUrl),
     _cl(ex, timeout)
 {
   _headers.set("X-Tanker-SdkType", info.sdkType);
