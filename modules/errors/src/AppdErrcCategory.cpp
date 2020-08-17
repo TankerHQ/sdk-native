@@ -16,8 +16,6 @@ std::string AppdErrcCategory::message(int c) const
     return "internal error";
   case AppdErrc::InvalidBody:
     return "invalid body";
-  case AppdErrc::InvalidOrigin:
-    return "invalid origin";
   case AppdErrc::TrustchainIsNotTest:
     return "trustchain is not test";
   case AppdErrc::AppNotFound:
@@ -26,6 +24,8 @@ std::string AppdErrcCategory::message(int c) const
     return "device not found";
   case AppdErrc::ProvisionalIdentityNotFound:
     return "provisional identity not found";
+  case AppdErrc::ProvisionalIdentityAlreadyAttached:
+    return "provisional identity already attached";
   case AppdErrc::DeviceRevoked:
     return "device revoked";
   case AppdErrc::TooManyAttempts:
@@ -65,22 +65,24 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const
   {
   case AppdErrc::InternalError:
   case AppdErrc::InvalidBody:
-  case AppdErrc::InvalidOrigin:
   case AppdErrc::TrustchainIsNotTest:
-  case AppdErrc::AppNotFound:
   case AppdErrc::DeviceNotFound:
   case AppdErrc::ProvisionalIdentityNotFound:
   case AppdErrc::UserNotFound:
+  case AppdErrc::InvalidToken:
+  case AppdErrc::VerificationNeeded: // Handled internally
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
+  case AppdErrc::ProvisionalIdentityAlreadyAttached:
+    return make_error_condition(Errors::Errc::InvalidArgument);
   case AppdErrc::VerificationCodeNotFound:
   case AppdErrc::InvalidPassphrase:
   case AppdErrc::InvalidVerificationCode:
   case AppdErrc::InvalidDelegationSignature:
     return make_error_condition(Errors::Errc::InvalidVerification);
+  case AppdErrc::AppNotFound:
   case AppdErrc::VerificationMethodNotSet:
   case AppdErrc::VerificationKeyNotFound:
-  case AppdErrc::InvalidToken:
     return make_error_condition(Errors::Errc::PreconditionFailed);
   case AppdErrc::TooManyAttempts:
     return make_error_condition(Errors::Errc::TooManyAttempts);
@@ -90,8 +92,6 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const
     return make_error_condition(Errors::Errc::GroupTooBig);
   case AppdErrc::DeviceRevoked:
     return make_error_condition(Errors::Errc::DeviceRevoked);
-  case AppdErrc::VerificationNeeded: // Handled internally
-    break;
   }
   return std::error_condition(c, *this);
 }
