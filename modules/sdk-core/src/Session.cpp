@@ -15,6 +15,8 @@
 
 #include <fmt/format.h>
 
+TLOG_CATEGORY("Session");
+
 namespace Tanker
 {
 namespace

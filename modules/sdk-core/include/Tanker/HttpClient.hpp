@@ -83,6 +83,8 @@ public:
       Trustchain::DeviceId const& deviceId,
       Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey);
 
+  bool isRevoked() const;
+
 private:
   fetchpp::http::url _baseUrl;
   fetchpp::http::request_header<> _headers;
@@ -90,6 +92,7 @@ private:
 
   Trustchain::DeviceId _deviceId;
   Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
+  bool _isRevoked{};
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 

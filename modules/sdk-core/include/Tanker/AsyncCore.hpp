@@ -151,12 +151,13 @@ private:
 
   mutable task_canceler _taskCanceler;
 
+  [[noreturn]] tc::cotask<void> handleDeviceRevocation();
+
   template <typename F>
   auto runResumable(F&& f)
   {
     return _taskCanceler.run([this, f = std::forward<F>(f)]() mutable {
       return tc::async_resumable([this, f = std::move(f)]() -> decltype(f()) {
-        std::exception_ptr exception;
         try
         {
           if constexpr (std::is_same_v<decltype(f()), void>)
@@ -171,25 +172,10 @@ private:
         }
         catch (Errors::Exception const& ex)
         {
-          if (ex.errorCode() == Errors::Errc::DeviceRevoked)
-            exception = std::make_exception_ptr(ex);
-          else
+          if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
             throw;
         }
-        // - This device was revoked, we need to stop so that Session
-        // gets destroyed.
-        // - There might be calls in progress on this session, so we
-        // must terminate() them before going on.
-        // - We can't call this->stop() because the terminate() would
-        // cancel this coroutine too.
-        // - We must not wait on terminate() because that means waiting
-        // on ourselves and deadlocking.
-        _taskCanceler.terminate();
-        TC_AWAIT(_core.nukeDatabase());
-        _core.stop();
-        if (_asyncDeviceRevoked)
-          _asyncDeviceRevoked();
-        std::rethrow_exception(exception);
+        TC_AWAIT(handleDeviceRevocation());
       });
     });
   }

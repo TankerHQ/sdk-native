@@ -94,7 +94,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
     exception = std::make_exception_ptr(ex);
   }
@@ -139,6 +139,9 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
   {
     TC_AWAIT(_session->authenticate());
     TC_AWAIT(_session->finalizeOpening());
+    if (_session->httpClient().isRevoked())
+      throw formatEx(Errors::AppdErrc::DeviceRevoked,
+                     "authentication reported that this device was revoked");
   }
   TC_RETURN(status());
 }
@@ -654,5 +657,10 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         spublicIdentitiesWithUs,
                         sgroupIds));
   TC_RETURN(sess);
+}
+
+tc::cotask<void> Core::refreshUser()
+{
+  TC_AWAIT(_session->accessors().localUserAccessor.pull());
 }
 }

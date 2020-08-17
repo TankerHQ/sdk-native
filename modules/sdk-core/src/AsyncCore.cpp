@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+TLOG_CATEGORY("AsyncCore");
+
 namespace Tanker
 {
 namespace
@@ -319,6 +321,48 @@ tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(
     TC_RETURN(TC_AWAIT(this->_core.makeEncryptionSession(
         publicIdentities, groupIds, shareWithSelf)));
   });
+}
+
+[[noreturn]] tc::cotask<void> AsyncCore::handleDeviceRevocation()
+{
+  std::exception_ptr deviceRevokedException;
+  try
+  {
+    TDEBUG("Refreshing user to verify verification");
+    TC_AWAIT(_core.refreshUser());
+    TERROR("While trying to confirm revocation, didn't get any error");
+    throw Errors::formatEx(
+        Errors::Errc::InternalError,
+        "server declared this device revoked, but it is not");
+  }
+  catch (Errors::Exception const& ex)
+  {
+    if (ex.errorCode() != Errors::Errc::DeviceRevoked)
+    {
+      TERROR("While trying to confirm revocation, got a different error: {}",
+             ex.what());
+      throw;
+    }
+    else
+    {
+      deviceRevokedException = std::current_exception();
+    }
+  }
+  // - This device was revoked, we need to stop so that Session
+  // gets destroyed.
+  // - There might be calls in progress on this session, so we
+  // must terminate() them before going on.
+  // - We can't call this->stop() because the terminate() would
+  // cancel this coroutine too.
+  // - We must not wait on terminate() because that means waiting
+  // on ourselves and deadlocking.
+  _taskCanceler.terminate();
+  TC_AWAIT(_core.nukeDatabase());
+  _core.stop();
+  if (_asyncDeviceRevoked)
+    _asyncDeviceRevoked();
+  TINFO("Revocation handled, self-destruct complete");
+  std::rethrow_exception(deviceRevokedException);
 }
 
 std::string const& AsyncCore::version()

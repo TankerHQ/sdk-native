@@ -25,6 +25,10 @@ public:
           Trustchain::UserId const& userId,
           Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey),
       override);
+  MAKE_MOCK1(getRevokedDeviceHistory,
+             tc::cotask<Users::IRequester::GetResult>(
+                 Trustchain::DeviceId const& deviceId),
+             override);
   MAKE_MOCK1(getUsers,
              tc::cotask<Users::IRequester::GetResult>(
                  gsl::span<Trustchain::UserId const> userIds),
@@ -43,5 +47,10 @@ public:
                                             Crypto::PublicEncryptionKey>>>(
                  gsl::span<Crypto::Hash const>)),
              override);
+
+  bool isRevoked() override
+  {
+    return false;
+  }
 };
 }

@@ -20,6 +20,8 @@ class Requester : public IRequester
 public:
   Requester(HttpClient* httpClient);
 
+  tc::cotask<GetResult> getRevokedDeviceHistory(
+      Trustchain::DeviceId const& deviceId) override;
   tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
   tc::cotask<GetResult> getUsers(
@@ -40,6 +42,8 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(
       gsl::span<Crypto::Hash const> hashedEmails) override;
+
+  bool isRevoked() override;
 
 private:
   tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);

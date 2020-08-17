@@ -42,6 +42,8 @@ public:
   };
 
   virtual ~IRequester() = default;
+  virtual tc::cotask<IRequester::GetResult> getRevokedDeviceHistory(
+      Trustchain::DeviceId const& deviceId) = 0;
   virtual tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) = 0;
   virtual tc::cotask<GetResult> getUsers(
@@ -60,5 +62,7 @@ public:
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(
       gsl::span<Crypto::Hash const> hashedEmails) = 0;
+
+  virtual bool isRevoked() = 0;
 };
 }

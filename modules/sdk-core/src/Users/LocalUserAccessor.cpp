@@ -12,12 +12,16 @@ tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
     IRequester* requester,
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& tId,
-    Trustchain::UserId const& userId)
+    Trustchain::UserId const& userId,
+    Trustchain::DeviceId const& deviceId)
 {
-  auto const [trustchainCreation, actions] =
-      TC_AWAIT(requester->getUsers(gsl::make_span(&userId, 1)));
-  auto const [context, user, userKeys] =
-      Updater::processUserEntries(deviceKeys, tId, trustchainCreation, actions);
+  IRequester::GetResult result;
+  if (requester->isRevoked())
+    result = TC_AWAIT(requester->getRevokedDeviceHistory(deviceId));
+  else
+    result = TC_AWAIT(requester->getUsers(gsl::make_span(&userId, 1)));
+  auto const [context, user, userKeys] = Updater::processUserEntries(
+      deviceKeys, tId, result.trustchainCreation, result.userEntries);
   auto const selfDevice =
       user.findDevice(deviceKeys.encryptionKeyPair.publicKey);
   TC_RETURN(std::make_tuple(
@@ -40,7 +44,11 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
                                 store));
   auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
   auto const [localUser, context] =
-      TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId, userId));
+      TC_AWAIT(fetchUser(requester,
+                         deviceKeys,
+                         trustchainId,
+                         userId,
+                         TC_AWAIT(store->getDeviceId())));
   TC_AWAIT(
       store->setTrustchainPublicSignatureKey(context.publicSignatureKey()));
   TC_AWAIT(store->putLocalUser(localUser));
@@ -63,8 +71,11 @@ LocalUserAccessor::~LocalUserAccessor() = default;
 
 tc::cotask<void> LocalUserAccessor::update()
 {
-  std::tie(_localUser, _context) = TC_AWAIT(fetchUser(
-      _requester, _localUser.deviceKeys(), _context.id(), _localUser.userId()));
+  std::tie(_localUser, _context) = TC_AWAIT(fetchUser(_requester,
+                                                      _localUser.deviceKeys(),
+                                                      _context.id(),
+                                                      _localUser.userId(),
+                                                      _localUser.deviceId()));
   TC_AWAIT(_store->putLocalUser(_localUser));
 }
 

@@ -71,6 +71,7 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const
   case AppdErrc::UserNotFound:
   case AppdErrc::InvalidToken:
   case AppdErrc::VerificationNeeded: // Handled internally
+  case AppdErrc::DeviceRevoked:      // Handled internally
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
   case AppdErrc::ProvisionalIdentityAlreadyAttached:
@@ -90,8 +91,6 @@ std::error_condition AppdErrcCategory::default_error_condition(int c) const
     return make_error_condition(Errors::Errc::ExpiredVerification);
   case AppdErrc::GroupTooBig:
     return make_error_condition(Errors::Errc::GroupTooBig);
-  case AppdErrc::DeviceRevoked:
-    return make_error_condition(Errors::Errc::DeviceRevoked);
   }
   return std::error_condition(c, *this);
 }
