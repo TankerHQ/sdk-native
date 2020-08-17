@@ -57,6 +57,29 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Triggering self destruct twice doesn't crash")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto aliceSecondDevice = alice.makeDevice();
+  auto secondSession = TC_AWAIT(aliceSecondDevice.open());
+
+  auto const secondDeviceId = secondSession->deviceId().get();
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
+
+  auto fut1 = secondSession->encrypt(make_buffer("will fail"));
+  auto fut2 = secondSession->encrypt(make_buffer("will fail"));
+
+  // one will throw DeviceRevoked, the other will throw OperationCanceled
+  CHECK_THROWS(TC_AWAIT(fut1));
+  CHECK_THROWS(TC_AWAIT(fut2));
+  CHECK(secondSession->status() == Status::Stopped);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can revoke a device while it is offline")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);

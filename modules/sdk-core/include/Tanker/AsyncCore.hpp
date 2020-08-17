@@ -22,6 +22,7 @@
 #include <Tanker/task_canceler.hpp>
 
 #include <tconcurrent/future.hpp>
+#include <tconcurrent/semaphore.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -148,6 +149,8 @@ private:
   // this signal is special compared to the other two because we need to do
   // special work before forwarding it, so we redefine it
   std::function<void()> _asyncDeviceRevoked;
+
+  tc::semaphore _revokeSemaphore{1};
 
   mutable task_canceler _taskCanceler;
 

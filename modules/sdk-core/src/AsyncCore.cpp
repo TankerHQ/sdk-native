@@ -325,6 +325,11 @@ tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(
 
 [[noreturn]] tc::cotask<void> AsyncCore::handleDeviceRevocation()
 {
+  // If multiple coroutines get here waiting for this lock, one will get the
+  // lock and eventually call _taskCanceler.terminate() which will abort all the
+  // other ones.
+  auto const lock = TC_AWAIT(_revokeSemaphore.get_scope_lock());
+
   std::exception_ptr deviceRevokedException;
   try
   {
