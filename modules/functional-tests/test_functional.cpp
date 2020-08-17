@@ -2,8 +2,10 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -133,6 +135,110 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   auto session = TC_AWAIT(device1.open());
   auto device2 = alice.makeDevice(Functional::DeviceType::New);
   REQUIRE_NOTHROW(TC_AWAIT(device2.open()));
+}
+
+namespace
+{
+struct HttpClientFactory
+{
+  HttpClientFactory(std::string url, SdkInfo info)
+    : client(new HttpClient(
+          fetchpp::http::url(std::move(url)),
+          std::move(info),
+          tc::get_default_executor().get_io_service().get_executor()))
+  {
+  }
+
+  std::unique_ptr<HttpClient> operator()()
+  {
+    return std::unique_ptr<HttpClient>(client);
+  }
+
+  HttpClient* client;
+};
+
+void deauthSession(HttpClient& client)
+{
+  // set some random access token
+  client.setAccessToken("UUSFMmx4RfGONVaFl2IAVv1yN20ORd3SjLhcHfgJPys");
+}
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession =
+      std::make_unique<AsyncCore>(httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+  TC_AWAIT(aliceSession->registerIdentity(
+      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  {
+    auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+  }
+  auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession =
+      std::make_unique<AsyncCore>(httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+  TC_AWAIT(aliceSession->verifyIdentity(
+      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "a session of an existing device can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  {
+    auto aliceSession =
+        TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+  }
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession =
+      std::make_unique<AsyncCore>(httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")

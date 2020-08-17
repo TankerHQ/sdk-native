@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -27,6 +28,8 @@ enum class SessionType
 class Device
 {
 public:
+  static Passphrase const STRONG_PASSWORD_DO_NOT_LEAK;
+
   Device(std::string trustchainUrl,
          std::string trustchainId,
          SUserId suserId,
@@ -37,6 +40,9 @@ public:
   tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
   SUserId const& suserId() const;
   std::string const& identity() const;
+  std::string writablePath() const;
+
+  SdkInfo getSdkInfo();
 
 private:
   std::string _trustchainUrl;

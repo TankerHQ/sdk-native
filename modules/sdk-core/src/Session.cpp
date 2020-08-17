@@ -75,19 +75,19 @@ Session::Requesters::Requesters(HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::string url, SdkInfo info)
-  : _httpClient(std::make_unique<HttpClient>(
-        fetchpp::http::url(
-            // TODO remove once socket io is removed
-            boost::algorithm::replace_all_copy(url, "api.", "appd.")),
-        info,
-        tc::get_default_executor().get_io_service().get_executor())),
+Session::Session(std::unique_ptr<HttpClient> httpClient)
+  : _httpClient(std::move(httpClient)),
     _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
     _identity(std::nullopt),
     _status(Status::Stopped)
 {
+}
+
+HttpClient& Session::httpClient()
+{
+  return *_httpClient;
 }
 
 void Session::createStorage(std::string const& writablePath)
@@ -154,6 +154,10 @@ Identity::SecretPermanentIdentity const& Session::identity() const
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   TC_AWAIT(storage().localUserStore.setDeviceId(deviceId));
+  _httpClient->setDeviceAuthData(
+      TC_AWAIT(storage().localUserStore.getDeviceId()),
+      TC_AWAIT(storage().localUserStore.getDeviceKeys())
+          .signatureKeyPair.privateKey);
 }
 
 Trustchain::TrustchainId const& Session::trustchainId() const
@@ -188,9 +192,11 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
 
 tc::cotask<void> Session::authenticate()
 {
-  TC_AWAIT(_requesters.authenticate(
+  _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair));
+      TC_AWAIT(storage().localUserStore.getDeviceKeys())
+          .signatureKeyPair.privateKey);
+  TC_AWAIT(_httpClient->authenticate());
 }
 
 tc::cotask<void> Session::finalizeOpening()

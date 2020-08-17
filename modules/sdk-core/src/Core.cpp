@@ -29,6 +29,7 @@
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Utils.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
 
 #include <fmt/format.h>
@@ -45,10 +46,21 @@ namespace Tanker
 Core::~Core() = default;
 
 Core::Core(std::string url, SdkInfo info, std::string writablePath)
-  : _url(std::move(url)),
-    _info(std::move(info)),
+  : Core(
+        [url, info] {
+          return std::make_unique<HttpClient>(
+              fetchpp::http::url(url),
+              info,
+              tc::get_default_executor().get_io_service().get_executor());
+        },
+        std::move(writablePath))
+{
+}
+
+Core::Core(HttpClientFactory httpClientFactory, std::string writablePath)
+  : _httpClientFactory(std::move(httpClientFactory)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_shared<Session>(_url, _info))
+    _session(std::make_shared<Session>(_httpClientFactory()))
 {
 }
 
@@ -68,7 +80,7 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(_url, _info);
+  _session = std::make_shared<Session>(_httpClientFactory());
 }
 
 template <typename F>

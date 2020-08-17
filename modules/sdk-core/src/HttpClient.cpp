@@ -1,9 +1,12 @@
 #include <Tanker/HttpClient.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/SdkInfo.hpp>
+#include <Tanker/Tracer/ScopeTimer.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <fetchpp/http/authorization.hpp>
 #include <fetchpp/http/json_body.hpp>
 #include <tconcurrent/asio_use_future.hpp>
@@ -42,6 +45,7 @@ std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_delegation_signature", AppdErrc::InvalidDelegationSignature},
     {"invalid_oidc_id_token", AppdErrc::InvalidVerificationCode},
     {"user_not_found", AppdErrc::UserNotFound},
+    {"invalid_token", AppdErrc::InvalidToken},
 };
 
 template <typename Request, typename Header>
@@ -103,28 +107,23 @@ HttpResult handleResponse(http::response res, Request const& req)
 fetchpp::http::request<fetchpp::http::json_body> makeRequest(
     fetchpp::http::verb verb,
     fetchpp::http::url url,
-    fetchpp::http::request_header<> const& header,
     nlohmann::json const& data)
 {
   auto request = http::make_request<http::request<http::json_body>>(
       verb, std::move(url), {}, data);
-  assignHeader(request, header);
   return request;
 }
 
 fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
-    fetchpp::http::verb verb,
-    fetchpp::http::url url,
-    fetchpp::http::request_header<> const& header)
+    fetchpp::http::verb verb, fetchpp::http::url url)
 {
   auto req = http::make_request(verb, std::move(url));
   req.prepare_payload();
-  assignHeader(req, header);
   return req;
 }
 
 template <typename Request>
-tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req)
+tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, Request req)
 {
   TLOG_CATEGORY(HttpClient);
   TINFO("{} {}", req.method(), req.uri().href());
@@ -168,9 +167,9 @@ HttpClient::HttpClient(http::url const& baseUrl,
                        SdkInfo const& info,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
-  : _baseUrl(
-        fmt::format("/apps/{appId:#S}/", fmt::arg("appId", info.trustchainId)),
-        baseUrl),
+  : _baseUrl(fmt::format("/v2/apps/{appId:#S}/",
+                         fmt::arg("appId", info.trustchainId)),
+             baseUrl),
     _cl(ex, timeout)
 {
   _headers.set("X-Tanker-SdkType", info.sdkType);
@@ -183,6 +182,69 @@ void HttpClient::setAccessToken(std::string accessToken)
                fetchpp::http::authorization::bearer{std::move(accessToken)});
 }
 
+void HttpClient::setDeviceAuthData(
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey)
+{
+  _deviceId = deviceId;
+  _deviceSignaturePrivateKey = deviceSignaturePrivateKey;
+}
+
+// Do not call anything else than asyncFetchBase here to avoid recursive calls
+tc::cotask<void> HttpClient::authenticate()
+{
+  if (!_authenticating.is_ready())
+  {
+    TC_AWAIT(_authenticating);
+    TC_RETURN();
+  }
+
+  _headers.erase(fetchpp::http::field::authorization);
+
+  auto const doAuth = [&]() -> tc::cotask<void> {
+    FUNC_TIMER(Net);
+
+    auto const baseTarget =
+        fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
+    auto req = makeRequest(fetchpp::http::verb::post,
+                           makeUrl(fmt::format("{}/challenges", baseTarget)));
+    assignHeader(req, _headers);
+    auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
+                               .value()
+                               .at("challenge")
+                               .get<std::string>();
+    // NOTE: It is MANDATORY to check this prefix is valid, or the server
+    // could get us to sign anything!
+    if (!boost::algorithm::starts_with(
+            challenge, u8"\U0001F512 Auth Challenge. 1234567890."))
+    {
+      throw formatEx(
+          Errors::Errc::InternalError,
+          "received auth challenge does not contain mandatory prefix, server "
+          "may not be up to date, or we may be under attack.");
+    }
+    auto const signature =
+        Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
+                     _deviceSignaturePrivateKey);
+    auto req2 =
+        makeRequest(fetchpp::http::verb::post,
+                    makeUrl(fmt::format("{}/sessions", baseTarget)),
+                    {{"signature", signature}, {"challenge", challenge}});
+    assignHeader(req2, _headers);
+    auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
+                           .value()
+                           .at("access_token")
+                           .get<std::string>();
+
+    _headers.set(fetchpp::http::field::authorization,
+                 fetchpp::http::authorization::bearer{std::move(accessToken)});
+  };
+
+  _authenticating = tc::async_resumable(doAuth).to_shared();
+
+  TC_AWAIT(_authenticating);
+}
+
 http::url HttpClient::makeUrl(std::string_view target) const
 {
   return http::url(target, _baseUrl);
@@ -190,37 +252,52 @@ http::url HttpClient::makeUrl(std::string_view target) const
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
-  auto req = makeRequest(
-      fetchpp::http::verb::post, makeUrl(target), _headers, std::move(data));
+  auto req =
+      makeRequest(fetchpp::http::verb::post, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
-  auto req = makeRequest(
-      fetchpp::http::verb::patch, makeUrl(target), _headers, std::move(data));
+  auto req =
+      makeRequest(fetchpp::http::verb::patch, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
-  auto req =
-      makeRequest(fetchpp::http::verb::delete_, makeUrl(target), _headers);
+  auto req = makeRequest(fetchpp::http::verb::delete_, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+}
+
+template <typename Request>
+tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
+{
+  TC_AWAIT(_authenticating);
+  assignHeader(req, _headers);
+
+  auto response = TC_AWAIT(asyncFetchBase(cl, req));
+  if (!response && response.error().ec == AppdErrc::InvalidToken)
+  {
+    TC_AWAIT(authenticate());
+    assignHeader(req, _headers);
+    TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
+  }
+  TC_RETURN(response);
 }
 
 HttpClient::~HttpClient() = default;

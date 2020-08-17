@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/SdkInfo.hpp>
+#include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <fetchpp/client.hpp>
 #include <fetchpp/http/authorization.hpp>
@@ -73,13 +75,25 @@ public:
                                     nlohmann::json data);
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
-  void setAccessToken(std::string accessToken);
-
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
+
+  tc::cotask<void> authenticate();
+  void setAccessToken(std::string accessToken);
+  void setDeviceAuthData(
+      Trustchain::DeviceId const& deviceId,
+      Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey);
 
 private:
   fetchpp::http::url _baseUrl;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
+
+  Trustchain::DeviceId _deviceId;
+  Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
+
+  tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
+
+  template <typename Request>
+  tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req);
 };
 }
