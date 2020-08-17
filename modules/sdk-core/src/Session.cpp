@@ -15,6 +15,8 @@
 
 #include <fmt/format.h>
 
+TLOG_CATEGORY("Session");
+
 namespace Tanker
 {
 namespace
@@ -190,13 +192,13 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
   TC_RETURN(TC_AWAIT(storage().localUserStore.findDeviceKeys()));
 }
 
-tc::cotask<void> Session::authenticate()
+tc::cotask<HttpClient::AuthResponse> Session::authenticate()
 {
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
       TC_AWAIT(storage().localUserStore.getDeviceKeys())
           .signatureKeyPair.privateKey);
-  TC_AWAIT(_httpClient->authenticate());
+  TC_RETURN(TC_AWAIT(_httpClient->authenticate()));
 }
 
 tc::cotask<void> Session::finalizeOpening()

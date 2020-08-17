@@ -57,6 +57,28 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can revoke a device while it is offline")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto aliceSecondDevice = alice.makeDevice();
+  SDeviceId secondDeviceId;
+  {
+    auto secondSession =
+        TC_AWAIT(aliceSecondDevice.open(Functional::SessionType::New));
+    secondDeviceId = secondSession->deviceId().get();
+  }
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSecondDevice.open(Functional::SessionType::New)),
+      Errc::DeviceRevoked);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can recreate a device and decrypt after a revocation")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
@@ -159,8 +181,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
   REQUIRE_EQ(result_data, clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it chan share with a group after a revoke")
+TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();

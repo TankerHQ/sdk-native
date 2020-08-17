@@ -98,7 +98,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
     exception = std::make_exception_ptr(ex);
   }
@@ -160,8 +160,11 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
     _session->setStatus(Status::IdentityVerificationNeeded);
   else
   {
-    TC_AWAIT(_session->authenticate());
+    auto const authResponse = TC_AWAIT(_session->authenticate());
     TC_AWAIT(_session->finalizeOpening());
+    if (authResponse == HttpClient::AuthResponse::Revoked)
+      throw formatEx(Errors::AppdErrc::DeviceRevoked,
+                     "authentication reported that this device was revoked");
   }
   TC_RETURN(status());
 }
@@ -542,10 +545,10 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
                                     _session->requesters()));
 }
 
-tc::cotask<void> Core::nukeDatabase()
+void Core::nukeDatabase()
 {
   assertStatus(Status::Ready, "nukeDatabase");
-  TC_AWAIT(_session->storage().db.nuke());
+  _session->storage().db.nuke();
 }
 
 Trustchain::ResourceId Core::getResourceId(
@@ -679,5 +682,10 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         spublicIdentitiesWithUs,
                         sgroupIds));
   TC_RETURN(sess);
+}
+
+tc::cotask<void> Core::confirmRevocation()
+{
+  TC_AWAIT(_session->accessors().localUserAccessor.confirmRevocation());
 }
 }

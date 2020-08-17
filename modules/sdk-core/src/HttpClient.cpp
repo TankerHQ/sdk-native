@@ -192,12 +192,12 @@ void HttpClient::setDeviceAuthData(
 }
 
 // Do not call anything else than asyncFetchBase here to avoid recursive calls
-tc::cotask<void> HttpClient::authenticate()
+tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 {
   if (!_authenticating.is_ready())
   {
     TC_AWAIT(_authenticating);
-    TC_RETURN();
+    TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
   }
 
   _headers.erase(fetchpp::http::field::authorization);
@@ -232,10 +232,9 @@ tc::cotask<void> HttpClient::authenticate()
                     makeUrl(fmt::format("{}/sessions", baseTarget)),
                     {{"signature", signature}, {"challenge", challenge}});
     assignHeader(req2, _headers);
-    auto accessToken = TC_AWAIT(asyncFetchBase(_cl, std::move(req2)))
-                           .value()
-                           .at("access_token")
-                           .get<std::string>();
+    auto response = TC_AWAIT(asyncFetchBase(_cl, std::move(req2))).value();
+    auto accessToken = response.at("access_token").get<std::string>();
+    _isRevoked = response.at("is_revoked").get<bool>();
 
     _headers.set(fetchpp::http::field::authorization,
                  fetchpp::http::authorization::bearer{std::move(accessToken)});
@@ -244,6 +243,8 @@ tc::cotask<void> HttpClient::authenticate()
   _authenticating = tc::async_resumable(doAuth).to_shared();
 
   TC_AWAIT(_authenticating);
+
+  TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
 }
 
 http::url HttpClient::makeUrl(std::string_view target) const

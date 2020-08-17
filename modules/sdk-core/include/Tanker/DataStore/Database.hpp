@@ -17,7 +17,7 @@ public:
                     bool exclusive);
 
   tc::cotask<void> migrate();
-  tc::cotask<void> nuke();
+  void nuke();
 
   sqlpp::sqlite3::connection* connection();
 

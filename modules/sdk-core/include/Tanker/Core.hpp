@@ -120,6 +120,8 @@ public:
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 
+  tc::cotask<void> confirmRevocation();
+
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
 

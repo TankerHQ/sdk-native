@@ -5,6 +5,7 @@
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Groups/Store.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
@@ -27,8 +28,6 @@
 
 namespace Tanker
 {
-class HttpClient;
-
 class Session
 {
 public:
@@ -95,7 +94,7 @@ public:
 
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
-  tc::cotask<void> authenticate();
+  tc::cotask<HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
 
 private:

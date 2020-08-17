@@ -285,7 +285,7 @@ void Database::dropTable()
   _db->execute(fmt::format(FMT_STRING("DROP TABLE {:s}"), tableName<Table>()));
 }
 
-tc::cotask<void> Database::nuke()
+void Database::nuke()
 {
   FUNC_TIMER(DB);
   flushAllCaches();
@@ -293,7 +293,6 @@ tc::cotask<void> Database::nuke()
     DeviceKeysTable tab{};
     (*_db)(remove_from(tab).unconditionally());
   }
-  TC_RETURN();
 }
 
 tc::cotask<void> Database::startTransaction()
