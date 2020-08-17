@@ -57,6 +57,52 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Triggering self destruct twice doesn't crash")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto aliceSecondDevice = alice.makeDevice();
+  auto secondSession = TC_AWAIT(aliceSecondDevice.open());
+
+  auto const secondDeviceId = secondSession->deviceId().get();
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
+
+  // This is a race, one of the future will finish with DeviceRevoked, and the
+  // other will be canceled and finish with tc::operation_canceled (which gets
+  // translated in the C layer).
+  auto fut1 = secondSession->encrypt(make_buffer("will fail"));
+  auto fut2 = secondSession->encrypt(make_buffer("will fail"));
+
+  int nbDeviceRevoked = 0;
+  int nbOperationCanceled = 0;
+  auto awaitAndCountExceptions = [&](auto const& fut) {
+    try
+    {
+      TC_AWAIT(fut);
+    }
+    catch (Errors::Exception const& e)
+    {
+      if (e.errorCode() == Errc::DeviceRevoked)
+        nbDeviceRevoked++;
+      else
+        throw;
+    }
+    catch (tc::operation_canceled const&)
+    {
+      nbOperationCanceled++;
+    }
+  };
+  CHECK_NOTHROW(awaitAndCountExceptions(fut1));
+  CHECK_NOTHROW(awaitAndCountExceptions(fut2));
+  CHECK(nbDeviceRevoked == 1);
+  CHECK(nbOperationCanceled == 1);
+  CHECK(secondSession->status() == Status::Stopped);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can revoke a device while it is offline")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
