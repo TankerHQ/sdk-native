@@ -27,11 +27,12 @@ namespace
 std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"internal_error", AppdErrc::InternalError},
     {"invalid_body", AppdErrc::InvalidBody},
-    {"invalid_origin", AppdErrc::InvalidOrigin},
     {"app_is_not_test", AppdErrc::TrustchainIsNotTest},
     {"app_not_found", AppdErrc::AppNotFound},
     {"device_not_found", AppdErrc::DeviceNotFound},
     {"provisional_identity_not_found", AppdErrc::ProvisionalIdentityNotFound},
+    {"provisional_identity_already_attached",
+     AppdErrc::ProvisionalIdentityAlreadyAttached},
     {"device_revoked", AppdErrc::DeviceRevoked},
     {"too_many_attempts", AppdErrc::TooManyAttempts},
     {"verification_needed", AppdErrc::VerificationNeeded},

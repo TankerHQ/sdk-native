@@ -698,6 +698,49 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
+    "Charlie cannot attach an already attached provisional identity")
+{
+  auto const bobEmail = Email{"bob2.test@tanker.io"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      mgs::base64::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
+
+  auto charlie = trustchain.makeUser();
+  auto charlieDevice = charlie.makeDevice();
+  auto charlieSession = TC_AWAIT(charlieDevice.open());
+
+  result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(
+          charlieSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+              bobEmail, VerificationCode{bobVerificationCode}})),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
     "Bob cannot verify a provisionalIdentity without attaching it first")
 {
   auto const bobEmail = Email{"bob3.test@tanker.io"};
