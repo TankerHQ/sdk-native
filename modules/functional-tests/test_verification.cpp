@@ -104,6 +104,43 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto const passphrase = Passphrase{"my passphrase"};
   auto const email = Email{"kirby@tanker.io"};
 
+  SUBCASE("registerIdentity throws if passphrase is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(Passphrase{""})),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("registerIdentity throws if email is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(Unlock::EmailVerification{
+            Email{""}, VerificationCode{"12345678"}})),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("registerIdentity throws if verificationCode is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(
+            Unlock::EmailVerification{email, VerificationCode{""}})),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("registerIdentity throws if OidcIdToken is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(OidcIdToken{""})),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("registerIdentity throws if verificationKey is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(VerificationKey{""})),
+        Errc::InvalidVerification);
+  }
+
   SUBCASE(
       "registerIdentity throws adequate exception when verificationKey public "
       "signature key is corrupted")
