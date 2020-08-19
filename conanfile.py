@@ -119,7 +119,7 @@ class TankerConan(ConanFile):
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
             self.build_requires("doctest/2.3.8")
-            self.build_requires("doctest-async/2.3.8")
+            self.build_requires("doctest-async/2.3.9")
             self.build_requires("trompeloeil/38")
             if self.should_build_bench:
                 self.build_requires("benchmark/1.5.0")
