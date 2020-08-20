@@ -1,4 +1,5 @@
 from conans import tools, CMake, ConanFile
+import os
 
 
 class TankerConan(ConanFile):
@@ -14,6 +15,7 @@ class TankerConan(ConanFile):
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         "coroutinests": [True, False],
+        "install_static_libstdcpp": [True, False],
     }
     default_options = {
         "tankerlib_shared": False,
@@ -24,6 +26,7 @@ class TankerConan(ConanFile):
         "sanitizer": None,
         "coverage": False,
         "coroutinests": False,
+        "install_static_libstdcpp": False,
     }
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
@@ -153,6 +156,10 @@ class TankerConan(ConanFile):
         self.cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
+        # We save CC because CMAKE_C_COMPILER is (sometimes) a generic /clang binary for android,
+        # instead of the full target-specific /armv7a-linux-androideabi19-clang we have in CC
+        self.cmake.definitions["INSTALL_STATIC_LIBSTDCPP_DRIVER"] = os.getenv("CC")
+        self.cmake.definitions["INSTALL_STATIC_LIBSTDCPP"] = self.options.install_static_libstdcpp
 
     def build(self):
         self.init_cmake()

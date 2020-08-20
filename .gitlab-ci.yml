@@ -38,6 +38,7 @@ build/windows/visual:
 build/windows/mingw:
   extends: .build
   tags: [windows]
+  when: manual
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
 
