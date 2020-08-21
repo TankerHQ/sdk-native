@@ -134,7 +134,7 @@ tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, Request req)
         req.uri().href(),
         res.result_int(),
         http::obsolete_reason(res.result()));
-  TC_RETURN(handleResponse(res, req));
+  TC_RETURN(handleResponse(std::move(res), req));
 }
 }
 
