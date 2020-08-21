@@ -15,6 +15,8 @@
 
 TLOG_CATEGORY(UserAccessor);
 
+static constexpr auto ChunkSize = 100;
+
 using Tanker::Trustchain::DeviceId;
 using Tanker::Trustchain::UserId;
 
@@ -163,14 +165,27 @@ UserAccessor::pullProvisional(
 
   auto const hashedEmails = hashProvisionalUserEmails(appProvisionalIdentities);
 
-  auto const tankerProvisionalIdentities =
-      TC_AWAIT(_requester->getPublicProvisionalIdentities(hashedEmails));
+  std::map<Crypto::Hash,
+           std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
+      tankerProvisionalIdentities;
+  for (unsigned int i = 0; i < hashedEmails.size(); i += ChunkSize)
+  {
+    auto const count =
+        std::min<unsigned int>(ChunkSize, hashedEmails.size() - i);
+    auto response = TC_AWAIT(_requester->getPublicProvisionalIdentities(
+        gsl::make_span(hashedEmails).subspan(i, count)));
+    tankerProvisionalIdentities.insert(
+        std::make_move_iterator(response.begin()),
+        std::make_move_iterator(response.end()));
+  }
 
   if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
   {
-    throw formatEx(
-        Errc::InternalError,
-        "getPublicProvisionalIdentities returned a list of different size");
+    throw formatEx(Errc::InternalError,
+                   "getPublicProvisionalIdentities returned a list of "
+                   "different size ({} vs. {})",
+                   appProvisionalIdentities.size(),
+                   tankerProvisionalIdentities.size());
   }
 
   provisionalUsers.reserve(appProvisionalIdentities.size());
@@ -193,9 +208,20 @@ auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
 {
   if (userIds.empty())
     TC_RETURN(UsersMap{});
-  auto const [trustchainCreation, actions] =
-      TC_AWAIT(_requester->getUsers(userIds));
-  TC_RETURN(std::get<UsersMap>(processUserEntries(_context, actions)));
+
+  UsersMap out;
+  out.reserve(userIds.size());
+  for (unsigned int i = 0; i < userIds.size(); i += ChunkSize)
+  {
+    auto const count = std::min<unsigned int>(ChunkSize, userIds.size() - i);
+    auto const [trustchainCreation, actions] =
+        TC_AWAIT(_requester->getUsers(userIds.subspan(i, count)));
+    auto currentUsers =
+        std::get<UsersMap>(processUserEntries(_context, actions));
+    out.insert(std::make_move_iterator(currentUsers.begin()),
+               std::make_move_iterator(currentUsers.end()));
+  }
+  TC_RETURN(out);
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
@@ -203,8 +229,19 @@ auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
 {
   if (deviceIds.empty())
     TC_RETURN(DevicesMap{});
-  auto const [trustchainCreation, actions] =
-      TC_AWAIT(_requester->getUsers(deviceIds));
-  TC_RETURN(std::get<DevicesMap>(processUserEntries(_context, actions)));
+
+  DevicesMap out;
+  out.reserve(deviceIds.size());
+  for (unsigned int i = 0; i < deviceIds.size(); i += ChunkSize)
+  {
+    auto const count = std::min<unsigned int>(ChunkSize, deviceIds.size() - i);
+    auto const [trustchainCreation, actions] =
+        TC_AWAIT(_requester->getUsers(deviceIds.subspan(i, count)));
+    auto currentDevices =
+        std::get<DevicesMap>(processUserEntries(_context, actions));
+    out.insert(std::make_move_iterator(currentDevices.begin()),
+               std::make_move_iterator(currentDevices.end()));
+  }
+  TC_RETURN(out);
 }
 }
