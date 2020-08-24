@@ -96,8 +96,7 @@ class TankerConan(ConanFile):
             self.requires("fetchpp/0.8.2")
             self.requires("socket.io-client-cpp/1.6.6", private=private)
             self.requires("sqlpp11/0.59", private=private)
-            self.requires(
-                "sqlpp11-connector-sqlite3/0.29", private=private)
+            self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("fmt/7.0.2", private=private)
@@ -159,7 +158,9 @@ class TankerConan(ConanFile):
         # We save CC because CMAKE_C_COMPILER is (sometimes) a generic /clang binary for android,
         # instead of the full target-specific /armv7a-linux-androideabi19-clang we have in CC
         self.cmake.definitions["INSTALL_STATIC_LIBSTDCPP_DRIVER"] = os.getenv("CC")
-        self.cmake.definitions["INSTALL_STATIC_LIBSTDCPP"] = self.options.install_static_libstdcpp
+        self.cmake.definitions[
+            "INSTALL_STATIC_LIBSTDCPP"
+        ] = self.options.install_static_libstdcpp
 
     def build(self):
         self.init_cmake()
