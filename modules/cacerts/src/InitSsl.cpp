@@ -26,8 +26,12 @@ namespace Cacerts
 {
 void init()
 {
-  SSL_load_error_strings(); /* readable error messages */
-  SSL_library_init();       /* initialize library */
+  static auto b = [] {
+    SSL_load_error_strings(); /* readable error messages */
+    SSL_library_init();       /* initialize library */
+    return 0;
+  }();
+  (void)b;
 }
 namespace
 {
