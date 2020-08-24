@@ -30,7 +30,6 @@ class TankerConan(ConanFile):
     }
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
-    build_policy = "missing"
     cmake = None
 
     @property
