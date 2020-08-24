@@ -481,6 +481,17 @@ contextlib2 = ">=0.5.5"
 
 [[package]]
 category = "main"
+description = "Python bindings for Selenium"
+name = "selenium"
+optional = false
+python-versions = "*"
+version = "3.141.0"
+
+[package.dependencies]
+urllib3 = "*"
+
+[[package]]
+category = "main"
 description = "Python 2 and 3 compatibility utilities"
 name = "six"
 optional = false
@@ -512,7 +523,6 @@ requests = ">=2.23.0,<3.0.0"
 
 [package.source]
 reference = "tanker.local"
-type = "legacy"
 url = "http://tanker.local:8181"
 
 [[package]]
@@ -521,7 +531,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.7.2621"
+version = "2020.8.2717"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -531,12 +541,12 @@ psutil = ">=5.6.7,<6.0.0"
 python-dotenv = ">=0.13.0,<0.14.0"
 python-gitlab = ">=2.0.0,<3.0.0"
 "ruamel.yaml" = ">=0.16.10,<0.17.0"
+selenium = ">=3.141.0,<4.0.0"
 tbump = ">=6.0.5,<7.0.0"
 tomlkit = ">=0.5.8,<0.6.0"
 
 [package.source]
 reference = "tanker.local"
-type = "legacy"
 url = "http://tanker.local:8181"
 
 [[package]]
@@ -610,7 +620,6 @@ testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
 content-hash = "5c640a9e291b2c4467c2d37a73c76c6854c12e998c7e036c6981479595b2565b"
-lock-version = "1.0"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -896,6 +905,10 @@ schema = [
     {file = "schema-0.7.2-py2.py3-none-any.whl", hash = "sha256:3a03c2e2b22e6a331ae73750ab1da46916da6ca861b16e6f073ac1d1eba43b71"},
     {file = "schema-0.7.2.tar.gz", hash = "sha256:b536f2375b49fdf56f36279addae98bd86a8afbd58b3c32ce363c464bed5fc1c"},
 ]
+selenium = [
+    {file = "selenium-3.141.0-py2.py3-none-any.whl", hash = "sha256:2d7131d7bc5a5b99a2d9b04aaf2612c411b03b8ca1b1ee8d3de5845a9be2cb3c"},
+    {file = "selenium-3.141.0.tar.gz", hash = "sha256:deaf32b60ad91a4611b98d8002757f29e6f2c2d5fcaf202e1c9ad06d6772300d"},
+]
 six = [
     {file = "six-1.14.0-py2.py3-none-any.whl", hash = "sha256:8f3cd2e254d8f793e7f3d6d9df77b92252b52637291d0f0da013c76ea2724b6c"},
     {file = "six-1.14.0.tar.gz", hash = "sha256:236bdbdce46e6e6a3d61a337c0f8b763ca1e8717c03b369e87a7ec7ce1319c0a"},
@@ -909,8 +922,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-0.1.0.tar.gz", hash = "md5:dc7e04941c4b821e4d904439f31685d1"},
 ]
 tankerci = [
-    {file = "tankerci-2020.7.2621-py3-none-any.whl", hash = "md5:bec1a32c35ba40f7a1a4f554f1d5200e"},
-    {file = "tankerci-2020.7.2621.tar.gz", hash = "md5:74deeb989e80f3f9a91453d8837e459b"},
+    {file = "tankerci-2020.8.2717-py3-none-any.whl", hash = "md5:e34c17669fd7a75108895ac9a61803a3"},
+    {file = "tankerci-2020.8.2717.tar.gz", hash = "md5:94471b397a2e5442e678b9ee0df0dc79"},
 ]
 tbump = [
     {file = "tbump-6.1.1-py3-none-any.whl", hash = "sha256:fc46f72b9467161993c11ac31ab4ec63b68bea6aa89533ad9e0687e83539d019"},
