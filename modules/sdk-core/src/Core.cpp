@@ -368,7 +368,7 @@ tc::cotask<void> Core::share(
     std::vector<SGroupId> const& sgroupIds)
 {
   assertStatus(Status::Ready, "share");
-  if (spublicIdentities.empty() && sgroupIds.empty())
+  if (sresourceIds.empty() || (spublicIdentities.empty() && sgroupIds.empty()))
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {

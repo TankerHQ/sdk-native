@@ -531,6 +531,36 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice cannot encrypt and share with more than 100 recipients")
+{
+  std::vector<SPublicIdentity> identities;
+  for (int i = 0; i < 101; ++i)
+  {
+    auto const bobEmail = Email{fmt::format("bob{}.test@tanker.io", i)};
+    auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+        mgs::base64::encode(trustchain.id), bobEmail);
+    identities.push_back(
+        SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)});
+  }
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->encrypt(clearData, identities)),
+      Errc::InvalidArgument);
+
+  auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
+  auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->share({resourceId}, identities, {})),
+      Errc::InvalidArgument);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {

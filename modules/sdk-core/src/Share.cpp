@@ -21,6 +21,8 @@
 
 #include <algorithm>
 
+static constexpr auto ShareLimit = 100;
+
 using namespace Tanker::Trustchain;
 
 namespace Tanker
@@ -288,6 +290,12 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
 {
   if (resourceKeys.empty())
     throw Errors::AssertionError("no keys to share");
+
+  if (publicIdentities.size() + groupIds.size() > ShareLimit)
+    throw formatEx(Errors::Errc::InvalidArgument,
+                   "cannot share with more than {} recipients at once",
+                   ShareLimit);
+
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
       userAccessor, groupAccessor, publicIdentities, groupIds));
 
