@@ -8,5 +8,6 @@ namespace Cacerts
 {
 void init();
 boost::asio::ssl::context& get_ssl_context();
+boost::asio::ssl::context create_ssl_context();
 }
 }
