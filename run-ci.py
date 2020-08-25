@@ -2,8 +2,8 @@ import argparse
 import os
 import sys
 
-from path import Path, TempDir
-from conans import __version__ as conan_version
+from typing import List
+from path import Path
 
 import tankerci
 import tankerci.conan
@@ -13,9 +13,7 @@ import tankerci.git
 
 def build_and_check(profiles: List[str], coverage: bool) -> None:
     for profile in profiles:
-        built_path = tankerci.cpp.build(
-            profile, make_package=True, coverage=coverage,
-        )
+        built_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage,)
         tankerci.cpp.check(built_path, coverage=coverage)
     recipe = Path.getcwd() / "conanfile.py"
     recipe.copy(Path.getcwd() / "package")
@@ -32,7 +30,9 @@ def main() -> None:
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
     build_and_test_parser = subparsers.add_parser("build-and-test")
-    build_and_test_parser.add_argument("--profile", dest="profiles", action="append", required=True)
+    build_and_test_parser.add_argument(
+        "--profile", dest="profiles", action="append", required=True
+    )
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
     subparsers.add_parser("deploy")
