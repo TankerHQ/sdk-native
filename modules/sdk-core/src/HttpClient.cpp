@@ -1,5 +1,6 @@
 #include <Tanker/HttpClient.hpp>
 
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
@@ -171,7 +172,7 @@ HttpClient::HttpClient(http::url const& baseUrl,
   : _baseUrl(fmt::format("/v2/apps/{appId:#S}/",
                          fmt::arg("appId", info.trustchainId)),
              baseUrl),
-    _cl(ex, timeout)
+    _cl(ex, timeout, Cacerts::create_ssl_context())
 {
   _headers.set("X-Tanker-SdkType", info.sdkType);
   _headers.set("X-Tanker-SdkVersion", info.version);

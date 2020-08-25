@@ -6,6 +6,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/ServerErrc.hpp>
 
+#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/Nature.hpp>
@@ -89,7 +90,7 @@ Client::Client(std::string_view host_url,
                fetchpp::net::executor ex)
   : _baseUrl("/apps", fetchpp::http::url(host_url)),
     _idToken{idToken},
-    _client(ex, std::chrono::seconds(10))
+    _client(ex, std::chrono::seconds(10), Cacerts::create_ssl_context())
 {
 }
 
