@@ -16,6 +16,7 @@ stages:
       # trigger the job after a MR is merged on feature branches and master
       # $CI_MERGE_REQUEST_ID == null is needed to avoid duplicate pipelines
     - if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 .build-manual:
   stage: build
