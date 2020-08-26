@@ -124,6 +124,20 @@ bridge/ios:
     project: tanker/sdk-ios
     strategy: depend
 
+bridge/ruby:
+  needs: ["build/linux/shared"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/linux/shared
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-ruby
+    strategy: depend
+
 pages:
   stage: deploy
   rules:
