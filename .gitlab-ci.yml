@@ -5,6 +5,7 @@ before_script:
 
 stages:
   - build
+  - bridge
   - check
   - deploy
 
@@ -44,6 +45,15 @@ build/macos:
   tags: [macos]
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+
+build/ios:
+  extends: .build-manual
+  tags: [macos]
+  artifacts:
+    paths:
+      - package
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
 
 build/windows/visual:
   extends: .build-always
@@ -89,6 +99,20 @@ nightly/coverage:
     paths:
       - coverage/
     expire_in: 7 days
+
+bridge/ios:
+  needs: ["build/ios"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-ios
+    strategy: depend
 
 pages:
   stage: deploy
