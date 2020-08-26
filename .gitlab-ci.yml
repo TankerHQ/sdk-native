@@ -41,6 +41,15 @@ build/linux:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
+build/linux/shared:
+  extends: .build-manual
+  artifacts:
+    paths:
+      - package/
+  tags: [linux]
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
+
 build/macos:
   extends: .build-always
   tags: [macos]
