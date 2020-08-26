@@ -18,12 +18,6 @@ typedef struct tanker_encryption_session tanker_encryption_session_t;
  *
  * \param tanker A tanker_t* instance
  * \pre tanker_status == TANKER_STATUS_READY
- * \param recipient_public_identities Array containing the recipients' public
- * identities.
- * \param nb_recipient_public_identities The number of recipients in
- * recipient_public_identities.
- * \param recipient_gids Array of strings describing the recipient groups.
- * \param nb_recipient_gids The number of groups in recipient_gids.
  *
  * \return A tanker_future of a tanker_encryption_session_t.
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
