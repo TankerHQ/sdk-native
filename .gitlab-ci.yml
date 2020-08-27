@@ -52,6 +52,9 @@ build/linux/shared:
 
 build/macos:
   extends: .build-always
+  artifacts:
+    paths:
+      - package
   tags: [macos]
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
@@ -77,6 +80,9 @@ build/ios:
 build/windows/visual:
   extends: .build-always
   tags: [windows]
+  artifacts:
+    paths:
+      - package
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
@@ -162,6 +168,51 @@ bridge/ruby/macos:
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: tanker/sdk-ruby
+    strategy: depend
+
+bridge/python/macos:
+  needs: ["build/macos"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/macos
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-python
+    strategy: depend
+
+bridge/python/linux:
+  needs: ["build/linux"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-python
+    strategy: depend
+
+bridge/python/windows:
+  needs: ["build/windows/visual"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: windows
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/windows/visual
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-python
     strategy: depend
 
 pages:
