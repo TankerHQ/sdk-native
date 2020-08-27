@@ -41,11 +41,29 @@ build/linux:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
+build/linux/shared:
+  extends: .build-manual
+  artifacts:
+    paths:
+      - package/
+  tags: [linux]
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
+
 build/macos:
   extends: .build-always
   tags: [macos]
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+
+build/macos/shared:
+  extends: .build-manual
+  artifacts:
+    paths:
+      - package/
+  tags: [macos]
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
 build/ios:
   extends: .build-manual
@@ -107,12 +125,43 @@ bridge/ios:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   variables:
+    UPSTREAM_RUNNER_TAG: macos
     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
     UPSTREAM_JOB_NAME: build/ios
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: tanker/sdk-ios
+    strategy: depend
+
+bridge/ruby/linux:
+  needs: ["build/linux/shared"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/linux/shared
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-ruby
+    strategy: depend
+
+bridge/ruby/macos:
+  needs: ["build/macos/shared"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/macos/shared
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-ruby
     strategy: depend
 
 pages:
