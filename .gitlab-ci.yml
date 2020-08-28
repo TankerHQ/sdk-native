@@ -41,6 +41,15 @@ build/linux:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
+build/android:
+  extends: .build-manual
+  artifacts:
+    paths:
+      - package/
+  tags: [linux]
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+
 build/linux/shared:
   extends: .build-manual
   artifacts:
@@ -138,6 +147,21 @@ bridge/ios:
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: tanker/sdk-ios
+    strategy: depend
+
+bridge/android:
+  needs: ["build/android"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/android
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: tanker/sdk-android
     strategy: depend
 
 bridge/ruby/linux:
