@@ -148,6 +148,19 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_THROWS(TC_AWAIT(core2->start(alice.sidentity())));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it throws the correct error when the server is down")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice(Functional::DeviceType::New);
+  // connect to a (probably) closed port
+  auto core = std::make_unique<AsyncCore>(
+      "https://127.0.0.1:65012", device.getSdkInfo(), device.writablePath());
+
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(device.identity())),
+                                Errc::NetworkError);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 {
   auto alice = trustchain.makeUser();

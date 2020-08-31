@@ -127,15 +127,24 @@ fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
 template <typename Request>
 tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, Request req)
 {
-  TLOG_CATEGORY(HttpClient);
-  TINFO("{} {}", req.method(), req.uri().href());
-  auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
-  TINFO("{} {}, {} {}",
-        req.method(),
-        req.uri().href(),
-        res.result_int(),
-        http::obsolete_reason(res.result()));
-  TC_RETURN(handleResponse(std::move(res), req));
+  try
+  {
+    TINFO("{} {}", req.method(), req.uri().href());
+    auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
+    TINFO("{} {}, {} {}",
+          req.method(),
+          req.uri().href(),
+          res.result_int(),
+          http::obsolete_reason(res.result()));
+    TC_RETURN(handleResponse(std::move(res), req));
+  }
+  catch (boost::system::system_error const& e)
+  {
+    throw Errors::formatEx(Errors::Errc::NetworkError,
+                           "{}: {}",
+                           e.code().category().name(),
+                           e.code().message());
+  }
 }
 }
 
