@@ -49,7 +49,7 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
       trustchainName.value_or(mgs::base64::encode(trustchainDefault)),
       kp,
       isTest));
-  TC_RETURN(Trustchain::make(TestConstants::trustchainUrl(),
+  TC_RETURN(Trustchain::make(TestConstants::appdUrl(),
                              std::move(app.id),
                              std::move(app.authToken),
                              kp));

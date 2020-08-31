@@ -8,7 +8,7 @@ using namespace Tanker;
 
 char const* get_config_app_url()
 {
-  return TestConstants::trustchainUrl().c_str();
+  return TestConstants::appdUrl().c_str();
 }
 
 char const* get_config_admin_url()

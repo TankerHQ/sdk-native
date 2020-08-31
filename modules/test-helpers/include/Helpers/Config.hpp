@@ -22,8 +22,7 @@ struct OidcConfig
   std::map<std::string, User> users;
 };
 
-std::string const& trustchainUrl();
-std::string_view appdUrl();
+std::string const& appdUrl();
 std::string_view admindUrl();
 std::string const& idToken();
 OidcConfig const& oidcConfig();
