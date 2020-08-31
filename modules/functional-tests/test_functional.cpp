@@ -185,9 +185,12 @@ struct HttpClientFactory
 
   std::unique_ptr<HttpClient> operator()()
   {
+    REQUIRE(!used);
+    used = true;
     return std::unique_ptr<HttpClient>(client);
   }
 
+  bool used = false;
   HttpClient* client;
 };
 
