@@ -116,7 +116,8 @@ public:
   static Trustchain::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
 
-  void stop();
+  tc::cotask<void> stop();
+  tc::cotask<void> stopForRevocation();
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 

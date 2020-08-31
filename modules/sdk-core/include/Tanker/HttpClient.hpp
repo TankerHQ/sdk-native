@@ -84,6 +84,7 @@ public:
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
 
   tc::cotask<AuthResponse> authenticate();
+  tc::cotask<void> deauthenticate();
   void setAccessToken(std::string accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,

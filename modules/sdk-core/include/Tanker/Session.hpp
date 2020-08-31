@@ -67,6 +67,8 @@ public:
   Session(std::unique_ptr<HttpClient> client);
   ~Session();
 
+  tc::cotask<void> stop();
+
   HttpClient& httpClient();
 
   Requesters const& requesters() const;

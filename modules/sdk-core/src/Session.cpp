@@ -87,6 +87,11 @@ Session::Session(std::unique_ptr<HttpClient> httpClient)
 {
 }
 
+tc::cotask<void> Session::stop()
+{
+  TC_AWAIT(_httpClient->deauthenticate());
+}
+
 HttpClient& Session::httpClient()
 {
   return *_httpClient;

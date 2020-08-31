@@ -81,8 +81,8 @@ tc::shared_future<void> AsyncCore::verifyIdentity(
 
 tc::shared_future<void> AsyncCore::stop()
 {
-  return _taskCanceler.run(
-      [&] { return tc::async([this] { this->_core.stop(); }); });
+  return runResumable(
+      [=]() -> tc::cotask<void> { TC_AWAIT(this->_core.stop()); });
 }
 
 Tanker::Status AsyncCore::status() const
@@ -368,7 +368,7 @@ tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(
   // We have asked for termination of all running tasks, including this one.
   // From now on, we must not TC_AWAIT or we will be canceled.
   _core.nukeDatabase();
-  _core.stop();
+  _core.stopForRevocation();
   if (_asyncDeviceRevoked)
     _asyncDeviceRevoked();
   TINFO("Revocation handled, self-destruct complete");

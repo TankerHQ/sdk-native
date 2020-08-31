@@ -248,6 +248,36 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
   TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
 }
 
+tc::cotask<void> HttpClient::deauthenticate()
+{
+  try
+  {
+    auto const baseTarget =
+        fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
+    auto req = makeRequest(fetchpp::http::verb::delete_,
+                           makeUrl(fmt::format("{}/sessions", baseTarget)));
+    assignHeader(req, _headers);
+    TINFO("{} {}", req.method(), req.uri().href());
+    auto res = TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future));
+    TINFO("{} {}, {} {}",
+          req.method(),
+          req.uri().href(),
+          res.result_int(),
+          http::obsolete_reason(res.result()));
+    // HTTP status:
+    //   204: session successfully deleted
+    //   401: session already expired
+    //   other: something unexpected happened -> ignore and continue closing
+    //   ¯\_(ツ)_/¯
+    if (res.result_int() != 204 && res.result_int() != 401)
+      TERROR("Error while closing the network client: {}", res.text());
+  }
+  catch (boost::system::system_error const& e)
+  {
+    TERROR("Error while closing the network client: {}", e.what());
+  }
+}
+
 http::url HttpClient::makeUrl(std::string_view target) const
 {
   return http::url(target, _baseUrl);

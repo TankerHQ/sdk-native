@@ -84,9 +84,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   };
 
   REQUIRE(core->status() == Status::Ready);
-  TC_AWAIT(core->stop());
+  CHECK_NOTHROW(TC_AWAIT(core->stop()));
   REQUIRE(core->status() == Status::Stopped);
   CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm1)));
+
+  // check that stopping a stopped session is a no-op
+  CHECK_NOTHROW(TC_AWAIT(core->stop()));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")

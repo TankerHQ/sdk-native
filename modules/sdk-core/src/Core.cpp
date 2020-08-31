@@ -117,11 +117,24 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
-void Core::stop()
+tc::cotask<void> Core::stop()
 {
   if (status() == Status::Stopped)
     return;
 
+  TC_AWAIT(_session->stop());
+  reset();
+  if (_sessionClosed)
+    _sessionClosed();
+}
+
+tc::cotask<void> Core::stopForRevocation()
+{
+  if (status() == Status::Stopped)
+    return;
+
+  // Do not stop the session, no need to close the session server-side.
+  // Also, calling _session->stop() here crashes.
   reset();
   if (_sessionClosed)
     _sessionClosed();
