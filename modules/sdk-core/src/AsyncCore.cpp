@@ -46,7 +46,10 @@ AsyncCore::AsyncCore(SdkInfo info,
 {
 }
 
-AsyncCore::~AsyncCore() = default;
+AsyncCore::~AsyncCore()
+{
+  assert(tc::get_default_executor().is_in_this_context());
+}
 
 tc::future<void> AsyncCore::destroy()
 {

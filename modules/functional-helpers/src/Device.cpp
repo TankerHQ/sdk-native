@@ -1,6 +1,5 @@
 #include <Tanker/Functional/Device.hpp>
 
-#include <Tanker/AsyncCore.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -16,17 +15,6 @@ namespace Functional
 {
 Passphrase const Device::STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
-
-namespace
-{
-struct AsyncCoreDeleter
-{
-  void operator()(AsyncCore* core) const
-  {
-    core->destroy().get();
-  }
-};
-}
 
 Device::Device(std::string trustchainUrl,
                std::string trustchainId,

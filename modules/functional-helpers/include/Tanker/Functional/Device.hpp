@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/AsyncCore.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Unlock/Verification.hpp>
@@ -18,6 +19,21 @@ class AsyncCore;
 namespace Functional
 {
 using AsyncCorePtr = std::shared_ptr<AsyncCore>;
+
+struct AsyncCoreDeleter
+{
+  void operator()(AsyncCore* core) const
+  {
+    core->destroy().get();
+  }
+};
+
+template <typename... T>
+std::unique_ptr<AsyncCore, AsyncCoreDeleter> makeAsyncCore(T&&... args)
+{
+  return std::unique_ptr<AsyncCore, AsyncCoreDeleter>(
+      new AsyncCore(std::forward<T>(args)...));
+}
 
 enum class SessionType
 {

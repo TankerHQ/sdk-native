@@ -204,7 +204,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
   auto aliceDevice = alice.makeDevice();
 
   HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = std::make_unique<AsyncCore>(
+  auto aliceSession = Functional::makeAsyncCore(
       aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
   TC_AWAIT(aliceSession->start(aliceDevice.identity()));
   TC_AWAIT(aliceSession->registerIdentity(
@@ -231,7 +231,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
   }
   auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
   HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = std::make_unique<AsyncCore>(
+  auto aliceSession = Functional::makeAsyncCore(
       aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
   TC_AWAIT(aliceSession->start(aliceDevice.identity()));
   TC_AWAIT(aliceSession->verifyIdentity(
@@ -259,7 +259,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
         TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
   }
   HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = std::make_unique<AsyncCore>(
+  auto aliceSession = Functional::makeAsyncCore(
       aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
   TC_AWAIT(aliceSession->start(aliceDevice.identity()));
 
