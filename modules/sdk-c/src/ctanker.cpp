@@ -471,7 +471,7 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
 tanker_future_t* tanker_share(tanker_t* ctanker,
                               char const* const* resource_ids,
                               uint64_t nb_resource_ids,
-                              tanker_sharing_options_t* options)
+                              tanker_sharing_options_t const* options)
 {
   if (!options)
   {
