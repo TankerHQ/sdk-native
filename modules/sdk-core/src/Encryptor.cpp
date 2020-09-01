@@ -40,7 +40,8 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
   case EncryptorV5::version():
     return std::forward<Callable>(cb)(EncryptorV5{});
   default:
-    throw formatEx(Errc::InvalidArgument, "unsupported version: {:d}", version);
+    throw Errors::Exception(make_error_code(Errc::InvalidArgument),
+                            "invalid encrypted data");
   }
 }
 }
