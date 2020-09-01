@@ -115,8 +115,18 @@ void Core::stop()
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
   _session->client().start();
-  _session->setIdentity(
-      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity));
+  auto const identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+  if (identity.trustchainId != _info.trustchainId)
+  {
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        "The provided identity was not signed by the private key of the "
+        "current app: expected app ID {} but got {}",
+        _info.trustchainId,
+        identity.trustchainId);
+  }
+  _session->setIdentity(identity);
   _session->createStorage(_writablePath);
   auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
   auto const [deviceExists, userExists, unused] = TC_AWAIT(
