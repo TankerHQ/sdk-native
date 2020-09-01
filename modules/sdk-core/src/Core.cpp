@@ -351,7 +351,8 @@ tc::cotask<void> Core::share(
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return base64DecodeArgument<Trustchain::ResourceId>(resourceId);
+    return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
+                                                        "resource id");
   });
 
   auto const localUser = _session->accessors().localUserAccessor.get();
@@ -388,7 +389,8 @@ tc::cotask<void> Core::updateGroupMembers(
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
   assertStatus(Status::Ready, "updateGroupMembers");
-  auto const groupId = base64DecodeArgument<Trustchain::GroupId>(groupIdString);
+  auto const groupId =
+      base64DecodeArgument<Trustchain::GroupId>(groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(

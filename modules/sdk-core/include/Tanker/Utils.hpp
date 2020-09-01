@@ -13,7 +13,7 @@
 namespace Tanker
 {
 template <typename T, typename String>
-T base64DecodeArgument(String const& b64)
+T base64DecodeArgument(String const& b64, std::string const& argName)
 {
   using namespace Tanker::Errors;
 
@@ -23,8 +23,8 @@ T base64DecodeArgument(String const& b64)
   }
   catch (mgs::exceptions::exception const&)
   {
-    throw Exception(make_error_code(Errc::InvalidArgument),
-                    "base64 deserialization failed");
+    throw formatEx(
+        Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
   }
 }
 
@@ -42,14 +42,8 @@ inline std::vector<Trustchain::GroupId> convertToGroupIds(
     std::vector<SGroupId> const& sgroupIds)
 {
   return convertList(sgroupIds, [](auto&& sgroupId) {
-    try
-    {
-      return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string());
-    }
-    catch (Errors::Exception const& e)
-    {
-      throw Errors::formatEx(e.errorCode(), "invalid group id {}", sgroupId);
-    }
+    return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string(),
+                                                     "group id");
   });
 }
 

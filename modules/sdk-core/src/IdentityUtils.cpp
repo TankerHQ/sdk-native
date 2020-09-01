@@ -17,8 +17,9 @@ std::vector<Identity::PublicIdentity> extractPublicIdentities(
     }
     catch (Errors::Exception const& e)
     {
-      throw Errors::formatEx(
-          e.errorCode(), "invalid public identity {}", spublicIdentity);
+      throw Errors::formatEx(e.errorCode(),
+                             "invalid public identity {}",
+                             fmt::make_format_args(spublicIdentity.string()));
     }
   });
 }
