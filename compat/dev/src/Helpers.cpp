@@ -76,17 +76,3 @@ void decryptAndCheck(CorePtr const& core,
   if (std::string(decryptedData.begin(), decryptedData.end()) != expectedData)
     throw std::runtime_error("failed to decrypt");
 }
-
-User upgradeToIdentity(Tanker::Trustchain::TrustchainId const& trustchainId,
-                       User user)
-{
-  if (user.userToken)
-  {
-    user.identity =
-        Tanker::Identity::upgradeUserToken(mgs::base64::encode(trustchainId),
-                                           user.suserId,
-                                           user.userToken.value());
-    user.userToken.reset();
-  }
-  return user;
-}

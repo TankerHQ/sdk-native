@@ -26,9 +26,9 @@ User::User(std::string trustchainUrl,
            std::string trustchainPrivateSignatureKey)
   : trustchainUrl(std::move(trustchainUrl)),
     trustchainId(std::move(trustchainId)),
-    suserId(createRandomUserId()),
-    identity(Identity::createIdentity(
-        this->trustchainId, trustchainPrivateSignatureKey, suserId)),
+    identity(Identity::createIdentity(this->trustchainId,
+                                      trustchainPrivateSignatureKey,
+                                      createRandomUserId())),
     userToken(std::nullopt)
 {
 }
@@ -41,11 +41,10 @@ void User::reuseCache()
 Device User::makeDevice(DeviceType type)
 {
   if (type == DeviceType::New)
-    return Device(trustchainUrl, trustchainId, suserId, identity);
+    return Device(trustchainUrl, trustchainId, identity);
 
   if (_currentDevice == _cachedDevices->size())
-    _cachedDevices->push_back(
-        Device(trustchainUrl, trustchainId, suserId, identity));
+    _cachedDevices->push_back(Device(trustchainUrl, trustchainId, identity));
   return (*_cachedDevices)[_currentDevice++];
 }
 
@@ -68,13 +67,11 @@ SPublicIdentity User::spublicIdentity() const
 
 void to_json(nlohmann::json& j, User const& user)
 {
-  j["suser_id"] = user.suserId;
   j["identity"] = user.identity;
 }
 
 void from_json(nlohmann::json const& j, User& user)
 {
-  j.at("suser_id").get_to(user.suserId);
   if (j.find("user_token") != j.end())
     user.userToken = j.at("user_token").get<std::string>();
   else if (j.find("identity") != j.end())

@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/HttpClient.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
@@ -58,13 +59,14 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
 
-  auto invalidIdentity = alice.identity;
+  auto invalidIdentity =
+      Identity::extract<Identity::SecretPermanentIdentity>(alice.identity);
   invalidIdentity.trustchainId[0]++;
-  alice.identity = invalidIdentity;
+  alice.identity = to_string(invalidIdentity);
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(alice.sidentity())),
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(alice.identity)),
                                 Errors::Errc::InvalidArgument);
 }
 

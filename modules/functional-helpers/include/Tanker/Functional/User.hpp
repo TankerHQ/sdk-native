@@ -24,7 +24,6 @@ class User
 public:
   std::string trustchainUrl;
   std::string trustchainId;
-  SUserId suserId;
   std::string identity;
   std::optional<std::string> userToken;
 

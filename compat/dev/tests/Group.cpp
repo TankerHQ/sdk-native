@@ -48,15 +48,12 @@ struct GroupCompat : Tanker::Compat::Command
   {
     auto const state = Tanker::loadJson(statePath).get<ShareState>();
 
-    auto alice = upgradeToIdentity(trustchain.id, state.alice);
-    auto bob = upgradeToIdentity(trustchain.id, state.bob);
-
-    auto bobCore = signInUser(bob.identity, trustchain, tankerPath);
+    auto bobCore = signInUser(state.bob.identity, trustchain, tankerPath);
     decryptAndCheck(bobCore,
                     state.encryptState.encryptedData,
                     state.encryptState.clearData);
 
-    auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
+    auto aliceCore = signInUser(state.alice.identity, trustchain, tankerPath);
     decryptAndCheck(aliceCore,
                     state.encryptState.encryptedData,
                     state.encryptState.clearData);

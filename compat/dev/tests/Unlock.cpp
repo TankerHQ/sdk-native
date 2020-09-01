@@ -28,8 +28,7 @@ struct UnlockCompat : Tanker::Compat::Command
   void next() override
   {
     auto const json = Tanker::loadJson(statePath);
-    auto const alice = upgradeToIdentity(
-        trustchain.id, json.at("alice").get<Tanker::Functional::User>());
+    auto const alice = json.at("alice").get<Tanker::Functional::User>();
     auto const passphrase = json.at("password").get<Tanker::Passphrase>();
 
     auto subDirForDevice = boost::filesystem::path(tankerPath) / "newDevice"s;

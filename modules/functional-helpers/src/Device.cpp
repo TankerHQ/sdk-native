@@ -18,11 +18,9 @@ static auto const TMP_PATH = "testtmp";
 
 Device::Device(std::string trustchainUrl,
                std::string trustchainId,
-               SUserId suserId,
                std::string identity)
   : _trustchainUrl(std::move(trustchainUrl)),
     _trustchainId(std::move(trustchainId)),
-    _suserId(std::move(suserId)),
     _identity(std::move(identity)),
     _storage(std::make_shared<UniquePath>(TMP_PATH))
 {
@@ -52,11 +50,6 @@ SdkInfo Device::getSdkInfo()
       "sdk-native-test",
       mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
       "0.0.1"};
-}
-
-SUserId const& Device::suserId() const
-{
-  return this->_suserId;
 }
 
 std::string const& Device::identity() const

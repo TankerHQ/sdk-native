@@ -48,13 +48,11 @@ public:
 
   Device(std::string trustchainUrl,
          std::string trustchainId,
-         SUserId suserId,
          std::string identity);
 
   AsyncCorePtr createCore(SessionType type);
   std::unique_ptr<AsyncCore> createAsyncCore();
   tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
-  SUserId const& suserId() const;
   std::string const& identity() const;
   std::string writablePath() const;
 
@@ -63,7 +61,6 @@ public:
 private:
   std::string _trustchainUrl;
   std::string _trustchainId;
-  SUserId _suserId;
   std::string _identity;
   std::shared_ptr<UniquePath> _storage;
 
