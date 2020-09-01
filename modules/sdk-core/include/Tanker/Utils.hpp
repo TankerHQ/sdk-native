@@ -42,7 +42,14 @@ inline std::vector<Trustchain::GroupId> convertToGroupIds(
     std::vector<SGroupId> const& sgroupIds)
 {
   return convertList(sgroupIds, [](auto&& sgroupId) {
-    return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string());
+    try
+    {
+      return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string());
+    }
+    catch (Errors::Exception const& e)
+    {
+      throw Errors::formatEx(e.errorCode(), "invalid group id {}", sgroupId);
+    }
   });
 }
 

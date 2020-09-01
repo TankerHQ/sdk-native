@@ -10,8 +10,16 @@ std::vector<Identity::PublicIdentity> extractPublicIdentities(
     std::vector<SPublicIdentity> const& spublicIdentities)
 {
   return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    return Identity::extract<Identity::PublicIdentity>(
-        spublicIdentity.string());
+    try
+    {
+      return Identity::extract<Identity::PublicIdentity>(
+          spublicIdentity.string());
+    }
+    catch (Errors::Exception const& e)
+    {
+      throw Errors::formatEx(
+          e.errorCode(), "invalid public identity {}", spublicIdentity);
+    }
   });
 }
 
