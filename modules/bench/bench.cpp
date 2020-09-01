@@ -16,29 +16,30 @@ using namespace Tanker::Functional;
 
 namespace
 {
-tc::cotask<std::vector<Tanker::Trustchain::UserId>> createUsers(
-    Trustchain& tr, std::size_t nbUsers)
+tc::cotask<std::vector<Tanker::SUserId>> createUsers(Trustchain& tr,
+                                                     std::size_t nbUsers)
 {
-  auto res = std::vector<Tanker::Trustchain::UserId>(nbUsers);
+  auto res = std::vector<Tanker::SUserId>(nbUsers);
   for (auto i = 0u; i < nbUsers; ++i)
   {
     auto user = tr.makeUser(UserType::New);
     auto device = user.makeDevice();
     auto core = TC_AWAIT(device.open());
     TC_AWAIT(core->stop());
-    res[i] = user.userId;
+    res[i] = device.suserId();
   }
   TC_RETURN(res);
 }
 
 std::vector<Tanker::SPublicIdentity> userIdsToPublicIdentities(
     Tanker::Trustchain::TrustchainId const& trustchainId,
-    std::vector<Tanker::Trustchain::UserId> const& userIds)
+    std::vector<Tanker::SUserId> const& suserIds)
 {
   auto res = std::vector<Tanker::SPublicIdentity>();
-  for (auto const& userId : userIds)
-    res.push_back(Tanker::SPublicIdentity{to_string(
-        Tanker::Identity::PublicPermanentIdentity{trustchainId, userId})});
+  for (auto const& suserId : suserIds)
+    res.push_back(Tanker::SPublicIdentity{
+        to_string(Tanker::Identity::PublicPermanentIdentity{
+            trustchainId, obfuscateUserId(suserId, trustchainId)})});
   return res;
 }
 
