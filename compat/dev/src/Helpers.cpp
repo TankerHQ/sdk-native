@@ -8,6 +8,7 @@
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
 
+using Tanker::Functional::User;
 using Tanker::Trustchain::TrustchainId;
 
 CorePtr createCore(std::string const& url,
@@ -23,7 +24,7 @@ CorePtr createCore(std::string const& url,
 UserSession signUpUser(Tanker::Functional::Trustchain& trustchain,
                        std::string const& tankerPath)
 {
-  auto user = makeUser(trustchain);
+  auto user = trustchain.makeUser();
   auto core = createCore(trustchain.url, trustchain.id, tankerPath);
   core->start(user.identity).get();
   core->registerIdentity(Tanker::Passphrase{"my password"}).get();

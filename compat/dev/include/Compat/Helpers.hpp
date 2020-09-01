@@ -3,8 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Tanker/Functional/Trustchain.hpp>
-
-#include <Compat/User.hpp>
+#include <Tanker/Functional/User.hpp>
 
 struct AsyncCoreDeleter
 {
@@ -23,7 +22,7 @@ CorePtr createCore(std::string const& url,
 struct UserSession
 {
   CorePtr core;
-  User user;
+  Tanker::Functional::User user;
 };
 
 UserSession signUpUser(Tanker::Functional::Trustchain& trustchain,
@@ -50,6 +49,6 @@ void decryptAndCheck(CorePtr const& core,
                      std::vector<uint8_t> const& encryptedData,
                      std::string const& expectedData);
 
-User upgradeToIdentity(
+Tanker::Functional::User upgradeToIdentity(
     Tanker::Trustchain::TrustchainId const& trustchainId,
-    User user);
+    Tanker::Functional::User user);

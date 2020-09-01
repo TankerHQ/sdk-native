@@ -17,7 +17,7 @@ struct UnlockCompat : Tanker::Compat::Command
 
   void base() override
   {
-    auto const alice = makeUser(trustchain);
+    auto const alice = trustchain.makeUser();
     auto aliceCore = createCore(trustchain.url, trustchain.id, tankerPath);
     aliceCore->start(alice.identity).get();
     aliceCore->registerIdentity(Tanker::Passphrase{"my password"}).get();
@@ -29,7 +29,7 @@ struct UnlockCompat : Tanker::Compat::Command
   {
     auto const json = Tanker::loadJson(statePath);
     auto const alice = upgradeToIdentity(
-        trustchain.id, json.at("alice").get<User>());
+        trustchain.id, json.at("alice").get<Tanker::Functional::User>());
     auto const passphrase = json.at("password").get<Tanker::Passphrase>();
 
     auto subDirForDevice = boost::filesystem::path(tankerPath) / "newDevice"s;
