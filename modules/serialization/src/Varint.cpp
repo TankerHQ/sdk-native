@@ -13,13 +13,13 @@ try
 {
   std::uint32_t value = 0;
   std::uint32_t factor = 1;
-  while ((data.at(0) & 0x80) != 0)
+  while ((data[0] & 0x80) != 0)
   {
-    value += (data.at(0) & 0x7f) * factor;
+    value += (data[0] & 0x7f) * factor;
     factor *= 128;
     data = data.subspan(1);
   }
-  value += data.at(0) * factor;
+  value += data[0] * factor;
   data = data.subspan(1);
   return {value, data};
 }
