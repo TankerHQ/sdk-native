@@ -26,6 +26,15 @@ T base64DecodeArgument(String const& b64, std::string const& argName)
     throw formatEx(
         Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
   }
+  catch (Errors::Exception const& e)
+  {
+    if (e.errorCode() == Crypto::Errc::InvalidBufferSize)
+    {
+      throw formatEx(
+          Errc::InvalidArgument, "{} has an invalid value: {}", argName, b64);
+    }
+    throw;
+  }
 }
 
 template <typename T, typename F>
