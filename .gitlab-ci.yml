@@ -103,7 +103,7 @@ build/windows/visual:
     paths:
       - package
   script:
-    - If $env:SDK_NATIVE_RELEASE_VERSION { poetry run python run-ci.py bump-files --version=$env:SDK_NATIVE_RELEASE_VERSION }
+    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$env:SDK_NATIVE_RELEASE_VERSION }
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
 # build/windows/mingw:
@@ -140,111 +140,111 @@ nightly/coverage:
       - coverage/
     expire_in: 7 days
 
-bridge/ios:
-  needs: ["build/ios"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/ios
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-ios
-    strategy: depend
-
-bridge/android:
-  needs: ["build/android"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/android
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-android
-    strategy: depend
-
-bridge/ruby/linux:
-  needs: ["build/linux/shared"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/linux/shared
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-ruby
-    strategy: depend
-
-bridge/ruby/macos:
-  needs: ["build/macos/shared"]
-  stage: bridge
-  rules:
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/macos/shared
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-ruby
-    strategy: depend
-
-bridge/python/macos:
-  needs: ["build/macos"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/macos
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-python
-    strategy: depend
-
-bridge/python/linux:
-  needs: ["build/linux"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/linux
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-python
-    strategy: depend
-
-bridge/python/windows:
-  needs: ["build/windows/visual"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-  variables:
-    UPSTREAM_RUNNER_TAG: windows
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/windows/visual
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: tanker/sdk-python
-    strategy: depend
+# bridge/ios:
+#   needs: ["build/ios"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/ios
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-ios
+#     strategy: depend
+#
+# bridge/android:
+#   needs: ["build/android"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/android
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-android
+#     strategy: depend
+#
+# bridge/ruby/linux:
+#   needs: ["build/linux/shared"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/linux/shared
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-ruby
+#     strategy: depend
+#
+# bridge/ruby/macos:
+#   needs: ["build/macos/shared"]
+#   stage: bridge
+#   rules:
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/macos/shared
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-ruby
+#     strategy: depend
+#
+# bridge/python/macos:
+#   needs: ["build/macos"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/macos
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-python
+#     strategy: depend
+#
+# bridge/python/linux:
+#   needs: ["build/linux"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/linux
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-python
+#     strategy: depend
+#
+# bridge/python/windows:
+#   needs: ["build/windows/visual"]
+#   stage: bridge
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+#   variables:
+#     UPSTREAM_RUNNER_TAG: windows
+#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+#     UPSTREAM_JOB_NAME: build/windows/visual
+#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+#   trigger:
+#     project: tanker/sdk-python
+#     strategy: depend
 
 pages:
   stage: deploy
