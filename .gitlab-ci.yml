@@ -103,7 +103,7 @@ build/windows/visual:
     paths:
       - package
   script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+    - If $env:SDK_NATIVE_RELEASE_VERSION { poetry run python run-ci.py bump-files --version=$env:SDK_NATIVE_RELEASE_VERSION }
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
 # build/windows/mingw:
