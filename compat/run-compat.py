@@ -154,7 +154,7 @@ def compat(args: str) -> None:
 
 
 def export_tanker_dev(src_path: Path, profile: str) -> None:
-    tankerci.conan.export(src_path=src_path, ref_or_channel="tanker/dev")
+    tankerci.conan.export(src_path=src_path)
 
 
 def use_packaged_tanker(src_path: Path, profile: str) -> None:
@@ -165,7 +165,7 @@ def use_packaged_tanker(src_path: Path, profile: str) -> None:
         make_package=False,
         warn_as_error=False,
     )
-    builder.export_pkg("tanker/dev")
+    builder.export_pkg()
 
 
 def main() -> None:
