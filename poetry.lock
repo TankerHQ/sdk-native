@@ -640,6 +640,7 @@ requests = ">=2.23.0,<3.0.0"
 
 [package.source]
 reference = "tanker.local"
+type = "legacy"
 url = "http://tanker.local:8181"
 
 [[package]]
@@ -648,7 +649,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.8.2717"
+version = "2020.9.2736"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -664,6 +665,7 @@ tomlkit = ">=0.5.8,<0.6.0"
 
 [package.source]
 reference = "tanker.local"
+type = "legacy"
 url = "http://tanker.local:8181"
 
 [[package]]
@@ -761,6 +763,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
 content-hash = "0164579fab672304b0be6cfb22247e2d207ad70b834484f3c14f2466fb8bbd60"
+lock-version = "1.0"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1138,8 +1141,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-0.1.0.tar.gz", hash = "md5:dc7e04941c4b821e4d904439f31685d1"},
 ]
 tankerci = [
-    {file = "tankerci-2020.8.2717-py3-none-any.whl", hash = "md5:e34c17669fd7a75108895ac9a61803a3"},
-    {file = "tankerci-2020.8.2717.tar.gz", hash = "md5:94471b397a2e5442e678b9ee0df0dc79"},
+    {file = "tankerci-2020.9.2736-py3-none-any.whl", hash = "md5:2f05d027381a0ddc3d00cf0350efba7d"},
+    {file = "tankerci-2020.9.2736.tar.gz", hash = "md5:fd76652020421d57f0b04fcd3401deb3"},
 ]
 tbump = [
     {file = "tbump-6.1.1-py3-none-any.whl", hash = "sha256:fc46f72b9467161993c11ac31ab4ec63b68bea6aa89533ad9e0687e83539d019"},
