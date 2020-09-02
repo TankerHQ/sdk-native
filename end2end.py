@@ -1,14 +1,14 @@
 import argparse
 
 from path import Path
-from conans import __version__ as conan_version
 
 import tankerci.cpp
+import tankerci.conan
 import tankerci.endtoend
 
 
-def export_tanker_dev(src_path: Path) -> None:
-    tankerci.conan.export(src_path=src_path, ref_or_channel="tanker/dev")
+def export_tanker(src_path: Path) -> None:
+    tankerci.conan.export(src_path=src_path)
 
 
 def use_packaged_tanker(src_path: Path, profile: str) -> None:
@@ -19,7 +19,7 @@ def use_packaged_tanker(src_path: Path, profile: str) -> None:
         coverage=False,
         warn_as_error=False,
     )
-    builder.export_pkg("tanker/dev")
+    builder.export_pkg()
 
 
 def main() -> None:
@@ -31,9 +31,8 @@ def main() -> None:
         default=False,
     )
     parser.add_argument(
-        "--export-tanker-dev",
+        "--export-tanker",
         action="store_true",
-        dest="export_tanker_dev",
         default=False,
     )
     parser.add_argument("--profile", required=True)
@@ -45,10 +44,14 @@ def main() -> None:
 
     tankerci.conan.update_config()
 
-    if args.export_tanker_dev:
-        export_tanker_dev(Path.getcwd())
+    if args.export_tanker:
+        export_tanker(Path.getcwd())
     else:
         use_packaged_tanker(Path.getcwd(), args.profile)
+    recipe_info = tankerci.conan.inspect(Path.getcwd())
+    name = recipe_info["name"]
+    version = recipe_info["version"]
+    tanker_conan_ref = f"{name}/{version}@"
 
     if args.use_local_sources:
         base_path = Path.getcwd().parent
@@ -57,7 +60,7 @@ def main() -> None:
             repos=["sdk-python", "sdk-js", "qa-python-js"]
         )
     tankerci.endtoend.test(
-        tanker_conan_ref="tanker/dev@tanker/dev",
+        tanker_conan_ref=tanker_conan_ref,
         profile=args.profile,
         base_path=base_path,
     )

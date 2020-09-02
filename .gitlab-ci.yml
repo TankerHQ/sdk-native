@@ -46,65 +46,65 @@ build/linux:
     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
-build/android:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [linux]
-  script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
-
-build/linux/shared:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [linux]
-  script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
-
-build/macos:
-  extends: .build-always
-  artifacts:
-    paths:
-      - package
-  tags: [macos]
-  script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
-
-build/macos/shared:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [macos]
-  script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
-
-build/ios:
-  extends: .build-manual
-  tags: [macos]
-  artifacts:
-    paths:
-      - package
-  script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
-
-build/windows/visual:
-  extends: .build-always
-  tags: [windows]
-  artifacts:
-    paths:
-      - package
-  script:
-    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$env:SDK_NATIVE_RELEASE_VERSION }
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+# build/android:
+#   extends: .build-manual
+#   artifacts:
+#     paths:
+#       - package/
+#   tags: [linux]
+#   script:
+#     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+#
+# build/linux/shared:
+#   extends: .build-manual
+#   artifacts:
+#     paths:
+#       - package/
+#   tags: [linux]
+#   script:
+#     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
+#
+# build/macos:
+#   extends: .build-always
+#   artifacts:
+#     paths:
+#       - package
+#   tags: [macos]
+#   script:
+#     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+#
+# build/macos/shared:
+#   extends: .build-manual
+#   artifacts:
+#     paths:
+#       - package/
+#   tags: [macos]
+#   script:
+#     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
+#
+# build/ios:
+#   extends: .build-manual
+#   tags: [macos]
+#   artifacts:
+#     paths:
+#       - package
+#   script:
+#     - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
+#
+# build/windows/visual:
+#   extends: .build-always
+#   tags: [windows]
+#   artifacts:
+#     paths:
+#       - package
+#   script:
+#     - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$env:SDK_NATIVE_RELEASE_VERSION }
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
 # build/windows/mingw:
 #   extends: .build-manual

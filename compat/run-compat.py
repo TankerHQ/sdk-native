@@ -10,8 +10,10 @@ import json
 
 import subprocess
 
+CURRENT = "dev"
+
 TESTS = {
-    "dev": [
+    CURRENT: [
         "encrypt",
         "encryption-session",
         "group",
@@ -56,8 +58,6 @@ TESTS = {
     ],
 }
 
-CURRENT = "dev"
-
 
 def assert_env(name: str) -> str:
     value = os.environ.get(name)
@@ -69,16 +69,16 @@ def compat_conan_home_path(version: str) -> str:
     return Path.getcwd() / "compat" / "conan" / version
 
 
-def build_all(do_export_tanker_dev, profile):
+def build_all(do_export_tanker, profile):
     built_binary = {}
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
         src_path = Path.getcwd() / "compat" / version
         tankerci.conan.set_home_isolation(compat_conan_home_path(version))
         tankerci.conan.config_install(src_path / "config")
-        if version == "dev":
-            if do_export_tanker_dev:
-                export_tanker_dev(Path.getcwd(), profile)
+        if version == CURRENT:
+            if do_export_tanker:
+                export_tanker(Path.getcwd(), profile)
             else:
                 use_packaged_tanker(Path.getcwd(), profile)
         built_path = tankerci.cpp.build(profile, src_path=src_path)
@@ -142,7 +142,7 @@ def run_test(base_path, next_path, version, command):
 
 def compat(args: str) -> None:
     built_binary = build_all(
-        do_export_tanker_dev=args.export_tanker_dev, profile=args.profile
+        do_export_tanker=args.export_tanker, profile=args.profile
     )
 
     tankerci.cpp.set_test_env()
@@ -153,7 +153,7 @@ def compat(args: str) -> None:
             run_test(built_binary[version], built_binary[CURRENT], version, command)
 
 
-def export_tanker_dev(src_path: Path, profile: str) -> None:
+def export_tanker(src_path: Path, profile: str) -> None:
     tankerci.conan.export(src_path=src_path)
 
 
@@ -177,9 +177,8 @@ def main() -> None:
         default=False,
     )
     parser.add_argument(
-        "--export-tanker-dev",
+        "--export-tanker",
         action="store_true",
-        dest="export_tanker_dev",
         default=False,
     )
     parser.add_argument("--profile", required=True)
