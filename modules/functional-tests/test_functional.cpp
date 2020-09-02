@@ -2,7 +2,9 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
@@ -46,6 +48,24 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
                  [](auto&& clear) { return make_buffer(clear); });
   return clearDatas;
 }
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it throws when starting a session when the identity appId "
+                  "is different from the one in tanker options")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice();
+
+  auto invalidIdentity =
+      Identity::extract<Identity::SecretPermanentIdentity>(alice.identity);
+  invalidIdentity.trustchainId[0]++;
+  alice.identity = to_string(invalidIdentity);
+  auto const core = TC_AWAIT(device.open());
+  TC_AWAIT(core->stop());
+  REQUIRE(core->status() == Status::Stopped);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(alice.identity)),
+                                Errors::Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")

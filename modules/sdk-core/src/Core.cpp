@@ -114,9 +114,28 @@ void Core::stop()
 
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
+  auto const identity = [&] {
+    try
+    {
+      return Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+    }
+    catch (Errors::Exception const& e)
+    {
+      throw Errors::Exception(e.errorCode(), "invalid identity");
+    }
+  }();
+
+  if (identity.trustchainId != _info.trustchainId)
+  {
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        "the provided identity was not signed by the private key of the "
+        "current app: expected app ID {} but got {}",
+        _info.trustchainId,
+        identity.trustchainId);
+  }
   _session->client().start();
-  _session->setIdentity(
-      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity));
+  _session->setIdentity(identity);
   _session->createStorage(_writablePath);
   auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
   auto const [deviceExists, userExists, unused] = TC_AWAIT(
@@ -332,7 +351,8 @@ tc::cotask<void> Core::share(
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return base64DecodeArgument<Trustchain::ResourceId>(resourceId);
+    return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
+                                                        "resource id");
   });
 
   auto const localUser = _session->accessors().localUserAccessor.get();
@@ -369,7 +389,8 @@ tc::cotask<void> Core::updateGroupMembers(
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
 {
   assertStatus(Status::Ready, "updateGroupMembers");
-  auto const groupId = base64DecodeArgument<Trustchain::GroupId>(groupIdString);
+  auto const groupId =
+      base64DecodeArgument<Trustchain::GroupId>(groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(

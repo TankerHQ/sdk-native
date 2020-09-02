@@ -47,8 +47,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   auto const devices = TC_AWAIT(aliceSession->getDeviceList());
   auto const secondDeviceInList =
       std::find_if(devices.begin(), devices.end(), [&](auto const& device) {
-        return device.id() ==
-               base64DecodeArgument<Trustchain::DeviceId>(secondDeviceId);
+        return device.id() == base64DecodeArgument<Trustchain::DeviceId>(
+                                  secondDeviceId, "secondDeviceId");
       });
   REQUIRE(secondDeviceInList != devices.end());
   CHECK(secondDeviceInList->isRevoked());

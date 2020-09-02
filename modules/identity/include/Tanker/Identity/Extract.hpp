@@ -24,12 +24,11 @@ I extract(std::string const& token)
   }
   catch (nlohmann::json::exception const&)
   {
-    throw Errors::formatEx(Errc::InvalidFormat, "json deserialization failed");
+    throw Errors::Exception(Errc::InvalidFormat);
   }
   catch (mgs::exceptions::exception const&)
   {
-    throw Errors::formatEx(Errc::InvalidFormat,
-                           "base64 deserialization failed");
+    throw Errors::Exception(Errc::InvalidFormat);
   }
 }
 }
