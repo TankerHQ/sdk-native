@@ -33,7 +33,3 @@ search = 'version = "{current_version}"'
 [[file]]
 src = "compat/dev/conanfile.py"
 search = 'tanker/{current_version}'
-
-[[file]]
-src = "compat/run-compat.py"
-search = 'CURRENT = "{current_version}"'

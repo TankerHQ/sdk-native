@@ -280,6 +280,7 @@ check/compat:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
   script:
+    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
     - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
@@ -291,6 +292,7 @@ check/e2e:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
   script:
+    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
     - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux

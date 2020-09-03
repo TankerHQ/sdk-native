@@ -80,7 +80,7 @@ def build_all(do_export_tanker, profile):
             if do_export_tanker:
                 export_tanker(Path.getcwd(), profile)
             else:
-                use_packaged_tanker(Path.getcwd(), profile)
+                use_packaged_tanker(Path.getcwd() / "package", profile)
         built_path = tankerci.cpp.build(profile, src_path=src_path)
         built_binary[version] = built_path / "bin" / "compat"
     return built_binary
@@ -157,15 +157,13 @@ def export_tanker(src_path: Path, profile: str) -> None:
     tankerci.conan.export(src_path=src_path)
 
 
-def use_packaged_tanker(src_path: Path, profile: str) -> None:
-    builder = tankerci.cpp.Builder(
-        src_path,
+def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
+    tankerci.conan.export_pkg(
+        artifacts_path,
         profile=profile,
-        coverage=False,
-        make_package=False,
-        warn_as_error=False,
+        force=True,
+        package_folder=artifacts_path / profile,
     )
-    builder.export_pkg()
 
 
 def main() -> None:

@@ -11,15 +11,13 @@ def export_tanker(src_path: Path) -> None:
     tankerci.conan.export(src_path=src_path)
 
 
-def use_packaged_tanker(src_path: Path, profile: str) -> None:
-    builder = tankerci.cpp.Builder(
-        src_path,
+def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
+    tankerci.conan.export_pkg(
+        artifacts_path,
         profile=profile,
-        make_package=False,
-        coverage=False,
-        warn_as_error=False,
+        force=True,
+        package_folder=artifacts_path / profile,
     )
-    builder.export_pkg()
 
 
 def main() -> None:
@@ -46,12 +44,14 @@ def main() -> None:
 
     if args.export_tanker:
         export_tanker(Path.getcwd())
+        tanker_conan_ref = "tanker/dev@"
     else:
-        use_packaged_tanker(Path.getcwd(), args.profile)
-    recipe_info = tankerci.conan.inspect(Path.getcwd())
-    name = recipe_info["name"]
-    version = recipe_info["version"]
-    tanker_conan_ref = f"{name}/{version}@"
+        artifacts_path = Path.getcwd() / "package"
+        use_packaged_tanker(artifacts_path, args.profile)
+        recipe_info = tankerci.conan.inspect(artifacts_path)
+        name = recipe_info["name"]
+        version = recipe_info["version"]
+        tanker_conan_ref = f"{name}/{version}@"
 
     if args.use_local_sources:
         base_path = Path.getcwd().parent
