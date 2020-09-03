@@ -121,9 +121,6 @@ deploy:
       when: manual
   script:
     - poetry run python run-ci.py --isolate-conan-user-home deploy
-  release:
-    tag_name: v$SDK_NATIVE_RELEASE_VERSION
-    description: sdk-native release v$SDK_NATIVE_RELEASE_VERSION
 
 nightly/coverage:
   stage: build

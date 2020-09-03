@@ -26,7 +26,7 @@ def deploy():
     artifacts_folder = Path.getcwd() / "package"
     recipe = artifacts_folder / "conanfile.py"
 
-    recipe_info = inspect(recipe)
+    recipe_info = tankerci.conan.inspect(recipe)
     version = recipe_info["version"]
 
     profiles = [d.basename() for d in artifacts_folder.dirs()]
@@ -37,6 +37,10 @@ def deploy():
             recipe, package_folder=package_folder, profile=profile, force=True
         )
     tankerci.conan.upload(f"tanker/{version}@")
+    git_tag = f"v{version}"
+    tankerci.git.run(Path.getcwd(), "tag", git_tag)
+    ssh_url = tankerci.context.get_gitlab_ssh_url()
+    tankerci.git.run(Path.getcwd(), "push", f"{ssh_url}:Tanker/sdk-native", git_tag)
 
 
 def main() -> None:
