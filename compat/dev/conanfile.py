@@ -5,7 +5,7 @@ class Compat(ConanFile):
     settings = "build_type"
 
     def requirements(self):
-        self.requires("tanker/dev@tanker/dev")
+        self.requires("tanker/dev")
         self.requires("docopt.cpp/0.6.2")
         self.requires("boost/1.73.0")
         self.requires("mgs/0.1.1")
