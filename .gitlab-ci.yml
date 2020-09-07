@@ -95,11 +95,12 @@ build/windows/visual:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
-build/windows/mingw:
-  extends: .build-manual
-  tags: [windows]
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
+# TODO put this one back once mingw-toolchain is up and running
+# build/windows/mingw:
+#   extends: .build-manual
+#   tags: [windows]
+#   script:
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
 
 deploy/linux:
   extends: .deploy
