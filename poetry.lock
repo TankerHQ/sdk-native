@@ -21,13 +21,13 @@ description = "Classes Without Boilerplate"
 name = "attrs"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "20.2.0"
+version = "19.3.0"
 
 [package.extras]
-dev = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "sphinx", "sphinx-rtd-theme", "pre-commit"]
-docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
-tests = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
-tests_no_zope = ["coverage (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six"]
+azure-pipelines = ["coverage", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "pytest-azurepipelines"]
+dev = ["coverage", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface", "sphinx", "pre-commit"]
+docs = ["sphinx", "zope.interface"]
+tests = ["coverage", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
 
 [[package]]
 category = "dev"
@@ -766,7 +766,6 @@ requests = ">=2.23.0,<3.0.0"
 
 [package.source]
 reference = "tanker.local"
-type = "legacy"
 url = "http://tanker.local:8181"
 
 [[package]]
@@ -775,7 +774,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.9.2780"
+version = "2020.9.2799"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -792,7 +791,6 @@ twine = ">=3.2.0,<4.0.0"
 
 [package.source]
 reference = "gitlab"
-type = "legacy"
 url = "https://gitlab.com/api/v4/projects/20917546/packages/pypi/simple"
 
 [[package]]
@@ -800,22 +798,19 @@ category = "main"
 description = "Bump software releases"
 name = "tbump"
 optional = false
-python-versions = ">=3.5"
-version = "6.0.5"
+python-versions = ">=3.5,<4.0"
+version = "6.1.1"
 
 [package.dependencies]
-attrs = "*"
-cli-ui = ">=0.9.0"
-docopt = "*"
-path = "*"
-schema = "*"
-toml = "*"
-
-[package.extras]
-dev = ["pytest (3.8.1)", "pytest-sugar", "pytest-mock", "pytest-cov", "codecov (2.0.15)", "mypy (0.730)", "flake8 (3.5.0)", "black (19.3b0)"]
+attrs = ">=19.3.0,<20.0.0"
+cli-ui = ">=0.10.3,<0.11.0"
+docopt = ">=0.6.2,<0.7.0"
+path = ">=13.0,<14.0"
+schema = ">=0.7.1,<0.8.0"
+tomlkit = ">=0.5.8,<0.6.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python Library for Tom's Obvious, Minimal Language"
 name = "toml"
 optional = false
@@ -924,7 +919,6 @@ testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
 content-hash = "258c58e327d7caae9e0a496c59524c42316f6ded051aeb33e6ba6c6fd853d05b"
-lock-version = "1.0"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -937,8 +931,8 @@ asn1crypto = [
     {file = "asn1crypto-1.4.0.tar.gz", hash = "sha256:f4f6e119474e58e04a2b1af817eb585b4fd72bdd89b998624712b5c99be7641c"},
 ]
 attrs = [
-    {file = "attrs-20.2.0-py2.py3-none-any.whl", hash = "sha256:fce7fc47dfc976152e82d53ff92fa0407700c21acd20886a13777a0d20e655dc"},
-    {file = "attrs-20.2.0.tar.gz", hash = "sha256:26b54ddbbb9ee1d34d5d3668dd37d6cf74990ab23c828c2888dccdceee395594"},
+    {file = "attrs-19.3.0-py2.py3-none-any.whl", hash = "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c"},
+    {file = "attrs-19.3.0.tar.gz", hash = "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"},
 ]
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
@@ -1345,12 +1339,12 @@ tankeradminsdk = [
     {file = "tankeradminsdk-0.1.0.tar.gz", hash = "md5:dc7e04941c4b821e4d904439f31685d1"},
 ]
 tankerci = [
-    {file = "tankerci-2020.9.2780-py3-none-any.whl", hash = "sha256:26cd5037beb82a85922728ecd6d200afec0937af5dfb775832c600e522fa2d9e"},
-    {file = "tankerci-2020.9.2780.tar.gz", hash = "sha256:d440fdebec686afae7ac4160d83d8793cd7ce13164cd39cd7b875ec0be8c9e5f"},
+    {file = "tankerci-2020.9.2799-py3-none-any.whl", hash = "sha256:92f2899c4bb305a8dfda8785318089305b24337f4452956e25e1e95727f1d196"},
+    {file = "tankerci-2020.9.2799.tar.gz", hash = "sha256:a2301ae9e08c787767070391ab5e221be37c45ed242c459af6ffe4f7d6dfeb12"},
 ]
 tbump = [
-    {file = "tbump-6.0.5-py3-none-any.whl", hash = "sha256:e6a4f82d9e4b341e3c00a20fcad73b0eb2880b6e53767cad288b143bf3cd8bd4"},
-    {file = "tbump-6.0.5.tar.gz", hash = "sha256:73480f6e14973ec1561d9e0d08f371e0de12de4bef0ac63210c34d239ad852da"},
+    {file = "tbump-6.1.1-py3-none-any.whl", hash = "sha256:fc46f72b9467161993c11ac31ab4ec63b68bea6aa89533ad9e0687e83539d019"},
+    {file = "tbump-6.1.1.tar.gz", hash = "sha256:f6f09f03d750a96d06257a4b68a3361e5dff2b76923abe1ddccb01f201e09c82"},
 ]
 toml = [
     {file = "toml-0.10.1-py2.py3-none-any.whl", hash = "sha256:bda89d5935c2eac546d648028b9901107a595863cb36bae0c73ac804a9b4ce88"},
