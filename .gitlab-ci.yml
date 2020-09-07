@@ -146,7 +146,7 @@ bridge/ios:
     UPSTREAM_JOB_NAME: build/ios
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-ios
+    project: TankerHQ/sdk-ios
     strategy: depend
 
 bridge/android:
@@ -161,7 +161,7 @@ bridge/android:
     UPSTREAM_JOB_NAME: build/android
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-android
+    project: TankerHQ/sdk-android
     strategy: depend
 
 bridge/ruby/linux:
@@ -176,7 +176,7 @@ bridge/ruby/linux:
     UPSTREAM_JOB_NAME: build/linux/shared
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-ruby
+    project: TankerHQ/sdk-ruby
     strategy: depend
 
 bridge/ruby/macos:
@@ -191,7 +191,7 @@ bridge/ruby/macos:
     UPSTREAM_JOB_NAME: build/macos/shared
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-ruby
+    project: TankerHQ/sdk-ruby
     strategy: depend
 
 bridge/python/macos:
@@ -206,7 +206,7 @@ bridge/python/macos:
     UPSTREAM_JOB_NAME: build/macos
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-python
+    project: TankerHQ/sdk-python
     strategy: depend
 
 bridge/python/linux:
@@ -221,7 +221,7 @@ bridge/python/linux:
     UPSTREAM_JOB_NAME: build/linux
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-python
+    project: TankerHQ/sdk-python
     strategy: depend
 
 bridge/python/windows:
@@ -236,7 +236,7 @@ bridge/python/windows:
     UPSTREAM_JOB_NAME: build/windows/visual
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
-    project: tanker/sdk-python
+    project: TankerHQ/sdk-python
     strategy: depend
 
 pages:
