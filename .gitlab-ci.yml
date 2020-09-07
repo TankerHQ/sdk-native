@@ -8,6 +8,7 @@ stages:
   - check
   - bridge
   - deploy
+  - bridge-bis
   - mirror
 
 workflow:
@@ -165,10 +166,27 @@ bridge/ios:
     strategy: depend
 
 bridge/ios/release:
-  needs: ["build/ios/release", "check/e2e", "check/compat/release"]
+  needs: ["build/ios/release", "check/e2e/release", "check/compat/release"]
   stage: bridge
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/ios/release
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/sdk-ios
+    # FIXME
+    branch: theo/fix_pipeline_release
+    strategy: depend
+
+bridge/ios/deploy:
+  needs: ["build/ios/release", "check/e2e", "check/compat/release", "deploy"]
+  stage: bridge-bis
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
   variables:
     UPSTREAM_RUNNER_TAG: macos
     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
