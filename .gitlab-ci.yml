@@ -173,7 +173,7 @@ bridge/ios/release:
     UPSTREAM_RUNNER_TAG: macos
     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_JOB_NAME: build/ios/release
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
   trigger:
@@ -304,9 +304,19 @@ check/compat:
   stage: check
   needs: ["build/linux"]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
+  tags:
+    - linux
+
+check/compat/release:
+  stage: check
+  needs: ["build/linux"]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+  script:
+    - poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION
     - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
@@ -318,7 +328,6 @@ check/e2e:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
   script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
     - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
     - linux
