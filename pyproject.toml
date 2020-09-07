@@ -7,12 +7,11 @@ authors = ["Tanker team <tech@tanker.io>"]
 [tool.poetry.dependencies]
 python = "^3.7"
 tankerci = "*"
-tankeradminsdk = "0.1.0"
+tankeradminsdk = "0.2.1"
 
 [[tool.poetry.source]]
-name = "tanker.local"
-url = "http://tanker.local:8181"
-
+name = "gitlab"
+url = "https://gitlab.com/api/v4/projects/20917546/packages/pypi/simple"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.8.3"
