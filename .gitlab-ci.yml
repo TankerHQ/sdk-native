@@ -5,8 +5,8 @@ before_script:
 
 stages:
   - build
-  - bridge
   - check
+  - bridge
   - deploy
   - mirror
 
@@ -165,7 +165,7 @@ bridge/ios:
     strategy: depend
 
 bridge/ios/release:
-  needs: ["build/ios/release"]
+  needs: ["build/ios/release", "check/e2e", "check/compat/release"]
   stage: bridge
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
