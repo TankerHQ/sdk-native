@@ -28,7 +28,6 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
-    - if: $CI_PIPELINE_SOURCE == "web"
 
 build/linux:
   stage: build
@@ -89,7 +88,18 @@ build/ios:
     paths:
       - package
   script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
+
+build/ios/release:
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+  tags: [macos]
+  artifacts:
+    paths:
+      - package
+  script:
+    - poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
 # build/windows/visual:
@@ -141,7 +151,24 @@ bridge/ios:
   needs: ["build/ios"]
   stage: bridge
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/sdk-ios
+    # FIXME
+    branch: theo/fix_pipeline_release
+    strategy: depend
+
+bridge/ios/release:
+  needs: ["build/ios/release"]
+  stage: bridge
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
   variables:
     UPSTREAM_RUNNER_TAG: macos
     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
@@ -151,6 +178,8 @@ bridge/ios:
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
   trigger:
     project: TankerHQ/sdk-ios
+    # FIXME
+    branch: theo/fix_pipeline_release
     strategy: depend
 
 # bridge/android:
