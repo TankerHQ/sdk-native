@@ -94,7 +94,7 @@ build/ios/release:
   stage: build
   rules:
     - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
-  tags: [macos]
+  tags: [macos, MacOSSlave-3]
   artifacts:
     paths:
       - package
