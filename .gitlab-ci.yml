@@ -15,17 +15,12 @@ workflow:
     # web pipelines for releases
     - if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
       when: never
+    # forbid push jobs to avoid duplicate pipelines
+    # only exception is after merging a MR on master or a feature branch
+    - if: $CI_PIPELINE_SOURCE == "push" && ($CI_MERGE_REQUEST_ID != null || ($CI_COMMIT_REF_NAME != "master" && $CI_COMMIT_REF_NAME !~ /\Afeat\/.+\z/))
+      when: never
     # allow everything else
     - when: always
-
-.build-always:
-  stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
-      # trigger the job after a MR is merged on feature branches and master
-      # $CI_MERGE_REQUEST_ID == null is needed to avoid duplicate pipelines
-    - if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
-    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 .build-manual:
   stage: build
@@ -36,7 +31,7 @@ workflow:
     - if: $CI_PIPELINE_SOURCE == "web"
 
 build/linux:
-  extends: .build-always
+  stage: build
   artifacts:
     expire_in: 1 day
     paths:
