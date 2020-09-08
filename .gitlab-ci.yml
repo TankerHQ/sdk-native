@@ -32,6 +32,8 @@ workflow:
 
 build/linux:
   stage: build
+  rules: 
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   artifacts:
     expire_in: 1 day
     paths:
@@ -42,6 +44,8 @@ build/linux:
 
 build/linux/release:
   stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
   artifacts:
     paths:
       - package/
