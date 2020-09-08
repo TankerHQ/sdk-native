@@ -1,4 +1,4 @@
-image: tanker.local:5000/ci-native:latest
+image: registry.gitlab.com/tankerhq/ci/ci-native:latest
 
 before_script:
  - poetry install
@@ -349,7 +349,7 @@ check/compat/release:
     - linux
 
 check/e2e:
-  image: tanker.local:5000/ci-base:latest
+  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
   stage: check
   needs: ["build/linux"]
   rules:
@@ -360,11 +360,11 @@ check/e2e:
     - linux
 
 check/e2e/release:
-  image: tanker.local:5000/ci-base:latest
+  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
   stage: check
   needs: ["build/linux/release"]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
   script:
     - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
