@@ -38,7 +38,16 @@ build/linux:
       - package/
   tags: [linux]
   script:
-    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+
+build/linux/release:
+  stage: build
+  artifacts:
+    paths:
+      - package/
+  tags: [linux]
+  script:
+    - poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 # build/android:
@@ -183,7 +192,7 @@ bridge/ios/release:
     strategy: depend
 
 bridge/ios/deploy:
-  needs: ["build/ios/release", "check/e2e", "check/compat/release", "deploy"]
+  needs: ["build/ios/release", "deploy"]
   stage: bridge-bis
   rules:
     - if: $CI_PIPELINE_SOURCE == "web" && $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
@@ -194,6 +203,7 @@ bridge/ios/deploy:
     UPSTREAM_JOB_NAME: build/ios/release
     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ios
     # FIXME
@@ -294,8 +304,7 @@ pages:
   stage: deploy
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-  dependencies:
-    - nightly/coverage
+  needs: ["nightly/coverage"]
   script:
     - mv coverage/ public/
   artifacts:
@@ -330,7 +339,7 @@ check/compat:
 
 check/compat/release:
   stage: check
-  needs: ["build/linux"]
+  needs: ["build/linux/release"]
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
   script:
@@ -344,7 +353,18 @@ check/e2e:
   stage: check
   needs: ["build/linux"]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
+  tags:
+    - linux
+
+check/e2e/release:
+  image: tanker.local:5000/ci-base:latest
+  stage: check
+  needs: ["build/linux/release"]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
     - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
   tags:
