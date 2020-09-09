@@ -1,4 +1,4 @@
-image: tanker.local:5000/ci-native:latest
+image: registry.gitlab.com/tankerhq/ci/ci-native:latest
 
 before_script:
  - poetry install
@@ -279,7 +279,7 @@ check/compat:
     - linux
 
 check/e2e:
-  image: tanker.local:5000/ci-base:latest
+  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
   stage: check
   needs: ["build/linux"]
   rules:
