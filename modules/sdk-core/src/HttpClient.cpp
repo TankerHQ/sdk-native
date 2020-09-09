@@ -10,6 +10,7 @@
 #include <boost/algorithm/string.hpp>
 #include <fetchpp/http/authorization.hpp>
 #include <fetchpp/http/json_body.hpp>
+#include <fetchpp/http/proxy.hpp>
 #include <tconcurrent/asio_use_future.hpp>
 
 #include <Tanker/Log/Log.hpp>
@@ -185,6 +186,11 @@ HttpClient::HttpClient(http::url const& baseUrl,
 {
   _headers.set("X-Tanker-SdkType", info.sdkType);
   _headers.set("X-Tanker-SdkVersion", info.version);
+  auto proxies = fetchpp::http::proxy_from_environment();
+  if (auto proxyIt = proxies.find(http::proxy_scheme::https);
+      proxyIt != proxies.end())
+    TINFO("HTTPS proxy detected: {}", proxyIt->second.url());
+  _cl.set_proxies(std::move(proxies));
 }
 
 void HttpClient::setAccessToken(std::string accessToken)
