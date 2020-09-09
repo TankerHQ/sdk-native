@@ -1,7 +1,10 @@
-image: registry.gitlab.com/tankerhq/ci/ci-native:latest
-
-before_script: &global_before_script
- - poetry install
+default:
+  image: registry.gitlab.com/tankerhq/ci/ci-native:latest
+  before_script: &global_before_script
+    - poetry install
+  artifacts:
+    paths:
+      - package/
 
 stages:
   - build
@@ -182,10 +185,6 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/mr/auto
-  artifacts:
-    expire_in: 1 day
-    paths:
-      - package/
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
@@ -195,9 +194,6 @@ build/linux/release:
     - .tags/linux
     - .rules/web/auto
     - .before-script/bump-files
-  artifacts:
-    paths:
-      - package/
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
@@ -206,9 +202,6 @@ build/ios:
     - .build
     - .tags/macos
     - .rules/mr/manual
-  artifacts:
-    paths:
-      - package
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
 
@@ -218,9 +211,6 @@ build/ios/release:
     - .tags/macos
     - .rules/web/auto
     - .before-script/bump-files
-  artifacts:
-    paths:
-      - package
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
