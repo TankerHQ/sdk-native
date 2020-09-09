@@ -189,4 +189,8 @@ if(INSTALL_STATIC_LIBSTDCPP)
       endif()
     endforeach()
   endforeach()
+
+  if(LIBSTDCPP_FILENAMES)
+    message(FATAL_ERROR "Couldn't find ${LIBSTDCPP_FILENAMES} in ${LIB_SEARCH_DIRS}")
+  endif()
 endif()
