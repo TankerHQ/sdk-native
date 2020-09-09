@@ -23,16 +23,13 @@ public:
 
   char const* what() const noexcept override;
   std::error_code const& errorCode() const;
-  std::string const& backtrace() const;
 
 private:
   std::error_code _errorCode;
-  std::string _backtrace;
   std::string _message;
 
   static std::string formatError(std::error_code ec,
                                  std::string const& message);
-  static std::string backtraceAsString();
 };
 
 TANKER_WARN_UNUSED_RESULT Exception formatEx(std::error_code ec,
