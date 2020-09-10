@@ -57,14 +57,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
 
-  auto invalidIdentity =
-      Identity::extract<Identity::SecretPermanentIdentity>(alice.identity);
+  auto invalidIdentity = alice.identity;
   invalidIdentity.trustchainId[0]++;
-  alice.identity = to_string(invalidIdentity);
+  alice.identity = invalidIdentity;
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(alice.identity)),
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(alice.sidentity())),
                                 Errors::Errc::InvalidArgument);
 }
 
