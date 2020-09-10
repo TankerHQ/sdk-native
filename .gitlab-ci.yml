@@ -74,6 +74,9 @@ stages:
 .if-valid-ios-release-version: &if-valid-ios-release-version
     if: $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
+.if-valid-android-release-version: &if-valid-android-release-version
+    if: $SDK_ANDROID_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+
 .if-invalid-web-release: &if-invalid-web-release
     if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
@@ -144,6 +147,12 @@ stages:
       when: never
     - <<: *if-valid-ios-release-version
 
+.rules/bridge-release/android:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-android-release-version
+
 .rules/mirror:
   rules:
     - <<: *if-not-push-pipeline
@@ -195,6 +204,23 @@ build/linux/release:
     - .before-script/bump-files
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+      
+build/android:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/manual
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+
+build/android/release:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/web/auto
+    - .before-script/bump-files
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
 
 build/ios:
   extends:
@@ -262,6 +288,39 @@ bridge/ios/release:
     project: TankerHQ/sdk-ios
     # FIXME
     branch: theo/fix_pipeline_release
+    strategy: depend
+
+bridge/android:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/android
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/android
+  trigger:
+    project: TankerHQ/sdk-android
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/android/release:
+  extends:
+    - .bridge-check
+    - .rules/bridge-release/android
+    - .variables/bridge-common
+  needs:
+    - build/android/release
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/android/release
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-android
+    # FIXME
+    branch: theo/new_release_process
     strategy: depend
 
 ###############
@@ -361,6 +420,26 @@ bridge/ios/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ios
+    # FIXME
+    branch: theo/fix_pipeline_release
+    strategy: depend
+
+bridge/android/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/android
+    - .variables/bridge-common
+  needs:
+    - bridge/android/release
+    - deploy
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/android/release
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-android
     # FIXME
     branch: theo/fix_pipeline_release
     strategy: depend
