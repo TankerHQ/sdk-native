@@ -649,7 +649,7 @@ description = "Tanker CI library"
 name = "tankerci"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "2020.9.2801"
+version = "2020.9.2821"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
@@ -1147,8 +1147,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-0.2.1.tar.gz", hash = "sha256:20c4bb48db1485d7fc336a58362f1e45b3acd1aba21b9233a1abc89eb267856b"},
 ]
 tankerci = [
-    {file = "tankerci-2020.9.2801-py3-none-any.whl", hash = "sha256:f04a0b45449a9e4c3443d93541a25efc3e6531162586c70a163ebde4319889e5"},
-    {file = "tankerci-2020.9.2801.tar.gz", hash = "sha256:b352e71bc8abe28146549d77f5f068c9634dae8eb3f8751e2ed11988a3117e99"},
+    {file = "tankerci-2020.9.2821-py3-none-any.whl", hash = "sha256:a3a056079d713345be9a72cb5d5ce68bbf5ea312fbbba5dd424275bd6aa31c37"},
+    {file = "tankerci-2020.9.2821.tar.gz", hash = "sha256:352b92cdca9f9d318b73e059f02332cf48155980ac62f903a08df2a3e3772a72"},
 ]
 tbump = [
     {file = "tbump-6.0.5-py3-none-any.whl", hash = "sha256:e6a4f82d9e4b341e3c00a20fcad73b0eb2880b6e53767cad288b143bf3cd8bd4"},
