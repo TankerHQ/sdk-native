@@ -453,5 +453,6 @@ mirror:
     - .mirror
     - .tags/linux
     - .rules/mirror
+  dependencies: []
   script:
     - poetry run python run-ci.py mirror
