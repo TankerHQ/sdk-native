@@ -16,31 +16,20 @@ using namespace Tanker::Functional;
 
 namespace
 {
-tc::cotask<std::vector<Tanker::SUserId>> createUsers(Trustchain& tr,
-                                                     std::size_t nbUsers)
+tc::cotask<std::vector<Tanker::SPublicIdentity>> createUsers(
+    Trustchain& tr, std::size_t nbUsers)
 {
-  auto res = std::vector<Tanker::SUserId>(nbUsers);
+  auto res = std::vector<Tanker::SPublicIdentity>(nbUsers);
   for (auto i = 0u; i < nbUsers; ++i)
   {
     auto user = tr.makeUser(UserType::New);
     auto device = user.makeDevice();
     auto core = TC_AWAIT(device.open());
     TC_AWAIT(core->stop());
-    res[i] = device.suserId();
+    res[i] = Tanker::SPublicIdentity{
+        Tanker::Identity::getPublicIdentity(user.identity)};
   }
   TC_RETURN(res);
-}
-
-std::vector<Tanker::SPublicIdentity> userIdsToPublicIdentities(
-    Tanker::Trustchain::TrustchainId const& trustchainId,
-    std::vector<Tanker::SUserId> const& suserIds)
-{
-  auto res = std::vector<Tanker::SPublicIdentity>();
-  for (auto const& suserId : suserIds)
-    res.push_back(Tanker::SPublicIdentity{
-        to_string(Tanker::Identity::PublicPermanentIdentity{
-            trustchainId, obfuscateUserId(suserId, trustchainId)})});
-  return res;
 }
 
 auto create_encrypted(std::string const& plain_data)
@@ -210,8 +199,7 @@ static void create_group(benchmark::State& state)
   tc::async_resumable([&]() -> tc::cotask<void> {
     TC_AWAIT(laptop->start(laptopDev.identity()));
     TC_AWAIT(laptop->registerIdentity(Tanker::Passphrase{"strong password"}));
-    auto users = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
     // First hit to pull and verify the users
     TC_AWAIT(laptop->createGroup(users));
     for (auto _ : state)
@@ -232,8 +220,7 @@ static void pull_and_create_group(benchmark::State& state)
 {
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto users = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
     for (auto _ : state)
     {
       state.PauseTiming();
@@ -264,8 +251,7 @@ static void share_to_unverified_users(benchmark::State& state)
 {
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto publicIdentities = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto publicIdentities = TC_AWAIT(createUsers(tr, state.range(0)));
     auto p = create_encrypted("a");
     for (auto _ : state)
     {
@@ -297,8 +283,8 @@ static void share_to_users(benchmark::State& state)
 {
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto publicIdentities = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto publicIdentities = TC_AWAIT(createUsers(tr, state.range(0)));
+
     auto p = create_encrypted("a");
     auto alice = tr.makeUser(UserType::New);
     auto laptopDev = alice.makeDevice();
@@ -326,8 +312,7 @@ static void share_to_group(benchmark::State& state)
 {
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto users = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
     auto p = create_encrypted("a");
     auto sgroupId = TC_AWAIT(createGroup(tr, users));
 
@@ -355,8 +340,7 @@ static void share_to_unverified_group(benchmark::State& state)
 {
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
-    auto users = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
+    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
     auto p = create_encrypted("a");
     auto sgroupId = TC_AWAIT(createGroup(tr, users));
 
@@ -391,10 +375,7 @@ static void add_to_group(benchmark::State& state)
   auto& tr = getTrustchain();
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto p = create_encrypted("a");
-
-    auto users = userIdsToPublicIdentities(
-        tr.id, TC_AWAIT(createUsers(tr, state.range(0))));
-
+    auto users = TC_AWAIT(createUsers(tr, state.range(0)));
     auto alice = tr.makeUser(UserType::New);
     auto laptopDev = alice.makeDevice();
     auto laptop = laptopDev.createCore(SessionType::New);

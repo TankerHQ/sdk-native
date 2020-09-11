@@ -1,6 +1,5 @@
 #include <Tanker/Functional/Device.hpp>
 
-#include <Tanker/AsyncCore.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -14,27 +13,14 @@ namespace Tanker
 {
 namespace Functional
 {
-static auto const STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
+Passphrase const Device::STRONG_PASSWORD_DO_NOT_LEAK = Passphrase("********");
 static auto const TMP_PATH = "testtmp";
-
-namespace
-{
-struct AsyncCoreDeleter
-{
-  void operator()(AsyncCore* core) const
-  {
-    core->destroy().get();
-  }
-};
-}
 
 Device::Device(std::string trustchainUrl,
                std::string trustchainId,
-               SUserId suserId,
                std::string identity)
   : _trustchainUrl(std::move(trustchainUrl)),
     _trustchainId(std::move(trustchainId)),
-    _suserId(std::move(suserId)),
     _identity(std::move(identity)),
     _storage(std::make_shared<UniquePath>(TMP_PATH))
 {
@@ -55,22 +41,25 @@ AsyncCorePtr Device::createCore(SessionType type)
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
   return std::make_unique<AsyncCore>(
-      _trustchainUrl,
-      Network::SdkInfo{
-          "sdk-native-test",
-          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
-          "0.0.1"},
-      _storage->path);
+      _trustchainUrl, getSdkInfo(), _storage->path);
 }
 
-SUserId const& Device::suserId() const
+SdkInfo Device::getSdkInfo()
 {
-  return this->_suserId;
+  return SdkInfo{
+      "sdk-native-test",
+      mgs::base64::decode<Tanker::Trustchain::TrustchainId>(_trustchainId),
+      "0.0.1"};
 }
 
 std::string const& Device::identity() const
 {
   return this->_identity;
+}
+
+std::string Device::writablePath() const
+{
+  return _storage->path;
 }
 
 tc::cotask<AsyncCorePtr> Device::open(SessionType sessionType)

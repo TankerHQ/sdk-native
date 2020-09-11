@@ -3,7 +3,7 @@
 #include <Helpers/Buffers.hpp>
 
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Version.hpp>
@@ -17,9 +17,7 @@ CorePtr createCore(std::string const& url,
 {
   return std::unique_ptr<Tanker::AsyncCore, AsyncCoreDeleter>(
       new Tanker::AsyncCore(
-          url,
-          Tanker::Network::SdkInfo{"test", id, TANKER_VERSION},
-          tankerPath),
+          url, Tanker::SdkInfo{"test", id, TANKER_VERSION}, tankerPath),
       AsyncCoreDeleter{});
 }
 
@@ -77,18 +75,4 @@ void decryptAndCheck(CorePtr const& core,
              std::string(decryptedData.begin(), decryptedData.end()));
   if (std::string(decryptedData.begin(), decryptedData.end()) != expectedData)
     throw std::runtime_error("failed to decrypt");
-}
-
-User upgradeToIdentity(Tanker::Trustchain::TrustchainId const& trustchainId,
-                       User user)
-{
-  if (user.userToken)
-  {
-    user.identity =
-        Tanker::Identity::upgradeUserToken(mgs::base64::encode(trustchainId),
-                                           user.suserId,
-                                           user.userToken.value());
-    user.userToken.reset();
-  }
-  return user;
 }

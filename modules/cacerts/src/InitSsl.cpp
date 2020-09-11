@@ -24,6 +24,8 @@ namespace Tanker
 {
 namespace Cacerts
 {
+namespace net = boost::asio;
+
 void init()
 {
   static auto b = [] {
@@ -33,10 +35,9 @@ void init()
   }();
   (void)b;
 }
+
 namespace
 {
-namespace net = boost::asio;
-
 auto get_certificate_authority()
 {
 #if TANKER_EMBED_CERTIFICATES
@@ -93,8 +94,9 @@ auto get_certificate_authority()
   return certs;
 #endif
 }
+}
 
-auto create_ssl_context()
+net::ssl::context create_ssl_context()
 {
   using net::ssl::context;
 
@@ -109,7 +111,6 @@ auto create_ssl_context()
 
   ctx.add_certificate_authority(net::const_buffer(auth.data(), auth.size()));
   return ctx;
-}
 }
 
 net::ssl::context& get_ssl_context()

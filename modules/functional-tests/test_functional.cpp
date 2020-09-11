@@ -2,10 +2,12 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -84,9 +86,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   };
 
   REQUIRE(core->status() == Status::Ready);
-  TC_AWAIT(core->stop());
+  CHECK_NOTHROW(TC_AWAIT(core->stop()));
   REQUIRE(core->status() == Status::Stopped);
   CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm1)));
+
+  // check that stopping a stopped session is a no-op
+  CHECK_NOTHROW(TC_AWAIT(core->stop()));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
@@ -145,6 +150,19 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it throws the correct error when the server is down")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice(Functional::DeviceType::New);
+  // connect to a (probably) closed port
+  auto core = std::make_unique<AsyncCore>(
+      "https://127.0.0.1:65012", device.getSdkInfo(), device.writablePath());
+
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(device.identity())),
+                                Errc::NetworkError);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 {
   auto alice = trustchain.makeUser();
@@ -153,6 +171,113 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
   auto session = TC_AWAIT(device1.open());
   auto device2 = alice.makeDevice(Functional::DeviceType::New);
   REQUIRE_NOTHROW(TC_AWAIT(device2.open()));
+}
+
+namespace
+{
+struct HttpClientFactory
+{
+  HttpClientFactory(std::string url, SdkInfo info)
+    : client(new HttpClient(
+          fetchpp::http::url(std::move(url)),
+          std::move(info),
+          tc::get_default_executor().get_io_service().get_executor()))
+  {
+  }
+
+  std::unique_ptr<HttpClient> operator()()
+  {
+    REQUIRE(!used);
+    used = true;
+    return std::unique_ptr<HttpClient>(client);
+  }
+
+  bool used = false;
+  HttpClient* client;
+};
+
+void deauthSession(HttpClient& client)
+{
+  // set some random access token
+  client.setAccessToken("UUSFMmx4RfGONVaFl2IAVv1yN20ORd3SjLhcHfgJPys");
+}
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession = Functional::makeAsyncCore(
+      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+  TC_AWAIT(aliceSession->registerIdentity(
+      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  {
+    auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+  }
+  auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession = Functional::makeAsyncCore(
+      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+  TC_AWAIT(aliceSession->verifyIdentity(
+      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "a session of an existing device can reauth")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  {
+    auto aliceSession =
+        TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+  }
+  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
+  auto aliceSession = Functional::makeAsyncCore(
+      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
+  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+
+  deauthSession(*httpFactory.client);
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
@@ -427,6 +552,36 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice cannot encrypt and share with more than 100 recipients")
+{
+  std::vector<SPublicIdentity> identities;
+  for (int i = 0; i < 101; ++i)
+  {
+    auto const bobEmail = Email{fmt::format("bob{}.test@tanker.io", i)};
+    auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+        mgs::base64::encode(trustchain.id), bobEmail);
+    identities.push_back(
+        SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)});
+  }
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->encrypt(clearData, identities)),
+      Errc::InvalidArgument);
+
+  auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
+  auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->share({resourceId}, identities, {})),
+      Errc::InvalidArgument);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {
@@ -608,6 +763,49 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(bobSession->verifyProvisionalIdentity(
           Unlock::EmailVerification{bobEmail, VerificationCode{"invalid"}})),
       Errc::InvalidVerification);
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Charlie cannot attach an already attached provisional identity")
+{
+  auto const bobEmail = Email{"bob2.test@tanker.io"};
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      mgs::base64::encode(trustchain.id), bobEmail);
+
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+      bobEmail, VerificationCode{bobVerificationCode}}));
+
+  auto charlie = trustchain.makeUser();
+  auto charlieDevice = charlie.makeDevice();
+  auto charlieSession = TC_AWAIT(charlieDevice.open());
+
+  result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
+      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  REQUIRE(result.status == Status::IdentityVerificationNeeded);
+  bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(
+          charlieSession->verifyProvisionalIdentity(Unlock::EmailVerification{
+              bobEmail, VerificationCode{bobVerificationCode}})),
+      Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(

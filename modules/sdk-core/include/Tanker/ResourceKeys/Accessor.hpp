@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Tanker/Client.hpp>
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>

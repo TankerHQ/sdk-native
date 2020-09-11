@@ -19,13 +19,13 @@ namespace Tanker
 namespace Users
 {
 class IUserAccessor;
+class IRequester;
 class LocalUser;
 class User;
 class Device;
 }
 
 struct DeviceKeys;
-class Pusher;
 
 namespace Revocation
 {
@@ -48,7 +48,7 @@ tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
                               Trustchain::TrustchainId const& trustchainId,
                               Users::LocalUser const& localUser,
                               Users::IUserAccessor& userAccessor,
-                              Pusher& client);
+                              Users::IRequester& requester);
 
 Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceAction(
     Trustchain::DeviceId const& targetDeviceId,

@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
 #include <mgs/base64.hpp>
@@ -11,6 +13,18 @@
 
 namespace
 {
+
+using namespace Tanker::Errors;
+
+void checkNotEmpty(std::string const& value, std::string const& description)
+{
+  if (value.empty())
+  {
+    throw formatEx(
+        Errc::InvalidArgument, "{:s} should not be empty", description);
+  }
+}
+
 template <typename T>
 Tanker::Crypto::Hash hashField(T const& field)
 {
@@ -27,6 +41,8 @@ Request makeRequest(Unlock::Verification const& verification,
   return boost::variant2::visit(
       overloaded{
           [&](Unlock::EmailVerification const& v) -> Request {
+            checkNotEmpty(v.verificationCode.string(), "verification code");
+            checkNotEmpty(v.email.string(), "email");
             return EncryptedEmailVerification{
                 hashField(v.email),
                 Crypto::encryptAead(
@@ -35,10 +51,17 @@ Request makeRequest(Unlock::Verification const& verification,
                 v.verificationCode};
           },
           [](Passphrase const& p) -> Request {
+            checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
           },
-          [](VerificationKey const& v) -> Request { return v; },
-          [](OidcIdToken const& v) -> Request { return v; },
+          [](VerificationKey const& v) -> Request {
+            checkNotEmpty(v.string(), "verificationKey");
+            return v;
+          },
+          [](OidcIdToken const& v) -> Request {
+            checkNotEmpty(v.string(), "oidcIdToken");
+            return v;
+          },
       },
       verification);
 }

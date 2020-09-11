@@ -48,7 +48,3 @@ CorePtr signInUser(std::string const& identity,
 void decryptAndCheck(CorePtr const& core,
                      std::vector<uint8_t> const& encryptedData,
                      std::string const& expectedData);
-
-Tanker::Functional::User upgradeToIdentity(
-    Tanker::Trustchain::TrustchainId const& trustchainId,
-    Tanker::Functional::User user);

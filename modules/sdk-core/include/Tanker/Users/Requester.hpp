@@ -1,12 +1,11 @@
 #pragma once
 
-#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
 namespace Tanker
 {
 struct DeviceKeys;
-class Client;
+class HttpClient;
 
 namespace Users
 {
@@ -19,26 +18,35 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client);
+  Requester(HttpClient* httpClient);
 
-  tc::cotask<GetMeResult> getMe() override;
-  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  tc::cotask<GetResult> getRevokedDeviceHistory(
+      Trustchain::DeviceId const& deviceId) override;
+  tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::UserId const> userIds) override;
-  tc::cotask<std::vector<Trustchain::UserAction>> getUsers(
+  tc::cotask<GetResult> getUsers(
       gsl::span<Trustchain::DeviceId const> deviceIds) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
-  tc::cotask<void> authenticate(
-      Trustchain::TrustchainId const& trustchainId,
+  tc::cotask<void> postResourceKeys(
+      Share::ShareActions const& resourceKeys) override;
+  tc::cotask<GetEncryptionKeyResult> getEncryptionKey(
       Trustchain::UserId const& userId,
-      Crypto::SignatureKeyPair const& userSignatureKeyPair) override;
+      Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) override;
 
-  tc::cotask<std::vector<
-      std::tuple<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
-  getPublicProvisionalIdentities(gsl::span<Email const> emails) override;
+  tc::cotask<void> revokeDevice(
+      Trustchain::Actions::DeviceRevocation const& deviceRevocation) override;
+
+  tc::cotask<std::map<
+      Crypto::Hash,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(
+      gsl::span<Crypto::Hash const> hashedEmails) override;
 
 private:
-  Client* _client;
+  tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);
+
+  HttpClient* _httpClient;
 };
 }
 }

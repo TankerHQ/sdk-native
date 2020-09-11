@@ -3,10 +3,10 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Errors/ServerErrc.hpp>
 #include <Tanker/Format/Enum.hpp>
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Groups/Manager.hpp>
@@ -14,7 +14,6 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Network/ConnectionFactory.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
@@ -30,6 +29,7 @@
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Utils.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
 
 #include <fmt/format.h>
@@ -45,11 +45,26 @@ namespace Tanker
 {
 Core::~Core() = default;
 
-Core::Core(std::string url, Network::SdkInfo info, std::string writablePath)
-  : _url(std::move(url)),
-    _info(std::move(info)),
+Core::Core(std::string url, SdkInfo info, std::string writablePath)
+  : Core(
+        info,
+        [url, info] {
+          return std::make_unique<HttpClient>(
+              fetchpp::http::url(url),
+              info,
+              tc::get_default_executor().get_io_service().get_executor());
+        },
+        std::move(writablePath))
+{
+}
+
+Core::Core(SdkInfo info,
+           HttpClientFactory httpClientFactory,
+           std::string writablePath)
+  : _info(std::move(info)),
+    _httpClientFactory(std::move(httpClientFactory)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_shared<Session>(_url, _info))
+    _session(std::make_shared<Session>(_httpClientFactory()))
 {
 }
 
@@ -69,7 +84,7 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(_url, _info);
+  _session = std::make_shared<Session>(_httpClientFactory());
 }
 
 template <typename F>
@@ -83,7 +98,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::Errc::DeviceRevoked)
+    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
     exception = std::make_exception_ptr(ex);
   }
@@ -102,11 +117,24 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   throw Errors::AssertionError("unreachable code in resetOnFailure");
 }
 
-void Core::stop()
+tc::cotask<void> Core::stop()
 {
   if (status() == Status::Stopped)
     return;
 
+  TC_AWAIT(_session->stop());
+  reset();
+  if (_sessionClosed)
+    _sessionClosed();
+}
+
+tc::cotask<void> Core::stopForRevocation()
+{
+  if (status() == Status::Stopped)
+    return;
+
+  // Do not stop the session, no need to close the session server-side.
+  // Also, calling _session->stop() here crashes.
   reset();
   if (_sessionClosed)
     _sessionClosed();
@@ -134,20 +162,23 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  _session->client().start();
   _session->setIdentity(identity);
   _session->createStorage(_writablePath);
-  auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
-  auto const [deviceExists, userExists, unused] = TC_AWAIT(
-      _session->requesters().userStatus(_session->trustchainId(),
-                                        _session->userId(),
-                                        deviceKeys.signatureKeyPair.publicKey));
-  if (deviceExists)
-    TC_AWAIT(_session->finalizeOpening());
-  else if (userExists)
+  auto const optPubUserEncKey =
+      TC_AWAIT(_session->requesters().userStatus(_session->userId()));
+  if (!optPubUserEncKey)
+    _session->setStatus(Status::IdentityRegistrationNeeded);
+  else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
+           !optDeviceKeys.has_value())
     _session->setStatus(Status::IdentityVerificationNeeded);
   else
-    _session->setStatus(Status::IdentityRegistrationNeeded);
+  {
+    auto const authResponse = TC_AWAIT(_session->authenticate());
+    TC_AWAIT(_session->finalizeOpening());
+    if (authResponse == HttpClient::AuthResponse::Revoked)
+      throw formatEx(Errors::AppdErrc::DeviceRevoked,
+                     "authentication reported that this device was revoked");
+  }
   TC_RETURN(status());
 }
 
@@ -168,31 +199,34 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
   {
-    auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
+    auto const deviceKeys = DeviceKeys::create();
+
     auto const ghostDeviceKeys =
         GhostDevice::create(verificationKey).toDeviceKeys();
-    auto const encryptedUserKey = TC_AWAIT(_session->client().getLastUserKey(
-        _session->trustchainId(), ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const encryptedUserKey =
+        TC_AWAIT(_session->requesters().getEncryptionKey(
+            _session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
     auto const privateUserEncryptionKey =
-        Crypto::sealDecrypt(encryptedUserKey.encryptedPrivateKey,
+        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey,
                             ghostDeviceKeys.encryptionKeyPair);
     auto const action = Users::createNewDeviceAction(
         _session->trustchainId(),
-        encryptedUserKey.deviceId,
+        encryptedUserKey.ghostDeviceId,
         Identity::makeDelegation(_session->userId(),
                                  ghostDeviceKeys.signatureKeyPair.privateKey),
         deviceKeys.signatureKeyPair.publicKey,
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
 
+    TC_AWAIT(
+        _session->requesters().createDevice(Serialization::serialize(action)));
+    TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
     TC_AWAIT(_session->setDeviceId(Trustchain::DeviceId{action.hash()}));
-
-    TC_AWAIT(_session->pusher().pushBlock(action));
     TC_AWAIT(_session->finalizeOpening());
   }
   catch (Exception const& e)
   {
-    if (e.errorCode() == ServerErrc::DeviceNotFound ||
+    if (e.errorCode() == AppdErrc::DeviceNotFound ||
         e.errorCode() == Errc::DecryptionFailed)
       throw Exception(make_error_code(Errc::InvalidVerification), e.what());
     throw;
@@ -220,7 +254,7 @@ tc::cotask<void> Core::registerIdentity(
                                  ghostDeviceKeys.signatureKeyPair.publicKey,
                                  ghostDeviceKeys.encryptionKeyPair.publicKey,
                                  userKeyPair);
-  auto const deviceKeys = TC_AWAIT(_session->getDeviceKeys());
+  auto const deviceKeys = DeviceKeys::create();
 
   auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
@@ -235,9 +269,6 @@ tc::cotask<void> Core::registerIdentity(
       _session->userSecret(),
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
-  TC_AWAIT(
-      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
-
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),
       _session->userId(),
@@ -245,6 +276,9 @@ tc::cotask<void> Core::registerIdentity(
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
       encryptVerificationKey));
+  TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
+  TC_AWAIT(
+      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
   TC_AWAIT(_session->finalizeOpening());
 }
 
@@ -280,7 +314,7 @@ tc::cotask<void> Core::encrypt(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{metadata.key, metadata.resourceId}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -347,7 +381,7 @@ tc::cotask<void> Core::share(
     std::vector<SGroupId> const& sgroupIds)
 {
   assertStatus(Status::Ready, "share");
-  if (spublicIdentities.empty() && sgroupIds.empty())
+  if (sresourceIds.empty() || (spublicIdentities.empty() && sgroupIds.empty()))
     TC_RETURN();
 
   auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
@@ -363,7 +397,7 @@ tc::cotask<void> Core::share(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         resourceKeys,
                         spublicIdentities,
                         sgroupIds));
@@ -376,7 +410,7 @@ tc::cotask<SGroupId> Core::createGroup(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto const groupId = TC_AWAIT(Groups::Manager::create(
       _session->accessors().userAccessor,
-      _session->pusher(),
+      _session->requesters(),
       spublicIdentities,
       _session->trustchainId(),
       localUser.deviceId(),
@@ -395,7 +429,7 @@ tc::cotask<void> Core::updateGroupMembers(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(
       _session->accessors().userAccessor,
-      _session->pusher(),
+      _session->requesters(),
       _session->accessors().groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
@@ -417,13 +451,12 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
     try
     {
       TC_AWAIT(_session->requesters().setVerificationMethod(
-          _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(method, _session->userSecret())));
     }
     catch (Errors::Exception const& e)
     {
-      if (e.errorCode() == ServerErrc::VerificationKeyNotFound)
+      if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
       {
         // the server does not send an error message
         throw Errors::formatEx(Errc::PreconditionFailed,
@@ -445,9 +478,12 @@ Core::getVerificationMethods()
                            FMT_STRING("invalid session status {:e} for {:s}"),
                            status(),
                            "getVerificationMethods");
-  auto methods = TC_AWAIT(_session->requesters().fetchVerificationMethods(
-      _session->trustchainId(), _session->userId()));
-  Unlock::decryptEmailMethods(methods, _session->userSecret());
+  auto methods = TC_AWAIT(
+      _session->requesters().fetchVerificationMethods(_session->userId()));
+  if (methods.empty())
+    methods.emplace_back(Tanker::VerificationKey{});
+  else
+    Unlock::decryptEmailMethods(methods, _session->userSecret());
   TC_RETURN(methods);
 }
 
@@ -456,7 +492,6 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
 {
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
-          _session->trustchainId(),
           _session->userId(),
           Unlock::makeRequest(verification, _session->userSecret())));
   auto const verificationKey = TC_AWAIT(
@@ -491,7 +526,7 @@ tc::cotask<AttachResult> Core::attachProvisionalIdentity(
   assertStatus(Status::Ready, "attachProvisionalIdentity");
   TC_RETURN(TC_AWAIT(
       _session->accessors().provisionalUsersManager.attachProvisionalIdentity(
-          sidentity)));
+          sidentity, _session->userSecret())));
 }
 
 tc::cotask<void> Core::verifyProvisionalIdentity(
@@ -520,13 +555,13 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
                                     _session->trustchainId(),
                                     localUser,
                                     _session->accessors().userAccessor,
-                                    _session->pusher()));
+                                    _session->requesters()));
 }
 
-tc::cotask<void> Core::nukeDatabase()
+void Core::nukeDatabase()
 {
   assertStatus(Status::Ready, "nukeDatabase");
-  TC_AWAIT(_session->storage().db.nuke());
+  _session->storage().db.nuke();
 }
 
 Trustchain::ResourceId Core::getResourceId(
@@ -573,7 +608,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{encryptor.symmetricKey(), encryptor.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
@@ -655,10 +690,15 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         _session->trustchainId(),
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
-                        _session->pusher(),
+                        _session->requesters(),
                         {{sess.sessionKey(), sess.resourceId()}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
   TC_RETURN(sess);
+}
+
+tc::cotask<void> Core::confirmRevocation()
+{
+  TC_AWAIT(_session->accessors().localUserAccessor.confirmRevocation());
 }
 }

@@ -13,6 +13,8 @@
 
 TLOG_CATEGORY("GroupAccessor");
 
+static constexpr auto ChunkSize = 100;
+
 using Tanker::Trustchain::GroupId;
 
 namespace Tanker::Groups
@@ -144,7 +146,17 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
 tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  auto const entries = TC_AWAIT(_requester->getGroupBlocks(groupIds));
+  std::vector<Trustchain::GroupAction> entries;
+  entries.reserve(groupIds.size());
+  for (unsigned int i = 0; i < groupIds.size(); i += ChunkSize)
+  {
+    auto const count = std::min<unsigned int>(ChunkSize, groupIds.size() - i);
+    auto response = TC_AWAIT(
+        _requester->getGroupBlocks(gsl::make_span(groupIds).subspan(i, count)));
+    entries.insert(entries.end(),
+                   std::make_move_iterator(response.begin()),
+                   std::make_move_iterator(response.end()));
+  }
   auto const groupMap = partitionGroups(entries);
 
   GroupPullResult out;

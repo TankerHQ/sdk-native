@@ -40,9 +40,7 @@ struct EncryptSession : Command
   {
     auto const state = Tanker::loadJson(statePath).get<ShareState>();
 
-    auto alice = upgradeToIdentity(trustchain.id, state.alice);
-
-    auto aliceCore = signInUser(alice.identity, trustchain, tankerPath);
+    auto aliceCore = signInUser(state.alice.identity, trustchain, tankerPath);
     decryptAndCheck(aliceCore,
                     state.encryptState.encryptedData,
                     state.encryptState.clearData);

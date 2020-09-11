@@ -10,7 +10,7 @@
 
 namespace Tanker
 {
-class Client;
+class HttpClient;
 namespace Groups
 {
 
@@ -22,16 +22,25 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(Client* client);
+  Requester(HttpClient* client);
 
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
-      std::vector<Trustchain::GroupId> const& groupIds) override;
+      gsl::span<Trustchain::GroupId const> groupIds) override;
 
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) override;
 
+  tc::cotask<void> createGroup(
+      Trustchain::Actions::UserGroupCreation const& groupCreation) override;
+
+  tc::cotask<void> updateGroup(
+      Trustchain::Actions::UserGroupAddition const& groupAddition) override;
+
 private:
-  Client* _client;
+  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocksImpl(
+      nlohmann::json const& query);
+
+  HttpClient* _httpClient;
 };
 }
 }

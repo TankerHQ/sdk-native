@@ -52,8 +52,7 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Requester.hpp
   include/Tanker/Unlock/Request.hpp
   include/Tanker/DeviceKeys.hpp
-  include/Tanker/Client.hpp
-  include/Tanker/Pusher.hpp
+  include/Tanker/HttpClient.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -121,8 +120,7 @@ add_library(tankercore STATIC
   src/Init.cpp
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
-  src/Client.cpp
-  src/Pusher.cpp
+  src/HttpClient.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
   src/Unlock/Requester.cpp
@@ -191,7 +189,6 @@ target_link_libraries(tankercore
   tankerserialization
   tankeridentity
   tankertypes
-  tankernetwork
   tankerstreams
   tankertrustchain
   tankercrypto
@@ -215,7 +212,6 @@ if(TANKER_BUILD_WITH_SSL)
 endif()
 
 target_link_libraries(tankercore
-  CONAN_PKG::socket.io-client-cpp
   CONAN_PKG::sqlpp11-connector-sqlite3
 )
 

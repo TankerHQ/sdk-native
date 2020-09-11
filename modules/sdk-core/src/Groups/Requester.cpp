@@ -1,7 +1,10 @@
 #include <Tanker/Groups/Requester.hpp>
 
-#include <Tanker/Client.hpp>
+#include <Tanker/HttpClient.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
+#include <Tanker/Utils.hpp>
 
+#include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 #include <tconcurrent/coroutine.hpp>
 
@@ -11,12 +14,9 @@ namespace Groups
 {
 namespace
 {
-tc::cotask<std::vector<Trustchain::GroupAction>> doBlockRequest(
-    Client* client, nlohmann::json const& req)
+std::vector<Trustchain::GroupAction> fromBlocksToGroupActions(
+    gsl::span<std::string const> blocks)
 {
-  auto const response = TC_AWAIT(client->emit("get groups blocks", req));
-  auto const blocks = response.get<std::vector<std::string>>();
-
   std::vector<Trustchain::GroupAction> entries;
   entries.reserve(blocks.size());
   std::transform(
@@ -27,34 +27,65 @@ tc::cotask<std::vector<Trustchain::GroupAction>> doBlockRequest(
         return Trustchain::deserializeGroupAction(mgs::base64::decode(block));
       });
 
-  TC_RETURN(entries);
+  return entries;
 }
 }
 
-Requester::Requester(Client* client) : _client(client)
+Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
 {
+}
+
+tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocksImpl(
+    nlohmann::json const& query)
+{
+  auto url = _httpClient->makeUrl("user-group-histories");
+  url.set_search(fetchpp::http::encode_query(query));
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  TC_RETURN(fromBlocksToGroupActions(
+      response.at("histories").get<std::vector<std::string>>()));
 }
 
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
-    std::vector<Trustchain::GroupId> const& groupIds)
+    gsl::span<Trustchain::GroupId const> groupIds)
 {
   if (groupIds.empty())
     TC_RETURN(std::vector<Trustchain::GroupAction>{});
-
-  TC_RETURN(TC_AWAIT(doBlockRequest(_client,
-                                    nlohmann::json{
-                                        {"groups_ids", groupIds},
-                                    })));
+  auto const query = nlohmann::json{
+      {"user_group_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(groupIds)}};
+  TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
 }
 
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
     Crypto::PublicEncryptionKey const& groupEncryptionKey)
 {
-  TC_RETURN(
-      TC_AWAIT(doBlockRequest(_client,
-                              nlohmann::json{
-                                  {"group_public_key", groupEncryptionKey},
-                              })));
+  auto const query =
+      nlohmann::json{{"user_group_public_encryption_key",
+                      mgs::base64url_nopad::encode(groupEncryptionKey)}};
+  TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
+}
+
+tc::cotask<void> Requester::createGroup(
+    Trustchain::Actions::UserGroupCreation const& groupCreation)
+{
+  auto const url = _httpClient->makeUrl("user-groups");
+  TC_AWAIT(
+      _httpClient->asyncPost(
+          url.href(),
+          {{"user_group_creation",
+            mgs::base64::encode(Serialization::serialize(groupCreation))}}))
+      .value();
+}
+
+tc::cotask<void> Requester::updateGroup(
+    Trustchain::Actions::UserGroupAddition const& groupAddition)
+{
+  auto const url = _httpClient->makeUrl("user-groups");
+  TC_AWAIT(
+      _httpClient->asyncPatch(
+          url.href(),
+          {{"user_group_addition",
+            mgs::base64::encode(Serialization::serialize(groupAddition))}}))
+      .value();
 }
 }
 }

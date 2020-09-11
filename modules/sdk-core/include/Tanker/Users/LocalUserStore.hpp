@@ -42,14 +42,14 @@ public:
   tc::cotask<std::optional<LocalUser>> findLocalUser(
       Trustchain::UserId const& userId) const;
   tc::cotask<DeviceKeys> getDeviceKeys() const;
+  tc::cotask<Trustchain::DeviceId> getDeviceId() const;
+  tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
+  // TODO put in private
+  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
 
 private:
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
-  tc::cotask<std::optional<Trustchain::DeviceId>> getDeviceId() const;
   tc::cotask<void> setDeviceInitialized();
-  // hack, is called in getDeviceKeys... This will be removed very soon with the
-  // new http server
-  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys) const;
   tc::cotask<bool> isDeviceInitialized() const;
 
   DataStore::Database* _db;

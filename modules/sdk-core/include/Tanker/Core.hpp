@@ -2,8 +2,9 @@
 
 #include <Tanker/AttachResult.hpp>
 #include <Tanker/EncryptionSession.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/HttpClient.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
@@ -40,10 +41,14 @@ public:
   static_assert(static_cast<int>(ShareWithSelf::No) == 0);
   static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
 
+  using HttpClientFactory = std::function<std::unique_ptr<HttpClient>()>;
   using SessionClosedHandler = std::function<void()>;
 
+  Core(std::string url, SdkInfo info, std::string writablePath);
+  Core(SdkInfo info,
+       HttpClientFactory httpClientFactory,
+       std::string writablePath);
   ~Core();
-  Core(std::string url, Network::SdkInfo info, std::string writablePath);
 
   tc::cotask<Status> start(std::string const& identity);
   tc::cotask<void> registerIdentity(Unlock::Verification const& verification);
@@ -111,9 +116,12 @@ public:
   static Trustchain::ResourceId getResourceId(
       gsl::span<uint8_t const> encryptedData);
 
-  void stop();
+  tc::cotask<void> stop();
+  tc::cotask<void> stopForRevocation();
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
+
+  tc::cotask<void> confirmRevocation();
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
@@ -130,8 +138,8 @@ private:
   decltype(std::declval<F>()()) resetOnFailure(F&& f);
 
 private:
-  std::string _url;
-  Network::SdkInfo _info;
+  SdkInfo _info;
+  HttpClientFactory _httpClientFactory;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
   std::shared_ptr<Session> _session;

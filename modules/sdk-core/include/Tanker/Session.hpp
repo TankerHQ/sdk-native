@@ -5,13 +5,14 @@
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Groups/Store.hpp>
-#include <Tanker/Network/SdkInfo.hpp>
+#include <Tanker/HttpClient.hpp>
+#include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/Pusher.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
@@ -19,6 +20,7 @@
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
+#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <memory>
 #include <string>
@@ -26,8 +28,6 @@
 
 namespace Tanker
 {
-class Client;
-
 class Session
 {
 public:
@@ -37,7 +37,7 @@ public:
                       Unlock::Requester
 
   {
-    Requesters(Client*);
+    Requesters(HttpClient*);
   };
 
   struct Storage
@@ -54,7 +54,6 @@ public:
   struct Accessors
   {
     Accessors(Storage& storage,
-              Pusher* pusher,
               Requesters* requesters,
               Users::LocalUserAccessor plocalUserAccessor);
     Users::LocalUserAccessor localUserAccessor;
@@ -65,11 +64,12 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::string url, Network::SdkInfo info);
+  Session(std::unique_ptr<HttpClient> client);
+  ~Session();
 
-  Client& client();
+  tc::cotask<void> stop();
 
-  Pusher& pusher();
+  HttpClient& httpClient();
 
   Requesters const& requesters() const;
   Requesters& requesters();
@@ -94,14 +94,13 @@ public:
 
   tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
 
-  tc::cotask<DeviceKeys> getDeviceKeys();
+  tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
-  tc::cotask<void> authenticate();
+  tc::cotask<HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
 
 private:
-  std::unique_ptr<Client> _client;
-  Pusher _pusher;
+  std::unique_ptr<HttpClient> _httpClient;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;

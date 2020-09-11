@@ -36,9 +36,9 @@ OidcConfig const& oidcConfig()
   return oidc;
 }
 
-std::string const& trustchainUrl()
+std::string const& appdUrl()
 {
-  static auto value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
+  static auto value = getSafeEnv("TANKER_APPD_URL");
   return value;
 }
 
