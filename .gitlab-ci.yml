@@ -2,9 +2,6 @@ default:
   image: registry.gitlab.com/tankerhq/ci/ci-native:latest
   before_script: &global_before_script
     - poetry install
-  artifacts:
-    paths:
-      - package/
 
 stages:
   - build
@@ -163,6 +160,15 @@ stages:
     - <<: *if-release-branch
     - <<: *if-feature-branch
 
+#################
+# Extend blocks #
+#################
+
+.build-artifacts:
+  artifacts:
+      paths:
+        - package/
+
 #############
 # Variables #
 #############
@@ -194,6 +200,7 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/mr/auto
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
@@ -203,6 +210,7 @@ build/linux/release:
     - .tags/linux
     - .rules/web/auto
     - .before-script/bump-files
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
       
@@ -211,6 +219,7 @@ build/android:
     - .build
     - .tags/linux
     - .rules/mr/manual
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
 
@@ -220,6 +229,7 @@ build/android/release:
     - .tags/linux
     - .rules/web/auto
     - .before-script/bump-files
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
 
@@ -228,6 +238,7 @@ build/ios:
     - .build
     - .tags/macos
     - .rules/mr/manual
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
 
@@ -237,6 +248,7 @@ build/ios/release:
     - .tags/macos
     - .rules/web/auto
     - .before-script/bump-files
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
@@ -454,5 +466,6 @@ mirror:
     - .mirror
     - .tags/linux
     - .rules/mirror
+  dependencies: []
   script:
     - poetry run python run-ci.py mirror
