@@ -12,6 +12,7 @@ boost:without_log=True
 boost:without_regex=True
 boost:without_mpi=True
 boost:without_serialization=True
+boost:without_stacktrace=True
 boost:without_coroutine=True
 boost:without_fiber=True
 boost:without_timer=True
