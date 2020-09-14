@@ -62,7 +62,8 @@ class TankerConan(ConanFile):
         if not self.develop:
             return False
 
-        if self.cross_building:
+        # mingw64 is not detected as cross-building
+        if self.cross_building or self.is_mingw:
             return False
 
         return True
