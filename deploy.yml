@@ -16,5 +16,4 @@ profiles:
     - ios-armv8-release
   win32:
     - vs2019-release
-    # TODO replace with mingw64
-    # - mingw32-release
+    - mingw64-release
