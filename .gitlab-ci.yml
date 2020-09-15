@@ -74,6 +74,9 @@ stages:
 .if-valid-android-release-version: &if-valid-android-release-version
     if: $SDK_ANDROID_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
+.if-valid-python-release-version: &if-valid-python-release-version
+    if: $SDK_PYTHON_RELEASE_VERSION =~ /\A[0-9.]+([a-b][0-9]+)?\z/
+
 .if-invalid-web-release: &if-invalid-web-release
     if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
@@ -150,6 +153,12 @@ stages:
       when: never
     - <<: *if-valid-android-release-version
 
+.rules/bridge-release/python:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-python-release-version
+
 .rules/mirror:
   rules:
     - <<: *if-not-push-pipeline
@@ -212,6 +221,63 @@ build/linux/release:
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+
+build/windows:
+  extends:
+    - .build
+    - .tags/windows
+    - .rules/mr/auto
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+
+build/windows/release:
+  extends:
+    - .build
+    - .tags/windows
+    - .rules/web/auto
+    - .before-script/bump-files
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+
+build/macos:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/auto
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+
+.build/macos/shared:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/manual
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
+
+build/macos/release:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/web/auto
+    - .before-script/bump-files
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+
+.build/macos/shared/release:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/web/auto
+    - .before-script/bump-files
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
       
 build/android:
   extends:
@@ -335,6 +401,105 @@ bridge/android/release:
     branch: theo/new_release_process
     strategy: depend
 
+bridge/python/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/linux
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/linux
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/windows:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/windows
+  variables:
+    UPSTREAM_RUNNER_TAG: windows
+    UPSTREAM_JOB_NAME: build/windows
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/release/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - build/linux/release
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/linux/release
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/release/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - build/macos/release
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos/release
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/release/windows:
+  extends:
+    - .bridge-check
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - build/windows/release
+  variables:
+    UPSTREAM_RUNNER_TAG: windows
+    UPSTREAM_JOB_NAME: build/windows/release
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
 ###############
 # check stage #
 ###############
@@ -452,6 +617,23 @@ bridge/android/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-android
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/python/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - deploy
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-python
     # FIXME
     branch: theo/new_release_process
     strategy: depend
