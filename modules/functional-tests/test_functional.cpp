@@ -156,8 +156,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice(Functional::DeviceType::New);
   // connect to a (probably) closed port
-  auto core = std::make_unique<AsyncCore>(
-      "https://127.0.0.1:65012", device.getSdkInfo(), device.writablePath());
+  auto core = std::unique_ptr<AsyncCore, Functional::AsyncCoreDeleter>(
+      new AsyncCore("https://127.0.0.1:65012",
+                    device.getSdkInfo(),
+                    device.writablePath()));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(device.identity())),
                                 Errc::NetworkError);
