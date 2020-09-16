@@ -53,10 +53,15 @@ stages:
 # Default settings override #
 #############################
 
-.before-script/bump-files:
+.before-script/bump-files-on-release/bash:
   before_script:
     - *global_before_script
-    - poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION
+    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+
+.before-script/bump-files-on-release/powershell:
+  before_script:
+    - *global_before_script
+    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION }
 
 ##############
 # Conditions #
@@ -77,6 +82,9 @@ stages:
 .if-valid-python-release-version: &if-valid-python-release-version
     if: $SDK_PYTHON_RELEASE_VERSION =~ /\A[0-9.]+([a-b][0-9]+)?\z/
 
+.if-valid-ruby-release-version: &if-valid-ruby-release-version
+    if: $SDK_RUBY_RELEASE_VERSION =~ /\A[0-9.]+(\.(alpha|beta)\.[0-9]+)?\z/
+
 .if-invalid-web-release: &if-invalid-web-release
     if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
@@ -88,6 +96,9 @@ stages:
 
 .if-invalid-python-release: &if-invalid-python-release
     if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A[0-9.]+([a-b][0-9]+)?\z/)
+
+.if-invalid-ruby-release: &if-invalid-ruby-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A[0-9.]+(\.(alpha|beta)\.[0-9]+)?\z/)
 
 .if-merge-result: &if-merge-result
     if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
@@ -122,19 +133,17 @@ stages:
 #########
 # Rules #
 #########
-
+    
 .rules/mr/auto:
   rules:
     - <<: *if-mr-pipeline
+    - <<: *if-web-pipeline
 
 .rules/mr/manual:
   rules:
     - <<: *if-mr-pipeline
       when: manual
       allow_failure: true
-
-.rules/web/auto:
-  rules:
     - <<: *if-web-pipeline
 
 .rules/deploy:
@@ -149,6 +158,7 @@ stages:
 .rules/bridge-ci:
   rules:
     - <<: *if-mr-pipeline
+    - <<: *if-web-pipeline
 
 .rules/bridge-release/ios:
   rules:
@@ -167,6 +177,12 @@ stages:
     - <<: *if-not-web-pipeline
       when: never
     - <<: *if-valid-python-release-version
+
+.rules/bridge-release/ruby:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-ruby-release-version
 
 .rules/mirror:
   rules:
@@ -211,6 +227,8 @@ workflow:
       when: never
     - <<: *if-invalid-python-release
       when: never
+    - <<: *if-invalid-ruby-release
+      when: never
     # allow everything else
     - when: always
 
@@ -224,18 +242,19 @@ build/linux:
     - .tags/linux
     - .rules/mr/auto
     - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
-build/linux/release:
+build/linux/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/web/auto
-    - .before-script/bump-files
+    - .rules/mr/manual
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
 
 build/windows:
   extends:
@@ -243,16 +262,7 @@ build/windows:
     - .tags/windows
     - .rules/mr/auto
     - .build-artifacts
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
-
-build/windows/release:
-  extends:
-    - .build
-    - .tags/windows
-    - .rules/web/auto
-    - .before-script/bump-files
-    - .build-artifacts
+    - .before-script/bump-files-on-release/powershell
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
@@ -262,54 +272,27 @@ build/macos:
     - .tags/macos
     - .rules/mr/auto
     - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
-.build/macos/shared:
+build/macos/shared:
   extends:
     - .build
     - .tags/macos
     - .rules/mr/manual
     - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
-build/macos/release:
-  extends:
-    - .build
-    - .tags/macos
-    - .rules/web/auto
-    - .before-script/bump-files
-    - .build-artifacts
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
-
-.build/macos/shared/release:
-  extends:
-    - .build
-    - .tags/macos
-    - .rules/web/auto
-    - .before-script/bump-files
-    - .build-artifacts
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
-      
 build/android:
   extends:
     - .build
     - .tags/linux
     - .rules/mr/manual
     - .build-artifacts
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
-
-build/android/release:
-  extends:
-    - .build
-    - .tags/linux
-    - .rules/web/auto
-    - .before-script/bump-files
-    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
 
@@ -319,16 +302,7 @@ build/ios:
     - .tags/macos
     - .rules/mr/manual
     - .build-artifacts
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
-
-build/ios/release:
-  extends:
-    - .build
-    - .tags/macos
-    - .rules/web/auto
-    - .before-script/bump-files
-    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
@@ -366,23 +340,6 @@ bridge/ios:
     branch: theo/fix_pipeline_release
     strategy: depend
 
-bridge/ios/release:
-  extends:
-    - .bridge-check
-    - .rules/bridge-release/ios
-    - .variables/bridge-common
-  needs:
-    - build/ios/release
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/ios/release
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-  trigger:
-    project: TankerHQ/sdk-ios
-    # FIXME
-    branch: theo/fix_pipeline_release
-    strategy: depend
-
 bridge/android:
   extends:
     - .bridge-check
@@ -393,23 +350,6 @@ bridge/android:
   variables:
     UPSTREAM_RUNNER_TAG: linux
     UPSTREAM_JOB_NAME: build/android
-  trigger:
-    project: TankerHQ/sdk-android
-    # FIXME
-    branch: theo/new_release_process
-    strategy: depend
-
-bridge/android/release:
-  extends:
-    - .bridge-check
-    - .rules/bridge-release/android
-    - .variables/bridge-common
-  needs:
-    - build/android/release
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/android/release
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
   trigger:
     project: TankerHQ/sdk-android
     # FIXME
@@ -464,53 +404,34 @@ bridge/python/windows:
     branch: theo/new_release_process
     strategy: depend
 
-bridge/python/release/linux:
+bridge/ruby/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-release/python
+    - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/linux/release
+    - build/linux/shared
   variables:
     UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/linux/release
-    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+    UPSTREAM_JOB_NAME: build/linux/shared
   trigger:
-    project: TankerHQ/sdk-python
+    project: TankerHQ/sdk-ruby
     # FIXME
     branch: theo/new_release_process
     strategy: depend
 
-bridge/python/release/macos:
+bridge/ruby/macos:
   extends:
     - .bridge-check
-    - .rules/bridge-release/python
+    - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/macos/release
+    - build/macos/shared
   variables:
     UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/macos/release
-    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+    UPSTREAM_JOB_NAME: build/macos/shared
   trigger:
-    project: TankerHQ/sdk-python
-    # FIXME
-    branch: theo/new_release_process
-    strategy: depend
-
-bridge/python/release/windows:
-  extends:
-    - .bridge-check
-    - .rules/bridge-release/python
-    - .variables/bridge-common
-  needs:
-    - build/windows/release
-  variables:
-    UPSTREAM_RUNNER_TAG: windows
-    UPSTREAM_JOB_NAME: build/windows/release
-    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
-  trigger:
-    project: TankerHQ/sdk-python
+    project: TankerHQ/sdk-ruby
     # FIXME
     branch: theo/new_release_process
     strategy: depend
@@ -524,6 +445,7 @@ check/compat:
     - .check
     - .tags/linux
     - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
   needs:
     - build/linux
   script:
@@ -534,32 +456,10 @@ check/e2e:
     - .check
     - .tags/linux
     - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
   image: registry.gitlab.com/tankerhq/ci/ci-main:latest
   needs:
     - build/linux
-  script:
-    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
-
-check/compat/release:
-  extends:
-    - .check
-    - .tags/linux
-    - .rules/web/auto
-    - .before-script/bump-files
-  needs:
-    - build/linux/release
-  script:
-    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
-
-check/e2e/release:
-  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
-  extends:
-    - .check
-    - .tags/linux
-    - .rules/web/auto
-    - .before-script/bump-files
-  needs:
-    - build/linux/release
   script:
     - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
 
@@ -602,11 +502,9 @@ bridge/ios/deploy:
     - .rules/bridge-release/ios
     - .variables/bridge-common
   needs:
-    - bridge/ios/release
+    - bridge/ios
     - deploy
   variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/ios/release
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
@@ -622,11 +520,9 @@ bridge/android/deploy:
     - .rules/bridge-release/android
     - .variables/bridge-common
   needs:
-    - bridge/android/release
+    - bridge/android
     - deploy
   variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/android/release
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
@@ -643,12 +539,34 @@ bridge/python/deploy:
     - .variables/bridge-common
   needs:
     - deploy
+    - bridge/python/windows
+    - bridge/python/macos
+    - bridge/python/linux
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-python
+    # FIXME
+    branch: theo/new_release_process
+    strategy: depend
+
+bridge/ruby/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/ruby
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/ruby/macos
+    - bridge/ruby/linux
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-ruby
     # FIXME
     branch: theo/new_release_process
     strategy: depend
