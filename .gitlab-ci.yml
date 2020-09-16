@@ -53,10 +53,15 @@ stages:
 # Default settings override #
 #############################
 
-.before-script/bump-files:
+.before-script/bump-files-on-release/bash:
   before_script:
     - *global_before_script
-    - poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION
+    - if [[ -z "$SDK_NATIVE_RELEASE_VERSION" ]]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+
+.before-script/bump-files-on-release/powershell:
+  before_script:
+    - *global_before_script
+    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION }
 
 ##############
 # Conditions #
@@ -255,7 +260,7 @@ build/linux/shared:
     - .build
     - .tags/linux
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
@@ -265,7 +270,7 @@ build/linux/shared/release:
     - .build
     - .tags/linux
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
@@ -284,7 +289,7 @@ build/linux/shared/release:
     - .build
     - .tags/windows
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/powershell
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
@@ -312,7 +317,7 @@ build/macos/shared:
     - .build
     - .tags/macos
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
@@ -322,7 +327,7 @@ build/macos/shared/release:
     - .build
     - .tags/macos
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
@@ -341,7 +346,7 @@ build/macos/shared/release:
     - .build
     - .tags/linux
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
@@ -360,7 +365,7 @@ build/macos/shared/release:
     - .build
     - .tags/macos
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
@@ -643,7 +648,7 @@ bridge/ruby/release/macos:
     - .check
     - .tags/linux
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
   needs:
     - build/linux/release
   script:
@@ -655,7 +660,7 @@ bridge/ruby/release/macos:
     - .check
     - .tags/linux
     - .rules/web/auto
-    - .before-script/bump-files
+    - .before-script/bump-files-on-release/bash
   needs:
     - build/linux/release
   script:
