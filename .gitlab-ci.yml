@@ -80,6 +80,15 @@ stages:
 .if-invalid-web-release: &if-invalid-web-release
     if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
 
+.if-invalid-android-release: &if-invalid-android-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
+
+.if-invalid-ios-release: &if-invalid-ios-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
+
+.if-invalid-python-release: &if-invalid-python-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A[0-9.]+([a-b][0-9]+)?\z/)
+
 .if-merge-result: &if-merge-result
     if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
 
@@ -195,6 +204,12 @@ workflow:
   rules:
     # web pipelines for releases only
     - <<: *if-invalid-web-release
+      when: never
+    - <<: *if-invalid-android-release
+      when: never
+    - <<: *if-invalid-ios-release
+      when: never
+    - <<: *if-invalid-python-release
       when: never
     # allow everything else
     - when: always
