@@ -167,6 +167,8 @@ class TankerConan(ConanFile):
             self.cmake.configure()
         if self.should_build:
             self.cmake.build()
+        if self.should_install and self.develop:
+            self.cmake.install()
 
     def package(self):
         self.init_cmake()
