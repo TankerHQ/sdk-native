@@ -68,37 +68,37 @@ stages:
 ##############
 
 .if-valid-native-release-version: &if-valid-native-release-version
-    if: $SDK_NATIVE_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+    if: $SDK_NATIVE_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
 
 .if-invalid-native-release-version: &if-invalid-native-release-version
-    if: $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+    if: $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
 
 .if-valid-ios-release-version: &if-valid-ios-release-version
-    if: $SDK_IOS_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+    if: $SDK_IOS_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
 
 .if-valid-android-release-version: &if-valid-android-release-version
-    if: $SDK_ANDROID_RELEASE_VERSION =~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+    if: $SDK_ANDROID_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
 
 .if-valid-python-release-version: &if-valid-python-release-version
-    if: $SDK_PYTHON_RELEASE_VERSION =~ /\A[0-9.]+([a-b][0-9]+)?\z/
+    if: $SDK_PYTHON_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/
 
 .if-valid-ruby-release-version: &if-valid-ruby-release-version
-    if: $SDK_RUBY_RELEASE_VERSION =~ /\A[0-9.]+(\.(alpha|beta)\.[0-9]+)?\z/
+    if: $SDK_RUBY_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/
 
 .if-invalid-web-release: &if-invalid-web-release
-    if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/
+    if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
 
 .if-invalid-android-release: &if-invalid-android-release
-    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
 
 .if-invalid-ios-release: &if-invalid-ios-release
-    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A[0-9.]+(-[a-z]+[0-9]+)?\z/)
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
 
 .if-invalid-python-release: &if-invalid-python-release
-    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A[0-9.]+([a-b][0-9]+)?\z/)
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/)
 
 .if-invalid-ruby-release: &if-invalid-ruby-release
-    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A[0-9.]+(\.(alpha|beta)\.[0-9]+)?\z/)
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/)
 
 .if-merge-result: &if-merge-result
     if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
