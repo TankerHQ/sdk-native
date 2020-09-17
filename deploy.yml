@@ -2,6 +2,7 @@ profiles:
   linux:
     - gcc8-release
     - gcc8-release-shared
+    - gcc8-release-static-bundle
     - android-x86-release
     - android-x86_64-release
     - android-armv7-release
