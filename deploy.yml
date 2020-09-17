@@ -7,6 +7,10 @@ profiles:
     - android-x86_64-release
     - android-armv7-release
     - android-armv8-release
+    - android-x86-release-static-bundle
+    - android-x86_64-release-static-bundle
+    - android-armv7-release-static-bundle
+    - android-armv8-release-static-bundle
   darwin:
     - macos-release
     - macos-release-shared
