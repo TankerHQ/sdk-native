@@ -158,6 +158,7 @@ stages:
 .rules/bridge-ci:
   rules:
     - <<: *if-mr-pipeline
+      allow_failure: true
     - <<: *if-web-pipeline
 
 .rules/bridge-release/ios:
