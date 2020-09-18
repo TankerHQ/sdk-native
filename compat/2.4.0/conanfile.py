@@ -18,7 +18,7 @@ class Compat(ConanFile):
         self.requires("gsl-lite/0.32.0@tanker/testing#8e9e0220b7a3c40458e5457c6d825bbf", override=True)
         self.requires("jsonformoderncpp/3.4.0@tanker/testing#3ba92ab5efa0ef0971af2f760eec7ee1", override=True)
         self.requires("libsodium/1.0.18@tanker/testing#f6a62ff8abf2171fcd2d7b845334a796", override=True)
-        self.requires("tconcurrent/0.30.0@tanker/stable#95a04658511e319fcee7660922a18278", override=True)
+        self.requires("tconcurrent/0.30.0@tanker/stable#481701a00b9e15d29d150f4c821617cb", override=True)
         self.requires("date/2.4.1@tanker/testing#95da0a6ae615b56ac0d0ffbcf43a08aa", override=True)
         self.requires("sqlcipher/4.2.0@tanker/testing#11dc58154e814db75e152c9612cd1bd2", override=True)
 
