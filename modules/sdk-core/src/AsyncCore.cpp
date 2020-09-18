@@ -265,8 +265,8 @@ tc::thread_pool& AsyncCore::getLogHandlerThreadPool()
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)
 {
-  auto& tp = getLogHandlerThreadPool();
-  Log::setLogHandler([handler, &tp](Log::Record const& record) {
+  Log::setLogHandler([handler](Log::Record const& record) {
+    auto& tp = getLogHandlerThreadPool();
     tc::async(tp, [=] { handler(record); }).get();
   });
 }
