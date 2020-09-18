@@ -57,16 +57,6 @@ TESTS = {
         "provisional-user-group-old-claim",
         "claim-provisional-self",
     ],
-    "2.3.0": [
-        "encrypt",
-        "group",
-        "unlock",
-        "preshare-and-claim",
-        "decrypt-old-claim",
-        "provisional-user-group-claim",
-        "provisional-user-group-old-claim",
-        "claim-provisional-self",
-    ],
 }
 
 
