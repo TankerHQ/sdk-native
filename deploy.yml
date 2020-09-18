@@ -13,12 +13,15 @@ profiles:
     - android-armv8-release-static-bundle
   darwin:
     - macos-release
+    - macos-release-static-bundle
     - macos-release-shared
     - ios-x86-release
     - ios-x86_64-release
+    - ios-x86_64-release-static-bundle
     - ios-armv7-release
     - ios-armv7s-release
     - ios-armv8-release
+    - ios-armv8-release-static-bundle
   win32:
     - vs2019-release
     - mingw64-release
