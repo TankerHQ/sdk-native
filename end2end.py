@@ -7,10 +7,6 @@ import tankerci.conan
 import tankerci.endtoend
 
 
-def export_tanker(src_path: Path) -> None:
-    tankerci.conan.export(src_path=src_path)
-
-
 def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
     tankerci.conan.export_pkg(
         artifacts_path,
@@ -29,9 +25,7 @@ def main() -> None:
         default=False,
     )
     parser.add_argument(
-        "--export-tanker",
-        action="store_true",
-        default=False,
+        "--use-editable", action="store_true", default=False,
     )
     parser.add_argument("--profile", required=True)
     parser.add_argument("--use-local-sources", action="store_true", default=False)
@@ -40,11 +34,11 @@ def main() -> None:
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
 
-    tankerci.conan.update_config()
+    # tankerci.conan.update_config()
 
-    if args.export_tanker:
-        export_tanker(Path.getcwd())
-        tanker_conan_ref = "tanker/dev@"
+    tanker_conan_ref = "tanker/dev@"
+    if args.use_editable:
+        tankerci.conan.add_editable(Path().getcwd())
     else:
         artifacts_path = Path.getcwd() / "package"
         use_packaged_tanker(artifacts_path, args.profile)
@@ -60,9 +54,7 @@ def main() -> None:
             repos=["sdk-python", "sdk-js", "qa-python-js"]
         )
     tankerci.endtoend.test(
-        tanker_conan_ref=tanker_conan_ref,
-        profile=args.profile,
-        base_path=base_path,
+        tanker_conan_ref=tanker_conan_ref, profile=args.profile, base_path=base_path,
     )
 
 
