@@ -142,9 +142,7 @@ def run_test(base_path, next_path, version, command):
 
 
 def compat(args: str) -> None:
-    built_binary = build_all(
-        do_export_tanker=args.export_tanker, profile=args.profile
-    )
+    built_binary = build_all(do_export_tanker=args.export_tanker, profile=args.profile)
 
     tankerci.cpp.set_test_env()
     for version, commands in TESTS.items():
@@ -176,9 +174,7 @@ def main() -> None:
         default=False,
     )
     parser.add_argument(
-        "--export-tanker",
-        action="store_true",
-        default=False,
+        "--export-tanker", action="store_true", default=False,
     )
     parser.add_argument("--profile", required=True)
 
