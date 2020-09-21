@@ -79,14 +79,7 @@ def build_all(use_editable, profile):
         tankerci.conan.config_install(src_path / "config")
         if version == CURRENT:
             if use_editable:
-                tankerci.conan.run(
-                    "editable",
-                    "add",
-                    "-l",
-                    Path().getcwd() / "tanker_layout.ini",
-                    Path().getcwd(),
-                    "tanker/dev",
-                )
+                tankerci.conan.add_editable(Path().getcwd())
             else:
                 use_packaged_tanker(Path.getcwd() / "package", profile)
         built_path = tankerci.cpp.build(profile, src_path=src_path)
@@ -170,12 +163,6 @@ def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--isolate-conan-user-home",
-        action="store_true",
-        dest="home_isolation",
-        default=False,
-    )
     parser.add_argument(
         "--use-editable", action="store_true", default=False,
     )

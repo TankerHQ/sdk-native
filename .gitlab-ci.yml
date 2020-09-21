@@ -440,7 +440,7 @@ check/compat:
   needs:
     - build/linux
   script:
-    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
+    - poetry run python compat/run-compat.py --profile gcc8-release
 
 check/e2e:
   extends:
