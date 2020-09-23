@@ -46,6 +46,17 @@ tc::cotask<void> LocalUserStore::setDeviceId(
   TC_RETURN();
 }
 
+tc::cotask<void> LocalUserStore::initializeDevice(
+    Crypto::PublicSignatureKey const& trustchainPublicKey,
+    std::vector<Crypto::EncryptionKeyPair> const& userKeys)
+{
+  TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
+    TC_AWAIT(setTrustchainPublicSignatureKey(trustchainPublicKey));
+    TC_AWAIT(putUserKeys(userKeys));
+    TC_AWAIT(setDeviceInitialized());
+  }));
+}
+
 tc::cotask<void> LocalUserStore::putLocalUser(LocalUser const& user)
 {
   TC_AWAIT(putUserKeys(user.userKeys()));

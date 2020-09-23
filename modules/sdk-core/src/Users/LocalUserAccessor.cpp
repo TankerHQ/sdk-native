@@ -38,12 +38,12 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
                                 Trustchain::Context{trustchainId, *optPubKey},
                                 requester,
                                 store));
+
   auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
   auto const [localUser, context] =
       TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId, userId));
-  TC_AWAIT(
-      store->setTrustchainPublicSignatureKey(context.publicSignatureKey()));
-  TC_AWAIT(store->putLocalUser(localUser));
+  TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
+                                   localUser.userKeys()));
 
   TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
 }
