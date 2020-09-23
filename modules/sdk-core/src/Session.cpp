@@ -160,7 +160,6 @@ Identity::SecretPermanentIdentity const& Session::identity() const
 
 tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
-  TC_AWAIT(storage().localUserStore.setDeviceId(deviceId));
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
       TC_AWAIT(storage().localUserStore.getDeviceKeys())

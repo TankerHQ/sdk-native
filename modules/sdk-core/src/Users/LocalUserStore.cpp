@@ -193,11 +193,13 @@ tc::cotask<void> LocalUserStore::setDeviceInitialized()
   TC_RETURN();
 }
 
-tc::cotask<void> LocalUserStore::setDeviceKeys(DeviceKeys const& deviceKeys)
+tc::cotask<void> LocalUserStore::setDeviceData(
+    Trustchain::DeviceId const& deviceId, DeviceKeys const& deviceKeys)
 {
   FUNC_TIMER(DB);
   DeviceKeysTable tab{};
   (*_db->connection())(insert_into(tab).set(
+      tab.device_id = deviceId.base(),
       tab.private_signature_key = deviceKeys.signatureKeyPair.privateKey.base(),
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
       tab.private_encryption_key =

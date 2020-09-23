@@ -46,8 +46,8 @@ public:
   tc::cotask<DeviceKeys> getDeviceKeys() const;
   tc::cotask<Trustchain::DeviceId> getDeviceId() const;
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
-  // TODO put in private
-  tc::cotask<void> setDeviceKeys(DeviceKeys const& deviceKeys);
+  tc::cotask<void> setDeviceData(Trustchain::DeviceId const& deviceId,
+                                 DeviceKeys const& deviceKeys);
 
 private:
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
