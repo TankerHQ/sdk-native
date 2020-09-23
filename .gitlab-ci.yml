@@ -138,6 +138,7 @@ stages:
   rules:
     - <<: *if-mr-pipeline
     - <<: *if-web-pipeline
+    - <<: *if-merge-result
 
 .rules/mr/manual:
   rules:
