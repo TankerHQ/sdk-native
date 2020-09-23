@@ -36,16 +36,6 @@ tc::cotask<bool> LocalUserStore::isInitialized()
   TC_RETURN(row.device_initialized);
 }
 
-tc::cotask<void> LocalUserStore::setDeviceId(
-    Trustchain::DeviceId const& deviceId)
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db->connection())(
-      update(tab).set(tab.device_id = deviceId.base()).unconditionally());
-  TC_RETURN();
-}
-
 tc::cotask<void> LocalUserStore::initializeDevice(
     Crypto::PublicSignatureKey const& trustchainPublicKey,
     std::vector<Crypto::EncryptionKeyPair> const& userKeys)

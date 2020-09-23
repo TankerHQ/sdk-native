@@ -29,7 +29,6 @@ public:
   LocalUserStore(DataStore::Database* dbCon);
 
   tc::cotask<bool> isInitialized();
-  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
   tc::cotask<void> initializeDevice(
       Crypto::PublicSignatureKey const& trustchaniPublicKey,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
