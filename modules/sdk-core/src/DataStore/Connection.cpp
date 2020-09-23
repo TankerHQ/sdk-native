@@ -3,6 +3,7 @@
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <Tanker/Log/Log.hpp>
 
@@ -97,13 +98,16 @@ ConnPtr createConnection(std::string const& dbPath,
   auto const shouldMigrate = hasCipher() && !isEncrypted && userSecret;
   try
   {
-    auto db = std::make_unique<Connection>(sqlpp::sqlite3::connection_config{
-        dbPath.c_str(),
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-        "",
-        false,
-        shouldEncrypt ? hexUserSecret(userSecret) : "",
-    });
+    auto db = [&] {
+      SCOPE_TIMER("open", DB);
+      return std::make_unique<Connection>(sqlpp::sqlite3::connection_config{
+          dbPath.c_str(),
+          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+          "",
+          false,
+          shouldEncrypt ? hexUserSecret(userSecret) : "",
+      });
+    }();
     // migrate from sqlcipher 3 to 4
     db->execute("PRAGMA cipher_migrate");
     // enable foreign key support
@@ -131,10 +135,13 @@ ConnPtr createConnection(std::string const& dbPath,
           hexkey});
     }
 
-    // Check the open succeeded
-    db->execute("SELECT count(*) FROM sqlite_master");
-    if (exclusive)
-      makeExclusive(db);
+    {
+      SCOPE_TIMER("finalize open", DB);
+      // Check the open succeeded
+      db->execute("SELECT count(*) FROM sqlite_master");
+      if (exclusive)
+        makeExclusive(db);
+    }
     return db;
   }
   catch (sqlpp::exception const& e)
