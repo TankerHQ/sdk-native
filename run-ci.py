@@ -19,6 +19,26 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
     recipe.copy(Path.getcwd() / "package")
 
 
+def deploy():
+    # first, clear cache to avoid uploading trash
+    tankerci.conan.run("remove", "*", "--force")
+
+    artifacts_folder = Path.getcwd() / "package"
+    recipe = artifacts_folder / "conanfile.py"
+
+    recipe_info = tankerci.conan.inspect(recipe)
+    version = recipe_info["version"]
+
+    profiles = [d.basename() for d in artifacts_folder.dirs()]
+
+    for profile in profiles:
+        package_folder = artifacts_folder / profile
+        tankerci.conan.export_pkg(
+            recipe, package_folder=package_folder, profile=profile, force=True
+        )
+    tankerci.conan.upload(f"tanker/{version}@")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -35,6 +55,9 @@ def main() -> None:
     )
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
+    bump_files_parser = subparsers.add_parser("bump-files")
+    bump_files_parser.add_argument("--version", required=True)
+
     subparsers.add_parser("deploy")
     subparsers.add_parser("mirror")
 
@@ -46,15 +69,10 @@ def main() -> None:
 
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
+    elif args.command == "bump-files":
+        tankerci.bump_files(args.version)
     elif args.command == "deploy":
-        git_tag = os.environ["CI_COMMIT_TAG"]
-        version = tankerci.version_from_git_tag(git_tag)
-        tankerci.bump_files(version)
-        tankerci.cpp.build_recipe(
-            Path.getcwd(),
-            conan_reference=f"tanker/{version}@tanker/stable",
-            upload=True,
-        )
+        deploy()
     elif args.command == "mirror":
         tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native", force=True)
     else:

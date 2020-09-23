@@ -1,250 +1,479 @@
-image: registry.gitlab.com/tankerhq/ci/ci-native:latest
-
-before_script:
- - poetry install
+default:
+  image: registry.gitlab.com/tankerhq/ci/ci-native:latest
+  before_script: &global_before_script
+    - poetry install
 
 stages:
   - build
-  - bridge
+  - bridge-check
   - check
   - deploy
+  - bridge-deploy
+  - mirror
 
-.build-always:
-  stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      # trigger the job after a MR is merged on feature branches and master
-      # $CI_MERGE_REQUEST_ID == null is needed to avoid duplicate pipelines
-    - if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+##########
+# Stages #
+##########
 
-.build-manual:
+.build:
   stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-      allow_failure: true
+
+.bridge-check:
+  stage: bridge-check
+
+.check:
+  stage: check
 
 .deploy:
   stage: deploy
+
+.bridge-deploy:
+  stage: bridge-deploy
+
+.mirror:
+  stage: mirror
+
+########
+# Tags #
+########
+
+.tags/windows:
+  tags:
+    - windows
+
+.tags/linux:
+  tags:
+    - linux
+
+.tags/macos:
+  tags:
+    - macos
+
+#############################
+# Default settings override #
+#############################
+
+.before-script/bump-files-on-release/bash:
+  before_script:
+    - *global_before_script
+    - if [ ! -z $SDK_NATIVE_RELEASE_VERSION ]; then poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION ; fi
+
+.before-script/bump-files-on-release/powershell:
+  before_script:
+    - *global_before_script
+    - if ($env:SDK_NATIVE_RELEASE_VERSION) { poetry run python run-ci.py bump-files --version=$SDK_NATIVE_RELEASE_VERSION }
+
+##############
+# Conditions #
+##############
+
+.if-valid-native-release-version: &if-valid-native-release-version
+    if: $SDK_NATIVE_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+
+.if-invalid-native-release-version: &if-invalid-native-release-version
+    if: $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+
+.if-valid-ios-release-version: &if-valid-ios-release-version
+    if: $SDK_IOS_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+
+.if-valid-android-release-version: &if-valid-android-release-version
+    if: $SDK_ANDROID_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+
+.if-valid-python-release-version: &if-valid-python-release-version
+    if: $SDK_PYTHON_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/
+
+.if-valid-ruby-release-version: &if-valid-ruby-release-version
+    if: $SDK_RUBY_RELEASE_VERSION =~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/
+
+.if-invalid-web-release: &if-invalid-web-release
+    if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+
+.if-invalid-android-release: &if-invalid-android-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
+
+.if-invalid-ios-release: &if-invalid-ios-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
+
+.if-invalid-python-release: &if-invalid-python-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/)
+
+.if-invalid-ruby-release: &if-invalid-ruby-release
+    if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/)
+
+.if-merge-result: &if-merge-result
+    if: $CI_MERGE_REQUEST_ID == null && $CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_REF_NAME == "master" || $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/)
+
+.if-web-pipeline: &if-web-pipeline
+    if: $CI_PIPELINE_SOURCE == "web"
+
+.if-not-web-pipeline: &if-not-web-pipeline
+    if: $CI_PIPELINE_SOURCE != "web"
+
+.if-mr-pipeline: &if-mr-pipeline
+    if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+.if-schedule-pipeline: &if-schedule-pipeline
+    if: $CI_PIPELINE_SOURCE == "schedule"
+
+.if-not-push-pipeline: &if-not-push-pipeline
+    if: $CI_PIPELINE_SOURCE != "push"
+
+.if-ref-master: &if-ref-master
+    if: $CI_COMMIT_REF_NAME == "master"
+
+.if-release-tag: &if-release-tag
+    if: $CI_COMMIT_REF_NAME =~ /\Av[0-9.]+\z/
+
+.if-release-branch: &if-release-branch
+    if: $CI_COMMIT_REF_NAME =~ /\Arelease\/.*\z/
+
+.if-feature-branch: &if-feature-branch
+    if: $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/
+
+#########
+# Rules #
+#########
+    
+.rules/mr/auto:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG
+    - <<: *if-mr-pipeline
+    - <<: *if-web-pipeline
+
+.rules/mr/manual:
+  rules:
+    - <<: *if-mr-pipeline
+      when: manual
+      # allow to merge when the job is not triggered
+      allow_failure: false
+
+.rules/web/auto:
+  rules:
+    - <<: *if-web-pipeline
+
+.rules/deploy:
+  rules:
+    - <<: *if-web-pipeline
       when: manual
 
-build/linux:
-  extends: .build-always
+.rules/nightly:
+  rules:
+    - <<: *if-schedule-pipeline
+
+.rules/bridge-ci:
+  rules:
+    - <<: *if-mr-pipeline
+    - <<: *if-web-pipeline
+
+.rules/bridge-release/ios:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-ios-release-version
+
+.rules/bridge-release/android:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-android-release-version
+
+.rules/bridge-release/python:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-python-release-version
+
+.rules/bridge-release/ruby:
+  rules:
+    - <<: *if-not-web-pipeline
+      when: never
+    - <<: *if-valid-ruby-release-version
+
+.rules/mirror:
+  rules:
+    - <<: *if-not-push-pipeline
+      when: never
+    - <<: *if-ref-master
+    - <<: *if-release-tag
+    - <<: *if-release-branch
+    - <<: *if-feature-branch
+
+#################
+# Extend blocks #
+#################
+
+.build-artifacts:
   artifacts:
-    expire_in: 1 day
-    paths:
-      - package/
-  tags: [linux]
+      paths:
+        - package/
+
+#############
+# Variables #
+#############
+
+.variables/bridge-common:
+  variables:
+    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
+    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+
+##################
+# Workflow rules #
+##################
+
+workflow:
+  rules:
+    # web pipelines for releases only
+    - <<: *if-invalid-web-release
+      when: never
+    - <<: *if-invalid-android-release
+      when: never
+    - <<: *if-invalid-ios-release
+      when: never
+    - <<: *if-invalid-python-release
+      when: never
+    - <<: *if-invalid-ruby-release
+      when: never
+    # allow everything else
+    - when: always
+
+###############
+# build stage #
+###############
+
+build/linux:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
-build/android:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [linux]
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
-
 build/linux/shared:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [linux]
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/manual
+    - .before-script/bump-files-on-release/bash
+    - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
 
+build/windows:
+  extends:
+    - .build
+    - .tags/windows
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/powershell
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+
 build/macos:
-  extends: .build-always
-  artifacts:
-    paths:
-      - package
-  tags: [macos]
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
 build/macos/shared:
-  extends: .build-manual
-  artifacts:
-    paths:
-      - package/
-  tags: [macos]
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/manual
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
-# build/ios:
-#   extends: .build-manual
-#   tags: [macos]
-#   artifacts:
-#     paths:
-#       - package
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release
-
-build/windows/visual:
-  extends: .build-always
-  tags: [windows]
-  artifacts:
-    paths:
-      - package
+build/android:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/manual
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
 
-# TODO put this one back once mingw-toolchain is up and running
-# build/windows/mingw:
-#   extends: .build-manual
-#   tags: [windows]
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile mingw32-release
-
-deploy/linux:
-  extends: .deploy
-  tags: [linux]
+build/ios:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/manual
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home deploy
-
-deploy/macos:
-  extends: .deploy
-  tags: [macos]
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home deploy
-
-deploy/windows:
-  extends: .deploy
-  tags: [windows]
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home deploy
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
 nightly/coverage:
-  stage: build
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/nightly
   script:
     # Using gcc8-release profile, but CI script will force debug for Tanker only
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release --coverage
     - mv build/gcc8-release/coverage coverage
-  tags:
-    - linux
   artifacts:
     paths:
       - coverage/
     expire_in: 7 days
 
-# bridge/ios:
-#   needs: ["build/ios"]
-#   stage: bridge
-#   rules:
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-#   variables:
-#     UPSTREAM_RUNNER_TAG: macos
-#     UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-#     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-#     UPSTREAM_JOB_NAME: build/ios
-#     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-#   trigger:
-#     project: TankerHQ/sdk-ios
-#     strategy: depend
+######################
+# bridge-check stage #
+######################
+
+bridge/ios:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/ios
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/ios
+  trigger:
+    project: TankerHQ/sdk-ios
+    strategy: depend
 
 bridge/android:
-  needs: ["build/android"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/android
   variables:
     UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
     UPSTREAM_JOB_NAME: build/android
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
 
-bridge/ruby/linux:
-  needs: ["build/linux/shared"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+bridge/python/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/linux
   variables:
     UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/linux/shared
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: TankerHQ/sdk-ruby
-    strategy: depend
-
-bridge/ruby/macos:
-  needs: ["build/macos/shared"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/macos/shared
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
-  trigger:
-    project: TankerHQ/sdk-ruby
-    strategy: depend
-
-bridge/python/macos:
-  needs: ["build/macos"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/macos
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+    UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/python/linux:
-  needs: ["build/linux"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+bridge/python/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos
   variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/linux
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
 
 bridge/python/windows:
-  needs: ["build/windows/visual"]
-  stage: bridge
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/windows
   variables:
     UPSTREAM_RUNNER_TAG: windows
-    UPSTREAM_PROJECT_ID: $CI_PROJECT_ID
-    UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
-    UPSTREAM_JOB_NAME: build/windows/visual
-    UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+    UPSTREAM_JOB_NAME: build/windows
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
 
+bridge/ruby/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/linux/shared
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/linux/shared
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+
+bridge/ruby/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos/shared
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos/shared
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+
+###############
+# check stage #
+###############
+
+check/compat:
+  extends:
+    - .check
+    - .tags/linux
+    - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
+  needs:
+    - build/linux
+  script:
+    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
+
+check/e2e:
+  extends:
+    - .check
+    - .tags/linux
+    - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
+  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
+  needs:
+    - build/linux
+  script:
+    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
+
+################
+# deploy stage #
+################
+
+deploy:
+  extends:
+    - .deploy
+    - .tags/linux
+    - .rules/deploy
+  release:
+    description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
+    tag_name: v$SDK_NATIVE_RELEASE_VERSION
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home deploy
+
 pages:
-  stage: deploy
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-  dependencies:
+  extends:
+    - .deploy
+    - .tags/linux
+    - .rules/nightly
+  needs:
     - nightly/coverage
   script:
     - mv coverage/ public/
@@ -252,39 +481,87 @@ pages:
     paths:
       - public
     expire_in: 7 days
-  tags:
-    - linux
+
+#######################
+# bridge-deploy stage #
+#######################
+
+bridge/ios/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/ios
+    - .variables/bridge-common
+  needs:
+    - bridge/ios
+    - deploy
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-ios
+    strategy: depend
+
+bridge/android/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/android
+    - .variables/bridge-common
+  needs:
+    - bridge/android
+    - deploy
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-android
+    strategy: depend
+
+bridge/python/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/python/windows
+    - bridge/python/macos
+    - bridge/python/linux
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+
+bridge/ruby/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/ruby
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/ruby/macos
+    - bridge/ruby/linux
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+
+################
+# mirror stage #
+################
 
 mirror:
-  tags:
-    - linux
-  stage: deploy
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-      when: never
-    - if: $CI_COMMIT_REF_NAME =~ /\Av[0-9.]+\z/
-    - if: $CI_COMMIT_REF_NAME =~ /\Afeat\/.+\z/
-    - if: $CI_COMMIT_REF_NAME == "master"
+  extends:
+    - .mirror
+    - .tags/linux
+    - .rules/mirror
+  dependencies: []
   script:
     - poetry run python run-ci.py mirror
-
-check/compat:
-  stage: check
-  needs: ["build/linux"]
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  script:
-    - poetry run python compat/run-compat.py --isolate-conan-user-home --profile gcc8-release
-  tags:
-    - linux
-
-check/e2e:
-  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
-  stage: check
-  needs: ["build/linux"]
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  script:
-    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
-  tags:
-    - linux
