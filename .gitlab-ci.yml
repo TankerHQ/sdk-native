@@ -340,8 +340,6 @@ bridge/ios:
     UPSTREAM_JOB_NAME: build/ios
   trigger:
     project: TankerHQ/sdk-ios
-    # FIXME
-    branch: theo/fix_pipeline_release
     strategy: depend
 
 bridge/android:
@@ -356,8 +354,6 @@ bridge/android:
     UPSTREAM_JOB_NAME: build/android
   trigger:
     project: TankerHQ/sdk-android
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/python/linux:
@@ -372,8 +368,6 @@ bridge/python/linux:
     UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-python
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/python/macos:
@@ -388,8 +382,6 @@ bridge/python/macos:
     UPSTREAM_JOB_NAME: build/macos
   trigger:
     project: TankerHQ/sdk-python
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/python/windows:
@@ -404,8 +396,6 @@ bridge/python/windows:
     UPSTREAM_JOB_NAME: build/windows
   trigger:
     project: TankerHQ/sdk-python
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/ruby/linux:
@@ -420,8 +410,6 @@ bridge/ruby/linux:
     UPSTREAM_JOB_NAME: build/linux/shared
   trigger:
     project: TankerHQ/sdk-ruby
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/ruby/macos:
@@ -436,8 +424,6 @@ bridge/ruby/macos:
     UPSTREAM_JOB_NAME: build/macos/shared
   trigger:
     project: TankerHQ/sdk-ruby
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 ###############
@@ -514,8 +500,6 @@ bridge/ios/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ios
-    # FIXME
-    branch: theo/fix_pipeline_release
     strategy: depend
 
 bridge/android/deploy:
@@ -532,8 +516,6 @@ bridge/android/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-android
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/python/deploy:
@@ -552,8 +534,6 @@ bridge/python/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-python
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 bridge/ruby/deploy:
@@ -571,8 +551,6 @@ bridge/ruby/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ruby
-    # FIXME
-    branch: theo/new_release_process
     strategy: depend
 
 ################
