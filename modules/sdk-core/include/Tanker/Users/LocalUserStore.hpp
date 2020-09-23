@@ -34,7 +34,6 @@ public:
       Crypto::PublicSignatureKey const& trustchaniPublicKey,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
 
-  tc::cotask<void> putLocalUser(LocalUser const& user);
   tc::cotask<void> putUserKeys(
       gsl::span<Crypto::EncryptionKeyPair const> userKeys);
 

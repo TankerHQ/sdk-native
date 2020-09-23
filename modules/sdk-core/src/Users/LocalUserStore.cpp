@@ -57,13 +57,6 @@ tc::cotask<void> LocalUserStore::initializeDevice(
   }));
 }
 
-tc::cotask<void> LocalUserStore::putLocalUser(LocalUser const& user)
-{
-  TC_AWAIT(putUserKeys(user.userKeys()));
-  TC_AWAIT(setDeviceKeys(user.deviceKeys()));
-  TC_AWAIT(setDeviceInitialized());
-}
-
 tc::cotask<void> LocalUserStore::putUserKeys(
     gsl::span<Crypto::EncryptionKeyPair const> userKeys)
 {
