@@ -218,10 +218,13 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
         deviceKeys.encryptionKeyPair.publicKey,
         Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
 
+    auto const deviceId = Trustchain::DeviceId{action.hash()};
+
     TC_AWAIT(
         _session->requesters().createDevice(Serialization::serialize(action)));
-    TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
-    TC_AWAIT(_session->setDeviceId(Trustchain::DeviceId{action.hash()}));
+    TC_AWAIT(
+        _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
+    TC_AWAIT(_session->setDeviceId(deviceId));
     TC_AWAIT(_session->finalizeOpening());
   }
   catch (Exception const& e)
@@ -269,6 +272,8 @@ tc::cotask<void> Core::registerIdentity(
       _session->userSecret(),
       gsl::make_span(ghostDevice.toVerificationKey()).as_span<uint8_t const>());
 
+  auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
+
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),
       _session->userId(),
@@ -276,9 +281,9 @@ tc::cotask<void> Core::registerIdentity(
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
       encryptVerificationKey));
-  TC_AWAIT(_session->storage().localUserStore.setDeviceKeys(deviceKeys));
   TC_AWAIT(
-      _session->setDeviceId(Trustchain::DeviceId{firstDeviceEntry.hash()}));
+      _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
+  TC_AWAIT(_session->setDeviceId(deviceId));
   TC_AWAIT(_session->finalizeOpening());
 }
 

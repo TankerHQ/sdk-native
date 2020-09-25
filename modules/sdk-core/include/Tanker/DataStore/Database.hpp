@@ -19,6 +19,8 @@ public:
   tc::cotask<void> migrate();
   void nuke();
 
+  tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f);
+
   sqlpp::sqlite3::connection* connection();
 
 private:
@@ -45,7 +47,6 @@ private:
   tc::cotask<void> startTransaction();
   tc::cotask<void> commitTransaction();
   tc::cotask<void> rollbackTransaction();
-  tc::cotask<void> inTransaction(std::function<tc::cotask<void>()> const& f);
 };
 
 tc::cotask<Database> createDatabase(
