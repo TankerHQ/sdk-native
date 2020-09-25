@@ -70,7 +70,7 @@ def compat_conan_home_path(version: str) -> str:
     return Path.getcwd() / "compat" / "conan" / version
 
 
-def build_all(do_export_tanker, profile):
+def build_all(use_editable, profile):
     built_binary = {}
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
@@ -78,8 +78,8 @@ def build_all(do_export_tanker, profile):
         tankerci.conan.set_home_isolation(compat_conan_home_path(version))
         tankerci.conan.config_install(src_path / "config")
         if version == CURRENT:
-            if do_export_tanker:
-                export_tanker(Path.getcwd(), profile)
+            if use_editable:
+                tankerci.conan.add_editable(Path().getcwd())
             else:
                 use_packaged_tanker(Path.getcwd() / "package", profile)
         built_path = tankerci.cpp.build(profile, src_path=src_path)
@@ -142,9 +142,7 @@ def run_test(base_path, next_path, version, command):
 
 
 def compat(args: str) -> None:
-    built_binary = build_all(
-        do_export_tanker=args.export_tanker, profile=args.profile
-    )
+    built_binary = build_all(use_editable=args.use_editable, profile=args.profile)
 
     tankerci.cpp.set_test_env()
     for version, commands in TESTS.items():
@@ -152,10 +150,6 @@ def compat(args: str) -> None:
             if command not in TESTS[CURRENT]:
                 continue
             run_test(built_binary[version], built_binary[CURRENT], version, command)
-
-
-def export_tanker(src_path: Path, profile: str) -> None:
-    tankerci.conan.export(src_path=src_path)
 
 
 def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
@@ -170,15 +164,7 @@ def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--isolate-conan-user-home",
-        action="store_true",
-        dest="home_isolation",
-        default=False,
-    )
-    parser.add_argument(
-        "--export-tanker",
-        action="store_true",
-        default=False,
+        "--use-editable", action="store_true", default=False,
     )
     parser.add_argument("--profile", required=True)
 

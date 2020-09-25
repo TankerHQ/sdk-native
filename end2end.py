@@ -4,11 +4,8 @@ from path import Path
 
 import tankerci.cpp
 import tankerci.conan
-import tankerci.endtoend
-
-
-def export_tanker(src_path: Path) -> None:
-    tankerci.conan.export(src_path=src_path)
+from tankerci.conan import TankerSource
+import tankerci.js
 
 
 def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
@@ -29,29 +26,19 @@ def main() -> None:
         default=False,
     )
     parser.add_argument(
-        "--export-tanker",
-        action="store_true",
-        default=False,
+        "--use-tanker",
+        type=TankerSource,
+        default=TankerSource.EDITABLE,
+        dest="tanker_source",
     )
     parser.add_argument("--profile", required=True)
     parser.add_argument("--use-local-sources", action="store_true", default=False)
 
     args = parser.parse_args()
+    artifact_path = Path().getcwd() / "package"
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
-
-    tankerci.conan.update_config()
-
-    if args.export_tanker:
-        export_tanker(Path.getcwd())
-        tanker_conan_ref = "tanker/dev@"
-    else:
-        artifacts_path = Path.getcwd() / "package"
-        use_packaged_tanker(artifacts_path, args.profile)
-        recipe_info = tankerci.conan.inspect(artifacts_path)
-        name = recipe_info["name"]
-        version = recipe_info["version"]
-        tanker_conan_ref = f"{name}/{version}@"
+        tankerci.conan.update_config()
 
     if args.use_local_sources:
         base_path = Path.getcwd().parent
@@ -59,11 +46,29 @@ def main() -> None:
         base_path = tankerci.git.prepare_sources(
             repos=["sdk-python", "sdk-js", "qa-python-js"]
         )
-    tankerci.endtoend.test(
-        tanker_conan_ref=tanker_conan_ref,
-        profile=args.profile,
-        base_path=base_path,
-    )
+
+    with base_path / "sdk-js":
+        tankerci.js.yarn_install()
+
+    with base_path / "sdk-python":
+        # artifacts are downloaded in sdk-native/package by gitlab
+        # since we are using sdk-python we use this smoke grenade
+        artifact_path.symlink(Path.getcwd() / "package")
+        tankerci.run("poetry", "install", "--no-root")
+        tankerci.run(
+            "poetry",
+            "run",
+            "python",
+            "run-ci.py",
+            "prepare",
+            f"--use-tanker={args.tanker_source.value}",
+            f"--profile={args.profile}",
+        )
+        tankerci.run("poetry", "install")
+
+    with base_path / "qa-python-js":
+        tankerci.run("poetry", "install")
+        tankerci.run("poetry", "run", "pytest", "--verbose", "--capture=no")
 
 
 if __name__ == "__main__":
