@@ -452,7 +452,7 @@ check/e2e:
   needs:
     - build/linux
   script:
-    - poetry run python end2end.py --isolate-conan-user-home --profile gcc8-release
+    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile gcc8-release
 
 ################
 # deploy stage #
