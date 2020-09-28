@@ -36,7 +36,11 @@ def deploy():
         tankerci.conan.export_pkg(
             recipe, package_folder=package_folder, profile=profile, force=True
         )
-    tankerci.conan.upload(f"tanker/{version}@")
+    latest_reference = f"tanker/{version}@"
+    alias = "tanker/deployed@"
+    tankerci.conan.upload(latest_reference)
+    tankerci.conan.alias(alias, latest_reference)
+    tankerci.conan.upload(alias)
 
 
 def main() -> None:

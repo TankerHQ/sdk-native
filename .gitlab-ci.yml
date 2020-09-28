@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: ccfcfdd1cc9df7aa3d1facbfd0a0431c858e7caf
+  ref: 701dd612951ce81b7c2b544282d57b18dcb1c57e
 
 ###############
 # build stage #
@@ -108,6 +108,8 @@ bridge/ios:
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/android:
   extends:
@@ -264,10 +266,11 @@ bridge/ios/deploy:
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/android/deploy:
   extends:
