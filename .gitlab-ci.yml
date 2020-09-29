@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: ccfcfdd1cc9df7aa3d1facbfd0a0431c858e7caf
+  ref: theo/fix_native_workflow_rules
 
 ###############
 # build stage #
@@ -108,6 +108,8 @@ bridge/ios:
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/android:
   extends:
@@ -122,6 +124,8 @@ bridge/android:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/python/linux:
   extends:
@@ -136,6 +140,8 @@ bridge/python/linux:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/python/macos:
   extends:
@@ -150,6 +156,8 @@ bridge/python/macos:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/python/windows:
   extends:
@@ -164,6 +172,8 @@ bridge/python/windows:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/ruby/linux:
   extends:
@@ -178,6 +188,8 @@ bridge/ruby/linux:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/ruby/macos:
   extends:
@@ -192,6 +204,8 @@ bridge/ruby/macos:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 ###############
 # check stage #
@@ -264,10 +278,11 @@ bridge/ios/deploy:
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/android/deploy:
   extends:
@@ -284,6 +299,8 @@ bridge/android/deploy:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/python/deploy:
   extends:
@@ -302,6 +319,8 @@ bridge/python/deploy:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 bridge/ruby/deploy:
   extends:
@@ -319,6 +338,8 @@ bridge/ruby/deploy:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 ################
 # mirror stage #
