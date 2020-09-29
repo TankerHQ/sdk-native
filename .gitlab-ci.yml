@@ -113,105 +113,105 @@ nightly/coverage:
 # bridge-check stage #
 ######################
 
-bridge/ios:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/ios
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/ios
-  trigger:
-    project: TankerHQ/sdk-ios
-    strategy: depend
-    # FIXME
-    branch: theo/conan_alias
-
-bridge/android:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/android
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/android
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-
-bridge/python/linux:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/linux
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/linux
-  trigger:
-    project: TankerHQ/sdk-python
-    strategy: depend
-
-bridge/python/macos:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/macos
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/macos
-  trigger:
-    project: TankerHQ/sdk-python
-    strategy: depend
-
-bridge/python/windows:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/windows
-  variables:
-    UPSTREAM_RUNNER_TAG: windows
-    UPSTREAM_JOB_NAME: build/windows
-  trigger:
-    project: TankerHQ/sdk-python
-    strategy: depend
-
-bridge/ruby/linux:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/linux/shared
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/linux/shared
-  trigger:
-    project: TankerHQ/sdk-ruby
-    strategy: depend
-
-bridge/ruby/macos:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/macos/shared
-  variables:
-    UPSTREAM_RUNNER_TAG: macos
-    UPSTREAM_JOB_NAME: build/macos/shared
-  trigger:
-    project: TankerHQ/sdk-ruby
-    strategy: depend
+# bridge/ios:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/ios
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_JOB_NAME: build/ios
+#   trigger:
+#     project: TankerHQ/sdk-ios
+#     strategy: depend
+#     # FIXME
+#     branch: theo/conan_alias
+#
+# bridge/android:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/android
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_JOB_NAME: build/android
+#   trigger:
+#     project: TankerHQ/sdk-android
+#     strategy: depend
+#
+# bridge/python/linux:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/linux
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_JOB_NAME: build/linux
+#   trigger:
+#     project: TankerHQ/sdk-python
+#     strategy: depend
+#
+# bridge/python/macos:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/macos
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_JOB_NAME: build/macos
+#   trigger:
+#     project: TankerHQ/sdk-python
+#     strategy: depend
+#
+# bridge/python/windows:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/windows
+#   variables:
+#     UPSTREAM_RUNNER_TAG: windows
+#     UPSTREAM_JOB_NAME: build/windows
+#   trigger:
+#     project: TankerHQ/sdk-python
+#     strategy: depend
+#
+# bridge/ruby/linux:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/linux/shared
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_JOB_NAME: build/linux/shared
+#   trigger:
+#     project: TankerHQ/sdk-ruby
+#     strategy: depend
+#
+# bridge/ruby/macos:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/macos/shared
+#   variables:
+#     UPSTREAM_RUNNER_TAG: macos
+#     UPSTREAM_JOB_NAME: build/macos/shared
+#   trigger:
+#     project: TankerHQ/sdk-ruby
+#     strategy: depend
 
 ###############
 # check stage #
@@ -273,73 +273,73 @@ pages:
 # bridge-deploy stage #
 #######################
 
-bridge/ios/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/ios
-    - .variables/bridge-common
-  needs:
-    - bridge/ios
-    - deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
-  trigger:
-    project: TankerHQ/sdk-ios
-    strategy: depend
-    # FIXME
-    branch: theo/conan_alias
-
-bridge/android/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/android
-    - .variables/bridge-common
-  needs:
-    - bridge/android
-    - deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-
-bridge/python/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/python
-    - .variables/bridge-common
-  needs:
-    - deploy
-    - bridge/python/windows
-    - bridge/python/macos
-    - bridge/python/linux
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-python
-    strategy: depend
-
-bridge/ruby/deploy:
-  extends:
-    - .bridge-deploy
-    - .rules/bridge-release/ruby
-    - .variables/bridge-common
-  needs:
-    - deploy
-    - bridge/ruby/macos
-    - bridge/ruby/linux
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-ruby
-    strategy: depend
+# bridge/ios/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/ios
+#     - .variables/bridge-common
+#   needs:
+#     - bridge/ios
+#     - deploy
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+#   trigger:
+#     project: TankerHQ/sdk-ios
+#     strategy: depend
+#     # FIXME
+#     branch: theo/conan_alias
+#
+# bridge/android/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/android
+#     - .variables/bridge-common
+#   needs:
+#     - bridge/android
+#     - deploy
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+#   trigger:
+#     project: TankerHQ/sdk-android
+#     strategy: depend
+#
+# bridge/python/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/python
+#     - .variables/bridge-common
+#   needs:
+#     - deploy
+#     - bridge/python/windows
+#     - bridge/python/macos
+#     - bridge/python/linux
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+#   trigger:
+#     project: TankerHQ/sdk-python
+#     strategy: depend
+#
+# bridge/ruby/deploy:
+#   extends:
+#     - .bridge-deploy
+#     - .rules/bridge-release/ruby
+#     - .variables/bridge-common
+#   needs:
+#     - deploy
+#     - bridge/ruby/macos
+#     - bridge/ruby/linux
+#   variables:
+#     UPSTREAM_BRIDGE_STAGE: deploy
+#     SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
+#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+#   trigger:
+#     project: TankerHQ/sdk-ruby
+#     strategy: depend
 
 ################
 # mirror stage #
