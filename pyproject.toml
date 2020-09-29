@@ -6,7 +6,7 @@ authors = ["Tanker team <tech@tanker.io>"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-tankerci = "*"
+tankerci = { git = "git@gitlab.com:TankerHQ/ci", branch = "theo/conan_alias" }
 tankeradminsdk = "0.2.1"
 
 [[tool.poetry.source]]
