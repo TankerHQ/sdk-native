@@ -1,23 +1,23 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 85c621c742dfcb56b7d1bcf419228115f5058788
+  ref: theo/fix_native_worfklow_rules
 
-workflow:
-  rules:
-    # web pipelines for releases only
-    - if: $CI_PIPELINE_SOURCE == "web" && $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/)
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/)
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "web" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
-      when: never
-    # allow everything else
-    - when: always
+# workflow:
+#   rules:
+#     # trigger pipelines for releases only
+#     - if: $CI_PIPELINE_SOURCE == "trigger" && $SDK_NATIVE_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/
+#       when: never
+#     - if: $CI_PIPELINE_SOURCE == "trigger" && ($SDK_PYTHON_RELEASE_VERSION != null && $SDK_PYTHON_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)([a-b][0-9]+)?\z/)
+#       when: never
+#     - if: $CI_PIPELINE_SOURCE == "trigger" && ($SDK_IOS_RELEASE_VERSION != null && $SDK_IOS_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
+#       when: never
+#     - if: $CI_PIPELINE_SOURCE == "trigger" && ($SDK_RUBY_RELEASE_VERSION != null && $SDK_RUBY_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(\.(alpha|beta)\.[0-9]+)?\z/)
+#       when: never
+#     - if: $CI_PIPELINE_SOURCE == "trigger" && ($SDK_ANDROID_RELEASE_VERSION != null && $SDK_ANDROID_RELEASE_VERSION !~ /\A([0-9]+)\.([0-9]+)\.([0-9]+)(-(alpha|beta)[0-9]+)?\z/)
+#       when: never
+#     # allow everything else
+#     - when: always
 
 
 ###############
@@ -32,6 +32,7 @@ build/linux:
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
+    - echo "CI_PIPELINE_SOURCE = $CI_PIPELINE_SOURCE"
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
 
 build/linux/shared:
