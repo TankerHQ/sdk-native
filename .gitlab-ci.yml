@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: ccfcfdd1cc9df7aa3d1facbfd0a0431c858e7caf
+  ref: 21ee71ff504eb0d9171f06bae9d77e106dfac35f
 
 ###############
 # build stage #
@@ -21,7 +21,7 @@ build/linux/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual
+    - .rules/mr/manual/web/auto
     - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
@@ -51,7 +51,7 @@ build/macos/shared:
   extends:
     - .build
     - .tags/macos
-    - .rules/mr/manual
+    - .rules/mr/manual/web/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -61,7 +61,7 @@ build/android:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual
+    - .rules/mr/manual/web/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -71,7 +71,7 @@ build/ios:
   extends:
     - .build
     - .tags/macos
-    - .rules/mr/manual
+    - .rules/mr/manual/web/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:

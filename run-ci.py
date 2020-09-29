@@ -36,7 +36,12 @@ def deploy():
         tankerci.conan.export_pkg(
             recipe, package_folder=package_folder, profile=profile, force=True
         )
-    tankerci.conan.upload(f"tanker/{version}@")
+    latest_reference = f"tanker/{version}@"
+    alias = "tanker/latest-stable@"
+    tankerci.conan.upload(latest_reference)
+    if "alpha" not in version and "beta" not in version:
+        tankerci.conan.alias(alias, latest_reference)
+        tankerci.conan.upload(alias)
 
 
 def main() -> None:
@@ -64,8 +69,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
-
-    tankerci.conan.update_config()
+        tankerci.conan.update_config()
 
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
