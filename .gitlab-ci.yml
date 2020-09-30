@@ -1,11 +1,17 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: theo/fix_native_workflow_rules
+  ref: theo/fix_workflow_rules
 
 ###############
 # build stage #
 ###############
+
+test/gitlab:
+  stage: build
+  script:
+    - echo "$SDK_NATIVE_RELEASE_VERSION"
+    - echo "$SDK_IOS_RELEASE_VERSION"
 
 # build/linux:
 #   extends:
@@ -16,7 +22,7 @@ include:
 #     - .before-script/bump-files-on-release/bash
 #   script:
 #     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
-
+#
 # build/linux/shared:
 #   extends:
 #     - .build
@@ -46,7 +52,7 @@ include:
 #     - .before-script/bump-files-on-release/bash
 #   script:
 #     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
-
+#
 # build/macos/shared:
 #   extends:
 #     - .build
@@ -57,16 +63,16 @@ include:
 #   script:
 #     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 #
-build/android:
-  extends:
-    - .build
-    - .tags/linux
-    - .rules/mr/manual/web/auto
-    - .build-artifacts
-    - .before-script/bump-files-on-release/bash
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
-
+# build/android:
+#   extends:
+#     - .build
+#     - .tags/linux
+#     - .rules/mr/manual/web/auto
+#     - .build-artifacts
+#     - .before-script/bump-files-on-release/bash
+#   script:
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+#
 # build/ios:
 #   tags:
 #     - macos
@@ -78,25 +84,25 @@ build/android:
 #     - .before-script/bump-files-on-release/bash
 #   script:
 #     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
-
-nightly/coverage:
-  extends:
-    - .build
-    - .tags/linux
-    - .rules/nightly
-  script:
-    # Using gcc8-release profile, but CI script will force debug for Tanker only
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release --coverage
-    - mv build/gcc8-release/coverage coverage
-  artifacts:
-    paths:
-      - coverage/
-    expire_in: 7 days
-
-######################
-# bridge-check stage #
-######################
-
+#
+# nightly/coverage:
+#   extends:
+#     - .build
+#     - .tags/linux
+#     - .rules/nightly
+#   script:
+#     # Using gcc8-release profile, but CI script will force debug for Tanker only
+#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release --coverage
+#     - mv build/gcc8-release/coverage coverage
+#   artifacts:
+#     paths:
+#       - coverage/
+#     expire_in: 7 days
+#
+# ######################
+# # bridge-check stage #
+# ######################
+#
 # bridge/ios:
 #   extends:
 #     - .bridge-check
@@ -112,23 +118,23 @@ nightly/coverage:
 #     strategy: depend
 #     # FIXME
 #     branch: theo/conan_alias
-
-bridge/android:
-  extends:
-    - .bridge-check
-    - .rules/bridge-ci
-    - .variables/bridge-common
-  needs:
-    - build/android
-  variables:
-    UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/android
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-    # FIXME
-    branch: theo/conan_alias
-
+#
+# bridge/android:
+#   extends:
+#     - .bridge-check
+#     - .rules/bridge-ci
+#     - .variables/bridge-common
+#   needs:
+#     - build/android
+#   variables:
+#     UPSTREAM_RUNNER_TAG: linux
+#     UPSTREAM_JOB_NAME: build/android
+#   trigger:
+#     project: TankerHQ/sdk-android
+#     strategy: depend
+#     # FIXME
+#     branch: theo/conan_alias
+#
 # bridge/python/linux:
 #   extends:
 #     - .bridge-check
@@ -208,11 +214,11 @@ bridge/android:
 #     strategy: depend
 #     # FIXME
 #     branch: theo/conan_alias
-
-###############
-# check stage #
-###############
-
+#
+# ###############
+# # check stage #
+# ###############
+#
 # check/compat:
 #   extends:
 #     - .check
@@ -235,40 +241,40 @@ bridge/android:
 #     - build/linux
 #   script:
 #     - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile gcc8-release
-
-################
-# deploy stage #
-################
-
-deploy:
-  extends:
-    - .deploy
-    - .tags/linux
-    - .rules/deploy/native
-  release:
-    description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
-    tag_name: v$SDK_NATIVE_RELEASE_VERSION
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home deploy
-
-pages:
-  extends:
-    - .deploy
-    - .tags/linux
-    - .rules/nightly
-  needs:
-    - nightly/coverage
-  script:
-    - mv coverage/ public/
-  artifacts:
-    paths:
-      - public
-    expire_in: 7 days
-
-#######################
-# bridge-deploy stage #
-#######################
-
+#
+# ################
+# # deploy stage #
+# ################
+#
+# deploy:
+#   extends:
+#     - .deploy
+#     - .tags/linux
+#     - .rules/deploy/native
+#   release:
+#     description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
+#     tag_name: v$SDK_NATIVE_RELEASE_VERSION
+#   script:
+#     - poetry run python run-ci.py --isolate-conan-user-home deploy
+#
+# pages:
+#   extends:
+#     - .deploy
+#     - .tags/linux
+#     - .rules/nightly
+#   needs:
+#     - nightly/coverage
+#   script:
+#     - mv coverage/ public/
+#   artifacts:
+#     paths:
+#       - public
+#     expire_in: 7 days
+#
+# #######################
+# # bridge-deploy stage #
+# #######################
+#
 # bridge/ios/deploy:
 #   extends:
 #     - .bridge-deploy
@@ -277,6 +283,11 @@ pages:
 #   needs:
 #     - bridge/ios
 #     - deploy
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE != "web"
+#       when: never
+#     - if: $SDK_IOS_RELEASE_VERSION == "2.6.1-alpha10"
+#       when: never
 #   variables:
 #     UPSTREAM_BRIDGE_STAGE: deploy
 #     SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
@@ -286,73 +297,73 @@ pages:
 #     strategy: depend
 #     # FIXME
 #     branch: theo/conan_alias
-
-bridge/android/deploy:
-  extends:
-    - .bridge-deploy
-    # - .rules/bridge-release/android
-    - .variables/bridge-common
-  needs:
-    - bridge/android
-    - deploy
-  variables:
-    UPSTREAM_BRIDGE_STAGE: deploy
-    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
-    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-  trigger:
-    project: TankerHQ/sdk-android
-    strategy: depend
-    # FIXME
-    branch: theo/conan_alias
-
-# bridge/python/deploy:
+#
+# bridge/android/deploy:
 #   extends:
 #     - .bridge-deploy
-#     - .rules/bridge-release/python
+#     - .rules/bridge-release/android
 #     - .variables/bridge-common
 #   needs:
+#     - bridge/android
 #     - deploy
-#     - bridge/python/windows
-#     - bridge/python/macos
-#     - bridge/python/linux
 #   variables:
 #     UPSTREAM_BRIDGE_STAGE: deploy
-#     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+#     SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
 #     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
 #   trigger:
-#     project: TankerHQ/sdk-python
+#     project: TankerHQ/sdk-android
 #     strategy: depend
 #     # FIXME
 #     branch: theo/conan_alias
 #
-# bridge/ruby/deploy:
+# # bridge/python/deploy:
+# #   extends:
+# #     - .bridge-deploy
+# #     - .rules/bridge-release/python
+# #     - .variables/bridge-common
+# #   needs:
+# #     - deploy
+# #     - bridge/python/windows
+# #     - bridge/python/macos
+# #     - bridge/python/linux
+# #   variables:
+# #     UPSTREAM_BRIDGE_STAGE: deploy
+# #     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+# #     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+# #   trigger:
+# #     project: TankerHQ/sdk-python
+# #     strategy: depend
+# #     # FIXME
+# #     branch: theo/conan_alias
+# #
+# # bridge/ruby/deploy:
+# #   extends:
+# #     - .bridge-deploy
+# #     - .rules/bridge-release/ruby
+# #     - .variables/bridge-common
+# #   needs:
+# #     - deploy
+# #     - bridge/ruby/macos
+# #     - bridge/ruby/linux
+# #   variables:
+# #     UPSTREAM_BRIDGE_STAGE: deploy
+# #     SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
+# #     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+# #   trigger:
+# #     project: TankerHQ/sdk-ruby
+# #     strategy: depend
+# #     # FIXME
+# #     branch: theo/conan_alias
+#
+# ################
+# # mirror stage #
+# ################
+#
+# mirror:
 #   extends:
-#     - .bridge-deploy
-#     - .rules/bridge-release/ruby
-#     - .variables/bridge-common
-#   needs:
-#     - deploy
-#     - bridge/ruby/macos
-#     - bridge/ruby/linux
-#   variables:
-#     UPSTREAM_BRIDGE_STAGE: deploy
-#     SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
-#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-#   trigger:
-#     project: TankerHQ/sdk-ruby
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-
-################
-# mirror stage #
-################
-
-mirror:
-  extends:
-    - .mirror
-    - .tags/linux
-    - .rules/mirror
-  dependencies: []
-  script:
-    - poetry run python run-ci.py mirror
+#     - .mirror
+#     - .tags/linux
+#     - .rules/mirror
+#   dependencies: []
+#   script:
+#     - poetry run python run-ci.py mirror
