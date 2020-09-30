@@ -7,55 +7,55 @@ include:
 # build stage #
 ###############
 
-# build/linux:
-#   extends:
-#     - .build
-#     - .tags/linux
-#     - .rules/mr/auto
-#     - .build-artifacts
-#     - .before-script/bump-files-on-release/bash
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
-#
-# build/linux/shared:
-#   extends:
-#     - .build
-#     - .tags/linux
-#     - .rules/mr/manual/web/auto
-#     - .before-script/bump-files-on-release/bash
-#     - .build-artifacts
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
-#
-# build/windows:
-#   extends:
-#     - .build
-#     - .tags/windows
-#     - .rules/mr/auto
-#     - .build-artifacts
-#     - .before-script/bump-files-on-release/powershell
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
-#
-# build/macos:
-#   extends:
-#     - .build
-#     - .tags/macos
-#     - .rules/mr/auto
-#     - .build-artifacts
-#     - .before-script/bump-files-on-release/bash
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
-#
-# build/macos/shared:
-#   extends:
-#     - .build
-#     - .tags/macos
-#     - .rules/mr/manual/web/auto
-#     - .build-artifacts
-#     - .before-script/bump-files-on-release/bash
-#   script:
-#     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
+build/linux:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+
+build/linux/shared:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/manual/web/auto
+    - .before-script/bump-files-on-release/bash
+    - .build-artifacts
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
+
+build/windows:
+  extends:
+    - .build
+    - .tags/windows
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/powershell
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+
+build/macos:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+
+build/macos/shared:
+  extends:
+    - .build
+    - .tags/macos
+    - .rules/mr/manual/web/auto
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
 build/android:
   extends:
@@ -129,112 +129,112 @@ bridge/android:
     # FIXME
     branch: theo/conan_alias
 
-# bridge/python/linux:
-#   extends:
-#     - .bridge-check
-#     - .rules/bridge-ci
-#     - .variables/bridge-common
-#   needs:
-#     - build/linux
-#   variables:
-#     UPSTREAM_RUNNER_TAG: linux
-#     UPSTREAM_JOB_NAME: build/linux
-#   trigger:
-#     project: TankerHQ/sdk-python
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-#
-# bridge/python/macos:
-#   extends:
-#     - .bridge-check
-#     - .rules/bridge-ci
-#     - .variables/bridge-common
-#   needs:
-#     - build/macos
-#   variables:
-#     UPSTREAM_RUNNER_TAG: macos
-#     UPSTREAM_JOB_NAME: build/macos
-#   trigger:
-#     project: TankerHQ/sdk-python
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-#
-# bridge/python/windows:
-#   extends:
-#     - .bridge-check
-#     - .rules/bridge-ci
-#     - .variables/bridge-common
-#   needs:
-#     - build/windows
-#   variables:
-#     UPSTREAM_RUNNER_TAG: windows
-#     UPSTREAM_JOB_NAME: build/windows
-#   trigger:
-#     project: TankerHQ/sdk-python
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-#
-# bridge/ruby/linux:
-#   extends:
-#     - .bridge-check
-#     - .rules/bridge-ci
-#     - .variables/bridge-common
-#   needs:
-#     - build/linux/shared
-#   variables:
-#     UPSTREAM_RUNNER_TAG: linux
-#     UPSTREAM_JOB_NAME: build/linux/shared
-#   trigger:
-#     project: TankerHQ/sdk-ruby
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-#
-# bridge/ruby/macos:
-#   extends:
-#     - .bridge-check
-#     - .rules/bridge-ci
-#     - .variables/bridge-common
-#   needs:
-#     - build/macos/shared
-#   variables:
-#     UPSTREAM_RUNNER_TAG: macos
-#     UPSTREAM_JOB_NAME: build/macos/shared
-#   trigger:
-#     project: TankerHQ/sdk-ruby
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
+bridge/python/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/linux
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/linux
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
+
+bridge/python/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
+
+bridge/python/windows:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/windows
+  variables:
+    UPSTREAM_RUNNER_TAG: windows
+    UPSTREAM_JOB_NAME: build/windows
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
+
+bridge/ruby/linux:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/linux/shared
+  variables:
+    UPSTREAM_RUNNER_TAG: linux
+    UPSTREAM_JOB_NAME: build/linux/shared
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
+
+bridge/ruby/macos:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos/shared
+  variables:
+    UPSTREAM_RUNNER_TAG: macos
+    UPSTREAM_JOB_NAME: build/macos/shared
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 ###############
 # check stage #
 ###############
 
-# check/compat:
-#   extends:
-#     - .check
-#     - .tags/linux
-#     - .rules/mr/auto
-#     - .before-script/bump-files-on-release/bash
-#   needs:
-#     - build/linux
-#   script:
-#     - poetry run python compat/run-compat.py --profile gcc8-release
-#
-# check/e2e:
-#   extends:
-#     - .check
-#     - .tags/linux
-#     - .rules/mr/auto
-#     - .before-script/bump-files-on-release/bash
-#   image: registry.gitlab.com/tankerhq/ci/ci-main:latest
-#   needs:
-#     - build/linux
-#   script:
-#     - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile gcc8-release
+check/compat:
+  extends:
+    - .check
+    - .tags/linux
+    - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
+  needs:
+    - build/linux
+  script:
+    - poetry run python compat/run-compat.py --profile gcc8-release
+
+check/e2e:
+  extends:
+    - .check
+    - .tags/linux
+    - .rules/mr/auto
+    - .before-script/bump-files-on-release/bash
+  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
+  needs:
+    - build/linux
+  script:
+    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile gcc8-release
 
 ################
 # deploy stage #
@@ -305,44 +305,44 @@ bridge/android/deploy:
     # FIXME
     branch: theo/conan_alias
 
-# bridge/python/deploy:
-#   extends:
-#     - .bridge-deploy
-#     - .rules/bridge-release/python
-#     - .variables/bridge-common
-#   needs:
-#     - deploy
-#     - bridge/python/windows
-#     - bridge/python/macos
-#     - bridge/python/linux
-#   variables:
-#     UPSTREAM_BRIDGE_STAGE: deploy
-#     SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
-#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-#   trigger:
-#     project: TankerHQ/sdk-python
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
-#
-# bridge/ruby/deploy:
-#   extends:
-#     - .bridge-deploy
-#     - .rules/bridge-release/ruby
-#     - .variables/bridge-common
-#   needs:
-#     - deploy
-#     - bridge/ruby/macos
-#     - bridge/ruby/linux
-#   variables:
-#     UPSTREAM_BRIDGE_STAGE: deploy
-#     SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
-#     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
-#   trigger:
-#     project: TankerHQ/sdk-ruby
-#     strategy: depend
-#     # FIXME
-#     branch: theo/conan_alias
+bridge/python/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/python
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/python/windows
+    - bridge/python/macos
+    - bridge/python/linux
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_PYTHON_RELEASE_VERSION: $SDK_PYTHON_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
+
+bridge/ruby/deploy:
+  extends:
+    - .bridge-deploy
+    - .rules/bridge-release/ruby
+    - .variables/bridge-common
+  needs:
+    - deploy
+    - bridge/ruby/macos
+    - bridge/ruby/linux
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_RUBY_RELEASE_VERSION: $SDK_RUBY_RELEASE_VERSION
+    SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+    # FIXME
+    branch: theo/conan_alias
 
 ################
 # mirror stage #
