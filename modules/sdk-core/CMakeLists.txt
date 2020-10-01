@@ -195,9 +195,9 @@ target_link_libraries(tankercore
   tankerformat
   tankerlog
   tankerconfig
-  tankeradmin
   ttracer
   CONAN_PKG::boost
+  CONAN_PKG::fetchpp
   CONAN_PKG::tconcurrent
   CONAN_PKG::mgs
   CONAN_PKG::gsl-lite
