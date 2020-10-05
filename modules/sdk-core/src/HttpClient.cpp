@@ -265,6 +265,9 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 
 tc::cotask<void> HttpClient::deauthenticate()
 {
+  if (_headers.count(fetchpp::http::field::authorization) == 0)
+    TC_RETURN();
+
   try
   {
     auto const baseTarget =
