@@ -46,34 +46,33 @@ auto AsyncCore::runResumable(F&& f)
   using Func = std::decay_t<F>;
   return tc::submit_to_future<typename tc::detail::task_return_type<decltype(
       std::declval<F>()())>::type>(
-             _taskCanceler.wrap(tc::lazy::connect(
-                 tc::lazy::async(tc::get_default_executor()),
-                 tc::lazy::run_resumable(
-                     tc::get_default_executor(),
-                     {},
-                     [](AsyncCore* core, Func f) -> decltype(f()) {
-                       try
-                       {
-                         if constexpr (std::is_same_v<decltype(f()), void>)
-                         {
-                           TC_AWAIT(f());
-                           TC_RETURN();
-                         }
-                         else
-                         {
-                           TC_RETURN(TC_AWAIT(f()));
-                         }
-                       }
-                       catch (Errors::Exception const& ex)
-                       {
-                         if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
-                           throw;
-                       }
-                       TC_AWAIT(core->handleDeviceRevocation());
-                     },
-                     this,
-                     std::forward<F>(f)))))
-      .to_shared();
+      _taskCanceler.wrap(tc::lazy::connect(
+          tc::lazy::async(tc::get_default_executor()),
+          tc::lazy::run_resumable(
+              tc::get_default_executor(),
+              {},
+              [](AsyncCore* core, Func f) -> decltype(f()) {
+                try
+                {
+                  if constexpr (std::is_same_v<decltype(f()), void>)
+                  {
+                    TC_AWAIT(f());
+                    TC_RETURN();
+                  }
+                  else
+                  {
+                    TC_RETURN(TC_AWAIT(f()));
+                  }
+                }
+                catch (Errors::Exception const& ex)
+                {
+                  if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
+                    throw;
+                }
+                TC_AWAIT(core->handleDeviceRevocation());
+              },
+              this,
+              std::forward<F>(f)))));
 }
 
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
@@ -102,14 +101,14 @@ tc::future<void> AsyncCore::destroy()
     return tc::async([this] { delete this; });
 }
 
-tc::shared_future<Status> AsyncCore::start(std::string const& identity)
+tc::future<Status> AsyncCore::start(std::string const& identity)
 {
   return runResumable([=]() -> tc::cotask<Status> {
     TC_RETURN(TC_AWAIT(this->_core.start(identity)));
   });
 }
 
-tc::shared_future<void> AsyncCore::registerIdentity(
+tc::future<void> AsyncCore::registerIdentity(
     Unlock::Verification const& verification)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -117,7 +116,7 @@ tc::shared_future<void> AsyncCore::registerIdentity(
   });
 }
 
-tc::shared_future<void> AsyncCore::verifyIdentity(
+tc::future<void> AsyncCore::verifyIdentity(
     Unlock::Verification const& verification)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -125,7 +124,7 @@ tc::shared_future<void> AsyncCore::verifyIdentity(
   });
 }
 
-tc::shared_future<void> AsyncCore::stop()
+tc::future<void> AsyncCore::stop()
 {
   return runResumable(
       [=]() -> tc::cotask<void> { TC_AWAIT(this->_core.stop()); });
@@ -136,7 +135,7 @@ Tanker::Status AsyncCore::status() const
   return this->_core.status();
 }
 
-tc::shared_future<void> AsyncCore::encrypt(
+tc::future<void> AsyncCore::encrypt(
     uint8_t* encryptedData,
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
@@ -149,15 +148,15 @@ tc::shared_future<void> AsyncCore::encrypt(
   });
 }
 
-tc::shared_future<void> AsyncCore::decrypt(
-    uint8_t* decryptedData, gsl::span<uint8_t const> encryptedData)
+tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
+                                    gsl::span<uint8_t const> encryptedData)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.decrypt(decryptedData, encryptedData));
   });
 }
 
-tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
+tc::future<std::vector<uint8_t>> AsyncCore::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
@@ -169,7 +168,7 @@ tc::shared_future<std::vector<uint8_t>> AsyncCore::encrypt(
   });
 }
 
-tc::shared_future<std::vector<uint8_t>> AsyncCore::decrypt(
+tc::future<std::vector<uint8_t>> AsyncCore::decrypt(
     gsl::span<uint8_t const> encryptedData)
 {
   return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
@@ -179,7 +178,7 @@ tc::shared_future<std::vector<uint8_t>> AsyncCore::decrypt(
   });
 }
 
-tc::shared_future<void> AsyncCore::share(
+tc::future<void> AsyncCore::share(
     std::vector<SResourceId> const& resourceId,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds)
@@ -189,7 +188,7 @@ tc::shared_future<void> AsyncCore::share(
   });
 }
 
-tc::shared_future<SGroupId> AsyncCore::createGroup(
+tc::future<SGroupId> AsyncCore::createGroup(
     std::vector<SPublicIdentity> const& members)
 {
   return runResumable([=]() -> tc::cotask<SGroupId> {
@@ -197,7 +196,7 @@ tc::shared_future<SGroupId> AsyncCore::createGroup(
   });
 }
 
-tc::shared_future<void> AsyncCore::updateGroupMembers(
+tc::future<void> AsyncCore::updateGroupMembers(
     SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -205,14 +204,14 @@ tc::shared_future<void> AsyncCore::updateGroupMembers(
   });
 }
 
-tc::shared_future<VerificationKey> AsyncCore::generateVerificationKey()
+tc::future<VerificationKey> AsyncCore::generateVerificationKey()
 {
   return runResumable([this]() -> tc::cotask<VerificationKey> {
     TC_RETURN(TC_AWAIT(this->_core.generateVerificationKey()));
   });
 }
 
-tc::shared_future<void> AsyncCore::setVerificationMethod(
+tc::future<void> AsyncCore::setVerificationMethod(
     Unlock::Verification const& method)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -220,7 +219,7 @@ tc::shared_future<void> AsyncCore::setVerificationMethod(
   });
 }
 
-tc::shared_future<std::vector<Unlock::VerificationMethod>>
+tc::future<std::vector<Unlock::VerificationMethod>>
 AsyncCore::getVerificationMethods()
 {
   return runResumable(
@@ -229,7 +228,7 @@ AsyncCore::getVerificationMethods()
       });
 }
 
-tc::shared_future<AttachResult> AsyncCore::attachProvisionalIdentity(
+tc::future<AttachResult> AsyncCore::attachProvisionalIdentity(
     SSecretProvisionalIdentity const& sidentity)
 {
   return runResumable([=]() -> tc::cotask<AttachResult> {
@@ -237,7 +236,7 @@ tc::shared_future<AttachResult> AsyncCore::attachProvisionalIdentity(
   });
 }
 
-tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
+tc::future<void> AsyncCore::verifyProvisionalIdentity(
     Unlock::Verification const& verification)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -245,18 +244,14 @@ tc::shared_future<void> AsyncCore::verifyProvisionalIdentity(
   });
 }
 
-tc::shared_future<SDeviceId> AsyncCore::deviceId() const
+tc::future<SDeviceId> AsyncCore::deviceId() const
 {
-  return tc::submit_to_future<SDeviceId>(
-             _taskCanceler.wrap(tc::lazy::then(
-                 tc::lazy::async(tc::get_default_executor()),
-                 [this] {
-                   return SDeviceId(mgs::base64::encode(_core.deviceId()));
-                 })))
-      .to_shared();
+  return tc::submit_to_future<SDeviceId>(_taskCanceler.wrap(tc::lazy::then(
+      tc::lazy::async(tc::get_default_executor()),
+      [this] { return SDeviceId(mgs::base64::encode(_core.deviceId())); })));
 }
 
-tc::shared_future<std::vector<Users::Device>> AsyncCore::getDeviceList()
+tc::future<std::vector<Users::Device>> AsyncCore::getDeviceList()
 {
   return runResumable([this]() -> tc::cotask<std::vector<Users::Device>> {
     auto devices = TC_AWAIT(this->_core.getDeviceList());
@@ -268,7 +263,7 @@ tc::shared_future<std::vector<Users::Device>> AsyncCore::getDeviceList()
   });
 }
 
-tc::shared_future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
+tc::future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
 {
   return runResumable([this, deviceId]() -> tc::cotask<void> {
     TC_AWAIT(
@@ -336,7 +331,7 @@ expected<SResourceId> AsyncCore::getResourceId(
   });
 }
 
-tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
+tc::future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& suserIds,
     std::vector<SGroupId> const& sgroupIds,
@@ -349,8 +344,8 @@ tc::shared_future<Streams::EncryptionStream> AsyncCore::makeEncryptionStream(
       });
 }
 
-tc::shared_future<Streams::DecryptionStreamAdapter>
-AsyncCore::makeDecryptionStream(Streams::InputSource cb)
+tc::future<Streams::DecryptionStreamAdapter> AsyncCore::makeDecryptionStream(
+    Streams::InputSource cb)
 {
   return runResumable(
       [this,
@@ -359,7 +354,7 @@ AsyncCore::makeDecryptionStream(Streams::InputSource cb)
       });
 }
 
-tc::shared_future<EncryptionSession> AsyncCore::makeEncryptionSession(
+tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
     Core::ShareWithSelf shareWithSelf)

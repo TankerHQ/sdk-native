@@ -78,10 +78,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   int nbDeviceRevoked = 0;
   int nbOperationCanceled = 0;
-  auto awaitAndCountExceptions = [&](auto const& fut) {
+  auto awaitAndCountExceptions = [&](auto fut) {
     try
     {
-      TC_AWAIT(fut);
+      TC_AWAIT(std::move(fut));
     }
     catch (Errors::Exception const& e)
     {
@@ -95,8 +95,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       nbOperationCanceled++;
     }
   };
-  CHECK_NOTHROW(awaitAndCountExceptions(fut1));
-  CHECK_NOTHROW(awaitAndCountExceptions(fut2));
+  CHECK_NOTHROW(awaitAndCountExceptions(std::move(fut1)));
+  CHECK_NOTHROW(awaitAndCountExceptions(std::move(fut2)));
   CHECK(nbDeviceRevoked == 1);
   CHECK(nbOperationCanceled == 1);
   CHECK(secondSession->status() == Status::Stopped);
