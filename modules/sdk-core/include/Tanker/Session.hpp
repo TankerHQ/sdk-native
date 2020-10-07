@@ -20,7 +20,6 @@
 #include <Tanker/Users/UserAccessor.hpp>
 
 #include <tconcurrent/coroutine.hpp>
-#include <tconcurrent/task_auto_canceler.hpp>
 
 #include <memory>
 #include <string>
@@ -106,7 +105,5 @@ private:
   std::unique_ptr<Accessors> _accessors;
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
-
-  tc::task_auto_canceler _taskCanceler;
 };
 }
