@@ -8,7 +8,7 @@ namespace Tanker
 {
 EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession)
   : _tankerSession(tankerSession),
-    _taskCanceler{std::make_shared<task_canceler>()},
+    _taskCanceler{std::make_shared<tc::task_canceler>()},
     _sessionKey{Crypto::makeSymmetricKey()},
     _resourceId{Crypto::getRandom<Trustchain::ResourceId>()}
 {
@@ -19,7 +19,8 @@ void EncryptionSession::assertSession(char const* action) const
   if (_tankerSession.expired())
     throw Errors::formatEx(
         Errors::Errc::PreconditionFailed,
-        FMT_STRING("invalid session for EncryptionSession::{:s}"),
+        FMT_STRING("can't call EncryptionSession::{:s} after the Tanker "
+                   "session has been closed"),
         action);
 }
 
@@ -35,7 +36,7 @@ Crypto::SymmetricKey const& EncryptionSession::sessionKey() const
   return _sessionKey;
 }
 
-std::shared_ptr<task_canceler> EncryptionSession::canceler() const
+std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
 {
   return _taskCanceler;
 }
