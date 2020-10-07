@@ -280,80 +280,89 @@ AsyncCorePtr signIn(MainArgs const& args)
 
 int main(int argc, char* argv[])
 {
-  std::map<std::string, docopt::value> args =
-      docopt::docopt(USAGE,
-                     {argv + 1, argv + argc},
-                     true,        // show help if requested
-                     "tcli 0.1"); // version string
-
-  if (args.at("deserializeblock").asBool())
+  try
   {
-    CliAction action =
-        deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
+    std::map<std::string, docopt::value> args =
+        docopt::docopt(USAGE,
+                       {argv + 1, argv + argc},
+                       true,        // show help if requested
+                       "tcli 0.1"); // version string
 
-    std::cout << formatAction(action) << std::endl;
+    if (args.at("deserializeblock").asBool())
+    {
+      CliAction action =
+          deserializeAction(mgs::base64::decode(args.at("<block>").asString()));
+
+      std::cout << formatAction(action) << std::endl;
+    }
+    else if (args.at("deserializeblockparts").asBool())
+    {
+      CliAction action = deserializeAction(constructBlockFromParts(args));
+
+      std::cout << formatAction(action) << std::endl;
+    }
+    else if (args.at("signup").asBool())
+    {
+      auto const core = signUp(args);
+    }
+    else if (args.at("signin").asBool())
+    {
+      auto const core = signIn(args);
+    }
+    else if (args.at("createidentity").asBool())
+    {
+      fmt::print("{}\n", createIdentity(args));
+    }
+    else if (args.at("encrypt").asBool())
+    {
+      auto const trustchainId =
+          mgs::base64::decode<Tanker::Trustchain::TrustchainId>(
+              args.at("<trustchainid>").asString());
+
+      auto const core = signIn(args);
+
+      std::vector<Tanker::SUserId> shareTo;
+      if (args.at("--share"))
+        shareTo.push_back(SUserId{args.at("--share").asString()});
+
+      std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
+      for (auto const& userId : shareTo)
+        shareToPublicIdentities.push_back(
+            SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
+                trustchainId, obfuscateUserId(userId, trustchainId)})});
+
+      auto const cleartext = args.at("<cleartext>").asString();
+      std::vector<uint8_t> encrypted(
+          AsyncCore::encryptedSize(cleartext.size()));
+
+      core->encrypt(encrypted.data(),
+                    gsl::make_span(cleartext).as_span<uint8_t const>(),
+                    shareToPublicIdentities)
+          .get();
+      fmt::print("encrypted: {}\n", mgs::base64::encode(encrypted));
+    }
+    else if (args.at("decrypt").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const encrypteddata =
+          mgs::base64::decode(args.at("<encrypteddata>").asString());
+      std::vector<uint8_t> decrypted(
+          AsyncCore::decryptedSize(encrypteddata).get());
+
+      core->decrypt(decrypted.data(),
+                    gsl::make_span(encrypteddata).as_span<uint8_t const>())
+          .get();
+      fmt::print(
+          "decrypted: {}\n",
+          std::string(decrypted.data(), decrypted.data() + decrypted.size()));
+    }
+
+    return 0;
   }
-  else if (args.at("deserializeblockparts").asBool())
+  catch (Tanker::Errors::Exception const& e)
   {
-    CliAction action = deserializeAction(constructBlockFromParts(args));
-
-    std::cout << formatAction(action) << std::endl;
+    auto const errorCode = e.errorCode().default_error_condition();
+    fmt::print("Error: {}: {}", errorCode.message(), e.what());
   }
-  else if (args.at("signup").asBool())
-  {
-    auto const core = signUp(args);
-  }
-  else if (args.at("signin").asBool())
-  {
-    auto const core = signIn(args);
-  }
-  else if (args.at("createidentity").asBool())
-  {
-    fmt::print("{}\n", createIdentity(args));
-  }
-  else if (args.at("encrypt").asBool())
-  {
-    auto const trustchainId =
-        mgs::base64::decode<Tanker::Trustchain::TrustchainId>(
-            args.at("<trustchainid>").asString());
-
-    auto const core = signIn(args);
-
-    std::vector<Tanker::SUserId> shareTo;
-    if (args.at("--share"))
-      shareTo.push_back(SUserId{args.at("--share").asString()});
-
-    std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
-    for (auto const& userId : shareTo)
-      shareToPublicIdentities.push_back(
-          SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
-              trustchainId, obfuscateUserId(userId, trustchainId)})});
-
-    auto const cleartext = args.at("<cleartext>").asString();
-    std::vector<uint8_t> encrypted(AsyncCore::encryptedSize(cleartext.size()));
-
-    core->encrypt(encrypted.data(),
-                  gsl::make_span(cleartext).as_span<uint8_t const>(),
-                  shareToPublicIdentities)
-        .get();
-    fmt::print("encrypted: {}\n", mgs::base64::encode(encrypted));
-  }
-  else if (args.at("decrypt").asBool())
-  {
-    auto const core = signIn(args);
-
-    auto const encrypteddata =
-        mgs::base64::decode(args.at("<encrypteddata>").asString());
-    std::vector<uint8_t> decrypted(
-        AsyncCore::decryptedSize(encrypteddata).get());
-
-    core->decrypt(decrypted.data(),
-                  gsl::make_span(encrypteddata).as_span<uint8_t const>())
-        .get();
-    fmt::print(
-        "decrypted: {}\n",
-        std::string(decrypted.data(), decrypted.data() + decrypted.size()));
-  }
-
-  return 0;
 }
