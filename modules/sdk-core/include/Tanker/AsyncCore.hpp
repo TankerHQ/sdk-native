@@ -19,9 +19,8 @@
 #include <Tanker/Types/VerificationKey.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
-#include <Tanker/task_canceler.hpp>
-
 #include <tconcurrent/future.hpp>
+#include <tconcurrent/lazy/task_canceler.hpp>
 #include <tconcurrent/semaphore.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -50,60 +49,55 @@ public:
   AsyncCore& operator=(AsyncCore&&) = delete;
 
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
-  AsyncCore(SdkInfo info, Core::HttpClientFactory httpClientFactory,
+  AsyncCore(SdkInfo info,
+            Core::HttpClientFactory httpClientFactory,
             std::string writablePath);
   ~AsyncCore();
 
   tc::future<void> destroy();
 
-  tc::shared_future<Status> start(std::string const& identity);
-  tc::shared_future<void> stop();
+  tc::future<Status> start(std::string const& identity);
+  tc::future<void> stop();
 
-  tc::shared_future<void> registerIdentity(
-      Unlock::Verification const& verification);
-  tc::shared_future<void> verifyIdentity(
-      Unlock::Verification const& verification);
+  tc::future<void> registerIdentity(Unlock::Verification const& verification);
+  tc::future<void> verifyIdentity(Unlock::Verification const& verification);
 
   Tanker::Status status() const;
 
-  tc::shared_future<void> encrypt(
+  tc::future<void> encrypt(
       uint8_t* encryptedData,
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
-  tc::shared_future<void> decrypt(uint8_t* decryptedData,
-                                  gsl::span<uint8_t const> encryptedData);
+  tc::future<void> decrypt(uint8_t* decryptedData,
+                           gsl::span<uint8_t const> encryptedData);
 
-  tc::shared_future<std::vector<uint8_t>> encrypt(
+  tc::future<std::vector<uint8_t>> encrypt(
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
-  tc::shared_future<std::vector<uint8_t>> decrypt(
+  tc::future<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);
 
-  tc::shared_future<void> share(
-      std::vector<SResourceId> const& resourceId,
-      std::vector<SPublicIdentity> const& publicIdentities,
-      std::vector<SGroupId> const& groupIds);
+  tc::future<void> share(std::vector<SResourceId> const& resourceId,
+                         std::vector<SPublicIdentity> const& publicIdentities,
+                         std::vector<SGroupId> const& groupIds);
 
-  tc::shared_future<SGroupId> createGroup(
-      std::vector<SPublicIdentity> const& members);
-  tc::shared_future<void> updateGroupMembers(
+  tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
+  tc::future<void> updateGroupMembers(
       SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
 
-  tc::shared_future<VerificationKey> generateVerificationKey();
+  tc::future<VerificationKey> generateVerificationKey();
 
-  tc::shared_future<void> setVerificationMethod(
-      Unlock::Verification const& method);
-  tc::shared_future<std::vector<Unlock::VerificationMethod>>
-  getVerificationMethods();
+  tc::future<void> setVerificationMethod(Unlock::Verification const& method);
+  tc::future<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
 
-  tc::shared_future<AttachResult> attachProvisionalIdentity(
+  tc::future<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
-  tc::shared_future<void> verifyProvisionalIdentity(
+  tc::future<void> verifyProvisionalIdentity(
       Unlock::Verification const& verification);
 
   void connectSessionClosed(std::function<void()> cb);
@@ -111,10 +105,10 @@ public:
   void connectDeviceRevoked(std::function<void()> cb);
   void disconnectDeviceRevoked();
 
-  tc::shared_future<SDeviceId> deviceId() const;
-  tc::shared_future<std::vector<Users::Device>> getDeviceList();
+  tc::future<SDeviceId> deviceId() const;
+  tc::future<std::vector<Users::Device>> getDeviceList();
 
-  tc::shared_future<void> revokeDevice(SDeviceId const& deviceId);
+  tc::future<void> revokeDevice(SDeviceId const& deviceId);
 
   static tc::thread_pool& getLogHandlerThreadPool();
   static void setLogHandler(Log::LogHandler handler);
@@ -124,16 +118,16 @@ public:
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
 
-  tc::shared_future<Streams::EncryptionStream> makeEncryptionStream(
+  tc::future<Streams::EncryptionStream> makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
-  tc::shared_future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
+  tc::future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
       Streams::InputSource);
 
-  tc::shared_future<EncryptionSession> makeEncryptionSession(
+  tc::future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
@@ -152,35 +146,11 @@ private:
 
   tc::semaphore _revokeSemaphore{1};
 
-  mutable task_canceler _taskCanceler;
+  mutable tc::lazy::task_canceler _taskCanceler;
 
   [[noreturn]] tc::cotask<void> handleDeviceRevocation();
 
   template <typename F>
-  auto runResumable(F&& f)
-  {
-    return _taskCanceler.run([this, f = std::forward<F>(f)]() mutable {
-      return tc::async_resumable([this, f = std::move(f)]() -> decltype(f()) {
-        try
-        {
-          if constexpr (std::is_same_v<decltype(f()), void>)
-          {
-            TC_AWAIT(f());
-            TC_RETURN();
-          }
-          else
-          {
-            TC_RETURN(TC_AWAIT(f()));
-          }
-        }
-        catch (Errors::Exception const& ex)
-        {
-          if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
-            throw;
-        }
-        TC_AWAIT(handleDeviceRevocation());
-      });
-    });
-  }
+  auto runResumable(F&& f);
 };
 }

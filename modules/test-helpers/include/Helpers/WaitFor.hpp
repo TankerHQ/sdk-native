@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tconcurrent/async_wait.hpp>
+#include <tconcurrent/when.hpp>
 
 #include <vector>
 

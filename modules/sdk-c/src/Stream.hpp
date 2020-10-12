@@ -2,7 +2,8 @@
 
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Types/SResourceId.hpp>
-#include <Tanker/task_canceler.hpp>
+
+#include <tconcurrent/task_canceler.hpp>
 
 inline auto wrapCallback(tanker_stream_input_source_t cb, void* additional_data)
 {
@@ -28,5 +29,5 @@ struct tanker_stream
 {
   Tanker::Streams::InputSource inputSource;
   Tanker::SResourceId resourceId;
-  Tanker::task_canceler canceler;
+  tc::task_canceler canceler;
 };
