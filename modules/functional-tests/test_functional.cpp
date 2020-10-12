@@ -94,6 +94,39 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   CHECK_NOTHROW(TC_AWAIT(core->stop()));
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "it throws nice exceptions when giving the wrong identity type")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice();
+  auto core = device.createCore(Functional::SessionType::New);
+  try
+  {
+    TC_AWAIT(core->start(alice.spublicIdentity().string()));
+    CHECK_MESSAGE(false, "start() should have thrown");
+  }
+  catch (Errors::Exception const& e)
+  {
+    CAPTURE(e.what());
+    CHECK(std::string(e.what()).find("got a public identity") !=
+          std::string::npos);
+  }
+  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+      mgs::base64::encode(trustchain.id), Email{"bob"});
+  try
+  {
+    TC_AWAIT(core->start(bobProvisionalIdentity));
+    CHECK_MESSAGE(false, "start() should have thrown");
+  }
+  catch (Errors::Exception const& e)
+  {
+    CAPTURE(e.what());
+    CHECK(std::string(e.what()).find("got a provisional identity") !=
+          std::string::npos);
+  }
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
 {
   auto alice = trustchain.makeUser();

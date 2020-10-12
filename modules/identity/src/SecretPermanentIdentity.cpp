@@ -76,12 +76,25 @@ void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
   auto const target = j.at("target").get<std::string>();
   if (target != "user")
   {
-    throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
-                           "unsupported provisional identity target: {}",
-                           target);
+    if (target == "email")
+      throw Errors::formatEx(Errc::InvalidFormat,
+                             "invalid identity (expected a permanent identity, "
+                             "got a provisional identity)");
+    else
+      throw Errors::formatEx(Errc::InvalidPermanentIdentityTarget,
+                             "unsupported identity target: {}",
+                             target);
   }
   j.at("trustchain_id").get_to(identity.trustchainId);
   j.at("value").get_to(identity.delegation.userId);
+
+  if (j.find("user_secret") == j.end())
+  {
+    throw Errors::formatEx(
+        Errc::InvalidFormat,
+        "invalid identity (expected an identity, got a public identity)");
+  }
+
   j.at("user_secret").get_to(identity.userSecret);
   j.at("ephemeral_public_signature_key")
       .get_to(identity.delegation.ephemeralKeyPair.publicKey);

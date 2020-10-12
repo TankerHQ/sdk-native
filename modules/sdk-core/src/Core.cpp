@@ -142,16 +142,8 @@ tc::cotask<void> Core::stopForRevocation()
 
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
-  auto const identity = [&] {
-    try
-    {
-      return Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
-    }
-    catch (Errors::Exception const& e)
-    {
-      throw Errors::Exception(e.errorCode(), "invalid identity");
-    }
-  }();
+  auto const identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
   if (identity.trustchainId != _info.trustchainId)
   {
