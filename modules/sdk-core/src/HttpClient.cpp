@@ -49,6 +49,7 @@ std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_oidc_id_token", AppdErrc::InvalidVerificationCode},
     {"user_not_found", AppdErrc::UserNotFound},
     {"invalid_token", AppdErrc::InvalidToken},
+    {"block_limits_exceeded", AppdErrc::BlockLimitsExceeded},
 };
 
 template <typename Request, typename Header>

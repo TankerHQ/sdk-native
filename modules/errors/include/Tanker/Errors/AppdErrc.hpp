@@ -28,6 +28,7 @@ enum class AppdErrc
   InvalidDelegationSignature,
   UnknownError,
   UserNotFound,
+  BlockLimitsExceeded,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;
