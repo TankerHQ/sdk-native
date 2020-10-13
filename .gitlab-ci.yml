@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 21ee71ff504eb0d9171f06bae9d77e106dfac35f
+  ref: 09985a8d5d7b6975d4abdebdcea1fd052534d31b
 
 ###############
 # build stage #
@@ -57,7 +57,7 @@ build/macos/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
-build/android:
+build/android/shared:
   extends:
     - .build
     - .tags/linux
@@ -66,6 +66,16 @@ build/android:
     - .before-script/bump-files-on-release/bash
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+
+build/android/static:
+  extends:
+    - .build
+    - .tags/linux
+    - .rules/mr/manual
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release-static --profile android-armv8-release-static --profile android-x86-release-static --profile android-x86_64-release-static
 
 build/ios:
   extends:
@@ -115,10 +125,10 @@ bridge/android:
     - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/android
+    - build/android/shared
   variables:
     UPSTREAM_RUNNER_TAG: linux
-    UPSTREAM_JOB_NAME: build/android
+    UPSTREAM_JOB_NAME: build/android/shared
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
