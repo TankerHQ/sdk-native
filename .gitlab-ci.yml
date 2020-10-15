@@ -143,6 +143,8 @@ bridge/rust/linux:
     UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-rust
+    # FIXME
+    branch: theo/deploy
     strategy: depend
 
 bridge/rust/ios:
@@ -157,6 +159,7 @@ bridge/rust/ios:
     UPSTREAM_JOB_NAME: build/ios
   trigger:
     project: TankerHQ/sdk-rust
+    branch: theo/deploy
     strategy: depend
 
 bridge/rust/macos:
@@ -171,6 +174,7 @@ bridge/rust/macos:
     UPSTREAM_JOB_NAME: build/macos
   trigger:
     project: TankerHQ/sdk-rust
+    branch: theo/deploy
     strategy: depend
 
 bridge/rust/android:
@@ -185,6 +189,7 @@ bridge/rust/android:
     UPSTREAM_JOB_NAME: build/android/static
   trigger:
     project: TankerHQ/sdk-rust
+    branch: theo/deploy
     strategy: depend
 
 bridge/python/linux:
@@ -401,6 +406,7 @@ bridge/rust/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-rust
+    branch: theo/deploy
     strategy: depend
 
 ################
