@@ -43,6 +43,7 @@ static const char USAGE[] =
       tcli deserializeblock <block>
       tcli deserializeblockparts <trustchainId> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
+      tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
@@ -312,6 +313,12 @@ int main(int argc, char* argv[])
     else if (args.at("createidentity").asBool())
     {
       fmt::print("{}\n", createIdentity(args));
+    }
+    else if (args.at("getpublicidentity").asBool())
+    {
+      auto const identity = args.at("<identity>").asString();
+      auto const publicIdentity = Tanker::Identity::getPublicIdentity(identity);
+      fmt::print("{}\n", publicIdentity);
     }
     else if (args.at("encrypt").asBool())
     {
