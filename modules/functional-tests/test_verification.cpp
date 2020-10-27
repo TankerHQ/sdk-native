@@ -18,7 +18,6 @@
 #include <mgs/base64url.hpp>
 
 #include <fetchpp/fetch.hpp>
-#include <fetchpp/http/json_body.hpp>
 
 #include <tconcurrent/asio_use_future.hpp>
 
@@ -72,8 +71,8 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
   using namespace fetchpp;
 
   auto const url = http::url("https://www.googleapis.com/oauth2/v4/token");
-  auto req = http::make_request<http::request<http::json_body>>(
-      http::verb::post, url, {}, std::move(payload));
+  auto req = http::request(http::verb::post, url);
+  req.content(payload.dump());
   auto response = TC_AWAIT(fetchpp::async_fetch(
       tc::get_default_executor().get_io_service().get_executor(),
       Cacerts::get_ssl_context(),
