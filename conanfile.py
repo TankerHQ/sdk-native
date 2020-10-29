@@ -91,7 +91,7 @@ class TankerConan(ConanFile):
         self.requires("boost/1.73.0", private=private)
         if self.options.with_ssl:
             self.requires("libressl/3.2.0", private=private)
-            self.requires("fetchpp/0.11.0")
+            self.requires("fetchpp/0.12.0")
             self.requires("sqlpp11/0.59", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
@@ -106,7 +106,6 @@ class TankerConan(ConanFile):
             self.requires("libcxx/9.0", private=private)
         if self.settings.os == "Android":
             self.requires("android_ndk_installer/r21d", private=private)
-
 
     def imports(self):
         if self.settings.os == "iOS":

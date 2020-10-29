@@ -7,9 +7,6 @@
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <fetchpp/client.hpp>
-#include <fetchpp/http/authorization.hpp>
-#include <fetchpp/http/json_body.hpp>
-#include <fetchpp/http/request.hpp>
 #include <fetchpp/http/url.hpp>
 
 #include <boost/outcome/result.hpp>

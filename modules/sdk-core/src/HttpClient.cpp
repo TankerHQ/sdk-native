@@ -9,8 +9,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fetchpp/http/authorization.hpp>
-#include <fetchpp/http/json_body.hpp>
 #include <fetchpp/http/proxy.hpp>
+#include <fetchpp/http/request.hpp>
+#include <fetchpp/http/response.hpp>
 #include <tconcurrent/asio_use_future.hpp>
 
 #include <Tanker/Log/Log.hpp>
@@ -67,8 +68,7 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-template <typename Request>
-HttpResult handleResponse(http::response res, Request const& req)
+HttpResult handleResponse(http::response res, http::request const& req)
 {
   TLOG_CATEGORY(HttpClient);
 
@@ -78,7 +78,7 @@ HttpResult handleResponse(http::response res, Request const& req)
     auto const href = req.uri().href();
     if (res.is_json())
     {
-      auto const& json = res.json();
+      auto const json = res.json();
       auto error = json.at("error").get<HttpError>();
       error.method = method;
       error.href = href;
@@ -108,26 +108,24 @@ HttpResult handleResponse(http::response res, Request const& req)
   }
 }
 
-fetchpp::http::request<fetchpp::http::json_body> makeRequest(
-    fetchpp::http::verb verb,
-    fetchpp::http::url url,
-    nlohmann::json const& data)
+fetchpp::http::request makeRequest(fetchpp::http::verb verb,
+                                   fetchpp::http::url url,
+                                   nlohmann::json const& data)
 {
-  auto request = http::make_request<http::request<http::json_body>>(
-      verb, std::move(url), {}, data);
+  auto request = http::request(verb, std::move(url));
+  request.content(data.dump());
   return request;
 }
 
-fetchpp::http::request<fetchpp::http::empty_body> makeRequest(
-    fetchpp::http::verb verb, fetchpp::http::url url)
+fetchpp::http::request makeRequest(fetchpp::http::verb verb,
+                                   fetchpp::http::url url)
 {
-  auto req = http::make_request(verb, std::move(url));
+  auto req = http::request(verb, std::move(url));
   req.prepare_payload();
   return req;
 }
 
-template <typename Request>
-tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, Request req)
+tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, http::request req)
 {
   try
   {
