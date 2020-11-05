@@ -12,6 +12,8 @@ enum class Errc
   InvalidDatabaseVersion = 1,
   RecordNotFound,
   DatabaseError,
+  DatabaseLocked,
+  DatabaseCorrupt,
 };
 
 std::error_code make_error_code(Errc c) noexcept;

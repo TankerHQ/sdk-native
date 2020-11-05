@@ -146,7 +146,16 @@ ConnPtr createConnection(std::string const& dbPath,
   }
   catch (sqlpp::exception const& e)
   {
-    throw Errors::Exception(Errc::DatabaseError, e.what());
+    std::string const msg = e.what();
+    if (msg.find("file is not a database") != std::string::npos)
+      throw Errors::Exception(
+          Errc::DatabaseCorrupt,
+          "database is corrupted, or an incorrect identity was used");
+    else if (msg.find("database is locked") != std::string::npos)
+      throw Errors::Exception(Errc::DatabaseLocked,
+                              "database is locked by another Tanker instance");
+    else
+      throw Errors::Exception(Errc::DatabaseError, e.what());
   }
   catch (std::exception const& e)
   {
