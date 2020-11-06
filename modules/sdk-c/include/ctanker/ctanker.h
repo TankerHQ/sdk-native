@@ -487,10 +487,11 @@ CTANKER_EXPORT tanker_future_t* tanker_decrypt(tanker_t* session,
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server or the
  * server returned an error
  */
-CTANKER_EXPORT tanker_future_t* tanker_share(tanker_t* session,
-                                             char const* const* resource_ids,
-                                             uint64_t nb_resource_ids,
-                                             tanker_sharing_options_t const* options);
+CTANKER_EXPORT tanker_future_t* tanker_share(
+    tanker_t* session,
+    char const* const* resource_ids,
+    uint64_t nb_resource_ids,
+    tanker_sharing_options_t const* options);
 
 /*!
  * Attach a provisional identity to the current user
