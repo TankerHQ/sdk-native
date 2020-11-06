@@ -12,7 +12,6 @@
 
 #include <mgs/base64.hpp>
 #include <tconcurrent/async.hpp>
-#include <tconcurrent/thread_pool.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
@@ -53,7 +52,8 @@ Unlock::Verification cverificationToVerification(
   Unlock::Verification verification;
   switch (cverification->verification_method_type)
   {
-  case TANKER_VERIFICATION_METHOD_EMAIL: {
+  case TANKER_VERIFICATION_METHOD_EMAIL:
+  {
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
       throw formatEx(Errc::InvalidArgument, "null field in email verification");
@@ -62,19 +62,22 @@ Unlock::Verification cverificationToVerification(
         VerificationCode{cverification->email_verification.verification_code}};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_PASSPHRASE: {
+  case TANKER_VERIFICATION_METHOD_PASSPHRASE:
+  {
     if (!cverification->passphrase)
       throw formatEx(Errc::InvalidArgument, "passphrase field is null");
     verification = Passphrase{cverification->passphrase};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY: {
+  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
+  {
     if (!cverification->verification_key)
       throw formatEx(Errc::InvalidArgument, "verification key is null");
     verification = VerificationKey{cverification->verification_key};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN: {
+  case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN:
+  {
     if (!cverification->oidc_id_token)
       throw formatEx(Errc::InvalidArgument, "oidc id token field is null");
     verification = OidcIdToken{cverification->oidc_id_token};
@@ -155,6 +158,11 @@ char const* tanker_version_string(void)
 void tanker_init()
 {
   Tanker::init();
+}
+
+void tanker_shutdown()
+{
+  Tanker::shutdown();
 }
 
 tanker_future_t* tanker_create(const tanker_options_t* options)
@@ -572,12 +580,6 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
     delete result->method;
   }
   delete result;
-}
-
-void tanker_leak_statics()
-{
-  tc::get_global_single_thread().prevent_destruction();
-  AsyncCore::getLogHandlerThreadPool().prevent_destruction();
 }
 
 tanker_expected_t* tanker_prehash_password(char const* password)

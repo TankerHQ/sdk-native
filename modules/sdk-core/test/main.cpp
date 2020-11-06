@@ -1,5 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 
+#include <Tanker/Init.hpp>
+
 #include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
@@ -23,5 +25,9 @@ int main(int argc, char* argv[])
 
   doctest::Context context(argc, argv);
 
-  return context.run();
+  auto const ret = context.run();
+
+  Tanker::shutdown();
+
+  return ret;
 }

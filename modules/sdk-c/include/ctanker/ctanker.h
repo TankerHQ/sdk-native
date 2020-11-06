@@ -246,6 +246,13 @@ CTANKER_EXPORT void tanker_set_log_handler(tanker_log_handler_t handler);
 CTANKER_EXPORT void tanker_init(void);
 
 /*!
+ * Prepare for shutdown by freeing long-lived resources.
+ *
+ * Calling any function after tanker_shutdown is undefined.
+ */
+CTANKER_EXPORT void tanker_shutdown(void);
+
+/*!
  * Create a Tanker instance.
  * \param options struct tanker_options_t with the following preconditions.
  * \pre The *option* structure must not be NULL, as well as the fields
@@ -546,17 +553,6 @@ CTANKER_EXPORT void tanker_free_verification_method_list(
     tanker_verification_method_list_t* list);
 
 CTANKER_EXPORT void tanker_free_attach_result(tanker_attach_result_t* result);
-
-/*!
- * Skip destruction of risky static objects
- *
- * This is useful when tanker is embedded into a garbage collected language
- * like Java. A Java program may quit and execute static destruction even if the
- * GC hasn't run and tanker instances are still running. This usually leads to a
- * deadlock or a crash, so call this method during initialization so that
- * statics are not destroyed and threads are not stopped.
- */
-CTANKER_EXPORT void tanker_leak_statics(void);
 
 /*!
  * Hash a password before sending it to the application server where it will

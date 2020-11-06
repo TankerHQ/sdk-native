@@ -3,6 +3,7 @@
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFactory.hpp>
 
+#include <Tanker/Init.hpp>
 #include <Tanker/Version.hpp>
 
 #include <fmt/format.h>
@@ -72,4 +73,6 @@ int main(int argc, char** argv)
     runner->base();
   else if (args.at("--next").asBool())
     runner->next();
+
+  Tanker::shutdown();
 }

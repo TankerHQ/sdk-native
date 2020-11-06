@@ -294,14 +294,28 @@ void AsyncCore::disconnectDeviceRevoked()
   this->_asyncDeviceRevoked = nullptr;
 }
 
+namespace
+{
+tc::thread_pool* logThreadPool = nullptr;
+}
+
 tc::thread_pool& AsyncCore::getLogHandlerThreadPool()
 {
   // Android's libart doesn't like it when we call java from a coroutine, so we
-  // make a thread pool here.
-  static tc::thread_pool tp;
-  if (!tp.is_running())
-    tp.start(1);
-  return tp;
+  // make a thread pool for logs.
+  // This function is not thread safe, but since it's called only during init,
+  // it's fine.
+  if (!logThreadPool)
+  {
+    logThreadPool = new tc::thread_pool;
+    logThreadPool->start(1);
+  }
+  return *logThreadPool;
+}
+
+void AsyncCore::stopLogHandlerThreadPool()
+{
+  delete logThreadPool;
 }
 
 void AsyncCore::setLogHandler(Log::LogHandler handler)
