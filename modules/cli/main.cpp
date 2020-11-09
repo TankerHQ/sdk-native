@@ -52,7 +52,6 @@ static const char USAGE[] =
 
     Options:
       -h --help     Show this screen.
-      -x --hex      Input is in hex (default: b64)
 
     Notes:
       deserializeblockparts takes hex
