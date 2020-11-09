@@ -1,6 +1,7 @@
 #include <string>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/HttpClient.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -127,6 +128,22 @@ TEST_CASE_FIXTURE(
   }
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "it throws nice exceptions when giving an incorrect identity")
+{
+  auto alice = trustchain.makeUser();
+  auto device = alice.makeDevice();
+
+  TC_AWAIT(device.open(Functional::SessionType::New));
+
+  auto core = device.createCore(Functional::SessionType::New);
+  auto identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(alice.identity);
+  ++identity.userSecret[0];
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->start(to_string(identity))),
+                                DataStore::Errc::DatabaseCorrupt);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
 {
   auto alice = trustchain.makeUser();
@@ -180,7 +197,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const core = TC_AWAIT(device.open());
 
   auto const core2 = device.createCore(Functional::SessionType::New);
-  REQUIRE_THROWS(TC_AWAIT(core2->start(alice.identity)));
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->start(alice.identity)),
+                                DataStore::Errc::DatabaseLocked);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

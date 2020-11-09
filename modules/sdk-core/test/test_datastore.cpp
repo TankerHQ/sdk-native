@@ -76,7 +76,7 @@ TEST_CASE("Connection" * doctest::test_suite("DataStore"))
   {
     auto dbPtr = createConnection(dbfile);
     TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile),
-                                  Errc::DatabaseError);
+                                  Errc::DatabaseLocked);
   }
 
   SUBCASE("I can have multiple connections on a non-exclusive database")
@@ -131,7 +131,7 @@ TEST_CASE("Connection encrypted" * doctest::test_suite("DataStore") *
     }
     Tanker::Crypto::randomFill(key);
     TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile, key, true),
-                                  Errc::DatabaseError);
+                                  Errc::DatabaseCorrupt);
   }
 }
 
