@@ -35,6 +35,9 @@ class UserGroupProvisionalMember3
                               UserGroupProvisionalMember3&);
 };
 
+bool operator<(UserGroupProvisionalMember3 const& l,
+               UserGroupProvisionalMember3 const& r);
+
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupProvisionalMember3)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupProvisionalMember3)
 }

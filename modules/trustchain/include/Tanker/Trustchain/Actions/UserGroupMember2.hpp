@@ -33,6 +33,8 @@ class UserGroupMember2
                               UserGroupMember2& k);
 };
 
+bool operator<(UserGroupMember2 const& l, UserGroupMember2 const& r);
+
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupMember2)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupMember2)
 }

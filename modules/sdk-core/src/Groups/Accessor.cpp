@@ -11,12 +11,14 @@
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 
 #include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
 
 TLOG_CATEGORY("GroupAccessor");
 
 static constexpr auto ChunkSize = 100;
 
 using Tanker::Trustchain::GroupId;
+using namespace Tanker::Trustchain::Actions;
 
 namespace Tanker::Groups
 {
@@ -46,10 +48,36 @@ tc::cotask<Accessor::InternalGroupPullResult> Accessor::getInternalGroups(
   for (auto const& group : groupPullResult.found)
   {
     if (auto const internalGroup =
-            boost::variant2::get_if<InternalGroup>(&group))
+            boost::variant2::get_if<InternalGroup>(&group.group))
       out.found.push_back(*internalGroup);
     else if (auto const externalGroup =
-                 boost::variant2::get_if<ExternalGroup>(&group))
+                 boost::variant2::get_if<ExternalGroup>(&group.group))
+      out.notFound.push_back(externalGroup->id);
+  }
+
+  TC_RETURN(out);
+}
+
+tc::cotask<Accessor::InternalGroupAndMembersPullResult>
+Accessor::getInternalGroupsAndMembers(
+    std::vector<Trustchain::GroupId> const& groupIds)
+{
+  // This function is only called when updating group members, and in that
+  // case we need the last block of the group. Since there is no way to know
+  // if we are up to date, just pull the group again
+  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+
+  InternalGroupAndMembersPullResult out;
+  out.notFound = std::move(groupPullResult.notFound);
+  for (auto&& group : groupPullResult.found)
+  {
+    if (auto const internalGroup =
+            boost::variant2::get_if<InternalGroup>(&group.group))
+      out.found.push_back({*internalGroup,
+                           std::move(group.members),
+                           std::move(group.provisionalMembers)});
+    else if (auto const externalGroup =
+                 boost::variant2::get_if<ExternalGroup>(&group.group))
       out.notFound.push_back(externalGroup->id);
   }
 
@@ -63,11 +91,11 @@ Accessor::getPublicEncryptionKeys(
   PublicEncryptionKeyPullResult out;
 
   // The key could have changed due to a new GroupUpdate block, so always fetch
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+  auto groupPullResult = TC_AWAIT(getGroups(groupIds, false));
 
   out.notFound = std::move(groupPullResult.notFound);
   for (auto const& group : groupPullResult.found)
-    out.found.push_back(getPublicEncryptionKey(group));
+    out.found.push_back(getPublicEncryptionKey(group.group));
 
   TC_RETURN(out);
 }
@@ -140,8 +168,8 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
 }
 }
 
-tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
-    std::vector<Trustchain::GroupId> const& groupIds)
+tc::cotask<Accessor::GroupAndMembersPullResult> Accessor::getGroups(
+    std::vector<Trustchain::GroupId> const& groupIds, bool fillMembers)
 {
   std::vector<Trustchain::GroupAction> entries;
   entries.reserve(groupIds.size());
@@ -156,7 +184,7 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
   }
   auto const groupMap = partitionGroups(entries);
 
-  GroupPullResult out;
+  GroupAndMembersPullResult out;
   for (auto const& groupId : groupIds)
   {
     auto const groupEntriesIt = groupMap.find(groupId);
@@ -173,13 +201,139 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
       if (!group)
         throw Errors::AssertionError(
             fmt::format("group {} has no blocks", groupId));
-      out.found.push_back(*group);
 
       // add the group and group keys to cache
       TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
+
+      if (fillMembers)
+        out.found.push_back(getGroupMembers(*group, groupEntriesIt->second));
+      else
+        out.found.push_back(GroupAndMembers<Group>{*group, {}, {}});
     }
   }
 
   TC_RETURN(out);
+}
+
+static void updateGroupMembersList(
+    UserGroupCreation const& base_action,
+    boost::container::flat_set<UserGroupMember2>& members,
+    boost::container::flat_set<UserGroupProvisionalMember3>& provisionalMembers)
+{
+  base_action.visit(
+      overloaded{[&](const UserGroupCreation::v1& userGroupCreation) {
+                   throw Errors::Exception(
+                       make_error_code(Errors::Errc::UnsupportedGroupVersion),
+                       "group block V1 unsupported");
+                 },
+                 [&](const UserGroupCreation::v2& userGroupCreation) {
+                   if (!userGroupCreation.provisionalMembers().empty())
+                     throw Errors::Exception(
+                         make_error_code(Errors::Errc::UnsupportedGroupVersion),
+                         "group block V2 provisional users unsupported");
+                   members.insert(userGroupCreation.members().begin(),
+                                  userGroupCreation.members().end());
+                 },
+                 [&](const UserGroupCreation::v3& userGroupCreation) {
+                   members.insert(userGroupCreation.members().begin(),
+                                  userGroupCreation.members().end());
+                   provisionalMembers.insert(
+                       userGroupCreation.provisionalMembers().begin(),
+                       userGroupCreation.provisionalMembers().end());
+                 }});
+}
+
+static void updateGroupMembersList(
+    UserGroupAddition const& base_action,
+    boost::container::flat_set<UserGroupMember2>& members,
+    boost::container::flat_set<UserGroupProvisionalMember3>& provisionalMembers)
+{
+  base_action.visit(overloaded{
+      [&](const UserGroupAddition::v1& userGroupAddition) {
+        throw Errors::Exception(
+            make_error_code(Errors::Errc::UnsupportedGroupVersion),
+            "group block V1 unsupported");
+      },
+      [&](const UserGroupAddition::v2& userGroupAddition) {
+        if (!userGroupAddition.provisionalMembers().empty())
+          throw Errors::Exception(
+              make_error_code(Errors::Errc::UnsupportedGroupVersion),
+              "group block V2 provisional users unsupported");
+        auto const& newMembers = userGroupAddition.members();
+        members.insert(newMembers.begin(), newMembers.end());
+      },
+      [&](const UserGroupAddition::v3& userGroupAddition) {
+        auto const& newMembers = userGroupAddition.members();
+        members.insert(newMembers.begin(), newMembers.end());
+        auto const& newProvMembers = userGroupAddition.provisionalMembers();
+        provisionalMembers.insert(newProvMembers.begin(), newProvMembers.end());
+      }});
+}
+
+static void updateGroupMembersList(
+    UserGroupUpdate const& base_action,
+    boost::container::flat_set<UserGroupMember2>& members,
+    boost::container::flat_set<UserGroupProvisionalMember3>& provisionalMembers)
+{
+  if (auto const action = base_action.get_if<UserGroupUpdate::v1>())
+  {
+    members.clear();
+    members.insert(action->members().begin(), action->members().end());
+    provisionalMembers.clear();
+    provisionalMembers.insert(action->provisionalMembers().begin(),
+                              action->provisionalMembers().end());
+  }
+  else
+  {
+    throw Errors::AssertionError(
+        fmt::format("unreachable code, all versions should be handled"));
+  }
+}
+
+GroupAndMembers<Group> Accessor::getGroupMembers(
+    Group group, std::vector<Trustchain::GroupAction> const& entries)
+{
+  boost::container::flat_set<UserGroupMember2> members;
+  boost::container::flat_set<UserGroupProvisionalMember3> provisionalMembers;
+
+  for (auto rit = entries.rbegin(); rit != entries.rend(); ++rit)
+  {
+    auto isGroupUpdate = boost::variant2::visit(
+        overloaded{
+            [&](const Trustchain::Actions::UserGroupCreation&
+                    userGroupCreation) {
+              updateGroupMembersList(
+                  userGroupCreation, members, provisionalMembers);
+              return false;
+            },
+            [&](const Trustchain::Actions::UserGroupAddition&
+                    userGroupAddition) {
+              updateGroupMembersList(
+                  userGroupAddition, members, provisionalMembers);
+              return false;
+            },
+            [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
+              updateGroupMembersList(
+                  userGroupUpdate, members, provisionalMembers);
+              return true;
+            }},
+        *rit);
+    if (isGroupUpdate)
+    {
+      break; // GroupUpdate is not a diff, it resets the member list
+    }
+  }
+  std::vector<UserGroupMember2> membersVec;
+  membersVec.insert(membersVec.end(), members.begin(), members.end());
+  std::vector<UserGroupProvisionalMember3> provisionalMembersVec;
+  provisionalMembersVec.insert(provisionalMembersVec.end(),
+                               provisionalMembers.begin(),
+                               provisionalMembers.end());
+
+  return GroupAndMembers<Group>{
+      group,
+      membersVec,
+      provisionalMembersVec,
+  };
 }
 }

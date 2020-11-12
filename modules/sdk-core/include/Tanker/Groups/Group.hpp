@@ -5,6 +5,8 @@
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Groups/GroupProvisionalUser.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupMember2.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupProvisionalMember3.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
 #include <optional>
@@ -50,6 +52,9 @@ struct ExternalGroup
   Crypto::Hash lastKeyRotationBlockHash;
 };
 
+bool operator==(ExternalGroup const& l, ExternalGroup const& r);
+bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
+
 class BaseGroup final
 {
 public:
@@ -70,8 +75,14 @@ private:
   Crypto::PublicEncryptionKey _publicEncryptionKey;
 };
 
-bool operator==(ExternalGroup const& l, ExternalGroup const& r);
-bool operator!=(ExternalGroup const& l, ExternalGroup const& r);
+template <class GroupType = InternalGroup>
+struct GroupAndMembers
+{
+  GroupType group;
+  std::vector<Trustchain::Actions::UserGroupMember2> members;
+  std::vector<Trustchain::Actions::UserGroupProvisionalMember3>
+      provisionalMembers;
+};
 
 using Group = boost::variant2::variant<InternalGroup, ExternalGroup>;
 
