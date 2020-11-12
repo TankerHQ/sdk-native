@@ -193,6 +193,7 @@ tc::cotask<void> updateMembers(
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
@@ -204,12 +205,20 @@ tc::cotask<void> updateMembers(
   if (groups.found.empty())
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
-  auto const groupEntry = makeUserGroupAdditionAction(members.users,
-                                                      members.provisionalUsers,
-                                                      groups.found[0],
-                                                      trustchainId,
-                                                      deviceId,
-                                                      privateSignatureKey);
-  TC_AWAIT(requester.updateGroup(groupEntry));
+  if (spublicIdentitiesToRemove.empty())
+  {
+    auto const groupEntry =
+        makeUserGroupAdditionAction(members.users,
+                                    members.provisionalUsers,
+                                    groups.found[0],
+                                    trustchainId,
+                                    deviceId,
+                                    privateSignatureKey);
+    TC_AWAIT(requester.updateGroup(groupEntry));
+  }
+  else
+  {
+    throw AssertionError("Removing members not implemented");
+  }
 }
 }

@@ -468,7 +468,7 @@ int main(int argc, char* argv[])
 
       auto const groupId = SGroupId{args.at("<groupid>").asString()};
       std::vector<SPublicIdentity> memberIdentities = extractIdentityArgs(args);
-      core->updateGroupMembers(groupId, memberIdentities).get();
+      core->updateGroupMembers(groupId, memberIdentities, {}).get();
     }
     else if (args.at("claim").asBool())
     {
