@@ -14,8 +14,14 @@ namespace Groups
 class IRequester
 {
 public:
+  enum class IsLight
+  {
+    No,
+    Yes,
+  };
+
   virtual tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
-      gsl::span<Trustchain::GroupId const> groupIds) = 0;
+      gsl::span<Trustchain::GroupId const> groupIds, IsLight isLight) = 0;
 
   virtual tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) = 0;

@@ -38,10 +38,8 @@ Accessor::Accessor(Groups::IRequester* requester,
 tc::cotask<Accessor::InternalGroupPullResult> Accessor::getInternalGroups(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  // This function is only called when updating group members, and in that
-  // case we need the last block of the group. Since there is no way to know
-  // if we are up to date, just pull the group again
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+  auto groupPullResult =
+      TC_AWAIT(getGroups(groupIds, Groups::IRequester::IsLight::Yes));
 
   InternalGroupPullResult out;
   out.notFound = std::move(groupPullResult.notFound);
@@ -62,10 +60,8 @@ tc::cotask<Accessor::InternalGroupAndMembersPullResult>
 Accessor::getInternalGroupsAndMembers(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
-  // This function is only called when updating group members, and in that
-  // case we need the last block of the group. Since there is no way to know
-  // if we are up to date, just pull the group again
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+  auto groupPullResult =
+      TC_AWAIT(getGroups(groupIds, Groups::IRequester::IsLight::No));
 
   InternalGroupAndMembersPullResult out;
   out.notFound = std::move(groupPullResult.notFound);
@@ -91,7 +87,8 @@ Accessor::getPublicEncryptionKeys(
   PublicEncryptionKeyPullResult out;
 
   // The key could have changed due to a new GroupUpdate block, so always fetch
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds, false));
+  auto groupPullResult =
+      TC_AWAIT(getGroups(groupIds, Groups::IRequester::IsLight::Yes));
 
   out.notFound = std::move(groupPullResult.notFound);
   for (auto const& group : groupPullResult.found)
@@ -169,15 +166,17 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
 }
 
 tc::cotask<Accessor::GroupAndMembersPullResult> Accessor::getGroups(
-    std::vector<Trustchain::GroupId> const& groupIds, bool fillMembers)
+    std::vector<Trustchain::GroupId> const& groupIds,
+    IRequester::IsLight isLight,
+    bool fillMembers)
 {
   std::vector<Trustchain::GroupAction> entries;
   entries.reserve(groupIds.size());
   for (unsigned int i = 0; i < groupIds.size(); i += ChunkSize)
   {
     auto const count = std::min<unsigned int>(ChunkSize, groupIds.size() - i);
-    auto response = TC_AWAIT(
-        _requester->getGroupBlocks(gsl::make_span(groupIds).subspan(i, count)));
+    auto response = TC_AWAIT(_requester->getGroupBlocks(
+        gsl::make_span(groupIds).subspan(i, count), isLight));
     entries.insert(entries.end(),
                    std::make_move_iterator(response.begin()),
                    std::make_move_iterator(response.end()));
