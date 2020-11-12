@@ -17,6 +17,14 @@ namespace Tanker::Trustchain::Actions
       (encryptedPrivateEncryptionKey,                                         \
        Crypto::TwoTimesSealedPrivateEncryptionKey)
 
+struct RawUserGroupProvisionalMember3
+{
+  Crypto::PublicSignatureKey appPublicSignatureKey;
+  Crypto::PublicSignatureKey tankerPublicSignatureKey;
+  Crypto::PublicEncryptionKey appPublicEncryptionKey;
+  Crypto::PublicEncryptionKey tankerPublicEncryptionKey;
+};
+
 class UserGroupProvisionalMember3
 {
   TANKER_IMMUTABLE_DATA_TYPE_IMPLEMENTATION(
