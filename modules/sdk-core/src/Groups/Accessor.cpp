@@ -116,6 +116,9 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
     else if (auto const userGroupAddition = boost::variant2::get_if<
                  Trustchain::Actions::UserGroupAddition>(&action))
       out[userGroupAddition->groupId()].push_back(action);
+    else if (auto const userGroupUpdate = boost::variant2::get_if<
+        Trustchain::Actions::UserGroupUpdate>(&action))
+      out[userGroupUpdate->groupId()].push_back(action);
     else
       TERROR("Expected group blocks but got {}", Trustchain::getNature(action));
   }

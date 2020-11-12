@@ -28,6 +28,12 @@ tc::cotask<Group> applyUserGroupAddition(
     std::optional<Group> previousGroup,
     Trustchain::GroupAction const& action);
 
+tc::cotask<Group> applyUserGroupUpdate(
+    Users::ILocalUserAccessor& localUserAccessor,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+    std::optional<Group> previousGroup,
+    Trustchain::GroupAction const& action);
+
 tc::cotask<std::optional<Group>> processGroupEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
