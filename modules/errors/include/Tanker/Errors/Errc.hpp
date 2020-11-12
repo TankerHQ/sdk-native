@@ -24,6 +24,7 @@ enum class Errc
   Conflict,
   UpgradeRequired,
   IdentityAlreadyAttached,
+  UnsupportedGroupVersion,
 
   Last,
 };
