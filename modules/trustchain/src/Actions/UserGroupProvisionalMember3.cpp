@@ -12,4 +12,11 @@ TANKER_TRUSTCHAIN_DATA_DEFINE_SERIALIZATION(
 TANKER_TRUSTCHAIN_DATA_DEFINE_TO_JSON(
     UserGroupProvisionalMember3,
     TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES)
+
+bool operator<(UserGroupProvisionalMember3 const& l,
+               UserGroupProvisionalMember3 const& r)
+{
+  return std::tie(l.appPublicSignatureKey(), l.tankerPublicSignatureKey()) <
+         std::tie(r.appPublicSignatureKey(), r.tankerPublicSignatureKey());
+}
 }

@@ -37,6 +37,8 @@ public:
 
   tc::cotask<InternalGroupPullResult> getInternalGroups(
       std::vector<Trustchain::GroupId> const& groupIds) override;
+  tc::cotask<InternalGroupAndMembersPullResult> getInternalGroupsAndMembers(
+      std::vector<Trustchain::GroupId> const& groupIds) override;
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds) override;
   // This function can only return keys for groups you are a member of
@@ -51,7 +53,10 @@ private:
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
-  tc::cotask<Accessor::GroupPullResult> getGroups(
-      std::vector<Trustchain::GroupId> const& groupIds);
+  tc::cotask<Accessor::GroupAndMembersPullResult> getGroups(
+      std::vector<Trustchain::GroupId> const& groupIds,
+      bool fillMembers = true);
+  static GroupAndMembers<Group> getGroupMembers(
+      Group group, std::vector<Trustchain::GroupAction> const& entries);
 };
 }

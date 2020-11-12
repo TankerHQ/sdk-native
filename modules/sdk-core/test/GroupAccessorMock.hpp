@@ -13,6 +13,10 @@ public:
              tc::cotask<InternalGroupPullResult>(
                  std::vector<Trustchain::GroupId> const&),
              override);
+  MAKE_MOCK1(getInternalGroupsAndMembers,
+             tc::cotask<InternalGroupAndMembersPullResult>(
+                 std::vector<Trustchain::GroupId> const&),
+             override);
   MAKE_MOCK1(getPublicEncryptionKeys,
              tc::cotask<PublicEncryptionKeyPullResult>(
                  std::vector<Trustchain::GroupId> const&),
