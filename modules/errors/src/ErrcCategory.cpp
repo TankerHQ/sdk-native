@@ -42,6 +42,8 @@ std::string ErrcCategory::message(int c) const
     return "upgrade required";
   case Errc::IdentityAlreadyAttached:
     return "Identity already claimed";
+  case Errc::UnsupportedGroupVersion:
+    return "group block version too old or unsupported";
   case Errc::Last:
     break;
   }
