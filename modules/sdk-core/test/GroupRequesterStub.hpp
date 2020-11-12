@@ -24,5 +24,8 @@ public:
   MAKE_MOCK1(updateGroup,
              tc::cotask<void>(Trustchain::Actions::UserGroupAddition const&),
              override);
+  MAKE_MOCK1(updateGroup,
+             tc::cotask<void>(Trustchain::Actions::UserGroupUpdate const&),
+             override);
 };
 }
