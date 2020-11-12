@@ -8,7 +8,6 @@
 
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/IdentityUtils.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -143,6 +142,49 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
                                          trustchainId,
                                          deviceId,
                                          privateSignatureKey);
+}
+
+Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
+    Crypto::SignatureKeyPair const& newGroupSignatureKeyPair,
+    Crypto::EncryptionKeyPair const& newGroupEncryptionKeyPair,
+    std::vector<RawUserGroupMember2> const& memberUsers,
+    std::vector<RawUserGroupProvisionalMember3> const& memberProvisionalUsers,
+    InternalGroup const& group,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey)
+{
+  auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
+  if (groupSize == 0)
+  {
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "must leave at least one member in a group");
+  }
+  else if (groupSize > MAX_GROUP_SIZE)
+  {
+    throw formatEx(
+        Errc::GroupTooBig,
+        FMT_STRING("cannot have {:d} members in a group, max is {:d}"),
+        groupSize,
+        MAX_GROUP_SIZE);
+  }
+
+  auto members = generateGroupKeysForUsers2(
+      newGroupEncryptionKeyPair.privateKey, memberUsers);
+  auto provisionalMembers = generateGroupKeysForProvisionalUsers3(
+      newGroupEncryptionKeyPair.privateKey, memberProvisionalUsers);
+  return createUserGroupUpdateV1Action(group.id,
+                                       group.lastBlockHash,
+                                       group.lastKeyRotationBlockHash,
+                                       newGroupSignatureKeyPair,
+                                       newGroupEncryptionKeyPair.publicKey,
+                                       group.signatureKeyPair,
+                                       group.encryptionKeyPair,
+                                       members,
+                                       provisionalMembers,
+                                       trustchainId,
+                                       deviceId,
+                                       privateSignatureKey);
 }
 
 tc::cotask<void> updateMembers(

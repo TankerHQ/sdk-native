@@ -26,6 +26,10 @@ Trustchain::Actions::UserGroupCreation::v2::Members generateGroupKeysForUsers2(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<Users::User> const& users);
 
+Trustchain::Actions::UserGroupCreation::v2::Members generateGroupKeysForUsers2(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<Trustchain::Actions::RawUserGroupMember2> const& users);
+
 Trustchain::Actions::UserGroupCreation::v2::ProvisionalMembers
 generateGroupKeysForProvisionalUsers2(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
@@ -35,6 +39,12 @@ Trustchain::Actions::UserGroupCreation::v3::ProvisionalMembers
 generateGroupKeysForProvisionalUsers3(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<ProvisionalUsers::PublicUser> const& users);
+
+Trustchain::Actions::UserGroupCreation::v3::ProvisionalMembers
+generateGroupKeysForProvisionalUsers3(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<Trustchain::Actions::RawUserGroupProvisionalMember3> const&
+        users);
 
 Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Crypto::SignatureKeyPair const& signatureKeyPair,
