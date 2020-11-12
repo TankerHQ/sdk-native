@@ -76,6 +76,7 @@ using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
                                            Actions::UserGroupCreation3,
                                            Actions::UserGroupAddition1,
                                            Actions::UserGroupAddition2,
+                                           Actions::UserGroupAddition3,
                                            Actions::KeyPublishToUser,
                                            Actions::KeyPublishToUserGroup,
                                            Actions::KeyPublishToProvisionalUser,
@@ -116,6 +117,8 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<UserGroupAddition1>(block);
   case Nature::UserGroupAddition2:
     return Serialization::deserialize<UserGroupAddition2>(block);
+  case Nature::UserGroupAddition3:
+    return Serialization::deserialize<UserGroupAddition3>(block);
   case Nature::KeyPublishToDevice:
     throw std::runtime_error("key publish to device are not supported anymore");
   case Nature::KeyPublishToUser:
