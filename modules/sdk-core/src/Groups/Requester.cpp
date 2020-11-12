@@ -45,13 +45,13 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocksImpl(
 }
 
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
-    gsl::span<Trustchain::GroupId const> groupIds)
+    gsl::span<Trustchain::GroupId const> groupIds, IsLight isLight)
 {
   if (groupIds.empty())
     TC_RETURN(std::vector<Trustchain::GroupAction>{});
   auto const query = nlohmann::json{
       {"user_group_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(groupIds)},
-      {"is_light", "true"}};
+      {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
   TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
 }
 
@@ -90,11 +90,10 @@ tc::cotask<void> Requester::updateGroup(
 tc::cotask<void> Requester::updateGroup(
     Trustchain::Actions::UserGroupUpdate const& groupUpdate)
 {
-  TC_AWAIT(
-      _httpClient->asyncPut(
-          _httpClient->makeUrl("user-groups"),
-          {{"user_group_update",
-            mgs::base64::encode(Serialization::serialize(groupUpdate))}}))
+  TC_AWAIT(_httpClient->asyncPut(
+               _httpClient->makeUrl("user-groups"),
+               {{"user_group_update",
+                 mgs::base64::encode(Serialization::serialize(groupUpdate))}}))
       .value();
 }
 }

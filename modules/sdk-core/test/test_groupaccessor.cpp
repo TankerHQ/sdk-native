@@ -55,7 +55,8 @@ TEST_CASE("GroupAccessor")
     {
       auto const unknownGroupId = make<GroupId>("unknownGroup");
       REQUIRE_CALL(requestStub,
-                   getGroupBlocks(std::vector<GroupId>{unknownGroupId}))
+                   getGroupBlocks(std::vector<GroupId>{unknownGroupId},
+                                  Groups::IRequester::IsLight::Yes))
           .RETURN(makeCoTask(std::vector<Trustchain::GroupAction>{}));
 
       auto const result =
@@ -88,7 +89,8 @@ TEST_CASE("GroupAccessor")
       SUBCASE("it should NOT return cached encryption keys")
       {
         REQUIRE_CALL(requestStub,
-                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}))
+                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()},
+                                    Groups::IRequester::IsLight::Yes))
             .RETURN(makeCoTask(makeEntries(aliceGroup)));
 
         {
@@ -109,7 +111,8 @@ TEST_CASE("GroupAccessor")
       SUBCASE("request group by Id")
       {
         REQUIRE_CALL(requestStub,
-                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}))
+                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()},
+                                    Groups::IRequester::IsLight::Yes))
             .RETURN(makeCoTask(makeEntries(aliceGroup)));
         SUBCASE(
             "it should request group public keys by groupId if not in store")
@@ -159,7 +162,8 @@ TEST_CASE("GroupAccessor")
       SUBCASE("it fails request internal groups when are not part of")
       {
         REQUIRE_CALL(requestStub,
-                     getGroupBlocks(std::vector<GroupId>{bobGroup.id()}))
+                     getGroupBlocks(std::vector<GroupId>{bobGroup.id()},
+                                    Groups::IRequester::IsLight::Yes))
             .RETURN(makeCoTask(makeEntries(bobGroup)));
         auto const result =
             AWAIT(groupAccessor.getInternalGroups({bobGroup.id()}));

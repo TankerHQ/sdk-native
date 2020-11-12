@@ -28,7 +28,7 @@ public:
   Requester(Network::HttpClient* client);
 
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
-      gsl::span<Trustchain::GroupId const> groupIds) override;
+      gsl::span<Trustchain::GroupId const> groupIds, IsLight isLight) override;
 
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocks(
       Crypto::PublicEncryptionKey const& groupEncryptionKey) override;

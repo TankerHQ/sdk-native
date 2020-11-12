@@ -10,9 +10,9 @@ class GroupRequesterStub
   : public trompeloeil::mock_interface<Groups::IRequester>
 {
 public:
-  MAKE_MOCK1(getGroupBlocks,
+  MAKE_MOCK2(getGroupBlocks,
              tc::cotask<std::vector<Trustchain::GroupAction>>(
-                 gsl::span<Trustchain::GroupId const>),
+                 gsl::span<Trustchain::GroupId const>, IsLight isLight),
              override);
   MAKE_MOCK1(getGroupBlocks,
              tc::cotask<std::vector<Trustchain::GroupAction>>(

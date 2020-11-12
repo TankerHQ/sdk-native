@@ -55,6 +55,7 @@ private:
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
   tc::cotask<Accessor::GroupAndMembersPullResult> getGroups(
       std::vector<Trustchain::GroupId> const& groupIds,
+      IRequester::IsLight isLight,
       bool fillMembers = true);
   static GroupAndMembers<Group> getGroupMembers(
       Group group, std::vector<Trustchain::GroupAction> const& entries);

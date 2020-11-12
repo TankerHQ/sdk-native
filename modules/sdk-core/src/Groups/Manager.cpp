@@ -14,6 +14,7 @@
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Utils.hpp>
 
+#include <boost/container/flat_set.hpp>
 #include <mgs/base64.hpp>
 
 using namespace Tanker::Trustchain::Actions;
@@ -187,6 +188,86 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
                                        privateSignatureKey);
 }
 
+static std::vector<RawUserGroupMember2> applyGroupUserDiff(
+    std::vector<UserGroupMember2> const& existingUsers,
+    std::vector<Users::User> const& usersToAdd,
+    std::vector<Trustchain::UserId> const& userIDsToRemove)
+{
+  boost::container::flat_set<Trustchain::UserId> usersToAddSet;
+  for (auto const& user : usersToAdd)
+    usersToAddSet.insert(user.id());
+
+  // Note that removing and adding the same user is allowed here (no-op)
+  boost::container::flat_set<Trustchain::UserId> userIdsToRemove;
+  for (auto const& user : userIDsToRemove)
+    userIdsToRemove.insert(user);
+
+  std::vector<RawUserGroupMember2> users;
+  for (auto const& user : existingUsers)
+  {
+    if (userIdsToRemove.erase(user.userId()))
+      continue;
+    usersToAddSet.erase(user.userId());
+    users.push_back({user.userId(), user.userPublicKey()});
+  }
+  if (!userIdsToRemove.empty())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "{} user IDs to remove were not found",
+                   userIdsToRemove.size());
+  }
+
+  // Silently skip duplicate adds (not an error since GroupAddition allows them)
+  for (auto const& user : usersToAdd)
+    if (usersToAddSet.contains(user.id()))
+      users.push_back({user.id(), *user.userKey()});
+
+  return users;
+}
+
+static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
+    std::vector<UserGroupProvisionalMember3> const& existingUsers,
+    std::vector<ProvisionalUsers::PublicUser> const& usersToAdd,
+    std::vector<Identity::PublicProvisionalIdentity> const& identitiesToRemove)
+{
+  boost::container::flat_set<Crypto::PublicSignatureKey> usersToAddSet;
+  for (auto&& user : usersToAdd)
+    usersToAddSet.insert(user.appSignaturePublicKey);
+
+  // Note that removing and adding the same user is allowed here (no-op)
+  boost::container::flat_set<Crypto::PublicSignatureKey> provisionalsToRemove;
+  for (auto&& user : identitiesToRemove)
+    provisionalsToRemove.insert(user.appSignaturePublicKey);
+
+  std::vector<RawUserGroupProvisionalMember3> provisionalUsers;
+  for (auto&& user : existingUsers)
+  {
+    if (provisionalsToRemove.erase(user.appPublicSignatureKey()))
+      continue;
+    usersToAddSet.erase(user.appPublicSignatureKey());
+    provisionalUsers.push_back({user.appPublicSignatureKey(),
+                                user.tankerPublicSignatureKey(),
+                                user.appPublicEncryptionKey(),
+                                user.tankerPublicEncryptionKey()});
+  }
+  if (!provisionalsToRemove.empty())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "{} provisional users to remove were not found",
+                   provisionalsToRemove.size());
+  }
+
+  // Silently skip duplicate adds (not an error since GroupAddition allows them)
+  for (auto&& user : usersToAdd)
+    if (usersToAddSet.contains(user.appSignaturePublicKey))
+      provisionalUsers.push_back({user.appSignaturePublicKey,
+                                  user.tankerSignaturePublicKey,
+                                  user.appEncryptionPublicKey,
+                                  user.tankerEncryptionPublicKey});
+
+  return provisionalUsers;
+}
+
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
@@ -198,18 +279,18 @@ tc::cotask<void> updateMembers(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  auto const members =
+  auto const newMembers =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
-
-  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
-  if (groups.found.empty())
-    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
   if (spublicIdentitiesToRemove.empty())
   {
+    auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
+    if (groups.found.empty())
+      throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+
     auto const groupEntry =
-        makeUserGroupAdditionAction(members.users,
-                                    members.provisionalUsers,
+        makeUserGroupAdditionAction(newMembers.users,
+                                    newMembers.provisionalUsers,
                                     groups.found[0],
                                     trustchainId,
                                     deviceId,
@@ -218,7 +299,33 @@ tc::cotask<void> updateMembers(
   }
   else
   {
-    throw AssertionError("Removing members not implemented");
+    auto const groups =
+        TC_AWAIT(groupAccessor.getInternalGroupsAndMembers({groupId}));
+    if (groups.found.empty())
+      throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+
+    auto const publicIdentitiesToRemove =
+        extractPublicIdentities(removeDuplicates(spublicIdentitiesToRemove));
+    auto const membersToRemove = partitionIdentities(publicIdentitiesToRemove);
+
+    auto users = applyGroupUserDiff(
+        groups.found[0].members, newMembers.users, membersToRemove.userIds);
+    auto provisionalUsers =
+        applyGroupProvisionalDiff(groups.found[0].provisionalMembers,
+                                  newMembers.provisionalUsers,
+                                  membersToRemove.publicProvisionalIdentities);
+
+    auto const newGroupSignatureKeyPair = Crypto::makeSignatureKeyPair();
+    auto const newGroupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
+    auto const groupEntry = makeUserGroupUpdateAction(newGroupSignatureKeyPair,
+                                                      newGroupEncryptionKeyPair,
+                                                      users,
+                                                      provisionalUsers,
+                                                      groups.found[0].group,
+                                                      trustchainId,
+                                                      deviceId,
+                                                      privateSignatureKey);
+    TC_AWAIT(requester.updateGroup(groupEntry));
   }
 }
 }
