@@ -69,11 +69,11 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
   return keysForUsers;
 }
 
-UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
+UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<ProvisionalUsers::PublicUser> const& users)
 {
-  UserGroupCreation::v2::ProvisionalMembers keysForUsers;
+  UserGroupCreation::v3::ProvisionalMembers keysForUsers;
   for (auto const& user : users)
   {
     auto const encryptedKeyOnce = Crypto::sealEncrypt(
@@ -83,6 +83,8 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers(
 
     keysForUsers.emplace_back(user.appSignaturePublicKey,
                               user.tankerSignaturePublicKey,
+                              user.appEncryptionPublicKey,
+                              user.tankerEncryptionPublicKey,
                               encryptedKeyTwice);
   }
   return keysForUsers;
@@ -114,7 +116,7 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
       groupEncryptionKeyPair.privateKey, memberUsers);
   auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers(
       groupEncryptionKeyPair.privateKey, memberProvisionalUsers);
-  return createUserGroupCreationV2Action(groupSignatureKeyPair,
+  return createUserGroupCreationV3Action(groupSignatureKeyPair,
                                          groupEncryptionKeyPair.publicKey,
                                          groupMembers,
                                          groupProvisionalMembers,
@@ -176,7 +178,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
                                             memberUsers);
   auto provisionalMembers = generateGroupKeysForProvisionalUsers(
       group.encryptionKeyPair.privateKey, memberProvisionalUsers);
-  return createUserGroupAdditionV2Action(group.signatureKeyPair,
+  return createUserGroupAdditionV3Action(group.signatureKeyPair,
                                          group.lastBlockHash,
                                          members,
                                          provisionalMembers,

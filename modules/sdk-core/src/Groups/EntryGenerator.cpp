@@ -29,11 +29,11 @@ Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
                                deviceSignatureKey};
 }
 
-Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
+Trustchain::Actions::UserGroupCreation3 createUserGroupCreationV3Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
     UserGroupCreation::v2::Members const& groupMembers,
-    UserGroupCreation::v2::ProvisionalMembers const& groupProvisionalMembers,
+    UserGroupCreation::v3::ProvisionalMembers const& groupProvisionalMembers,
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
@@ -41,7 +41,7 @@ Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
   auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
       groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
 
-  return UserGroupCreation::v2{
+  return UserGroupCreation::v3{
       trustchainId,
       groupSignatureKeyPair.publicKey,
       groupPublicEncryptionKey,
@@ -75,18 +75,18 @@ Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
   };
 }
 
-Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
+Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
     std::vector<UserGroupAddition::v2::Member> const& members,
-    std::vector<UserGroupAddition::v2::ProvisionalMember> const&
+    std::vector<UserGroupAddition::v3::ProvisionalMember> const&
         provisionalMembers,
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)
 {
   GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
-  return UserGroupAddition::v2{
+  return UserGroupAddition::v3{
       trustchainId,
       groupId,
       previousGroupBlockHash,
