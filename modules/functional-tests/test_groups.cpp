@@ -99,9 +99,9 @@ TEST_SUITE("Groups")
         Errors::Errc::InvalidArgument);
 
     REQUIRE_NOTHROW(TC_AWAIT(
-        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
+        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()}, {})));
     REQUIRE_NOTHROW(TC_AWAIT(
-        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()})));
+        aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()}, {})));
 
     REQUIRE_NOTHROW(decryptedData =
                         TC_AWAIT(decrypt(*bobSession, encryptedData)));
@@ -129,9 +129,9 @@ TEST_SUITE("Groups")
       auto const groupId =
           TC_AWAIT(AliceSession->createGroup({Bob.spublicIdentity()}));
       TC_AWAIT(
-          BobSession->updateGroupMembers(groupId, {Charlie.spublicIdentity()}));
+          BobSession->updateGroupMembers(groupId, {Charlie.spublicIdentity()}, {}));
       TC_AWAIT(CharlieSession->updateGroupMembers(groupId,
-                                                  {Alice.spublicIdentity()}));
+                                                  {Alice.spublicIdentity()}, {}));
 
       REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                           encrypt(*CharlieSession, clearData, {}, {groupId})));
@@ -231,7 +231,7 @@ TEST_SUITE("Groups")
     REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
         myGroup,
         {SPublicIdentity{
-            Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+            Identity::getPublicIdentity(bobProvisionalIdentity)}}, {})));
 
     auto bob = trustchain.makeUser();
     auto bobDevice = bob.makeDevice();
@@ -341,7 +341,7 @@ TEST_SUITE("Groups")
     REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
         myGroup,
         {SPublicIdentity{
-            Identity::getPublicIdentity(bobProvisionalIdentity)}})));
+            Identity::getPublicIdentity(bobProvisionalIdentity)}}, {})));
 
     auto bob = trustchain.makeUser();
     auto bobDevice = bob.makeDevice();

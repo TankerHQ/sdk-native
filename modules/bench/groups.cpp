@@ -71,7 +71,7 @@ static void updateGroupMembers_addMembers(benchmark::State& state)
 
   tc::async_resumable([&]() -> tc::cotask<void> {
     for (auto _ : state)
-      TC_AWAIT(tanker->updateGroupMembers(groupId, publicIdentities));
+      TC_AWAIT(tanker->updateGroupMembers(groupId, publicIdentities, {}));
   }).get();
 }
 BENCHMARK(updateGroupMembers_addMembers)

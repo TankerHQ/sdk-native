@@ -81,6 +81,7 @@ tc::cotask<void> updateMembers(
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);

@@ -557,7 +557,8 @@ tc::cotask<SGroupId> Core::createGroup(
 
 tc::cotask<void> Core::updateGroupMembers(
     SGroupId const& groupIdString,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd)
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove)
 {
   assertStatus(Status::Ready, "updateGroupMembers");
   auto const groupId =
@@ -570,6 +571,7 @@ tc::cotask<void> Core::updateGroupMembers(
       _session->accessors().groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
+      spublicIdentitiesToRemove,
       _session->trustchainId(),
       localUser.deviceId(),
       localUser.deviceKeys().signatureKeyPair.privateKey));

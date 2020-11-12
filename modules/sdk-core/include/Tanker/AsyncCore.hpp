@@ -93,7 +93,9 @@ public:
 
   tc::future<SGroupId> createGroup(std::vector<SPublicIdentity> const& members);
   tc::future<void> updateGroupMembers(
-      SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd);
+      SGroupId const& groupId,
+      std::vector<SPublicIdentity> const& usersToAdd,
+      std::vector<SPublicIdentity> const& usersToRemove);
 
   tc::future<VerificationKey> generateVerificationKey();
 
