@@ -23,6 +23,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation/v2.hpp
+  include/Tanker/Trustchain/Actions/UserGroupCreation/v3.hpp
   include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember3.hpp
@@ -65,6 +66,7 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupCreation.cpp
   src/Actions/UserGroupCreation/v1.cpp
   src/Actions/UserGroupCreation/v2.cpp
+  src/Actions/UserGroupCreation/v3.cpp
   src/Actions/UserGroupMember2.cpp
   src/Actions/UserGroupProvisionalMember2.cpp
   src/Actions/UserGroupProvisionalMember3.cpp
