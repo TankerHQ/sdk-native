@@ -76,6 +76,7 @@ public:
   tc::cotask<HttpResult> asyncPost(std::string_view target);
   tc::cotask<HttpResult> asyncPatch(std::string_view target,
                                     nlohmann::json data);
+  tc::cotask<HttpResult> asyncPut(std::string_view target, nlohmann::json data);
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   std::string makeUrl(std::string_view target) const;
