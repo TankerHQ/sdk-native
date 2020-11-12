@@ -86,5 +86,16 @@ tc::cotask<void> Requester::updateGroup(
             mgs::base64::encode(Serialization::serialize(groupAddition))}}))
       .value();
 }
+
+tc::cotask<void> Requester::updateGroup(
+    Trustchain::Actions::UserGroupUpdate const& groupUpdate)
+{
+  TC_AWAIT(
+      _httpClient->asyncPut(
+          _httpClient->makeUrl("user-groups"),
+          {{"user_group_update",
+            mgs::base64::encode(Serialization::serialize(groupUpdate))}}))
+      .value();
+}
 }
 }

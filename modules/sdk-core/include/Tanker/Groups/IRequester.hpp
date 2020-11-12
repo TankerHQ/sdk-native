@@ -24,6 +24,8 @@ public:
       Trustchain::Actions::UserGroupCreation const& groupCreation) = 0;
   virtual tc::cotask<void> updateGroup(
       Trustchain::Actions::UserGroupAddition const& groupAddition) = 0;
+  virtual tc::cotask<void> updateGroup(
+      Trustchain::Actions::UserGroupUpdate const& groupUpdate) = 0;
 
   virtual ~IRequester() = default;
 };

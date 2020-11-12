@@ -39,6 +39,9 @@ public:
   tc::cotask<void> updateGroup(
       Trustchain::Actions::UserGroupAddition const& groupAddition) override;
 
+  tc::cotask<void> updateGroup(
+      Trustchain::Actions::UserGroupUpdate const& groupUpdate) override;
+
 private:
   tc::cotask<std::vector<Trustchain::GroupAction>> getGroupBlocksImpl(
       nlohmann::json const& query);
