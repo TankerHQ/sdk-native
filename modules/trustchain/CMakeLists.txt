@@ -29,6 +29,8 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember3.hpp
   include/Tanker/Trustchain/Actions/SessionCertificate.hpp
+  include/Tanker/Trustchain/Actions/UserGroupUpdate.hpp
+  include/Tanker/Trustchain/Actions/UserGroupUpdate/v1.hpp
   include/Tanker/Trustchain/Context.hpp
   include/Tanker/Trustchain/Errors/Errc.hpp
   include/Tanker/Trustchain/Errors/ErrcCategory.hpp
@@ -74,6 +76,8 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupProvisionalMember2.cpp
   src/Actions/UserGroupProvisionalMember3.cpp
   src/Actions/SessionCertificate.cpp
+  src/Actions/UserGroupUpdate.cpp
+  src/Actions/UserGroupUpdate/v1.cpp
   src/Context.cpp
   src/Errors/Errc.cpp
   src/Errors/ErrcCategory.cpp
