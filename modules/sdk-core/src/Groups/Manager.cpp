@@ -49,48 +49,6 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   }));
 }
 
-namespace
-{
-UserGroupCreation::v2::Members generateGroupKeysForUsers2(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<Users::User> const& users)
-{
-  UserGroupCreation::v2::Members keysForUsers;
-  for (auto const& user : users)
-  {
-    if (!user.userKey())
-      throw AssertionError("cannot create group for users without a user key");
-
-    keysForUsers.emplace_back(
-        user.id(),
-        *user.userKey(),
-        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey()));
-  }
-  return keysForUsers;
-}
-
-UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<ProvisionalUsers::PublicUser> const& users)
-{
-  UserGroupCreation::v3::ProvisionalMembers keysForUsers;
-  for (auto const& user : users)
-  {
-    auto const encryptedKeyOnce = Crypto::sealEncrypt(
-        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
-    auto const encryptedKeyTwice =
-        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
-
-    keysForUsers.emplace_back(user.appSignaturePublicKey,
-                              user.tankerSignaturePublicKey,
-                              user.appEncryptionPublicKey,
-                              user.tankerEncryptionPublicKey,
-                              encryptedKeyTwice);
-  }
-  return keysForUsers;
-}
-}
-
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
@@ -114,7 +72,7 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 
   auto groupMembers = generateGroupKeysForUsers2(
       groupEncryptionKeyPair.privateKey, memberUsers);
-  auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers(
+  auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers3(
       groupEncryptionKeyPair.privateKey, memberProvisionalUsers);
   return createUserGroupCreationV3Action(groupSignatureKeyPair,
                                          groupEncryptionKeyPair.publicKey,
@@ -176,7 +134,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
   auto members = generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
                                             memberUsers);
-  auto provisionalMembers = generateGroupKeysForProvisionalUsers(
+  auto provisionalMembers = generateGroupKeysForProvisionalUsers3(
       group.encryptionKeyPair.privateKey, memberProvisionalUsers);
   return createUserGroupAdditionV3Action(group.signatureKeyPair,
                                          group.lastBlockHash,

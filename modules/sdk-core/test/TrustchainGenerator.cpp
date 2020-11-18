@@ -274,35 +274,14 @@ auto createGroupAction(Trustchain::TrustchainId const& tid,
       author.keys().signatureKeyPair.privateKey);
 }
 
-using SealedPrivateEncryptionKeysForUsers = Trustchain::Actions::
-    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers;
-
-SealedPrivateEncryptionKeysForUsers generateGroupKeysForUsers(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<User> const& users)
-{
-  SealedPrivateEncryptionKeysForUsers keysForUsers;
-  for (auto const& user : users)
-  {
-    if (user.userKeys().empty())
-      throw std::runtime_error(
-          "TrustchainGenerator: can't add a user without user key to a "
-          "group");
-    keysForUsers.emplace_back(
-        user.userKeys().back().publicKey,
-        Crypto::sealEncrypt(groupPrivateEncryptionKey,
-                            user.userKeys().back().publicKey));
-  }
-  return keysForUsers;
-}
-
 auto createGroupAction(Trustchain::TrustchainId const& tid,
                        Device const& author,
                        Crypto::EncryptionKeyPair const& encKp,
                        Crypto::SignatureKeyPair const& sigKp,
                        std::vector<User> const& users)
 {
-  auto const keysForUsers = generateGroupKeysForUsers(encKp.privateKey, users);
+  auto const keysForUsers = Groups::generateGroupKeysForUsers1(
+      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
   return Groups::createUserGroupCreationV1Action(
       sigKp,
       encKp.publicKey,
@@ -409,8 +388,8 @@ Trustchain::Actions::UserGroupAddition Group::addUsers(
 Trustchain::Actions::UserGroupAddition Group::addUsersV1(
     Device const& author, std::vector<User> const& users)
 {
-  auto const keysForUsers =
-      generateGroupKeysForUsers(currentEncKp().privateKey, users);
+  auto const keysForUsers = Groups::generateGroupKeysForUsers1(
+      currentEncKp().privateKey, transformTo<std::vector<Users::User>>(users));
 
   auto const groupAddition = Groups::createUserGroupAdditionV1Action(
       currentSigKp(),

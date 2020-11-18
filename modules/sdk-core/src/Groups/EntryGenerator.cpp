@@ -1,12 +1,89 @@
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
+using namespace Tanker::Errors;
 
 namespace Tanker::Groups
 {
+UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers
+generateGroupKeysForUsers1(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<Users::User> const& users)
+{
+  UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers keysForUsers;
+  for (auto const& user : users)
+  {
+    if (!user.userKey())
+      throw AssertionError("can't add a user without user key to a group");
+    keysForUsers.emplace_back(
+        *user.userKey(),
+        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey()));
+  }
+  return keysForUsers;
+}
+
+UserGroupCreation::v2::Members generateGroupKeysForUsers2(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<Users::User> const& users)
+{
+  UserGroupCreation::v2::Members keysForUsers;
+  for (auto const& user : users)
+  {
+    if (!user.userKey())
+      throw AssertionError("cannot create group for users without a user key");
+
+    keysForUsers.emplace_back(
+        user.id(),
+        *user.userKey(),
+        Crypto::sealEncrypt(groupPrivateEncryptionKey, *user.userKey()));
+  }
+  return keysForUsers;
+}
+
+UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers2(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<ProvisionalUsers::PublicUser> const& users)
+{
+  UserGroupCreation::v2::ProvisionalMembers keysForProvUsers;
+  for (auto const& user : users)
+  {
+    auto const encryptedKeyOnce = Crypto::sealEncrypt(
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
+    auto const encryptedKeyTwice =
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
+
+    keysForProvUsers.emplace_back(user.appSignaturePublicKey,
+                              user.tankerSignaturePublicKey,
+                              encryptedKeyTwice);
+  }
+  return keysForProvUsers;
+}
+
+UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers3(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<ProvisionalUsers::PublicUser> const& users)
+{
+  UserGroupCreation::v3::ProvisionalMembers keysForProvUsers;
+  for (auto const& user : users)
+  {
+    auto const encryptedKeyOnce = Crypto::sealEncrypt(
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
+    auto const encryptedKeyTwice =
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
+
+    keysForProvUsers.emplace_back(user.appSignaturePublicKey,
+                              user.tankerSignaturePublicKey,
+                              user.appEncryptionPublicKey,
+                              user.tankerEncryptionPublicKey,
+                              encryptedKeyTwice);
+  }
+  return keysForProvUsers;
+}
+
 Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
