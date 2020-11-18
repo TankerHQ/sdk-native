@@ -106,6 +106,29 @@ Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
                                deviceSignatureKey};
 }
 
+Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
+    UserGroupCreation::v2::Members const& groupMembers,
+    UserGroupCreation::v2::ProvisionalMembers const& groupProvisionalMembers,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
+      groupSignatureKeyPair.privateKey, groupPublicEncryptionKey);
+
+  return UserGroupCreation::v2{trustchainId,
+                               groupSignatureKeyPair.publicKey,
+                               groupPublicEncryptionKey,
+                               encryptedPrivateSignatureKey,
+                               groupMembers,
+                               groupProvisionalMembers,
+                               static_cast<Crypto::Hash>(deviceId),
+                               groupSignatureKeyPair.privateKey,
+                               deviceSignatureKey};
+}
+
 Trustchain::Actions::UserGroupCreation3 createUserGroupCreationV3Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
@@ -146,6 +169,29 @@ Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
       groupId,
       previousGroupBlockHash,
       sealedPrivateEncryptionKeysForUsers,
+      static_cast<Crypto::Hash>(deviceId),
+      groupSignatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
+}
+
+Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::Hash const& previousGroupBlockHash,
+    std::vector<UserGroupAddition::v2::Member> const& members,
+    std::vector<UserGroupAddition::v2::ProvisionalMember> const&
+    provisionalMembers,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  GroupId const groupId{groupSignatureKeyPair.publicKey.base()};
+  return UserGroupAddition::v2{
+      trustchainId,
+      groupId,
+      previousGroupBlockHash,
+      members,
+      provisionalMembers,
       static_cast<Crypto::Hash>(deviceId),
       groupSignatureKeyPair.privateKey,
       deviceSignatureKey,

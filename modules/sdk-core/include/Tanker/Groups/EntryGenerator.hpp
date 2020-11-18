@@ -44,6 +44,16 @@ Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);
 
+Trustchain::Actions::UserGroupCreation2 createUserGroupCreationV2Action(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
+    Trustchain::Actions::UserGroupCreation::v2::Members const& groupMembers,
+    Trustchain::Actions::UserGroupCreation::v2::ProvisionalMembers const&
+        groupProvisionalMembers,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey);
+
 Trustchain::Actions::UserGroupCreation3 createUserGroupCreationV3Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::PublicEncryptionKey const& groupPublicEncryptionKey,
@@ -60,6 +70,18 @@ Trustchain::Actions::UserGroupAddition1 createUserGroupAdditionV1Action(
     Trustchain::Actions::UserGroupAddition::v1::
         SealedPrivateEncryptionKeysForUsers const&
             sealedPrivateEncryptionKeysForUsers,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey);
+
+Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
+    Crypto::SignatureKeyPair const& groupSignatureKeyPair,
+    Crypto::Hash const& previousGroupBlockHash,
+    std::vector<Trustchain::Actions::UserGroupAddition::v2::Member> const&
+        members,
+    std::vector<
+        Trustchain::Actions::UserGroupAddition::v2::ProvisionalMember> const&
+        provisionalMembers,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey);

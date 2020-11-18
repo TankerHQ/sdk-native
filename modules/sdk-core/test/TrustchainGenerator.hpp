@@ -44,16 +44,17 @@ class Resource;
 
 struct Group
 {
-  // Group v2
-  Group(Trustchain::TrustchainId const& tid,
-        Device const& author,
-        std::vector<User> const& users,
-        std::vector<ProvisionalUser> const& provisionalUsers);
-
-  // Group v1
-  Group(Trustchain::TrustchainId const& tid,
-        Device const& author,
-        std::vector<User> const& users);
+  static Group newV1(Trustchain::TrustchainId const& tid,
+              Device const& author,
+              std::vector<User> const& users);
+  static Group newV2(Trustchain::TrustchainId const& tid,
+              Device const& author,
+              std::vector<User> const& users,
+              std::vector<ProvisionalUser> const& provisionalUsers);
+  static Group newV3(Trustchain::TrustchainId const& tid,
+              Device const& author,
+              std::vector<User> const& users,
+              std::vector<ProvisionalUser> const& provisionalUsers);
 
   operator Tanker::InternalGroup() const;
   explicit operator Tanker::ExternalGroup() const;
@@ -65,13 +66,23 @@ struct Group
 
   std::vector<Trustchain::GroupAction> const& entries() const;
 
+  Trustchain::Actions::UserGroupAddition addUsersV1(
+      Device const& author, std::vector<User> const& users);
+  Trustchain::Actions::UserGroupAddition addUsersV2(
+      Device const& author,
+      std::vector<User> const& newUsers = {},
+      std::vector<ProvisionalUser> const& provisionalUsers = {});
   Trustchain::Actions::UserGroupAddition addUsers(
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});
 
-  Trustchain::Actions::UserGroupAddition addUsersV1(
-      Device const& author, std::vector<User> const& users);
+private:
+  Group(Trustchain::TrustchainId const& tid,
+        Device const& author,
+        Crypto::EncryptionKeyPair const& currentEncKp,
+        Crypto::SignatureKeyPair const& currentSigKp,
+        std::vector<Trustchain::GroupAction> const& entries);
 
 private:
   Trustchain::TrustchainId _tid;
@@ -191,12 +202,15 @@ public:
   User makeUser(std::string const& suserId) const;
   User makeUserV1(std::string const& suserId) const;
 
+  Group makeGroupV1(Device const& author, std::vector<User> const& users) const;
+  Group makeGroupV2(
+      Device const& author,
+      std::vector<User> const& users = {},
+      std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
   Group makeGroup(
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {}) const;
-
-  Group makeGroupV1(Device const& author, std::vector<User> const& users) const;
 
   ProvisionalUser makeProvisionalUser(std::string const& email);
 
