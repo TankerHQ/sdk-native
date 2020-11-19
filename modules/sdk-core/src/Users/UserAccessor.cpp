@@ -209,13 +209,19 @@ auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
   if (userIds.empty())
     TC_RETURN(UsersMap{});
 
+  std::vector<Trustchain::UserId> uniqueUserIds(userIds.begin(), userIds.end());
+  std::sort(uniqueUserIds.begin(), uniqueUserIds.end());
+  uniqueUserIds.erase(std::unique(uniqueUserIds.begin(), uniqueUserIds.end()),
+                      uniqueUserIds.end());
+
   UsersMap out;
-  out.reserve(userIds.size());
-  for (unsigned int i = 0; i < userIds.size(); i += ChunkSize)
+  out.reserve(uniqueUserIds.size());
+  for (unsigned int i = 0; i < uniqueUserIds.size(); i += ChunkSize)
   {
-    auto const count = std::min<unsigned int>(ChunkSize, userIds.size() - i);
-    auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(userIds.subspan(i, count)));
+    auto const count =
+        std::min<std::size_t>(ChunkSize, uniqueUserIds.size() - i);
+    auto const [trustchainCreation, actions] = TC_AWAIT(
+        _requester->getUsers(gsl::make_span(uniqueUserIds).subspan(i, count)));
     auto currentUsers =
         std::get<UsersMap>(processUserEntries(_context, actions));
     out.insert(std::make_move_iterator(currentUsers.begin()),
@@ -230,13 +236,21 @@ auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
   if (deviceIds.empty())
     TC_RETURN(DevicesMap{});
 
+  std::vector<Trustchain::DeviceId> uniqueDeviceIds(deviceIds.begin(),
+                                                    deviceIds.end());
+  std::sort(uniqueDeviceIds.begin(), uniqueDeviceIds.end());
+  uniqueDeviceIds.erase(
+      std::unique(uniqueDeviceIds.begin(), uniqueDeviceIds.end()),
+      uniqueDeviceIds.end());
+
   DevicesMap out;
-  out.reserve(deviceIds.size());
-  for (unsigned int i = 0; i < deviceIds.size(); i += ChunkSize)
+  out.reserve(uniqueDeviceIds.size());
+  for (unsigned int i = 0; i < uniqueDeviceIds.size(); i += ChunkSize)
   {
-    auto const count = std::min<unsigned int>(ChunkSize, deviceIds.size() - i);
-    auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(deviceIds.subspan(i, count)));
+    auto const count =
+        std::min<std::size_t>(ChunkSize, uniqueDeviceIds.size() - i);
+    auto const [trustchainCreation, actions] = TC_AWAIT(_requester->getUsers(
+        gsl::make_span(uniqueDeviceIds).subspan(i, count)));
     auto currentDevices =
         std::get<DevicesMap>(processUserEntries(_context, actions));
     out.insert(std::make_move_iterator(currentDevices.begin()),
