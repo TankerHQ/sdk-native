@@ -39,6 +39,7 @@ TEST_CASE("UserAccessor")
   SUBCASE("it should return found users")
   {
     std::vector ids{alice.id(), bob.id(), charlie.id()};
+    std::sort(ids.begin(), ids.end());
 
     REQUIRE_CALL(requester, getUsers(ids))
         .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{

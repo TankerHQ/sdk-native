@@ -552,7 +552,7 @@ User Generator::makeUser(std::string const& suserId) const
 
   auto const device = createFirstDevice(
       _context.id(), userId, userKeys, _trustchainKeyPair.privateKey);
-  return {userId, _context.id(), userKeys, {device}};
+  return {userId, _context.id(), userKeys, std::vector{device}};
 }
 
 User Generator::makeUserV1(std::string const& suserId) const
@@ -563,7 +563,7 @@ User Generator::makeUserV1(std::string const& suserId) const
                                      userId,
                                      Crypto::Hash{context().id()},
                                      _trustchainKeyPair.privateKey);
-  return {userId, context().id(), std::nullopt, {device}};
+  return {userId, context().id(), std::nullopt, std::vector{device}};
 }
 
 Group Generator::makeGroup(

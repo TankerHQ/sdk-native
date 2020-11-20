@@ -129,8 +129,7 @@ TEST_CASE("generateRecipientList")
   SUBCASE("a new user should return their user key")
   {
 
-    REQUIRE_CALL(userAccessor,
-                 pull(gsl::span<Trustchain::UserId const>{newUser.id()}))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{newUser}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -223,8 +222,7 @@ TEST_CASE("generateRecipientList")
 
   SUBCASE("a not-found user should throw")
   {
-    REQUIRE_CALL(userAccessor,
-                 pull(gsl::span<Trustchain::UserId const>{newUser.id()}))
+    REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {newUser.id()}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
