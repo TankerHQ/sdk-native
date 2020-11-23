@@ -62,7 +62,7 @@ tc::cotask<void> TrustchainFixture::tearDown()
 tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
     Email const& email)
 {
-  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::appdUrl(),
+  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
                                                 _trustchain->id,
                                                 _trustchain->authToken,
                                                 email)));
