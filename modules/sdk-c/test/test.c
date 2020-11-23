@@ -26,7 +26,7 @@ static tanker_options_t make_tanker_options(tanker_app_descriptor_t* app)
   tanker_options_t tanker_options = TANKER_OPTIONS_INIT;
   tanker_options.app_id = app->id;
   tanker_options.url = get_config_app_url();
-  tanker_options.sdk_type = "test";
+  tanker_options.sdk_type = "sdk-native-test-c";
   tanker_options.sdk_version = "0.0.1";
   return tanker_options;
 }

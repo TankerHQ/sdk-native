@@ -17,7 +17,7 @@ CorePtr createCore(std::string const& url,
 {
   return std::unique_ptr<Tanker::AsyncCore, AsyncCoreDeleter>(
       new Tanker::AsyncCore(
-          url, Tanker::SdkInfo{"test", id, TANKER_VERSION}, tankerPath),
+          url, Tanker::SdkInfo{"sdk-native-test-compat", id, TANKER_VERSION}, tankerPath),
       AsyncCoreDeleter{});
 }
 
