@@ -190,7 +190,6 @@ tc::cotask<VerificationCode> getVerificationCode(
   req.set(field::accept, "application/json");
   auto const response = TC_AWAIT(fetchpp::async_fetch(
       tc::get_default_executor().get_io_service().get_executor(),
-      Cacerts::get_ssl_context(),
       std::move(req),
       tc::asio::use_future));
   if (response.result() != status::ok)
