@@ -27,6 +27,10 @@ InternalGroup rowToInternalGroup(T const& row)
   assert(!row.private_signature_key.is_null() &&
          !row.private_encryption_key.is_null());
 
+  // We can't know whether a group is V3 without pulling the group blocks since
+  // the DB could be out of date, so we can assume false until we pull blocks.
+  // (This value is actually unused since we always pull blocks.)
+  auto groupVersion = GroupBlocksVersion::Legacy;
   return InternalGroup{
       DataStore::extractBlob<GroupId>(row.group_id),
       {DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -37,12 +41,17 @@ InternalGroup rowToInternalGroup(T const& row)
            row.public_encryption_key),
        DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
            row.private_encryption_key)},
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
+      groupVersion};
 }
 
 template <typename T>
 ExternalGroup rowToExternalGroup(T const& row)
 {
+  // We can't know whether a group is V3 without pulling the group blocks since
+  // the DB could be out of date, so we can assume false until we pull blocks.
+  // (This value is actually unused since we always pull blocks.)
+  auto groupVersion = GroupBlocksVersion::Legacy;
   return ExternalGroup{
       DataStore::extractBlob<GroupId>(row.group_id),
       DataStore::extractBlob<Crypto::PublicSignatureKey>(
@@ -51,7 +60,8 @@ ExternalGroup rowToExternalGroup(T const& row)
           row.encrypted_private_signature_key),
       DataStore::extractBlob<Crypto::PublicEncryptionKey>(
           row.public_encryption_key),
-      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash)};
+      DataStore::extractBlob<Crypto::Hash>(row.last_group_block_hash),
+      groupVersion};
 }
 
 template <typename T>

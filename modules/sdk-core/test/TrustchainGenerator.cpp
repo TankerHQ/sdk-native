@@ -304,11 +304,17 @@ auto createGroupActionV3(Trustchain::TrustchainId const& tid,
                          std::vector<User> const& users,
                          std::vector<ProvisionalUser> const& provisionalUsers)
 {
-  return Groups::Manager::makeUserGroupCreationAction(
-      transformTo<std::vector<Users::User>>(users),
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers),
+  auto groupMembers = Groups::generateGroupKeysForUsers2(
+      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+  auto groupProvisionalMembers = Groups::generateGroupKeysForProvisionalUsers3(
+      encKp.privateKey,
+      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+
+  return Groups::createUserGroupCreationV3Action(
       sigKp,
-      encKp,
+      encKp.publicKey,
+      groupMembers,
+      groupProvisionalMembers,
       tid,
       author.id(),
       author.keys().signatureKeyPair.privateKey);
@@ -319,12 +325,14 @@ Group::Group(Trustchain::TrustchainId const& tid,
              Device const& author,
              Crypto::EncryptionKeyPair const& currentEncKp,
              Crypto::SignatureKeyPair const& currentSigKp,
-             std::vector<Trustchain::GroupAction> const& entries)
+             std::vector<Trustchain::GroupAction> const& entries,
+             GroupBlocksVersion version)
   : _tid(tid),
     _currentEncKp(currentEncKp),
     _currentSigKp(currentSigKp),
     _id(Trustchain::GroupId(_currentSigKp.publicKey)),
-    _entries(entries)
+    _entries(entries),
+    _version(version)
 {
 }
 
@@ -339,7 +347,8 @@ Group Group::newV1(Trustchain::TrustchainId const& tid,
       author,
       currentEncKp,
       currentSigKp,
-      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)}};
+      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)},
+      GroupBlocksVersion::Legacy};
 }
 
 Group Group::newV2(Trustchain::TrustchainId const& tid,
@@ -355,7 +364,8 @@ Group Group::newV2(Trustchain::TrustchainId const& tid,
       currentEncKp,
       currentSigKp,
       {createGroupActionV2(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
+      GroupBlocksVersion::Legacy};
 }
 
 Group Group::newV3(Trustchain::TrustchainId const& tid,
@@ -371,7 +381,8 @@ Group Group::newV3(Trustchain::TrustchainId const& tid,
       currentEncKp,
       currentSigKp,
       {createGroupActionV3(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
+      GroupBlocksVersion::V3};
 }
 
 Trustchain::GroupId const& Group::id() const
@@ -412,6 +423,7 @@ Group::operator Tanker::InternalGroup() const
       currentSigKp(),
       currentEncKp(),
       lastBlockHash(),
+      _version,
   };
 }
 
@@ -423,6 +435,7 @@ Group::operator Tanker::ExternalGroup() const
       encryptedSignatureKey(),
       currentEncKp().publicKey,
       lastBlockHash(),
+      _version,
   };
 }
 

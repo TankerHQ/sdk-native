@@ -45,16 +45,16 @@ class Resource;
 struct Group
 {
   static Group newV1(Trustchain::TrustchainId const& tid,
-              Device const& author,
-              std::vector<User> const& users);
+                     Device const& author,
+                     std::vector<User> const& users);
   static Group newV2(Trustchain::TrustchainId const& tid,
-              Device const& author,
-              std::vector<User> const& users,
-              std::vector<ProvisionalUser> const& provisionalUsers);
+                     Device const& author,
+                     std::vector<User> const& users,
+                     std::vector<ProvisionalUser> const& provisionalUsers);
   static Group newV3(Trustchain::TrustchainId const& tid,
-              Device const& author,
-              std::vector<User> const& users,
-              std::vector<ProvisionalUser> const& provisionalUsers);
+                     Device const& author,
+                     std::vector<User> const& users,
+                     std::vector<ProvisionalUser> const& provisionalUsers);
 
   operator Tanker::InternalGroup() const;
   explicit operator Tanker::ExternalGroup() const;
@@ -82,7 +82,8 @@ private:
         Device const& author,
         Crypto::EncryptionKeyPair const& currentEncKp,
         Crypto::SignatureKeyPair const& currentSigKp,
-        std::vector<Trustchain::GroupAction> const& entries);
+        std::vector<Trustchain::GroupAction> const& entries,
+        GroupBlocksVersion version);
 
 private:
   Trustchain::TrustchainId _tid;
@@ -90,6 +91,7 @@ private:
   Crypto::SignatureKeyPair _currentSigKp;
   Trustchain::GroupId _id;
   std::vector<Trustchain::GroupAction> _entries;
+  GroupBlocksVersion _version;
 };
 
 struct User
