@@ -75,13 +75,19 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
 Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
+  {
+    auto const groupKey = TC_AWAIT(
+        _groupStore->findKeyByPublicEncryptionKey(publicEncryptionKey));
+    if (groupKey)
+      TC_RETURN(groupKey);
+  }
+
   auto const entries =
       TC_AWAIT(_requester->getGroupBlocks(publicEncryptionKey));
-
   if (entries.empty())
     TC_RETURN(std::nullopt);
 
-  auto const group =
+  auto const [group, groupKeys] =
       TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                  *_userAccessor,
                                                  *_provisionalUserAccessor,
@@ -91,11 +97,16 @@ Accessor::getEncryptionKeyPair(
     throw Errors::AssertionError(
         fmt::format("group {} has no blocks", publicEncryptionKey));
 
-  if (auto const internalGroup =
-          boost::variant2::get_if<InternalGroup>(&*group))
-    TC_RETURN(internalGroup->encryptionKeyPair);
-  else
-    TC_RETURN(std::nullopt);
+  // add the group keys to cache
+  auto groupId = getGroupId(*group);
+  std::optional<Crypto::EncryptionKeyPair> result;
+  for (auto&& key : groupKeys)
+  {
+    if (key.publicKey == publicEncryptionKey)
+      result = key;
+    TC_AWAIT(_groupStore->putKey(groupId, key));
+  }
+  TC_RETURN(result);
 }
 
 namespace
@@ -116,8 +127,9 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
     else if (auto const userGroupAddition = boost::variant2::get_if<
                  Trustchain::Actions::UserGroupAddition>(&action))
       out[userGroupAddition->groupId()].push_back(action);
-    else if (auto const userGroupUpdate = boost::variant2::get_if<
-        Trustchain::Actions::UserGroupUpdate>(&action))
+    else if (auto const userGroupUpdate =
+                 boost::variant2::get_if<Trustchain::Actions::UserGroupUpdate>(
+                     &action))
       out[userGroupUpdate->groupId()].push_back(action);
     else
       TERROR("Expected group blocks but got {}", Trustchain::getNature(action));
@@ -150,7 +162,7 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
       out.notFound.push_back(groupId);
     else
     {
-      auto const group =
+      auto const [group, groupKeys] =
           TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                      *_userAccessor,
                                                      *_provisionalUserAccessor,

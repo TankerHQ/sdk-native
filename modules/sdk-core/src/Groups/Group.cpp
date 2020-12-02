@@ -116,4 +116,21 @@ Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group)
 
   return boost::variant2::visit(Getter{}, group);
 }
+
+Trustchain::GroupId getGroupId(Group const& group)
+{
+  struct Getter
+  {
+    auto operator()(ExternalGroup const& externalGroup) const
+    {
+      return externalGroup.id;
+    }
+    auto operator()(InternalGroup const& internalGroup) const
+    {
+      return internalGroup.id;
+    }
+  };
+
+  return boost::variant2::visit(Getter{}, group);
+}
 }

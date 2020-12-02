@@ -12,6 +12,7 @@ set(TANKER_CORE_DATASTORE_SRC
   include/Tanker/DataStore/Errors/ErrcCategory.hpp
   include/Tanker/DbModels/DeviceKeyStore.hpp
   include/Tanker/DbModels/Groups.hpp
+  include/Tanker/DbModels/GroupKeys.hpp
   include/Tanker/DbModels/ResourceKeys.hpp
   include/Tanker/DbModels/ProvisionalUserKeys.hpp
   include/Tanker/DbModels/TrustchainInfo.hpp
@@ -24,6 +25,7 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DataStore/Table.cpp
   src/DbModels/DeviceKeyStore.cpp
   src/DbModels/Groups.cpp
+  src/DbModels/GroupKeys.cpp
   src/DbModels/ResourceKeys.cpp
   src/DbModels/ProvisionalUserKeys.cpp
   src/DbModels/TrustchainInfo.cpp

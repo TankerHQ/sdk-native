@@ -326,13 +326,15 @@ std::vector<Trustchain::DeviceId> extractAuthors(
   return {deviceIds.begin(), deviceIds.end()};
 }
 
-tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
+tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     std::vector<Trustchain::GroupAction> const& actions)
 {
+  std::vector<Crypto::EncryptionKeyPair> groupKeys;
+
   for (auto const& action : actions)
   {
     try
@@ -374,6 +376,14 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
       else
         throw Errors::AssertionError(fmt::format(
             "cannot handle nature: {}", Trustchain::getNature(action)));
+
+      if (auto const internalGroup =
+              boost::variant2::get_if<InternalGroup>(&*previousGroup))
+      {
+        if (groupKeys.empty() || groupKeys.back().publicKey !=
+                                     internalGroup->encryptionKeyPair.publicKey)
+          groupKeys.push_back(internalGroup->encryptionKeyPair);
+      }
     }
     catch (Errors::Exception const& err)
     {
@@ -387,11 +397,12 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
         throw;
     }
   }
-  TC_RETURN(previousGroup);
+  auto result = ProcessGroupResult{previousGroup, groupKeys};
+  TC_RETURN(result);
 }
 }
 
-tc::cotask<std::optional<Group>> processGroupEntries(
+tc::cotask<ProcessGroupResult> processGroupEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,

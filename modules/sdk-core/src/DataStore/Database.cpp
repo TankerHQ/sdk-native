@@ -6,6 +6,7 @@
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
+#include <Tanker/DbModels/GroupKeys.hpp>
 #include <Tanker/DbModels/Groups.hpp>
 #include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/DbModels/ResourceKeys.hpp>
@@ -65,6 +66,7 @@ using ResourceKeysTable = DbModels::resource_keys::resource_keys;
 using ProvisionalUserKeysTable =
     DbModels::provisional_user_keys::provisional_user_keys;
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
+using GroupKeysTable = DbModels::group_keys::group_keys;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
@@ -209,6 +211,7 @@ void Database::performUnifiedMigration()
     }
     case 9:
       _db->execute("DROP TABLE IF EXISTS groups");
+      createTable<GroupKeysTable>(*_db);
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
