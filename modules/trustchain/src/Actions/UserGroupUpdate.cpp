@@ -6,11 +6,7 @@
 
 #include <algorithm>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 Nature UserGroupUpdate::nature() const
 {
@@ -37,7 +33,5 @@ std::size_t serialized_size(UserGroupUpdate const& dc)
 void to_json(nlohmann::json& j, UserGroupUpdate const& dc)
 {
   boost::variant2::visit([&j](auto const& val) { j = val; }, dc._variant);
-}
-}
 }
 }

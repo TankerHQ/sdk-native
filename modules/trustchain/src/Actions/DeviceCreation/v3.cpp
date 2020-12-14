@@ -8,11 +8,7 @@
 
 #include <tuple>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 DeviceCreation3::DeviceCreation3(
     TrustchainId const& trustchainId,
@@ -55,6 +51,4 @@ std::vector<std::uint8_t> DeviceCreation3::delegationSignatureData() const
 
 TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
     DeviceCreation3, TANKER_TRUSTCHAIN_ACTIONS_DEVICE_CREATION_V3_ATTRIBUTES)
-}
-}
 }

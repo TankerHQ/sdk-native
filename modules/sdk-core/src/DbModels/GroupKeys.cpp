@@ -20,7 +20,7 @@ void createTable(DataStore::Connection& db, group_keys const&)
   db.execute(R"(
     CREATE TABLE IF NOT EXISTS group_keys (
       public_encryption_key BLOB PRIMARY KEY,
-      private_encryption_key BLOB NOT NULL UNIQUE,
+      private_encryption_key BLOB NOT NULL,
       group_id BLOB NOT NULL
     );
   )");

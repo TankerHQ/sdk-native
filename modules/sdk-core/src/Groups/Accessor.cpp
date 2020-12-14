@@ -100,7 +100,7 @@ Accessor::getEncryptionKeyPair(
   // add the group keys to cache
   auto groupId = getGroupId(*group);
   std::optional<Crypto::EncryptionKeyPair> result;
-  for (auto&& key : groupKeys)
+  for (auto const& key : groupKeys)
   {
     if (key.publicKey == publicEncryptionKey)
       result = key;
@@ -172,6 +172,10 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
         throw Errors::AssertionError(
             fmt::format("group {} has no blocks", groupId));
       out.found.push_back(*group);
+
+      // add the group and group keys to cache
+      for (auto const& key : groupKeys)
+        TC_AWAIT(_groupStore->putKey(groupId, key));
     }
   }
 

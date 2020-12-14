@@ -20,11 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 class UserGroupUpdate
 {
@@ -62,6 +58,4 @@ std::uint8_t* to_serialized(std::uint8_t*, UserGroupUpdate const&);
 std::size_t serialized_size(UserGroupUpdate const&);
 
 void to_json(nlohmann::json&, UserGroupUpdate const&);
-}
-}
 }

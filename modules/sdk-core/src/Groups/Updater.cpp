@@ -304,8 +304,12 @@ tc::cotask<Group> applyUserGroupUpdate(
       groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
           provisionalUsersAccessor, ugu1->provisionalMembers()));
   }
+  else
+  {
+    throw AssertionError("Expected GroupUpdate nature");
+  }
 
-  // They key changed, so it's possible we got kicked out
+  // The key changed, so it's possible we got kicked out
   if (groupPrivateEncryptionKey)
     TC_RETURN(makeInternalGroup(*groupPrivateEncryptionKey, userGroupUpdate));
   else

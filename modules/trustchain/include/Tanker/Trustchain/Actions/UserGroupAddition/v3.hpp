@@ -11,11 +11,7 @@
 #include <utility>
 #include <vector>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION3_ATTRIBUTES     \
   (groupId, GroupId), (previousGroupBlockHash, Crypto::Hash),         \
@@ -53,6 +49,4 @@ private:
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupAddition3)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupAddition3)
-}
-}
 }

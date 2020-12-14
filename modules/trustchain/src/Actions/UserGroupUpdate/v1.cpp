@@ -8,11 +8,7 @@
 
 #include <algorithm>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 UserGroupUpdate1::UserGroupUpdate1(
     TrustchainId const& trustchainId,
@@ -108,6 +104,4 @@ std::vector<std::uint8_t> UserGroupUpdate1::signatureData() const
 
 TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
     UserGroupUpdate1, TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_UPDATE_V1_ATTRIBUTES)
-}
-}
 }

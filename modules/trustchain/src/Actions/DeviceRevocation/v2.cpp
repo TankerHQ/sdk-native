@@ -6,11 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 DeviceRevocation2::DeviceRevocation2(
     TrustchainId const& trustchainId,
@@ -36,6 +32,4 @@ DeviceRevocation2::DeviceRevocation2(
 TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
     DeviceRevocation2,
     TANKER_TRUSTCHAIN_ACTIONS_DEVICE_REVOCATION_V2_ATTRIBUTES)
-}
-}
 }
