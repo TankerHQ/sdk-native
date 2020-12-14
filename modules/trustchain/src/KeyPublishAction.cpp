@@ -56,8 +56,10 @@ KeyPublishAction deserializeKeyPublishAction(
   default:
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals
-    throw Errors::AssertionError(fmt::format(
-        FMT_STRING("{} is not a key publish block"), static_cast<int>(nature)));
+    throw Errors::formatEx(Errors::Errc::UpgradeRequired,
+                           "{} is not a known key publish block nature, Tanker "
+                           "needs to be updated",
+                           static_cast<int>(nature));
   }
 }
 }
