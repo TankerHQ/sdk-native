@@ -42,7 +42,7 @@ void deserializeBlockNature(Serialization::SerializedSource& ss,
   auto const nature = static_cast<Actions::Nature>(ss.read_varint());
   if (nature != expected)
   {
-    throw Errors::formatEx(Errc::InvalidBlockVersion,
+    throw Errors::formatEx(Errc::InvalidBlockNature,
                            "wrong block nature: expected {}, got {}",
                            expected,
                            nature);
