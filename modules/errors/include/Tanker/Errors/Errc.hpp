@@ -22,6 +22,7 @@ enum class Errc
   IOError,
   DeviceRevoked,
   Conflict,
+  UpgradeRequired,
 
   Last,
 };
