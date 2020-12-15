@@ -30,6 +30,7 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   {
   case Errc::InvalidBlockVersion:
   case Errc::InvalidBlockNature:
+    return make_error_condition(Errors::Errc::UpgradeRequired);
   case Errc::InvalidLastResetField:
     return make_error_condition(Errors::Errc::InternalError);
   default:

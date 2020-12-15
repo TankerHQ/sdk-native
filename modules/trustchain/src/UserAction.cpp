@@ -64,8 +64,10 @@ UserAction deserializeUserAction(gsl::span<std::uint8_t const> block)
   default:
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals
-    throw Errors::AssertionError(fmt::format(
-        FMT_STRING("{} is not a group block"), static_cast<int>(nature)));
+    throw Errors::formatEx(
+        Errors::Errc::UpgradeRequired,
+        "{} is not a known user block nature, Tanker needs to be updated",
+        static_cast<int>(nature));
   }
 }
 }

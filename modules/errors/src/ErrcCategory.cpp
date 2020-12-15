@@ -38,6 +38,8 @@ std::string ErrcCategory::message(int c) const
     return "device was revoked";
   case Errc::Conflict:
     return "conflict";
+  case Errc::UpgradeRequired:
+    return "upgrade required";
   case Errc::Last:
     break;
   }
