@@ -1,6 +1,6 @@
 import argparse
 import cli_ui as ui
-from path import Path
+from pathlib import Path
 import tempfile
 import tankerci.cpp
 import tankerci.conan
@@ -66,22 +66,22 @@ def assert_env(name: str) -> str:
     return value
 
 
-def compat_conan_home_path(version: str) -> str:
-    return Path.getcwd() / "compat" / "conan" / version
+def compat_conan_home_path(version: str) -> Path:
+    return Path.cwd() / "compat" / "conan" / version
 
 
 def build_all(use_editable, profile):
     built_binary = {}
     for version, c in TESTS.items():
         ui.info(ui.darkblue, "building compat", version)
-        src_path = Path.getcwd() / "compat" / version
+        src_path = Path.cwd() / "compat" / version
         tankerci.conan.set_home_isolation(compat_conan_home_path(version))
-        tankerci.conan.config_install(src_path / "config")
+        tankerci.conan.config_install(str(src_path / "config"))
         if version == CURRENT:
             if use_editable:
-                tankerci.conan.add_editable(Path().getcwd())
+                tankerci.conan.add_editable(Path.cwd())
             else:
-                use_packaged_tanker(Path.getcwd() / "package", profile)
+                use_packaged_tanker(Path.cwd() / "package", profile)
         built_path = tankerci.cpp.build(profile, src_path=src_path)
         built_binary[version] = built_path / "bin" / "compat"
     return built_binary
@@ -141,7 +141,7 @@ def run_test(base_path, next_path, version, command):
         admin.delete_app(app["id"])
 
 
-def compat(args: str) -> None:
+def compat(args: argparse.Namespace) -> None:
     built_binary = build_all(use_editable=args.use_editable, profile=args.profile)
 
     tankerci.cpp.set_test_env()

@@ -1,9 +1,10 @@
 import argparse
 import os
+import shutil
 import sys
 
 from typing import List
-from path import Path
+from pathlib import Path
 
 import tankerci
 import tankerci.conan
@@ -13,23 +14,27 @@ import tankerci.git
 
 def build_and_check(profiles: List[str], coverage: bool) -> None:
     for profile in profiles:
-        built_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage,)
+        built_path = tankerci.cpp.build(
+            profile,
+            make_package=True,
+            coverage=coverage,
+        )
         tankerci.cpp.check(built_path, coverage=coverage)
-    recipe = Path.getcwd() / "conanfile.py"
-    recipe.copy(Path.getcwd() / "package")
+    recipe = Path.cwd() / "conanfile.py"
+    shutil.copy(recipe, Path.cwd() / "package")
 
 
-def deploy():
+def deploy() -> None:
     # first, clear cache to avoid uploading trash
     tankerci.conan.run("remove", "*", "--force")
 
-    artifacts_folder = Path.getcwd() / "package"
+    artifacts_folder = Path.cwd() / "package"
     recipe = artifacts_folder / "conanfile.py"
 
     recipe_info = tankerci.conan.inspect(recipe)
     version = recipe_info["version"]
 
-    profiles = [d.basename() for d in artifacts_folder.dirs()]
+    profiles = [d.name for d in artifacts_folder.iterdir() if d.is_dir()]
 
     for profile in profiles:
         package_folder = artifacts_folder / profile

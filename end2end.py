@@ -1,6 +1,6 @@
 import argparse
 
-from path import Path
+from pathlib import Path
 
 import tankerci.cpp
 import tankerci.conan
@@ -35,25 +35,25 @@ def main() -> None:
     parser.add_argument("--use-local-sources", action="store_true", default=False)
 
     args = parser.parse_args()
-    artifact_path = Path().getcwd() / "package"
+    artifact_path = Path().cwd() / "package"
     if args.home_isolation:
         tankerci.conan.set_home_isolation()
         tankerci.conan.update_config()
 
     if args.use_local_sources:
-        base_path = Path.getcwd().parent
+        base_path = Path.cwd().parent
     else:
         base_path = tankerci.git.prepare_sources(
             repos=["sdk-python", "sdk-js", "qa-python-js"]
         )
 
-    with base_path / "sdk-js":
+    with tankerci.working_directory(base_path / "sdk-js"):
         tankerci.js.yarn_install()
 
-    with base_path / "sdk-python":
+    with tankerci.working_directory(base_path / "sdk-python"):
         # artifacts are downloaded in sdk-native/package by gitlab
         # since we are using sdk-python we use this smoke grenade
-        artifact_path.symlink(Path.getcwd() / "package")
+        (Path.cwd() / "package").symlink_to(artifact_path)
         tankerci.run("poetry", "install", "--no-root")
         tankerci.run(
             "poetry",
@@ -66,7 +66,7 @@ def main() -> None:
         )
         tankerci.run("poetry", "install")
 
-    with base_path / "qa-python-js":
+    with tankerci.working_directory(base_path / "qa-python-js"):
         tankerci.run("poetry", "install")
         tankerci.run("poetry", "run", "pytest", "--verbose", "--capture=no")
 
