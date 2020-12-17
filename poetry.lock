@@ -609,7 +609,7 @@ reference = "gitlab"
 
 [[package]]
 name = "tankerci"
-version = "2020.12.dev3122"
+version = "2020.12.3123"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -737,7 +737,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "843716f2436da3f1cfe10775d91489fc2f91767628efc968e6fd5783ba80d654"
+content-hash = "18f9869dd2d24e9454b52831ddec97b31dc7802ea1f6d3b69ad8fc5ed011bb8c"
 
 [metadata.files]
 appdirs = [
@@ -1133,8 +1133,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-0.2.1.tar.gz", hash = "sha256:20c4bb48db1485d7fc336a58362f1e45b3acd1aba21b9233a1abc89eb267856b"},
 ]
 tankerci = [
-    {file = "tankerci-2020.12.dev3122-py3-none-any.whl", hash = "sha256:f470737eb8f14037dd1832687a066e0210f8aacc7031a1ad2966695b2fcb8683"},
-    {file = "tankerci-2020.12.dev3122.tar.gz", hash = "sha256:00524430a5184f46f74122d724e3ebb64bf0ba80d35329c5febdeb2087d00d56"},
+    {file = "tankerci-2020.12.3123-py3-none-any.whl", hash = "sha256:df71e1d2c18922f9c1abcef69923c887bb3796cd8ca3002d4424509b0ae3b209"},
+    {file = "tankerci-2020.12.3123.tar.gz", hash = "sha256:5c8ad1957a0d022fbde28ae81ecc9a15d9051f53f78b7fe1715fbf9d83ebbb72"},
 ]
 tbump = [
     {file = "tbump-6.2.0-py3-none-any.whl", hash = "sha256:eb85c720b143e3c309d2cff73326f9de16e411edd0436a20b9d293de54884eea"},
