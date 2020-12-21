@@ -49,6 +49,8 @@ static const char USAGE[] =
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
+      tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <memberuserid>...
+      tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> <memberuserid>...
       tcli --help
 
     Options:
@@ -221,6 +223,22 @@ std::string loadIdentity(std::string const& trustchainId,
   return identity;
 }
 
+SPublicIdentity makePublicIdentity(std::string const& strustchainId,
+                                   std::string const& suserId)
+{
+  auto const trustchainId =
+      mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
+  auto const userId = Tanker::obfuscateUserId(SUserId{suserId}, trustchainId);
+
+  nlohmann::json j{
+      {"trustchain_id", trustchainId},
+      {"target", "user"},
+      {"value", userId},
+  };
+
+  return SPublicIdentity{mgs::base64::encode(j.dump())};
+}
+
 auto const sdkType = "test";
 auto const sdkVersion = "0.0.1";
 
@@ -363,6 +381,30 @@ int main(int argc, char* argv[])
       fmt::print(
           "decrypted: {}\n",
           std::string(decrypted.data(), decrypted.data() + decrypted.size()));
+    }
+    else if (args.at("creategroup").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const trustchainId = args.at("<trustchainid>").asString();
+      auto const memberUserIds = args.at("<memberuserid>").asStringList();
+      std::vector<SPublicIdentity> memberIdentities;
+      for (auto const& userId : memberUserIds)
+        memberIdentities.push_back(makePublicIdentity(trustchainId, userId));
+      auto const groupId = core->createGroup(memberIdentities).get();
+      fmt::print("groupId: {}\n", groupId);
+    }
+    else if (args.at("addtogroup").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const groupId = SGroupId{args.at("<groupid>").asString()};
+      auto const memberUserIds = args.at("<memberuserid>").asStringList();
+      std::vector<SPublicIdentity> memberIdentities;
+      for (auto const& userId : memberUserIds)
+        memberIdentities.push_back(
+            makePublicIdentity(args.at("<trustchainid>").asString(), userId));
+      core->updateGroupMembers(groupId, memberIdentities).get();
     }
 
     return 0;
