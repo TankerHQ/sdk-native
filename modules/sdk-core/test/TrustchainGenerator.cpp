@@ -11,6 +11,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>
+#include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
 #include <Helpers/TransformTo.hpp>

@@ -1,5 +1,6 @@
 #include <Tanker/Share.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/Accessor.hpp>

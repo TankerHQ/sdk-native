@@ -1,5 +1,6 @@
 #include <Tanker/Identity/Utils.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 
 using Tanker::Trustchain::UserId;
@@ -28,16 +29,6 @@ Crypto::SymmetricKey generateUserSecret(UserId const& userId)
   auto check = userSecretHash(sp, userId);
   random.back() = check[0];
   return random;
-}
-
-UserToken generateUserToken(
-    Tanker::Crypto::PrivateSignatureKey const& trustchainPrivateKey,
-    UserId const& obfuscatedUserId)
-{
-  UserToken userToken{};
-  userToken.delegation = makeDelegation(obfuscatedUserId, trustchainPrivateKey);
-  userToken.userSecret = generateUserSecret(obfuscatedUserId);
-  return userToken;
 }
 }
 }

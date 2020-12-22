@@ -30,17 +30,6 @@ tanker_expected_t* tanker_create_provisional_identity(char const* trustchain_id,
   }));
 }
 
-tanker_expected_t* tanker_upgrade_user_token(char const* trustchain_id,
-                                             char const* user_id,
-                                             char const* user_token)
-{
-  return makeFuture(tc::sync([&] {
-    return static_cast<void*>(
-        duplicateString(Tanker::Identity::upgradeUserToken(
-            trustchain_id, Tanker::SUserId{user_id}, user_token)));
-  }));
-}
-
 tanker_expected_t* tanker_get_public_identity(char const* identity)
 {
   return makeFuture(tc::sync([&] {

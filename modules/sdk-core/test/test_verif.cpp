@@ -12,6 +12,7 @@
 #include <Helpers/Const.hpp>
 #include <Helpers/Errors.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 
 #include <doctest/doctest.h>
