@@ -47,7 +47,7 @@ static const char USAGE[] =
       tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
-      tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
+      tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <memberuserid>...
       tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> <memberuserid>...
@@ -349,6 +349,10 @@ int main(int argc, char* argv[])
       std::vector<Tanker::SUserId> shareTo;
       if (args.at("--share"))
         shareTo.push_back(SUserId{args.at("--share").asString()});
+      std::vector<Tanker::SGroupId> shareWithGroups;
+      if (args.at("--share-with-group"))
+        shareWithGroups.push_back(
+            SGroupId{args.at("--share-with-group").asString()});
 
       std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
       for (auto const& userId : shareTo)
@@ -362,7 +366,8 @@ int main(int argc, char* argv[])
 
       core->encrypt(encrypted.data(),
                     gsl::make_span(cleartext).as_span<uint8_t const>(),
-                    shareToPublicIdentities)
+                    shareToPublicIdentities,
+                    shareWithGroups)
           .get();
       fmt::print("encrypted: {}\n", mgs::base64::encode(encrypted));
     }
