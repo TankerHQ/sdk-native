@@ -59,5 +59,14 @@ std::string const& idToken()
   static auto value = getSafeEnv("TANKER_ID_TOKEN");
   return value;
 }
+
+AppConfig const& benchmarkApp()
+{
+  static AppConfig app = {
+      getSafeEnv("TANKER_BENCHMARK_APP_ID"),
+      getSafeEnv("TANKER_BENCHMARK_APP_SECRET"),
+  };
+  return app;
+}
 }
 }
