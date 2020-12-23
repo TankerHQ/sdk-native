@@ -13,5 +13,3 @@ target_link_libraries(bench_tanker
   tankertesthelpers
   CONAN_PKG::benchmark
 )
-
-add_test(NAME bench_tanker COMMAND bench_tanker)
