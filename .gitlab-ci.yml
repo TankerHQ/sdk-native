@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: f21f0f4176fe7fd899a28cb41212f09c466f58a7
+  ref: 4b9ae23b9ee4d88488d645d4af71188c28c634e3
 
 ###############
 # build stage #
@@ -278,7 +278,7 @@ check/e2e:
     - .tags/linux
     - .rules/mr/auto
     - .before-script/bump-files-on-release/bash
-  image: registry.gitlab.com/tankerhq/ci/ci-main:latest
+  image: registry.gitlab.com/tankerhq/docker/e2e:latest
   needs:
     - build/linux
   script:
