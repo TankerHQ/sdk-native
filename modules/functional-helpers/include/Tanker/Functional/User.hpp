@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Functional/Device.hpp>
-#include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -25,7 +24,6 @@ public:
   std::string trustchainUrl;
   std::string trustchainId;
   std::string identity;
-  std::optional<std::string> userToken;
 
   User() = default;
 

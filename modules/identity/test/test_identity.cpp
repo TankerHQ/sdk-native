@@ -5,7 +5,6 @@
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
-#include <Tanker/Identity/UserToken.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -28,16 +27,6 @@ using namespace type_literals;
 
 namespace
 {
-auto const GOOD_USER_TOKEN =
-    "eyJkZWxlZ2F0aW9uX3NpZ25hdHVyZSI6IlU5V1FvbEN2UnlqVDhvUjJQUW1kMVdYTkNpMHFtTD"
-    "EyaE5ydEdhYllSRVdpcnk1MmtXeDFBZ1l6a0x4SDZncG8zTWlBOXIrK3pobm1vWWRFSjArSkN3"
-    "PT0iLCJlcGhlbWVyYWxfcHJpdmF0ZV9zaWduYXR1cmVfa2V5IjoiakVEVDR3UUNjMURGd29kWE"
-    "5QSEZDbG5kVFBuRnVGbVhoQnQraXNLVTRacGVIZUxURU5PbXZjZGUwSFpEblh0QXEvZHJNM05j"
-    "c3RjeDBrTk5JZmh0M2c9PSIsImVwaGVtZXJhbF9wdWJsaWNfc2lnbmF0dXJlX2tleSI6IlhoM2"
-    "kweERUcHIzSFh0QjJRNTE3UUt2M2F6TnpYTExYTWRKRFRTSDRiZDQ9IiwidXNlcl9pZCI6IlJE"
-    "YTBlcTRYTnVqNXRWN2hkYXBqT3hobWhlVGg0UUJETnB5NFN2eTlYb2s9IiwidXNlcl9zZWNyZX"
-    "QiOiI3RlNmL24wZTc2UVQzczBEa3ZldFJWVkpoWFpHRWpPeGo1RVdBRmV4dmpJPSJ9"s;
-
 auto const GOOD_SECRET_PERMANENT_IDENTITY =
     "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
     "JDTGpkND0iLCJ0YXJnZXQiOiJ1c2VyIiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
@@ -275,25 +264,6 @@ TEST_SUITE("serialization")
   }
 }
 
-TEST_SUITE("ugprade a user token to an identity")
-{
-  TEST_CASE("We can upgrade a userToken to an identity")
-  {
-    auto identity = extract<SecretPermanentIdentity>(
-        upgradeUserToken(trustchainIdString, suserId, GOOD_USER_TOKEN));
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.delegation, delegation);
-    CHECK_EQ(identity.userSecret, userSecret);
-  }
-
-  TEST_CASE("should throw when upgrading the wrong userId")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        upgradeUserToken(trustchainIdString, "herbert"_uid, GOOD_USER_TOKEN),
-        Errc::InvalidUserId);
-  }
-}
-
 TEST_SUITE("getPublicIdentity")
 {
   TEST_CASE("get a public identity from a secret permanent identity")
@@ -324,80 +294,6 @@ TEST_SUITE("getPublicIdentity")
     CHECK_EQ(p->value, userEmail);
     CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
-  }
-}
-
-TEST_SUITE("Generate user token")
-{
-  TEST_CASE("should throw given empty userId")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        generateUserToken("trustchainID", "privateKey", ""_uid),
-        Errc::InvalidUserId);
-  }
-
-  TEST_CASE("should throw given empty trustchainId")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        generateUserToken("", "privateKey", "userId"_uid),
-        Errc::InvalidTrustchainId);
-  }
-
-  TEST_CASE("should throw given empty privateKey")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        generateUserToken("trustchainId", "", "userId"_uid),
-        Errc::InvalidTrustchainPrivateKey);
-  }
-
-  TEST_CASE("should generate a UserToken")
-  {
-    CHECK_NOTHROW(generateUserToken(
-        trustchainIdString, trustchainPrivateKeyString, "alice"_uid));
-  }
-
-  TEST_CASE("should be able to be deserialize a user token")
-  {
-    auto const userTokenString = generateUserToken(
-        trustchainIdString, trustchainPrivateKeyString, suserId);
-    auto const clearStr = mgs::base64::decode(userTokenString);
-    CHECK_NOTHROW(nlohmann::json::parse(clearStr).get<UserToken>());
-  }
-
-  TEST_CASE("user secret have good format")
-  {
-    auto const userTokenString = generateUserToken(
-        trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
-    auto const userToken2 = extract<UserToken>(userTokenString);
-
-    CHECK_NOTHROW(checkUserSecret(userToken2.userSecret,
-                                  obfuscateUserId("alice"_uid, trustchainId)));
-  }
-
-  TEST_CASE("extract should throw when identity has invalid format")
-  {
-    SUBCASE("json")
-    {
-      auto const invalidIdentity = mgs::base64::encode("}");
-      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>(invalidIdentity),
-                                    Errc::InvalidFormat);
-    }
-
-    SUBCASE("base64")
-    {
-      TANKER_CHECK_THROWS_WITH_CODE(extract<UserToken>("?"),
-                                    Errc::InvalidFormat);
-    }
-  }
-
-  TEST_CASE("We can construct one user token from a good string")
-  {
-    auto const userToken = extract<UserToken>(GOOD_USER_TOKEN);
-
-    CHECK_EQ(userToken.delegation, delegation);
-    CHECK_EQ(userToken.userSecret, userSecret);
-    CHECK_NOTHROW(checkUserSecret(userToken.userSecret,
-                                  obfuscateUserId(suserId, trustchainId)));
   }
 }
 

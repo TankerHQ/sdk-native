@@ -49,7 +49,6 @@ tanker_stream_get_resource_id
 tanker_stream_read
 tanker_stream_read_operation_finish
 tanker_update_group_members
-tanker_upgrade_user_token
 tanker_verify_identity
 tanker_verify_provisional_identity
 tanker_version_string

@@ -28,8 +28,7 @@ User::User(std::string trustchainUrl,
     trustchainId(std::move(trustchainId)),
     identity(Identity::createIdentity(this->trustchainId,
                                       trustchainPrivateSignatureKey,
-                                      createRandomUserId())),
-    userToken(std::nullopt)
+                                      createRandomUserId()))
 {
 }
 
@@ -72,9 +71,7 @@ void to_json(nlohmann::json& j, User const& user)
 
 void from_json(nlohmann::json const& j, User& user)
 {
-  if (j.find("user_token") != j.end())
-    user.userToken = j.at("user_token").get<std::string>();
-  else if (j.find("identity") != j.end())
+  if (j.find("identity") != j.end())
     j.at("identity").get_to(user.identity);
   else
     throw std::runtime_error("missing User identity field");

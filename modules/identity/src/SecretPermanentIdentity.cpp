@@ -15,19 +15,16 @@ namespace Tanker
 namespace Identity
 {
 
-SecretPermanentIdentity::SecretPermanentIdentity(
-    UserToken const& userToken, Trustchain::TrustchainId const& trustchainId)
-  : UserToken(userToken), trustchainId(trustchainId)
-{
-}
-
 SecretPermanentIdentity createIdentity(
     Trustchain::TrustchainId const& trustchainId,
     Crypto::PrivateSignatureKey const& trustchainPrivateKey,
     Trustchain::UserId const& userId)
 {
-  return SecretPermanentIdentity(
-      generateUserToken(trustchainPrivateKey, userId), std::move(trustchainId));
+  return SecretPermanentIdentity{
+      trustchainId,
+      makeDelegation(userId, trustchainPrivateKey),
+      generateUserSecret(userId),
+  };
 }
 
 std::string createIdentity(std::string const& trustchainIdParam,
@@ -48,27 +45,6 @@ std::string createIdentity(std::string const& trustchainIdParam,
                      mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
                          trustchainPrivateKey),
                      Tanker::obfuscateUserId(userId, trustchainId)));
-}
-
-SecretPermanentIdentity upgradeUserToken(
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::UserId const& userId,
-    UserToken const& userToken)
-{
-  if (userToken.delegation.userId != userId)
-    throw Errors::Exception(Errc::InvalidUserId, "invalid user id provided");
-  return SecretPermanentIdentity(std::move(userToken), std::move(trustchainId));
-}
-
-std::string upgradeUserToken(std::string const& strustchainId,
-                             SUserId const& suserId,
-                             std::string const& suserToken)
-{
-  auto const trustchainId =
-      mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
-  auto const userId = Tanker::obfuscateUserId(suserId, trustchainId);
-  auto const userToken = extract<UserToken>(suserToken);
-  return to_string(upgradeUserToken(trustchainId, userId, userToken));
 }
 
 void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/EncryptionKeyPair.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>

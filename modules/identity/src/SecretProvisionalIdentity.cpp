@@ -1,5 +1,6 @@
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
 

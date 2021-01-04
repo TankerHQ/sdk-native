@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.4)
 project(tankeridentity)
 
 add_library(tankeridentity STATIC
-  include/Tanker/Identity/UserToken.hpp
   include/Tanker/Identity/Delegation.hpp
   include/Tanker/Identity/Utils.hpp
   include/Tanker/Identity/SecretPermanentIdentity.hpp
@@ -17,7 +16,6 @@ add_library(tankeridentity STATIC
   include/Tanker/Identity/Errors/Errc.hpp
   include/Tanker/Identity/Errors/ErrcCategory.hpp
 
-  src/UserToken.cpp
   src/Extract.cpp
   src/Delegation.cpp
   src/Utils.cpp
