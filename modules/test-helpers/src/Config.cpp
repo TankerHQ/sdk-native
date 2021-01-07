@@ -23,41 +23,50 @@ std::string getSafeEnv(std::string_view key)
 
 OidcConfig const& oidcConfig()
 {
-  static OidcConfig oidc = {
-      getSafeEnv("TANKER_OIDC_CLIENT_SECRET"),
-      getSafeEnv("TANKER_OIDC_CLIENT_ID"),
-      getSafeEnv("TANKER_OIDC_PROVIDER"),
-      {{"kevin",
-        {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"),
-         getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
-       {"martine",
-        {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"),
-         getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
+  static auto const oidc =
+      OidcConfig{getSafeEnv("TANKER_OIDC_CLIENT_SECRET"),
+                 getSafeEnv("TANKER_OIDC_CLIENT_ID"),
+                 getSafeEnv("TANKER_OIDC_PROVIDER"),
+                 {{"kevin",
+                   {getSafeEnv("TANKER_OIDC_KEVIN_EMAIL"),
+                    getSafeEnv("TANKER_OIDC_KEVIN_REFRESH_TOKEN")}},
+                  {"martine",
+                   {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"),
+                    getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
   return oidc;
 }
 
 std::string const& trustchaindUrl()
 {
-  static auto value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
+  static auto const value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
   return value;
 }
 
 std::string const& appdUrl()
 {
-  static auto value = getSafeEnv("TANKER_APPD_URL");
+  static auto const value = getSafeEnv("TANKER_APPD_URL");
   return value;
 }
 
 std::string_view admindUrl()
 {
-  static auto value = getSafeEnv("TANKER_ADMIND_URL");
+  static auto const value = getSafeEnv("TANKER_ADMIND_URL");
   return value;
 }
 
 std::string const& idToken()
 {
-  static auto value = getSafeEnv("TANKER_ID_TOKEN");
+  static auto const value = getSafeEnv("TANKER_ID_TOKEN");
   return value;
+}
+
+AppConfig const& benchmarkApp()
+{
+  static auto const app = AppConfig{
+      getSafeEnv("TANKER_BENCHMARK_APP_ID"),
+      getSafeEnv("TANKER_BENCHMARK_APP_SECRET"),
+  };
+  return app;
 }
 }
 }

@@ -47,8 +47,10 @@ static const char USAGE[] =
       tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
-      tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>]
+      tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
+      tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <memberuserid>...
+      tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> <memberuserid>...
       tcli --help
 
     Options:
@@ -221,6 +223,22 @@ std::string loadIdentity(std::string const& trustchainId,
   return identity;
 }
 
+SPublicIdentity makePublicIdentity(std::string const& strustchainId,
+                                   std::string const& suserId)
+{
+  auto const trustchainId =
+      mgs::base64::decode<Trustchain::TrustchainId>(strustchainId);
+  auto const userId = Tanker::obfuscateUserId(SUserId{suserId}, trustchainId);
+
+  nlohmann::json j{
+      {"trustchain_id", trustchainId},
+      {"target", "user"},
+      {"value", userId},
+  };
+
+  return SPublicIdentity{mgs::base64::encode(j.dump())};
+}
+
 auto const sdkType = "test";
 auto const sdkVersion = "0.0.1";
 
@@ -331,6 +349,10 @@ int main(int argc, char* argv[])
       std::vector<Tanker::SUserId> shareTo;
       if (args.at("--share"))
         shareTo.push_back(SUserId{args.at("--share").asString()});
+      std::vector<Tanker::SGroupId> shareWithGroups;
+      if (args.at("--share-with-group"))
+        shareWithGroups.push_back(
+            SGroupId{args.at("--share-with-group").asString()});
 
       std::vector<Tanker::SPublicIdentity> shareToPublicIdentities;
       for (auto const& userId : shareTo)
@@ -344,7 +366,8 @@ int main(int argc, char* argv[])
 
       core->encrypt(encrypted.data(),
                     gsl::make_span(cleartext).as_span<uint8_t const>(),
-                    shareToPublicIdentities)
+                    shareToPublicIdentities,
+                    shareWithGroups)
           .get();
       fmt::print("encrypted: {}\n", mgs::base64::encode(encrypted));
     }
@@ -363,6 +386,30 @@ int main(int argc, char* argv[])
       fmt::print(
           "decrypted: {}\n",
           std::string(decrypted.data(), decrypted.data() + decrypted.size()));
+    }
+    else if (args.at("creategroup").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const trustchainId = args.at("<trustchainid>").asString();
+      auto const memberUserIds = args.at("<memberuserid>").asStringList();
+      std::vector<SPublicIdentity> memberIdentities;
+      for (auto const& userId : memberUserIds)
+        memberIdentities.push_back(makePublicIdentity(trustchainId, userId));
+      auto const groupId = core->createGroup(memberIdentities).get();
+      fmt::print("groupId: {}\n", groupId);
+    }
+    else if (args.at("addtogroup").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const groupId = SGroupId{args.at("<groupid>").asString()};
+      auto const memberUserIds = args.at("<memberuserid>").asStringList();
+      std::vector<SPublicIdentity> memberIdentities;
+      for (auto const& userId : memberUserIds)
+        memberIdentities.push_back(
+            makePublicIdentity(args.at("<trustchainid>").asString(), userId));
+      core->updateGroupMembers(groupId, memberIdentities).get();
     }
 
     return 0;

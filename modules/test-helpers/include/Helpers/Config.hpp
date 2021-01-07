@@ -22,10 +22,17 @@ struct OidcConfig
   std::map<std::string, User> users;
 };
 
+struct AppConfig
+{
+  std::string appId;
+  std::string appSecret;
+};
+
 std::string const& trustchaindUrl();
 std::string const& appdUrl();
 std::string_view admindUrl();
 std::string const& idToken();
 OidcConfig const& oidcConfig();
+AppConfig const& benchmarkApp();
 }
 }
