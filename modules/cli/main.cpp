@@ -44,6 +44,7 @@ static const char USAGE[] =
       tcli deserializeblock <block>
       tcli deserializeblockparts <trustchainId> <nature> <payload> <author> <signature>
       tcli createidentity <trustchainid> <userid> --trustchain-private-key=<trustchainprivatekey>
+      tcli createprovisionalidentity <trustchainid> <email>
       tcli getpublicidentity <identity>
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
@@ -199,6 +200,14 @@ std::string createIdentity(MainArgs const& args)
       Tanker::SUserId{userId});
 }
 
+std::string createProvisionalIdentity(MainArgs const& args)
+{
+  auto const trustchainId = args.at("<trustchainid>").asString();
+  auto const email = args.at("<email>").asString();
+  return Tanker::Identity::createProvisionalIdentity(trustchainId,
+                                                     Tanker::Email{email});
+}
+
 std::string loadIdentity(std::string const& trustchainId,
                          std::string const& userId,
                          MainArgs const& args)
@@ -331,6 +340,10 @@ int main(int argc, char* argv[])
     else if (args.at("createidentity").asBool())
     {
       fmt::print("{}\n", createIdentity(args));
+    }
+    else if (args.at("createprovisionalidentity").asBool())
+    {
+      fmt::print("{}\n", createProvisionalIdentity(args));
     }
     else if (args.at("getpublicidentity").asBool())
     {
