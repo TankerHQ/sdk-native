@@ -143,7 +143,7 @@ void Database::performUnifiedMigration()
       _db->execute("DROP TABLE IF EXISTS key_publishes");
       [[fallthrough]];
     case 5:
-      flushAllCaches();
+      flushAllCaches(currentVersion);
       [[fallthrough]];
     case 6:
       _db->execute("DROP TABLE IF EXISTS trustchain");
@@ -250,7 +250,7 @@ void Database::setDatabaseVersion(int version)
   (*_db)(update(tab).set(tab.db_version = version).unconditionally());
 }
 
-void Database::flushAllCaches()
+void Database::flushAllCaches(int currentVersion)
 {
   FUNC_TIMER(DB);
   auto const flushTable = [this](auto const& tab) {
@@ -272,11 +272,12 @@ void Database::flushAllCaches()
                .unconditionally());
   }
 
-  {
-    DeviceKeysTable tab{};
+  DeviceKeysTable tab{};
+  if (currentVersion != 0 && currentVersion < 7)
     (*_db)(
         update(tab).set(tab.device_id = DeviceId{}.base()).unconditionally());
-  }
+  else
+    (*_db)(update(tab).set(tab.device_initialized = 0).unconditionally());
 }
 
 template <typename Table>
@@ -288,7 +289,7 @@ void Database::dropTable()
 void Database::nuke()
 {
   FUNC_TIMER(DB);
-  flushAllCaches();
+  flushAllCaches(DataStore::latestVersion());
   {
     DeviceKeysTable tab{};
     (*_db)(remove_from(tab).unconditionally());

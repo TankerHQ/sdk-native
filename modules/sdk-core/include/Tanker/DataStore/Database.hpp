@@ -42,7 +42,7 @@ private:
 
   int currentDatabaseVersion();
 
-  void flushAllCaches();
+  void flushAllCaches(int currentVersion);
 
   tc::cotask<void> startTransaction();
   tc::cotask<void> commitTransaction();
