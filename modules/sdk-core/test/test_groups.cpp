@@ -62,7 +62,7 @@ TEST_CASE("Can create a group with two users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto group = action.get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v3>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);
@@ -109,7 +109,7 @@ TEST_CASE("Can create a group with two provisional users")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto group = action.get<UserGroupCreation::v2>();
+  auto group = action.get<UserGroupCreation::v3>();
 
   auto const selfSignature =
       Crypto::sign(group.signatureData(), groupSignatureKey.privateKey);

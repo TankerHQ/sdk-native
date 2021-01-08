@@ -24,14 +24,12 @@ ExternalGroup::ExternalGroup(
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::SealedPrivateSignatureKey const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::Hash const& lastBlockHash,
-    GroupBlocksVersion version)
+    Crypto::Hash const& lastBlockHash)
   : id(id),
     publicSignatureKey(publicSignatureKey),
     encryptedPrivateSignatureKey(enc),
     publicEncryptionKey(publicEncryptionKey),
-    lastBlockHash(lastBlockHash),
-    version(version)
+    lastBlockHash(lastBlockHash)
 {
 }
 
@@ -109,6 +107,7 @@ Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group)
     {
       return externalGroup.publicEncryptionKey;
     }
+
     auto operator()(InternalGroup const& internalGroup) const
     {
       return internalGroup.encryptionKeyPair.publicKey;

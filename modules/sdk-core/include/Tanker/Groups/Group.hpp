@@ -16,19 +16,12 @@
 namespace Tanker
 {
 
-enum class GroupBlocksVersion
-{
-  V3,
-  Legacy
-};
-
 struct InternalGroup
 {
   Trustchain::GroupId id;
   Crypto::SignatureKeyPair signatureKeyPair;
   Crypto::EncryptionKeyPair encryptionKeyPair;
   Crypto::Hash lastBlockHash;
-  GroupBlocksVersion version;
 };
 
 bool operator==(InternalGroup const& l, InternalGroup const& r);
@@ -45,15 +38,13 @@ struct ExternalGroup
                 Crypto::PublicSignatureKey const&,
                 Crypto::SealedPrivateSignatureKey const&,
                 Crypto::PublicEncryptionKey const&,
-                Crypto::Hash const&,
-                GroupBlocksVersion version);
+                Crypto::Hash const&);
 
   Trustchain::GroupId id;
   Crypto::PublicSignatureKey publicSignatureKey;
   Crypto::SealedPrivateSignatureKey encryptedPrivateSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
-  GroupBlocksVersion version;
 };
 
 class BaseGroup final
