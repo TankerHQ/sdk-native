@@ -336,6 +336,21 @@ std::vector<Trustchain::DeviceId> extractAuthors(
   return {deviceIds.begin(), deviceIds.end()};
 }
 
+Crypto::EncryptionKeyPair decryptPreviousGroupKey(
+    UserGroupUpdate const& userGroupUpdate,
+    Crypto::EncryptionKeyPair const& newKey)
+{
+  if (auto const ugu1 = userGroupUpdate.get_if<UserGroupUpdate::v1>())
+  {
+    return Crypto::makeEncryptionKeyPair(Crypto::sealDecrypt(
+        ugu1->sealedPreviousPrivateEncryptionKey(), newKey));
+  }
+  else
+  {
+    throw AssertionError("Unexpected GroupUpdate nature");
+  }
+}
+
 tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
     Users::ILocalUserAccessor& localUserAccessor,
@@ -343,10 +358,11 @@ tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
     std::optional<Group> previousGroup,
     std::vector<Trustchain::GroupAction> const& actions)
 {
-  std::vector<Crypto::EncryptionKeyPair> groupKeys;
-
-  for (auto const& action : actions)
+  Crypto::EncryptionKeyPair lastKnownKey;
+  auto lastKnownKeyBlockIt = actions.end();
+  for (auto it = actions.begin(); it != actions.end(); ++it)
   {
+    auto const& action = *it;
     try
     {
       auto const authorIt =
@@ -390,9 +406,8 @@ tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
       if (auto const internalGroup =
               boost::variant2::get_if<InternalGroup>(&*previousGroup))
       {
-        if (groupKeys.empty() || groupKeys.back().publicKey !=
-                                     internalGroup->encryptionKeyPair.publicKey)
-          groupKeys.push_back(internalGroup->encryptionKeyPair);
+        lastKnownKey = internalGroup->encryptionKeyPair;
+        lastKnownKeyBlockIt = it;
       }
     }
     catch (Errors::Exception const& err)
@@ -407,6 +422,25 @@ tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
         throw;
     }
   }
+
+  std::vector<Crypto::EncryptionKeyPair> groupKeys;
+  if (lastKnownKeyBlockIt != actions.end())
+  {
+    groupKeys.push_back(lastKnownKey);
+    for (auto it = std::make_reverse_iterator(lastKnownKeyBlockIt + 1);
+         it != actions.rend();
+         ++it)
+    {
+      auto const& action = *it;
+      if (auto const updateAction =
+              boost::variant2::get_if<UserGroupUpdate>(&action))
+      {
+        auto prevKey = decryptPreviousGroupKey(*updateAction, groupKeys.back());
+        groupKeys.emplace_back(prevKey);
+      }
+    }
+  }
+
   auto result = ProcessGroupResult{previousGroup, groupKeys};
   TC_RETURN(result);
 }

@@ -22,6 +22,7 @@ struct ProcessGroupResult
   std::optional<Group> group;
   // We can be added to and removed from a group multiple times,
   // this holds the history of the group encryption keys shared with us
+  // NOTE: Keys are not currently guaranteed to be in order!
   std::vector<Crypto::EncryptionKeyPair> groupKeys;
 };
 
