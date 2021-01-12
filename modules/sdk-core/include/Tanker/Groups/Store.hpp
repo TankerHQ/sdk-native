@@ -24,8 +24,8 @@ public:
 
   Store(DataStore::Database* dbConn);
 
-  tc::cotask<void> putKey(Trustchain::GroupId const& id,
-                          Crypto::EncryptionKeyPair const& key);
+  tc::cotask<void> putKeys(Trustchain::GroupId const& id,
+                           std::vector<Crypto::EncryptionKeyPair> const& keys);
 
   tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
   findKeyByPublicEncryptionKey(

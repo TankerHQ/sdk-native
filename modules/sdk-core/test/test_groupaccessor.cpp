@@ -93,8 +93,8 @@ TEST_CASE("GroupAccessor")
 
         {
           auto aliceInternalGroup = static_cast<InternalGroup>(aliceGroup);
-          AWAIT_VOID(groupStore.putKey(aliceInternalGroup.id,
-                                       aliceInternalGroup.encryptionKeyPair));
+          AWAIT_VOID(groupStore.putKeys(
+              aliceInternalGroup.id, {aliceInternalGroup.encryptionKeyPair}));
         }
 
         auto const result1 =

@@ -103,9 +103,12 @@ Accessor::getEncryptionKeyPair(
   for (auto const& key : groupKeys)
   {
     if (key.publicKey == publicEncryptionKey)
+    {
       result = key;
-    TC_AWAIT(_groupStore->putKey(groupId, key));
+      break;
+    }
   }
+  TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
   TC_RETURN(result);
 }
 
@@ -174,8 +177,7 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
       out.found.push_back(*group);
 
       // add the group and group keys to cache
-      for (auto const& key : groupKeys)
-        TC_AWAIT(_groupStore->putKey(groupId, key));
+      TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
     }
   }
 

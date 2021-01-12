@@ -26,19 +26,23 @@ Store::Store(DataStore::Database* dbConn) : _db(dbConn)
 {
 }
 
-tc::cotask<void> Store::putKey(Trustchain::GroupId const& id,
-                               Crypto::EncryptionKeyPair const& key)
+tc::cotask<void> Store::putKeys(
+    Trustchain::GroupId const& id,
+    std::vector<Crypto::EncryptionKeyPair> const& keys)
 {
-  TINFO("Adding internal group key for group {}", id);
+  TINFO("Adding internal group keys for group {}", id);
   FUNC_TIMER(DB);
   GroupKeysTable groupKeys;
 
-  (*_db->connection())(sqlpp::sqlite3::insert_or_replace_into(groupKeys).set(
-      groupKeys.public_encryption_key =
-          key.publicKey.base(),
-      groupKeys.private_encryption_key =
-          key.privateKey.base(),
-      groupKeys.group_id = id.base()));
+  TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
+    for (auto const& key : keys)
+      (*_db->connection())(
+          sqlpp::sqlite3::insert_or_replace_into(groupKeys).set(
+              groupKeys.public_encryption_key = key.publicKey.base(),
+              groupKeys.private_encryption_key = key.privateKey.base(),
+              groupKeys.group_id = id.base()));
+  }));
+
   TC_RETURN();
 }
 

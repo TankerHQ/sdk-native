@@ -32,7 +32,7 @@ TEST_CASE("GroupKeyStore")
 
   SUBCASE("it should find a group key that was inserted")
   {
-    AWAIT_VOID(groupStore.putKey(groupId, groupKey));
+    AWAIT_VOID(groupStore.putKeys(groupId, {groupKey}));
     CHECK_EQ(AWAIT(groupStore.findKeyByPublicEncryptionKey(groupKey.publicKey))
                  .value(),
              groupKey);
