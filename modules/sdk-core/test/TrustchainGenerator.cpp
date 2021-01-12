@@ -503,6 +503,43 @@ Trustchain::Actions::UserGroupAddition Group::addUsers(
   return groupAddition;
 }
 
+Trustchain::Actions::UserGroupUpdate Group::updateUsers(
+    Device const& author,
+    std::vector<User> const& users,
+    std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto newEncKp = Crypto::makeEncryptionKeyPair();
+  auto newSigKp = Crypto::makeSignatureKeyPair();
+
+  std::vector<Trustchain::Actions::RawUserGroupMember2> rawUsers;
+  for (auto const& user : users)
+    rawUsers.push_back({user.id(), user.userKeys().back().publicKey});
+
+  std::vector<Trustchain::Actions::RawUserGroupProvisionalMember3> rawProvUsers;
+  for (auto const& user : provisionalUsers)
+    rawProvUsers.push_back({user.appSignatureKeyPair().publicKey,
+                            user.tankerSignatureKeyPair().publicKey,
+                            user.appEncryptionKeyPair().publicKey,
+                            user.tankerEncryptionKeyPair().publicKey});
+
+  auto const groupUpdate = Groups::Manager::makeUserGroupUpdateAction(
+      newSigKp,
+      newEncKp,
+      rawUsers,
+      rawProvUsers,
+      *this,
+      _tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+
+  _currentEncKp = newEncKp;
+  _currentSigKp = newSigKp;
+  _entries.emplace_back(groupUpdate);
+  _lastKeyRotationBlockHash = Trustchain::getHash(groupUpdate);
+
+  return groupUpdate;
+}
+
 // ================ ProvisionalUser
 
 ProvisionalUser::ProvisionalUser(Trustchain::TrustchainId const& tid,
