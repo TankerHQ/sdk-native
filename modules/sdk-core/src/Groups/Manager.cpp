@@ -191,7 +191,9 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
 static std::vector<RawUserGroupMember2> applyGroupUserDiff(
     std::vector<UserGroupMember2> const& existingUsers,
     std::vector<Users::User> const& usersToAdd,
-    std::vector<Trustchain::UserId> const& userIDsToRemove)
+    std::vector<Trustchain::UserId> const& userIDsToRemove,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
   boost::container::flat_set<Trustchain::UserId> usersToAddSet;
   for (auto const& user : usersToAdd)
@@ -212,9 +214,11 @@ static std::vector<RawUserGroupMember2> applyGroupUserDiff(
   }
   if (!userIdsToRemove.empty())
   {
+    auto const notFoundIdentities = mapIdentitiesToStrings(
+        userIDsToRemove, spublicIdentitiesToRemove, publicIdentitiesToRemove);
     throw formatEx(Errc::InvalidArgument,
-                   "{} user IDs to remove were not found",
-                   userIdsToRemove.size());
+                   "unknown users to remove: {:s}",
+                   fmt::join(notFoundIdentities, ", "));
   }
 
   // Silently skip duplicate adds (not an error since GroupAddition allows them)
@@ -304,12 +308,17 @@ tc::cotask<void> updateMembers(
     if (groups.found.empty())
       throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
+    auto const spublicIdentitiesToRemoveDedup =
+        removeDuplicates(spublicIdentitiesToRemove);
     auto const publicIdentitiesToRemove =
-        extractPublicIdentities(removeDuplicates(spublicIdentitiesToRemove));
+        extractPublicIdentities(spublicIdentitiesToRemoveDedup);
     auto const membersToRemove = partitionIdentities(publicIdentitiesToRemove);
 
-    auto users = applyGroupUserDiff(
-        groups.found[0].members, newMembers.users, membersToRemove.userIds);
+    auto users = applyGroupUserDiff(groups.found[0].members,
+                                    newMembers.users,
+                                    membersToRemove.userIds,
+                                    spublicIdentitiesToRemoveDedup,
+                                    publicIdentitiesToRemove);
     auto provisionalUsers =
         applyGroupProvisionalDiff(groups.found[0].provisionalMembers,
                                   newMembers.provisionalUsers,
