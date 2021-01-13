@@ -230,9 +230,6 @@ tc::cotask<KeyRecipients> generateRecipientList(
   auto const userResult =
       TC_AWAIT(userAccessor.pull(partitionedIdentities.userIds));
 
-  auto const provisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
-      partitionedIdentities.publicProvisionalIdentities));
-
   auto const groupResult =
       TC_AWAIT(groupAccessor.getPublicEncryptionKeys(groupIds));
 
@@ -242,6 +239,9 @@ tc::cotask<KeyRecipients> generateRecipientList(
                  sgroupIds,
                  groupIds,
                  groupResult.notFound);
+
+  auto const provisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
+      partitionedIdentities.publicProvisionalIdentities));
 
   TC_RETURN(
       toKeyRecipients(userResult.found, provisionalUsers, groupResult.found));

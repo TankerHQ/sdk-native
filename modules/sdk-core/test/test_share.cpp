@@ -226,10 +226,6 @@ TEST_CASE("generateRecipientList")
     REQUIRE_CALL(userAccessor, pull(std::vector{newUser.id()}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {newUser.id()}}));
 
-    REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-        .LR_RETURN(
-            Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
-
     REQUIRE_CALL(groupAccessor, getPublicEncryptionKeys(std::vector<GroupId>{}))
         .LR_RETURN(makeCoTask(
             Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
@@ -250,10 +246,6 @@ TEST_CASE("generateRecipientList")
 
     REQUIRE_CALL(userAccessor, pull(gsl::span<Trustchain::UserId const>{}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
-
-    REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
-        .LR_RETURN(
-            Tanker::makeCoTask(std::vector<ProvisionalUsers::PublicUser>{}));
 
     REQUIRE_CALL(groupAccessor,
                  getPublicEncryptionKeys(std::vector<GroupId>{newGroup.id()}))
