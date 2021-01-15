@@ -202,6 +202,30 @@ TEST_SUITE("Groups")
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture,
+                    "Don't share with group creator if not in the group")
+  {
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+    auto bob = trustchain.makeUser();
+    auto bobDevice = bob.makeDevice();
+    auto bobSession = TC_AWAIT(bobDevice.open());
+
+    auto const groupId =
+        TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+
+    auto const clearData = "my clear data is clear";
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*bobSession, clearData, {}, {groupId})));
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(decrypt(*aliceSession, encryptedData)),
+        Errors::Errc::InvalidArgument);
+  }
+
+  TEST_CASE_FIXTURE(TrustchainFixture,
                     "Alice shares with a group with Bob as a provisional user")
   {
     auto const bobEmail = Email{"bob1.test@tanker.io"};
