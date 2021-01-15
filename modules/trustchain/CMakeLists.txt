@@ -20,11 +20,14 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition/v1.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition/v2.hpp
+  include/Tanker/Trustchain/Actions/UserGroupAddition/v3.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp
   include/Tanker/Trustchain/Actions/UserGroupCreation/v2.hpp
+  include/Tanker/Trustchain/Actions/UserGroupCreation/v3.hpp
   include/Tanker/Trustchain/Actions/UserGroupMember2.hpp
   include/Tanker/Trustchain/Actions/UserGroupProvisionalMember2.hpp
+  include/Tanker/Trustchain/Actions/UserGroupProvisionalMember3.hpp
   include/Tanker/Trustchain/Context.hpp
   include/Tanker/Trustchain/Errors/Errc.hpp
   include/Tanker/Trustchain/Errors/ErrcCategory.hpp
@@ -61,11 +64,14 @@ add_library(tankertrustchain STATIC
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupAddition/v1.cpp
   src/Actions/UserGroupAddition/v2.cpp
+  src/Actions/UserGroupAddition/v3.cpp
   src/Actions/UserGroupCreation.cpp
   src/Actions/UserGroupCreation/v1.cpp
   src/Actions/UserGroupCreation/v2.cpp
+  src/Actions/UserGroupCreation/v3.cpp
   src/Actions/UserGroupMember2.cpp
   src/Actions/UserGroupProvisionalMember2.cpp
+  src/Actions/UserGroupProvisionalMember3.cpp
   src/Context.cpp
   src/Errors/Errc.cpp
   src/Errors/ErrcCategory.cpp

@@ -196,7 +196,7 @@ TEST_CASE("Can add users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto groupAdd = action.get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v3>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);
@@ -240,7 +240,7 @@ TEST_CASE("Can add provisional users to a group")
       userDevice.id(),
       userDevice.keys().signatureKeyPair.privateKey);
 
-  auto groupAdd = action.get<UserGroupAddition::v2>();
+  auto groupAdd = action.get<UserGroupAddition::v3>();
 
   auto const selfSignature =
       Crypto::sign(groupAdd.signatureData(), group.currentSigKp().privateKey);

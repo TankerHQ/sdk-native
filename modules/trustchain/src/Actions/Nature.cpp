@@ -29,6 +29,8 @@ std::string to_string(Nature n)
     NATURE_CASE(ProvisionalIdentityClaim);
     NATURE_CASE(UserGroupCreation2);
     NATURE_CASE(UserGroupAddition2);
+    NATURE_CASE(UserGroupCreation3);
+    NATURE_CASE(UserGroupAddition3);
   }
   return "INVALID";
 }

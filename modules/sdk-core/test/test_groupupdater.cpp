@@ -115,12 +115,12 @@ TEST_CASE("Group V1")
       GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE("Alice sees Charly being added to Bob's group")
+    SUBCASE("Alice sees Charlie being added to Bob's group")
     {
       auto bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
-      auto const charly = generator.makeUser("charly");
+      auto const charlie = generator.makeUser("charlie");
       auto bobGroupUpdated = bobGroup;
-      bobGroupUpdated.addUsersV1(bob.devices()[0], {charly});
+      bobGroupUpdated.addUsersV1(bob.devices()[0], {charlie});
       REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       REQUIRE_CALL(aliceLocalUserAccessor, pull())
           .LR_RETURN(makeCoTask<Users::LocalUser const&>(aliceLocalUser));
@@ -135,6 +135,137 @@ TEST_CASE("Group V1")
 }
 
 TEST_CASE("Group V2")
+{
+  Test::Generator generator;
+  auto const alice = generator.makeUser("alice");
+  auto aliceLocalUserAccessor = LocalUserAccessorMock{};
+  auto aliceProvisionalUsersAccessor = ProvisionalUsersAccessorMock{};
+  auto const aliceProvisionalUser =
+      generator.makeProvisionalUser("alice@tanker");
+  auto const bob = generator.makeUser("bob");
+
+  auto const aliceLocalUser = static_cast<Users::LocalUser>(alice);
+
+  SUBCASE("GroupCreation")
+  {
+    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+
+    SUBCASE("handles creation of a group I am part of")
+    {
+      auto const group =
+          generator.makeGroupV2(alice.devices().front(), {alice});
+      REQUIRE_CALL(aliceLocalUserAccessor,
+                   pullUserKeyPair(alice.userKeys().back().publicKey))
+          .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
+
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(group).front()));
+
+      GroupMatcher<InternalGroup>(resultGroup, group);
+    }
+
+    SUBCASE("handles creation of a group I am *not* part of")
+    {
+      auto const bobGroup = generator.makeGroupV2(bob.devices().front(), {bob});
+
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(bobGroup).front()));
+
+      GroupMatcher<ExternalGroup>(resultGroup, bobGroup);
+    }
+
+    SUBCASE(
+        "handles creation of a group I am part of through a provisional "
+        "identity")
+    {
+      auto const bobGroup = generator.makeGroupV2(
+          bob.devices().front(), {bob}, {aliceProvisionalUser});
+      REQUIRE_CALL(aliceProvisionalUsersAccessor,
+                   findEncryptionKeysFromCache(trompeloeil::_, trompeloeil::_))
+          .RETURN(makeCoTask(
+              std::make_optional<ProvisionalUserKeys>(aliceProvisionalUser)));
+
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupCreation(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               makeEntries(bobGroup).front()));
+
+      GroupMatcher<InternalGroup>(resultGroup, bobGroup);
+    }
+  }
+
+  SUBCASE("GroupAddition")
+  {
+    SUBCASE("Alice sees Bob being added to her group")
+    {
+      auto aliceGroup = generator.makeGroupV2(alice.devices().front(), {alice});
+      aliceGroup.addUsersV2(alice.devices()[0], {bob});
+      auto const resultGroup = AWAIT(
+          GroupUpdater::applyUserGroupAddition(aliceLocalUserAccessor,
+                                               aliceProvisionalUsersAccessor,
+                                               aliceGroup,
+                                               makeEntries(aliceGroup).back()));
+      GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
+    }
+
+    SUBCASE("Alice sees herself being added to Bob's group")
+    {
+      auto const bobGroup = generator.makeGroupV2(bob.devices()[0], {bob});
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsersV2(bob.devices()[0], {alice});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      REQUIRE_CALL(aliceLocalUserAccessor,
+                   pullUserKeyPair(alice.userKeys().back().publicKey))
+          .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
+    }
+
+    SUBCASE("Alice sees Charlie being added to Bob's group")
+    {
+      auto bobGroup = generator.makeGroupV2(bob.devices()[0], {bob});
+      auto const charlie = generator.makeUser("charlie");
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsersV2(bob.devices()[0], {charlie});
+      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+      GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
+    }
+
+    SUBCASE(
+        "Alice sees herself being added to Bob's group as a provisional user")
+    {
+      auto bobGroup = generator.makeGroupV2(bob.devices()[0], {bob}, {});
+      auto bobGroupUpdated = bobGroup;
+      bobGroupUpdated.addUsersV2(bob.devices()[0], {}, {aliceProvisionalUser});
+      REQUIRE_CALL(aliceProvisionalUsersAccessor,
+                   findEncryptionKeysFromCache(trompeloeil::_, trompeloeil::_))
+          .RETURN(makeCoTask(
+              std::make_optional<ProvisionalUserKeys>(aliceProvisionalUser)));
+      auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
+          aliceLocalUserAccessor,
+          aliceProvisionalUsersAccessor,
+          static_cast<ExternalGroup>(bobGroup),
+          makeEntries(bobGroupUpdated).back()));
+
+      GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
+    }
+  }
+}
+
+TEST_CASE("Group V3")
 {
   Test::Generator generator;
   auto const alice = generator.makeUser("alice");
@@ -228,12 +359,12 @@ TEST_CASE("Group V2")
       GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE("Alice sees Charly being added to Bob's group")
+    SUBCASE("Alice sees Charlie being added to Bob's group")
     {
       auto bobGroup = generator.makeGroup(bob.devices()[0], {bob});
-      auto const charly = generator.makeUser("charly");
+      auto const charlie = generator.makeUser("charlie");
       auto bobGroupUpdated = bobGroup;
-      bobGroupUpdated.addUsers(bob.devices()[0], {charly});
+      bobGroupUpdated.addUsers(bob.devices()[0], {charlie});
       REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           aliceLocalUserAccessor,

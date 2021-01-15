@@ -8,6 +8,7 @@
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/Device.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUser.hpp>
@@ -91,9 +92,10 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
   TC_RETURN(groupPrivateEncryptionKey);
 }
 
+template <typename ProvMembers>
 tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyProvisionalKey(
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
-    UserGroupCreation::v2::ProvisionalMembers const& groupKeys)
+    ProvMembers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
@@ -111,18 +113,21 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyProvisionalKey(
   TC_RETURN(std::nullopt);
 }
 
-ExternalGroup makeExternalGroup(UserGroupCreation const& userGroupCreation)
+ExternalGroup makeExternalGroup(UserGroupCreation const& userGroupCreation,
+                                GroupBlocksVersion version)
 {
   return ExternalGroup{GroupId{userGroupCreation.publicSignatureKey()},
                        userGroupCreation.publicSignatureKey(),
                        userGroupCreation.sealedPrivateSignatureKey(),
                        userGroupCreation.publicEncryptionKey(),
-                       Trustchain::getHash(userGroupCreation)};
+                       Trustchain::getHash(userGroupCreation),
+                       version};
 }
 
 InternalGroup makeInternalGroup(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    UserGroupCreation const& userGroupCreation)
+    UserGroupCreation const& userGroupCreation,
+    GroupBlocksVersion version)
 {
   auto const groupPrivateSignatureKey =
       Crypto::sealDecrypt(userGroupCreation.sealedPrivateSignatureKey(),
@@ -139,32 +144,35 @@ InternalGroup makeInternalGroup(
                            userGroupCreation.publicEncryptionKey(),
                            groupPrivateEncryptionKey,
                        },
-                       Trustchain::getHash(userGroupCreation)};
+                       Trustchain::getHash(userGroupCreation),
+                       version};
 }
 
 InternalGroup makeInternalGroup(
     ExternalGroup const& previousGroup,
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    Trustchain::GroupAction const& action)
+    Trustchain::GroupAction const& action,
+    GroupBlocksVersion version)
 {
+  if (previousGroup.version == GroupBlocksVersion::V3)
+    version = previousGroup.version;
   auto const groupPrivateSignatureKey =
       Crypto::sealDecrypt(previousGroup.encryptedPrivateSignatureKey,
                           Crypto::EncryptionKeyPair{
                               previousGroup.publicEncryptionKey,
                               groupPrivateEncryptionKey,
                           });
-  return InternalGroup{
-      GroupId{previousGroup.publicSignatureKey},
-      Crypto::SignatureKeyPair{
-          previousGroup.publicSignatureKey,
-          groupPrivateSignatureKey,
-      },
-      Crypto::EncryptionKeyPair{
-          previousGroup.publicEncryptionKey,
-          groupPrivateEncryptionKey,
-      },
-      Trustchain::getHash(action),
-  };
+  return InternalGroup{GroupId{previousGroup.publicSignatureKey},
+                       Crypto::SignatureKeyPair{
+                           previousGroup.publicSignatureKey,
+                           groupPrivateSignatureKey,
+                       },
+                       Crypto::EncryptionKeyPair{
+                           previousGroup.publicEncryptionKey,
+                           groupPrivateEncryptionKey,
+                       },
+                       Trustchain::getHash(action),
+                       version};
 }
 }
 
@@ -176,23 +184,35 @@ tc::cotask<Group> applyUserGroupCreation(
   auto const& userGroupCreation =
       boost::variant2::get<UserGroupCreation>(action);
 
+  auto version = GroupBlocksVersion::Legacy;
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  if (auto const ugc1 = userGroupCreation.get_if<UserGroupCreation::v1>())
-    groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
-        localUserAccessor, ugc1->sealedPrivateEncryptionKeysForUsers()));
-  else if (auto const ugc2 = userGroupCreation.get_if<UserGroupCreation::v2>())
-  {
-    groupPrivateEncryptionKey =
-        TC_AWAIT(decryptMyKey(localUserAccessor, ugc2->members()));
-    if (!groupPrivateEncryptionKey)
-      groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUsersAccessor, ugc2->provisionalMembers()));
-  }
+  userGroupCreation.visit(overloaded{
+      [&](UserGroupCreation::v1 const& ugc) {
+        groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
+            localUserAccessor, ugc.sealedPrivateEncryptionKeysForUsers()));
+      },
+      [&](UserGroupCreation::v2 const& ugc) {
+        groupPrivateEncryptionKey =
+            TC_AWAIT(decryptMyKey(localUserAccessor, ugc.members()));
+        if (!groupPrivateEncryptionKey)
+          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+              provisionalUsersAccessor, ugc.provisionalMembers()));
+      },
+      [&](auto const& ugc) {
+        version = GroupBlocksVersion::V3;
+        groupPrivateEncryptionKey =
+            TC_AWAIT(decryptMyKey(localUserAccessor, ugc.members()));
+        if (!groupPrivateEncryptionKey)
+          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+              provisionalUsersAccessor, ugc.provisionalMembers()));
+      },
+  });
 
   if (groupPrivateEncryptionKey)
-    TC_RETURN(makeInternalGroup(*groupPrivateEncryptionKey, userGroupCreation));
+    TC_RETURN(makeInternalGroup(
+        *groupPrivateEncryptionKey, userGroupCreation, version));
   else
-    TC_RETURN(makeExternalGroup(userGroupCreation));
+    TC_RETURN(makeExternalGroup(userGroupCreation, version));
 }
 
 tc::cotask<Group> applyUserGroupAddition(
@@ -214,31 +234,47 @@ tc::cotask<Group> applyUserGroupAddition(
 
   updateLastGroupBlock(*previousGroup, Trustchain::getHash(action));
 
-  // I am already member of this group, ignore
-  if (boost::variant2::holds_alternative<InternalGroup>(*previousGroup))
-    TC_RETURN(*previousGroup);
+  // Even if we were already a member of a group, we should check for V3 blocks
+  GroupBlocksVersion version =
+      userGroupAddition.holds_alternative<UserGroupAddition::v3>() ?
+          GroupBlocksVersion::V3 :
+          GroupBlocksVersion::Legacy;
+
+  // I am already member of this group, don't try to decrypt keys again
+  if (auto const ig = boost::variant2::get_if<InternalGroup>(&*previousGroup))
+  {
+    auto newGroup = *ig;
+    newGroup.version = version;
+    TC_RETURN(newGroup);
+  }
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  if (auto const uga1 = userGroupAddition.get_if<UserGroupAddition::v1>())
-    groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
-        localUserAccessor, uga1->sealedPrivateEncryptionKeysForUsers()));
-  else if (auto const uga2 = userGroupAddition.get_if<UserGroupAddition::v2>())
-  {
-    groupPrivateEncryptionKey =
-        TC_AWAIT(decryptMyKey(localUserAccessor, uga2->members()));
-    if (!groupPrivateEncryptionKey)
-      groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-          provisionalUsersAccessor, uga2->provisionalMembers()));
-  }
+  userGroupAddition.visit(overloaded{
+      [&](UserGroupAddition::v1 const& uga) {
+        groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
+            localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers()));
+      },
+      [&](auto const& uga) {
+        groupPrivateEncryptionKey =
+            TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
+        if (!groupPrivateEncryptionKey)
+          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+              provisionalUsersAccessor, uga.provisionalMembers()));
+      },
+  });
 
   // we checked above that this is an external group
   auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
 
   if (!groupPrivateEncryptionKey)
-    TC_RETURN(externalGroup);
+  {
+    auto newGroup = externalGroup;
+    newGroup.version = version;
+    TC_RETURN(newGroup);
+  }
   else
-    TC_RETURN(
-        makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, action));
+    TC_RETURN(makeInternalGroup(
+        externalGroup, *groupPrivateEncryptionKey, action, version));
 }
 
 namespace

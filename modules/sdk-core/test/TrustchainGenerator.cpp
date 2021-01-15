@@ -129,7 +129,7 @@ Group User::makeGroup(
   std::vector<User> withMe({*this});
   withMe.reserve(withMe.size() + users.size());
   withMe.insert(withMe.end(), std::begin(users), std::end(users));
-  return {_tid, devices().back(), withMe, provisionalUsers};
+  return Group::newV3(_tid, devices().back(), withMe, provisionalUsers);
 }
 
 Device User::makeDevice() const
@@ -257,52 +257,14 @@ Trustchain::Actions::DeviceRevocation2 User::revokeDeviceForMigration(
 // ============ Groups
 namespace
 {
-auto createGroupAction(Trustchain::TrustchainId const& tid,
-                       Device const& author,
-                       Crypto::EncryptionKeyPair const& encKp,
-                       Crypto::SignatureKeyPair const& sigKp,
-                       std::vector<User> const& users,
-                       std::vector<ProvisionalUser> const& provisionalUsers)
+auto createGroupActionV1(Trustchain::TrustchainId const& tid,
+                         Device const& author,
+                         Crypto::EncryptionKeyPair const& encKp,
+                         Crypto::SignatureKeyPair const& sigKp,
+                         std::vector<User> const& users)
 {
-  return Groups::Manager::makeUserGroupCreationAction(
-      transformTo<std::vector<Users::User>>(users),
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers),
-      sigKp,
-      encKp,
-      tid,
-      author.id(),
-      author.keys().signatureKeyPair.privateKey);
-}
-
-using SealedPrivateEncryptionKeysForUsers = Trustchain::Actions::
-    UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers;
-
-SealedPrivateEncryptionKeysForUsers generateGroupKeysForUsers(
-    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
-    std::vector<User> const& users)
-{
-  SealedPrivateEncryptionKeysForUsers keysForUsers;
-  for (auto const& user : users)
-  {
-    if (user.userKeys().empty())
-      throw std::runtime_error(
-          "TrustchainGenerator: can't add a user without user key to a "
-          "group");
-    keysForUsers.emplace_back(
-        user.userKeys().back().publicKey,
-        Crypto::sealEncrypt(groupPrivateEncryptionKey,
-                            user.userKeys().back().publicKey));
-  }
-  return keysForUsers;
-}
-
-auto createGroupAction(Trustchain::TrustchainId const& tid,
-                       Device const& author,
-                       Crypto::EncryptionKeyPair const& encKp,
-                       Crypto::SignatureKeyPair const& sigKp,
-                       std::vector<User> const& users)
-{
-  auto const keysForUsers = generateGroupKeysForUsers(encKp.privateKey, users);
+  auto const keysForUsers = Groups::generateGroupKeysForUsers1(
+      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
   return Groups::createUserGroupCreationV1Action(
       sigKp,
       encKp.publicKey,
@@ -311,31 +273,116 @@ auto createGroupAction(Trustchain::TrustchainId const& tid,
       author.id(),
       author.keys().signatureKeyPair.privateKey);
 }
+
+auto createGroupActionV2(Trustchain::TrustchainId const& tid,
+                         Device const& author,
+                         Crypto::EncryptionKeyPair const& encKp,
+                         Crypto::SignatureKeyPair const& sigKp,
+                         std::vector<User> const& users,
+                         std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto groupMembers = Groups::generateGroupKeysForUsers2(
+      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+  auto groupProvisionalMembers = Groups::generateGroupKeysForProvisionalUsers2(
+      encKp.privateKey,
+      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+
+  return Groups::createUserGroupCreationV2Action(
+      sigKp,
+      encKp.publicKey,
+      groupMembers,
+      groupProvisionalMembers,
+      tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+}
+
+auto createGroupActionV3(Trustchain::TrustchainId const& tid,
+                         Device const& author,
+                         Crypto::EncryptionKeyPair const& encKp,
+                         Crypto::SignatureKeyPair const& sigKp,
+                         std::vector<User> const& users,
+                         std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto groupMembers = Groups::generateGroupKeysForUsers2(
+      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+  auto groupProvisionalMembers = Groups::generateGroupKeysForProvisionalUsers3(
+      encKp.privateKey,
+      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+
+  return Groups::createUserGroupCreationV3Action(
+      sigKp,
+      encKp.publicKey,
+      groupMembers,
+      groupProvisionalMembers,
+      tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+}
 }
 
 Group::Group(Trustchain::TrustchainId const& tid,
              Device const& author,
-             std::vector<User> const& users,
-             std::vector<ProvisionalUser> const& provisionalUsers)
+             Crypto::EncryptionKeyPair const& currentEncKp,
+             Crypto::SignatureKeyPair const& currentSigKp,
+             std::vector<Trustchain::GroupAction> const& entries,
+             GroupBlocksVersion version)
   : _tid(tid),
-    _currentEncKp(Crypto::makeEncryptionKeyPair()),
-    _currentSigKp(Crypto::makeSignatureKeyPair()),
+    _currentEncKp(currentEncKp),
+    _currentSigKp(currentSigKp),
     _id(Trustchain::GroupId(_currentSigKp.publicKey)),
-    _entries({createGroupAction(
-        tid, author, _currentEncKp, _currentSigKp, users, provisionalUsers)})
+    _entries(entries),
+    _version(version)
 {
 }
 
-Group::Group(Trustchain::TrustchainId const& tid,
-             Device const& author,
-             std::vector<User> const& users)
-  : _tid(tid),
-    _currentEncKp(Crypto::makeEncryptionKeyPair()),
-    _currentSigKp(Crypto::makeSignatureKeyPair()),
-    _id(Trustchain::GroupId(_currentSigKp.publicKey)),
-    _entries(
-        {createGroupAction(tid, author, _currentEncKp, _currentSigKp, users)})
+Group Group::newV1(Trustchain::TrustchainId const& tid,
+                   Device const& author,
+                   std::vector<User> const& users)
 {
+  auto currentEncKp = Crypto::makeEncryptionKeyPair();
+  auto currentSigKp = Crypto::makeSignatureKeyPair();
+  return Group{
+      tid,
+      author,
+      currentEncKp,
+      currentSigKp,
+      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)},
+      GroupBlocksVersion::Legacy};
+}
+
+Group Group::newV2(Trustchain::TrustchainId const& tid,
+                   Device const& author,
+                   std::vector<User> const& users,
+                   std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto currentEncKp = Crypto::makeEncryptionKeyPair();
+  auto currentSigKp = Crypto::makeSignatureKeyPair();
+  return Group{
+      tid,
+      author,
+      currentEncKp,
+      currentSigKp,
+      {createGroupActionV2(
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
+      GroupBlocksVersion::Legacy};
+}
+
+Group Group::newV3(Trustchain::TrustchainId const& tid,
+                   Device const& author,
+                   std::vector<User> const& users,
+                   std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto currentEncKp = Crypto::makeEncryptionKeyPair();
+  auto currentSigKp = Crypto::makeSignatureKeyPair();
+  return Group{
+      tid,
+      author,
+      currentEncKp,
+      currentSigKp,
+      {createGroupActionV3(
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
+      GroupBlocksVersion::V3};
 }
 
 Trustchain::GroupId const& Group::id() const
@@ -376,6 +423,7 @@ Group::operator Tanker::InternalGroup() const
       currentSigKp(),
       currentEncKp(),
       lastBlockHash(),
+      _version,
   };
 }
 
@@ -387,7 +435,49 @@ Group::operator Tanker::ExternalGroup() const
       encryptedSignatureKey(),
       currentEncKp().publicKey,
       lastBlockHash(),
+      _version,
   };
+}
+
+Trustchain::Actions::UserGroupAddition Group::addUsersV1(
+    Device const& author, std::vector<User> const& users)
+{
+  auto const keysForUsers = Groups::generateGroupKeysForUsers1(
+      currentEncKp().privateKey, transformTo<std::vector<Users::User>>(users));
+
+  auto const groupAddition = Groups::createUserGroupAdditionV1Action(
+      currentSigKp(),
+      lastBlockHash(),
+      keysForUsers,
+      _tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+  _entries.emplace_back(groupAddition);
+  return groupAddition;
+}
+
+Trustchain::Actions::UserGroupAddition Group::addUsersV2(
+    Device const& author,
+    std::vector<User> const& newUsers,
+    std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto members = Groups::generateGroupKeysForUsers2(
+      currentEncKp().privateKey,
+      transformTo<std::vector<Users::User>>(newUsers));
+  auto provisionalMembers = Groups::generateGroupKeysForProvisionalUsers2(
+      currentEncKp().privateKey,
+      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+
+  auto const groupAddition = Groups::createUserGroupAdditionV2Action(
+      currentSigKp(),
+      lastBlockHash(),
+      members,
+      provisionalMembers,
+      _tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+  _entries.emplace_back(groupAddition);
+  return groupAddition;
 }
 
 Trustchain::Actions::UserGroupAddition Group::addUsers(
@@ -399,23 +489,6 @@ Trustchain::Actions::UserGroupAddition Group::addUsers(
       transformTo<std::vector<Users::User>>(newUsers),
       transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers),
       *this,
-      _tid,
-      author.id(),
-      author.keys().signatureKeyPair.privateKey);
-  _entries.emplace_back(groupAddition);
-  return groupAddition;
-}
-
-Trustchain::Actions::UserGroupAddition Group::addUsersV1(
-    Device const& author, std::vector<User> const& users)
-{
-  auto const keysForUsers =
-      generateGroupKeysForUsers(currentEncKp().privateKey, users);
-
-  auto const groupAddition = Groups::createUserGroupAdditionV1Action(
-      currentSigKp(),
-      lastBlockHash(),
-      keysForUsers,
       _tid,
       author.id(),
       author.keys().signatureKeyPair.privateKey);
@@ -567,18 +640,26 @@ User Generator::makeUserV1(std::string const& suserId) const
   return {userId, context().id(), std::nullopt, std::vector{device}};
 }
 
+Group Generator::makeGroupV1(Device const& author,
+                             std::vector<User> const& users) const
+{
+  return Group::newV1(context().id(), author, users);
+}
+
+Group Generator::makeGroupV2(
+    Device const& author,
+    std::vector<User> const& users,
+    std::vector<ProvisionalUser> const& provisionalUsers) const
+{
+  return Group::newV2(context().id(), author, users, provisionalUsers);
+}
+
 Group Generator::makeGroup(
     Device const& author,
     std::vector<User> const& users,
     std::vector<ProvisionalUser> const& provisionalUsers) const
 {
-  return {context().id(), author, users, provisionalUsers};
-}
-
-Group Generator::makeGroupV1(Device const& author,
-                             std::vector<User> const& users) const
-{
-  return {context().id(), author, users};
+  return Group::newV3(context().id(), author, users, provisionalUsers);
 }
 
 Trustchain::Actions::KeyPublishToUser Generator::shareWith(Device const& sender,

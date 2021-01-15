@@ -22,7 +22,8 @@ Trustchain::GroupAction verifyUserGroupAddition(
     std::optional<BaseGroup> const& group)
 {
   assert(getNature(action) == Nature::UserGroupAddition1 ||
-         getNature(action) == Nature::UserGroupAddition2);
+         getNature(action) == Nature::UserGroupAddition2 ||
+         getNature(action) == Nature::UserGroupAddition3);
 
   ensures(group.has_value(),
           Verif::Errc::InvalidGroup,

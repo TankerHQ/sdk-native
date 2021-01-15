@@ -24,12 +24,14 @@ ExternalGroup::ExternalGroup(
     Crypto::PublicSignatureKey const& publicSignatureKey,
     Crypto::SealedPrivateSignatureKey const& enc,
     Crypto::PublicEncryptionKey const& publicEncryptionKey,
-    Crypto::Hash const& lastBlockHash)
+    Crypto::Hash const& lastBlockHash,
+    GroupBlocksVersion version)
   : id(id),
     publicSignatureKey(publicSignatureKey),
     encryptedPrivateSignatureKey(enc),
     publicEncryptionKey(publicEncryptionKey),
-    lastBlockHash(lastBlockHash)
+    lastBlockHash(lastBlockHash),
+    version(version)
 {
 }
 

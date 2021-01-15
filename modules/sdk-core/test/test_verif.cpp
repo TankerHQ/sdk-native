@@ -548,6 +548,13 @@ TEST_CASE("Verif UserGroupCreation")
   }
   SUBCASE("V2")
   {
+    auto const aliceGroup = generator.makeGroupV2(firstDevice, {alice});
+    testUserGroupCreationCommon(
+        firstDevice,
+        boost::variant2::get<UserGroupCreation>(aliceGroup.entries().front()));
+  }
+  SUBCASE("V3")
+  {
     auto const aliceGroup = generator.makeGroup(firstDevice, {alice});
     testUserGroupCreationCommon(
         firstDevice,
@@ -571,6 +578,14 @@ TEST_CASE("Verif UserGroupAddition")
         aliceDevice, aliceGroup.addUsersV1(aliceDevice, {bob}), previousGroup);
   }
   SUBCASE("V2")
+  {
+    auto aliceGroup = generator.makeGroupV2(aliceDevice, {alice});
+    auto const previousGroup = aliceGroup;
+
+    testUserGroupAdditionCommon(
+        aliceDevice, aliceGroup.addUsersV2(aliceDevice, {bob}), previousGroup);
+  }
+  SUBCASE("V3")
   {
     auto aliceGroup = generator.makeGroup(aliceDevice, {alice});
     auto const previousGroup = aliceGroup;

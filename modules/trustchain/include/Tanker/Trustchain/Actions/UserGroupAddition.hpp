@@ -7,6 +7,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition/v1.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition/v2.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupAddition/v3.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
@@ -37,12 +38,13 @@ class UserGroupAddition
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
       UserGroupAddition,
-      (UserGroupAddition1, UserGroupAddition2),
+      (UserGroupAddition1, UserGroupAddition2, UserGroupAddition3),
       TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION_ATTRIBUTES)
 
 public:
   using v1 = UserGroupAddition1;
   using v2 = UserGroupAddition2;
+  using v3 = UserGroupAddition3;
 
   Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;

@@ -10,6 +10,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation/v1.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation/v2.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupCreation/v3.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
@@ -31,7 +32,7 @@ class UserGroupCreation
 {
   TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION(
       UserGroupCreation,
-      (UserGroupCreation1, UserGroupCreation2),
+      (UserGroupCreation1, UserGroupCreation2, UserGroupCreation3),
       (trustchainId, TrustchainId),
       (publicSignatureKey, Crypto::PublicSignatureKey),
       (publicEncryptionKey, Crypto::PublicEncryptionKey),
@@ -43,6 +44,7 @@ class UserGroupCreation
 public:
   using v1 = UserGroupCreation1;
   using v2 = UserGroupCreation2;
+  using v3 = UserGroupCreation3;
 
   Nature nature() const;
   std::vector<std::uint8_t> signatureData() const;
