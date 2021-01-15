@@ -13,6 +13,7 @@
 #include <Tanker/GhostDevice.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
+#include <Tanker/Groups/Store.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -545,14 +546,20 @@ tc::cotask<SGroupId> Core::createGroup(
 {
   assertStatus(Status::Ready, "createGroup");
   auto const& localUser = _session->accessors().localUserAccessor.get();
-  auto const groupId = TC_AWAIT(Groups::Manager::create(
+  auto const result = TC_AWAIT(Groups::Manager::create(
       _session->accessors().userAccessor,
       _session->requesters(),
       spublicIdentities,
       _session->trustchainId(),
       localUser.deviceId(),
-      localUser.deviceKeys().signatureKeyPair.privateKey));
-  TC_RETURN(groupId);
+      localUser.deviceKeys().signatureKeyPair.privateKey,
+      localUser.userId()));
+  if (result.encryptionKeyPair)
+  {
+    TC_AWAIT(_session->storage().groupStore.putKeys(
+        result.groupId, {result.encryptionKeyPair.value()}));
+  }
+  TC_RETURN(mgs::base64::encode(result.groupId));
 }
 
 tc::cotask<void> Core::updateGroupMembers(
@@ -565,7 +572,7 @@ tc::cotask<void> Core::updateGroupMembers(
       base64DecodeArgument<Trustchain::GroupId>(groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
-  TC_AWAIT(Groups::Manager::updateMembers(
+  auto const newKeyPair = TC_AWAIT(Groups::Manager::updateMembers(
       _session->accessors().userAccessor,
       _session->requesters(),
       _session->accessors().groupAccessor,
@@ -574,7 +581,10 @@ tc::cotask<void> Core::updateGroupMembers(
       spublicIdentitiesToRemove,
       _session->trustchainId(),
       localUser.deviceId(),
-      localUser.deviceKeys().signatureKeyPair.privateKey));
+      localUser.deviceKeys().signatureKeyPair.privateKey,
+      localUser.userId()));
+  if (newKeyPair)
+    TC_AWAIT(_session->storage().groupStore.putKeys(groupId, {*newKeyPair}));
 }
 
 tc::cotask<std::optional<std::string>> Core::setVerificationMethod(

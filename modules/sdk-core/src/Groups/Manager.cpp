@@ -83,13 +83,14 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
                                          deviceSignatureKey);
 }
 
-tc::cotask<SGroupId> create(
+tc::cotask<GroupCreationResult> create(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     std::vector<SPublicIdentity> const& spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
+    Crypto::PrivateSignatureKey const& privateSignatureKey,
+    Trustchain::UserId const& userId)
 {
   auto const members =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentities));
@@ -106,7 +107,20 @@ tc::cotask<SGroupId> create(
                                                       privateSignatureKey);
 
   TC_AWAIT(requester.createGroup(groupEntry));
-  TC_RETURN(mgs::base64::encode(groupSignatureKeyPair.publicKey));
+
+  // Check if the author is in the group
+  std::optional<Crypto::EncryptionKeyPair> encryptionKeyPair;
+  if (std::find_if(
+          members.users.begin(), members.users.end(), [&](auto const& user) {
+            return user.id() == userId;
+          }) != members.users.end())
+  {
+    encryptionKeyPair = groupEncryptionKeyPair;
+  }
+
+  auto result = GroupCreationResult{
+      Trustchain::GroupId{groupSignatureKeyPair.publicKey}, encryptionKeyPair};
+  TC_RETURN(result);
 }
 
 Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
@@ -272,7 +286,7 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   return provisionalUsers;
 }
 
-tc::cotask<void> updateMembers(
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
@@ -281,7 +295,8 @@ tc::cotask<void> updateMembers(
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey)
+    Crypto::PrivateSignatureKey const& privateSignatureKey,
+    Trustchain::UserId const& userId)
 {
   auto const newMembers =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
@@ -300,6 +315,7 @@ tc::cotask<void> updateMembers(
                                     deviceId,
                                     privateSignatureKey);
     TC_AWAIT(requester.updateGroup(groupEntry));
+    TC_RETURN(std::nullopt);
   }
   else
   {
@@ -335,6 +351,18 @@ tc::cotask<void> updateMembers(
                                                       deviceId,
                                                       privateSignatureKey);
     TC_AWAIT(requester.updateGroup(groupEntry));
+
+    // Check if the author is in the group
+    std::optional<Crypto::EncryptionKeyPair> encryptionKeyPair;
+    if (std::find_if(newMembers.users.begin(),
+                     newMembers.users.end(),
+                     [&](auto const& user) { return user.id() == userId; }) !=
+        newMembers.users.end())
+    {
+      encryptionKeyPair = newGroupEncryptionKeyPair;
+    }
+
+    TC_RETURN(encryptionKeyPair);
   }
 }
 }

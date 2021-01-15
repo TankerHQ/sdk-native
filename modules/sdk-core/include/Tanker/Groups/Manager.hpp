@@ -35,6 +35,12 @@ struct MembersToAdd
   std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
 };
 
+struct GroupCreationResult
+{
+  Trustchain::GroupId groupId;
+  std::optional<Crypto::EncryptionKeyPair> encryptionKeyPair;
+};
+
 tc::cotask<MembersToAdd> fetchFutureMembers(
     Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
@@ -48,13 +54,14 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-tc::cotask<SGroupId> create(
+tc::cotask<GroupCreationResult> create(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     std::vector<SPublicIdentity> const& spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
+    Crypto::PrivateSignatureKey const& privateSignatureKey,
+    Trustchain::UserId const& userId);
 
 Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     std::vector<Users::User> const& memberUsers,
@@ -75,7 +82,7 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
-tc::cotask<void> updateMembers(
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
@@ -84,5 +91,6 @@ tc::cotask<void> updateMembers(
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
+    Crypto::PrivateSignatureKey const& privateSignatureKey,
+    Trustchain::UserId const& userId);
 }
