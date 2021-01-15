@@ -209,27 +209,35 @@ static std::vector<RawUserGroupMember2> applyGroupUserDiff(
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
+  boost::container::flat_set<Trustchain::UserId> userIDsToRemoveSet;
+  for (auto const& user : userIDsToRemove)
+    userIDsToRemoveSet.insert(user);
+
   boost::container::flat_set<Trustchain::UserId> usersToAddSet;
   for (auto const& user : usersToAdd)
+  {
+    if (userIDsToRemoveSet.contains(user.id()))
+    {
+      throw formatEx(Errc::InvalidArgument,
+                     "cannot both add and remove user: {:s}",
+                     user.id());
+    }
     usersToAddSet.insert(user.id());
-
-  // Note that removing and adding the same user is allowed here (no-op)
-  boost::container::flat_set<Trustchain::UserId> userIdsToRemove;
-  for (auto const& user : userIDsToRemove)
-    userIdsToRemove.insert(user);
+  }
 
   std::vector<RawUserGroupMember2> users;
   for (auto const& user : existingUsers)
   {
-    if (userIdsToRemove.erase(user.userId()))
+    if (userIDsToRemoveSet.erase(user.userId()))
       continue;
     usersToAddSet.erase(user.userId());
     users.push_back({user.userId(), user.userPublicKey()});
   }
-  if (!userIdsToRemove.empty())
+  if (!userIDsToRemoveSet.empty())
   {
+    std::vector<Trustchain::UserId> userIDsNotFound(userIDsToRemoveSet.begin(), userIDsToRemoveSet.end());
     auto const notFoundIdentities = mapIdentitiesToStrings(
-        userIDsToRemove, spublicIdentitiesToRemove, publicIdentitiesToRemove);
+        userIDsNotFound, spublicIdentitiesToRemove, publicIdentitiesToRemove);
     throw formatEx(Errc::InvalidArgument,
                    "unknown users to remove: {:s}",
                    fmt::join(notFoundIdentities, ", "));
@@ -255,7 +263,13 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   // Note that removing and adding the same user is allowed here (no-op)
   boost::container::flat_set<Crypto::PublicSignatureKey> provisionalsToRemove;
   for (auto&& user : identitiesToRemove)
+  {
+    if (usersToAddSet.contains(user.appSignaturePublicKey))
+      throw formatEx(Errc::InvalidArgument,
+                     "cannot both add and remove provisional user: {:s}",
+                     to_string(user));
     provisionalsToRemove.insert(user.appSignaturePublicKey);
+  }
 
   std::vector<RawUserGroupProvisionalMember3> provisionalUsers;
   for (auto&& user : existingUsers)
