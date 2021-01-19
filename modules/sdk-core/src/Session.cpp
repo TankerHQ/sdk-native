@@ -97,8 +97,11 @@ HttpClient& Session::httpClient()
   return *_httpClient;
 }
 
-void Session::createStorage(std::string const& writablePath)
+void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
+                          std::string const& writablePath)
 {
+  assert(!_identity && !_storage);
+  _identity = identity;
   _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
       getDbPath(writablePath, userId()), userSecret())));
 }
@@ -135,12 +138,6 @@ Session::Accessors& Session::accessors()
 {
   assert(_accessors);
   return *_accessors;
-}
-
-void Session::setIdentity(Identity::SecretPermanentIdentity const& identity)
-{
-  assert(!_identity);
-  _identity = identity;
 }
 
 Identity::SecretPermanentIdentity const& Session::identity() const
