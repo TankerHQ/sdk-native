@@ -106,14 +106,15 @@ std::optional<Crypto::SealedEncryptionKeyPair> extractEncryptedUserKey(
 }
 
 std::tuple<Users::User, std::vector<Crypto::SealedEncryptionKeyPair>>
-processUserSealedKeys(DeviceKeys const& deviceKeys,
+processUserSealedKeys(Trustchain::DeviceId const& deviceId,
+                      DeviceKeys const& deviceKeys,
                       Trustchain::Context const& context,
                       gsl::span<Trustchain::UserAction const> actions)
 {
   std::vector<Crypto::SealedEncryptionKeyPair> sealedKeys;
 
   std::optional<Users::User> user;
-  std::optional<Trustchain::DeviceId> selfDeviceId;
+  bool foundThisDevice = false;
   for (auto const& action : actions)
   {
     try
@@ -126,13 +127,52 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
         auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(action, user);
         auto const& device = user->devices().back();
-        if (device.publicSignatureKey() ==
-            deviceKeys.signatureKeyPair.publicKey)
+        if (device.id() == deviceId)
         {
-          selfDeviceId = device.id();
+          // These are very strange assertions, you could argue that they can't
+          // fail. Yet we have seen those cases in production, so these
+          // assertions will provide us with more information.
+          if (device.publicEncryptionKey() !=
+              deviceKeys.encryptionKeyPair.publicKey)
+            throw Errors::DeviceUnusable(fmt::format(
+                "found this device, but the public encryption key does not "
+                "match (device ID: {}, found key: {}, expected key: {})",
+                deviceId,
+                device.publicEncryptionKey(),
+                deviceKeys.encryptionKeyPair.publicKey));
+          if (device.publicSignatureKey() !=
+              deviceKeys.signatureKeyPair.publicKey)
+            throw Errors::formatEx(
+                Errors::Errc::InternalError,
+                "found this device, but the public signature key does not "
+                "match (device ID: {}, found key: {}, expected key: {})",
+                deviceId,
+                device.publicSignatureKey(),
+                deviceKeys.signatureKeyPair.publicKey);
           if (extractedKeys)
             sealedKeys.push_back(*extractedKeys);
+          foundThisDevice = true;
         }
+        else if (device.publicEncryptionKey() ==
+                 deviceKeys.encryptionKeyPair.publicKey)
+          throw Errors::formatEx(
+              Errors::Errc::InternalError,
+              "found this device's public encryption key, but the "
+              "device id does not match (public encryption key: "
+              "{}, found device ID: {}, expected device ID: {})",
+              deviceKeys.encryptionKeyPair.publicKey,
+              device.id(),
+              deviceId);
+        else if (device.publicSignatureKey() ==
+                 deviceKeys.signatureKeyPair.publicKey)
+          throw Errors::formatEx(
+              Errors::Errc::InternalError,
+              "found this device's public signature key, but the "
+              "device id does not match (public signature key: "
+              "{}, found device ID: {}, expected device ID: {})",
+              deviceKeys.signatureKeyPair.publicKey,
+              device.id(),
+              deviceId);
       }
       else if (auto const deviceRevocation =
                    boost::variant2::get_if<DeviceRevocation>(&action))
@@ -140,7 +180,7 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
         auto const action =
             Verif::verifyDeviceRevocation(*deviceRevocation, user);
         if (auto const extractedKeys =
-                extractEncryptedUserKey(*deviceRevocation, *selfDeviceId))
+                extractEncryptedUserKey(*deviceRevocation, deviceId))
           sealedKeys.push_back(*extractedKeys);
         user = applyDeviceRevocationToUser(action, *user);
       }
@@ -158,9 +198,12 @@ processUserSealedKeys(DeviceKeys const& deviceKeys,
   if (!user.has_value())
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our user");
-  if (!selfDeviceId)
+  if (!foundThisDevice)
     throw Errors::formatEx(Errors::Errc::InternalError,
-                           "We did not find our device");
+                           "could not find this device during initial pull "
+                           "(device ID: {}, public signature key: {})",
+                           deviceId,
+                           deviceKeys.signatureKeyPair.publicKey);
 
   return std::make_tuple(*user, sealedKeys);
 }
@@ -212,6 +255,7 @@ std::tuple<Trustchain::Context,
            Users::User,
            std::vector<Crypto::EncryptionKeyPair>>
 processUserEntries(
+    Trustchain::DeviceId const& deviceId,
     DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::Actions::TrustchainCreation const& trustchainCreation,
@@ -224,7 +268,8 @@ processUserEntries(
       extractTrustchainSignature(trustchainId, trustchainCreation);
   auto const context =
       Trustchain::Context{trustchainId, trustchainSignatureKey};
-  auto [user, sealedKeys] = processUserSealedKeys(deviceKeys, context, entries);
+  auto [user, sealedKeys] =
+      processUserSealedKeys(deviceId, deviceKeys, context, entries);
   auto userKeys = recoverUserKeys(deviceKeys.encryptionKeyPair, sealedKeys);
   return std::make_tuple(context, std::move(user), std::move(userKeys));
 }
