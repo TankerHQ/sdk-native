@@ -125,15 +125,6 @@ Session::Requesters& Session::requesters()
   return _requesters;
 }
 
-tc::cotask<void> Session::createAccessors()
-{
-  _accessors = std::make_unique<Accessors>(
-      storage(),
-      &requesters(),
-      TC_AWAIT(Users::LocalUserAccessor::create(
-          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
-}
-
 Session::Accessors const& Session::accessors() const
 {
   assert(_accessors);
@@ -207,7 +198,11 @@ tc::cotask<HttpClient::AuthResponse> Session::authenticate()
 
 tc::cotask<void> Session::finalizeOpening()
 {
-  TC_AWAIT(createAccessors());
+  _accessors = std::make_unique<Accessors>(
+      storage(),
+      &requesters(),
+      TC_AWAIT(Users::LocalUserAccessor::create(
+          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
   setStatus(Status::Ready);
 }
 

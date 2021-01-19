@@ -77,7 +77,6 @@ public:
   Storage const& storage() const;
   Storage& storage();
 
-  tc::cotask<void> createAccessors();
   Accessors const& accessors() const;
   Accessors& accessors();
 
