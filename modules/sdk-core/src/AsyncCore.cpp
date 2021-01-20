@@ -409,6 +409,15 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
       deviceRevokedException = std::current_exception();
     }
   }
+  nukeAndStop();
+  if (_asyncDeviceRevoked)
+    _asyncDeviceRevoked();
+  TINFO("Revocation handled, self-destruct complete");
+  std::rethrow_exception(deviceRevokedException);
+}
+
+void AsyncCore::nukeAndStop()
+{
   // - This device was revoked, we need to stop so that Session
   // gets destroyed.
   // - There might be calls in progress on this session, so we
@@ -422,10 +431,6 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
   // From now on, we must not TC_AWAIT or we will be canceled.
   _core.nukeDatabase();
   _core.stopForRevocation();
-  if (_asyncDeviceRevoked)
-    _asyncDeviceRevoked();
-  TINFO("Revocation handled, self-destruct complete");
-  std::rethrow_exception(deviceRevokedException);
 }
 
 std::string const& AsyncCore::version()
