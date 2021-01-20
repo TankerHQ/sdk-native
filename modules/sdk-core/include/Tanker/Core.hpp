@@ -117,7 +117,7 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> stop();
-  tc::cotask<void> stopForRevocation();
+  tc::cotask<void> quickStop();
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 

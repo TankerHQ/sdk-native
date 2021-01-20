@@ -129,7 +129,7 @@ tc::cotask<void> Core::stop()
     _sessionClosed();
 }
 
-tc::cotask<void> Core::stopForRevocation()
+tc::cotask<void> Core::quickStop()
 {
   if (status() == Status::Stopped)
     return;

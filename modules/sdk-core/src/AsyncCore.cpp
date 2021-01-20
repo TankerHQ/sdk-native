@@ -430,7 +430,7 @@ void AsyncCore::nukeAndStop()
   // We have asked for termination of all running tasks, including this one.
   // From now on, we must not TC_AWAIT or we will be canceled.
   _core.nukeDatabase();
-  _core.stopForRevocation();
+  _core.quickStop();
 }
 
 std::string const& AsyncCore::version()
