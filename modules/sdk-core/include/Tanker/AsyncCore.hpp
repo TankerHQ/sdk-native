@@ -145,7 +145,7 @@ private:
   // special work before forwarding it, so we redefine it
   std::function<void()> _asyncDeviceRevoked;
 
-  tc::semaphore _revokeSemaphore{1};
+  tc::semaphore _quickStopSemaphore{1};
 
   mutable tc::lazy::task_canceler _taskCanceler;
 
