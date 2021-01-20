@@ -60,6 +60,10 @@ std::string AppdErrcCategory::message(int c) const
     return "upgrade required";
   case AppdErrc::BadRequest:
     return "bad request";
+  case AppdErrc::InvalidChallengeSignature:
+    return "invalid challenge signature";
+  case AppdErrc::InvalidChallengePublicKey:
+    return "invalid challenge public key";
   }
   return "unknown error";
 }
@@ -77,6 +81,8 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::ProvisionalIdentityNotFound:
   case AppdErrc::UserNotFound:
   case AppdErrc::InvalidToken:
+  case AppdErrc::InvalidChallengeSignature:
+  case AppdErrc::InvalidChallengePublicKey:
   case AppdErrc::VerificationNeeded: // Handled internally
   case AppdErrc::DeviceRevoked:      // Handled internally
   case AppdErrc::UnknownError:

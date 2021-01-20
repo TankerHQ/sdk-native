@@ -150,6 +150,7 @@ private:
   mutable tc::lazy::task_canceler _taskCanceler;
 
   [[noreturn]] tc::cotask<void> handleDeviceRevocation();
+  tc::cotask<void> handleDeviceUnrecoverable();
   void nukeAndStop();
 
   template <typename F>

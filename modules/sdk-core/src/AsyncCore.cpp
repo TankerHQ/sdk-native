@@ -1,6 +1,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -52,6 +53,9 @@ auto AsyncCore::runResumable(F&& f)
               tc::get_default_executor(),
               {},
               [](AsyncCore* core, Func f) -> decltype(f()) {
+                bool isRevoked = false;
+                bool isUnusable = false;
+                std::exception_ptr eptr;
                 try
                 {
                   if constexpr (std::is_same_v<decltype(f()), void>)
@@ -64,12 +68,33 @@ auto AsyncCore::runResumable(F&& f)
                     TC_RETURN(TC_AWAIT(f()));
                   }
                 }
+                catch (Errors::DeviceUnusable const& ex)
+                {
+                  eptr = std::current_exception();
+                  TERROR("Device is unusable: {}", ex.what());
+                  isUnusable = true;
+                }
                 catch (Errors::Exception const& ex)
                 {
-                  if (ex.errorCode() != Errors::AppdErrc::DeviceRevoked)
+                  eptr = std::current_exception();
+                  if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
+                  {
+                    TINFO("Device is revoked: {}", ex.what());
+                    isRevoked = true;
+                  }
+                  else
                     throw;
                 }
-                TC_AWAIT(core->handleDeviceRevocation());
+                if (isRevoked)
+                  TC_AWAIT(core->handleDeviceRevocation()); // this is noreturn
+                else if (isUnusable)
+                {
+                  TC_AWAIT(core->handleDeviceUnrecoverable());
+                  std::rethrow_exception(eptr);
+                }
+                else
+                  throw Errors::AssertionError(
+                      "unreachable code in runResumable");
               },
               this,
               std::forward<F>(f)))));
@@ -416,10 +441,18 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
   std::rethrow_exception(deviceRevokedException);
 }
 
+tc::cotask<void> AsyncCore::handleDeviceUnrecoverable()
+{
+  // See handleDeviceRevocation
+  auto const lock = TC_AWAIT(_quickStopSemaphore.get_scope_lock());
+
+  nukeAndStop();
+}
+
 void AsyncCore::nukeAndStop()
 {
-  // - This device was revoked, we need to stop so that Session
-  // gets destroyed.
+  // - This device was revoked or has been deemed unusable, we need to stop so
+  // that Session gets destroyed.
   // - There might be calls in progress on this session, so we
   // must terminate() them before going on.
   // - We can't call this->stop() because the terminate() would

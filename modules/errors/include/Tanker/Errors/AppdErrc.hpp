@@ -31,6 +31,8 @@ enum class AppdErrc
   BlockLimitsExceeded,
   UpgradeRequired,
   BadRequest,
+  InvalidChallengePublicKey,
+  InvalidChallengeSignature,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;

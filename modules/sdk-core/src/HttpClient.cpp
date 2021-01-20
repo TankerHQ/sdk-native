@@ -55,6 +55,8 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_token", AppdErrc::InvalidToken},
     {"block_limits_exceeded", AppdErrc::BlockLimitsExceeded},
     {"upgrade_required", AppdErrc::UpgradeRequired},
+    {"invalid_challenge_signature", AppdErrc::InvalidChallengeSignature},
+    {"invalid_challenge_public_key", AppdErrc::InvalidChallengePublicKey},
 };
 
 template <typename Request, typename Header>
@@ -69,6 +71,7 @@ AppdErrc getErrorFromCode(std::string_view code)
 {
   if (auto it = appdErrorMap.find(code); it != appdErrorMap.end())
     return it->second;
+  TERROR("Unknown server error: {}", code);
   return AppdErrc::UnknownError;
 }
 

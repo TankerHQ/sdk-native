@@ -9,8 +9,10 @@ add_library(tankererrors STATIC
   include/Tanker/Errors/AppdErrcCategory.hpp
   include/Tanker/Errors/Exception.hpp
   include/Tanker/Errors/AssertionError.hpp
+  include/Tanker/Errors/DeviceUnusable.hpp
 
   src/AssertionError.cpp
+  src/DeviceUnusable.cpp
   src/Errc.cpp
   src/ErrcCategory.cpp
   src/AppdErrc.cpp

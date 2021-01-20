@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -142,37 +143,34 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
                 deviceKeys.encryptionKeyPair.publicKey));
           if (device.publicSignatureKey() !=
               deviceKeys.signatureKeyPair.publicKey)
-            throw Errors::formatEx(
-                Errors::Errc::InternalError,
+            throw Errors::DeviceUnusable(fmt::format(
                 "found this device, but the public signature key does not "
                 "match (device ID: {}, found key: {}, expected key: {})",
                 deviceId,
                 device.publicSignatureKey(),
-                deviceKeys.signatureKeyPair.publicKey);
+                deviceKeys.signatureKeyPair.publicKey));
           if (extractedKeys)
             sealedKeys.push_back(*extractedKeys);
           foundThisDevice = true;
         }
         else if (device.publicEncryptionKey() ==
                  deviceKeys.encryptionKeyPair.publicKey)
-          throw Errors::formatEx(
-              Errors::Errc::InternalError,
-              "found this device's public encryption key, but the "
-              "device id does not match (public encryption key: "
-              "{}, found device ID: {}, expected device ID: {})",
-              deviceKeys.encryptionKeyPair.publicKey,
-              device.id(),
-              deviceId);
+          throw Errors::DeviceUnusable(
+              fmt::format("found this device's public encryption key, but the "
+                          "device id does not match (public encryption key: "
+                          "{}, found device ID: {}, expected device ID: {})",
+                          deviceKeys.encryptionKeyPair.publicKey,
+                          device.id(),
+                          deviceId));
         else if (device.publicSignatureKey() ==
                  deviceKeys.signatureKeyPair.publicKey)
-          throw Errors::formatEx(
-              Errors::Errc::InternalError,
-              "found this device's public signature key, but the "
-              "device id does not match (public signature key: "
-              "{}, found device ID: {}, expected device ID: {})",
-              deviceKeys.signatureKeyPair.publicKey,
-              device.id(),
-              deviceId);
+          throw Errors::DeviceUnusable(
+              fmt::format("found this device's public signature key, but the "
+                          "device id does not match (public signature key: "
+                          "{}, found device ID: {}, expected device ID: {})",
+                          deviceKeys.signatureKeyPair.publicKey,
+                          device.id(),
+                          deviceId));
       }
       else if (auto const deviceRevocation =
                    boost::variant2::get_if<DeviceRevocation>(&action))
@@ -199,11 +197,11 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "We did not find our user");
   if (!foundThisDevice)
-    throw Errors::formatEx(Errors::Errc::InternalError,
-                           "could not find this device during initial pull "
-                           "(device ID: {}, public signature key: {})",
-                           deviceId,
-                           deviceKeys.signatureKeyPair.publicKey);
+    throw Errors::DeviceUnusable(
+        fmt::format("could not find this device during initial pull "
+                    "(device ID: {}, public signature key: {})",
+                    deviceId,
+                    deviceKeys.signatureKeyPair.publicKey));
 
   return std::make_tuple(*user, sealedKeys);
 }

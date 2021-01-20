@@ -6,6 +6,7 @@
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
@@ -96,12 +97,17 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   {
     TC_RETURN(TC_AWAIT(f()));
   }
+  catch (Errors::DeviceUnusable const& ex)
+  {
+    // DeviceUnusable is handled at AsyncCore's level, so just ignore it here
+    throw;
+  }
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
     if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
-    exception = std::make_exception_ptr(ex);
+    exception = std::current_exception();
   }
   catch (...)
   {
@@ -131,13 +137,15 @@ tc::cotask<void> Core::stop()
 
 tc::cotask<void> Core::quickStop()
 {
-  if (status() == Status::Stopped)
-    return;
+  // This function may be called by AsyncCore to reset everything when start()
+  // fails. In these cases, we still need to call reset(), but not trigger
+  // sessionClosed.
+  auto const wasStopped = status() == Status::Stopped;
 
   // Do not stop the session, no need to close the session server-side.
   // Also, calling _session->stop() here crashes.
   reset();
-  if (_sessionClosed)
+  if (!wasStopped && _sessionClosed)
     _sessionClosed();
 }
 
@@ -165,11 +173,23 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
     _session->setStatus(Status::IdentityVerificationNeeded);
   else
   {
-    auto const authResponse = TC_AWAIT(_session->authenticate());
-    TC_AWAIT(_session->finalizeOpening());
-    if (authResponse == HttpClient::AuthResponse::Revoked)
-      throw formatEx(Errors::AppdErrc::DeviceRevoked,
-                     "authentication reported that this device was revoked");
+    try
+    {
+      auto const authResponse = TC_AWAIT(_session->authenticate());
+      TC_AWAIT(_session->finalizeOpening());
+      if (authResponse == HttpClient::AuthResponse::Revoked)
+        throw formatEx(Errors::AppdErrc::DeviceRevoked,
+                       "authentication reported that this device was revoked");
+    }
+    catch (Errors::Exception const& e)
+    {
+      if (e.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
+          e.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
+          e.errorCode() == Errors::AppdErrc::DeviceNotFound)
+        throw Errors::DeviceUnusable(e.what());
+      else
+        throw;
+    }
   }
   TC_RETURN(status());
 }
@@ -566,7 +586,6 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 
 void Core::nukeDatabase()
 {
-  assertStatus(Status::Ready, "nukeDatabase");
   _session->storage().db.nuke();
 }
 
