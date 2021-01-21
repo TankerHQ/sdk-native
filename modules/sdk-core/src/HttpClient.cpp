@@ -14,6 +14,8 @@
 #include <fetchpp/http/response.hpp>
 #include <tconcurrent/asio_use_future.hpp>
 
+#include <boost/container/flat_map.hpp>
+
 #include <Tanker/Log/Log.hpp>
 
 #include <fmt/ostream.h>
@@ -27,7 +29,7 @@ namespace http = fetchpp::http;
 
 namespace
 {
-std::map<std::string_view, AppdErrc> const appdErrorMap{
+boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"internal_error", AppdErrc::InternalError},
     {"invalid_body", AppdErrc::InvalidBody},
     {"app_is_not_test", AppdErrc::TrustchainIsNotTest},

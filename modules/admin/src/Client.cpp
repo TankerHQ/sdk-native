@@ -3,8 +3,8 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 
 #include <Tanker/Cacerts/InitSsl.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Errors/ServerErrc.hpp>
 
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Log/Log.hpp>
@@ -50,7 +50,7 @@ void from_json(nlohmann::json const& j, ServerErrorMessage& msg)
   j.at("trace_id").get_to(msg.requestId);
 }
 
-auto errorReport(Errors::ServerErrc err_code,
+auto errorReport(Errors::AppdErrc err_code,
                  std::string_view customMessage,
                  fetchpp::http::response const& response)
 {
@@ -128,9 +128,8 @@ tc::cotask<App> Client::createTrustchain(
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::created)
     TC_RETURN(response.json().at("app"));
-  throw errorReport(Errors::ServerErrc::InternalError,
-                    "could not delete trustchain",
-                    response);
+  throw errorReport(
+      Errors::AppdErrc::InternalError, "could not delete trustchain", response);
 }
 
 tc::cotask<void> Client::deleteTrustchain(
@@ -145,9 +144,8 @@ tc::cotask<void> Client::deleteTrustchain(
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
     return;
-  throw errorReport(Errors::ServerErrc::InternalError,
-                    "could not delete trustchain",
-                    response);
+  throw errorReport(
+      Errors::AppdErrc::InternalError, "could not delete trustchain", response);
 }
 
 tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
@@ -170,9 +168,8 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
   if (response.result() == status::ok)
     TC_RETURN(response.json().at("app"));
 
-  throw errorReport(Errors::ServerErrc::InternalError,
-                    "could not update trustchain",
-                    response);
+  throw errorReport(
+      Errors::AppdErrc::InternalError, "could not update trustchain", response);
 }
 
 tc::cotask<VerificationCode> getVerificationCode(
