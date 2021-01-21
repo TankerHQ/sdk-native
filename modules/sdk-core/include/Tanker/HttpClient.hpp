@@ -85,7 +85,7 @@ public:
   void setAccessToken(std::string accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,
-      Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey);
+      Crypto::SignatureKeyPair const& deviceSignatureKeyPair);
 
 private:
   fetchpp::http::url _baseUrl;
@@ -93,7 +93,7 @@ private:
   fetchpp::client _cl;
 
   Trustchain::DeviceId _deviceId;
-  Crypto::PrivateSignatureKey _deviceSignaturePrivateKey;
+  Crypto::SignatureKeyPair _deviceSignatureKeyPair;
   bool _isRevoked{};
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();

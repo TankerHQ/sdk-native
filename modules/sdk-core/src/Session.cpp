@@ -150,8 +150,7 @@ tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
 {
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys())
-          .signatureKeyPair.privateKey);
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
 }
 
 Trustchain::TrustchainId const& Session::trustchainId() const
@@ -188,8 +187,7 @@ tc::cotask<HttpClient::AuthResponse> Session::authenticate()
 {
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys())
-          .signatureKeyPair.privateKey);
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
   TC_RETURN(TC_AWAIT(_httpClient->authenticate()));
 }
 

@@ -207,10 +207,10 @@ void HttpClient::setAccessToken(std::string accessToken)
 
 void HttpClient::setDeviceAuthData(
     Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& deviceSignaturePrivateKey)
+    Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
 {
   _deviceId = deviceId;
-  _deviceSignaturePrivateKey = deviceSignaturePrivateKey;
+  _deviceSignatureKeyPair = deviceSignatureKeyPair;
 }
 
 // Do not call anything else than asyncFetchBase here to avoid recursive calls
@@ -248,11 +248,13 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
     }
     auto const signature =
         Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
-                     _deviceSignaturePrivateKey);
-    auto req2 =
-        makeRequest(fetchpp::http::verb::post,
-                    makeUrl(fmt::format("{}/sessions", baseTarget)),
-                    {{"signature", signature}, {"challenge", challenge}});
+                     _deviceSignatureKeyPair.privateKey);
+    auto req2 = makeRequest(
+        fetchpp::http::verb::post,
+        makeUrl(fmt::format("{}/sessions", baseTarget)),
+        {{"signature", signature},
+         {"challenge", challenge},
+         {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
     assignHeader(req2, _headers);
     auto response = TC_AWAIT(asyncFetchBase(_cl, std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
