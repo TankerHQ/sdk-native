@@ -29,6 +29,7 @@ enum class AppdErrc
   UnknownError,
   UserNotFound,
   BlockLimitsExceeded,
+  UpgradeRequired,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;

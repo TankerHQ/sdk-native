@@ -56,6 +56,8 @@ std::string AppdErrcCategory::message(int c) const
     return "user not found";
   case AppdErrc::BlockLimitsExceeded:
     return "block limits exceeded";
+  case AppdErrc::UpgradeRequired:
+    return "upgrade required";
   }
   return "unknown error";
 }
@@ -94,6 +96,8 @@ std::error_condition AppdErrcCategory::default_error_condition(
     return make_error_condition(Errors::Errc::ExpiredVerification);
   case AppdErrc::GroupTooBig:
     return make_error_condition(Errors::Errc::GroupTooBig);
+  case AppdErrc::UpgradeRequired:
+    return make_error_condition(Errors::Errc::UpgradeRequired);
   }
   return std::error_condition(c, *this);
 }

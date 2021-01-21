@@ -51,6 +51,7 @@ std::map<std::string_view, AppdErrc> const appdErrorMap{
     {"user_not_found", AppdErrc::UserNotFound},
     {"invalid_token", AppdErrc::InvalidToken},
     {"block_limits_exceeded", AppdErrc::BlockLimitsExceeded},
+    {"upgrade_required", AppdErrc::UpgradeRequired},
 };
 
 template <typename Request, typename Header>
