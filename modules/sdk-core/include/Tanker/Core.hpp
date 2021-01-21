@@ -125,6 +125,9 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
+  tc::cotask<void> registerIdentityImpl(
+      Unlock::Verification const& verification);
+  tc::cotask<void> verifyIdentityImpl(Unlock::Verification const& verification);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::Verification const& verification);
@@ -134,8 +137,8 @@ private:
 
   void assertStatus(Status wanted, std::string const& string) const;
   void reset();
-  template <typename F>
-  decltype(std::declval<F>()()) resetOnFailure(F&& f);
+  template <auto... ErrcToIgnore, typename F>
+  std::invoke_result_t<F> resetOnFailure(F&& f);
 
 private:
   SdkInfo _info;

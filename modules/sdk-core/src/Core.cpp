@@ -89,13 +89,21 @@ void Core::reset()
   _session = std::make_shared<Session>(_httpClientFactory());
 }
 
-template <typename F>
-decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
+template <auto... ErrcToIgnore, typename F>
+std::invoke_result_t<F> Core::resetOnFailure(F&& f)
 {
   std::exception_ptr exception;
   try
   {
-    TC_RETURN(TC_AWAIT(f()));
+    if constexpr (std::is_same_v<decltype(TC_AWAIT(f())), void>)
+    {
+      TC_AWAIT(f());
+      TC_RETURN();
+    }
+    else
+    {
+      TC_RETURN(TC_AWAIT(f()));
+    }
   }
   catch (Errors::DeviceUnusable const& ex)
   {
@@ -105,9 +113,14 @@ decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
+    if ((... || (ex.errorCode() == ErrcToIgnore)))
       throw;
     exception = std::current_exception();
+  }
+  catch (tc::operation_canceled const&)
+  {
+    // Do not try to do anything if we are canceling operations
+    throw;
   }
   catch (...)
   {
@@ -198,16 +211,15 @@ tc::cotask<Status> Core::start(std::string const& identity)
 {
   SCOPE_TIMER("core_start", Proc);
   assertStatus(Status::Stopped, "start");
-  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
-    TC_RETURN(TC_AWAIT(startImpl(identity)));
-  })));
+  TC_RETURN(TC_AWAIT(resetOnFailure<Errors::AppdErrc::DeviceRevoked>(
+      [&]() -> tc::cotask<Status> {
+        TC_RETURN(TC_AWAIT(startImpl(identity)));
+      })));
 }
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+tc::cotask<void> Core::verifyIdentityImpl(
+    Unlock::Verification const& verification)
 {
-  TINFO("verifyIdentity");
-  FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
   {
@@ -248,13 +260,24 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
   }
 }
 
-tc::cotask<void> Core::registerIdentity(
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  TC_AWAIT(
+      (resetOnFailure<Errors::AppdErrc::DeviceRevoked,
+                      Errors::Errc::ExpiredVerification,
+                      Errors::Errc::InvalidVerification,
+                      Errors::Errc::InvalidArgument,
+                      Errors::Errc::PreconditionFailed,
+                      Errors::Errc::TooManyAttempts>([&]() -> tc::cotask<void> {
+        TC_AWAIT(verifyIdentityImpl(verification));
+      })));
+}
+
+tc::cotask<void> Core::registerIdentityImpl(
     Unlock::Verification const& verification)
 {
-  TINFO("registerIdentity");
-  FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
-
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
   auto const ghostDeviceKeys =
@@ -301,6 +324,22 @@ tc::cotask<void> Core::registerIdentity(
       _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
   TC_AWAIT(_session->setDeviceId(deviceId));
   TC_AWAIT(_session->finalizeOpening());
+}
+
+tc::cotask<void> Core::registerIdentity(
+    Unlock::Verification const& verification)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
+  TC_AWAIT(
+      (resetOnFailure<Errors::AppdErrc::DeviceRevoked,
+                      Errors::Errc::ExpiredVerification,
+                      Errors::Errc::InvalidVerification,
+                      Errors::Errc::InvalidArgument,
+                      Errors::Errc::PreconditionFailed,
+                      Errors::Errc::TooManyAttempts>([&]() -> tc::cotask<void> {
+        TC_AWAIT(registerIdentityImpl(verification));
+      })));
 }
 
 tc::cotask<void> Core::encrypt(
