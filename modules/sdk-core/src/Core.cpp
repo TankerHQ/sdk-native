@@ -496,8 +496,10 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
       TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->userId(),
           Unlock::makeRequest(verification, _session->userSecret())));
-  auto const verificationKey = TC_AWAIT(
-      Encryptor::decryptFallbackAead(_session->userSecret(), encryptedKey));
+  std::vector<uint8_t> verificationKey(
+      EncryptorV2::decryptedSize(encryptedKey));
+  TC_AWAIT(EncryptorV2::decrypt(
+      verificationKey.data(), _session->userSecret(), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 

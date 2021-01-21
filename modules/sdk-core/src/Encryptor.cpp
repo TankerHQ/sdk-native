@@ -81,23 +81,6 @@ tc::cotask<void> decrypt(uint8_t* decryptedData,
   });
 }
 
-tc::cotask<std::vector<uint8_t>> decryptFallbackAead(
-    Crypto::SymmetricKey const& key, gsl::span<uint8_t const> encryptedData)
-{
-  try
-  {
-    std::vector<uint8_t> decryptedData(decryptedSize(encryptedData));
-    TC_AWAIT(decrypt(decryptedData.data(), key, encryptedData));
-    TC_RETURN(decryptedData);
-  }
-  catch (...)
-  {
-    // fallback to a simple decrypt for compatibility because old SDKs didn't
-    // put a version byte
-    TC_RETURN(Crypto::decryptAead(key, encryptedData));
-  }
-}
-
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
   auto const version = Serialization::varint_read(encryptedData).first;
