@@ -108,6 +108,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(Passphrase{""})),
         Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE("registerIdentity throws if email is empty")
@@ -116,6 +117,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core1->registerIdentity(Unlock::EmailVerification{
             Email{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE("registerIdentity throws if verificationCode is empty")
@@ -124,6 +126,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core1->registerIdentity(
             Unlock::EmailVerification{email, VerificationCode{""}})),
         Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE("registerIdentity throws if OidcIdToken is empty")
@@ -131,6 +134,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(OidcIdToken{""})),
         Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE("registerIdentity throws if verificationKey is empty")
@@ -138,6 +142,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(VerificationKey{""})),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE(
@@ -156,6 +161,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE(
@@ -174,6 +180,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE(
@@ -201,6 +208,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE(
@@ -228,6 +236,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE(
@@ -255,6 +264,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE("it creates an verificationKey and use it to add a second device")
@@ -385,6 +395,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(Passphrase{"wrongPass"})),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE("it throws when trying to verify with an invalid verification code")
@@ -399,6 +410,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core2->verifyIdentity(
             Unlock::EmailVerification{email, VerificationCode{"d3JvbmcK"}})),
         Errc::InvalidVerification);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE(
@@ -419,18 +431,21 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
           TC_AWAIT(core2->verifyIdentity(
               Unlock::EmailVerification{email, VerificationCode{"d3JvbmcK"}})),
           Errc::InvalidVerification);
+      REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
     }
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
             Unlock::Verification{Unlock::EmailVerification{email, code}})),
         Errc::TooManyAttempts);
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
 
   SUBCASE("it throws when trying to verify before registration")
   {
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
-    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->verifyIdentity(passphrase)),
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core1->verifyIdentity(passphrase)),
                                   Errc::PreconditionFailed);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
   SUBCASE("It updates verification methods on setVerificationMethods")
