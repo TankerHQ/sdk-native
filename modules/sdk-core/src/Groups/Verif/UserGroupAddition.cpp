@@ -38,11 +38,6 @@ Trustchain::GroupAction verifyUserGroupAddition(
   auto const& userGroupAddition =
       boost::variant2::get<UserGroupAddition>(action);
 
-  ensures(userGroupAddition.previousGroupBlockHash() == group->lastBlockHash(),
-          Errc::InvalidGroup,
-          "UserGroupAddition - previous group block does not match for this "
-          "group id");
-
   ensures(Crypto::verify(userGroupAddition.signatureData(),
                          userGroupAddition.selfSignature(),
                          group->publicSignatureKey()),

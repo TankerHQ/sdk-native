@@ -211,20 +211,6 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE(
-      "should reject a UserGroupAddition where previousGroupBlock is not the "
-      "hash of last modification")
-  {
-    unconstify(gaEntry.previousGroupBlockHash())[0]++;
-    unconstify(gaEntry.selfSignature()) =
-        Crypto::sign(gaEntry.signatureData(), group.currentSigKp().privateKey);
-    unconstify(gaEntry.signature()) = Crypto::sign(
-        getHash(gaEntry), authorDevice.keys().signatureKeyPair.privateKey);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup),
-        Errc::InvalidGroup);
-  }
-
   SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
   {
     unconstify(gaEntry.selfSignature())[0]++;
