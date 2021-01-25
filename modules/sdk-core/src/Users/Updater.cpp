@@ -125,7 +125,6 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
       {
         auto const action =
             Verif::verifyDeviceCreation(*deviceCreation, context, user);
-        auto const extractedKeys = extractEncryptedUserKey(*deviceCreation);
         user = applyDeviceCreationToUser(action, user);
         auto const& device = user->devices().back();
         if (device.id() == deviceId)
@@ -149,7 +148,8 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
                 deviceId,
                 device.publicSignatureKey(),
                 deviceKeys.signatureKeyPair.publicKey));
-          if (extractedKeys)
+          if (auto const extractedKeys =
+                  extractEncryptedUserKey(*deviceCreation))
             sealedKeys.push_back(*extractedKeys);
           foundThisDevice = true;
         }
