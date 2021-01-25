@@ -16,8 +16,8 @@ public:
   }
 
   std::string message(int c) const override final;
-  std::error_condition default_error_condition(int c) const
-      noexcept override final;
+  std::error_condition default_error_condition(
+      int c) const noexcept override final;
 };
 }
 

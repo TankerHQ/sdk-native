@@ -55,8 +55,8 @@ std::string ServerErrcCategory::message(int c) const
   return "unknown error";
 }
 
-std::error_condition ServerErrcCategory::default_error_condition(int c) const
-    noexcept
+std::error_condition ServerErrcCategory::default_error_condition(
+    int c) const noexcept
 {
   switch (static_cast<ServerErrc>(c))
   {

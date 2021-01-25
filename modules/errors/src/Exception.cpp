@@ -26,8 +26,7 @@ Exception::Exception(std::error_code ec) : Exception(ec, ec.message())
 }
 
 Exception::Exception(std::error_code ec, std::string const& message)
-  : _errorCode(ec),
-    _message(formatError(ec, message))
+  : _errorCode(ec), _message(formatError(ec, message))
 {
 }
 
