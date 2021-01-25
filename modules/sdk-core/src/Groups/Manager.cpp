@@ -65,7 +65,7 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
   {
     throw formatEx(
         Errc::GroupTooBig,
-        FMT_STRING("cannot create a group with {:d} members, max is {:d}"),
+        FMT_STRING("cannot add {:d} members at once to a group, max is {:d}"),
         groupSize,
         MAX_GROUP_SIZE);
   }
@@ -127,7 +127,7 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
   {
     throw formatEx(
         Errc::GroupTooBig,
-        FMT_STRING("cannot add {:d} members to a group, max is {:d}"),
+        FMT_STRING("cannot add {:d} members at once to a group, max is {:d}"),
         groupSize,
         MAX_GROUP_SIZE);
   }
