@@ -32,6 +32,7 @@ namespace
 boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"internal_error", AppdErrc::InternalError},
     {"invalid_body", AppdErrc::InvalidBody},
+    {"bad_request", AppdErrc::BadRequest},
     {"app_is_not_test", AppdErrc::TrustchainIsNotTest},
     {"app_not_found", AppdErrc::AppNotFound},
     {"device_not_found", AppdErrc::DeviceNotFound},
