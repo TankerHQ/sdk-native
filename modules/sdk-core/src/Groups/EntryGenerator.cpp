@@ -57,8 +57,8 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers2(
         Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
 
     keysForProvUsers.emplace_back(user.appSignaturePublicKey,
-                              user.tankerSignaturePublicKey,
-                              encryptedKeyTwice);
+                                  user.tankerSignaturePublicKey,
+                                  encryptedKeyTwice);
   }
   return keysForProvUsers;
 }
@@ -76,10 +76,10 @@ UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers3(
         Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
 
     keysForProvUsers.emplace_back(user.appSignaturePublicKey,
-                              user.tankerSignaturePublicKey,
-                              user.appEncryptionPublicKey,
-                              user.tankerEncryptionPublicKey,
-                              encryptedKeyTwice);
+                                  user.tankerSignaturePublicKey,
+                                  user.appEncryptionPublicKey,
+                                  user.tankerEncryptionPublicKey,
+                                  encryptedKeyTwice);
   }
   return keysForProvUsers;
 }
@@ -180,7 +180,7 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
     Crypto::Hash const& previousGroupBlockHash,
     std::vector<UserGroupAddition::v2::Member> const& members,
     std::vector<UserGroupAddition::v2::ProvisionalMember> const&
-    provisionalMembers,
+        provisionalMembers,
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& deviceSignatureKey)

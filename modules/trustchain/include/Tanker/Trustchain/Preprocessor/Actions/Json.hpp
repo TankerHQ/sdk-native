@@ -18,7 +18,7 @@
 
 #define TANKER_DETAIL_FIELD_TO_JSON(unused1, unused2, elem)   \
   j[BOOST_PP_STRINGIZE(TANKER_DETAIL_PARAMETER_NAME(elem))] = \
-      k.TANKER_DETAIL_PARAMETER_NAME(elem)();
+        k.TANKER_DETAIL_PARAMETER_NAME(elem)();
 
 #define TANKER_DETAIL_DEFINE_ACTION_TO_JSON(name, list)                        \
   void to_json(nlohmann::json& j, name const& k)                               \

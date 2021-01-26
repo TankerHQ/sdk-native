@@ -60,8 +60,8 @@ std::string AppdErrcCategory::message(int c) const
   return "unknown error";
 }
 
-std::error_condition AppdErrcCategory::default_error_condition(int c) const
-    noexcept
+std::error_condition AppdErrcCategory::default_error_condition(
+    int c) const noexcept
 {
   switch (static_cast<AppdErrc>(c))
   {

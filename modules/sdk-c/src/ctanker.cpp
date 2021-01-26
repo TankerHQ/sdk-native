@@ -52,8 +52,7 @@ Unlock::Verification cverificationToVerification(
   Unlock::Verification verification;
   switch (cverification->verification_method_type)
   {
-  case TANKER_VERIFICATION_METHOD_EMAIL:
-  {
+  case TANKER_VERIFICATION_METHOD_EMAIL: {
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
       throw formatEx(Errc::InvalidArgument, "null field in email verification");
@@ -62,22 +61,19 @@ Unlock::Verification cverificationToVerification(
         VerificationCode{cverification->email_verification.verification_code}};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_PASSPHRASE:
-  {
+  case TANKER_VERIFICATION_METHOD_PASSPHRASE: {
     if (!cverification->passphrase)
       throw formatEx(Errc::InvalidArgument, "passphrase field is null");
     verification = Passphrase{cverification->passphrase};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY:
-  {
+  case TANKER_VERIFICATION_METHOD_VERIFICATION_KEY: {
     if (!cverification->verification_key)
       throw formatEx(Errc::InvalidArgument, "verification key is null");
     verification = VerificationKey{cverification->verification_key};
     break;
   }
-  case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN:
-  {
+  case TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN: {
     if (!cverification->oidc_id_token)
       throw formatEx(Errc::InvalidArgument, "oidc id token field is null");
     verification = OidcIdToken{cverification->oidc_id_token};
