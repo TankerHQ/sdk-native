@@ -390,6 +390,9 @@ tc::cotask<void> Core::share(
     return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
                                                         "resource id");
   });
+  std::sort(resourceIds.begin(), resourceIds.end());
+  resourceIds.erase(std::unique(resourceIds.begin(), resourceIds.end()),
+                    resourceIds.end());
 
   auto const localUser = _session->accessors().localUserAccessor.get();
   auto const resourceKeys =

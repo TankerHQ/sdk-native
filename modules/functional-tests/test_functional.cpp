@@ -605,6 +605,28 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
   REQUIRE(TC_AWAIT(checkDecrypt(bobDevice, metaResources)));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can share multiple times the same resource to Bob")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = TC_AWAIT(bob.makeDevices(1));
+
+  auto const clearData = make_buffer("my clear data is clear");
+  auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
+  auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
+
+  std::vector<SResourceId> resourceIds{resourceId, resourceId};
+
+  REQUIRE_NOTHROW(
+      TC_AWAIT(aliceSession->share(resourceIds, {bob.spublicIdentity()}, {})));
+  REQUIRE_UNARY(TC_AWAIT(
+      checkDecrypt({bobDevice}, {std::make_tuple(clearData, encryptedData)})));
+}
+
 TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Alice cannot encrypt and share with more than 100 recipients")
