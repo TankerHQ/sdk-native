@@ -159,9 +159,12 @@ void Database::performUnifiedMigration()
         _db->execute(
             "ALTER TABLE device_key_store "
             "ADD COLUMN device_initialized BOOL");
-        _db->execute(
-            "UPDATE device_key_store "
-            "SET device_initialized = (device_id IS NOT NULL)");
+        // We don't support migrating half-initialized devices anymore, flush
+        // everything so that we fallback to IdentityVerificationNeeded
+        auto const deleted = _db->execute(
+            "DELETE FROM device_key_store WHERE device_id IS NULL");
+        if (deleted)
+          flushAllCaches(currentVersion);
       }
       break;
     default:
