@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
+#include <Tanker/Encryptor/v2.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Types/Overloaded.hpp>
@@ -43,12 +45,16 @@ Request makeRequest(Unlock::Verification const& verification,
           [&](Unlock::EmailVerification const& v) -> Request {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
+
+            std::vector<uint8_t> encryptedEmail(
+                EncryptorV2::encryptedSize(v.email.size()));
+            EncryptorV2::encryptSync(
+                encryptedEmail.data(),
+                gsl::make_span(v.email).as_span<uint8_t const>(),
+                userSecret);
+
             return EncryptedEmailVerification{
-                hashField(v.email),
-                Crypto::encryptAead(
-                    userSecret,
-                    gsl::make_span(v.email).as_span<uint8_t const>()),
-                v.verificationCode};
+                hashField(v.email), encryptedEmail, v.verificationCode};
           },
           [](Passphrase const& p) -> Request {
             checkNotEmpty(p.string(), "passphrase");
@@ -80,7 +86,7 @@ void adl_serializer<Tanker::Unlock::Request>::to_json(
             std::vector<std::uint8_t> encrypted_email;
             std::tie(
                 j["hashed_email"], encrypted_email, j["verification_code"]) = e;
-            j["encrypted_email"] = mgs::base64::encode(encrypted_email);
+            j["v2_encrypted_email"] = mgs::base64::encode(encrypted_email);
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;

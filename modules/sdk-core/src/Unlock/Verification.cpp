@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
@@ -42,9 +43,9 @@ tc::cotask<void> decryptEmailMethods(
   {
     if (auto encryptedEmail = method.get_if<Unlock::EncryptedEmail>())
     {
-      auto const decryptedEmail = TC_AWAIT(Encryptor::decryptFallbackAead(
-          userSecret,
-          gsl::make_span(*encryptedEmail).as_span<std::uint8_t const>()));
+      std::vector<uint8_t> decryptedEmail(
+          EncryptorV2::decryptedSize(*encryptedEmail));
+      EncryptorV2::decrypt(decryptedEmail.data(), userSecret, *encryptedEmail);
       method = Email{decryptedEmail.begin(), decryptedEmail.end()};
     }
   }
