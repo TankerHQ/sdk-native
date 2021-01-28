@@ -262,10 +262,7 @@ tc::cotask<void> Core::registerIdentityImpl(
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
       encryptedVerificationKey));
-  TC_AWAIT(
-      _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
-  TC_AWAIT(_session->setDeviceId(deviceId));
-  TC_AWAIT(_session->finalizeOpening());
+  TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
 tc::cotask<void> Core::registerIdentity(
@@ -313,10 +310,7 @@ tc::cotask<void> Core::verifyIdentityImpl(
 
     TC_AWAIT(
         _session->requesters().createDevice(Serialization::serialize(action)));
-    TC_AWAIT(
-        _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
-    TC_AWAIT(_session->setDeviceId(deviceId));
-    TC_AWAIT(_session->finalizeOpening());
+    TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
   }
   catch (Exception const& e)
   {

@@ -1,5 +1,6 @@
 #include <Tanker/Users/LocalUserAccessor.hpp>
 
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/Updater.hpp>
@@ -25,6 +26,23 @@ tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
 }
 }
 
+tc::cotask<LocalUserAccessor> LocalUserAccessor::createAndInit(
+    Trustchain::UserId const& userId,
+    Trustchain::TrustchainId const& trustchainId,
+    IRequester* requester,
+    LocalUserStore* store,
+    DeviceKeys const& deviceKeys,
+    Trustchain::DeviceId const& deviceId)
+{
+  auto const [localUser, context] = TC_AWAIT(
+      fetchUser(requester, trustchainId, userId, deviceId, deviceKeys));
+  TC_AWAIT(store->setDeviceData(deviceId, deviceKeys));
+  TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
+                                   localUser.userKeys()));
+
+  TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
+}
+
 tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
     Trustchain::UserId const& userId,
     Trustchain::TrustchainId const& trustchainId,
@@ -33,20 +51,14 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
 {
   auto optLocalUser = TC_AWAIT(store->findLocalUser(userId));
   auto optPubKey = TC_AWAIT(store->findTrustchainPublicSignatureKey());
-  if (optLocalUser && optPubKey)
-    TC_RETURN(LocalUserAccessor(*optLocalUser,
-                                Trustchain::Context{trustchainId, *optPubKey},
-                                requester,
-                                store));
+  if (!optLocalUser || !optPubKey)
+    throw Errors::DeviceUnusable(
+        "LocalUser or Trustchain public key is missing from database");
 
-  auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
-  auto deviceId = TC_AWAIT(store->getDeviceId());
-  auto const [localUser, context] = TC_AWAIT(
-      fetchUser(requester, trustchainId, userId, deviceId, deviceKeys));
-  TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
-                                   localUser.userKeys()));
-
-  TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
+  TC_RETURN(LocalUserAccessor(*optLocalUser,
+                              Trustchain::Context{trustchainId, *optPubKey},
+                              requester,
+                              store));
 }
 
 LocalUserAccessor::LocalUserAccessor(LocalUser localUser,

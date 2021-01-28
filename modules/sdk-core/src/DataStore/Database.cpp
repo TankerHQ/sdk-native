@@ -276,21 +276,6 @@ void Database::flushAllCaches(int currentVersion)
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeysTable{});
   flushTable(GroupsTable{});
-
-  {
-    TrustchainInfoTable tab{};
-    (*_db)(update(tab)
-               .set(tab.last_index = 0,
-                    tab.trustchain_public_signature_key = sqlpp::null)
-               .unconditionally());
-  }
-
-  DeviceKeysTable tab{};
-  if (currentVersion != 0 && currentVersion < 7)
-    (*_db)(
-        update(tab).set(tab.device_id = DeviceId{}.base()).unconditionally());
-  else
-    (*_db)(update(tab).set(tab.device_initialized = 0).unconditionally());
 }
 
 template <typename Table>

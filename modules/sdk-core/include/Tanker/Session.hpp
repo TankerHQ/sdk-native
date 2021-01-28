@@ -90,12 +90,12 @@ public:
 
   Identity::SecretPermanentIdentity const& identity() const;
 
-  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
-
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
   tc::cotask<HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
+  tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId,
+                                    DeviceKeys const& deviceKeys);
 
 private:
   std::unique_ptr<HttpClient> _httpClient;
