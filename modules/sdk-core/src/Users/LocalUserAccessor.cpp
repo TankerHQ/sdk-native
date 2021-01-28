@@ -36,8 +36,9 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::createAndInit(
 {
   auto const [localUser, context] = TC_AWAIT(
       fetchUser(requester, trustchainId, userId, deviceId, deviceKeys));
-  TC_AWAIT(store->setDeviceData(deviceId, deviceKeys));
   TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
+                                   deviceId,
+                                   deviceKeys,
                                    localUser.userKeys()));
 
   TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
