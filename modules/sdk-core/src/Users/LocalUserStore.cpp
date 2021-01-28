@@ -24,18 +24,6 @@ LocalUserStore::LocalUserStore(DataStore::Database* db) : _db(db)
 {
 }
 
-tc::cotask<bool> LocalUserStore::isInitialized()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows = (*_db->connection())(
-      select(tab.device_initialized).from(tab).unconditionally());
-  if (rows.empty())
-    TC_RETURN(false);
-  auto const& row = rows.front();
-  TC_RETURN(row.device_initialized);
-}
-
 tc::cotask<void> LocalUserStore::initializeDevice(
     Crypto::PublicSignatureKey const& trustchainPublicKey,
     Trustchain::DeviceId const& deviceId,
@@ -46,7 +34,6 @@ tc::cotask<void> LocalUserStore::initializeDevice(
     TC_AWAIT(setDeviceData(deviceId, deviceKeys));
     TC_AWAIT(setTrustchainPublicSignatureKey(trustchainPublicKey));
     TC_AWAIT(putUserKeys(userKeys));
-    TC_AWAIT(setDeviceInitialized());
   }));
 }
 
@@ -132,9 +119,6 @@ tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
     Trustchain::UserId const& userId) const
 {
   auto const keys = TC_AWAIT(getDeviceKeys());
-  auto const initialized = TC_AWAIT(isDeviceInitialized());
-  if (!initialized)
-    TC_RETURN(std::nullopt);
   auto const deviceId = TC_AWAIT(getDeviceId());
   auto const userKeys = TC_AWAIT(getUserKeyPairs());
   TC_RETURN(std::make_optional(LocalUser(userId, deviceId, keys, userKeys)));
@@ -177,15 +161,6 @@ tc::cotask<Trustchain::DeviceId> LocalUserStore::getDeviceId() const
   TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
 }
 
-tc::cotask<void> LocalUserStore::setDeviceInitialized()
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db->connection())(
-      update(tab).set(tab.device_initialized = 1).unconditionally());
-  TC_RETURN();
-}
-
 tc::cotask<void> LocalUserStore::setDeviceData(
     Trustchain::DeviceId const& deviceId, DeviceKeys const& deviceKeys)
 {
@@ -197,20 +172,8 @@ tc::cotask<void> LocalUserStore::setDeviceData(
       tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
       tab.private_encryption_key =
           deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key = deviceKeys.encryptionKeyPair.publicKey.base(),
-      tab.device_initialized = 0));
+      tab.public_encryption_key =
+          deviceKeys.encryptionKeyPair.publicKey.base()));
   TC_RETURN();
-}
-
-tc::cotask<bool> LocalUserStore::isDeviceInitialized() const
-{
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows = (*_db->connection())(
-      select(tab.device_initialized).from(tab).unconditionally());
-  if (rows.empty())
-    TC_RETURN(false);
-  auto const& row = rows.front();
-  TC_RETURN(row.device_initialized);
 }
 }

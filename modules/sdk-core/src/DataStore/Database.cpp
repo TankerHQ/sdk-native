@@ -173,6 +173,39 @@ void Database::performUnifiedMigration()
           "WHERE rowid NOT IN ("
           "  SELECT rowid FROM device_key_store LIMIT 1 "
           ")");
+
+      if (currentVersion != 0)
+      {
+        // Also, device_initialized was dropped in this migration
+        _db->execute(R"(
+            CREATE TABLE IF NOT EXISTS device_key_store_new (
+              id INTEGER PRIMARY KEY,
+              private_signature_key BLOB NOT NULL,
+              public_signature_key BLOB NOT NULL,
+              private_encryption_key BLOB NOT NULL,
+              public_encryption_key BLOB NOT NULL,
+              device_id BLOB
+            );)");
+        _db->execute(R"(
+            INSERT INTO device_key_store_new (
+              private_signature_key,
+              private_signature_key,
+              public_signature_key,
+              private_encryption_key,
+              public_encryption_key,
+              device_id)
+            SELECT private_signature_key,
+              private_signature_key,
+              public_signature_key,
+              private_encryption_key,
+              public_encryption_key,
+              device_id
+            FROM device_key_store)");
+        _db->execute("DROP TABLE device_key_store");
+        _db->execute(
+            "ALTER TABLE device_key_store_new RENAME TO device_key_store");
+      }
+
       if (updatedRows)
         flushAllCaches(currentVersion);
     }
