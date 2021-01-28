@@ -58,6 +58,8 @@ std::string AppdErrcCategory::message(int c) const
     return "block limits exceeded";
   case AppdErrc::UpgradeRequired:
     return "upgrade required";
+  case AppdErrc::BadRequest:
+    return "bad request";
   }
   return "unknown error";
 }
@@ -69,6 +71,7 @@ std::error_condition AppdErrcCategory::default_error_condition(
   {
   case AppdErrc::InternalError:
   case AppdErrc::InvalidBody:
+  case AppdErrc::BadRequest:
   case AppdErrc::TrustchainIsNotTest:
   case AppdErrc::DeviceNotFound:
   case AppdErrc::ProvisionalIdentityNotFound:
