@@ -89,8 +89,9 @@ void Core::reset()
   _session = std::make_shared<Session>(_httpClientFactory());
 }
 
-template <auto... ErrcToIgnore, typename F>
-std::invoke_result_t<F> Core::resetOnFailure(F&& f)
+template <typename F>
+decltype(std::declval<F>()()) Core::resetOnFailure(
+    F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore)
 {
   std::exception_ptr exception;
   try
@@ -113,8 +114,11 @@ std::invoke_result_t<F> Core::resetOnFailure(F&& f)
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
-    if ((... || (ex.errorCode() == ErrcToIgnore)))
+    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
+    for (auto const e : additionalErrorsToIgnore)
+      if (ex.errorCode() == e)
+        throw;
     exception = std::current_exception();
   }
   catch (tc::operation_canceled const&)
@@ -211,10 +215,9 @@ tc::cotask<Status> Core::start(std::string const& identity)
 {
   SCOPE_TIMER("core_start", Proc);
   assertStatus(Status::Stopped, "start");
-  TC_RETURN(TC_AWAIT(resetOnFailure<Errors::AppdErrc::DeviceRevoked>(
-      [&]() -> tc::cotask<Status> {
-        TC_RETURN(TC_AWAIT(startImpl(identity)));
-      })));
+  TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
+    TC_RETURN(TC_AWAIT(startImpl(identity)));
+  })));
 }
 
 tc::cotask<void> Core::registerIdentityImpl(
@@ -270,15 +273,15 @@ tc::cotask<void> Core::registerIdentity(
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
-  TC_AWAIT(
-      (resetOnFailure<Errors::AppdErrc::DeviceRevoked,
-                      Errors::Errc::ExpiredVerification,
-                      Errors::Errc::InvalidVerification,
-                      Errors::Errc::InvalidArgument,
-                      Errors::Errc::PreconditionFailed,
-                      Errors::Errc::TooManyAttempts>([&]() -> tc::cotask<void> {
+  TC_AWAIT(resetOnFailure(
+      [&]() -> tc::cotask<void> {
         TC_AWAIT(registerIdentityImpl(verification));
-      })));
+      },
+      {Errors::Errc::ExpiredVerification,
+       Errors::Errc::InvalidVerification,
+       Errors::Errc::InvalidArgument,
+       Errors::Errc::PreconditionFailed,
+       Errors::Errc::TooManyAttempts}));
 }
 
 tc::cotask<void> Core::verifyIdentityImpl(
@@ -325,15 +328,13 @@ tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
-  TC_AWAIT(
-      (resetOnFailure<Errors::AppdErrc::DeviceRevoked,
-                      Errors::Errc::ExpiredVerification,
-                      Errors::Errc::InvalidVerification,
-                      Errors::Errc::InvalidArgument,
-                      Errors::Errc::PreconditionFailed,
-                      Errors::Errc::TooManyAttempts>([&]() -> tc::cotask<void> {
-        TC_AWAIT(verifyIdentityImpl(verification));
-      })));
+  TC_AWAIT(resetOnFailure(
+      [&]() -> tc::cotask<void> { TC_AWAIT(verifyIdentityImpl(verification)); },
+      {Errors::Errc::ExpiredVerification,
+       Errors::Errc::InvalidVerification,
+       Errors::Errc::InvalidArgument,
+       Errors::Errc::PreconditionFailed,
+       Errors::Errc::TooManyAttempts}));
 }
 
 tc::cotask<void> Core::encrypt(

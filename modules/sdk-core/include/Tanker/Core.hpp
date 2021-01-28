@@ -137,8 +137,9 @@ private:
 
   void assertStatus(Status wanted, std::string const& string) const;
   void reset();
-  template <auto... ErrcToIgnore, typename F>
-  std::invoke_result_t<F> resetOnFailure(F&& f);
+  template <typename F>
+  decltype(std::declval<F>()()) resetOnFailure(
+      F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore = {});
 
 private:
   SdkInfo _info;
