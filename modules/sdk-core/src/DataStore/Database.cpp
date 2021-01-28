@@ -159,14 +159,24 @@ void Database::performUnifiedMigration()
         _db->execute(
             "ALTER TABLE device_key_store "
             "ADD COLUMN device_initialized BOOL");
-        // We don't support migrating half-initialized devices anymore, flush
-        // everything so that we fallback to IdentityVerificationNeeded
-        auto const deleted = _db->execute(
-            "DELETE FROM device_key_store WHERE device_id IS NULL");
-        if (deleted)
-          flushAllCaches(currentVersion);
       }
-      break;
+      [[fallthrough]];
+    case 8: {
+      // We don't support migrating half-initialized devices anymore, flush
+      // everything so that we fallback to IdentityVerificationNeeded.
+      auto updatedRows =
+          _db->execute("DELETE FROM device_key_store WHERE device_id IS NULL");
+      // In older versions, we could create multiple rows in the
+      // device_key_store table, remove superfluous lines
+      updatedRows += _db->execute(
+          "DELETE FROM device_key_store "
+          "WHERE rowid NOT IN ("
+          "  SELECT rowid FROM device_key_store LIMIT 1 "
+          ")");
+      if (updatedRows)
+        flushAllCaches(currentVersion);
+    }
+    break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
                              "invalid database version: {}",
