@@ -28,9 +28,19 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
         )
         report_size(profile, build_path)
         tankerci.cpp.check(build_path, coverage=coverage)
-        report_performance(profile, build_path)
     recipe = Path.cwd() / "conanfile.py"
     shutil.copy(recipe, Path.cwd() / "package")
+
+
+def build_and_benchmark(profiles: List[str]) -> None:
+    for profile in profiles:
+        build_path = tankerci.cpp.build(
+            profile,
+            make_package=True,
+            coverage=False,
+        )
+        report_size(profile, build_path)
+        report_performance(profile, build_path)
 
 
 def deploy() -> None:
@@ -79,13 +89,11 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 def report_performance(profile: str, build_path: Path) -> None:
     branch = get_branch_name()
     if not branch:
-        ui.info("Not on a branch, skipping benchmark report")
-        return
+        ui.fatal("Not on a branch, can't report benchmarks")
     _, commit_id = tankerci.git.run_captured(os.getcwd(), "rev-parse", "HEAD")
 
     if profile not in BENCHMARK_PROFILE_TO_BUILD_TARGET:
-        ui.info(f"We don't benchmark {profile}, skipping report")
-        return
+        ui.fatal(f"We don't benchmark {profile}")
 
     bench_binary = build_path / "bin/bench_tanker"
     if platform.system() == "Windows":
@@ -93,8 +101,7 @@ def report_performance(profile: str, build_path: Path) -> None:
     bench_output = build_path / "benchmarks.json"
 
     if not bench_binary.exists():
-        ui.info("No benchmark to run, skipping benchmark report")
-        return
+        ui.fatal("No benchmark binary to run")
 
     tankerci.run(
         str(bench_binary),
@@ -208,6 +215,11 @@ def main() -> None:
     )
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
+    build_and_benchmark_parser = subparsers.add_parser("build-and-benchmark")
+    build_and_benchmark_parser.add_argument(
+        "--profile", dest="profiles", action="append", required=True
+    )
+
     bump_files_parser = subparsers.add_parser("bump-files")
     bump_files_parser.add_argument("--version", required=True)
 
@@ -221,6 +233,8 @@ def main() -> None:
 
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
+    elif args.command == "build-and-benchmark":
+        build_and_benchmark(args.profiles)
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
