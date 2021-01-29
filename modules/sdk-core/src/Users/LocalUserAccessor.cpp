@@ -1,5 +1,6 @@
 #include <Tanker/Users/LocalUserAccessor.hpp>
 
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/Updater.hpp>
@@ -10,19 +11,37 @@ namespace
 {
 tc::cotask<std::tuple<LocalUser, Trustchain::Context>> fetchUser(
     IRequester* requester,
-    DeviceKeys const& deviceKeys,
     Trustchain::TrustchainId const& tId,
-    Trustchain::UserId const& userId)
+    Trustchain::UserId const& userId,
+    Trustchain::DeviceId const& deviceId,
+    DeviceKeys const& deviceKeys)
 {
   auto const [trustchainCreation, actions] =
       TC_AWAIT(requester->getUsers(gsl::make_span(&userId, 1)));
-  auto const [context, user, userKeys] =
-      Updater::processUserEntries(deviceKeys, tId, trustchainCreation, actions);
-  auto const selfDevice =
-      user.findDevice(deviceKeys.encryptionKeyPair.publicKey);
+  auto const [context, user, userKeys] = Updater::processUserEntries(
+      deviceId, deviceKeys, tId, trustchainCreation, actions);
+  auto const selfDevice = user.findDevice(deviceId);
   TC_RETURN(std::make_tuple(
       LocalUser(user.id(), selfDevice->id(), deviceKeys, userKeys), context));
 }
+}
+
+tc::cotask<LocalUserAccessor> LocalUserAccessor::createAndInit(
+    Trustchain::UserId const& userId,
+    Trustchain::TrustchainId const& trustchainId,
+    IRequester* requester,
+    LocalUserStore* store,
+    DeviceKeys const& deviceKeys,
+    Trustchain::DeviceId const& deviceId)
+{
+  auto const [localUser, context] = TC_AWAIT(
+      fetchUser(requester, trustchainId, userId, deviceId, deviceKeys));
+  TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
+                                   deviceId,
+                                   deviceKeys,
+                                   localUser.userKeys()));
+
+  TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
 }
 
 tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
@@ -33,19 +52,14 @@ tc::cotask<LocalUserAccessor> LocalUserAccessor::create(
 {
   auto optLocalUser = TC_AWAIT(store->findLocalUser(userId));
   auto optPubKey = TC_AWAIT(store->findTrustchainPublicSignatureKey());
-  if (optLocalUser && optPubKey)
-    TC_RETURN(LocalUserAccessor(*optLocalUser,
-                                Trustchain::Context{trustchainId, *optPubKey},
-                                requester,
-                                store));
+  if (!optLocalUser || !optPubKey)
+    throw Errors::DeviceUnusable(
+        "LocalUser or Trustchain public key is missing from database");
 
-  auto deviceKeys = TC_AWAIT(store->getDeviceKeys());
-  auto const [localUser, context] =
-      TC_AWAIT(fetchUser(requester, deviceKeys, trustchainId, userId));
-  TC_AWAIT(store->initializeDevice(context.publicSignatureKey(),
-                                   localUser.userKeys()));
-
-  TC_RETURN(LocalUserAccessor(localUser, context, requester, store));
+  TC_RETURN(LocalUserAccessor(*optLocalUser,
+                              Trustchain::Context{trustchainId, *optPubKey},
+                              requester,
+                              store));
 }
 
 LocalUserAccessor::LocalUserAccessor(LocalUser localUser,
@@ -63,21 +77,24 @@ LocalUserAccessor::~LocalUserAccessor() = default;
 
 tc::cotask<void> LocalUserAccessor::update()
 {
-  std::tie(_localUser, _context) = TC_AWAIT(fetchUser(
-      _requester, _localUser.deviceKeys(), _context.id(), _localUser.userId()));
+  std::tie(_localUser, _context) = TC_AWAIT(fetchUser(_requester,
+                                                      _context.id(),
+                                                      _localUser.userId(),
+                                                      _localUser.deviceId(),
+                                                      _localUser.deviceKeys()));
   TC_AWAIT(_store->putUserKeys(_localUser.userKeys()));
 }
 
 tc::cotask<void> LocalUserAccessor::confirmRevocation()
 {
+  auto const& deviceId = _localUser.deviceId();
   auto const& deviceKeys = _localUser.deviceKeys();
   auto const [trustchainCreation, actions] =
       TC_AWAIT(_requester->getRevokedDeviceHistory(_localUser.deviceId()));
   // This will throw if we are effectively revoked
   auto const [context, user, userKeys] = Updater::processUserEntries(
-      deviceKeys, _context.id(), trustchainCreation, actions);
-  auto const selfDevice =
-      user.findDevice(deviceKeys.encryptionKeyPair.publicKey);
+      deviceId, deviceKeys, _context.id(), trustchainCreation, actions);
+  auto const selfDevice = user.findDevice(deviceId);
   _localUser = LocalUser(user.id(), selfDevice->id(), deviceKeys, userKeys);
   _context = context;
   TC_AWAIT(_store->putUserKeys(_localUser.userKeys()));

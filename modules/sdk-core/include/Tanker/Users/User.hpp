@@ -26,8 +26,6 @@ public:
 
   std::optional<Device> findDevice(Trustchain::DeviceId const& deviceId) const;
   Device& getDevice(Trustchain::DeviceId const& deviceId);
-  std::optional<Device> findDevice(
-      Crypto::PublicEncryptionKey const& publicKey) const;
 
   Trustchain::UserId const& id() const;
   std::optional<Crypto::PublicEncryptionKey> const& userKey() const;

@@ -102,7 +102,7 @@ TEST_CASE("UserUpdater")
   SUBCASE("processing server entries for the user")
   {
     auto const [user, sealedKeys] = Updater::processUserSealedKeys(
-        selfdevice.keys(), generator.context(), aliceEntries);
+        selfdevice.id(), selfdevice.keys(), generator.context(), aliceEntries);
     CHECK_EQ(sealedKeys.size(), 5);
 
     SUBCASE("recovering keys")

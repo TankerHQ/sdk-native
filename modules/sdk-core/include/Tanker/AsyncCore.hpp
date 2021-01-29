@@ -145,11 +145,13 @@ private:
   // special work before forwarding it, so we redefine it
   std::function<void()> _asyncDeviceRevoked;
 
-  tc::semaphore _revokeSemaphore{1};
+  tc::semaphore _quickStopSemaphore{1};
 
   mutable tc::lazy::task_canceler _taskCanceler;
 
   [[noreturn]] tc::cotask<void> handleDeviceRevocation();
+  tc::cotask<void> handleDeviceUnrecoverable();
+  void nukeAndStop();
 
   template <typename F>
   auto runResumable(F&& f);

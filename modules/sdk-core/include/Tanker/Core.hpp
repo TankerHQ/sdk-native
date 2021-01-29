@@ -117,7 +117,7 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> stop();
-  tc::cotask<void> stopForRevocation();
+  tc::cotask<void> quickStop();
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 
@@ -125,6 +125,9 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
+  tc::cotask<void> registerIdentityImpl(
+      Unlock::Verification const& verification);
+  tc::cotask<void> verifyIdentityImpl(Unlock::Verification const& verification);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::Verification const& verification);
@@ -135,7 +138,8 @@ private:
   void assertStatus(Status wanted, std::string const& string) const;
   void reset();
   template <typename F>
-  decltype(std::declval<F>()()) resetOnFailure(F&& f);
+  decltype(std::declval<F>()()) resetOnFailure(
+      F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore = {});
 
 private:
   SdkInfo _info;

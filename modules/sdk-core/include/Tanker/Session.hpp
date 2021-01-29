@@ -73,11 +73,11 @@ public:
   Requesters const& requesters() const;
   Requesters& requesters();
 
-  void createStorage(std::string const& writablePath);
+  void openStorage(Identity::SecretPermanentIdentity const& identity,
+                   std::string const& writablePath);
   Storage const& storage() const;
   Storage& storage();
 
-  tc::cotask<void> createAccessors();
   Accessors const& accessors() const;
   Accessors& accessors();
 
@@ -89,14 +89,13 @@ public:
   void setStatus(Status);
 
   Identity::SecretPermanentIdentity const& identity() const;
-  void setIdentity(Identity::SecretPermanentIdentity const&);
-
-  tc::cotask<void> setDeviceId(Trustchain::DeviceId const& deviceId);
 
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
   tc::cotask<HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
+  tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId,
+                                    DeviceKeys const& deviceKeys);
 
 private:
   std::unique_ptr<HttpClient> _httpClient;

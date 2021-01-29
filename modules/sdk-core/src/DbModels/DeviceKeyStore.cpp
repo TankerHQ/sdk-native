@@ -63,8 +63,7 @@ void createTable(DataStore::Connection& db, device_key_store const&)
       public_signature_key BLOB NOT NULL,
       private_encryption_key BLOB NOT NULL,
       public_encryption_key BLOB NOT NULL,
-      device_id BLOB,
-      device_initialized BOOL NOT NULL
+      device_id BLOB
     );
   )");
 }

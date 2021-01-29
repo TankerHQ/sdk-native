@@ -129,7 +129,7 @@ tc::cotask<App> Client::createTrustchain(
   if (response.result() == status::created)
     TC_RETURN(response.json().at("app"));
   throw errorReport(
-      Errors::AppdErrc::InternalError, "could not delete trustchain", response);
+      Errors::AppdErrc::InternalError, "could not create trustchain", response);
 }
 
 tc::cotask<void> Client::deleteTrustchain(

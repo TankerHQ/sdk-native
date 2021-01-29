@@ -6,6 +6,7 @@
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Format/Enum.hpp>
@@ -89,19 +90,41 @@ void Core::reset()
 }
 
 template <typename F>
-decltype(std::declval<F>()()) Core::resetOnFailure(F&& f)
+decltype(std::declval<F>()()) Core::resetOnFailure(
+    F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore)
 {
   std::exception_ptr exception;
   try
   {
-    TC_RETURN(TC_AWAIT(f()));
+    if constexpr (std::is_same_v<decltype(TC_AWAIT(f())), void>)
+    {
+      TC_AWAIT(f());
+      TC_RETURN();
+    }
+    else
+    {
+      TC_RETURN(TC_AWAIT(f()));
+    }
+  }
+  catch (Errors::DeviceUnusable const& ex)
+  {
+    // DeviceUnusable is handled at AsyncCore's level, so just ignore it here
+    throw;
   }
   catch (Errors::Exception const& ex)
   {
     // DeviceRevoked is handled at AsyncCore's level, so just ignore it here
     if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
       throw;
-    exception = std::make_exception_ptr(ex);
+    for (auto const e : additionalErrorsToIgnore)
+      if (ex.errorCode() == e)
+        throw;
+    exception = std::current_exception();
+  }
+  catch (tc::operation_canceled const&)
+  {
+    // Do not try to do anything if we are canceling operations
+    throw;
   }
   catch (...)
   {
@@ -129,15 +152,17 @@ tc::cotask<void> Core::stop()
     _sessionClosed();
 }
 
-tc::cotask<void> Core::stopForRevocation()
+tc::cotask<void> Core::quickStop()
 {
-  if (status() == Status::Stopped)
-    return;
+  // This function may be called by AsyncCore to reset everything when start()
+  // fails. In these cases, we still need to call reset(), but not trigger
+  // sessionClosed.
+  auto const wasStopped = status() == Status::Stopped;
 
   // Do not stop the session, no need to close the session server-side.
   // Also, calling _session->stop() here crashes.
   reset();
-  if (_sessionClosed)
+  if (!wasStopped && _sessionClosed)
     _sessionClosed();
 }
 
@@ -155,8 +180,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  _session->setIdentity(identity);
-  _session->createStorage(_writablePath);
+  _session->openStorage(identity, _writablePath);
   auto const optPubUserEncKey =
       TC_AWAIT(_session->requesters().userStatus(_session->userId()));
   if (!optPubUserEncKey)
@@ -166,11 +190,23 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
     _session->setStatus(Status::IdentityVerificationNeeded);
   else
   {
-    auto const authResponse = TC_AWAIT(_session->authenticate());
-    TC_AWAIT(_session->finalizeOpening());
-    if (authResponse == HttpClient::AuthResponse::Revoked)
-      throw formatEx(Errors::AppdErrc::DeviceRevoked,
-                     "authentication reported that this device was revoked");
+    try
+    {
+      auto const authResponse = TC_AWAIT(_session->authenticate());
+      TC_AWAIT(_session->finalizeOpening());
+      if (authResponse == HttpClient::AuthResponse::Revoked)
+        throw formatEx(Errors::AppdErrc::DeviceRevoked,
+                       "authentication reported that this device was revoked");
+    }
+    catch (Errors::Exception const& e)
+    {
+      if (e.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
+          e.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
+          e.errorCode() == Errors::AppdErrc::DeviceNotFound)
+        throw Errors::DeviceUnusable(e.what());
+      else
+        throw;
+    }
   }
   TC_RETURN(status());
 }
@@ -184,58 +220,9 @@ tc::cotask<Status> Core::start(std::string const& identity)
   })));
 }
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
-{
-  TINFO("verifyIdentity");
-  FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
-  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
-  try
-  {
-    auto const deviceKeys = DeviceKeys::create();
-
-    auto const ghostDeviceKeys =
-        GhostDevice::create(verificationKey).toDeviceKeys();
-    auto const encryptedUserKey =
-        TC_AWAIT(_session->requesters().getEncryptionKey(
-            _session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
-    auto const privateUserEncryptionKey =
-        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey,
-                            ghostDeviceKeys.encryptionKeyPair);
-    auto const action = Users::createNewDeviceAction(
-        _session->trustchainId(),
-        encryptedUserKey.ghostDeviceId,
-        Identity::makeDelegation(_session->userId(),
-                                 ghostDeviceKeys.signatureKeyPair.privateKey),
-        deviceKeys.signatureKeyPair.publicKey,
-        deviceKeys.encryptionKeyPair.publicKey,
-        Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
-
-    auto const deviceId = Trustchain::DeviceId{action.hash()};
-
-    TC_AWAIT(
-        _session->requesters().createDevice(Serialization::serialize(action)));
-    TC_AWAIT(
-        _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
-    TC_AWAIT(_session->setDeviceId(deviceId));
-    TC_AWAIT(_session->finalizeOpening());
-  }
-  catch (Exception const& e)
-  {
-    if (e.errorCode() == AppdErrc::DeviceNotFound ||
-        e.errorCode() == Errc::DecryptionFailed)
-      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
-    throw;
-  }
-}
-
-tc::cotask<void> Core::registerIdentity(
+tc::cotask<void> Core::registerIdentityImpl(
     Unlock::Verification const& verification)
 {
-  TINFO("registerIdentity");
-  FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
-
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
   auto const ghostDeviceKeys =
@@ -278,10 +265,76 @@ tc::cotask<void> Core::registerIdentity(
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(verification, _session->userSecret()),
       encryptedVerificationKey));
-  TC_AWAIT(
-      _session->storage().localUserStore.setDeviceData(deviceId, deviceKeys));
-  TC_AWAIT(_session->setDeviceId(deviceId));
-  TC_AWAIT(_session->finalizeOpening());
+  TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
+}
+
+tc::cotask<void> Core::registerIdentity(
+    Unlock::Verification const& verification)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
+  TC_AWAIT(resetOnFailure(
+      [&]() -> tc::cotask<void> {
+        TC_AWAIT(registerIdentityImpl(verification));
+      },
+      {Errors::Errc::ExpiredVerification,
+       Errors::Errc::InvalidVerification,
+       Errors::Errc::InvalidArgument,
+       Errors::Errc::PreconditionFailed,
+       Errors::Errc::TooManyAttempts}));
+}
+
+tc::cotask<void> Core::verifyIdentityImpl(
+    Unlock::Verification const& verification)
+{
+  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
+  try
+  {
+    auto const deviceKeys = DeviceKeys::create();
+
+    auto const ghostDeviceKeys =
+        GhostDevice::create(verificationKey).toDeviceKeys();
+    auto const encryptedUserKey =
+        TC_AWAIT(_session->requesters().getEncryptionKey(
+            _session->userId(), ghostDeviceKeys.signatureKeyPair.publicKey));
+    auto const privateUserEncryptionKey =
+        Crypto::sealDecrypt(encryptedUserKey.encryptedUserPrivateEncryptionKey,
+                            ghostDeviceKeys.encryptionKeyPair);
+    auto const action = Users::createNewDeviceAction(
+        _session->trustchainId(),
+        encryptedUserKey.ghostDeviceId,
+        Identity::makeDelegation(_session->userId(),
+                                 ghostDeviceKeys.signatureKeyPair.privateKey),
+        deviceKeys.signatureKeyPair.publicKey,
+        deviceKeys.encryptionKeyPair.publicKey,
+        Crypto::makeEncryptionKeyPair(privateUserEncryptionKey));
+
+    auto const deviceId = Trustchain::DeviceId{action.hash()};
+
+    TC_AWAIT(
+        _session->requesters().createDevice(Serialization::serialize(action)));
+    TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
+  }
+  catch (Exception const& e)
+  {
+    if (e.errorCode() == AppdErrc::DeviceNotFound ||
+        e.errorCode() == Errc::DecryptionFailed)
+      throw Exception(make_error_code(Errc::InvalidVerification), e.what());
+    throw;
+  }
+}
+
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  TC_AWAIT(resetOnFailure(
+      [&]() -> tc::cotask<void> { TC_AWAIT(verifyIdentityImpl(verification)); },
+      {Errors::Errc::ExpiredVerification,
+       Errors::Errc::InvalidVerification,
+       Errors::Errc::InvalidArgument,
+       Errors::Errc::PreconditionFailed,
+       Errors::Errc::TooManyAttempts}));
 }
 
 tc::cotask<void> Core::encrypt(
@@ -567,7 +620,6 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 
 void Core::nukeDatabase()
 {
-  assertStatus(Status::Ready, "nukeDatabase");
   _session->storage().db.nuke();
 }
 

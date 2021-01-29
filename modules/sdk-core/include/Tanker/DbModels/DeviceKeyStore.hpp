@@ -19,7 +19,6 @@ SQLPP_DECLARE_TABLE(
   (private_encryption_key , blob , SQLPP_NOT_NULL    )
   (public_encryption_key  , blob , SQLPP_NOT_NULL    )
   (device_id              , blob                     )
-  (device_initialized     , int                      )
 )
 // clang-format on
 

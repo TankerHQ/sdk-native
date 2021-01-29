@@ -28,9 +28,10 @@ class LocalUserStore
 public:
   LocalUserStore(DataStore::Database* dbCon);
 
-  tc::cotask<bool> isInitialized();
   tc::cotask<void> initializeDevice(
       Crypto::PublicSignatureKey const& trustchaniPublicKey,
+      Trustchain::DeviceId const& deviceId,
+      DeviceKeys const& deviceKeys,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
 
   tc::cotask<void> putUserKeys(
@@ -38,20 +39,18 @@ public:
 
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() const;
-  tc::cotask<void> setTrustchainPublicSignatureKey(
-      Crypto::PublicSignatureKey const& sigKey);
   tc::cotask<std::optional<LocalUser>> findLocalUser(
       Trustchain::UserId const& userId) const;
   tc::cotask<DeviceKeys> getDeviceKeys() const;
   tc::cotask<Trustchain::DeviceId> getDeviceId() const;
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
-  tc::cotask<void> setDeviceData(Trustchain::DeviceId const& deviceId,
-                                 DeviceKeys const& deviceKeys);
 
 private:
+  tc::cotask<void> setTrustchainPublicSignatureKey(
+      Crypto::PublicSignatureKey const& sigKey);
+  tc::cotask<void> setDeviceData(Trustchain::DeviceId const& deviceId,
+                                 DeviceKeys const& deviceKeys);
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
-  tc::cotask<void> setDeviceInitialized();
-  tc::cotask<bool> isDeviceInitialized() const;
 
   DataStore::Database* _db;
 };

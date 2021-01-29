@@ -97,8 +97,11 @@ HttpClient& Session::httpClient()
   return *_httpClient;
 }
 
-void Session::createStorage(std::string const& writablePath)
+void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
+                          std::string const& writablePath)
 {
+  assert(!_identity && !_storage);
+  _identity = identity;
   _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
       getDbPath(writablePath, userId()), userSecret())));
 }
@@ -125,15 +128,6 @@ Session::Requesters& Session::requesters()
   return _requesters;
 }
 
-tc::cotask<void> Session::createAccessors()
-{
-  _accessors = std::make_unique<Accessors>(
-      storage(),
-      &requesters(),
-      TC_AWAIT(Users::LocalUserAccessor::create(
-          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
-}
-
 Session::Accessors const& Session::accessors() const
 {
   assert(_accessors);
@@ -146,24 +140,10 @@ Session::Accessors& Session::accessors()
   return *_accessors;
 }
 
-void Session::setIdentity(Identity::SecretPermanentIdentity const& identity)
-{
-  assert(!_identity);
-  _identity = identity;
-}
-
 Identity::SecretPermanentIdentity const& Session::identity() const
 {
   assert(_identity);
   return *_identity;
-}
-
-tc::cotask<void> Session::setDeviceId(Trustchain::DeviceId const& deviceId)
-{
-  _httpClient->setDeviceAuthData(
-      TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys())
-          .signatureKeyPair.privateKey);
 }
 
 Trustchain::TrustchainId const& Session::trustchainId() const
@@ -200,14 +180,34 @@ tc::cotask<HttpClient::AuthResponse> Session::authenticate()
 {
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys())
-          .signatureKeyPair.privateKey);
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
   TC_RETURN(TC_AWAIT(_httpClient->authenticate()));
+}
+
+tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
+                                           DeviceKeys const& deviceKeys)
+{
+  _httpClient->setDeviceAuthData(deviceId, deviceKeys.signatureKeyPair);
+  _accessors = std::make_unique<Accessors>(
+      storage(),
+      &requesters(),
+      TC_AWAIT(
+          Users::LocalUserAccessor::createAndInit(userId(),
+                                                  trustchainId(),
+                                                  &_requesters,
+                                                  &storage().localUserStore,
+                                                  deviceKeys,
+                                                  deviceId)));
+  setStatus(Status::Ready);
 }
 
 tc::cotask<void> Session::finalizeOpening()
 {
-  TC_AWAIT(createAccessors());
+  _accessors = std::make_unique<Accessors>(
+      storage(),
+      &requesters(),
+      TC_AWAIT(Users::LocalUserAccessor::create(
+          userId(), trustchainId(), &_requesters, &storage().localUserStore)));
   setStatus(Status::Ready);
 }
 
