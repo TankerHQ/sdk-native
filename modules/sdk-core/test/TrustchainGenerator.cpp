@@ -325,14 +325,12 @@ Group::Group(Trustchain::TrustchainId const& tid,
              Device const& author,
              Crypto::EncryptionKeyPair const& currentEncKp,
              Crypto::SignatureKeyPair const& currentSigKp,
-             std::vector<Trustchain::GroupAction> const& entries,
-             GroupBlocksVersion version)
+             std::vector<Trustchain::GroupAction> const& entries)
   : _tid(tid),
     _currentEncKp(currentEncKp),
     _currentSigKp(currentSigKp),
     _id(Trustchain::GroupId(_currentSigKp.publicKey)),
-    _entries(entries),
-    _version(version)
+    _entries(entries)
 {
 }
 
@@ -347,8 +345,7 @@ Group Group::newV1(Trustchain::TrustchainId const& tid,
       author,
       currentEncKp,
       currentSigKp,
-      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)},
-      GroupBlocksVersion::Legacy};
+      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)}};
 }
 
 Group Group::newV2(Trustchain::TrustchainId const& tid,
@@ -364,8 +361,7 @@ Group Group::newV2(Trustchain::TrustchainId const& tid,
       currentEncKp,
       currentSigKp,
       {createGroupActionV2(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
-      GroupBlocksVersion::Legacy};
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
 }
 
 Group Group::newV3(Trustchain::TrustchainId const& tid,
@@ -381,8 +377,7 @@ Group Group::newV3(Trustchain::TrustchainId const& tid,
       currentEncKp,
       currentSigKp,
       {createGroupActionV3(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)},
-      GroupBlocksVersion::V3};
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
 }
 
 Trustchain::GroupId const& Group::id() const
@@ -423,20 +418,16 @@ Group::operator Tanker::InternalGroup() const
       currentSigKp(),
       currentEncKp(),
       lastBlockHash(),
-      _version,
   };
 }
 
 Group::operator Tanker::ExternalGroup() const
 {
-  return {
-      id(),
-      currentSigKp().publicKey,
-      encryptedSignatureKey(),
-      currentEncKp().publicKey,
-      lastBlockHash(),
-      _version,
-  };
+  return {id(),
+          currentSigKp().publicKey,
+          encryptedSignatureKey(),
+          currentEncKp().publicKey,
+          lastBlockHash()};
 }
 
 Trustchain::Actions::UserGroupAddition Group::addUsersV1(

@@ -22,7 +22,6 @@ TEST_CASE("GroupStore")
       Crypto::makeSignatureKeyPair(),
       Crypto::makeEncryptionKeyPair(),
       make<Crypto::Hash>("last block hash"),
-      GroupBlocksVersion::V3,
   };
   auto const externalGroup = ExternalGroup{
       make<GroupId>("group id"),
@@ -30,7 +29,6 @@ TEST_CASE("GroupStore")
       make<Crypto::SealedPrivateSignatureKey>("encrypted private key"),
       group.encryptionKeyPair.publicKey,
       make<Crypto::Hash>("last block hash"),
-      GroupBlocksVersion::V3,
   };
   SUBCASE("it should not find a non-existent group")
   {

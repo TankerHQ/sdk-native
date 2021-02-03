@@ -72,9 +72,9 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 
   auto groupMembers = generateGroupKeysForUsers2(
       groupEncryptionKeyPair.privateKey, memberUsers);
-  auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers2(
+  auto groupProvisionalMembers = generateGroupKeysForProvisionalUsers3(
       groupEncryptionKeyPair.privateKey, memberProvisionalUsers);
-  return createUserGroupCreationV2Action(groupSignatureKeyPair,
+  return createUserGroupCreationV3Action(groupSignatureKeyPair,
                                          groupEncryptionKeyPair.publicKey,
                                          groupMembers,
                                          groupProvisionalMembers,
@@ -134,30 +134,15 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
 
   auto members = generateGroupKeysForUsers2(group.encryptionKeyPair.privateKey,
                                             memberUsers);
-  if (group.version == GroupBlocksVersion::V3)
-  {
-    auto provisionalMembers = generateGroupKeysForProvisionalUsers3(
-        group.encryptionKeyPair.privateKey, memberProvisionalUsers);
-    return createUserGroupAdditionV3Action(group.signatureKeyPair,
-                                           group.lastBlockHash,
-                                           members,
-                                           provisionalMembers,
-                                           trustchainId,
-                                           deviceId,
-                                           privateSignatureKey);
-  }
-  else
-  {
-    auto provisionalMembers = generateGroupKeysForProvisionalUsers2(
-        group.encryptionKeyPair.privateKey, memberProvisionalUsers);
-    return createUserGroupAdditionV2Action(group.signatureKeyPair,
-                                           group.lastBlockHash,
-                                           members,
-                                           provisionalMembers,
-                                           trustchainId,
-                                           deviceId,
-                                           privateSignatureKey);
-  }
+  auto provisionalMembers = generateGroupKeysForProvisionalUsers3(
+      group.encryptionKeyPair.privateKey, memberProvisionalUsers);
+  return createUserGroupAdditionV3Action(group.signatureKeyPair,
+                                         group.lastBlockHash,
+                                         members,
+                                         provisionalMembers,
+                                         trustchainId,
+                                         deviceId,
+                                         privateSignatureKey);
 }
 
 tc::cotask<void> updateMembers(

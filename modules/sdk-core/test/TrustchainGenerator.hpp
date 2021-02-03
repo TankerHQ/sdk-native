@@ -82,8 +82,7 @@ private:
         Device const& author,
         Crypto::EncryptionKeyPair const& currentEncKp,
         Crypto::SignatureKeyPair const& currentSigKp,
-        std::vector<Trustchain::GroupAction> const& entries,
-        GroupBlocksVersion version);
+        std::vector<Trustchain::GroupAction> const& entries);
 
 private:
   Trustchain::TrustchainId _tid;
@@ -91,7 +90,6 @@ private:
   Crypto::SignatureKeyPair _currentSigKp;
   Trustchain::GroupId _id;
   std::vector<Trustchain::GroupAction> _entries;
-  GroupBlocksVersion _version;
 };
 
 struct User
