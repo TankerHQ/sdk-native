@@ -634,6 +634,11 @@ void Core::setSessionClosedHandler(SessionClosedHandler handler)
   _sessionClosed = std::move(handler);
 }
 
+void Core::setHttpSessionToken(std::string_view token)
+{
+  this->_session->httpClient().setAccessToken(token);
+}
+
 tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,

@@ -199,10 +199,10 @@ HttpClient::HttpClient(http::url const& baseUrl,
   _cl.set_proxies(std::move(proxies));
 }
 
-void HttpClient::setAccessToken(std::string accessToken)
+void HttpClient::setAccessToken(std::string_view accessToken)
 {
   _headers.set(fetchpp::http::field::authorization,
-               fetchpp::http::authorization::bearer{std::move(accessToken)});
+               fetchpp::http::authorization::bearer{accessToken});
 }
 
 void HttpClient::setDeviceAuthData(

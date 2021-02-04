@@ -121,6 +121,8 @@ public:
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 
+  void setHttpSessionToken(std::string_view);
+
   tc::cotask<void> confirmRevocation();
 
 private:

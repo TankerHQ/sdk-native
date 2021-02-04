@@ -82,7 +82,7 @@ public:
 
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
-  void setAccessToken(std::string accessToken);
+  void setAccessToken(std::string_view accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& deviceSignatureKeyPair);

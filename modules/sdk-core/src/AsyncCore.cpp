@@ -470,4 +470,10 @@ std::string const& AsyncCore::version()
 {
   return TANKER_VERSION;
 }
+
+tc::future<void> AsyncCore::setHttpSessionToken(std::string token)
+{
+  return tc::async(
+      [this, tk = std::move(token)] { this->_core.setHttpSessionToken(std::move(tk)); });
+}
 }

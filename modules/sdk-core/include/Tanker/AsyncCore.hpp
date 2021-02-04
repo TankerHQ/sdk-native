@@ -138,6 +138,8 @@ public:
 
   static std::string const& version();
 
+  tc::future<void> setHttpSessionToken(std::string token);
+
 private:
   Core _core;
 

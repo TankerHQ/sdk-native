@@ -249,10 +249,10 @@ struct HttpClientFactory
   HttpClient* client;
 };
 
-void deauthSession(HttpClient& client)
+void deauthSession(Tanker::AsyncCore& core)
 {
   // set some random access token
-  client.setAccessToken("UUSFMmx4RfGONVaFl2IAVv1yN20ORd3SjLhcHfgJPys");
+  core.setHttpSessionToken("UUSFMmx4RfGONVaFl2IAVv1yN20ORd3SjLhcHfgJPys");
 }
 }
 
@@ -268,7 +268,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
   TC_AWAIT(aliceSession->registerIdentity(
       Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
 
-  deauthSession(*httpFactory.client);
+  deauthSession(*aliceSession);
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -295,7 +295,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
   TC_AWAIT(aliceSession->verifyIdentity(
       Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
 
-  deauthSession(*httpFactory.client);
+  deauthSession(*aliceSession);
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -321,7 +321,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
   TC_AWAIT(aliceSession->start(aliceDevice.identity()));
 
-  deauthSession(*httpFactory.client);
+  deauthSession(*aliceSession);
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
