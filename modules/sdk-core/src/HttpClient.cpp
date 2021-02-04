@@ -182,16 +182,10 @@ std::error_code make_error_code(HttpError const& e)
 }
 
 HttpClient::HttpClient(http::url const& baseUrl,
-                       SdkInfo const& info,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
-  : _baseUrl(fmt::format("/v2/apps/{appId:#S}/",
-                         fmt::arg("appId", info.trustchainId)),
-             baseUrl),
-    _cl(ex, timeout, Cacerts::create_ssl_context())
+  : _baseUrl(baseUrl), _cl(ex, timeout, Cacerts::create_ssl_context())
 {
-  _headers.set("X-Tanker-SdkType", info.sdkType);
-  _headers.set("X-Tanker-SdkVersion", info.version);
   auto proxies = fetchpp::http::proxy_from_environment();
   if (auto proxyIt = proxies.find(http::proxy_scheme::https);
       proxyIt != proxies.end())
@@ -203,6 +197,11 @@ void HttpClient::setAccessToken(std::string_view accessToken)
 {
   _headers.set(fetchpp::http::field::authorization,
                fetchpp::http::authorization::bearer{accessToken});
+}
+
+void HttpClient::setHeader(std::string_view name, std::string_view value)
+{
+  _headers.set(name, value);
 }
 
 void HttpClient::setDeviceAuthData(

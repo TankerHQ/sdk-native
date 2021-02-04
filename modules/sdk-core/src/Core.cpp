@@ -33,8 +33,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
-
-#include <fmt/format.h>
+#include <fetchpp/http/url.hpp>
 
 #include <stdexcept>
 #include <utility>
@@ -50,10 +49,15 @@ namespace
 std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
                                              SdkInfo const& info)
 {
-  return std::make_unique<HttpClient>(
-      fetchpp::http::url(url),
-      std::move(info),
+
+  auto client = std::make_unique<HttpClient>(
+      fetchpp::http::url{fmt::format("/v2/apps/{appId:#S}/",
+                                     fmt::arg("appId", info.trustchainId)),
+                         fetchpp::http::url(url)},
       tc::get_default_executor().get_io_service().get_executor());
+  client->setHeader("X-Tanker-SdkType", info.sdkType);
+  client->setHeader("X-Tanker-SdkVersion", info.version);
+  return client;
 }
 }
 
