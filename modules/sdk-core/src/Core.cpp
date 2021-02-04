@@ -34,6 +34,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
 #include <fetchpp/http/url.hpp>
+#include <mgs/base64.hpp>
 
 #include <stdexcept>
 #include <utility>
@@ -47,6 +48,7 @@ namespace Tanker
 namespace
 {
 std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
+                                             std::string instanceId,
                                              SdkInfo const& info)
 {
 
@@ -57,7 +59,15 @@ std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
       tc::get_default_executor().get_io_service().get_executor());
   client->setHeader("X-Tanker-SdkType", info.sdkType);
   client->setHeader("X-Tanker-SdkVersion", info.version);
+  client->setHeader("X-Tanker-Instanceid", instanceId);
   return client;
+}
+
+std::string createInstanceId()
+{
+  auto rd = std::array<uint8_t, 16>{};
+  Crypto::randomFill(rd);
+  return mgs::base64::encode(rd);
 }
 }
 
@@ -65,9 +75,11 @@ Core::~Core() = default;
 
 Core::Core(std::string url, SdkInfo info, std::string writablePath)
   : _url(std::move(url)),
+    _instanceId(createInstanceId()),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_shared<Session>(createHttpClient(_url, _info)))
+    _session(
+        std::make_shared<Session>(createHttpClient(_url, _instanceId, _info)))
 {
 }
 
@@ -87,7 +99,8 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(createHttpClient(_url, _info));
+  _session =
+      std::make_shared<Session>(createHttpClient(_url, _instanceId, _info));
 }
 
 template <typename F>

@@ -141,6 +141,7 @@ private:
 
 private:
   std::string _url;
+  std::string _instanceId;
   SdkInfo _info;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
