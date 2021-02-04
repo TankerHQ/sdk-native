@@ -228,26 +228,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open a session on a second device")
 
 namespace
 {
-struct HttpClientFactory
-{
-  HttpClientFactory(std::string url, SdkInfo info)
-    : client(new HttpClient(
-          fetchpp::http::url(std::move(url)),
-          std::move(info),
-          tc::get_default_executor().get_io_service().get_executor()))
-  {
-  }
-
-  std::unique_ptr<HttpClient> operator()()
-  {
-    REQUIRE(!used);
-    used = true;
-    return std::unique_ptr<HttpClient>(client);
-  }
-
-  bool used = false;
-  HttpClient* client;
-};
 
 void deauthSession(Tanker::AsyncCore& core)
 {
@@ -261,12 +241,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
   auto alice = trustchain.makeUser(Functional::UserType::New);
   auto aliceDevice = alice.makeDevice();
 
-  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = Functional::makeAsyncCore(
-      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
-  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
-  TC_AWAIT(aliceSession->registerIdentity(
-      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   deauthSession(*aliceSession);
 
@@ -288,12 +263,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
     auto aliceSession = TC_AWAIT(aliceDevice.open());
   }
   auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
-  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = Functional::makeAsyncCore(
-      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
-  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
-  TC_AWAIT(aliceSession->verifyIdentity(
-      Unlock::Verification{Functional::Device::STRONG_PASSWORD_DO_NOT_LEAK}));
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   deauthSession(*aliceSession);
 
@@ -316,10 +286,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
     auto aliceSession =
         TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
   }
-  HttpClientFactory httpFactory(trustchain.url, aliceDevice.getSdkInfo());
-  auto aliceSession = Functional::makeAsyncCore(
-      aliceDevice.getSdkInfo(), httpFactory, aliceDevice.writablePath());
-  TC_AWAIT(aliceSession->start(aliceDevice.identity()));
+  auto aliceSession = TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
 
   deauthSession(*aliceSession);
 

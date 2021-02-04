@@ -45,28 +45,25 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
+namespace
+{
+std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
+                                             SdkInfo const& info)
+{
+  return std::make_unique<HttpClient>(
+      fetchpp::http::url(url),
+      std::move(info),
+      tc::get_default_executor().get_io_service().get_executor());
+}
+}
+
 Core::~Core() = default;
 
 Core::Core(std::string url, SdkInfo info, std::string writablePath)
-  : Core(
-        info,
-        [url, info] {
-          return std::make_unique<HttpClient>(
-              fetchpp::http::url(url),
-              info,
-              tc::get_default_executor().get_io_service().get_executor());
-        },
-        std::move(writablePath))
-{
-}
-
-Core::Core(SdkInfo info,
-           HttpClientFactory httpClientFactory,
-           std::string writablePath)
-  : _info(std::move(info)),
-    _httpClientFactory(std::move(httpClientFactory)),
+  : _url(std::move(url)),
+    _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_shared<Session>(_httpClientFactory()))
+    _session(std::make_shared<Session>(createHttpClient(_url, _info)))
 {
 }
 
@@ -86,7 +83,7 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(_httpClientFactory());
+  _session = std::make_shared<Session>(createHttpClient(_url, _info));
 }
 
 template <typename F>

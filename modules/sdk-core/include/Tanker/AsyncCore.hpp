@@ -49,9 +49,6 @@ public:
   AsyncCore& operator=(AsyncCore&&) = delete;
 
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
-  AsyncCore(SdkInfo info,
-            Core::HttpClientFactory httpClientFactory,
-            std::string writablePath);
   ~AsyncCore();
 
   tc::future<void> destroy();
