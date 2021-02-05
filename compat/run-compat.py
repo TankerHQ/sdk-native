@@ -24,6 +24,28 @@ TESTS = {
         "provisional-user-group-old-claim",
         "claim-provisional-self",
     ],
+    "2.9.0": [
+        "encrypt",
+        "encryption-session",
+        "group",
+        "unlock",
+        "preshare-and-claim",
+        "decrypt-old-claim",
+        "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
+        "claim-provisional-self",
+    ],
+    "2.8.0": [
+        "encrypt",
+        "encryption-session",
+        "group",
+        "unlock",
+        "preshare-and-claim",
+        "decrypt-old-claim",
+        "provisional-user-group-claim",
+        "provisional-user-group-old-claim",
+        "claim-provisional-self",
+    ],
     "2.7.0": [
         "encrypt",
         "encryption-session",
@@ -175,7 +197,9 @@ def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--use-editable", action="store_true", default=False,
+        "--use-editable",
+        action="store_true",
+        default=False,
     )
     parser.add_argument("--profile", required=True)
 
