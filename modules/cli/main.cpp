@@ -50,8 +50,8 @@ static const char USAGE[] =
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--dont-share-with-self] [--share-with-identity=<identity>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
-      tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <memberuserid>...
-      tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> <memberuserid>...
+      tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
+      tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
       tcli --help
 
     Options:
@@ -310,6 +310,23 @@ AsyncCorePtr signIn(MainArgs const& args)
 
   return core;
 }
+
+std::vector<SPublicIdentity> extractIdentityArgs(MainArgs const& args)
+{
+  std::vector<SPublicIdentity> memberIdentities;
+
+  auto const trustchainId = args.at("<trustchainid>").asString();
+  auto const memberUserIds = args.at("--with-user").asStringList();
+  for (auto const& userId : memberUserIds)
+    memberIdentities.push_back(makePublicIdentity(trustchainId, userId));
+
+  auto const memberPublicIdentities =
+      args.at("--with-public-identity").asStringList();
+  for (auto const& id : memberPublicIdentities)
+    memberIdentities.push_back(SPublicIdentity{id});
+
+  return memberIdentities;
+}
 }
 
 int main(int argc, char* argv[])
@@ -419,11 +436,7 @@ int main(int argc, char* argv[])
     {
       auto const core = signIn(args);
 
-      auto const trustchainId = args.at("<trustchainid>").asString();
-      auto const memberUserIds = args.at("<memberuserid>").asStringList();
-      std::vector<SPublicIdentity> memberIdentities;
-      for (auto const& userId : memberUserIds)
-        memberIdentities.push_back(makePublicIdentity(trustchainId, userId));
+      std::vector<SPublicIdentity> memberIdentities = extractIdentityArgs(args);
       auto const groupId = core->createGroup(memberIdentities).get();
       fmt::print("groupId: {}\n", groupId);
     }
@@ -432,11 +445,7 @@ int main(int argc, char* argv[])
       auto const core = signIn(args);
 
       auto const groupId = SGroupId{args.at("<groupid>").asString()};
-      auto const memberUserIds = args.at("<memberuserid>").asStringList();
-      std::vector<SPublicIdentity> memberIdentities;
-      for (auto const& userId : memberUserIds)
-        memberIdentities.push_back(
-            makePublicIdentity(args.at("<trustchainid>").asString(), userId));
+      std::vector<SPublicIdentity> memberIdentities = extractIdentityArgs(args);
       core->updateGroupMembers(groupId, memberIdentities).get();
     }
 
