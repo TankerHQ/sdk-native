@@ -52,6 +52,7 @@ static const char USAGE[] =
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
       tcli addtogroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <groupid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
+      tcli claim <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <provisionalidentity> <email> <code>
       tcli --help
 
     Options:
@@ -447,6 +448,19 @@ int main(int argc, char* argv[])
       auto const groupId = SGroupId{args.at("<groupid>").asString()};
       std::vector<SPublicIdentity> memberIdentities = extractIdentityArgs(args);
       core->updateGroupMembers(groupId, memberIdentities).get();
+    }
+    else if (args.at("claim").asBool())
+    {
+      auto const core = signIn(args);
+
+      auto const provisionalIdentity = SSecretProvisionalIdentity{
+          args.at("<provisionalidentity>").asString()};
+      auto const email = args.at("<email>").asString();
+      auto const code = args.at("<code>").asString();
+      core->attachProvisionalIdentity(provisionalIdentity).get();
+      core->verifyProvisionalIdentity(
+              Unlock::EmailVerification{Email{email}, VerificationCode{code}})
+          .get();
     }
 
     return 0;
