@@ -31,13 +31,12 @@ public:
   UserAccessor& operator=(UserAccessor const&) = delete;
   UserAccessor& operator=(UserAccessor&&) = delete;
 
-  tc::cotask<PullResult> pull(
-      gsl::span<Trustchain::UserId const> userIds) override;
+  tc::cotask<PullResult> pull(std::vector<Trustchain::UserId> userIds) override;
   tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
-      gsl::span<Trustchain::DeviceId const> deviceIds) override;
+      std::vector<Trustchain::DeviceId> deviceIds) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
-      gsl::span<Identity::PublicProvisionalIdentity const>
-          appProvisionalIdentities) override;
+      std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
+      override;
 
 private:
   auto fetch(gsl::span<Trustchain::UserId const> userIds)

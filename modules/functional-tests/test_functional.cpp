@@ -349,6 +349,27 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   REQUIRE_EQ(decryptedData, clearData);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "It can share explicitly with an equivalent self identity")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto alicepub = mgs::base64::decode(alice.spublicIdentity().string());
+  alicepub.push_back(' ');
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(
+      encryptedData = TC_AWAIT(aliceSession->encrypt(
+          clearData, {SPublicIdentity{mgs::base64::encode(alicepub)}})));
+  std::vector<uint8_t> decryptedData;
+  REQUIRE_NOTHROW(decryptedData =
+                      TC_AWAIT(aliceSession->decrypt(encryptedData)));
+
+  REQUIRE_EQ(decryptedData, clearData);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
 {
   auto alice = trustchain.makeUser();

@@ -160,7 +160,7 @@ TEST_CASE("generateRecipientList")
 
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor, pull(gsl::span<Trustchain::UserId const>{}))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -189,7 +189,7 @@ TEST_CASE("generateRecipientList")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
-    REQUIRE_CALL(userAccessor, pull(gsl::span<Trustchain::UserId const>{}))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
     REQUIRE_CALL(userAccessor, pullProvisional(trompeloeil::_))
@@ -244,7 +244,7 @@ TEST_CASE("generateRecipientList")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
-    REQUIRE_CALL(userAccessor, pull(gsl::span<Trustchain::UserId const>{}))
+    REQUIRE_CALL(userAccessor, pull(std::vector<Trustchain::UserId>{}))
         .LR_RETURN(Tanker::makeCoTask(UsersPullResult{{}, {}}));
 
     REQUIRE_CALL(groupAccessor,

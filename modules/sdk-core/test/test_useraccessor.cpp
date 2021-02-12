@@ -31,6 +31,7 @@ TEST_CASE("UserAccessor")
             Tanker::Users::IRequester::GetResult{generator.rootBlock(), {}}));
 
     std::vector ids{bob.id(), charlie.id()};
+    std::sort(ids.begin(), ids.end());
     auto const result = AWAIT(userAccessor.pull(ids));
     CHECK_UNARY(result.found.empty());
     CHECK_EQ(result.notFound, ids);
@@ -52,5 +53,18 @@ TEST_CASE("UserAccessor")
     std::sort(result.found.begin(), result.found.end());
     std::sort(expectedUsers.begin(), expectedUsers.end());
     CHECK_EQ(result.found, expectedUsers);
+  }
+
+  SUBCASE("it should return unique users")
+  {
+    std::vector ids{alice.id(), alice.id()};
+
+    REQUIRE_CALL(requester, getUsers(std::vector{alice.id()}))
+        .RETURN(makeCoTask(Tanker::Users::IRequester::GetResult{
+            generator.rootBlock(), generator.makeEntryList({alice})}));
+    auto result = AWAIT(userAccessor.pull(ids));
+
+    CHECK_UNARY(result.notFound.empty());
+    CHECK_EQ(result.found, std::vector<Users::User>{alice});
   }
 }
