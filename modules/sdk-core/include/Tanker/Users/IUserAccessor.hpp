@@ -15,9 +15,9 @@ namespace Tanker::Users
 class IUserAccessor
 {
 public:
-  using PullResult = BasicPullResult<User, Trustchain::UserId>;
+  using UserPullResult = BasicPullResult<User, Trustchain::UserId>;
 
-  virtual tc::cotask<PullResult> pull(
+  virtual tc::cotask<UserPullResult> pull(
       std::vector<Trustchain::UserId> userIds) = 0;
   virtual tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
       std::vector<Trustchain::DeviceId> deviceIds) = 0;

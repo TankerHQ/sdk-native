@@ -11,7 +11,7 @@ class UserAccessorMock : public Tanker::Users::IUserAccessor
 {
 public:
   MAKE_MOCK1(pull,
-             tc::cotask<Tanker::Users::IUserAccessor::PullResult>(
+             tc::cotask<Tanker::Users::IUserAccessor::UserPullResult>(
                  std::vector<Tanker::Trustchain::UserId>),
              override);
   MAKE_MOCK1(pull,

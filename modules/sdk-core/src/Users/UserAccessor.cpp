@@ -33,14 +33,15 @@ UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
 {
 }
 
-auto UserAccessor::pull(std::vector<UserId> userIds) -> tc::cotask<PullResult>
+auto UserAccessor::pull(std::vector<UserId> userIds)
+    -> tc::cotask<UserPullResult>
 {
   std::sort(userIds.begin(), userIds.end());
   userIds.erase(std::unique(userIds.begin(), userIds.end()), userIds.end());
 
   auto const userIdsMap = TC_AWAIT(fetch(userIds));
 
-  PullResult ret;
+  UserPullResult ret;
   ret.found.reserve(userIds.size());
 
   for (auto const& userId : userIds)

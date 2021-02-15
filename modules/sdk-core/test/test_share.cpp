@@ -116,7 +116,7 @@ void assertKeyPublishToGroupTargetedAt(
 }
 }
 
-using UsersPullResult = Tanker::Users::UserAccessor::PullResult;
+using UsersPullResult = Tanker::Users::UserAccessor::UserPullResult;
 
 TEST_CASE("generateRecipientList")
 {

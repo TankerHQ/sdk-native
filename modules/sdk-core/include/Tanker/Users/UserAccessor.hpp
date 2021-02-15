@@ -31,7 +31,8 @@ public:
   UserAccessor& operator=(UserAccessor const&) = delete;
   UserAccessor& operator=(UserAccessor&&) = delete;
 
-  tc::cotask<PullResult> pull(std::vector<Trustchain::UserId> userIds) override;
+  tc::cotask<UserPullResult> pull(
+      std::vector<Trustchain::UserId> userIds) override;
   tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
       std::vector<Trustchain::DeviceId> deviceIds) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(

@@ -22,7 +22,7 @@ using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
-using UsersPullResult = Tanker::Users::IUserAccessor::PullResult;
+using UsersPullResult = Tanker::Users::IUserAccessor::UserPullResult;
 
 TEST_CASE("Can't create an empty group")
 {
