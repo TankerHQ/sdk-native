@@ -53,8 +53,8 @@ auto UserAccessor::pull(std::vector<UserId> userIds)
   TC_RETURN(ret);
 }
 
-tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> UserAccessor::pull(
-    std::vector<Trustchain::DeviceId> deviceIds)
+auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
+    -> tc::cotask<DevicePullResult>
 {
   std::sort(deviceIds.begin(), deviceIds.end());
   deviceIds.erase(std::unique(deviceIds.begin(), deviceIds.end()),
@@ -62,7 +62,7 @@ tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> UserAccessor::pull(
 
   auto const deviceIdsMap = TC_AWAIT(fetch(deviceIds));
 
-  BasicPullResult<Device, Trustchain::DeviceId> ret;
+  DevicePullResult ret;
   ret.found.reserve(deviceIds.size());
 
   for (auto const& deviceId : deviceIds)

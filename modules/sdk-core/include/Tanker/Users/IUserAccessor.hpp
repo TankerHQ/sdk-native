@@ -16,10 +16,11 @@ class IUserAccessor
 {
 public:
   using UserPullResult = BasicPullResult<User, Trustchain::UserId>;
+  using DevicePullResult = BasicPullResult<Device, Trustchain::DeviceId>;
 
   virtual tc::cotask<UserPullResult> pull(
       std::vector<Trustchain::UserId> userIds) = 0;
-  virtual tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
+  virtual tc::cotask<DevicePullResult> pull(
       std::vector<Trustchain::DeviceId> deviceIds) = 0;
   virtual tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       std::vector<Identity::PublicProvisionalIdentity>

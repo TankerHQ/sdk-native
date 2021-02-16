@@ -15,8 +15,7 @@ public:
                  std::vector<Tanker::Trustchain::UserId>),
              override);
   MAKE_MOCK1(pull,
-             (tc::cotask<Tanker::BasicPullResult<Tanker::Users::Device,
-                                                 Tanker::Trustchain::DeviceId>>(
+             (tc::cotask<Tanker::Users::IUserAccessor::DevicePullResult>(
                  std::vector<Tanker::Trustchain::DeviceId> deviceIds)),
              override);
   MAKE_MOCK1(pullProvisional,

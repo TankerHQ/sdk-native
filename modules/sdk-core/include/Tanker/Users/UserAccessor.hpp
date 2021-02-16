@@ -33,7 +33,7 @@ public:
 
   tc::cotask<UserPullResult> pull(
       std::vector<Trustchain::UserId> userIds) override;
-  tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
+  tc::cotask<DevicePullResult> pull(
       std::vector<Trustchain::DeviceId> deviceIds) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
