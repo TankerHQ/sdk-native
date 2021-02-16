@@ -12,15 +12,15 @@ class UserAccessorMock : public Tanker::Users::IUserAccessor
 public:
   MAKE_MOCK1(pull,
              tc::cotask<Tanker::Users::IUserAccessor::PullResult>(
-                 gsl::span<Tanker::Trustchain::UserId const>),
+                 std::vector<Tanker::Trustchain::UserId>),
              override);
   MAKE_MOCK1(pull,
              (tc::cotask<Tanker::BasicPullResult<Tanker::Users::Device,
                                                  Tanker::Trustchain::DeviceId>>(
-                 gsl::span<Tanker::Trustchain::DeviceId const> deviceIds)),
+                 std::vector<Tanker::Trustchain::DeviceId> deviceIds)),
              override);
   MAKE_MOCK1(pullProvisional,
              tc::cotask<std::vector<Tanker::ProvisionalUsers::PublicUser>>(
-                 gsl::span<Tanker::Identity::PublicProvisionalIdentity const>),
+                 std::vector<Tanker::Identity::PublicProvisionalIdentity>),
              override);
 };

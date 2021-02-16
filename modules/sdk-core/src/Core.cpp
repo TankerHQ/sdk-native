@@ -422,8 +422,8 @@ Trustchain::DeviceId const& Core::deviceId() const
 tc::cotask<std::vector<Users::Device>> Core::getDeviceList() const
 {
   assertStatus(Status::Ready, "getDeviceList");
-  auto const results = TC_AWAIT(_session->accessors().userAccessor.pull(
-      gsl::make_span(std::addressof(_session->userId()), 1)));
+  auto const results =
+      TC_AWAIT(_session->accessors().userAccessor.pull({_session->userId()}));
   if (results.found.size() != 1)
     throw Errors::AssertionError("Did not find our userId");
 

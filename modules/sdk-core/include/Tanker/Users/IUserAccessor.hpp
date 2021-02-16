@@ -18,11 +18,11 @@ public:
   using PullResult = BasicPullResult<User, Trustchain::UserId>;
 
   virtual tc::cotask<PullResult> pull(
-      gsl::span<Trustchain::UserId const> userIds) = 0;
+      std::vector<Trustchain::UserId> userIds) = 0;
   virtual tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
-      gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
+      std::vector<Trustchain::DeviceId> deviceIds) = 0;
   virtual tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
-      gsl::span<Identity::PublicProvisionalIdentity const>
+      std::vector<Identity::PublicProvisionalIdentity>
           appProvisionalIdentities) = 0;
 };
 }

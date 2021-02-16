@@ -27,7 +27,7 @@ tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
                                         UserId const& selfUserId,
                                         Users::IUserAccessor& userAccessor)
 {
-  auto const result = TC_AWAIT(userAccessor.pull(gsl::make_span(&deviceId, 1)));
+  auto const result = TC_AWAIT(userAccessor.pull({deviceId}));
   if (!result.notFound.empty() || result.found.front().userId() != selfUserId)
     throw formatEx(
         Errc::InvalidArgument, FMT_STRING("unknown device: {:s}"), deviceId);
@@ -36,8 +36,7 @@ tc::cotask<void> ensureDeviceIsFromUser(DeviceId const& deviceId,
 tc::cotask<Users::User> getUserFromUserId(UserId const& selfUserId,
                                           Users::IUserAccessor& userAccessor)
 {
-  auto const result =
-      TC_AWAIT(userAccessor.pull(gsl::make_span(&selfUserId, 1)));
+  auto const result = TC_AWAIT(userAccessor.pull({selfUserId}));
   if (!result.notFound.empty())
     throw formatEx(
         Errc::InternalError,
