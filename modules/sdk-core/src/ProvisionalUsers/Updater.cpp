@@ -47,7 +47,8 @@ tc::cotask<DeviceMap> extractAuthors(
       std::end(entries),
       std::begin(authors),
       [](auto const& action) { return Trustchain::DeviceId{action.author()}; });
-  auto const pullResult = TC_AWAIT(contactAccessor.pull(authors));
+  auto const pullResult =
+      TC_AWAIT(contactAccessor.pull(authors, Users::IRequester::IsLight::Yes));
   if (!pullResult.notFound.empty())
   {
     // we should have all the devices because they are *our* devices

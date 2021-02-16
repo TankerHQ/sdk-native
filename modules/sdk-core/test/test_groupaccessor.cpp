@@ -91,7 +91,7 @@ TEST_CASE("GroupAccessor")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
                    pull(std::vector{alice.devices().back().id()},
-                        Users::IRequester::IsLight::No))
+                        Users::IRequester::IsLight::Yes))
           .RETURN(
               makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
                   {alice.devices().front()}, {}}));
@@ -145,7 +145,7 @@ TEST_CASE("GroupAccessor")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
                    pull(std::vector{bob.devices().back().id()},
-                        Users::IRequester::IsLight::No))
+                        Users::IRequester::IsLight::Yes))
           .RETURN(
               makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
                   {bob.devices().front()}, {}}));

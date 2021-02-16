@@ -227,8 +227,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
 
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 
-  auto const userResult =
-      TC_AWAIT(userAccessor.pull(partitionedIdentities.userIds));
+  auto const userResult = TC_AWAIT(userAccessor.pull(
+      partitionedIdentities.userIds, Users::IRequester::IsLight::Yes));
 
   auto const groupResult =
       TC_AWAIT(groupAccessor.getPublicEncryptionKeys(groupIds));
