@@ -218,41 +218,32 @@ UserAccessor::pullProvisional(
 auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
     -> tc::cotask<UsersMap>
 {
-  if (userIds.empty())
-    TC_RETURN(UsersMap{});
-
-  UsersMap out;
-  out.reserve(userIds.size());
-  for (unsigned int i = 0; i < userIds.size(); i += ChunkSize)
-  {
-    auto const count = std::min<std::size_t>(ChunkSize, userIds.size() - i);
-    auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(userIds.subspan(i, count)));
-    auto currentUsers =
-        std::get<UsersMap>(processUserEntries(_context, actions));
-    out.insert(std::make_move_iterator(currentUsers.begin()),
-               std::make_move_iterator(currentUsers.end()));
-  }
-  TC_RETURN(out);
+  return fetchImpl<UsersMap>(userIds);
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
     -> tc::cotask<DevicesMap>
 {
-  if (deviceIds.empty())
-    TC_RETURN(DevicesMap{});
+  return fetchImpl<DevicesMap>(deviceIds);
+}
 
-  DevicesMap out;
-  out.reserve(deviceIds.size());
-  for (unsigned int i = 0; i < deviceIds.size(); i += ChunkSize)
+template <typename Result, typename Id>
+auto UserAccessor::fetchImpl(gsl::span<Id const> ids) -> tc::cotask<Result>
+{
+  Result out;
+
+  if (ids.empty())
+    TC_RETURN(out);
+
+  out.reserve(ids.size());
+  for (unsigned int i = 0; i < ids.size(); i += ChunkSize)
   {
-    auto const count = std::min<std::size_t>(ChunkSize, deviceIds.size() - i);
+    auto const count = std::min<std::size_t>(ChunkSize, ids.size() - i);
     auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(deviceIds.subspan(i, count)));
-    auto currentDevices =
-        std::get<DevicesMap>(processUserEntries(_context, actions));
-    out.insert(std::make_move_iterator(currentDevices.begin()),
-               std::make_move_iterator(currentDevices.end()));
+        TC_AWAIT(_requester->getUsers(ids.subspan(i, count)));
+    auto currentUsers = std::get<Result>(processUserEntries(_context, actions));
+    out.insert(std::make_move_iterator(currentUsers.begin()),
+               std::make_move_iterator(currentUsers.end()));
   }
   TC_RETURN(out);
 }
