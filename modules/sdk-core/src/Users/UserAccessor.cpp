@@ -36,40 +36,32 @@ UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
 auto UserAccessor::pull(std::vector<UserId> userIds)
     -> tc::cotask<UserPullResult>
 {
-  std::sort(userIds.begin(), userIds.end());
-  userIds.erase(std::unique(userIds.begin(), userIds.end()), userIds.end());
-
-  auto const userIdsMap = TC_AWAIT(fetch(userIds));
-
-  UserPullResult ret;
-  ret.found.reserve(userIds.size());
-
-  for (auto const& userId : userIds)
-    if (auto it = userIdsMap.find(userId); it != userIdsMap.end())
-      ret.found.push_back(it->second);
-    else
-      ret.notFound.push_back(userId);
-
-  TC_RETURN(ret);
+  return pullImpl<UserPullResult, UserId>(std::move(userIds));
 }
 
 auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
     -> tc::cotask<DevicePullResult>
 {
-  std::sort(deviceIds.begin(), deviceIds.end());
-  deviceIds.erase(std::unique(deviceIds.begin(), deviceIds.end()),
-                  deviceIds.end());
+  return pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds));
+}
 
-  auto const deviceIdsMap = TC_AWAIT(fetch(deviceIds));
+template <typename Result, typename Id>
+auto UserAccessor::pullImpl(std::vector<Id> requestedIds) -> tc::cotask<Result>
+{
+  std::sort(requestedIds.begin(), requestedIds.end());
+  requestedIds.erase(std::unique(requestedIds.begin(), requestedIds.end()),
+                     requestedIds.end());
 
-  DevicePullResult ret;
-  ret.found.reserve(deviceIds.size());
+  auto const resultMap = TC_AWAIT(fetch(requestedIds));
 
-  for (auto const& deviceId : deviceIds)
-    if (auto it = deviceIdsMap.find(deviceId); it != deviceIdsMap.end())
+  Result ret;
+  ret.found.reserve(requestedIds.size());
+
+  for (auto const& requestedId : requestedIds)
+    if (auto it = resultMap.find(requestedId); it != resultMap.end())
       ret.found.push_back(it->second);
     else
-      ret.notFound.push_back(deviceId);
+      ret.notFound.push_back(requestedId);
 
   TC_RETURN(ret);
 }

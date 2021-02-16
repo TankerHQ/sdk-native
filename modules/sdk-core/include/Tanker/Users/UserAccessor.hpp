@@ -45,6 +45,9 @@ private:
   auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
       -> tc::cotask<DevicesMap>;
 
+  template <typename Result, typename Id>
+  auto pullImpl(std::vector<Id> ids) -> tc::cotask<Result>;
+
 private:
   Trustchain::Context _context;
   Users::IRequester* _requester;
