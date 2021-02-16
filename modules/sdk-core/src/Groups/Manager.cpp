@@ -30,7 +30,8 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);
   auto const members = partitionIdentities(publicIdentities);
 
-  auto const memberUsers = TC_AWAIT(userAccessor.pull(members.userIds));
+  auto const memberUsers = TC_AWAIT(
+      userAccessor.pull(members.userIds, Users::IRequester::IsLight::Yes));
   if (!memberUsers.notFound.empty())
   {
     auto const notFoundIdentities = mapIdsToStrings(
