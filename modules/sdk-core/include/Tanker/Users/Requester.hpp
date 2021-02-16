@@ -22,10 +22,11 @@ public:
 
   tc::cotask<GetResult> getRevokedDeviceHistory(
       Trustchain::DeviceId const& deviceId) override;
+  tc::cotask<GetResult> getUsers(gsl::span<Trustchain::UserId const> userIds,
+                                 IsLight isLight) override;
   tc::cotask<GetResult> getUsers(
-      gsl::span<Trustchain::UserId const> userIds) override;
-  tc::cotask<GetResult> getUsers(
-      gsl::span<Trustchain::DeviceId const> deviceIds) override;
+      gsl::span<Trustchain::DeviceId const> deviceIds,
+      IsLight isLight) override;
   tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) override;
   tc::cotask<void> postResourceKeys(

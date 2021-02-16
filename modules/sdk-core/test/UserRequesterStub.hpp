@@ -29,13 +29,14 @@ public:
              tc::cotask<Users::IRequester::GetResult>(
                  Trustchain::DeviceId const& deviceId),
              override);
-  MAKE_MOCK1(getUsers,
+  MAKE_MOCK2(getUsers,
              tc::cotask<Users::IRequester::GetResult>(
-                 gsl::span<Trustchain::UserId const> userIds),
+                 gsl::span<Trustchain::UserId const> userIds, IsLight isLight),
              override);
-  MAKE_MOCK1(getUsers,
+  MAKE_MOCK2(getUsers,
              tc::cotask<Users::IRequester::GetResult>(
-                 gsl::span<Trustchain::DeviceId const> deviceIds),
+                 gsl::span<Trustchain::DeviceId const> deviceIds,
+                 IsLight isLight),
              override);
   MAKE_MOCK1(getKeyPublishes,
              tc::cotask<std::vector<Trustchain::KeyPublishAction>>(
