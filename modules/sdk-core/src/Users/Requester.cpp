@@ -103,18 +103,20 @@ tc::cotask<Requester::GetResult> Requester::getRevokedDeviceHistory(
 }
 
 tc::cotask<Requester::GetResult> Requester::getUsers(
-    gsl::span<Trustchain::UserId const> userIds)
+    gsl::span<Trustchain::UserId const> userIds, IsLight isLight)
 {
   auto const query = nlohmann::json{
-      {"user_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(userIds)}};
+      {"user_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(userIds)},
+      {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 
 tc::cotask<Requester::GetResult> Requester::getUsers(
-    gsl::span<Trustchain::DeviceId const> deviceIds)
+    gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight)
 {
   auto const query = nlohmann::json{
-      {"device_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(deviceIds)}};
+      {"device_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(deviceIds)},
+      {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
 

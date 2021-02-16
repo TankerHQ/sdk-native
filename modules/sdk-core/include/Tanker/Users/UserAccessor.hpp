@@ -23,7 +23,7 @@ using DevicesMap = boost::container::flat_map<Trustchain::DeviceId, Device>;
 class UserAccessor : public IUserAccessor
 {
 public:
-  UserAccessor(Trustchain::Context trustchainCtx, Users::IRequester* requester);
+  UserAccessor(Trustchain::Context trustchainCtx, IRequester* requester);
 
   UserAccessor() = delete;
   UserAccessor(UserAccessor const&) = delete;
@@ -32,23 +32,27 @@ public:
   UserAccessor& operator=(UserAccessor&&) = delete;
 
   tc::cotask<UserPullResult> pull(
-      std::vector<Trustchain::UserId> userIds) override;
+      std::vector<Trustchain::UserId> userIds,
+      IRequester::IsLight isLight = IRequester::IsLight::No) override;
   tc::cotask<DevicePullResult> pull(
-      std::vector<Trustchain::DeviceId> deviceIds) override;
+      std::vector<Trustchain::DeviceId> deviceIds,
+      IRequester::IsLight isLight = IRequester::IsLight::No) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
       override;
 
 private:
-  auto fetch(gsl::span<Trustchain::UserId const> userIds)
-      -> tc::cotask<UsersMap>;
-  auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
-      -> tc::cotask<DevicesMap>;
+  auto fetch(gsl::span<Trustchain::UserId const> userIds,
+             IRequester::IsLight isLight) -> tc::cotask<UsersMap>;
+  auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds,
+             IRequester::IsLight isLight) -> tc::cotask<DevicesMap>;
   template <typename Result, typename Id>
-  auto fetchImpl(gsl::span<Id const> ids) -> tc::cotask<Result>;
+  auto fetchImpl(gsl::span<Id const> ids, IRequester::IsLight isLight)
+      -> tc::cotask<Result>;
 
   template <typename Result, typename Id>
-  auto pullImpl(std::vector<Id> ids) -> tc::cotask<Result>;
+  auto pullImpl(std::vector<Id> ids, IRequester::IsLight isLight)
+      -> tc::cotask<Result>;
 
 private:
   Trustchain::Context _context;

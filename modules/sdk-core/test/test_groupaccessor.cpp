@@ -90,7 +90,8 @@ TEST_CASE("GroupAccessor")
     SUBCASE("request group we are member of")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
-                   pull(std::vector{alice.devices().back().id()}))
+                   pull(std::vector{alice.devices().back().id()},
+                        Users::IRequester::IsLight::No))
           .RETURN(
               makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
                   {alice.devices().front()}, {}}));
@@ -143,7 +144,8 @@ TEST_CASE("GroupAccessor")
     SUBCASE("Request group we are *NOT* part of")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
-                   pull(std::vector{bob.devices().back().id()}))
+                   pull(std::vector{bob.devices().back().id()},
+                        Users::IRequester::IsLight::No))
           .RETURN(
               makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
                   {bob.devices().front()}, {}}));

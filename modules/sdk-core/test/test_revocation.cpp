@@ -27,7 +27,8 @@ TEST_CASE("Revocation tests")
   {
     auto const alice = generator.makeUser("alice");
     auto const brokenAlice = Users::User(alice.id(), {}, {});
-    REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
+    REQUIRE_CALL(userAccessorMock,
+                 pull(std::vector{alice.id()}, Users::IRequester::IsLight::No))
         .RETURN(makeCoTask(
             Users::IUserAccessor::UserPullResult{{brokenAlice}, {}}));
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -38,7 +39,8 @@ TEST_CASE("Revocation tests")
   SUBCASE("getUserFromUserId correctly finds bob user")
   {
     auto alice = generator.makeUser("alice");
-    REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
+    REQUIRE_CALL(userAccessorMock,
+                 pull(std::vector{alice.id()}, Users::IRequester::IsLight::No))
         .RETURN(makeCoTask(Users::IUserAccessor::UserPullResult{{alice}, {}}));
     auto const user =
         AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock));
