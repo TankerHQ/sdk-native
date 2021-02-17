@@ -22,6 +22,26 @@ using Tanker::Functional::TrustchainFixture;
 
 TEST_SUITE_BEGIN("Revocation");
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can list her devices")
+{
+  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto aliceSecondDevice = alice.makeDevice();
+  auto secondSession = TC_AWAIT(aliceSecondDevice.open());
+
+  auto devices = TC_AWAIT(aliceSession->getDeviceList());
+  std::vector<SDeviceId> deviceIds;
+  for (auto const& device : devices)
+    deviceIds.push_back(mgs::base64::encode<SDeviceId>(device.id()));
+  auto expectedDeviceIds = std::vector{TC_AWAIT(aliceSession->deviceId()),
+                                       TC_AWAIT(secondSession->deviceId())};
+  std::sort(deviceIds.begin(), deviceIds.end());
+  std::sort(expectedDeviceIds.begin(), expectedDeviceIds.end());
+  CHECK(deviceIds == expectedDeviceIds);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 {
   auto alice = trustchain.makeUser(Functional::UserType::New);
