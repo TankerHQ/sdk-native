@@ -41,13 +41,9 @@ public:
   static_assert(static_cast<int>(ShareWithSelf::No) == 0);
   static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
 
-  using HttpClientFactory = std::function<std::unique_ptr<HttpClient>()>;
   using SessionClosedHandler = std::function<void()>;
 
   Core(std::string url, SdkInfo info, std::string writablePath);
-  Core(SdkInfo info,
-       HttpClientFactory httpClientFactory,
-       std::string writablePath);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
@@ -121,6 +117,8 @@ public:
   tc::cotask<void> nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 
+  void setHttpSessionToken(std::string_view);
+
   tc::cotask<void> confirmRevocation();
 
 private:
@@ -142,8 +140,9 @@ private:
       F&& f, std::vector<Errors::Errc> const& additionalErrorsToIgnore = {});
 
 private:
+  std::string _url;
+  std::string _instanceId;
   SdkInfo _info;
-  HttpClientFactory _httpClientFactory;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
   std::shared_ptr<Session> _session;

@@ -33,8 +33,8 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
-
-#include <fmt/format.h>
+#include <fetchpp/http/url.hpp>
+#include <mgs/base64.hpp>
 
 #include <stdexcept>
 #include <utility>
@@ -45,28 +45,41 @@ TLOG_CATEGORY(Core);
 
 namespace Tanker
 {
+namespace
+{
+std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
+                                             std::string instanceId,
+                                             SdkInfo const& info)
+{
+
+  auto client = std::make_unique<HttpClient>(
+      fetchpp::http::url{fmt::format("/v2/apps/{appId:#S}/",
+                                     fmt::arg("appId", info.trustchainId)),
+                         fetchpp::http::url(url)},
+      tc::get_default_executor().get_io_service().get_executor());
+  client->setHeader("X-Tanker-SdkType", info.sdkType);
+  client->setHeader("X-Tanker-SdkVersion", info.version);
+  client->setHeader("X-Tanker-Instanceid", instanceId);
+  return client;
+}
+
+std::string createInstanceId()
+{
+  auto rd = std::array<uint8_t, 16>{};
+  Crypto::randomFill(rd);
+  return mgs::base64::encode(rd);
+}
+}
+
 Core::~Core() = default;
 
 Core::Core(std::string url, SdkInfo info, std::string writablePath)
-  : Core(
-        info,
-        [url, info] {
-          return std::make_unique<HttpClient>(
-              fetchpp::http::url(url),
-              info,
-              tc::get_default_executor().get_io_service().get_executor());
-        },
-        std::move(writablePath))
-{
-}
-
-Core::Core(SdkInfo info,
-           HttpClientFactory httpClientFactory,
-           std::string writablePath)
-  : _info(std::move(info)),
-    _httpClientFactory(std::move(httpClientFactory)),
+  : _url(std::move(url)),
+    _instanceId(createInstanceId()),
+    _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _session(std::make_shared<Session>(_httpClientFactory()))
+    _session(
+        std::make_shared<Session>(createHttpClient(_url, _instanceId, _info)))
 {
 }
 
@@ -86,7 +99,8 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session = std::make_shared<Session>(_httpClientFactory());
+  _session =
+      std::make_shared<Session>(createHttpClient(_url, _instanceId, _info));
 }
 
 template <typename F>
@@ -632,6 +646,11 @@ Trustchain::ResourceId Core::getResourceId(
 void Core::setSessionClosedHandler(SessionClosedHandler handler)
 {
   _sessionClosed = std::move(handler);
+}
+
+void Core::setHttpSessionToken(std::string_view token)
+{
+  this->_session->httpClient().setAccessToken(token);
 }
 
 tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(

@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <fetchpp/client.hpp>
@@ -60,7 +59,6 @@ public:
   };
 
   HttpClient(fetchpp::http::url const& baseUrl,
-             SdkInfo const& info,
              fetchpp::net::executor ex,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;
@@ -82,7 +80,9 @@ public:
 
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
-  void setAccessToken(std::string accessToken);
+
+  void setHeader(std::string_view name, std::string_view value);
+  void setAccessToken(std::string_view accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,
       Crypto::SignatureKeyPair const& deviceSignatureKeyPair);

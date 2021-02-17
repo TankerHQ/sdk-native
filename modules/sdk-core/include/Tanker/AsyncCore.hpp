@@ -49,9 +49,6 @@ public:
   AsyncCore& operator=(AsyncCore&&) = delete;
 
   AsyncCore(std::string url, SdkInfo info, std::string writablePath);
-  AsyncCore(SdkInfo info,
-            Core::HttpClientFactory httpClientFactory,
-            std::string writablePath);
   ~AsyncCore();
 
   tc::future<void> destroy();
@@ -137,6 +134,8 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   static std::string const& version();
+
+  tc::future<void> setHttpSessionToken(std::string token);
 
 private:
   Core _core;

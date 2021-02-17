@@ -105,14 +105,6 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
 {
 }
 
-AsyncCore::AsyncCore(SdkInfo info,
-                     Core::HttpClientFactory httpClientFactory,
-                     std::string writablePath)
-  : _core(
-        std::move(info), std::move(httpClientFactory), std::move(writablePath))
-{
-}
-
 AsyncCore::~AsyncCore()
 {
   assert(tc::get_default_executor().is_in_this_context());
@@ -469,5 +461,12 @@ void AsyncCore::nukeAndStop()
 std::string const& AsyncCore::version()
 {
   return TANKER_VERSION;
+}
+
+tc::future<void> AsyncCore::setHttpSessionToken(std::string token)
+{
+  return tc::async([this, tk = std::move(token)] {
+    this->_core.setHttpSessionToken(std::move(tk));
+  });
 }
 }
