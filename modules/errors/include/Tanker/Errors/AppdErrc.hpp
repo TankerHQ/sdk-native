@@ -28,7 +28,7 @@ enum class AppdErrc
   InvalidDelegationSignature,
   UnknownError,
   UserNotFound,
-  BlockLimitsExceeded,
+  Blocked,
   UpgradeRequired,
   BadRequest,
   InvalidChallengePublicKey,
