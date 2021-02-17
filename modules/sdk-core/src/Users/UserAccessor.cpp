@@ -6,6 +6,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Users/Updater.hpp>
+#include <Tanker/Utils.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
@@ -49,9 +50,7 @@ auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
 template <typename Result, typename Id>
 auto UserAccessor::pullImpl(std::vector<Id> requestedIds) -> tc::cotask<Result>
 {
-  std::sort(requestedIds.begin(), requestedIds.end());
-  requestedIds.erase(std::unique(requestedIds.begin(), requestedIds.end()),
-                     requestedIds.end());
+  requestedIds = removeDuplicates(requestedIds);
 
   auto const resultMap = TC_AWAIT(fetch(requestedIds));
 
