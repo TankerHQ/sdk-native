@@ -36,13 +36,14 @@ UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
 auto UserAccessor::pull(std::vector<UserId> userIds)
     -> tc::cotask<UserPullResult>
 {
-  return pullImpl<UserPullResult, UserId>(std::move(userIds));
+  TC_RETURN(TC_AWAIT((pullImpl<UserPullResult, UserId>(std::move(userIds)))));
 }
 
 auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
     -> tc::cotask<DevicePullResult>
 {
-  return pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds));
+  TC_RETURN(TC_AWAIT((
+      pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds)))));
 }
 
 template <typename Result, typename Id>
@@ -218,13 +219,13 @@ UserAccessor::pullProvisional(
 auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
     -> tc::cotask<UsersMap>
 {
-  return fetchImpl<UsersMap>(userIds);
+  TC_RETURN(TC_AWAIT(fetchImpl<UsersMap>(userIds)));
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
     -> tc::cotask<DevicesMap>
 {
-  return fetchImpl<DevicesMap>(deviceIds);
+  TC_RETURN(TC_AWAIT(fetchImpl<DevicesMap>(deviceIds)));
 }
 
 template <typename Result, typename Id>
