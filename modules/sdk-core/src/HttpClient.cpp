@@ -53,7 +53,7 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_oidc_id_token", AppdErrc::InvalidVerificationCode},
     {"user_not_found", AppdErrc::UserNotFound},
     {"invalid_token", AppdErrc::InvalidToken},
-    {"block_limits_exceeded", AppdErrc::BlockLimitsExceeded},
+    {"blocked", AppdErrc::Blocked},
     {"upgrade_required", AppdErrc::UpgradeRequired},
     {"invalid_challenge_signature", AppdErrc::InvalidChallengeSignature},
     {"invalid_challenge_public_key", AppdErrc::InvalidChallengePublicKey},

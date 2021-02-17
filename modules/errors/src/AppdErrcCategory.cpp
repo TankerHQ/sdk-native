@@ -54,8 +54,8 @@ std::string AppdErrcCategory::message(int c) const
     return "unknown server error";
   case AppdErrc::UserNotFound:
     return "user not found";
-  case AppdErrc::BlockLimitsExceeded:
-    return "block limits exceeded";
+  case AppdErrc::Blocked:
+    return "blocked";
   case AppdErrc::UpgradeRequired:
     return "upgrade required";
   case AppdErrc::BadRequest:
@@ -97,7 +97,7 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::AppNotFound:
   case AppdErrc::VerificationMethodNotSet:
   case AppdErrc::VerificationKeyNotFound:
-  case AppdErrc::BlockLimitsExceeded:
+  case AppdErrc::Blocked:
     return make_error_condition(Errors::Errc::PreconditionFailed);
   case AppdErrc::TooManyAttempts:
     return make_error_condition(Errors::Errc::TooManyAttempts);
