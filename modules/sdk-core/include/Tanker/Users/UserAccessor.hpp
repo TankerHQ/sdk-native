@@ -31,8 +31,9 @@ public:
   UserAccessor& operator=(UserAccessor const&) = delete;
   UserAccessor& operator=(UserAccessor&&) = delete;
 
-  tc::cotask<PullResult> pull(std::vector<Trustchain::UserId> userIds) override;
-  tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> pull(
+  tc::cotask<UserPullResult> pull(
+      std::vector<Trustchain::UserId> userIds) override;
+  tc::cotask<DevicePullResult> pull(
       std::vector<Trustchain::DeviceId> deviceIds) override;
   tc::cotask<std::vector<ProvisionalUsers::PublicUser>> pullProvisional(
       std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
@@ -43,6 +44,11 @@ private:
       -> tc::cotask<UsersMap>;
   auto fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
       -> tc::cotask<DevicesMap>;
+  template <typename Result, typename Id>
+  auto fetchImpl(gsl::span<Id const> ids) -> tc::cotask<Result>;
+
+  template <typename Result, typename Id>
+  auto pullImpl(std::vector<Id> ids) -> tc::cotask<Result>;
 
 private:
   Trustchain::Context _context;

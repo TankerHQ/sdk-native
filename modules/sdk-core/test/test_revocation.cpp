@@ -28,8 +28,8 @@ TEST_CASE("Revocation tests")
     auto const alice = generator.makeUser("alice");
     auto const brokenAlice = Users::User(alice.id(), {}, {});
     REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
-        .RETURN(
-            makeCoTask(Users::IUserAccessor::PullResult{{brokenAlice}, {}}));
+        .RETURN(makeCoTask(
+            Users::IUserAccessor::UserPullResult{{brokenAlice}, {}}));
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock)),
         Errc::InternalError);
@@ -39,7 +39,7 @@ TEST_CASE("Revocation tests")
   {
     auto alice = generator.makeUser("alice");
     REQUIRE_CALL(userAccessorMock, pull(std::vector{alice.id()}))
-        .RETURN(makeCoTask(Users::IUserAccessor::PullResult{{alice}, {}}));
+        .RETURN(makeCoTask(Users::IUserAccessor::UserPullResult{{alice}, {}}));
     auto const user =
         AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock));
     CHECK_EQ(*user.userKey(), alice.userKeys().back().publicKey);

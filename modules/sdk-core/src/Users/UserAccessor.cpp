@@ -6,6 +6,7 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Users/Updater.hpp>
+#include <Tanker/Utils.hpp>
 #include <Tanker/Verif/DeviceCreation.hpp>
 #include <Tanker/Verif/DeviceRevocation.hpp>
 
@@ -33,42 +34,34 @@ UserAccessor::UserAccessor(Trustchain::Context trustchainContext,
 {
 }
 
-auto UserAccessor::pull(std::vector<UserId> userIds) -> tc::cotask<PullResult>
+auto UserAccessor::pull(std::vector<UserId> userIds)
+    -> tc::cotask<UserPullResult>
 {
-  std::sort(userIds.begin(), userIds.end());
-  userIds.erase(std::unique(userIds.begin(), userIds.end()), userIds.end());
-
-  auto const userIdsMap = TC_AWAIT(fetch(userIds));
-
-  PullResult ret;
-  ret.found.reserve(userIds.size());
-
-  for (auto const& userId : userIds)
-    if (auto it = userIdsMap.find(userId); it != userIdsMap.end())
-      ret.found.push_back(it->second);
-    else
-      ret.notFound.push_back(userId);
-
-  TC_RETURN(ret);
+  TC_RETURN(TC_AWAIT((pullImpl<UserPullResult, UserId>(std::move(userIds)))));
 }
 
-tc::cotask<BasicPullResult<Device, Trustchain::DeviceId>> UserAccessor::pull(
-    std::vector<Trustchain::DeviceId> deviceIds)
+auto UserAccessor::pull(std::vector<Trustchain::DeviceId> deviceIds)
+    -> tc::cotask<DevicePullResult>
 {
-  std::sort(deviceIds.begin(), deviceIds.end());
-  deviceIds.erase(std::unique(deviceIds.begin(), deviceIds.end()),
-                  deviceIds.end());
+  TC_RETURN(TC_AWAIT((
+      pullImpl<DevicePullResult, Trustchain::DeviceId>(std::move(deviceIds)))));
+}
 
-  auto const deviceIdsMap = TC_AWAIT(fetch(deviceIds));
+template <typename Result, typename Id>
+auto UserAccessor::pullImpl(std::vector<Id> requestedIds) -> tc::cotask<Result>
+{
+  requestedIds = removeDuplicates(requestedIds);
 
-  BasicPullResult<Device, Trustchain::DeviceId> ret;
-  ret.found.reserve(deviceIds.size());
+  auto const resultMap = TC_AWAIT(fetch(requestedIds));
 
-  for (auto const& deviceId : deviceIds)
-    if (auto it = deviceIdsMap.find(deviceId); it != deviceIdsMap.end())
+  Result ret;
+  ret.found.reserve(requestedIds.size());
+
+  for (auto const& requestedId : requestedIds)
+    if (auto it = resultMap.find(requestedId); it != resultMap.end())
       ret.found.push_back(it->second);
     else
-      ret.notFound.push_back(deviceId);
+      ret.notFound.push_back(requestedId);
 
   TC_RETURN(ret);
 }
@@ -225,41 +218,32 @@ UserAccessor::pullProvisional(
 auto UserAccessor::fetch(gsl::span<Trustchain::UserId const> userIds)
     -> tc::cotask<UsersMap>
 {
-  if (userIds.empty())
-    TC_RETURN(UsersMap{});
-
-  UsersMap out;
-  out.reserve(userIds.size());
-  for (unsigned int i = 0; i < userIds.size(); i += ChunkSize)
-  {
-    auto const count = std::min<std::size_t>(ChunkSize, userIds.size() - i);
-    auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(userIds.subspan(i, count)));
-    auto currentUsers =
-        std::get<UsersMap>(processUserEntries(_context, actions));
-    out.insert(std::make_move_iterator(currentUsers.begin()),
-               std::make_move_iterator(currentUsers.end()));
-  }
-  TC_RETURN(out);
+  TC_RETURN(TC_AWAIT(fetchImpl<UsersMap>(userIds)));
 }
 
 auto UserAccessor::fetch(gsl::span<Trustchain::DeviceId const> deviceIds)
     -> tc::cotask<DevicesMap>
 {
-  if (deviceIds.empty())
-    TC_RETURN(DevicesMap{});
+  TC_RETURN(TC_AWAIT(fetchImpl<DevicesMap>(deviceIds)));
+}
 
-  DevicesMap out;
-  out.reserve(deviceIds.size());
-  for (unsigned int i = 0; i < deviceIds.size(); i += ChunkSize)
+template <typename Result, typename Id>
+auto UserAccessor::fetchImpl(gsl::span<Id const> ids) -> tc::cotask<Result>
+{
+  Result out;
+
+  if (ids.empty())
+    TC_RETURN(out);
+
+  out.reserve(ids.size());
+  for (unsigned int i = 0; i < ids.size(); i += ChunkSize)
   {
-    auto const count = std::min<std::size_t>(ChunkSize, deviceIds.size() - i);
+    auto const count = std::min<std::size_t>(ChunkSize, ids.size() - i);
     auto const [trustchainCreation, actions] =
-        TC_AWAIT(_requester->getUsers(deviceIds.subspan(i, count)));
-    auto currentDevices =
-        std::get<DevicesMap>(processUserEntries(_context, actions));
-    out.insert(std::make_move_iterator(currentDevices.begin()),
-               std::make_move_iterator(currentDevices.end()));
+        TC_AWAIT(_requester->getUsers(ids.subspan(i, count)));
+    auto currentUsers = std::get<Result>(processUserEntries(_context, actions));
+    out.insert(std::make_move_iterator(currentUsers.begin()),
+               std::make_move_iterator(currentUsers.end()));
   }
   TC_RETURN(out);
 }
