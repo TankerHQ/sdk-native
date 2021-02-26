@@ -45,8 +45,8 @@ template <typename F>
 auto AsyncCore::runResumable(F&& f)
 {
   using Func = std::decay_t<F>;
-  return tc::submit_to_future<typename tc::detail::task_return_type<decltype(
-      std::declval<F>()())>::type>(
+  return tc::submit_to_future<typename tc::detail::task_return_type<
+      decltype(std::declval<F>()())>::type>(
       _taskCanceler.wrap(tc::lazy::connect(
           tc::lazy::async(tc::get_default_executor()),
           tc::lazy::run_resumable(
@@ -126,18 +126,20 @@ tc::future<Status> AsyncCore::start(std::string const& identity)
 }
 
 tc::future<void> AsyncCore::registerIdentity(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.registerIdentity(verification));
+    TC_AWAIT(this->_core.registerIdentity(verification, withTokenNonce));
   });
 }
 
 tc::future<void> AsyncCore::verifyIdentity(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.verifyIdentity(verification));
+    TC_AWAIT(this->_core.verifyIdentity(verification, withTokenNonce));
   });
 }
 
@@ -229,10 +231,11 @@ tc::future<VerificationKey> AsyncCore::generateVerificationKey()
 }
 
 tc::future<void> AsyncCore::setVerificationMethod(
-    Unlock::Verification const& method)
+    Unlock::Verification const& method,
+    std::optional<std::string> withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.setVerificationMethod(method));
+    TC_AWAIT(this->_core.setVerificationMethod(method, withTokenNonce));
   });
 }
 

@@ -47,8 +47,10 @@ public:
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
-  tc::cotask<void> registerIdentity(Unlock::Verification const& verification);
-  tc::cotask<void> verifyIdentity(Unlock::Verification const& verification);
+  tc::cotask<void> registerIdentity(Unlock::Verification const& verification,
+                                    std::optional<std::string> withTokenNonce);
+  tc::cotask<void> verifyIdentity(Unlock::Verification const& verification,
+                                  std::optional<std::string> withTokenNonce);
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
@@ -79,7 +81,9 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
+  tc::cotask<void> setVerificationMethod(
+      Unlock::Verification const& method,
+      std::optional<std::string> withTokenNonce);
   tc::cotask<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
   tc::cotask<VerificationKey> generateVerificationKey() const;
 
@@ -124,8 +128,11 @@ public:
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
   tc::cotask<void> registerIdentityImpl(
-      Unlock::Verification const& verification);
-  tc::cotask<void> verifyIdentityImpl(Unlock::Verification const& verification);
+      Unlock::Verification const& verification,
+      std::optional<std::string> withTokenNonce);
+  tc::cotask<void> verifyIdentityImpl(
+      Unlock::Verification const& verification,
+      std::optional<std::string> withTokenNonce);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
       Unlock::Verification const& verification);

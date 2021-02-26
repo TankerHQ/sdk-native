@@ -52,6 +52,7 @@ typedef struct tanker_options tanker_options_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
+typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
@@ -174,6 +175,17 @@ struct tanker_verification_method
 #define TANKER_VERIFICATION_METHOD_INIT \
   {                                     \
     1, 0, NULL                          \
+  }
+
+struct tanker_verification_options
+{
+  uint8_t version;
+  bool with_token;
+};
+
+#define TANKER_VERIFICATION_OPTIONS_INIT \
+  {                                      \
+    1, false                             \
   }
 
 struct tanker_encrypt_options
@@ -324,7 +336,9 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
 CTANKER_EXPORT tanker_future_t* tanker_register_identity(
-    tanker_t* tanker, tanker_verification_t const* verification);
+    tanker_t* tanker,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Verify an identity with provided verification.
@@ -341,7 +355,9 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
 CTANKER_EXPORT tanker_future_t* tanker_verify_identity(
-    tanker_t* tanker, tanker_verification_t const* verification);
+    tanker_t* tanker,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Close a tanker session.
@@ -396,7 +412,9 @@ CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
  * \return a future to void
  */
 CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
-    tanker_t* session, tanker_verification_t const* verification);
+    tanker_t* session,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Return all registered verification methods for the current user.

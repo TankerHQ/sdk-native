@@ -235,7 +235,8 @@ tc::cotask<Status> Core::start(std::string const& identity)
 }
 
 tc::cotask<void> Core::registerIdentityImpl(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> withTokenNonce)
 {
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
@@ -283,13 +284,14 @@ tc::cotask<void> Core::registerIdentityImpl(
 }
 
 tc::cotask<void> Core::registerIdentity(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> withTokenNonce)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
-        TC_AWAIT(registerIdentityImpl(verification));
+        TC_AWAIT(registerIdentityImpl(verification, withTokenNonce));
       },
       {Errors::Errc::ExpiredVerification,
        Errors::Errc::InvalidVerification,
@@ -299,7 +301,8 @@ tc::cotask<void> Core::registerIdentity(
 }
 
 tc::cotask<void> Core::verifyIdentityImpl(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> withTokenNonce)
 {
   auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
   try
@@ -338,12 +341,15 @@ tc::cotask<void> Core::verifyIdentityImpl(
   }
 }
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification,
+                                      std::optional<std::string> withTokenNonce)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   TC_AWAIT(resetOnFailure(
-      [&]() -> tc::cotask<void> { TC_AWAIT(verifyIdentityImpl(verification)); },
+      [&]() -> tc::cotask<void> {
+        TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce));
+      },
       {Errors::Errc::ExpiredVerification,
        Errors::Errc::InvalidVerification,
        Errors::Errc::InvalidArgument,
@@ -510,7 +516,9 @@ tc::cotask<void> Core::updateGroupMembers(
       localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
-tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
+tc::cotask<void> Core::setVerificationMethod(
+    Unlock::Verification const& method,
+    std::optional<std::string> withTokenNonce)
 {
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
