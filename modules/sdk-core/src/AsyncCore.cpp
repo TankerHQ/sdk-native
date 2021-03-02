@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-TLOG_CATEGORY("AsyncCore");
+TLOG_CATEGORY(AsyncCore);
 
 namespace Tanker
 {
