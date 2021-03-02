@@ -41,13 +41,19 @@ public:
     Trustchain::DeviceId ghostDeviceId;
   };
 
+  enum class IsLight
+  {
+    No,
+    Yes,
+  };
+
   virtual ~IRequester() = default;
   virtual tc::cotask<IRequester::GetResult> getRevokedDeviceHistory(
       Trustchain::DeviceId const& deviceId) = 0;
   virtual tc::cotask<GetResult> getUsers(
-      gsl::span<Trustchain::UserId const> userIds) = 0;
+      gsl::span<Trustchain::UserId const> userIds, IsLight isLight) = 0;
   virtual tc::cotask<GetResult> getUsers(
-      gsl::span<Trustchain::DeviceId const> deviceIds) = 0;
+      gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight) = 0;
   virtual tc::cotask<std::vector<Trustchain::KeyPublishAction>> getKeyPublishes(
       gsl::span<Trustchain::ResourceId const> resourceIds) = 0;
   virtual tc::cotask<void> postResourceKeys(

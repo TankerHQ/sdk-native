@@ -36,7 +36,7 @@ using DeviceMap =
     boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
 tc::cotask<DeviceMap> extractAuthors(
-    Users::IUserAccessor& contactAccessor,
+    Users::IUserAccessor& userAccessor,
     gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> entries)
 {
   DeviceMap out;
@@ -47,7 +47,8 @@ tc::cotask<DeviceMap> extractAuthors(
       std::end(entries),
       std::begin(authors),
       [](auto const& action) { return Trustchain::DeviceId{action.author()}; });
-  auto const pullResult = TC_AWAIT(contactAccessor.pull(authors));
+  auto const pullResult =
+      TC_AWAIT(userAccessor.pull(authors, Users::IRequester::IsLight::Yes));
   if (!pullResult.notFound.empty())
   {
     // we should have all the devices because they are *our* devices
@@ -98,10 +99,10 @@ tc::cotask<UsedSecretUser> extractKeysToStore(
 
 tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
-    Users::IUserAccessor& contactAccessor,
+    Users::IUserAccessor& userAccessor,
     gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions)
 {
-  auto const authors = TC_AWAIT(extractAuthors(contactAccessor, actions));
+  auto const authors = TC_AWAIT(extractAuthors(userAccessor, actions));
 
   std::vector<UsedSecretUser> out;
   for (auto const& action : actions)

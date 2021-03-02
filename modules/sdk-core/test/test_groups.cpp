@@ -149,7 +149,9 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   UserAccessorMock userAccessor;
 
-  REQUIRE_CALL(userAccessor, pull(ANY(std::vector<Trustchain::UserId>)))
+  REQUIRE_CALL(userAccessor,
+               pull(ANY(std::vector<Trustchain::UserId>),
+                    Users::IRequester::IsLight::Yes))
       .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
   TANKER_CHECK_THROWS_WITH_CODE(
