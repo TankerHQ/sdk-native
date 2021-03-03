@@ -56,10 +56,12 @@ public:
   tc::future<Status> start(std::string const& identity);
   tc::future<void> stop();
 
-  tc::future<void> registerIdentity(Unlock::Verification const& verification,
-      std::optional<std::string> withTokenNonce = std::nullopt);
-  tc::future<void> verifyIdentity(Unlock::Verification const& verification,
-                                  std::optional<std::string> withTokenNonce = std::nullopt);
+  tc::future<void> registerIdentity(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce = std::nullopt);
+  tc::future<void> verifyIdentity(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce = std::nullopt);
 
   Tanker::Status status() const;
 
@@ -91,8 +93,9 @@ public:
 
   tc::future<VerificationKey> generateVerificationKey();
 
-  tc::future<void> setVerificationMethod(Unlock::Verification const& method,
-      std::optional<std::string> withTokenNone = std::nullopt);
+  tc::future<void> setVerificationMethod(
+      Unlock::Verification const& method,
+      std::optional<std::string> const& withTokenNone = std::nullopt);
   tc::future<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
 
   tc::future<AttachResult> attachProvisionalIdentity(

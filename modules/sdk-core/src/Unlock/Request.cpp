@@ -38,11 +38,12 @@ Tanker::Crypto::Hash hashField(T const& field)
 namespace Tanker::Unlock
 {
 Request makeRequest(Unlock::Verification const& verification,
-                    Crypto::SymmetricKey const& userSecret)
+                    Crypto::SymmetricKey const& userSecret,
+                    std::optional<std::string> const& withTokenNonce)
 {
-  return boost::variant2::visit(
+  auto verif = boost::variant2::visit(
       overloaded{
-          [&](Unlock::EmailVerification const& v) -> Request {
+          [&](Unlock::EmailVerification const& v) -> RequestVerification {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
@@ -56,28 +57,29 @@ Request makeRequest(Unlock::Verification const& verification,
             return EncryptedEmailVerification{
                 hashField(v.email), encryptedEmail, v.verificationCode};
           },
-          [](Passphrase const& p) -> Request {
+          [](Passphrase const& p) -> RequestVerification {
             checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
           },
-          [](VerificationKey const& v) -> Request {
+          [](VerificationKey const& v) -> RequestVerification {
             checkNotEmpty(v.string(), "verificationKey");
             return v;
           },
-          [](OidcIdToken const& v) -> Request {
+          [](OidcIdToken const& v) -> RequestVerification {
             checkNotEmpty(v.string(), "oidcIdToken");
             return v;
           },
       },
       verification);
+  return {verif, withTokenNonce};
 }
 }
 
 namespace nlohmann
 {
 template <>
-void adl_serializer<Tanker::Unlock::Request>::to_json(
-    json& j, Tanker::Unlock::Request const& request)
+void adl_serializer<Tanker::Unlock::RequestVerification>::to_json(
+    json& j, Tanker::Unlock::RequestVerification const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
@@ -95,5 +97,14 @@ void adl_serializer<Tanker::Unlock::Request>::to_json(
           [](VerificationKey const& v) {},
       },
       request);
+}
+
+template <>
+void adl_serializer<Tanker::Unlock::Request>::to_json(
+    json& j, Tanker::Unlock::Request const& request)
+{
+  j = json(request.verification);
+  if (request.withTokenNonce.has_value())
+    j["with_token"] = {{"nonce", *request.withTokenNonce}};
 }
 }

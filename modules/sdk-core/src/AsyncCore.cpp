@@ -127,7 +127,7 @@ tc::future<Status> AsyncCore::start(std::string const& identity)
 
 tc::future<void> AsyncCore::registerIdentity(
     Unlock::Verification const& verification,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.registerIdentity(verification, withTokenNonce));
@@ -136,7 +136,7 @@ tc::future<void> AsyncCore::registerIdentity(
 
 tc::future<void> AsyncCore::verifyIdentity(
     Unlock::Verification const& verification,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.verifyIdentity(verification, withTokenNonce));
@@ -232,7 +232,7 @@ tc::future<VerificationKey> AsyncCore::generateVerificationKey()
 
 tc::future<void> AsyncCore::setVerificationMethod(
     Unlock::Verification const& method,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.setVerificationMethod(method, withTokenNonce));

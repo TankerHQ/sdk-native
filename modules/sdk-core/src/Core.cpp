@@ -236,7 +236,7 @@ tc::cotask<Status> Core::start(std::string const& identity)
 
 tc::cotask<void> Core::registerIdentityImpl(
     Unlock::Verification const& verification,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
@@ -278,14 +278,15 @@ tc::cotask<void> Core::registerIdentityImpl(
       _session->userId(),
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
-      Unlock::makeRequest(verification, _session->userSecret()),
+      Unlock::makeRequest(
+          verification, _session->userSecret(), std::move(withTokenNonce)),
       encryptedVerificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
 tc::cotask<void> Core::registerIdentity(
     Unlock::Verification const& verification,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
@@ -302,9 +303,10 @@ tc::cotask<void> Core::registerIdentity(
 
 tc::cotask<void> Core::verifyIdentityImpl(
     Unlock::Verification const& verification,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
-  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
+  auto const verificationKey =
+      TC_AWAIT(getVerificationKey(verification, withTokenNonce));
   try
   {
     auto const deviceKeys = DeviceKeys::create();
@@ -341,8 +343,9 @@ tc::cotask<void> Core::verifyIdentityImpl(
   }
 }
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification,
-                                      std::optional<std::string> withTokenNonce)
+tc::cotask<void> Core::verifyIdentity(
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
@@ -518,7 +521,7 @@ tc::cotask<void> Core::updateGroupMembers(
 
 tc::cotask<void> Core::setVerificationMethod(
     Unlock::Verification const& method,
-    std::optional<std::string> withTokenNonce)
+    std::optional<std::string> const& withTokenNonce)
 {
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
@@ -532,7 +535,8 @@ tc::cotask<void> Core::setVerificationMethod(
     {
       TC_AWAIT(_session->requesters().setVerificationMethod(
           _session->userId(),
-          Unlock::makeRequest(method, _session->userSecret())));
+          Unlock::makeRequest(
+              method, _session->userSecret(), std::move(withTokenNonce))));
     }
     catch (Errors::Exception const& e)
     {
@@ -568,12 +572,14 @@ Core::getVerificationMethods()
 }
 
 tc::cotask<VerificationKey> Core::fetchVerificationKey(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->userId(),
-          Unlock::makeRequest(verification, _session->userSecret())));
+          Unlock::makeRequest(
+              verification, _session->userSecret(), withTokenNonce)));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
@@ -582,7 +588,8 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
 }
 
 tc::cotask<VerificationKey> Core::getVerificationKey(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   using boost::variant2::get_if;
   using boost::variant2::holds_alternative;
@@ -592,7 +599,7 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
   else if (holds_alternative<Unlock::EmailVerification>(verification) ||
            holds_alternative<Passphrase>(verification) ||
            holds_alternative<OidcIdToken>(verification))
-    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));
   throw AssertionError("invalid verification, unreachable code");
 }
 
