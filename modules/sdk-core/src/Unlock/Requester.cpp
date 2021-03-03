@@ -64,6 +64,24 @@ Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
                 .get<std::vector<Unlock::VerificationMethod>>());
 }
 
+tc::cotask<std::string> Requester::getSessionToken(
+    Trustchain::UserId const& userId,
+    gsl::span<uint8_t const> sessionCertificate,
+    std::string nonce)
+{
+  using namespace fmt::literals;
+  nlohmann::json body{
+      {"session_certificate", mgs::base64::encode(sessionCertificate)},
+      {"nonce", nonce}};
+
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      fmt::format("users/{userId:#S}/session-certificates",
+                  "userId"_a = userId),
+      std::move(body)));
+
+  TC_RETURN(res.value().at("session_token").get<std::string>());
+}
+
 tc::cotask<void> Requester::createUser(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::UserId const& userId,
