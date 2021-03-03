@@ -1,0 +1,3 @@
+include(gcc8)
+[settings]
+build_type=Release
