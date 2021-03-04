@@ -144,6 +144,8 @@ private:
       Trustchain::ResourceId const&);
 
   void assertStatus(Status wanted, std::string const& string) const;
+  void assertStatus(std::initializer_list<Status> wanted,
+                    std::string const& action) const;
   void reset();
   template <typename F>
   decltype(std::declval<F>()()) resetOnFailure(

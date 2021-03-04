@@ -85,11 +85,21 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
 
 void Core::assertStatus(Status wanted, std::string const& action) const
 {
-  if (auto const s = status(); s != wanted)
-    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                           FMT_STRING("invalid session status {:e} for {:s}"),
-                           s,
-                           action);
+  assertStatus({wanted}, action);
+}
+
+void Core::assertStatus(std::initializer_list<Status> wanted,
+                        std::string const& action) const
+{
+  auto const actualStatus = status();
+  for (auto s : wanted)
+    if (actualStatus == s)
+      return;
+
+  throw Errors::formatEx(Errors::Errc::PreconditionFailed,
+                         FMT_STRING("invalid session status {:e} for {:s}"),
+                         actualStatus,
+                         action);
 }
 
 Status Core::status() const
@@ -348,7 +358,11 @@ tc::cotask<void> Core::verifyIdentity(
     std::optional<std::string> const& withTokenNonce)
 {
   FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  if (withTokenNonce.has_value())
+    assertStatus({Status::IdentityVerificationNeeded, Status::Ready},
+                 "verifyIdentity");
+  else
+    assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
         TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce));
