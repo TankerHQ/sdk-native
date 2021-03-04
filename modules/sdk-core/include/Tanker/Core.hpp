@@ -47,10 +47,16 @@ public:
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
-  tc::cotask<void> registerIdentity(Unlock::Verification const& verification,
-                                    std::optional<std::string> const& withTokenNonce);
-  tc::cotask<void> verifyIdentity(Unlock::Verification const& verification,
-                                  std::optional<std::string> const& withTokenNonce);
+  tc::cotask<void> registerIdentity(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<void> verifyIdentity(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
+
+  tc::cotask<std::string> getSessionToken(
+      Unlock::Verification const& verification,
+      std::string const& withTokenNonce);
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,

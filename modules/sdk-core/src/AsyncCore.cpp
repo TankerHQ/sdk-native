@@ -143,6 +143,15 @@ tc::future<void> AsyncCore::verifyIdentity(
   });
 }
 
+tc::future<std::string> AsyncCore::getSessionToken(
+    Unlock::Verification const& verification, std::string const& withTokenNonce)
+{
+  return runResumable([=]() -> tc::cotask<std::string> {
+    TC_RETURN(
+        TC_AWAIT(this->_core.getSessionToken(verification, withTokenNonce)));
+  });
+}
+
 tc::future<void> AsyncCore::stop()
 {
   return runResumable(

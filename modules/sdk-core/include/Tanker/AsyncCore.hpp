@@ -63,6 +63,10 @@ public:
       Unlock::Verification const& verification,
       std::optional<std::string> const& withTokenNonce = std::nullopt);
 
+  tc::future<std::string> getSessionToken(
+      Unlock::Verification const& verification,
+      std::string const& withTokenNonce);
+
   Tanker::Status status() const;
 
   tc::future<void> encrypt(

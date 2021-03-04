@@ -322,11 +322,22 @@ tanker_future_t* tanker_register_identity(
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   std::optional withTokenNonce =
       sessionCertificateTokenNonceFromVerifOptions(cverif_opts);
+  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tc::sync([&] {
-        auto const verification = cverificationToVerification(cverification);
-        return tanker->registerIdentity(verification, withTokenNonce);
-      }).unwrap());
+      tanker->registerIdentity(verification, withTokenNonce)
+          .and_then(
+              tc::get_synchronous_executor(),
+              [&](auto&&) {
+                if (!withTokenNonce)
+                  return tc::sync([] { return static_cast<void*>(nullptr); });
+
+                return tanker->getSessionToken(verification, *withTokenNonce)
+                    .and_then(
+                        tc::get_synchronous_executor(), [](auto const& token) {
+                          return static_cast<void*>(duplicateString(token));
+                        });
+              })
+          .unwrap());
 }
 
 tanker_future_t* tanker_verify_identity(
@@ -337,11 +348,22 @@ tanker_future_t* tanker_verify_identity(
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   std::optional withTokenNonce =
       sessionCertificateTokenNonceFromVerifOptions(cverif_opts);
+  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tc::sync([&] {
-        auto const verification = cverificationToVerification(cverification);
-        return tanker->verifyIdentity(verification, withTokenNonce);
-      }).unwrap());
+      tanker->verifyIdentity(verification, withTokenNonce)
+          .and_then(
+              tc::get_synchronous_executor(),
+              [&](auto&&) {
+                if (!withTokenNonce)
+                  return tc::sync([] { return static_cast<void*>(nullptr); });
+
+                return tanker->getSessionToken(verification, *withTokenNonce)
+                    .and_then(
+                        tc::get_synchronous_executor(), [](auto const& token) {
+                          return static_cast<void*>(duplicateString(token));
+                        });
+              })
+          .unwrap());
 }
 
 tanker_future_t* tanker_stop(tanker_t* ctanker)
@@ -403,11 +425,22 @@ tanker_future_t* tanker_set_verification_method(
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   std::optional withTokenNonce =
       sessionCertificateTokenNonceFromVerifOptions(cverif_opts);
+  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tc::sync([&] {
-        auto const verification = cverificationToVerification(cverification);
-        return tanker->setVerificationMethod(verification, withTokenNonce);
-      }).unwrap());
+      tanker->setVerificationMethod(verification, withTokenNonce)
+          .and_then(
+              tc::get_synchronous_executor(),
+              [&](auto&&) {
+                if (!withTokenNonce)
+                  return tc::sync([] { return static_cast<void*>(nullptr); });
+
+                return tanker->getSessionToken(verification, *withTokenNonce)
+                    .and_then(
+                        tc::get_synchronous_executor(), [](auto const& token) {
+                          return static_cast<void*>(duplicateString(token));
+                        });
+              })
+          .unwrap());
 }
 
 tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)

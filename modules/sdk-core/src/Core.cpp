@@ -23,6 +23,7 @@
 #include <Tanker/Streams/DecryptionStream.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
+#include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
@@ -372,6 +373,23 @@ tc::cotask<void> Core::verifyIdentity(
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
        Errors::Errc::TooManyAttempts}));
+}
+
+tc::cotask<std::string> Core::getSessionToken(
+    Unlock::Verification const& verification, const std::string& withTokenNonce)
+{
+  assertStatus(Status::Ready, "getSessionToken");
+
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  auto sessionCertificate = Users::createSessionCertificate(
+      _session->trustchainId(),
+      deviceId(),
+      verification,
+      localUser.deviceKeys().signatureKeyPair.privateKey);
+  auto const serializedSessCert = Serialization::serialize(sessionCertificate);
+
+  TC_RETURN(TC_AWAIT(_session->requesters().getSessionToken(
+      _session->userId(), serializedSessCert, withTokenNonce)));
 }
 
 tc::cotask<void> Core::encrypt(
