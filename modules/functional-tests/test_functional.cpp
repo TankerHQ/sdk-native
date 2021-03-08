@@ -888,3 +888,92 @@ TEST_CASE_FIXTURE(
           bobEmail, VerificationCode{"DUMMY_CODE_FOR_FASTER_TESTS"}})),
       Errc::PreconditionFailed);
 }
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can get a session token after registerIdentity")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const aliceEmail = Email{"alice123.test@tanker.io"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  auto const emailVerif = Unlock::EmailVerification{
+      aliceEmail, VerificationCode{aliceVerificationCode}};
+
+  auto tokenNonce = "randomNonce";
+  TC_AWAIT(aliceSession->registerIdentity(emailVerif, tokenNonce));
+  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
+  CHECK(!token.empty());
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can get a session token with a passphrase")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const alicePass = Passphrase{"alicealice"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto token = TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+  CHECK(token.has_value());
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice can use verifyIdentity when Ready to get a session token")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const aliceEmail = Email{"alice456.test@tanker.io"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+  auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  auto emailVerif = Unlock::EmailVerification{
+      aliceEmail, VerificationCode{aliceVerificationCode}};
+  TC_AWAIT(aliceSession->registerIdentity(emailVerif));
+  REQUIRE(aliceSession->status() == Status::Ready);
+
+  auto tokenNonce = "randomNonce";
+  aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  emailVerif = Unlock::EmailVerification{
+      aliceEmail, VerificationCode{aliceVerificationCode}};
+  TC_AWAIT(aliceSession->verifyIdentity(emailVerif, tokenNonce));
+  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
+  CHECK(!token.empty());
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can use setVerificationMethod to get a session token")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const aliceEmail = Email{"alice@wonder.land"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+  auto const passVerif = Passphrase("testpass");
+  TC_AWAIT(aliceSession->registerIdentity(passVerif));
+
+  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  auto const emailVerif = Unlock::EmailVerification{
+      aliceEmail, VerificationCode{aliceVerificationCode}};
+
+  auto tokenNonce = "randomNonce";
+  TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, tokenNonce));
+  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
+      CHECK(!token.empty());
+}

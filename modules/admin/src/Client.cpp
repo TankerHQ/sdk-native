@@ -150,7 +150,8 @@ tc::cotask<void> Client::deleteTrustchain(
 
 tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
                                std::optional<std::string_view> oidcClientId,
-                               std::optional<std::string_view> oidcProvider)
+                               std::optional<std::string_view> oidcProvider,
+                               std::optional<bool> enable2fa)
 {
   TINFO("updating trustchain {:#S}", trustchainId);
   // FIXME: is that still necesseray since we have in the url ?
@@ -159,6 +160,8 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
     body["oidc_client_id"] = *oidcClientId;
   if (oidcProvider)
     body["oidc_provider"] = *oidcProvider;
+  if (enable2fa.has_value())
+    body["session_certificates_enabled"] = *enable2fa;
   auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
   request.content(body.dump());
   request.set(authorization::bearer(_idToken));

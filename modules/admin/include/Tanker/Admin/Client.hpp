@@ -41,7 +41,8 @@ public:
                                    bool isTest);
   tc::cotask<App> update(Trustchain::TrustchainId const& trustchainId,
                          std::optional<std::string_view> oidcClientId,
-                         std::optional<std::string_view> oidcProvider);
+                         std::optional<std::string_view> oidcProvider,
+                         std::optional<bool> enable2fa);
   tc::cotask<void> deleteTrustchain(
       Trustchain::TrustchainId const& trustchainId);
 

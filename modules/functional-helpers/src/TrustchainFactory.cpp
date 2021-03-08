@@ -59,7 +59,14 @@ tc::cotask<void> TrustchainFactory::enableOidc(
     Tanker::Trustchain::TrustchainId const& id)
 {
   auto const& oidcConfig = TestConstants::oidcConfig();
-  TC_AWAIT(_admin->update(id, oidcConfig.clientId, oidcConfig.provider));
+  TC_AWAIT(_admin->update(
+      id, oidcConfig.clientId, oidcConfig.provider, std::nullopt));
+}
+
+tc::cotask<void> TrustchainFactory::enable2fa(
+    Tanker::Trustchain::TrustchainId const& id)
+{
+  TC_AWAIT(_admin->update(id, std::nullopt, std::nullopt, true));
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(

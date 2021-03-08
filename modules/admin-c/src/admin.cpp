@@ -107,6 +107,7 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
         TC_AWAIT(
             admin->update(mgs::base64::decode<Trustchain::TrustchainId>(appID),
                           oidcClientId,
-                          oidcProvider));
+                          oidcProvider,
+                          std::nullopt));
       }));
 }

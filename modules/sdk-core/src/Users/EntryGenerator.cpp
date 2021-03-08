@@ -22,8 +22,7 @@ Crypto::Hash verificationTargetHash(Unlock::Verification const& verification,
   if (auto const emailVerif =
           boost::variant2::get_if<Unlock::EmailVerification>(&verification))
   {
-    target = Crypto::generichash(
-        gsl::make_span(emailVerif->email).as_span<uint8_t const>());
+    target = Crypto::generichash(gsl::make_span(emailVerif->email).as_span<uint8_t const>());
   }
   else
   {
