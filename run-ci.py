@@ -81,8 +81,8 @@ def get_branch_name() -> Optional[str]:
 
 
 BENCHMARK_PROFILE_TO_BUILD_TARGET = {
-    "gcc8-release": "linux-x86_64",
-    "gcc8-release-shared": "linux-x86_64",
+    "linux-release": "linux-x86_64",
+    "linux-release-shared": "linux-x86_64",
 }
 
 
@@ -150,7 +150,7 @@ SIZE_PROFILE_TO_BUILD_TARGET = {
     "android-armv8-release": "android-armv8",
     "android-x86_64-release": "android-x86_64",
     "android-x86-release": "android-x86",
-    "gcc8-release-shared": "linux-x86_64",
+    "linux-release-shared": "linux-x86_64",
     "macos-release-shared": "macos-x86_64",
     "vs2019-release-shared": "windows-x86_64",
 }

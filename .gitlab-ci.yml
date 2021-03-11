@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 4b9ae23b9ee4d88488d645d4af71188c28c634e3
+  ref: 37bb68d38359db981eaec61aa6918075ff29d4e0
 
 ###############
 # build stage #
@@ -15,7 +15,7 @@ build/linux:
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release
 
 build/linux/shared:
   extends:
@@ -25,7 +25,7 @@ build/linux/shared:
     - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release-shared
 
 build/windows:
   extends:
@@ -65,7 +65,7 @@ build/android/shared:
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile gcc8-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
 
 build/android/static:
   extends:
@@ -93,7 +93,7 @@ nightly/benchmark:
     - .tags/linux
     - .rules/nightly
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-benchmark --profile gcc8-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-benchmark --profile linux-release-shared
 
 nightly/coverage:
   extends:
@@ -101,9 +101,9 @@ nightly/coverage:
     - .tags/linux
     - .rules/nightly
   script:
-    # Using gcc8-release profile, but CI script will force debug for Tanker only
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile gcc8-release --coverage
-    - mv build/gcc8-release/coverage coverage
+    # Using linux-release profile, but CI script will force debug for Tanker only
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release --coverage
+    - mv build/linux-release/coverage coverage
   artifacts:
     paths:
       - coverage/
@@ -278,7 +278,7 @@ check/compat:
   needs:
     - build/linux
   script:
-    - poetry run python compat/run-compat.py --profile gcc8-release
+    - poetry run python compat/run-compat.py --profile linux-release
 
 check/e2e:
   extends:
@@ -290,7 +290,7 @@ check/e2e:
   needs:
     - build/linux
   script:
-    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile gcc8-release
+    - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile linux-release
 
 ################
 # deploy stage #
