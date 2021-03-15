@@ -143,7 +143,7 @@ private:
       Unlock::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<VerificationKey> getVerificationKey(
-      Unlock::Verification const&,
+      Unlock::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);

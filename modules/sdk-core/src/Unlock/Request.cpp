@@ -43,7 +43,7 @@ Request makeRequest(Unlock::Verification const& verification,
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](Unlock::EmailVerification const& v) -> RequestVerification {
+          [&](Unlock::EmailVerification const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
@@ -57,15 +57,15 @@ Request makeRequest(Unlock::Verification const& verification,
             return EncryptedEmailVerification{
                 hashField(v.email), encryptedEmail, v.verificationCode};
           },
-          [](Passphrase const& p) -> RequestVerification {
+          [](Passphrase const& p) -> RequestVerificationMethods {
             checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
           },
-          [](VerificationKey const& v) -> RequestVerification {
+          [](VerificationKey const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.string(), "verificationKey");
             return v;
           },
-          [](OidcIdToken const& v) -> RequestVerification {
+          [](OidcIdToken const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.string(), "oidcIdToken");
             return v;
           },
@@ -73,13 +73,20 @@ Request makeRequest(Unlock::Verification const& verification,
       verification);
   return {verif, withTokenNonce};
 }
+
+void to_json(nlohmann::json& j, Tanker::Unlock::Request const& request)
+{
+  j = nlohmann::json(request.verification);
+  if (request.withTokenNonce.has_value())
+    j["with_token"] = {{"nonce", *request.withTokenNonce}};
+}
 }
 
 namespace nlohmann
 {
 template <>
-void adl_serializer<Tanker::Unlock::RequestVerification>::to_json(
-    json& j, Tanker::Unlock::RequestVerification const& request)
+void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
+    json& j, Tanker::Unlock::RequestVerificationMethods const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
@@ -97,14 +104,5 @@ void adl_serializer<Tanker::Unlock::RequestVerification>::to_json(
           [](VerificationKey const& v) {},
       },
       request);
-}
-
-template <>
-void adl_serializer<Tanker::Unlock::Request>::to_json(
-    json& j, Tanker::Unlock::Request const& request)
-{
-  j = json(request.verification);
-  if (request.withTokenNonce.has_value())
-    j["with_token"] = {{"nonce", *request.withTokenNonce}};
 }
 }

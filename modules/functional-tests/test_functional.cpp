@@ -907,6 +907,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto withToken = Core::VerifyWithToken::Yes;
   auto token = TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
   CHECK(token.has_value());
+  CHECK(mgs::base64::decode(*token).size() > 0);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

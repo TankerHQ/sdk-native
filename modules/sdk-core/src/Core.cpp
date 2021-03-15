@@ -840,8 +840,7 @@ std::optional<std::string> Core::makeWithTokenRandomNonce(
     return std::nullopt;
   std::array<uint8_t, 8> randombuf;
   Tanker::Crypto::randomFill(gsl::make_span(randombuf));
-  auto nonce = mgs::base16::encode(randombuf.begin(), randombuf.end());
-  return std::optional<std::string>(nonce);
+  return mgs::base16::encode(randombuf.begin(), randombuf.end());
 }
 
 tc::cotask<void> Core::confirmRevocation()

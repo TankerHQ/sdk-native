@@ -327,7 +327,8 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user, must not be NULL.
- * \return a future of NULL, or of a session token string if with_token is true
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
@@ -346,7 +347,8 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user. Must not be NULL.
- * \return a future of NULL, or of a session token string if with_token is true
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
@@ -409,7 +411,8 @@ CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
  * \param session a tanker tanker_t* instance
  * \param verification a instance of tanker_verification_t
  * \pre tanker_status == TANKER_STATUS_READY
- * \return a future of NULL, or of a session token string if with_token is true
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  */
 CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
     tanker_t* session,
