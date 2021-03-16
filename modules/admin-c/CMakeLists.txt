@@ -36,9 +36,7 @@ if (TANKERLIB_SHARED)
   endif()
 endif()
 
-if(TANKER_BUILD_WITH_SSL)
-  target_link_libraries(tanker_admin-c tankercacerts)
-endif()
+target_link_libraries(tanker_admin-c tankercacerts)
 
 tanker_link_libraries(tanker_admin-c
   tankeradmin

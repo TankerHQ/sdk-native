@@ -33,7 +33,6 @@ target_link_libraries(tankercacerts
   CONAN_PKG::libressl
 )
 
-target_compile_definitions(tankercacerts PUBLIC TANKER_BUILD_WITH_SSL)
 if(TANKER_EMBED_CERTIFICATES)
   target_compile_definitions(tankercacerts PUBLIC TANKER_EMBED_CERTIFICATES)
 endif()

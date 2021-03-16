@@ -2,7 +2,6 @@
 
 #include <Tanker/Log/Log.hpp>
 
-#if TANKER_BUILD_WITH_SSL
 #ifdef _WIN32
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -12,7 +11,6 @@
 
 #include <set>
 #include <vector>
-#endif
 #endif
 
 TLOG_CATEGORY("InitSsl");
