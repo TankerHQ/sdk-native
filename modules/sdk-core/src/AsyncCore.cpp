@@ -125,30 +125,19 @@ tc::future<Status> AsyncCore::start(std::string const& identity)
   });
 }
 
-tc::future<void> AsyncCore::registerIdentity(
-    Unlock::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::future<std::optional<std::string>> AsyncCore::registerIdentity(
+    Unlock::Verification const& verification, Core::VerifyWithToken withToken)
 {
-  return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.registerIdentity(verification, withTokenNonce));
+  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+    TC_RETURN(TC_AWAIT(this->_core.registerIdentity(verification, withToken)));
   });
 }
 
-tc::future<void> AsyncCore::verifyIdentity(
-    Unlock::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::future<std::optional<std::string>> AsyncCore::verifyIdentity(
+    Unlock::Verification const& verification, Core::VerifyWithToken withToken)
 {
-  return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.verifyIdentity(verification, withTokenNonce));
-  });
-}
-
-tc::future<std::string> AsyncCore::getSessionToken(
-    Unlock::Verification const& verification, std::string const& withTokenNonce)
-{
-  return runResumable([=]() -> tc::cotask<std::string> {
-    TC_RETURN(
-        TC_AWAIT(this->_core.getSessionToken(verification, withTokenNonce)));
+  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+    TC_RETURN(TC_AWAIT(this->_core.verifyIdentity(verification, withToken)));
   });
 }
 
@@ -239,12 +228,11 @@ tc::future<VerificationKey> AsyncCore::generateVerificationKey()
   });
 }
 
-tc::future<void> AsyncCore::setVerificationMethod(
-    Unlock::Verification const& method,
-    std::optional<std::string> const& withTokenNonce)
+tc::future<std::optional<std::string>> AsyncCore::setVerificationMethod(
+    Unlock::Verification const& method, Core::VerifyWithToken withToken)
 {
-  return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.setVerificationMethod(method, withTokenNonce));
+  return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
+    TC_RETURN(TC_AWAIT(this->_core.setVerificationMethod(method, withToken)));
   });
 }
 

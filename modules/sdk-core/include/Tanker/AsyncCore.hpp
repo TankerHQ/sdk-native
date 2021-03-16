@@ -56,12 +56,12 @@ public:
   tc::future<Status> start(std::string const& identity);
   tc::future<void> stop();
 
-  tc::future<void> registerIdentity(
+  tc::future<std::optional<std::string>> registerIdentity(
       Unlock::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce = std::nullopt);
-  tc::future<void> verifyIdentity(
+      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
+  tc::future<std::optional<std::string>> verifyIdentity(
       Unlock::Verification const& verification,
-      std::optional<std::string> const& withTokenNonce = std::nullopt);
+      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
 
   tc::future<std::string> getSessionToken(
       Unlock::Verification const& verification,
@@ -97,9 +97,9 @@ public:
 
   tc::future<VerificationKey> generateVerificationKey();
 
-  tc::future<void> setVerificationMethod(
+  tc::future<std::optional<std::string>> setVerificationMethod(
       Unlock::Verification const& method,
-      std::optional<std::string> const& withTokenNone = std::nullopt);
+      Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
   tc::future<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
 
   tc::future<AttachResult> attachProvisionalIdentity(

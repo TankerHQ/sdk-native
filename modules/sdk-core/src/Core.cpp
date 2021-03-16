@@ -35,6 +35,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
 #include <fetchpp/http/url.hpp>
+#include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
 
 #include <stdexcept>
@@ -290,17 +291,17 @@ tc::cotask<void> Core::registerIdentityImpl(
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
       Unlock::makeRequest(
-          verification, _session->userSecret(), std::move(withTokenNonce)),
+          verification, _session->userSecret(), withTokenNonce),
       encryptedVerificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
-tc::cotask<void> Core::registerIdentity(
-    Unlock::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<std::optional<std::string>> Core::registerIdentity(
+    Unlock::Verification const& verification, VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
         TC_AWAIT(registerIdentityImpl(verification, withTokenNonce));
@@ -310,6 +311,10 @@ tc::cotask<void> Core::registerIdentity(
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
        Errors::Errc::TooManyAttempts}));
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
 }
 
 tc::cotask<void> Core::verifyIdentityImpl(
@@ -354,16 +359,16 @@ tc::cotask<void> Core::verifyIdentityImpl(
   }
 }
 
-tc::cotask<void> Core::verifyIdentity(
-    Unlock::Verification const& verification,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<std::optional<std::string>> Core::verifyIdentity(
+    Unlock::Verification const& verification, VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
-  if (withTokenNonce.has_value())
+  if (withToken == VerifyWithToken::Yes)
     assertStatus({Status::IdentityVerificationNeeded, Status::Ready},
                  "verifyIdentity");
   else
     assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
         TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce));
@@ -373,6 +378,10 @@ tc::cotask<void> Core::verifyIdentity(
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
        Errors::Errc::TooManyAttempts}));
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
 }
 
 tc::cotask<std::string> Core::getSessionToken(
@@ -551,9 +560,8 @@ tc::cotask<void> Core::updateGroupMembers(
       localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
-tc::cotask<void> Core::setVerificationMethod(
-    Unlock::Verification const& method,
-    std::optional<std::string> const& withTokenNonce)
+tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
+    Unlock::Verification const& method, VerifyWithToken withToken)
 {
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
@@ -561,28 +569,31 @@ tc::cotask<void> Core::setVerificationMethod(
     throw formatEx(Errc::InvalidArgument,
                    "cannot call setVerificationMethod with a verification key");
   }
-  else
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
+
+  try
   {
-    try
-    {
-      TC_AWAIT(_session->requesters().setVerificationMethod(
-          _session->userId(),
-          Unlock::makeRequest(
-              method, _session->userSecret(), std::move(withTokenNonce))));
-    }
-    catch (Errors::Exception const& e)
-    {
-      if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
-      {
-        // the server does not send an error message
-        throw Errors::formatEx(Errc::PreconditionFailed,
-                               "Cannot call setVerificationMethod after a "
-                               "verification key has been used. {}",
-                               e.what());
-      }
-      throw;
-    }
+    TC_AWAIT(_session->requesters().setVerificationMethod(
+        _session->userId(),
+        Unlock::makeRequest(
+            method, _session->userSecret(), withTokenNonce)));
   }
+  catch (Errors::Exception const& e)
+  {
+    if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
+    {
+      // the server does not send an error message
+      throw Errors::formatEx(Errc::PreconditionFailed,
+                             "Cannot call setVerificationMethod after a "
+                             "verification key has been used. {}",
+                             e.what());
+    }
+    throw;
+  }
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(method, *withTokenNonce)));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
@@ -820,6 +831,17 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         spublicIdentitiesWithUs,
                         sgroupIds));
   TC_RETURN(sess);
+}
+
+std::optional<std::string> Core::makeWithTokenRandomNonce(
+    VerifyWithToken wanted)
+{
+  if (wanted == VerifyWithToken::No)
+    return std::nullopt;
+  std::array<uint8_t, 8> randombuf;
+  Tanker::Crypto::randomFill(gsl::make_span(randombuf));
+  auto nonce = mgs::base16::encode(randombuf.begin(), randombuf.end());
+  return std::optional<std::string>(nonce);
 }
 
 tc::cotask<void> Core::confirmRevocation()

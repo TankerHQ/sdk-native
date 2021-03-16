@@ -904,10 +904,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const emailVerif = Unlock::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
 
-  auto tokenNonce = "randomNonce";
-  TC_AWAIT(aliceSession->registerIdentity(emailVerif, tokenNonce));
-  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
-  CHECK(!token.empty());
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto token = TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
+  CHECK(token.has_value());
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -945,13 +944,12 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(aliceSession->registerIdentity(emailVerif));
   REQUIRE(aliceSession->status() == Status::Ready);
 
-  auto tokenNonce = "randomNonce";
+  auto withToken = Core::VerifyWithToken::Yes;
   aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
   emailVerif = Unlock::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
-  TC_AWAIT(aliceSession->verifyIdentity(emailVerif, tokenNonce));
-  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
-  CHECK(!token.empty());
+  auto token = TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken));
+  CHECK(token.has_value());
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -972,8 +970,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const emailVerif = Unlock::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
 
-  auto tokenNonce = "randomNonce";
-  TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, tokenNonce));
-  auto token = TC_AWAIT(aliceSession->getSessionToken(emailVerif, tokenNonce));
-      CHECK(!token.empty());
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto token =
+      TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken));
+  CHECK(token.has_value());
 }
