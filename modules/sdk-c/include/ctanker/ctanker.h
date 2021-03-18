@@ -180,7 +180,7 @@ struct tanker_verification_method
 struct tanker_verification_options
 {
   uint8_t version;
-  bool with_token;
+  bool with_session_token;
 };
 
 #define TANKER_VERIFICATION_OPTIONS_INIT \

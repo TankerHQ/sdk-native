@@ -124,7 +124,7 @@ Tanker::Core::VerifyWithToken withTokenFromVerifOptions(
                     1,
                     cverif_opts->version));
 
-  bool withToken = cverif_opts->with_token;
+  bool withToken = cverif_opts->with_session_token;
   return withToken ? VerifyWithToken::Yes : VerifyWithToken::No;
 }
 
