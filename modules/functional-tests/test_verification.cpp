@@ -11,9 +11,7 @@
 #include <Helpers/Errors.hpp>
 #include <Tanker/GhostDevice.hpp>
 
-#ifdef TANKER_BUILD_WITH_SSL
 #include <Tanker/Cacerts/InitSsl.hpp>
-#endif
 
 #include <mgs/base64url.hpp>
 
@@ -44,7 +42,6 @@ void checkVerificationMethods(std::vector<Unlock::VerificationMethod> actual,
     throw std::runtime_error("check failed: verification methods do not match");
 }
 
-#ifdef TANKER_BUILD_WITH_SSL
 tc::cotask<Tanker::Status> expectVerification(
     Functional::AsyncCorePtr session,
     std::string const& identity,
@@ -86,7 +83,6 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
 
   TC_RETURN(response.json().at("id_token").get<OidcIdToken>());
 }
-#endif
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
@@ -477,7 +473,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   }
 }
 
-#ifdef TANKER_BUILD_WITH_SSL
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 {
   TC_AWAIT(enableOidc());
@@ -593,4 +588,3 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     }
   }
 }
-#endif

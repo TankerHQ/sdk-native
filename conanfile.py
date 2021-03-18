@@ -9,7 +9,6 @@ class TankerConan(ConanFile):
     options = {
         "tankerlib_shared": [True, False],
         "fPIC": [True, False],
-        "with_ssl": [True, False],
         "with_tracer": [True, False],
         "warn_as_error": [True, False],
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
@@ -19,7 +18,6 @@ class TankerConan(ConanFile):
     default_options = {
         "tankerlib_shared": False,
         "fPIC": True,
-        "with_ssl": True,
         "with_tracer": False,
         "warn_as_error": False,
         "sanitizer": None,
@@ -89,11 +87,10 @@ class TankerConan(ConanFile):
         private = self.options.tankerlib_shared == True
 
         self.requires("boost/1.73.0", private=private)
-        if self.options.with_ssl:
-            self.requires("libressl/3.2.0", private=private)
-            self.requires("fetchpp/0.12.5")
-            self.requires("sqlpp11/0.59", private=private)
-            self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
+        self.requires("libressl/3.2.0", private=private)
+        self.requires("fetchpp/0.12.5")
+        self.requires("sqlpp11/0.59", private=private)
+        self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("fmt/7.0.2", private=private)
@@ -146,7 +143,6 @@ class TankerConan(ConanFile):
         self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
         self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tools
-        self.cmake.definitions["TANKER_BUILD_WITH_SSL"] = self.options.with_ssl
         if self.settings.os != "Windows":
             # On Android and iOS OpenSSL can't use system ca-certificates, so we
             # ship mozilla's cacert.pem instead on all platforms but windows
@@ -194,8 +190,7 @@ class TankerConan(ConanFile):
                     "tankerformat",
                 ]
             )
-            if self.options.with_ssl:
-                libs.append("tankercacerts")
+            libs.append("tankercacerts")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
@@ -203,7 +198,6 @@ class TankerConan(ConanFile):
 
         if (
             self.settings.os == "Windows"
-            and self.options.with_ssl
             and not self.options.tankerlib_shared
         ):
             libs.append("crypt32")

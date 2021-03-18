@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.4)
 
 project(TankerSDK-Core)
 
-option(TANKER_BUILD_WITH_SSL "Tanker uses ssl" ON)
-
 set(TANKER_CORE_DATASTORE_SRC
   include/Tanker/DataStore/Connection.hpp
   include/Tanker/DataStore/Database.hpp
@@ -206,10 +204,7 @@ target_link_libraries(tankercore
   CONAN_PKG::enum-flags
 )
 
-if(TANKER_BUILD_WITH_SSL)
-  target_link_libraries(tankercore tankercacerts)
-  target_compile_definitions(tankercore PUBLIC TANKER_BUILD_WITH_SSL)
-endif()
+target_link_libraries(tankercore tankercacerts)
 
 target_link_libraries(tankercore
   CONAN_PKG::sqlpp11-connector-sqlite3
