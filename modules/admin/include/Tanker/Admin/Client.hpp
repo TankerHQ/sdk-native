@@ -26,6 +26,13 @@ struct App
   std::optional<std::string> oidcClientId;
 };
 
+struct AppUpdateOptions
+{
+  std::optional<std::string> oidcProvider;
+  std::optional<std::string> oidcClientId;
+  std::optional<bool> sessionCertificates;
+};
+
 void from_json(nlohmann::json const& j, App& app);
 
 class Client
@@ -40,9 +47,7 @@ public:
                                    Crypto::SignatureKeyPair const& keypair,
                                    bool isTest);
   tc::cotask<App> update(Trustchain::TrustchainId const& trustchainId,
-                         std::optional<std::string_view> oidcClientId,
-                         std::optional<std::string_view> oidcProvider,
-                         std::optional<bool> enable2fa);
+                         AppUpdateOptions const& options);
   tc::cotask<void> deleteTrustchain(
       Trustchain::TrustchainId const& trustchainId);
 

@@ -5,6 +5,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Crypto/Init.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <fmt/format.h>
@@ -13,6 +14,7 @@
 #include <ctanker/private/Utils.hpp>
 
 using namespace Tanker;
+using namespace Tanker::Errors;
 
 tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
 {
@@ -96,18 +98,27 @@ tanker_future_t* tanker_get_verification_code(char const* url,
 
 tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
                                          char const* app_id,
-                                         char const* oidc_client_id,
-                                         char const* oidc_provier)
+                                         tanker_app_update_options_t* coptions)
 {
-  return makeFuture(tc::async_resumable(
-      [admin = reinterpret_cast<Admin::Client*>(admin),
-       appID = std::string(app_id),
-       oidcClientId = std::string(oidc_client_id),
-       oidcProvider = std::string(oidc_provier)]() -> tc::cotask<void> {
-        TC_AWAIT(
-            admin->update(mgs::base64::decode<Trustchain::TrustchainId>(appID),
-                          oidcClientId,
-                          oidcProvider,
-                          std::nullopt));
+  if (coptions->version != 1)
+    throw Exception(
+        make_error_code(Errc::InvalidArgument),
+        fmt::format("options version should be {:d} instead of {:d}",
+                    1,
+                    coptions->version));
+
+  Admin::AppUpdateOptions appOptions{};
+  if (coptions->oidc_client_id)
+    appOptions.oidcClientId = coptions->oidc_client_id;
+  if (coptions->oidc_client_provider)
+    appOptions.oidcProvider = coptions->oidc_client_provider;
+  if (coptions->session_certificates)
+    appOptions.sessionCertificates = *coptions->session_certificates;
+  return makeFuture(
+      tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
+                           appID = std::string(app_id),
+                           appOptions]() -> tc::cotask<void> {
+        TC_AWAIT(admin->update(
+            mgs::base64::decode<Trustchain::TrustchainId>(appID), appOptions));
       }));
 }
