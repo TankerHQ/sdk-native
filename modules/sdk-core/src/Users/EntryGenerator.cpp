@@ -1,7 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
-#include <boost/date_time.hpp>
+#include <date/date.h>
 
 namespace Tanker::Users
 {
@@ -22,7 +22,8 @@ Crypto::Hash verificationTargetHash(Unlock::Verification const& verification,
   if (auto const emailVerif =
           boost::variant2::get_if<Unlock::EmailVerification>(&verification))
   {
-    target = Crypto::generichash(gsl::make_span(emailVerif->email).as_span<uint8_t const>());
+    target = Crypto::generichash(
+        gsl::make_span(emailVerif->email).as_span<uint8_t const>());
   }
   else
   {
@@ -61,19 +62,14 @@ uint64_t secondsSinceEpoch()
   // "unix timestamps" are still considered a downright esoteric idea,
   // so naturally time_since_epoch uses an implementation-defined
   // epoch before C++20, which makes its return value unpredictable.
-  // Instead, we use Boost date_time, which is theoretically usable.
-  namespace posix_time = boost::posix_time;
+  // Instead, we use date.h, which is theoretically usable.
+  using namespace std::chrono;
 
-  // Whatever the system clock says. This just calls gettimeofday() on Linux
-  auto localTime = boost::posix_time::microsec_clock::local_time();
+  auto localTime = time_point_cast<std::chrono::seconds>(system_clock::now());
+  auto dateSeconds = date::sys_seconds{localTime};
 
-  // There is no timestamp function in Boost, so substract the epoch manually
-  auto epoch = boost::posix_time::from_time_t(0);
-  posix_time::time_duration timeSinceEpoch = localTime - epoch;
-
-  // The total_seconds() function does not return a 64bit type, workaround...
-  auto timestampTicks = static_cast<uint64_t>(timeSinceEpoch.ticks());
-  return timestampTicks / posix_time::time_duration::ticks_per_second();
+  // date::sys_seconds documents that its epoch is the unix epoch everywhere
+  return dateSeconds.time_since_epoch().count();
 }
 }
 
