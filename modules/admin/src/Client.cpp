@@ -152,7 +152,6 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
                                AppUpdateOptions const& options)
 {
   TINFO("updating trustchain {:#S}", trustchainId);
-  // FIXME: is that still necesseray since we have in the url ?
   auto body = nlohmann::json{};
   if (options.oidcClientId)
     body["oidc_client_id"] = *options.oidcClientId;

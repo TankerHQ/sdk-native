@@ -12,17 +12,26 @@
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
+#include <Tanker/Crypto/Format/Format.hpp>
+
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <doctest/doctest.h>
 
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/WaitFor.hpp>
 
 #include "CheckDecrypt.hpp"
 
 #include <boost/scope_exit.hpp>
+
+#include <fetchpp/fetch.hpp>
+#include <fetchpp/http/authorization.hpp>
+#include <fetchpp/http/request.hpp>
+
+#include <tconcurrent/asio_use_future.hpp>
 
 using namespace std::string_literals;
 
@@ -50,6 +59,49 @@ auto make_clear_data(std::initializer_list<std::string> clearText)
                  std::back_inserter(clearDatas),
                  [](auto&& clear) { return make_buffer(clear); });
   return clearDatas;
+}
+
+tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
+                                          std::string const& authToken,
+                                          std::string const& publicIdentity,
+                                          std::string const& sessionToken,
+                                          nlohmann::json const& allowedMethods)
+{
+  using namespace fetchpp::http;
+  auto const body = nlohmann::json({{"app_id", mgs::base64::encode(appId)},
+                                    {"auth_token", authToken},
+                                    {"public_identity", publicIdentity},
+                                    {"session_token", sessionToken},
+                                    {"allowed_methods", allowedMethods}});
+  auto endpoint =
+      fmt::format("/v2/apps/{:#S}/verification/session-token", appId);
+  auto req =
+      fetchpp::http::request(verb::post,
+                             url("/verification/session-token",
+                                 url(Tanker::TestConstants::trustchaindUrl())));
+  req.content(body.dump());
+  req.set(field::accept, "application/json");
+  auto const response = TC_AWAIT(fetchpp::async_fetch(
+      tc::get_default_executor().get_io_service().get_executor(),
+      std::move(req),
+      tc::asio::use_future));
+  if (response.result() != status::ok)
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "Failed to check session token");
+  TC_RETURN(response.json().at("verification_method").get<std::string>());
+}
+
+tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
+                                          std::string const& authToken,
+                                          std::string const& publicIdentity,
+                                          std::string const& sessionToken,
+                                          std::string const& allowedMethod)
+{
+  return checkSessionToken(appId,
+                           authToken,
+                           publicIdentity,
+                           sessionToken,
+                           {{{"type", allowedMethod}}});
 }
 }
 
@@ -975,4 +1027,111 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto token =
       TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken));
   CHECK(token.has_value());
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Can check a session token with the REST API")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const alicePass = Passphrase{"alicealice"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto sessionToken =
+      TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+
+  std::string expectedMethod = "passphrase";
+  auto method = TC_AWAIT(checkSessionToken(trustchain.id,
+                                           trustchain.authToken,
+                                           alice.spublicIdentity().string(),
+                                           *sessionToken,
+                                           expectedMethod));
+  CHECK(method == expectedMethod);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Fails to check a session token with the wrong method")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const alicePass = Passphrase{"alicealice"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto sessionToken =
+      TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+
+  std::string wrongMethod = "oidc_id_token";
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(checkSessionToken(trustchain.id,
+                                 trustchain.authToken,
+                                 alice.spublicIdentity().string(),
+                                 *sessionToken,
+                                 wrongMethod)),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Fails to check an invalid session token")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const alicePass = Passphrase{"alicealice"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+  std::string sessionToken = "This ain't a valid token";
+
+  std::string verifMethod = "passphrase";
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(checkSessionToken(trustchain.id,
+                                 trustchain.authToken,
+                                 alice.spublicIdentity().string(),
+                                 sessionToken,
+                                 verifMethod)),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Can check a session token with multiple allowed methods")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const aliceEmail = Email{"aaalice@tanker.io"};
+  auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  auto const emailVerif =
+      Unlock::EmailVerification{aliceEmail, VerificationCode{verificationCode}};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto sessionToken =
+      TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
+
+  nlohmann::json expectedMethods = {
+      {{"type", "passphrase"}},
+      {{"type", "email"}, {"email", aliceEmail.string()}},
+  };
+  auto method = TC_AWAIT(checkSessionToken(trustchain.id,
+                                           trustchain.authToken,
+                                           alice.spublicIdentity().string(),
+                                           *sessionToken,
+                                           expectedMethods));
+  CHECK(method == "email");
 }
