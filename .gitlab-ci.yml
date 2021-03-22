@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 37bb68d38359db981eaec61aa6918075ff29d4e0
+  ref: cc820822bc646de30fd3f2f01304ea4a6f23b72d
 
 ###############
 # build stage #
@@ -11,7 +11,7 @@ build/linux:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/auto
+    - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -21,7 +21,7 @@ build/linux/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto
+    - .rules/mr/manual/web/auto/nightly
     - .before-script/bump-files-on-release/bash
     - .build-artifacts
   script:
@@ -31,7 +31,7 @@ build/windows:
   extends:
     - .build
     - .tags/windows
-    - .rules/mr/auto
+    - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
   script:
@@ -41,7 +41,7 @@ build/macos:
   extends:
     - .build
     - .tags/macos
-    - .rules/mr/auto
+    - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -51,7 +51,7 @@ build/macos/shared:
   extends:
     - .build
     - .tags/macos
-    - .rules/mr/manual/web/auto
+    - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -61,7 +61,7 @@ build/android/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto
+    - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -71,7 +71,7 @@ build/android/static:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto
+    - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -81,7 +81,7 @@ build/ios:
   extends:
     - .build
     - .tags/macos
-    - .rules/mr/manual/web/auto
+    - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
   script:
@@ -273,7 +273,7 @@ check/compat:
   extends:
     - .check
     - .tags/linux
-    - .rules/mr/auto
+    - .rules/mr/auto/nightly
     - .before-script/bump-files-on-release/bash
   needs:
     - build/linux
@@ -284,7 +284,7 @@ check/e2e:
   extends:
     - .check
     - .tags/linux
-    - .rules/mr/auto
+    - .rules/mr/auto/nightly
     - .before-script/bump-files-on-release/bash
   image: registry.gitlab.com/tankerhq/docker/e2e:latest
   needs:
