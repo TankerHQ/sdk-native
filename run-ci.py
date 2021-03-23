@@ -180,12 +180,14 @@ def report_size(profile: str, build_path: Path) -> None:
             "install/strip",
             env={**os.environ, "DESTDIR": temp_path},
         )
+        package_path = Path.cwd() / "package" / profile
+        package_path_relative = package_path.relative_to("/")
         if "vs2019" in profile:
-            lib_path = temp_path / build_path / "bin/ctanker.dll"
+            lib_path = temp_path / package_path_relative / "bin/ctanker.dll"
         elif "macos" in profile:
-            lib_path = temp_path / build_path / "lib/libctanker.dylib"
+            lib_path = temp_path / package_path_relative / "lib/libctanker.dylib"
         else:
-            lib_path = temp_path / build_path / "lib/libctanker.so"
+            lib_path = temp_path / package_path_relative / "lib/libctanker.so"
         size = lib_path.stat().st_size
         tankerci.reporting.send_metric(
             "benchmark",
