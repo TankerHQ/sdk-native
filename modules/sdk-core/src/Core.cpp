@@ -290,8 +290,7 @@ tc::cotask<void> Core::registerIdentityImpl(
       _session->userId(),
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
-      Unlock::makeRequest(
-          verification, _session->userSecret(), withTokenNonce),
+      Unlock::makeRequest(verification, _session->userSecret(), withTokenNonce),
       encryptedVerificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
@@ -301,6 +300,12 @@ tc::cotask<std::optional<std::string>> Core::registerIdentity(
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
+  if (withToken == VerifyWithToken::Yes &&
+      boost::variant2::holds_alternative<VerificationKey>(verification))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot get a session token with a verification key");
+  }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
@@ -364,10 +369,19 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(
 {
   FUNC_TIMER(Proc);
   if (withToken == VerifyWithToken::Yes)
+  {
     assertStatus({Status::IdentityVerificationNeeded, Status::Ready},
                  "verifyIdentity");
+    if (boost::variant2::holds_alternative<VerificationKey>(verification))
+    {
+      throw formatEx(Errc::InvalidArgument,
+                     "cannot get a session token with a verification key");
+    }
+  }
   else
+  {
     assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
@@ -575,8 +589,7 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
   {
     TC_AWAIT(_session->requesters().setVerificationMethod(
         _session->userId(),
-        Unlock::makeRequest(
-            method, _session->userSecret(), withTokenNonce)));
+        Unlock::makeRequest(method, _session->userSecret(), withTokenNonce)));
   }
   catch (Errors::Exception const& e)
   {

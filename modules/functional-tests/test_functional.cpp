@@ -1030,6 +1030,25 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Cannot get a session token with a verification key")
+{
+  TC_AWAIT(enable2fa());
+
+  auto const aliceEmail = Email{"alice@wonder.land"};
+  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceSession =
+      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  TC_AWAIT(aliceSession->start(alice.identity));
+
+  auto withToken = Core::VerifyWithToken::Yes;
+  auto verificationKey = TC_AWAIT(aliceSession->generateVerificationKey());
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->registerIdentity(verificationKey, withToken)),
+      Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Can check a session token with the REST API")
 {
   TC_AWAIT(enable2fa());
