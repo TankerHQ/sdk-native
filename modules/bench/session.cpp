@@ -179,3 +179,36 @@ static void verifyIdentity_passphrase(benchmark::State& state)
 BENCHMARK(verifyIdentity_passphrase)
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
+
+// What: starts and verifies an identity with a passphrase and asks for a
+// session token
+// PreCond: an identity was registered with another device
+// PostCond: the session is open and we have a session token
+static void verifyIdentity_passphrase_withToken(benchmark::State& state)
+{
+  auto& tr = getTrustchain();
+  auto alice = tr.makeUser(UserType::New);
+  auto device = alice.makeDevice();
+  auto core = device.createCore(SessionType::New);
+  AWAIT_VOID(core->start(device.identity()));
+  AWAIT_VOID(core->registerIdentity(Tanker::Passphrase{"passphrase"}));
+  AWAIT_VOID(core->stop());
+  tc::async_resumable([&]() -> tc::cotask<void> {
+    for (auto _ : state)
+    {
+      state.PauseTiming();
+      auto device2 = alice.makeDevice();
+      auto core2 = device2.createCore(SessionType::New);
+      state.ResumeTiming();
+      TC_AWAIT(core2->start(alice.identity));
+      TC_AWAIT(core2->verifyIdentity(Tanker::Passphrase{"passphrase"},
+                                     Tanker::Core::VerifyWithToken::Yes));
+      state.PauseTiming();
+      core2.reset();
+      state.ResumeTiming();
+    }
+  }).get();
+}
+BENCHMARK(verifyIdentity_passphrase_withToken)
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
