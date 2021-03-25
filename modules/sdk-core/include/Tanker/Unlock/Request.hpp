@@ -11,6 +11,7 @@
 
 #include <tuple>
 #include <vector>
+#include <optional>
 
 namespace Tanker::Unlock
 {
