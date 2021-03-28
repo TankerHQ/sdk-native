@@ -1,6 +1,7 @@
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
@@ -256,6 +257,35 @@ TEST_SUITE("Groups")
     std::string decrypted;
     REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
     CHECK(decrypted == clearData);
+  }
+
+  TEST_CASE_FIXTURE(TrustchainFixture,
+                    "Creates a group with mixed identities and a missing")
+  {
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+    auto const charlie = trustchain.makeUser(Functional::UserType::New);
+
+    /// This a provisional identity we tried to put in first place in the member
+    /// list to check that the error reporting message is accurate.
+    auto const brokenFmtId =
+        R"json({{"target":"email","trustchain_id":"{:s}","value":"bob@tanker.io","public_encryption_key":"wpDs8fba4xcsDWmZvfxkPEY9E2St+P7LFNb0fSQT83I=","public_signature_key":"n6Iimfg/35a8AbIMMLHwzfSY83tYKdVGiQEN0XwCluw="}})json";
+    auto const brokenId = SPublicIdentity{
+        mgs::base64::encode(fmt::format(brokenFmtId, trustchain.id))};
+    try
+    {
+      TC_AWAIT(
+          aliceSession->createGroup({brokenId, charlie.spublicIdentity()}));
+      CHECK(false);
+    }
+    catch (Tanker::Errors::Exception const& e)
+    {
+      auto const what = std::string_view(e.what());
+      CHECK(what.find(charlie.spublicIdentity().string()) !=
+            std::string_view::npos);
+    }
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture,

@@ -43,4 +43,31 @@ PartitionedIdentities partitionIdentities(
   }
   return out;
 }
+
+std::vector<SPublicIdentity> mapIdentitiesToStrings(
+    std::vector<Trustchain::UserId> const& errorIds,
+    std::vector<SPublicIdentity> const& sIds,
+    std::vector<Identity::PublicIdentity> const& ids)
+
+{
+  std::vector<SPublicIdentity> clearIds;
+  clearIds.reserve(ids.size());
+  for (auto const& errorId : errorIds)
+  {
+    using boost::variant2::get_if;
+    auto const idsIt =
+        std::find_if(ids.begin(), ids.end(), [&](auto const& id) {
+          if (auto const permId =
+                  get_if<Identity::PublicPermanentIdentity>(&id))
+            return permId->userId == errorId;
+          return false;
+        });
+
+    if (idsIt == ids.end())
+      throw Errors::AssertionError("identities not found");
+
+    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
+  }
+  return clearIds;
+}
 }
