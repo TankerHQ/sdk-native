@@ -2,7 +2,6 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
-#include <iostream>
 
 #include <mgs/base64.hpp>
 #include <mgs/codecs/concepts/codec.hpp>
