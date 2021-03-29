@@ -37,7 +37,7 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
     auto const notFoundIdentities = mapIdentitiesToStrings(
         memberUsers.notFound, spublicIdentities, publicIdentities);
     throw formatEx(Errc::InvalidArgument,
-                   "unknown users: {:s}",
+                   "public identities not found: {:s}",
                    fmt::join(notFoundIdentities, ", "));
   }
   auto const memberProvisionalUsers = TC_AWAIT(
