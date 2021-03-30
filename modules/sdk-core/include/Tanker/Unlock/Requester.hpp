@@ -38,6 +38,11 @@ public:
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::UserId const& userId) override;
 
+  tc::cotask<std::string> getSessionToken(
+      Trustchain::UserId const& userId,
+      gsl::span<uint8_t const> sessionCertificate,
+      std::string nonce) override;
+
   tc::cotask<void> createUser(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

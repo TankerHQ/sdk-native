@@ -31,6 +31,7 @@ std::string to_string(Nature n)
     NATURE_CASE(UserGroupAddition2);
     NATURE_CASE(UserGroupCreation3);
     NATURE_CASE(UserGroupAddition3);
+    NATURE_CASE(SessionCertificate);
   }
   return "INVALID";
 }

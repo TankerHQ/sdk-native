@@ -52,6 +52,7 @@ typedef struct tanker_options tanker_options_t;
 typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_verification tanker_verification_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
+typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
 typedef struct tanker_sharing_options tanker_sharing_options_t;
 typedef struct tanker_log_record tanker_log_record_t;
@@ -174,6 +175,17 @@ struct tanker_verification_method
 #define TANKER_VERIFICATION_METHOD_INIT \
   {                                     \
     1, 0, NULL                          \
+  }
+
+struct tanker_verification_options
+{
+  uint8_t version;
+  bool with_session_token;
+};
+
+#define TANKER_VERIFICATION_OPTIONS_INIT \
+  {                                      \
+    1, false                             \
   }
 
 struct tanker_encrypt_options
@@ -315,7 +327,8 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user, must not be NULL.
- * \return a future of NULL
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
@@ -324,7 +337,9 @@ CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
 CTANKER_EXPORT tanker_future_t* tanker_register_identity(
-    tanker_t* tanker, tanker_verification_t const* verification);
+    tanker_t* tanker,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Verify an identity with provided verification.
@@ -332,7 +347,8 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(
  * \param tanker a tanker tanker_t* instance.
  * \param verification the verification methods to set up for the
  * user. Must not be NULL.
- * \return a future of NULL
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  * \throws TANKER_ERROR_INVALID_VERIFICATION_KEY unlock key is incorrect
  * \throws TANKER_ERROR_INVALID_VERIFICATION_CODE verification code is incorrect
  * \throws TANKER_ERROR_INVALID_UNLOCK_PASSWORD passphrase is incorrect
@@ -341,7 +357,9 @@ CTANKER_EXPORT tanker_future_t* tanker_register_identity(
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
 CTANKER_EXPORT tanker_future_t* tanker_verify_identity(
-    tanker_t* tanker, tanker_verification_t const* verification);
+    tanker_t* tanker,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Close a tanker session.
@@ -393,10 +411,13 @@ CTANKER_EXPORT tanker_future_t* tanker_generate_verification_key(
  * \param session a tanker tanker_t* instance
  * \param verification a instance of tanker_verification_t
  * \pre tanker_status == TANKER_STATUS_READY
- * \return a future to void
+ * \return a future of NULL if with_session_token is false, otherwise a
+ * session token string that must be freed with tanker_free_buffer.
  */
 CTANKER_EXPORT tanker_future_t* tanker_set_verification_method(
-    tanker_t* session, tanker_verification_t const* verification);
+    tanker_t* session,
+    tanker_verification_t const* verification,
+    tanker_verification_options_t const* cverif_opts);
 
 /*!
  * Return all registered verification methods for the current user.

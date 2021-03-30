@@ -37,6 +37,12 @@ public:
     Yes,
   };
 
+  enum class VerifyWithToken : bool
+  {
+    No,
+    Yes,
+  };
+
   // There are hidden casts of this enum, so grep them if you change the enum
   static_assert(static_cast<int>(ShareWithSelf::No) == 0);
   static_assert(static_cast<int>(ShareWithSelf::Yes) == 1);
@@ -47,8 +53,10 @@ public:
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
-  tc::cotask<void> registerIdentity(Unlock::Verification const& verification);
-  tc::cotask<void> verifyIdentity(Unlock::Verification const& verification);
+  tc::cotask<std::optional<std::string>> registerIdentity(
+      Unlock::Verification const& verification, VerifyWithToken withToken);
+  tc::cotask<std::optional<std::string>> verifyIdentity(
+      Unlock::Verification const& verification, VerifyWithToken withToken);
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
@@ -79,7 +87,8 @@ public:
       SGroupId const& groupIdString,
       std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
 
-  tc::cotask<void> setVerificationMethod(Unlock::Verification const& method);
+  tc::cotask<std::optional<std::string>> setVerificationMethod(
+      Unlock::Verification const& method, VerifyWithToken withToken);
   tc::cotask<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
   tc::cotask<VerificationKey> generateVerificationKey() const;
 
@@ -124,16 +133,29 @@ public:
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
   tc::cotask<void> registerIdentityImpl(
-      Unlock::Verification const& verification);
-  tc::cotask<void> verifyIdentityImpl(Unlock::Verification const& verification);
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<void> verifyIdentityImpl(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
-      Unlock::Verification const& verification);
-  tc::cotask<VerificationKey> getVerificationKey(Unlock::Verification const&);
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
+  tc::cotask<VerificationKey> getVerificationKey(
+      Unlock::Verification const& verification,
+      std::optional<std::string> const& withTokenNonce);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
 
+  std::optional<std::string> makeWithTokenRandomNonce(VerifyWithToken wanted);
+  tc::cotask<std::string> getSessionToken(
+      Unlock::Verification const& verification,
+      std::string const& withTokenNonce);
+
   void assertStatus(Status wanted, std::string const& string) const;
+  void assertStatus(std::initializer_list<Status> wanted,
+                    std::string const& action) const;
   void reset();
   template <typename F>
   decltype(std::declval<F>()()) resetOnFailure(

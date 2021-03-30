@@ -27,6 +27,11 @@ public:
   virtual tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods(Trustchain::UserId const& userId) = 0;
 
+  virtual tc::cotask<std::string> getSessionToken(
+      Trustchain::UserId const& userId,
+      gsl::span<uint8_t const> sessionCertificate,
+      std::string nonce) = 0;
+
   virtual tc::cotask<void> createUser(
       Trustchain::TrustchainId const& trustchainId,
       Trustchain::UserId const& userId,

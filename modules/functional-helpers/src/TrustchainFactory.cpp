@@ -59,7 +59,18 @@ tc::cotask<void> TrustchainFactory::enableOidc(
     Tanker::Trustchain::TrustchainId const& id)
 {
   auto const& oidcConfig = TestConstants::oidcConfig();
-  TC_AWAIT(_admin->update(id, oidcConfig.clientId, oidcConfig.provider));
+  Admin::AppUpdateOptions options{};
+  options.oidcClientId = oidcConfig.clientId;
+  options.oidcProvider = oidcConfig.provider;
+  TC_AWAIT(_admin->update(id, options));
+}
+
+tc::cotask<void> TrustchainFactory::enable2fa(
+    Tanker::Trustchain::TrustchainId const& id)
+{
+  Admin::AppUpdateOptions options{};
+  options.sessionCertificates = true;
+  TC_AWAIT(_admin->update(id, options));
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(

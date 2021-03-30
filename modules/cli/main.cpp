@@ -14,6 +14,7 @@
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
+#include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
@@ -84,7 +85,8 @@ using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
                                            Actions::KeyPublishToUser,
                                            Actions::KeyPublishToUserGroup,
                                            Actions::KeyPublishToProvisionalUser,
-                                           Actions::ProvisionalIdentityClaim>;
+                                           Actions::ProvisionalIdentityClaim,
+                                           Actions::SessionCertificate>;
 
 CliAction deserializeAction(gsl::span<std::uint8_t const> block)
 {
@@ -133,6 +135,8 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<KeyPublishToProvisionalUser>(block);
   case Nature::ProvisionalIdentityClaim:
     return Serialization::deserialize<ProvisionalIdentityClaim>(block);
+  case Nature::SessionCertificate:
+    return Serialization::deserialize<SessionCertificate>(block);
   }
   throw std::runtime_error(
       fmt::format(FMT_STRING("unknown nature: {}"), static_cast<int>(nature)));

@@ -1,5 +1,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
+#include <date/date.h>
 
 namespace Tanker::Users
 {
@@ -10,6 +12,66 @@ using Trustchain::Actions::DeviceCreation3;
 using Trustchain::Actions::DeviceRevocation;
 using Trustchain::Actions::DeviceRevocation1;
 using Trustchain::Actions::DeviceRevocation2;
+
+namespace
+{
+Crypto::Hash verificationTargetHash(Unlock::Verification const& verification,
+                                    DeviceId const& deviceId)
+{
+  Crypto::Hash target;
+  if (auto const emailVerif =
+          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
+  {
+    target = Crypto::generichash(
+        gsl::make_span(emailVerif->email).as_span<uint8_t const>());
+  }
+  else
+  {
+    target.fill(0);
+  }
+  return target;
+}
+
+Trustchain::Actions::VerificationMethodType verificationMethodType(
+    Unlock::Verification const& verification)
+{
+  using Trustchain::Actions::VerificationMethodType;
+  return boost::variant2::visit(
+      overloaded{
+          [](Unlock::EmailVerification const& v) -> VerificationMethodType {
+            return VerificationMethodType::Email;
+          },
+          [](Passphrase const& p) -> VerificationMethodType {
+            return VerificationMethodType::Passphrase;
+          },
+          [](VerificationKey const& v) -> VerificationMethodType {
+            return VerificationMethodType::VerificationKey;
+          },
+          [](OidcIdToken const& v) -> VerificationMethodType {
+            return VerificationMethodType::OidcIdToken;
+          },
+      },
+      verification);
+}
+
+uint64_t secondsSinceEpoch()
+{
+  // LEGACY:
+  // While C++ provides a `time_since_epoch` function, unlike other advanced
+  // concepts such as "files and folders" introduced relatively early (C++17),
+  // "unix timestamps" are still considered a downright esoteric idea,
+  // so naturally time_since_epoch uses an implementation-defined
+  // epoch before C++20, which makes its return value unpredictable.
+  // Instead, we use date.h, which is theoretically usable.
+  using namespace std::chrono;
+
+  auto localTime = time_point_cast<std::chrono::seconds>(system_clock::now());
+  auto dateSeconds = date::sys_seconds{localTime};
+
+  // date::sys_seconds documents that its epoch is the unix epoch everywhere
+  return dateSeconds.time_since_epoch().count();
+}
+}
 
 namespace
 {
@@ -142,6 +204,25 @@ DeviceRevocation1 createRevokeDeviceV1Action(
       static_cast<Crypto::Hash>(author),
       signatureKey,
   };
+}
+
+Actions::SessionCertificate createSessionCertificate(
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Unlock::Verification const& verification,
+    Crypto::PrivateSignatureKey const& signatureKey)
+{
+  auto verifTarget = verificationTargetHash(verification, deviceId);
+  auto methodType = verificationMethodType(verification);
+  auto const sessionSignatureKeyPair = Crypto::makeSignatureKeyPair();
+
+  return Actions::SessionCertificate(trustchainId,
+                                     sessionSignatureKeyPair.publicKey,
+                                     secondsSinceEpoch(),
+                                     methodType,
+                                     verifTarget,
+                                     static_cast<Crypto::Hash>(deviceId),
+                                     signatureKey);
 }
 
 Actions::ProvisionalIdentityClaim createProvisionalIdentityClaimAction(

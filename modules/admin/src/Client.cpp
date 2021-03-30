@@ -149,16 +149,16 @@ tc::cotask<void> Client::deleteTrustchain(
 }
 
 tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
-                               std::optional<std::string_view> oidcClientId,
-                               std::optional<std::string_view> oidcProvider)
+                               AppUpdateOptions const& options)
 {
   TINFO("updating trustchain {:#S}", trustchainId);
-  // FIXME: is that still necesseray since we have in the url ?
   auto body = nlohmann::json{};
-  if (oidcClientId)
-    body["oidc_client_id"] = *oidcClientId;
-  if (oidcProvider)
-    body["oidc_provider"] = *oidcProvider;
+  if (options.oidcClientId)
+    body["oidc_client_id"] = *options.oidcClientId;
+  if (options.oidcProvider)
+    body["oidc_provider"] = *options.oidcProvider;
+  if (options.sessionCertificates)
+    body["session_certificates_enabled"] = *options.sessionCertificates;
   auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
   request.content(body.dump());
   request.set(authorization::bearer(_idToken));

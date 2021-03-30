@@ -54,7 +54,7 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
   verification.passphrase = "passphrase";
 
   future_get(tanker_start(tanker, identity));
-  future_get(tanker_register_identity(tanker, &verification));
+  future_get(tanker_register_identity(tanker, &verification, NULL));
   future_get(tanker_stop(tanker));
 
   tanker_free_buffer(identity);

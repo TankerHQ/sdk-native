@@ -17,6 +17,19 @@ typedef struct tanker_app_descriptor
   char const* public_key;
 } tanker_app_descriptor_t;
 
+typedef struct tanker_app_update_options
+{
+  uint8_t version;
+  char const* oidc_client_id;
+  char const* oidc_client_provider;
+  bool const* session_certificates;
+} tanker_app_update_options_t;
+
+#define TANKER_APP_UPDATE_OPTIONS_INIT \
+  {                                    \
+    1, NULL, NULL, NULL                \
+  }
+
 typedef struct tanker_admin tanker_admin_t;
 
 /*!
@@ -70,13 +83,13 @@ TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_verification_code(
     char const* user_email);
 
 /*!
- * Updates app properties
+ * Updates app properties.
+ * All fields in options may be left NULL individually.
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_app_update(
     tanker_admin_t* admin,
     char const* app_id,
-    char const* oidc_client_id,
-    char const* oidc_client_provider);
+    tanker_app_update_options_t* options);
 
 #ifdef __cplusplus
 }

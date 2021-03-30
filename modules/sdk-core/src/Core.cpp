@@ -23,6 +23,7 @@
 #include <Tanker/Streams/DecryptionStream.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
+#include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
@@ -34,6 +35,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
 #include <fetchpp/http/url.hpp>
+#include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
 
 #include <stdexcept>
@@ -85,11 +87,21 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
 
 void Core::assertStatus(Status wanted, std::string const& action) const
 {
-  if (auto const s = status(); s != wanted)
-    throw Errors::formatEx(Errors::Errc::PreconditionFailed,
-                           FMT_STRING("invalid session status {:e} for {:s}"),
-                           s,
-                           action);
+  assertStatus({wanted}, action);
+}
+
+void Core::assertStatus(std::initializer_list<Status> wanted,
+                        std::string const& action) const
+{
+  auto const actualStatus = status();
+  for (auto s : wanted)
+    if (actualStatus == s)
+      return;
+
+  throw Errors::formatEx(Errors::Errc::PreconditionFailed,
+                         FMT_STRING("invalid session status {:e} for {:s}"),
+                         actualStatus,
+                         action);
 }
 
 Status Core::status() const
@@ -235,7 +247,8 @@ tc::cotask<Status> Core::start(std::string const& identity)
 }
 
 tc::cotask<void> Core::registerIdentityImpl(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
@@ -277,31 +290,44 @@ tc::cotask<void> Core::registerIdentityImpl(
       _session->userId(),
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
-      Unlock::makeRequest(verification, _session->userSecret()),
+      Unlock::makeRequest(verification, _session->userSecret(), withTokenNonce),
       encryptedVerificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
-tc::cotask<void> Core::registerIdentity(
-    Unlock::Verification const& verification)
+tc::cotask<std::optional<std::string>> Core::registerIdentity(
+    Unlock::Verification const& verification, VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
   assertStatus(Status::IdentityRegistrationNeeded, "registerIdentity");
+  if (withToken == VerifyWithToken::Yes &&
+      boost::variant2::holds_alternative<VerificationKey>(verification))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot get a session token with a verification key");
+  }
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
-        TC_AWAIT(registerIdentityImpl(verification));
+        TC_AWAIT(registerIdentityImpl(verification, withTokenNonce));
       },
       {Errors::Errc::ExpiredVerification,
        Errors::Errc::InvalidVerification,
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
        Errors::Errc::TooManyAttempts}));
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
 }
 
 tc::cotask<void> Core::verifyIdentityImpl(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
-  auto const verificationKey = TC_AWAIT(getVerificationKey(verification));
+  auto const verificationKey =
+      TC_AWAIT(getVerificationKey(verification, withTokenNonce));
   try
   {
     auto const deviceKeys = DeviceKeys::create();
@@ -338,17 +364,55 @@ tc::cotask<void> Core::verifyIdentityImpl(
   }
 }
 
-tc::cotask<void> Core::verifyIdentity(Unlock::Verification const& verification)
+tc::cotask<std::optional<std::string>> Core::verifyIdentity(
+    Unlock::Verification const& verification, VerifyWithToken withToken)
 {
   FUNC_TIMER(Proc);
-  assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  if (withToken == VerifyWithToken::Yes)
+  {
+    assertStatus({Status::IdentityVerificationNeeded, Status::Ready},
+                 "verifyIdentity");
+    if (boost::variant2::holds_alternative<VerificationKey>(verification))
+    {
+      throw formatEx(Errc::InvalidArgument,
+                     "cannot get a session token with a verification key");
+    }
+  }
+  else
+  {
+    assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
+  }
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
-      [&]() -> tc::cotask<void> { TC_AWAIT(verifyIdentityImpl(verification)); },
+      [&]() -> tc::cotask<void> {
+        TC_AWAIT(verifyIdentityImpl(verification, withTokenNonce));
+      },
       {Errors::Errc::ExpiredVerification,
        Errors::Errc::InvalidVerification,
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
        Errors::Errc::TooManyAttempts}));
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(verification, *withTokenNonce)));
+}
+
+tc::cotask<std::string> Core::getSessionToken(
+    Unlock::Verification const& verification, const std::string& withTokenNonce)
+{
+  assertStatus(Status::Ready, "getSessionToken");
+
+  auto const& localUser = _session->accessors().localUserAccessor.get();
+  auto sessionCertificate = Users::createSessionCertificate(
+      _session->trustchainId(),
+      deviceId(),
+      verification,
+      localUser.deviceKeys().signatureKeyPair.privateKey);
+  auto const serializedSessCert = Serialization::serialize(sessionCertificate);
+
+  TC_RETURN(TC_AWAIT(_session->requesters().getSessionToken(
+      _session->userId(), serializedSessCert, withTokenNonce)));
 }
 
 tc::cotask<void> Core::encrypt(
@@ -510,7 +574,8 @@ tc::cotask<void> Core::updateGroupMembers(
       localUser.deviceKeys().signatureKeyPair.privateKey));
 }
 
-tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
+tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
+    Unlock::Verification const& method, VerifyWithToken withToken)
 {
   assertStatus(Status::Ready, "setVerificationMethod");
   if (boost::variant2::holds_alternative<VerificationKey>(method))
@@ -518,27 +583,30 @@ tc::cotask<void> Core::setVerificationMethod(Unlock::Verification const& method)
     throw formatEx(Errc::InvalidArgument,
                    "cannot call setVerificationMethod with a verification key");
   }
-  else
+  auto withTokenNonce = makeWithTokenRandomNonce(withToken);
+
+  try
   {
-    try
-    {
-      TC_AWAIT(_session->requesters().setVerificationMethod(
-          _session->userId(),
-          Unlock::makeRequest(method, _session->userSecret())));
-    }
-    catch (Errors::Exception const& e)
-    {
-      if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
-      {
-        // the server does not send an error message
-        throw Errors::formatEx(Errc::PreconditionFailed,
-                               "Cannot call setVerificationMethod after a "
-                               "verification key has been used. {}",
-                               e.what());
-      }
-      throw;
-    }
+    TC_AWAIT(_session->requesters().setVerificationMethod(
+        _session->userId(),
+        Unlock::makeRequest(method, _session->userSecret(), withTokenNonce)));
   }
+  catch (Errors::Exception const& e)
+  {
+    if (e.errorCode() == AppdErrc::VerificationKeyNotFound)
+    {
+      // the server does not send an error message
+      throw Errors::formatEx(Errc::PreconditionFailed,
+                             "Cannot call setVerificationMethod after a "
+                             "verification key has been used. {}",
+                             e.what());
+    }
+    throw;
+  }
+
+  if (withToken == VerifyWithToken::No)
+    TC_RETURN(std::nullopt);
+  TC_RETURN(TC_AWAIT(getSessionToken(method, *withTokenNonce)));
 }
 
 tc::cotask<std::vector<Unlock::VerificationMethod>>
@@ -560,12 +628,14 @@ Core::getVerificationMethods()
 }
 
 tc::cotask<VerificationKey> Core::fetchVerificationKey(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->userId(),
-          Unlock::makeRequest(verification, _session->userSecret())));
+          Unlock::makeRequest(
+              verification, _session->userSecret(), withTokenNonce)));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
@@ -574,7 +644,8 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
 }
 
 tc::cotask<VerificationKey> Core::getVerificationKey(
-    Unlock::Verification const& verification)
+    Unlock::Verification const& verification,
+    std::optional<std::string> const& withTokenNonce)
 {
   using boost::variant2::get_if;
   using boost::variant2::holds_alternative;
@@ -584,7 +655,7 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
   else if (holds_alternative<Unlock::EmailVerification>(verification) ||
            holds_alternative<Passphrase>(verification) ||
            holds_alternative<OidcIdToken>(verification))
-    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification)));
+    TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));
   throw AssertionError("invalid verification, unreachable code");
 }
 
@@ -773,6 +844,16 @@ tc::cotask<EncryptionSession> Core::makeEncryptionSession(
                         spublicIdentitiesWithUs,
                         sgroupIds));
   TC_RETURN(sess);
+}
+
+std::optional<std::string> Core::makeWithTokenRandomNonce(
+    VerifyWithToken wanted)
+{
+  if (wanted == VerifyWithToken::No)
+    return std::nullopt;
+  std::array<uint8_t, 8> randombuf;
+  Tanker::Crypto::randomFill(gsl::make_span(randombuf));
+  return mgs::base16::encode(randombuf.begin(), randombuf.end());
 }
 
 tc::cotask<void> Core::confirmRevocation()

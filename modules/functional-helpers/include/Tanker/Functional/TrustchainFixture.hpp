@@ -21,6 +21,7 @@ struct TrustchainFixture
 
   tc::cotask<VerificationCode> getVerificationCode(Email const& email);
   tc::cotask<void> enableOidc();
+  tc::cotask<void> enable2fa();
 };
 }
 }
