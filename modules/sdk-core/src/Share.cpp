@@ -107,24 +107,13 @@ void handleNotFound(
 {
   if (!groupsNotFound.empty() || !usersNotFound.empty())
   {
-    auto const clearPublicIdentities = mapIdsToStrings(
-        usersNotFound,
-        spublicIdentities,
-        publicIdentities,
-        [](auto const& identity) {
-          auto const permanentIdentity =
-              boost::variant2::get_if<Identity::PublicPermanentIdentity>(
-                  &identity);
-          return permanentIdentity ?
-                     std::make_optional(permanentIdentity->userId) :
-                     std::nullopt;
-        });
-    auto const clearGids = mapIdsToStrings(groupsNotFound, sgroupIds, groupIds);
+    auto const clearPublicIdentities = mapIdentitiesToStrings(
+        usersNotFound, spublicIdentities, publicIdentities);
     throw Errors::formatEx(
         Errors::Errc::InvalidArgument,
         FMT_STRING("unknown public identities: [{:s}], unknown groups: [{:s}]"),
         fmt::join(clearPublicIdentities, ", "),
-        fmt::join(clearGids, ", "));
+        fmt::join(groupsNotFound, ", "));
   }
 }
 

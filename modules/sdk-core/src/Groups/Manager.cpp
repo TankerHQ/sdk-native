@@ -34,13 +34,12 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
       userAccessor.pull(members.userIds, Users::IRequester::IsLight::Yes));
   if (!memberUsers.notFound.empty())
   {
-    auto const notFoundIdentities = mapIdsToStrings(
-        memberUsers.notFound, spublicIdentities, members.userIds);
+    auto const notFoundIdentities = mapIdentitiesToStrings(
+        memberUsers.notFound, spublicIdentities, publicIdentities);
     throw formatEx(Errc::InvalidArgument,
-                   "unknown users: {:s}",
+                   "public identities not found: {:s}",
                    fmt::join(notFoundIdentities, ", "));
   }
-
   auto const memberProvisionalUsers = TC_AWAIT(
       userAccessor.pullProvisional(members.publicProvisionalIdentities));
 

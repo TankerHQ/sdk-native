@@ -2,7 +2,6 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
-#include <iostream>
 
 #include <mgs/base64.hpp>
 #include <mgs/codecs/concepts/codec.hpp>
@@ -78,28 +77,6 @@ struct IdentityFunc
     return std::forward<T>(t);
   }
 };
-
-template <typename S, typename T, typename I, typename F = IdentityFunc>
-auto mapIdsToStrings(std::vector<T> const& errorIds,
-                     std::vector<S> const& sIds,
-                     std::vector<I> const& ids,
-                     F&& mapToT = IdentityFunc{})
-{
-  std::vector<S> clearIds;
-  clearIds.reserve(ids.size());
-
-  for (auto const& errorId : errorIds)
-  {
-    auto const idsIt = std::find_if(ids.begin(), ids.end(), [&](auto const& e) {
-      return mapToT(e) == errorId;
-    });
-
-    assert(idsIt != ids.end() && "Wrong id not found");
-
-    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
-  }
-  return clearIds;
-}
 
 template <typename T>
 std::vector<T> removeDuplicates(std::vector<T> stuff)
