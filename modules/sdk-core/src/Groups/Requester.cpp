@@ -1,6 +1,6 @@
 #include <Tanker/Groups/Requester.hpp>
 
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Utils.hpp>
 
