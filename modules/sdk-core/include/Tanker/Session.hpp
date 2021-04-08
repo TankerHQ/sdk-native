@@ -5,8 +5,8 @@
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Groups/Store.hpp>
-#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/ProvisionalUsers/Manager.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
@@ -36,7 +36,7 @@ public:
                       Unlock::Requester
 
   {
-    Requesters(HttpClient*);
+    Requesters(Network::HttpClient*);
   };
 
   struct Storage
@@ -63,12 +63,12 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::unique_ptr<HttpClient> client);
+  Session(std::unique_ptr<Network::HttpClient> client);
   ~Session();
 
   tc::cotask<void> stop();
 
-  HttpClient& httpClient();
+  Network::HttpClient& httpClient();
 
   Requesters const& requesters() const;
   Requesters& requesters();
@@ -92,13 +92,13 @@ public:
 
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
-  tc::cotask<HttpClient::AuthResponse> authenticate();
+  tc::cotask<Network::HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
   tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId,
                                     DeviceKeys const& deviceKeys);
 
 private:
-  std::unique_ptr<HttpClient> _httpClient;
+  std::unique_ptr<Network::HttpClient> _httpClient;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;

@@ -31,7 +31,7 @@ std::vector<Trustchain::GroupAction> fromBlocksToGroupActions(
 }
 }
 
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 

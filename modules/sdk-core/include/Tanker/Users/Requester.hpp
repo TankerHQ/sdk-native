@@ -5,7 +5,10 @@
 namespace Tanker
 {
 struct DeviceKeys;
+namespace Network
+{
 class HttpClient;
+}
 
 namespace Users
 {
@@ -18,7 +21,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(HttpClient* httpClient);
+  Requester(Network::HttpClient* httpClient);
 
   tc::cotask<GetResult> getRevokedDeviceHistory(
       Trustchain::DeviceId const& deviceId) override;
@@ -47,7 +50,7 @@ public:
 private:
   tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);
 
-  HttpClient* _httpClient;
+  Network::HttpClient* _httpClient;
 };
 }
 }

@@ -10,7 +10,10 @@
 
 namespace Tanker
 {
+namespace Network
+{
 class HttpClient;
+}
 
 namespace Unlock
 {
@@ -22,7 +25,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(HttpClient* httpClient);
+  Requester(Network::HttpClient* httpClient);
 
   tc::cotask<std::optional<Crypto::PublicEncryptionKey>> userStatus(
       Trustchain::UserId const& userId) override;
@@ -55,7 +58,7 @@ public:
       gsl::span<uint8_t const> deviceCreation) override;
 
 private:
-  HttpClient* _httpClient;
+  Network::HttpClient* _httpClient;
 };
 }
 }

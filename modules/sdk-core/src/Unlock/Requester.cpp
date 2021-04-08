@@ -14,7 +14,7 @@
 
 namespace Tanker::Unlock
 {
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
