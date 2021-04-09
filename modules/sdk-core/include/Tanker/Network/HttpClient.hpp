@@ -19,9 +19,18 @@
 
 namespace Tanker::Network
 {
+enum class HttpVerb
+{
+  get,
+  post,
+  put,
+  patch,
+  delete_,
+};
+
 struct HttpError
 {
-  fetchpp::http::verb method;
+  HttpVerb method;
   std::string href;
   int status;
   Errors::AppdErrc ec;
