@@ -40,7 +40,6 @@ add_library(tankercore STATIC
   include/Tanker/Session.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/Init.hpp
-  include/Tanker/Retry.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
   include/Tanker/Unlock/Registration.hpp
@@ -50,7 +49,7 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Requester.hpp
   include/Tanker/Unlock/Request.hpp
   include/Tanker/DeviceKeys.hpp
-  include/Tanker/HttpClient.hpp
+  include/Tanker/Network/HttpClient.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -109,7 +108,6 @@ add_library(tankercore STATIC
   include/Tanker/Encryptor/v4.hpp
   include/Tanker/Encryptor/v5.hpp
   include/Tanker/EncryptionSession.hpp
-  include/Tanker/Retry.hpp
 
   src/AsyncCore.cpp
   src/AttachResult.cpp
@@ -118,7 +116,7 @@ add_library(tankercore STATIC
   src/Init.cpp
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
-  src/HttpClient.cpp
+  src/Network/HttpClient.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
   src/Unlock/Requester.cpp
@@ -167,7 +165,6 @@ add_library(tankercore STATIC
   src/Encryptor/v4.cpp
   src/Encryptor/v5.cpp
   src/EncryptionSession.cpp
-  src/Retry.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
   ${TANKER_CORE_CONNECTION_SRC}

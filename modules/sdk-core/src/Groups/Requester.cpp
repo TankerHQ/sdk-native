@@ -1,6 +1,6 @@
 #include <Tanker/Groups/Requester.hpp>
 
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Utils.hpp>
 
@@ -31,7 +31,7 @@ std::vector<Trustchain::GroupAction> fromBlocksToGroupActions(
 }
 }
 
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 

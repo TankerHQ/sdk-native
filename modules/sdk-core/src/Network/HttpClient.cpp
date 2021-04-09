@@ -1,4 +1,4 @@
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 
 #include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
@@ -22,11 +22,11 @@
 
 TLOG_CATEGORY(HttpClient);
 
-namespace Tanker
-{
 using namespace Tanker::Errors;
 namespace http = fetchpp::http;
 
+namespace Tanker::Network
+{
 namespace
 {
 boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
@@ -193,6 +193,8 @@ HttpClient::HttpClient(http::url const& baseUrl,
   _cl.set_proxies(std::move(proxies));
 }
 
+HttpClient::~HttpClient() = default;
+
 void HttpClient::setAccessToken(std::string_view accessToken)
 {
   _headers.set(fetchpp::http::field::authorization,
@@ -357,6 +359,4 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
   }
   TC_RETURN(response);
 }
-
-HttpClient::~HttpClient() = default;
 }

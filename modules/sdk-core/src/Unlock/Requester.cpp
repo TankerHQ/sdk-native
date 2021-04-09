@@ -2,7 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 
 #include <mgs/base64.hpp>
 
@@ -14,7 +14,7 @@
 
 namespace Tanker::Unlock
 {
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 

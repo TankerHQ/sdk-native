@@ -4,10 +4,12 @@
 
 namespace Tanker
 {
+namespace Network
+{
 class HttpClient;
 }
 
-namespace Tanker::ProvisionalUsers
+namespace ProvisionalUsers
 {
 class Requester : public IRequester
 {
@@ -17,7 +19,7 @@ class Requester : public IRequester
   Requester& operator=(Requester&&) = delete;
 
 public:
-  Requester(HttpClient* httpClient);
+  Requester(Network::HttpClient* httpClient);
 
   tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
   getClaimBlocks(Trustchain::UserId const& userId) override;
@@ -30,6 +32,7 @@ public:
       override;
 
 private:
-  HttpClient* _httpClient;
+  Network::HttpClient* _httpClient;
 };
+}
 }

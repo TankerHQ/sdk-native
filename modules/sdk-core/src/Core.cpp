@@ -49,12 +49,12 @@ namespace Tanker
 {
 namespace
 {
-std::unique_ptr<HttpClient> createHttpClient(std::string_view url,
-                                             std::string instanceId,
-                                             SdkInfo const& info)
+std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
+                                                    std::string instanceId,
+                                                    SdkInfo const& info)
 {
 
-  auto client = std::make_unique<HttpClient>(
+  auto client = std::make_unique<Network::HttpClient>(
       fetchpp::http::url{fmt::format("/v2/apps/{appId:#S}/",
                                      fmt::arg("appId", info.trustchainId)),
                          fetchpp::http::url(url)},
@@ -220,7 +220,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
     {
       auto const authResponse = TC_AWAIT(_session->authenticate());
       TC_AWAIT(_session->finalizeOpening());
-      if (authResponse == HttpClient::AuthResponse::Revoked)
+      if (authResponse == Network::HttpClient::AuthResponse::Revoked)
         throw formatEx(Errors::AppdErrc::DeviceRevoked,
                        "authentication reported that this device was revoked");
     }

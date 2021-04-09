@@ -5,7 +5,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -68,7 +68,7 @@ std::vector<std::string> base64KeyPublishActions(std::vector<T> const& actions)
 }
 }
 
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 

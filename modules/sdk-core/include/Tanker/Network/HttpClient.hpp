@@ -17,7 +17,7 @@
 #include <chrono>
 #include <string_view>
 
-namespace Tanker
+namespace Tanker::Network
 {
 struct HttpError
 {
@@ -35,12 +35,12 @@ struct HttpError
 namespace boost::outcome_v2::trait
 {
 template <>
-struct is_error_code_available<::Tanker::HttpError> : std::true_type
+struct is_error_code_available<::Tanker::Network::HttpError> : std::true_type
 {
 };
 }
 
-namespace Tanker
+namespace Tanker::Network
 {
 void from_json(nlohmann::json const& j, HttpError& e);
 

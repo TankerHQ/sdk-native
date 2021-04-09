@@ -4,7 +4,7 @@
 #include <Tanker/DataStore/Database.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
@@ -67,7 +67,7 @@ Session::Accessors::Accessors(Storage& storage,
 {
 }
 
-Session::Requesters::Requesters(HttpClient* httpClient)
+Session::Requesters::Requesters(Network::HttpClient* httpClient)
   : Users::Requester(httpClient),
     Groups::Requester(httpClient),
     ProvisionalUsers::Requester(httpClient),
@@ -77,7 +77,7 @@ Session::Requesters::Requesters(HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::unique_ptr<HttpClient> httpClient)
+Session::Session(std::unique_ptr<Network::HttpClient> httpClient)
   : _httpClient(std::move(httpClient)),
     _requesters(_httpClient.get()),
     _storage(nullptr),
@@ -92,7 +92,7 @@ tc::cotask<void> Session::stop()
   TC_AWAIT(_httpClient->deauthenticate());
 }
 
-HttpClient& Session::httpClient()
+Network::HttpClient& Session::httpClient()
 {
   return *_httpClient;
 }
@@ -176,7 +176,7 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
   TC_RETURN(TC_AWAIT(storage().localUserStore.findDeviceKeys()));
 }
 
-tc::cotask<HttpClient::AuthResponse> Session::authenticate()
+tc::cotask<Network::HttpClient::AuthResponse> Session::authenticate()
 {
   _httpClient->setDeviceAuthData(
       TC_AWAIT(storage().localUserStore.getDeviceId()),

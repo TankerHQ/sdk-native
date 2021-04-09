@@ -1,7 +1,7 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/HttpClient.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
 #include <mgs/base64.hpp>
@@ -30,7 +30,7 @@ fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
 }
 }
 
-Requester::Requester(HttpClient* httpClient) : _httpClient(httpClient)
+Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
 
