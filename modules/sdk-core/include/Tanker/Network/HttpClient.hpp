@@ -60,6 +60,7 @@ public:
   };
 
   HttpClient(std::string baseUrl,
+             std::string instanceId,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
@@ -90,6 +91,7 @@ public:
 
 private:
   std::string _baseUrl;
+  std::string _instanceId;
   std::string _accessToken;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;

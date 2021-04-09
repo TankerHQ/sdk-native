@@ -57,10 +57,10 @@ std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
   auto client = std::make_unique<Network::HttpClient>(
       fmt::format("{url}/v2/apps/{appId:#S}/",
                   fmt::arg("url", url),
-                  fmt::arg("appId", info.trustchainId)));
+                  fmt::arg("appId", info.trustchainId)),
+      std::move(instanceId));
   client->setHeader("X-Tanker-SdkType", info.sdkType);
   client->setHeader("X-Tanker-SdkVersion", info.version);
-  client->setHeader("X-Tanker-Instanceid", instanceId);
   return client;
 }
 

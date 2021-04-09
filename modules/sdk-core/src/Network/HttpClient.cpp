@@ -181,8 +181,11 @@ std::error_code make_error_code(HttpError const& e)
                          e.traceId);
 }
 
-HttpClient::HttpClient(std::string baseUrl, std::chrono::nanoseconds timeout)
+HttpClient::HttpClient(std::string baseUrl,
+                       std::string instanceId,
+                       std::chrono::nanoseconds timeout)
   : _baseUrl(std::move(baseUrl)),
+    _instanceId(std::move(instanceId)),
     _cl(tc::get_default_executor().get_io_service().get_executor(),
         timeout,
         Cacerts::create_ssl_context())
@@ -374,6 +377,7 @@ fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
 {
   auto request = http::request(toFetchppVerb(verb), http::url(url));
   request.content(data.dump());
+  request.set("X-Tanker-Instanceid", _instanceId);
   if (!_accessToken.empty())
     request.set(fetchpp::http::field::authorization, _accessToken);
   return request;
@@ -383,6 +387,7 @@ fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
                                                std::string_view url)
 {
   auto req = http::request(toFetchppVerb(verb), http::url(url));
+  req.set("X-Tanker-Instanceid", _instanceId);
   if (!_accessToken.empty())
     req.set(fetchpp::http::field::authorization, _accessToken);
   req.prepare_payload();
