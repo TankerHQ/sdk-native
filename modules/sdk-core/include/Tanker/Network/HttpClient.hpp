@@ -99,6 +99,11 @@ private:
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
+  fetchpp::http::request makeRequest(HttpVerb verb,
+                                     std::string_view url,
+                                     nlohmann::json const& data);
+  fetchpp::http::request makeRequest(HttpVerb verb, std::string_view url);
+
   template <typename Request>
   tc::cotask<HttpResult> asyncFetch(Request req);
   tc::cotask<HttpResult> asyncFetchBase(fetchpp::http::request req);

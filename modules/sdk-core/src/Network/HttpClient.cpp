@@ -153,22 +153,6 @@ HttpResult handleResponse(http::response res, http::request const& req)
                            "invalid http response format");
   }
 }
-
-fetchpp::http::request makeRequest(HttpVerb verb,
-                                   std::string_view url,
-                                   nlohmann::json const& data)
-{
-  auto request = http::request(toFetchppVerb(verb), http::url(url));
-  request.content(data.dump());
-  return request;
-}
-
-fetchpp::http::request makeRequest(HttpVerb verb, std::string_view url)
-{
-  auto req = http::request(toFetchppVerb(verb), http::url(url));
-  req.prepare_payload();
-  return req;
-}
 }
 
 void from_json(nlohmann::json const& j, HttpError& e)
@@ -384,6 +368,23 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req = makeRequest(HttpVerb::delete_, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+}
+
+fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
+                                               std::string_view url,
+                                               nlohmann::json const& data)
+{
+  auto request = http::request(toFetchppVerb(verb), http::url(url));
+  request.content(data.dump());
+  return request;
+}
+
+fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
+                                               std::string_view url)
+{
+  auto req = http::request(toFetchppVerb(verb), http::url(url));
+  req.prepare_payload();
+  return req;
 }
 
 template <typename Request>
