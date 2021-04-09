@@ -59,7 +59,6 @@ public:
   };
 
   HttpClient(std::string baseUrl,
-             fetchpp::net::executor ex,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;

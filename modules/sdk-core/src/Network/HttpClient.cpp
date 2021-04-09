@@ -182,11 +182,11 @@ std::error_code make_error_code(HttpError const& e)
                          e.traceId);
 }
 
-HttpClient::HttpClient(std::string baseUrl,
-                       fetchpp::net::executor ex,
-                       std::chrono::nanoseconds timeout)
+HttpClient::HttpClient(std::string baseUrl, std::chrono::nanoseconds timeout)
   : _baseUrl(std::move(baseUrl)),
-    _cl(ex, timeout, Cacerts::create_ssl_context())
+    _cl(tc::get_default_executor().get_io_service().get_executor(),
+        timeout,
+        Cacerts::create_ssl_context())
 {
   auto proxies = fetchpp::http::proxy_from_environment();
   if (auto proxyIt = proxies.find(http::proxy_scheme::https);
