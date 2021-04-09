@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/HttpVerb.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <fetchpp/client.hpp>
@@ -19,15 +20,6 @@
 
 namespace Tanker::Network
 {
-enum class HttpVerb
-{
-  get,
-  post,
-  put,
-  patch,
-  delete_,
-};
-
 struct HttpError
 {
   HttpVerb method;

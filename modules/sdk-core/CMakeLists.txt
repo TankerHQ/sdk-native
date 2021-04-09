@@ -49,6 +49,7 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Requester.hpp
   include/Tanker/Unlock/Request.hpp
   include/Tanker/DeviceKeys.hpp
+  include/Tanker/Network/HttpVerb.hpp
   include/Tanker/Network/HttpClient.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
