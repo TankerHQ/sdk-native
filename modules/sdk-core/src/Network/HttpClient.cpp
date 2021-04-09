@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -308,6 +309,33 @@ tc::cotask<void> HttpClient::deauthenticate()
 http::url HttpClient::makeUrl(std::string_view target) const
 {
   return http::url(target, _baseUrl);
+}
+
+std::string HttpClient::makeQueryString(nlohmann::json const& query) const
+{
+  std::string out;
+  for (auto const& elem : query.items())
+  {
+    if (elem.value().is_array())
+    {
+      for (auto const& item : elem.value())
+      {
+        out += fmt::format("{}={}&", elem.key(), item.get<std::string>());
+      }
+    }
+    else if (elem.value().is_string())
+    {
+      out += fmt::format("{}={}&", elem.key(), elem.value().get<std::string>());
+    }
+    else
+    {
+      throw Errors::AssertionError(
+          "unknown type in HttpClient::makeQueryString");
+    }
+  }
+  if (!out.empty())
+    out.pop_back(); // remove the final '&'
+  return out;
 }
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)

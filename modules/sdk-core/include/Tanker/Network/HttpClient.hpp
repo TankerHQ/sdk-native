@@ -77,6 +77,7 @@ public:
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
+  std::string makeQueryString(nlohmann::json const& query) const;
 
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();

@@ -75,9 +75,8 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 tc::cotask<Requester::GetResult> Requester::getUsersImpl(
     nlohmann::json const& query)
 {
-  auto url = _httpClient->makeUrl("user-histories");
-  url.set_search(fetchpp::http::encode_query(query));
-  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url = "user-histories?" + _httpClient->makeQueryString(query);
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   auto rootBlock =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
           mgs::base64::decode(response.at("root").get<std::string>()));
@@ -90,9 +89,8 @@ tc::cotask<Requester::GetResult> Requester::getUsersImpl(
 tc::cotask<Requester::GetResult> Requester::getRevokedDeviceHistory(
     Trustchain::DeviceId const& deviceId)
 {
-  auto url = _httpClient->makeUrl(
-      fmt::format("devices/{:#S}/revoked-device-history", deviceId));
-  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url = fmt::format("devices/{:#S}/revoked-device-history", deviceId);
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   auto rootBlock =
       Serialization::deserialize<Trustchain::Actions::TrustchainCreation>(
           mgs::base64::decode(response.at("root").get<std::string>()));
@@ -125,19 +123,17 @@ Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
   auto const query = nlohmann::json{
       {"resource_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(resourceIds)}};
-  auto url = _httpClient->makeUrl("resource-keys");
-  url.set_search(fetchpp::http::encode_query(query));
-  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url = "resource-keys?" + _httpClient->makeQueryString(query);
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   TC_RETURN(fromBlocksToKeyPublishActions(
       response.at("resource_keys").get<std::vector<std::string>>()));
 }
 
 tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
 {
-  auto const url = _httpClient->makeUrl("resource-keys");
   auto const response =
       TC_AWAIT(_httpClient->asyncPost(
-                   url.href(),
+                   "resource-keys",
                    {{"key_publishes_to_user",
                      base64KeyPublishActions(actions.keyPublishesToUsers)},
                     {"key_publishes_to_user_group",
@@ -151,10 +147,9 @@ tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
 tc::cotask<void> Requester::revokeDevice(
     Trustchain::Actions::DeviceRevocation const& deviceRevocation)
 {
-  auto const url = _httpClient->makeUrl("device-revocations");
   TC_AWAIT(
       _httpClient->asyncPost(
-          url.href(),
+          "device-revocations",
           {{"device_revocation",
             mgs::base64::encode(Serialization::serialize(deviceRevocation))}}))
       .value();
@@ -169,10 +164,10 @@ tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
   auto query = nlohmann::json{
       {"ghost_device_public_signature_key",
        mgs::base64url_nopad::encode(ghostDevicePublicSignatureKey)}};
-  auto url = _httpClient->makeUrl(
-      fmt::format("users/{userId:#S}/encryption-key", "userId"_a = userId));
-  url.set_search(fetchpp::http::encode_query(query));
-  auto const res = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url = fmt::format("users/{userId:#S}/encryption-key?{query}",
+                         "userId"_a = userId,
+                         "query"_a = _httpClient->makeQueryString(query));
+  auto const res = TC_AWAIT(_httpClient->asyncGet(url)).value();
   TC_RETURN((GetEncryptionKeyResult{
       res.at("encrypted_user_private_encryption_key")
           .get<Crypto::SealedPrivateEncryptionKey>(),
@@ -194,9 +189,9 @@ Requester::getPublicProvisionalIdentities(
   auto query =
       nlohmann::json{{"hashed_emails[]",
                       encodeCryptoTypes<mgs::base64url_nopad>(hashedEmails)}};
-  auto url = _httpClient->makeUrl("public-provisional-identities");
-  url.set_search(fetchpp::http::encode_query(query));
-  auto const result = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url =
+      "public-provisional-identities?" + _httpClient->makeQueryString(query);
+  auto const result = TC_AWAIT(_httpClient->asyncGet(url)).value();
 
   for (auto const& elem : result.at("public_provisional_identities"))
   {
