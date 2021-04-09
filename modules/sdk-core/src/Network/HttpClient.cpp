@@ -407,7 +407,7 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
   try
   {
     TINFO("{} {}", req.method(), req.uri().href());
-    auto res = TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future));
+    auto res = TC_AWAIT(doAsyncFetch(req));
     TINFO("{} {}, {} {}",
           req.method(),
           req.uri().href(),
@@ -422,5 +422,10 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
                            e.code().category().name(),
                            e.code().message());
   }
+}
+
+tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(http::request req)
+{
+  TC_RETURN(TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future)));
 }
 }

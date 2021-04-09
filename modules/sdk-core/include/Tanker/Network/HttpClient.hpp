@@ -102,5 +102,6 @@ private:
   template <typename Request>
   tc::cotask<HttpResult> asyncFetch(Request req);
   tc::cotask<HttpResult> asyncFetchBase(fetchpp::http::request req);
+  tc::cotask<fetchpp::http::response> doAsyncFetch(fetchpp::http::request req);
 };
 }
