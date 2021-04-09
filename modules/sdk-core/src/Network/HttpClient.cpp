@@ -117,18 +117,18 @@ HttpResult handleResponse(http::response res, http::request const& req)
 }
 
 fetchpp::http::request makeRequest(fetchpp::http::verb verb,
-                                   fetchpp::http::url url,
+                                   std::string_view url,
                                    nlohmann::json const& data)
 {
-  auto request = http::request(verb, std::move(url));
+  auto request = http::request(verb, http::url(url));
   request.content(data.dump());
   return request;
 }
 
 fetchpp::http::request makeRequest(fetchpp::http::verb verb,
-                                   fetchpp::http::url url)
+                                   std::string_view url)
 {
-  auto req = http::request(verb, std::move(url));
+  auto req = http::request(verb, http::url(url));
   req.prepare_payload();
   return req;
 }
@@ -182,10 +182,11 @@ std::error_code make_error_code(HttpError const& e)
                          e.traceId);
 }
 
-HttpClient::HttpClient(http::url const& baseUrl,
+HttpClient::HttpClient(std::string baseUrl,
                        fetchpp::net::executor ex,
                        std::chrono::nanoseconds timeout)
-  : _baseUrl(baseUrl), _cl(ex, timeout, Cacerts::create_ssl_context())
+  : _baseUrl(std::move(baseUrl)),
+    _cl(ex, timeout, Cacerts::create_ssl_context())
 {
   auto proxies = fetchpp::http::proxy_from_environment();
   if (auto proxyIt = proxies.find(http::proxy_scheme::https);
@@ -306,9 +307,9 @@ tc::cotask<void> HttpClient::deauthenticate()
   }
 }
 
-http::url HttpClient::makeUrl(std::string_view target) const
+std::string HttpClient::makeUrl(std::string_view target) const
 {
-  return http::url(target, _baseUrl);
+  return fmt::format("{}{}", _baseUrl, target);
 }
 
 std::string HttpClient::makeQueryString(nlohmann::json const& query) const

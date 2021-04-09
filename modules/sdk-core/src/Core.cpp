@@ -50,14 +50,14 @@ namespace Tanker
 namespace
 {
 std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
-                                                    std::string instanceId,
-                                                    SdkInfo const& info)
+                                                      std::string instanceId,
+                                                      SdkInfo const& info)
 {
 
   auto client = std::make_unique<Network::HttpClient>(
-      fetchpp::http::url{fmt::format("/v2/apps/{appId:#S}/",
-                                     fmt::arg("appId", info.trustchainId)),
-                         fetchpp::http::url(url)},
+      fmt::format("{url}/v2/apps/{appId:#S}/",
+                  fmt::arg("url", url),
+                  fmt::arg("appId", info.trustchainId)),
       tc::get_default_executor().get_io_service().get_executor());
   client->setHeader("X-Tanker-SdkType", info.sdkType);
   client->setHeader("X-Tanker-SdkVersion", info.version);
