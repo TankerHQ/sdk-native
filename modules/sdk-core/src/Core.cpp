@@ -58,9 +58,8 @@ std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
       fmt::format("{url}/v2/apps/{appId:#S}/",
                   fmt::arg("url", url),
                   fmt::arg("appId", info.trustchainId)),
-      std::move(instanceId));
-  client->setHeader("X-Tanker-SdkType", info.sdkType);
-  client->setHeader("X-Tanker-SdkVersion", info.version);
+      std::move(instanceId),
+      info);
   return client;
 }
 

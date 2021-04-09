@@ -183,9 +183,11 @@ std::error_code make_error_code(HttpError const& e)
 
 HttpClient::HttpClient(std::string baseUrl,
                        std::string instanceId,
+                       SdkInfo sdkInfo,
                        std::chrono::nanoseconds timeout)
   : _baseUrl(std::move(baseUrl)),
     _instanceId(std::move(instanceId)),
+    _sdkInfo(std::move(sdkInfo)),
     _cl(tc::get_default_executor().get_io_service().get_executor(),
         timeout,
         Cacerts::create_ssl_context())
@@ -436,6 +438,8 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
 
 tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(http::request req)
 {
+  req.set("X-Tanker-SdkType", _sdkInfo.sdkType);
+  req.set("X-Tanker-SdkVersion", _sdkInfo.version);
   TC_RETURN(TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future)));
 }
 }

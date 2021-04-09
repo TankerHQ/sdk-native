@@ -4,6 +4,7 @@
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/HttpVerb.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
 #include <fetchpp/client.hpp>
@@ -61,6 +62,7 @@ public:
 
   HttpClient(std::string baseUrl,
              std::string instanceId,
+             SdkInfo sdkInfo,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
@@ -93,6 +95,7 @@ private:
   std::string _baseUrl;
   std::string _instanceId;
   std::string _accessToken;
+  SdkInfo _sdkInfo;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
 
