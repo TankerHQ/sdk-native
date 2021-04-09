@@ -169,28 +169,6 @@ fetchpp::http::request makeRequest(HttpVerb verb, std::string_view url)
   req.prepare_payload();
   return req;
 }
-
-tc::cotask<HttpResult> asyncFetchBase(fetchpp::client& cl, http::request req)
-{
-  try
-  {
-    TINFO("{} {}", req.method(), req.uri().href());
-    auto res = TC_AWAIT(cl.async_fetch(std::move(req), tc::asio::use_future));
-    TINFO("{} {}, {} {}",
-          req.method(),
-          req.uri().href(),
-          res.result_int(),
-          http::obsolete_reason(res.result()));
-    TC_RETURN(handleResponse(std::move(res), req));
-  }
-  catch (boost::system::system_error const& e)
-  {
-    throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "{}: {}",
-                           e.code().category().name(),
-                           e.code().message());
-  }
-}
 }
 
 void from_json(nlohmann::json const& j, HttpError& e)
@@ -272,7 +250,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
     auto req = makeRequest(HttpVerb::post,
                            makeUrl(fmt::format("{}/challenges", baseTarget)));
     assignHeader(req, _headers);
-    auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
+    auto const challenge = TC_AWAIT(asyncFetchBase(std::move(req)))
                                .value()
                                .at("challenge")
                                .get<std::string>();
@@ -296,7 +274,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
          {"challenge", challenge},
          {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
     assignHeader(req2, _headers);
-    auto response = TC_AWAIT(asyncFetchBase(_cl, std::move(req2))).value();
+    auto response = TC_AWAIT(asyncFetchBase(std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
     _isRevoked = response.at("is_revoked").get<bool>();
 
@@ -379,48 +357,70 @@ std::string HttpClient::makeQueryString(nlohmann::json const& query) const
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
   auto req = makeRequest(HttpVerb::get, makeUrl(target));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
   auto req = makeRequest(HttpVerb::post, makeUrl(target));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
   auto req = makeRequest(HttpVerb::post, makeUrl(target), std::move(data));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
   auto req = makeRequest(HttpVerb::patch, makeUrl(target), std::move(data));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req = makeRequest(HttpVerb::delete_, makeUrl(target));
-  TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
+  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 template <typename Request>
-tc::cotask<HttpResult> HttpClient::asyncFetch(fetchpp::client& cl, Request req)
+tc::cotask<HttpResult> HttpClient::asyncFetch(Request req)
 {
   TC_AWAIT(_authenticating);
   assignHeader(req, _headers);
 
-  auto response = TC_AWAIT(asyncFetchBase(cl, req));
+  auto response = TC_AWAIT(asyncFetchBase(req));
   if (!response && response.error().ec == AppdErrc::InvalidToken)
   {
     TC_AWAIT(authenticate());
     assignHeader(req, _headers);
-    TC_RETURN(TC_AWAIT(asyncFetchBase(cl, std::move(req))));
+    TC_RETURN(TC_AWAIT(asyncFetchBase(std::move(req))));
   }
   TC_RETURN(response);
+}
+
+tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
+{
+  try
+  {
+    TINFO("{} {}", req.method(), req.uri().href());
+    auto res = TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future));
+    TINFO("{} {}, {} {}",
+          req.method(),
+          req.uri().href(),
+          res.result_int(),
+          http::obsolete_reason(res.result()));
+    TC_RETURN(handleResponse(std::move(res), req));
+  }
+  catch (boost::system::system_error const& e)
+  {
+    throw Errors::formatEx(Errors::Errc::NetworkError,
+                           "{}: {}",
+                           e.code().category().name(),
+                           e.code().message());
+  }
 }
 }
