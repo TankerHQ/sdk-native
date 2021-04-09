@@ -90,6 +90,7 @@ public:
 
 private:
   std::string _baseUrl;
+  std::string _accessToken;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
 

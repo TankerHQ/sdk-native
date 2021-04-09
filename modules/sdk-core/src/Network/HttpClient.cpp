@@ -198,8 +198,7 @@ HttpClient::~HttpClient() = default;
 
 void HttpClient::setAccessToken(std::string_view accessToken)
 {
-  _headers.set(fetchpp::http::field::authorization,
-               fetchpp::http::authorization::bearer{accessToken});
+  _accessToken = fmt::format("Bearer {}", accessToken);
 }
 
 void HttpClient::setHeader(std::string_view name, std::string_view value)
@@ -224,7 +223,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
     TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
   }
 
-  _headers.erase(fetchpp::http::field::authorization);
+  _accessToken.clear();
 
   auto const doAuth = [&]() -> tc::cotask<void> {
     FUNC_TIMER(Net);
@@ -262,8 +261,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
     auto accessToken = response.at("access_token").get<std::string>();
     _isRevoked = response.at("is_revoked").get<bool>();
 
-    _headers.set(fetchpp::http::field::authorization,
-                 fetchpp::http::authorization::bearer{std::move(accessToken)});
+    setAccessToken(accessToken);
   };
 
   _authenticating = tc::async_resumable(doAuth).to_shared();
@@ -275,7 +273,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 
 tc::cotask<void> HttpClient::deauthenticate()
 {
-  if (_headers.count(fetchpp::http::field::authorization) == 0)
+  if (_accessToken.empty())
     TC_RETURN();
 
   try
@@ -376,6 +374,8 @@ fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
 {
   auto request = http::request(toFetchppVerb(verb), http::url(url));
   request.content(data.dump());
+  if (!_accessToken.empty())
+    request.set(fetchpp::http::field::authorization, _accessToken);
   return request;
 }
 
@@ -383,6 +383,8 @@ fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
                                                std::string_view url)
 {
   auto req = http::request(toFetchppVerb(verb), http::url(url));
+  if (!_accessToken.empty())
+    req.set(fetchpp::http::field::authorization, _accessToken);
   req.prepare_payload();
   return req;
 }
@@ -398,6 +400,8 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(Request req)
   {
     TC_AWAIT(authenticate());
     assignHeader(req, _headers);
+    if (!_accessToken.empty())
+      req.set(fetchpp::http::field::authorization, _accessToken);
     TC_RETURN(TC_AWAIT(asyncFetchBase(std::move(req))));
   }
   TC_RETURN(response);
