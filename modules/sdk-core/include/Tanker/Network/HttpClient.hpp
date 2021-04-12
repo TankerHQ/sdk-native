@@ -87,7 +87,6 @@ public:
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
 
-  void setHeader(std::string_view name, std::string_view value);
   void setAccessToken(std::string_view accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,
@@ -98,7 +97,6 @@ private:
   std::string _instanceId;
   std::string _accessToken;
   SdkInfo _sdkInfo;
-  fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
 
   Trustchain::DeviceId _deviceId;

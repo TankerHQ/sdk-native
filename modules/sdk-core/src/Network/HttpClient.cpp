@@ -60,14 +60,6 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"invalid_challenge_public_key", AppdErrc::InvalidChallengePublicKey},
 };
 
-template <typename Request, typename Header>
-void assignHeader(Request& request, Header const& header)
-{
-  for (auto const& field : header)
-    request.set(field.name_string(), field.value());
-  request.set("Accept", "application/json");
-}
-
 AppdErrc getErrorFromCode(std::string_view code)
 {
   if (auto it = appdErrorMap.find(code); it != appdErrorMap.end())
@@ -206,11 +198,6 @@ void HttpClient::setAccessToken(std::string_view accessToken)
   _accessToken = fmt::format("Bearer {}", accessToken);
 }
 
-void HttpClient::setHeader(std::string_view name, std::string_view value)
-{
-  _headers.set(name, value);
-}
-
 void HttpClient::setDeviceAuthData(
     Trustchain::DeviceId const& deviceId,
     Crypto::SignatureKeyPair const& deviceSignatureKeyPair)
@@ -237,7 +224,6 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpVerb::post,
                            makeUrl(fmt::format("{}/challenges", baseTarget)));
-    assignHeader(req, _headers);
     auto const challenge = TC_AWAIT(asyncFetchBase(std::move(req)))
                                .value()
                                .at("challenge")
@@ -261,7 +247,6 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         {{"signature", signature},
          {"challenge", challenge},
          {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
-    assignHeader(req2, _headers);
     auto response = TC_AWAIT(asyncFetchBase(std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
     _isRevoked = response.at("is_revoked").get<bool>();
@@ -287,7 +272,6 @@ tc::cotask<void> HttpClient::deauthenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpVerb::delete_,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
-    assignHeader(req, _headers);
     TINFO("{} {}", req.method(), req.uri().href());
     auto res = TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future));
     TINFO("{} {}, {} {}",
@@ -406,13 +390,11 @@ template <typename Request>
 tc::cotask<HttpResult> HttpClient::asyncFetch(Request req)
 {
   TC_AWAIT(_authenticating);
-  assignHeader(req, _headers);
 
   auto response = TC_AWAIT(asyncFetchBase(req));
   if (!response && response.error().ec == AppdErrc::InvalidToken)
   {
     TC_AWAIT(authenticate());
-    assignHeader(req, _headers);
     if (!_accessToken.empty())
       req.set(fetchpp::http::field::authorization, _accessToken);
     TC_RETURN(TC_AWAIT(asyncFetchBase(std::move(req))));
@@ -446,6 +428,7 @@ tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(http::request req)
 {
   req.set("X-Tanker-SdkType", _sdkInfo.sdkType);
   req.set("X-Tanker-SdkVersion", _sdkInfo.version);
+  req.set("Accept", "application/json");
   TC_RETURN(TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future)));
 }
 }
