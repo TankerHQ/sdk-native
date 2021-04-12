@@ -1,19 +1,10 @@
 #include <Tanker/Network/HttpClient.hpp>
 
-#include <Tanker/Cacerts/InitSsl.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
-
-#include <boost/algorithm/string.hpp>
-#include <fetchpp/http/authorization.hpp>
-#include <fetchpp/http/proxy.hpp>
-#include <fetchpp/http/request.hpp>
-#include <fetchpp/http/response.hpp>
-#include <tconcurrent/asio_use_future.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/container/flat_map.hpp>
@@ -25,7 +16,6 @@
 TLOG_CATEGORY(HttpClient);
 
 using namespace Tanker::Errors;
-namespace http = fetchpp::http;
 
 namespace Tanker::Network
 {
@@ -67,25 +57,6 @@ AppdErrc getErrorFromCode(std::string_view code)
     return it->second;
   TERROR("Unknown server error: {}", code);
   return AppdErrc::UnknownError;
-}
-
-fetchpp::http::verb toFetchppVerb(HttpVerb verb)
-{
-  switch (verb)
-  {
-  case HttpVerb::get:
-    return fetchpp::http::verb::get;
-  case HttpVerb::post:
-    return fetchpp::http::verb::post;
-  case HttpVerb::put:
-    return fetchpp::http::verb::put;
-  case HttpVerb::patch:
-    return fetchpp::http::verb::patch;
-  case HttpVerb::delete_:
-    return fetchpp::http::verb::delete_;
-  default:
-    throw Errors::AssertionError("unknown HTTP verb");
-  }
 }
 
 HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
@@ -158,16 +129,8 @@ HttpClient::HttpClient(std::string baseUrl,
                        std::chrono::nanoseconds timeout)
   : _baseUrl(std::move(baseUrl)),
     _instanceId(std::move(instanceId)),
-    _sdkInfo(std::move(sdkInfo)),
-    _cl(tc::get_default_executor().get_io_service().get_executor(),
-        timeout,
-        Cacerts::create_ssl_context())
+    _backend(std::move(sdkInfo), timeout)
 {
-  auto proxies = fetchpp::http::proxy_from_environment();
-  if (auto proxyIt = proxies.find(http::proxy_scheme::https);
-      proxyIt != proxies.end())
-    TINFO("HTTPS proxy detected: {}", proxyIt->second.url());
-  _cl.set_proxies(std::move(proxies));
 }
 
 HttpClient::~HttpClient() = default;
@@ -252,7 +215,7 @@ tc::cotask<void> HttpClient::deauthenticate()
     auto req = makeRequest(HttpVerb::delete_,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
     TINFO("{} {}", httpVerbToString(req.verb), req.url);
-    auto res = TC_AWAIT(doAsyncFetch(req));
+    auto res = TC_AWAIT(_backend.fetch(req));
     TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
     // HTTP status:
     //   204: session successfully deleted
@@ -262,9 +225,12 @@ tc::cotask<void> HttpClient::deauthenticate()
     if (res.statusCode != 204 && res.statusCode != 401)
       TERROR("Error while closing the network client: {}", res.body);
   }
-  catch (boost::system::system_error const& e)
+  catch (Errors::Exception const& e)
   {
-    TERROR("Error while closing the network client: {}", e.what());
+    if (e.errorCode() == Errors::Errc::NetworkError)
+      TERROR("Error while closing the network client: {}", e.what());
+    else
+      throw;
   }
 }
 
@@ -377,42 +343,9 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(HttpRequest req)
 
 tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
 {
-  try
-  {
-    TINFO("{} {}", httpVerbToString(req.verb), req.url);
-    auto res = TC_AWAIT(doAsyncFetch(req));
-    TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
-    TC_RETURN(handleResponse(std::move(res), req));
-  }
-  catch (boost::system::system_error const& e)
-  {
-    throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "{}: {}",
-                           e.code().category().name(),
-                           e.code().message());
-  }
-}
-
-tc::cotask<HttpResponse> HttpClient::doAsyncFetch(HttpRequest req)
-{
-  auto request = http::request(toFetchppVerb(req.verb), http::url(req.url));
-  request.set("Accept", "application/json");
-  request.set("X-Tanker-SdkType", _sdkInfo.sdkType);
-  request.set("X-Tanker-SdkVersion", _sdkInfo.version);
-  request.set("X-Tanker-Instanceid", req.instanceId);
-  if (!req.authorization.empty())
-    request.set(fetchpp::http::field::authorization, req.authorization);
-  request.content(req.body);
-  request.prepare_payload();
-  auto const fResponse =
-      TC_AWAIT(_cl.async_fetch(std::move(request), tc::asio::use_future));
-
-  HttpResponse response;
-  response.statusCode = fResponse.result_int();
-  if (auto const contentType = fResponse.find(http::field::content_type);
-      contentType != fResponse.end())
-    response.contentType = contentType->value();
-  response.body = fResponse.text();
-  TC_RETURN(response);
+  TINFO("{} {}", httpVerbToString(req.verb), req.url);
+  auto res = TC_AWAIT(_backend.fetch(req));
+  TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
+  TC_RETURN(handleResponse(std::move(res), req));
 }
 }

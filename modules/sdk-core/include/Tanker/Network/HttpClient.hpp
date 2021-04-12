@@ -3,14 +3,12 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/FetchppBackend.hpp>
 #include <Tanker/Network/HttpRequest.hpp>
 #include <Tanker/Network/HttpResponse.hpp>
 #include <Tanker/Network/HttpVerb.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-
-#include <fetchpp/client.hpp>
-#include <fetchpp/http/url.hpp>
 
 #include <boost/outcome/result.hpp>
 
@@ -98,8 +96,7 @@ private:
   std::string _baseUrl;
   std::string _instanceId;
   std::string _accessToken;
-  SdkInfo _sdkInfo;
-  fetchpp::client _cl;
+  FetchppBackend _backend;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;
@@ -114,6 +111,5 @@ private:
 
   tc::cotask<HttpResult> asyncFetch(HttpRequest req);
   tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
-  tc::cotask<HttpResponse> doAsyncFetch(HttpRequest req);
 };
 }

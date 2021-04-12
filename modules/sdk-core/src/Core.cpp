@@ -34,7 +34,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
-#include <fetchpp/http/url.hpp>
 #include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
 
