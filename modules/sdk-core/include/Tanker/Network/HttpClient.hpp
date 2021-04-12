@@ -4,6 +4,7 @@
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/HttpRequest.hpp>
+#include <Tanker/Network/HttpResponse.hpp>
 #include <Tanker/Network/HttpVerb.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -113,6 +114,6 @@ private:
 
   tc::cotask<HttpResult> asyncFetch(HttpRequest req);
   tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
-  tc::cotask<fetchpp::http::response> doAsyncFetch(HttpRequest req);
+  tc::cotask<HttpResponse> doAsyncFetch(HttpRequest req);
 };
 }

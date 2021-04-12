@@ -15,6 +15,7 @@
 #include <fetchpp/http/response.hpp>
 #include <tconcurrent/asio_use_future.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/container/flat_map.hpp>
 
 #include <Tanker/Log/Log.hpp>
@@ -87,15 +88,13 @@ fetchpp::http::verb toFetchppVerb(HttpVerb verb)
   }
 }
 
-HttpResult handleResponse(http::response res, HttpRequest const& req)
+HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
 {
-  TLOG_CATEGORY(HttpClient);
-
-  if (http::to_status_class(res.result()) != http::status_class::successful)
+  if (res.statusCode / 100 != 2)
   {
-    if (res.is_json())
+    if (boost::algorithm::starts_with(res.contentType, "application/json"))
     {
-      auto const json = res.json();
+      auto const json = nlohmann::json::parse(res.body);
       auto error = json.at("error").get<HttpError>();
       error.method = req.verb;
       error.href = req.url;
@@ -107,21 +106,22 @@ HttpResult handleResponse(http::response res, HttpRequest const& req)
                              "{} {}, status: {}",
                              httpVerbToString(req.verb),
                              req.url,
-                             res.result_int());
+                             res.statusCode);
     }
   }
 
   try
   {
-    if (res.result() != http::status::no_content)
-      return boost::outcome_v2::success(res.json());
+    if (res.statusCode != 204)
+      return boost::outcome_v2::success(nlohmann::json::parse(res.body));
     else
       return boost::outcome_v2::success(nlohmann::json(nullptr));
   }
   catch (nlohmann::json::exception const& ex)
   {
     throw Errors::formatEx(Errors::AppdErrc::InternalError,
-                           "invalid http response format");
+                           "invalid http response format: {}",
+                           res.body);
   }
 }
 }
@@ -253,18 +253,14 @@ tc::cotask<void> HttpClient::deauthenticate()
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
     TINFO("{} {}", httpVerbToString(req.verb), req.url);
     auto res = TC_AWAIT(doAsyncFetch(req));
-    TINFO("{} {}, {} {}",
-          httpVerbToString(req.verb),
-          req.url,
-          res.result_int(),
-          http::obsolete_reason(res.result()));
+    TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
     // HTTP status:
     //   204: session successfully deleted
     //   401: session already expired
     //   other: something unexpected happened -> ignore and continue closing
     //   ¯\_(ツ)_/¯
-    if (res.result_int() != 204 && res.result_int() != 401)
-      TERROR("Error while closing the network client: {}", res.text());
+    if (res.statusCode != 204 && res.statusCode != 401)
+      TERROR("Error while closing the network client: {}", res.body);
   }
   catch (boost::system::system_error const& e)
   {
@@ -385,11 +381,7 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
   {
     TINFO("{} {}", httpVerbToString(req.verb), req.url);
     auto res = TC_AWAIT(doAsyncFetch(req));
-    TINFO("{} {}, {} {}",
-          httpVerbToString(req.verb),
-          req.url,
-          res.result_int(),
-          http::obsolete_reason(res.result()));
+    TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
     TC_RETURN(handleResponse(std::move(res), req));
   }
   catch (boost::system::system_error const& e)
@@ -401,7 +393,7 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
   }
 }
 
-tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(HttpRequest req)
+tc::cotask<HttpResponse> HttpClient::doAsyncFetch(HttpRequest req)
 {
   auto request = http::request(toFetchppVerb(req.verb), http::url(req.url));
   request.set("Accept", "application/json");
@@ -412,7 +404,15 @@ tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(HttpRequest req)
     request.set(fetchpp::http::field::authorization, req.authorization);
   request.content(req.body);
   request.prepare_payload();
-  TC_RETURN(
-      TC_AWAIT(_cl.async_fetch(std::move(request), tc::asio::use_future)));
+  auto const fResponse =
+      TC_AWAIT(_cl.async_fetch(std::move(request), tc::asio::use_future));
+
+  HttpResponse response;
+  response.statusCode = fResponse.result_int();
+  if (auto const contentType = fResponse.find(http::field::content_type);
+      contentType != fResponse.end())
+    response.contentType = contentType->value();
+  response.body = fResponse.text();
+  TC_RETURN(response);
 }
 }
