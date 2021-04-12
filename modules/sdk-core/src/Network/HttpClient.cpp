@@ -68,25 +68,6 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
-HttpVerb fromFetchppVerb(fetchpp::http::verb verb)
-{
-  switch (verb)
-  {
-  case fetchpp::http::verb::get:
-    return HttpVerb::get;
-  case fetchpp::http::verb::post:
-    return HttpVerb::post;
-  case fetchpp::http::verb::put:
-    return HttpVerb::put;
-  case fetchpp::http::verb::patch:
-    return HttpVerb::patch;
-  case fetchpp::http::verb::delete_:
-    return HttpVerb::delete_;
-  default:
-    throw Errors::AssertionError("unknown HTTP verb");
-  }
-}
-
 fetchpp::http::verb toFetchppVerb(HttpVerb verb)
 {
   switch (verb)
@@ -106,28 +87,26 @@ fetchpp::http::verb toFetchppVerb(HttpVerb verb)
   }
 }
 
-HttpResult handleResponse(http::response res, http::request const& req)
+HttpResult handleResponse(http::response res, HttpRequest const& req)
 {
   TLOG_CATEGORY(HttpClient);
 
   if (http::to_status_class(res.result()) != http::status_class::successful)
   {
-    auto const method = req.method();
-    auto const href = req.uri().href();
     if (res.is_json())
     {
       auto const json = res.json();
       auto error = json.at("error").get<HttpError>();
-      error.method = fromFetchppVerb(method);
-      error.href = href;
+      error.method = req.verb;
+      error.href = req.url;
       return boost::outcome_v2::failure(std::move(error));
     }
     else
     {
       throw Errors::formatEx(Errors::AppdErrc::InternalError,
                              "{} {}, status: {}",
-                             method,
-                             href,
+                             httpVerbToString(req.verb),
+                             req.url,
                              res.result_int());
     }
   }
@@ -272,11 +251,11 @@ tc::cotask<void> HttpClient::deauthenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpVerb::delete_,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
-    TINFO("{} {}", req.method(), req.uri().href());
-    auto res = TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future));
+    TINFO("{} {}", httpVerbToString(req.verb), req.url);
+    auto res = TC_AWAIT(doAsyncFetch(req));
     TINFO("{} {}, {} {}",
-          req.method(),
-          req.uri().href(),
+          httpVerbToString(req.verb),
+          req.url,
           res.result_int(),
           http::obsolete_reason(res.result()));
     // HTTP status:
@@ -363,31 +342,30 @@ tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
-fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
-                                               std::string_view url,
-                                               nlohmann::json const& data)
+HttpRequest HttpClient::makeRequest(HttpVerb verb,
+                                    std::string_view url,
+                                    nlohmann::json const& data)
 {
-  auto request = http::request(toFetchppVerb(verb), http::url(url));
-  request.content(data.dump());
-  request.set("X-Tanker-Instanceid", _instanceId);
-  if (!_accessToken.empty())
-    request.set(fetchpp::http::field::authorization, _accessToken);
-  return request;
-}
-
-fetchpp::http::request HttpClient::makeRequest(HttpVerb verb,
-                                               std::string_view url)
-{
-  auto req = http::request(toFetchppVerb(verb), http::url(url));
-  req.set("X-Tanker-Instanceid", _instanceId);
-  if (!_accessToken.empty())
-    req.set(fetchpp::http::field::authorization, _accessToken);
-  req.prepare_payload();
+  HttpRequest req;
+  req.verb = verb;
+  req.url = url;
+  req.body = data.dump();
+  req.instanceId = _instanceId;
+  req.authorization = _accessToken;
   return req;
 }
 
-template <typename Request>
-tc::cotask<HttpResult> HttpClient::asyncFetch(Request req)
+HttpRequest HttpClient::makeRequest(HttpVerb verb, std::string_view url)
+{
+  HttpRequest req;
+  req.verb = verb;
+  req.url = url;
+  req.instanceId = _instanceId;
+  req.authorization = _accessToken;
+  return req;
+}
+
+tc::cotask<HttpResult> HttpClient::asyncFetch(HttpRequest req)
 {
   TC_AWAIT(_authenticating);
 
@@ -395,22 +373,21 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(Request req)
   if (!response && response.error().ec == AppdErrc::InvalidToken)
   {
     TC_AWAIT(authenticate());
-    if (!_accessToken.empty())
-      req.set(fetchpp::http::field::authorization, _accessToken);
+    req.authorization = _accessToken;
     TC_RETURN(TC_AWAIT(asyncFetchBase(std::move(req))));
   }
   TC_RETURN(response);
 }
 
-tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
+tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
 {
   try
   {
-    TINFO("{} {}", req.method(), req.uri().href());
+    TINFO("{} {}", httpVerbToString(req.verb), req.url);
     auto res = TC_AWAIT(doAsyncFetch(req));
     TINFO("{} {}, {} {}",
-          req.method(),
-          req.uri().href(),
+          httpVerbToString(req.verb),
+          req.url,
           res.result_int(),
           http::obsolete_reason(res.result()));
     TC_RETURN(handleResponse(std::move(res), req));
@@ -424,11 +401,18 @@ tc::cotask<HttpResult> HttpClient::asyncFetchBase(http::request req)
   }
 }
 
-tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(http::request req)
+tc::cotask<fetchpp::http::response> HttpClient::doAsyncFetch(HttpRequest req)
 {
-  req.set("X-Tanker-SdkType", _sdkInfo.sdkType);
-  req.set("X-Tanker-SdkVersion", _sdkInfo.version);
-  req.set("Accept", "application/json");
-  TC_RETURN(TC_AWAIT(_cl.async_fetch(std::move(req), tc::asio::use_future)));
+  auto request = http::request(toFetchppVerb(req.verb), http::url(req.url));
+  request.set("Accept", "application/json");
+  request.set("X-Tanker-SdkType", _sdkInfo.sdkType);
+  request.set("X-Tanker-SdkVersion", _sdkInfo.version);
+  request.set("X-Tanker-Instanceid", req.instanceId);
+  if (!req.authorization.empty())
+    request.set(fetchpp::http::field::authorization, req.authorization);
+  request.content(req.body);
+  request.prepare_payload();
+  TC_RETURN(
+      TC_AWAIT(_cl.async_fetch(std::move(request), tc::asio::use_future)));
 }
 }

@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/HttpRequest.hpp>
 #include <Tanker/Network/HttpVerb.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -105,14 +106,13 @@ private:
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
-  fetchpp::http::request makeRequest(HttpVerb verb,
-                                     std::string_view url,
-                                     nlohmann::json const& data);
-  fetchpp::http::request makeRequest(HttpVerb verb, std::string_view url);
+  HttpRequest makeRequest(HttpVerb verb,
+                          std::string_view url,
+                          nlohmann::json const& data);
+  HttpRequest makeRequest(HttpVerb verb, std::string_view url);
 
-  template <typename Request>
-  tc::cotask<HttpResult> asyncFetch(Request req);
-  tc::cotask<HttpResult> asyncFetchBase(fetchpp::http::request req);
-  tc::cotask<fetchpp::http::response> doAsyncFetch(fetchpp::http::request req);
+  tc::cotask<HttpResult> asyncFetch(HttpRequest req);
+  tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
+  tc::cotask<fetchpp::http::response> doAsyncFetch(HttpRequest req);
 };
 }
