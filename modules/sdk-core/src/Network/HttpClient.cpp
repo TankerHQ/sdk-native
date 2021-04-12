@@ -314,6 +314,12 @@ std::string HttpClient::makeUrl(std::string_view target) const
   return fmt::format("{}{}", _baseUrl, target);
 }
 
+std::string HttpClient::makeUrl(std::string_view target,
+                                nlohmann::json const& query) const
+{
+  return fmt::format("{}{}?{}", _baseUrl, target, makeQueryString(query));
+}
+
 std::string HttpClient::makeQueryString(nlohmann::json const& query) const
 {
   std::string out;
@@ -343,33 +349,33 @@ std::string HttpClient::makeQueryString(nlohmann::json const& query) const
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::get, makeUrl(target));
+  auto req = makeRequest(HttpVerb::get, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::post, makeUrl(target));
+  auto req = makeRequest(HttpVerb::post, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
-  auto req = makeRequest(HttpVerb::post, makeUrl(target), std::move(data));
+  auto req = makeRequest(HttpVerb::post, target, std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
-  auto req = makeRequest(HttpVerb::patch, makeUrl(target), std::move(data));
+  auto req = makeRequest(HttpVerb::patch, target, std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::delete_, makeUrl(target));
+  auto req = makeRequest(HttpVerb::delete_, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 

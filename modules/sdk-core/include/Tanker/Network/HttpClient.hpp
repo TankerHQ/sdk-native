@@ -80,6 +80,8 @@ public:
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   std::string makeUrl(std::string_view target) const;
+  std::string makeUrl(std::string_view target,
+                      nlohmann::json const& query) const;
   std::string makeQueryString(nlohmann::json const& query) const;
 
   tc::cotask<AuthResponse> authenticate();
