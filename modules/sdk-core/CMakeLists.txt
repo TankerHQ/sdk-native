@@ -52,6 +52,7 @@ add_library(tankercore STATIC
   include/Tanker/Network/HttpVerb.hpp
   include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
+  include/Tanker/Network/Backend.hpp
   include/Tanker/Network/FetchppBackend.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp

@@ -3,7 +3,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Network/FetchppBackend.hpp>
+#include <Tanker/Network/Backend.hpp>
 #include <Tanker/Network/HttpRequest.hpp>
 #include <Tanker/Network/HttpResponse.hpp>
 #include <Tanker/Network/HttpVerb.hpp>
@@ -96,7 +96,7 @@ private:
   std::string _baseUrl;
   std::string _instanceId;
   std::string _accessToken;
-  FetchppBackend _backend;
+  std::unique_ptr<Backend> _backend;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;

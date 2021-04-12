@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Network/FetchppBackend.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string.hpp>
@@ -129,7 +130,7 @@ HttpClient::HttpClient(std::string baseUrl,
                        std::chrono::nanoseconds timeout)
   : _baseUrl(std::move(baseUrl)),
     _instanceId(std::move(instanceId)),
-    _backend(std::move(sdkInfo), timeout)
+    _backend(std::make_unique<FetchppBackend>(std::move(sdkInfo), timeout))
 {
 }
 
@@ -215,7 +216,7 @@ tc::cotask<void> HttpClient::deauthenticate()
     auto req = makeRequest(HttpVerb::delete_,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
     TINFO("{} {}", httpVerbToString(req.verb), req.url);
-    auto res = TC_AWAIT(_backend.fetch(req));
+    auto res = TC_AWAIT(_backend->fetch(req));
     TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
     // HTTP status:
     //   204: session successfully deleted
@@ -344,7 +345,7 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(HttpRequest req)
 tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
 {
   TINFO("{} {}", httpVerbToString(req.verb), req.url);
-  auto res = TC_AWAIT(_backend.fetch(req));
+  auto res = TC_AWAIT(_backend->fetch(req));
   TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
   TC_RETURN(handleResponse(std::move(res), req));
 }
