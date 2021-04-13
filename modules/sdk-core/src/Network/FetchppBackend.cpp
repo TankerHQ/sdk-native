@@ -25,15 +25,15 @@ fetchpp::http::verb toFetchppVerb(HttpVerb verb)
 {
   switch (verb)
   {
-  case HttpVerb::get:
+  case HttpVerb::Get:
     return fetchpp::http::verb::get;
-  case HttpVerb::post:
+  case HttpVerb::Post:
     return fetchpp::http::verb::post;
-  case HttpVerb::put:
+  case HttpVerb::Put:
     return fetchpp::http::verb::put;
-  case HttpVerb::patch:
+  case HttpVerb::Patch:
     return fetchpp::http::verb::patch;
-  case HttpVerb::delete_:
+  case HttpVerb::Delete:
     return fetchpp::http::verb::delete_;
   default:
     throw Errors::AssertionError("unknown HTTP verb");

@@ -4,26 +4,26 @@ namespace Tanker::Network
 {
 enum class HttpVerb
 {
-  get,
-  post,
-  put,
-  patch,
-  delete_,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
 };
 
 inline char const* httpVerbToString(HttpVerb verb)
 {
   switch (verb)
   {
-  case HttpVerb::get:
+  case HttpVerb::Get:
     return "GET";
-  case HttpVerb::post:
+  case HttpVerb::Post:
     return "POST";
-  case HttpVerb::put:
+  case HttpVerb::Put:
     return "PUT";
-  case HttpVerb::patch:
+  case HttpVerb::Patch:
     return "PATCH";
-  case HttpVerb::delete_:
+  case HttpVerb::Delete:
     return "DELETE";
   }
   return "UNKNOWN";
