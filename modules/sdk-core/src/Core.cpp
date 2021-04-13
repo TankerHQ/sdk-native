@@ -16,6 +16,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/FetchppBackend.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
@@ -50,7 +51,8 @@ namespace
 {
 std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
                                                       std::string instanceId,
-                                                      SdkInfo const& info)
+                                                      SdkInfo const& info,
+                                                      Network::Backend* backend)
 {
 
   auto client = std::make_unique<Network::HttpClient>(
@@ -58,7 +60,7 @@ std::unique_ptr<Network::HttpClient> createHttpClient(std::string_view url,
                   fmt::arg("url", url),
                   fmt::arg("appId", info.trustchainId)),
       std::move(instanceId),
-      info);
+      backend);
   return client;
 }
 
@@ -77,8 +79,9 @@ Core::Core(std::string url, SdkInfo info, std::string writablePath)
     _instanceId(createInstanceId()),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _session(
-        std::make_shared<Session>(createHttpClient(_url, _instanceId, _info)))
+    _backend(std::make_unique<Network::FetchppBackend>(_info)),
+    _session(std::make_shared<Session>(
+        createHttpClient(_url, _instanceId, _info, _backend.get())))
 {
 }
 
@@ -108,8 +111,8 @@ Status Core::status() const
 
 void Core::reset()
 {
-  _session =
-      std::make_shared<Session>(createHttpClient(_url, _instanceId, _info));
+  _session = std::make_shared<Session>(
+      createHttpClient(_url, _instanceId, _info, _backend.get()));
 }
 
 template <typename F>

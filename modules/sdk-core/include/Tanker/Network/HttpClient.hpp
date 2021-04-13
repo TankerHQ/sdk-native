@@ -60,10 +60,7 @@ public:
     Revoked,
   };
 
-  HttpClient(std::string baseUrl,
-             std::string instanceId,
-             SdkInfo sdkInfo,
-             std::chrono::nanoseconds timeout = std::chrono::seconds(30));
+  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend);
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
   HttpClient& operator=(HttpClient const&) = delete;
@@ -96,7 +93,7 @@ private:
   std::string _baseUrl;
   std::string _instanceId;
   std::string _accessToken;
-  std::unique_ptr<Backend> _backend;
+  Backend* _backend;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;

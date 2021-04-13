@@ -167,6 +167,7 @@ private:
   SdkInfo _info;
   std::string _writablePath;
   SessionClosedHandler _sessionClosed;
+  std::unique_ptr<Network::Backend> _backend;
   std::shared_ptr<Session> _session;
 };
 }

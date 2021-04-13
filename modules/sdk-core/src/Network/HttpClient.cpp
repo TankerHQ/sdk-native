@@ -4,13 +4,14 @@
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
-#include <Tanker/Network/FetchppBackend.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/container/flat_map.hpp>
 
 #include <Tanker/Log/Log.hpp>
+
+#include <nlohmann/json.hpp>
 
 #include <fmt/ostream.h>
 
@@ -126,11 +127,10 @@ std::error_code make_error_code(HttpError const& e)
 
 HttpClient::HttpClient(std::string baseUrl,
                        std::string instanceId,
-                       SdkInfo sdkInfo,
-                       std::chrono::nanoseconds timeout)
+                       Backend* backend)
   : _baseUrl(std::move(baseUrl)),
     _instanceId(std::move(instanceId)),
-    _backend(std::make_unique<FetchppBackend>(std::move(sdkInfo), timeout))
+    _backend(backend)
 {
 }
 
