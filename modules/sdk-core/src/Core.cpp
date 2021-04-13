@@ -74,12 +74,16 @@ std::string createInstanceId()
 
 Core::~Core() = default;
 
-Core::Core(std::string url, SdkInfo info, std::string writablePath)
+Core::Core(std::string url,
+           SdkInfo info,
+           std::string writablePath,
+           std::unique_ptr<Network::Backend> backend)
   : _url(std::move(url)),
     _instanceId(createInstanceId()),
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
-    _backend(std::make_unique<Network::FetchppBackend>(_info)),
+    _backend(backend ? std::move(backend) :
+                       std::make_unique<Network::FetchppBackend>(_info)),
     _session(std::make_shared<Session>(
         createHttpClient(_url, _instanceId, _info, _backend.get())))
 {

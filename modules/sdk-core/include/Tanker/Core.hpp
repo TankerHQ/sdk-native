@@ -49,7 +49,10 @@ public:
 
   using SessionClosedHandler = std::function<void()>;
 
-  Core(std::string url, SdkInfo info, std::string writablePath);
+  Core(std::string url,
+       SdkInfo info,
+       std::string writablePath,
+       std::unique_ptr<Network::Backend> backend);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);

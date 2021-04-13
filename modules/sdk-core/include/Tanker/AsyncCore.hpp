@@ -48,7 +48,10 @@ public:
   AsyncCore& operator=(AsyncCore const&) = delete;
   AsyncCore& operator=(AsyncCore&&) = delete;
 
-  AsyncCore(std::string url, SdkInfo info, std::string writablePath);
+  AsyncCore(std::string url,
+            SdkInfo info,
+            std::string writablePath,
+            std::unique_ptr<Network::Backend> backend = nullptr);
   ~AsyncCore();
 
   tc::future<void> destroy();

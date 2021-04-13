@@ -107,8 +107,14 @@ auto AsyncCore::runResumable(F&& f, bool stopCheck)
           std::forward<F>(f)))));
 }
 
-AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
-  : _core(std::move(url), std::move(info), std::move(writablePath))
+AsyncCore::AsyncCore(std::string url,
+                     SdkInfo info,
+                     std::string writablePath,
+                     std::unique_ptr<Network::Backend> backend)
+  : _core(std::move(url),
+          std::move(info),
+          std::move(writablePath),
+          std::move(backend))
 {
 }
 
