@@ -69,7 +69,7 @@ HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
     {
       auto const json = nlohmann::json::parse(res.body);
       auto error = json.at("error").get<HttpError>();
-      error.method = req.verb;
+      error.method = req.method;
       error.href = req.url;
       return boost::outcome_v2::failure(std::move(error));
     }
@@ -77,7 +77,7 @@ HttpResult handleResponse(HttpResponse res, HttpRequest const& req)
     {
       throw Errors::formatEx(Errors::AppdErrc::InternalError,
                              "{} {}, status: {}",
-                             httpVerbToString(req.verb),
+                             httpMethodToString(req.method),
                              req.url,
                              res.statusCode);
     }
@@ -165,7 +165,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 
     auto const baseTarget =
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(HttpVerb::Post,
+    auto req = makeRequest(HttpMethod::Post,
                            makeUrl(fmt::format("{}/challenges", baseTarget)));
     auto const challenge = TC_AWAIT(asyncFetchBase(std::move(req)))
                                .value()
@@ -185,7 +185,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
                      _deviceSignatureKeyPair.privateKey);
     auto req2 = makeRequest(
-        HttpVerb::Post,
+        HttpMethod::Post,
         makeUrl(fmt::format("{}/sessions", baseTarget)),
         {{"signature", signature},
          {"challenge", challenge},
@@ -213,11 +213,11 @@ tc::cotask<void> HttpClient::deauthenticate()
   {
     auto const baseTarget =
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(HttpVerb::Delete,
+    auto req = makeRequest(HttpMethod::Delete,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
-    TINFO("{} {}", httpVerbToString(req.verb), req.url);
+    TINFO("{} {}", httpMethodToString(req.method), req.url);
     auto res = TC_AWAIT(_backend->fetch(req));
-    TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
+    TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
     // HTTP status:
     //   204: session successfully deleted
     //   401: session already expired
@@ -275,42 +275,42 @@ std::string HttpClient::makeQueryString(nlohmann::json const& query) const
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::Get, target);
+  auto req = makeRequest(HttpMethod::Get, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::Post, target);
+  auto req = makeRequest(HttpMethod::Post, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
-  auto req = makeRequest(HttpVerb::Post, target, std::move(data));
+  auto req = makeRequest(HttpMethod::Post, target, std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
-  auto req = makeRequest(HttpVerb::Patch, target, std::move(data));
+  auto req = makeRequest(HttpMethod::Patch, target, std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
-  auto req = makeRequest(HttpVerb::Delete, target);
+  auto req = makeRequest(HttpMethod::Delete, target);
   TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
 }
 
-HttpRequest HttpClient::makeRequest(HttpVerb verb,
+HttpRequest HttpClient::makeRequest(HttpMethod method,
                                     std::string_view url,
                                     nlohmann::json const& data)
 {
   HttpRequest req;
-  req.verb = verb;
+  req.method = method;
   req.url = url;
   req.body = data.dump();
   req.instanceId = _instanceId;
@@ -318,10 +318,10 @@ HttpRequest HttpClient::makeRequest(HttpVerb verb,
   return req;
 }
 
-HttpRequest HttpClient::makeRequest(HttpVerb verb, std::string_view url)
+HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
 {
   HttpRequest req;
-  req.verb = verb;
+  req.method = method;
   req.url = url;
   req.instanceId = _instanceId;
   req.authorization = _accessToken;
@@ -344,9 +344,9 @@ tc::cotask<HttpResult> HttpClient::asyncFetch(HttpRequest req)
 
 tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
 {
-  TINFO("{} {}", httpVerbToString(req.verb), req.url);
+  TINFO("{} {}", httpMethodToString(req.method), req.url);
   auto res = TC_AWAIT(_backend->fetch(req));
-  TINFO("{} {}, {}", httpVerbToString(req.verb), req.url, res.statusCode);
+  TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
   TC_RETURN(handleResponse(std::move(res), req));
 }
 }

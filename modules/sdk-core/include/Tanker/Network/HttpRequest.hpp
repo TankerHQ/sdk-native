@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Tanker/Network/HttpVerb.hpp>
+#include <Tanker/Network/HttpMethod.hpp>
 
 #include <string>
 
@@ -8,7 +8,7 @@ namespace Tanker::Network
 {
 struct HttpRequest
 {
-  HttpVerb verb;
+  HttpMethod method;
   std::string url;
   std::string authorization;
   std::string instanceId;

@@ -21,22 +21,22 @@ namespace Tanker::Network
 {
 namespace
 {
-fetchpp::http::verb toFetchppVerb(HttpVerb verb)
+fetchpp::http::verb toFetchppVerb(HttpMethod method)
 {
-  switch (verb)
+  switch (method)
   {
-  case HttpVerb::Get:
+  case HttpMethod::Get:
     return fetchpp::http::verb::get;
-  case HttpVerb::Post:
+  case HttpMethod::Post:
     return fetchpp::http::verb::post;
-  case HttpVerb::Put:
+  case HttpMethod::Put:
     return fetchpp::http::verb::put;
-  case HttpVerb::Patch:
+  case HttpMethod::Patch:
     return fetchpp::http::verb::patch;
-  case HttpVerb::Delete:
+  case HttpMethod::Delete:
     return fetchpp::http::verb::delete_;
   default:
-    throw Errors::AssertionError("unknown HTTP verb");
+    throw Errors::AssertionError("unknown HTTP method");
   }
 }
 }
@@ -61,7 +61,7 @@ tc::cotask<HttpResponse> FetchppBackend::fetch(HttpRequest req)
 {
   try
   {
-    auto request = http::request(toFetchppVerb(req.verb), http::url(req.url));
+    auto request = http::request(toFetchppVerb(req.method), http::url(req.url));
     request.set("Accept", "application/json");
     request.set("X-Tanker-SdkType", _sdkInfo.sdkType);
     request.set("X-Tanker-SdkVersion", _sdkInfo.version);

@@ -4,9 +4,9 @@
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Network/Backend.hpp>
+#include <Tanker/Network/HttpMethod.hpp>
 #include <Tanker/Network/HttpRequest.hpp>
 #include <Tanker/Network/HttpResponse.hpp>
-#include <Tanker/Network/HttpVerb.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
@@ -23,7 +23,7 @@ namespace Tanker::Network
 {
 struct HttpError
 {
-  HttpVerb method;
+  HttpMethod method;
   std::string href;
   int status;
   Errors::AppdErrc ec;
@@ -101,10 +101,10 @@ private:
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
-  HttpRequest makeRequest(HttpVerb verb,
+  HttpRequest makeRequest(HttpMethod method,
                           std::string_view url,
                           nlohmann::json const& data);
-  HttpRequest makeRequest(HttpVerb verb, std::string_view url);
+  HttpRequest makeRequest(HttpMethod method, std::string_view url);
 
   tc::cotask<HttpResult> asyncFetch(HttpRequest req);
   tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
