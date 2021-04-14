@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: cc820822bc646de30fd3f2f01304ea4a6f23b72d
+  ref: 7567838f7e82019db51f2be429e52b46f0a79e21
 
 ###############
 # build stage #
@@ -409,6 +409,27 @@ bridge/rust/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-rust
+    strategy: depend
+
+#############################
+# react-native-deploy stage #
+#############################
+
+bridge/react-native/deploy:
+  extends:
+    - .react-native-deploy
+    - .rules/bridge-release/react-native
+    - .variables/bridge-common
+  needs:
+    - bridge/android/deploy
+    - bridge/ios/deploy
+  variables:
+    UPSTREAM_BRIDGE_STAGE: deploy
+    SDK_ANDROID_RELEASE_VERSION: $SDK_ANDROID_RELEASE_VERSION
+    SDK_IOS_RELEASE_VERSION: $SDK_IOS_RELEASE_VERSION
+    SDK_REACT_NATIVE_RELEASE_VERSION: $SDK_REACT_NATIVE_RELEASE_VERSION
+  trigger:
+    project: TankerHQ/sdk-react-native
     strategy: depend
 
 ################
