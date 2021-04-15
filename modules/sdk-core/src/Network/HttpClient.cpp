@@ -4,6 +4,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 
@@ -75,6 +76,44 @@ AppdErrc getErrorFromCode(std::string_view code)
   return AppdErrc::UnknownError;
 }
 
+HttpVerb fromFetchppVerb(fetchpp::http::verb verb)
+{
+  switch (verb)
+  {
+  case fetchpp::http::verb::get:
+    return HttpVerb::get;
+  case fetchpp::http::verb::post:
+    return HttpVerb::post;
+  case fetchpp::http::verb::put:
+    return HttpVerb::put;
+  case fetchpp::http::verb::patch:
+    return HttpVerb::patch;
+  case fetchpp::http::verb::delete_:
+    return HttpVerb::delete_;
+  default:
+    throw Errors::AssertionError("unknown HTTP verb");
+  }
+}
+
+fetchpp::http::verb toFetchppVerb(HttpVerb verb)
+{
+  switch (verb)
+  {
+  case HttpVerb::get:
+    return fetchpp::http::verb::get;
+  case HttpVerb::post:
+    return fetchpp::http::verb::post;
+  case HttpVerb::put:
+    return fetchpp::http::verb::put;
+  case HttpVerb::patch:
+    return fetchpp::http::verb::patch;
+  case HttpVerb::delete_:
+    return fetchpp::http::verb::delete_;
+  default:
+    throw Errors::AssertionError("unknown HTTP verb");
+  }
+}
+
 HttpResult handleResponse(http::response res, http::request const& req)
 {
   TLOG_CATEGORY(HttpClient);
@@ -87,7 +126,7 @@ HttpResult handleResponse(http::response res, http::request const& req)
     {
       auto const json = res.json();
       auto error = json.at("error").get<HttpError>();
-      error.method = method;
+      error.method = fromFetchppVerb(method);
       error.href = href;
       return boost::outcome_v2::failure(std::move(error));
     }
@@ -115,19 +154,18 @@ HttpResult handleResponse(http::response res, http::request const& req)
   }
 }
 
-fetchpp::http::request makeRequest(fetchpp::http::verb verb,
-                                   fetchpp::http::url url,
+fetchpp::http::request makeRequest(HttpVerb verb,
+                                   std::string_view url,
                                    nlohmann::json const& data)
 {
-  auto request = http::request(verb, std::move(url));
+  auto request = http::request(toFetchppVerb(verb), http::url(url));
   request.content(data.dump());
   return request;
 }
 
-fetchpp::http::request makeRequest(fetchpp::http::verb verb,
-                                   fetchpp::http::url url)
+fetchpp::http::request makeRequest(HttpVerb verb, std::string_view url)
 {
-  auto req = http::request(verb, std::move(url));
+  auto req = http::request(toFetchppVerb(verb), http::url(url));
   req.prepare_payload();
   return req;
 }
@@ -181,10 +219,11 @@ std::error_code make_error_code(HttpError const& e)
                          e.traceId);
 }
 
-HttpClient::HttpClient(http::url const& baseUrl,
-                       fetchpp::net::executor ex,
-                       std::chrono::nanoseconds timeout)
-  : _baseUrl(baseUrl), _cl(ex, timeout, Cacerts::create_ssl_context())
+HttpClient::HttpClient(std::string baseUrl, std::chrono::nanoseconds timeout)
+  : _baseUrl(std::move(baseUrl)),
+    _cl(tc::get_default_executor().get_io_service().get_executor(),
+        timeout,
+        Cacerts::create_ssl_context())
 {
   auto proxies = fetchpp::http::proxy_from_environment();
   if (auto proxyIt = proxies.find(http::proxy_scheme::https);
@@ -230,7 +269,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 
     auto const baseTarget =
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(fetchpp::http::verb::post,
+    auto req = makeRequest(HttpVerb::post,
                            makeUrl(fmt::format("{}/challenges", baseTarget)));
     assignHeader(req, _headers);
     auto const challenge = TC_AWAIT(asyncFetchBase(_cl, std::move(req)))
@@ -251,7 +290,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         Crypto::sign(gsl::make_span(challenge).as_span<uint8_t const>(),
                      _deviceSignatureKeyPair.privateKey);
     auto req2 = makeRequest(
-        fetchpp::http::verb::post,
+        HttpVerb::post,
         makeUrl(fmt::format("{}/sessions", baseTarget)),
         {{"signature", signature},
          {"challenge", challenge},
@@ -281,7 +320,7 @@ tc::cotask<void> HttpClient::deauthenticate()
   {
     auto const baseTarget =
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
-    auto req = makeRequest(fetchpp::http::verb::delete_,
+    auto req = makeRequest(HttpVerb::delete_,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
     assignHeader(req, _headers);
     TINFO("{} {}", req.method(), req.uri().href());
@@ -305,42 +344,67 @@ tc::cotask<void> HttpClient::deauthenticate()
   }
 }
 
-http::url HttpClient::makeUrl(std::string_view target) const
+std::string HttpClient::makeUrl(std::string_view target) const
 {
-  return http::url(target, _baseUrl);
+  return fmt::format("{}{}", _baseUrl, target);
+}
+
+std::string HttpClient::makeQueryString(nlohmann::json const& query) const
+{
+  std::string out;
+  for (auto const& elem : query.items())
+  {
+    if (elem.value().is_array())
+    {
+      for (auto const& item : elem.value())
+      {
+        out += fmt::format("{}={}&", elem.key(), item.get<std::string>());
+      }
+    }
+    else if (elem.value().is_string())
+    {
+      out += fmt::format("{}={}&", elem.key(), elem.value().get<std::string>());
+    }
+    else
+    {
+      throw Errors::AssertionError(
+          "unknown type in HttpClient::makeQueryString");
+    }
+  }
+  if (!out.empty())
+    out.pop_back(); // remove the final '&'
+  return out;
 }
 
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::get, makeUrl(target));
+  auto req = makeRequest(HttpVerb::get, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::post, makeUrl(target));
+  auto req = makeRequest(HttpVerb::post, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
-  auto req =
-      makeRequest(fetchpp::http::verb::post, makeUrl(target), std::move(data));
+  auto req = makeRequest(HttpVerb::post, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
-  auto req =
-      makeRequest(fetchpp::http::verb::patch, makeUrl(target), std::move(data));
+  auto req = makeRequest(HttpVerb::patch, makeUrl(target), std::move(data));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
-  auto req = makeRequest(fetchpp::http::verb::delete_, makeUrl(target));
+  auto req = makeRequest(HttpVerb::delete_, makeUrl(target));
   TC_RETURN(TC_AWAIT(asyncFetch(_cl, std::move(req))));
 }
 

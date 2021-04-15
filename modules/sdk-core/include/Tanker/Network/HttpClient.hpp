@@ -19,9 +19,18 @@
 
 namespace Tanker::Network
 {
+enum class HttpVerb
+{
+  get,
+  post,
+  put,
+  patch,
+  delete_,
+};
+
 struct HttpError
 {
-  fetchpp::http::verb method;
+  HttpVerb method;
   std::string href;
   int status;
   Errors::AppdErrc ec;
@@ -58,8 +67,7 @@ public:
     Revoked,
   };
 
-  HttpClient(fetchpp::http::url const& baseUrl,
-             fetchpp::net::executor ex,
+  HttpClient(std::string baseUrl,
              std::chrono::nanoseconds timeout = std::chrono::seconds(30));
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
@@ -76,7 +84,8 @@ public:
                                     nlohmann::json data);
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
-  [[nodiscard]] fetchpp::http::url makeUrl(std::string_view target) const;
+  std::string makeUrl(std::string_view target) const;
+  std::string makeQueryString(nlohmann::json const& query) const;
 
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
@@ -88,7 +97,7 @@ public:
       Crypto::SignatureKeyPair const& deviceSignatureKeyPair);
 
 private:
-  fetchpp::http::url _baseUrl;
+  std::string _baseUrl;
   fetchpp::http::request_header<> _headers;
   fetchpp::client _cl;
 

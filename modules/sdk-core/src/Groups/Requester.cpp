@@ -38,9 +38,8 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocksImpl(
     nlohmann::json const& query)
 {
-  auto url = _httpClient->makeUrl("user-group-histories");
-  url.set_search(fetchpp::http::encode_query(query));
-  auto const response = TC_AWAIT(_httpClient->asyncGet(url.href())).value();
+  auto url = "user-group-histories?" + _httpClient->makeQueryString(query);
+  auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   TC_RETURN(fromBlocksToGroupActions(
       response.at("histories").get<std::vector<std::string>>()));
 }
@@ -69,10 +68,9 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
 tc::cotask<void> Requester::createGroup(
     Trustchain::Actions::UserGroupCreation const& groupCreation)
 {
-  auto const url = _httpClient->makeUrl("user-groups");
   TC_AWAIT(
       _httpClient->asyncPost(
-          url.href(),
+          "user-groups",
           {{"user_group_creation",
             mgs::base64::encode(Serialization::serialize(groupCreation))}}))
       .value();
@@ -81,10 +79,9 @@ tc::cotask<void> Requester::createGroup(
 tc::cotask<void> Requester::updateGroup(
     Trustchain::Actions::UserGroupAddition const& groupAddition)
 {
-  auto const url = _httpClient->makeUrl("user-groups");
   TC_AWAIT(
       _httpClient->asyncPatch(
-          url.href(),
+          "user-groups",
           {{"user_group_addition",
             mgs::base64::encode(Serialization::serialize(groupAddition))}}))
       .value();
