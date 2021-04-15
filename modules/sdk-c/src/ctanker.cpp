@@ -18,6 +18,8 @@
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
 
+#include "CNetwork.hpp"
+
 #include <string>
 #include <utility>
 
@@ -184,12 +186,12 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       throw Exception(make_error_code(Errc::InvalidArgument),
                       "options is null");
     }
-    if (options->version != 2)
+    if (options->version != 2 && options->version != 3)
     {
       throw Exception(
           make_error_code(Errc::InvalidArgument),
           fmt::format("options version should be {:d} instead of {:d}",
-                      2,
+                      3,
                       options->version));
     }
     if (options->app_id == nullptr)
@@ -217,6 +219,15 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       "writable_path is null");
     }
 
+    std::unique_ptr<Tanker::Network::Backend> backend;
+    if (options->version == 3 && options->http_send_request &&
+        options->http_cancel_request)
+    {
+      backend = std::make_unique<CTankerBackend>(options->http_send_request,
+                                                 options->http_cancel_request,
+                                                 options->http_data);
+    }
+
     try
     {
       auto const trustchainId = mgs::base64::decode<Trustchain::TrustchainId>(
@@ -225,7 +236,8 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       return static_cast<void*>(
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
-                        options->writable_path));
+                        options->writable_path,
+                        std::move(backend)));
     }
     catch (mgs::exceptions::exception const&)
     {

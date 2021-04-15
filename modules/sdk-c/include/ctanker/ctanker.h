@@ -3,6 +3,7 @@
 
 #include <ctanker/async.h>
 #include <ctanker/export.h>
+#include <ctanker/network.h>
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -127,11 +128,15 @@ struct tanker_options
   char const* writable_path; /*!< Must not be NULL. */
   char const* sdk_type;      /*!< Must not be NULL. */
   char const* sdk_version;   /*!< Must not be NULL. */
+
+  tanker_http_send_request_t http_send_request;
+  tanker_http_cancel_request_t http_cancel_request;
+  void* http_data;
 };
 
-#define TANKER_OPTIONS_INIT         \
-  {                                 \
-    2, NULL, NULL, NULL, NULL, NULL \
+#define TANKER_OPTIONS_INIT                           \
+  {                                                   \
+    3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL \
   }
 
 struct tanker_email_verification
