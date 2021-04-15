@@ -224,12 +224,12 @@ tc::cotask<void> HttpClient::deauthenticate()
     //   other: something unexpected happened -> ignore and continue closing
     //   ¯\_(ツ)_/¯
     if (res.statusCode != 204 && res.statusCode != 401)
-      TERROR("Error while closing the network client: {}", res.body);
+      TERROR("Error while deauthenticating: {}", res.body);
   }
   catch (Errors::Exception const& e)
   {
     if (e.errorCode() == Errors::Errc::NetworkError)
-      TERROR("Error while closing the network client: {}", e.what());
+      TERROR("Error while deauthenticating: {}", e.what());
     else
       throw;
   }
