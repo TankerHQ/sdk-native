@@ -215,16 +215,18 @@ tc::cotask<void> HttpClient::deauthenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpMethod::Delete,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
-    TINFO("{} {}", httpMethodToString(req.method), req.url);
-    auto res = TC_AWAIT(_backend->fetch(req));
-    TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
-    // HTTP status:
-    //   204: session successfully deleted
-    //   401: session already expired
-    //   other: something unexpected happened -> ignore and continue closing
-    //   ¯\_(ツ)_/¯
-    if (res.statusCode != 204 && res.statusCode != 401)
-      TERROR("Error while deauthenticating: {}", res.body);
+    auto res = TC_AWAIT(fetch(req));
+    if (res.has_error())
+    {
+      auto const error = res.error();
+      // HTTP status:
+      //   204: session successfully deleted
+      //   401: session already expired
+      //   other: something unexpected happened -> ignore and continue closing
+      //   ¯\_(ツ)_/¯
+      if (error.status != 204 && error.status != 401)
+        TERROR("Error while deauthenticating: {}: {}", error.ec, error.message);
+    }
   }
   catch (Errors::Exception const& e)
   {
