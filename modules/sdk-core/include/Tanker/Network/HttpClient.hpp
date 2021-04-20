@@ -106,7 +106,7 @@ private:
                           nlohmann::json const& data);
   HttpRequest makeRequest(HttpMethod method, std::string_view url);
 
-  tc::cotask<HttpResult> asyncFetch(HttpRequest req);
-  tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
+  tc::cotask<HttpResult> authenticatedFetch(HttpRequest req);
+  tc::cotask<HttpResult> fetch(HttpRequest req);
 };
 }
