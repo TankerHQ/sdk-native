@@ -37,9 +37,9 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
 Requester::getClaimBlocks(Trustchain::UserId const& userId)
 {
-  auto const target =
+  auto const target = _httpClient->makeUrl(
       fmt::format("users/{userId:#S}/provisional-identity-claims",
-                  fmt::arg("userId", userId));
+                  fmt::arg("userId", userId)));
   auto const res = TC_AWAIT(_httpClient->asyncGet(target));
   auto ret = fromBlocksToProvisionalIdentityClaims(
       res.value()
@@ -51,7 +51,8 @@ Requester::getClaimBlocks(Trustchain::UserId const& userId)
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Requester::getVerifiedProvisionalIdentityKeys()
 {
-  auto const res = TC_AWAIT(_httpClient->asyncPost("provisional-identities"));
+  auto const res = TC_AWAIT(
+      _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities")));
 
   auto const j = res.value();
   if (j.empty())
@@ -72,8 +73,9 @@ Requester::getVerifiedProvisionalIdentityKeys()
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
 {
-  auto const res = TC_AWAIT(_httpClient->asyncPost(
-      "provisional-identities", {{"verification", request}}));
+  auto const res = TC_AWAIT(
+      _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities"),
+                             {{"verification", request}}));
 
   if (res.has_error() &&
       res.error().ec == Errors::AppdErrc::ProvisionalIdentityNotFound)
@@ -100,7 +102,8 @@ tc::cotask<void> Requester::claimProvisionalIdentity(
       {"provisional_identity_claim", mgs::base64::encode(serialized)}};
 
   TC_AWAIT(
-      _httpClient->asyncPost("provisional-identity-claims", std::move(body)))
+      _httpClient->asyncPost(
+          _httpClient->makeUrl("provisional-identity-claims"), std::move(body)))
       .value();
   TC_RETURN();
 }

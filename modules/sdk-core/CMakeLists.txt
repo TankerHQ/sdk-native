@@ -49,7 +49,11 @@ add_library(tankercore STATIC
   include/Tanker/Unlock/Requester.hpp
   include/Tanker/Unlock/Request.hpp
   include/Tanker/DeviceKeys.hpp
+  include/Tanker/Network/HttpMethod.hpp
+  include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
+  include/Tanker/Network/Backend.hpp
+  include/Tanker/Network/FetchppBackend.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -117,6 +121,7 @@ add_library(tankercore STATIC
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
   src/Network/HttpClient.cpp
+  src/Network/FetchppBackend.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
   src/Unlock/Requester.cpp

@@ -3,10 +3,12 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Network/Backend.hpp>
+#include <Tanker/Network/HttpMethod.hpp>
+#include <Tanker/Network/HttpRequest.hpp>
+#include <Tanker/Network/HttpResponse.hpp>
+#include <Tanker/SdkInfo.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
-
-#include <fetchpp/client.hpp>
-#include <fetchpp/http/url.hpp>
 
 #include <boost/outcome/result.hpp>
 
@@ -19,18 +21,9 @@
 
 namespace Tanker::Network
 {
-enum class HttpVerb
-{
-  get,
-  post,
-  put,
-  patch,
-  delete_,
-};
-
 struct HttpError
 {
-  HttpVerb method;
+  HttpMethod method;
   std::string href;
   int status;
   Errors::AppdErrc ec;
@@ -67,8 +60,7 @@ public:
     Revoked,
   };
 
-  HttpClient(std::string baseUrl,
-             std::chrono::nanoseconds timeout = std::chrono::seconds(30));
+  HttpClient(std::string baseUrl, std::string instanceId, Backend* backend);
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
   HttpClient& operator=(HttpClient const&) = delete;
@@ -85,12 +77,13 @@ public:
   tc::cotask<HttpResult> asyncDelete(std::string_view target);
 
   std::string makeUrl(std::string_view target) const;
+  std::string makeUrl(std::string_view target,
+                      nlohmann::json const& query) const;
   std::string makeQueryString(nlohmann::json const& query) const;
 
   tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
 
-  void setHeader(std::string_view name, std::string_view value);
   void setAccessToken(std::string_view accessToken);
   void setDeviceAuthData(
       Trustchain::DeviceId const& deviceId,
@@ -98,8 +91,9 @@ public:
 
 private:
   std::string _baseUrl;
-  fetchpp::http::request_header<> _headers;
-  fetchpp::client _cl;
+  std::string _instanceId;
+  std::string _accessToken;
+  Backend* _backend;
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;
@@ -107,7 +101,12 @@ private:
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
-  template <typename Request>
-  tc::cotask<HttpResult> asyncFetch(fetchpp::client& cl, Request req);
+  HttpRequest makeRequest(HttpMethod method,
+                          std::string_view url,
+                          nlohmann::json const& data);
+  HttpRequest makeRequest(HttpMethod method, std::string_view url);
+
+  tc::cotask<HttpResult> asyncFetch(HttpRequest req);
+  tc::cotask<HttpResult> asyncFetchBase(HttpRequest req);
 };
 }

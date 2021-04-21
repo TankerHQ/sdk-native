@@ -38,7 +38,7 @@ Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocksImpl(
     nlohmann::json const& query)
 {
-  auto url = "user-group-histories?" + _httpClient->makeQueryString(query);
+  auto url = _httpClient->makeUrl("user-group-histories", query);
   auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   TC_RETURN(fromBlocksToGroupActions(
       response.at("histories").get<std::vector<std::string>>()));
@@ -70,7 +70,7 @@ tc::cotask<void> Requester::createGroup(
 {
   TC_AWAIT(
       _httpClient->asyncPost(
-          "user-groups",
+          _httpClient->makeUrl("user-groups"),
           {{"user_group_creation",
             mgs::base64::encode(Serialization::serialize(groupCreation))}}))
       .value();
@@ -81,7 +81,7 @@ tc::cotask<void> Requester::updateGroup(
 {
   TC_AWAIT(
       _httpClient->asyncPatch(
-          "user-groups",
+          _httpClient->makeUrl("user-groups"),
           {{"user_group_addition",
             mgs::base64::encode(Serialization::serialize(groupAddition))}}))
       .value();
