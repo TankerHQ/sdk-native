@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 7567838f7e82019db51f2be429e52b46f0a79e21
+  ref: 119d624e8fb6bd70a588f3b53a798e3c168adfff
 
 ###############
 # build stage #
