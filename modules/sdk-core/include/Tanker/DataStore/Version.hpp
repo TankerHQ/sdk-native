@@ -6,7 +6,7 @@ namespace DataStore
 {
 constexpr int latestVersion()
 {
-  return 9;
+  return 10;
 }
 }
 }

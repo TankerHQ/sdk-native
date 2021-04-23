@@ -65,7 +65,6 @@ using ResourceKeysTable = DbModels::resource_keys::resource_keys;
 using ProvisionalUserKeysTable =
     DbModels::provisional_user_keys::provisional_user_keys;
 using DeviceKeysTable = DbModels::device_key_store::device_key_store;
-using GroupsTable = DbModels::groups::groups;
 using VersionTable = DbModels::version::version;
 using OldVersionsTable = DbModels::versions::versions;
 
@@ -127,7 +126,6 @@ void Database::performUnifiedMigration()
     {
     // 0 denotes that there is no table at all
     case 0:
-      createTable<GroupsTable>(*_db);
       createTable<ResourceKeysTable>(*_db);
       createTable<UserKeysTable>(*_db);
       createTable<DeviceKeysTable>(*_db);
@@ -150,7 +148,6 @@ void Database::performUnifiedMigration()
       _db->execute("DROP TABLE IF EXISTS contact_devices");
       _db->execute("DROP TABLE IF EXISTS contact_user_keys");
       _db->execute("DROP TABLE IF EXISTS groups");
-      createTable<GroupsTable>(*_db);
       [[fallthrough]];
     case 7:
       if (currentVersion != 0)
@@ -208,8 +205,11 @@ void Database::performUnifiedMigration()
 
       if (updatedRows)
         flushAllCaches(currentVersion);
+      [[fallthrough]];
     }
-    break;
+    case 9:
+      _db->execute("DROP TABLE IF EXISTS groups");
+      break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
                              "invalid database version: {}",
@@ -226,7 +226,6 @@ void Database::performOldMigration()
 {
   TINFO("Performing migration from old version...");
   // retrieve each table version, and perform migration
-  createOrMigrateTable<GroupsTable>(currentTableVersion<GroupsTable>());
   createOrMigrateTable<ResourceKeysTable>(
       currentTableVersion<ResourceKeysTable>());
   createOrMigrateTable<UserKeysTable>(currentTableVersion<UserKeysTable>());
@@ -308,7 +307,6 @@ void Database::flushAllCaches(int currentVersion)
   flushTable(UserKeysTable{});
   flushTable(ResourceKeysTable{});
   flushTable(ProvisionalUserKeysTable{});
-  flushTable(GroupsTable{});
 }
 
 template <typename Table>

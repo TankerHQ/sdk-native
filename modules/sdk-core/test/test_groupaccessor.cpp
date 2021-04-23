@@ -51,20 +51,6 @@ TEST_CASE("GroupAccessor")
 
   SUBCASE("request groups in cache")
   {
-    SUBCASE("it should return cached encryption keys")
-    {
-
-      AWAIT_VOID(groupStore.put(static_cast<InternalGroup>(aliceGroup)));
-
-      auto const result1 =
-          AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
-      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
-
-      auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
-          {aliceGroup.currentEncKp().publicKey}));
-      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
-    }
-
     SUBCASE("it can request group public keys by invalid groupId")
     {
       auto const unknownGroupId = make<GroupId>("unknownGroup");
