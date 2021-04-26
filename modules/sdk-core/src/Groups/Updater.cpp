@@ -120,6 +120,7 @@ ExternalGroup makeExternalGroup(UserGroupCreation const& userGroupCreation)
                        userGroupCreation.publicSignatureKey(),
                        userGroupCreation.sealedPrivateSignatureKey(),
                        userGroupCreation.publicEncryptionKey(),
+                       Trustchain::getHash(userGroupCreation),
                        Trustchain::getHash(userGroupCreation)};
 }
 
@@ -129,6 +130,7 @@ ExternalGroup makeExternalGroup(UserGroupUpdate const& userGroupUpdate)
                        userGroupUpdate.publicSignatureKey(),
                        userGroupUpdate.sealedPrivateSignatureKey(),
                        userGroupUpdate.publicEncryptionKey(),
+                       Trustchain::getHash(userGroupUpdate),
                        Trustchain::getHash(userGroupUpdate)};
 }
 
@@ -151,6 +153,7 @@ InternalGroup makeInternalGroup(
                            userGroupCreation.publicEncryptionKey(),
                            groupPrivateEncryptionKey,
                        },
+                       Trustchain::getHash(userGroupCreation),
                        Trustchain::getHash(userGroupCreation)};
 }
 
@@ -173,6 +176,7 @@ InternalGroup makeInternalGroup(
                            userGroupUpdate.publicEncryptionKey(),
                            groupPrivateEncryptionKey,
                        },
+                       Trustchain::getHash(userGroupUpdate),
                        Trustchain::getHash(userGroupUpdate)};
 }
 
@@ -196,7 +200,8 @@ InternalGroup makeInternalGroup(
                            previousGroup.publicEncryptionKey,
                            groupPrivateEncryptionKey,
                        },
-                       Trustchain::getHash(action)};
+                       Trustchain::getHash(action),
+                       previousGroup.lastKeyRotationBlockHash};
 }
 }
 
@@ -294,6 +299,7 @@ tc::cotask<Group> applyUserGroupUpdate(
   }
 
   updateLastGroupBlock(*previousGroup, Trustchain::getHash(action));
+  updateLastKeyRotationBlockHash(*previousGroup, Trustchain::getHash(action));
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
   if (auto const ugu1 = userGroupUpdate.get_if<UserGroupUpdate::v1>())

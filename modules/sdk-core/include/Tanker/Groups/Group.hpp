@@ -22,6 +22,7 @@ struct InternalGroup
   Crypto::SignatureKeyPair signatureKeyPair;
   Crypto::EncryptionKeyPair encryptionKeyPair;
   Crypto::Hash lastBlockHash;
+  Crypto::Hash lastKeyRotationBlockHash;
 };
 
 bool operator==(InternalGroup const& l, InternalGroup const& r);
@@ -38,6 +39,7 @@ struct ExternalGroup
                 Crypto::PublicSignatureKey const&,
                 Crypto::SealedPrivateSignatureKey const&,
                 Crypto::PublicEncryptionKey const&,
+                Crypto::Hash const&,
                 Crypto::Hash const&);
 
   Trustchain::GroupId id;
@@ -45,6 +47,7 @@ struct ExternalGroup
   Crypto::SealedPrivateSignatureKey encryptedPrivateSignatureKey;
   Crypto::PublicEncryptionKey publicEncryptionKey;
   Crypto::Hash lastBlockHash;
+  Crypto::Hash lastKeyRotationBlockHash;
 };
 
 class BaseGroup final
@@ -55,12 +58,14 @@ public:
 
   Trustchain::GroupId const& id() const;
   Crypto::Hash const& lastBlockHash() const;
+  Crypto::Hash const& lastKeyRotationBlockHash() const;
   Crypto::PublicSignatureKey const& publicSignatureKey() const;
   Crypto::PublicEncryptionKey const& publicEncryptionKey() const;
 
 private:
   Trustchain::GroupId _id;
   Crypto::Hash _lastBlockHash;
+  Crypto::Hash _lastKeyRotationBlockHash;
   Crypto::PublicSignatureKey _publicSignatureKey;
   Crypto::PublicEncryptionKey _publicEncryptionKey;
 };
@@ -82,6 +87,7 @@ inline std::optional<BaseGroup> extractBaseGroup(
 }
 
 void updateLastGroupBlock(Group& group, Crypto::Hash const& lastBlockHash);
+void updateLastKeyRotationBlockHash(Group& group, Crypto::Hash const& lastKeyRotationBlockHash);
 Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 Trustchain::GroupId getGroupId(Group const& group);
 }

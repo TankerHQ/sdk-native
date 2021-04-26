@@ -27,6 +27,7 @@ void GroupMatcher(Group const& resultGroup, Test::Group const& testGroup)
   auto const group = boost::variant2::get_if<R>(&resultGroup);
   REQUIRE_UNARY(group);
   CHECK_EQ(group->lastBlockHash, testGroup.lastBlockHash());
+  CHECK_EQ(group->lastKeyRotationBlockHash, testGroup.lastKeyRotationBlockHash());
   CHECK_EQ(group->id, testGroup.id());
   if constexpr (std::is_same_v<R, InternalGroup>)
   {

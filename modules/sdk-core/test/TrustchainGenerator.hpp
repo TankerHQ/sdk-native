@@ -63,6 +63,7 @@ struct Group
   Crypto::SignatureKeyPair const& currentSigKp() const;
   Crypto::SealedPrivateSignatureKey encryptedSignatureKey() const;
   Crypto::Hash lastBlockHash() const;
+  Crypto::Hash lastKeyRotationBlockHash() const;
 
   std::vector<Trustchain::GroupAction> const& entries() const;
 
@@ -82,7 +83,8 @@ private:
         Device const& author,
         Crypto::EncryptionKeyPair const& currentEncKp,
         Crypto::SignatureKeyPair const& currentSigKp,
-        std::vector<Trustchain::GroupAction> const& entries);
+        std::vector<Trustchain::GroupAction> const& entries,
+        Crypto::Hash const& lastKeyRotationBlockHash);
 
 private:
   Trustchain::TrustchainId _tid;
@@ -90,6 +92,7 @@ private:
   Crypto::SignatureKeyPair _currentSigKp;
   Trustchain::GroupId _id;
   std::vector<Trustchain::GroupAction> _entries;
+  Crypto::Hash _lastKeyRotationBlockHash;
 };
 
 struct User

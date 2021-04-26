@@ -35,6 +35,11 @@ Trustchain::GroupAction verifyUserGroupUpdate(
 
   auto const& userGroupUpdate = boost::variant2::get<UserGroupUpdate>(action);
 
+  ensures(userGroupUpdate.previousKeyRotationBlockHash() == group->lastKeyRotationBlockHash(),
+          Errc::InvalidGroup,
+          "UserGroupUpdate - previous key rotation block does not match for this "
+          "group id");
+
   ensures(Crypto::verify(userGroupUpdate.signatureData(),
                          userGroupUpdate.selfSignatureWithCurrentKey(),
                          userGroupUpdate.publicSignatureKey()),
