@@ -103,7 +103,7 @@ class TankerConan(ConanFile):
         if self.settings.os == "iOS":
             self.requires("libcxx/11.1.0", private=private)
         if self.settings.os == "Android":
-            self.requires("android_ndk_installer/r21d", private=private)
+            self.requires("android_ndk_installer/r22b", private=private)
 
     def imports(self):
         if self.settings.os == "iOS":
