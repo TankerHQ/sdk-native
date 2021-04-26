@@ -13,7 +13,7 @@ class Compat(ConanFile):
         self.requires("sqlpp11-connector-sqlite3/0.29#bd03093b51f67d6f9b2a7a5aeca3ed9a", override=True)
         self.requires("enum-flags/0.1a#1465646923f26248b0ba3e0557221666", override=True)
         self.requires("fmt/7.0.2#4ea38ba34e73cf51fe92f7d0b6980567", override=True)
-        self.requires("gsl-lite/0.37.0#05a79938830608d0ed7af72fbee2a5b1", override=True)
+        self.requires("gsl-lite/0.37.0#244fadd18d97cb0d92a9d9de22b98346", override=True)
         self.requires("jsonformoderncpp/3.8.0@tanker/testing#a5aa536c8f57f0270dde99b4507f713b", override=True)
         self.requires("libsodium/1.0.18#7da1360fbd948094efe67ea00f61b751", override=True)
         self.requires("tconcurrent/0.32.0#4af1f68da3e501e575762201db2c3c4a", override=True)
