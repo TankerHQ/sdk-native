@@ -21,7 +21,7 @@ class Compat(ConanFile):
         self.requires("mgs/0.1.1#7e61da1ab254d213bab1a11b93d688ee", override=True)
         self.requires("enum-flags/0.1a#1465646923f26248b0ba3e0557221666", override=True)
         self.requires("fmt/7.0.2#4ea38ba34e73cf51fe92f7d0b6980567", override=True)
-        self.requires("gsl-lite/0.37.0#05a79938830608d0ed7af72fbee2a5b1", override=True)
+        self.requires("gsl-lite/0.37.0#244fadd18d97cb0d92a9d9de22b98346", override=True)
         self.requires("libsodium/1.0.18#7da1360fbd948094efe67ea00f61b751", override=True)
         self.requires("tconcurrent/0.34.0#bb0ea767341649c57592ddf3df90d452", override=True)
         self.requires("function2/4.1.0#dd821de6e3704caf6b50cdf27baf27c2", override=True)
