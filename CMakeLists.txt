@@ -136,7 +136,7 @@ endif()
 
 if(WITH_COVERAGE)
   # gcov version must match GCC version
-  string(REGEX MATCH "([0-9])\.[0-9]\.[0-9]" _out ${CMAKE_CXX_COMPILER_VERSION})
+  string(REGEX MATCH "([0-9]{1,2})\.[0-9]{1,2}\.[0-9]{1,2}" _out ${CMAKE_CXX_COMPILER_VERSION})
   set(COVERAGE_FILE ${CMAKE_BINARY_DIR}/coverage.info)
   add_custom_target(coverage
     COMMAND lcov
