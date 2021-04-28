@@ -88,7 +88,7 @@ class TankerConan(ConanFile):
 
         self.requires("boost/1.73.0", private=private)
         self.requires("libressl/3.2.0", private=private)
-        self.requires("fetchpp/0.12.5")
+        self.requires("fetchpp/0.13.0")
         self.requires("sqlpp11/0.59", private=private)
         self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
         self.requires("mgs/0.1.1", private=private)
@@ -197,10 +197,7 @@ class TankerConan(ConanFile):
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
             self.cpp_info.exelinkflags = [self.sanitizer_flag]
 
-        if (
-            self.settings.os == "Windows"
-            and not self.options.tankerlib_shared
-        ):
+        if self.settings.os == "Windows" and not self.options.tankerlib_shared:
             libs.append("crypt32")
 
         self.cpp_info.libs = libs
