@@ -3,11 +3,11 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Types/SUserId.hpp>

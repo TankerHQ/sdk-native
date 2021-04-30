@@ -111,6 +111,7 @@ Status Core::status() const
 
 void Core::reset()
 {
+  _backend = std::make_unique<Network::FetchppBackend>(_info);
   _session = std::make_shared<Session>(
       createHttpClient(_url, _instanceId, _info, _backend.get()));
 }
