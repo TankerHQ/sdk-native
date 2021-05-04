@@ -7,6 +7,8 @@
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 #include <mgs/base64.hpp>
 
 #include <cassert>
@@ -72,7 +74,7 @@ void migrateTable(DataStore::Connection& db,
   case 2:
     break;
   default:
-    assert(false && "Unreachable code");
+    throw Tanker::Errors::AssertionError("Unreachable code");
     std::terminate();
   }
 }

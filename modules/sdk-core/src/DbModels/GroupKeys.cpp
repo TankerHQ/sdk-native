@@ -4,6 +4,8 @@
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 #include <cassert>
 #include <exception>
 
@@ -26,11 +28,14 @@ void createTable(DataStore::Connection& db, group_keys const&)
   )");
 }
 
-void migrateTable(DataStore::Connection& db, int currentVersion, group_keys const&)
+void migrateTable(DataStore::Connection& db,
+                  int currentVersion,
+                  group_keys const&)
 {
   if (currentVersion != 0)
   {
-    assert(false && "New table can not exist in the old migration system");
+    throw Tanker::Errors::AssertionError(
+        "New table can not exist in the old migration system");
     std::terminate();
   }
 }

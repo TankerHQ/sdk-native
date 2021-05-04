@@ -9,6 +9,8 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 #include <mgs/base64.hpp>
 
 #include <cassert>
@@ -84,8 +86,7 @@ void migrateTable(DataStore::Connection& db,
     migrate1To2(db);
     break;
   default:
-    assert(false && "Unreachable code");
-    std::terminate();
+    throw Tanker::Errors::AssertionError("Unreachable code");
   }
 }
 }
