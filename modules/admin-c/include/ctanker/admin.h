@@ -43,13 +43,21 @@ TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_connect(
     char const* url, char const* id_token);
 
 /*!
- * Creates a new app
+ * Creates a new test app
  *
  * \return The app_descriptor. Free with
  * tanker_admin_app_descriptor_free
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_create_app(
     tanker_admin_t* admin, char const* name);
+/*!
+ * Creates a new test app on the specified environment id
+ *
+ * \return The app_descriptor. Free with
+ * tanker_admin_app_descriptor_free
+ */
+TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_create_app_with_env_id(
+    tanker_admin_t* admin, char const* name, char const* env_id);
 
 /*!
  * Deletes the app permanently
