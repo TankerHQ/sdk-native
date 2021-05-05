@@ -395,7 +395,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pygments"
-version = "2.8.1"
+version = "2.9.0"
 description = "Pygments is a syntax highlighting package written in Python."
 category = "main"
 optional = false
@@ -462,7 +462,7 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "python-gitlab"
-version = "2.7.0"
+version = "2.7.1"
 description = "Interact with GitLab API"
 category = "main"
 optional = false
@@ -603,7 +603,7 @@ widechars = ["wcwidth"]
 
 [[package]]
 name = "tankeradminsdk"
-version = "0.2.1"
+version = "1.0.0"
 description = "Tanker Python Admin SDK"
 category = "main"
 optional = false
@@ -620,7 +620,7 @@ reference = "gitlab"
 
 [[package]]
 name = "tankerci"
-version = "2021.4.3349"
+version = "2021.4.3354"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -697,7 +697,7 @@ python-versions = "*"
 
 [[package]]
 name = "typing-extensions"
-version = "3.7.4.3"
+version = "3.10.0.0"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 category = "dev"
 optional = false
@@ -726,7 +726,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "websocket-client"
-version = "0.58.0"
+version = "0.59.0"
 description = "WebSocket client for Python with low level API options"
 category = "main"
 optional = false
@@ -750,7 +750,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "2d64710fba9cf0f8c553c173d9b7aa44c0b8d5f6afb5d7e1f654be9d54d6c942"
+content-hash = "b71b274bdd20447a78d856cabd49a1d280568632e52c2b28a4a48da02764859f"
 
 [metadata.files]
 appdirs = [
@@ -1015,8 +1015,8 @@ pyflakes = [
     {file = "pyflakes-2.3.1.tar.gz", hash = "sha256:f5bc8ecabc05bb9d291eb5203d6810b49040f6ff446a756326104746cc00c1db"},
 ]
 pygments = [
-    {file = "Pygments-2.8.1-py3-none-any.whl", hash = "sha256:534ef71d539ae97d4c3a4cf7d6f110f214b0e687e92f9cb9d2a3b0d3101289c8"},
-    {file = "Pygments-2.8.1.tar.gz", hash = "sha256:2656e1a6edcdabf4275f9a3640db59fd5de107d88e8663c5d4e9a0fa62f77f94"},
+    {file = "Pygments-2.9.0-py3-none-any.whl", hash = "sha256:d66e804411278594d764fc69ec36ec13d9ae9147193a1740cd34d272ca383b8e"},
+    {file = "Pygments-2.9.0.tar.gz", hash = "sha256:a18f47b506a429f6f4b9df81bb02beab9ca21d0a5fee38ed15aef65f0545519f"},
 ]
 pyjwt = [
     {file = "PyJWT-1.7.1-py2.py3-none-any.whl", hash = "sha256:5c6eca3c2940464d106b99ba83b00c6add741c9becaec087fb7ccdefea71350e"},
@@ -1055,8 +1055,8 @@ python-dotenv = [
     {file = "python_dotenv-0.13.0-py2.py3-none-any.whl", hash = "sha256:25c0ff1a3e12f4bde8d592cc254ab075cfe734fc5dd989036716fd17ee7e5ec7"},
 ]
 python-gitlab = [
-    {file = "python-gitlab-2.7.0.tar.gz", hash = "sha256:94ad2dcdebc246d07c50d180116bc19a652b01bf6a54b3dfa49d2451bc2f31b0"},
-    {file = "python_gitlab-2.7.0-py3-none-any.whl", hash = "sha256:aa24dcd6e6ea990db202f1b39ef9756fd53a8ecbbbed47413689627157d9d870"},
+    {file = "python-gitlab-2.7.1.tar.gz", hash = "sha256:e1f9234a3ee7fbcf9ab1a5cb8b935ae58fdab29af9832ae060bf74d88bac8a7c"},
+    {file = "python_gitlab-2.7.1-py3-none-any.whl", hash = "sha256:b1dbb66f53ad7cf33fbdce8e9e7e6a09b18c75a9c506b099af1f6f9191542cfb"},
 ]
 pytimeparse = [
     {file = "pytimeparse-1.1.8-py2.py3-none-any.whl", hash = "sha256:04b7be6cc8bd9f5647a6325444926c3ac34ee6bc7e69da4367ba282f076036bd"},
@@ -1212,12 +1212,12 @@ tabulate = [
     {file = "tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7"},
 ]
 tankeradminsdk = [
-    {file = "tankeradminsdk-0.2.1-py3-none-any.whl", hash = "sha256:7f2252fb5d22e75d1fa804cd5db69e168ce450343af3d944370b45fa20e07ea3"},
-    {file = "tankeradminsdk-0.2.1.tar.gz", hash = "sha256:20c4bb48db1485d7fc336a58362f1e45b3acd1aba21b9233a1abc89eb267856b"},
+    {file = "tankeradminsdk-1.0.0-py3-none-any.whl", hash = "sha256:7f1a664211e9697e0dccd63342eee427b70ddf03e2890bfcc46aa72460290c07"},
+    {file = "tankeradminsdk-1.0.0.tar.gz", hash = "sha256:7aab4e8785764e970774f4f3c8fb23c5acebe99546769032f5372933dae0d741"},
 ]
 tankerci = [
-    {file = "tankerci-2021.4.3349-py3-none-any.whl", hash = "sha256:56115efb08e25e0d7cdb6aab31a99a8c4d434ee56028929fc9f4e68d69e06316"},
-    {file = "tankerci-2021.4.3349.tar.gz", hash = "sha256:fee16dbcd8f02e22414a996e8abfa50a9ab1bf517e5896531b2dc4c003894891"},
+    {file = "tankerci-2021.4.3354-py3-none-any.whl", hash = "sha256:b83e492d2bebb4ffd654b91bf86af3bd9d2de4be0812870b4a0f6df6c9f5c20a"},
+    {file = "tankerci-2021.4.3354.tar.gz", hash = "sha256:5f893b382f7917763826fe0e4e0138a9ce4851384057f282652199ac5a7eb0a0"},
 ]
 tbump = [
     {file = "tbump-6.3.1-py3-none-any.whl", hash = "sha256:60a8b0e36654c705a359b0a1af289eff2397d4482a348219e150ee1169d63c7f"},
@@ -1268,9 +1268,9 @@ typed-ast = [
     {file = "typed_ast-1.4.3.tar.gz", hash = "sha256:fb1bbeac803adea29cedd70781399c99138358c26d05fcbd23c13016b7f5ec65"},
 ]
 typing-extensions = [
-    {file = "typing_extensions-3.7.4.3-py2-none-any.whl", hash = "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"},
-    {file = "typing_extensions-3.7.4.3-py3-none-any.whl", hash = "sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918"},
-    {file = "typing_extensions-3.7.4.3.tar.gz", hash = "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c"},
+    {file = "typing_extensions-3.10.0.0-py2-none-any.whl", hash = "sha256:0ac0f89795dd19de6b97debb0c6af1c70987fd80a2d62d1958f7e56fcc31b497"},
+    {file = "typing_extensions-3.10.0.0-py3-none-any.whl", hash = "sha256:779383f6086d90c99ae41cf0ff39aac8a7937a9283ce0a414e5dd782f4c94a84"},
+    {file = "typing_extensions-3.10.0.0.tar.gz", hash = "sha256:50b6f157849174217d0656f99dc82fe932884fb250826c18350e159ec6cdf342"},
 ]
 unidecode = [
     {file = "Unidecode-1.2.0-py2.py3-none-any.whl", hash = "sha256:12435ef2fc4cdfd9cf1035a1db7e98b6b047fe591892e81f34e94959591fad00"},
@@ -1281,8 +1281,8 @@ urllib3 = [
     {file = "urllib3-1.25.11.tar.gz", hash = "sha256:8d7eaa5a82a1cac232164990f04874c594c9453ec55eef02eab885aa02fc17a2"},
 ]
 websocket-client = [
-    {file = "websocket_client-0.58.0-py2.py3-none-any.whl", hash = "sha256:44b5df8f08c74c3d82d28100fdc81f4536809ce98a17f0757557813275fbb663"},
-    {file = "websocket_client-0.58.0.tar.gz", hash = "sha256:63509b41d158ae5b7f67eb4ad20fecbb4eee99434e73e140354dc3ff8e09716f"},
+    {file = "websocket-client-0.59.0.tar.gz", hash = "sha256:d376bd60eace9d437ab6d7ee16f4ab4e821c9dae591e1b783c58ebd8aaf80c5c"},
+    {file = "websocket_client-0.59.0-py2.py3-none-any.whl", hash = "sha256:2e50d26ca593f70aba7b13a489435ef88b8fc3b5c5643c1ce8808ff9b40f0b32"},
 ]
 zipp = [
     {file = "zipp-3.4.1-py3-none-any.whl", hash = "sha256:51cb66cc54621609dd593d1787f286ee42a5c0adbb4b29abea5a63edc3e03098"},
