@@ -20,7 +20,7 @@ public:
   getClaimBlocks(Trustchain::UserId const& userId) = 0;
   virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys() = 0;
-  virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
+  virtual tc::cotask<TankerSecretProvisionalIdentity>
   getProvisionalIdentityKeys(Unlock::Request const& request) = 0;
   virtual tc::cotask<void> claimProvisionalIdentity(
       Trustchain::Actions::ProvisionalIdentityClaim const& claimAction) = 0;

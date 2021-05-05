@@ -143,6 +143,36 @@ TEST_SUITE("Groups")
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture,
+                    "Alice can't add Bob's already attached "
+                    "provisional identity to a group")
+  {
+    auto const bobEmail = Email{"bob13.test@tanker.io"};
+    auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+        mgs::base64::encode(trustchain.id), bobEmail);
+
+    auto alice = trustchain.makeUser(Functional::UserType::New);
+    auto aliceDevice = alice.makeDevice();
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+    auto bob = trustchain.makeUser(Functional::UserType::New);
+    auto bobDevice = bob.makeDevice();
+    auto bobSession = TC_AWAIT(bobDevice.open());
+
+    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{bobProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
+    auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+    auto const verification = Unlock::Verification{Unlock::EmailVerification{
+        bobEmail, VerificationCode{bobVerificationCode}}};
+    TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(aliceSession->createGroup({SPublicIdentity{
+            Identity::getPublicIdentity(bobProvisionalIdentity)}})),
+        Errors::Errc::InternalError);
+  }
+
+  TEST_CASE_FIXTURE(TrustchainFixture,
                     "Alice shares with a group with Bob as a provisional user")
   {
     auto const bobEmail = Email{"bob1.test@tanker.io"};

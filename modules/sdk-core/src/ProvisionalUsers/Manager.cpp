@@ -70,21 +70,23 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
                     provisionalIdentity.target));
   }
 
-  auto optProvisionalKey =
-      TC_AWAIT(_provisionalUserKeysStore
-                   ->findProvisionalUserKeysByAppPublicEncryptionKey(
-                       provisionalIdentity.appEncryptionKeyPair.publicKey));
-
-  if (!optProvisionalKey)
   {
-    TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
-    optProvisionalKey =
+    auto optProvisionalKey =
         TC_AWAIT(_provisionalUserKeysStore
                      ->findProvisionalUserKeysByAppPublicEncryptionKey(
                          provisionalIdentity.appEncryptionKeyPair.publicKey));
+
+    if (!optProvisionalKey)
+    {
+      TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
+      optProvisionalKey =
+          TC_AWAIT(_provisionalUserKeysStore
+                       ->findProvisionalUserKeysByAppPublicEncryptionKey(
+                           provisionalIdentity.appEncryptionKeyPair.publicKey));
+    }
+    if (optProvisionalKey)
+      TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
-  if (optProvisionalKey)
-    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
 
   auto const email = Email{provisionalIdentity.value};
   try
@@ -132,11 +134,6 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
 {
   auto const tankerKeys =
       TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));
-  if (!tankerKeys)
-  {
-    TINFO("Nothing to claim");
-    TC_RETURN();
-  }
 
   auto const localUser = TC_AWAIT(_localUserAccessor->pull());
   auto const clientEntry = Users::createProvisionalIdentityClaimAction(
@@ -147,9 +144,9 @@ tc::cotask<void> Manager::verifyProvisionalIdentity(
       ProvisionalUsers::SecretUser{_provisionalIdentity->target,
                                    _provisionalIdentity->value,
                                    _provisionalIdentity->appEncryptionKeyPair,
-                                   tankerKeys->encryptionKeyPair,
+                                   tankerKeys.encryptionKeyPair,
                                    _provisionalIdentity->appSignatureKeyPair,
-                                   tankerKeys->signatureKeyPair},
+                                   tankerKeys.signatureKeyPair},
       localUser.currentKeyPair());
   TC_AWAIT(_requester->claimProvisionalIdentity(clientEntry));
 
