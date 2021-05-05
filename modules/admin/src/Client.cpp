@@ -107,6 +107,31 @@ fetchpp::http::url Client::make_url(
 tc::cotask<App> Client::createTrustchain(
     std::string_view name, Crypto::SignatureKeyPair const& keyPair, bool isTest)
 {
+  auto request =
+      fetchpp::http::request(verb::get, url("/environments", _baseUrl));
+  request.set(authorization::bearer(_idToken));
+  request.set(field::accept, "application/json");
+  auto const response =
+      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
+  if (response.result() != status::ok)
+    throw errorReport(Errors::AppdErrc::InternalError,
+                      "could not get environments",
+                      response);
+  auto const envs = response.json().at("environments");
+  if (envs.empty())
+    throw errorReport(
+        Errors::AppdErrc::InternalError, "environment list is empty", response);
+
+  auto env_id = envs[0].at("id").get<std::string>();
+  TC_RETURN(TC_AWAIT(createTrustchain(name, keyPair, env_id, isTest)));
+}
+
+tc::cotask<App> Client::createTrustchain(
+    std::string_view name,
+    Crypto::SignatureKeyPair const& keyPair,
+    std::string_view environmentId,
+    bool isTest)
+{
   using namespace Tanker::Trustchain;
   Actions::TrustchainCreation const action(keyPair.publicKey);
   TrustchainId const trustchainId{action.hash()};
@@ -114,6 +139,7 @@ tc::cotask<App> Client::createTrustchain(
   auto message = nlohmann::json{
       {"name", name},
       {"root_block", mgs::base64::encode(Serialization::serialize(action))},
+      {"environment_id", environmentId},
   };
   if (isTest)
     message["private_signature_key"] = keyPair.privateKey;
@@ -122,7 +148,10 @@ tc::cotask<App> Client::createTrustchain(
   request.content(message.dump());
   request.set(authorization::bearer(_idToken));
   request.set(field::accept, "application/json");
-  TINFO("creating trustchain {} {:#S}", name, trustchainId);
+  TINFO("creating trustchain {} {:#S} on environment ",
+        name,
+        trustchainId,
+        environmentId);
 
   auto const response =
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));

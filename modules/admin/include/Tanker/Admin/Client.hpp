@@ -46,6 +46,10 @@ public:
   tc::cotask<App> createTrustchain(std::string_view name,
                                    Crypto::SignatureKeyPair const& keypair,
                                    bool isTest);
+  tc::cotask<App> createTrustchain(std::string_view name,
+                                   Crypto::SignatureKeyPair const& keypair,
+                                   std::string_view environmentId,
+                                   bool isTest);
   tc::cotask<App> update(Trustchain::TrustchainId const& trustchainId,
                          AppUpdateOptions const& options);
   tc::cotask<void> deleteTrustchain(
