@@ -23,6 +23,7 @@ enum class Errc
   DeviceRevoked,
   Conflict,
   UpgradeRequired,
+  IdentityAlreadyAttached,
 
   Last,
 };

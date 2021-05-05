@@ -88,7 +88,7 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::UnknownError:
     return make_error_condition(Errors::Errc::InternalError);
   case AppdErrc::ProvisionalIdentityAlreadyAttached:
-    return make_error_condition(Errors::Errc::InvalidArgument);
+    return make_error_condition(Errors::Errc::IdentityAlreadyAttached);
   case AppdErrc::VerificationCodeNotFound:
   case AppdErrc::InvalidPassphrase:
   case AppdErrc::InvalidVerificationCode:

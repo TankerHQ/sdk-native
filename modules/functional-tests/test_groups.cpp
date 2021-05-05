@@ -169,7 +169,7 @@ TEST_SUITE("Groups")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(aliceSession->createGroup({SPublicIdentity{
             Identity::getPublicIdentity(bobProvisionalIdentity)}})),
-        Errors::Errc::InternalError);
+        Errors::Errc::IdentityAlreadyAttached);
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture,

@@ -121,7 +121,7 @@ TEST_CASE_FIXTURE(
           make_buffer("my clear data is clear"),
           {SPublicIdentity{
               Identity::getPublicIdentity(bobProvisionalIdentity)}})),
-      Errors::Errc::InternalError);
+      Errors::Errc::IdentityAlreadyAttached);
 }
 
 TEST_CASE_FIXTURE(
@@ -267,7 +267,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(
           charlieSession->verifyProvisionalIdentity(Unlock::EmailVerification{
               bobEmail, VerificationCode{bobVerificationCode}})),
-      Errc::InvalidArgument);
+      Errc::IdentityAlreadyAttached);
 }
 
 TEST_CASE_FIXTURE(
@@ -349,7 +349,7 @@ TEST_CASE_FIXTURE(
             clearData,
             {SPublicIdentity{
                 Identity::getPublicIdentity(bobProvisionalIdentities[0])}})),
-        Errc::InvalidArgument);
+        Errc::IdentityAlreadyAttached);
 
     for (auto i = 1u; i < nb_ids; ++i)
     {

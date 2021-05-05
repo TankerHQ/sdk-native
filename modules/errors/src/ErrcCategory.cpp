@@ -40,6 +40,8 @@ std::string ErrcCategory::message(int c) const
     return "conflict";
   case Errc::UpgradeRequired:
     return "upgrade required";
+  case Errc::IdentityAlreadyAttached:
+    return "Identity already claimed";
   case Errc::Last:
     break;
   }
