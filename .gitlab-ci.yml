@@ -16,11 +16,12 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/mr/auto/nightly
-    - .build-artifacts
+    - .bench-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release
+    - mkdir -p bench-artifacts/linux-release/ && cp build/linux-release/bin/bench_tanker bench-artifacts/linux-release/
 
 build/linux/shared:
   extends:
