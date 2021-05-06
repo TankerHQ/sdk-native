@@ -132,6 +132,8 @@ HttpClient::HttpClient(std::string baseUrl,
     _instanceId(std::move(instanceId)),
     _backend(backend)
 {
+  if (!_baseUrl.empty() && _baseUrl.back() != '/')
+    _baseUrl += '/';
 }
 
 HttpClient::~HttpClient() = default;
