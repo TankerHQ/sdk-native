@@ -38,6 +38,8 @@ if(TANKERLIB_SHARED)
     # mingw will create libctanker.dll, which is not found via -lctanker
     set_target_properties(ctanker PROPERTIES PREFIX "")
     set(_additional_link_flags "-Wl,-static;-static-libgcc")
+  elseif(UNIX AND NOT APPLE AND NOT ANDROID)
+    set(_additional_link_flags "-static-libstdc++")
   endif()
 endif()
 
