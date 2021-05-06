@@ -31,7 +31,13 @@ def build_and_benchmark(profiles: List[str]) -> None:
     for profile in profiles:
         build_path = tankerci.cpp.build(profile, make_package=True, coverage=False)
         report_size(profile, build_path)
-        report_performance(profile, build_path)
+        report_performance(profile, bench_path, upload_results=True)
+
+
+def benchmark_artifact(profiles: List[str], upload_results: bool) -> None:
+    for profile in profiles:
+        bench_path = Path.cwd() / "bench-artifacts" / profile
+        report_performance(profile, bench_path, upload_results)
 
 
 def deploy() -> None:
@@ -77,7 +83,7 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 }
 
 
-def report_performance(profile: str, build_path: Path) -> None:
+def report_performance(profile: str, bench_path: Path, upload_results: bool) -> None:
     branch = get_branch_name()
     if not branch:
         ui.fatal("Not on a branch, can't report benchmarks")
@@ -86,10 +92,10 @@ def report_performance(profile: str, build_path: Path) -> None:
     if profile not in BENCHMARK_PROFILE_TO_BUILD_TARGET:
         ui.fatal(f"We don't benchmark {profile}")
 
-    bench_binary = build_path / "bin/bench_tanker"
+    bench_binary = bench_path / "bench_tanker"
     if platform.system() == "Windows":
         bench_binary = bench_binary.with_suffix(".exe")
-    bench_output = build_path / "benchmarks.json"
+    bench_output = bench_path / "benchmarks.json"
 
     if not bench_binary.exists():
         ui.fatal("No benchmark binary to run")
@@ -119,21 +125,23 @@ def report_performance(profile: str, build_path: Path) -> None:
             real_time /= 1000
         else:
             raise RuntimeError(f"unimplemented time unit: {time_unit}")
-        tankerci.reporting.send_metric(
-            "benchmark",
-            tags={
-                "project": "sdk-native",
-                "branch": branch,
-                "build-target": BENCHMARK_PROFILE_TO_BUILD_TARGET[profile],
-                "scenario": name.lower(),
-                "host": hostname,
-            },
-            fields={
-                "real_time": real_time,
-                "commit_id": commit_id,
-                "profile": profile,
-            },
-        )
+
+        if upload_results:
+            tankerci.reporting.send_metric(
+                "benchmark",
+                tags={
+                    "project": "sdk-native",
+                    "branch": branch,
+                    "build-target": BENCHMARK_PROFILE_TO_BUILD_TARGET[profile],
+                    "scenario": name.lower(),
+                    "host": hostname,
+                },
+                fields={
+                    "real_time": real_time,
+                    "commit_id": commit_id,
+                    "profile": profile,
+                },
+            )
 
 
 SIZE_PROFILE_TO_BUILD_TARGET = {
@@ -214,6 +222,14 @@ def main() -> None:
         "--profile", dest="profiles", action="append", required=True
     )
 
+    benchmark_artifact_parser = subparsers.add_parser("benchmark-artifact")
+    benchmark_artifact_parser.add_argument(
+        "--profile", dest="profiles", action="append", required=True
+    )
+    benchmark_artifact_parser.add_argument(
+        "--upload-results", dest="upload_results", action="store_true"
+    )
+
     bump_files_parser = subparsers.add_parser("bump-files")
     bump_files_parser.add_argument("--version", required=True)
 
@@ -228,6 +244,8 @@ def main() -> None:
         build_and_check(args.profiles, args.coverage)
     elif args.command == "build-and-benchmark":
         build_and_benchmark(args.profiles)
+    elif args.command == "benchmark-artifact":
+        benchmark_artifact(args.profiles, args.upload_results)
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
