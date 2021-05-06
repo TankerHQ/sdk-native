@@ -93,10 +93,15 @@ def report_performance(profile: str, bench_path: Path, upload_results: bool) -> 
     if not bench_binary.exists():
         ui.fatal("No benchmark binary to run")
 
+    # Helps reduce variability, but don't go overboard (slow!)
+    repetitions = 15
+
     tankerci.run(
         str(bench_binary),
         f"--benchmark_out={bench_output}",
         "--benchmark_out_format=json",
+        f"--benchmark_repetitions={repetitions}",
+        "--benchmark_report_aggregates_only",
     )
 
     bench_results = json.loads(bench_output.read_text())
@@ -110,27 +115,34 @@ def report_performance(profile: str, bench_path: Path, upload_results: bool) -> 
     if not hostname:
         hostname = socket.gethostname()
 
-    for benchmark in bench_results["benchmarks"]:
-        name = benchmark["name"]
-        real_time = benchmark["real_time"]
-        time_unit = benchmark["time_unit"]
-        if time_unit == "ms":
-            real_time /= 1000
-        else:
-            raise RuntimeError(f"unimplemented time unit: {time_unit}")
+    if upload_results:
+        benchmark_aggregates = {}
+        for benchmark in bench_results["benchmarks"]:
+            name = benchmark["run_name"].lower()
+            aggregate = benchmark["aggregate_name"]
+            real_time = benchmark["real_time"]
+            time_unit = benchmark["time_unit"]
+            if time_unit == "ms":
+                real_time /= 1000
+            else:
+                raise RuntimeError(f"unimplemented time unit: {time_unit}")
+            if name not in benchmark_aggregates:
+                benchmark_aggregates[name] = {}
+            benchmark_aggregates[name][aggregate] = real_time
 
-        if upload_results:
+        for name, results in benchmark_aggregates.items():
             tankerci.reporting.send_metric(
                 "benchmark",
                 tags={
                     "project": "sdk-native",
                     "branch": branch,
                     "build-target": BENCHMARK_PROFILE_TO_BUILD_TARGET[profile],
-                    "scenario": name.lower(),
+                    "scenario": name,
                     "host": hostname,
                 },
                 fields={
-                    "real_time": real_time,
+                    "real_time": results["median"],
+                    "stddev": results["stddev"],
                     "commit_id": commit_id,
                     "profile": profile,
                 },
