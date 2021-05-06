@@ -171,6 +171,17 @@ bench/linux:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --profile linux-release
 
+bench/linux/master:
+  extends:
+    - .bench
+    - .rules/master/nightly
+  tags:
+    - LinuxSlave-4
+  needs:
+    - build/linux
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --profile linux-release --upload-results
+
 ######################
 # bridge-check stage #
 ######################
