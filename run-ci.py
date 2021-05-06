@@ -27,13 +27,6 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
     shutil.copy(recipe, Path.cwd() / "package")
 
 
-def build_and_benchmark(profiles: List[str]) -> None:
-    for profile in profiles:
-        build_path = tankerci.cpp.build(profile, make_package=True, coverage=False)
-        report_size(profile, build_path)
-        report_performance(profile, bench_path, upload_results=True)
-
-
 def benchmark_artifact(profiles: List[str], upload_results: bool) -> None:
     for profile in profiles:
         bench_path = Path.cwd() / "bench-artifacts" / profile
@@ -218,11 +211,6 @@ def main() -> None:
     )
     build_and_test_parser.add_argument("--coverage", action="store_true")
 
-    build_and_benchmark_parser = subparsers.add_parser("build-and-benchmark")
-    build_and_benchmark_parser.add_argument(
-        "--profile", dest="profiles", action="append", required=True
-    )
-
     benchmark_artifact_parser = subparsers.add_parser("benchmark-artifact")
     benchmark_artifact_parser.add_argument(
         "--profile", dest="profiles", action="append", required=True
@@ -243,8 +231,6 @@ def main() -> None:
 
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
-    elif args.command == "build-and-benchmark":
-        build_and_benchmark(args.profiles)
     elif args.command == "benchmark-artifact":
         benchmark_artifact(args.profiles, args.upload_results)
     elif args.command == "bump-files":

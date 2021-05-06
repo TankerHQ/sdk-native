@@ -134,14 +134,6 @@ build/ios:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
-nightly/benchmark:
-  extends:
-    - .build
-    - .tags/linux
-    - .rules/nightly
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-benchmark --profile linux-release-shared
-
 nightly/coverage:
   extends:
     - .build
