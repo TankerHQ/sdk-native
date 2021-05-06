@@ -156,6 +156,21 @@ nightly/coverage:
       - coverage/
     expire_in: 7 days
 
+###############
+# bench stage #
+###############
+
+bench/linux:
+  extends:
+    - .bench
+    - .rules/mr/auto
+  tags:
+    - LinuxSlave-4
+  needs:
+    - build/linux
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --profile linux-release
+
 ######################
 # bridge-check stage #
 ######################
