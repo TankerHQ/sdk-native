@@ -189,6 +189,7 @@ def report_size(profile: str, build_path: Path) -> None:
         else:
             lib_path = temp_path / package_path_relative / "lib/libctanker.so"
         size = lib_path.stat().st_size
+        ui.info(f"Tanker library size: {size/1024}KiB")
         tankerci.reporting.send_metric(
             "benchmark",
             tags={
