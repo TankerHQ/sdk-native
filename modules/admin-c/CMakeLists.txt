@@ -33,6 +33,8 @@ if (TANKERLIB_SHARED)
   if (MINGW)
     set_target_properties(tanker_admin-c PROPERTIES PREFIX "")
     set(_additional_link_flags "-Wl,-static;-static-libgcc")
+  elseif(UNIX AND NOT APPLE AND NOT ANDROID)
+    set(_additional_link_flags "-static-libstdc++")
   endif()
 endif()
 
