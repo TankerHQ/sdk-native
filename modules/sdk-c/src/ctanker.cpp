@@ -13,6 +13,7 @@
 #include <boost/algorithm/hex.hpp>
 #include <mgs/base64.hpp>
 #include <tconcurrent/async.hpp>
+#include <tconcurrent/thread_pool.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
@@ -173,11 +174,6 @@ char const* tanker_version_string(void)
 void tanker_init()
 {
   Tanker::init();
-}
-
-void tanker_shutdown()
-{
-  Tanker::shutdown();
 }
 
 tanker_future_t* tanker_create(const tanker_options_t* options)

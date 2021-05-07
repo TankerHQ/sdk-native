@@ -10,7 +10,6 @@
 #include <nlohmann/json.hpp>
 
 #include <Tanker/AsyncCore.hpp>
-#include <Tanker/Init.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation/v2.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
@@ -489,6 +488,4 @@ int main(int argc, char* argv[])
     auto const errorCode = e.errorCode().default_error_condition();
     fmt::print("Error: {}: {}", errorCode.message(), e.what());
   }
-
-  Tanker::shutdown();
 }

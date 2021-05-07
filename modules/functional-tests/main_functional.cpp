@@ -22,25 +22,21 @@ int main(int argc, char* argv[])
     Tanker::TimeoutTerminate tt(5min);
     doctest::Context context(argc, argv);
 
-    {
-      // We run the tests on a different thread than the default thread to be
-      // closer to real use-cases. We can't run them on the main thread because
-      // we need coroutines
-      tc::thread_pool tp;
-      tp.start(1);
+    // We run the tests on a different thread than the default thread to be
+    // closer to real use-cases. We can't run them on the main thread because we
+    // need coroutines
+    tc::thread_pool tp;
+    tp.start(1);
 
-      return tc::async_resumable("main_functional",
-                                 tc::executor(tp),
-                                 [&]() -> tc::cotask<int> {
-                                   TC_AWAIT(TrustchainFixture::setUp());
-                                   auto const ret = TC_AWAIT(context.run());
-                                   TC_AWAIT(TrustchainFixture::tearDown());
-                                   TC_RETURN(ret);
-                                 })
-          .get();
-    }
-
-    Tanker::shutdown();
+    return tc::async_resumable("main_functional",
+                               tc::executor(tp),
+                               [&]() -> tc::cotask<int> {
+                                 TC_AWAIT(TrustchainFixture::setUp());
+                                 auto const ret = TC_AWAIT(context.run());
+                                 TC_AWAIT(TrustchainFixture::tearDown());
+                                 TC_RETURN(ret);
+                               })
+        .get();
   }
   catch (std::exception const& e)
   {
