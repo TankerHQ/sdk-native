@@ -97,7 +97,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.37.0", private=private)
         self.requires("nlohmann_json/3.8.0", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.34.0", private=private)
+        self.requires("tconcurrent/0.37.0", private=private)
         self.requires("date/3.0.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os == "iOS":
@@ -118,7 +118,7 @@ class TankerConan(ConanFile):
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
             self.build_requires("doctest/2.3.8")
-            self.build_requires("doctest-async/2.3.10")
+            self.build_requires("doctest-async/2.3.11")
             self.build_requires("trompeloeil/38")
             if self.should_build_bench:
                 self.build_requires("benchmark/1.5.0")
