@@ -89,8 +89,4 @@ tc::cotask<HttpResponse> FetchppBackend::fetch(HttpRequest req)
                            e.code().message());
   }
 }
-tc::cotask<void> FetchppBackend::stop()
-{
-  TC_AWAIT(_cl.async_stop(tc::asio::use_future));
-}
 }

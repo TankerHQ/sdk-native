@@ -235,11 +235,6 @@ tc::cotask<void> HttpClient::deauthenticate()
   }
 }
 
-tc::cotask<void> HttpClient::stop()
-{
-  TC_AWAIT(_backend->stop());
-}
-
 std::string HttpClient::makeUrl(std::string_view target) const
 {
   return fmt::format("{}{}", _baseUrl, target);

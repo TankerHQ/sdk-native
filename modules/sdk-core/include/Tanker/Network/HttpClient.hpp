@@ -68,8 +68,6 @@ public:
 
   ~HttpClient();
 
-  tc::cotask<void> stop();
-
   tc::cotask<HttpResult> asyncGet(std::string_view target);
   tc::cotask<HttpResult> asyncPost(std::string_view target,
                                    nlohmann::json data);
