@@ -33,7 +33,10 @@ if (TANKERLIB_SHARED)
   if (MINGW)
     set_target_properties(tanker_admin-c PROPERTIES PREFIX "")
     set(_additional_link_flags "-Wl,-static;-static-libgcc")
-  elseif(UNIX AND NOT APPLE AND NOT ANDROID)
+  # We compile for older Linux distro which don't have an up to date libstdc++
+  # Ignore that for clang because libc++ isn't compiled with -fPIC, and we don't
+  # ship clang build for Linux anyway.
+  elseif(UNIX AND NOT APPLE AND NOT ANDROID AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
     set(_additional_link_flags "-static-libstdc++")
   endif()
 endif()
