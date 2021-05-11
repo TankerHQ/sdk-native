@@ -164,7 +164,11 @@ private:
   mutable tc::lazy::task_canceler _taskCanceler;
   fu2::function<void()> _cancelStop;
 
-  [[noreturn]] tc::cotask<void> handleDeviceRevocation();
+  // This function is noreturn, but we can't mark it [[noreturn]] because it's a
+  // coroutine and it... kind of returns. In other words, it seems like
+  // [[noreturn]] also means noco_await, according to clang, which makes the
+  // keyword useless on coroutines.
+  tc::cotask<void> handleDeviceRevocation();
   tc::cotask<void> handleDeviceUnrecoverable();
   void nukeAndStop();
 

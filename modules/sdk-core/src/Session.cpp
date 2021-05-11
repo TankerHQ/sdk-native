@@ -97,8 +97,9 @@ Network::HttpClient& Session::httpClient()
   return *_httpClient;
 }
 
-void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
-                          std::string const& writablePath)
+tc::cotask<void> Session::openStorage(
+    Identity::SecretPermanentIdentity const& identity,
+    std::string const& writablePath)
 {
   assert(!_identity && !_storage);
   _identity = identity;

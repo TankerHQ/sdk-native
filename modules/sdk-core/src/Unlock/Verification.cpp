@@ -19,13 +19,16 @@ namespace Tanker::Unlock
 namespace
 {
 template <typename Ret, typename T>
-Ret decryptMethod(T const& encrypted, Crypto::SymmetricKey const& userSecret)
+tc::cotask<Ret> decryptMethod(T const& encrypted,
+                              Crypto::SymmetricKey const& userSecret)
 {
   Ret decrypted(EncryptorV2::decryptedSize(encrypted), 0);
 
-  EncryptorV2::decrypt(
-      reinterpret_cast<std::uint8_t*>(decrypted.data()), userSecret, encrypted);
-  return decrypted;
+  TC_AWAIT(
+      EncryptorV2::decrypt(reinterpret_cast<std::uint8_t*>(decrypted.data()),
+                           userSecret,
+                           encrypted));
+  TC_RETURN(decrypted);
 }
 }
 
@@ -56,9 +59,10 @@ tc::cotask<void> decryptMethods(
   for (auto& method : encryptedMethods)
   {
     if (auto encryptedEmail = method.get_if<EncryptedEmail>())
-      method = decryptMethod<Email>(*encryptedEmail, userSecret);
+      method = TC_AWAIT(decryptMethod<Email>(*encryptedEmail, userSecret));
     else if (auto encryptedPhoneNumber = method.get_if<EncryptedPhoneNumber>())
-      method = decryptMethod<PhoneNumber>(*encryptedPhoneNumber, userSecret);
+      method = TC_AWAIT(
+          decryptMethod<PhoneNumber>(*encryptedPhoneNumber, userSecret));
   }
 }
 

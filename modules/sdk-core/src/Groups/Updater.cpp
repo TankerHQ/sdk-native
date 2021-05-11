@@ -180,19 +180,19 @@ tc::cotask<Group> applyUserGroupCreation(
       boost::variant2::get<UserGroupCreation>(action);
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  userGroupCreation.visit(overloaded{
-      [&](UserGroupCreation::v1 const& ugc) {
+  TC_AWAIT(userGroupCreation.visit(overloaded{
+      [&](UserGroupCreation::v1 const& ugc) -> tc::cotask<void> {
         groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
             localUserAccessor, ugc.sealedPrivateEncryptionKeysForUsers()));
       },
-      [&](auto const& ugc) {
+      [&](auto const& ugc) -> tc::cotask<void> {
         groupPrivateEncryptionKey =
             TC_AWAIT(decryptMyKey(localUserAccessor, ugc.members()));
         if (!groupPrivateEncryptionKey)
           groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
               provisionalUsersAccessor, ugc.provisionalMembers()));
       },
-  });
+  }));
 
   if (groupPrivateEncryptionKey)
     TC_RETURN(makeInternalGroup(*groupPrivateEncryptionKey, userGroupCreation));
@@ -224,19 +224,19 @@ tc::cotask<Group> applyUserGroupAddition(
     TC_RETURN(*ig);
 
   std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  userGroupAddition.visit(overloaded{
-      [&](UserGroupAddition::v1 const& uga) {
+  TC_AWAIT(userGroupAddition.visit(overloaded{
+      [&](UserGroupAddition::v1 const& uga) -> tc::cotask<void> {
         groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
             localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers()));
       },
-      [&](auto const& uga) {
+      [&](auto const& uga) -> tc::cotask<void> {
         groupPrivateEncryptionKey =
             TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
         if (!groupPrivateEncryptionKey)
           groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
               provisionalUsersAccessor, uga.provisionalMembers()));
       },
-  });
+  }));
 
   // we checked above that this is an external group
   auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
@@ -284,10 +284,10 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = *authorIt;
-      boost::variant2::visit(
+      TC_AWAIT(boost::variant2::visit(
           overloaded{
               [&](const Trustchain::Actions::UserGroupCreation&
-                      userGroupCreation) {
+                      userGroupCreation) -> tc::cotask<void> {
                 auto const verifiedAction = Verif::verifyUserGroupCreation(
                     action, author, extractBaseGroup(previousGroup));
                 previousGroup =
@@ -296,7 +296,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
                                                     verifiedAction));
               },
               [&](const Trustchain::Actions::UserGroupAddition&
-                      userGroupAddition) {
+                      userGroupAddition) -> tc::cotask<void> {
                 auto const verifiedAction = Verif::verifyUserGroupAddition(
                     action, author, extractBaseGroup(previousGroup));
                 previousGroup =
@@ -306,7 +306,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
                                                     verifiedAction));
               },
           },
-          action);
+          action));
 
       if (auto const internalGroup =
               boost::variant2::get_if<InternalGroup>(&*previousGroup))

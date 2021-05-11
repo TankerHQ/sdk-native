@@ -88,11 +88,11 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
                                           std::string const& sessionToken,
                                           std::string const& allowedMethod)
 {
-  return checkSessionToken(appId,
-                           authToken,
-                           publicIdentity,
-                           sessionToken,
-                           {{{"type", allowedMethod}}});
+  TC_RETURN(TC_AWAIT(checkSessionToken(appId,
+                                       authToken,
+                                       publicIdentity,
+                                       sessionToken,
+                                       {{{"type", allowedMethod}}})));
 }
 }
 

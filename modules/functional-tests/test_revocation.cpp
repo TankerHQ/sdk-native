@@ -98,7 +98,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   int nbDeviceRevoked = 0;
   int nbOperationCanceled = 0;
-  auto awaitAndCountExceptions = [&](auto fut) {
+  auto awaitAndCountExceptions = [&](auto fut) -> tc::cotask<void> {
     try
     {
       TC_AWAIT(std::move(fut));
@@ -115,8 +115,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       nbOperationCanceled++;
     }
   };
-  CHECK_NOTHROW(awaitAndCountExceptions(std::move(fut1)));
-  CHECK_NOTHROW(awaitAndCountExceptions(std::move(fut2)));
+  CHECK_NOTHROW(TC_AWAIT(awaitAndCountExceptions(std::move(fut1))));
+  CHECK_NOTHROW(TC_AWAIT(awaitAndCountExceptions(std::move(fut2))));
   CHECK(nbDeviceRevoked == 1);
   CHECK(nbOperationCanceled == 1);
   CHECK(secondSession->status() == Status::Stopped);

@@ -84,7 +84,7 @@ TEST_CASE("GroupAccessor")
     SUBCASE("it should return cached public encryption keys")
     {
       FORBID_CALL(requestStub,
-                    getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}));
+                  getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}));
 
       {
         auto aliceInternalGroup = static_cast<InternalGroup>(aliceGroup);
@@ -105,7 +105,12 @@ TEST_CASE("GroupAccessor")
   {
     auto const la = static_cast<Users::LocalUser>(alice);
     REQUIRE_CALL(aliceLocalAccessorMock, get()).LR_RETURN(la);
-    REQUIRE_CALL(aliceProvisionalUsersAccessor, refreshKeys());
+    REQUIRE_CALL(aliceProvisionalUsersAccessor, refreshKeys())
+#if TCONCURRENT_COROUTINES_TS
+        .LR_RETURN(makeCoTask());
+#else
+        ;
+#endif
 
     SUBCASE("request group we are member of")
     {
@@ -118,7 +123,6 @@ TEST_CASE("GroupAccessor")
       REQUIRE_CALL(aliceLocalAccessorMock,
                    pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
-
 
       SUBCASE("request group by Id")
       {

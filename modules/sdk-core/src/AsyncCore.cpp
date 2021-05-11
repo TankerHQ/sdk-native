@@ -105,8 +105,7 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
     TC_AWAIT(handleDeviceUnrecoverable());
     std::rethrow_exception(eptr);
   }
-  else
-    throw Errors::AssertionError("unreachable code in runResumable");
+  throw Errors::AssertionError("unreachable code in runResumable");
 }
 
 AsyncCore::AsyncCore(std::string url,
@@ -411,7 +410,7 @@ tc::future<EncryptionSession> AsyncCore::makeEncryptionSession(
   });
 }
 
-[[noreturn]] tc::cotask<void> AsyncCore::handleDeviceRevocation()
+tc::cotask<void> AsyncCore::handleDeviceRevocation()
 {
   // If multiple coroutines get here waiting for this lock, one will get the
   // lock and eventually call _taskCanceler.terminate() which will abort all the
