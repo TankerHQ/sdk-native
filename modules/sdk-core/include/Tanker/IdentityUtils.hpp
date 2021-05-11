@@ -27,4 +27,9 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<Trustchain::UserId> const& errorIds,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids);
+
+std::vector<SPublicIdentity> mapProvisionalIdentitiesToStrings(
+    std::vector<Tanker::Crypto::PublicSignatureKey> const& errorIds,
+    std::vector<SPublicIdentity> const& sIds,
+    std::vector<Identity::PublicIdentity> const& ids);
 }
