@@ -457,6 +457,27 @@ TEST_SUITE("Groups")
                                   Errors::Errc::InvalidArgument);
   }
 
+  TEST_CASE_FIXTURE(TrustchainFixture,
+                    "Cannot add and remove the same user from a group")
+  {
+    auto alice = trustchain.makeUser();
+    auto bob = trustchain.makeUser();
+
+    auto aliceDevice = alice.makeDevice();
+    auto bobDevice = bob.makeDevice();
+
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+    auto bobSession = TC_AWAIT(bobDevice.open());
+
+    auto const groupId =
+        TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(aliceSession->updateGroupMembers(
+            groupId, {bob.spublicIdentity()}, {bob.spublicIdentity()})),
+        Errors::Errc::InvalidArgument);
+  }
+
   TEST_CASE_FIXTURE(TrustchainFixture, "Can add then remove users from a group")
   {
     auto alice = trustchain.makeUser();
@@ -619,6 +640,29 @@ TEST_SUITE("Groups")
     REQUIRE(TC_AWAIT(checkDecrypt(
         {charlieDevice},
         {std::make_tuple(make_buffer(clearData), encryptedData)})));
+  }
+
+  TEST_CASE_FIXTURE(
+      TrustchainFixture,
+      "Cannot add and remove the same provisional user from a group")
+  {
+    auto const bobEmail = Email{"bob1.test@tanker.io"};
+    auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
+        mgs::base64::encode(trustchain.id), bobEmail);
+    auto const bobPublicProvisional =
+        SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+    auto myGroup =
+        TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(aliceSession->updateGroupMembers(
+            myGroup, {bobPublicProvisional}, {bobPublicProvisional})),
+        Errors::Errc::InvalidArgument);
   }
 
   TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group users")

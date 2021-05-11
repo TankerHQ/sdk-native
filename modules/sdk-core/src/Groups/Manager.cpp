@@ -205,76 +205,106 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
 static std::vector<RawUserGroupMember2> applyGroupUserDiff(
     std::vector<UserGroupMember2> const& existingUsers,
     std::vector<Users::User> const& usersToAdd,
-    std::vector<Trustchain::UserId> const& userIDsToRemove,
+    std::vector<Trustchain::UserId> const& userIdsToRemove,
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
-  boost::container::flat_set<Trustchain::UserId> userIDsToRemoveSet;
-  for (auto const& user : userIDsToRemove)
-    userIDsToRemoveSet.insert(user);
+  boost::container::flat_set<Trustchain::UserId> userIdsToRemoveSet;
+  for (auto const& user : userIdsToRemove)
+    userIdsToRemoveSet.insert(user);
 
   boost::container::flat_set<Trustchain::UserId> usersToAddSet;
+  std::vector<Trustchain::UserId> usersBothAddedAndRemoved;
   for (auto const& user : usersToAdd)
   {
-    if (userIDsToRemoveSet.contains(user.id()))
+    if (userIdsToRemoveSet.contains(user.id()))
     {
-      throw formatEx(Errc::InvalidArgument,
-                     "cannot both add and remove user: {:s}",
-                     user.id());
+      usersBothAddedAndRemoved.push_back(user.id());
     }
     usersToAddSet.insert(user.id());
   }
 
-  std::vector<RawUserGroupMember2> users;
+  if (!usersBothAddedAndRemoved.empty())
+  {
+    auto const problematicIdentities =
+        mapIdentitiesToStrings(usersBothAddedAndRemoved,
+                               spublicIdentitiesToRemove,
+                               publicIdentitiesToRemove);
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot both add and remove: {:s}",
+                   fmt::join(problematicIdentities, ", "));
+  }
+
+  std::vector<RawUserGroupMember2> finalUsers;
   for (auto const& user : existingUsers)
   {
-    if (userIDsToRemoveSet.erase(user.userId()))
+    if (userIdsToRemoveSet.erase(user.userId()))
       continue;
     usersToAddSet.erase(user.userId());
-    users.push_back({user.userId(), user.userPublicKey()});
+    finalUsers.push_back({user.userId(), user.userPublicKey()});
   }
-  if (!userIDsToRemoveSet.empty())
+  if (!userIdsToRemoveSet.empty())
   {
-    std::vector<Trustchain::UserId> userIDsNotFound(userIDsToRemoveSet.begin(), userIDsToRemoveSet.end());
-    auto const notFoundIdentities = mapIdentitiesToStrings(
-        userIDsNotFound, spublicIdentitiesToRemove, publicIdentitiesToRemove);
+    std::vector<Trustchain::UserId> userIdsNotFound(userIdsToRemoveSet.begin(),
+                                                    userIdsToRemoveSet.end());
+    auto const problematicIdentities = mapIdentitiesToStrings(
+        userIdsNotFound, spublicIdentitiesToRemove, publicIdentitiesToRemove);
     throw formatEx(Errc::InvalidArgument,
-                   "unknown users to remove: {:s}",
-                   fmt::join(notFoundIdentities, ", "));
+                   "Tried to remove users not in the group: {:s}",
+                   fmt::join(problematicIdentities, ", "));
   }
 
   // Silently skip duplicate adds (not an error since GroupAddition allows them)
   for (auto const& user : usersToAdd)
-    if (usersToAddSet.contains(user.id()))
-      users.push_back({user.id(), *user.userKey()});
+  {
+    if (usersToAddSet.erase(user.id()))
+    {
+      finalUsers.push_back({user.id(), *user.userKey()});
+    }
+  }
 
-  return users;
+  return finalUsers;
 }
 
 static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
     std::vector<UserGroupProvisionalMember3> const& existingUsers,
     std::vector<ProvisionalUsers::PublicUser> const& usersToAdd,
-    std::vector<Identity::PublicProvisionalIdentity> const& identitiesToRemove)
+    std::vector<Identity::PublicProvisionalIdentity> const& identitiesToRemove,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
   boost::container::flat_set<Crypto::PublicSignatureKey> usersToAddSet;
   for (auto&& user : usersToAdd)
     usersToAddSet.insert(user.appSignaturePublicKey);
 
-  // Note that removing and adding the same user is allowed here (no-op)
-  boost::container::flat_set<Crypto::PublicSignatureKey> provisionalsToRemove;
+  boost::container::flat_set<Crypto::PublicSignatureKey>
+      provisionalsToRemoveSet;
+  std::vector<Crypto::PublicSignatureKey> provisionalsBothAddedAndRemoved;
+
   for (auto&& user : identitiesToRemove)
   {
     if (usersToAddSet.contains(user.appSignaturePublicKey))
-      throw formatEx(Errc::InvalidArgument,
-                     "cannot both add and remove provisional user: {:s}",
-                     to_string(user));
-    provisionalsToRemove.insert(user.appSignaturePublicKey);
+    {
+      provisionalsBothAddedAndRemoved.push_back(user.appSignaturePublicKey);
+    }
+    provisionalsToRemoveSet.insert(user.appSignaturePublicKey);
+  }
+
+  if (provisionalsBothAddedAndRemoved.size() != 0)
+  {
+    auto const problematicIdentities =
+        mapProvisionalIdentitiesToStrings(provisionalsBothAddedAndRemoved,
+                                          spublicIdentitiesToRemove,
+                                          publicIdentitiesToRemove);
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot both add and remove: {:s}",
+                   fmt::join(problematicIdentities, ", "));
   }
 
   std::vector<RawUserGroupProvisionalMember3> provisionalUsers;
   for (auto&& user : existingUsers)
   {
-    if (provisionalsToRemove.erase(user.appPublicSignatureKey()))
+    if (provisionalsToRemoveSet.erase(user.appPublicSignatureKey()))
       continue;
     usersToAddSet.erase(user.appPublicSignatureKey());
     provisionalUsers.push_back({user.appPublicSignatureKey(),
@@ -282,21 +312,30 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
                                 user.appPublicEncryptionKey(),
                                 user.tankerPublicEncryptionKey()});
   }
-  if (!provisionalsToRemove.empty())
+  if (!provisionalsToRemoveSet.empty())
   {
+    std::vector<Crypto::PublicSignatureKey> provisionalsToRemove(
+        provisionalsToRemoveSet.begin(), provisionalsToRemoveSet.end());
+    auto const problematicIdentities =
+        mapProvisionalIdentitiesToStrings(provisionalsToRemove,
+                                          spublicIdentitiesToRemove,
+                                          publicIdentitiesToRemove);
     throw formatEx(Errc::InvalidArgument,
-                   "{} provisional users to remove were not found",
-                   provisionalsToRemove.size());
+                   "provisional identities to remove not found: {:s}",
+                   fmt::join(problematicIdentities, ", "));
   }
 
   // Silently skip duplicate adds (not an error since GroupAddition allows them)
   for (auto&& user : usersToAdd)
-    if (usersToAddSet.contains(user.appSignaturePublicKey))
+  {
+    if (usersToAddSet.erase(user.appSignaturePublicKey))
+    {
       provisionalUsers.push_back({user.appSignaturePublicKey,
                                   user.tankerSignaturePublicKey,
                                   user.appEncryptionPublicKey,
                                   user.tankerEncryptionPublicKey});
-
+    }
+  }
   return provisionalUsers;
 }
 
@@ -352,7 +391,9 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
     auto provisionalUsers =
         applyGroupProvisionalDiff(groups.found[0].provisionalMembers,
                                   newMembers.provisionalUsers,
-                                  membersToRemove.publicProvisionalIdentities);
+                                  membersToRemove.publicProvisionalIdentities,
+                                  spublicIdentitiesToRemoveDedup,
+                                  publicIdentitiesToRemove);
 
     auto const newGroupSignatureKeyPair = Crypto::makeSignatureKeyPair();
     auto const newGroupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
