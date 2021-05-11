@@ -7,6 +7,7 @@ add_library(tankertesthelpers STATIC
   include/Helpers/Const.hpp
   include/Helpers/Barrier.hpp
   include/Helpers/Errors.hpp
+  include/Helpers/Email.hpp
   include/Helpers/MakeCoTask.hpp
   include/Helpers/Stepper.hpp
   include/Helpers/UniquePath.hpp
@@ -17,6 +18,7 @@ add_library(tankertesthelpers STATIC
   include/Helpers/JsonFile.hpp
 
   src/Config.cpp
+  src/Email.cpp
   src/TimeoutTerminate.cpp
   src/Barrier.cpp
   src/Stepper.cpp
@@ -39,4 +41,4 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankertrustchain tankererrors CONAN_PKG::boost CONAN_PKG::nlohmann_json CONAN_PKG::fmt)
+target_link_libraries(tankertesthelpers tankertrustchain tankererrors tankertypes CONAN_PKG::boost CONAN_PKG::nlohmann_json CONAN_PKG::fmt)
