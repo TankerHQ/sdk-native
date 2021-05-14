@@ -161,7 +161,7 @@ bench/linux:
   needs:
     - build/linux
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --profile linux-release
+    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --profile linux-release --compare-results
 
 bench/linux/master:
   extends:

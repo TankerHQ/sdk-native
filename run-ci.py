@@ -5,11 +5,13 @@ import shutil
 import sys
 import json
 import platform
+import math
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Any
 import cli_ui as ui  # noqa
 import tempfile
+import gitlab
 
 import tankerci
 import tankerci.conan
@@ -27,10 +29,12 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
     shutil.copy(recipe, Path.cwd() / "package")
 
 
-def benchmark_artifact(profiles: List[str], upload_results: bool) -> None:
+def benchmark_artifact(
+    profiles: List[str], compare_results: bool, upload_results: bool
+) -> None:
     for profile in profiles:
         bench_path = Path.cwd() / "bench-artifacts" / profile
-        report_performance(profile, bench_path, upload_results)
+        report_performance(profile, bench_path, compare_results, upload_results)
 
 
 def deploy() -> None:
@@ -76,7 +80,9 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 }
 
 
-def report_performance(profile: str, bench_path: Path, upload_results: bool) -> None:
+def report_performance(
+    profile: str, bench_path: Path, compare_results: bool, upload_results: bool
+) -> None:
     branch = get_branch_name()
     if not branch:
         ui.fatal("Not on a branch, can't report benchmarks")
@@ -115,21 +121,53 @@ def report_performance(profile: str, bench_path: Path, upload_results: bool) -> 
     if not hostname:
         hostname = socket.gethostname()
 
-    if upload_results:
-        benchmark_aggregates = {}
-        for benchmark in bench_results["benchmarks"]:
-            name = benchmark["run_name"].lower()
-            aggregate = benchmark["aggregate_name"]
-            real_time = benchmark["real_time"]
-            time_unit = benchmark["time_unit"]
-            if time_unit == "ms":
-                real_time /= 1000
-            else:
-                raise RuntimeError(f"unimplemented time unit: {time_unit}")
-            if name not in benchmark_aggregates:
-                benchmark_aggregates[name] = {}
-            benchmark_aggregates[name][aggregate] = real_time
+    benchmark_aggregates = {}
+    for benchmark in bench_results["benchmarks"]:
+        name = benchmark["run_name"].lower()
+        aggregate = benchmark["aggregate_name"]
+        real_time = benchmark["real_time"]
+        time_unit = benchmark["time_unit"]
+        if time_unit == "ms":
+            real_time /= 1000
+        else:
+            raise RuntimeError(f"unimplemented time unit: {time_unit}")
+        if name not in benchmark_aggregates:
+            benchmark_aggregates[name] = {}
+        benchmark_aggregates[name][aggregate] = real_time
 
+    if compare_results:
+        response = tankerci.reporting.query_last_metrics(
+            "benchmark",
+            group_by="scenario",
+            tags=["scenario"],
+            fields=["real_time", "stddev"],
+            where={"branch": "master", "project": "sdk-native"},
+        )
+        master_results = {}
+        for point in response["results"][0]["series"]:
+            result = data_point_to_bench_result(point)
+            if result["stddev"] is None:
+                result["stddev"] = 0  # Old benchmarks did not have a stddev
+            master_results[result["name"]] = result
+
+        result_message = (
+            "<details><summary>Benchmark results (lower is better)</summary>\n\n"
+            "| Benchmark scenario | `master` | This MR | Difference |\n"
+            "| --- | --- | --- | --- |\n"
+        )
+        for name, result in benchmark_aggregates.items():
+            old_result = master_results[name]
+            result_message += format_benchmark_result(old_result, result)
+
+        gl = gitlab.Gitlab(
+            os.environ["CI_SERVER_URL"], private_token=os.environ["GITLAB_TOKEN"]
+        )
+        gl.auth()
+        p = gl.projects.get("TankerHQ/sdk-native")
+        mr = p.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
+        mr.discussions.create({"body": result_message})
+
+    if upload_results:
         for name, results in benchmark_aggregates.items():
             tankerci.reporting.send_metric(
                 "benchmark",
@@ -147,6 +185,60 @@ def report_performance(profile: str, bench_path: Path, upload_results: bool) -> 
                     "profile": profile,
                 },
             )
+
+
+def format_benchmark_change(ratio, stddev):
+    pctage = (ratio - 1) * 100
+    confident_pctage_magnitude = max(abs(pctage) - stddev * 100, 0)
+    confident_pctage = math.copysign(confident_pctage_magnitude, pctage)
+    if confident_pctage <= -15:
+        color = "green"
+    elif confident_pctage <= -7.5:
+        color = "greenyellow"
+    elif confident_pctage >= 15:
+        color = "red"
+    elif confident_pctage >= 7.5:
+        color = "pink"
+    else:
+        color = "default"
+
+    ratio_str = f"{pctage:+.1f}\\%"
+    stddev_str = f"± {stddev * 100:.1f}\\%"
+    return r"$`\textcolor{%s}{\text{%s\scriptsize{ %s }}}`$" % (
+        color,
+        ratio_str,
+        stddev_str,
+    )
+
+
+def format_benchmark_result(old_result, new_result):
+    ratio = new_result["median"] / old_result["median"]
+    stddev = ratio * math.sqrt(
+        (new_result["stddev"] / new_result["median"]) ** 2
+        + (old_result["stddev"] / old_result["median"]) ** 2
+    )
+    name = old_result["name"].replace("/real_time", "")
+    old_time = (
+        f"{old_result['median'] * 1000:.0f}ms ± {old_result['stddev'] * 1000:.0f}ms"
+    )
+    new_time = (
+        f"{new_result['median'] * 1000:.0f}ms ± {new_result['stddev'] * 1000:.0f}ms"
+    )
+    diff = format_benchmark_change(ratio, stddev)
+    return f"|{name}|{old_time}|{new_time}|{diff}|\n"
+
+
+def data_point_to_bench_result(point: Any) -> Any:
+    result = {}
+    values = point["values"][0]
+    for i, col in enumerate(point["columns"]):
+        if col == "scenario":
+            result["name"] = values[i].lower().replace('"', "")
+        elif col == "real_time":
+            result["median"] = values[i]
+        else:
+            result[col] = values[i]
+    return result
 
 
 SIZE_PROFILE_TO_BUILD_TARGET = {
@@ -194,7 +286,7 @@ def report_size(profile: str, build_path: Path) -> None:
         else:
             lib_path = temp_path / package_path_relative / "lib/libctanker.so"
         size = lib_path.stat().st_size
-        ui.info(f"Tanker library size: {size/1024}KiB")
+        ui.info(f"Tanker library size: {size / 1024}KiB")
         tankerci.reporting.send_metric(
             "benchmark",
             tags={
@@ -228,6 +320,9 @@ def main() -> None:
         "--profile", dest="profiles", action="append", required=True
     )
     benchmark_artifact_parser.add_argument(
+        "--compare-results", dest="compare_results", action="store_true"
+    )
+    benchmark_artifact_parser.add_argument(
         "--upload-results", dest="upload_results", action="store_true"
     )
 
@@ -244,7 +339,7 @@ def main() -> None:
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
     elif args.command == "benchmark-artifact":
-        benchmark_artifact(args.profiles, args.upload_results)
+        benchmark_artifact(args.profiles, args.compare_results, args.upload_results)
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
