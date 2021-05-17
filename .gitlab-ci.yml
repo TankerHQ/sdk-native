@@ -155,7 +155,7 @@ nightly/coverage:
 bench/linux:
   extends:
     - .bench
-    - .rules/mr/auto
+    - .rules/mr/manual
   tags:
     - LinuxSlave-4
   needs:
