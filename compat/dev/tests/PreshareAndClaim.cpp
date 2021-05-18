@@ -44,7 +44,8 @@ struct PreshareAndClaim : Tanker::Compat::Command
   void next() override
   {
     auto const json = Tanker::loadJson(statePath);
-    auto bob = signUpAndClaim(json.at("bob_provisional_identity"),
+    auto bob = signUpAndClaim(json.at("bob_provisional_identity")
+                                  .get<Tanker::SSecretProvisionalIdentity>(),
                               bobEmail,
                               bobCode,
                               trustchain,
