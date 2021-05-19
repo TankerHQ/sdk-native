@@ -16,7 +16,6 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
-#include <Tanker/Network/FetchppBackend.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
@@ -32,6 +31,10 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Utils.hpp>
+
+#ifdef TANKER_WITH_FETCHPP
+#include <Tanker/Network/FetchppBackend.hpp>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
@@ -83,10 +86,18 @@ Core::Core(std::string url,
     _info(std::move(info)),
     _writablePath(std::move(writablePath)),
     _backend(backend ? std::move(backend) :
-                       std::make_unique<Network::FetchppBackend>(_info)),
+#if TANKER_WITH_FETCHPP
+                       std::make_unique<Network::FetchppBackend>(_info)
+#else
+                       nullptr
+#endif
+                 ),
     _session(std::make_shared<Session>(
         createHttpClient(_url, _instanceId, _info, _backend.get())))
 {
+  if (!_backend)
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "no built-in HTTP backend, please provide one");
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const

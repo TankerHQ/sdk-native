@@ -34,6 +34,13 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DbModels/Version.cpp
 )
 
+if (WITH_FETCHPP)
+  set(TANKER_CORE_HTTP_SRC
+    include/Tanker/Network/FetchppBackend.hpp
+    src/Network/FetchppBackend.cpp
+  )
+endif()
+
 add_library(tankercore STATIC
   include/Tanker/AsyncCore.hpp
   include/Tanker/AttachResult.hpp
@@ -55,7 +62,6 @@ add_library(tankercore STATIC
   include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
   include/Tanker/Network/Backend.hpp
-  include/Tanker/Network/FetchppBackend.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -124,7 +130,6 @@ add_library(tankercore STATIC
   src/DataStore/Errors/Errc.cpp
   src/DataStore/Errors/ErrcCategory.cpp
   src/Network/HttpClient.cpp
-  src/Network/FetchppBackend.cpp
   src/GhostDevice.cpp
   src/Unlock/Verification.cpp
   src/Unlock/Requester.cpp
@@ -176,8 +181,7 @@ add_library(tankercore STATIC
   src/EncryptionSession.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
-  ${TANKER_CORE_CONNECTION_SRC}
-  ${TANKER_CORE_EXTRA_SRC}
+  ${TANKER_CORE_HTTP_SRC}
 )
 
 target_include_directories(tankercore
@@ -201,7 +205,6 @@ target_link_libraries(tankercore
   tankerconfig
   ttracer
   CONAN_PKG::boost
-  CONAN_PKG::fetchpp
   CONAN_PKG::tconcurrent
   CONAN_PKG::mgs
   CONAN_PKG::gsl-lite
@@ -210,7 +213,9 @@ target_link_libraries(tankercore
   CONAN_PKG::enum-flags
 )
 
-target_link_libraries(tankercore tankercacerts)
+if(WITH_FETCHPP)
+  target_link_libraries(tankercore tankercacerts CONAN_PKG::fetchpp)
+endif()
 
 target_link_libraries(tankercore
   CONAN_PKG::sqlpp11-connector-sqlite3

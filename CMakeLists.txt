@@ -26,6 +26,7 @@ option(BUILD_TANKER_TOOLS "Build Tanker Tools" ON)
 option(WITH_TRACER "Enable tracer library" OFF)
 option(TANKERLIB_SHARED "whether to build the main tanker library as a shared" OFF)
 option(WARN_AS_ERROR "Add -Werror during compilation" OFF)
+option(WITH_FETCHPP "Add the built-in fetchpp HTTP backend" ON)
 
 add_definitions("-DGSL_THROW_ON_CONTRACT_VIOLATION")
 
@@ -43,6 +44,10 @@ if(WIN32)
   if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
   endif()
+endif()
+
+if (WITH_FETCHPP)
+  add_definitions("-DTANKER_WITH_FETCHPP")
 endif()
 
 if(BUILD_TESTS)

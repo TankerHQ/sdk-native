@@ -90,6 +90,8 @@ auto get_certificate_authority()
   CertFreeCertificateContext(pContext);
   CertCloseStore(hStore, 0);
   return certs;
+#else
+#error unsupported build configuration
 #endif
 }
 }
