@@ -7,6 +7,7 @@
 #include <Tanker/Groups/Updater.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 
 #include <boost/container/flat_map.hpp>
@@ -98,18 +99,14 @@ Accessor::getEncryptionKeyPair(
         fmt::format("group {} has no blocks", publicEncryptionKey));
 
   // add the group keys to cache
-  auto groupId = getGroupId(*group);
-  std::optional<Crypto::EncryptionKeyPair> result;
-  for (auto const& key : groupKeys)
-  {
-    if (key.publicKey == publicEncryptionKey)
-    {
-      result = key;
-      break;
-    }
-  }
+  auto const groupId = getGroupId(*group);
+  auto const result =
+      std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& key) {
+        return key.publicKey == publicEncryptionKey;
+      });
   TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
-  TC_RETURN(result);
+  TC_RETURN(result != groupKeys.end() ? std::make_optional(*result) :
+                                        std::nullopt);
 }
 
 namespace
@@ -123,19 +120,21 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
   GroupMap out;
   for (auto const& action : entries)
   {
-    if (auto const userGroupCreation =
-            boost::variant2::get_if<Trustchain::Actions::UserGroupCreation>(
-                &action))
-      out[GroupId{userGroupCreation->publicSignatureKey()}].push_back(action);
-    else if (auto const userGroupAddition = boost::variant2::get_if<
-                 Trustchain::Actions::UserGroupAddition>(&action))
-      out[userGroupAddition->groupId()].push_back(action);
-    else if (auto const userGroupUpdate =
-                 boost::variant2::get_if<Trustchain::Actions::UserGroupUpdate>(
-                     &action))
-      out[userGroupUpdate->groupId()].push_back(action);
-    else
-      TERROR("Expected group blocks but got {}", Trustchain::getNature(action));
+    boost::variant2::visit(
+        overloaded{
+            [&](const Trustchain::Actions::UserGroupCreation&
+                    userGroupCreation) {
+              out[GroupId{userGroupCreation.publicSignatureKey()}].push_back(
+                  action);
+            },
+            [&](const Trustchain::Actions::UserGroupAddition&
+                    userGroupAddition) {
+              out[userGroupAddition.groupId()].push_back(action);
+            },
+            [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
+              out[userGroupUpdate.groupId()].push_back(action);
+            }},
+        action);
   }
   return out;
 }

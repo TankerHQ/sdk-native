@@ -157,8 +157,8 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
   auto const groupSize = memberUsers.size() + memberProvisionalUsers.size();
   if (groupSize == 0)
   {
-    throw Exception(make_error_code(Errc::InvalidArgument),
-                    "must leave at least one member in a group");
+    throw formatEx(Errc::InvalidArgument,
+                   "a group must have at least one member");
   }
   else if (groupSize > MAX_GROUP_SIZE)
   {

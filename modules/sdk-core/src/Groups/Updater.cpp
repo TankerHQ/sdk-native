@@ -373,35 +373,37 @@ tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = *authorIt;
-      if (boost::variant2::holds_alternative<UserGroupCreation>(action))
-      {
-        auto const verifiedAction = Verif::verifyUserGroupCreation(
-            action, author, extractBaseGroup(previousGroup));
-        previousGroup = TC_AWAIT(applyUserGroupCreation(
-            localUserAccessor, provisionalUsersAccessor, verifiedAction));
-      }
-      else if (boost::variant2::holds_alternative<UserGroupAddition>(action))
-      {
-        auto const verifiedAction = Verif::verifyUserGroupAddition(
-            action, author, extractBaseGroup(previousGroup));
-        previousGroup =
-            TC_AWAIT(applyUserGroupAddition(localUserAccessor,
-                                            provisionalUsersAccessor,
-                                            previousGroup,
-                                            verifiedAction));
-      }
-      else if (boost::variant2::holds_alternative<UserGroupUpdate>(action))
-      {
-        auto const verifiedAction = Verif::verifyUserGroupUpdate(
-            action, author, extractBaseGroup(previousGroup));
-        previousGroup = TC_AWAIT(applyUserGroupUpdate(localUserAccessor,
-                                                      provisionalUsersAccessor,
-                                                      previousGroup,
-                                                      verifiedAction));
-      }
-      else
-        throw Errors::AssertionError(fmt::format(
-            "cannot handle nature: {}", Trustchain::getNature(action)));
+      boost::variant2::visit(
+          overloaded{
+              [&](const Trustchain::Actions::UserGroupCreation&
+                      userGroupCreation) {
+                auto const verifiedAction = Verif::verifyUserGroupCreation(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupCreation(localUserAccessor,
+                                                    provisionalUsersAccessor,
+                                                    verifiedAction));
+              },
+              [&](const Trustchain::Actions::UserGroupAddition&
+                      userGroupAddition) {
+                auto const verifiedAction = Verif::verifyUserGroupAddition(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupAddition(localUserAccessor,
+                                                    provisionalUsersAccessor,
+                                                    previousGroup,
+                                                    verifiedAction));
+              },
+              [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
+                auto const verifiedAction = Verif::verifyUserGroupUpdate(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupUpdate(localUserAccessor,
+                                                  provisionalUsersAccessor,
+                                                  previousGroup,
+                                                  verifiedAction));
+              }},
+          action);
 
       if (auto const internalGroup =
               boost::variant2::get_if<InternalGroup>(&*previousGroup))
