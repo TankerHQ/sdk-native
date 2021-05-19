@@ -70,20 +70,17 @@ Requester::getVerifiedProvisionalIdentityKeys()
            .get<Crypto::PrivateSignatureKey>()}}));
 }
 
-tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
+tc::cotask<TankerSecretProvisionalIdentity>
 Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
 {
   auto const res = TC_AWAIT(
       _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities"),
                              {{"verification", request}}));
 
-  if (res.has_error() &&
-      res.error().ec == Errors::AppdErrc::ProvisionalIdentityNotFound)
-    TC_RETURN(std::nullopt);
   auto const json = res.value();
 
   auto& jProvisional = json.at("provisional_identity");
-  TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
+  TC_RETURN((TankerSecretProvisionalIdentity{
       {jProvisional.at("public_encryption_key")
            .get<Crypto::PublicEncryptionKey>(),
        jProvisional.at("private_encryption_key")
