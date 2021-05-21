@@ -1,0 +1,3 @@
+include(linux)
+[settings]
+build_type=Release
