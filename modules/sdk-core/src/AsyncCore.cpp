@@ -15,7 +15,6 @@
 #include <tconcurrent/lazy/async.hpp>
 #include <tconcurrent/lazy/sink_receiver.hpp>
 #include <tconcurrent/lazy/then.hpp>
-#include <tconcurrent/thread_pool.hpp>
 
 #include <functional>
 #include <iostream>
@@ -45,8 +44,8 @@ template <typename F>
 auto AsyncCore::runResumable(F&& f)
 {
   using Func = std::decay_t<F>;
-  return tc::submit_to_future<typename tc::detail::task_return_type<
-      decltype(std::declval<F>()())>::type>(
+  return tc::submit_to_future<typename tc::detail::task_return_type<decltype(
+      std::declval<F>()())>::type>(
       _taskCanceler.wrap(tc::lazy::connect(
           tc::lazy::async(tc::get_default_executor()),
           tc::lazy::run_resumable(
@@ -311,35 +310,10 @@ void AsyncCore::disconnectDeviceRevoked()
   this->_asyncDeviceRevoked = nullptr;
 }
 
-namespace
-{
-tc::thread_pool* logThreadPool = nullptr;
-}
-
-tc::thread_pool& AsyncCore::getLogHandlerThreadPool()
-{
-  // Android's libart doesn't like it when we call java from a coroutine, so we
-  // make a thread pool for logs.
-  // This function is not thread safe, but since it's called only during init,
-  // it's fine.
-  if (!logThreadPool)
-  {
-    logThreadPool = new tc::thread_pool;
-    logThreadPool->start(1);
-  }
-  return *logThreadPool;
-}
-
-void AsyncCore::stopLogHandlerThreadPool()
-{
-  delete logThreadPool;
-}
-
 void AsyncCore::setLogHandler(Log::LogHandler handler)
 {
-  auto& tp = getLogHandlerThreadPool();
-  Log::setLogHandler([handler, &tp](Log::Record const& record) {
-    tc::async(tp, [=] { handler(record); }).get();
+  Log::setLogHandler([handler](Log::Record const& record) {
+    tc::dispatch_on_thread_context([&] { handler(record); });
   });
 }
 

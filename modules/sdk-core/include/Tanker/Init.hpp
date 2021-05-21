@@ -3,5 +3,4 @@
 namespace Tanker
 {
 void init();
-void shutdown();
 }

@@ -258,13 +258,6 @@ CTANKER_EXPORT void tanker_set_log_handler(tanker_log_handler_t handler);
 CTANKER_EXPORT void tanker_init(void);
 
 /*!
- * Prepare for shutdown by freeing long-lived resources.
- *
- * Calling any function after tanker_shutdown is undefined.
- */
-CTANKER_EXPORT void tanker_shutdown(void);
-
-/*!
  * Create a Tanker instance.
  * \param options struct tanker_options_t with the following preconditions.
  * \pre The *option* structure must not be NULL, as well as the fields
