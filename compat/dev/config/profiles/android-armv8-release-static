@@ -1,0 +1,4 @@
+include(android-armv8-release)
+
+[options]
+tanker:tankerlib_shared=False

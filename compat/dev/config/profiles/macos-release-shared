@@ -1,0 +1,4 @@
+include(macos-release)
+
+[options]
+tanker:tankerlib_shared=True
