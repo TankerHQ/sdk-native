@@ -1,0 +1,4 @@
+include(android-x86_64-release)
+
+[options]
+tanker:tankerlib_shared=False

@@ -86,18 +86,18 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("boost/1.73.0", private=private)
-        self.requires("libressl/3.2.0", private=private)
-        self.requires("fetchpp/0.13.0")
-        self.requires("sqlpp11/0.59", private=private)
-        self.requires("sqlpp11-connector-sqlite3/0.29", private=private)
+        self.requires("boost/1.76.0", private=private)
+        self.requires("libressl/3.2.5", private=private)
+        self.requires("fetchpp/0.13.1-r1", private=private)
+        self.requires("sqlpp11/0.60", private=private)
+        self.requires("sqlpp11-connector-sqlite3/0.30", private=private)
         self.requires("mgs/0.1.1", private=private)
         self.requires("enum-flags/0.1a", private=private)
-        self.requires("fmt/7.0.2", private=private)
+        self.requires("fmt/7.1.3", private=private)
         self.requires("gsl-lite/0.37.0", private=private)
-        self.requires("nlohmann_json/3.8.0", private=private)
+        self.requires("nlohmann_json/3.9.1", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.37.0", private=private)
+        self.requires("tconcurrent/0.39.0", private=private)
         self.requires("date/3.0.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os == "iOS":
@@ -117,11 +117,11 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("doctest/2.3.8")
-            self.build_requires("doctest-async/2.3.11")
+            self.build_requires("doctest/2.4.6")
+            self.build_requires("doctest-async/2.4.7")
             self.build_requires("trompeloeil/38")
             if self.should_build_bench:
-                self.build_requires("benchmark/1.5.0")
+                self.build_requires("benchmark/1.5.2")
 
     def init_cmake(self):
         if self.cmake:

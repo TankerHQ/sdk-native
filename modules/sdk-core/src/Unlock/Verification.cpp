@@ -97,8 +97,9 @@ void validateVerification(
     {
       std::vector<std::string> res;
       ba::split(res, *oidcIdToken, ba::is_any_of("."));
-      jwtEmail = nlohmann::json::parse(mgs::base64url_nopad::decode(res.at(1)))
-                     .at("email");
+      nlohmann::json::parse(mgs::base64url_nopad::decode(res.at(1)))
+          .at("email")
+          .get_to(jwtEmail);
     }
     catch (...)
     {
