@@ -2,6 +2,7 @@
 
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -29,7 +30,7 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<Identity::PublicIdentity> const& ids);
 
 std::vector<SPublicIdentity> mapProvisionalIdentitiesToStrings(
-    std::vector<Tanker::Crypto::PublicSignatureKey> const& errorIds,
+    std::vector<ProvisionalUsers::PublicUser> const& errorUsers,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids);
 }
