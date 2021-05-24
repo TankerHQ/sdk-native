@@ -189,8 +189,8 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       throw Exception(
           make_error_code(Errc::InvalidArgument),
           fmt::format("options version should be {:d} instead of {:d}",
-                      options->version,
-                      2));
+                      2,
+                      options->version));
     }
     if (options->app_id == nullptr)
     {
