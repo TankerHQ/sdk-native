@@ -12,4 +12,6 @@ struct PublicUser
   Crypto::PublicSignatureKey tankerSignaturePublicKey;
   Crypto::PublicEncryptionKey tankerEncryptionPublicKey;
 };
+
+bool operator<(PublicUser const& l, PublicUser const& r);
 }

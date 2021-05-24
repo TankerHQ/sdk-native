@@ -2,6 +2,7 @@
 
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/Extract.hpp>
+#include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Utils.hpp>
 
 namespace Tanker
@@ -72,20 +73,21 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
 }
 
 std::vector<SPublicIdentity> mapProvisionalIdentitiesToStrings(
-    std::vector<Tanker::Crypto::PublicSignatureKey> const& errorIds,
+    std::vector<ProvisionalUsers::PublicUser> const& errorUsers,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids)
 {
   std::vector<SPublicIdentity> clearIds;
   clearIds.reserve(ids.size());
-  for (auto const& errorId : errorIds)
+  for (auto const& errorUser : errorUsers)
   {
     using boost::variant2::get_if;
     auto const idsIt =
         std::find_if(ids.begin(), ids.end(), [&](auto const& id) {
           if (auto const provisionalId =
                   get_if<Identity::PublicProvisionalIdentity>(&id))
-            return provisionalId->appSignaturePublicKey == errorId;
+            return provisionalId->appSignaturePublicKey ==
+                   errorUser.appSignaturePublicKey;
           return false;
         });
 

@@ -269,25 +269,25 @@ static std::vector<RawUserGroupMember2> applyGroupUserDiff(
 static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
     std::vector<UserGroupProvisionalMember3> const& existingUsers,
     std::vector<ProvisionalUsers::PublicUser> const& usersToAdd,
-    std::vector<Identity::PublicProvisionalIdentity> const& identitiesToRemove,
+    std::vector<ProvisionalUsers::PublicUser> const& usersToRemove,
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
-  boost::container::flat_set<Crypto::PublicSignatureKey> usersToAddSet;
+  boost::container::flat_set<ProvisionalUsers::PublicUser> usersToAddSet;
   for (auto&& user : usersToAdd)
-    usersToAddSet.insert(user.appSignaturePublicKey);
+    usersToAddSet.insert(user);
 
-  boost::container::flat_set<Crypto::PublicSignatureKey>
+  boost::container::flat_set<ProvisionalUsers::PublicUser>
       provisionalsToRemoveSet;
-  std::vector<Crypto::PublicSignatureKey> provisionalsBothAddedAndRemoved;
+  std::vector<ProvisionalUsers::PublicUser> provisionalsBothAddedAndRemoved;
 
-  for (auto&& user : identitiesToRemove)
+  for (auto&& user : usersToRemove)
   {
-    if (usersToAddSet.contains(user.appSignaturePublicKey))
+    if (usersToAddSet.contains(user))
     {
-      provisionalsBothAddedAndRemoved.push_back(user.appSignaturePublicKey);
+      provisionalsBothAddedAndRemoved.push_back(user);
     }
-    provisionalsToRemoveSet.insert(user.appSignaturePublicKey);
+    provisionalsToRemoveSet.insert(user);
   }
 
   if (provisionalsBothAddedAndRemoved.size() != 0)
@@ -304,9 +304,14 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   std::vector<RawUserGroupProvisionalMember3> provisionalUsers;
   for (auto&& user : existingUsers)
   {
-    if (provisionalsToRemoveSet.erase(user.appPublicSignatureKey()))
+    ProvisionalUsers::PublicUser publicUser = {
+        user.appPublicSignatureKey(),
+        user.appPublicEncryptionKey(),
+        user.tankerPublicSignatureKey(),
+        user.tankerPublicEncryptionKey()};
+    if (provisionalsToRemoveSet.erase(publicUser))
       continue;
-    usersToAddSet.erase(user.appPublicSignatureKey());
+    usersToAddSet.erase(publicUser);
     provisionalUsers.push_back({user.appPublicSignatureKey(),
                                 user.tankerPublicSignatureKey(),
                                 user.appPublicEncryptionKey(),
@@ -314,7 +319,7 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   }
   if (!provisionalsToRemoveSet.empty())
   {
-    std::vector<Crypto::PublicSignatureKey> provisionalsToRemove(
+    std::vector<ProvisionalUsers::PublicUser> provisionalsToRemove(
         provisionalsToRemoveSet.begin(), provisionalsToRemoveSet.end());
     auto const problematicIdentities =
         mapProvisionalIdentitiesToStrings(provisionalsToRemove,
@@ -328,7 +333,7 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   // Silently skip duplicate adds (not an error since GroupAddition allows them)
   for (auto&& user : usersToAdd)
   {
-    if (usersToAddSet.erase(user.appSignaturePublicKey))
+    if (usersToAddSet.erase(user))
     {
       provisionalUsers.push_back({user.appSignaturePublicKey,
                                   user.tankerSignaturePublicKey,
@@ -388,10 +393,14 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
                                     membersToRemove.userIds,
                                     spublicIdentitiesToRemoveDedup,
                                     publicIdentitiesToRemove);
+
+    auto const provisionalUsersToRemove = TC_AWAIT(userAccessor.pullProvisional(
+        membersToRemove.publicProvisionalIdentities));
+
     auto provisionalUsers =
         applyGroupProvisionalDiff(groups.found[0].provisionalMembers,
                                   newMembers.provisionalUsers,
-                                  membersToRemove.publicProvisionalIdentities,
+                                  provisionalUsersToRemove,
                                   spublicIdentitiesToRemoveDedup,
                                   publicIdentitiesToRemove);
 
