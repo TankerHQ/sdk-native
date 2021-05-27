@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 8ed113d5cc381d94dd1296758c4f95d38ec2892b
+  ref: theo/reset_branch_on_deploy
 
 ###############
 # build stage #
