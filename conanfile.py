@@ -102,7 +102,7 @@ class TankerConan(ConanFile):
         self.requires("tconcurrent/0.39.0", private=private)
         self.requires("date/3.0.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
-        if self.settings.os == "iOS":
+        if self.settings.os in ("iOS", "Macos"):
             self.requires("libcxx/11.1.0", private=private)
         if self.settings.os == "Android":
             self.requires("android_ndk_installer/r22b", private=private)
