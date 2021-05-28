@@ -54,7 +54,7 @@ tc::cotask<void> Accessor::refreshKeys()
 {
   auto const blocks =
       TC_AWAIT(_requester->getClaimBlocks(_localUserAccessor->get().userId()));
-  auto const toStore = TC_AWAIT(Updater::processClaimEntries(
+  auto const toStore = TC_AWAIT(Updater::processSelfClaimEntries(
       *_localUserAccessor, *_userAccessor, blocks));
 
   for (auto const& [appSignaturePublicKey,

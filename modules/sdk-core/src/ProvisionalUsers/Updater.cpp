@@ -97,7 +97,7 @@ tc::cotask<UsedSecretUser> extractKeysToStore(
                             tankerEncryptionKeyPair}));
 }
 
-tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
+tc::cotask<std::vector<UsedSecretUser>> processSelfClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions)
