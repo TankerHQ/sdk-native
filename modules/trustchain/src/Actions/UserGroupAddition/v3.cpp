@@ -6,11 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 UserGroupAddition3::UserGroupAddition3(
     TrustchainId const& trustchainId,
@@ -54,6 +50,4 @@ std::vector<std::uint8_t> UserGroupAddition3::signatureData() const
 TANKER_TRUSTCHAIN_ACTION_DEFINE_METHODS(
     UserGroupAddition3,
     TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_ADDITION3_ATTRIBUTES)
-}
-}
 }

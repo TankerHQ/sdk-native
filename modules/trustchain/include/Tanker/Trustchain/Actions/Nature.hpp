@@ -28,6 +28,7 @@ enum class Nature
   UserGroupCreation3 = 17,
   UserGroupAddition3 = 18,
   SessionCertificate = 19,
+  UserGroupUpdate1 = 20,
 };
 
 std::string to_string(Nature);

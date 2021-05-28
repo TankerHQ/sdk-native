@@ -13,6 +13,12 @@ namespace Trustchain
 {
 namespace Actions
 {
+struct RawUserGroupMember2
+{
+  UserId userId;
+  Crypto::PublicEncryptionKey userPublicKey;
+};
+
 #define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_MEMBER_V2_ATTRIBUTES \
   (userId, UserId), (userPublicKey, Crypto::PublicEncryptionKey), \
       (encryptedPrivateEncryptionKey, Crypto::SealedPrivateEncryptionKey)

@@ -7,11 +7,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/Json.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp>
 
-namespace Tanker
-{
-namespace Trustchain
-{
-namespace Actions
+namespace Tanker::Trustchain::Actions
 {
 #define TANKER_TRUSTCHAIN_ACTIONS_USER_GROUP_PROVISIONAL_MEMBER_V3_ATTRIBUTES \
   (appPublicSignatureKey, Crypto::PublicSignatureKey),                        \
@@ -20,6 +16,14 @@ namespace Actions
       (tankerPublicEncryptionKey, Crypto::PublicEncryptionKey),               \
       (encryptedPrivateEncryptionKey,                                         \
        Crypto::TwoTimesSealedPrivateEncryptionKey)
+
+struct RawUserGroupProvisionalMember3
+{
+  Crypto::PublicSignatureKey appPublicSignatureKey;
+  Crypto::PublicSignatureKey tankerPublicSignatureKey;
+  Crypto::PublicEncryptionKey appPublicEncryptionKey;
+  Crypto::PublicEncryptionKey tankerPublicEncryptionKey;
+};
 
 class UserGroupProvisionalMember3
 {
@@ -33,6 +37,4 @@ class UserGroupProvisionalMember3
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(UserGroupProvisionalMember3)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(UserGroupProvisionalMember3)
-}
-}
 }

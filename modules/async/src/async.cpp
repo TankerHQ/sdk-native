@@ -4,6 +4,8 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
+
 #include <tconcurrent/promise.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>

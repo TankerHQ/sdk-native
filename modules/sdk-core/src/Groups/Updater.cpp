@@ -6,6 +6,7 @@
 
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
+#include <Tanker/Groups/Verif/UserGroupUpdate.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/Overloaded.hpp>
@@ -119,7 +120,18 @@ ExternalGroup makeExternalGroup(UserGroupCreation const& userGroupCreation)
                        userGroupCreation.publicSignatureKey(),
                        userGroupCreation.sealedPrivateSignatureKey(),
                        userGroupCreation.publicEncryptionKey(),
+                       Trustchain::getHash(userGroupCreation),
                        Trustchain::getHash(userGroupCreation)};
+}
+
+ExternalGroup makeExternalGroup(UserGroupUpdate const& userGroupUpdate)
+{
+  return ExternalGroup{userGroupUpdate.groupId(),
+                       userGroupUpdate.publicSignatureKey(),
+                       userGroupUpdate.sealedPrivateSignatureKey(),
+                       userGroupUpdate.publicEncryptionKey(),
+                       Trustchain::getHash(userGroupUpdate),
+                       Trustchain::getHash(userGroupUpdate)};
 }
 
 InternalGroup makeInternalGroup(
@@ -141,7 +153,31 @@ InternalGroup makeInternalGroup(
                            userGroupCreation.publicEncryptionKey(),
                            groupPrivateEncryptionKey,
                        },
+                       Trustchain::getHash(userGroupCreation),
                        Trustchain::getHash(userGroupCreation)};
+}
+
+InternalGroup makeInternalGroup(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    UserGroupUpdate const& userGroupUpdate)
+{
+  auto const groupPrivateSignatureKey =
+      Crypto::sealDecrypt(userGroupUpdate.sealedPrivateSignatureKey(),
+                          Crypto::EncryptionKeyPair{
+                              userGroupUpdate.publicEncryptionKey(),
+                              groupPrivateEncryptionKey,
+                          });
+  return InternalGroup{userGroupUpdate.groupId(),
+                       Crypto::SignatureKeyPair{
+                           userGroupUpdate.publicSignatureKey(),
+                           groupPrivateSignatureKey,
+                       },
+                       Crypto::EncryptionKeyPair{
+                           userGroupUpdate.publicEncryptionKey(),
+                           groupPrivateEncryptionKey,
+                       },
+                       Trustchain::getHash(userGroupUpdate),
+                       Trustchain::getHash(userGroupUpdate)};
 }
 
 InternalGroup makeInternalGroup(
@@ -164,7 +200,8 @@ InternalGroup makeInternalGroup(
                            previousGroup.publicEncryptionKey,
                            groupPrivateEncryptionKey,
                        },
-                       Trustchain::getHash(action)};
+                       Trustchain::getHash(action),
+                       previousGroup.lastKeyRotationBlockHash};
 }
 }
 
@@ -245,6 +282,46 @@ tc::cotask<Group> applyUserGroupAddition(
         makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, action));
 }
 
+tc::cotask<Group> applyUserGroupUpdate(
+    Users::ILocalUserAccessor& localUserAccessor,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+    std::optional<Group> previousGroup,
+    Trustchain::GroupAction const& action)
+{
+  auto const& userGroupUpdate = boost::variant2::get<UserGroupUpdate>(action);
+
+  if (!previousGroup)
+  {
+    // this block should never have passed verification
+    throw AssertionError(
+        fmt::format(FMT_STRING("cannot find previous group block for {:s}"),
+                    userGroupUpdate.groupId()));
+  }
+
+  updateLastGroupBlock(*previousGroup, Trustchain::getHash(action));
+  updateLastKeyRotationBlockHash(*previousGroup, Trustchain::getHash(action));
+
+  std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
+  if (auto const ugu1 = userGroupUpdate.get_if<UserGroupUpdate::v1>())
+  {
+    groupPrivateEncryptionKey =
+        TC_AWAIT(decryptMyKey(localUserAccessor, ugu1->members()));
+    if (!groupPrivateEncryptionKey)
+      groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+          provisionalUsersAccessor, ugu1->provisionalMembers()));
+  }
+  else
+  {
+    throw AssertionError("Expected GroupUpdate nature");
+  }
+
+  // The key changed, so it's possible we got kicked out
+  if (groupPrivateEncryptionKey)
+    TC_RETURN(makeInternalGroup(*groupPrivateEncryptionKey, userGroupUpdate));
+  else
+    TC_RETURN(makeExternalGroup(userGroupUpdate));
+}
+
 namespace
 {
 using DeviceMap =
@@ -259,15 +336,33 @@ std::vector<Trustchain::DeviceId> extractAuthors(
   return {deviceIds.begin(), deviceIds.end()};
 }
 
-tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
+Crypto::EncryptionKeyPair decryptPreviousGroupKey(
+    UserGroupUpdate const& userGroupUpdate,
+    Crypto::EncryptionKeyPair const& newKey)
+{
+  if (auto const ugu1 = userGroupUpdate.get_if<UserGroupUpdate::v1>())
+  {
+    return Crypto::makeEncryptionKeyPair(Crypto::sealDecrypt(
+        ugu1->sealedPreviousPrivateEncryptionKey(), newKey));
+  }
+  else
+  {
+    throw AssertionError("Unexpected GroupUpdate nature");
+  }
+}
+
+tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
     std::vector<Trustchain::GroupAction> const& actions)
 {
-  for (auto const& action : actions)
+  Crypto::EncryptionKeyPair lastKnownKey;
+  auto lastKnownKeyBlockIt = actions.end();
+  for (auto it = actions.begin(); it != actions.end(); ++it)
   {
+    auto const& action = *it;
     try
     {
       auto const authorIt =
@@ -278,26 +373,44 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
                      Verif::Errc::InvalidAuthor,
                      "author not found");
       auto const& author = *authorIt;
-      if (boost::variant2::holds_alternative<UserGroupCreation>(action))
+      boost::variant2::visit(
+          overloaded{
+              [&](const Trustchain::Actions::UserGroupCreation&
+                      userGroupCreation) {
+                auto const verifiedAction = Verif::verifyUserGroupCreation(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupCreation(localUserAccessor,
+                                                    provisionalUsersAccessor,
+                                                    verifiedAction));
+              },
+              [&](const Trustchain::Actions::UserGroupAddition&
+                      userGroupAddition) {
+                auto const verifiedAction = Verif::verifyUserGroupAddition(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupAddition(localUserAccessor,
+                                                    provisionalUsersAccessor,
+                                                    previousGroup,
+                                                    verifiedAction));
+              },
+              [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
+                auto const verifiedAction = Verif::verifyUserGroupUpdate(
+                    action, author, extractBaseGroup(previousGroup));
+                previousGroup =
+                    TC_AWAIT(applyUserGroupUpdate(localUserAccessor,
+                                                  provisionalUsersAccessor,
+                                                  previousGroup,
+                                                  verifiedAction));
+              }},
+          action);
+
+      if (auto const internalGroup =
+              boost::variant2::get_if<InternalGroup>(&*previousGroup))
       {
-        auto const verifiedAction = Verif::verifyUserGroupCreation(
-            action, author, extractBaseGroup(previousGroup));
-        previousGroup = TC_AWAIT(applyUserGroupCreation(
-            localUserAccessor, provisionalUsersAccessor, verifiedAction));
+        lastKnownKey = internalGroup->encryptionKeyPair;
+        lastKnownKeyBlockIt = it;
       }
-      else if (boost::variant2::holds_alternative<UserGroupAddition>(action))
-      {
-        auto const verifiedAction = Verif::verifyUserGroupAddition(
-            action, author, extractBaseGroup(previousGroup));
-        previousGroup =
-            TC_AWAIT(applyUserGroupAddition(localUserAccessor,
-                                            provisionalUsersAccessor,
-                                            previousGroup,
-                                            verifiedAction));
-      }
-      else
-        throw Errors::AssertionError(fmt::format(
-            "cannot handle nature: {}", Trustchain::getNature(action)));
     }
     catch (Errors::Exception const& err)
     {
@@ -311,11 +424,31 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
         throw;
     }
   }
-  TC_RETURN(previousGroup);
+
+  std::vector<Crypto::EncryptionKeyPair> groupKeys;
+  if (lastKnownKeyBlockIt != actions.end())
+  {
+    groupKeys.push_back(lastKnownKey);
+    for (auto it = std::make_reverse_iterator(lastKnownKeyBlockIt + 1);
+         it != actions.rend();
+         ++it)
+    {
+      auto const& action = *it;
+      if (auto const updateAction =
+              boost::variant2::get_if<UserGroupUpdate>(&action))
+      {
+        auto prevKey = decryptPreviousGroupKey(*updateAction, groupKeys.back());
+        groupKeys.emplace_back(prevKey);
+      }
+    }
+  }
+
+  auto result = ProcessGroupResult{previousGroup, groupKeys};
+  TC_RETURN(result);
 }
 }
 
-tc::cotask<std::optional<Group>> processGroupEntries(
+tc::cotask<ProcessGroupResult> processGroupEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,

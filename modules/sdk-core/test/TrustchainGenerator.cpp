@@ -325,12 +325,14 @@ Group::Group(Trustchain::TrustchainId const& tid,
              Device const& author,
              Crypto::EncryptionKeyPair const& currentEncKp,
              Crypto::SignatureKeyPair const& currentSigKp,
-             std::vector<Trustchain::GroupAction> const& entries)
+             std::vector<Trustchain::GroupAction> const& entries,
+             Crypto::Hash const& lastKeyRotationBlockHash)
   : _tid(tid),
     _currentEncKp(currentEncKp),
     _currentSigKp(currentSigKp),
     _id(Trustchain::GroupId(_currentSigKp.publicKey)),
-    _entries(entries)
+    _entries(entries),
+    _lastKeyRotationBlockHash(lastKeyRotationBlockHash)
 {
 }
 
@@ -340,12 +342,14 @@ Group Group::newV1(Trustchain::TrustchainId const& tid,
 {
   auto currentEncKp = Crypto::makeEncryptionKeyPair();
   auto currentSigKp = Crypto::makeSignatureKeyPair();
+  auto entry = createGroupActionV1(tid, author, currentEncKp, currentSigKp, users);
   return Group{
       tid,
       author,
       currentEncKp,
       currentSigKp,
-      {createGroupActionV1(tid, author, currentEncKp, currentSigKp, users)}};
+      {entry},
+      Trustchain::getHash(entry)};
 }
 
 Group Group::newV2(Trustchain::TrustchainId const& tid,
@@ -355,13 +359,15 @@ Group Group::newV2(Trustchain::TrustchainId const& tid,
 {
   auto currentEncKp = Crypto::makeEncryptionKeyPair();
   auto currentSigKp = Crypto::makeSignatureKeyPair();
+  auto entry = createGroupActionV2(
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers);
   return Group{
       tid,
       author,
       currentEncKp,
       currentSigKp,
-      {createGroupActionV2(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
+      {entry},
+      Trustchain::getHash(entry)};
 }
 
 Group Group::newV3(Trustchain::TrustchainId const& tid,
@@ -371,13 +377,15 @@ Group Group::newV3(Trustchain::TrustchainId const& tid,
 {
   auto currentEncKp = Crypto::makeEncryptionKeyPair();
   auto currentSigKp = Crypto::makeSignatureKeyPair();
+  auto entry = createGroupActionV3(
+          tid, author, currentEncKp, currentSigKp, users, provisionalUsers);
   return Group{
       tid,
       author,
       currentEncKp,
       currentSigKp,
-      {createGroupActionV3(
-          tid, author, currentEncKp, currentSigKp, users, provisionalUsers)}};
+      {entry},
+      Trustchain::getHash(entry)};
 }
 
 Trustchain::GroupId const& Group::id() const
@@ -406,6 +414,11 @@ Crypto::Hash Group::lastBlockHash() const
   return Trustchain::getHash(entries().back());
 }
 
+Crypto::Hash Group::lastKeyRotationBlockHash() const
+{
+  return _lastKeyRotationBlockHash;
+}
+
 std::vector<Trustchain::GroupAction> const& Group::entries() const
 {
   return _entries;
@@ -418,6 +431,7 @@ Group::operator Tanker::InternalGroup() const
       currentSigKp(),
       currentEncKp(),
       lastBlockHash(),
+      lastKeyRotationBlockHash(),
   };
 }
 
@@ -427,7 +441,9 @@ Group::operator Tanker::ExternalGroup() const
           currentSigKp().publicKey,
           encryptedSignatureKey(),
           currentEncKp().publicKey,
-          lastBlockHash()};
+          lastBlockHash(),
+          lastKeyRotationBlockHash()
+          };
 }
 
 Trustchain::Actions::UserGroupAddition Group::addUsersV1(
@@ -485,6 +501,43 @@ Trustchain::Actions::UserGroupAddition Group::addUsers(
       author.keys().signatureKeyPair.privateKey);
   _entries.emplace_back(groupAddition);
   return groupAddition;
+}
+
+Trustchain::Actions::UserGroupUpdate Group::updateUsers(
+    Device const& author,
+    std::vector<User> const& users,
+    std::vector<ProvisionalUser> const& provisionalUsers)
+{
+  auto newEncKp = Crypto::makeEncryptionKeyPair();
+  auto newSigKp = Crypto::makeSignatureKeyPair();
+
+  std::vector<Trustchain::Actions::RawUserGroupMember2> rawUsers;
+  for (auto const& user : users)
+    rawUsers.push_back({user.id(), user.userKeys().back().publicKey});
+
+  std::vector<Trustchain::Actions::RawUserGroupProvisionalMember3> rawProvUsers;
+  for (auto const& user : provisionalUsers)
+    rawProvUsers.push_back({user.appSignatureKeyPair().publicKey,
+                            user.tankerSignatureKeyPair().publicKey,
+                            user.appEncryptionKeyPair().publicKey,
+                            user.tankerEncryptionKeyPair().publicKey});
+
+  auto const groupUpdate = Groups::Manager::makeUserGroupUpdateAction(
+      newSigKp,
+      newEncKp,
+      rawUsers,
+      rawProvUsers,
+      *this,
+      _tid,
+      author.id(),
+      author.keys().signatureKeyPair.privateKey);
+
+  _currentEncKp = newEncKp;
+  _currentSigKp = newSigKp;
+  _entries.emplace_back(groupUpdate);
+  _lastKeyRotationBlockHash = Trustchain::getHash(groupUpdate);
+
+  return groupUpdate;
 }
 
 // ================ ProvisionalUser

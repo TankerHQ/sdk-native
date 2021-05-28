@@ -44,6 +44,21 @@ UserGroupCreation::v2::Members generateGroupKeysForUsers2(
   return keysForUsers;
 }
 
+UserGroupCreation::v2::Members generateGroupKeysForUsers2(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<RawUserGroupMember2> const& users)
+{
+  UserGroupCreation::v2::Members keysForUsers;
+  for (auto const& user : users)
+  {
+    keysForUsers.emplace_back(
+        user.userId,
+        user.userPublicKey,
+        Crypto::sealEncrypt(groupPrivateEncryptionKey, user.userPublicKey));
+  }
+  return keysForUsers;
+}
+
 UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers2(
     Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
     std::vector<ProvisionalUsers::PublicUser> const& users)
@@ -82,6 +97,27 @@ UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers3(
                                   encryptedKeyTwice);
   }
   return keysForProvUsers;
+}
+
+UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers3(
+    Crypto::PrivateEncryptionKey const& groupPrivateEncryptionKey,
+    std::vector<RawUserGroupProvisionalMember3> const& users)
+{
+  UserGroupCreation::v3::ProvisionalMembers keysForUsers;
+  for (auto const& user : users)
+  {
+    auto const encryptedKeyOnce = Crypto::sealEncrypt(
+        groupPrivateEncryptionKey, user.appPublicEncryptionKey);
+    auto const encryptedKeyTwice =
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerPublicEncryptionKey);
+
+    keysForUsers.emplace_back(user.appPublicSignatureKey,
+                              user.tankerPublicSignatureKey,
+                              user.appPublicEncryptionKey,
+                              user.tankerPublicEncryptionKey,
+                              encryptedKeyTwice);
+  }
+  return keysForUsers;
 }
 
 Trustchain::Actions::UserGroupCreation1 createUserGroupCreationV1Action(
@@ -217,6 +253,44 @@ Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
       provisionalMembers,
       static_cast<Crypto::Hash>(deviceId),
       groupSignatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
+}
+
+Trustchain::Actions::UserGroupUpdate1 createUserGroupUpdateV1Action(
+    GroupId const& groupId,
+    Crypto::Hash const& previousGroupBlockHash,
+    Crypto::Hash const& previousKeyRotationBlockHash,
+    Crypto::SignatureKeyPair const& newGroupSignatureKeyPair,
+    Crypto::PublicEncryptionKey const& newGroupPublicEncryptionKey,
+    Crypto::SignatureKeyPair const& previousGroupSignatureKeyPair,
+    Crypto::EncryptionKeyPair const& previousGroupEncryptionKeyPair,
+    std::vector<UserGroupAddition::v2::Member> const& members,
+    std::vector<UserGroupAddition::v3::ProvisionalMember> const&
+        provisionalMembers,
+    TrustchainId const& trustchainId,
+    DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
+      newGroupSignatureKeyPair.privateKey, newGroupPublicEncryptionKey);
+  auto const encryptedPreviousEncryptionKey = Crypto::sealEncrypt(
+      previousGroupEncryptionKeyPair.privateKey, newGroupPublicEncryptionKey);
+
+  return UserGroupUpdate::v1{
+      trustchainId,
+      groupId,
+      previousGroupBlockHash,
+      previousKeyRotationBlockHash,
+      newGroupSignatureKeyPair.publicKey,
+      newGroupPublicEncryptionKey,
+      encryptedPrivateSignatureKey,
+      encryptedPreviousEncryptionKey,
+      members,
+      provisionalMembers,
+      static_cast<Crypto::Hash>(deviceId),
+      newGroupSignatureKeyPair.privateKey,
+      previousGroupSignatureKeyPair.privateKey,
       deviceSignatureKey,
   };
 }

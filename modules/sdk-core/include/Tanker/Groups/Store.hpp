@@ -24,15 +24,11 @@ public:
 
   Store(DataStore::Database* dbConn);
 
-  tc::cotask<void> put(Group const& group);
-  tc::cotask<void> put(InternalGroup const& group);
-  tc::cotask<void> put(ExternalGroup const& group);
+  tc::cotask<void> putKeys(Trustchain::GroupId const& id,
+                           std::vector<Crypto::EncryptionKeyPair> const& keys);
 
-  tc::cotask<std::optional<Group>> findById(
-      Trustchain::GroupId const& groupId) const;
-  tc::cotask<std::optional<InternalGroup>> findInternalByPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
-  tc::cotask<std::optional<Group>> findByPublicEncryptionKey(
+  tc::cotask<std::optional<Crypto::EncryptionKeyPair>>
+  findKeyByPublicEncryptionKey(
       Crypto::PublicEncryptionKey const& publicEncryptionKey) const;
 
 private:

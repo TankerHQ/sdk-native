@@ -12,6 +12,7 @@ set(TANKER_CORE_DATASTORE_SRC
   include/Tanker/DataStore/Errors/ErrcCategory.hpp
   include/Tanker/DbModels/DeviceKeyStore.hpp
   include/Tanker/DbModels/Groups.hpp
+  include/Tanker/DbModels/GroupKeys.hpp
   include/Tanker/DbModels/ResourceKeys.hpp
   include/Tanker/DbModels/ProvisionalUserKeys.hpp
   include/Tanker/DbModels/TrustchainInfo.hpp
@@ -24,6 +25,7 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DataStore/Table.cpp
   src/DbModels/DeviceKeyStore.cpp
   src/DbModels/Groups.cpp
+  src/DbModels/GroupKeys.cpp
   src/DbModels/ResourceKeys.cpp
   src/DbModels/ProvisionalUserKeys.cpp
   src/DbModels/TrustchainInfo.cpp
@@ -78,6 +80,7 @@ add_library(tankercore STATIC
   include/Tanker/Groups/EntryGenerator.hpp
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
+  include/Tanker/Groups/Verif/UserGroupUpdate.hpp
   include/Tanker/ResourceKeys/KeysResult.hpp
   include/Tanker/ResourceKeys/Store.hpp
   include/Tanker/ResourceKeys/Accessor.hpp
@@ -148,6 +151,7 @@ add_library(tankercore STATIC
   src/Groups/Requester.cpp
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
+  src/Groups/Verif/UserGroupUpdate.cpp
   src/Users/User.cpp
   src/Users/Updater.cpp
   src/Users/LocalUser.cpp
