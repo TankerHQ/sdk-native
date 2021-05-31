@@ -574,6 +574,7 @@ tc::cotask<void> Core::updateGroupMembers(
   auto const& localUser = _session->accessors().localUserAccessor.get();
   auto const newKeyPair = TC_AWAIT(Groups::Manager::updateMembers(
       _session->accessors().userAccessor,
+      _session->accessors().provisionalUsersAccessor,
       _session->requesters(),
       _session->accessors().groupAccessor,
       groupId,

@@ -3,6 +3,7 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
@@ -84,6 +85,7 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
     Users::IUserAccessor& userAccessor,
+    ProvisionalUsers::IAccessor& provisionalUserAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,

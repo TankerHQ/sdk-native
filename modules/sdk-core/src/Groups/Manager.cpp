@@ -210,9 +210,11 @@ static void checkAddedAndRemoved(
     std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
 {
   std::vector<T> usersBothAddedAndRemoved;
-  for (auto const& user : usersToAddSet)
-    if (userIdsToRemoveSet.contains(user))
-      usersBothAddedAndRemoved.push_back(user);
+  std::set_intersection(usersToAddSet.begin(),
+                        usersToAddSet.end(),
+                        userIdsToRemoveSet.begin(),
+                        userIdsToRemoveSet.end(),
+                        std::back_inserter(usersBothAddedAndRemoved));
 
   if (!usersBothAddedAndRemoved.empty())
   {
@@ -226,8 +228,45 @@ static void checkAddedAndRemoved(
   }
 }
 
+static tc::cotask<std::pair<std::vector<RawUserGroupMember2>,
+                            std::vector<UserGroupProvisionalMember3>>>
+upgradeGroupMembers(
+    Users::IUserAccessor& userAccessor,
+    ProvisionalUsers::IAccessor::ProvisionalUserClaims claimedUserIds,
+    std::vector<UserGroupProvisionalMember3> const& provisionalMembers)
+{
+  std::vector<Trustchain::UserId> memberUserIds;
+  std::vector<UserGroupProvisionalMember3> outProvisionalMembers;
+  for (auto const& provisionalMember : provisionalMembers)
+  {
+    if (auto const& it =
+            claimedUserIds.find({provisionalMember.appPublicSignatureKey(),
+                                 provisionalMember.tankerPublicSignatureKey()});
+        it != claimedUserIds.end())
+      memberUserIds.push_back(it->second);
+    else
+      outProvisionalMembers.push_back(provisionalMember);
+  }
+
+  auto memberUsers = TC_AWAIT(
+      userAccessor.pull(memberUserIds, Users::IRequester::IsLight::Yes));
+
+  if (!memberUsers.notFound.empty())
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "found claiming users but couldn't pull them: {}",
+                           fmt::join(memberUsers.notFound, ", "));
+
+  std::vector<RawUserGroupMember2> outMembers;
+  for (auto const& user : memberUsers.found)
+    outMembers.push_back({user.id(), user.userKey().value()});
+
+  TC_RETURN((std::pair<std::vector<RawUserGroupMember2>,
+                       std::vector<UserGroupProvisionalMember3>>{
+      std::move(outMembers), std::move(outProvisionalMembers)}));
+}
+
 static std::vector<RawUserGroupMember2> applyGroupUserDiff(
-    std::vector<UserGroupMember2> const& existingUsers,
+    std::vector<RawUserGroupMember2> const& existingUsers,
     std::vector<Users::User> const& usersToAdd,
     std::vector<Trustchain::UserId> const& userIdsToRemove,
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
@@ -247,10 +286,10 @@ static std::vector<RawUserGroupMember2> applyGroupUserDiff(
   std::vector<RawUserGroupMember2> finalUsers;
   for (auto const& user : existingUsers)
   {
-    if (userIdsToRemoveSet.erase(user.userId()))
+    if (userIdsToRemoveSet.erase(user.userId))
       continue;
-    userIdsToAddSet.erase(user.userId());
-    finalUsers.push_back({user.userId(), user.userPublicKey()});
+    userIdsToAddSet.erase(user.userId);
+    finalUsers.push_back({user.userId, user.userPublicKey});
   }
   if (!userIdsToRemoveSet.empty())
   {
@@ -337,6 +376,7 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
     Users::IUserAccessor& userAccessor,
+    ProvisionalUsers::IAccessor& provisionalUserAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
@@ -379,17 +419,52 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
         extractPublicIdentities(spublicIdentitiesToRemoveDedup);
     auto const membersToRemove = partitionIdentities(publicIdentitiesToRemove);
 
-    auto users = applyGroupUserDiff(groups.found[0].members,
+    auto const provisionalUsersToRemove = TC_AWAIT(userAccessor.pullProvisional(
+        membersToRemove.publicProvisionalIdentities));
+
+    std::vector<ProvisionalUsers::ProvisionalUserId> provisionalUsersToQuery;
+    for (auto const& provisionalMember : groups.found[0].provisionalMembers)
+      provisionalUsersToQuery.push_back(
+          {provisionalMember.appPublicSignatureKey(),
+           provisionalMember.tankerPublicSignatureKey()});
+    for (auto const& toRemove : provisionalUsersToRemove)
+      provisionalUsersToQuery.push_back(
+          {toRemove.appSignaturePublicKey, toRemove.tankerSignaturePublicKey});
+
+    auto const claimedUserIds = TC_AWAIT(
+        provisionalUserAccessor.pullClaimingUserIds(provisionalUsersToQuery));
+
+    std::vector<ProvisionalUsers::PublicUser> claimedIdentitiesToRemove;
+    for (auto const& toRemove : provisionalUsersToRemove)
+      if (claimedUserIds.find({toRemove.appSignaturePublicKey,
+                               toRemove.tankerSignaturePublicKey}) !=
+          claimedUserIds.end())
+        claimedIdentitiesToRemove.push_back(toRemove);
+
+    if (!claimedIdentitiesToRemove.empty())
+    {
+      auto const problematicIdentities =
+          mapIdentitiesToStrings(claimedIdentitiesToRemove,
+                                 spublicIdentitiesToRemoveDedup,
+                                 publicIdentitiesToRemove);
+      throw formatEx(Errc::IdentityAlreadyAttached,
+                     "the following identities are already claimed: {:s}",
+                     fmt::join(problematicIdentities, ", "));
+    }
+
+    auto [usersPass1, newProvisionalUsers] = TC_AWAIT(upgradeGroupMembers(
+        userAccessor, claimedUserIds, groups.found[0].provisionalMembers));
+    for (auto const& member : groups.found[0].members)
+      usersPass1.push_back({member.userId(), member.userPublicKey()});
+
+    auto users = applyGroupUserDiff(usersPass1,
                                     newMembers.users,
                                     membersToRemove.userIds,
                                     spublicIdentitiesToRemoveDedup,
                                     publicIdentitiesToRemove);
 
-    auto const provisionalUsersToRemove = TC_AWAIT(userAccessor.pullProvisional(
-        membersToRemove.publicProvisionalIdentities));
-
     auto provisionalUsers =
-        applyGroupProvisionalDiff(groups.found[0].provisionalMembers,
+        applyGroupProvisionalDiff(newProvisionalUsers,
                                   newMembers.provisionalUsers,
                                   provisionalUsersToRemove,
                                   spublicIdentitiesToRemoveDedup,
