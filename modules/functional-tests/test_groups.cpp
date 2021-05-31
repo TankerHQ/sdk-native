@@ -83,7 +83,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Bob can decrypt previous group shares")
   auto bobDevices = TC_AWAIT(bob.makeDevices(1));
 
   auto charlie = trustchain.makeUser();
-  auto charlieDevices = TC_AWAIT(bob.makeDevices(1));
+  auto charlieDevices = TC_AWAIT(charlie.makeDevices(1));
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), charlie.spublicIdentity()}));
