@@ -48,6 +48,27 @@ Requester::getClaimBlocks(Trustchain::UserId const& userId)
   TC_RETURN(std::move(ret));
 }
 
+tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
+Requester::getClaimBlocks(
+    std::vector<ProvisionalUserId> const& provisionalUserIds)
+{
+  auto const target =
+      _httpClient->makeUrl("provisional-identity-claims-by-signature-keys");
+  auto jsonProvisionalUserIds = nlohmann::json::array();
+  for (auto const provisionalUserId : provisionalUserIds)
+    jsonProvisionalUserIds.push_back(nlohmann::json{
+        {"app_signature_public_key", provisionalUserId.appSignaturePublicKey},
+        {"tanker_signature_public_key",
+         provisionalUserId.tankerSignaturePublicKey}});
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      target, nlohmann::json{{"provisional_users", jsonProvisionalUserIds}}));
+  auto ret = fromBlocksToProvisionalIdentityClaims(
+      res.value()
+          .at("provisional_identity_claims")
+          .get<std::vector<std::string>>());
+  TC_RETURN(std::move(ret));
+}
+
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Requester::getVerifiedProvisionalIdentityKeys()
 {

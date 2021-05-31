@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/ProvisionalUsers/ProvisionalUserId.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
@@ -18,6 +19,8 @@ class IRequester
 public:
   virtual tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
   getClaimBlocks(Trustchain::UserId const& userId) = 0;
+  virtual tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
+  getClaimBlocks(std::vector<ProvisionalUserId> const& provisionalUserIds) = 0;
   virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys() = 0;
   virtual tc::cotask<TankerSecretProvisionalIdentity>
