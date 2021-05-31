@@ -38,6 +38,8 @@ public:
   tc::cotask<std::optional<ProvisionalUserKeys>> findEncryptionKeysFromCache(
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) override;
+  tc::cotask<ProvisionalUserClaims> pullClaimingUserIds(
+      std::vector<ProvisionalUserId> const& signatureKeys) override;
 
   tc::cotask<void> refreshKeys() override;
 

@@ -50,6 +50,17 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Accessor::pullEncryptionKeys(
       appPublicSigKey, tankerPublicSigKey)));
 }
 
+tc::cotask<Accessor::ProvisionalUserClaims> Accessor::pullClaimingUserIds(
+    std::vector<ProvisionalUserId> const& provisionalUserIds)
+{
+  ProvisionalUserClaims out;
+  if (provisionalUserIds.empty())
+    TC_RETURN(out);
+
+  auto const blocks = TC_AWAIT(_requester->getClaimBlocks(provisionalUserIds));
+  TC_RETURN(TC_AWAIT(Updater::processClaimEntries(*_userAccessor, blocks)));
+}
+
 tc::cotask<void> Accessor::refreshKeys()
 {
   auto const blocks =

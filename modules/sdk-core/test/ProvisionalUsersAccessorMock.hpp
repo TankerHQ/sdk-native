@@ -10,5 +10,6 @@ class ProvisionalUsersAccessorMock
 {
   IMPLEMENT_MOCK2(pullEncryptionKeys);
   IMPLEMENT_MOCK2(findEncryptionKeysFromCache);
+  IMPLEMENT_MOCK1(pullClaimingUserIds);
   IMPLEMENT_MOCK0(refreshKeys);
 };

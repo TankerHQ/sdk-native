@@ -15,8 +15,6 @@
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
-#include <boost/container/flat_map.hpp>
-
 #include <algorithm>
 
 TLOG_CATEGORY("ProvisionalUsersUpdater");
@@ -131,6 +129,56 @@ tc::cotask<std::vector<UsedSecretUser>> processSelfClaimEntries(
       else
         throw;
     }
+  }
+  TC_RETURN(out);
+}
+
+namespace
+{
+std::optional<Trustchain::Actions::ProvisionalIdentityClaim> processClaimEntry(
+    DeviceMap const& authors,
+    Trustchain::Actions::ProvisionalIdentityClaim const& action)
+{
+  try
+  {
+    auto const authorIt = authors.find(Trustchain::DeviceId{action.author()});
+    Verif::ensures(authorIt != authors.end(),
+                   Verif::Errc::InvalidAuthor,
+                   "author not found");
+    auto const& author = authorIt->second;
+
+    auto const verifiedAction =
+        Verif::verifyProvisionalIdentityClaim(action, author);
+
+    return verifiedAction;
+  }
+  catch (Errors::Exception const& err)
+  {
+    if (err.errorCode().category() == Verif::ErrcCategory())
+    {
+      TERROR("skipping invalid claim block {}: {}", action.hash(), err.what());
+    }
+    else
+      throw;
+  }
+
+  return std::nullopt;
+}
+}
+
+tc::cotask<ProvisionalUserClaims> processClaimEntries(
+    Users::IUserAccessor& userAccessor,
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions)
+{
+  auto const authors = TC_AWAIT(extractAuthors(userAccessor, actions));
+
+  boost::container::flat_map<ProvisionalUserId, Trustchain::UserId> out;
+  for (auto const& action : actions)
+  {
+    if (auto const verifiedAction = processClaimEntry(authors, action))
+      out[{verifiedAction->appSignaturePublicKey(),
+           verifiedAction->tankerSignaturePublicKey()}] =
+          verifiedAction->userId();
   }
   TC_RETURN(out);
 }

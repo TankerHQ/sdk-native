@@ -1,10 +1,13 @@
 #pragma once
 
+#include <Tanker/ProvisionalUsers/ProvisionalUserId.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 #include <Tanker/ProvisionalUsers/SecretUser.hpp>
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 
 #include <tconcurrent/coroutine.hpp>
+
+#include <boost/container/flat_map.hpp>
 
 #include <gsl/gsl-lite.hpp>
 
@@ -32,5 +35,12 @@ tc::cotask<UsedSecretUser> extractKeysToStore(
 tc::cotask<std::vector<UsedSecretUser>> processSelfClaimEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& contactAccessor,
+    gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions);
+
+using ProvisionalUserClaims =
+    boost::container::flat_map<ProvisionalUserId, Trustchain::UserId>;
+
+tc::cotask<ProvisionalUserClaims> processClaimEntries(
+    Users::IUserAccessor& userAccessor,
     gsl::span<Trustchain::Actions::ProvisionalIdentityClaim const> actions);
 }
