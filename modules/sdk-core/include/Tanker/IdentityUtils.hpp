@@ -29,7 +29,7 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids);
 
-std::vector<SPublicIdentity> mapProvisionalIdentitiesToStrings(
+std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<ProvisionalUsers::PublicUser> const& errorUsers,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids);

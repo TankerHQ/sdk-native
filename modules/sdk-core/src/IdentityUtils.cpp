@@ -72,7 +72,7 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
   return clearIds;
 }
 
-std::vector<SPublicIdentity> mapProvisionalIdentitiesToStrings(
+std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<ProvisionalUsers::PublicUser> const& errorUsers,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids)
