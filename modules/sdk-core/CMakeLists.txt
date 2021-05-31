@@ -67,6 +67,7 @@ add_library(tankercore STATIC
   include/Tanker/ProvisionalUsers/Manager.hpp
   include/Tanker/ProvisionalUsers/SecretUser.hpp
   include/Tanker/ProvisionalUsers/PublicUser.hpp
+  include/Tanker/ProvisionalUsers/ProvisionalUserId.hpp
   include/Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp
   include/Tanker/Groups/Group.hpp
   include/Tanker/Groups/GroupProvisionalUser.hpp
@@ -140,6 +141,7 @@ add_library(tankercore STATIC
   src/ProvisionalUsers/Requester.cpp
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
+  src/ProvisionalUsers/ProvisionalUserId.cpp
   src/ProvisionalUsers/PublicUser.cpp
   src/ProvisionalUsers/Manager.cpp
   src/Groups/Group.cpp
