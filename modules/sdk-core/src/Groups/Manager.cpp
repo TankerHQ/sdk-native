@@ -403,6 +403,31 @@ tc::cotask<void> addGroupMembers(
   TC_AWAIT(requester.updateGroup(groupEntry));
 }
 
+void checkRemoveClaimedIdentities(
+    ProvisionalUsers::IAccessor::ProvisionalUserClaims const& claimedUserIds,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemoveDedup,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove,
+    std::vector<ProvisionalUsers::PublicUser> const& provisionalUsersToRemove)
+{
+  std::vector<ProvisionalUsers::PublicUser> claimedIdentitiesToRemove;
+  for (auto const& toRemove : provisionalUsersToRemove)
+    if (claimedUserIds.find({toRemove.appSignaturePublicKey,
+                             toRemove.tankerSignaturePublicKey}) !=
+        claimedUserIds.end())
+      claimedIdentitiesToRemove.push_back(toRemove);
+
+  if (!claimedIdentitiesToRemove.empty())
+  {
+    auto const problematicIdentities =
+        mapIdentitiesToStrings(claimedIdentitiesToRemove,
+                               spublicIdentitiesToRemoveDedup,
+                               publicIdentitiesToRemove);
+    throw formatEx(Errc::IdentityAlreadyAttached,
+                   "the following identities are already claimed: {:s}",
+                   fmt::join(problematicIdentities, ", "));
+  }
+}
+
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUserAccessor,
@@ -445,23 +470,10 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
   auto const claimedUserIds = TC_AWAIT(
       provisionalUserAccessor.pullClaimingUserIds(provisionalUsersToQuery));
 
-  std::vector<ProvisionalUsers::PublicUser> claimedIdentitiesToRemove;
-  for (auto const& toRemove : provisionalUsersToRemove)
-    if (claimedUserIds.find({toRemove.appSignaturePublicKey,
-                             toRemove.tankerSignaturePublicKey}) !=
-        claimedUserIds.end())
-      claimedIdentitiesToRemove.push_back(toRemove);
-
-  if (!claimedIdentitiesToRemove.empty())
-  {
-    auto const problematicIdentities =
-        mapIdentitiesToStrings(claimedIdentitiesToRemove,
+  checkRemoveClaimedIdentities(claimedUserIds,
                                spublicIdentitiesToRemoveDedup,
-                               publicIdentitiesToRemove);
-    throw formatEx(Errc::IdentityAlreadyAttached,
-                   "the following identities are already claimed: {:s}",
-                   fmt::join(problematicIdentities, ", "));
-  }
+                               publicIdentitiesToRemove,
+                               provisionalUsersToRemove);
 
   auto [groupMembersWithUpgradedMembers, newProvisionalUsers] =
       TC_AWAIT(upgradeGroupMembers(
