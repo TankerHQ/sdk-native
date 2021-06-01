@@ -657,7 +657,7 @@ TEST_CASE_FIXTURE(
       Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group users")
+TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
 {
   auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
@@ -697,7 +697,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group users")
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
-    "Can't remove claimed provisional group users as a provisional identity")
+    "Can't remove claimed provisional group members as a provisional identity")
 {
   auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
@@ -731,7 +731,7 @@ TEST_CASE_FIXTURE(
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
-    "Can remove claimed provisional group users as a permanent identity")
+    "Can remove claimed provisional group members as a permanent identity")
 {
   auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
