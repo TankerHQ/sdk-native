@@ -202,8 +202,10 @@ Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
                                        privateSignatureKey);
 }
 
+namespace
+{
 template <typename T>
-static void checkAddedAndRemoved(
+void checkAddedAndRemoved(
     boost::container::flat_set<T> const& usersToAddSet,
     boost::container::flat_set<T> const& userIdsToRemoveSet,
     std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
@@ -228,8 +230,8 @@ static void checkAddedAndRemoved(
   }
 }
 
-static tc::cotask<std::pair<std::vector<RawUserGroupMember2>,
-                            std::vector<UserGroupProvisionalMember3>>>
+tc::cotask<std::pair<std::vector<RawUserGroupMember2>,
+                     std::vector<UserGroupProvisionalMember3>>>
 upgradeGroupMembers(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor::ProvisionalUserClaims claimedUserIds,
@@ -265,7 +267,7 @@ upgradeGroupMembers(
       std::move(outMembers), std::move(outProvisionalMembers)}));
 }
 
-static std::vector<RawUserGroupMember2> applyGroupUserDiff(
+std::vector<RawUserGroupMember2> applyGroupUserDiff(
     std::vector<RawUserGroupMember2> const& existingUsers,
     std::vector<Users::User> const& usersToAdd,
     std::vector<Trustchain::UserId> const& userIdsToRemove,
@@ -314,7 +316,7 @@ static std::vector<RawUserGroupMember2> applyGroupUserDiff(
   return finalUsers;
 }
 
-static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
+std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
     std::vector<UserGroupProvisionalMember3> const& existingUsers,
     std::vector<ProvisionalUsers::PublicUser> const& usersToAdd,
     std::vector<ProvisionalUsers::PublicUser> const& usersToRemove,
@@ -372,6 +374,7 @@ static std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
     }
   }
   return provisionalUsers;
+}
 }
 
 tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
