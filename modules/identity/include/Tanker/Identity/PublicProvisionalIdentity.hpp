@@ -22,7 +22,7 @@ struct PublicProvisionalIdentity
 };
 
 void from_json(nlohmann::json const& j, PublicProvisionalIdentity& result);
-void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity);
+void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity);
 std::string to_string(PublicProvisionalIdentity const& identity);
 }
 }

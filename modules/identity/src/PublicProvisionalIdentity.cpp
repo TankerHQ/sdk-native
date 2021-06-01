@@ -34,7 +34,7 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
   };
 }
 
-void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = to_string(identity.target);
@@ -43,13 +43,11 @@ void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
       mgs::base64::encode(identity.appEncryptionPublicKey);
   j["public_signature_key"] =
       mgs::base64::encode(identity.appSignaturePublicKey);
-  j["public_encryption_key"] =
-      mgs::base64::encode(identity.appEncryptionPublicKey);
 }
 
 std::string to_string(PublicProvisionalIdentity const& identity)
 {
-  return mgs::base64::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
 }
 }
 }

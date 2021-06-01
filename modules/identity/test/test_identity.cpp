@@ -40,8 +40,8 @@ auto const GOOD_SECRET_PERMANENT_IDENTITY =
     "94ajVFV0FGZXh2akk9In0="s;
 
 auto const GOOD_PUBLIC_PERMANENT_IDENTITY =
-    "eyJ0YXJnZXQiOiJ1c2VyIiwidHJ1c3RjaGFpbl9pZCI6InRwb3h5TnpoMGhVOUcyaTlhZ012SH"
-    "l5ZCtwTzZ6R0NqTzlCZmhyQ0xqZDQ9IiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJ1c2VyIiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
     "aG1oZVRoNFFCRE5weTRTdnk5WG9rPSJ9"s;
 
 auto const trustchainIdString = "tpoxyNzh0hU9G2i9agMvHyyd+pO6zGCjO9BfhrCLjd4="s;
@@ -206,16 +206,17 @@ TEST_SUITE("generate provisional Identity")
 
 TEST_SUITE("serialization")
 {
-  TEST_CASE("We can deserialize a secret permanent identity from a good string")
+  TEST_CASE("We can de/reserialize a secret permanent identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
+    CHECK_EQ(to_string(identity), GOOD_SECRET_PERMANENT_IDENTITY);
   }
 
-  TEST_CASE("We can deserialize a public permanent identity from a good string")
+  TEST_CASE("We can de/reserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
@@ -223,6 +224,7 @@ TEST_SUITE("serialization")
         boost::variant2::get<PublicPermanentIdentity>(publicIdentity);
     CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
+    CHECK_EQ(to_string(publicIdentity), GOOD_PUBLIC_PERMANENT_IDENTITY);
   }
 
   TEST_CASE(
@@ -235,7 +237,7 @@ TEST_SUITE("serialization")
   }
 
   TEST_CASE(
-      "We can deserialize a secret provisional identity from a good string")
+      "We can de/reserialize a secret provisional identity from a good string")
   {
     auto const identity =
         extract<SecretProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY);
@@ -247,6 +249,7 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appSignatureKeyPair.privateKey, appSignaturePrivateKey);
     CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
     CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
+    CHECK_EQ(to_string(identity), GOOD_SECRET_PROVISIONAL_IDENTITY);
   }
 
   TEST_CASE("We can deserialize an unhashed email public provisional identity")
@@ -259,6 +262,7 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.target, TargetType::Email);
     CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
+    CHECK_EQ(to_string(identity), GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 
   TEST_CASE("We can deserialize a hashed email public provisional identity")
