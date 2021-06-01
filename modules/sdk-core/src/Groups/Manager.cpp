@@ -375,9 +375,35 @@ std::vector<RawUserGroupProvisionalMember3> applyGroupProvisionalDiff(
   }
   return provisionalUsers;
 }
+
+tc::cotask<void> addGroupMembers(
+    Users::IUserAccessor& userAccessor,
+    IRequester& requester,
+    IAccessor& groupAccessor,
+    Trustchain::GroupId const& groupId,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey)
+{
+  auto const newMembers =
+      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
+
+  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
+  if (groups.found.empty())
+    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+
+  auto const groupEntry =
+      makeUserGroupAdditionAction(newMembers.users,
+                                  newMembers.provisionalUsers,
+                                  groups.found[0],
+                                  trustchainId,
+                                  deviceId,
+                                  privateSignatureKey);
+  TC_AWAIT(requester.updateGroup(groupEntry));
 }
 
-tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUserAccessor,
     IRequester& requester,
@@ -393,109 +419,134 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
   auto const newMembers =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
+  auto const groups =
+      TC_AWAIT(groupAccessor.getInternalGroupsAndMembers({groupId}));
+  if (groups.found.empty())
+    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+
+  auto const spublicIdentitiesToRemoveDedup =
+      removeDuplicates(spublicIdentitiesToRemove);
+  auto const publicIdentitiesToRemove =
+      extractPublicIdentities(spublicIdentitiesToRemoveDedup);
+  auto const membersToRemove = partitionIdentities(publicIdentitiesToRemove);
+
+  auto const provisionalUsersToRemove = TC_AWAIT(userAccessor.pullProvisional(
+      membersToRemove.publicProvisionalIdentities));
+
+  std::vector<ProvisionalUsers::ProvisionalUserId> provisionalUsersToQuery;
+  for (auto const& provisionalMember : groups.found[0].provisionalMembers)
+    provisionalUsersToQuery.push_back(
+        {provisionalMember.appPublicSignatureKey(),
+         provisionalMember.tankerPublicSignatureKey()});
+  for (auto const& toRemove : provisionalUsersToRemove)
+    provisionalUsersToQuery.push_back(
+        {toRemove.appSignaturePublicKey, toRemove.tankerSignaturePublicKey});
+
+  auto const claimedUserIds = TC_AWAIT(
+      provisionalUserAccessor.pullClaimingUserIds(provisionalUsersToQuery));
+
+  std::vector<ProvisionalUsers::PublicUser> claimedIdentitiesToRemove;
+  for (auto const& toRemove : provisionalUsersToRemove)
+    if (claimedUserIds.find({toRemove.appSignaturePublicKey,
+                             toRemove.tankerSignaturePublicKey}) !=
+        claimedUserIds.end())
+      claimedIdentitiesToRemove.push_back(toRemove);
+
+  if (!claimedIdentitiesToRemove.empty())
+  {
+    auto const problematicIdentities =
+        mapIdentitiesToStrings(claimedIdentitiesToRemove,
+                               spublicIdentitiesToRemoveDedup,
+                               publicIdentitiesToRemove);
+    throw formatEx(Errc::IdentityAlreadyAttached,
+                   "the following identities are already claimed: {:s}",
+                   fmt::join(problematicIdentities, ", "));
+  }
+
+  auto [groupMembersWithUpgradedMembers, newProvisionalUsers] =
+      TC_AWAIT(upgradeGroupMembers(
+          userAccessor, claimedUserIds, groups.found[0].provisionalMembers));
+  for (auto const& member : groups.found[0].members)
+    groupMembersWithUpgradedMembers.push_back(
+        {member.userId(), member.userPublicKey()});
+
+  auto users = applyGroupUserDiff(groupMembersWithUpgradedMembers,
+                                  newMembers.users,
+                                  membersToRemove.userIds,
+                                  spublicIdentitiesToRemoveDedup,
+                                  publicIdentitiesToRemove);
+
+  auto provisionalUsers =
+      applyGroupProvisionalDiff(newProvisionalUsers,
+                                newMembers.provisionalUsers,
+                                provisionalUsersToRemove,
+                                spublicIdentitiesToRemoveDedup,
+                                publicIdentitiesToRemove);
+
+  auto const newGroupSignatureKeyPair = Crypto::makeSignatureKeyPair();
+  auto const newGroupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
+  auto const groupEntry = makeUserGroupUpdateAction(newGroupSignatureKeyPair,
+                                                    newGroupEncryptionKeyPair,
+                                                    users,
+                                                    provisionalUsers,
+                                                    groups.found[0].group,
+                                                    trustchainId,
+                                                    deviceId,
+                                                    privateSignatureKey);
+  TC_AWAIT(requester.updateGroup(groupEntry));
+
+  // Check if the author is in the group
+  std::optional<Crypto::EncryptionKeyPair> encryptionKeyPair;
+  if (std::find_if(newMembers.users.begin(),
+                   newMembers.users.end(),
+                   [&](auto const& user) { return user.id() == userId; }) !=
+      newMembers.users.end())
+  {
+    encryptionKeyPair = newGroupEncryptionKeyPair;
+  }
+
+  TC_RETURN(encryptionKeyPair);
+}
+}
+
+tc::cotask<std::optional<Crypto::EncryptionKeyPair>> updateMembers(
+    Users::IUserAccessor& userAccessor,
+    ProvisionalUsers::IAccessor& provisionalUserAccessor,
+    IRequester& requester,
+    IAccessor& groupAccessor,
+    Trustchain::GroupId const& groupId,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& privateSignatureKey,
+    Trustchain::UserId const& userId)
+{
   if (spublicIdentitiesToRemove.empty())
   {
-    auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
-    if (groups.found.empty())
-      throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
-
-    auto const groupEntry =
-        makeUserGroupAdditionAction(newMembers.users,
-                                    newMembers.provisionalUsers,
-                                    groups.found[0],
-                                    trustchainId,
-                                    deviceId,
-                                    privateSignatureKey);
-    TC_AWAIT(requester.updateGroup(groupEntry));
+    TC_AWAIT(addGroupMembers(userAccessor,
+                             requester,
+                             groupAccessor,
+                             groupId,
+                             spublicIdentitiesToAdd,
+                             trustchainId,
+                             deviceId,
+                             privateSignatureKey));
     TC_RETURN(std::nullopt);
   }
   else
   {
-    auto const groups =
-        TC_AWAIT(groupAccessor.getInternalGroupsAndMembers({groupId}));
-    if (groups.found.empty())
-      throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
-
-    auto const spublicIdentitiesToRemoveDedup =
-        removeDuplicates(spublicIdentitiesToRemove);
-    auto const publicIdentitiesToRemove =
-        extractPublicIdentities(spublicIdentitiesToRemoveDedup);
-    auto const membersToRemove = partitionIdentities(publicIdentitiesToRemove);
-
-    auto const provisionalUsersToRemove = TC_AWAIT(userAccessor.pullProvisional(
-        membersToRemove.publicProvisionalIdentities));
-
-    std::vector<ProvisionalUsers::ProvisionalUserId> provisionalUsersToQuery;
-    for (auto const& provisionalMember : groups.found[0].provisionalMembers)
-      provisionalUsersToQuery.push_back(
-          {provisionalMember.appPublicSignatureKey(),
-           provisionalMember.tankerPublicSignatureKey()});
-    for (auto const& toRemove : provisionalUsersToRemove)
-      provisionalUsersToQuery.push_back(
-          {toRemove.appSignaturePublicKey, toRemove.tankerSignaturePublicKey});
-
-    auto const claimedUserIds = TC_AWAIT(
-        provisionalUserAccessor.pullClaimingUserIds(provisionalUsersToQuery));
-
-    std::vector<ProvisionalUsers::PublicUser> claimedIdentitiesToRemove;
-    for (auto const& toRemove : provisionalUsersToRemove)
-      if (claimedUserIds.find({toRemove.appSignaturePublicKey,
-                               toRemove.tankerSignaturePublicKey}) !=
-          claimedUserIds.end())
-        claimedIdentitiesToRemove.push_back(toRemove);
-
-    if (!claimedIdentitiesToRemove.empty())
-    {
-      auto const problematicIdentities =
-          mapIdentitiesToStrings(claimedIdentitiesToRemove,
-                                 spublicIdentitiesToRemoveDedup,
-                                 publicIdentitiesToRemove);
-      throw formatEx(Errc::IdentityAlreadyAttached,
-                     "the following identities are already claimed: {:s}",
-                     fmt::join(problematicIdentities, ", "));
-    }
-
-    auto [usersPass1, newProvisionalUsers] = TC_AWAIT(upgradeGroupMembers(
-        userAccessor, claimedUserIds, groups.found[0].provisionalMembers));
-    for (auto const& member : groups.found[0].members)
-      usersPass1.push_back({member.userId(), member.userPublicKey()});
-
-    auto users = applyGroupUserDiff(usersPass1,
-                                    newMembers.users,
-                                    membersToRemove.userIds,
-                                    spublicIdentitiesToRemoveDedup,
-                                    publicIdentitiesToRemove);
-
-    auto provisionalUsers =
-        applyGroupProvisionalDiff(newProvisionalUsers,
-                                  newMembers.provisionalUsers,
-                                  provisionalUsersToRemove,
-                                  spublicIdentitiesToRemoveDedup,
-                                  publicIdentitiesToRemove);
-
-    auto const newGroupSignatureKeyPair = Crypto::makeSignatureKeyPair();
-    auto const newGroupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
-    auto const groupEntry = makeUserGroupUpdateAction(newGroupSignatureKeyPair,
-                                                      newGroupEncryptionKeyPair,
-                                                      users,
-                                                      provisionalUsers,
-                                                      groups.found[0].group,
-                                                      trustchainId,
-                                                      deviceId,
-                                                      privateSignatureKey);
-    TC_AWAIT(requester.updateGroup(groupEntry));
-
-    // Check if the author is in the group
-    std::optional<Crypto::EncryptionKeyPair> encryptionKeyPair;
-    if (std::find_if(newMembers.users.begin(),
-                     newMembers.users.end(),
-                     [&](auto const& user) { return user.id() == userId; }) !=
-        newMembers.users.end())
-    {
-      encryptionKeyPair = newGroupEncryptionKeyPair;
-    }
-
-    TC_RETURN(encryptionKeyPair);
+    TC_RETURN(TC_AWAIT(addAndRemoveMembers(userAccessor,
+                                           provisionalUserAccessor,
+                                           requester,
+                                           groupAccessor,
+                                           groupId,
+                                           spublicIdentitiesToAdd,
+                                           spublicIdentitiesToRemove,
+                                           trustchainId,
+                                           deviceId,
+                                           privateSignatureKey,
+                                           userId)));
   }
 }
 }
