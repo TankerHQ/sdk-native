@@ -63,7 +63,8 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
   };
 }
 
-void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j,
+             SecretProvisionalIdentity const& identity)
 {
   if (identity.target != TargetType::Email)
   {
@@ -72,22 +73,22 @@ void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity)
                            static_cast<int>(identity.target));
   }
 
-  j["value"] = identity.value;
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "email";
-  j["public_signature_key"] =
-      mgs::base64::encode(identity.appSignatureKeyPair.publicKey);
-  j["private_signature_key"] =
-      mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
+  j["value"] = identity.value;
   j["public_encryption_key"] =
       mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
   j["private_encryption_key"] =
       mgs::base64::encode(identity.appEncryptionKeyPair.privateKey);
+  j["public_signature_key"] =
+      mgs::base64::encode(identity.appSignatureKeyPair.publicKey);
+  j["private_signature_key"] =
+      mgs::base64::encode(identity.appSignatureKeyPair.privateKey);
 }
 
 std::string to_string(SecretProvisionalIdentity const& identity)
 {
-  return mgs::base64::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
 }
 }
 }
