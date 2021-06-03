@@ -22,6 +22,10 @@ public:
   {
   }
 
+  StringWrapper(base_t::size_type count, char ch) : base_t(count, ch)
+  {
+  }
+
   StringWrapper(base_t::value_type const* s, std::size_t size) : base_t(s, size)
   {
   }

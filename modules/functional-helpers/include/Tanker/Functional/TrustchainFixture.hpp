@@ -3,6 +3,7 @@
 #include <Tanker/Functional/Trustchain.hpp>
 #include <Tanker/Functional/TrustchainFactory.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 
 namespace Tanker
 {
@@ -20,6 +21,8 @@ struct TrustchainFixture
   static tc::cotask<void> tearDown();
 
   tc::cotask<VerificationCode> getVerificationCode(Email const& email);
+  tc::cotask<VerificationCode> getVerificationCode(
+      PhoneNumber const& phoneNumber);
   tc::cotask<void> enableOidc();
   tc::cotask<void> enable2fa();
 };

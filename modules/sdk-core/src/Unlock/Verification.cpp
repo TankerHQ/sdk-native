@@ -6,6 +6,7 @@
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -13,41 +14,51 @@
 #include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 
-namespace Tanker
+namespace Tanker::Unlock
 {
-namespace Unlock
+namespace
 {
+template <typename Ret, typename T>
+Ret decryptMethod(T const& encrypted, Crypto::SymmetricKey const& userSecret)
+{
+  Ret decrypted(EncryptorV2::decryptedSize(encrypted), 0);
+
+  EncryptorV2::decrypt(
+      reinterpret_cast<std::uint8_t*>(decrypted.data()), userSecret, encrypted);
+  return decrypted;
+}
+}
 
 VerificationMethod VerificationMethod::from(Verification const& v)
 {
-  using boost::variant2::holds_alternative;
-  VerificationMethod m;
-  if (holds_alternative<Passphrase>(v))
-    m = Passphrase{};
-  else if (holds_alternative<VerificationKey>(v))
-    m = VerificationKey{};
-  else if (holds_alternative<OidcIdToken>(v))
-    m = OidcIdToken{};
-  else if (auto const email = boost::variant2::get_if<EmailVerification>(&v))
-    m = email->email;
-  else
-    throw Errors::AssertionError("use of an outdated sdk");
-  return m;
+  return boost::variant2::visit(
+      overloaded{
+          [](Passphrase const&) -> VerificationMethod { return Passphrase{}; },
+          [](VerificationKey const&) -> VerificationMethod {
+            return VerificationKey{};
+          },
+          [](OidcIdToken const&) -> VerificationMethod {
+            return OidcIdToken{};
+          },
+          [](EmailVerification const& v) -> VerificationMethod {
+            return v.email;
+          },
+          [](PhoneNumberVerification const& v) -> VerificationMethod {
+            return v.phoneNumber;
+          }},
+      v);
 }
 
-tc::cotask<void> decryptEmailMethods(
+tc::cotask<void> decryptMethods(
     std::vector<VerificationMethod>& encryptedMethods,
     Crypto::SymmetricKey const& userSecret)
 {
   for (auto& method : encryptedMethods)
   {
     if (auto encryptedEmail = method.get_if<EncryptedEmail>())
-    {
-      std::vector<uint8_t> decryptedEmail(
-          EncryptorV2::decryptedSize(*encryptedEmail));
-      EncryptorV2::decrypt(decryptedEmail.data(), userSecret, *encryptedEmail);
-      method = Email{decryptedEmail.begin(), decryptedEmail.end()};
-    }
+      method = decryptMethod<Email>(*encryptedEmail, userSecret);
+    else if (auto encryptedPhoneNumber = method.get_if<EncryptedPhoneNumber>())
+      method = decryptMethod<PhoneNumber>(*encryptedPhoneNumber, userSecret);
   }
 }
 
@@ -66,9 +77,17 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
     auto const decodedEmail = mgs::base64::decode(email);
     m = EncryptedEmail{decodedEmail.begin(), decodedEmail.end()};
   }
+  else if (value == "phone_number")
+  {
+    auto const phoneNumber = j.at("encrypted_phone_number").get<std::string>();
+    auto const decodedPhoneNumber = mgs::base64::decode(phoneNumber);
+    m = EncryptedPhoneNumber{decodedPhoneNumber.begin(),
+                             decodedPhoneNumber.end()};
+  }
   else
     throw Errors::AssertionError("use of an outdated sdk");
 }
+
 void validateVerification(
     Unlock::Verification const& verification,
     Identity::SecretProvisionalIdentity const& provisionalIdentity)
@@ -89,6 +108,15 @@ void validateVerification(
       throw Errors::Exception(
           make_error_code(Errors::Errc::InvalidArgument),
           "verification email does not match provisional identity");
+  }
+  if (auto const phoneNumberVerification =
+          bv::get_if<Unlock::PhoneNumberVerification>(&verification))
+  {
+    if (phoneNumberVerification->phoneNumber !=
+        PhoneNumber{provisionalIdentity.value})
+      throw Errors::Exception(
+          make_error_code(Errors::Errc::InvalidArgument),
+          "verification phone number does not match provisional identity");
   }
   else if (auto const oidcIdToken = bv::get_if<OidcIdToken>(&verification))
   {
@@ -111,6 +139,5 @@ void validateVerification(
           make_error_code(Errors::Errc::InvalidArgument),
           "verification does not match provisional identity");
   }
-}
 }
 }

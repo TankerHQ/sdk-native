@@ -2,6 +2,9 @@
 
 #include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
+#include <Tanker/Types/BufferWrapper.hpp>
+#include <Tanker/Types/EncryptedEmail.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Unlock/Verification.hpp>
 
@@ -22,11 +25,21 @@ struct EncryptedEmailVerification
   VerificationCode verificationCode;
 };
 
+struct EncryptedPhoneNumberVerification
+{
+  PhoneNumber phoneNumber;
+  Crypto::Hash userSalt;
+  EncryptedPhoneNumber encryptedPhoneNumber;
+  VerificationCode verificationCode;
+};
+
 using RequestVerificationMethods =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
-                             OidcIdToken>;
+                             OidcIdToken,
+                             EncryptedPhoneNumberVerification>;
+
 struct Request
 {
   RequestVerificationMethods verification;

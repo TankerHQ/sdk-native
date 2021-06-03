@@ -4,6 +4,8 @@
 #include <utility>
 #include <vector>
 
+#include <mgs/base64.hpp>
+
 namespace Tanker
 {
 template <typename>
@@ -140,13 +142,13 @@ bool operator<=(BufferWrapper<T> const& lhs,
 template <typename BasicJsonType, typename T>
 void from_json(BasicJsonType const& j, BufferWrapper<T>& b)
 {
-  b = BufferWrapper<T>{j.template get<std::vector<std::uint8_t>>()};
+  b = BufferWrapper<T>{mgs::base64::decode(j.template get<std::string>())};
 }
 
 template <typename BasicJsonType, typename T>
 void to_json(BasicJsonType& j, BufferWrapper<T> const& b)
 {
-  j = b.vector();
+  j = mgs::base64::encode(b.vector());
 }
 }
 
