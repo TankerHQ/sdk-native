@@ -638,7 +638,7 @@ Core::getVerificationMethods()
   if (methods.empty())
     methods.emplace_back(Tanker::VerificationKey{});
   else
-    Unlock::decryptEmailMethods(methods, _session->userSecret());
+    Unlock::decryptMethods(methods, _session->userSecret());
   TC_RETURN(methods);
 }
 
@@ -668,6 +668,7 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
   if (auto const verificationKey = get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
   else if (holds_alternative<Unlock::EmailVerification>(verification) ||
+           holds_alternative<Unlock::PhoneNumberVerification>(verification) ||
            holds_alternative<Passphrase>(verification) ||
            holds_alternative<OidcIdToken>(verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));

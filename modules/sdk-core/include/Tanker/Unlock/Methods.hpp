@@ -13,6 +13,7 @@ enum class Method
   Passphrase,
   VerificationKey,
   OidcIdToken,
+  PhoneNumber,
 
   Last = OidcIdToken,
 };

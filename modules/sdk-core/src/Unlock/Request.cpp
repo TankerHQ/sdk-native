@@ -27,10 +27,10 @@ void checkNotEmpty(std::string const& value, std::string const& description)
   }
 }
 
-template <typename T>
-Tanker::Crypto::Hash hashField(T const& field)
+template <typename Ret = Tanker::Crypto::Hash, typename T>
+Ret hashField(T const& field)
 {
-  return Tanker::Crypto::generichash(
+  return Tanker::Crypto::generichash<Ret>(
       gsl::make_span(field).template as_span<std::uint8_t const>());
 }
 }
@@ -43,19 +43,39 @@ Request makeRequest(Unlock::Verification const& verification,
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](Unlock::EmailVerification const& v) -> RequestVerificationMethods {
+          [&](Unlock::EmailVerification const& v)
+              -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
-            std::vector<uint8_t> encryptedEmail(
+            EncryptedEmail encryptedEmail(
                 EncryptorV2::encryptedSize(v.email.size()));
             EncryptorV2::encryptSync(
                 encryptedEmail.data(),
                 gsl::make_span(v.email).as_span<uint8_t const>(),
                 userSecret);
 
-            return EncryptedEmailVerification{
-                hashField(v.email), encryptedEmail, v.verificationCode};
+            return EncryptedEmailVerification{hashField(v.email),
+                                              std::move(encryptedEmail),
+                                              v.verificationCode};
+          },
+          [&](Unlock::PhoneNumberVerification const& v)
+              -> RequestVerificationMethods {
+            checkNotEmpty(v.verificationCode.string(), "verification code");
+            checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
+
+            EncryptedPhoneNumber encryptedPhoneNumber(
+                EncryptorV2::encryptedSize(v.phoneNumber.size()));
+            EncryptorV2::encryptSync(
+                encryptedPhoneNumber.data(),
+                gsl::make_span(v.phoneNumber).as_span<std::uint8_t const>(),
+                userSecret);
+
+            return EncryptedPhoneNumberVerification{
+                v.phoneNumber,
+                hashField(userSecret),
+                std::move(encryptedPhoneNumber),
+                v.verificationCode};
           },
           [](Passphrase const& p) -> RequestVerificationMethods {
             checkNotEmpty(p.string(), "passphrase");
@@ -92,10 +112,15 @@ void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
   boost::variant2::visit(
       overloaded{
           [&](Unlock::EncryptedEmailVerification const& e) {
-            std::vector<std::uint8_t> encrypted_email;
-            std::tie(
-                j["hashed_email"], encrypted_email, j["verification_code"]) = e;
-            j["v2_encrypted_email"] = mgs::base64::encode(encrypted_email);
+            j["hashed_email"] = e.hashedEmail;
+            j["verification_code"] = e.verificationCode;
+            j["v2_encrypted_email"] = e.encryptedEmail;
+          },
+          [&](Unlock::EncryptedPhoneNumberVerification const& e) {
+            j["phone_number"] = e.phoneNumber;
+            j["verification_code"] = e.verificationCode;
+            j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+            j["user_salt"] = e.userSalt;
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;
