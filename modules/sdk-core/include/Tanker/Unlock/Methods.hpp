@@ -15,7 +15,7 @@ enum class Method
   OidcIdToken,
   PhoneNumber,
 
-  Last = OidcIdToken,
+  Last,
 };
 
 using Methods = ::flags::flags<Method>;

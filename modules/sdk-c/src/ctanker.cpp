@@ -46,7 +46,7 @@ Unlock::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 3)
+  if (cverification->version != 4)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
@@ -83,6 +83,17 @@ Unlock::Verification cverificationToVerification(
     verification = OidcIdToken{cverification->oidc_id_token};
     break;
   }
+  case TANKER_VERIFICATION_METHOD_PHONE_NUMBER: {
+    if (!cverification->phone_number_verification.phone_number ||
+        !cverification->phone_number_verification.verification_code)
+      throw formatEx(Errc::InvalidArgument,
+                     "null field in phone number verification");
+    verification = Unlock::PhoneNumberVerification{
+        PhoneNumber{cverification->phone_number_verification.phone_number},
+        VerificationCode{
+            cverification->phone_number_verification.verification_code}};
+    break;
+  }
   default:
     throw formatEx(Errc::InvalidArgument, "unknown verification type");
   }
@@ -107,7 +118,13 @@ void cVerificationMethodFromVerificationMethod(
   {
     c_verif_method.verification_method_type =
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_EMAIL);
-    c_verif_method.email = duplicateString(email->c_str());
+    c_verif_method.value = duplicateString(email->c_str());
+  }
+  else if (auto const phoneNumber = method.get_if<PhoneNumber>())
+  {
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PHONE_NUMBER);
+    c_verif_method.value = duplicateString(phoneNumber->c_str());
   }
   else
     throw AssertionError("unknown verification type");
@@ -144,9 +161,11 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
                   Unlock::Method::VerificationKey);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
                   Unlock::Method::OidcIdToken);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER,
+                  Unlock::Method::PhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 4,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 6,
               "Please update the event assertions above if you added a new "
               "unlock methods");
 
@@ -604,8 +623,10 @@ void tanker_free_verification_method_list(
   for (size_t i = 0; i < methodList->count; ++i)
   {
     if (methodList->methods[i].verification_method_type ==
-        TANKER_VERIFICATION_METHOD_EMAIL)
-      free(const_cast<char*>(methodList->methods[i].email));
+            TANKER_VERIFICATION_METHOD_EMAIL ||
+        methodList->methods[i].verification_method_type ==
+            TANKER_VERIFICATION_METHOD_PHONE_NUMBER)
+      free(const_cast<char*>(methodList->methods[i].value));
   }
   delete[] methodList->methods;
   delete methodList;
@@ -616,8 +637,10 @@ void tanker_free_attach_result(tanker_attach_result_t* result)
   if (result->method)
   {
     if (result->method->verification_method_type ==
-        TANKER_VERIFICATION_METHOD_EMAIL)
-      free(const_cast<char*>(result->method->email));
+            TANKER_VERIFICATION_METHOD_EMAIL ||
+        result->method->verification_method_type ==
+            TANKER_VERIFICATION_METHOD_PHONE_NUMBER)
+      free(const_cast<char*>(result->method->value));
     delete result->method;
   }
   delete result;
