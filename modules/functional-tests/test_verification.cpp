@@ -98,6 +98,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
   auto const passphrase = Passphrase{"my passphrase"};
   auto const email = Email{"kirby@tanker.io"};
+  auto const phoneNumber = PhoneNumber{"+33600112233"};
 
   SUBCASE("registerIdentity throws if passphrase is empty")
   {
@@ -112,6 +113,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(Unlock::EmailVerification{
             Email{""}, VerificationCode{"12345678"}})),
+        Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+  }
+
+  SUBCASE("registerIdentity throws if phone number is empty")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(Unlock::PhoneNumberVerification{
+            PhoneNumber{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
@@ -326,6 +336,25 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core2->getVerificationMethods()), {email}));
   }
 
+  SUBCASE("it sets a phone number and adds a new device")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+        Unlock::PhoneNumberVerification{phoneNumber, verificationCode}})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {phoneNumber}));
+
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+               Status::IdentityVerificationNeeded);
+    verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
+        Unlock::PhoneNumberVerification{phoneNumber, verificationCode})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core2->getVerificationMethods()), {phoneNumber}));
+  }
+
   SUBCASE("it updates a verification passphrase")
   {
     REQUIRE_NOTHROW(
@@ -338,6 +367,28 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(newPassphrase)));
+  }
+
+  SUBCASE("it sets a phone number and then sets a passphrase")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+        Unlock::PhoneNumberVerification{phoneNumber, verificationCode}})));
+
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core1->setVerificationMethod(Unlock::Verification{passphrase})));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {phoneNumber, Passphrase{}}));
+
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+               Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(passphrase)));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core2->getVerificationMethods()),
+                                 {phoneNumber, Passphrase{}}));
   }
 
   SUBCASE("it sets an email and then sets a passphrase")
@@ -444,7 +495,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("It updates verification methods on setVerificationMethods")
+  SUBCASE("It updates email verification method on setVerificationMethods")
   {
     // register
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
@@ -470,6 +521,35 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     methods = TC_AWAIT(core1->getVerificationMethods());
     REQUIRE(methods.size() == 1);
     CHECK(methods[0].get<Email>() == newEmail);
+  }
+
+  SUBCASE(
+      "It updates phone number verification method on setVerificationMethods")
+  {
+    // register
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Unlock::Verification{
+        Unlock::PhoneNumberVerification{phoneNumber, verificationCode}}));
+
+    // update phone number
+    auto const newPhoneNumber = PhoneNumber{"+33600112244"};
+    verificationCode = TC_AWAIT(getVerificationCode(newPhoneNumber));
+    TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
+        Unlock::PhoneNumberVerification{newPhoneNumber, verificationCode}}));
+
+    // check that phoneNumber is updated in cache
+    auto methods = TC_AWAIT(core1->getVerificationMethods());
+    REQUIRE(methods.size() == 1);
+    CHECK(methods[0].get<PhoneNumber>() == newPhoneNumber);
+
+    // reconnect
+    TC_AWAIT(core1->stop());
+    TC_AWAIT(core1->start(alice.identity));
+
+    // check that phone number is ok
+    methods = TC_AWAIT(core1->getVerificationMethods());
+    REQUIRE(methods.size() == 1);
+    CHECK(methods[0].get<PhoneNumber>() == newPhoneNumber);
   }
 }
 

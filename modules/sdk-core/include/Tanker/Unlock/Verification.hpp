@@ -4,8 +4,10 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
+#include <Tanker/Types/EncryptedPhoneNumber.hpp>
 #include <Tanker/Types/OidcIdToken.hpp>
 #include <Tanker/Types/Passphrase.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
@@ -28,14 +30,28 @@ struct EmailVerification
   VerificationCode verificationCode;
 };
 
-using Verification = boost::variant2::
-    variant<VerificationKey, EmailVerification, Passphrase, OidcIdToken>;
+struct PhoneNumberVerification
+{
+  PhoneNumber phoneNumber;
+  VerificationCode verificationCode;
+};
+
+using Verification = boost::variant2::variant<VerificationKey,
+                                              EmailVerification,
+                                              Passphrase,
+                                              OidcIdToken,
+                                              PhoneNumberVerification>;
 
 class VerificationMethod
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
-      VerificationMethod,
-      (VerificationKey, EncryptedEmail, Email, Passphrase, OidcIdToken))
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(VerificationMethod,
+                                                       (VerificationKey,
+                                                        EncryptedEmail,
+                                                        Email,
+                                                        Passphrase,
+                                                        OidcIdToken,
+                                                        EncryptedPhoneNumber,
+                                                        PhoneNumber))
 
   static VerificationMethod from(Verification const& v);
 
@@ -45,7 +61,7 @@ private:
                         VerificationMethod const& b);
 };
 
-tc::cotask<void> decryptEmailMethods(
+tc::cotask<void> decryptMethods(
     std::vector<VerificationMethod>& encryptedMethods,
     Crypto::SymmetricKey const& userSecret);
 

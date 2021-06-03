@@ -41,6 +41,10 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
           [](Unlock::EmailVerification const& v) -> VerificationMethodType {
             return VerificationMethodType::Email;
           },
+          [](Unlock::PhoneNumberVerification const& v)
+              -> VerificationMethodType {
+            return VerificationMethodType::PhoneNumber;
+          },
           [](Passphrase const& p) -> VerificationMethodType {
             return VerificationMethodType::Passphrase;
           },
