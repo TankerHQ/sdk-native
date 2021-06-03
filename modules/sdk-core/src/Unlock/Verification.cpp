@@ -41,7 +41,7 @@ tc::cotask<void> decryptEmailMethods(
 {
   for (auto& method : encryptedMethods)
   {
-    if (auto encryptedEmail = method.get_if<Unlock::EncryptedEmail>())
+    if (auto encryptedEmail = method.get_if<EncryptedEmail>())
     {
       std::vector<uint8_t> decryptedEmail(
           EncryptorV2::decryptedSize(*encryptedEmail));

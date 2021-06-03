@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/OidcIdToken.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
@@ -29,8 +30,6 @@ struct EmailVerification
 
 using Verification = boost::variant2::
     variant<VerificationKey, EmailVerification, Passphrase, OidcIdToken>;
-
-using EncryptedEmail = std::vector<std::uint8_t>;
 
 class VerificationMethod
 {
