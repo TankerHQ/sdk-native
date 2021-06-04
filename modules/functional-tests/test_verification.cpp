@@ -197,7 +197,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto aliceIdentity =
         nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);
@@ -225,7 +225,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto aliceIdentity =
         nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);
@@ -253,7 +253,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto aliceIdentity =
         nlohmann::json::parse(mgs::base64::decode(alice.identity))
             .get<Identity::SecretPermanentIdentity>();
-    auto identity = mgs::base64::encode(nlohmann::json(aliceIdentity).dump());
+    auto identity = mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
     CHECK_EQ(TC_AWAIT(core2->start(identity)),
              Status::IdentityVerificationNeeded);

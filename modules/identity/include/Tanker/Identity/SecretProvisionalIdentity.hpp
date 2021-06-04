@@ -23,7 +23,7 @@ struct SecretProvisionalIdentity
 };
 
 void from_json(nlohmann::json const& j, SecretProvisionalIdentity& result);
-void to_json(nlohmann::json& j, SecretProvisionalIdentity const& identity);
+void to_json(nlohmann::ordered_json& j, SecretProvisionalIdentity const& identity);
 std::string to_string(SecretProvisionalIdentity const& identity);
 
 SecretProvisionalIdentity createProvisionalIdentity(
