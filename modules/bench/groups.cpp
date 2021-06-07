@@ -79,6 +79,51 @@ BENCHMARK(updateGroupMembers_addMembers)
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
 
+// What: remove members from a group
+// PreCond: a session is open and a group was created with members
+// PostCond: members were removed from the group
+static void updateGroupMembers_removeMembers(benchmark::State& state)
+{
+  std::vector<Tanker::SPublicIdentity> publicIdentitiesInGroup;
+  for (auto i = 0; i < state.range(0); ++i)
+    publicIdentitiesInGroup.push_back(
+        Tanker::SPublicIdentity(makePublicIdentity(benchAppId, i)));
+
+  std::vector<Tanker::SPublicIdentity> publicIdentitiesToRemove;
+  std::copy_n(publicIdentitiesInGroup.begin(),
+              state.range(1),
+              std::back_inserter(publicIdentitiesToRemove));
+
+  auto const identity = Tanker::Identity::createIdentity(
+      benchAppId,
+      benchAppSecret,
+      Tanker::SUserId(std::to_string(randombytes_random())));
+  auto device = Device(getTrustchain().url, benchAppId, identity);
+  auto tanker = AWAIT(device.open());
+
+  auto publicIdentitiesAndMe = publicIdentitiesInGroup;
+  publicIdentitiesAndMe.push_back(
+      Tanker::SPublicIdentity(Tanker::Identity::getPublicIdentity(identity)));
+
+  tc::async_resumable([&]() -> tc::cotask<void> {
+    for (auto _ : state)
+    {
+      state.PauseTiming();
+      auto const groupId = TC_AWAIT(tanker->createGroup(publicIdentitiesAndMe));
+      state.ResumeTiming();
+
+      TC_AWAIT(
+          tanker->updateGroupMembers(groupId, {}, publicIdentitiesToRemove));
+    }
+  }).get();
+}
+BENCHMARK(updateGroupMembers_removeMembers)
+    ->Args({1, 1})
+    ->Args({999, 999})
+    ->Args({999, 1})
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+
 // What: shares a resource with groups
 // PreCond: a session is open and a resource was encrypted
 // PostCond: the resource is shared with the groups
