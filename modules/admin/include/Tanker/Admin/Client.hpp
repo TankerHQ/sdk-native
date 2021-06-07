@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 
 #include <fetchpp/client.hpp>
@@ -69,4 +70,9 @@ private:
     std::string const& authToken,
     Email const& email);
 
+[[nodiscard]] tc::cotask<VerificationCode> getVerificationCode(
+    std::string_view url,
+    Tanker::Trustchain::TrustchainId const& appId,
+    std::string const& authToken,
+    PhoneNumber const& phoneNumber);
 }
