@@ -7,6 +7,8 @@
 #include <Tanker/Crypto/Init.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 
 #include <fmt/format.h>
 
@@ -99,10 +101,10 @@ tanker_future_t* tanker_admin_destroy(tanker_admin_t* admin)
       [admin = reinterpret_cast<Admin::Client*>(admin)] { delete admin; }));
 }
 
-tanker_future_t* tanker_get_verification_code(char const* url,
-                                              char const* app_id,
-                                              char const* auth_token,
-                                              char const* user_email)
+tanker_future_t* tanker_get_email_verification_code(char const* url,
+                                                    char const* app_id,
+                                                    char const* auth_token,
+                                                    char const* user_email)
 {
   return makeFuture(tc::async_resumable(
       [url = std::string(url),
@@ -114,6 +116,25 @@ tanker_future_t* tanker_get_verification_code(char const* url,
             mgs::base64::decode<Trustchain::TrustchainId>(appId),
             authToken,
             Email{email}));
+        TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
+      }));
+}
+
+tanker_future_t* tanker_get_sms_verification_code(char const* url,
+                                                  char const* app_id,
+                                                  char const* auth_token,
+                                                  char const* user_phone_number)
+{
+  return makeFuture(tc::async_resumable(
+      [url = std::string(url),
+       appId = std::string(app_id),
+       authToken = std::string(auth_token),
+       phoneNumber = std::string(user_phone_number)]() -> tc::cotask<void*> {
+        auto verifCode = TC_AWAIT(Admin::getVerificationCode(
+            url,
+            mgs::base64::decode<Trustchain::TrustchainId>(appId),
+            authToken,
+            PhoneNumber{phoneNumber}));
         TC_RETURN(static_cast<void*>(duplicateString(verifCode.string())));
       }));
 }
