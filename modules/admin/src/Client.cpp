@@ -207,7 +207,6 @@ tc::cotask<VerificationCode> getVerificationCode(
     std::string const& authToken,
     Email const& email)
 {
-  using namespace fetchpp::http;
   auto const body = nlohmann::json(
       {{"email", email}, {"app_id", appId}, {"auth_token", authToken}});
   auto req = fetchpp::http::request(
@@ -222,6 +221,30 @@ tc::cotask<VerificationCode> getVerificationCode(
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "could not retrieve verification code for {}",
                            email);
+  TC_RETURN(response.json().at("verification_code").get<std::string>());
+}
+
+tc::cotask<VerificationCode> getVerificationCode(
+    std::string_view host_url,
+    Tanker::Trustchain::TrustchainId const& appId,
+    std::string const& authToken,
+    PhoneNumber const& phoneNumber)
+{
+  auto const body = nlohmann::json({{"phone_number", phoneNumber},
+                                    {"app_id", appId},
+                                    {"auth_token", authToken}});
+  auto req = fetchpp::http::request(
+      verb::post, url("/verification/sms/code", url(host_url)));
+  req.content(body.dump());
+  req.set(field::accept, "application/json");
+  auto const response = TC_AWAIT(fetchpp::async_fetch(
+      tc::get_default_executor().get_io_service().get_executor(),
+      std::move(req),
+      tc::asio::use_future));
+  if (response.result() != status::ok)
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "could not retrieve verification code for {}",
+                           phoneNumber);
   TC_RETURN(response.json().at("verification_code").get<std::string>());
 }
 }
