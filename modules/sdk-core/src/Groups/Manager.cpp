@@ -389,14 +389,12 @@ tc::cotask<void> addGroupMembers(
   auto const newMembers =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
-  if (groups.found.empty())
-    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+  auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
 
   auto const groupEntry =
       makeUserGroupAdditionAction(newMembers.users,
                                   newMembers.provisionalUsers,
-                                  groups.found[0],
+                                  group,
                                   trustchainId,
                                   deviceId,
                                   privateSignatureKey);
@@ -444,10 +442,8 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
   auto const newMembers =
       TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
 
-  auto const groups =
-      TC_AWAIT(groupAccessor.getInternalGroupsAndMembers({groupId}));
-  if (groups.found.empty())
-    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+  auto const groupAndMembers =
+      TC_AWAIT(groupAccessor.getInternalGroupAndMembers(groupId));
 
   auto const spublicIdentitiesToRemoveDedup =
       removeDuplicates(spublicIdentitiesToRemove);
@@ -459,7 +455,7 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
       membersToRemove.publicProvisionalIdentities));
 
   std::vector<ProvisionalUsers::ProvisionalUserId> provisionalUsersToQuery;
-  for (auto const& provisionalMember : groups.found[0].provisionalMembers)
+  for (auto const& provisionalMember : groupAndMembers.provisionalMembers)
     provisionalUsersToQuery.push_back(
         {provisionalMember.appPublicSignatureKey(),
          provisionalMember.tankerPublicSignatureKey()});
@@ -477,8 +473,8 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
 
   auto [groupMembersWithUpgradedMembers, newProvisionalUsers] =
       TC_AWAIT(upgradeGroupMembers(
-          userAccessor, claimedUserIds, groups.found[0].provisionalMembers));
-  for (auto const& member : groups.found[0].members)
+          userAccessor, claimedUserIds, groupAndMembers.provisionalMembers));
+  for (auto const& member : groupAndMembers.members)
     groupMembersWithUpgradedMembers.push_back(
         {member.userId(), member.userPublicKey()});
 
@@ -501,7 +497,7 @@ tc::cotask<std::optional<Crypto::EncryptionKeyPair>> addAndRemoveMembers(
                                                     newGroupEncryptionKeyPair,
                                                     users,
                                                     provisionalUsers,
-                                                    groups.found[0].group,
+                                                    groupAndMembers.group,
                                                     trustchainId,
                                                     deviceId,
                                                     privateSignatureKey);

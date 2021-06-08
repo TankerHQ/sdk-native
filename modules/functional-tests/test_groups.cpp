@@ -136,6 +136,26 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
   CHECK(decryptedData == clearData);
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(
+          bobSession->updateGroupMembers(groupId, {bob.spublicIdentity()}, {})),
+      Errors::Errc::InvalidArgument,
+      "user is not part of group");
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
 {
   auto Alice = trustchain.makeUser();
