@@ -14,6 +14,7 @@ enum class Errc
   DatabaseError,
   DatabaseLocked,
   DatabaseCorrupt,
+  DatabaseTooRecent,
 };
 
 std::error_code make_error_code(Errc c) noexcept;
