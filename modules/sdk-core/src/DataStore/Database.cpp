@@ -120,63 +120,70 @@ void Database::performUnifiedMigration()
 {
   auto const currentVersion = currentDatabaseVersion();
 
-  if (currentVersion < DataStore::latestVersion())
+  if (currentVersion == DataStore::latestVersion())
+    return;
+
+  if (currentVersion > DataStore::latestVersion())
+    throw Errors::formatEx(Errc::DatabaseTooRecent,
+                           "database version too recent, expected {}, got {}",
+                           DataStore::latestVersion(),
+                           currentVersion);
+
+  TINFO("Performing unified migration from version {}", currentVersion);
+
+  switch (currentVersion)
   {
-    TINFO("Performing unified migration, from version {}", currentVersion);
-
-    switch (currentVersion)
+  // 0 denotes that there is no table at all
+  case 0:
+    createTable<ResourceKeysTable>(*_db);
+    createTable<UserKeysTable>(*_db);
+    createTable<DeviceKeysTable>(*_db);
+    createTable<VersionTable>(*_db);
+    [[fallthrough]];
+  case 3:
+    createTable<TrustchainInfoTable>(*_db);
+    createTable<ProvisionalUserKeysTable>(*_db);
+    _db->execute("DROP TABLE IF EXISTS resource_id_to_key_publish");
+    _db->execute("DROP TABLE IF EXISTS trustchain_indexes");
+    [[fallthrough]];
+  case 4:
+    _db->execute("DROP TABLE IF EXISTS key_publishes");
+    [[fallthrough]];
+  case 5:
+    flushAllCaches(currentVersion);
+    [[fallthrough]];
+  case 6:
+    _db->execute("DROP TABLE IF EXISTS trustchain");
+    _db->execute("DROP TABLE IF EXISTS contact_devices");
+    _db->execute("DROP TABLE IF EXISTS contact_user_keys");
+    _db->execute("DROP TABLE IF EXISTS groups");
+    [[fallthrough]];
+  case 7:
+    if (currentVersion != 0)
     {
-    // 0 denotes that there is no table at all
-    case 0:
-      createTable<ResourceKeysTable>(*_db);
-      createTable<UserKeysTable>(*_db);
-      createTable<DeviceKeysTable>(*_db);
-      createTable<VersionTable>(*_db);
-      [[fallthrough]];
-    case 3:
-      createTable<TrustchainInfoTable>(*_db);
-      createTable<ProvisionalUserKeysTable>(*_db);
-      _db->execute("DROP TABLE IF EXISTS resource_id_to_key_publish");
-      _db->execute("DROP TABLE IF EXISTS trustchain_indexes");
-      [[fallthrough]];
-    case 4:
-      _db->execute("DROP TABLE IF EXISTS key_publishes");
-      [[fallthrough]];
-    case 5:
-      flushAllCaches(currentVersion);
-      [[fallthrough]];
-    case 6:
-      _db->execute("DROP TABLE IF EXISTS trustchain");
-      _db->execute("DROP TABLE IF EXISTS contact_devices");
-      _db->execute("DROP TABLE IF EXISTS contact_user_keys");
-      _db->execute("DROP TABLE IF EXISTS groups");
-      [[fallthrough]];
-    case 7:
-      if (currentVersion != 0)
-      {
-        // this database wasn't just created, we need to upgrade it
-        _db->execute(
-            "ALTER TABLE device_key_store "
-            "ADD COLUMN device_initialized BOOL");
-      }
-      [[fallthrough]];
-    case 8: {
-      // We don't support migrating half-initialized devices anymore, flush
-      // everything so that we fallback to IdentityVerificationNeeded.
-      auto updatedRows =
-          _db->execute("DELETE FROM device_key_store WHERE device_id IS NULL");
-      // In older versions, we could create multiple rows in the
-      // device_key_store table, remove superfluous lines
-      updatedRows += _db->execute(
-          "DELETE FROM device_key_store "
-          "WHERE rowid NOT IN ("
-          "  SELECT rowid FROM device_key_store LIMIT 1 "
-          ")");
+      // this database wasn't just created, we need to upgrade it
+      _db->execute(
+          "ALTER TABLE device_key_store "
+          "ADD COLUMN device_initialized BOOL");
+    }
+    [[fallthrough]];
+  case 8: {
+    // We don't support migrating half-initialized devices anymore, flush
+    // everything so that we fallback to IdentityVerificationNeeded.
+    auto updatedRows =
+        _db->execute("DELETE FROM device_key_store WHERE device_id IS NULL");
+    // In older versions, we could create multiple rows in the
+    // device_key_store table, remove superfluous lines
+    updatedRows += _db->execute(
+        "DELETE FROM device_key_store "
+        "WHERE rowid NOT IN ("
+        "  SELECT rowid FROM device_key_store LIMIT 1 "
+        ")");
 
-      if (currentVersion != 0)
-      {
-        // Also, device_initialized was dropped in this migration
-        _db->execute(R"(
+    if (currentVersion != 0)
+    {
+      // Also, device_initialized was dropped in this migration
+      _db->execute(R"(
             CREATE TABLE IF NOT EXISTS device_key_store_new (
               id INTEGER PRIMARY KEY,
               private_signature_key BLOB NOT NULL,
@@ -185,7 +192,7 @@ void Database::performUnifiedMigration()
               public_encryption_key BLOB NOT NULL,
               device_id BLOB
             );)");
-        _db->execute(R"(
+      _db->execute(R"(
             INSERT INTO device_key_store_new (
               private_signature_key,
               private_signature_key,
@@ -200,29 +207,28 @@ void Database::performUnifiedMigration()
               public_encryption_key,
               device_id
             FROM device_key_store)");
-        _db->execute("DROP TABLE device_key_store");
-        _db->execute(
-            "ALTER TABLE device_key_store_new RENAME TO device_key_store");
-      }
-
-      if (updatedRows)
-        flushAllCaches(currentVersion);
-      [[fallthrough]];
-    }
-    case 9:
-      _db->execute("DROP TABLE IF EXISTS groups");
-      createTable<GroupKeysTable>(*_db);
-      break;
-    default:
-      throw Errors::formatEx(Errc::InvalidDatabaseVersion,
-                             "invalid database version: {}",
-                             currentVersion);
+      _db->execute("DROP TABLE device_key_store");
+      _db->execute(
+          "ALTER TABLE device_key_store_new RENAME TO device_key_store");
     }
 
-    setDatabaseVersion(DataStore::latestVersion());
-
-    TINFO("Migration complete");
+    if (updatedRows)
+      flushAllCaches(currentVersion);
+    [[fallthrough]];
   }
+  case 9:
+    _db->execute("DROP TABLE IF EXISTS groups");
+    createTable<GroupKeysTable>(*_db);
+    break;
+  default:
+    throw Errors::formatEx(Errc::InvalidDatabaseVersion,
+                           "invalid database version: {}",
+                           currentVersion);
+  }
+
+  setDatabaseVersion(DataStore::latestVersion());
+
+  TINFO("Migration complete");
 }
 
 void Database::performOldMigration()
