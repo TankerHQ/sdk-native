@@ -20,20 +20,15 @@ public:
   using GroupPullResult = BasicPullResult<Group, Trustchain::GroupId>;
   using GroupAndMembersPullResult =
       BasicPullResult<GroupAndMembers<Group>, Trustchain::GroupId>;
-  using InternalGroupPullResult =
-      BasicPullResult<InternalGroup, Trustchain::GroupId>;
-  using InternalGroupAndMembersPullResult =
-      BasicPullResult<GroupAndMembers<InternalGroup>, Trustchain::GroupId>;
   using PublicEncryptionKeyPullResult =
       BasicPullResult<Crypto::PublicEncryptionKey, Trustchain::GroupId>;
   using EncryptionKeyPairPullResult =
       BasicPullResult<Crypto::EncryptionKeyPair, Trustchain::GroupId>;
 
-  virtual tc::cotask<InternalGroupPullResult> getInternalGroups(
-      std::vector<Trustchain::GroupId> const& groupIds) = 0;
-  virtual tc::cotask<InternalGroupAndMembersPullResult>
-  getInternalGroupsAndMembers(
-      std::vector<Trustchain::GroupId> const& groupIds) = 0;
+  virtual tc::cotask<InternalGroup> getInternalGroup(
+      Trustchain::GroupId const& groupId) = 0;
+  virtual tc::cotask<GroupAndMembers<InternalGroup>> getInternalGroupAndMembers(
+      Trustchain::GroupId const& groupId) = 0;
   virtual tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds) = 0;
   virtual tc::cotask<std::optional<Crypto::EncryptionKeyPair>>

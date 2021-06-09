@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Groups/Updater.hpp>
@@ -35,49 +36,53 @@ Accessor::Accessor(Groups::IRequester* requester,
 {
 }
 
-tc::cotask<Accessor::InternalGroupPullResult> Accessor::getInternalGroups(
-    std::vector<Trustchain::GroupId> const& groupIds)
+tc::cotask<InternalGroup> Accessor::getInternalGroup(
+    Trustchain::GroupId const& groupId)
 {
   auto groupPullResult =
-      TC_AWAIT(getGroups(groupIds, Groups::IRequester::IsLight::Yes));
+      TC_AWAIT(getGroups({groupId}, Groups::IRequester::IsLight::Yes));
 
-  InternalGroupPullResult out;
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto const& group : groupPullResult.found)
-  {
-    if (auto const internalGroup =
-            boost::variant2::get_if<InternalGroup>(&group.group))
-      out.found.push_back(*internalGroup);
-    else if (auto const externalGroup =
-                 boost::variant2::get_if<ExternalGroup>(&group.group))
-      out.notFound.push_back(externalGroup->id);
-  }
+  if (!groupPullResult.notFound.empty())
+    throw formatEx(
+        Errors::Errc::InvalidArgument, "group not found: {:s}", groupId);
 
-  TC_RETURN(out);
+  TC_RETURN(boost::variant2::visit(
+      overloaded{
+          [&](InternalGroup const& group) { return group; },
+          [&](ExternalGroup const& group) -> InternalGroup {
+            throw formatEx(Errors::Errc::InvalidArgument,
+                           "user is not part of group {:s}",
+                           groupId);
+          },
+      },
+      groupPullResult.found[0].group));
 }
 
-tc::cotask<Accessor::InternalGroupAndMembersPullResult>
-Accessor::getInternalGroupsAndMembers(
-    std::vector<Trustchain::GroupId> const& groupIds)
+tc::cotask<GroupAndMembers<InternalGroup>> Accessor::getInternalGroupAndMembers(
+    Trustchain::GroupId const& groupId)
 {
   auto groupPullResult =
-      TC_AWAIT(getGroups(groupIds, Groups::IRequester::IsLight::No));
+      TC_AWAIT(getGroups({groupId}, Groups::IRequester::IsLight::No));
 
-  InternalGroupAndMembersPullResult out;
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto&& group : groupPullResult.found)
-  {
-    if (auto const internalGroup =
-            boost::variant2::get_if<InternalGroup>(&group.group))
-      out.found.push_back({*internalGroup,
-                           std::move(group.members),
-                           std::move(group.provisionalMembers)});
-    else if (auto const externalGroup =
-                 boost::variant2::get_if<ExternalGroup>(&group.group))
-      out.notFound.push_back(externalGroup->id);
-  }
+  if (!groupPullResult.notFound.empty())
+    throw formatEx(
+        Errors::Errc::InvalidArgument, "group not found: {:s}", groupId);
 
-  TC_RETURN(out);
+  TC_RETURN(boost::variant2::visit(
+      overloaded{
+          [&](InternalGroup const& group) {
+            return GroupAndMembers<InternalGroup>{
+                group,
+                std::move(groupPullResult.found[0].members),
+                std::move(groupPullResult.found[0].provisionalMembers)};
+          },
+          [&](ExternalGroup const& group) -> GroupAndMembers<InternalGroup> {
+            throw formatEx(Errors::Errc::InvalidArgument,
+                           "user is not part of group {:s}",
+                           groupId);
+          },
+      },
+      groupPullResult.found[0].group));
 }
 
 tc::cotask<Accessor::PublicEncryptionKeyPullResult>

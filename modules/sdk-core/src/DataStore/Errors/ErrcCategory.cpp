@@ -23,6 +23,8 @@ std::string ErrcCategory::message(int c) const
     return "database locked";
   case Errc::DatabaseCorrupt:
     return "database corrupt";
+  case Errc::DatabaseTooRecent:
+    return "database too recent";
   }
   return "unknown error";
 }
@@ -37,6 +39,8 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   case Errc::DatabaseLocked:
   case Errc::DatabaseCorrupt:
     return make_error_condition(Errors::Errc::InternalError);
+  case Errc::DatabaseTooRecent:
+    return make_error_condition(Errors::Errc::UpgradeRequired);
   }
   return std::error_condition(c, *this);
 }
