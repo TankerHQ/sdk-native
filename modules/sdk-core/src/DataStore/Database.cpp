@@ -212,6 +212,7 @@ void Database::performUnifiedMigration()
     case 9:
       _db->execute("DROP TABLE IF EXISTS groups");
       createTable<GroupKeysTable>(*_db);
+    case 10:
       break;
     default:
       throw Errors::formatEx(Errc::InvalidDatabaseVersion,
