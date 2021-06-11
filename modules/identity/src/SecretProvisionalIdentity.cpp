@@ -50,7 +50,7 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 
   identity = SecretProvisionalIdentity{
       j.at("trustchain_id").get<TrustchainId>(),
-      TargetType::Email,
+      to_target_type(target),
       j.at("value").get<std::string>(),
       {mgs::base64::decode<Crypto::PublicSignatureKey>(
            j.at("public_signature_key").get<std::string>()),
@@ -74,7 +74,7 @@ void to_json(nlohmann::ordered_json& j,
   }
 
   j["trustchain_id"] = identity.trustchainId;
-  j["target"] = "email";
+  j["target"] = to_string(identity.target);
   j["value"] = identity.value;
   j["public_encryption_key"] =
       mgs::base64::encode(identity.appEncryptionKeyPair.publicKey);
