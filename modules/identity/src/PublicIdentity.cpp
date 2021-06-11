@@ -19,13 +19,21 @@ PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity)
 
 PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
 {
-  return PublicIdentity(PublicProvisionalIdentity{
+  auto prov = PublicProvisionalIdentity{
       identity.trustchainId,
       identity.target,
       identity.value,
       identity.appSignatureKeyPair.publicKey,
       identity.appEncryptionKeyPair.publicKey,
-  });
+  };
+  if (prov.target == TargetType::Email)
+  {
+    prov.target = TargetType::HashedEmail;
+    auto hashedEmail = Crypto::generichash(
+        gsl::make_span(prov.value).as_span<uint8_t const>());
+    prov.value = mgs::base64::encode(hashedEmail);
+  }
+  return prov;
 }
 
 std::string getPublicIdentity(std::string const& secretIdentity)

@@ -119,6 +119,8 @@ auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
     "5yVEE9In0="s;
 
 auto const userEmail = "brendan.eich@tanker.io"s;
+auto const b64HashedEmail = mgs::base64::encode(Crypto::generichash(
+    gsl::make_span(std::string(userEmail)).as_span<uint8_t const>()));
 
 auto const appSignaturePublicKey =
     mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
@@ -206,7 +208,8 @@ TEST_SUITE("generate provisional Identity")
 
 TEST_SUITE("serialization")
 {
-  TEST_CASE("We can de/reserialize a secret permanent identity from a good string")
+  TEST_CASE(
+      "We can de/reserialize a secret permanent identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
@@ -216,7 +219,8 @@ TEST_SUITE("serialization")
     CHECK_EQ(to_string(identity), GOOD_SECRET_PERMANENT_IDENTITY);
   }
 
-  TEST_CASE("We can de/reserialize a public permanent identity from a good string")
+  TEST_CASE(
+      "We can de/reserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
@@ -315,10 +319,11 @@ TEST_SUITE("getPublicIdentity")
 
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
-    CHECK_EQ(p->target, TargetType::Email);
-    CHECK_EQ(p->value, userEmail);
+    CHECK_EQ(p->target, TargetType::HashedEmail);
+    CHECK_EQ(p->value, b64HashedEmail);
     CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
+    CHECK_EQ(b64PublicIdentity, GOOD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 }
 
