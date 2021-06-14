@@ -145,7 +145,18 @@ std::vector<Crypto::Hash> hashProvisionalUserEmails(
   std::vector<Crypto::Hash> hashedProvisionalUserEmails;
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
   {
-    if (appProvisionalIdentity.target != Identity::TargetType::Email)
+    if (appProvisionalIdentity.target == Identity::TargetType::Email)
+    {
+      hashedProvisionalUserEmails.push_back(
+          hashEmail(Email{appProvisionalIdentity.value}));
+    }
+    else if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
+    {
+      auto hashedEmail =
+          mgs::base64::decode<Crypto::Hash>(appProvisionalIdentity.value);
+      hashedProvisionalUserEmails.push_back(hashedEmail);
+    }
+    else
     {
       throw AssertionError(
           fmt::format("unsupported target type: {}",
