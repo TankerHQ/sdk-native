@@ -148,6 +148,8 @@ public:
 private:
   Core _core;
 
+  std::atomic<bool> _stopping{false};
+
   // this signal is special compared to the other two because we need to do
   // special work before forwarding it, so we redefine it
   std::function<void()> _asyncDeviceRevoked;
@@ -155,12 +157,13 @@ private:
   tc::semaphore _quickStopSemaphore{1};
 
   mutable tc::lazy::task_canceler _taskCanceler;
+  fu2::function<void()> _cancelStop;
 
   [[noreturn]] tc::cotask<void> handleDeviceRevocation();
   tc::cotask<void> handleDeviceUnrecoverable();
   void nukeAndStop();
 
   template <typename F>
-  auto runResumable(F&& f);
+  auto runResumable(F&& f, bool stopCheck = true);
 };
 }

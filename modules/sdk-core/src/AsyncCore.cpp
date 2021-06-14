@@ -16,6 +16,8 @@
 #include <tconcurrent/lazy/sink_receiver.hpp>
 #include <tconcurrent/lazy/then.hpp>
 
+#include <boost/scope_exit.hpp>
+
 #include <functional>
 #include <iostream>
 #include <string>
@@ -41,62 +43,68 @@ auto makeEventHandler(tc::lazy::task_canceler& taskCanceler,
 }
 
 template <typename F>
-auto AsyncCore::runResumable(F&& f)
+auto AsyncCore::runResumable(F&& f, bool stopCheck)
 {
   using Func = std::decay_t<F>;
-  return tc::submit_to_future<typename tc::detail::task_return_type<decltype(
-      std::declval<F>()())>::type>(
-      _taskCanceler.wrap(tc::lazy::connect(
-          tc::lazy::async(tc::get_default_executor()),
-          tc::lazy::run_resumable(
-              tc::get_default_executor(),
-              {},
-              [](AsyncCore* core, Func f) -> decltype(f()) {
-                bool isRevoked = false;
-                bool isUnusable = false;
-                std::exception_ptr eptr;
-                try
-                {
-                  if constexpr (std::is_same_v<decltype(f()), void>)
-                  {
-                    TC_AWAIT(f());
-                    TC_RETURN();
-                  }
-                  else
-                  {
-                    TC_RETURN(TC_AWAIT(f()));
-                  }
-                }
-                catch (Errors::DeviceUnusable const& ex)
-                {
-                  eptr = std::current_exception();
-                  TERROR("Device is unusable: {}", ex.what());
-                  isUnusable = true;
-                }
-                catch (Errors::Exception const& ex)
-                {
-                  eptr = std::current_exception();
-                  if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
-                  {
-                    TINFO("Device is revoked: {}", ex.what());
-                    isRevoked = true;
-                  }
-                  else
-                    throw;
-                }
-                if (isRevoked)
-                  TC_AWAIT(core->handleDeviceRevocation()); // this is noreturn
-                else if (isUnusable)
-                {
-                  TC_AWAIT(core->handleDeviceUnrecoverable());
-                  std::rethrow_exception(eptr);
-                }
-                else
-                  throw Errors::AssertionError(
-                      "unreachable code in runResumable");
-              },
-              this,
-              std::forward<F>(f)))));
+  using ReturnValue = typename tc::detail::task_return_type<decltype(
+      std::declval<F>()())>::type;
+
+  if (_stopping && !stopCheck)
+    tc::make_exceptional_future<ReturnValue>(std::make_exception_ptr(
+        Errors::formatEx(Errors::Errc::PreconditionFailed,
+                         "the Tanker session is closing")));
+
+  return tc::submit_to_future<ReturnValue>(_taskCanceler.wrap(tc::lazy::connect(
+      tc::lazy::async(tc::get_default_executor()),
+      tc::lazy::run_resumable(
+          tc::get_default_executor(),
+          {},
+          [](AsyncCore* core, Func f) -> decltype(f()) {
+            bool isRevoked = false;
+            bool isUnusable = false;
+            std::exception_ptr eptr;
+            try
+            {
+              if constexpr (std::is_same_v<decltype(f()), void>)
+              {
+                TC_AWAIT(f());
+                TC_RETURN();
+              }
+              else
+              {
+                TC_RETURN(TC_AWAIT(f()));
+              }
+            }
+            catch (Errors::DeviceUnusable const& ex)
+            {
+              eptr = std::current_exception();
+              TERROR("Device is unusable: {}", ex.what());
+              isUnusable = true;
+            }
+            catch (Errors::Exception const& ex)
+            {
+              eptr = std::current_exception();
+              if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
+              {
+                TINFO("Device is revoked: {}", ex.what());
+                isRevoked = true;
+              }
+              else
+                throw;
+            }
+            if (isRevoked)
+              TC_AWAIT(core->handleDeviceRevocation()); // this is
+                                                        // noreturn
+            else if (isUnusable)
+            {
+              TC_AWAIT(core->handleDeviceUnrecoverable());
+              std::rethrow_exception(eptr);
+            }
+            else
+              throw Errors::AssertionError("unreachable code in runResumable");
+          },
+          this,
+          std::forward<F>(f)))));
 }
 
 AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
@@ -107,6 +115,9 @@ AsyncCore::AsyncCore(std::string url, SdkInfo info, std::string writablePath)
 AsyncCore::~AsyncCore()
 {
   assert(tc::get_default_executor().is_in_this_context());
+  // stop() calls aren't put in the task canceler, so cancel it explicitly
+  if (_cancelStop)
+    _cancelStop();
 }
 
 tc::future<void> AsyncCore::destroy()
@@ -142,8 +153,27 @@ tc::future<std::optional<std::string>> AsyncCore::verifyIdentity(
 
 tc::future<void> AsyncCore::stop()
 {
-  return runResumable(
-      [=]() -> tc::cotask<void> { TC_AWAIT(this->_core.stop()); });
+  // Set _stopping so that we reject all new calls
+  if (_stopping.exchange(true))
+    tc::make_exceptional_future<void>(std::make_exception_ptr(Errors::formatEx(
+        Errors::Errc::PreconditionFailed, "the Tanker session is closing")));
+
+  auto fut = tc::async_resumable([&]() -> tc::cotask<void> {
+    BOOST_SCOPE_EXIT_ALL(&)
+    {
+      _stopping = false;
+    };
+
+    // Terminate all calls so that we can stop and delete stuff safely. Note
+    // that the current call will not be canceled because we didn't add its
+    // future to the task canceler.
+    _taskCanceler.terminate();
+
+    TC_AWAIT(this->_core.stop());
+  });
+  _cancelStop = fut.make_canceler();
+
+  return fut;
 }
 
 Tanker::Status AsyncCore::status() const
