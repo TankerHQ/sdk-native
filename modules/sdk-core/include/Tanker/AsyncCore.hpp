@@ -168,5 +168,7 @@ private:
 
   template <typename F>
   auto runResumable(F&& f, bool stopCheck = true);
+  template <typename F>
+  std::invoke_result_t<F> runResumableImpl(F f);
 };
 }

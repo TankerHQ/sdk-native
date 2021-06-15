@@ -56,56 +56,57 @@ auto AsyncCore::runResumable(F&& f, bool stopCheck)
 
   return tc::submit_to_future<ReturnValue>(_taskCanceler.wrap(tc::lazy::connect(
       tc::lazy::async(tc::get_default_executor()),
-      tc::lazy::run_resumable(
-          tc::get_default_executor(),
-          {},
-          [](AsyncCore* core, Func f) -> std::invoke_result_t<F> {
-            bool isRevoked = false;
-            bool isUnusable = false;
-            std::exception_ptr eptr;
-            try
-            {
-              if constexpr (std::is_same_v<std::invoke_result_t<F>,
-                                           tc::cotask<void>>)
-              {
-                TC_AWAIT(f());
-                TC_RETURN();
-              }
-              else
-              {
-                TC_RETURN(TC_AWAIT(f()));
-              }
-            }
-            catch (Errors::DeviceUnusable const& ex)
-            {
-              eptr = std::current_exception();
-              TERROR("Device is unusable: {}", ex.what());
-              isUnusable = true;
-            }
-            catch (Errors::Exception const& ex)
-            {
-              eptr = std::current_exception();
-              if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
-              {
-                TINFO("Device is revoked: {}", ex.what());
-                isRevoked = true;
-              }
-              else
-                throw;
-            }
-            if (isRevoked)
-              TC_AWAIT(core->handleDeviceRevocation()); // this is
-                                                        // noreturn
-            else if (isUnusable)
-            {
-              TC_AWAIT(core->handleDeviceUnrecoverable());
-              std::rethrow_exception(eptr);
-            }
-            else
-              throw Errors::AssertionError("unreachable code in runResumable");
-          },
-          this,
-          std::forward<F>(f)))));
+      tc::lazy::run_resumable(tc::get_default_executor(),
+                              {},
+                              &AsyncCore::runResumableImpl<Func>,
+                              this,
+                              std::forward<F>(f)))));
+}
+
+template <typename F>
+std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
+{
+  bool isRevoked = false;
+  bool isUnusable = false;
+  std::exception_ptr eptr;
+  try
+  {
+    if constexpr (std::is_same_v<std::invoke_result_t<F>, tc::cotask<void>>)
+    {
+      TC_AWAIT(f());
+      TC_RETURN();
+    }
+    else
+    {
+      TC_RETURN(TC_AWAIT(f()));
+    }
+  }
+  catch (Errors::DeviceUnusable const& ex)
+  {
+    eptr = std::current_exception();
+    TERROR("Device is unusable: {}", ex.what());
+    isUnusable = true;
+  }
+  catch (Errors::Exception const& ex)
+  {
+    eptr = std::current_exception();
+    if (ex.errorCode() == Errors::AppdErrc::DeviceRevoked)
+    {
+      TINFO("Device is revoked: {}", ex.what());
+      isRevoked = true;
+    }
+    else
+      throw;
+  }
+  if (isRevoked)
+    TC_AWAIT(handleDeviceRevocation()); // this is noreturn
+  else if (isUnusable)
+  {
+    TC_AWAIT(handleDeviceUnrecoverable());
+    std::rethrow_exception(eptr);
+  }
+  else
+    throw Errors::AssertionError("unreachable code in runResumable");
 }
 
 AsyncCore::AsyncCore(std::string url,
