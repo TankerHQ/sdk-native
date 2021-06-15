@@ -46,8 +46,8 @@ template <typename F>
 auto AsyncCore::runResumable(F&& f, bool stopCheck)
 {
   using Func = std::decay_t<F>;
-  using ReturnValue = typename tc::detail::task_return_type<decltype(
-      std::declval<F>()())>::type;
+  using ReturnValue =
+      typename tc::detail::task_return_type<std::invoke_result_t<F>>::type;
 
   if (_stopping && !stopCheck)
     tc::make_exceptional_future<ReturnValue>(std::make_exception_ptr(
@@ -59,13 +59,14 @@ auto AsyncCore::runResumable(F&& f, bool stopCheck)
       tc::lazy::run_resumable(
           tc::get_default_executor(),
           {},
-          [](AsyncCore* core, Func f) -> decltype(f()) {
+          [](AsyncCore* core, Func f) -> std::invoke_result_t<F> {
             bool isRevoked = false;
             bool isUnusable = false;
             std::exception_ptr eptr;
             try
             {
-              if constexpr (std::is_same_v<decltype(f()), void>)
+              if constexpr (std::is_same_v<std::invoke_result_t<F>,
+                                           tc::cotask<void>>)
               {
                 TC_AWAIT(f());
                 TC_RETURN();
