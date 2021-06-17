@@ -1,7 +1,11 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 8ed113d5cc381d94dd1296758c4f95d38ec2892b
+  ref: ecfaa4031b36380595405ca7078f73daf08c6b1b
+
+.after-script/branch_name:
+  after_script:
+    - echo $CI_COMMIT_REF_NAME > branch_name.txt
 
 ###############
 # build stage #
@@ -14,6 +18,7 @@ build/linux:
     - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release
 
@@ -23,6 +28,7 @@ build/linux/shared:
     - .tags/linux
     - .rules/mr/manual/web/auto/nightly
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release-shared
@@ -34,6 +40,7 @@ build/windows:
     - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
@@ -44,6 +51,7 @@ build/macos:
     - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
 
@@ -54,6 +62,7 @@ build/macos/shared:
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
 
@@ -64,6 +73,7 @@ build/android/shared:
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
 
@@ -74,6 +84,7 @@ build/android/static:
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release-static --profile android-armv8-release-static --profile android-x86-release-static --profile android-x86_64-release-static
 
@@ -84,6 +95,7 @@ build/ios:
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
