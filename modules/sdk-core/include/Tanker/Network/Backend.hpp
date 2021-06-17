@@ -13,6 +13,5 @@ public:
   virtual ~Backend() = default;
 
   virtual tc::cotask<HttpResponse> fetch(HttpRequest req) = 0;
-  virtual tc::cotask<void> stop() = 0;
 };
 }

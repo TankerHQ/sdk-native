@@ -132,6 +132,8 @@ HttpClient::HttpClient(std::string baseUrl,
     _instanceId(std::move(instanceId)),
     _backend(backend)
 {
+  if (!_baseUrl.empty() && _baseUrl.back() != '/')
+    _baseUrl += '/';
 }
 
 HttpClient::~HttpClient() = default;
@@ -149,7 +151,7 @@ void HttpClient::setDeviceAuthData(
   _deviceSignatureKeyPair = deviceSignatureKeyPair;
 }
 
-// Do not call anything else than asyncFetchBase here to avoid recursive calls
+// Do not call anything else than fetch here to avoid recursive calls
 tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 {
   if (!_authenticating.is_ready())
@@ -167,7 +169,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpMethod::Post,
                            makeUrl(fmt::format("{}/challenges", baseTarget)));
-    auto const challenge = TC_AWAIT(asyncFetchBase(std::move(req)))
+    auto const challenge = TC_AWAIT(fetch(std::move(req)))
                                .value()
                                .at("challenge")
                                .get<std::string>();
@@ -190,7 +192,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
         {{"signature", signature},
          {"challenge", challenge},
          {"signature_public_key", _deviceSignatureKeyPair.publicKey}});
-    auto response = TC_AWAIT(asyncFetchBase(std::move(req2))).value();
+    auto response = TC_AWAIT(fetch(std::move(req2))).value();
     auto accessToken = response.at("access_token").get<std::string>();
     _isRevoked = response.at("is_revoked").get<bool>();
 
@@ -215,16 +217,18 @@ tc::cotask<void> HttpClient::deauthenticate()
         fmt::format("devices/{deviceId:#S}", fmt::arg("deviceId", _deviceId));
     auto req = makeRequest(HttpMethod::Delete,
                            makeUrl(fmt::format("{}/sessions", baseTarget)));
-    TINFO("{} {}", httpMethodToString(req.method), req.url);
-    auto res = TC_AWAIT(_backend->fetch(req));
-    TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
-    // HTTP status:
-    //   204: session successfully deleted
-    //   401: session already expired
-    //   other: something unexpected happened -> ignore and continue closing
-    //   ¯\_(ツ)_/¯
-    if (res.statusCode != 204 && res.statusCode != 401)
-      TERROR("Error while deauthenticating: {}", res.body);
+    auto res = TC_AWAIT(fetch(req));
+    if (res.has_error())
+    {
+      auto const error = res.error();
+      // HTTP status:
+      //   204: session successfully deleted
+      //   401: session already expired
+      //   other: something unexpected happened -> ignore and continue closing
+      //   ¯\_(ツ)_/¯
+      if (error.status != 204 && error.status != 401)
+        TERROR("Error while deauthenticating: {}: {}", error.ec, error.message);
+    }
   }
   catch (Errors::Exception const& e)
   {
@@ -233,11 +237,6 @@ tc::cotask<void> HttpClient::deauthenticate()
     else
       throw;
   }
-}
-
-tc::cotask<void> HttpClient::stop()
-{
-  TC_AWAIT(_backend->stop());
 }
 
 std::string HttpClient::makeUrl(std::string_view target) const
@@ -281,33 +280,33 @@ std::string HttpClient::makeQueryString(nlohmann::json const& query) const
 tc::cotask<HttpResult> HttpClient::asyncGet(std::string_view target)
 {
   auto req = makeRequest(HttpMethod::Get, target);
-  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target)
 {
   auto req = makeRequest(HttpMethod::Post, target);
-  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPost(std::string_view target,
                                              nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Post, target, std::move(data));
-  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncPatch(std::string_view target,
                                               nlohmann::json data)
 {
   auto req = makeRequest(HttpMethod::Patch, target, std::move(data));
-  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
 tc::cotask<HttpResult> HttpClient::asyncDelete(std::string_view target)
 {
   auto req = makeRequest(HttpMethod::Delete, target);
-  TC_RETURN(TC_AWAIT(asyncFetch(std::move(req))));
+  TC_RETURN(TC_AWAIT(authenticatedFetch(std::move(req))));
 }
 
 HttpRequest HttpClient::makeRequest(HttpMethod method,
@@ -333,21 +332,21 @@ HttpRequest HttpClient::makeRequest(HttpMethod method, std::string_view url)
   return req;
 }
 
-tc::cotask<HttpResult> HttpClient::asyncFetch(HttpRequest req)
+tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 {
   TC_AWAIT(_authenticating);
 
-  auto response = TC_AWAIT(asyncFetchBase(req));
+  auto response = TC_AWAIT(fetch(req));
   if (!response && response.error().ec == AppdErrc::InvalidToken)
   {
     TC_AWAIT(authenticate());
     req.authorization = _accessToken;
-    TC_RETURN(TC_AWAIT(asyncFetchBase(std::move(req))));
+    TC_RETURN(TC_AWAIT(fetch(std::move(req))));
   }
   TC_RETURN(response);
 }
 
-tc::cotask<HttpResult> HttpClient::asyncFetchBase(HttpRequest req)
+tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
 {
   TINFO("{} {}", httpMethodToString(req.method), req.url);
   auto res = TC_AWAIT(_backend->fetch(req));

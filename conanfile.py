@@ -14,6 +14,7 @@ class TankerConan(ConanFile):
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
         "coroutinests": [True, False],
+        "with_fetchpp": [True, False],
     }
     default_options = {
         "tankerlib_shared": False,
@@ -23,6 +24,7 @@ class TankerConan(ConanFile):
         "sanitizer": None,
         "coverage": False,
         "coroutinests": False,
+        "with_fetchpp": True,
     }
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
@@ -151,6 +153,7 @@ class TankerConan(ConanFile):
         self.cmake.definitions["TANKERLIB_SHARED"] = self.options.tankerlib_shared
         self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
+        self.cmake.definitions["WITH_FETCHPP"] = self.options.with_fetchpp
 
     def build(self):
         self.init_cmake()
@@ -191,7 +194,8 @@ class TankerConan(ConanFile):
                     "tankerformat",
                 ]
             )
-            libs.append("tankercacerts")
+            if self.options.with_fetchpp:
+                libs.append("tankercacerts")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]

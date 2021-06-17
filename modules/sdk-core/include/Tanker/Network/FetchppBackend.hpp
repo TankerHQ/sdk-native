@@ -24,7 +24,6 @@ public:
   ~FetchppBackend();
 
   tc::cotask<HttpResponse> fetch(HttpRequest req) override;
-  tc::cotask<void> stop() override;
 
 private:
   fetchpp::client _cl;
