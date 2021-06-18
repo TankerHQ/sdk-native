@@ -443,16 +443,3 @@ bridge/react-native/deploy:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
-
-################
-# mirror stage #
-################
-
-mirror:
-  extends:
-    - .mirror
-    - .tags/linux
-    - .rules/mirror
-  dependencies: []
-  script:
-    - poetry run python run-ci.py mirror
