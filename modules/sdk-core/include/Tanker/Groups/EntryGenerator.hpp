@@ -7,7 +7,6 @@
 #include <Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupUpdate.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -101,23 +100,6 @@ Trustchain::Actions::UserGroupAddition2 createUserGroupAdditionV2Action(
 Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
     Crypto::SignatureKeyPair const& groupSignatureKeyPair,
     Crypto::Hash const& previousGroupBlockHash,
-    std::vector<Trustchain::Actions::UserGroupAddition::v2::Member> const&
-        members,
-    std::vector<
-        Trustchain::Actions::UserGroupAddition::v3::ProvisionalMember> const&
-        provisionalMembers,
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& deviceSignatureKey);
-
-Trustchain::Actions::UserGroupUpdate1 createUserGroupUpdateV1Action(
-    Trustchain::GroupId const& groupId,
-    Crypto::Hash const& previousGroupBlockHash,
-    Crypto::Hash const& previousKeyRotationBlockHash,
-    Crypto::SignatureKeyPair const& newGroupSignatureKeyPair,
-    Crypto::PublicEncryptionKey const& newGroupPublicEncryptionKey,
-    Crypto::SignatureKeyPair const& previousGroupSignatureKeyPair,
-    Crypto::EncryptionKeyPair const& previousGroupEncryptionKeyPair,
     std::vector<Trustchain::Actions::UserGroupAddition::v2::Member> const&
         members,
     std::vector<

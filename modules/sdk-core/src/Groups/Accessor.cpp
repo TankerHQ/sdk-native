@@ -131,9 +131,7 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
                     userGroupAddition) {
               out[userGroupAddition.groupId()].push_back(action);
             },
-            [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
-              out[userGroupUpdate.groupId()].push_back(action);
-            }},
+        },
         action);
   }
   return out;

@@ -86,7 +86,6 @@ add_library(tankercore STATIC
   include/Tanker/Groups/EntryGenerator.hpp
   include/Tanker/Groups/Verif/UserGroupAddition.hpp
   include/Tanker/Groups/Verif/UserGroupCreation.hpp
-  include/Tanker/Groups/Verif/UserGroupUpdate.hpp
   include/Tanker/ResourceKeys/KeysResult.hpp
   include/Tanker/ResourceKeys/Store.hpp
   include/Tanker/ResourceKeys/Accessor.hpp
@@ -156,7 +155,6 @@ add_library(tankercore STATIC
   src/Groups/Requester.cpp
   src/Groups/Verif/UserGroupAddition.cpp
   src/Groups/Verif/UserGroupCreation.cpp
-  src/Groups/Verif/UserGroupUpdate.cpp
   src/Users/User.cpp
   src/Users/Updater.cpp
   src/Users/LocalUser.cpp

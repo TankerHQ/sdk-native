@@ -78,10 +78,6 @@ struct Group
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});
-  Trustchain::Actions::UserGroupUpdate updateUsers(
-      Device const& author,
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {});
 
 private:
   Group(Trustchain::TrustchainId const& tid,
