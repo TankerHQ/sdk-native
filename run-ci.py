@@ -9,7 +9,6 @@ import platform
 from pathlib import Path
 from typing import List, Optional
 import cli_ui as ui  # noqa
-import requests
 import tempfile
 
 import tankerci
@@ -226,7 +225,6 @@ def main() -> None:
     bump_files_parser.add_argument("--version", required=True)
 
     subparsers.add_parser("deploy")
-    subparsers.add_parser("mirror")
 
     args = parser.parse_args()
     if args.home_isolation:
@@ -241,8 +239,6 @@ def main() -> None:
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
         deploy()
-    elif args.command == "mirror":
-        tankerci.git.mirror(github_url="git@github.com:TankerHQ/sdk-native", force=True)
     else:
         parser.print_help()
         sys.exit(1)
