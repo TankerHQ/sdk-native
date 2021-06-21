@@ -262,7 +262,7 @@ std::vector<Trustchain::DeviceId> extractAuthors(
   return {deviceIds.begin(), deviceIds.end()};
 }
 
-tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
+tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
@@ -328,18 +328,11 @@ tc::cotask<ProcessGroupResult> processGroupEntriesWithAuthors(
     }
   }
 
-  std::vector<Crypto::EncryptionKeyPair> groupKeys;
-  if (lastKnownKeyBlockIt != actions.end())
-  {
-    groupKeys.push_back(lastKnownKey);
-  }
-
-  auto result = ProcessGroupResult{previousGroup, groupKeys};
-  TC_RETURN(result);
+  TC_RETURN(previousGroup);
 }
 }
 
-tc::cotask<ProcessGroupResult> processGroupEntries(
+tc::cotask<std::optional<Group>> processGroupEntries(
     Users::ILocalUserAccessor& localUserAccessor,
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
