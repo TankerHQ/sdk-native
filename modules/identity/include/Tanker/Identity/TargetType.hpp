@@ -2,14 +2,13 @@
 
 #include <string>
 
-namespace Tanker
-{
-namespace Identity
+namespace Tanker::Identity
 {
 enum class TargetType
 {
-  Email = 0,
+  Email,
+  HashedEmail,
 };
 std::string to_string(TargetType s);
-}
+TargetType to_target_type(std::string const& s);
 }

@@ -103,14 +103,22 @@ auto const GOOD_SECRET_PROVISIONAL_IDENTITY =
     "dGVfc2lnbmF0dXJlX2tleSI6IlVtbll1dmRUYUxZRzBhK0phRHBZNm9qdzQvMkxsOHpzbXJhbV"
     "ZDNGZ1cVJidEFSQUc3MFZkeGNpazZDcnJhMC9BR0xJVUJ1bFBXc0N1NFBTSDgydE1BPT0ifQ="
     "="s;
-auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
+auto const GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY =
     "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
     "JDTGpkND0iLCJ0YXJnZXQiOiJlbWFpbCIsInZhbHVlIjoiYnJlbmRhbi5laWNoQHRhbmtlci5p"
     "byIsInB1YmxpY19lbmNyeXB0aW9uX2tleSI6Ii8yajRkSTNyOFBsdkNOM3VXNEhoQTV3QnRNS0"
     "9jQUNkMzhLNk4wcSttRlU9IiwicHVibGljX3NpZ25hdHVyZV9rZXkiOiJXN1FFUUJ1OUZYY1hJ"
     "cE9ncTYydFB3Qml5RkFicFQxckFydUQwaC9OclRBPSJ9"s;
 
-auto const userEmail = "brendan.eich@tanker.io";
+auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJoYXNoZWRfZW1haWwiLCJ2YWx1ZSI6IjB1MmM4dzhFSVpXVDJG"
+    "elJOL3l5TTVxSWJFR1lUTkRUNVNrV1ZCdTIwUW89IiwicHVibGljX2VuY3J5cHRpb25fa2V5Ij"
+    "oiLzJqNGRJM3I4UGx2Q04zdVc0SGhBNXdCdE1LT2NBQ2QzOEs2TjBxK21GVT0iLCJwdWJsaWNf"
+    "c2lnbmF0dXJlX2tleSI6Ilc3UUVRQnU5RlhjWElwT2dxNjJ0UHdCaXlGQWJwVDFyQXJ1RDBoL0"
+    "5yVEE9In0="s;
+
+auto const userEmail = "brendan.eich@tanker.io"s;
 
 auto const appSignaturePublicKey =
     mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
@@ -241,15 +249,28 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
   }
 
-  TEST_CASE(
-      "We can deserialize a public provisional identity from a good string")
+  TEST_CASE("We can deserialize an unhashed email public provisional identity")
   {
-    auto const identity =
-        extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
+    auto const identity = extract<PublicProvisionalIdentity>(
+        GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
 
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.value, userEmail);
     CHECK_EQ(identity.target, TargetType::Email);
+    CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
+    CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
+  }
+
+  TEST_CASE("We can deserialize a hashed email public provisional identity")
+  {
+    auto const identity =
+        extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
+    auto hashedEmail = mgs::base64::encode(Crypto::generichash(
+        gsl::make_span(userEmail).template as_span<std::uint8_t const>()));
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, hashedEmail);
+    CHECK_EQ(identity.target, TargetType::HashedEmail);
     CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
   }

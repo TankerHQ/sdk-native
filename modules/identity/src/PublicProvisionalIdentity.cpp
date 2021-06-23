@@ -15,12 +15,6 @@ namespace Identity
 void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
-  if (target != "email")
-  {
-    throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
-                           "unsupported provisional identity target: {}",
-                           target);
-  }
 
   if (j.find("private_signature_key") != j.end())
   {
@@ -31,7 +25,7 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 
   identity = PublicProvisionalIdentity{
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
-      TargetType::Email,
+      to_target_type(target),
       j.at("value").get<std::string>(),
       mgs::base64::decode<Crypto::PublicSignatureKey>(
           j.at("public_signature_key").get<std::string>()),
@@ -42,16 +36,11 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 
 void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
 {
-  if (identity.target != TargetType::Email)
-  {
-    throw Errors::AssertionError(
-        fmt::format("unsupported provisional identity target: {}",
-                    static_cast<int>(identity.target)));
-  }
-
-  j["value"] = identity.value;
   j["trustchain_id"] = identity.trustchainId;
-  j["target"] = "email";
+  j["target"] = to_string(identity.target);
+  j["value"] = identity.value;
+  j["public_encryption_key"] =
+      mgs::base64::encode(identity.appEncryptionPublicKey);
   j["public_signature_key"] =
       mgs::base64::encode(identity.appSignaturePublicKey);
   j["public_encryption_key"] =
