@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Crypto/Hash.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
 #include <Tanker/Identity/TargetType.hpp>
@@ -20,6 +21,8 @@ struct PublicProvisionalIdentity
   Crypto::PublicSignatureKey appSignaturePublicKey;
   Crypto::PublicEncryptionKey appEncryptionPublicKey;
 };
+
+Crypto::Hash hashProvisionalEmail(std::string const& value);
 
 void from_json(nlohmann::json const& j, PublicProvisionalIdentity& result);
 void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity);

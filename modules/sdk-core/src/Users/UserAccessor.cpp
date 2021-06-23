@@ -131,12 +131,6 @@ auto processUserEntries(Trustchain::Context const& context,
   return std::make_tuple(usersMap, devicesMap);
 }
 
-Crypto::Hash hashEmail(Email const& email)
-{
-  return Crypto::generichash(
-      gsl::make_span(email).template as_span<std::uint8_t const>());
-}
-
 std::vector<Crypto::Hash> hashProvisionalUserEmails(
 
     gsl::span<Identity::PublicProvisionalIdentity const>
@@ -148,7 +142,7 @@ std::vector<Crypto::Hash> hashProvisionalUserEmails(
     if (appProvisionalIdentity.target == Identity::TargetType::Email)
     {
       hashedProvisionalUserEmails.push_back(
-          hashEmail(Email{appProvisionalIdentity.value}));
+          Identity::hashProvisionalEmail(appProvisionalIdentity.value));
     }
     else if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
     {

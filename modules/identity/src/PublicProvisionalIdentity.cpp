@@ -1,5 +1,6 @@
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
@@ -48,6 +49,12 @@ void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identit
 std::string to_string(PublicProvisionalIdentity const& identity)
 {
   return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
+}
+
+Crypto::Hash hashProvisionalEmail(std::string const& value)
+{
+  return Crypto::generichash(
+      gsl::make_span(value).template as_span<std::uint8_t const>());
 }
 }
 }

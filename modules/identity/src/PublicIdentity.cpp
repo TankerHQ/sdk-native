@@ -29,8 +29,7 @@ PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
   if (prov.target == TargetType::Email)
   {
     prov.target = TargetType::HashedEmail;
-    auto hashedEmail = Crypto::generichash(
-        gsl::make_span(prov.value).as_span<uint8_t const>());
+    const auto hashedEmail = hashProvisionalEmail(prov.value);
     prov.value = mgs::base64::encode(hashedEmail);
   }
   return prov;
