@@ -40,15 +40,6 @@ using namespace Tanker::Errors;
 using namespace type_literals;
 using Tanker::Functional::TrustchainFixture;
 
-namespace Tanker
-{
-static std::ostream& operator<<(std::ostream& os, Status s)
-{
-  os << to_string(s);
-  return os;
-}
-}
-
 namespace
 {
 auto make_clear_data(std::initializer_list<std::string> clearText)
