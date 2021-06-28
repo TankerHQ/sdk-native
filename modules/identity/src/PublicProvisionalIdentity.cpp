@@ -54,7 +54,7 @@ std::string to_string(PublicProvisionalIdentity const& identity)
 Crypto::Hash hashProvisionalEmail(std::string const& value)
 {
   return Crypto::generichash(
-      gsl::make_span(value).template as_span<std::uint8_t const>());
+      gsl::make_span(value).as_span<std::uint8_t const>());
 }
 }
 }

@@ -274,7 +274,7 @@ TEST_SUITE("serialization")
     auto const identity =
         extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
     auto hashedEmail = mgs::base64::encode(Crypto::generichash(
-        gsl::make_span(userEmail).template as_span<std::uint8_t const>()));
+        gsl::make_span(userEmail).as_span<std::uint8_t const>()));
 
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.value, hashedEmail);
