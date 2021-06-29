@@ -9,14 +9,18 @@
 
 #include <nlohmann/json_fwd.hpp>
 
+#include <optional>
 #include <tuple>
 #include <vector>
-#include <optional>
 
 namespace Tanker::Unlock
 {
-using EncryptedEmailVerification =
-    std::tuple<Crypto::Hash, std::vector<std::uint8_t>, VerificationCode>;
+struct EncryptedEmailVerification
+{
+  Crypto::Hash hashedEmail;
+  EncryptedEmail encryptedEmail;
+  VerificationCode verificationCode;
+};
 
 using RequestVerificationMethods =
     boost::variant2::variant<VerificationKey,
@@ -42,10 +46,12 @@ namespace nlohmann
 template <typename SFINAE>
 struct adl_serializer<Tanker::Unlock::RequestVerificationMethods, SFINAE>
 {
-  static void to_json(nlohmann::json& j,
-                      Tanker::Unlock::RequestVerificationMethods const& request);
+  static void to_json(
+      nlohmann::json& j,
+      Tanker::Unlock::RequestVerificationMethods const& request);
 
   static void from_json(nlohmann::json const& j,
-                        Tanker::Unlock::RequestVerificationMethods& request) = delete;
+                        Tanker::Unlock::RequestVerificationMethods& request) =
+      delete;
 };
 }
