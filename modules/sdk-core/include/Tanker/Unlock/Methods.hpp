@@ -13,8 +13,9 @@ enum class Method
   Passphrase,
   VerificationKey,
   OidcIdToken,
+  PhoneNumber,
 
-  Last = OidcIdToken,
+  Last,
 };
 
 using Methods = ::flags::flags<Method>;

@@ -82,13 +82,22 @@ TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_destroy(
     tanker_admin_t* admin);
 
 /*!
- * Gets verification code of a user from the server
+ * Gets the email verification code of a user from the server
  */
-TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_verification_code(
+TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_email_verification_code(
     char const* url,
     char const* app_id,
     char const* auth_token,
     char const* user_email);
+
+/*!
+ * Gets the SMS verification code of a user from the server
+ */
+TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_get_sms_verification_code(
+    char const* url,
+    char const* app_id,
+    char const* auth_token,
+    char const* user_phone_number);
 
 /*!
  * Updates app properties.
