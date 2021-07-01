@@ -35,6 +35,6 @@ tanker_future_t* tanker_update_group_members(
   auto const public_identities_to_add_vec = to_vector<SPublicIdentity>(
       public_identities_to_add, nb_public_identities_to_add);
 
-  return makeFuture(tanker->updateGroupMembers(SGroupId{group_id},
-                                               public_identities_to_add_vec));
+  return makeFuture(tanker->updateGroupMembers(
+      SGroupId{group_id}, public_identities_to_add_vec, {}));
 }
