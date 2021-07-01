@@ -16,6 +16,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Actions/KeyPublish/ToUser.hpp
   include/Tanker/Trustchain/Actions/KeyPublish/ToUserGroup.hpp
   include/Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp
+  include/Tanker/Trustchain/Actions/UserGroupRemoval.hpp
   include/Tanker/Trustchain/Actions/TrustchainCreation.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition.hpp
   include/Tanker/Trustchain/Actions/UserGroupAddition/v1.hpp
@@ -40,6 +41,7 @@ add_library(tankertrustchain STATIC
   include/Tanker/Trustchain/Preprocessor/Actions/Serialization.hpp
   include/Tanker/Trustchain/ResourceId.hpp
   include/Tanker/Trustchain/UserId.hpp
+  include/Tanker/Trustchain/ProvisionalUserId.hpp
   include/Tanker/Trustchain/HashedPassphrase.hpp
   include/Tanker/Trustchain/TrustchainId.hpp
   include/Tanker/Trustchain/ComputeHash.hpp
@@ -61,6 +63,7 @@ add_library(tankertrustchain STATIC
   src/Actions/KeyPublish/ToUser.cpp
   src/Actions/KeyPublish/ToUserGroup.cpp
   src/Actions/ProvisionalIdentityClaim.cpp
+  src/Actions/UserGroupRemoval.cpp
   src/Actions/TrustchainCreation.cpp
   src/Actions/UserGroupAddition.cpp
   src/Actions/UserGroupAddition/v1.cpp
@@ -82,6 +85,7 @@ add_library(tankertrustchain STATIC
   src/Serialization.cpp
   src/GroupAction.cpp
   src/UserAction.cpp
+  src/ProvisionalUserId.cpp
   src/KeyPublishAction.cpp
 )
 
