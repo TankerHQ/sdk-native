@@ -7,6 +7,7 @@
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ProvisionalUserId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
@@ -35,6 +36,16 @@ struct MembersToAdd
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
+    Users::IUserAccessor& userAccessor,
+    std::vector<SPublicIdentity> spublicIdentities);
+
+struct MembersToRemove
+{
+  std::vector<Trustchain::UserId> users;
+  std::vector<Trustchain::ProvisionalUserId> provisionalUsers;
+};
+
+tc::cotask<MembersToRemove> fetchMembersToRemove(
     Users::IUserAccessor& userAccessor,
     std::vector<SPublicIdentity> spublicIdentities);
 
@@ -69,6 +80,7 @@ tc::cotask<void> updateMembers(
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);

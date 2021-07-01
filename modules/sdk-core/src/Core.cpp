@@ -584,6 +584,7 @@ tc::cotask<void> Core::updateGroupMembers(
       _session->accessors().groupAccessor,
       groupId,
       spublicIdentitiesToAdd,
+      {},
       _session->trustchainId(),
       localUser.deviceId(),
       localUser.deviceKeys().signatureKeyPair.privateKey));

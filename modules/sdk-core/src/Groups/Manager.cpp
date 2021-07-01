@@ -48,6 +48,27 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
   }));
 }
 
+tc::cotask<MembersToRemove> fetchMembersToRemove(
+    Users::IUserAccessor& userAccessor,
+    std::vector<SPublicIdentity> spublicIdentities)
+{
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto members = partitionIdentities(publicIdentities);
+
+  MembersToRemove ret;
+  ret.users = std::move(members.userIds);
+
+  auto const memberProvisionalUsers = TC_AWAIT(
+      userAccessor.pullProvisional(members.publicProvisionalIdentities));
+
+  for (auto const& member : memberProvisionalUsers)
+    ret.provisionalUsers.push_back(
+        {member.appSignaturePublicKey, member.tankerSignaturePublicKey});
+
+  TC_RETURN(std::move(ret));
+}
+
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
@@ -144,29 +165,78 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
                                          privateSignatureKey);
 }
 
+Trustchain::Actions::UserGroupRemoval makeUserGroupRemovalAction(
+    std::vector<Trustchain::UserId> const& membersToRemove,
+    std::vector<Trustchain::ProvisionalUserId> const&
+        provisionalMembersToRemove,
+    InternalGroup const& group,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  return UserGroupRemoval{
+      trustchainId,
+      group.id,
+      membersToRemove,
+      provisionalMembersToRemove,
+      deviceId,
+      group.signatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
+}
+
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
     std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  auto const members =
-      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
-
   auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
   if (groups.found.empty())
     throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
 
-  auto const groupEntry = makeUserGroupAdditionAction(members.users,
-                                                      members.provisionalUsers,
-                                                      groups.found[0],
-                                                      trustchainId,
-                                                      deviceId,
-                                                      privateSignatureKey);
-  TC_AWAIT(requester.updateGroup(groupEntry));
+  std::optional<Trustchain::Actions::UserGroupAddition> groupAddEntry;
+  std::optional<Trustchain::Actions::UserGroupRemoval> groupRemoveEntry;
+
+  if (!spublicIdentitiesToAdd.empty())
+  {
+    auto const members =
+        TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
+
+    groupAddEntry = makeUserGroupAdditionAction(members.users,
+                                                members.provisionalUsers,
+                                                groups.found[0],
+                                                trustchainId,
+                                                deviceId,
+                                                privateSignatureKey);
+  }
+
+  if (!spublicIdentitiesToRemove.empty())
+  {
+    auto const membersToRemove =
+        TC_AWAIT(fetchMembersToRemove(userAccessor, spublicIdentitiesToRemove));
+
+    groupRemoveEntry =
+        makeUserGroupRemovalAction(membersToRemove.users,
+                                   membersToRemove.provisionalUsers,
+                                   groups.found[0],
+                                   trustchainId,
+                                   deviceId,
+                                   privateSignatureKey);
+  }
+
+  if (groupRemoveEntry)
+    TC_AWAIT(requester.softUpdateGroup(*groupRemoveEntry, groupAddEntry));
+  else
+  {
+    if (!groupAddEntry)
+      throw AssertionError("no user to add or remove from group");
+    TC_AWAIT(requester.updateGroup(*groupAddEntry));
+  }
 }
 }
