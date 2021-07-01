@@ -98,7 +98,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
   auto const passphrase = Passphrase{"my passphrase"};
   auto const email = Email{"kirby@tanker.io"};
-  auto const phoneNumber = PhoneNumber{"+33600112233"};
+  auto const phoneNumber = PhoneNumber{"+33639982233"};
 
   SUBCASE("registerIdentity throws if passphrase is empty")
   {
@@ -532,7 +532,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         Unlock::PhoneNumberVerification{phoneNumber, verificationCode}}));
 
     // update phone number
-    auto const newPhoneNumber = PhoneNumber{"+33600112244"};
+    auto const newPhoneNumber = PhoneNumber{"+33639982244"};
     verificationCode = TC_AWAIT(getVerificationCode(newPhoneNumber));
     TC_AWAIT(core1->setVerificationMethod(Unlock::Verification{
         Unlock::PhoneNumberVerification{newPhoneNumber, verificationCode}}));
