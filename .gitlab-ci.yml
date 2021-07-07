@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 874483a45e99037b888688c0c3d0fb6a186da6b0
+  ref: 2021-07-07-1
 
 .after-script/branch_name:
   after_script:
@@ -44,27 +44,49 @@ build/windows:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
 
-build/macos:
+build/macos/x86_64:
   extends:
     - .build
-    - .tags/macos
+    - .tags/macos/x86_64
     - .rules/mr/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-x86_64-release
 
-build/macos/shared:
+build/macos/arm:
   extends:
     - .build
-    - .tags/macos
+    - .tags/macos/arm
+    - .rules/mr/auto/nightly
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-armv8-release
+
+build/macos/x86_64/shared:
+  extends:
+    - .build
+    - .tags/macos/x86_64
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-x86_64-release-shared
+
+build/macos/arm/shared:
+  extends:
+    - .build
+    - .tags/macos/arm
+    - .rules/mr/manual/web/auto/nightly
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-armv8-release-shared
 
 build/android/shared:
   extends:
@@ -91,13 +113,14 @@ build/android/static:
 build/ios:
   extends:
     - .build
-    - .tags/macos
+      # build everything on the fast one
+    - .tags/macos/arm
     - .rules/mr/manual/web/auto/nightly
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-x86-release --profile ios-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
 nightly/benchmark:
   extends:
@@ -179,16 +202,30 @@ bridge/rust/ios:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/macos:
+bridge/rust/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/macos
+    - build/macos/x86_64
   variables:
-    UPSTREAM_JOB_TARGET: macos
-    UPSTREAM_JOB_NAME: build/macos
+    UPSTREAM_JOB_TARGET: macos-x86_64
+    UPSTREAM_JOB_NAME: build/macos/x86_64
+  trigger:
+    project: TankerHQ/sdk-rust
+    strategy: depend
+
+bridge/rust/macos/arm:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos/arm
+  variables:
+    UPSTREAM_JOB_TARGET: macos-arm
+    UPSTREAM_JOB_NAME: build/macos/arm
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
@@ -221,16 +258,31 @@ bridge/python/linux:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/python/macos:
+bridge/python/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/macos
+    - build/macos/x86_64
   variables:
-    UPSTREAM_JOB_TARGET: macos
-    UPSTREAM_JOB_NAME: build/macos
+    UPSTREAM_JOB_TARGET: macos-x86_64
+    UPSTREAM_JOB_NAME: build/macos/x86_64
+  trigger:
+    project: TankerHQ/sdk-python
+    strategy: depend
+
+bridge/python/macos/arm:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos/arm
+  variables:
+    UPSTREAM_JOB_TARGET: macos-arm
+    UPSTREAM_JOB_NAME: build/macos/arm
+    UPSTREAM_JOB_ARCH: arm
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
@@ -263,16 +315,30 @@ bridge/ruby/linux:
     project: TankerHQ/sdk-ruby
     strategy: depend
 
-bridge/ruby/macos:
+bridge/ruby/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge-ci
     - .variables/bridge-common
   needs:
-    - build/macos/shared
+    - build/macos/x86_64/shared
   variables:
-    UPSTREAM_JOB_TARGET: macos
-    UPSTREAM_JOB_NAME: build/macos/shared
+    UPSTREAM_JOB_TARGET: macos-x86_64
+    UPSTREAM_JOB_NAME: build/macos/x86_64/shared
+  trigger:
+    project: TankerHQ/sdk-ruby
+    strategy: depend
+
+bridge/ruby/macos/arm:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci
+    - .variables/bridge-common
+  needs:
+    - build/macos/arm/shared
+  variables:
+    UPSTREAM_JOB_TARGET: macos-arm
+    UPSTREAM_JOB_NAME: build/macos/arm/shared
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
@@ -377,7 +443,8 @@ bridge/python/deploy:
   needs:
     - deploy
     - bridge/python/windows
-    - bridge/python/macos
+    - bridge/python/macos/x86_64
+    - bridge/python/macos/arm
     - bridge/python/linux
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
@@ -394,7 +461,8 @@ bridge/ruby/deploy:
     - .variables/bridge-common
   needs:
     - deploy
-    - bridge/ruby/macos
+    - bridge/ruby/macos/x86_64
+    - bridge/ruby/macos/arm
     - bridge/ruby/linux
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
@@ -413,7 +481,8 @@ bridge/rust/deploy:
     - deploy
     - bridge/rust/ios
     - bridge/rust/android
-    - bridge/rust/macos
+    - bridge/rust/macos/arm
+    - bridge/rust/macos/x86_64
     - bridge/rust/linux
   variables:
     UPSTREAM_BRIDGE_STAGE: deploy
