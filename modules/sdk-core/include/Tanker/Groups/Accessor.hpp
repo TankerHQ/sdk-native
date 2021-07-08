@@ -35,8 +35,8 @@ public:
   Accessor& operator=(Accessor const&) = delete;
   Accessor& operator=(Accessor&&) = delete;
 
-  tc::cotask<InternalGroupPullResult> getInternalGroups(
-      std::vector<Trustchain::GroupId> const& groupIds) override;
+  tc::cotask<InternalGroup> getInternalGroup(
+      Trustchain::GroupId const& groupId) override;
   tc::cotask<PublicEncryptionKeyPullResult> getPublicEncryptionKeys(
       std::vector<Trustchain::GroupId> const& groupIds) override;
   // This function can only return keys for groups you are a member of

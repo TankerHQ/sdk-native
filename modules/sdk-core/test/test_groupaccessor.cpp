@@ -7,6 +7,7 @@
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
+#include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
 #include "GroupRequesterStub.hpp"
@@ -138,11 +139,9 @@ TEST_CASE("GroupAccessor")
         SUBCASE("it should request internal groups by groupId if not in store")
         {
           auto const result =
-              AWAIT(groupAccessor.getInternalGroups({aliceGroup.id()}));
+              AWAIT(groupAccessor.getInternalGroup({aliceGroup.id()}));
 
-          CHECK(result.notFound.empty());
-          REQUIRE_EQ(result.found.size(), 1);
-          CHECK_EQ(result.found[0], aliceGroup);
+          CHECK_EQ(result, aliceGroup);
         }
       }
 
@@ -174,12 +173,9 @@ TEST_CASE("GroupAccessor")
         REQUIRE_CALL(requestStub,
                      getGroupBlocks(std::vector<GroupId>{bobGroup.id()}))
             .RETURN(makeCoTask(makeEntries(bobGroup)));
-        auto const result =
-            AWAIT(groupAccessor.getInternalGroups({bobGroup.id()}));
-
-        CHECK(result.found.empty());
-        REQUIRE_EQ(result.notFound.size(), 1);
-        CHECK_EQ(result.notFound[0], bobGroup.id());
+        TANKER_CHECK_THROWS_WITH_CODE(
+            AWAIT(groupAccessor.getInternalGroup({bobGroup.id()})),
+            Errors::Errc::InvalidArgument);
       }
 
       SUBCASE("it fails to get group encryption key pairs if not in group")

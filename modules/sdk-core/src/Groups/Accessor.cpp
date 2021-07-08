@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Groups/IRequester.hpp>
 #include <Tanker/Groups/Store.hpp>
 #include <Tanker/Groups/Updater.hpp>
@@ -33,27 +34,25 @@ Accessor::Accessor(Groups::IRequester* requester,
 {
 }
 
-tc::cotask<Accessor::InternalGroupPullResult> Accessor::getInternalGroups(
-    std::vector<Trustchain::GroupId> const& groupIds)
+tc::cotask<InternalGroup> Accessor::getInternalGroup(
+    Trustchain::GroupId const& groupId)
 {
-  // This function is only called when updating group members, and in that
-  // case we need the last block of the group. Since there is no way to know
-  // if we are up to date, just pull the group again
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+  auto groupPullResult = TC_AWAIT(getGroups({groupId}));
 
-  InternalGroupPullResult out;
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto const& group : groupPullResult.found)
-  {
-    if (auto const internalGroup =
-            boost::variant2::get_if<InternalGroup>(&group))
-      out.found.push_back(*internalGroup);
-    else if (auto const externalGroup =
-                 boost::variant2::get_if<ExternalGroup>(&group))
-      out.notFound.push_back(externalGroup->id);
-  }
+  if (!groupPullResult.notFound.empty())
+    throw formatEx(
+        Errors::Errc::InvalidArgument, "group not found: {:s}", groupId);
 
-  TC_RETURN(out);
+  TC_RETURN(boost::variant2::visit(
+      overloaded{
+          [&](InternalGroup const& group) { return group; },
+          [&](ExternalGroup const& group) -> InternalGroup {
+            throw formatEx(Errors::Errc::InvalidArgument,
+                           "user is not part of group {:s}",
+                           groupId);
+          },
+      },
+      groupPullResult.found[0]));
 }
 
 tc::cotask<Accessor::PublicEncryptionKeyPullResult>

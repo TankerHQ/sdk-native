@@ -196,9 +196,7 @@ tc::cotask<void> updateMembers(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
-  if (groups.found.empty())
-    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+  auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
 
   std::optional<Trustchain::Actions::UserGroupAddition> groupAddEntry;
   std::optional<Trustchain::Actions::UserGroupRemoval> groupRemoveEntry;
@@ -210,7 +208,7 @@ tc::cotask<void> updateMembers(
 
     groupAddEntry = makeUserGroupAdditionAction(members.users,
                                                 members.provisionalUsers,
-                                                groups.found[0],
+                                                group,
                                                 trustchainId,
                                                 deviceId,
                                                 privateSignatureKey);
@@ -224,7 +222,7 @@ tc::cotask<void> updateMembers(
     groupRemoveEntry =
         makeUserGroupRemovalAction(membersToRemove.users,
                                    membersToRemove.provisionalUsers,
-                                   groups.found[0],
+                                   group,
                                    trustchainId,
                                    deviceId,
                                    privateSignatureKey);

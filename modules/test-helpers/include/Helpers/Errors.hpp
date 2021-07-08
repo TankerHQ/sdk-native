@@ -24,6 +24,22 @@
     }                                             \
   } while (0)
 
+#define TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(expr, code, message)  \
+  do                                                                    \
+  {                                                                     \
+    try                                                                 \
+    {                                                                   \
+      (void)(expr);                                                     \
+      CHECK(false);                                                     \
+    }                                                                   \
+    catch (::Tanker::Errors::Exception const& e)                        \
+    {                                                                   \
+      CHECK_EQ(e.errorCode(), code);                                    \
+      CAPTURE(e.what());                                                \
+      CHECK_NE(std::string(e.what()).find(message), std::string::npos); \
+    }                                                                   \
+  } while (0)
+
 #define TANKER_CHECK_THROWS_WITH_CODE_AND_CONDITION(expr, code, condition) \
   do                                                                       \
   {                                                                        \
