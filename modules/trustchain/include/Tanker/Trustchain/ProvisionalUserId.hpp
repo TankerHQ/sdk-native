@@ -21,6 +21,8 @@ class ProvisionalUserId
                               ProvisionalUserId& k);
 };
 
+bool operator<(ProvisionalUserId const& l, ProvisionalUserId const& r);
+
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(ProvisionalUserId)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(ProvisionalUserId)
 }

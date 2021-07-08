@@ -154,9 +154,17 @@ TEST_CASE("throws when getting keys of an unknown member")
                     Users::IRequester::IsLight::Yes))
       .LR_RETURN(makeCoTask(UsersPullResult{{}, {unknownIdentity.userId}}));
 
+  auto const spublicIdentities =
+      std::vector<SPublicIdentity>{SPublicIdentity{to_string(unknownIdentity)}};
+  auto const publicIdentitiesToAdd = extractPublicIdentities(spublicIdentities);
+  auto const partitionedIdentitiesToAdd =
+      partitionIdentities(publicIdentitiesToAdd);
+
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(Groups::Manager::fetchFutureMembers(
-          userAccessor, {SPublicIdentity{to_string(unknownIdentity)}})),
+      AWAIT(Groups::Manager::fetchFutureMembers(userAccessor,
+                                                spublicIdentities,
+                                                publicIdentitiesToAdd,
+                                                partitionedIdentitiesToAdd)),
       Errc::InvalidArgument);
 }
 

@@ -7,7 +7,6 @@
 #include <Tanker/Errors/Exception.hpp>
 
 #include <Tanker/Groups/EntryGenerator.hpp>
-#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -23,12 +22,10 @@ namespace Tanker::Groups::Manager
 {
 tc::cotask<MembersToAdd> fetchFutureMembers(
     Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> spublicIdentities)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    Tanker::PartitionedIdentities const& members)
 {
-  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto const members = partitionIdentities(publicIdentities);
-
   auto const memberUsers = TC_AWAIT(
       userAccessor.pull(members.userIds, Users::IRequester::IsLight::Yes));
   if (!memberUsers.notFound.empty())
@@ -50,12 +47,10 @@ tc::cotask<MembersToAdd> fetchFutureMembers(
 
 tc::cotask<MembersToRemove> fetchMembersToRemove(
     Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> spublicIdentities)
+    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    Tanker::PartitionedIdentities const& members)
 {
-  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto members = partitionIdentities(publicIdentities);
-
   MembersToRemove ret;
   ret.users = std::move(members.userIds);
 
@@ -106,13 +101,20 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
-    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SPublicIdentity> spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  auto const members =
-      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentities));
+  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
+  auto const publicIdentitiesToAdd = extractPublicIdentities(spublicIdentities);
+  auto const partitionedIdentitiesToAdd =
+      partitionIdentities(publicIdentitiesToAdd);
+
+  auto const members = TC_AWAIT(fetchFutureMembers(userAccessor,
+                                                   spublicIdentities,
+                                                   publicIdentitiesToAdd,
+                                                   partitionedIdentitiesToAdd));
 
   auto const groupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const groupSignatureKeyPair = Crypto::makeSignatureKeyPair();
@@ -185,29 +187,119 @@ Trustchain::Actions::UserGroupRemoval makeUserGroupRemovalAction(
   };
 }
 
+namespace
+{
+template <typename T>
+void checkAddedAndRemoved(
+    std::vector<T> usersToAdd,
+    std::vector<T> usersToRemove,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove)
+{
+  std::sort(usersToAdd.begin(), usersToAdd.end());
+  std::sort(usersToRemove.begin(), usersToRemove.end());
+
+  std::vector<T> usersBothAddedAndRemoved;
+  std::set_intersection(usersToAdd.begin(),
+                        usersToAdd.end(),
+                        usersToRemove.begin(),
+                        usersToRemove.end(),
+                        std::back_inserter(usersBothAddedAndRemoved));
+
+  if (!usersBothAddedAndRemoved.empty())
+  {
+    auto const identitiesBothAddedAndRemoved =
+        mapIdentitiesToStrings(usersBothAddedAndRemoved,
+                               spublicIdentitiesToRemove,
+                               publicIdentitiesToRemove);
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot both add and remove: {:s}",
+                   fmt::join(identitiesBothAddedAndRemoved, ", "));
+  }
+}
+
+std::vector<Trustchain::UserId> usersToUserIds(
+    std::vector<Users::User> const& users)
+{
+  std::vector<Trustchain::UserId> ret;
+  ret.reserve(users.size());
+  for (auto const& u : users)
+    ret.push_back(u.id());
+  return ret;
+}
+
+std::vector<Trustchain::ProvisionalUserId> provisionalUsersToProvisionalUserIds(
+    std::vector<ProvisionalUsers::PublicUser> const& users)
+{
+  std::vector<Trustchain::ProvisionalUserId> ret;
+  ret.reserve(users.size());
+  for (auto const& u : users)
+    ret.push_back({u.appSignaturePublicKey, u.tankerSignaturePublicKey});
+  return ret;
+}
+
+void checkMembers(
+    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToAdd,
+    MembersToAdd const& membersToAdd,
+    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    std::vector<Identity::PublicIdentity> const& publicIdentitiesToRemove,
+    MembersToRemove const& membersToRemove)
+{
+  checkAddedAndRemoved(usersToUserIds(membersToAdd.users),
+                       membersToRemove.users,
+                       spublicIdentitiesToAdd,
+                       publicIdentitiesToAdd);
+
+  checkAddedAndRemoved(
+      provisionalUsersToProvisionalUserIds(membersToAdd.provisionalUsers),
+      membersToRemove.provisionalUsers,
+      spublicIdentitiesToAdd,
+      publicIdentitiesToAdd);
+}
+}
+
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToRemove,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
   auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
 
+  spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));
+  auto const publicIdentitiesToAdd =
+      extractPublicIdentities(spublicIdentitiesToAdd);
+  auto const partitionedIdentitiesToAdd =
+      partitionIdentities(publicIdentitiesToAdd);
+
+  spublicIdentitiesToRemove =
+      removeDuplicates(std::move(spublicIdentitiesToRemove));
+  auto const publicIdentitiesToRemove =
+      extractPublicIdentities(spublicIdentitiesToRemove);
+  auto const partitionedIdentitiesToRemove =
+      partitionIdentities(publicIdentitiesToRemove);
+
+  MembersToAdd membersToAdd;
+  MembersToRemove membersToRemove;
+
   std::optional<Trustchain::Actions::UserGroupAddition> groupAddEntry;
   std::optional<Trustchain::Actions::UserGroupRemoval> groupRemoveEntry;
 
   if (!spublicIdentitiesToAdd.empty())
   {
-    auto const members =
-        TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
+    membersToAdd = TC_AWAIT(fetchFutureMembers(userAccessor,
+                                               spublicIdentitiesToAdd,
+                                               publicIdentitiesToAdd,
+                                               partitionedIdentitiesToAdd));
 
-    groupAddEntry = makeUserGroupAdditionAction(members.users,
-                                                members.provisionalUsers,
+    groupAddEntry = makeUserGroupAdditionAction(membersToAdd.users,
+                                                membersToAdd.provisionalUsers,
                                                 group,
                                                 trustchainId,
                                                 deviceId,
@@ -216,8 +308,11 @@ tc::cotask<void> updateMembers(
 
   if (!spublicIdentitiesToRemove.empty())
   {
-    auto const membersToRemove =
-        TC_AWAIT(fetchMembersToRemove(userAccessor, spublicIdentitiesToRemove));
+    membersToRemove =
+        TC_AWAIT(fetchMembersToRemove(userAccessor,
+                                      spublicIdentitiesToRemove,
+                                      publicIdentitiesToRemove,
+                                      partitionedIdentitiesToRemove));
 
     groupRemoveEntry =
         makeUserGroupRemovalAction(membersToRemove.users,
@@ -227,6 +322,13 @@ tc::cotask<void> updateMembers(
                                    deviceId,
                                    privateSignatureKey);
   }
+
+  checkMembers(spublicIdentitiesToAdd,
+               publicIdentitiesToAdd,
+               membersToAdd,
+               spublicIdentitiesToRemove,
+               publicIdentitiesToRemove,
+               membersToRemove);
 
   if (groupRemoveEntry)
     TC_AWAIT(requester.softUpdateGroup(*groupRemoveEntry, groupAddEntry));
