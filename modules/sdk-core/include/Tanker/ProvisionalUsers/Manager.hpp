@@ -45,6 +45,12 @@ public:
   provisionalIdentity() const;
 
 private:
+  tc::cotask<std::optional<ProvisionalUserKeys>> fetchProvisionalKeys(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity);
+  tc::cotask<AttachResult> claimProvisionalIdentity(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity,
+      Crypto::SymmetricKey const& userSecret);
+
   Users::ILocalUserAccessor* _localUserAccessor;
   IRequester* _requester;
   Unlock::Requester* _unlockRequester;

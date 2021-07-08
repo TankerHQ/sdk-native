@@ -55,40 +55,31 @@ Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
 {
 }
 
-tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
-    SSecretProvisionalIdentity const& sidentity,
-    Crypto::SymmetricKey const& userSecret)
+tc::cotask<std::optional<ProvisionalUserKeys>> Manager::fetchProvisionalKeys(
+    Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
-  auto const provisionalIdentity =
-      Identity::extract<Identity::SecretProvisionalIdentity>(
-          sidentity.string());
+  auto optProvisionalKey =
+      TC_AWAIT(_provisionalUserKeysStore
+                   ->findProvisionalUserKeysByAppPublicEncryptionKey(
+                       provisionalIdentity.appEncryptionKeyPair.publicKey));
 
-  if (provisionalIdentity.target != Identity::TargetType::Email)
+  if (!optProvisionalKey)
   {
-    throw Errors::AssertionError(
-        fmt::format(FMT_STRING("unsupported provisional identity target {:s}"),
-                    provisionalIdentity.target));
-  }
-
-  {
-    auto optProvisionalKey =
+    TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
+    optProvisionalKey =
         TC_AWAIT(_provisionalUserKeysStore
                      ->findProvisionalUserKeysByAppPublicEncryptionKey(
                          provisionalIdentity.appEncryptionKeyPair.publicKey));
-
-    if (!optProvisionalKey)
-    {
-      TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
-      optProvisionalKey =
-          TC_AWAIT(_provisionalUserKeysStore
-                       ->findProvisionalUserKeysByAppPublicEncryptionKey(
-                           provisionalIdentity.appEncryptionKeyPair.publicKey));
-    }
-    if (optProvisionalKey)
-      TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
   }
+  TC_RETURN(std::move(optProvisionalKey));
+}
 
+tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
+    Identity::SecretProvisionalIdentity const& provisionalIdentity,
+    Crypto::SymmetricKey const& userSecret)
+{
   auto const email = Email{provisionalIdentity.value};
+
   try
   {
     auto verificationMethods =
@@ -127,6 +118,27 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   }
   _provisionalIdentity = provisionalIdentity;
   TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+}
+
+tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
+    SSecretProvisionalIdentity const& sidentity,
+    Crypto::SymmetricKey const& userSecret)
+{
+  auto const provisionalIdentity =
+      Identity::extract<Identity::SecretProvisionalIdentity>(
+          sidentity.string());
+
+  if (provisionalIdentity.target != Identity::TargetType::Email)
+  {
+    throw Errors::AssertionError(
+        fmt::format(FMT_STRING("unsupported provisional identity target {:s}"),
+                    provisionalIdentity.target));
+  }
+
+  if (TC_AWAIT(fetchProvisionalKeys(provisionalIdentity)))
+    TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
+
+  return claimProvisionalIdentity(provisionalIdentity, userSecret);
 }
 
 tc::cotask<void> Manager::verifyProvisionalIdentity(
