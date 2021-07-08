@@ -161,10 +161,11 @@ TEST_CASE("throws when getting keys of an unknown member")
       partitionIdentities(publicIdentitiesToAdd);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(Groups::Manager::fetchFutureMembers(userAccessor,
-                                                spublicIdentities,
-                                                publicIdentitiesToAdd,
-                                                partitionedIdentitiesToAdd)),
+      AWAIT(Groups::Manager::fetchFutureMembers(
+          userAccessor,
+          Groups::Manager::ProcessedIdentities{spublicIdentities,
+                                               publicIdentitiesToAdd,
+                                               partitionedIdentitiesToAdd})),
       Errc::InvalidArgument);
 }
 
