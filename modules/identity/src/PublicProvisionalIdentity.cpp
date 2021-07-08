@@ -51,9 +51,9 @@ std::string to_string(PublicProvisionalIdentity const& identity)
   return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
 }
 
-Crypto::Hash hashProvisionalEmail(std::string const& value)
+HashedEmail hashProvisionalEmail(std::string const& value)
 {
-  return Crypto::generichash(
+  return Crypto::generichash<HashedEmail>(
       gsl::make_span(value).as_span<std::uint8_t const>());
 }
 }

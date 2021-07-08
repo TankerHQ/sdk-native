@@ -176,12 +176,12 @@ tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
 }
 
 tc::cotask<std::map<
-    Crypto::Hash,
+    HashedEmail,
     std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
 Requester::getPublicProvisionalIdentities(
-    gsl::span<Crypto::Hash const> hashedEmails)
+    gsl::span<HashedEmail const> hashedEmails)
 {
-  std::map<Crypto::Hash,
+  std::map<HashedEmail,
            std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
       ret;
   if (hashedEmails.empty())
@@ -195,7 +195,7 @@ Requester::getPublicProvisionalIdentities(
 
   for (auto const& elem : result.at("public_provisional_identities"))
   {
-    auto const hashedEmail = elem.at("hashed_email").get<Crypto::Hash>();
+    auto const hashedEmail = elem.at("hashed_email").get<HashedEmail>();
     auto const publicSignatureKey =
         elem.at("public_signature_key").get<Crypto::PublicSignatureKey>();
     auto const publicEncryptionKey =

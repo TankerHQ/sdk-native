@@ -6,6 +6,7 @@
 #include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Types/HashedEmail.hpp>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -22,7 +23,7 @@ struct PublicProvisionalIdentity
   Crypto::PublicEncryptionKey appEncryptionPublicKey;
 };
 
-Crypto::Hash hashProvisionalEmail(std::string const& value);
+HashedEmail hashProvisionalEmail(std::string const& value);
 
 void from_json(nlohmann::json const& j, PublicProvisionalIdentity& result);
 void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity);

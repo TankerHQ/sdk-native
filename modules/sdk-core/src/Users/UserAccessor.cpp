@@ -131,12 +131,11 @@ auto processUserEntries(Trustchain::Context const& context,
   return std::make_tuple(usersMap, devicesMap);
 }
 
-std::vector<Crypto::Hash> hashProvisionalUserEmails(
-
+std::vector<HashedEmail> hashProvisionalUserEmails(
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
-  std::vector<Crypto::Hash> hashedProvisionalUserEmails;
+  std::vector<HashedEmail> hashedProvisionalUserEmails;
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
   {
     if (appProvisionalIdentity.target == Identity::TargetType::Email)
@@ -147,7 +146,7 @@ std::vector<Crypto::Hash> hashProvisionalUserEmails(
     else if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
     {
       auto hashedEmail =
-          mgs::base64::decode<Crypto::Hash>(appProvisionalIdentity.value);
+          mgs::base64::decode<HashedEmail>(appProvisionalIdentity.value);
       hashedProvisionalUserEmails.push_back(hashedEmail);
     }
     else
@@ -184,7 +183,7 @@ UserAccessor::pullProvisional(
 
   auto const hashedEmails = hashProvisionalUserEmails(appProvisionalIdentities);
 
-  std::map<Crypto::Hash,
+  std::map<HashedEmail,
            std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
       tankerProvisionalIdentities;
   for (unsigned int i = 0; i < hashedEmails.size(); i += ChunkSize)
