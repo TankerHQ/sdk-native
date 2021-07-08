@@ -51,6 +51,9 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"upgrade_required", AppdErrc::UpgradeRequired},
     {"invalid_challenge_signature", AppdErrc::InvalidChallengeSignature},
     {"invalid_challenge_public_key", AppdErrc::InvalidChallengePublicKey},
+    {"not_a_user_group_member", AppdErrc::NotAUserGroupMember},
+    {"empty_user_group", AppdErrc::EmptyUserGroup},
+    {"missing_user_group_members", AppdErrc::MissingUserGroupMembers},
 };
 
 AppdErrc getErrorFromCode(std::string_view code)

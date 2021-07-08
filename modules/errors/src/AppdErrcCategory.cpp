@@ -64,6 +64,12 @@ std::string AppdErrcCategory::message(int c) const
     return "invalid challenge signature";
   case AppdErrc::InvalidChallengePublicKey:
     return "invalid challenge public key";
+  case AppdErrc::NotAUserGroupMember:
+    return "not a user group member";
+  case AppdErrc::EmptyUserGroup:
+    return "empty user group";
+  case AppdErrc::MissingUserGroupMembers:
+    return "missing user group members";
   }
   return "unknown error";
 }
@@ -107,6 +113,10 @@ std::error_condition AppdErrcCategory::default_error_condition(
     return make_error_condition(Errors::Errc::GroupTooBig);
   case AppdErrc::UpgradeRequired:
     return make_error_condition(Errors::Errc::UpgradeRequired);
+  case AppdErrc::NotAUserGroupMember:
+  case AppdErrc::EmptyUserGroup:
+  case AppdErrc::MissingUserGroupMembers:
+    return make_error_condition(Errors::Errc::InvalidArgument);
   }
   return std::error_condition(c, *this);
 }

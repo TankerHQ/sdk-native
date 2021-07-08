@@ -33,6 +33,9 @@ enum class AppdErrc
   BadRequest,
   InvalidChallengePublicKey,
   InvalidChallengeSignature,
+  NotAUserGroupMember,
+  EmptyUserGroup,
+  MissingUserGroupMembers,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;
