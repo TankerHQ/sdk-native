@@ -270,6 +270,10 @@ tc::cotask<void> updateMembers(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
+  if (spublicIdentitiesToAdd.empty() && spublicIdentitiesToRemove.empty())
+    throw formatEx(Errc::InvalidArgument,
+                   "no members to add or remove in updateGroupMembers");
+
   auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
 
   spublicIdentitiesToAdd = removeDuplicates(std::move(spublicIdentitiesToAdd));

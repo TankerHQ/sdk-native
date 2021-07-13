@@ -337,6 +337,19 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   }
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can't do a no-op update to a group")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {}, {})),
+      Errors::Errc::InvalidArgument);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice shares with a group with Bob later added as a "
                   "provisional user when Bob has already verified the group")
