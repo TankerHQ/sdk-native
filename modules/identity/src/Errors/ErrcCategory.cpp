@@ -31,6 +31,8 @@ std::string ErrcCategory::message(int c) const
     return "invalid identity type";
   case Errc::InvalidFormat:
     return "invalid identity format";
+  case Errc::InvalidPhoneNumber:
+    return "invalid phone number";
   default:
     return "unknown error";
   }
@@ -49,6 +51,7 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   case Errc::InvalidEmail:
   case Errc::InvalidType:
   case Errc::InvalidFormat:
+  case Errc::InvalidPhoneNumber:
     return make_error_condition(Errors::Errc::InvalidArgument);
   default:
     return std::error_condition(c, *this);

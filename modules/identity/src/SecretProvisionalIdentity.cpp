@@ -25,6 +25,18 @@ SecretProvisionalIdentity createProvisionalIdentity(
   };
 }
 
+SecretProvisionalIdentity createProvisionalIdentity(
+    TrustchainId const& trustchainId, PhoneNumber const& phoneNumber)
+{
+  return SecretProvisionalIdentity{
+      trustchainId,
+      TargetType::PhoneNumber,
+      phoneNumber.string(),
+      Crypto::makeSignatureKeyPair(),
+      Crypto::makeEncryptionKeyPair(),
+  };
+}
+
 std::string createProvisionalIdentity(std::string const& trustchainIdParam,
                                       Email const& email)
 {
@@ -38,10 +50,23 @@ std::string createProvisionalIdentity(std::string const& trustchainIdParam,
   return to_string(createProvisionalIdentity(trustchainId, email));
 }
 
+std::string createProvisionalIdentity(std::string const& trustchainIdParam,
+                                      PhoneNumber const& phoneNumber)
+{
+  if (phoneNumber.empty())
+    throw Errors::Exception(Errc::InvalidPhoneNumber);
+  if (trustchainIdParam.empty())
+    throw Errors::Exception(Errc::InvalidTrustchainId);
+
+  auto const trustchainId =
+      mgs::base64::decode<TrustchainId>(trustchainIdParam);
+  return to_string(createProvisionalIdentity(trustchainId, phoneNumber));
+}
+
 void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
-  if (target != "email")
+  if (target != "email" && target != "phone_number")
   {
     throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
                            "unsupported provisional identity target: {}",
@@ -66,7 +91,8 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 void to_json(nlohmann::ordered_json& j,
              SecretProvisionalIdentity const& identity)
 {
-  if (identity.target != TargetType::Email)
+  if (identity.target != TargetType::Email &&
+      identity.target != TargetType::PhoneNumber)
   {
     throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
                            "unsupported provisional identity target: {}",

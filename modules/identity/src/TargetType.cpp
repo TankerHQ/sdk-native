@@ -14,6 +14,10 @@ std::string to_string(TargetType t)
     return "email";
   case TargetType::HashedEmail:
     return "hashed_email";
+  case TargetType::PhoneNumber:
+    return "phone_number";
+  case TargetType::HashedPhoneNumber:
+    return "hashed_phone_number";
   }
   throw Errors::AssertionError("Unhandled type in to_string(TargetType)");
 }
@@ -24,6 +28,10 @@ TargetType to_target_type(std::string const& s)
     return TargetType::Email;
   else if (s == "hashed_email")
     return TargetType::HashedEmail;
+  if (s == "phone_number")
+    return TargetType::PhoneNumber;
+  else if (s == "hashed_phone_number")
+    return TargetType::HashedPhoneNumber;
   else
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "Invalid identity target type: " + s);
