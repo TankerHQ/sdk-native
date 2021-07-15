@@ -4,6 +4,7 @@
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <Tanker/Functional/TrustchainFixture.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 
 #include <mgs/base64.hpp>
 

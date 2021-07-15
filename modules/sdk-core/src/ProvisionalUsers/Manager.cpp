@@ -128,7 +128,8 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
       Identity::extract<Identity::SecretProvisionalIdentity>(
           sidentity.string());
 
-  if (provisionalIdentity.target != Identity::TargetType::Email)
+  if (provisionalIdentity.target != Identity::TargetType::Email &&
+      provisionalIdentity.target != Identity::TargetType::PhoneNumber)
   {
     throw Errors::AssertionError(
         fmt::format(FMT_STRING("unsupported provisional identity target {:s}"),
