@@ -62,8 +62,6 @@ GroupAction deserializeGroupAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<UserGroupAddition2>(block);
   case Nature::UserGroupAddition3:
     return Serialization::deserialize<UserGroupAddition3>(block);
-  case Nature::UserGroupUpdate1:
-    return Serialization::deserialize<UserGroupUpdate1>(block);
   default:
     // remove the static_cast and this line will make fmt dereference a null
     // pointer, deep in its internals

@@ -88,7 +88,7 @@ Accessor::getEncryptionKeyPair(
   if (entries.empty())
     TC_RETURN(std::nullopt);
 
-  auto const [group, groupKeys] =
+  auto const group =
       TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                  *_userAccessor,
                                                  *_provisionalUserAccessor,
@@ -98,15 +98,15 @@ Accessor::getEncryptionKeyPair(
     throw Errors::AssertionError(
         fmt::format("group {} has no blocks", publicEncryptionKey));
 
-  // add the group keys to cache
-  auto const groupId = getGroupId(*group);
-  auto const result =
-      std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& key) {
-        return key.publicKey == publicEncryptionKey;
-      });
-  TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
-  TC_RETURN(result != groupKeys.end() ? std::make_optional(*result) :
-                                        std::nullopt);
+  if (auto const internalGroup =
+          boost::variant2::get_if<InternalGroup>(&*group))
+  {
+    TC_AWAIT(_groupStore->putKeys(internalGroup->id,
+                                  {internalGroup->encryptionKeyPair}));
+    TC_RETURN(internalGroup->encryptionKeyPair);
+  }
+  else
+    TC_RETURN(std::nullopt);
 }
 
 namespace
@@ -131,9 +131,7 @@ GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
                     userGroupAddition) {
               out[userGroupAddition.groupId()].push_back(action);
             },
-            [&](const Trustchain::Actions::UserGroupUpdate& userGroupUpdate) {
-              out[userGroupUpdate.groupId()].push_back(action);
-            }},
+        },
         action);
   }
   return out;
@@ -164,7 +162,7 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
       out.notFound.push_back(groupId);
     else
     {
-      auto const [group, groupKeys] =
+      auto const group =
           TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
                                                      *_userAccessor,
                                                      *_provisionalUserAccessor,
@@ -175,8 +173,10 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
             fmt::format("group {} has no blocks", groupId));
       out.found.push_back(*group);
 
-      // add the group and group keys to cache
-      TC_AWAIT(_groupStore->putKeys(groupId, groupKeys));
+      if (auto const internalGroup =
+              boost::variant2::get_if<InternalGroup>(&*group))
+        TC_AWAIT(
+            _groupStore->putKeys(groupId, {internalGroup->encryptionKeyPair}));
     }
   }
 

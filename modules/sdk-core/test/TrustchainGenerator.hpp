@@ -1,3 +1,4 @@
+#pragma once
 
 #include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
@@ -74,10 +75,6 @@ struct Group
       std::vector<User> const& newUsers = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});
   Trustchain::Actions::UserGroupAddition addUsers(
-      Device const& author,
-      std::vector<User> const& users = {},
-      std::vector<ProvisionalUser> const& provisionalUsers = {});
-  Trustchain::Actions::UserGroupUpdate updateUsers(
       Device const& author,
       std::vector<User> const& users = {},
       std::vector<ProvisionalUser> const& provisionalUsers = {});

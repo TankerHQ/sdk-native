@@ -257,44 +257,6 @@ Trustchain::Actions::UserGroupAddition3 createUserGroupAdditionV3Action(
   };
 }
 
-Trustchain::Actions::UserGroupUpdate1 createUserGroupUpdateV1Action(
-    GroupId const& groupId,
-    Crypto::Hash const& previousGroupBlockHash,
-    Crypto::Hash const& previousKeyRotationBlockHash,
-    Crypto::SignatureKeyPair const& newGroupSignatureKeyPair,
-    Crypto::PublicEncryptionKey const& newGroupPublicEncryptionKey,
-    Crypto::SignatureKeyPair const& previousGroupSignatureKeyPair,
-    Crypto::EncryptionKeyPair const& previousGroupEncryptionKeyPair,
-    std::vector<UserGroupAddition::v2::Member> const& members,
-    std::vector<UserGroupAddition::v3::ProvisionalMember> const&
-        provisionalMembers,
-    TrustchainId const& trustchainId,
-    DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& deviceSignatureKey)
-{
-  auto const encryptedPrivateSignatureKey = Crypto::sealEncrypt(
-      newGroupSignatureKeyPair.privateKey, newGroupPublicEncryptionKey);
-  auto const encryptedPreviousEncryptionKey = Crypto::sealEncrypt(
-      previousGroupEncryptionKeyPair.privateKey, newGroupPublicEncryptionKey);
-
-  return UserGroupUpdate::v1{
-      trustchainId,
-      groupId,
-      previousGroupBlockHash,
-      previousKeyRotationBlockHash,
-      newGroupSignatureKeyPair.publicKey,
-      newGroupPublicEncryptionKey,
-      encryptedPrivateSignatureKey,
-      encryptedPreviousEncryptionKey,
-      members,
-      provisionalMembers,
-      static_cast<Crypto::Hash>(deviceId),
-      newGroupSignatureKeyPair.privateKey,
-      previousGroupSignatureKeyPair.privateKey,
-      deviceSignatureKey,
-  };
-}
-
 KeyPublishToUserGroup createKeyPublishToGroupAction(
     Crypto::SealedSymmetricKey const& symKey,
     ResourceId const& resourceId,

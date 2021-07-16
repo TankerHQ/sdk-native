@@ -6,7 +6,6 @@
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
-#include <Tanker/Trustchain/Actions/UserGroupUpdate.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -59,17 +58,6 @@ tc::cotask<SGroupId> create(
 Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     std::vector<Users::User> const& memberUsers,
     std::vector<ProvisionalUsers::PublicUser> const& memberProvisionalUsers,
-    InternalGroup const& group,
-    Trustchain::TrustchainId const& trustchainId,
-    Trustchain::DeviceId const& deviceId,
-    Crypto::PrivateSignatureKey const& privateSignatureKey);
-
-Trustchain::Actions::UserGroupUpdate makeUserGroupUpdateAction(
-    Crypto::SignatureKeyPair const& newGroupSignatureKeyPair,
-    Crypto::EncryptionKeyPair const& newGroupEncryptionKeyPair,
-    std::vector<Trustchain::Actions::RawUserGroupMember2> const& memberUsers,
-    std::vector<Trustchain::Actions::RawUserGroupProvisionalMember3> const&
-        memberProvisionalUsers,
     InternalGroup const& group,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,

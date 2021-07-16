@@ -1,6 +1,5 @@
 #include <Tanker/Groups/Verif/UserGroupAddition.hpp>
 #include <Tanker/Groups/Verif/UserGroupCreation.hpp>
-#include <Tanker/Groups/Verif/UserGroupUpdate.hpp>
 #include <Tanker/ProvisionalUsers/Verif/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/DeviceCreation.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -224,67 +223,6 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
   {
     CHECK_NOTHROW(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup));
-  }
-}
-
-void testUserGroupUpdateCommon(Test::Device const& authorDevice,
-                               UserGroupUpdate const& grpEntry,
-                               Test::Group const& prevGroup,
-                               Test::Group const& newGroup)
-{
-  auto const baseGroup = BaseGroup{prevGroup};
-
-  SUBCASE("should reject a UserGroupUpdate for an unknown group")
-  {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, std::nullopt),
-        Errc::InvalidGroup);
-  }
-
-  SUBCASE("should reject an incorrectly signed UserGroupUpdate")
-  {
-    unconstify(grpEntry.signature())[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, baseGroup),
-        Errc::InvalidSignature);
-  }
-
-  SUBCASE(
-      "should reject a UserGroupUpdate where previousKeyRotationBlock is not the "
-      "hash of last key rotation")
-  {
-    unconstify(grpEntry.previousKeyRotationBlockHash())[0]++;
-    unconstify(grpEntry.selfSignatureWithCurrentKey()) = Crypto::sign(
-        grpEntry.signatureData(), newGroup.currentSigKp().privateKey);
-    unconstify(grpEntry.selfSignatureWithPreviousKey()) = Crypto::sign(
-        grpEntry.signatureData(), prevGroup.currentSigKp().privateKey);
-    unconstify(grpEntry.signature()) = Crypto::sign(
-        getHash(grpEntry), authorDevice.keys().signatureKeyPair.privateKey);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, baseGroup),
-        Errc::InvalidGroup);
-  }
-
-  SUBCASE("should reject a UserGroupUpdate with invalid previous selfSignature")
-  {
-    unconstify(grpEntry.selfSignatureWithPreviousKey())[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, baseGroup),
-        Errc::InvalidSignature);
-  }
-
-  SUBCASE("should reject a UserGroupUpdate with invalid current selfSignature")
-  {
-    unconstify(grpEntry.selfSignatureWithCurrentKey())[0]++;
-    TANKER_CHECK_THROWS_WITH_CODE(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, baseGroup),
-        Errc::InvalidSignature);
-  }
-
-  SUBCASE("should accept a valid UserGroupUpdate")
-  {
-    CHECK_NOTHROW(
-        Verif::verifyUserGroupUpdate(grpEntry, authorDevice, baseGroup));
   }
 }
 }
@@ -640,24 +578,6 @@ TEST_CASE("Verif UserGroupAddition")
 
     testUserGroupAdditionCommon(
         aliceDevice, aliceGroup.addUsers(aliceDevice, {bob}), previousGroup);
-  }
-}
-
-TEST_CASE("Verif UserGroupUpdate")
-{
-  Test::Generator generator;
-
-  auto alice = generator.makeUser("alice");
-  auto const& aliceDevice = alice.addDevice();
-  auto const bob = generator.makeUser("bob");
-
-  SUBCASE("V1")
-  {
-    auto aliceGroup = generator.makeGroup(aliceDevice, {alice, bob});
-    auto const prevGroup = aliceGroup;
-    auto updateBlock = aliceGroup.updateUsers(aliceDevice, {alice});
-
-    testUserGroupUpdateCommon(aliceDevice, updateBlock, prevGroup, aliceGroup);
   }
 }
 
