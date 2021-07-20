@@ -45,6 +45,7 @@ void migrateTable(DataStore::Connection& db, int currentVersion, groups const&)
   {
   case 0:
   case 1:
+    break;
   default:
     throw Tanker::Errors::AssertionError("Unreachable code");
     std::terminate();
