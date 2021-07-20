@@ -51,6 +51,20 @@ TEST_CASE("GroupAccessor")
 
   SUBCASE("request groups from cache")
   {
+    SUBCASE("it should return cached encryption keys")
+    {
+
+      AWAIT_VOID(groupStore.put(static_cast<InternalGroup>(aliceGroup)));
+
+      auto const result1 =
+          AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
+      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
+
+      auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
+          {aliceGroup.currentEncKp().publicKey}));
+      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
+    }
+
     SUBCASE("it can request group public keys by invalid groupId")
     {
       auto const unknownGroupId = make<GroupId>("unknownGroup");
@@ -64,6 +78,25 @@ TEST_CASE("GroupAccessor")
       CHECK(result.found.empty());
       REQUIRE_EQ(result.notFound.size(), 1);
       CHECK_EQ(result.notFound[0], unknownGroupId);
+    }
+
+    SUBCASE("it should return cached public encryption keys")
+    {
+      FORBID_CALL(requestStub,
+                    getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}));
+
+      {
+        auto aliceInternalGroup = static_cast<InternalGroup>(aliceGroup);
+        AWAIT_VOID(groupStore.put(aliceInternalGroup));
+      }
+
+      auto const result1 =
+          AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
+      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
+
+      auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
+          {aliceGroup.currentEncKp().publicKey}));
+      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
     }
   }
 
@@ -85,26 +118,6 @@ TEST_CASE("GroupAccessor")
                    pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
 
-      SUBCASE("it should NOT return cached encryption keys")
-      {
-        REQUIRE_CALL(requestStub,
-                     getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}))
-            .RETURN(makeCoTask(makeEntries(aliceGroup)));
-
-        {
-          auto aliceInternalGroup = static_cast<InternalGroup>(aliceGroup);
-          AWAIT_VOID(groupStore.putKeys(
-              aliceInternalGroup.id, {aliceInternalGroup.encryptionKeyPair}));
-        }
-
-        auto const result1 =
-            AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
-        CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
-
-        auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
-            {aliceGroup.currentEncKp().publicKey}));
-        CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
-      }
 
       SUBCASE("request group by Id")
       {

@@ -61,13 +61,23 @@ Accessor::getPublicEncryptionKeys(
     std::vector<Trustchain::GroupId> const& groupIds)
 {
   PublicEncryptionKeyPullResult out;
+  for (auto const& groupId : groupIds)
+  {
+    auto const group = TC_AWAIT(_groupStore->findById(groupId));
+    if (group)
+      out.found.push_back(getPublicEncryptionKey(*group));
+    else
+      out.notFound.push_back(groupId);
+  }
 
-  // The key could have changed due to a new GroupUpdate block, so always fetch
-  auto groupPullResult = TC_AWAIT(getGroups(groupIds));
+  if (!out.notFound.empty())
+  {
+    auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
 
-  out.notFound = std::move(groupPullResult.notFound);
-  for (auto const& group : groupPullResult.found)
-    out.found.push_back(getPublicEncryptionKey(group));
+    out.notFound = std::move(groupPullResult.notFound);
+    for (auto const& group : groupPullResult.found)
+      out.found.push_back(getPublicEncryptionKey(group));
+  }
 
   TC_RETURN(out);
 }
@@ -77,10 +87,10 @@ Accessor::getEncryptionKeyPair(
     Crypto::PublicEncryptionKey const& publicEncryptionKey)
 {
   {
-    auto const groupKey = TC_AWAIT(
-        _groupStore->findKeyByPublicEncryptionKey(publicEncryptionKey));
-    if (groupKey)
-      TC_RETURN(groupKey);
+    auto const group = TC_AWAIT(
+        _groupStore->findInternalByPublicEncryptionKey(publicEncryptionKey));
+    if (group)
+      TC_RETURN(group->encryptionKeyPair);
   }
 
   auto const entries =
@@ -98,13 +108,12 @@ Accessor::getEncryptionKeyPair(
     throw Errors::AssertionError(
         fmt::format("group {} has no blocks", publicEncryptionKey));
 
+  // add the group to cache
+  TC_AWAIT(_groupStore->put(*group));
+
   if (auto const internalGroup =
           boost::variant2::get_if<InternalGroup>(&*group))
-  {
-    TC_AWAIT(_groupStore->putKeys(internalGroup->id,
-                                  {internalGroup->encryptionKeyPair}));
     TC_RETURN(internalGroup->encryptionKeyPair);
-  }
   else
     TC_RETURN(std::nullopt);
 }
@@ -172,13 +181,12 @@ tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
         throw Errors::AssertionError(
             fmt::format("group {} has no blocks", groupId));
       out.found.push_back(*group);
-
-      if (auto const internalGroup =
-              boost::variant2::get_if<InternalGroup>(&*group))
-        TC_AWAIT(
-            _groupStore->putKeys(groupId, {internalGroup->encryptionKeyPair}));
     }
   }
+
+  // add all the groups to cache
+  for (auto const& group : out.found)
+    TC_AWAIT(_groupStore->put(group));
 
   TC_RETURN(out);
 }

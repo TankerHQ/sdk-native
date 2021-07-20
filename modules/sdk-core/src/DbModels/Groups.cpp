@@ -1,6 +1,7 @@
 #include <Tanker/DbModels/Groups.hpp>
 
 #include <Tanker/DataStore/Connection.hpp>
+#include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DataStore/Version.hpp>
 #include <Tanker/Log/Log.hpp>
 
@@ -27,7 +28,8 @@ void createTable(DataStore::Connection& db, groups const&)
       encrypted_private_signature_key BLOB NULL,
       public_encryption_key BLOB NOT NULL UNIQUE,
       private_encryption_key BLOB NULL,
-      last_group_block_hash BLOB NOT NULL
+      last_group_block_hash BLOB NOT NULL,
+      last_key_rotation_block_hash BLOB NOT NULL
     );
   )");
 }
@@ -43,7 +45,6 @@ void migrateTable(DataStore::Connection& db, int currentVersion, groups const&)
   {
   case 0:
   case 1:
-    break;
   default:
     throw Tanker::Errors::AssertionError("Unreachable code");
     std::terminate();
