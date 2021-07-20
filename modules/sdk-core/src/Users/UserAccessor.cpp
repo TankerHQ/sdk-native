@@ -162,8 +162,6 @@ std::vector<Crypto::Hash> hashProvisionalUserEmails(
           fmt::format("unsupported target type: {}",
                       static_cast<int>(appProvisionalIdentity.target)));
     }
-    hashedProvisionalUserEmails.push_back(
-        hashEmail(Email{appProvisionalIdentity.value}));
   }
   return hashedProvisionalUserEmails;
 }
@@ -215,6 +213,9 @@ UserAccessor::pullProvisional(
                    tankerProvisionalIdentities.size());
   }
 
+  if (appProvisionalIdentities.size() != hashedEmails.size())
+    throw AssertionError(
+        "hashed emails count does not match provisional identities count");
   provisionalUsers.reserve(appProvisionalIdentities.size());
   for (auto i = 0u; i < appProvisionalIdentities.size(); ++i)
   {
