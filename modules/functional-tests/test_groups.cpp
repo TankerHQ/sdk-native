@@ -179,12 +179,18 @@ TEST_SUITE("Groups")
     auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
         mgs::base64::encode(trustchain.id), bobEmail);
 
+    auto const charlieEmail = Email{"charlie.test@tanker.io"};
+    auto const charlieProvisionalIdentity = Identity::createProvisionalIdentity(
+        mgs::base64::encode(trustchain.id), charlieEmail);
+
     auto alice = trustchain.makeUser();
     auto aliceDevice = alice.makeDevice();
     auto aliceSession = TC_AWAIT(aliceDevice.open());
 
-    auto myGroup = TC_AWAIT(aliceSession->createGroup({SPublicIdentity{
-        Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+    auto myGroup = TC_AWAIT(aliceSession->createGroup(
+        {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)},
+         SPublicIdentity{
+             Identity::getPublicIdentity(charlieProvisionalIdentity)}}));
 
     auto const clearData = "my clear data is clear";
     std::vector<uint8_t> encryptedData;
@@ -195,16 +201,33 @@ TEST_SUITE("Groups")
     auto bobDevice = bob.makeDevice();
     auto bobSession = TC_AWAIT(bobDevice.open());
 
-    auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
+    auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
         SSecretProvisionalIdentity{bobProvisionalIdentity}));
     REQUIRE(result.status == Status::IdentityVerificationNeeded);
     auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-    auto const verification = Unlock::Verification{Unlock::EmailVerification{
+    auto verification = Unlock::Verification{Unlock::EmailVerification{
         bobEmail, VerificationCode{bobVerificationCode}}};
     TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
 
     std::string decrypted;
     REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
+    CHECK(decrypted == clearData);
+
+    auto charlie = trustchain.makeUser();
+    auto charlieDevice = charlie.makeDevice();
+    auto charlieSession = TC_AWAIT(charlieDevice.open());
+
+    result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
+        SSecretProvisionalIdentity{charlieProvisionalIdentity}));
+    REQUIRE(result.status == Status::IdentityVerificationNeeded);
+    auto const charlieVerificationCode =
+        TC_AWAIT(getVerificationCode(charlieEmail));
+    verification = Unlock::Verification{Unlock::EmailVerification{
+        charlieEmail, VerificationCode{charlieVerificationCode}}};
+    TC_AWAIT(charlieSession->verifyProvisionalIdentity(verification));
+
+    REQUIRE_NOTHROW(decrypted =
+                        TC_AWAIT(decrypt(*charlieSession, encryptedData)));
     CHECK(decrypted == clearData);
   }
 
