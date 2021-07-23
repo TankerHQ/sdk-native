@@ -30,6 +30,13 @@ namespace Tanker::Groups::Manager
 {
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
+struct ProcessedIdentities
+{
+  std::vector<SPublicIdentity> spublicIdentities;
+  std::vector<Identity::PublicIdentity> publicIdentities;
+  PartitionedIdentities partitionedIdentities;
+};
+
 struct MembersToAdd
 {
   std::vector<Users::User> users;
@@ -37,10 +44,7 @@ struct MembersToAdd
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    Tanker::PartitionedIdentities const& members);
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
 
 struct MembersToRemove
 {
@@ -49,10 +53,7 @@ struct MembersToRemove
 };
 
 tc::cotask<MembersToRemove> fetchMembersToRemove(
-    Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> const& spublicIdentities,
-    std::vector<Identity::PublicIdentity> const& publicIdentities,
-    Tanker::PartitionedIdentities const& members);
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
 
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
