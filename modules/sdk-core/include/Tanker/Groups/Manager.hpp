@@ -3,10 +3,12 @@
 #include <Tanker/Groups/Group.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/Groups/IRequester.hpp>
+#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/ProvisionalUsers/PublicUser.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
+#include <Tanker/Trustchain/ProvisionalUserId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
@@ -28,6 +30,13 @@ namespace Tanker::Groups::Manager
 {
 static constexpr size_t MAX_GROUP_SIZE = 1000;
 
+struct ProcessedIdentities
+{
+  std::vector<SPublicIdentity> spublicIdentities;
+  std::vector<Identity::PublicIdentity> publicIdentities;
+  PartitionedIdentities partitionedIdentities;
+};
+
 struct MembersToAdd
 {
   std::vector<Users::User> users;
@@ -35,8 +44,16 @@ struct MembersToAdd
 };
 
 tc::cotask<MembersToAdd> fetchFutureMembers(
-    Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> spublicIdentities);
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
+
+struct MembersToRemove
+{
+  std::vector<Trustchain::UserId> users;
+  std::vector<Trustchain::ProvisionalUserId> provisionalUsers;
+};
+
+tc::cotask<MembersToRemove> fetchMembersToRemove(
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities);
 
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
     std::vector<Users::User> const& memberUsers,
@@ -50,7 +67,7 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
-    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SPublicIdentity> spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
@@ -68,7 +85,8 @@ tc::cotask<void> updateMembers(
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);

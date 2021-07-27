@@ -7,7 +7,6 @@
 #include <Tanker/Errors/Exception.hpp>
 
 #include <Tanker/Groups/EntryGenerator.hpp>
-#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Users/IUserAccessor.hpp>
@@ -21,31 +20,57 @@ using namespace Tanker::Errors;
 
 namespace Tanker::Groups::Manager
 {
-tc::cotask<MembersToAdd> fetchFutureMembers(
-    Users::IUserAccessor& userAccessor,
-    std::vector<SPublicIdentity> spublicIdentities)
+namespace
 {
-  spublicIdentities = removeDuplicates(std::move(spublicIdentities));
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto const members = partitionIdentities(publicIdentities);
+ProcessedIdentities processIdentities(std::vector<SPublicIdentity> identities)
+{
+  ProcessedIdentities ret;
+  ret.spublicIdentities = removeDuplicates(std::move(identities));
+  ret.publicIdentities = extractPublicIdentities(ret.spublicIdentities);
+  ret.partitionedIdentities = partitionIdentities(ret.publicIdentities);
+  return ret;
+}
+}
 
-  auto const memberUsers = TC_AWAIT(
-      userAccessor.pull(members.userIds, Users::IRequester::IsLight::Yes));
+tc::cotask<MembersToAdd> fetchFutureMembers(
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities)
+{
+  auto const memberUsers =
+      TC_AWAIT(userAccessor.pull(identities.partitionedIdentities.userIds,
+                                 Users::IRequester::IsLight::Yes));
   if (!memberUsers.notFound.empty())
   {
-    auto const notFoundIdentities = mapIdentitiesToStrings(
-        memberUsers.notFound, spublicIdentities, publicIdentities);
+    auto const notFoundIdentities =
+        mapIdentitiesToStrings(memberUsers.notFound,
+                               identities.spublicIdentities,
+                               identities.publicIdentities);
     throw formatEx(Errc::InvalidArgument,
                    "public identities not found: {:s}",
                    fmt::join(notFoundIdentities, ", "));
   }
-  auto const memberProvisionalUsers = TC_AWAIT(
-      userAccessor.pullProvisional(members.publicProvisionalIdentities));
+  auto const memberProvisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
+      identities.partitionedIdentities.publicProvisionalIdentities));
 
   TC_RETURN((MembersToAdd{
       memberUsers.found,
       memberProvisionalUsers,
   }));
+}
+
+tc::cotask<MembersToRemove> fetchMembersToRemove(
+    Users::IUserAccessor& userAccessor, ProcessedIdentities const& identities)
+{
+  MembersToRemove ret;
+  ret.users = identities.partitionedIdentities.userIds;
+
+  auto const memberProvisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
+      identities.partitionedIdentities.publicProvisionalIdentities));
+
+  for (auto const& member : memberProvisionalUsers)
+    ret.provisionalUsers.push_back(
+        {member.appSignaturePublicKey, member.tankerSignaturePublicKey});
+
+  TC_RETURN(std::move(ret));
 }
 
 Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
@@ -85,13 +110,16 @@ Trustchain::Actions::UserGroupCreation makeUserGroupCreationAction(
 tc::cotask<SGroupId> create(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
-    std::vector<SPublicIdentity> const& spublicIdentities,
+    std::vector<SPublicIdentity> spublicIdentities,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
+  auto const processedIdentities =
+      processIdentities(std::move(spublicIdentities));
+
   auto const members =
-      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentities));
+      TC_AWAIT(fetchFutureMembers(userAccessor, processedIdentities));
 
   auto const groupEncryptionKeyPair = Crypto::makeEncryptionKeyPair();
   auto const groupSignatureKeyPair = Crypto::makeSignatureKeyPair();
@@ -144,29 +172,147 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
                                          privateSignatureKey);
 }
 
+Trustchain::Actions::UserGroupRemoval makeUserGroupRemovalAction(
+    std::vector<Trustchain::UserId> const& membersToRemove,
+    std::vector<Trustchain::ProvisionalUserId> const&
+        provisionalMembersToRemove,
+    InternalGroup const& group,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey)
+{
+  return UserGroupRemoval{
+      trustchainId,
+      group.id,
+      membersToRemove,
+      provisionalMembersToRemove,
+      deviceId,
+      group.signatureKeyPair.privateKey,
+      deviceSignatureKey,
+  };
+}
+
+namespace
+{
+template <typename T>
+void checkAddedAndRemoved(std::vector<T> usersToAdd,
+                          std::vector<T> usersToRemove,
+                          ProcessedIdentities const& identitiesToAdd)
+{
+  std::sort(usersToAdd.begin(), usersToAdd.end());
+  std::sort(usersToRemove.begin(), usersToRemove.end());
+
+  std::vector<T> usersBothAddedAndRemoved;
+  std::set_intersection(usersToAdd.begin(),
+                        usersToAdd.end(),
+                        usersToRemove.begin(),
+                        usersToRemove.end(),
+                        std::back_inserter(usersBothAddedAndRemoved));
+
+  if (!usersBothAddedAndRemoved.empty())
+  {
+    auto const identitiesBothAddedAndRemoved =
+        mapIdentitiesToStrings(usersBothAddedAndRemoved,
+                               identitiesToAdd.spublicIdentities,
+                               identitiesToAdd.publicIdentities);
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot both add and remove: {:s}",
+                   fmt::join(identitiesBothAddedAndRemoved, ", "));
+  }
+}
+
+std::vector<Trustchain::UserId> usersToUserIds(
+    std::vector<Users::User> const& users)
+{
+  std::vector<Trustchain::UserId> ret;
+  ret.reserve(users.size());
+  for (auto const& u : users)
+    ret.push_back(u.id());
+  return ret;
+}
+
+std::vector<Trustchain::ProvisionalUserId> provisionalUsersToProvisionalUserIds(
+    std::vector<ProvisionalUsers::PublicUser> const& users)
+{
+  std::vector<Trustchain::ProvisionalUserId> ret;
+  ret.reserve(users.size());
+  for (auto const& u : users)
+    ret.push_back({u.appSignaturePublicKey, u.tankerSignaturePublicKey});
+  return ret;
+}
+}
+
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
     IAccessor& groupAccessor,
     Trustchain::GroupId const& groupId,
-    std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> spublicIdentitiesToAdd,
+    std::vector<SPublicIdentity> spublicIdentitiesToRemove,
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
-  auto const members =
-      TC_AWAIT(fetchFutureMembers(userAccessor, spublicIdentitiesToAdd));
+  if (spublicIdentitiesToAdd.empty() && spublicIdentitiesToRemove.empty())
+    throw formatEx(Errc::InvalidArgument,
+                   "no members to add or remove in updateGroupMembers");
 
-  auto const groups = TC_AWAIT(groupAccessor.getInternalGroups({groupId}));
-  if (groups.found.empty())
-    throw formatEx(Errc::InvalidArgument, "no such group: {:s}", groupId);
+  auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
 
-  auto const groupEntry = makeUserGroupAdditionAction(members.users,
-                                                      members.provisionalUsers,
-                                                      groups.found[0],
-                                                      trustchainId,
-                                                      deviceId,
-                                                      privateSignatureKey);
-  TC_AWAIT(requester.updateGroup(groupEntry));
+  auto const processedIdentitiesToAdd =
+      processIdentities(std::move(spublicIdentitiesToAdd));
+  auto const processedIdentitiesToRemove =
+      processIdentities(std::move(spublicIdentitiesToRemove));
+
+  MembersToAdd membersToAdd;
+  MembersToRemove membersToRemove;
+
+  std::optional<Trustchain::Actions::UserGroupAddition> groupAddEntry;
+  std::optional<Trustchain::Actions::UserGroupRemoval> groupRemoveEntry;
+
+  if (!processedIdentitiesToAdd.spublicIdentities.empty())
+  {
+    membersToAdd =
+        TC_AWAIT(fetchFutureMembers(userAccessor, processedIdentitiesToAdd));
+
+    groupAddEntry = makeUserGroupAdditionAction(membersToAdd.users,
+                                                membersToAdd.provisionalUsers,
+                                                group,
+                                                trustchainId,
+                                                deviceId,
+                                                privateSignatureKey);
+  }
+
+  if (!processedIdentitiesToRemove.spublicIdentities.empty())
+  {
+    membersToRemove = TC_AWAIT(
+        fetchMembersToRemove(userAccessor, processedIdentitiesToRemove));
+
+    groupRemoveEntry =
+        makeUserGroupRemovalAction(membersToRemove.users,
+                                   membersToRemove.provisionalUsers,
+                                   group,
+                                   trustchainId,
+                                   deviceId,
+                                   privateSignatureKey);
+  }
+
+  checkAddedAndRemoved(usersToUserIds(membersToAdd.users),
+                       membersToRemove.users,
+                       processedIdentitiesToAdd);
+
+  checkAddedAndRemoved(
+      provisionalUsersToProvisionalUserIds(membersToAdd.provisionalUsers),
+      membersToRemove.provisionalUsers,
+      processedIdentitiesToAdd);
+
+  if (groupRemoveEntry)
+    TC_AWAIT(requester.softUpdateGroup(*groupRemoveEntry, groupAddEntry));
+  else
+  {
+    if (!groupAddEntry)
+      throw AssertionError("no user to add or remove from group");
+    TC_AWAIT(requester.updateGroup(*groupAddEntry));
+  }
 }
 }

@@ -40,8 +40,13 @@ CTANKER_EXPORT tanker_future_t* tanker_create_group(
  * \pre tanker_status == TANKER_STATUS_READY
  * \param group_id The group ID returned by tanker_create_group
  * \param public_identities_to_add Array of the new group members' public
- * identities. \param nb_public_identities_to_add The number of users in
+ * identities.
+ * \param nb_public_identities_to_add The number of users in
  * public_identities_to_add.
+ * \param public_identities_to_remove Array of the public identities of group
+ * members to remove.
+ * \param nb_public_identities_to_remove The number of users in
+ * public_identities_to_remove.
  *
  * \return An empty future.
  * \throws TANKER_ERROR_USER_NOT_FOUND One of the users was not found, no
@@ -53,7 +58,9 @@ CTANKER_EXPORT tanker_future_t* tanker_update_group_members(
     tanker_t* session,
     char const* group_id,
     char const* const* public_identities_to_add,
-    uint64_t nb_public_identities_to_add);
+    uint64_t nb_public_identities_to_add,
+    char const* const* public_identities_to_remove,
+    uint64_t nb_public_identities_to_remove);
 
 #ifdef __cplusplus
 }

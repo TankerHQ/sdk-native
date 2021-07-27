@@ -251,10 +251,13 @@ tc::future<SGroupId> AsyncCore::createGroup(
 }
 
 tc::future<void> AsyncCore::updateGroupMembers(
-    SGroupId const& groupId, std::vector<SPublicIdentity> const& usersToAdd)
+    SGroupId const& groupId,
+    std::vector<SPublicIdentity> const& usersToAdd,
+    std::vector<SPublicIdentity> const& usersToRemove)
 {
   return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.updateGroupMembers(groupId, usersToAdd));
+    TC_AWAIT(
+        this->_core.updateGroupMembers(groupId, usersToAdd, usersToRemove));
   });
 }
 

@@ -15,6 +15,7 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/Actions/TrustchainCreation.hpp>
+#include <Tanker/Trustchain/Actions/UserGroupRemoval.hpp>
 #include <Tanker/Trustchain/ComputeHash.hpp>
 #include <Tanker/Trustchain/GroupAction.hpp>
 #include <Tanker/Trustchain/KeyPublishAction.hpp>
@@ -85,7 +86,8 @@ using CliAction = boost::variant2::variant<Actions::TrustchainCreation,
                                            Actions::KeyPublishToUserGroup,
                                            Actions::KeyPublishToProvisionalUser,
                                            Actions::ProvisionalIdentityClaim,
-                                           Actions::SessionCertificate>;
+                                           Actions::SessionCertificate,
+                                           Actions::UserGroupRemoval>;
 
 CliAction deserializeAction(gsl::span<std::uint8_t const> block)
 {
@@ -124,6 +126,8 @@ CliAction deserializeAction(gsl::span<std::uint8_t const> block)
     return Serialization::deserialize<UserGroupAddition2>(block);
   case Nature::UserGroupAddition3:
     return Serialization::deserialize<UserGroupAddition3>(block);
+  case Nature::UserGroupRemoval:
+    return Serialization::deserialize<UserGroupRemoval>(block);
   case Nature::KeyPublishToDevice:
     throw std::runtime_error("key publish to device are not supported anymore");
   case Nature::KeyPublishToUser:
@@ -465,7 +469,7 @@ int main(int argc, char* argv[])
 
       auto const groupId = SGroupId{args.at("<groupid>").asString()};
       std::vector<SPublicIdentity> memberIdentities = extractIdentityArgs(args);
-      core->updateGroupMembers(groupId, memberIdentities).get();
+      core->updateGroupMembers(groupId, memberIdentities, {}).get();
     }
     else if (args.at("claim").asBool())
     {

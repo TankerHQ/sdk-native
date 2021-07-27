@@ -70,4 +70,31 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
   }
   return clearIds;
 }
+
+std::vector<SPublicIdentity> mapIdentitiesToStrings(
+    std::vector<Trustchain::ProvisionalUserId> const& errorUsers,
+    std::vector<SPublicIdentity> const& sIds,
+    std::vector<Identity::PublicIdentity> const& ids)
+{
+  std::vector<SPublicIdentity> clearIds;
+  clearIds.reserve(ids.size());
+  for (auto const& errorUser : errorUsers)
+  {
+    using boost::variant2::get_if;
+    auto const idsIt =
+        std::find_if(ids.begin(), ids.end(), [&](auto const& id) {
+          if (auto const provisionalId =
+                  get_if<Identity::PublicProvisionalIdentity>(&id))
+            return provisionalId->appSignaturePublicKey ==
+                   errorUser.appSignaturePublicKey();
+          return false;
+        });
+
+    if (idsIt == ids.end())
+      throw Errors::AssertionError("provisional identities not found");
+
+    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
+  }
+  return clearIds;
+}
 }

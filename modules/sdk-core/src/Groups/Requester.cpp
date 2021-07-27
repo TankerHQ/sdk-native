@@ -86,5 +86,20 @@ tc::cotask<void> Requester::updateGroup(
             mgs::base64::encode(Serialization::serialize(groupAddition))}}))
       .value();
 }
+
+tc::cotask<void> Requester::softUpdateGroup(
+    Trustchain::Actions::UserGroupRemoval const& groupRemoval,
+    std::optional<Trustchain::Actions::UserGroupAddition> const& groupAddition)
+{
+  nlohmann::json body{
+      {"user_group_removal",
+       mgs::base64::encode(Serialization::serialize(groupRemoval))}};
+  if (groupAddition)
+    body["user_group_addition"] =
+        mgs::base64::encode(Serialization::serialize(*groupAddition));
+  TC_AWAIT(_httpClient->asyncPost(
+               _httpClient->makeUrl("user-groups/soft-update"), body))
+      .value();
+}
 }
 }

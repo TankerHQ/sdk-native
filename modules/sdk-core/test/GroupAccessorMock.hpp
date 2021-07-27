@@ -9,9 +9,8 @@ namespace Tanker
 class GroupAccessorMock : public Groups::IAccessor
 {
 public:
-  MAKE_MOCK1(getInternalGroups,
-             tc::cotask<InternalGroupPullResult>(
-                 std::vector<Trustchain::GroupId> const&),
+  MAKE_MOCK1(getInternalGroup,
+             tc::cotask<InternalGroup>(Trustchain::GroupId const&),
              override);
   MAKE_MOCK1(getPublicEncryptionKeys,
              tc::cotask<PublicEncryptionKeyPullResult>(

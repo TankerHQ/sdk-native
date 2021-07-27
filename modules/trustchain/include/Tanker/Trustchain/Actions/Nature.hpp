@@ -14,6 +14,7 @@ enum class Nature
   DeviceCreation1 = 2,
   KeyPublishToDevice = 3,
   DeviceRevocation1 = 4,
+  // UserReset = 5,
   DeviceCreation2 = 6,
   DeviceCreation3 = 7,
   KeyPublishToUser = 8,
@@ -28,7 +29,8 @@ enum class Nature
   UserGroupCreation3 = 17,
   UserGroupAddition3 = 18,
   SessionCertificate = 19,
-  UserGroupUpdate1 = 20,
+  // UserGroupUpdate = 20,
+  UserGroupRemoval = 21,
 };
 
 std::string to_string(Nature);

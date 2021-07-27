@@ -88,7 +88,8 @@ public:
       std::vector<SPublicIdentity> const& spublicIdentities);
   tc::cotask<void> updateGroupMembers(
       SGroupId const& groupIdString,
-      std::vector<SPublicIdentity> const& spublicIdentitiesToAdd);
+      std::vector<SPublicIdentity> const& spublicIdentitiesToAdd,
+      std::vector<SPublicIdentity> const& spublicIdentitiesToRemove);
 
   tc::cotask<std::optional<std::string>> setVerificationMethod(
       Unlock::Verification const& method, VerifyWithToken withToken);
