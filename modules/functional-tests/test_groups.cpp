@@ -74,6 +74,42 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
       bobDevices, {std::make_tuple(make_buffer(clearData), encryptedData)})));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture, "updateGroupMembers throws when given an invalid arguments")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto bob = trustchain.makeUser();
+
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+  // invalid identities
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{""}}, {})),
+      Errors::Errc::InvalidArgument);
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{"AAAA="}}, {})),
+      Errors::Errc::InvalidArgument);
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="}}, {})),
+      Errors::Errc::InvalidArgument);
+
+  // invalid groupId
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{""}, {alice.spublicIdentity()}, {})),
+      Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{"AAAA="}, {alice.spublicIdentity()}, {})),
+      Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="}, {alice.spublicIdentity()}, {})),
+      Errors::Errc::InvalidArgument);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
 {
   auto alice = trustchain.makeUser();
