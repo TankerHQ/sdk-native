@@ -148,6 +148,20 @@ nightly/coverage:
 # bridge-check stage #
 ######################
 
+bridge/compat:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci/auto
+    - .variables/bridge-common
+  needs:
+    - build/linux
+  variables:
+    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_TARGET: linux
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
 bridge/ios:
   extends:
     - .bridge-check
@@ -346,17 +360,6 @@ bridge/ruby/macos/arm:
 ###############
 # check stage #
 ###############
-
-check/compat:
-  extends:
-    - .check
-    - .tags/linux
-    - .rules/mr/auto/nightly
-    - .before-script/bump-files-on-release/bash
-  needs:
-    - build/linux
-  script:
-    - poetry run python compat/run-compat.py --profile linux-release
 
 check/e2e:
   extends:
