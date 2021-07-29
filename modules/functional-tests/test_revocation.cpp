@@ -161,9 +161,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       AsyncCore::encryptedSize(clearData.size()));
   TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
 
-  std::vector<uint8_t> decryptedData;
-  decryptedData.resize(clearData.size());
-
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
@@ -188,9 +185,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> encryptedData(
       AsyncCore::encryptedSize(clearData.size()));
   TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
-
-  std::vector<uint8_t> decryptedData;
-  decryptedData.resize(clearData.size());
 
   tc::promise<void> wasEmitted;
   secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
