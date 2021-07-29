@@ -39,18 +39,17 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(1));
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(
-      aliceSession->encrypt(encryptedData.data(), clearData, {}, {myGroup})));
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
-  REQUIRE(TC_AWAIT(
-      checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
@@ -60,18 +59,19 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(1));
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData)));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData));
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup})));
 
-  REQUIRE(TC_AWAIT(checkDecrypt(
-      bobDevices, {std::make_tuple(make_buffer(clearData), encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "updateGroupMembers throws when given an invalid arguments")
@@ -171,9 +171,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*charlieSession, clearData, {}, {groupId})));
 
-  REQUIRE(TC_AWAIT(
-      checkDecrypt({aliceDevice},
-                   {std::make_tuple(make_buffer(clearData), encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -541,15 +540,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Removed group members cannot decrypt")
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
                       make_buffer(clearData), {}, {groupId})));
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(checkDecrypt(
-          {aliceDevice},
-          {std::make_tuple(make_buffer(clearData), encryptedData)})),
-      Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
+                                Errors::Errc::InvalidArgument);
 
-  REQUIRE(TC_AWAIT(
-      checkDecrypt({charlieDevice},
-                   {std::make_tuple(make_buffer(clearData), encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({charlieSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(
@@ -576,11 +571,8 @@ TEST_CASE_FIXTURE(
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
                       make_buffer(clearData), {}, {groupId})));
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(checkDecrypt(
-          {aliceDevice},
-          {std::make_tuple(make_buffer(clearData), encryptedData)})),
-      Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
+                                Errors::Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can add and remove users from a group")
@@ -864,25 +856,27 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(1));
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto charlie = trustchain.makeUser();
-  auto charlieDevices = TC_AWAIT(charlie.makeDevices(1));
+  auto charlieDevice = charlie.makeDevice();
+  auto charlieSession = TC_AWAIT(charlieDevice.open());
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), charlie.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData)));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData));
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup})));
+  TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup}));
 
   TC_AWAIT(aliceSession->updateGroupMembers(
       myGroup, {bob.spublicIdentity()}, {charlie.spublicIdentity()}));
 
-  REQUIRE(TC_AWAIT(checkDecrypt(
-      bobDevices, {std::make_tuple(make_buffer(clearData), encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
@@ -920,9 +914,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData =
-                      TC_AWAIT(encrypt(*bobSession, clearData, {}, {groupId})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*bobSession, clearData, {}, {groupId}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*aliceSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);

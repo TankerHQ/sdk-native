@@ -24,12 +24,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for herself")
 
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
 
-  auto const clearData = make_buffer("my clear data is clear");
+  std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(encSess.encrypt(encryptedData.data(), clearData)));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
 
-  REQUIRE(TC_AWAIT(checkDecrypt({aliceDevice}, {{clearData, encryptedData}})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
@@ -39,18 +41,20 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(1));
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto encSess =
       TC_AWAIT(aliceSession->makeEncryptionSession({bob.spublicIdentity()}));
 
-  auto const clearData = make_buffer("my clear data is clear");
+  std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(encSess.encrypt(encryptedData.data(), clearData)));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
 
-  REQUIRE(TC_AWAIT(
-      checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -66,13 +70,15 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
       {bob.spublicIdentity()}, {}, Core::ShareWithSelf::No));
 
-  auto const clearData = make_buffer("my clear data is clear");
+  std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
-  REQUIRE_NOTHROW(TC_AWAIT(encSess.encrypt(encryptedData.data(), clearData)));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
                                 Errc::InvalidArgument);
-  REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
