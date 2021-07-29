@@ -1,6 +1,0 @@
-include(android)
-
-[settings]
-os.api_level=19
-arch=armv7
-build_type=Release

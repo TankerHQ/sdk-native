@@ -1,3 +1,0 @@
-include(mingw64)
-[settings]
-build_type=Release

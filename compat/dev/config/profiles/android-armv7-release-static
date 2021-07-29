@@ -1,4 +1,0 @@
-include(android-armv7-release)
-
-[options]
-tanker:tankerlib_shared=False

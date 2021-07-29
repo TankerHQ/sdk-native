@@ -1,5 +1,0 @@
-include(vs2019)
-
-[settings]
-build_type=Release
-compiler.runtime=MD
