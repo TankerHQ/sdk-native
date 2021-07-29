@@ -135,30 +135,19 @@ TEST_CASE_FIXTURE(
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
   auto core = device.createCore(Functional::SessionType::New);
-  try
-  {
-    TC_AWAIT(core->start(alice.spublicIdentity().string()));
-    CHECK_MESSAGE(false, "start() should have thrown");
-  }
-  catch (Errors::Exception const& e)
-  {
-    CAPTURE(e.what());
-    CHECK(std::string(e.what()).find("got a public identity") !=
-          std::string::npos);
-  }
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(core->start(alice.spublicIdentity().string())),
+      Errors::Errc::InvalidArgument,
+      "got a public identity");
+
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), Email{"bob"});
-  try
-  {
-    TC_AWAIT(core->start(bobProvisionalIdentity));
-    CHECK_MESSAGE(false, "start() should have thrown");
-  }
-  catch (Errors::Exception const& e)
-  {
-    CAPTURE(e.what());
-    CHECK(std::string(e.what()).find("got a provisional identity") !=
-          std::string::npos);
-  }
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(core->start(bobProvisionalIdentity)),
+      Errors::Errc::InvalidArgument,
+      "got a provisional identity");
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
