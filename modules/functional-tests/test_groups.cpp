@@ -194,11 +194,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
-  auto bob = trustchain.makeUser(Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 

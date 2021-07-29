@@ -39,7 +39,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                       {SPublicIdentity{Identity::getPublicIdentity(
                           bobProvisionalIdentity)}})));
 
-  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto const bobSession = TC_AWAIT(bobDevice.open());
 
@@ -112,7 +112,7 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}));
 
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -132,7 +132,7 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -166,7 +166,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto const bobSession = TC_AWAIT(bobDevice.open());
 
@@ -221,7 +221,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
