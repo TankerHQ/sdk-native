@@ -21,6 +21,21 @@ inline tc::cotask<std::string> decrypt(
   TC_RETURN(std::string(decrypted.begin(), decrypted.end()));
 }
 
+inline tc::cotask<void> checkDecrypt(
+    std::vector<Functional::AsyncCorePtr> const& sessions,
+    std::string const& clearData,
+    std::vector<uint8_t> const& encryptedData)
+{
+  for (auto const& session : sessions)
+  {
+    std::vector<uint8_t> decryptedData =
+        TC_AWAIT(session->decrypt(encryptedData));
+    if (gsl::make_span(decryptedData) !=
+        gsl::make_span(clearData).as_span<uint8_t const>())
+      throw std::runtime_error("checkDecrypt: decrypted data doesn't match");
+  }
+}
+
 inline tc::cotask<bool> checkDecrypt(
     std::vector<Functional::Device> devices,
     std::vector<std::tuple<std::vector<uint8_t>, std::vector<uint8_t>>> const&
