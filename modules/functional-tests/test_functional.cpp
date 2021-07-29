@@ -701,8 +701,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can get a session token after registerIdentity")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice can get a session token after registerIdentity with an email")
 {
   TC_AWAIT(enable2fa());
 
@@ -722,8 +723,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(mgs::base64::decode(*token).size() > 0);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can get a session token with a passphrase")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice can get a session token after registerIdentity with a passphrase")
 {
   TC_AWAIT(enable2fa());
 
@@ -789,8 +791,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(token.has_value());
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Cannot get a session token with a verification key")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Cannot get a session token after registerIdentity with a verification key")
 {
   TC_AWAIT(enable2fa());
 
