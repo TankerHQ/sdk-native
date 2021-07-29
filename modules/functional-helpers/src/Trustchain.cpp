@@ -49,7 +49,7 @@ Trustchain::Trustchain(TrustchainConfig const& config)
 {
 }
 
-User Trustchain::makeUser(UserType type)
+User Trustchain::makeUser()
 {
   auto const trustchainIdString = mgs::base64::encode(id);
   auto const trustchainPrivateKeyString =

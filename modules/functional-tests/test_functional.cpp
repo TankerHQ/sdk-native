@@ -134,7 +134,7 @@ TEST_CASE_FIXTURE(
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(Functional::SessionType::New);
+  auto core = device.createCore();
 
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
       TC_AWAIT(core->start(alice.spublicIdentity().string())),
@@ -157,9 +157,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto device = alice.makeDevice();
 
   // open and close a session
-  TC_AWAIT(device.open(Functional::SessionType::New));
+  TC_AWAIT(device.open());
 
-  auto core = device.createCore(Functional::SessionType::New);
+  auto core = device.createCore();
   auto identity =
       Identity::extract<Identity::SecretPermanentIdentity>(alice.identity);
   ++identity.userSecret[0];
@@ -220,7 +220,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto const core = TC_AWAIT(device.open());
 
-  auto const core2 = device.createCore(Functional::SessionType::New);
+  auto const core2 = device.createCore();
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->start(alice.identity)),
                                 DataStore::Errc::DatabaseLocked);
 }
@@ -229,7 +229,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "it throws the correct error when the server is down")
 {
   auto alice = trustchain.makeUser();
-  auto device = alice.makeDevice(Functional::DeviceType::New);
+  auto device = alice.makeDevice();
   // connect to a (probably) closed port
   auto core = std::unique_ptr<AsyncCore, Functional::AsyncCoreDeleter>(
       new AsyncCore("https://127.0.0.1:65012",
@@ -251,7 +251,7 @@ void deauthSession(Tanker::AsyncCore& core)
 
 TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
 
   auto aliceSession = TC_AWAIT(aliceDevice.open());
@@ -270,12 +270,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   {
-    auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+    auto aliceDevice = alice.makeDevice();
     auto aliceSession = TC_AWAIT(aliceDevice.open());
   }
-  auto aliceDevice = alice.makeDevice(Functional::DeviceType::New);
+  auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   deauthSession(*aliceSession);
@@ -293,13 +293,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "a session of an existing device can reauth")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   {
-    auto aliceSession =
-        TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+    auto aliceSession = TC_AWAIT(aliceDevice.open());
   }
-  auto aliceSession = TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   deauthSession(*aliceSession);
 
@@ -590,10 +589,9 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(enable2fa());
 
   auto const aliceEmail = Email{"alice123.test@tanker.io"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
   auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
   auto const emailVerif = Unlock::EmailVerification{
@@ -612,10 +610,9 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(enable2fa());
 
   auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -630,10 +627,9 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(enable2fa());
 
   auto const aliceEmail = Email{"alice@wonder.land"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -650,10 +646,9 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(enable2fa());
 
   auto const aliceEmail = Email{"alice456.test@tanker.io"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
   auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
   auto emailVerif = Unlock::EmailVerification{
@@ -675,10 +670,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(enable2fa());
 
   auto const aliceEmail = Email{"alice@wonder.land"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
   auto const passVerif = Passphrase("testpass");
   TC_AWAIT(aliceSession->registerIdentity(passVerif));
@@ -699,10 +693,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(enable2fa());
 
   auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -724,10 +717,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(enable2fa());
 
   auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -749,10 +741,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Fails to check an invalid session token")
   TC_AWAIT(enable2fa());
 
   auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -778,10 +769,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
   auto const emailVerif =
       Unlock::EmailVerification{aliceEmail, VerificationCode{verificationCode}};
-  auto alice = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceSession =
-      aliceDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
 
   auto withToken = Core::VerifyWithToken::Yes;

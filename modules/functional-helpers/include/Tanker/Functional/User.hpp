@@ -12,12 +12,6 @@ namespace Tanker
 {
 namespace Functional
 {
-enum class DeviceType
-{
-  Cached,
-  New,
-};
-
 class User
 {
 public:
@@ -31,7 +25,7 @@ public:
        std::string trustchainId,
        std::string trustchainPrivateSignatureKey);
 
-  Device makeDevice(DeviceType type = DeviceType::Cached);
+  Device makeDevice();
 
   tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
 

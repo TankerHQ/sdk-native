@@ -274,7 +274,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Creates a group with mixed identities and a missing")
 {
   // This user isn't registered on the trustchain!
-  auto const charlie = trustchain.makeUser(Functional::UserType::New);
+  auto const charlie = trustchain.makeUser();
 
   /// This a provisional identity we tried to put in first place in the member
   /// list to check that the error reporting message is accurate.
@@ -345,11 +345,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "It should share with a group after the device that "
                   "created the group has been revoked")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
-  auto bob = trustchain.makeUser(Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 

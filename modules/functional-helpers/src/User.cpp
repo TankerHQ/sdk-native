@@ -32,7 +32,7 @@ User::User(std::string trustchainUrl,
 {
 }
 
-Device User::makeDevice(DeviceType type)
+Device User::makeDevice()
 {
   return Device(trustchainUrl, trustchainId, identity);
 }

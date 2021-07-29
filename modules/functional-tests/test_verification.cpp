@@ -87,14 +87,14 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
-  auto core1 = device1.createCore(Functional::SessionType::New);
+  auto core1 = device1.createCore();
   REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
              Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
-  auto core2 = device2.createCore(Functional::SessionType::New);
+  auto core2 = device2.createCore();
 
   auto const passphrase = Passphrase{"my passphrase"};
   auto const email = Email{"kirby@tanker.io"};
@@ -557,14 +557,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 {
   TC_AWAIT(enableOidc());
 
-  auto martine = trustchain.makeUser(Functional::UserType::New);
+  auto martine = trustchain.makeUser();
   auto martineDevice = martine.makeDevice();
-  auto martineLaptop = martineDevice.createCore(Functional::SessionType::New);
+  auto martineLaptop = martineDevice.createCore();
   REQUIRE_EQ(TC_AWAIT(martineLaptop->start(martine.identity)),
              Status::IdentityRegistrationNeeded);
 
   auto martineDevice2 = martine.makeDevice();
-  auto martinePhone = martineDevice2.createCore(Functional::SessionType::New);
+  auto martinePhone = martineDevice2.createCore();
 
   auto oidcConfig = TestConstants::oidcConfig();
 
@@ -641,10 +641,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     }
     SUBCASE("decrypts data shared with an attached provisional identity")
     {
-      auto alice = trustchain.makeUser(Functional::UserType::New);
+      auto alice = trustchain.makeUser();
       auto aliceDevice = alice.makeDevice();
-      auto aliceLaptop =
-          TC_AWAIT(aliceDevice.open(Functional::SessionType::New));
+      auto aliceLaptop = TC_AWAIT(aliceDevice.open());
 
       auto const martineEmail = Email{oidcConfig.users.at("martine").email};
       auto const martineProvisionalIdentity =

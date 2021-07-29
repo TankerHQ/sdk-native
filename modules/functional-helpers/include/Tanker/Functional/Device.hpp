@@ -35,12 +35,6 @@ std::unique_ptr<AsyncCore, AsyncCoreDeleter> makeAsyncCore(T&&... args)
       new AsyncCore(std::forward<T>(args)...));
 }
 
-enum class SessionType
-{
-  Cached,
-  New,
-};
-
 class Device
 {
 public:
@@ -50,9 +44,9 @@ public:
          std::string trustchainId,
          std::string identity);
 
-  AsyncCorePtr createCore(SessionType type);
+  AsyncCorePtr createCore();
   std::unique_ptr<AsyncCore> createAsyncCore();
-  tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
+  tc::cotask<AsyncCorePtr> open();
   std::string const& identity() const;
   std::string writablePath() const;
 

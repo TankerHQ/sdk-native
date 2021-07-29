@@ -24,7 +24,7 @@ TEST_SUITE_BEGIN("Revocation");
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can list her devices")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -44,7 +44,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can list her devices")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -79,7 +79,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Triggering self destruct twice doesn't crash")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -125,29 +125,27 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can revoke a device while it is offline")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto aliceSecondDevice = alice.makeDevice();
   SDeviceId secondDeviceId;
   {
-    auto secondSession =
-        TC_AWAIT(aliceSecondDevice.open(Functional::SessionType::New));
+    auto secondSession = TC_AWAIT(aliceSecondDevice.open());
     secondDeviceId = secondSession->deviceId().get();
   }
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSecondDevice.open(Functional::SessionType::New)),
-      Errc::DeviceRevoked);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSecondDevice.open()),
+                                Errc::DeviceRevoked);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can recreate a device and decrypt after a revocation")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -173,7 +171,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "multiple devices can be successively revoked")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -218,7 +216,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -238,7 +236,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
@@ -260,7 +258,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can claim a resource after a revoke")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceEmail = Email{"alice1.test@tanker.io"};
   auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(
@@ -294,7 +292,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can claim a resource after a revoke")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "it can claim and decrypt a resource after a revoke")
 {
-  auto alice = trustchain.makeUser(Functional::UserType::New);
+  auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceEmail = Email{"alice1.test@tanker.io"};
   auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(

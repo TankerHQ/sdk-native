@@ -112,7 +112,7 @@ TEST_CASE_FIXTURE(
       make_buffer("my clear data is clear"),
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
-  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
@@ -162,10 +162,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                       {SPublicIdentity{Identity::getPublicIdentity(
                           bobProvisionalIdentity)}})));
 
-  auto bob = trustchain.makeUser(Tanker::Functional::UserType::New);
+  auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
-  auto const bobSession =
-      bobDevice.createCore(Tanker::Functional::SessionType::New);
+  auto const bobSession = bobDevice.createCore();
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const emailVerif = Unlock::EmailVerification{
