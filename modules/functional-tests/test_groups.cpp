@@ -74,7 +74,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "updateGroupMembers throws when given an invalid arguments")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "updateGroupMembers throws when given an invalid arguments")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -86,27 +87,37 @@ TEST_CASE_FIXTURE(TrustchainFixture, "updateGroupMembers throws when given an in
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   // invalid identities
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{""}}, {})),
-      Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->updateGroupMembers(
+                                    groupId, {SPublicIdentity{""}}, {})),
+                                Errors::Errc::InvalidArgument);
+
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->updateGroupMembers(
+                                    groupId, {SPublicIdentity{"AAAA="}}, {})),
+                                Errors::Errc::InvalidArgument);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{"AAAA="}}, {})),
-      Errors::Errc::InvalidArgument);
-
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(groupId, {SPublicIdentity{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="}}, {})),
+      TC_AWAIT(aliceSession->updateGroupMembers(
+          groupId,
+          {SPublicIdentity{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBB"
+                           "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="}},
+          {})),
       Errors::Errc::InvalidArgument);
 
   // invalid groupId
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{""}, {alice.spublicIdentity()}, {})),
+      TC_AWAIT(aliceSession->updateGroupMembers(
+          SGroupId{""}, {alice.spublicIdentity()}, {})),
       Errors::Errc::InvalidArgument);
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{"AAAA="}, {alice.spublicIdentity()}, {})),
+      TC_AWAIT(aliceSession->updateGroupMembers(
+          SGroupId{"AAAA="}, {alice.spublicIdentity()}, {})),
       Errors::Errc::InvalidArgument);
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->updateGroupMembers(SGroupId{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="}, {alice.spublicIdentity()}, {})),
+      TC_AWAIT(aliceSession->updateGroupMembers(
+          SGroupId{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBB"
+                   "BBBBBBBBBBBBBBBBBBBBBBBBBBB="},
+          {alice.spublicIdentity()},
+          {})),
       Errors::Errc::InvalidArgument);
 }
 

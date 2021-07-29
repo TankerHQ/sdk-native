@@ -682,9 +682,8 @@ TEST_CASE_FIXTURE(
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice cannot encrypt and share with an illformed groupId")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice cannot encrypt and share with an illformed groupId")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -692,22 +691,26 @@ TEST_CASE_FIXTURE(
 
   auto const clearData = make_buffer("my clear data is clear");
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->encrypt(clearData, {}, { SGroupId{""} })),
+      TC_AWAIT(aliceSession->encrypt(clearData, {}, {SGroupId{""}})),
       Errc::InvalidArgument);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->encrypt(clearData, {}, { SGroupId{"AAAA="} })),
+      TC_AWAIT(aliceSession->encrypt(clearData, {}, {SGroupId{"AAAA="}})),
       Errc::InvalidArgument);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->encrypt(clearData, {}, { SGroupId{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="} })),
+      TC_AWAIT(aliceSession->encrypt(
+          clearData,
+          {},
+          {SGroupId{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBB"
+                    "BBBBBBBBBBBBBBBBBBBBBBBBBBBB="}})),
       Errc::InvalidArgument);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->encrypt(clearData, {}, { SGroupId{alice.spublicIdentity().string()} })),
+      TC_AWAIT(aliceSession->encrypt(
+          clearData, {}, {SGroupId{alice.spublicIdentity().string()}})),
       Errc::InvalidArgument);
 }
-
 
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can get a session token after registerIdentity")
