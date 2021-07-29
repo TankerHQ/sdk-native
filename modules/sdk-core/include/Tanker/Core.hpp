@@ -126,8 +126,8 @@ public:
       gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<void> stop();
-  tc::cotask<void> quickStop();
-  tc::cotask<void> nukeDatabase();
+  void quickStop();
+  void nukeDatabase();
   void setSessionClosedHandler(SessionClosedHandler);
 
   void setHttpSessionToken(std::string_view);

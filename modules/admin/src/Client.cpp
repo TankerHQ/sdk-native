@@ -172,7 +172,7 @@ tc::cotask<void> Client::deleteTrustchain(
   auto response =
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::ok)
-    return;
+    TC_RETURN();
   throw errorReport(
       Errors::AppdErrc::InternalError, "could not delete trustchain", response);
 }

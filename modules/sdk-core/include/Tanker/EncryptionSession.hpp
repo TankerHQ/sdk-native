@@ -5,7 +5,7 @@
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <tconcurrent/stackful_coroutine.hpp>
+#include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_canceler.hpp>
 
 namespace Tanker

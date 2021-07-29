@@ -137,14 +137,16 @@ decltype(std::declval<F>()()) Core::resetOnFailure(
   std::exception_ptr exception;
   try
   {
-    if constexpr (std::is_same_v<decltype(TC_AWAIT(f())), void>)
+    if constexpr (std::is_same_v<typename tc::detail::task_return_type<
+                                     std::invoke_result_t<F>>::type,
+                                 void>)
     {
-      TC_AWAIT(f());
+      TC_AWAIT(std::forward<F>(f)());
       TC_RETURN();
     }
     else
     {
-      TC_RETURN(TC_AWAIT(f()));
+      TC_RETURN(TC_AWAIT(std::forward<F>(f)()));
     }
   }
   catch (Errors::DeviceUnusable const& ex)
@@ -185,7 +187,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(
 tc::cotask<void> Core::stop()
 {
   if (status() == Status::Stopped)
-    return;
+    TC_RETURN();
 
   TC_AWAIT(_session->stop());
   reset();
@@ -193,7 +195,7 @@ tc::cotask<void> Core::stop()
     _sessionClosed();
 }
 
-tc::cotask<void> Core::quickStop()
+void Core::quickStop()
 {
   // This function may be called by AsyncCore to reset everything when start()
   // fails. In these cases, we still need to call reset(), but not trigger
@@ -221,7 +223,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  _session->openStorage(identity, _writablePath);
+  TC_AWAIT(_session->openStorage(identity, _writablePath));
   auto const optPubUserEncKey =
       TC_AWAIT(_session->requesters().userStatus(_session->userId()));
   if (!optPubUserEncKey)
@@ -640,7 +642,7 @@ Core::getVerificationMethods()
   if (methods.empty())
     methods.emplace_back(Tanker::VerificationKey{});
   else
-    Unlock::decryptMethods(methods, _session->userSecret());
+    TC_AWAIT(Unlock::decryptMethods(methods, _session->userSecret()));
   TC_RETURN(methods);
 }
 

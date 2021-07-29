@@ -94,7 +94,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
     auto verificationMethods =
         TC_AWAIT(_unlockRequester->fetchVerificationMethods(
             _localUserAccessor->get().userId()));
-    Unlock::decryptMethods(verificationMethods, userSecret);
+    TC_AWAIT(Unlock::decryptMethods(verificationMethods, userSecret));
 
     if (findVerificationMethod(verificationMethods, email))
     {

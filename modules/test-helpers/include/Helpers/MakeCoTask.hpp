@@ -10,4 +10,9 @@ auto makeCoTask(T value) -> tc::cotask<T>
 {
   TC_RETURN(std::move(value));
 }
+
+inline auto makeCoTask() -> tc::cotask<void>
+{
+  TC_RETURN();
+}
 }

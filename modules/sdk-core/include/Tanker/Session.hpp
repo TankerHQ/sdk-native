@@ -73,8 +73,9 @@ public:
   Requesters const& requesters() const;
   Requesters& requesters();
 
-  void openStorage(Identity::SecretPermanentIdentity const& identity,
-                   std::string const& writablePath);
+  tc::cotask<void> openStorage(
+      Identity::SecretPermanentIdentity const& identity,
+      std::string const& writablePath);
   Storage const& storage() const;
   Storage& storage();
 
