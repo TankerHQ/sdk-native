@@ -146,34 +146,33 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
 {
-  auto Alice = trustchain.makeUser();
-  auto Bob = trustchain.makeUser();
-  auto Charlie = trustchain.makeUser();
+  auto alice = trustchain.makeUser();
+  auto bob = trustchain.makeUser();
+  auto charlie = trustchain.makeUser();
 
-  auto AliceDevice = Alice.makeDevice();
-  auto BobDevice = Bob.makeDevice();
-  auto CharlieDevice = Charlie.makeDevice();
+  auto aliceDevice = alice.makeDevice();
+  auto bobDevice = bob.makeDevice();
+  auto charlieDevice = charlie.makeDevice();
+
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+  auto bobSession = TC_AWAIT(bobDevice.open());
+  auto charlieSession = TC_AWAIT(charlieDevice.open());
 
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
-  {
-    auto AliceSession = TC_AWAIT(AliceDevice.open());
-    auto BobSession = TC_AWAIT(BobDevice.open());
-    auto CharlieSession = TC_AWAIT(CharlieDevice.open());
 
-    auto const groupId =
-        TC_AWAIT(AliceSession->createGroup({Bob.spublicIdentity()}));
-    TC_AWAIT(BobSession->updateGroupMembers(
-        groupId, {Charlie.spublicIdentity()}, {}));
-    TC_AWAIT(CharlieSession->updateGroupMembers(
-        groupId, {Alice.spublicIdentity()}, {}));
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+  TC_AWAIT(
+      bobSession->updateGroupMembers(groupId, {charlie.spublicIdentity()}, {}));
+  TC_AWAIT(charlieSession->updateGroupMembers(
+      groupId, {alice.spublicIdentity()}, {}));
 
-    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                        encrypt(*CharlieSession, clearData, {}, {groupId})));
-  }
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                      encrypt(*charlieSession, clearData, {}, {groupId})));
 
   REQUIRE(TC_AWAIT(
-      checkDecrypt({AliceDevice},
+      checkDecrypt({aliceDevice},
                    {std::make_tuple(make_buffer(clearData), encryptedData)})));
 }
 
@@ -525,23 +524,22 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Removed group members cannot decrypt")
   auto bobDevice = bob.makeDevice();
   auto charlieDevice = charlie.makeDevice();
 
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+  auto bobSession = TC_AWAIT(bobDevice.open());
+  auto charlieSession = TC_AWAIT(charlieDevice.open());
+
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
-  {
-    auto aliceSession = TC_AWAIT(aliceDevice.open());
-    auto bobSession = TC_AWAIT(bobDevice.open());
-    auto charlieSession = TC_AWAIT(charlieDevice.open());
 
-    auto const groupId =
-        TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity(),
-                                            bob.spublicIdentity(),
-                                            charlie.spublicIdentity()}));
-    TC_AWAIT(
-        bobSession->updateGroupMembers(groupId, {}, {alice.spublicIdentity()}));
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity(),
+                                          bob.spublicIdentity(),
+                                          charlie.spublicIdentity()}));
+  TC_AWAIT(
+      bobSession->updateGroupMembers(groupId, {}, {alice.spublicIdentity()}));
 
-    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
-                        make_buffer(clearData), {}, {groupId})));
-  }
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
+                      make_buffer(clearData), {}, {groupId})));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(checkDecrypt(
@@ -564,20 +562,19 @@ TEST_CASE_FIXTURE(
   auto aliceDevice = alice.makeDevice();
   auto bobDevice = bob.makeDevice();
 
+  auto aliceSession = TC_AWAIT(aliceDevice.open());
+  auto bobSession = TC_AWAIT(bobDevice.open());
+
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
-  {
-    auto aliceSession = TC_AWAIT(aliceDevice.open());
-    auto bobSession = TC_AWAIT(bobDevice.open());
 
-    auto const groupId = TC_AWAIT(aliceSession->createGroup(
-        {alice.spublicIdentity(), bob.spublicIdentity()}));
-    TC_AWAIT(aliceSession->updateGroupMembers(
-        groupId, {}, {alice.spublicIdentity()}));
+  auto const groupId = TC_AWAIT(aliceSession->createGroup(
+      {alice.spublicIdentity(), bob.spublicIdentity()}));
+  TC_AWAIT(
+      aliceSession->updateGroupMembers(groupId, {}, {alice.spublicIdentity()}));
 
-    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
-                        make_buffer(clearData), {}, {groupId})));
-  }
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
+                      make_buffer(clearData), {}, {groupId})));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(checkDecrypt(
