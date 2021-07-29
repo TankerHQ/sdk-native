@@ -436,16 +436,20 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
 
+  auto aliceDevice2 = alice.makeDevice();
+  auto aliceSession2 = TC_AWAIT(aliceDevice.open());
+
   auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(2));
+  auto bobDevice = bob.makeDevice();
+  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
-                      clearData, {bob.spublicIdentity()})));
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(bobSession->encrypt(
+                      clearData, {alice.spublicIdentity()})));
 
-  REQUIRE(TC_AWAIT(
-      checkDecrypt(bobDevices, {std::make_tuple(clearData, encryptedData)})));
+  REQUIRE(TC_AWAIT(checkDecrypt({aliceDevice, aliceDevice2},
+                                {std::make_tuple(clearData, encryptedData)})));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
