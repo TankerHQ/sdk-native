@@ -56,17 +56,12 @@ public:
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
 
-  void reuseCache();
-
   User makeUser(UserType = UserType::Cached);
 
   TrustchainConfig toConfig() const;
 
 private:
   Trustchain();
-
-  uint32_t _currentUser = 0;
-  std::vector<User> _cachedUsers;
 };
 }
 }

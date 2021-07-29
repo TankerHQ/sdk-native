@@ -33,7 +33,6 @@ tc::cotask<void> createTrustchain()
 
 TrustchainFixture::TrustchainFixture() : trustchain(getTrustchain())
 {
-  trustchain.reuseCache();
 }
 
 TrustchainFactory& TrustchainFixture::trustchainFactory()

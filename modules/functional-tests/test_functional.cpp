@@ -186,11 +186,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   REQUIRE(core->status() == Status::Stopped);
   CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm1)));
 
+  core = TC_AWAIT(device.open());
+
   tc::promise<void> closeProm2;
   core->connectSessionClosed(
       [closeProm2]() mutable { closeProm2.set_value({}); });
 
-  core = TC_AWAIT(device.open());
   REQUIRE(core->status() == Status::Ready);
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);

@@ -63,12 +63,6 @@ private:
   std::string _trustchainId;
   std::string _identity;
   std::shared_ptr<UniquePath> _storage;
-
-  // Since Device is copyable and since we want to share the cache between all
-  // the device copies, we need a shared_ptr of shared_ptr
-  // TLDR; Don't remove it or it will break
-  std::shared_ptr<AsyncCorePtr> _cachedSession =
-      std::make_shared<AsyncCorePtr>();
 };
 }
 }

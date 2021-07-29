@@ -28,14 +28,7 @@ Device::Device(std::string trustchainUrl,
 
 AsyncCorePtr Device::createCore(SessionType type)
 {
-  if (type == SessionType::New)
-    return AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
-
-  if (!*_cachedSession)
-    *_cachedSession =
-        AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
-
-  return *_cachedSession;
+  return AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
 }
 
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
