@@ -11,11 +11,15 @@ namespace Functional
 {
 struct TrustchainFixture
 {
+  Trustchain& trustchain;
+  User &alice, &bob, &charlie;
+  Device &aliceDevice, &aliceDevice2, &bobDevice, &charlieDevice;
+  AsyncCorePtr &aliceSession, &aliceSession2, &bobSession, &charlieSession;
+
   TrustchainFixture();
   static TrustchainFactory& trustchainFactory();
 
   static Trustchain& getTrustchain();
-  Trustchain& trustchain;
 
   static tc::cotask<void> setUp();
   static tc::cotask<void> tearDown();
