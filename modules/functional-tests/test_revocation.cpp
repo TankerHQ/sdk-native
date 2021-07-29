@@ -230,9 +230,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
 
   auto const clearData = make_buffer("my clear data is clear");
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
   auto encrypted =
       TC_AWAIT(bobSession->encrypt(clearData, {alice.spublicIdentity()}));
   auto result_data = TC_AWAIT(aliceSession->decrypt(encrypted));
@@ -251,9 +248,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
   REQUIRE_NOTHROW(TC_AWAIT(
       aliceSecondSession->revokeDevice(aliceSecondSession->deviceId().get())));
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
   auto const groupId = TC_AWAIT(bobSession->createGroup(
       {bob.spublicIdentity(), alice.spublicIdentity()}));
 
@@ -279,10 +273,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can claim a resource after a revoke")
       aliceSecondSession->revokeDevice(aliceSecondSession->deviceId().get())));
 
   auto const clearData = make_buffer("my clear data is clear");
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const encrypted =
       TC_AWAIT(bobSession->encrypt(clearData,
@@ -320,10 +310,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceThirdSession = TC_AWAIT(aliceThirdDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const encrypted =
       TC_AWAIT(bobSession->encrypt(clearData,

@@ -18,10 +18,6 @@ TEST_SUITE_BEGIN("Encryption sessions");
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for herself")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
 
   std::string const clearData = "my clear data is clear";
@@ -36,14 +32,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for herself")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto encSess =
       TC_AWAIT(aliceSession->makeEncryptionSession({bob.spublicIdentity()}));
 
@@ -60,13 +48,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can session-encrypt without sharing with self")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
       {bob.spublicIdentity()}, {}, Core::ShareWithSelf::No));
 
@@ -84,10 +65,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice cannot stream-encrypt without sharing with anybody")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->makeEncryptionSession(
                                     {}, {}, Core::ShareWithSelf::No)),
                                 Errc::InvalidArgument);

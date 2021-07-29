@@ -21,27 +21,12 @@ TEST_SUITE_BEGIN("Groups");
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can create a group with Bob")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevices = TC_AWAIT(bob.makeDevices(1));
-
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->createGroup(
       {bob.spublicIdentity(), alice.spublicIdentity()})));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
@@ -54,14 +39,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
@@ -77,12 +54,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "updateGroupMembers throws when given an invalid arguments")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -123,14 +94,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -157,18 +120,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-  auto charlie = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-  auto charlieDevice = charlie.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-  auto charlieSession = TC_AWAIT(charlieDevice.open());
-
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
 
@@ -193,14 +144,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobEmail = Email{"bob13.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -227,10 +170,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const charlieProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), charlieEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)},
        SPublicIdentity{
@@ -240,10 +179,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*aliceSession, clearData, {}, {myGroup})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -256,10 +191,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::string decrypted;
   REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
   CHECK(decrypted == clearData);
-
-  auto charlie = trustchain.makeUser();
-  auto charlieDevice = charlie.makeDevice();
-  auto charlieSession = TC_AWAIT(charlieDevice.open());
 
   result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{charlieProvisionalIdentity}));
@@ -283,10 +214,6 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
@@ -298,10 +225,6 @@ TEST_CASE_FIXTURE(
       myGroup,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}},
       {})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
@@ -324,10 +247,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
@@ -335,10 +254,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*aliceSession, clearData, {}, {myGroup})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   // verify the group
   TC_AWAIT(encrypt(*bobSession, "", {}, {myGroup}));
@@ -358,10 +273,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Creates a group with mixed identities and a missing")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
+  // This user isn't registered on the trustchain!
   auto const charlie = trustchain.makeUser(Functional::UserType::New);
 
   /// This a provisional identity we tried to put in first place in the member
@@ -385,10 +297,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice can't do a no-op update to a group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
@@ -405,10 +313,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
@@ -420,10 +324,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       myGroup,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}},
       {})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   // verify the group
   std::vector<uint8_t> useless(AsyncCore::encryptedSize(0));
@@ -461,15 +361,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users from a group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bob.spublicIdentity()}));
   TC_AWAIT(
@@ -483,15 +374,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users from a group")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users twice from a group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bob.spublicIdentity()}));
   TC_AWAIT(aliceSession->updateGroupMembers(
@@ -506,15 +388,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users twice from a group")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Cannot remove someone who is not a member")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -526,18 +399,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Removed group members cannot decrypt")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-  auto charlie = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-  auto charlieDevice = charlie.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-  auto charlieSession = TC_AWAIT(charlieDevice.open());
-
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
 
@@ -562,15 +423,6 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Alice cannot decrypt when she removes herself from the group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
 
@@ -588,15 +440,6 @@ TEST_CASE_FIXTURE(
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can add and remove users from a group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
   TC_AWAIT(
@@ -612,10 +455,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add and remove users from a group")
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Cannot remove the last user from a group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->updateGroupMembers(
@@ -626,15 +465,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Cannot remove the last user from a group")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Cannot add and remove the same user from a group")
 {
-  auto alice = trustchain.makeUser();
-  auto bob = trustchain.makeUser();
-
-  auto aliceDevice = alice.makeDevice();
-  auto bobDevice = bob.makeDevice();
-
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -653,10 +483,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
   auto const bobPublicProvisional =
       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bobPublicProvisional}));
   TC_AWAIT(
@@ -666,10 +492,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*aliceSession, clearData, {}, {myGroup})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -692,10 +514,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobPublicProvisional =
       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bobPublicProvisional}));
   TC_AWAIT(aliceSession->updateGroupMembers(
@@ -705,10 +523,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*aliceSession, clearData, {}, {myGroup})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -732,10 +546,6 @@ TEST_CASE_FIXTURE(
   auto const bobPublicProvisional =
       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
@@ -755,16 +565,8 @@ TEST_CASE_FIXTURE(
   auto const bobPublicProvisional =
       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bobPublicProvisional}));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -789,16 +591,8 @@ TEST_CASE_FIXTURE(
   auto const bobPublicProvisional =
       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bobPublicProvisional}));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -827,17 +621,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(),
        SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
@@ -862,18 +648,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can decrypt previous group shares with a group update")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
-  auto charlie = trustchain.makeUser();
-  auto charlieDevice = charlie.makeDevice();
-  auto charlieSession = TC_AWAIT(charlieDevice.open());
-
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), charlie.spublicIdentity()}));
 
@@ -892,14 +666,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -913,14 +679,6 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Don't share with group creator if not in the group")
 {
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 

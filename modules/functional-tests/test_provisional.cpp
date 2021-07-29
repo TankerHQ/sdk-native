@@ -28,20 +28,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
                       clearData,
                       {SPublicIdentity{Identity::getPublicIdentity(
                           bobProvisionalIdentity)}})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto const bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -64,20 +56,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
                       clearData,
                       {SPublicIdentity{Identity::getPublicIdentity(
                           bobProvisionalIdentity)}})));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -100,10 +84,6 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   CHECK(result.status == Status::IdentityVerificationNeeded);
@@ -111,10 +91,6 @@ TEST_CASE_FIXTURE(
 
   TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}));
-
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(aliceSession->encrypt(
@@ -131,10 +107,6 @@ TEST_CASE_FIXTURE(
   auto const bobEmail = makeEmail();
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const encrypted = TC_AWAIT(aliceSession->encrypt(
       make_buffer("my clear data is clear"),
@@ -166,10 +138,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto const bobSession = TC_AWAIT(bobDevice.open());
-
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
@@ -186,10 +154,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobEmail = makeEmail();
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -221,10 +185,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
@@ -244,20 +204,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
   auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}));
-
-  auto charlie = trustchain.makeUser();
-  auto charlieDevice = charlie.makeDevice();
-  auto charlieSession = TC_AWAIT(charlieDevice.open());
 
   result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -278,10 +230,6 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
           bobEmail, VerificationCode{"DUMMY_CODE_FOR_FASTER_TESTS"}})),
@@ -292,15 +240,6 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob's has multiple provisional identities with the same email")
 {
-
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
   auto const clearData = make_buffer("my clear data is clear");
 
   auto const bobEmail = makeEmail();
