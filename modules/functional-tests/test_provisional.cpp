@@ -132,6 +132,47 @@ TEST_CASE_FIXTURE(
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can revoke a device, claim a provisional identity and "
+                  "decrypt on multiple devices")
+{
+  auto alice = trustchain.makeUser();
+  auto aliceDevice = alice.makeDevice();
+  auto const aliceEmail = Email{"alice1.test@tanker.io"};
+  auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(
+      mgs::base64::encode(trustchain.id), aliceEmail);
+  auto const aliceSession = TC_AWAIT(aliceDevice.open());
+
+  auto aliceSecondDevice = alice.makeDevice();
+  auto aliceSecondSession = TC_AWAIT(aliceSecondDevice.open());
+  REQUIRE_NOTHROW(TC_AWAIT(
+      aliceSecondSession->revokeDevice(aliceSecondSession->deviceId().get())));
+
+  auto aliceThirdDevice = alice.makeDevice();
+  auto aliceThirdSession = TC_AWAIT(aliceThirdDevice.open());
+
+  auto const clearData = make_buffer("my clear data is clear");
+
+  auto const encrypted =
+      TC_AWAIT(bobSession->encrypt(clearData,
+                                   {SPublicIdentity{Identity::getPublicIdentity(
+                                       aliceProvisionalIdentity)}}));
+
+  REQUIRE_EQ(TC_AWAIT(aliceSession->attachProvisionalIdentity(
+                          SSecretProvisionalIdentity{aliceProvisionalIdentity}))
+                 .status,
+             Status::IdentityVerificationNeeded);
+  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->verifyProvisionalIdentity(
+      Unlock::EmailVerification{aliceEmail, aliceVerificationCode})));
+
+  auto const result_data = TC_AWAIT(aliceSession->decrypt(encrypted));
+  REQUIRE_EQ(result_data, clearData);
+
+  auto const result_data2 = TC_AWAIT(aliceThirdSession->decrypt(encrypted));
+  REQUIRE_EQ(result_data2, clearData);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim when there is nothing to claim")
 {
   auto const bobEmail = makeEmail();
