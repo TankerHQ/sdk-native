@@ -26,18 +26,15 @@ TEST_SUITE_BEGIN("provisionals");
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with a provisional user")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
-      *aliceSession,
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+  std::vector<uint8_t> encryptedData = TC_AWAIT(
+      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
@@ -51,52 +48,30 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim the same provisional identity twice")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
-      *aliceSession,
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+  std::vector<uint8_t> encryptedData = TC_AWAIT(
+      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  CHECK(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}));
-
-  auto const result2 = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  CHECK(result2.status == Tanker::Status::Ready);
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
+  CHECK(result.status == Tanker::Status::Ready);
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Bob must verify his identity to claim a provisional identity")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can't share with a claimed provisional identity")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  CHECK(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}));
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->encrypt(
-          make_buffer("my clear data is clear"),
-          {SPublicIdentity{
-              Identity::getPublicIdentity(bobProvisionalIdentity)}})),
+      TC_AWAIT(aliceSession->encrypt(make_buffer("my clear data is clear"),
+                                     {bobProvisional.publicIdentity})),
       Errors::Errc::IdentityAlreadyAttached);
 }
 
@@ -104,27 +79,17 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob can decrypt a provisional share claimed by a revoked device")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
-      *aliceSession,
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+  std::vector<uint8_t> encryptedData = TC_AWAIT(
+      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
 
   auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
   auto bobSession = TC_AWAIT(bobDevice.open());
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  CHECK(result.status == Status::IdentityVerificationNeeded);
-  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{aliceVerificationCode}}));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TC_AWAIT(bobSession->revokeDevice(bobSession->deviceId().get()));
 
@@ -139,9 +104,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
-  auto const aliceEmail = Email{"alice1.test@tanker.io"};
-  auto const aliceProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), aliceEmail);
   auto const aliceSession = TC_AWAIT(aliceDevice.open());
 
   auto aliceSecondDevice = alice.makeDevice();
@@ -152,21 +114,14 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceThirdDevice = alice.makeDevice();
   auto aliceThirdSession = TC_AWAIT(aliceThirdDevice.open());
 
+  auto const aliceProvisional = trustchain.makeEmailProvisionalUser();
+
   auto const clearData = "my clear data is clear";
 
-  auto const encryptedData =
-      TC_AWAIT(encrypt(*bobSession,
-                       clearData,
-                       {SPublicIdentity{Identity::getPublicIdentity(
-                           aliceProvisionalIdentity)}}));
+  auto const encryptedData = TC_AWAIT(
+      encrypt(*bobSession, clearData, {aliceProvisional.publicIdentity}));
 
-  REQUIRE_EQ(TC_AWAIT(aliceSession->attachProvisionalIdentity(
-                          SSecretProvisionalIdentity{aliceProvisionalIdentity}))
-                 .status,
-             Status::IdentityVerificationNeeded);
-  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->verifyProvisionalIdentity(
-      Unlock::EmailVerification{aliceEmail, aliceVerificationCode})));
+  TC_AWAIT(attachProvisionalIdentity(*aliceSession, aliceProvisional));
 
   REQUIRE_NOTHROW(checkDecrypt(
       {aliceSession, aliceThirdSession}, clearData, encryptedData));
@@ -175,12 +130,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim when there is nothing to claim")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
@@ -192,15 +146,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can attach a provisional identity without verification")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
-      *aliceSession,
-      clearData,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+  std::vector<uint8_t> encryptedData = TC_AWAIT(
+      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
 
   auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
@@ -211,8 +162,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->registerIdentity(emailVerif));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
   CHECK(result.status == Status::Ready);
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
@@ -222,12 +173,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Handles incorrect verification codes when verifying "
                   "provisional identity")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
@@ -241,25 +191,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Charlie cannot attach an already attached provisional "
                   "identity")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
-  auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
-  result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(
-          charlieSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-              bobEmail, VerificationCode{bobVerificationCode}})),
+      TC_AWAIT(attachProvisionalIdentity(*charlieSession, bobProvisional)),
       Errc::IdentityAlreadyAttached);
 }
 
@@ -267,9 +204,8 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob cannot verify a provisionalIdentity without attaching it first")
 {
-  auto const bobEmail = makeEmail();
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{

@@ -141,60 +141,29 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can't add Bob's already attached "
                   "provisional identity to a group")
 {
-  auto const bobEmail = Email{"bob13.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->createGroup({SPublicIdentity{
-          Identity::getPublicIdentity(bobProvisionalIdentity)}})),
+      TC_AWAIT(aliceSession->createGroup({bobProvisional.publicIdentity})),
       Errors::Errc::IdentityAlreadyAttached);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice shares with a group with two provisional users")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-
-  auto const charlieEmail = Email{"charlie.test@tanker.io"};
-  auto const charlieProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), charlieEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)},
-       SPublicIdentity{
-           Identity::getPublicIdentity(charlieProvisionalIdentity)}}));
+      {bobProvisional.publicIdentity, charlieProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
-  auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
-
-  result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{charlieProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const charlieVerificationCode =
-      TC_AWAIT(getVerificationCode(charlieEmail));
-  verification = Unlock::Verification{Unlock::EmailVerification{
-      charlieEmail, VerificationCode{charlieVerificationCode}}};
-  TC_AWAIT(charlieSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+  TC_AWAIT(attachProvisionalIdentity(*charlieSession, charlieProvisional));
 
   REQUIRE_NOTHROW(
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
@@ -204,9 +173,7 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Alice shares with a group with Bob later added as a provisional user")
 {
-  auto const bobEmail = Email{"bob2.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -215,17 +182,9 @@ TEST_CASE_FIXTURE(
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
-      myGroup,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}},
-      {})));
+      myGroup, {bobProvisional.publicIdentity}, {})));
 
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
@@ -234,12 +193,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice shares with a group with Bob as a provisional user "
                   "when Bob has already verified the group")
 {
-  auto const bobEmail = Email{"bob3.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
-  auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+  auto myGroup =
+      TC_AWAIT(aliceSession->createGroup({bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData =
@@ -248,12 +205,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   // verify the group
   TC_AWAIT(encrypt(*bobSession, "", {}, {myGroup}));
 
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
@@ -297,9 +249,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice shares with a group with Bob later added as a "
                   "provisional user when Bob has already verified the group")
 {
-  auto const bobEmail = Email{"bob4.tanker@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
@@ -308,20 +258,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
-      myGroup,
-      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}},
-      {})));
+      myGroup, {bobProvisional.publicIdentity}, {})));
 
   // verify the group
   std::vector<uint8_t> useless(AsyncCore::encryptedSize(0));
   TC_AWAIT(bobSession->encrypt(useless.data(), {}, {}, {myGroup}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
@@ -458,28 +401,18 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-  auto const bobPublicProvisional =
-      SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {alice.spublicIdentity(), bobPublicProvisional}));
-  TC_AWAIT(
-      aliceSession->updateGroupMembers(myGroup, {}, {bobPublicProvisional}));
+      {alice.spublicIdentity(), bobProvisional.publicIdentity}));
+  TC_AWAIT(aliceSession->updateGroupMembers(
+      myGroup, {}, {bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);
@@ -488,28 +421,20 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Can remove provisional group members twice")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-  auto const bobPublicProvisional =
-      SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {alice.spublicIdentity(), bobPublicProvisional}));
+      {alice.spublicIdentity(), bobProvisional.publicIdentity}));
   TC_AWAIT(aliceSession->updateGroupMembers(
-      myGroup, {}, {bobPublicProvisional, bobPublicProvisional}));
+      myGroup,
+      {},
+      {bobProvisional.publicIdentity, bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);
@@ -519,17 +444,15 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Cannot add and remove the same provisional user from a group")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-  auto const bobPublicProvisional =
-      SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
-      TC_AWAIT(aliceSession->updateGroupMembers(
-          myGroup, {bobPublicProvisional}, {bobPublicProvisional})),
+      TC_AWAIT(
+          aliceSession->updateGroupMembers(myGroup,
+                                           {bobProvisional.publicIdentity},
+                                           {bobProvisional.publicIdentity})),
       Errors::Errc::InvalidArgument,
       "cannot both add and remove");
 }
@@ -538,48 +461,29 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Can't remove claimed provisional group members as a provisional identity")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-  auto const bobPublicProvisional =
-      SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {alice.spublicIdentity(), bobPublicProvisional}));
+      {alice.spublicIdentity(), bobProvisional.publicIdentity}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->updateGroupMembers(
-                                    myGroup, {}, {bobPublicProvisional})),
-                                Errors::Errc::IdentityAlreadyAttached);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->updateGroupMembers(
+          myGroup, {}, {bobProvisional.publicIdentity})),
+      Errors::Errc::IdentityAlreadyAttached);
 }
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Can remove claimed provisional group members as a permanent identity")
 {
-  auto const bobEmail = Email{"bob1.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
-  auto const bobPublicProvisional =
-      SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)};
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {alice.spublicIdentity(), bobPublicProvisional}));
+      {alice.spublicIdentity(), bobProvisional.publicIdentity}));
 
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   TC_AWAIT(
       aliceSession->updateGroupMembers(myGroup, {}, {bob.spublicIdentity()}));
@@ -595,21 +499,12 @@ TEST_CASE_FIXTURE(
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Claimed provisional identities can update group")
 {
-  auto const bobEmail = Email{"bob2.test@tanker.io"};
-  auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-      mgs::base64::encode(trustchain.id), bobEmail);
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
-      {alice.spublicIdentity(),
-       SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
+      {alice.spublicIdentity(), bobProvisional.publicIdentity}));
 
-  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
-      SSecretProvisionalIdentity{bobProvisionalIdentity}));
-  REQUIRE(result.status == Status::IdentityVerificationNeeded);
-  auto const verification = Unlock::Verification{Unlock::EmailVerification{
-      bobEmail, VerificationCode{bobVerificationCode}}};
-  TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   REQUIRE_NOTHROW(TC_AWAIT(
       bobSession->updateGroupMembers(myGroup, {}, {alice.spublicIdentity()})));
