@@ -536,13 +536,7 @@ TEST_CASE_FIXTURE(
 {
   std::vector<SPublicIdentity> identities;
   for (int i = 0; i < 101; ++i)
-  {
-    auto const bobEmail = Email{fmt::format("bob{}.test@tanker.io", i)};
-    auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
-        mgs::base64::encode(trustchain.id), bobEmail);
-    identities.push_back(
-        SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)});
-  }
+    identities.push_back(trustchain.makeEmailProvisionalUser().publicIdentity);
 
   auto const clearData = make_buffer("my clear data is clear");
   TANKER_CHECK_THROWS_WITH_CODE(

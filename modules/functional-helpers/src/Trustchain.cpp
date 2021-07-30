@@ -1,8 +1,12 @@
 #include <Tanker/Functional/Trustchain.hpp>
 
+#include <Tanker/Identity/PublicIdentity.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+
 #include <mgs/base64.hpp>
 
 #include <Helpers/Config.hpp>
+#include <Helpers/Email.hpp>
 
 #include <memory>
 #include <string>
@@ -56,6 +60,18 @@ User Trustchain::makeUser()
       mgs::base64::encode(keyPair.privateKey);
 
   return User(url, trustchainIdString, trustchainPrivateKeyString);
+}
+
+AppProvisionalUser Trustchain::makeEmailProvisionalUser()
+{
+  auto const email = makeEmail();
+  auto const secretProvisionalIdentity =
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+          mgs::base64::encode(this->id), email));
+  auto const publicProvisionalIdentity = SPublicIdentity(
+      Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+  return AppProvisionalUser{
+      email, secretProvisionalIdentity, publicProvisionalIdentity};
 }
 
 TrustchainConfig Trustchain::toConfig() const

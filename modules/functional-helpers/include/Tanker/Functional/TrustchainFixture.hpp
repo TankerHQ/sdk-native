@@ -27,6 +27,8 @@ struct TrustchainFixture
   tc::cotask<VerificationCode> getVerificationCode(Email const& email);
   tc::cotask<VerificationCode> getVerificationCode(
       PhoneNumber const& phoneNumber);
+  tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
+                                             AppProvisionalUser const& prov);
   tc::cotask<void> enableOidc();
   tc::cotask<void> enable2fa();
 };

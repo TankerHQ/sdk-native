@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/Functional/Provisional.hpp>
 #include <Tanker/Functional/User.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -51,6 +52,7 @@ public:
   Trustchain& operator=(Trustchain&&) = default;
 
   User makeUser();
+  AppProvisionalUser makeEmailProvisionalUser();
 
   TrustchainConfig toConfig() const;
 
