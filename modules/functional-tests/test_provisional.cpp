@@ -13,6 +13,8 @@
 
 #include <doctest/doctest.h>
 
+#include "CheckDecrypt.hpp"
+
 using namespace Tanker;
 using Functional::TrustchainFixture;
 using namespace Errors;
@@ -28,12 +30,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
-                      clearData,
-                      {SPublicIdentity{Identity::getPublicIdentity(
-                          bobProvisionalIdentity)}})));
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
+      *aliceSession,
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -44,9 +45,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 
-  std::vector<uint8_t> decrypted;
-  decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
-  CHECK(decrypted == clearData);
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -56,12 +55,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
-                      clearData,
-                      {SPublicIdentity{Identity::getPublicIdentity(
-                          bobProvisionalIdentity)}})));
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
+      *aliceSession,
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -74,6 +72,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const result2 = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   CHECK(result2.status == Tanker::Status::Ready);
+
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(
@@ -108,8 +108,10 @@ TEST_CASE_FIXTURE(
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto const encrypted = TC_AWAIT(aliceSession->encrypt(
-      make_buffer("my clear data is clear"),
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
+      *aliceSession,
+      clearData,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
   auto bob = trustchain.makeUser();
@@ -128,7 +130,7 @@ TEST_CASE_FIXTURE(
 
   auto bobDevice2 = bob.makeDevice();
   auto bobSession2 = TC_AWAIT(bobDevice2.open());
-  REQUIRE_NOTHROW(TC_AWAIT(bobSession2->decrypt(encrypted)));
+  REQUIRE_NOTHROW(checkDecrypt({bobSession2}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -150,12 +152,13 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceThirdDevice = alice.makeDevice();
   auto aliceThirdSession = TC_AWAIT(aliceThirdDevice.open());
 
-  auto const clearData = make_buffer("my clear data is clear");
+  auto const clearData = "my clear data is clear";
 
-  auto const encrypted =
-      TC_AWAIT(bobSession->encrypt(clearData,
-                                   {SPublicIdentity{Identity::getPublicIdentity(
-                                       aliceProvisionalIdentity)}}));
+  auto const encryptedData =
+      TC_AWAIT(encrypt(*bobSession,
+                       clearData,
+                       {SPublicIdentity{Identity::getPublicIdentity(
+                           aliceProvisionalIdentity)}}));
 
   REQUIRE_EQ(TC_AWAIT(aliceSession->attachProvisionalIdentity(
                           SSecretProvisionalIdentity{aliceProvisionalIdentity}))
@@ -165,11 +168,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->verifyProvisionalIdentity(
       Unlock::EmailVerification{aliceEmail, aliceVerificationCode})));
 
-  auto const result_data = TC_AWAIT(aliceSession->decrypt(encrypted));
-  REQUIRE_EQ(result_data, clearData);
-
-  auto const result_data2 = TC_AWAIT(aliceThirdSession->decrypt(encrypted));
-  REQUIRE_EQ(result_data2, clearData);
+  REQUIRE_NOTHROW(checkDecrypt(
+      {aliceSession, aliceThirdSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -196,12 +196,11 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
       mgs::base64::encode(trustchain.id), bobEmail);
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(
-                      clearData,
-                      {SPublicIdentity{Identity::getPublicIdentity(
-                          bobProvisionalIdentity)}})));
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
+      *aliceSession,
+      clearData,
+      {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
   auto bob = trustchain.makeUser();
   auto bobDevice = bob.makeDevice();
@@ -215,6 +214,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
   CHECK(result.status == Status::Ready);
+
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -280,7 +281,7 @@ TEST_CASE_FIXTURE(
     TrustchainFixture,
     "Bob's has multiple provisional identities with the same email")
 {
-  auto const clearData = make_buffer("my clear data is clear");
+  auto const clearData = "my clear data is clear";
 
   auto const bobEmail = makeEmail();
   std::array const bobProvisionalIdentities = {
@@ -297,10 +298,10 @@ TEST_CASE_FIXTURE(
     for (auto const& id : bobProvisionalIdentities)
     {
       CAPTURE(id);
-      std::vector<uint8_t> encryptedData;
-      REQUIRE_NOTHROW(
-          encryptedData = TC_AWAIT(aliceSession->encrypt(
-              clearData, {SPublicIdentity{Identity::getPublicIdentity(id)}})));
+      std::vector<uint8_t> encryptedData =
+          TC_AWAIT(encrypt(*aliceSession,
+                           clearData,
+                           {SPublicIdentity{Identity::getPublicIdentity(id)}}));
 
       auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
           SSecretProvisionalIdentity{id}));
@@ -309,8 +310,7 @@ TEST_CASE_FIXTURE(
       TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
           bobEmail, VerificationCode{bobVerificationCode}}));
 
-      auto const decrypted = TC_AWAIT(bobSession->decrypt(encryptedData));
-      CHECK(decrypted == clearData);
+      REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
     }
   }
   SUBCASE(
@@ -324,20 +324,22 @@ TEST_CASE_FIXTURE(
         bobEmail, VerificationCode{bobVerificationCode}}));
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(aliceSession->encrypt(
-            clearData,
-            {SPublicIdentity{
-                Identity::getPublicIdentity(bobProvisionalIdentities[0])}})),
+        TC_AWAIT(encrypt(*aliceSession,
+                         clearData,
+                         {SPublicIdentity{Identity::getPublicIdentity(
+                             bobProvisionalIdentities[0])}})),
         Errc::IdentityAlreadyAttached);
 
     for (auto i = 1u; i < nb_ids; ++i)
     {
       CAPTURE(bobProvisionalIdentities[i]);
-      REQUIRE_NOTHROW(TC_AWAIT(aliceSession->encrypt(
-          clearData,
-          {SPublicIdentity{
-              Identity::getPublicIdentity(bobProvisionalIdentities[i])}})));
+      REQUIRE_NOTHROW(
+          TC_AWAIT(encrypt(*aliceSession,
+                           clearData,
+                           {SPublicIdentity{Identity::getPublicIdentity(
+                               bobProvisionalIdentities[i])}})));
     }
   }
 }
+
 TEST_SUITE_END();

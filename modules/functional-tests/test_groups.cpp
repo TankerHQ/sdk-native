@@ -160,7 +160,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice shares with a group with Bob as a provisional user")
+                  "Alice shares with a group with two provisional users")
 {
   auto const bobEmail = Email{"bob1.test@tanker.io"};
   auto const bobProvisionalIdentity = Identity::createProvisionalIdentity(
@@ -176,9 +176,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
            Identity::getPublicIdentity(charlieProvisionalIdentity)}}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -187,10 +186,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto verification = Unlock::Verification{Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
-
-  std::string decrypted;
-  REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
-  CHECK(decrypted == clearData);
 
   result = TC_AWAIT(charlieSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{charlieProvisionalIdentity}));
@@ -201,9 +196,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       charlieEmail, VerificationCode{charlieVerificationCode}}};
   TC_AWAIT(charlieSession->verifyProvisionalIdentity(verification));
 
-  REQUIRE_NOTHROW(decrypted =
-                      TC_AWAIT(decrypt(*charlieSession, encryptedData)));
-  CHECK(decrypted == clearData);
+  REQUIRE_NOTHROW(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(
@@ -217,9 +211,8 @@ TEST_CASE_FIXTURE(
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
       myGroup,
@@ -234,9 +227,7 @@ TEST_CASE_FIXTURE(
       bobEmail, VerificationCode{bobVerificationCode}}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(verification));
 
-  std::string decrypted;
-  REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
-  CHECK(decrypted == clearData);
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -251,9 +242,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {SPublicIdentity{Identity::getPublicIdentity(bobProvisionalIdentity)}}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   // verify the group
   TC_AWAIT(encrypt(*bobSession, "", {}, {myGroup}));
@@ -265,9 +255,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}));
 
-  std::string decrypted;
-  REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
-  CHECK(decrypted == clearData);
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -316,9 +304,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
       myGroup,
@@ -336,9 +323,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}}));
 
-  std::string decrypted;
-  REQUIRE_NOTHROW(decrypted = TC_AWAIT(decrypt(*bobSession, encryptedData)));
-  CHECK(decrypted == clearData);
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -348,10 +333,6 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
 
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
   TC_AWAIT(aliceSession->revokeDevice(TC_AWAIT(aliceSession->deviceId())));
@@ -489,9 +470,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
       aliceSession->updateGroupMembers(myGroup, {}, {bobPublicProvisional}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -520,9 +500,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       myGroup, {}, {bobPublicProvisional, bobPublicProvisional}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   auto const result = TC_AWAIT(bobSession->attachProvisionalIdentity(
       SSecretProvisionalIdentity{bobProvisionalIdentity}));
@@ -606,9 +585,8 @@ TEST_CASE_FIXTURE(
       aliceSession->updateGroupMembers(myGroup, {}, {bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
-                      encrypt(*aliceSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);
@@ -637,9 +615,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       bobSession->updateGroupMembers(myGroup, {}, {alice.spublicIdentity()})));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData;
-  REQUIRE_NOTHROW(encryptedData =
-                      TC_AWAIT(encrypt(*bobSession, clearData, {}, {myGroup})));
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*bobSession, clearData, {}, {myGroup}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*aliceSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);
