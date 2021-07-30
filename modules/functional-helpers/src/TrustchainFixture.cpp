@@ -1,6 +1,7 @@
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/Trustchain/TrustchainId.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 
 #include <Helpers/Config.hpp>
 
@@ -116,6 +117,34 @@ tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
                                                 trustchain.id,
                                                 trustchain.authToken,
                                                 phoneNumber)));
+}
+
+tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
+    AsyncCore& session, AppProvisionalUser const& prov)
+{
+  auto const result =
+      TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
+  if (result.status == Status::Ready)
+    TC_RETURN();
+
+  if (result.status != Status::IdentityVerificationNeeded)
+    throw std::runtime_error("attachProvisionalIdentity: unexpected status!");
+
+  auto const verif = TC_AWAIT(boost::variant2::visit(
+      overloaded{
+          [&](Email const& v) -> tc::cotask<Unlock::Verification> {
+            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+            TC_RETURN((Unlock::EmailVerification{
+                v, VerificationCode{verificationCode}}));
+          },
+          [&](PhoneNumber const& v) -> tc::cotask<Unlock::Verification> {
+            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+            TC_RETURN((Unlock::PhoneNumberVerification{
+                v, VerificationCode{verificationCode}}));
+          },
+      },
+      prov.value));
+  TC_AWAIT(session.verifyProvisionalIdentity(verif));
 }
 
 tc::cotask<void> TrustchainFixture::enableOidc()
