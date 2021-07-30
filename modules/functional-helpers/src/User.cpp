@@ -32,19 +32,9 @@ User::User(std::string trustchainUrl,
 {
 }
 
-void User::reuseCache()
+Device User::makeDevice()
 {
-  _currentDevice = 0;
-}
-
-Device User::makeDevice(DeviceType type)
-{
-  if (type == DeviceType::New)
-    return Device(trustchainUrl, trustchainId, identity);
-
-  if (_currentDevice == _cachedDevices->size())
-    _cachedDevices->push_back(Device(trustchainUrl, trustchainId, identity));
-  return (*_cachedDevices)[_currentDevice++];
+  return Device(trustchainUrl, trustchainId, identity);
 }
 
 tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)

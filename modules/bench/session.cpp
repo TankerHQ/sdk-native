@@ -24,7 +24,7 @@ static void registerIdentity_verificationKey(benchmark::State& state)
     for (auto _ : state)
     {
       state.PauseTiming();
-      auto alice = tr.makeUser(UserType::New);
+      auto alice = tr.makeUser();
       auto device = alice.makeDevice();
       auto core = device.createAsyncCore();
       state.ResumeTiming();
@@ -51,7 +51,7 @@ static void registerIdentity_passphrase(benchmark::State& state)
     for (auto _ : state)
     {
       state.PauseTiming();
-      auto alice = tr.makeUser(UserType::New);
+      auto alice = tr.makeUser();
       auto device = alice.makeDevice();
       auto core = device.createAsyncCore();
       state.ResumeTiming();
@@ -73,9 +73,9 @@ BENCHMARK(registerIdentity_passphrase)
 static void start_noVerification(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(SessionType::New);
+  auto core = device.createCore();
   AWAIT_VOID(core->start(device.identity()));
   auto const verificationKey = AWAIT(core->generateVerificationKey());
   AWAIT_VOID(core->registerIdentity(verificationKey));
@@ -98,9 +98,9 @@ BENCHMARK(start_noVerification)->Unit(benchmark::kMillisecond)->UseRealTime();
 static void stop(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(SessionType::New);
+  auto core = device.createCore();
   AWAIT_VOID(core->start(device.identity()));
   auto const verificationKey = AWAIT(core->generateVerificationKey());
   AWAIT_VOID(core->registerIdentity(verificationKey));
@@ -123,9 +123,9 @@ BENCHMARK(stop)->Unit(benchmark::kMillisecond)->UseRealTime();
 static void verifyIdentity_verificationKey(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(SessionType::New);
+  auto core = device.createCore();
   AWAIT_VOID(core->start(device.identity()));
   auto const verificationKey = AWAIT(core->generateVerificationKey());
   AWAIT_VOID(core->registerIdentity(verificationKey));
@@ -135,7 +135,7 @@ static void verifyIdentity_verificationKey(benchmark::State& state)
     {
       state.PauseTiming();
       auto device2 = alice.makeDevice();
-      auto core2 = device2.createCore(SessionType::New);
+      auto core2 = device2.createCore();
       state.ResumeTiming();
       TC_AWAIT(core2->start(alice.identity));
       TC_AWAIT(core2->verifyIdentity(verificationKey));
@@ -155,9 +155,9 @@ BENCHMARK(verifyIdentity_verificationKey)
 static void verifyIdentity_passphrase(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(SessionType::New);
+  auto core = device.createCore();
   AWAIT_VOID(core->start(device.identity()));
   AWAIT_VOID(core->registerIdentity(Tanker::Passphrase{"passphrase"}));
   AWAIT_VOID(core->stop());
@@ -166,7 +166,7 @@ static void verifyIdentity_passphrase(benchmark::State& state)
     {
       state.PauseTiming();
       auto device2 = alice.makeDevice();
-      auto core2 = device2.createCore(SessionType::New);
+      auto core2 = device2.createCore();
       state.ResumeTiming();
       TC_AWAIT(core2->start(alice.identity));
       TC_AWAIT(core2->verifyIdentity(Tanker::Passphrase{"passphrase"}));
@@ -187,9 +187,9 @@ BENCHMARK(verifyIdentity_passphrase)
 static void verifyIdentity_passphrase_withToken(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
-  auto core = device.createCore(SessionType::New);
+  auto core = device.createCore();
   AWAIT_VOID(core->start(device.identity()));
   AWAIT_VOID(core->registerIdentity(Tanker::Passphrase{"passphrase"}));
   AWAIT_VOID(core->stop());
@@ -198,7 +198,7 @@ static void verifyIdentity_passphrase_withToken(benchmark::State& state)
     {
       state.PauseTiming();
       auto device2 = alice.makeDevice();
-      auto core2 = device2.createCore(SessionType::New);
+      auto core2 = device2.createCore();
       state.ResumeTiming();
       TC_AWAIT(core2->start(alice.identity));
       TC_AWAIT(core2->verifyIdentity(Tanker::Passphrase{"passphrase"},

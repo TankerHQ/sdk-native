@@ -26,16 +26,9 @@ Device::Device(std::string trustchainUrl,
 {
 }
 
-AsyncCorePtr Device::createCore(SessionType type)
+AsyncCorePtr Device::createCore()
 {
-  if (type == SessionType::New)
-    return AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
-
-  if (!*_cachedSession)
-    *_cachedSession =
-        AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
-
-  return *_cachedSession;
+  return AsyncCorePtr(createAsyncCore().release(), AsyncCoreDeleter{});
 }
 
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
@@ -62,9 +55,9 @@ std::string Device::writablePath() const
   return _storage->path;
 }
 
-tc::cotask<AsyncCorePtr> Device::open(SessionType sessionType)
+tc::cotask<AsyncCorePtr> Device::open()
 {
-  auto tanker = createCore(sessionType);
+  auto tanker = createCore();
   if (tanker->status() == Status::Ready)
     TC_RETURN(std::move(tanker));
 

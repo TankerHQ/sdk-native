@@ -35,12 +35,6 @@ std::unique_ptr<AsyncCore, AsyncCoreDeleter> makeAsyncCore(T&&... args)
       new AsyncCore(std::forward<T>(args)...));
 }
 
-enum class SessionType
-{
-  Cached,
-  New,
-};
-
 class Device
 {
 public:
@@ -50,9 +44,9 @@ public:
          std::string trustchainId,
          std::string identity);
 
-  AsyncCorePtr createCore(SessionType type);
+  AsyncCorePtr createCore();
   std::unique_ptr<AsyncCore> createAsyncCore();
-  tc::cotask<AsyncCorePtr> open(SessionType type = SessionType::Cached);
+  tc::cotask<AsyncCorePtr> open();
   std::string const& identity() const;
   std::string writablePath() const;
 
@@ -63,12 +57,6 @@ private:
   std::string _trustchainId;
   std::string _identity;
   std::shared_ptr<UniquePath> _storage;
-
-  // Since Device is copyable and since we want to share the cache between all
-  // the device copies, we need a shared_ptr of shared_ptr
-  // TLDR; Don't remove it or it will break
-  std::shared_ptr<AsyncCorePtr> _cachedSession =
-      std::make_shared<AsyncCorePtr>();
 };
 }
 }

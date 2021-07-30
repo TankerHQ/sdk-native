@@ -25,12 +25,6 @@ void from_json(nlohmann::json const& j, TrustchainConfig& state);
 
 class TrustchainFactory;
 
-enum class UserType
-{
-  Cached,
-  New,
-};
-
 class Trustchain
 {
 public:
@@ -56,17 +50,12 @@ public:
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
 
-  void reuseCache();
-
-  User makeUser(UserType = UserType::Cached);
+  User makeUser();
 
   TrustchainConfig toConfig() const;
 
 private:
   Trustchain();
-
-  uint32_t _currentUser = 0;
-  std::vector<User> _cachedUsers;
 };
 }
 }

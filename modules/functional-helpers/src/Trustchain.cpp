@@ -49,26 +49,13 @@ Trustchain::Trustchain(TrustchainConfig const& config)
 {
 }
 
-void Trustchain::reuseCache()
-{
-  for (auto& user : _cachedUsers)
-    user.reuseCache();
-  _currentUser = 0;
-}
-
-User Trustchain::makeUser(UserType type)
+User Trustchain::makeUser()
 {
   auto const trustchainIdString = mgs::base64::encode(id);
   auto const trustchainPrivateKeyString =
       mgs::base64::encode(keyPair.privateKey);
 
-  if (type == UserType::New)
-    return User(url, trustchainIdString, trustchainPrivateKeyString);
-
-  if (_currentUser == _cachedUsers.size())
-    _cachedUsers.push_back(
-        User(url, trustchainIdString, trustchainPrivateKeyString));
-  return _cachedUsers[_currentUser++];
+  return User(url, trustchainIdString, trustchainPrivateKeyString);
 }
 
 TrustchainConfig Trustchain::toConfig() const

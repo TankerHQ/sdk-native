@@ -12,12 +12,6 @@ namespace Tanker
 {
 namespace Functional
 {
-enum class DeviceType
-{
-  Cached,
-  New,
-};
-
 class User
 {
 public:
@@ -31,18 +25,11 @@ public:
        std::string trustchainId,
        std::string trustchainPrivateSignatureKey);
 
-  void reuseCache();
-
-  Device makeDevice(DeviceType type = DeviceType::Cached);
+  Device makeDevice();
 
   tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
 
   SPublicIdentity spublicIdentity() const;
-
-private:
-  unsigned int _currentDevice = 0;
-  std::shared_ptr<std::vector<Device>> _cachedDevices =
-      std::make_shared<std::vector<Device>>();
 };
 
 void to_json(nlohmann::json& j, User const& state);

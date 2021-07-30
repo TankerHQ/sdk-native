@@ -26,7 +26,7 @@ auto const benchAppSecret = Tanker::TestConstants::benchmarkApp().appSecret;
 static void encrypt(benchmark::State& state)
 {
   auto& tr = getTrustchain();
-  auto alice = tr.makeUser(UserType::New);
+  auto alice = tr.makeUser();
   auto device = alice.makeDevice();
   auto core = AWAIT(device.open());
 
@@ -61,7 +61,7 @@ static void share_withUsers(benchmark::State& state)
           benchAppSecret,
           Tanker::SUserId(std::to_string(randombytes_random())));
       auto device = Device(getTrustchain().url, benchAppId, identity);
-      auto core = TC_AWAIT(device.open(SessionType::New));
+      auto core = TC_AWAIT(device.open());
       auto const encryptedData = TC_AWAIT(core->encrypt(
           gsl::make_span("make some noise").as_span<uint8_t const>()));
       auto const resourceId = TC_AWAIT(core->getResourceId(encryptedData));

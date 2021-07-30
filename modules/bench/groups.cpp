@@ -138,7 +138,7 @@ static void share_withGroup(benchmark::State& state, std::string const& groupId)
           benchAppSecret,
           Tanker::SUserId(std::to_string(randombytes_random())));
       auto device = Device(getTrustchain().url, benchAppId, identity);
-      auto tanker = TC_AWAIT(device.open(SessionType::New));
+      auto tanker = TC_AWAIT(device.open());
       auto const encryptedData = TC_AWAIT(tanker->encrypt(
           gsl::make_span("make some noise").as_span<uint8_t const>()));
       auto const resourceId = TC_AWAIT(tanker->getResourceId(encryptedData));
