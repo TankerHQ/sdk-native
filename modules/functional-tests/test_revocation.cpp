@@ -156,22 +156,18 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto const secondDeviceId = secondSession->deviceId().get();
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
-
-  std::vector<uint8_t> decryptedData;
-  decryptedData.resize(clearData.size());
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*secondSession, clearData));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
 
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(encrypt(*secondSession, clearData)),
                                 Errc::DeviceRevoked);
 
-  TC_AWAIT(aliceSecondDevice.open());
-  REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
-      {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
+  secondSession = TC_AWAIT(aliceSecondDevice.open());
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({secondSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -184,13 +180,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto aliceSecondDevice = alice.makeDevice();
   auto secondSession = TC_AWAIT(aliceSecondDevice.open());
 
-  auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData(
-      AsyncCore::encryptedSize(clearData.size()));
-  TC_AWAIT(secondSession->encrypt(encryptedData.data(), clearData));
-
-  std::vector<uint8_t> decryptedData;
-  decryptedData.resize(clearData.size());
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*secondSession, clearData));
 
   tc::promise<void> wasEmitted;
   secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
@@ -199,29 +191,29 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->revokeDevice(secondSession->deviceId().get())));
 
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(encrypt(*secondSession, clearData)),
                                 Errc::DeviceRevoked);
   CHECK(secondSession->status() == Status::Stopped);
   CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
   secondSession = TC_AWAIT(aliceSecondDevice.open());
-  REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
-      {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({secondSession}, clearData, encryptedData)));
 
-  //   Second Revoke
+  // Second Revoke
   wasEmitted = {};
   secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->revokeDevice(secondSession->deviceId().get())));
 
-  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(secondSession->encrypt(clearData)),
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(encrypt(*secondSession, clearData)),
                                 Errc::DeviceRevoked);
   CHECK(secondSession->status() == Status::Stopped);
   CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
-  TC_AWAIT(aliceSecondDevice.open());
-  REQUIRE_UNARY(TC_AWAIT(checkDecrypt(
-      {aliceSecondDevice}, {std::make_tuple(clearData, encryptedData)})));
+  secondSession = TC_AWAIT(aliceSecondDevice.open());
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({secondSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
