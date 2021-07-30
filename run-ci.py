@@ -150,7 +150,8 @@ SIZE_PROFILE_TO_BUILD_TARGET = {
     "android-x86_64-release": "android-x86_64",
     "android-x86-release": "android-x86",
     "linux-release-shared": "linux-x86_64",
-    "macos-release-shared": "macos-x86_64",
+    "macos-armv8-release-shared": "macos-armv8",
+    "macos-x86_64-release-shared": "macos-x86_64",
     "vs2019-release-shared": "windows-x86_64",
 }
 
