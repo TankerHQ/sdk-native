@@ -35,7 +35,8 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
   };
 }
 
-void to_json(nlohmann::ordered_json& j, PublicProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j,
+             PublicProvisionalIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = to_string(identity.target);

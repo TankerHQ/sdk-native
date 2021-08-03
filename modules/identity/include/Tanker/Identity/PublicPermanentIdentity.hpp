@@ -18,7 +18,8 @@ struct PublicPermanentIdentity
 };
 
 void from_json(nlohmann::json const& j, PublicPermanentIdentity& result);
-void to_json(nlohmann::ordered_json& j, PublicPermanentIdentity const& identity);
+void to_json(nlohmann::ordered_json& j,
+             PublicPermanentIdentity const& identity);
 std::string to_string(PublicPermanentIdentity const& identity);
 }
 }

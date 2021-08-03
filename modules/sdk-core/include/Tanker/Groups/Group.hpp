@@ -87,7 +87,8 @@ inline std::optional<BaseGroup> extractBaseGroup(
 }
 
 void updateLastGroupBlock(Group& group, Crypto::Hash const& lastBlockHash);
-void updateLastKeyRotationBlockHash(Group& group, Crypto::Hash const& lastKeyRotationBlockHash);
+void updateLastKeyRotationBlockHash(
+    Group& group, Crypto::Hash const& lastKeyRotationBlockHash);
 Crypto::PublicEncryptionKey getPublicEncryptionKey(Group const& group);
 Trustchain::GroupId getGroupId(Group const& group);
 }
