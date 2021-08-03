@@ -196,6 +196,21 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {aliceSession, aliceThirdSession}, clearData, encryptedData));
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob can claim a provisional identity with a phone number verification")
+{
+  auto const bobProvisionalIdentity =
+      trustchain.makePhoneNumberProvisionalUser();
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisionalIdentity));
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(aliceSession->encrypt(make_buffer("my clear data is clear"),
+                                     {bobProvisionalIdentity.publicIdentity})),
+      Errors::Errc::IdentityAlreadyAttached);
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim when there is nothing to claim")
 {
