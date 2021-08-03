@@ -9,6 +9,7 @@ add_library(tankertesthelpers STATIC
   include/Helpers/Errors.hpp
   include/Helpers/Email.hpp
   include/Helpers/MakeCoTask.hpp
+  include/Helpers/PhoneNumber.hpp
   include/Helpers/Stepper.hpp
   include/Helpers/UniquePath.hpp
   include/Helpers/Buffers.hpp
@@ -19,6 +20,7 @@ add_library(tankertesthelpers STATIC
 
   src/Config.cpp
   src/Email.cpp
+  src/PhoneNumber.cpp
   src/TimeoutTerminate.cpp
   src/Barrier.cpp
   src/Stepper.cpp

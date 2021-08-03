@@ -7,6 +7,7 @@
 
 #include <Helpers/Config.hpp>
 #include <Helpers/Email.hpp>
+#include <Helpers/PhoneNumber.hpp>
 
 #include <memory>
 #include <string>
@@ -72,6 +73,18 @@ AppProvisionalUser Trustchain::makeEmailProvisionalUser()
       Identity::getPublicIdentity(secretProvisionalIdentity.string()));
   return AppProvisionalUser{
       email, secretProvisionalIdentity, publicProvisionalIdentity};
+}
+
+AppProvisionalUser Trustchain::makePhoneNumberProvisionalUser()
+{
+  auto const phoneNumber = makePhoneNumber();
+  auto const secretProvisionalIdentity =
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+          mgs::base64::encode(this->id), phoneNumber));
+  auto const publicProvisionalIdentity = SPublicIdentity(
+      Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+  return AppProvisionalUser{
+      phoneNumber, secretProvisionalIdentity, publicProvisionalIdentity};
 }
 
 TrustchainConfig Trustchain::toConfig() const
