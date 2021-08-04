@@ -74,12 +74,12 @@ tc::cotask<TankerSecretProvisionalIdentity>
 Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
 {
   auto const res = TC_AWAIT(
-      _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities"),
+      _httpClient->asyncPost(_httpClient->makeUrl("tanker-provisional-keys"),
                              {{"verification", request}}));
 
   auto const json = res.value();
 
-  auto& jProvisional = json.at("provisional_identity");
+  auto& jProvisional = json.at("tanker_provisional_keys");
   TC_RETURN((TankerSecretProvisionalIdentity{
       {jProvisional.at("public_encryption_key")
            .get<Crypto::PublicEncryptionKey>(),

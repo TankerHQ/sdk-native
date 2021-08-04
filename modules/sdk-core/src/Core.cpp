@@ -307,7 +307,8 @@ tc::cotask<void> Core::registerIdentityImpl(
       _session->userId(),
       Serialization::serialize(userCreationEntry),
       Serialization::serialize(firstDeviceEntry),
-      Unlock::makeRequest(verification, _session->userSecret(), withTokenNonce),
+      Unlock::makeRequest(
+          verification, _session->userSecret(), std::nullopt, withTokenNonce),
       encryptedVerificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
@@ -608,7 +609,8 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
   {
     TC_AWAIT(_session->requesters().setVerificationMethod(
         _session->userId(),
-        Unlock::makeRequest(method, _session->userSecret(), withTokenNonce)));
+        Unlock::makeRequest(
+            method, _session->userSecret(), std::nullopt, withTokenNonce)));
   }
   catch (Errors::Exception const& e)
   {
@@ -653,8 +655,10 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->userId(),
-          Unlock::makeRequest(
-              verification, _session->userSecret(), withTokenNonce)));
+          Unlock::makeRequest(verification,
+                              _session->userSecret(),
+                              std::nullopt,
+                              withTokenNonce)));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
@@ -708,7 +712,9 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
   Unlock::validateVerification(verification, *identity);
   TC_AWAIT(
       _session->accessors().provisionalUsersManager.verifyProvisionalIdentity(
-          Unlock::makeRequest(verification, _session->userSecret())));
+          Unlock::makeRequest(verification,
+                              _session->userSecret(),
+                              identity->appSignatureKeyPair)));
 }
 
 tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)

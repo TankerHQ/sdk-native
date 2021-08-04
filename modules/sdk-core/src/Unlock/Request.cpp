@@ -38,9 +38,11 @@ Ret hashField(T const& field)
 
 namespace Tanker::Unlock
 {
-Request makeRequest(Unlock::Verification const& verification,
-                    Crypto::SymmetricKey const& userSecret,
-                    std::optional<std::string> const& withTokenNonce)
+Request makeRequest(
+    Unlock::Verification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce)
 {
   auto verif = boost::variant2::visit(
       overloaded{
@@ -72,9 +74,16 @@ Request makeRequest(Unlock::Verification const& verification,
                 gsl::make_span(v.phoneNumber).as_span<std::uint8_t const>(),
                 userSecret);
 
+            auto const provisionalSalt =
+                secretProvisionalSigKey.has_value() ?
+                    std::make_optional(
+                        hashField(secretProvisionalSigKey->privateKey)) :
+                    std::nullopt;
+
             return EncryptedPhoneNumberVerification{
                 v.phoneNumber,
                 hashField(userSecret),
+                provisionalSalt,
                 std::move(encryptedPhoneNumber),
                 v.verificationCode};
           },
@@ -122,6 +131,10 @@ void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
             j["verification_code"] = e.verificationCode;
             j["encrypted_phone_number"] = e.encryptedPhoneNumber;
             j["user_salt"] = e.userSalt;
+            if (e.provisionalSalt)
+            {
+              j["provisional_salt"] = *e.provisionalSalt;
+            }
           },
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;

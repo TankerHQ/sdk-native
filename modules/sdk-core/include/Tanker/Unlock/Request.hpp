@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
@@ -29,6 +30,7 @@ struct EncryptedPhoneNumberVerification
 {
   PhoneNumber phoneNumber;
   Crypto::Hash userSalt;
+  std::optional<Crypto::Hash> provisionalSalt;
   EncryptedPhoneNumber encryptedPhoneNumber;
   VerificationCode verificationCode;
 };
@@ -51,6 +53,7 @@ void to_json(nlohmann::json&, Request const&);
 Request makeRequest(
     Unlock::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);
 }
 
