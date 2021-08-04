@@ -11,6 +11,8 @@
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/HashedEmail.hpp>
+#include <Tanker/Types/HashedPhoneNumber.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -68,5 +70,10 @@ public:
       HashedEmail,
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(gsl::span<HashedEmail const> hashedEmails) = 0;
+  virtual tc::cotask<std::map<
+      HashedPhoneNumber,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(
+      gsl::span<HashedPhoneNumber const> hashedPhoneNumbers) = 0;
 };
 }

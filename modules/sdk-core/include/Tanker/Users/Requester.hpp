@@ -47,6 +47,12 @@ public:
   getPublicProvisionalIdentities(
       gsl::span<HashedEmail const> hashedEmails) override;
 
+  tc::cotask<std::map<
+      HashedPhoneNumber,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(
+      gsl::span<HashedPhoneNumber const> hashedPhoneNumbers) override;
+
 private:
   tc::cotask<GetResult> getUsersImpl(nlohmann::json const& query);
 

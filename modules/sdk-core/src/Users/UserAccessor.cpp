@@ -19,8 +19,13 @@ TLOG_CATEGORY(UserAccessor);
 
 static constexpr auto ChunkSize = 100;
 
+using boost::container::flat_map;
+
 using Tanker::Trustchain::DeviceId;
 using Tanker::Trustchain::UserId;
+
+using PublicKeys = std::pair<Tanker::Crypto::PublicSignatureKey,
+                             Tanker::Crypto::PublicEncryptionKey>;
 
 using namespace Tanker::Errors;
 using namespace Tanker::Trustchain::Actions;
@@ -131,32 +136,98 @@ auto processUserEntries(Trustchain::Context const& context,
   return std::make_tuple(usersMap, devicesMap);
 }
 
-std::vector<HashedEmail> hashProvisionalUserEmails(
+struct HashProvisionalUsersResult
+{
+  std::vector<HashedEmail> hashedEmails;
+  std::vector<HashedPhoneNumber> hashedPhoneNumbers;
+};
+
+void hashProvisionalUser(Identity::PublicProvisionalIdentity const& identity,
+                         HashProvisionalUsersResult& result)
+{
+  switch (identity.target)
+  {
+  case Identity::TargetType::Email: {
+    result.hashedEmails.push_back(
+        Identity::hashProvisionalEmail(identity.value));
+    break;
+  }
+  case Identity::TargetType::HashedEmail: {
+    auto hashedEmail = mgs::base64::decode<HashedEmail>(identity.value);
+    result.hashedEmails.push_back(hashedEmail);
+    break;
+  }
+  case Identity::TargetType::HashedPhoneNumber: {
+    auto hashedPhoneNumber =
+        mgs::base64::decode<HashedPhoneNumber>(identity.value);
+    result.hashedPhoneNumbers.push_back(hashedPhoneNumber);
+    break;
+  }
+  default:
+    throw AssertionError(fmt::format("unsupported target type: {}",
+                                     static_cast<int>(identity.target)));
+  }
+}
+
+HashProvisionalUsersResult hashProvisionalUsers(
     gsl::span<Identity::PublicProvisionalIdentity const>
         appProvisionalIdentities)
 {
-  std::vector<HashedEmail> hashedProvisionalUserEmails;
+  HashProvisionalUsersResult result;
   for (auto const& appProvisionalIdentity : appProvisionalIdentities)
+    hashProvisionalUser(appProvisionalIdentity, result);
+  return result;
+}
+
+PublicKeys findFetchedPublicKeysForProvisional(
+    Identity::PublicProvisionalIdentity const& appProvisionalIdentity,
+    flat_map<HashedEmail, PublicKeys> const& tankerEmailProvisionalIdentities,
+    flat_map<HashedPhoneNumber, PublicKeys> const&
+        tankerPhoneNumberProvisionalIdentities)
+{
+  if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
   {
-    if (appProvisionalIdentity.target == Identity::TargetType::Email)
-    {
-      hashedProvisionalUserEmails.push_back(
-          Identity::hashProvisionalEmail(appProvisionalIdentity.value));
-    }
-    else if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
-    {
-      auto hashedEmail =
-          mgs::base64::decode<HashedEmail>(appProvisionalIdentity.value);
-      hashedProvisionalUserEmails.push_back(hashedEmail);
-    }
-    else
-    {
-      throw AssertionError(
-          fmt::format("unsupported target type: {}",
-                      static_cast<int>(appProvisionalIdentity.target)));
-    }
+    auto const hashedValue =
+        mgs::base64::decode<HashedEmail>(appProvisionalIdentity.value);
+    auto const it = tankerEmailProvisionalIdentities.find(hashedValue);
+    if (it == tankerEmailProvisionalIdentities.end())
+      throw formatEx(
+          Errc::InternalError,
+          "getPublicProvisionalIdentities is missing hashed email value {}",
+          appProvisionalIdentity.value);
+    return it->second;
   }
-  return hashedProvisionalUserEmails;
+  else if (appProvisionalIdentity.target == Identity::TargetType::Email)
+  {
+    auto const it = tankerEmailProvisionalIdentities.find(
+        Identity::hashProvisionalEmail(appProvisionalIdentity.value));
+    if (it == tankerEmailProvisionalIdentities.end())
+      throw formatEx(
+          Errc::InternalError,
+          "getPublicProvisionalIdentities is missing email value {}",
+          // Avoid logging real emails directly
+          Identity::hashProvisionalEmail(appProvisionalIdentity.value));
+    return it->second;
+  }
+  else if (appProvisionalIdentity.target ==
+           Identity::TargetType::HashedPhoneNumber)
+  {
+    auto const hashedValue =
+        mgs::base64::decode<HashedPhoneNumber>(appProvisionalIdentity.value);
+    auto const it = tankerPhoneNumberProvisionalIdentities.find(hashedValue);
+    if (it == tankerPhoneNumberProvisionalIdentities.end())
+      throw formatEx(Errc::InternalError,
+                     "getPublicProvisionalIdentities is missing hashed phone "
+                     "number value {}",
+                     appProvisionalIdentity.value);
+    return it->second;
+  }
+  else
+  {
+    throw AssertionError(
+        fmt::format("unsupported target type: {}",
+                    static_cast<int>(appProvisionalIdentity.target)));
+  }
 }
 }
 
@@ -181,44 +252,60 @@ UserAccessor::pullProvisional(
                                              }),
                                  appProvisionalIdentities.end());
 
-  auto const hashedEmails = hashProvisionalUserEmails(appProvisionalIdentities);
+  auto const hashedProvisionals =
+      hashProvisionalUsers(appProvisionalIdentities);
 
-  std::map<HashedEmail,
-           std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
-      tankerProvisionalIdentities;
-  for (unsigned int i = 0; i < hashedEmails.size(); i += ChunkSize)
+  flat_map<HashedEmail, PublicKeys> tankerEmailProvisionalIdentities;
+  for (unsigned int i = 0; i < hashedProvisionals.hashedEmails.size();
+       i += ChunkSize)
   {
-    auto const count =
-        std::min<unsigned int>(ChunkSize, hashedEmails.size() - i);
+    auto const count = std::min<unsigned int>(
+        ChunkSize, hashedProvisionals.hashedEmails.size() - i);
     auto response = TC_AWAIT(_requester->getPublicProvisionalIdentities(
-        gsl::make_span(hashedEmails).subspan(i, count)));
-    tankerProvisionalIdentities.insert(
+        gsl::make_span(hashedProvisionals.hashedEmails).subspan(i, count)));
+    tankerEmailProvisionalIdentities.insert(
         std::make_move_iterator(response.begin()),
         std::make_move_iterator(response.end()));
   }
 
-  if (appProvisionalIdentities.size() != tankerProvisionalIdentities.size())
+  flat_map<HashedPhoneNumber, PublicKeys>
+      tankerPhoneNumberProvisionalIdentities;
+  for (unsigned int i = 0; i < hashedProvisionals.hashedPhoneNumbers.size();
+       i += ChunkSize)
+  {
+    auto const count = std::min<unsigned int>(
+        ChunkSize, hashedProvisionals.hashedPhoneNumbers.size() - i);
+    auto response = TC_AWAIT(_requester->getPublicProvisionalIdentities(
+        gsl::make_span(hashedProvisionals.hashedPhoneNumbers)
+            .subspan(i, count)));
+    tankerPhoneNumberProvisionalIdentities.insert(
+        std::make_move_iterator(response.begin()),
+        std::make_move_iterator(response.end()));
+  }
+
+  if (appProvisionalIdentities.size() !=
+      tankerEmailProvisionalIdentities.size() +
+          tankerPhoneNumberProvisionalIdentities.size())
   {
     throw formatEx(Errc::InternalError,
                    "getPublicProvisionalIdentities returned a list of "
                    "different size ({} vs. {})",
                    appProvisionalIdentities.size(),
-                   tankerProvisionalIdentities.size());
+                   tankerEmailProvisionalIdentities.size() +
+                       tankerPhoneNumberProvisionalIdentities.size());
   }
 
-  if (appProvisionalIdentities.size() != hashedEmails.size())
-    throw AssertionError(
-        "hashed emails count does not match provisional identities count");
   provisionalUsers.reserve(appProvisionalIdentities.size());
-  for (auto i = 0u; i < appProvisionalIdentities.size(); ++i)
+  for (auto const& appProvisionalIdentity : appProvisionalIdentities)
   {
-    auto const& [tankerSigKey, tankerEncKey] =
-        tankerProvisionalIdentities.at(hashedEmails[i]);
-    provisionalUsers.push_back(
-        {appProvisionalIdentities[i].appSignaturePublicKey,
-         appProvisionalIdentities[i].appEncryptionPublicKey,
-         tankerSigKey,
-         tankerEncKey});
+    auto publicKeys = findFetchedPublicKeysForProvisional(
+        appProvisionalIdentity,
+        tankerEmailProvisionalIdentities,
+        tankerPhoneNumberProvisionalIdentities);
+    provisionalUsers.push_back({appProvisionalIdentity.appSignaturePublicKey,
+                                appProvisionalIdentity.appEncryptionPublicKey,
+                                publicKeys.first,
+                                publicKeys.second});
   }
 
   TC_RETURN(provisionalUsers);

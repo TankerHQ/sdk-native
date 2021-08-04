@@ -57,5 +57,16 @@ HashedEmail hashProvisionalEmail(std::string const& value)
   return Crypto::generichash<HashedEmail>(
       gsl::make_span(value).as_span<std::uint8_t const>());
 }
+
+HashedPhoneNumber hashProvisionalPhoneNumber(
+    SecretProvisionalIdentity const& identity)
+{
+  auto const salt =
+      Crypto::generichash(identity.appSignatureKeyPair.privateKey);
+
+  std::vector<std::uint8_t> buffer(salt.begin(), salt.end());
+  buffer.insert(buffer.end(), identity.value.begin(), identity.value.end());
+  return Crypto::generichash<HashedPhoneNumber>(buffer);
+}
 }
 }

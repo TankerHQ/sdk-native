@@ -48,5 +48,11 @@ public:
                                             Crypto::PublicEncryptionKey>>>(
                  gsl::span<HashedEmail const>)),
              override);
+  MAKE_MOCK1(getPublicProvisionalIdentities,
+             (tc::cotask<std::map<HashedPhoneNumber,
+                                  std::pair<Crypto::PublicSignatureKey,
+                                            Crypto::PublicEncryptionKey>>>(
+                 gsl::span<HashedPhoneNumber const>)),
+             override);
 };
 }
