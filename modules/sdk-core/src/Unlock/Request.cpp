@@ -6,6 +6,7 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
@@ -110,6 +111,39 @@ void to_json(nlohmann::json& j, Tanker::Unlock::RequestWithVerif const& request)
   if (request.withTokenNonce.has_value())
     j["with_token"] = {{"nonce", *request.withTokenNonce}};
 }
+
+RequestWithSession makeRequestWithSession(
+    Identity::SecretProvisionalIdentity const& identity,
+    Crypto::SymmetricKey const& userSecret)
+{
+  SessionRequestValue value;
+  if (identity.target == Identity::TargetType::Email)
+  {
+    value = EmailSessionRequest{Email(identity.value)};
+  }
+  else if (identity.target == Identity::TargetType::PhoneNumber)
+  {
+    const auto provisionalSalt =
+        hashField(identity.appSignatureKeyPair.privateKey);
+    value = PhoneNumberSessionRequest{
+        PhoneNumber(identity.value), hashField(userSecret), provisionalSalt};
+  }
+  else
+  {
+    throw Errors::AssertionError(
+        "makeRequestWithSession: Unexpected target for secret provisional "
+        "identity");
+  }
+
+  return {identity.target, value};
+}
+
+void to_json(nlohmann::json& j,
+             Tanker::Unlock::RequestWithSession const& request)
+{
+  j = nlohmann::json(request.value);
+  j["target"] = to_string(request.target);
+}
 }
 
 namespace nlohmann
@@ -141,6 +175,23 @@ void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
           },
           [&](OidcIdToken const& t) { j["oidc_id_token"] = t.string(); },
           [](VerificationKey const& v) {},
+      },
+      request);
+}
+
+template <>
+void adl_serializer<Tanker::Unlock::SessionRequestValue>::to_json(
+    json& j, Tanker::Unlock::SessionRequestValue const& request)
+{
+  using namespace Tanker;
+  boost::variant2::visit(
+      overloaded{
+          [&](Unlock::EmailSessionRequest const& e) { j["email"] = e.email; },
+          [&](Unlock::PhoneNumberSessionRequest const& e) {
+            j["phone_number"] = e.phoneNumber;
+            j["provisional_salt"] = e.provisionalSalt;
+            j["user_secret_salt"] = e.userSalt;
+          },
       },
       request);
 }

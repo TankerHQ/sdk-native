@@ -23,20 +23,25 @@ namespace ProvisionalUsers
 namespace
 {
 std::optional<Unlock::VerificationMethod> findVerificationMethod(
-    gsl::span<Unlock::VerificationMethod const> methods, Email const& email)
+    gsl::span<Unlock::VerificationMethod const> methods,
+    Unlock::VerificationMethod const& wanted)
 {
-  auto it = std::find_if(methods.begin(),
-                         methods.end(),
-                         [&email](Unlock::VerificationMethod const& method) {
-                           if (auto const e = method.get_if<Email>())
-                           {
-                             return *e == email;
-                           }
-                           return false;
-                         });
+  auto it = std::find(methods.begin(), methods.end(), wanted);
   if (it != methods.end())
     return *it;
   return std::nullopt;
+}
+
+Unlock::VerificationMethod getSecretProvisionalVerifMethod(
+    Identity::SecretProvisionalIdentity const& provisionalIdentity)
+{
+  if (provisionalIdentity.target == Identity::TargetType::Email)
+    return Email{provisionalIdentity.value};
+  else if (provisionalIdentity.target == Identity::TargetType::PhoneNumber)
+    return PhoneNumber{provisionalIdentity.value};
+  else
+    throw Errors::AssertionError(
+        "Unexpected target for secret provisional identity");
 }
 }
 
@@ -74,41 +79,51 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Manager::fetchProvisionalKeys(
   TC_RETURN(std::move(optProvisionalKey));
 }
 
+tc::cotask<AttachResult> Manager::claimProvisionalIdentityWithMethod(
+    Identity::SecretProvisionalIdentity const& provisionalIdentity,
+    Unlock::VerificationMethod const& method,
+    Crypto::SymmetricKey const& userSecret)
+{
+  auto const request =
+      Unlock::makeRequestWithSession(provisionalIdentity, userSecret);
+  if (auto const tankerKeys =
+          TC_AWAIT(_requester->getVerifiedProvisionalIdentityKeys(
+              _localUserAccessor->get().userId(), request)))
+  {
+    auto const localUser = TC_AWAIT(_localUserAccessor->pull());
+    auto const claimAction = Users::createProvisionalIdentityClaimAction(
+        _trustchainId,
+        localUser.deviceId(),
+        localUser.deviceKeys().signatureKeyPair.privateKey,
+        localUser.userId(),
+        ProvisionalUsers::SecretUser{provisionalIdentity.target,
+                                     provisionalIdentity.value,
+                                     provisionalIdentity.appEncryptionKeyPair,
+                                     tankerKeys->encryptionKeyPair,
+                                     provisionalIdentity.appSignatureKeyPair,
+                                     tankerKeys->signatureKeyPair},
+        localUser.currentKeyPair());
+    TC_AWAIT(_requester->claimProvisionalIdentity(claimAction));
+  }
+  TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
+}
+
 tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
     Identity::SecretProvisionalIdentity const& provisionalIdentity,
     Crypto::SymmetricKey const& userSecret)
 {
-  auto const email = Email{provisionalIdentity.value};
-
+  auto method = getSecretProvisionalVerifMethod(provisionalIdentity);
   try
   {
+    auto const& userId = _localUserAccessor->get().userId();
     auto verificationMethods =
-        TC_AWAIT(_unlockRequester->fetchVerificationMethods(
-            _localUserAccessor->get().userId()));
+        TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
     TC_AWAIT(Unlock::decryptMethods(verificationMethods, userSecret));
 
-    if (findVerificationMethod(verificationMethods, email))
+    if (findVerificationMethod(verificationMethods, method))
     {
-      if (auto const tankerKeys =
-              TC_AWAIT(_requester->getVerifiedProvisionalIdentityKeys()))
-      {
-        auto const localUser = TC_AWAIT(_localUserAccessor->pull());
-        auto const claimAction = Users::createProvisionalIdentityClaimAction(
-            _trustchainId,
-            localUser.deviceId(),
-            localUser.deviceKeys().signatureKeyPair.privateKey,
-            localUser.userId(),
-            ProvisionalUsers::SecretUser{
-                provisionalIdentity.target,
-                provisionalIdentity.value,
-                provisionalIdentity.appEncryptionKeyPair,
-                tankerKeys->encryptionKeyPair,
-                provisionalIdentity.appSignatureKeyPair,
-                tankerKeys->signatureKeyPair},
-            localUser.currentKeyPair());
-        TC_AWAIT(_requester->claimProvisionalIdentity(claimAction));
-      }
-      TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
+      TC_RETURN(TC_AWAIT(claimProvisionalIdentityWithMethod(
+          provisionalIdentity, method, userSecret)));
     }
   }
   catch (Tanker::Errors::Exception const& e)
@@ -117,7 +132,7 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
       throw;
   }
   _provisionalIdentity = provisionalIdentity;
-  TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, email}));
+  TC_RETURN((AttachResult{Tanker::Status::IdentityVerificationNeeded, method}));
 }
 
 tc::cotask<AttachResult> Manager::attachProvisionalIdentity(

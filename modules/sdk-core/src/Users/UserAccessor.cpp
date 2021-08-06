@@ -185,8 +185,9 @@ PublicKeys findFetchedPublicKeysForProvisional(
     flat_map<HashedPhoneNumber, PublicKeys> const&
         tankerPhoneNumberProvisionalIdentities)
 {
-  if (appProvisionalIdentity.target == Identity::TargetType::HashedEmail)
+  switch (appProvisionalIdentity.target)
   {
+  case Identity::TargetType::HashedEmail: {
     auto const hashedValue =
         mgs::base64::decode<HashedEmail>(appProvisionalIdentity.value);
     auto const it = tankerEmailProvisionalIdentities.find(hashedValue);
@@ -197,8 +198,7 @@ PublicKeys findFetchedPublicKeysForProvisional(
           appProvisionalIdentity.value);
     return it->second;
   }
-  else if (appProvisionalIdentity.target == Identity::TargetType::Email)
-  {
+  case Identity::TargetType::Email: {
     auto const it = tankerEmailProvisionalIdentities.find(
         Identity::hashProvisionalEmail(appProvisionalIdentity.value));
     if (it == tankerEmailProvisionalIdentities.end())
@@ -209,9 +209,7 @@ PublicKeys findFetchedPublicKeysForProvisional(
           Identity::hashProvisionalEmail(appProvisionalIdentity.value));
     return it->second;
   }
-  else if (appProvisionalIdentity.target ==
-           Identity::TargetType::HashedPhoneNumber)
-  {
+  case Identity::TargetType::HashedPhoneNumber: {
     auto const hashedValue =
         mgs::base64::decode<HashedPhoneNumber>(appProvisionalIdentity.value);
     auto const it = tankerPhoneNumberProvisionalIdentities.find(hashedValue);
@@ -222,11 +220,9 @@ PublicKeys findFetchedPublicKeysForProvisional(
                      appProvisionalIdentity.value);
     return it->second;
   }
-  else
-  {
+  default:
     throw AssertionError(
-        fmt::format("unsupported target type: {}",
-                    static_cast<int>(appProvisionalIdentity.target)));
+        fmt::format("unexpected target ({})", appProvisionalIdentity.target));
   }
 }
 }

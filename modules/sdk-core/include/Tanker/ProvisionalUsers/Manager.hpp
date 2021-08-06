@@ -50,6 +50,10 @@ private:
   tc::cotask<AttachResult> claimProvisionalIdentity(
       Identity::SecretProvisionalIdentity const& provisionalIdentity,
       Crypto::SymmetricKey const& userSecret);
+  tc::cotask<AttachResult> claimProvisionalIdentityWithMethod(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity,
+      Unlock::VerificationMethod const& method,
+      Crypto::SymmetricKey const& userSecret);
 
   Users::ILocalUserAccessor* _localUserAccessor;
   IRequester* _requester;

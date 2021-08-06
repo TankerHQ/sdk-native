@@ -24,7 +24,9 @@ public:
   tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
   getClaimBlocks(Trustchain::UserId const& userId) override;
   tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-  getVerifiedProvisionalIdentityKeys() override;
+  getVerifiedProvisionalIdentityKeys(
+      Trustchain::UserId const& userId,
+      Unlock::RequestWithSession const& request) override;
   tc::cotask<TankerSecretProvisionalIdentity> getProvisionalIdentityKeys(
       Unlock::RequestWithVerif const& request) override;
   tc::cotask<void> claimProvisionalIdentity(

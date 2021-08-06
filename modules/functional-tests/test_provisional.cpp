@@ -227,8 +227,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can attach a provisional identity without verification")
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob can attach an email provisional identity without verification")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -245,6 +246,33 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const emailVerif = Unlock::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->registerIdentity(emailVerif));
+
+  auto const result = TC_AWAIT(
+      bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
+  CHECK(result.status == Status::Ready);
+
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Bob can attach a phone number provisional identity without verification")
+{
+  auto const bobProvisional = trustchain.makePhoneNumberProvisionalUser();
+  auto const bobPhone = boost::variant2::get<PhoneNumber>(bobProvisional.value);
+
+  auto const clearData = "my clear data is clear";
+  auto const encryptedData = TC_AWAIT(
+      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
+
+  auto bob = trustchain.makeUser();
+  auto bobDevice = bob.makeDevice();
+  auto const bobSession = bobDevice.createCore();
+  TC_AWAIT(bobSession->start(bob.identity));
+  auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobPhone));
+  auto const verif = Unlock::PhoneNumberVerification{
+      bobPhone, VerificationCode{bobVerificationCode}};
+  TC_AWAIT(bobSession->registerIdentity(verif));
 
   auto const result = TC_AWAIT(
       bobSession->attachProvisionalIdentity(bobProvisional.secretIdentity));
