@@ -34,7 +34,7 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
 }
 
 tc::cotask<void> Requester::setVerificationMethod(
-    Trustchain::UserId const& userId, Unlock::Request const& request)
+    Trustchain::UserId const& userId, Unlock::RequestWithVerif const& request)
 {
   nlohmann::json payload{{"verification", request}};
   auto const target = _httpClient->makeUrl(fmt::format(
@@ -43,7 +43,7 @@ tc::cotask<void> Requester::setVerificationMethod(
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
-    Trustchain::UserId const& userId, Unlock::Request const& request)
+    Trustchain::UserId const& userId, Unlock::RequestWithVerif const& request)
 {
   using namespace fmt::literals;
   auto const res = TC_AWAIT(_httpClient->asyncPost(
@@ -89,7 +89,7 @@ tc::cotask<void> Requester::createUser(
     Trustchain::UserId const& userId,
     gsl::span<uint8_t const> userCreation,
     gsl::span<uint8_t const> firstDevice,
-    Unlock::Request const& verificationRequest,
+    Unlock::RequestWithVerif const& verificationRequest,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   nlohmann::json body{

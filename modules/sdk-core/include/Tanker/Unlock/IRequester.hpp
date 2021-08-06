@@ -18,11 +18,11 @@ public:
       Trustchain::UserId const& userId) = 0;
 
   virtual tc::cotask<void> setVerificationMethod(
-      Trustchain::UserId const& userId, Unlock::Request const& request) = 0;
+      Trustchain::UserId const& userId, Unlock::RequestWithVerif const& request) = 0;
 
   virtual tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::UserId const& userId,
-      Unlock::Request const& verificationRequest) = 0;
+      Unlock::RequestWithVerif const& verificationRequest) = 0;
 
   virtual tc::cotask<std::vector<Unlock::VerificationMethod>>
   fetchVerificationMethods(Trustchain::UserId const& userId) = 0;
@@ -37,7 +37,7 @@ public:
       Trustchain::UserId const& userId,
       gsl::span<uint8_t const> userCreation,
       gsl::span<uint8_t const> firstDevice,
-      Unlock::Request const& verificationRequest,
+      Unlock::RequestWithVerif const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey) = 0;
 
   virtual tc::cotask<void> createDevice(

@@ -42,15 +42,15 @@ using RequestVerificationMethods =
                              OidcIdToken,
                              EncryptedPhoneNumberVerification>;
 
-struct Request
+struct RequestWithVerif
 {
   RequestVerificationMethods verification;
   std::optional<std::string> withTokenNonce;
 };
 
-void to_json(nlohmann::json&, Request const&);
+void to_json(nlohmann::json&, RequestWithVerif const&);
 
-Request makeRequest(
+RequestWithVerif makeRequestWithVerif(
     Unlock::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,

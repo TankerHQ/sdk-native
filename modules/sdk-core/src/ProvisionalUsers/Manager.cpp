@@ -143,7 +143,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
 }
 
 tc::cotask<void> Manager::verifyProvisionalIdentity(
-    Unlock::Request const& unlockRequest)
+    Unlock::RequestWithVerif const& unlockRequest)
 {
   auto const tankerKeys =
       TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));

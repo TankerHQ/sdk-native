@@ -71,7 +71,7 @@ Requester::getVerifiedProvisionalIdentityKeys()
 }
 
 tc::cotask<TankerSecretProvisionalIdentity>
-Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
+Requester::getProvisionalIdentityKeys(Unlock::RequestWithVerif const& request)
 {
   auto const res = TC_AWAIT(
       _httpClient->asyncPost(_httpClient->makeUrl("tanker-provisional-keys"),

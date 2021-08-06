@@ -39,7 +39,7 @@ public:
       Crypto::SymmetricKey const& userSecret);
 
   tc::cotask<void> verifyProvisionalIdentity(
-      Unlock::Request const& unlockRequest);
+      Unlock::RequestWithVerif const& unlockRequest);
 
   std::optional<Identity::SecretProvisionalIdentity> const&
   provisionalIdentity() const;

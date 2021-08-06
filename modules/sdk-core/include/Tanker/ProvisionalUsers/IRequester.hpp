@@ -21,7 +21,7 @@ public:
   virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
   getVerifiedProvisionalIdentityKeys() = 0;
   virtual tc::cotask<TankerSecretProvisionalIdentity>
-  getProvisionalIdentityKeys(Unlock::Request const& request) = 0;
+  getProvisionalIdentityKeys(Unlock::RequestWithVerif const& request) = 0;
   virtual tc::cotask<void> claimProvisionalIdentity(
       Trustchain::Actions::ProvisionalIdentityClaim const& claimAction) = 0;
   virtual ~IRequester() = default;

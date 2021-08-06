@@ -38,7 +38,7 @@ Ret hashField(T const& field)
 
 namespace Tanker::Unlock
 {
-Request makeRequest(
+RequestWithVerif makeRequestWithVerif(
     Unlock::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
@@ -104,7 +104,7 @@ Request makeRequest(
   return {verif, withTokenNonce};
 }
 
-void to_json(nlohmann::json& j, Tanker::Unlock::Request const& request)
+void to_json(nlohmann::json& j, Tanker::Unlock::RequestWithVerif const& request)
 {
   j = nlohmann::json(request.verification);
   if (request.withTokenNonce.has_value())
