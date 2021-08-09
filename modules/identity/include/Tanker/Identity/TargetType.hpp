@@ -12,5 +12,6 @@ enum class TargetType
   HashedPhoneNumber,
 };
 std::string to_string(TargetType s);
-TargetType to_target_type(std::string const& s);
+TargetType to_public_target_type(std::string const& s);
+TargetType to_secret_target_type(std::string const& s);
 }

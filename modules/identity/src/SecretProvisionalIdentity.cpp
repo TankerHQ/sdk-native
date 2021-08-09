@@ -66,6 +66,12 @@ std::string createProvisionalIdentity(std::string const& trustchainIdParam,
 void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 {
   auto const target = j.at("target").get<std::string>();
+  if (!j.contains("private_signature_key"))
+  {
+    throw Errors::Exception(Errc::InvalidType,
+                            "cannot deserialize PublicProvisionalIdentity in "
+                            "SecretProvisionalIdentity");
+  }
   if (target != "email" && target != "phone_number")
   {
     throw Errors::formatEx(Errc::InvalidProvisionalIdentityTarget,
@@ -75,7 +81,7 @@ void from_json(nlohmann::json const& j, SecretProvisionalIdentity& identity)
 
   identity = SecretProvisionalIdentity{
       j.at("trustchain_id").get<TrustchainId>(),
-      to_target_type(target),
+      to_secret_target_type(target),
       j.at("value").get<std::string>(),
       {mgs::base64::decode<Crypto::PublicSignatureKey>(
            j.at("public_signature_key").get<std::string>()),

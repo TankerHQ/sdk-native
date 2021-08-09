@@ -26,7 +26,7 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 
   identity = PublicProvisionalIdentity{
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
-      to_target_type(target),
+      to_public_target_type(target),
       j.at("value").get<std::string>(),
       mgs::base64::decode<Crypto::PublicSignatureKey>(
           j.at("public_signature_key").get<std::string>()),
