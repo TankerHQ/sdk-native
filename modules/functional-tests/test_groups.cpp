@@ -37,6 +37,21 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice uses encrypt to share with two groups")
+{
+  auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+  auto myGroup2 =
+      TC_AWAIT(aliceSession->createGroup({charlie.spublicIdentity()}));
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup, myGroup2}));
+
+  REQUIRE_NOTHROW(TC_AWAIT(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
@@ -49,6 +64,24 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice encrypts and then shares with two groups")
+{
+  auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+  auto myGroup2 =
+      TC_AWAIT(aliceSession->createGroup({charlie.spublicIdentity()}));
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
+  REQUIRE_NOTHROW(
+      TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup, myGroup2})));
+
+  REQUIRE_NOTHROW(TC_AWAIT(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -109,7 +142,23 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
+}
 
+TEST_CASE_FIXTURE(TrustchainFixture, "Can add two users at once to a group")
+{
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                      encrypt(*aliceSession, clearData, {}, {groupId})));
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
+      groupId, {bob.spublicIdentity(), charlie.spublicIdentity()}, {})));
+
+  REQUIRE_NOTHROW(TC_AWAIT(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
@@ -181,6 +230,31 @@ TEST_CASE_FIXTURE(
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice shares with a group, with Bob and Charlie later added "
+                  "as provisional users")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
+
+  auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
+
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
+      myGroup,
+      {bobProvisional.publicIdentity, charlieProvisional.publicIdentity},
+      {})));
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+  TC_AWAIT(attachProvisionalIdentity(*charlieSession, charlieProvisional));
+
+  REQUIRE_NOTHROW(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -277,7 +351,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(bobSession->encrypt(make_buffer("paf"), {}, {myGroup})));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users from a group")
+TEST_CASE_FIXTURE(TrustchainFixture, "Alice can remove Bob from a group")
 {
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bob.spublicIdentity()}));
@@ -286,6 +360,25 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users from a group")
 
   // Bob can't update the group
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->updateGroupMembers(
+                                    groupId, {}, {alice.spublicIdentity()})),
+                                Errors::AppdErrc::NotAUserGroupMember);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can remove Bob and Charlie from a group")
+{
+  auto const groupId =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity(),
+                                          bob.spublicIdentity(),
+                                          charlie.spublicIdentity()}));
+  TC_AWAIT(aliceSession->updateGroupMembers(
+      groupId, {}, {bob.spublicIdentity(), charlie.spublicIdentity()}));
+
+  // Bob and Charlie can't update the group
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->updateGroupMembers(
+                                    groupId, {}, {alice.spublicIdentity()})),
+                                Errors::AppdErrc::NotAUserGroupMember);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(charlieSession->updateGroupMembers(
                                     groupId, {}, {alice.spublicIdentity()})),
                                 Errors::AppdErrc::NotAUserGroupMember);
 }
@@ -393,7 +486,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       "cannot both add and remove");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can remove a provisional group member")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -410,6 +504,35 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove provisional group members")
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
                                 Errors::Errc::InvalidArgument);
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can remove two provisional group members")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
+
+  auto myGroup =
+      TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity(),
+                                          bobProvisional.publicIdentity,
+                                          charlieProvisional.publicIdentity}));
+  TC_AWAIT(aliceSession->updateGroupMembers(
+      myGroup,
+      {},
+      {bobProvisional.publicIdentity, charlieProvisional.publicIdentity}));
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+  TC_AWAIT(attachProvisionalIdentity(*charlieSession, charlieProvisional));
+
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
+                                Errors::Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(decrypt(*charlieSession, encryptedData)),
+      Errors::Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

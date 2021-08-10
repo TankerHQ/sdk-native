@@ -379,7 +379,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
   CHECK_EQ(decryptedData, clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can encrypt and share with both of Alice's devices")
 {
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData =
@@ -387,6 +388,19 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypt and share with Bob")
 
   REQUIRE_NOTHROW(TC_AWAIT(
       checkDecrypt({aliceSession, aliceSession2}, clearData, encryptedData)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can encrypt and share with Bob and Charlie")
+{
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession,
+                       clearData,
+                       {bob.spublicIdentity(), charlie.spublicIdentity()}));
+
+  REQUIRE_NOTHROW(TC_AWAIT(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -490,7 +504,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Bob will fail to decrypt without the key")
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can share many resources with Bob and Charlie")
 {
   auto const clearDatas = {
       "to be clear, ", "or not be clear, ", "that is the test case..."};
@@ -507,11 +522,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can share many resources with Bob")
     metaResources.emplace_back(std::move(clearData), std::move(encryptedData));
   }
 
-  REQUIRE_NOTHROW(
-      TC_AWAIT(aliceSession->share(resourceIds, {bob.spublicIdentity()}, {})));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->share(
+      resourceIds, {bob.spublicIdentity(), charlie.spublicIdentity()}, {})));
 
   for (auto const& r : metaResources)
-    REQUIRE_NOTHROW(TC_AWAIT(checkDecrypt({bobSession}, r.first, r.second)));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        checkDecrypt({bobSession, charlieSession}, r.first, r.second)));
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
