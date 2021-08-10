@@ -102,20 +102,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
   REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
                       encrypt(*aliceSession, clearData, {}, {groupId})));
 
-  std::string decryptedData;
-  TANKER_CHECK_THROWS_WITH_CODE(
-      decryptedData = TC_AWAIT(decrypt(*bobSession, encryptedData)),
-      Errors::Errc::InvalidArgument);
-
   REQUIRE_NOTHROW(TC_AWAIT(
       aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()}, {})));
   REQUIRE_NOTHROW(TC_AWAIT(
       aliceSession->updateGroupMembers(groupId, {bob.spublicIdentity()}, {})));
 
-  REQUIRE_NOTHROW(decryptedData =
-                      TC_AWAIT(decrypt(*bobSession, encryptedData)));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 
-  CHECK(decryptedData == clearData);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
