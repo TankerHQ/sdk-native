@@ -383,7 +383,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can encrypt and share with both of Alice's devices")
 {
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*bobSession, clearData, {alice.spublicIdentity()}));
 
   REQUIRE_NOTHROW(TC_AWAIT(
@@ -394,7 +394,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with Bob and Charlie")
 {
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession,
                        clearData,
                        {bob.spublicIdentity(), charlie.spublicIdentity()}));
@@ -407,7 +407,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can share a key he hasn't received yet")
 {
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {bob.spublicIdentity()}));
 
   TC_AWAIT(
@@ -452,7 +452,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {bob.spublicIdentity()},
       {},
       Core::ShareWithSelf::No));
-  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
+  auto const encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
                                 Errc::InvalidArgument);
   REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
@@ -473,8 +473,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
 {
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
-      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
   REQUIRE_NOTHROW(TC_AWAIT(
       checkDecrypt({aliceSession, aliceSession2}, clearData, encryptedData)));
 }
@@ -483,8 +482,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice's second device can decrypt old resources")
 {
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
-      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession2}, clearData, encryptedData)));
@@ -493,15 +491,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 TEST_CASE_FIXTURE(TrustchainFixture, "Bob will fail to decrypt without the key")
 {
   auto const clearData = make_buffer("my clear data is clear");
-  std::vector<uint8_t> encryptedData;
-  encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
+  auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
 
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
 
-  std::vector<uint8_t> decryptedData;
-  TANKER_CHECK_THROWS_WITH_CODE(
-      decryptedData = TC_AWAIT(bobSession->decrypt(encryptedData)),
-      Errc::InvalidArgument);
+  TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(bobSession->decrypt(encryptedData)),
+                                Errc::InvalidArgument);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
@@ -516,8 +511,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   resourceIds.reserve(clearDatas.size());
   for (auto const& clearData : clearDatas)
   {
-    std::vector<uint8_t> encryptedData =
-        TC_AWAIT(encrypt(*aliceSession, clearData));
+    auto encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
     resourceIds.emplace_back(AsyncCore::getResourceId(encryptedData).get());
     metaResources.emplace_back(std::move(clearData), std::move(encryptedData));
   }

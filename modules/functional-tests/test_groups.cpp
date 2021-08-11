@@ -30,7 +30,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(
@@ -45,7 +45,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceSession->createGroup({charlie.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup, myGroup2}));
 
   REQUIRE_NOTHROW(TC_AWAIT(
@@ -57,8 +57,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
-      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup})));
 
@@ -74,8 +73,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceSession->createGroup({charlie.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
-      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
   REQUIRE_NOTHROW(
       TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup, myGroup2})));
@@ -202,7 +200,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {bobProvisional.publicIdentity, charlieProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -221,7 +219,7 @@ TEST_CASE_FIXTURE(
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
@@ -242,7 +240,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
@@ -267,7 +265,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceSession->createGroup({bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   // verify the group
@@ -322,7 +320,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->updateGroupMembers(
@@ -497,7 +495,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       myGroup, {}, {bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -522,7 +520,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {bobProvisional.publicIdentity, charlieProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -548,7 +546,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {bobProvisional.publicIdentity, bobProvisional.publicIdentity}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -606,7 +604,7 @@ TEST_CASE_FIXTURE(
       aliceSession->updateGroupMembers(myGroup, {}, {bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*bobSession, encryptedData)),
@@ -627,7 +625,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       bobSession->updateGroupMembers(myGroup, {}, {alice.spublicIdentity()})));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*bobSession, clearData, {}, {myGroup}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*aliceSession, encryptedData)),
@@ -641,8 +639,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {alice.spublicIdentity(), charlie.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
-      TC_AWAIT(encrypt(*aliceSession, clearData));
+  auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
   auto const resourceId = AsyncCore::getResourceId(encryptedData).get();
   TC_AWAIT(aliceSession->share({resourceId}, {}, {myGroup}));
 
@@ -672,7 +669,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
   auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData =
+  auto const encryptedData =
       TC_AWAIT(encrypt(*bobSession, clearData, {}, {groupId}));
 
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(decrypt(*aliceSession, encryptedData)),
