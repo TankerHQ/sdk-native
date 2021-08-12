@@ -80,6 +80,15 @@ Trustchain::Actions::UserGroupAddition makeUserGroupAdditionAction(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateSignatureKey const& privateSignatureKey);
 
+Trustchain::Actions::UserGroupRemoval makeUserGroupRemovalAction(
+    std::vector<Trustchain::UserId> const& membersToRemove,
+    std::vector<Trustchain::ProvisionalUserId> const&
+        provisionalMembersToRemove,
+    InternalGroup const& group,
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::DeviceId const& deviceId,
+    Crypto::PrivateSignatureKey const& deviceSignatureKey);
+
 tc::cotask<void> updateMembers(
     Users::IUserAccessor& userAccessor,
     IRequester& requester,
