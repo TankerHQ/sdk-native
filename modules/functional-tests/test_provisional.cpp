@@ -46,6 +46,74 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can encrypt and share with multiple provisional users")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
+  auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
+  auto const charlieEmail =
+      boost::variant2::get<Email>(charlieProvisional.value);
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData = TC_AWAIT(encrypt(
+      *aliceSession,
+      clearData,
+      {bobProvisional.publicIdentity, charlieProvisional.publicIdentity}));
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+  TC_AWAIT(attachProvisionalIdentity(*charlieSession, charlieProvisional));
+
+  REQUIRE_NOTHROW(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Alice can encrypt and then share with a provisional user")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData));
+
+  TC_AWAIT(
+      aliceSession->share({TC_AWAIT(AsyncCore::getResourceId(encryptedData))},
+                          {bobProvisional.publicIdentity},
+                          {}));
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+
+  REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice can encrypt and then share with multiple provisional users")
+{
+  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
+  auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
+  auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
+  auto const charlieEmail =
+      boost::variant2::get<Email>(charlieProvisional.value);
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData));
+
+  TC_AWAIT(aliceSession->share(
+      {TC_AWAIT(AsyncCore::getResourceId(encryptedData))},
+      {bobProvisional.publicIdentity, charlieProvisional.publicIdentity},
+      {}));
+
+  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
+  TC_AWAIT(attachProvisionalIdentity(*charlieSession, charlieProvisional));
+
+  REQUIRE_NOTHROW(
+      checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Bob can claim the same provisional identity twice")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
