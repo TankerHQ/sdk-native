@@ -351,6 +351,7 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 
 tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
 {
+  FUNC_TIMER(Net);
   TINFO("{} {}", httpMethodToString(req.method), req.url);
   auto res = TC_AWAIT(_backend->fetch(req));
   TINFO("{} {}, {}", httpMethodToString(req.method), req.url, res.statusCode);
