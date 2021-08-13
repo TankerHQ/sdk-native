@@ -124,31 +124,35 @@ BENCHMARK(updateGroupMembers_removeMembers)
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
 
-// What: shares a resource with groups
-// PreCond: a session is open and a resource was encrypted
+// What: shares a resource with a cached group
+// PreCond: a session is open, a resource was encrypted and the group is in the
+//  cache
 // PostCond: the resource is shared with the groups
 static void share_withGroup(benchmark::State& state, std::string const& groupId)
 {
   tc::async_resumable([&]() -> tc::cotask<void> {
+    auto const identity = Tanker::Identity::createIdentity(
+        benchAppId,
+        benchAppSecret,
+        Tanker::SUserId(std::to_string(randombytes_random())));
+    auto device = Device(getTrustchain().url, benchAppId, identity);
+    auto tanker = TC_AWAIT(device.open());
+
+    // warm up the cache
+    TC_AWAIT(tanker->encrypt(
+        gsl::make_span("make some noise").as_span<uint8_t const>(),
+        {},
+        {Tanker::SGroupId{groupId}}));
+
     for (auto _ : state)
     {
       state.PauseTiming();
-      auto const identity = Tanker::Identity::createIdentity(
-          benchAppId,
-          benchAppSecret,
-          Tanker::SUserId(std::to_string(randombytes_random())));
-      auto device = Device(getTrustchain().url, benchAppId, identity);
-      auto tanker = TC_AWAIT(device.open());
       auto const encryptedData = TC_AWAIT(tanker->encrypt(
           gsl::make_span("make some noise").as_span<uint8_t const>()));
       auto const resourceId = TC_AWAIT(tanker->getResourceId(encryptedData));
       state.ResumeTiming();
 
       TC_AWAIT(tanker->share({resourceId}, {}, {Tanker::SGroupId{groupId}}));
-
-      state.PauseTiming();
-      tanker = nullptr;
-      state.ResumeTiming();
     }
   }).get();
 }
@@ -187,5 +191,55 @@ BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
 BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
                   4000,
                   "rD3EO/d4S8dI20aybJUZcGiACV5kD298K8szq6ZWm0w=")
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+
+// What: shares a resource with a group
+// PreCond: a session is open and a resource was encrypted
+// PostCond: the resource is shared with the groups
+static void share_nocache_withGroup(benchmark::State& state,
+                                    std::string const& groupId)
+{
+  tc::async_resumable([&]() -> tc::cotask<void> {
+    for (auto _ : state)
+    {
+      state.PauseTiming();
+      auto const identity = Tanker::Identity::createIdentity(
+          benchAppId,
+          benchAppSecret,
+          Tanker::SUserId(std::to_string(randombytes_random())));
+      auto device = Device(getTrustchain().url, benchAppId, identity);
+      auto tanker = TC_AWAIT(device.open());
+      auto const encryptedData = TC_AWAIT(tanker->encrypt(
+          gsl::make_span("make some noise").as_span<uint8_t const>()));
+      auto const resourceId = TC_AWAIT(tanker->getResourceId(encryptedData));
+      state.ResumeTiming();
+
+      TC_AWAIT(tanker->share({resourceId}, {}, {Tanker::SGroupId{groupId}}));
+
+      state.PauseTiming();
+      tanker = nullptr;
+      state.ResumeTiming();
+    }
+  }).get();
+}
+BENCHMARK_CAPTURE(share_nocache_withGroup,
+                  1,
+                  "80ngpVLQ8cfglO5cC7I6a2Ph5QRfKPUVkXWOul5e6RM=")
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+BENCHMARK_CAPTURE(share_nocache_withGroup,
+                  100,
+                  "XhMfSCnOhMlW/KSt5k33eD/FoGG09MRI/6JT8q/YDK0=")
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+BENCHMARK_CAPTURE(share_nocache_withGroup,
+                  1000,
+                  "dzNO6xPpz9r2Wpe2Xxdl+9WiO6E/m8GVhv0RwvUcc0Q=")
+    ->Unit(benchmark::kMillisecond)
+    ->UseRealTime();
+BENCHMARK_CAPTURE(share_nocache_withGroup,
+                  4000,
+                  "8EySxOOyXktHkSOOgGAKCBRvIalV2iFObPGHk1QU63Q=")
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
