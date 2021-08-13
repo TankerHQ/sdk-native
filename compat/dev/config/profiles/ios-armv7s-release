@@ -1,5 +1,0 @@
-include(ios)
-
-[settings]
-build_type=Release
-arch=armv7s

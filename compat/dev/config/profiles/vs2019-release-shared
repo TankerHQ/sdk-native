@@ -1,4 +1,0 @@
-include(vs2019-release)
-
-[options]
-tanker:tankerlib_shared=True

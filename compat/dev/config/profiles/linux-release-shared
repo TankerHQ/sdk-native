@@ -1,4 +1,0 @@
-include(linux-release)
-
-[options]
-tanker:tankerlib_shared=True

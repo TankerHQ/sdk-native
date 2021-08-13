@@ -1,4 +1,0 @@
-include(macos)
-
-[settings]
-build_type=Release

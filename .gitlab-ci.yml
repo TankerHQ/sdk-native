@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-07-07-1
+  ref: 2021-08-13-1
 
 .after-script/branch_name:
   after_script:
@@ -148,10 +148,24 @@ nightly/coverage:
 # bridge-check stage #
 ######################
 
+bridge/compat:
+  extends:
+    - .bridge-check
+    - .rules/bridge-ci/auto
+    - .variables/bridge-common
+  needs:
+    - build/linux
+  variables:
+    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_TARGET: linux
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
 bridge/ios:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/auto
     - .variables/bridge-common
   needs:
     - build/ios
@@ -164,7 +178,7 @@ bridge/ios:
 bridge/android:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/auto
     - .variables/bridge-common
   needs:
     - build/android/shared
@@ -177,7 +191,7 @@ bridge/android:
 bridge/rust/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/linux
@@ -191,7 +205,7 @@ bridge/rust/linux:
 bridge/rust/ios:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/auto
     - .variables/bridge-common
   needs:
     - build/ios
@@ -205,7 +219,7 @@ bridge/rust/ios:
 bridge/rust/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
@@ -219,7 +233,7 @@ bridge/rust/macos/x86_64:
 bridge/rust/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm
@@ -233,7 +247,7 @@ bridge/rust/macos/arm:
 bridge/rust/android:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/auto
     - .variables/bridge-common
   needs:
     - build/android/static
@@ -247,7 +261,7 @@ bridge/rust/android:
 bridge/python/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/linux
@@ -261,7 +275,7 @@ bridge/python/linux:
 bridge/python/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
@@ -275,7 +289,7 @@ bridge/python/macos/x86_64:
 bridge/python/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm
@@ -290,7 +304,7 @@ bridge/python/macos/arm:
 bridge/python/windows:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/windows
@@ -304,7 +318,7 @@ bridge/python/windows:
 bridge/ruby/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/linux/shared
@@ -318,7 +332,7 @@ bridge/ruby/linux:
 bridge/ruby/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64/shared
@@ -332,7 +346,7 @@ bridge/ruby/macos/x86_64:
 bridge/ruby/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci
+    - .rules/bridge-ci/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm/shared
@@ -346,17 +360,6 @@ bridge/ruby/macos/arm:
 ###############
 # check stage #
 ###############
-
-check/compat:
-  extends:
-    - .check
-    - .tags/linux
-    - .rules/mr/auto/nightly
-    - .before-script/bump-files-on-release/bash
-  needs:
-    - build/linux
-  script:
-    - poetry run python compat/run-compat.py --profile linux-release
 
 check/e2e:
   extends:
