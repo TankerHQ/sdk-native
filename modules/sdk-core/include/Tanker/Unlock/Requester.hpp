@@ -32,11 +32,11 @@ public:
 
   tc::cotask<void> setVerificationMethod(
       Trustchain::UserId const& userId,
-      Unlock::Request const& request) override;
+      Unlock::RequestWithVerif const& request) override;
 
   tc::cotask<std::vector<std::uint8_t>> fetchVerificationKey(
       Trustchain::UserId const& userId,
-      Unlock::Request const& verificationRequest) override;
+      Unlock::RequestWithVerif const& verificationRequest) override;
 
   tc::cotask<std::vector<Unlock::VerificationMethod>> fetchVerificationMethods(
       Trustchain::UserId const& userId) override;
@@ -51,7 +51,7 @@ public:
       Trustchain::UserId const& userId,
       gsl::span<uint8_t const> userCreation,
       gsl::span<uint8_t const> firstDevice,
-      Unlock::Request const& verificationRequest,
+      Unlock::RequestWithVerif const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey) override;
 
   tc::cotask<void> createDevice(

@@ -74,7 +74,8 @@ Store::Store(DataStore::Database* dbConn) : _db(dbConn)
 tc::cotask<void> Store::put(Group const& group)
 {
   TC_AWAIT(boost::variant2::visit(
-      [this](auto const& g) -> tc::cotask<void> { TC_AWAIT(this->put(g)); }, group));
+      [this](auto const& g) -> tc::cotask<void> { TC_AWAIT(this->put(g)); },
+      group));
 }
 
 tc::cotask<void> Store::put(InternalGroup const& group)
@@ -91,7 +92,8 @@ tc::cotask<void> Store::put(InternalGroup const& group)
       groups.public_encryption_key = group.encryptionKeyPair.publicKey.base(),
       groups.private_encryption_key = group.encryptionKeyPair.privateKey.base(),
       groups.last_group_block_hash = group.lastBlockHash.base(),
-      groups.last_key_rotation_block_hash = group.lastKeyRotationBlockHash.base()));
+      groups.last_key_rotation_block_hash =
+          group.lastKeyRotationBlockHash.base()));
   TC_RETURN();
 }
 
@@ -111,7 +113,8 @@ tc::cotask<void> Store::put(ExternalGroup const& group)
       groups.public_encryption_key = group.publicEncryptionKey.base(),
       groups.private_encryption_key = sqlpp::null,
       groups.last_group_block_hash = group.lastBlockHash.base(),
-      groups.last_key_rotation_block_hash = group.lastKeyRotationBlockHash.base()));
+      groups.last_key_rotation_block_hash =
+          group.lastKeyRotationBlockHash.base()));
 
   TC_RETURN();
 }

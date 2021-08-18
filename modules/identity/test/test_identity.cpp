@@ -40,8 +40,8 @@ auto const GOOD_SECRET_PERMANENT_IDENTITY =
     "94ajVFV0FGZXh2akk9In0="s;
 
 auto const GOOD_PUBLIC_PERMANENT_IDENTITY =
-    "eyJ0YXJnZXQiOiJ1c2VyIiwidHJ1c3RjaGFpbl9pZCI6InRwb3h5TnpoMGhVOUcyaTlhZ012SH"
-    "l5ZCtwTzZ6R0NqTzlCZmhyQ0xqZDQ9IiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJ1c2VyIiwidmFsdWUiOiJSRGEwZXE0WE51ajV0VjdoZGFwak94"
     "aG1oZVRoNFFCRE5weTRTdnk5WG9rPSJ9"s;
 
 auto const trustchainIdString = "tpoxyNzh0hU9G2i9agMvHyyd+pO6zGCjO9BfhrCLjd4="s;
@@ -118,7 +118,28 @@ auto const GOOD_PUBLIC_PROVISIONAL_IDENTITY =
     "c2lnbmF0dXJlX2tleSI6Ilc3UUVRQnU5RlhjWElwT2dxNjJ0UHdCaXlGQWJwVDFyQXJ1RDBoL0"
     "5yVEE9In0="s;
 
+auto const GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJwaG9uZV9udW1iZXIiLCJ2YWx1ZSI6IiszMzYzOTk4MjIzMyIs"
+    "InB1YmxpY19lbmNyeXB0aW9uX2tleSI6IjAweWRuY2QxTHZKR0NrWWw5L1JzNUFDTGx2RGNhem"
+    "o3RWc3NXo0OTRRWFU9IiwicHJpdmF0ZV9lbmNyeXB0aW9uX2tleSI6IlNyRHJjRS9Nbkx4WHFr"
+    "WlJIenJYb2FJSUNKb3hUR0htUWduUjllU090UU09IiwicHVibGljX3NpZ25hdHVyZV9rZXkiOi"
+    "I2SG95eitrMmdqcnJwUDZxZnpRZEJDaXl6R0V5ajBWNWx6Mm9VUlVrRERNPSIsInByaXZhdGVf"
+    "c2lnbmF0dXJlX2tleSI6IlJqQzRrTnlFL3EyQU5wbUpCN3h5UHpudkV0Z3Z2YTloMHU5dlRYQW"
+    "N4Q2pvZWpMUDZUYUNPdXVrL3FwL05CMEVLTExNWVRLUFJYbVhQYWhSRlNRTU13PT0ifQ=="s;
+
+auto const GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY =
+    "eyJ0cnVzdGNoYWluX2lkIjoidHBveHlOemgwaFU5RzJpOWFnTXZIeXlkK3BPNnpHQ2pPOUJmaH"
+    "JDTGpkND0iLCJ0YXJnZXQiOiJoYXNoZWRfcGhvbmVfbnVtYmVyIiwidmFsdWUiOiJTbXRYZHdN"
+    "RUFCYzl4OFBCNVJQT2lqanVWYlNHR3N4N2xUODNhN2dSMVhFPSIsInB1YmxpY19lbmNyeXB0aW"
+    "9uX2tleSI6IjAweWRuY2QxTHZKR0NrWWw5L1JzNUFDTGx2RGNhemo3RWc3NXo0OTRRWFU9Iiwi"
+    "cHVibGljX3NpZ25hdHVyZV9rZXkiOiI2SG95eitrMmdqcnJwUDZxZnpRZEJDaXl6R0V5ajBWNW"
+    "x6Mm9VUlVrRERNPSJ9"s;
+
 auto const userEmail = "brendan.eich@tanker.io"s;
+auto const phoneNumber = "+33639982233"s;
+auto const b64HashedEmail = mgs::base64::encode(Crypto::generichash(
+    gsl::make_span(std::string(userEmail)).as_span<uint8_t const>()));
 
 auto const appSignaturePublicKey =
     mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
@@ -133,6 +154,20 @@ auto const appEncryptionPublicKey =
 auto const appEncryptionPrivateKey =
     mgs::base64::decode<Tanker::Crypto::PrivateEncryptionKey>(
         "4QB5TWmvcBrgeyDDLhULINU6tbqAOEQ8v9pjDkPcybA=");
+
+auto const phoneNumberAppSignaturePublicKey =
+    mgs::base64::decode<Tanker::Crypto::PublicSignatureKey>(
+        "6Hoyz+k2gjrrpP6qfzQdBCiyzGEyj0V5lz2oURUkDDM=");
+auto const phoneNumberAppSignaturePrivateKey =
+    mgs::base64::decode<Tanker::Crypto::PrivateSignatureKey>(
+        "RjC4kNyE/q2ANpmJB7xyPznvEtgvva9h0u9vTXAcxCjoejLP6TaCOuuk/qp/"
+        "NB0EKLLMYTKPRXmXPahRFSQMMw==");
+auto const phoneNumberAppEncryptionPublicKey =
+    mgs::base64::decode<Tanker::Crypto::PublicEncryptionKey>(
+        "00ydncd1LvJGCkYl9/Rs5ACLlvDcazj7Eg75z494QXU=");
+auto const phoneNumberAppEncryptionPrivateKey =
+    mgs::base64::decode<Tanker::Crypto::PrivateEncryptionKey>(
+        "SrDrcE/MnLxXqkZRHzrXoaIICJoxTGHmQgnR9eSOtQM=");
 
 void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
                      UserId const& userId)
@@ -206,16 +241,19 @@ TEST_SUITE("generate provisional Identity")
 
 TEST_SUITE("serialization")
 {
-  TEST_CASE("We can deserialize a secret permanent identity from a good string")
+  TEST_CASE(
+      "We can de/reserialize a secret permanent identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.delegation, delegation);
     CHECK_EQ(identity.userSecret, userSecret);
+    CHECK_EQ(to_string(identity), GOOD_SECRET_PERMANENT_IDENTITY);
   }
 
-  TEST_CASE("We can deserialize a public permanent identity from a good string")
+  TEST_CASE(
+      "We can de/reserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
@@ -223,6 +261,7 @@ TEST_SUITE("serialization")
         boost::variant2::get<PublicPermanentIdentity>(publicIdentity);
     CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
     CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
+    CHECK_EQ(to_string(publicIdentity), GOOD_PUBLIC_PERMANENT_IDENTITY);
   }
 
   TEST_CASE(
@@ -235,7 +274,8 @@ TEST_SUITE("serialization")
   }
 
   TEST_CASE(
-      "We can deserialize a secret provisional identity from a good string")
+      "We can de/reserialize an email secret provisional identity from a good "
+      "string")
   {
     auto const identity =
         extract<SecretProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY);
@@ -247,6 +287,29 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appSignatureKeyPair.privateKey, appSignaturePrivateKey);
     CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
     CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
+    CHECK_EQ(to_string(identity), GOOD_SECRET_PROVISIONAL_IDENTITY);
+  }
+
+  TEST_CASE(
+      "We can de/reserialize a phone number secret provisional identity from a "
+      "good string")
+  {
+    auto const identity = extract<SecretProvisionalIdentity>(
+        GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY);
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, phoneNumber);
+    CHECK_EQ(identity.target, TargetType::PhoneNumber);
+    CHECK_EQ(identity.appSignatureKeyPair.publicKey,
+             phoneNumberAppSignaturePublicKey);
+    CHECK_EQ(identity.appSignatureKeyPair.privateKey,
+             phoneNumberAppSignaturePrivateKey);
+    CHECK_EQ(identity.appEncryptionKeyPair.publicKey,
+             phoneNumberAppEncryptionPublicKey);
+    CHECK_EQ(identity.appEncryptionKeyPair.privateKey,
+             phoneNumberAppEncryptionPrivateKey);
+    CHECK_EQ(to_string(identity),
+             GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY);
   }
 
   TEST_CASE("We can deserialize an unhashed email public provisional identity")
@@ -259,6 +322,7 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.target, TargetType::Email);
     CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
+    CHECK_EQ(to_string(identity), GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 
   TEST_CASE("We can deserialize a hashed email public provisional identity")
@@ -266,7 +330,7 @@ TEST_SUITE("serialization")
     auto const identity =
         extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
     auto hashedEmail = mgs::base64::encode(Crypto::generichash(
-        gsl::make_span(userEmail).template as_span<std::uint8_t const>()));
+        gsl::make_span(userEmail).as_span<std::uint8_t const>()));
 
     CHECK_EQ(identity.trustchainId, trustchainId);
     CHECK_EQ(identity.value, hashedEmail);
@@ -275,14 +339,36 @@ TEST_SUITE("serialization")
     CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
   }
 
-  TEST_CASE(
-      "We cannot deserialize a secret provisional identity as a public "
-      "provisional identity")
+  TEST_CASE("We can deserialize a phone number public provisional identity")
   {
-    TANKER_CHECK_THROWS_WITH_CODE(
-        extract<PublicProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY),
-        Errc::InvalidType);
+    auto const identity = extract<PublicProvisionalIdentity>(
+        GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY);
+    auto const salt = Crypto::generichash(phoneNumberAppSignaturePrivateKey);
+
+    std::vector<std::uint8_t> buffer(salt.begin(), salt.end());
+    buffer.insert(buffer.end(), phoneNumber.begin(), phoneNumber.end());
+
+    auto const hashedPhoneNumber =
+        mgs::base64::encode(Crypto::generichash(buffer));
+
+    CHECK_EQ(identity.trustchainId, trustchainId);
+    CHECK_EQ(identity.value, hashedPhoneNumber);
+    CHECK_EQ(identity.target, TargetType::HashedPhoneNumber);
+    CHECK_EQ(identity.appSignaturePublicKey, phoneNumberAppSignaturePublicKey);
+    CHECK_EQ(identity.appEncryptionPublicKey,
+             phoneNumberAppEncryptionPublicKey);
+    CHECK_EQ(to_string(identity),
+             GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY);
   }
+}
+
+TEST_CASE(
+    "We cannot deserialize a secret provisional identity as a public "
+    "provisional identity")
+{
+  TANKER_CHECK_THROWS_WITH_CODE(
+      extract<PublicProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY),
+      Errc::InvalidType);
 }
 
 TEST_SUITE("getPublicIdentity")
@@ -311,10 +397,11 @@ TEST_SUITE("getPublicIdentity")
 
     REQUIRE_UNARY(p);
     CHECK_EQ(p->trustchainId, trustchainId);
-    CHECK_EQ(p->target, TargetType::Email);
-    CHECK_EQ(p->value, userEmail);
+    CHECK_EQ(p->target, TargetType::HashedEmail);
+    CHECK_EQ(p->value, b64HashedEmail);
     CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
     CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
+    CHECK_EQ(b64PublicIdentity, GOOD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 }
 

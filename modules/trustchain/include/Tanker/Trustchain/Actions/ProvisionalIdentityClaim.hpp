@@ -4,18 +4,12 @@
 #include <Tanker/Crypto/PrivateEncryptionKey.hpp>
 #include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
-#include <Tanker/Crypto/SealedPrivateEncryptionKey.hpp>
-#include <Tanker/Crypto/SealedPrivateSignatureKey.hpp>
 #include <Tanker/Crypto/SignatureKeyPair.hpp>
-#include <Tanker/Crypto/TwoTimesSealedPrivateEncryptionKey.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
-// TODO remove it once Crypto::Sealed<> is added
 #include <sodium/crypto_box.h>
-
-#include <tuple>
 
 namespace Tanker
 {
@@ -34,6 +28,7 @@ namespace Actions
 class ProvisionalIdentityClaim
 {
 public:
+  // cannot be refactored using Sealed, keep this ad-hoc class
   class SealedPrivateEncryptionKeys
     : public Crypto::BasicCryptographicType<
           SealedPrivateEncryptionKeys,

@@ -110,7 +110,8 @@ TEST_CASE("GroupStore")
     externalGroup2.publicEncryptionKey =
         Crypto::makeEncryptionKeyPair().publicKey;
     externalGroup2.lastBlockHash = make<Crypto::Hash>("other last");
-    externalGroup2.lastKeyRotationBlockHash = make<Crypto::Hash>("and another one");
+    externalGroup2.lastKeyRotationBlockHash =
+        make<Crypto::Hash>("and another one");
     AWAIT_VOID(groupStore.put(externalGroup2));
     CHECK_EQ(AWAIT(groupStore.findById(externalGroup2.id)).value(),
              Group{externalGroup2});

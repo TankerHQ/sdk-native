@@ -176,31 +176,60 @@ tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
 }
 
 tc::cotask<std::map<
-    Crypto::Hash,
+    HashedEmail,
     std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
 Requester::getPublicProvisionalIdentities(
-    gsl::span<Crypto::Hash const> hashedEmails)
+    gsl::span<HashedEmail const> hashedEmails)
 {
-  std::map<Crypto::Hash,
+  std::map<HashedEmail,
            std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
       ret;
   if (hashedEmails.empty())
     TC_RETURN(ret);
 
-  auto query =
-      nlohmann::json{{"hashed_emails[]",
-                      encodeCryptoTypes<mgs::base64url_nopad>(hashedEmails)}};
-  auto url = _httpClient->makeUrl("public-provisional-identities", query);
-  auto const result = TC_AWAIT(_httpClient->asyncGet(url)).value();
-
-  for (auto const& elem : result.at("public_provisional_identities"))
+  auto query = nlohmann::json{
+      {"hashed_emails", encodeCryptoTypes<mgs::base64>(hashedEmails)}};
+  auto url = _httpClient->makeUrl("public-provisional-identities");
+  auto const result = TC_AWAIT(_httpClient->asyncPost(url, query)).value();
+  auto const publicIdentitites = result.at("public_provisional_identities");
+  for (auto const& elem : publicIdentitites.at("hashed_emails"))
   {
-    auto const hashedEmail = elem.at("hashed_email").get<Crypto::Hash>();
+    auto const hashedEmail = elem.at("value").get<HashedEmail>();
     auto const publicSignatureKey =
         elem.at("public_signature_key").get<Crypto::PublicSignatureKey>();
     auto const publicEncryptionKey =
         elem.at("public_encryption_key").get<Crypto::PublicEncryptionKey>();
     ret[hashedEmail] = {publicSignatureKey, publicEncryptionKey};
+  }
+  TC_RETURN(ret);
+}
+
+tc::cotask<std::map<
+    HashedPhoneNumber,
+    std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+Requester::getPublicProvisionalIdentities(
+    gsl::span<HashedPhoneNumber const> hashedPhoneNumbers)
+{
+  std::map<HashedPhoneNumber,
+           std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>
+      ret;
+  if (hashedPhoneNumbers.empty())
+    TC_RETURN(ret);
+
+  auto query =
+      nlohmann::json{{"hashed_phone_numbers",
+                      encodeCryptoTypes<mgs::base64>(hashedPhoneNumbers)}};
+  auto url = _httpClient->makeUrl("public-provisional-identities");
+  auto const result = TC_AWAIT(_httpClient->asyncPost(url, query)).value();
+  auto const publicIdentitites = result.at("public_provisional_identities");
+  for (auto const& elem : publicIdentitites.at("hashed_phone_numbers"))
+  {
+    auto const hashedPhoneNumber = elem.at("value").get<HashedPhoneNumber>();
+    auto const publicSignatureKey =
+        elem.at("public_signature_key").get<Crypto::PublicSignatureKey>();
+    auto const publicEncryptionKey =
+        elem.at("public_encryption_key").get<Crypto::PublicEncryptionKey>();
+    ret[hashedPhoneNumber] = {publicSignatureKey, publicEncryptionKey};
   }
   TC_RETURN(ret);
 }

@@ -101,6 +101,7 @@ void validateVerification(
   namespace ba = boost::algorithm;
 
   if (!(bv::holds_alternative<Unlock::EmailVerification>(verification) ||
+        bv::holds_alternative<Unlock::PhoneNumberVerification>(verification) ||
         bv::holds_alternative<OidcIdToken>(verification)))
     throw Errors::Exception(
         make_error_code(Errors::Errc::InvalidArgument),

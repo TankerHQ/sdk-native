@@ -43,10 +43,16 @@ public:
                  gsl::span<Trustchain::ResourceId const> resourceIds),
              override);
   MAKE_MOCK1(getPublicProvisionalIdentities,
-             (tc::cotask<std::map<Crypto::Hash,
+             (tc::cotask<std::map<HashedEmail,
                                   std::pair<Crypto::PublicSignatureKey,
                                             Crypto::PublicEncryptionKey>>>(
-                 gsl::span<Crypto::Hash const>)),
+                 gsl::span<HashedEmail const>)),
+             override);
+  MAKE_MOCK1(getPublicProvisionalIdentities,
+             (tc::cotask<std::map<HashedPhoneNumber,
+                                  std::pair<Crypto::PublicSignatureKey,
+                                            Crypto::PublicEncryptionKey>>>(
+                 gsl::span<HashedPhoneNumber const>)),
              override);
 };
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Tanker/Crypto/Hash.hpp>
+#include <Tanker/Crypto/SignatureKeyPair.hpp>
+#include <Tanker/Identity/TargetType.hpp>
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
@@ -29,6 +31,7 @@ struct EncryptedPhoneNumberVerification
 {
   PhoneNumber phoneNumber;
   Crypto::Hash userSalt;
+  std::optional<Crypto::Hash> provisionalSalt;
   EncryptedPhoneNumber encryptedPhoneNumber;
   VerificationCode verificationCode;
 };
@@ -40,18 +43,46 @@ using RequestVerificationMethods =
                              OidcIdToken,
                              EncryptedPhoneNumberVerification>;
 
-struct Request
+struct RequestWithVerif
 {
   RequestVerificationMethods verification;
   std::optional<std::string> withTokenNonce;
 };
 
-void to_json(nlohmann::json&, Request const&);
+void to_json(nlohmann::json&, RequestWithVerif const&);
 
-Request makeRequest(
+RequestWithVerif makeRequestWithVerif(
     Unlock::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);
+
+struct EmailSessionRequest
+{
+  Email email;
+};
+
+struct PhoneNumberSessionRequest
+{
+  PhoneNumber phoneNumber;
+  Crypto::Hash userSalt;
+  Crypto::Hash provisionalSalt;
+};
+
+using SessionRequestValue =
+    boost::variant2::variant<EmailSessionRequest, PhoneNumberSessionRequest>;
+
+struct RequestWithSession
+{
+  Identity::TargetType target;
+  SessionRequestValue value;
+};
+
+void to_json(nlohmann::json&, RequestWithSession const&);
+
+RequestWithSession makeRequestWithSession(
+    Identity::SecretProvisionalIdentity const& identity,
+    Crypto::SymmetricKey const& userSecret);
 }
 
 namespace nlohmann
@@ -66,5 +97,15 @@ struct adl_serializer<Tanker::Unlock::RequestVerificationMethods, SFINAE>
   static void from_json(nlohmann::json const& j,
                         Tanker::Unlock::RequestVerificationMethods& request) =
       delete;
+};
+
+template <typename SFINAE>
+struct adl_serializer<Tanker::Unlock::SessionRequestValue, SFINAE>
+{
+  static void to_json(nlohmann::json& j,
+                      Tanker::Unlock::SessionRequestValue const& request);
+
+  static void from_json(nlohmann::json const& j,
+                        Tanker::Unlock::SessionRequestValue& request) = delete;
 };
 }

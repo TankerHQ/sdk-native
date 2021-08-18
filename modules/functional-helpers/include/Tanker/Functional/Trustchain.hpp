@@ -53,6 +53,7 @@ public:
 
   User makeUser();
   AppProvisionalUser makeEmailProvisionalUser();
+  AppProvisionalUser makePhoneNumberProvisionalUser();
 
   TrustchainConfig toConfig() const;
 

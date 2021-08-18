@@ -10,6 +10,9 @@
 #include <Tanker/Trustchain/UserAction.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/HashedEmail.hpp>
+#include <Tanker/Types/HashedPhoneNumber.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -64,9 +67,13 @@ public:
   virtual tc::cotask<void> revokeDevice(
       Trustchain::Actions::DeviceRevocation const& deviceRevocation) = 0;
   virtual tc::cotask<std::map<
-      Crypto::Hash,
+      HashedEmail,
+      std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
+  getPublicProvisionalIdentities(gsl::span<HashedEmail const> hashedEmails) = 0;
+  virtual tc::cotask<std::map<
+      HashedPhoneNumber,
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>
   getPublicProvisionalIdentities(
-      gsl::span<Crypto::Hash const> hashedEmails) = 0;
+      gsl::span<HashedPhoneNumber const> hashedPhoneNumbers) = 0;
 };
 }

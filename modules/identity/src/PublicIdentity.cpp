@@ -1,5 +1,6 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
@@ -19,13 +20,31 @@ PublicIdentity getPublicIdentity(SecretPermanentIdentity const& identity)
 
 PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity)
 {
-  return PublicIdentity(PublicProvisionalIdentity{
+  auto prov = PublicProvisionalIdentity{
       identity.trustchainId,
       identity.target,
       identity.value,
       identity.appSignatureKeyPair.publicKey,
       identity.appEncryptionKeyPair.publicKey,
-  });
+  };
+  if (prov.target == TargetType::Email)
+  {
+    prov.target = TargetType::HashedEmail;
+    auto const hashedEmail = hashProvisionalEmail(prov.value);
+    prov.value = mgs::base64::encode(hashedEmail);
+  }
+  else if (prov.target == TargetType::PhoneNumber)
+  {
+    prov.target = TargetType::HashedPhoneNumber;
+    auto const hashedPhoneNumber = hashProvisionalPhoneNumber(identity);
+    prov.value = mgs::base64::encode(hashedPhoneNumber);
+  }
+  else
+  {
+    throw Errors::AssertionError(fmt::format("unsupported target type: {}",
+                                             static_cast<int>(prov.target)));
+  }
+  return prov;
 }
 
 std::string getPublicIdentity(std::string const& secretIdentity)

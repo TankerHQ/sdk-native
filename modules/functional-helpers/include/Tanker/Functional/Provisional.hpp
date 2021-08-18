@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Functional/Device.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 
@@ -14,7 +15,7 @@ namespace Tanker::Functional
 {
 struct AppProvisionalUser
 {
-  boost::variant2::variant<Email> value;
+  boost::variant2::variant<Email, PhoneNumber> value;
   SSecretProvisionalIdentity secretIdentity;
   SPublicIdentity publicIdentity;
 };

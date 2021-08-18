@@ -21,7 +21,8 @@ struct SecretPermanentIdentity
 };
 
 void from_json(nlohmann::json const& j, SecretPermanentIdentity& result);
-void to_json(nlohmann::json& j, SecretPermanentIdentity const& identity);
+void to_json(nlohmann::ordered_json& j,
+             SecretPermanentIdentity const& identity);
 std::string to_string(SecretPermanentIdentity const& identity);
 
 SecretPermanentIdentity createIdentity(

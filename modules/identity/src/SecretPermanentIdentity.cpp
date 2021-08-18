@@ -79,22 +79,22 @@ void from_json(nlohmann::json const& j, SecretPermanentIdentity& identity)
   j.at("delegation_signature").get_to(identity.delegation.signature);
 }
 
-void to_json(nlohmann::json& j, SecretPermanentIdentity const& identity)
+void to_json(nlohmann::ordered_json& j, SecretPermanentIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "user";
   j["value"] = identity.delegation.userId;
-  j["user_secret"] = identity.userSecret;
+  j["delegation_signature"] = identity.delegation.signature;
   j["ephemeral_public_signature_key"] =
       identity.delegation.ephemeralKeyPair.publicKey;
   j["ephemeral_private_signature_key"] =
       identity.delegation.ephemeralKeyPair.privateKey;
-  j["delegation_signature"] = identity.delegation.signature;
+  j["user_secret"] = identity.userSecret;
 }
 
 std::string to_string(SecretPermanentIdentity const& identity)
 {
-  return mgs::base64::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
 }
 }
 }

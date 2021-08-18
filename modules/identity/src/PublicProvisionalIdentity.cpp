@@ -1,5 +1,6 @@
 #include <Tanker/Identity/PublicProvisionalIdentity.hpp>
 
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/Errors/Errc.hpp>
@@ -25,7 +26,7 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
 
   identity = PublicProvisionalIdentity{
       j.at("trustchain_id").get<Trustchain::TrustchainId>(),
-      to_target_type(target),
+      to_public_target_type(target),
       j.at("value").get<std::string>(),
       mgs::base64::decode<Crypto::PublicSignatureKey>(
           j.at("public_signature_key").get<std::string>()),
@@ -34,7 +35,8 @@ void from_json(nlohmann::json const& j, PublicProvisionalIdentity& identity)
   };
 }
 
-void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
+void to_json(nlohmann::ordered_json& j,
+             PublicProvisionalIdentity const& identity)
 {
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = to_string(identity.target);
@@ -43,13 +45,28 @@ void to_json(nlohmann::json& j, PublicProvisionalIdentity const& identity)
       mgs::base64::encode(identity.appEncryptionPublicKey);
   j["public_signature_key"] =
       mgs::base64::encode(identity.appSignaturePublicKey);
-  j["public_encryption_key"] =
-      mgs::base64::encode(identity.appEncryptionPublicKey);
 }
 
 std::string to_string(PublicProvisionalIdentity const& identity)
 {
-  return mgs::base64::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
+}
+
+HashedEmail hashProvisionalEmail(std::string const& value)
+{
+  return Crypto::generichash<HashedEmail>(
+      gsl::make_span(value).as_span<std::uint8_t const>());
+}
+
+HashedPhoneNumber hashProvisionalPhoneNumber(
+    SecretProvisionalIdentity const& identity)
+{
+  auto const salt =
+      Crypto::generichash(identity.appSignatureKeyPair.privateKey);
+
+  std::vector<std::uint8_t> buffer(salt.begin(), salt.end());
+  buffer.insert(buffer.end(), identity.value.begin(), identity.value.end());
+  return Crypto::generichash<HashedPhoneNumber>(buffer);
 }
 }
 }

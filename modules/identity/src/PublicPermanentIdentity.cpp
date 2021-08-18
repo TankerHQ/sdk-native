@@ -31,16 +31,16 @@ void from_json(nlohmann::json const& j, PublicPermanentIdentity& identity)
   j.at("value").get_to(identity.userId);
 }
 
-void to_json(nlohmann::json& j, PublicPermanentIdentity const& identity)
+void to_json(nlohmann::ordered_json& j, PublicPermanentIdentity const& identity)
 {
-  j["value"] = identity.userId;
   j["trustchain_id"] = identity.trustchainId;
   j["target"] = "user";
+  j["value"] = identity.userId;
 }
 
 std::string to_string(PublicPermanentIdentity const& identity)
 {
-  return mgs::base64::encode(nlohmann::json(identity).dump());
+  return mgs::base64::encode(nlohmann::ordered_json(identity).dump());
 }
 }
 }

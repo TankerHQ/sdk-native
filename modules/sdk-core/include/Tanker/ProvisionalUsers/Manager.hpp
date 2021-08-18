@@ -39,12 +39,22 @@ public:
       Crypto::SymmetricKey const& userSecret);
 
   tc::cotask<void> verifyProvisionalIdentity(
-      Unlock::Request const& unlockRequest);
+      Unlock::RequestWithVerif const& unlockRequest);
 
   std::optional<Identity::SecretProvisionalIdentity> const&
   provisionalIdentity() const;
 
 private:
+  tc::cotask<std::optional<ProvisionalUserKeys>> fetchProvisionalKeys(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity);
+  tc::cotask<AttachResult> claimProvisionalIdentity(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity,
+      Crypto::SymmetricKey const& userSecret);
+  tc::cotask<AttachResult> claimProvisionalIdentityWithMethod(
+      Identity::SecretProvisionalIdentity const& provisionalIdentity,
+      Unlock::VerificationMethod const& method,
+      Crypto::SymmetricKey const& userSecret);
+
   Users::ILocalUserAccessor* _localUserAccessor;
   IRequester* _requester;
   Unlock::Requester* _unlockRequester;

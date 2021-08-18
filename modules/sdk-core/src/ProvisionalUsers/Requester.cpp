@@ -49,16 +49,20 @@ Requester::getClaimBlocks(Trustchain::UserId const& userId)
 }
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-Requester::getVerifiedProvisionalIdentityKeys()
+Requester::getVerifiedProvisionalIdentityKeys(
+    Trustchain::UserId const& userId, Unlock::RequestWithSession const& request)
 {
   auto const res = TC_AWAIT(
-      _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities")));
+      _httpClient->asyncPost(_httpClient->makeUrl(fmt::format(
+                                 "users/{userId:#S}/tanker-provisional-keys",
+                                 fmt::arg("userId", userId))),
+                             request));
 
-  auto const j = res.value();
+  auto const& j = res.value();
   if (j.empty())
     TC_RETURN(std::nullopt);
 
-  auto& jProvisional = j.at("provisional_identity");
+  auto& jProvisional = j.at("tanker_provisional_keys");
   TC_RETURN(std::make_optional(TankerSecretProvisionalIdentity{
       {jProvisional.at("public_encryption_key")
            .get<Crypto::PublicEncryptionKey>(),
@@ -71,15 +75,15 @@ Requester::getVerifiedProvisionalIdentityKeys()
 }
 
 tc::cotask<TankerSecretProvisionalIdentity>
-Requester::getProvisionalIdentityKeys(Unlock::Request const& request)
+Requester::getProvisionalIdentityKeys(Unlock::RequestWithVerif const& request)
 {
   auto const res = TC_AWAIT(
-      _httpClient->asyncPost(_httpClient->makeUrl("provisional-identities"),
+      _httpClient->asyncPost(_httpClient->makeUrl("tanker-provisional-keys"),
                              {{"verification", request}}));
 
-  auto const json = res.value();
+  auto const& json = res.value();
 
-  auto& jProvisional = json.at("provisional_identity");
+  auto& jProvisional = json.at("tanker_provisional_keys");
   TC_RETURN((TankerSecretProvisionalIdentity{
       {jProvisional.at("public_encryption_key")
            .get<Crypto::PublicEncryptionKey>(),
