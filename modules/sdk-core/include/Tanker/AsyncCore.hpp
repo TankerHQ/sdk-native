@@ -17,7 +17,7 @@
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Verification/Verification.hpp>
 
 #include <tconcurrent/future.hpp>
 #include <tconcurrent/lazy/task_canceler.hpp>
@@ -60,14 +60,14 @@ public:
   tc::future<void> stop();
 
   tc::future<std::optional<std::string>> registerIdentity(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
   tc::future<std::optional<std::string>> verifyIdentity(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
 
   tc::future<std::string> getSessionToken(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::string const& withTokenNonce);
 
   Tanker::Status status() const;
@@ -103,14 +103,15 @@ public:
   tc::future<VerificationKey> generateVerificationKey();
 
   tc::future<std::optional<std::string>> setVerificationMethod(
-      Unlock::Verification const& method,
+      Verification::Verification const& method,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
-  tc::future<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
+  tc::future<std::vector<Verification::VerificationMethod>>
+  getVerificationMethods();
 
   tc::future<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
   tc::future<void> verifyProvisionalIdentity(
-      Unlock::Verification const& verification);
+      Verification::Verification const& verification);
 
   void connectSessionClosed(std::function<void()> cb);
   void disconnectSessionClosed();

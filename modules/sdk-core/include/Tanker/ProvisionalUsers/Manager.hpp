@@ -6,7 +6,7 @@
 #include <Tanker/ProvisionalUsers/Accessor.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Request.hpp>
+#include <Tanker/Verification/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -16,7 +16,7 @@ namespace Users
 {
 class ILocalUserAccessor;
 }
-namespace Unlock
+namespace Verification
 {
 class Requester;
 }
@@ -29,7 +29,7 @@ class Manager
 public:
   Manager(Users::ILocalUserAccessor* localUserAccessor,
           IRequester* requester,
-          Unlock::Requester* unlockRequester,
+          Verification::Requester* unlockRequester,
           ProvisionalUsers::Accessor* provisionalUsersAccessor,
           ProvisionalUserKeysStore* provisionalUserKeysStore,
           Trustchain::TrustchainId const& trustchainId);
@@ -39,7 +39,7 @@ public:
       Crypto::SymmetricKey const& userSecret);
 
   tc::cotask<void> verifyProvisionalIdentity(
-      Unlock::RequestWithVerif const& unlockRequest);
+      Verification::RequestWithVerif const& unlockRequest);
 
   std::optional<Identity::SecretProvisionalIdentity> const&
   provisionalIdentity() const;
@@ -52,12 +52,12 @@ private:
       Crypto::SymmetricKey const& userSecret);
   tc::cotask<AttachResult> claimProvisionalIdentityWithMethod(
       Identity::SecretProvisionalIdentity const& provisionalIdentity,
-      Unlock::VerificationMethod const& method,
+      Verification::VerificationMethod const& method,
       Crypto::SymmetricKey const& userSecret);
 
   Users::ILocalUserAccessor* _localUserAccessor;
   IRequester* _requester;
-  Unlock::Requester* _unlockRequester;
+  Verification::Requester* _unlockRequester;
   ProvisionalUsers::Accessor* _provisionalUsersAccessor;
   ProvisionalUserKeysStore* _provisionalUserKeysStore;
   Trustchain::TrustchainId _trustchainId;

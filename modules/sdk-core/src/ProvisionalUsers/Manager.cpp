@@ -9,10 +9,10 @@
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/ProvisionalUsers/IRequester.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
-#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
+#include <Tanker/Verification/Requester.hpp>
 
 TLOG_CATEGORY(ProvisionalUsers);
 
@@ -22,9 +22,9 @@ namespace ProvisionalUsers
 {
 namespace
 {
-std::optional<Unlock::VerificationMethod> findVerificationMethod(
-    gsl::span<Unlock::VerificationMethod const> methods,
-    Unlock::VerificationMethod const& wanted)
+std::optional<Verification::VerificationMethod> findVerificationMethod(
+    gsl::span<Verification::VerificationMethod const> methods,
+    Verification::VerificationMethod const& wanted)
 {
   auto it = std::find(methods.begin(), methods.end(), wanted);
   if (it != methods.end())
@@ -32,7 +32,7 @@ std::optional<Unlock::VerificationMethod> findVerificationMethod(
   return std::nullopt;
 }
 
-Unlock::VerificationMethod getSecretProvisionalVerifMethod(
+Verification::VerificationMethod getSecretProvisionalVerifMethod(
     Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
   if (provisionalIdentity.target == Identity::TargetType::Email)
@@ -47,7 +47,7 @@ Unlock::VerificationMethod getSecretProvisionalVerifMethod(
 
 Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
                  IRequester* requester,
-                 Unlock::Requester* unlockRequester,
+                 Verification::Requester* unlockRequester,
                  ProvisionalUsers::Accessor* provisionalUsersAccessor,
                  ProvisionalUserKeysStore* provisionalUserKeysStore,
                  Trustchain::TrustchainId const& trustchainId)
@@ -81,11 +81,11 @@ tc::cotask<std::optional<ProvisionalUserKeys>> Manager::fetchProvisionalKeys(
 
 tc::cotask<AttachResult> Manager::claimProvisionalIdentityWithMethod(
     Identity::SecretProvisionalIdentity const& provisionalIdentity,
-    Unlock::VerificationMethod const& method,
+    Verification::VerificationMethod const& method,
     Crypto::SymmetricKey const& userSecret)
 {
   auto const request =
-      Unlock::makeRequestWithSession(provisionalIdentity, userSecret);
+      Verification::makeRequestWithSession(provisionalIdentity, userSecret);
   if (auto const tankerKeys =
           TC_AWAIT(_requester->getVerifiedProvisionalIdentityKeys(
               _localUserAccessor->get().userId(), request)))
@@ -118,7 +118,7 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
     auto const& userId = _localUserAccessor->get().userId();
     auto verificationMethods =
         TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
-    TC_AWAIT(Unlock::decryptMethods(verificationMethods, userSecret));
+    TC_AWAIT(Verification::decryptMethods(verificationMethods, userSecret));
 
     if (findVerificationMethod(verificationMethods, method))
     {
@@ -158,7 +158,7 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
 }
 
 tc::cotask<void> Manager::verifyProvisionalIdentity(
-    Unlock::RequestWithVerif const& unlockRequest)
+    Verification::RequestWithVerif const& unlockRequest)
 {
   auto const tankerKeys =
       TC_AWAIT(_requester->getProvisionalIdentityKeys(unlockRequest));

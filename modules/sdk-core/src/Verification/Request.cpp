@@ -1,4 +1,4 @@
-#include <Tanker/Unlock/Request.hpp>
+#include <Tanker/Verification/Request.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
@@ -37,18 +37,17 @@ Ret hashField(T const& field)
 }
 }
 
-namespace Tanker::Unlock
+namespace Tanker::Verification
 {
 RequestWithVerif makeRequestWithVerif(
-    Unlock::Verification const& verification,
+    Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](Unlock::EmailVerification const& v)
-              -> RequestVerificationMethods {
+          [&](EmailVerification const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
@@ -63,8 +62,7 @@ RequestWithVerif makeRequestWithVerif(
                                               std::move(encryptedEmail),
                                               v.verificationCode};
           },
-          [&](Unlock::PhoneNumberVerification const& v)
-              -> RequestVerificationMethods {
+          [&](PhoneNumberVerification const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
 
@@ -105,7 +103,7 @@ RequestWithVerif makeRequestWithVerif(
   return {verif, withTokenNonce};
 }
 
-void to_json(nlohmann::json& j, Tanker::Unlock::RequestWithVerif const& request)
+void to_json(nlohmann::json& j, RequestWithVerif const& request)
 {
   j = nlohmann::json(request.verification);
   if (request.withTokenNonce.has_value())
@@ -138,8 +136,7 @@ RequestWithSession makeRequestWithSession(
   return {identity.target, value};
 }
 
-void to_json(nlohmann::json& j,
-             Tanker::Unlock::RequestWithSession const& request)
+void to_json(nlohmann::json& j, RequestWithSession const& request)
 {
   j = nlohmann::json(request.value);
   j["target"] = to_string(request.target);
@@ -149,18 +146,18 @@ void to_json(nlohmann::json& j,
 namespace nlohmann
 {
 template <>
-void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
-    json& j, Tanker::Unlock::RequestVerificationMethods const& request)
+void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
+    json& j, Tanker::Verification::RequestVerificationMethods const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
       overloaded{
-          [&](Unlock::EncryptedEmailVerification const& e) {
+          [&](Verification::EncryptedEmailVerification const& e) {
             j["hashed_email"] = e.hashedEmail;
             j["verification_code"] = e.verificationCode;
             j["v2_encrypted_email"] = e.encryptedEmail;
           },
-          [&](Unlock::EncryptedPhoneNumberVerification const& e) {
+          [&](Verification::EncryptedPhoneNumberVerification const& e) {
             j["phone_number"] = e.phoneNumber;
             j["verification_code"] = e.verificationCode;
             j["encrypted_phone_number"] = e.encryptedPhoneNumber;
@@ -180,14 +177,16 @@ void adl_serializer<Tanker::Unlock::RequestVerificationMethods>::to_json(
 }
 
 template <>
-void adl_serializer<Tanker::Unlock::SessionRequestValue>::to_json(
-    json& j, Tanker::Unlock::SessionRequestValue const& request)
+void adl_serializer<Tanker::Verification::SessionRequestValue>::to_json(
+    json& j, Tanker::Verification::SessionRequestValue const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
       overloaded{
-          [&](Unlock::EmailSessionRequest const& e) { j["email"] = e.email; },
-          [&](Unlock::PhoneNumberSessionRequest const& e) {
+          [&](Verification::EmailSessionRequest const& e) {
+            j["email"] = e.email;
+          },
+          [&](Verification::PhoneNumberSessionRequest const& e) {
             j["phone_number"] = e.phoneNumber;
             j["provisional_salt"] = e.provisionalSalt;
             j["user_secret_salt"] = e.userSalt;

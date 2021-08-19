@@ -22,7 +22,7 @@ namespace Identity
 struct SecretProvisionalIdentity;
 }
 
-namespace Unlock
+namespace Verification
 {
 struct EmailVerification
 {

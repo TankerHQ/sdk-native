@@ -143,7 +143,8 @@ tc::future<Status> AsyncCore::start(std::string const& identity)
 }
 
 tc::future<std::optional<std::string>> AsyncCore::registerIdentity(
-    Unlock::Verification const& verification, Core::VerifyWithToken withToken)
+    Verification::Verification const& verification,
+    Core::VerifyWithToken withToken)
 {
   return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(this->_core.registerIdentity(verification, withToken)));
@@ -151,7 +152,8 @@ tc::future<std::optional<std::string>> AsyncCore::registerIdentity(
 }
 
 tc::future<std::optional<std::string>> AsyncCore::verifyIdentity(
-    Unlock::Verification const& verification, Core::VerifyWithToken withToken)
+    Verification::Verification const& verification,
+    Core::VerifyWithToken withToken)
 {
   return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(this->_core.verifyIdentity(verification, withToken)));
@@ -268,18 +270,18 @@ tc::future<VerificationKey> AsyncCore::generateVerificationKey()
 }
 
 tc::future<std::optional<std::string>> AsyncCore::setVerificationMethod(
-    Unlock::Verification const& method, Core::VerifyWithToken withToken)
+    Verification::Verification const& method, Core::VerifyWithToken withToken)
 {
   return runResumable([=]() -> tc::cotask<std::optional<std::string>> {
     TC_RETURN(TC_AWAIT(this->_core.setVerificationMethod(method, withToken)));
   });
 }
 
-tc::future<std::vector<Unlock::VerificationMethod>>
+tc::future<std::vector<Verification::VerificationMethod>>
 AsyncCore::getVerificationMethods()
 {
   return runResumable(
-      [=]() -> tc::cotask<std::vector<Unlock::VerificationMethod>> {
+      [=]() -> tc::cotask<std::vector<Verification::VerificationMethod>> {
         TC_RETURN(TC_AWAIT(this->_core.getVerificationMethods()));
       });
 }
@@ -293,7 +295,7 @@ tc::future<AttachResult> AsyncCore::attachProvisionalIdentity(
 }
 
 tc::future<void> AsyncCore::verifyProvisionalIdentity(
-    Unlock::Verification const& verification)
+    Verification::Verification const& verification)
 {
   return runResumable([=]() -> tc::cotask<void> {
     TC_AWAIT(this->_core.verifyProvisionalIdentity(verification));

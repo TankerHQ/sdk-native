@@ -3,7 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Types/SUserId.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Verification/Verification.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <Helpers/UniquePath.hpp>

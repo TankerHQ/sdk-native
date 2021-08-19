@@ -51,12 +51,12 @@ add_library(tankercore STATIC
   include/Tanker/Init.hpp
   include/Tanker/GhostDevice.hpp
   include/Tanker/EncryptedUserKey.hpp
-  include/Tanker/Unlock/Registration.hpp
-  include/Tanker/Unlock/Verification.hpp
-  include/Tanker/Unlock/Methods.hpp
-  include/Tanker/Unlock/IRequester.hpp
-  include/Tanker/Unlock/Requester.hpp
-  include/Tanker/Unlock/Request.hpp
+  include/Tanker/Verification/Registration.hpp
+  include/Tanker/Verification/Verification.hpp
+  include/Tanker/Verification/Methods.hpp
+  include/Tanker/Verification/IRequester.hpp
+  include/Tanker/Verification/Requester.hpp
+  include/Tanker/Verification/Request.hpp
   include/Tanker/DeviceKeys.hpp
   include/Tanker/Network/HttpMethod.hpp
   include/Tanker/Network/HttpRequest.hpp
@@ -130,9 +130,9 @@ add_library(tankercore STATIC
   src/DataStore/Errors/ErrcCategory.cpp
   src/Network/HttpClient.cpp
   src/GhostDevice.cpp
-  src/Unlock/Verification.cpp
-  src/Unlock/Requester.cpp
-  src/Unlock/Request.cpp
+  src/Verification/Verification.cpp
+  src/Verification/Requester.cpp
+  src/Verification/Request.cpp
   src/Status.cpp
   src/DeviceKeys.cpp
   src/ReceiveKey.cpp

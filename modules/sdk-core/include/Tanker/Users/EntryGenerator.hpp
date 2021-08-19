@@ -13,7 +13,7 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Verification/Verification.hpp>
 
 namespace Tanker::Users
 {
@@ -67,7 +67,7 @@ Trustchain::Actions::DeviceRevocation1 createRevokeDeviceV1Action(
 Trustchain::Actions::SessionCertificate createSessionCertificate(
     Trustchain::TrustchainId const& trustchainId,
     Trustchain::DeviceId const& deviceId,
-    Unlock::Verification const& verification,
+    Verification::Verification const& verification,
     Crypto::PrivateSignatureKey const& signatureKey);
 
 Trustchain::Actions::ProvisionalIdentityClaim

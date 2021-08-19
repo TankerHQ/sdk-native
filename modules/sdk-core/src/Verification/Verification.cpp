@@ -1,4 +1,4 @@
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Verification/Verification.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Json/Json.hpp>
@@ -14,7 +14,7 @@
 #include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
 
-namespace Tanker::Unlock
+namespace Tanker::Verification
 {
 namespace
 {
@@ -94,21 +94,21 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
 }
 
 void validateVerification(
-    Unlock::Verification const& verification,
+    Verification const& verification,
     Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
   namespace bv = boost::variant2;
   namespace ba = boost::algorithm;
 
-  if (!(bv::holds_alternative<Unlock::EmailVerification>(verification) ||
-        bv::holds_alternative<Unlock::PhoneNumberVerification>(verification) ||
+  if (!(bv::holds_alternative<EmailVerification>(verification) ||
+        bv::holds_alternative<PhoneNumberVerification>(verification) ||
         bv::holds_alternative<OidcIdToken>(verification)))
     throw Errors::Exception(
         make_error_code(Errors::Errc::InvalidArgument),
         "unknown verification method for provisional identity");
 
   if (auto const emailVerification =
-          bv::get_if<Unlock::EmailVerification>(&verification))
+          bv::get_if<EmailVerification>(&verification))
   {
     if (emailVerification->email != Email{provisionalIdentity.value})
       throw Errors::Exception(
@@ -116,7 +116,7 @@ void validateVerification(
           "verification email does not match provisional identity");
   }
   if (auto const phoneNumberVerification =
-          bv::get_if<Unlock::PhoneNumberVerification>(&verification))
+          bv::get_if<PhoneNumberVerification>(&verification))
   {
     if (phoneNumberVerification->phoneNumber !=
         PhoneNumber{provisionalIdentity.value})

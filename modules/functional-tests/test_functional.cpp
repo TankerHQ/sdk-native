@@ -598,7 +598,7 @@ TEST_CASE_FIXTURE(
   auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
   auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif = Unlock::EmailVerification{
+  auto const emailVerif = Verification::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -655,14 +655,14 @@ TEST_CASE_FIXTURE(
   auto const aliceSession = aliceDevice.createCore();
   TC_AWAIT(aliceSession->start(alice.identity));
   auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto emailVerif = Unlock::EmailVerification{
+  auto emailVerif = Verification::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
   TC_AWAIT(aliceSession->registerIdentity(emailVerif));
   REQUIRE(aliceSession->status() == Status::Ready);
 
   auto withToken = Core::VerifyWithToken::Yes;
   aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  emailVerif = Unlock::EmailVerification{
+  emailVerif = Verification::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
   auto token = TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken));
   CHECK(token.has_value());
@@ -682,7 +682,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(aliceSession->registerIdentity(passVerif));
 
   auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif = Unlock::EmailVerification{
+  auto const emailVerif = Verification::EmailVerification{
       aliceEmail, VerificationCode{aliceVerificationCode}};
 
   auto withToken = Core::VerifyWithToken::Yes;
@@ -771,8 +771,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto const aliceEmail = Email{"aaalice@tanker.io"};
   auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif =
-      Unlock::EmailVerification{aliceEmail, VerificationCode{verificationCode}};
+  auto const emailVerif = Verification::EmailVerification{
+      aliceEmail, VerificationCode{verificationCode}};
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
   auto const aliceSession = aliceDevice.createCore();

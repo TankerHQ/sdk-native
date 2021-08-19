@@ -14,8 +14,8 @@
 #include <Tanker/Types/SResourceId.hpp>
 #include <Tanker/Types/SSecretProvisionalIdentity.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
-#include <Tanker/Unlock/Verification.hpp>
 #include <Tanker/Users/Device.hpp>
+#include <Tanker/Verification/Verification.hpp>
 
 #include <gsl/gsl-lite.hpp>
 #include <tconcurrent/coroutine.hpp>
@@ -57,9 +57,11 @@ public:
 
   tc::cotask<Status> start(std::string const& identity);
   tc::cotask<std::optional<std::string>> registerIdentity(
-      Unlock::Verification const& verification, VerifyWithToken withToken);
+      Verification::Verification const& verification,
+      VerifyWithToken withToken);
   tc::cotask<std::optional<std::string>> verifyIdentity(
-      Unlock::Verification const& verification, VerifyWithToken withToken);
+      Verification::Verification const& verification,
+      VerifyWithToken withToken);
 
   tc::cotask<void> encrypt(
       uint8_t* encryptedData,
@@ -92,14 +94,15 @@ public:
       std::vector<SPublicIdentity> const& spublicIdentitiesToRemove);
 
   tc::cotask<std::optional<std::string>> setVerificationMethod(
-      Unlock::Verification const& method, VerifyWithToken withToken);
-  tc::cotask<std::vector<Unlock::VerificationMethod>> getVerificationMethods();
+      Verification::Verification const& method, VerifyWithToken withToken);
+  tc::cotask<std::vector<Verification::VerificationMethod>>
+  getVerificationMethods();
   tc::cotask<VerificationKey> generateVerificationKey() const;
 
   tc::cotask<AttachResult> attachProvisionalIdentity(
       SSecretProvisionalIdentity const& sidentity);
   tc::cotask<void> verifyProvisionalIdentity(
-      Unlock::Verification const& verification);
+      Verification::Verification const& verification);
 
   tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
 
@@ -137,24 +140,24 @@ public:
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
   tc::cotask<void> registerIdentityImpl(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<void> verifyIdentityImpl(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
 
   tc::cotask<VerificationKey> fetchVerificationKey(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<VerificationKey> getVerificationKey(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
   tc::cotask<Crypto::SymmetricKey> getResourceKey(
       Trustchain::ResourceId const&);
 
   std::optional<std::string> makeWithTokenRandomNonce(VerifyWithToken wanted);
   tc::cotask<std::string> getSessionToken(
-      Unlock::Verification const& verification,
+      Verification::Verification const& verification,
       std::string const& withTokenNonce);
 
   void assertStatus(Status wanted, std::string const& string) const;

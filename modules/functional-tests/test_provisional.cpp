@@ -39,7 +39,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const emailVerif = Unlock::EmailVerification{
+  auto const emailVerif = Verification::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 
@@ -222,7 +222,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE(result.status == Status::IdentityVerificationNeeded);
 
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const emailVerif = Unlock::EmailVerification{
+  auto const emailVerif = Verification::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 }
@@ -243,7 +243,7 @@ TEST_CASE_FIXTURE(
   auto const bobSession = bobDevice.createCore();
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-  auto const emailVerif = Unlock::EmailVerification{
+  auto const emailVerif = Verification::EmailVerification{
       bobEmail, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->registerIdentity(emailVerif));
 
@@ -270,7 +270,7 @@ TEST_CASE_FIXTURE(
   auto const bobSession = bobDevice.createCore();
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobPhone));
-  auto const verif = Unlock::PhoneNumberVerification{
+  auto const verif = Verification::PhoneNumberVerification{
       bobPhone, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->registerIdentity(verif));
 
@@ -294,8 +294,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(bobSession->verifyProvisionalIdentity(
-          Unlock::EmailVerification{bobEmail, VerificationCode{"invalid"}})),
+      TC_AWAIT(
+          bobSession->verifyProvisionalIdentity(Verification::EmailVerification{
+              bobEmail, VerificationCode{"invalid"}})),
       Errc::InvalidVerification);
 }
 
@@ -320,8 +321,9 @@ TEST_CASE_FIXTURE(
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-          bobEmail, VerificationCode{"DUMMY_CODE_FOR_FASTER_TESTS"}})),
+      TC_AWAIT(
+          bobSession->verifyProvisionalIdentity(Verification::EmailVerification{
+              bobEmail, VerificationCode{"DUMMY_CODE_FOR_FASTER_TESTS"}})),
       Errc::PreconditionFailed);
 }
 
@@ -355,8 +357,9 @@ TEST_CASE_FIXTURE(
           SSecretProvisionalIdentity{id}));
       REQUIRE(result.status == Status::IdentityVerificationNeeded);
       auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-      TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-          bobEmail, VerificationCode{bobVerificationCode}}));
+      TC_AWAIT(
+          bobSession->verifyProvisionalIdentity(Verification::EmailVerification{
+              bobEmail, VerificationCode{bobVerificationCode}}));
 
       REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
     }
@@ -368,8 +371,9 @@ TEST_CASE_FIXTURE(
         SSecretProvisionalIdentity{bobProvisionalIdentities[0]}));
     REQUIRE(result.status == Status::IdentityVerificationNeeded);
     auto bobVerificationCode = TC_AWAIT(getVerificationCode(bobEmail));
-    TC_AWAIT(bobSession->verifyProvisionalIdentity(Unlock::EmailVerification{
-        bobEmail, VerificationCode{bobVerificationCode}}));
+    TC_AWAIT(
+        bobSession->verifyProvisionalIdentity(Verification::EmailVerification{
+            bobEmail, VerificationCode{bobVerificationCode}}));
 
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(encrypt(*aliceSession,

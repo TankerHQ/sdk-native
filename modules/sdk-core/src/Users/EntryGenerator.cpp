@@ -15,12 +15,13 @@ using Trustchain::Actions::DeviceRevocation2;
 
 namespace
 {
-Crypto::Hash verificationTargetHash(Unlock::Verification const& verification,
-                                    DeviceId const& deviceId)
+Crypto::Hash verificationTargetHash(
+    Verification::Verification const& verification, DeviceId const& deviceId)
 {
   Crypto::Hash target;
   if (auto const emailVerif =
-          boost::variant2::get_if<Unlock::EmailVerification>(&verification))
+          boost::variant2::get_if<Verification::EmailVerification>(
+              &verification))
   {
     target = Crypto::generichash(
         gsl::make_span(emailVerif->email).as_span<uint8_t const>());
@@ -33,15 +34,16 @@ Crypto::Hash verificationTargetHash(Unlock::Verification const& verification,
 }
 
 Trustchain::Actions::VerificationMethodType verificationMethodType(
-    Unlock::Verification const& verification)
+    Verification::Verification const& verification)
 {
   using Trustchain::Actions::VerificationMethodType;
   return boost::variant2::visit(
       overloaded{
-          [](Unlock::EmailVerification const& v) -> VerificationMethodType {
+          [](Verification::EmailVerification const& v)
+              -> VerificationMethodType {
             return VerificationMethodType::Email;
           },
-          [](Unlock::PhoneNumberVerification const& v)
+          [](Verification::PhoneNumberVerification const& v)
               -> VerificationMethodType {
             return VerificationMethodType::PhoneNumber;
           },
@@ -213,7 +215,7 @@ DeviceRevocation1 createRevokeDeviceV1Action(
 Actions::SessionCertificate createSessionCertificate(
     TrustchainId const& trustchainId,
     DeviceId const& deviceId,
-    Unlock::Verification const& verification,
+    Verification::Verification const& verification,
     Crypto::PrivateSignatureKey const& signatureKey)
 {
   auto verifTarget = verificationTargetHash(verification, deviceId);

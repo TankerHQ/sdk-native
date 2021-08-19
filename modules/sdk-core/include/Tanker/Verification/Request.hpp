@@ -8,7 +8,7 @@
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
-#include <Tanker/Unlock/Verification.hpp>
+#include <Tanker/Verification/Verification.hpp>
 
 #include <boost/variant2/variant.hpp>
 
@@ -18,7 +18,7 @@
 #include <tuple>
 #include <vector>
 
-namespace Tanker::Unlock
+namespace Tanker::Verification
 {
 struct EncryptedEmailVerification
 {
@@ -52,7 +52,7 @@ struct RequestWithVerif
 void to_json(nlohmann::json&, RequestWithVerif const&);
 
 RequestWithVerif makeRequestWithVerif(
-    Unlock::Verification const& verification,
+    Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);
@@ -88,24 +88,25 @@ RequestWithSession makeRequestWithSession(
 namespace nlohmann
 {
 template <typename SFINAE>
-struct adl_serializer<Tanker::Unlock::RequestVerificationMethods, SFINAE>
+struct adl_serializer<Tanker::Verification::RequestVerificationMethods, SFINAE>
 {
   static void to_json(
       nlohmann::json& j,
-      Tanker::Unlock::RequestVerificationMethods const& request);
+      Tanker::Verification::RequestVerificationMethods const& request);
 
-  static void from_json(nlohmann::json const& j,
-                        Tanker::Unlock::RequestVerificationMethods& request) =
-      delete;
+  static void from_json(
+      nlohmann::json const& j,
+      Tanker::Verification::RequestVerificationMethods& request) = delete;
 };
 
 template <typename SFINAE>
-struct adl_serializer<Tanker::Unlock::SessionRequestValue, SFINAE>
+struct adl_serializer<Tanker::Verification::SessionRequestValue, SFINAE>
 {
   static void to_json(nlohmann::json& j,
-                      Tanker::Unlock::SessionRequestValue const& request);
+                      Tanker::Verification::SessionRequestValue const& request);
 
   static void from_json(nlohmann::json const& j,
-                        Tanker::Unlock::SessionRequestValue& request) = delete;
+                        Tanker::Verification::SessionRequestValue& request) =
+      delete;
 };
 }

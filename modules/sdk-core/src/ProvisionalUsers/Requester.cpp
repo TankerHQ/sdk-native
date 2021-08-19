@@ -50,7 +50,8 @@ Requester::getClaimBlocks(Trustchain::UserId const& userId)
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
 Requester::getVerifiedProvisionalIdentityKeys(
-    Trustchain::UserId const& userId, Unlock::RequestWithSession const& request)
+    Trustchain::UserId const& userId,
+    Verification::RequestWithSession const& request)
 {
   auto const res = TC_AWAIT(
       _httpClient->asyncPost(_httpClient->makeUrl(fmt::format(
@@ -75,7 +76,8 @@ Requester::getVerifiedProvisionalIdentityKeys(
 }
 
 tc::cotask<TankerSecretProvisionalIdentity>
-Requester::getProvisionalIdentityKeys(Unlock::RequestWithVerif const& request)
+Requester::getProvisionalIdentityKeys(
+    Verification::RequestWithVerif const& request)
 {
   auto const res = TC_AWAIT(
       _httpClient->asyncPost(_httpClient->makeUrl("tanker-provisional-keys"),

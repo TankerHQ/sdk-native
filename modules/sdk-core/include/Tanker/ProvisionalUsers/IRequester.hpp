@@ -3,7 +3,7 @@
 #include <Tanker/Trustchain/Actions/ProvisionalIdentityClaim.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/TankerSecretProvisionalIdentity.hpp>
-#include <Tanker/Unlock/Request.hpp>
+#include <Tanker/Verification/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -19,9 +19,11 @@ public:
   virtual tc::cotask<std::vector<Trustchain::Actions::ProvisionalIdentityClaim>>
   getClaimBlocks(Trustchain::UserId const& userId) = 0;
   virtual tc::cotask<std::optional<TankerSecretProvisionalIdentity>>
-  getVerifiedProvisionalIdentityKeys(Trustchain::UserId const& userId, Unlock::RequestWithSession const& request) = 0;
+  getVerifiedProvisionalIdentityKeys(
+      Trustchain::UserId const& userId,
+      Verification::RequestWithSession const& request) = 0;
   virtual tc::cotask<TankerSecretProvisionalIdentity>
-  getProvisionalIdentityKeys(Unlock::RequestWithVerif const& request) = 0;
+  getProvisionalIdentityKeys(Verification::RequestWithVerif const& request) = 0;
   virtual tc::cotask<void> claimProvisionalIdentity(
       Trustchain::Actions::ProvisionalIdentityClaim const& claimAction) = 0;
   virtual ~IRequester() = default;
