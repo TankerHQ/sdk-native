@@ -46,6 +46,39 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice cannot encrypt and share with two provisional users who "
+    "have the same email address")
+{
+  auto const email = makeEmail();
+
+  auto const secretProvisionalIdentity1 =
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+          mgs::base64::encode(trustchain.id), email));
+  auto const publicProvisionalIdentity1 = SPublicIdentity(
+      Identity::getPublicIdentity(secretProvisionalIdentity1.string()));
+  Functional::AppProvisionalUser bobProvisional{
+      email, secretProvisionalIdentity1, publicProvisionalIdentity1};
+
+  auto const secretProvisionalIdentity2 =
+      SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+          mgs::base64::encode(trustchain.id), email));
+  auto const publicProvisionalIdentity2 = SPublicIdentity(
+      Identity::getPublicIdentity(secretProvisionalIdentity2.string()));
+  Functional::AppProvisionalUser charlieProvisional{
+      email, secretProvisionalIdentity2, publicProvisionalIdentity2};
+
+  auto const clearData = "my clear data is clear";
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(encrypt(
+          *aliceSession,
+          clearData,
+          {bobProvisional.publicIdentity, charlieProvisional.publicIdentity})),
+      Errc::InvalidArgument,
+      "using multiple provisional identities for the same target");
+}
+
 TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice can encrypt and share with multiple provisional users")
 {

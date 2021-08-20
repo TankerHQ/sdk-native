@@ -225,6 +225,15 @@ PublicKeys findFetchedPublicKeysForProvisional(
         fmt::format("unexpected target ({})", appProvisionalIdentity.target));
   }
 }
+
+template <typename T>
+void checkIdentityUnicity(std::vector<T> v)
+{
+  std::sort(v.begin(), v.end());
+  if (std::unique(v.begin(), v.end()) != v.end())
+    throw formatEx(Errc::InvalidArgument,
+                   "using multiple provisional identities for the same target");
+}
 }
 
 tc::cotask<std::vector<ProvisionalUsers::PublicUser>>
@@ -250,6 +259,8 @@ UserAccessor::pullProvisional(
 
   auto const hashedProvisionals =
       hashProvisionalUsers(appProvisionalIdentities);
+  checkIdentityUnicity(hashedProvisionals.hashedEmails);
+  checkIdentityUnicity(hashedProvisionals.hashedPhoneNumbers);
 
   flat_map<HashedEmail, PublicKeys> tankerEmailProvisionalIdentities;
   for (unsigned int i = 0; i < hashedProvisionals.hashedEmails.size();
