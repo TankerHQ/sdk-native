@@ -20,8 +20,7 @@ Crypto::Hash verificationTargetHash(
 {
   Crypto::Hash target;
   if (auto const emailVerif =
-          boost::variant2::get_if<Verification::EmailVerification>(
-              &verification))
+          boost::variant2::get_if<Verification::ByEmail>(&verification))
   {
     target = Crypto::generichash(
         gsl::make_span(emailVerif->email).as_span<uint8_t const>());
@@ -39,8 +38,7 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
   using Trustchain::Actions::VerificationMethodType;
   return boost::variant2::visit(
       overloaded{
-          [](Verification::EmailVerification const& v)
-              -> VerificationMethodType {
+          [](Verification::ByEmail const& v) -> VerificationMethodType {
             return VerificationMethodType::Email;
           },
           [](Verification::PhoneNumberVerification const& v)

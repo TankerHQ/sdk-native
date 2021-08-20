@@ -47,7 +47,7 @@ RequestWithVerif makeRequestWithVerif(
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](EmailVerification const& v) -> RequestVerificationMethods {
+          [&](ByEmail const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 

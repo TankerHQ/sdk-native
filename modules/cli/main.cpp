@@ -480,8 +480,8 @@ int main(int argc, char* argv[])
       auto const email = args.at("<email>").asString();
       auto const code = args.at("<code>").asString();
       core->attachProvisionalIdentity(provisionalIdentity).get();
-      core->verifyProvisionalIdentity(Verification::EmailVerification{
-                                          Email{email}, VerificationCode{code}})
+      core->verifyProvisionalIdentity(
+              Verification::ByEmail{Email{email}, VerificationCode{code}})
           .get();
     }
 

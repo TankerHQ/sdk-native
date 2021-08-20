@@ -134,8 +134,8 @@ tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
       overloaded{
           [&](Email const& v) -> tc::cotask<Verification::Verification> {
             auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Verification::EmailVerification{
-                v, VerificationCode{verificationCode}}));
+            TC_RETURN(
+                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
           },
           [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
             auto const verificationCode = TC_AWAIT(getVerificationCode(v));

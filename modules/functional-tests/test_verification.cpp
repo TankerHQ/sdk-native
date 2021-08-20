@@ -113,8 +113,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   SUBCASE("registerIdentity throws if email is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->registerIdentity(Verification::EmailVerification{
-            Email{""}, VerificationCode{"12345678"}})),
+        TC_AWAIT(core1->registerIdentity(
+            Verification::ByEmail{Email{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
@@ -132,7 +132,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(
-            Verification::EmailVerification{email, VerificationCode{""}})),
+            Verification::ByEmail{email, VerificationCode{""}})),
         Errc::InvalidArgument);
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
   }
@@ -326,7 +326,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::EmailVerification{email, verificationCode}})));
+        Verification::ByEmail{email, verificationCode}})));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email}));
@@ -334,8 +334,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     verificationCode = TC_AWAIT(getVerificationCode(email));
-    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
-        Verification::EmailVerification{email, verificationCode})));
+    REQUIRE_NOTHROW(TC_AWAIT(
+        core2->verifyIdentity(Verification::ByEmail{email, verificationCode})));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {email}));
@@ -402,7 +402,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::EmailVerification{email, verificationCode}})));
+        Verification::ByEmail{email, verificationCode}})));
 
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->setVerificationMethod(Verification::Verification{passphrase})));
@@ -456,13 +456,13 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto const verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::EmailVerification{email, verificationCode}})));
+        Verification::ByEmail{email, verificationCode}})));
 
     REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core2->verifyIdentity(Verification::EmailVerification{
-            email, VerificationCode{"d3JvbmcK"}})),
+        TC_AWAIT(core2->verifyIdentity(
+            Verification::ByEmail{email, VerificationCode{"d3JvbmcK"}})),
         Errc::InvalidVerification);
     REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
@@ -473,7 +473,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   {
     auto const verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::EmailVerification{email, verificationCode}})));
+        Verification::ByEmail{email, verificationCode}})));
 
     auto const code = TC_AWAIT(getVerificationCode(email));
 
@@ -482,14 +482,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     for (int i = 0; i < 3; ++i)
     {
       TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(core2->verifyIdentity(Verification::EmailVerification{
-              email, VerificationCode{"d3JvbmcK"}})),
+          TC_AWAIT(core2->verifyIdentity(
+              Verification::ByEmail{email, VerificationCode{"d3JvbmcK"}})),
           Errc::InvalidVerification);
       REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
     }
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core2->verifyIdentity(Verification::Verification{
-            Verification::EmailVerification{email, code}})),
+        TC_AWAIT(core2->verifyIdentity(
+            Verification::Verification{Verification::ByEmail{email, code}})),
         Errc::TooManyAttempts);
     REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
@@ -507,13 +507,13 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     // register
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::EmailVerification{email, verificationCode}}));
+        Verification::ByEmail{email, verificationCode}}));
 
     // update email
     auto const newEmail = Email{"alice.test@tanker.io"};
     verificationCode = TC_AWAIT(getVerificationCode(newEmail));
     TC_AWAIT(core1->setVerificationMethod(Verification::Verification{
-        Verification::EmailVerification{newEmail, verificationCode}}));
+        Verification::ByEmail{newEmail, verificationCode}}));
 
     // check that email is updated in cache
     auto methods = TC_AWAIT(core1->getVerificationMethods());

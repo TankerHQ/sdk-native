@@ -676,7 +676,7 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
 
   if (auto const verificationKey = get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
-  else if (holds_alternative<Verification::EmailVerification>(verification) ||
+  else if (holds_alternative<Verification::ByEmail>(verification) ||
            holds_alternative<Verification::PhoneNumberVerification>(
                verification) ||
            holds_alternative<Passphrase>(verification) ||

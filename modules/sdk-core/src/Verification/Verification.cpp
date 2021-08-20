@@ -43,9 +43,7 @@ VerificationMethod VerificationMethod::from(Verification const& v)
           [](OidcIdToken const&) -> VerificationMethod {
             return OidcIdToken{};
           },
-          [](EmailVerification const& v) -> VerificationMethod {
-            return v.email;
-          },
+          [](ByEmail const& v) -> VerificationMethod { return v.email; },
           [](PhoneNumberVerification const& v) -> VerificationMethod {
             return v.phoneNumber;
           }},
@@ -100,15 +98,14 @@ void validateVerification(
   namespace bv = boost::variant2;
   namespace ba = boost::algorithm;
 
-  if (!(bv::holds_alternative<EmailVerification>(verification) ||
+  if (!(bv::holds_alternative<ByEmail>(verification) ||
         bv::holds_alternative<PhoneNumberVerification>(verification) ||
         bv::holds_alternative<OidcIdToken>(verification)))
     throw Errors::Exception(
         make_error_code(Errors::Errc::InvalidArgument),
         "unknown verification method for provisional identity");
 
-  if (auto const emailVerification =
-          bv::get_if<EmailVerification>(&verification))
+  if (auto const emailVerification = bv::get_if<ByEmail>(&verification))
   {
     if (emailVerification->email != Email{provisionalIdentity.value})
       throw Errors::Exception(

@@ -24,7 +24,7 @@ struct SecretProvisionalIdentity;
 
 namespace Verification
 {
-struct EmailVerification
+struct ByEmail
 {
   Email email;
   VerificationCode verificationCode;
@@ -37,7 +37,7 @@ struct PhoneNumberVerification
 };
 
 using Verification = boost::variant2::variant<VerificationKey,
-                                              EmailVerification,
+                                              ByEmail,
                                               Passphrase,
                                               OidcIdToken,
                                               PhoneNumberVerification>;

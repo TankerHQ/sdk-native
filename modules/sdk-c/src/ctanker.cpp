@@ -60,7 +60,7 @@ Verification::Verification cverificationToVerification(
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
       throw formatEx(Errc::InvalidArgument, "null field in email verification");
-    verification = Verification::EmailVerification{
+    verification = Verification::ByEmail{
         Email{cverification->email_verification.email},
         VerificationCode{cverification->email_verification.verification_code}};
     break;
