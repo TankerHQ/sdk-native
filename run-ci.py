@@ -30,11 +30,13 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
 
 
 def benchmark_artifact(
-    profiles: List[str], compare_results: bool, upload_results: bool
+    profiles: List[str], iterations: int, compare_results: bool, upload_results: bool
 ) -> None:
     for profile in profiles:
         bench_path = Path.cwd() / "bench-artifacts" / profile
-        report_performance(profile, bench_path, compare_results, upload_results)
+        report_performance(
+            profile, bench_path, iterations, compare_results, upload_results
+        )
 
 
 def deploy() -> None:
@@ -81,7 +83,11 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 
 
 def report_performance(
-    profile: str, bench_path: Path, compare_results: bool, upload_results: bool
+    profile: str,
+    bench_path: Path,
+    iterations: int,
+    compare_results: bool,
+    upload_results: bool,
 ) -> None:
     branch = get_branch_name()
     if not branch:
@@ -99,14 +105,11 @@ def report_performance(
     if not bench_binary.exists():
         ui.fatal("No benchmark binary to run")
 
-    # Helps reduce variability, but don't go overboard (slow!)
-    repetitions = 15
-
     tankerci.run(
         str(bench_binary),
         f"--benchmark_out={bench_output}",
         "--benchmark_out_format=json",
-        f"--benchmark_repetitions={repetitions}",
+        f"--benchmark_repetitions={iterations}",
         "--benchmark_report_aggregates_only",
     )
 
@@ -325,6 +328,7 @@ def main() -> None:
     benchmark_artifact_parser.add_argument(
         "--upload-results", dest="upload_results", action="store_true"
     )
+    benchmark_artifact_parser.add_argument("--iterations", default=20, type=int)
 
     bump_files_parser = subparsers.add_parser("bump-files")
     bump_files_parser.add_argument("--version", required=True)
@@ -339,7 +343,9 @@ def main() -> None:
     if args.command == "build-and-test":
         build_and_check(args.profiles, args.coverage)
     elif args.command == "benchmark-artifact":
-        benchmark_artifact(args.profiles, args.compare_results, args.upload_results)
+        benchmark_artifact(
+            args.profiles, args.iterations, args.compare_results, args.upload_results
+        )
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
     elif args.command == "deploy":
