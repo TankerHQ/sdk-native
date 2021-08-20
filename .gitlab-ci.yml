@@ -161,7 +161,7 @@ bench/linux:
   needs:
     - build/linux
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --iterations 15 --profile linux-release --compare-results
+    - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
 
 bench/linux/master:
   extends:
@@ -172,7 +172,7 @@ bench/linux/master:
   needs:
     - build/linux
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home benchmark-artifact --iterations 50 --profile linux-release --upload-results
+    - poetry run python run-ci.py benchmark-artifact --iterations 50 --profile linux-release --upload-results
 
 ######################
 # bridge-check stage #
