@@ -64,10 +64,10 @@ tc::cotask<AsyncCorePtr> Device::open()
   auto const status = TC_AWAIT(tanker->start(_identity));
   if (status == Status::IdentityRegistrationNeeded)
     TC_AWAIT(tanker->registerIdentity(
-        Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
+        Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
   else if (status == Status::IdentityVerificationNeeded)
     TC_AWAIT(tanker->verifyIdentity(
-        Unlock::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
+        Verification::Verification{STRONG_PASSWORD_DO_NOT_LEAK}));
   TC_RETURN(std::move(tanker));
 }
 }

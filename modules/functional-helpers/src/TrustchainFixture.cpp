@@ -132,14 +132,14 @@ tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
 
   auto const verif = TC_AWAIT(boost::variant2::visit(
       overloaded{
-          [&](Email const& v) -> tc::cotask<Unlock::Verification> {
+          [&](Email const& v) -> tc::cotask<Verification::Verification> {
             auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Unlock::EmailVerification{
-                v, VerificationCode{verificationCode}}));
+            TC_RETURN(
+                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
           },
-          [&](PhoneNumber const& v) -> tc::cotask<Unlock::Verification> {
+          [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
             auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Unlock::PhoneNumberVerification{
+            TC_RETURN((Verification::ByPhoneNumber{
                 v, VerificationCode{verificationCode}}));
           },
       },

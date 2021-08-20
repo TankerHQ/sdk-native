@@ -6,10 +6,10 @@
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
-#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
+#include <Tanker/Verification/Requester.hpp>
 
 #include <boost/algorithm/string/replace.hpp>
 
@@ -71,7 +71,7 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
   : Users::Requester(httpClient),
     Groups::Requester(httpClient),
     ProvisionalUsers::Requester(httpClient),
-    Unlock::Requester(httpClient)
+    Verification::Requester(httpClient)
 {
 }
 

@@ -305,7 +305,7 @@ AsyncCorePtr signIn(MainArgs const& args)
        sdkVersion},
       ".")};
 
-  Unlock::Verification verification;
+  Verification::Verification verification;
   if (args.at(VerificationKeyOpt))
     verification = VerificationKey{args.at(VerificationKeyOpt).asString()};
   else if (args.at(UnlockPasswordOpt))
@@ -481,7 +481,7 @@ int main(int argc, char* argv[])
       auto const code = args.at("<code>").asString();
       core->attachProvisionalIdentity(provisionalIdentity).get();
       core->verifyProvisionalIdentity(
-              Unlock::EmailVerification{Email{email}, VerificationCode{code}})
+              Verification::ByEmail{Email{email}, VerificationCode{code}})
           .get();
     }
 

@@ -22,25 +22,22 @@ namespace Identity
 struct SecretProvisionalIdentity;
 }
 
-namespace Unlock
+namespace Verification
 {
-struct EmailVerification
+struct ByEmail
 {
   Email email;
   VerificationCode verificationCode;
 };
 
-struct PhoneNumberVerification
+struct ByPhoneNumber
 {
   PhoneNumber phoneNumber;
   VerificationCode verificationCode;
 };
 
-using Verification = boost::variant2::variant<VerificationKey,
-                                              EmailVerification,
-                                              Passphrase,
-                                              OidcIdToken,
-                                              PhoneNumberVerification>;
+using Verification = boost::variant2::
+    variant<VerificationKey, ByEmail, Passphrase, OidcIdToken, ByPhoneNumber>;
 
 class VerificationMethod
 {

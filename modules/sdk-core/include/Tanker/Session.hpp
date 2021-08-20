@@ -13,11 +13,11 @@
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/ResourceKeys/Accessor.hpp>
 #include <Tanker/SdkInfo.hpp>
-#include <Tanker/Unlock/Requester.hpp>
 #include <Tanker/Users/LocalUserAccessor.hpp>
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
+#include <Tanker/Verification/Requester.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -33,7 +33,7 @@ public:
   struct Requesters : Users::Requester,
                       Groups::Requester,
                       ProvisionalUsers::Requester,
-                      Unlock::Requester
+                      Verification::Requester
 
   {
     Requesters(Network::HttpClient*);

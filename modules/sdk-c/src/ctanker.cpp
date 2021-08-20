@@ -8,7 +8,7 @@
 
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
-#include <Tanker/Unlock/Methods.hpp>
+#include <Tanker/Verification/Methods.hpp>
 
 #include <boost/algorithm/hex.hpp>
 #include <mgs/base64.hpp>
@@ -37,7 +37,7 @@ std::optional<T> nullableToOpt(char const* str)
     return std::nullopt;
 }
 
-Unlock::Verification cverificationToVerification(
+Verification::Verification cverificationToVerification(
     tanker_verification_t const* cverification)
 {
   if (!cverification)
@@ -53,14 +53,14 @@ Unlock::Verification cverificationToVerification(
                    cverification->version);
   }
 
-  Unlock::Verification verification;
+  Verification::Verification verification;
   switch (cverification->verification_method_type)
   {
   case TANKER_VERIFICATION_METHOD_EMAIL: {
     if (!cverification->email_verification.email ||
         !cverification->email_verification.verification_code)
       throw formatEx(Errc::InvalidArgument, "null field in email verification");
-    verification = Unlock::EmailVerification{
+    verification = Verification::ByEmail{
         Email{cverification->email_verification.email},
         VerificationCode{cverification->email_verification.verification_code}};
     break;
@@ -88,7 +88,7 @@ Unlock::Verification cverificationToVerification(
         !cverification->phone_number_verification.verification_code)
       throw formatEx(Errc::InvalidArgument,
                      "null field in phone number verification");
-    verification = Unlock::PhoneNumberVerification{
+    verification = Verification::ByPhoneNumber{
         PhoneNumber{cverification->phone_number_verification.phone_number},
         VerificationCode{
             cverification->phone_number_verification.verification_code}};
@@ -102,7 +102,7 @@ Unlock::Verification cverificationToVerification(
 
 void cVerificationMethodFromVerificationMethod(
     tanker_verification_method_t& c_verif_method,
-    Unlock::VerificationMethod const& method)
+    Verification::VerificationMethod const& method)
 {
   c_verif_method.version = 1;
   c_verif_method.value = nullptr;
@@ -155,16 +155,17 @@ Tanker::Core::VerifyWithToken withTokenFromVerifOptions(
 
 // Unlock
 
-STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL, Unlock::Method::Email);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_EMAIL,
+                  Verification::Method::Email);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PASSPHRASE,
-                  Unlock::Method::Passphrase);
+                  Verification::Method::Passphrase);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_VERIFICATION_KEY,
-                  Unlock::Method::VerificationKey);
+                  Verification::Method::VerificationKey);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
-                  Unlock::Method::OidcIdToken);
+                  Verification::Method::OidcIdToken);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER,
-                  Unlock::Method::PhoneNumber);
-STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Unlock::Method::Last);
+                  Verification::Method::PhoneNumber);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
 static_assert(TANKER_VERIFICATION_METHOD_LAST == 6,
               "Please update the assertions above if you added a new "
@@ -452,7 +453,7 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->getVerificationMethods().and_then(
       tc::get_synchronous_executor(),
-      [](std::vector<Unlock::VerificationMethod> methods) {
+      [](std::vector<Verification::VerificationMethod> methods) {
         auto verifMethods = new tanker_verification_method_t[methods.size()];
         for (size_t i = 0; i < methods.size(); ++i)
         {

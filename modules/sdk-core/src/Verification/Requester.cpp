@@ -1,4 +1,4 @@
-#include <Tanker/Unlock/Requester.hpp>
+#include <Tanker/Verification/Requester.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
@@ -12,7 +12,7 @@
 
 #include <optional>
 
-namespace Tanker::Unlock
+namespace Tanker::Verification
 {
 Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
@@ -34,7 +34,7 @@ tc::cotask<std::optional<Crypto::PublicEncryptionKey>> Requester::userStatus(
 }
 
 tc::cotask<void> Requester::setVerificationMethod(
-    Trustchain::UserId const& userId, Unlock::RequestWithVerif const& request)
+    Trustchain::UserId const& userId, RequestWithVerif const& request)
 {
   nlohmann::json payload{{"verification", request}};
   auto const target = _httpClient->makeUrl(fmt::format(
@@ -43,7 +43,7 @@ tc::cotask<void> Requester::setVerificationMethod(
 }
 
 tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
-    Trustchain::UserId const& userId, Unlock::RequestWithVerif const& request)
+    Trustchain::UserId const& userId, RequestWithVerif const& request)
 {
   using namespace fmt::literals;
   auto const res = TC_AWAIT(_httpClient->asyncPost(
@@ -54,8 +54,8 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
       res.value().at("encrypted_verification_key").get<std::string>()));
 }
 
-tc::cotask<std::vector<Unlock::VerificationMethod>>
-Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
+tc::cotask<std::vector<VerificationMethod>> Requester::fetchVerificationMethods(
+    Trustchain::UserId const& userId)
 {
   using namespace fmt::literals;
   auto const res =
@@ -63,7 +63,7 @@ Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
           "users/{userId:#S}/verification-methods", "userId"_a = userId))));
   TC_RETURN(res.value()
                 .at("verification_methods")
-                .get<std::vector<Unlock::VerificationMethod>>());
+                .get<std::vector<VerificationMethod>>());
 }
 
 tc::cotask<std::string> Requester::getSessionToken(
@@ -89,7 +89,7 @@ tc::cotask<void> Requester::createUser(
     Trustchain::UserId const& userId,
     gsl::span<uint8_t const> userCreation,
     gsl::span<uint8_t const> firstDevice,
-    Unlock::RequestWithVerif const& verificationRequest,
+    RequestWithVerif const& verificationRequest,
     gsl::span<uint8_t const> encryptedVerificationKey)
 {
   nlohmann::json body{
