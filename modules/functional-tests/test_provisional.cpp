@@ -270,7 +270,7 @@ TEST_CASE_FIXTURE(
   auto const bobSession = bobDevice.createCore();
   TC_AWAIT(bobSession->start(bob.identity));
   auto const bobVerificationCode = TC_AWAIT(getVerificationCode(bobPhone));
-  auto const verif = Verification::PhoneNumberVerification{
+  auto const verif = Verification::ByPhoneNumber{
       bobPhone, VerificationCode{bobVerificationCode}};
   TC_AWAIT(bobSession->registerIdentity(verif));
 

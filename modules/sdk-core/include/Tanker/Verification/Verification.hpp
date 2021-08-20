@@ -30,17 +30,14 @@ struct ByEmail
   VerificationCode verificationCode;
 };
 
-struct PhoneNumberVerification
+struct ByPhoneNumber
 {
   PhoneNumber phoneNumber;
   VerificationCode verificationCode;
 };
 
-using Verification = boost::variant2::variant<VerificationKey,
-                                              ByEmail,
-                                              Passphrase,
-                                              OidcIdToken,
-                                              PhoneNumberVerification>;
+using Verification = boost::variant2::
+    variant<VerificationKey, ByEmail, Passphrase, OidcIdToken, ByPhoneNumber>;
 
 class VerificationMethod
 {

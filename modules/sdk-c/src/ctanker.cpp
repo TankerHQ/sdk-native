@@ -88,7 +88,7 @@ Verification::Verification cverificationToVerification(
         !cverification->phone_number_verification.verification_code)
       throw formatEx(Errc::InvalidArgument,
                      "null field in phone number verification");
-    verification = Verification::PhoneNumberVerification{
+    verification = Verification::ByPhoneNumber{
         PhoneNumber{cverification->phone_number_verification.phone_number},
         VerificationCode{
             cverification->phone_number_verification.verification_code}};

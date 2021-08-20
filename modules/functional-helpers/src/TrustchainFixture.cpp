@@ -139,7 +139,7 @@ tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
           },
           [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
             auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Verification::PhoneNumberVerification{
+            TC_RETURN((Verification::ByPhoneNumber{
                 v, VerificationCode{verificationCode}}));
           },
       },

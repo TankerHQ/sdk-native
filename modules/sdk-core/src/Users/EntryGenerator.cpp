@@ -41,8 +41,7 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
           [](Verification::ByEmail const& v) -> VerificationMethodType {
             return VerificationMethodType::Email;
           },
-          [](Verification::PhoneNumberVerification const& v)
-              -> VerificationMethodType {
+          [](Verification::ByPhoneNumber const& v) -> VerificationMethodType {
             return VerificationMethodType::PhoneNumber;
           },
           [](Passphrase const& p) -> VerificationMethodType {

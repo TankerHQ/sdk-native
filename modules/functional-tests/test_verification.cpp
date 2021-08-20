@@ -122,7 +122,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   SUBCASE("registerIdentity throws if phone number is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
-        TC_AWAIT(core1->registerIdentity(Verification::PhoneNumberVerification{
+        TC_AWAIT(core1->registerIdentity(Verification::ByPhoneNumber{
             PhoneNumber{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
     REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
@@ -344,9 +344,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   SUBCASE("it sets a phone number and adds a new device")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
-    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(
-        Verification::Verification{Verification::PhoneNumberVerification{
-            phoneNumber, verificationCode}})));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}})));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {phoneNumber}));
@@ -355,7 +354,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                Status::IdentityVerificationNeeded);
     verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
-        Verification::PhoneNumberVerification{phoneNumber, verificationCode})));
+        Verification::ByPhoneNumber{phoneNumber, verificationCode})));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {phoneNumber}));
@@ -378,9 +377,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   SUBCASE("it sets a phone number and then sets a passphrase")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
-    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(
-        Verification::Verification{Verification::PhoneNumberVerification{
-            phoneNumber, verificationCode}})));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}})));
 
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->setVerificationMethod(Verification::Verification{passphrase})));
@@ -536,14 +534,13 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     // register
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     TC_AWAIT(core1->registerIdentity(Verification::Verification{
-        Verification::PhoneNumberVerification{phoneNumber, verificationCode}}));
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
 
     // update phone number
     auto const newPhoneNumber = PhoneNumber{"+33639982244"};
     verificationCode = TC_AWAIT(getVerificationCode(newPhoneNumber));
-    TC_AWAIT(core1->setVerificationMethod(
-        Verification::Verification{Verification::PhoneNumberVerification{
-            newPhoneNumber, verificationCode}}));
+    TC_AWAIT(core1->setVerificationMethod(Verification::Verification{
+        Verification::ByPhoneNumber{newPhoneNumber, verificationCode}}));
 
     // check that phoneNumber is updated in cache
     auto methods = TC_AWAIT(core1->getVerificationMethods());

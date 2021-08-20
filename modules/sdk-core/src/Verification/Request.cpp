@@ -62,7 +62,7 @@ RequestWithVerif makeRequestWithVerif(
                                               std::move(encryptedEmail),
                                               v.verificationCode};
           },
-          [&](PhoneNumberVerification const& v) -> RequestVerificationMethods {
+          [&](ByPhoneNumber const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
 

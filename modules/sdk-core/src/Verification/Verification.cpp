@@ -44,7 +44,7 @@ VerificationMethod VerificationMethod::from(Verification const& v)
             return OidcIdToken{};
           },
           [](ByEmail const& v) -> VerificationMethod { return v.email; },
-          [](PhoneNumberVerification const& v) -> VerificationMethod {
+          [](ByPhoneNumber const& v) -> VerificationMethod {
             return v.phoneNumber;
           }},
       v);
@@ -99,7 +99,7 @@ void validateVerification(
   namespace ba = boost::algorithm;
 
   if (!(bv::holds_alternative<ByEmail>(verification) ||
-        bv::holds_alternative<PhoneNumberVerification>(verification) ||
+        bv::holds_alternative<ByPhoneNumber>(verification) ||
         bv::holds_alternative<OidcIdToken>(verification)))
     throw Errors::Exception(
         make_error_code(Errors::Errc::InvalidArgument),
@@ -113,7 +113,7 @@ void validateVerification(
           "verification email does not match provisional identity");
   }
   if (auto const phoneNumberVerification =
-          bv::get_if<PhoneNumberVerification>(&verification))
+          bv::get_if<ByPhoneNumber>(&verification))
   {
     if (phoneNumberVerification->phoneNumber !=
         PhoneNumber{provisionalIdentity.value})
