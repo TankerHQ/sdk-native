@@ -30,12 +30,16 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
 
 
 def benchmark_artifact(
-    profiles: List[str], iterations: int, compare_results: bool, upload_results: bool
+    *, profiles: List[str], iterations: int, compare_results: bool, upload_results: bool
 ) -> None:
     for profile in profiles:
         bench_path = Path.cwd() / "bench-artifacts" / profile
         report_performance(
-            profile, bench_path, iterations, compare_results, upload_results
+            profile=profile,
+            bench_path=bench_path,
+            iterations=iterations,
+            compare_results=compare_results,
+            upload_results=upload_results,
         )
 
 
@@ -83,6 +87,7 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 
 
 def fetch_lib_size_for_branch(branch: str) -> int:
+    """Retrieves the size of the tanker shared library for a branch from InfluxDB"""
     response = tankerci.reporting.query_last_metrics(
         "benchmark",
         group_by="scenario",
@@ -96,7 +101,19 @@ def fetch_lib_size_for_branch(branch: str) -> int:
     return size_data_point
 
 
+def post_gitlab_mr_message(body: str) -> None:
+    """Posts a comment on the Gitlab merge request for this pipeline"""
+    gl = gitlab.Gitlab(
+        os.environ["CI_SERVER_URL"], private_token=os.environ["GITLAB_TOKEN"]
+    )
+    gl.auth()
+    p = gl.projects.get("TankerHQ/sdk-native")
+    mr = p.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
+    mr.discussions.create({"body": body})
+
+
 def report_performance(
+    *,
     profile: str,
     bench_path: Path,
     iterations: int,
@@ -152,6 +169,7 @@ def report_performance(
             benchmark_aggregates[name] = {}
         benchmark_aggregates[name][aggregate] = real_time
 
+    # Post a comparison table to the merge request?
     if compare_results:
         response = tankerci.reporting.query_last_metrics(
             "benchmark",
@@ -167,29 +185,15 @@ def report_performance(
                 result["stddev"] = 0  # Old benchmarks did not have a stddev
             master_results[result["name"]] = result
 
-        result_message = (
-            "<details><summary>Benchmark results (lower is better)</summary>\n\n"
-            "| Benchmark scenario | `master` | This MR | Difference |\n"
-            "| --- | --- | --- | --- |\n"
-        )
-
         master_size = fetch_lib_size_for_branch("master")
         new_size = fetch_lib_size_for_branch(branch)
-        size_diff_pct = 100 * (new_size / master_size - 1)
-        result_message += f"| size | {master_size//1024}kB | {new_size//1024}kB | {size_diff_pct:+.1f}% |"
-
-        for name, result in benchmark_aggregates.items():
-            old_result = master_results[name]
-            result_message += format_benchmark_result(old_result, result)
-
-        gl = gitlab.Gitlab(
-            os.environ["CI_SERVER_URL"], private_token=os.environ["GITLAB_TOKEN"]
+        result_message = format_benchmark_table(
+            benchmark_aggregates, master_results, master_size, new_size
         )
-        gl.auth()
-        p = gl.projects.get("TankerHQ/sdk-native")
-        mr = p.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
-        mr.discussions.create({"body": result_message})
 
+        post_gitlab_mr_message(result_message)
+
+    # Save results to InfluxDB?
     if upload_results:
         for name, results in benchmark_aggregates.items():
             tankerci.reporting.send_metric(
@@ -211,6 +215,7 @@ def report_performance(
 
 
 def format_benchmark_change(ratio, stddev):
+    """Formats the percentage change in a benchmark result row (with colors!)"""
     pctage = (ratio - 1) * 100
     confident_pctage_magnitude = max(abs(pctage) - stddev * 100, 0)
     confident_pctage = math.copysign(confident_pctage_magnitude, pctage)
@@ -235,6 +240,7 @@ def format_benchmark_change(ratio, stddev):
 
 
 def format_benchmark_result(old_result, new_result):
+    """Formats a single row of the benchmark results markdown table"""
     ratio = new_result["median"] / old_result["median"]
     stddev = ratio * math.sqrt(
         (new_result["stddev"] / new_result["median"]) ** 2
@@ -249,6 +255,23 @@ def format_benchmark_result(old_result, new_result):
     )
     diff = format_benchmark_change(ratio, stddev)
     return f"|{name}|{old_time}|{new_time}|{diff}|\n"
+
+
+def format_benchmark_table(benchmark_aggregates, master_results, master_size, new_size):
+    """Formats a markdown table containing benchmark results and size changes"""
+    result_message = (
+        "<details><summary>Benchmark results (lower is better)</summary>\n\n"
+        "| Benchmark scenario | `master` | This MR | Difference |\n"
+        "| --- | --- | --- | --- |\n"
+    )
+
+    size_diff_pct = 100 * (new_size / master_size - 1)
+    result_message += f"| size | {master_size // 1024}kB | {new_size // 1024}kB | {size_diff_pct:+.1f}% |"
+
+    for name, result in benchmark_aggregates.items():
+        old_result = master_results[name]
+        result_message += format_benchmark_result(old_result, result)
+    return result_message
 
 
 def data_point_to_bench_result(point: Any) -> Any:
@@ -364,7 +387,10 @@ def main() -> None:
         build_and_check(args.profiles, args.coverage)
     elif args.command == "benchmark-artifact":
         benchmark_artifact(
-            args.profiles, args.iterations, args.compare_results, args.upload_results
+            profiles=args.profiles,
+            iterations=args.iterations,
+            compare_results=args.compare_results,
+            upload_results=args.upload_results,
         )
     elif args.command == "bump-files":
         tankerci.bump_files(args.version)
