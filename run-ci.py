@@ -20,11 +20,7 @@ import tankerci.reporting
 
 def build_and_check(profiles: List[str], coverage: bool) -> None:
     for profile in profiles:
-        build_path = tankerci.cpp.build(
-            profile,
-            make_package=True,
-            coverage=coverage,
-        )
+        build_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage)
         report_size(profile, build_path)
         tankerci.cpp.check(build_path, coverage=coverage)
     recipe = Path.cwd() / "conanfile.py"
@@ -33,11 +29,7 @@ def build_and_check(profiles: List[str], coverage: bool) -> None:
 
 def build_and_benchmark(profiles: List[str]) -> None:
     for profile in profiles:
-        build_path = tankerci.cpp.build(
-            profile,
-            make_package=True,
-            coverage=False,
-        )
+        build_path = tankerci.cpp.build(profile, make_package=True, coverage=False)
         report_size(profile, build_path)
         report_performance(profile, build_path)
 
@@ -172,16 +164,16 @@ def report_size(profile: str, build_path: Path) -> None:
     _, commit_id = tankerci.git.run_captured(os.getcwd(), "rev-parse", "HEAD")
 
     with tempfile.TemporaryDirectory() as temp_path:
+        args = ["cmake", "--build", str(build_path)]
+        if "vs2019" not in profile:
+            args.extend(["--target", "install/strip"])
+        else:
+            args.extend(["--target", "install"])
         tankerci.run(
-            "cmake",
-            "--build",
-            str(build_path),
-            "--target",
-            "install/strip",
-            env={**os.environ, "DESTDIR": temp_path},
+            *args, env={**os.environ, "DESTDIR": temp_path},
         )
         package_path = Path.cwd() / "package" / profile
-        package_path_relative = package_path.relative_to("/")
+        package_path_relative = package_path.relative_to(*package_path.parts[:1])
         if "vs2019" in profile:
             lib_path = temp_path / package_path_relative / "bin/ctanker.dll"
         elif "macos" in profile:
