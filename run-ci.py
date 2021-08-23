@@ -82,6 +82,20 @@ BENCHMARK_PROFILE_TO_BUILD_TARGET = {
 }
 
 
+def fetch_lib_size_for_branch(branch: str) -> int:
+    response = tankerci.reporting.query_last_metrics(
+        "benchmark",
+        group_by="scenario",
+        tags=["scenario"],
+        fields=["value"],
+        where={"branch": branch, "project": "sdk-native", "scenario": "size"},
+    )
+    result_series = response["results"][0]["series"][0]
+    size_column_idx = result_series["columns"].index("value")
+    size_data_point = result_series["values"][0][size_column_idx]
+    return size_data_point
+
+
 def report_performance(
     profile: str,
     bench_path: Path,
@@ -158,6 +172,12 @@ def report_performance(
             "| Benchmark scenario | `master` | This MR | Difference |\n"
             "| --- | --- | --- | --- |\n"
         )
+
+        master_size = fetch_lib_size_for_branch("master")
+        new_size = fetch_lib_size_for_branch(branch)
+        size_diff_pct = 100 * (new_size / master_size - 1)
+        result_message += f"| size | {master_size//1024}kB | {new_size//1024}kB | {size_diff_pct:+.1f}% |"
+
         for name, result in benchmark_aggregates.items():
             old_result = master_results[name]
             result_message += format_benchmark_result(old_result, result)
