@@ -93,7 +93,12 @@ def fetch_lib_size_for_branch(branch: str) -> int:
         group_by="scenario",
         tags=["scenario"],
         fields=["value"],
-        where={"branch": branch, "project": "sdk-native", "scenario": "size"},
+        where={
+            "branch": branch,
+            "project": "sdk-native",
+            "scenario": "size",
+            "build-target": "linux-x86_64",
+        },
     )
     result_series = response["results"][0]["series"][0]
     size_column_idx = result_series["columns"].index("value")
