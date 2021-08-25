@@ -5,11 +5,8 @@ import os
 class TankerNativeTestPackage(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
-    options = {
-        "tankerlib_shared": [True, False]
-    }
+    options = {"tankerlib_shared": [True, False]}
     default_options = "tankerlib_shared=False"
-
 
     def configure(self):
         del self.settings.compiler.libcxx
@@ -28,4 +25,4 @@ class TankerNativeTestPackage(ConanFile):
 
     def test(self):
         if not tools.cross_building(self.settings):
-            self.run(os.path.join("bin","example"), run_environment=True)
+            self.run(os.path.join("bin", "example"), run_environment=True)

@@ -16,11 +16,12 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/mr/auto/nightly
-    - .build-artifacts
+    - .bench-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release
+    - mkdir -p bench-artifacts/linux-release/ && cp build/linux-release/bin/bench_tanker bench-artifacts/linux-release/
 
 build/linux/shared:
   extends:
@@ -133,14 +134,6 @@ build/ios:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
-nightly/benchmark:
-  extends:
-    - .build
-    - .tags/linux
-    - .rules/nightly
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-benchmark --profile linux-release-shared
-
 nightly/coverage:
   extends:
     - .build
@@ -154,6 +147,32 @@ nightly/coverage:
     paths:
       - coverage/
     expire_in: 7 days
+
+###############
+# bench stage #
+###############
+
+bench/linux:
+  extends:
+    - .bench
+    - .rules/mr/manual
+  tags:
+    - LinuxSlave-4
+  needs:
+    - build/linux
+  script:
+    - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
+
+bench/linux/master:
+  extends:
+    - .bench
+    - .rules/master/nightly
+  tags:
+    - LinuxSlave-4
+  needs:
+    - build/linux
+  script:
+    - poetry run python run-ci.py benchmark-artifact --iterations 50 --profile linux-release --upload-results
 
 ######################
 # bridge-check stage #
