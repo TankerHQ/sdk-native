@@ -27,7 +27,7 @@ build/linux/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/mr/auto/nightly
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
     - .build-artifacts
@@ -160,6 +160,7 @@ bench/linux:
     - LinuxSlave-4
   needs:
     - build/linux
+    - build/linux/shared
   script:
     - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
 
@@ -171,6 +172,7 @@ bench/linux/master:
     - LinuxSlave-4
   needs:
     - build/linux
+    - build/linux/shared
   script:
     - poetry run python run-ci.py benchmark-artifact --iterations 50 --profile linux-release --upload-results
 
