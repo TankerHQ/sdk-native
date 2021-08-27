@@ -9,7 +9,6 @@
 #include <Helpers/Config.hpp>
 
 #include <fmt/core.h>
-#include <sodium/randombytes.h>
 
 #include "BenchHelpers.hpp"
 
@@ -59,7 +58,7 @@ static void share_withUsers(benchmark::State& state)
       auto const identity = Tanker::Identity::createIdentity(
           benchAppId,
           benchAppSecret,
-          Tanker::SUserId(std::to_string(randombytes_random())));
+          createRandomUserId());
       auto device = Device(getTrustchain().url, benchAppId, identity);
       auto core = TC_AWAIT(device.open());
       auto const encryptedData = TC_AWAIT(core->encrypt(
