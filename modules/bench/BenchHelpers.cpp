@@ -20,3 +20,10 @@ std::string makePublicIdentity(std::string const& sappId, uint32_t n)
   };
   return to_string(publicIdentity);
 }
+
+Tanker::SUserId createRandomUserId()
+{
+  auto rdm = std::array<std::uint8_t, 10>{};
+  Tanker::Crypto::randomFill(rdm);
+  return Tanker::SUserId{mgs::base64::encode(rdm)};
+}
