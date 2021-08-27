@@ -156,37 +156,12 @@ static void share_withGroup(benchmark::State& state, std::string const& groupId)
   }).get();
 }
 BENCHMARK_CAPTURE(share_withGroup,
-                  1,
-                  "80ngpVLQ8cfglO5cC7I6a2Ph5QRfKPUVkXWOul5e6RM=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_withGroup,
-                  100,
-                  "XhMfSCnOhMlW/KSt5k33eD/FoGG09MRI/6JT8q/YDK0=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_withGroup,
-                  1000,
-                  "dzNO6xPpz9r2Wpe2Xxdl+9WiO6E/m8GVhv0RwvUcc0Q=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_withGroup,
                   4000,
                   "8EySxOOyXktHkSOOgGAKCBRvIalV2iFObPGHk1QU63Q=")
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
 
 static constexpr auto share_withGroupMultiAuthor = share_withGroup;
-BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
-                  100,
-                  "n08iCwU+/QYAPKCqDBPD4dUK2oVyO1V3EwB3fo7Yz6U=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
-                  1000,
-                  "XyR77EErpEZ+ZCAjLTOQzUrH5dfck6avsZPLvZ/Ebmc=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
 BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
                   4000,
                   "rD3EO/d4S8dI20aybJUZcGiACV5kD298K8szq6ZWm0w=")
@@ -222,21 +197,6 @@ static void share_nocache_withGroup(benchmark::State& state,
     }
   }).get();
 }
-BENCHMARK_CAPTURE(share_nocache_withGroup,
-                  1,
-                  "80ngpVLQ8cfglO5cC7I6a2Ph5QRfKPUVkXWOul5e6RM=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_nocache_withGroup,
-                  100,
-                  "XhMfSCnOhMlW/KSt5k33eD/FoGG09MRI/6JT8q/YDK0=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
-BENCHMARK_CAPTURE(share_nocache_withGroup,
-                  1000,
-                  "dzNO6xPpz9r2Wpe2Xxdl+9WiO6E/m8GVhv0RwvUcc0Q=")
-    ->Unit(benchmark::kMillisecond)
-    ->UseRealTime();
 BENCHMARK_CAPTURE(share_nocache_withGroup,
                   4000,
                   "8EySxOOyXktHkSOOgGAKCBRvIalV2iFObPGHk1QU63Q=")
