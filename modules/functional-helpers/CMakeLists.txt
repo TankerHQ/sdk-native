@@ -14,6 +14,7 @@ add_library(tankerfunctionalhelpers STATIC
   src/TrustchainFixture.cpp
   src/User.cpp
   src/Device.cpp
+  src/Provisional.cpp
 )
 
 target_include_directories(tankerfunctionalhelpers

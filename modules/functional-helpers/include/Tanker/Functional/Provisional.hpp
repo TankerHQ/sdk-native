@@ -19,4 +19,7 @@ struct AppProvisionalUser
   SSecretProvisionalIdentity secretIdentity;
   SPublicIdentity publicIdentity;
 };
+
+void to_json(nlohmann::json& j, AppProvisionalUser const& user);
+void from_json(nlohmann::json const& j, AppProvisionalUser& user);
 }

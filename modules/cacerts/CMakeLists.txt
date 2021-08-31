@@ -46,6 +46,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "App
   target_compile_options(tankercacerts PRIVATE "-Wno-unused-command-line-argument")
 endif()
 
+install(DIRECTORY include DESTINATION .)
 install(TARGETS tankercacerts
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
