@@ -180,7 +180,7 @@ bench/linux/master:
 # bridge-check stage #
 ######################
 
-bridge/compat:
+.bridge/compat:
   extends:
     - .bridge-check
     - .rules/bridge-ci/auto
