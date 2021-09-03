@@ -18,6 +18,7 @@ import tankerci.conan
 import tankerci.cpp
 import tankerci.git
 import tankerci.reporting
+import tankerci.benchmark
 
 
 def build_and_check(profiles: List[str], coverage: bool) -> None:
@@ -106,17 +107,6 @@ def fetch_lib_size_for_branch(branch: str) -> int:
     return size_data_point
 
 
-def post_gitlab_mr_message(body: str) -> None:
-    """Posts a comment on the Gitlab merge request for this pipeline"""
-    gl = gitlab.Gitlab(
-        os.environ["CI_SERVER_URL"], private_token=os.environ["GITLAB_TOKEN"]
-    )
-    gl.auth()
-    p = gl.projects.get("TankerHQ/sdk-native")
-    mr = p.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
-    mr.discussions.create({"body": body})
-
-
 def report_performance(
     *,
     profile: str,
@@ -185,18 +175,18 @@ def report_performance(
         )
         master_results = {}
         for point in response["results"][0]["series"]:
-            result = data_point_to_bench_result(point)
+            result = tankerci.benchmark.data_point_to_bench_result(point)
             if result["stddev"] is None:
                 result["stddev"] = 0  # Old benchmarks did not have a stddev
             master_results[result["name"]] = result
 
         master_size = fetch_lib_size_for_branch("master")
         new_size = fetch_lib_size_for_branch(branch)
-        result_message = format_benchmark_table(
+        result_message = tankerci.benchmark.format_benchmark_table(
             benchmark_aggregates, master_results, master_size, new_size
         )
 
-        post_gitlab_mr_message(result_message)
+        tankerci.benchmark.post_gitlab_mr_message("sdk-native", result_message)
 
     # Save results to InfluxDB?
     if upload_results:
@@ -217,79 +207,6 @@ def report_performance(
                     "profile": profile,
                 },
             )
-
-
-def format_benchmark_change(ratio, stddev):
-    """Formats the percentage change in a benchmark result row (with colors!)"""
-    pctage = (ratio - 1) * 100
-    confident_pctage_magnitude = max(abs(pctage) - stddev * 100, 0)
-    confident_pctage = math.copysign(confident_pctage_magnitude, pctage)
-    if confident_pctage <= -15:
-        color = "green"
-    elif confident_pctage <= -7.5:
-        color = "greenyellow"
-    elif confident_pctage >= 15:
-        color = "red"
-    elif confident_pctage >= 7.5:
-        color = "pink"
-    else:
-        color = "default"
-
-    ratio_str = f"{pctage:+.1f}\\%"
-    stddev_str = f"± {stddev * 100:.1f}\\%"
-    return r"$`\textcolor{%s}{\text{%s\scriptsize{ %s }}}`$" % (
-        color,
-        ratio_str,
-        stddev_str,
-    )
-
-
-def format_benchmark_result(old_result, new_result):
-    """Formats a single row of the benchmark results markdown table"""
-    ratio = new_result["median"] / old_result["median"]
-    stddev = ratio * math.sqrt(
-        (new_result["stddev"] / new_result["median"]) ** 2
-        + (old_result["stddev"] / old_result["median"]) ** 2
-    )
-    name = old_result["name"].replace("/real_time", "")
-    old_time = (
-        f"{old_result['median'] * 1000:.0f}ms ± {old_result['stddev'] * 1000:.0f}ms"
-    )
-    new_time = (
-        f"{new_result['median'] * 1000:.0f}ms ± {new_result['stddev'] * 1000:.0f}ms"
-    )
-    diff = format_benchmark_change(ratio, stddev)
-    return f"|{name}|{old_time}|{new_time}|{diff}|\n"
-
-
-def format_benchmark_table(benchmark_aggregates, master_results, master_size, new_size):
-    """Formats a markdown table containing benchmark results and size changes"""
-    result_message = (
-        "<details><summary>Benchmark results (lower is better)</summary>\n\n"
-        "| Benchmark scenario | `master` | This MR | Difference |\n"
-        "| --- | --- | --- | --- |\n"
-    )
-
-    size_diff_pct = 100 * (new_size / master_size - 1)
-    result_message += f"| size | {master_size // 1024}kB | {new_size // 1024}kB | {size_diff_pct:+.1f}% |"
-
-    for name, result in benchmark_aggregates.items():
-        old_result = master_results[name]
-        result_message += format_benchmark_result(old_result, result)
-    return result_message
-
-
-def data_point_to_bench_result(point: Any) -> Any:
-    result = {}
-    values = point["values"][0]
-    for i, col in enumerate(point["columns"]):
-        if col == "scenario":
-            result["name"] = values[i].lower().replace('"', "")
-        elif col == "real_time":
-            result["median"] = values[i]
-        else:
-            result[col] = values[i]
-    return result
 
 
 SIZE_PROFILE_TO_BUILD_TARGET = {
