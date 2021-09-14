@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 project(TankerSDK-Core)
 
 set(TANKER_CORE_DATASTORE_SRC
+  include/Tanker/DataStore/Backend.hpp
   include/Tanker/DataStore/Connection.hpp
   include/Tanker/DataStore/Database.hpp
   include/Tanker/DataStore/Table.hpp
