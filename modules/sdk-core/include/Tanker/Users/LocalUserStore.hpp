@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -23,10 +25,18 @@ class Database;
 
 namespace Users
 {
+struct DeviceData
+{
+  Trustchain::DeviceId deviceId;
+  DeviceKeys deviceKeys;
+};
+
 class LocalUserStore
 {
 public:
-  LocalUserStore(DataStore::Database* dbCon);
+  LocalUserStore(Crypto::SymmetricKey const& userSecret,
+                 DataStore::Database* dbCon,
+                 DataStore::DataStore* db2);
 
   tc::cotask<void> initializeDevice(
       Crypto::PublicSignatureKey const& trustchaniPublicKey,
@@ -48,11 +58,14 @@ public:
 private:
   tc::cotask<void> setTrustchainPublicSignatureKey(
       Crypto::PublicSignatureKey const& sigKey);
-  tc::cotask<void> setDeviceData(Trustchain::DeviceId const& deviceId,
-                                 DeviceKeys const& deviceKeys);
+  tc::cotask<void> setDeviceData(DeviceData const& deviceData);
+  tc::cotask<std::optional<DeviceData>> getDeviceData() const;
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
 
+  Crypto::SymmetricKey _userSecret;
+
   DataStore::Database* _db;
+  DataStore::DataStore* _db2;
 };
 }
 }
