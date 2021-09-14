@@ -750,6 +750,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 void Core::nukeDatabase()
 {
   _session->storage().db.nuke();
+  _session->storage().db2->nuke();
 }
 
 Trustchain::ResourceId Core::getResourceId(
