@@ -1,4 +1,4 @@
-set(TEST_TANKER_EXTRA_SRC test_datastore.cpp)
+set(TEST_TANKER_EXTRA_SRC test_datastore.cpp test_datastore_new.cpp)
 
 add_executable(test_tanker
   test_groupstore.cpp
