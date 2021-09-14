@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -28,10 +29,21 @@ std::string getDbPath(std::string const& writablePath,
     return writablePath;
   return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
 }
+
+std::string getDb2Path(std::string const& writablePath,
+                       Trustchain::UserId const& userId)
+{
+  if (writablePath == ":memory:")
+    return writablePath;
+  return fmt::format(FMT_STRING("{:s}/{:S}"), writablePath, userId);
+}
 }
 
-Session::Storage::Storage(DataStore::Database pdb)
+Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
+                          DataStore::Database pdb,
+                          std::unique_ptr<DataStore::DataStore> pdb2)
   : db(std::move(pdb)),
+    db2(std::move(pdb2)),
     localUserStore(&db),
     groupStore(&db),
     resourceKeyStore(&db),
@@ -103,8 +115,13 @@ tc::cotask<void> Session::openStorage(
 {
   assert(!_identity && !_storage);
   _identity = identity;
-  _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
-      getDbPath(writablePath, userId()), userSecret())));
+  _storage = std::make_unique<Storage>(
+      userSecret(),
+      TC_AWAIT(DataStore::createDatabase(getDbPath(writablePath, userId()),
+                                         userSecret())),
+      // TODO The backend should come from above
+      DataStore::SqliteBackend().open(getDb2Path(writablePath, userId()),
+                                      getDb2Path(writablePath, userId())));
 }
 
 Session::Storage const& Session::storage() const
