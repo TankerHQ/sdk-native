@@ -93,7 +93,7 @@ class TankerConan(ConanFile):
         self.requires("fetchpp/0.13.1-r1", private=private)
         self.requires("sqlpp11/0.60", private=private)
         self.requires("sqlpp11-connector-sqlite3/0.30", private=private)
-        self.requires("mgs/0.1.1", private=private)
+        self.requires("mgs/0.1.5", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("fmt/7.1.3", private=private)
         self.requires("gsl-lite/0.37.0", private=private)
