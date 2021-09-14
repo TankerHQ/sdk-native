@@ -1,12 +1,16 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 
 #include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/DbModels/DeviceKeyStore.hpp>
 #include <Tanker/DbModels/TrustchainInfo.hpp>
 #include <Tanker/DbModels/UserKeys.hpp>
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Serialization/Errors/Errc.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
@@ -23,7 +27,72 @@ using TrustchainInfoTable = Tanker::DbModels::trustchain_info::trustchain_info;
 
 namespace Tanker::Users
 {
-LocalUserStore::LocalUserStore(DataStore::Database* db) : _db(db)
+namespace
+{
+constexpr auto Version = 1;
+
+std::vector<uint8_t> serializeEncryptedDevice(DeviceData const& deviceData)
+{
+  std::vector<uint8_t> data(
+      sizeof(uint8_t) + serialized_size(deviceData.deviceId) +
+      serialized_size(deviceData.deviceKeys.signatureKeyPair.privateKey) +
+      serialized_size(deviceData.deviceKeys.signatureKeyPair.publicKey) +
+      serialized_size(deviceData.deviceKeys.encryptionKeyPair.privateKey) +
+      serialized_size(deviceData.deviceKeys.encryptionKeyPair.publicKey));
+
+  auto it = data.data();
+  it = Serialization::serialize<uint8_t>(it, Version);
+  it = Serialization::serialize(it, deviceData.deviceId);
+  it = Serialization::serialize(
+      it, deviceData.deviceKeys.signatureKeyPair.privateKey);
+  it = Serialization::serialize(
+      it, deviceData.deviceKeys.signatureKeyPair.publicKey);
+  it = Serialization::serialize(
+      it, deviceData.deviceKeys.encryptionKeyPair.privateKey);
+  it = Serialization::serialize(
+      it, deviceData.deviceKeys.encryptionKeyPair.publicKey);
+
+  return data;
+}
+
+DeviceData deserializeEncryptedDevice(gsl::span<const uint8_t> payload)
+{
+  DeviceData out;
+  Serialization::SerializedSource source(payload);
+
+  uint8_t version;
+  Serialization::deserialize_to(source, version);
+
+  if (version != Version)
+    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
+                           "unsupported device storage version: {}",
+                           static_cast<int>(version));
+
+  Serialization::deserialize_to(source, out.deviceId);
+  Serialization::deserialize_to(source,
+                                out.deviceKeys.signatureKeyPair.privateKey);
+  Serialization::deserialize_to(source,
+                                out.deviceKeys.signatureKeyPair.publicKey);
+  Serialization::deserialize_to(source,
+                                out.deviceKeys.encryptionKeyPair.privateKey);
+  Serialization::deserialize_to(source,
+                                out.deviceKeys.encryptionKeyPair.publicKey);
+
+  if (!source.eof())
+  {
+    throw Errors::formatEx(Serialization::Errc::TrailingInput,
+                           "{} trailing bytes",
+                           source.remaining_size());
+  }
+
+  return out;
+}
+}
+
+LocalUserStore::LocalUserStore(Crypto::SymmetricKey const& userSecret,
+                               DataStore::Database* db,
+                               DataStore::DataStore* db2)
+  : _userSecret(userSecret), _db(db), _db2(db2)
 {
 }
 
@@ -34,7 +103,7 @@ tc::cotask<void> LocalUserStore::initializeDevice(
     std::vector<Crypto::EncryptionKeyPair> const& userKeys)
 {
   TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
-    TC_AWAIT(setDeviceData(deviceId, deviceKeys));
+    TC_AWAIT(setDeviceData(DeviceData{deviceId, deviceKeys}));
     TC_AWAIT(setTrustchainPublicSignatureKey(trustchainPublicKey));
     TC_AWAIT(putUserKeys(userKeys));
   }));
@@ -65,27 +134,10 @@ tc::cotask<DeviceKeys> LocalUserStore::getDeviceKeys() const
 
 tc::cotask<std::optional<DeviceKeys>> LocalUserStore::findDeviceKeys() const
 {
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows = (*_db->connection())(select(tab.private_signature_key,
-                                          tab.public_signature_key,
-                                          tab.private_encryption_key,
-                                          tab.public_encryption_key,
-                                          tab.device_id)
-                                       .from(tab)
-                                       .unconditionally());
-  if (rows.empty())
+  auto const deviceData = TC_AWAIT(getDeviceData());
+  if (!deviceData)
     TC_RETURN(std::nullopt);
-
-  auto const& row = rows.front();
-  TC_RETURN((DeviceKeys{{DataStore::extractBlob<Crypto::PublicSignatureKey>(
-                             row.public_signature_key),
-                         DataStore::extractBlob<Crypto::PrivateSignatureKey>(
-                             row.private_signature_key)},
-                        {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                             row.public_encryption_key),
-                         DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                             row.private_encryption_key)}}));
+  TC_RETURN(deviceData->deviceKeys);
 }
 
 tc::cotask<std::optional<Crypto::PublicSignatureKey>>
@@ -150,31 +202,38 @@ LocalUserStore::getUserKeyPairs() const
 
 tc::cotask<Trustchain::DeviceId> LocalUserStore::getDeviceId() const
 {
-  FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  auto rows =
-      (*_db->connection())(select(tab.device_id).from(tab).unconditionally());
-  if (rows.empty())
+  auto const deviceData = TC_AWAIT(getDeviceData());
+  if (!deviceData)
     throw Errors::AssertionError("no device_id in database");
-  auto const& row = rows.front();
-  if (row.device_id.len == 0)
-    throw Errors::AssertionError("empty device_id in database");
-  TC_RETURN((DataStore::extractBlob<Trustchain::DeviceId>(row.device_id)));
+  TC_RETURN(deviceData->deviceId);
 }
 
-tc::cotask<void> LocalUserStore::setDeviceData(
-    Trustchain::DeviceId const& deviceId, DeviceKeys const& deviceKeys)
+tc::cotask<std::optional<DeviceData>> LocalUserStore::getDeviceData() const
 {
   FUNC_TIMER(DB);
-  DeviceKeysTable tab{};
-  (*_db->connection())(insert_into(tab).set(
-      tab.device_id = deviceId.base(),
-      tab.private_signature_key = deviceKeys.signatureKeyPair.privateKey.base(),
-      tab.public_signature_key = deviceKeys.signatureKeyPair.publicKey.base(),
-      tab.private_encryption_key =
-          deviceKeys.encryptionKeyPair.privateKey.base(),
-      tab.public_encryption_key =
-          deviceKeys.encryptionKeyPair.publicKey.base()));
+
+  auto const encryptedPayload = _db2->findSerializedDevice();
+  if (!encryptedPayload)
+    TC_RETURN(std::nullopt);
+
+  std::vector<uint8_t> payload(EncryptorV2::decryptedSize(*encryptedPayload));
+  TC_AWAIT(
+      EncryptorV2::decrypt(payload.data(), _userSecret, *encryptedPayload));
+
+  auto const device = deserializeEncryptedDevice(payload);
+  TC_RETURN(device);
+}
+
+tc::cotask<void> LocalUserStore::setDeviceData(DeviceData const& deviceData)
+{
+  FUNC_TIMER(DB);
+
+  auto const payload = serializeEncryptedDevice(deviceData);
+  std::vector<uint8_t> encryptedPayload(
+      EncryptorV2::encryptedSize(payload.size()));
+  EncryptorV2::encryptSync(encryptedPayload.data(), payload, _userSecret);
+  _db2->putSerializedDevice(encryptedPayload);
+
   TC_RETURN();
 }
 }
