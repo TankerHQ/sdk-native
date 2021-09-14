@@ -44,7 +44,7 @@ public:
 
   virtual void putCacheValues(gsl::span<std::pair<Key, Value> const> keyValues,
                               OnConflict onConflict) = 0;
-  virtual std::vector<ValueResult> findCacheValues(
+  virtual std::vector<std::optional<std::vector<uint8_t>>> findCacheValues(
       gsl::span<Key const> keys) = 0;
 };
 }
