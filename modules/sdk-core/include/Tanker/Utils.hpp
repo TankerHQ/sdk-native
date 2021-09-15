@@ -77,12 +77,4 @@ struct IdentityFunc
     return std::forward<T>(t);
   }
 };
-
-template <typename T>
-std::vector<T> removeDuplicates(std::vector<T> stuff)
-{
-  std::sort(begin(stuff), end(stuff));
-  stuff.erase(std::unique(begin(stuff), end(stuff)), end(stuff));
-  return stuff;
-}
 }

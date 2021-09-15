@@ -209,6 +209,7 @@ target_link_libraries(tankercore
   CONAN_PKG::fmt
   CONAN_PKG::nlohmann_json
   CONAN_PKG::enum-flags
+  CONAN_PKG::range-v3
 )
 
 if(WITH_FETCHPP)

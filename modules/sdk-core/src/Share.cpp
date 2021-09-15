@@ -7,6 +7,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/IdentityUtils.hpp>
@@ -205,11 +206,11 @@ makeKeyPublishToProvisionalUser(
 tc::cotask<KeyRecipients> generateRecipientList(
     Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
-    std::vector<SPublicIdentity> const& aspublicIdentities,
-    std::vector<SGroupId> const& asgroupIds)
+    std::vector<SPublicIdentity> spublicIdentities,
+    std::vector<SGroupId> sgroupIds)
 {
-  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
-  auto const sgroupIds = removeDuplicates(asgroupIds);
+  spublicIdentities |= Actions::deduplicate;
+  sgroupIds |= Actions::deduplicate;
 
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);
   auto const groupIds = convertToGroupIds(sgroupIds);

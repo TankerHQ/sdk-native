@@ -77,8 +77,8 @@ makeKeyPublishToProvisionalUser(
 tc::cotask<KeyRecipients> generateRecipientList(
     Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
-    std::vector<SPublicIdentity> const& publicIdentities,
-    std::vector<SGroupId> const& groupIds);
+    std::vector<SPublicIdentity> publicIdentities,
+    std::vector<SGroupId> groupIds);
 
 ShareActions generateShareBlocks(
     Trustchain::TrustchainId const& trustchainId,

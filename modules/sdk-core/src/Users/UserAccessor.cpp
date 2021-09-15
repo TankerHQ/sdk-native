@@ -1,5 +1,6 @@
 #include <Tanker/Users/UserAccessor.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -12,6 +13,9 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
+
+#include <range/v3/action/sort.hpp>
+#include <range/v3/action/unique.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -59,7 +63,7 @@ template <typename Result, typename Id>
 auto UserAccessor::pullImpl(std::vector<Id> requestedIds,
                             IRequester::IsLight isLight) -> tc::cotask<Result>
 {
-  requestedIds = removeDuplicates(requestedIds);
+  requestedIds |= Actions::deduplicate;
 
   auto const resultMap = TC_AWAIT(fetch(requestedIds, isLight));
 

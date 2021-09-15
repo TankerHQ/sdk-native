@@ -6,6 +6,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -25,7 +26,7 @@ namespace
 ProcessedIdentities processIdentities(std::vector<SPublicIdentity> identities)
 {
   ProcessedIdentities ret;
-  ret.spublicIdentities = removeDuplicates(std::move(identities));
+  ret.spublicIdentities = std::move(identities) | Actions::deduplicate;
   ret.publicIdentities = extractPublicIdentities(ret.spublicIdentities);
   ret.partitionedIdentities = partitionIdentities(ret.publicIdentities);
   return ret;
