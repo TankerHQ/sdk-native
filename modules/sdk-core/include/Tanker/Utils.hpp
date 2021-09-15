@@ -68,13 +68,4 @@ inline std::vector<Trustchain::GroupId> convertToGroupIds(
                                                      "group id");
   });
 }
-
-struct IdentityFunc
-{
-  template <typename T>
-  T&& operator()(T&& t)
-  {
-    return std::forward<T>(t);
-  }
-};
 }
