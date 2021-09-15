@@ -221,7 +221,9 @@ tc::cotask<KeyRecipients> generateRecipientList(
                               sgroupId.string(), "group id");
                         }) |
                         ranges::to<std::vector>;
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
+  auto const publicIdentities =
+      spublicIdentities | ranges::views::transform(extractPublicIdentity) |
+      ranges::to<std::vector>;
 
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 

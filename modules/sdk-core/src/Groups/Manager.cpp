@@ -16,6 +16,9 @@
 
 #include <mgs/base64.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
 
@@ -27,7 +30,9 @@ ProcessedIdentities processIdentities(std::vector<SPublicIdentity> identities)
 {
   ProcessedIdentities ret;
   ret.spublicIdentities = std::move(identities) | Actions::deduplicate;
-  ret.publicIdentities = extractPublicIdentities(ret.spublicIdentities);
+  ret.publicIdentities = ret.spublicIdentities |
+                         ranges::views::transform(extractPublicIdentity) |
+                         ranges::to<std::vector>;
   ret.partitionedIdentities = partitionIdentities(ret.publicIdentities);
   return ret;
 }

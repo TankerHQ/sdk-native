@@ -16,6 +16,9 @@
 #include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <Helpers/Buffers.hpp>
 
 using namespace Tanker;
@@ -156,7 +159,9 @@ TEST_CASE("throws when getting keys of an unknown member")
 
   auto const spublicIdentities =
       std::vector<SPublicIdentity>{SPublicIdentity{to_string(unknownIdentity)}};
-  auto const publicIdentitiesToAdd = extractPublicIdentities(spublicIdentities);
+  auto const publicIdentitiesToAdd =
+      spublicIdentities | ranges::views::transform(extractPublicIdentity) |
+      ranges::to<std::vector>;
   auto const partitionedIdentitiesToAdd =
       partitionIdentities(publicIdentitiesToAdd);
 
