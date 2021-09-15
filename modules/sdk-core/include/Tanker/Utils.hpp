@@ -6,6 +6,9 @@
 #include <mgs/base64.hpp>
 #include <mgs/codecs/concepts/codec.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <algorithm>
 #include <type_traits>
 #include <vector>
@@ -50,22 +53,13 @@ std::vector<std::string> encodeCryptoTypes(gsl::span<T> cryptoTypes)
   return ret;
 }
 
-template <typename T, typename F>
-auto convertList(std::vector<T> const& source, F&& f)
-{
-  std::vector<std::result_of_t<F(T)>> ret;
-  ret.reserve(source.size());
-
-  std::transform(begin(source), end(source), std::back_inserter(ret), f);
-  return ret;
-}
-
 inline std::vector<Trustchain::GroupId> convertToGroupIds(
     std::vector<SGroupId> const& sgroupIds)
 {
-  return convertList(sgroupIds, [](auto&& sgroupId) {
-    return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string(),
-                                                     "group id");
-  });
+  return sgroupIds | ranges::views::transform([](auto&& sgroupId) {
+           return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string(),
+                                                            "group id");
+         }) |
+         ranges::to<std::vector>;
 }
 }
