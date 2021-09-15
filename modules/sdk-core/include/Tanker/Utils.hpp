@@ -52,14 +52,4 @@ std::vector<std::string> encodeCryptoTypes(gsl::span<T> cryptoTypes)
     ret.push_back(Codec::template encode(elem));
   return ret;
 }
-
-inline std::vector<Trustchain::GroupId> convertToGroupIds(
-    std::vector<SGroupId> const& sgroupIds)
-{
-  return sgroupIds | ranges::views::transform([](auto&& sgroupId) {
-           return base64DecodeArgument<Trustchain::GroupId>(sgroupId.string(),
-                                                            "group id");
-         }) |
-         ranges::to<std::vector>;
-}
 }

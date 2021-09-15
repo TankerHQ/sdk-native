@@ -20,6 +20,9 @@
 
 #include <boost/variant2/variant.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <algorithm>
 
 static constexpr auto ShareLimit = 100;
@@ -212,8 +215,13 @@ tc::cotask<KeyRecipients> generateRecipientList(
   spublicIdentities |= Actions::deduplicate;
   sgroupIds |= Actions::deduplicate;
 
+  auto const groupIds = sgroupIds |
+                        ranges::views::transform([](auto&& sgroupId) {
+                          return base64DecodeArgument<Trustchain::GroupId>(
+                              sgroupId.string(), "group id");
+                        }) |
+                        ranges::to<std::vector>;
   auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto const groupIds = convertToGroupIds(sgroupIds);
 
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 
