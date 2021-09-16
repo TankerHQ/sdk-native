@@ -34,7 +34,8 @@ constexpr auto Version = 1;
 std::vector<uint8_t> serializeEncryptedDevice(DeviceData const& deviceData)
 {
   std::vector<uint8_t> data(
-      sizeof(uint8_t) + serialized_size(deviceData.deviceId) +
+      sizeof(uint8_t) + serialized_size(deviceData.trustchainPublicKey) +
+      serialized_size(deviceData.deviceId) +
       serialized_size(deviceData.deviceKeys.signatureKeyPair.privateKey) +
       serialized_size(deviceData.deviceKeys.signatureKeyPair.publicKey) +
       serialized_size(deviceData.deviceKeys.encryptionKeyPair.privateKey) +
@@ -42,6 +43,7 @@ std::vector<uint8_t> serializeEncryptedDevice(DeviceData const& deviceData)
 
   auto it = data.data();
   it = Serialization::serialize<uint8_t>(it, Version);
+  it = Serialization::serialize(it, deviceData.trustchainPublicKey);
   it = Serialization::serialize(it, deviceData.deviceId);
   it = Serialization::serialize(
       it, deviceData.deviceKeys.signatureKeyPair.privateKey);
@@ -68,6 +70,7 @@ DeviceData deserializeEncryptedDevice(gsl::span<const uint8_t> payload)
                            "unsupported device storage version: {}",
                            static_cast<int>(version));
 
+  Serialization::deserialize_to(source, out.trustchainPublicKey);
   Serialization::deserialize_to(source, out.deviceId);
   Serialization::deserialize_to(source,
                                 out.deviceKeys.signatureKeyPair.privateKey);
@@ -103,8 +106,8 @@ tc::cotask<void> LocalUserStore::initializeDevice(
     std::vector<Crypto::EncryptionKeyPair> const& userKeys)
 {
   TC_AWAIT(_db->inTransaction([&]() -> tc::cotask<void> {
-    TC_AWAIT(setDeviceData(DeviceData{deviceId, deviceKeys}));
-    TC_AWAIT(setTrustchainPublicSignatureKey(trustchainPublicKey));
+    TC_AWAIT(
+        setDeviceData(DeviceData{trustchainPublicKey, deviceId, deviceKeys}));
     TC_AWAIT(putUserKeys(userKeys));
   }));
 }
@@ -143,31 +146,10 @@ tc::cotask<std::optional<DeviceKeys>> LocalUserStore::findDeviceKeys() const
 tc::cotask<std::optional<Crypto::PublicSignatureKey>>
 LocalUserStore::findTrustchainPublicSignatureKey() const
 {
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-  auto rows = (*_db->connection())(
-      select(tab.trustchain_public_signature_key).from(tab).unconditionally());
-  if (rows.empty())
-  {
-    throw Errors::AssertionError(
-        "trustchain_info table must have a single row");
-  }
-  if (rows.front().trustchain_public_signature_key.is_null())
+  auto const deviceData = TC_AWAIT(getDeviceData());
+  if (!deviceData)
     TC_RETURN(std::nullopt);
-  TC_RETURN(DataStore::extractBlob<Crypto::PublicSignatureKey>(
-      rows.front().trustchain_public_signature_key));
-}
-
-tc::cotask<void> LocalUserStore::setTrustchainPublicSignatureKey(
-    Crypto::PublicSignatureKey const& sigKey)
-{
-  FUNC_TIMER(DB);
-  TrustchainInfoTable tab{};
-  (*_db->connection())(
-      update(tab)
-          .set(tab.trustchain_public_signature_key = sigKey.base())
-          .unconditionally());
-  TC_RETURN();
+  TC_RETURN(deviceData->trustchainPublicKey);
 }
 
 tc::cotask<std::optional<LocalUser>> LocalUserStore::findLocalUser(
