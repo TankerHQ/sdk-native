@@ -40,7 +40,7 @@ public:
                  DataStore::DataStore* db);
 
   tc::cotask<void> initializeDevice(
-      Crypto::PublicSignatureKey const& trustchaniPublicKey,
+      Crypto::PublicSignatureKey const& trustchainPublicKey,
       Trustchain::DeviceId const& deviceId,
       DeviceKeys const& deviceKeys,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
