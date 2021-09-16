@@ -27,6 +27,7 @@ namespace Users
 {
 struct DeviceData
 {
+  Crypto::PublicSignatureKey trustchainPublicKey;
   Trustchain::DeviceId deviceId;
   DeviceKeys deviceKeys;
 };
