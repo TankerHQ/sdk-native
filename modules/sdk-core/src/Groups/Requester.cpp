@@ -6,6 +6,7 @@
 
 #include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
+#include <range/v3/view/transform.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
@@ -50,7 +51,9 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
   if (groupIds.empty())
     TC_RETURN(std::vector<Trustchain::GroupAction>{});
   auto const query = nlohmann::json{
-      {"user_group_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(groupIds)},
+      {"user_group_ids[]",
+       groupIds |
+           ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
       {"is_light", "true"}};
   TC_RETURN(TC_AWAIT(getGroupBlocksImpl(query)));
 }

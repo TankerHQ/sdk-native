@@ -39,17 +39,4 @@ T base64DecodeArgument(String const& b64, std::string const& argName)
     throw;
   }
 }
-
-template <typename Codec = mgs::base64,
-          typename T,
-          typename = std::enable_if_t<Crypto::IsCryptographicType<T>::value &&
-                                      mgs::codecs::is_codec<Codec>::value>>
-std::vector<std::string> encodeCryptoTypes(gsl::span<T> cryptoTypes)
-{
-  std::vector<std::string> ret;
-  ret.reserve(cryptoTypes.size());
-  for (auto const& elem : cryptoTypes)
-    ret.push_back(Codec::template encode(elem));
-  return ret;
-}
 }

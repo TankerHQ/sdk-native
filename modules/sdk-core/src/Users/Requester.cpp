@@ -105,7 +105,8 @@ tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::UserId const> userIds, IsLight isLight)
 {
   auto const query = nlohmann::json{
-      {"user_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(userIds)},
+      {"user_ids[]",
+       userIds | ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
       {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
@@ -114,7 +115,9 @@ tc::cotask<Requester::GetResult> Requester::getUsers(
     gsl::span<Trustchain::DeviceId const> deviceIds, IsLight isLight)
 {
   auto const query = nlohmann::json{
-      {"device_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(deviceIds)},
+      {"device_ids[]",
+       deviceIds |
+           ranges::views::transform(mgs::base64url_nopad::lazy_encode())},
       {"is_light", isLight == IsLight::Yes ? "true" : "false"}};
   TC_RETURN(TC_AWAIT(getUsersImpl(query)));
 }
@@ -122,8 +125,10 @@ tc::cotask<Requester::GetResult> Requester::getUsers(
 tc::cotask<std::vector<Trustchain::KeyPublishAction>>
 Requester::getKeyPublishes(gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  auto const query = nlohmann::json{
-      {"resource_ids[]", encodeCryptoTypes<mgs::base64url_nopad>(resourceIds)}};
+  auto const query =
+      nlohmann::json{{"resource_ids[]",
+                      resourceIds | ranges::views::transform(
+                                        mgs::base64url_nopad::lazy_encode())}};
   auto url = _httpClient->makeUrl("resource-keys", query);
   auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
   TC_RETURN(fromBlocksToKeyPublishActions(
@@ -188,7 +193,8 @@ Requester::getPublicProvisionalIdentities(
     TC_RETURN(ret);
 
   auto query = nlohmann::json{
-      {"hashed_emails", encodeCryptoTypes<mgs::base64>(hashedEmails)}};
+      {"hashed_emails",
+       hashedEmails | ranges::views::transform(mgs::base64::lazy_encode())}};
   auto url = _httpClient->makeUrl("public-provisional-identities");
   auto const result = TC_AWAIT(_httpClient->asyncPost(url, query)).value();
   auto const publicIdentitites = result.at("public_provisional_identities");
@@ -218,7 +224,8 @@ Requester::getPublicProvisionalIdentities(
 
   auto query =
       nlohmann::json{{"hashed_phone_numbers",
-                      encodeCryptoTypes<mgs::base64>(hashedPhoneNumbers)}};
+                      hashedPhoneNumbers | ranges::views::transform(
+                                               mgs::base64::lazy_encode())}};
   auto url = _httpClient->makeUrl("public-provisional-identities");
   auto const result = TC_AWAIT(_httpClient->asyncPost(url, query)).value();
   auto const publicIdentitites = result.at("public_provisional_identities");
