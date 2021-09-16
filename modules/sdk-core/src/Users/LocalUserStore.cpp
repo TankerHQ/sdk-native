@@ -3,9 +3,6 @@
 #include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/DeviceKeyStore.hpp>
-#include <Tanker/DbModels/TrustchainInfo.hpp>
-#include <Tanker/DbModels/UserKeys.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/DeviceUnusable.hpp>
@@ -25,10 +22,6 @@
 #include <range/v3/view/set_algorithm.hpp>
 
 TLOG_CATEGORY(LocalUserStore);
-
-using UserKeysTable = Tanker::DbModels::user_keys::user_keys;
-using DeviceKeysTable = Tanker::DbModels::device_key_store::device_key_store;
-using TrustchainInfoTable = Tanker::DbModels::trustchain_info::trustchain_info;
 
 namespace Tanker::Users
 {
@@ -106,9 +99,8 @@ DeviceData deserializeEncryptedDevice(gsl::span<const uint8_t> payload)
 }
 
 LocalUserStore::LocalUserStore(Crypto::SymmetricKey const& userSecret,
-                               DataStore::Database* db,
-                               DataStore::DataStore* db2)
-  : _userSecret(userSecret), _db(db), _db2(db2)
+                               DataStore::DataStore* db)
+  : _userSecret(userSecret), _db(db)
 {
 }
 
@@ -194,7 +186,7 @@ tc::cotask<std::optional<DeviceData>> LocalUserStore::getDeviceData() const
 {
   FUNC_TIMER(DB);
 
-  auto const encryptedPayload = _db2->findSerializedDevice();
+  auto const encryptedPayload = _db->findSerializedDevice();
   if (!encryptedPayload)
     TC_RETURN(std::nullopt);
 
@@ -218,7 +210,7 @@ tc::cotask<void> LocalUserStore::setDeviceData(DeviceData const& deviceData)
   std::vector<uint8_t> encryptedPayload(
       EncryptorV2::encryptedSize(payload.size()));
   EncryptorV2::encryptSync(encryptedPayload.data(), payload, _userSecret);
-  _db2->putSerializedDevice(encryptedPayload);
+  _db->putSerializedDevice(encryptedPayload);
 
   TC_RETURN();
 }

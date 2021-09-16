@@ -37,8 +37,7 @@ class LocalUserStore
 {
 public:
   LocalUserStore(Crypto::SymmetricKey const& userSecret,
-                 DataStore::Database* dbCon,
-                 DataStore::DataStore* db2);
+                 DataStore::DataStore* db);
 
   tc::cotask<void> initializeDevice(
       Crypto::PublicSignatureKey const& trustchaniPublicKey,
@@ -57,16 +56,13 @@ public:
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
 private:
-  tc::cotask<void> setTrustchainPublicSignatureKey(
-      Crypto::PublicSignatureKey const& sigKey);
   tc::cotask<void> setDeviceData(DeviceData const& deviceData);
   tc::cotask<std::optional<DeviceData>> getDeviceData() const;
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
 
   Crypto::SymmetricKey _userSecret;
 
-  DataStore::Database* _db;
-  DataStore::DataStore* _db2;
+  DataStore::DataStore* _db;
 };
 }
 }
