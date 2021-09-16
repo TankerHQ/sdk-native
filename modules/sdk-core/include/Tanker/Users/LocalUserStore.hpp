@@ -30,6 +30,7 @@ struct DeviceData
   Crypto::PublicSignatureKey trustchainPublicKey;
   Trustchain::DeviceId deviceId;
   DeviceKeys deviceKeys;
+  std::vector<Crypto::EncryptionKeyPair> userKeys;
 };
 
 class LocalUserStore
@@ -45,8 +46,7 @@ public:
       DeviceKeys const& deviceKeys,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
 
-  tc::cotask<void> putUserKeys(
-      gsl::span<Crypto::EncryptionKeyPair const> userKeys);
+  tc::cotask<void> putUserKeys(std::vector<Crypto::EncryptionKeyPair> userKeys);
 
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() const;
