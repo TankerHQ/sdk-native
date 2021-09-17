@@ -6,32 +6,13 @@
 
 #include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
+#include <range/v3/functional/compose.hpp>
+#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
 #include <tconcurrent/coroutine.hpp>
 
-namespace Tanker
+namespace Tanker::Groups
 {
-namespace Groups
-{
-namespace
-{
-std::vector<Trustchain::GroupAction> fromBlocksToGroupActions(
-    gsl::span<std::string const> blocks)
-{
-  std::vector<Trustchain::GroupAction> entries;
-  entries.reserve(blocks.size());
-  std::transform(
-      std::begin(blocks),
-      std::end(blocks),
-      std::back_inserter(entries),
-      [](auto const& block) {
-        return Trustchain::deserializeGroupAction(mgs::base64::decode(block));
-      });
-
-  return entries;
-}
-}
-
 Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
@@ -41,8 +22,13 @@ tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocksImpl(
 {
   auto url = _httpClient->makeUrl("user-group-histories", query);
   auto const response = TC_AWAIT(_httpClient->asyncGet(url)).value();
-  TC_RETURN(fromBlocksToGroupActions(
-      response.at("histories").get<std::vector<std::string>>()));
+  auto const histories =
+      response.at("histories").get<std::vector<std::string>>();
+  TC_RETURN(
+      histories |
+      ranges::views::transform(ranges::compose(
+          Trustchain::deserializeGroupAction, mgs::base64::lazy_decode())) |
+      ranges::to<std::vector>);
 }
 
 tc::cotask<std::vector<Trustchain::GroupAction>> Requester::getGroupBlocks(
@@ -103,6 +89,5 @@ tc::cotask<void> Requester::softUpdateGroup(
   TC_AWAIT(_httpClient->asyncPost(
                _httpClient->makeUrl("user-groups/soft-update"), body))
       .value();
-}
 }
 }
