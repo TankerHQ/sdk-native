@@ -7,6 +7,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/IdentityUtils.hpp>
@@ -18,6 +19,9 @@
 #include <Tanker/Utils.hpp>
 
 #include <boost/variant2/variant.hpp>
+
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <algorithm>
 
@@ -205,14 +209,21 @@ makeKeyPublishToProvisionalUser(
 tc::cotask<KeyRecipients> generateRecipientList(
     Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
-    std::vector<SPublicIdentity> const& aspublicIdentities,
-    std::vector<SGroupId> const& asgroupIds)
+    std::vector<SPublicIdentity> spublicIdentities,
+    std::vector<SGroupId> sgroupIds)
 {
-  auto const spublicIdentities = removeDuplicates(aspublicIdentities);
-  auto const sgroupIds = removeDuplicates(asgroupIds);
+  spublicIdentities |= Actions::deduplicate;
+  sgroupIds |= Actions::deduplicate;
 
-  auto const publicIdentities = extractPublicIdentities(spublicIdentities);
-  auto const groupIds = convertToGroupIds(sgroupIds);
+  auto const groupIds = sgroupIds |
+                        ranges::views::transform([](auto&& sgroupId) {
+                          return base64DecodeArgument<Trustchain::GroupId>(
+                              sgroupId.string(), "group id");
+                        }) |
+                        ranges::to<std::vector>;
+  auto const publicIdentities =
+      spublicIdentities | ranges::views::transform(extractPublicIdentity) |
+      ranges::to<std::vector>;
 
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 

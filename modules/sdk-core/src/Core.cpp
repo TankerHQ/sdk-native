@@ -1,5 +1,6 @@
 #include <Tanker/Core.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Encryptor.hpp>
@@ -40,6 +41,9 @@
 #include <boost/variant2/variant.hpp>
 #include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
+
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <stdexcept>
 #include <utility>
@@ -536,13 +540,12 @@ tc::cotask<void> Core::share(
   if (sresourceIds.empty() || (spublicIdentities.empty() && sgroupIds.empty()))
     TC_RETURN();
 
-  auto resourceIds = convertList(sresourceIds, [](auto&& resourceId) {
-    return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
-                                                        "resource id");
-  });
-  std::sort(resourceIds.begin(), resourceIds.end());
-  resourceIds.erase(std::unique(resourceIds.begin(), resourceIds.end()),
-                    resourceIds.end());
+  auto const resourceIds =
+      sresourceIds | ranges::views::transform([](auto&& resourceId) {
+        return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
+                                                            "resource id");
+      }) |
+      ranges::to<std::vector> | Actions::deduplicate;
 
   auto const localUser = _session->accessors().localUserAccessor.get();
   auto const resourceKeys =

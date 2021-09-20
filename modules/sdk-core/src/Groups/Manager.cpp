@@ -6,6 +6,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Groups/EntryGenerator.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -14,6 +15,9 @@
 #include <Tanker/Utils.hpp>
 
 #include <mgs/base64.hpp>
+
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 using namespace Tanker::Trustchain::Actions;
 using namespace Tanker::Errors;
@@ -25,8 +29,10 @@ namespace
 ProcessedIdentities processIdentities(std::vector<SPublicIdentity> identities)
 {
   ProcessedIdentities ret;
-  ret.spublicIdentities = removeDuplicates(std::move(identities));
-  ret.publicIdentities = extractPublicIdentities(ret.spublicIdentities);
+  ret.spublicIdentities = std::move(identities) | Actions::deduplicate;
+  ret.publicIdentities = ret.spublicIdentities |
+                         ranges::views::transform(extractPublicIdentity) |
+                         ranges::to<std::vector>;
   ret.partitionedIdentities = partitionIdentities(ret.publicIdentities);
   return ret;
 }

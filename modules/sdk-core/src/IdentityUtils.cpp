@@ -6,22 +6,20 @@
 
 namespace Tanker
 {
-std::vector<Identity::PublicIdentity> extractPublicIdentities(
-    std::vector<SPublicIdentity> const& spublicIdentities)
+Identity::PublicIdentity extractPublicIdentity(
+    SPublicIdentity const& spublicIdentity)
 {
-  return convertList(spublicIdentities, [](auto&& spublicIdentity) {
-    try
-    {
-      return Identity::extract<Identity::PublicIdentity>(
-          spublicIdentity.string());
-    }
-    catch (Errors::Exception const& e)
-    {
-      throw Errors::formatEx(e.errorCode(),
-                             "invalid public identity {}",
-                             fmt::make_format_args(spublicIdentity.string()));
-    }
-  });
+  try
+  {
+    return Identity::extract<Identity::PublicIdentity>(
+        spublicIdentity.string());
+  }
+  catch (Errors::Exception const& e)
+  {
+    throw Errors::formatEx(e.errorCode(),
+                           "invalid public identity {}",
+                           fmt::make_format_args(spublicIdentity.string()));
+  }
 }
 
 PartitionedIdentities partitionIdentities(

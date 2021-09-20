@@ -18,8 +18,8 @@ struct PartitionedIdentities
   std::vector<Identity::PublicProvisionalIdentity> publicProvisionalIdentities;
 };
 
-std::vector<Identity::PublicIdentity> extractPublicIdentities(
-    std::vector<SPublicIdentity> const& spublicIdentities);
+Identity::PublicIdentity extractPublicIdentity(
+    SPublicIdentity const& spublicIdentity);
 
 PartitionedIdentities partitionIdentities(
     std::vector<Identity::PublicIdentity> const& identities);
