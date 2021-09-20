@@ -192,16 +192,16 @@ makeKeyPublishToProvisionalUser(
     Crypto::SymmetricKey const& resourceKey)
 {
   auto const encryptedKeyOnce = Crypto::sealEncrypt(
-      resourceKey, recipientProvisionalUser.appEncryptionPublicKey);
+      resourceKey, recipientProvisionalUser.appEncryptionPublicKey());
   auto const encryptedKeyTwice = Crypto::sealEncrypt(
-      encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey);
+      encryptedKeyOnce, recipientProvisionalUser.tankerEncryptionPublicKey());
 
   return Users::createKeyPublishToProvisionalUserAction(
       trustchainId,
       deviceId,
       signatureKey,
-      recipientProvisionalUser.appSignaturePublicKey,
-      recipientProvisionalUser.tankerSignaturePublicKey,
+      recipientProvisionalUser.appSignaturePublicKey(),
+      recipientProvisionalUser.tankerSignaturePublicKey(),
       resourceId,
       encryptedKeyTwice);
 }

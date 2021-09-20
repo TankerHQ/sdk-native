@@ -216,15 +216,16 @@ TEST_CASE("generateRecipientList")
     CHECK(recipients.recipientUserKeys.size() == 0);
     CHECK(recipients.recipientGroupKeys.size() == 0);
     CHECK(recipients.recipientProvisionalUserKeys.size() == 1);
-    CHECK(recipients.recipientProvisionalUserKeys[0].appSignaturePublicKey ==
+    CHECK(recipients.recipientProvisionalUserKeys[0].appSignaturePublicKey() ==
           provisionalUser.appSignatureKeyPair().publicKey);
-    CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey ==
+    CHECK(recipients.recipientProvisionalUserKeys[0].appEncryptionPublicKey() ==
           provisionalUser.appEncryptionKeyPair().publicKey);
-    CHECK(recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey ==
-          provisionalUser.tankerSignatureKeyPair().publicKey);
     CHECK(
-        recipients.recipientProvisionalUserKeys[0].tankerEncryptionPublicKey ==
-        provisionalUser.tankerEncryptionKeyPair().publicKey);
+        recipients.recipientProvisionalUserKeys[0].tankerSignaturePublicKey() ==
+        provisionalUser.tankerSignatureKeyPair().publicKey);
+    CHECK(recipients.recipientProvisionalUserKeys[0]
+              .tankerEncryptionPublicKey() ==
+          provisionalUser.tankerEncryptionKeyPair().publicKey);
   }
 
   SUBCASE("a not-found user should throw")

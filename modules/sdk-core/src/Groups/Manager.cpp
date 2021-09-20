@@ -74,9 +74,10 @@ tc::cotask<MembersToRemove> fetchMembersToRemove(
   auto const memberProvisionalUsers = TC_AWAIT(userAccessor.pullProvisional(
       identities.partitionedIdentities.publicProvisionalIdentities));
 
-  for (auto const& member : memberProvisionalUsers)
-    ret.provisionalUsers.push_back(
-        {member.appSignaturePublicKey, member.tankerSignaturePublicKey});
+  ret.provisionalUsers =
+      memberProvisionalUsers |
+      ranges::views::transform(&ProvisionalUsers::PublicUser::id) |
+      ranges::to<std::vector>;
 
   TC_RETURN(std::move(ret));
 }
@@ -272,22 +273,18 @@ auto createGroupEntries(Users::IUserAccessor& userAccessor,
                                    privateSignatureKey);
   }
 
-  checkAddedAndRemoved(
-      membersToAdd.users |
-          ranges::views::transform(std::mem_fn(&Users::User::id)) |
-          ranges::to<std::vector>,
-      membersToRemove.users,
-      processedIdentitiesToAdd);
-
-  checkAddedAndRemoved(membersToAdd.provisionalUsers |
-                           ranges::views::transform([](auto const& p) {
-                             return Trustchain::ProvisionalUserId{
-                                 p.appSignaturePublicKey,
-                                 p.tankerSignaturePublicKey};
-                           }) |
+  checkAddedAndRemoved(membersToAdd.users |
+                           ranges::views::transform(&Users::User::id) |
                            ranges::to<std::vector>,
-                       membersToRemove.provisionalUsers,
+                       membersToRemove.users,
                        processedIdentitiesToAdd);
+
+  checkAddedAndRemoved(
+      membersToAdd.provisionalUsers |
+          ranges::views::transform(&ProvisionalUsers::PublicUser::id) |
+          ranges::to<std::vector>,
+      membersToRemove.provisionalUsers,
+      processedIdentitiesToAdd);
   return std::make_pair(std::move(groupAddEntry), std::move(groupRemoveEntry));
 }
 }
@@ -305,7 +302,7 @@ tc::cotask<void> updateMembers(
 {
   if (spublicIdentitiesToAdd.empty() && spublicIdentitiesToRemove.empty())
     throw formatEx(Errc::InvalidArgument,
-                   "no members to add or remove in updateGroupMembers");
+                   "no members to add or remove in updateMembers");
 
   auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
   auto const [groupAddEntry, groupRemoveEntry] =
