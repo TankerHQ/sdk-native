@@ -30,7 +30,7 @@ std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<Identity::PublicIdentity> const& ids);
 
 std::vector<SPublicIdentity> mapIdentitiesToStrings(
-    std::vector<Trustchain::ProvisionalUserId> const& errorUsers,
+    std::vector<Trustchain::ProvisionalUserId> const& errorIds,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids);
 }
