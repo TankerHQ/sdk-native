@@ -1,7 +1,12 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/DataStore/Connection.hpp>
 #include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
+#include <Tanker/DataStore/Table.hpp>
+#include <Tanker/DataStore/Utils.hpp>
+#include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>
@@ -13,16 +18,12 @@
 
 using namespace Tanker;
 
-#include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Table.hpp>
-#include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ResourceKeys.hpp>
-
 TEST_CASE("Resource Keys Store")
 {
-  auto db = AWAIT(DataStore::createDatabase(":memory:"));
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
+                                            DataStore::MemoryPath);
 
-  ResourceKeys::Store keys(&db);
+  ResourceKeys::Store keys({}, db.get());
 
   SUBCASE("it should not find a non-existent key")
   {
