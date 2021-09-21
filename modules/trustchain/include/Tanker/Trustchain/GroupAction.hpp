@@ -3,6 +3,7 @@
 #include <Tanker/Trustchain/Actions/Nature.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupAddition.hpp>
 #include <Tanker/Trustchain/Actions/UserGroupCreation.hpp>
+#include <Tanker/Trustchain/GroupId.hpp>
 
 #include <boost/variant2/variant.hpp>
 #include <gsl/gsl-lite.hpp>
@@ -21,6 +22,7 @@ Crypto::Hash getHash(GroupAction const& action);
 Actions::Nature getNature(GroupAction const& action);
 Crypto::Hash const& getAuthor(GroupAction const& action);
 Crypto::Signature const& getSignature(GroupAction const& action);
+GroupId getGroupId(GroupAction const& action);
 
 GroupAction deserializeGroupAction(gsl::span<std::uint8_t const>);
 }

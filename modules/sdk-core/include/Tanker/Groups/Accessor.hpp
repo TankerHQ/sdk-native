@@ -7,6 +7,7 @@
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/Trustchain/GroupId.hpp>
 
+#include <boost/container/flat_map.hpp>
 #include <tconcurrent/coroutine.hpp>
 
 #include <optional>
@@ -50,8 +51,16 @@ private:
   Users::ILocalUserAccessor* _localUserAccessor;
   ProvisionalUsers::IAccessor* _provisionalUserAccessor;
 
+  using GroupMap =
+      boost::container::flat_map<Trustchain::GroupId,
+                                 std::vector<Trustchain::GroupAction>>;
+
+  GroupMap partitionGroups(std::vector<Trustchain::GroupAction> entries);
+  tc::cotask<std::vector<Trustchain::GroupAction>> getGroupEntries(
+      gsl::span<Trustchain::GroupId const>);
   tc::cotask<void> fetch(gsl::span<Trustchain::GroupId const> groupIds);
   tc::cotask<Accessor::GroupPullResult> getGroups(
-      std::vector<Trustchain::GroupId> const& groupIds);
+      std::vector<Trustchain::GroupId> groupIds);
+  tc::cotask<std::vector<Group>> processGroupEntries(GroupMap const& groups);
 };
 }

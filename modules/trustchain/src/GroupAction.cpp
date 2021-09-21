@@ -44,6 +44,17 @@ Crypto::Signature const& getSignature(GroupAction const& action)
       action);
 }
 
+GroupId getGroupId(GroupAction const& action)
+{
+  using namespace boost::variant2;
+
+  if (auto ugc = get_if<Actions::UserGroupCreation>(&action))
+    return GroupId{ugc->publicSignatureKey()};
+  else if (auto uga = get_if<Actions::UserGroupAddition>(&action))
+    return uga->groupId();
+  throw Errors::AssertionError{"getGroupId: unexpected type in variant"};
+}
+
 GroupAction deserializeGroupAction(gsl::span<std::uint8_t const> block)
 {
   auto const nature = getBlockNature(block);
