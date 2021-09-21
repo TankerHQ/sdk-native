@@ -16,6 +16,7 @@
 
 #include <range/v3/action/sort.hpp>
 #include <range/v3/action/unique.hpp>
+#include <range/v3/algorithm/unique.hpp>
 
 #include <tconcurrent/coroutine.hpp>
 
@@ -99,6 +100,7 @@ auto processUserEntries(Trustchain::Context const& context,
 {
   UsersMap usersMap;
   DevicesMap devicesMap;
+
   for (auto const& action : actions)
   {
     if (auto const dc = boost::variant2::get_if<DeviceCreation>(&action))
@@ -233,8 +235,8 @@ PublicKeys findFetchedPublicKeysForProvisional(
 template <typename T>
 void checkIdentityUnicity(std::vector<T> v)
 {
-  std::sort(v.begin(), v.end());
-  if (std::unique(v.begin(), v.end()) != v.end())
+  v |= ranges::actions::sort;
+  if (ranges::unique(v) != v.end())
     throw formatEx(Errc::InvalidArgument,
                    "using multiple provisional identities for the same target");
 }
@@ -245,21 +247,15 @@ UserAccessor::pullProvisional(
     std::vector<Identity::PublicProvisionalIdentity> appProvisionalIdentities)
 {
   std::vector<ProvisionalUsers::PublicUser> provisionalUsers;
+
   if (appProvisionalIdentities.empty())
     TC_RETURN(provisionalUsers);
 
-  std::sort(appProvisionalIdentities.begin(),
-            appProvisionalIdentities.end(),
-            [](auto const& a, auto const& b) {
-              return a.appSignaturePublicKey < b.appSignaturePublicKey;
-            });
-  appProvisionalIdentities.erase(std::unique(appProvisionalIdentities.begin(),
-                                             appProvisionalIdentities.end(),
-                                             [](auto const& a, auto const& b) {
-                                               return a.appSignaturePublicKey ==
-                                                      b.appSignaturePublicKey;
-                                             }),
-                                 appProvisionalIdentities.end());
+  constexpr auto proj =
+      &Identity::PublicProvisionalIdentity::appSignaturePublicKey;
+
+  appProvisionalIdentities |= ranges::actions::sort(ranges::less{}, proj) |
+                              ranges::actions::unique(ranges::equal_to{}, proj);
 
   auto const hashedProvisionals =
       hashProvisionalUsers(appProvisionalIdentities);
