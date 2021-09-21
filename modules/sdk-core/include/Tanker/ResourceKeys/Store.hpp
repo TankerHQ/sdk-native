@@ -44,8 +44,6 @@ public:
 
   tc::cotask<Crypto::SymmetricKey> getKey(
       Trustchain::ResourceId const& resourceId) const;
-  tc::cotask<KeysResult> getKeys(
-      gsl::span<Trustchain::ResourceId const> resourceIds) const;
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId) const;
