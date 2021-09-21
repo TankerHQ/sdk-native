@@ -75,39 +75,6 @@ TEST_CASE("Resource Keys Store")
     CHECK(key == key2);
   }
 
-  SUBCASE("passing a list of resourceIds")
-  {
-    auto const resourceId1 = make<Trustchain::ResourceId>("mymac1");
-    auto const key1 = make<Crypto::SymmetricKey>("mykey1");
-    ResourceKeys::KeyResult const result1{key1, resourceId1};
-
-    AWAIT_VOID(keys.putKey(resourceId1, key1));
-
-    auto const resourceId2 = make<Trustchain::ResourceId>("mymac2");
-    auto const key2 = make<Crypto::SymmetricKey>("mykey2");
-    ResourceKeys::KeyResult const result2{key2, resourceId2};
-
-    AWAIT_VOID(keys.putKey(resourceId2, key2));
-
-    SUBCASE("should return a list of keys")
-    {
-      auto const result =
-          AWAIT(keys.getKeys(std::vector{resourceId1, resourceId2}));
-      CHECK(result.size() == 2);
-      CHECK(result.at(0) == result1);
-      CHECK(result.at(1) == result2);
-    }
-    SUBCASE("should throw if some doesn't exist")
-    {
-      TANKER_CHECK_THROWS_WITH_CODE(
-          AWAIT(keys.getKeys(
-              std::vector{resourceId1,
-                          resourceId2,
-                          make<Trustchain::ResourceId>("notmymac")})),
-          Errors::Errc::InvalidArgument);
-    }
-  }
-
   SUBCASE("it should ignore a duplicate key and keep the first")
   {
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
