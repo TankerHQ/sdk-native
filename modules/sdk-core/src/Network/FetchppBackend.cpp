@@ -77,7 +77,7 @@ tc::cotask<HttpResponse> FetchppBackend::fetch(HttpRequest req)
     response.statusCode = fResponse.result_int();
     if (auto const contentType = fResponse.find(http::field::content_type);
         contentType != fResponse.end())
-      response.contentType = contentType->value();
+      response.contentType = contentType->value().to_string();
     response.body = fResponse.text();
     TC_RETURN(response);
   }

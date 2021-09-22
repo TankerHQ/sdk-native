@@ -7,6 +7,7 @@ add_library(tankerformat STATIC
   include/Tanker/Format/Json.hpp
   include/Tanker/Format/Enum.hpp
   include/Tanker/Format/Width.hpp
+  include/Tanker/Format/StringView.hpp
 
   src/Json.cpp
 )
