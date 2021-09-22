@@ -3,6 +3,7 @@
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v5.hpp>
+#include <Tanker/Encryptor/v6.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
@@ -10,7 +11,9 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
+#include <cstdint>
 #include <doctest/doctest.h>
+#include <gsl/gsl-lite.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -28,6 +31,13 @@ struct TestContext<EncryptorV2>
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV2::encrypt(encryptedData, clearData);
+  }
+
+  void decrypt(std::vector<uint8_t>& decryptedData,
+               Crypto::SymmetricKey const& key,
+               gsl::span<std::uint8_t const> encryptedData)
+  {
+    AWAIT_VOID(EncryptorV2::decrypt(decryptedData.data(), key, encryptedData));
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -52,6 +62,13 @@ struct TestContext<EncryptorV3>
     return EncryptorV3::encrypt(encryptedData, clearData);
   }
 
+  void decrypt(std::vector<uint8_t>& decryptedData,
+               Crypto::SymmetricKey const& key,
+               gsl::span<std::uint8_t const> encryptedData)
+  {
+    AWAIT_VOID(EncryptorV3::decrypt(decryptedData.data(), key, encryptedData));
+  }
+
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
       0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -71,6 +88,13 @@ struct TestContext<EncryptorV5>
   {
     return EncryptorV5::encrypt(
         encryptedData, clearData, resourceId, keyVector);
+  }
+
+  void decrypt(std::vector<uint8_t>& decryptedData,
+               Crypto::SymmetricKey const& key,
+               gsl::span<std::uint8_t const> encryptedData)
+  {
+    AWAIT_VOID(EncryptorV5::decrypt(decryptedData.data(), key, encryptedData));
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -104,10 +128,41 @@ struct TestContext<EncryptorV5>
       0x7e,
   }};
 };
+
+template <>
+struct TestContext<EncryptorV6>
+{
+  tc::cotask<EncryptionMetadata> encrypt(
+      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t const> clearData) const
+  {
+    return EncryptorV6::encrypt(encryptedData, clearData);
+  }
+
+  void decrypt(std::vector<uint8_t>& decryptedData,
+               Crypto::SymmetricKey const& key,
+               gsl::span<std::uint8_t const> encryptedData)
+  {
+    auto const decryptedSize =
+        AWAIT(EncryptorV6::decrypt(decryptedData.data(), key, encryptedData));
+    decryptedData.resize(decryptedSize);
+  }
+
+  Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
+      0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
+      0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
+      0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd}};
+  std::vector<std::uint8_t> encryptedTestVector{
+      0x6,  0x37, 0xb5, 0x3d, 0x55, 0x34, 0xb5, 0xc1, 0x3f, 0xe3,
+      0x72, 0x81, 0x47, 0xf0, 0xca, 0xda, 0x29, 0x99, 0x6e, 0x4,
+      0x3e, 0x1a, 0x2f, 0x93, 0x26, 0x65, 0x26, 0xa3, 0x17, 0xf1,
+      0x5c, 0xa3, 0xc8, 0x7b, 0xb5, 0x4b, 0x81};
+};
+
 }
 
 template <typename T>
-void commonEncryptorTests(TestContext<T> ctx)
+void unpaddedEncryptorTests(TestContext<T> ctx)
 {
   SUBCASE("decryptedSize and encryptedSize should be symmetrical")
   {
@@ -118,7 +173,11 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(T::decryptedSize(a0) == 0);
     CHECK(T::decryptedSize(a42) == 42);
   }
+}
 
+template <typename T>
+void commonEncryptorTests(TestContext<T> ctx)
+{
   SUBCASE("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
@@ -135,20 +194,20 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
 
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    ctx.decrypt(decryptedData, metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
 
   SUBCASE("encrypt/decrypt should work with a normal buffer")
   {
-    auto clearData = make_buffer("this is the data to encrypt");
+    auto const clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    ctx.decrypt(decryptedData, metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
@@ -159,15 +218,14 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(
         T::decryptedSize(ctx.encryptedTestVector));
-    AWAIT_VOID(T::decrypt(
-        decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector));
+    ctx.decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector);
 
     CHECK(decryptedData == clearData);
   }
 
   SUBCASE("encrypt should never give the same result twice")
   {
-    auto clearData = make_buffer("this is the data to encrypt");
+    auto const clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(T::encryptedSize(clearData.size()));
     AWAIT(ctx.encrypt(encryptedData1.data(), clearData));
     std::vector<uint8_t> encryptedData2(T::encryptedSize(clearData.size()));
@@ -178,22 +236,19 @@ void commonEncryptorTests(TestContext<T> ctx)
 
   SUBCASE("decrypt should not work with a corrupted buffer")
   {
-    auto const clearData = make_buffer("this is very secret");
-
     std::vector<uint8_t> decryptedData(
         T::decryptedSize(ctx.encryptedTestVector));
 
     ctx.encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(T::decrypt(
-            decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector)),
+        ctx.decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector),
         Errc::DecryptionFailed);
   }
 
   SUBCASE("extractResourceId should give the same result as encrypt")
   {
-    auto clearData = make_buffer("this is the data to encrypt");
+    auto const clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
@@ -206,6 +261,7 @@ TEST_CASE("EncryptorV2 tests")
 {
   TestContext<EncryptorV2> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SUBCASE("encryptedSize should return the right size")
@@ -222,6 +278,7 @@ TEST_CASE("EncryptorV3 tests")
 {
   TestContext<EncryptorV3> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SUBCASE("encryptedSize should return the right size")
@@ -237,6 +294,7 @@ TEST_CASE("EncryptorV5 tests")
 {
   TestContext<EncryptorV5> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SUBCASE("encryptedSize should return the right size")
@@ -258,4 +316,101 @@ TEST_CASE("extractResourceId should throw on a truncated buffer")
 
   TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
                                 Errc::InvalidArgument);
+}
+
+TEST_CASE("EncryptorV6 tests")
+{
+  TestContext<EncryptorV6> ctx;
+
+  commonEncryptorTests(ctx);
+
+  SUBCASE("padme should return the right values")
+  {
+    CHECK_EQ(EncryptorV6::padme(0), 0);
+    CHECK_EQ(EncryptorV6::padme(1), 0);
+
+    CHECK_EQ(EncryptorV6::padme(2), 2);
+    CHECK_EQ(EncryptorV6::padme(9), 10);
+    CHECK_EQ(EncryptorV6::padme(42), 44);
+    CHECK_EQ(EncryptorV6::padme(666), 672);
+    CHECK_EQ(EncryptorV6::padme(1999), 2048);
+  }
+
+  SUBCASE(
+      "unpaddedSize should throw if 0x80 is not found or followed by non 0x00 "
+      "values")
+  {
+    auto const paddedDataEmpty = gsl::make_span("").as_span<uint8_t const>();
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(paddedDataEmpty),
+                                  Errc::DecryptionFailed);
+
+    auto const paddedDataNormal =
+        gsl::make_span("this is a test data").as_span<uint8_t const>();
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(paddedDataNormal),
+                                  Errc::DecryptionFailed);
+
+    std::vector<uint8_t> trueAsBytes{0x74, 0x72, 0x75, 0x65};
+
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+                                  Errc::DecryptionFailed);
+
+    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x00, 0x00, 0x00};
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+                                  Errc::DecryptionFailed);
+
+    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42};
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+                                  Errc::DecryptionFailed);
+
+    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00};
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+                                  Errc::DecryptionFailed);
+
+    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00, 0x00};
+    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+                                  Errc::DecryptionFailed);
+  }
+
+  SUBCASE("unpaddedSize should return the right values")
+  {
+    std::vector<uint8_t> const eighty{0x80};
+    auto result = EncryptorV6::unpaddedSize(eighty);
+    CHECK_EQ(result, 0);
+
+    std::vector<uint8_t> trueAsBytesPadded{0x74, 0x72, 0x75, 0x65, 0x80};
+    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    CHECK_EQ(result, 4);
+
+    trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00};
+    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    CHECK_EQ(result, 4);
+
+    trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x80, 0x00};
+    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    CHECK_EQ(result, 7);
+  }
+
+  SUBCASE("encryptedSize should return the right size")
+  {
+    auto const versionSize = Serialization::varint_size(EncryptorV6::version());
+    constexpr auto MacSize = Crypto::Mac::arraySize;
+    constexpr auto overhead = versionSize + MacSize;
+
+    SUBCASE("padding should have a minimal padding")
+    {
+      constexpr auto minimalPadding = EncryptorV6::minimalPadding();
+      CHECK_EQ(EncryptorV6::encryptedSize(0), minimalPadding + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(1), minimalPadding + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(8), minimalPadding + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(9), minimalPadding + overhead);
+    }
+
+    SUBCASE("encryptedSize should use the padme algorithm")
+    {
+      CHECK_EQ(EncryptorV6::encryptedSize(10), 12 + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(11), 12 + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(42), 44 + overhead);
+      CHECK_EQ(EncryptorV6::encryptedSize(250), 256 + overhead);
+    }
+  }
 }
