@@ -1,9 +1,13 @@
 #include <Tanker/Crypto/AeadIv.hpp>
+#include <Tanker/Crypto/Mac.hpp>
+#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
+#include <Tanker/Encryptor/v6.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
@@ -287,6 +291,65 @@ struct TestContext<EncryptorV5>
   };
 };
 
+template <>
+struct TestContext<EncryptorV6>
+{
+  tc::cotask<EncryptionMetadata> encrypt(
+      gsl::span<std::uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData) const
+  {
+    return EncryptorV6::encrypt(encryptedData, clearData, paddingStep);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    auto const res = EncryptorV6::encryptedSize(clearSize, paddingStep);
+
+    if (paddingStep)
+    {
+      auto const paddedSize = res - overhead;
+      CAPTURE(*paddingStep);
+      CAPTURE(clearSize);
+      CAPTURE(paddedSize);
+      CHECK(paddedSize >= clearSize);
+      CHECK(paddedSize % *paddingStep == 0);
+    }
+
+    return res;
+  }
+
+  std::vector<TestVector> testVectors{
+      {{0x56, 0x95, 0xa2, 0x36, 0x2b, 0x8b, 0x11, 0x92, 0xf9, 0x56, 0x0b,
+        0xcb, 0xf2, 0x07, 0x6a, 0x21, 0x03, 0x2c, 0x82, 0x3b, 0xbe, 0x21,
+        0x60, 0x2f, 0x64, 0xf9, 0xc2, 0x9f, 0xe5, 0xe5, 0x6d, 0x7f},
+       make_buffer("this is very secret"),
+       {0x06, 0x46, 0xfd, 0x4a, 0xab, 0x34, 0x24, 0x3b, 0x97, 0x0e,
+        0x13, 0x90, 0x32, 0x88, 0x5c, 0xba, 0xc7, 0x82, 0x4d, 0xeb,
+        0xb0, 0x5b, 0xd2, 0x26, 0x6e, 0xc6, 0x7c, 0x05, 0xf0, 0xfc,
+        0x77, 0x95, 0x34, 0xa2, 0xfa, 0x7e, 0x6e, 0x36},
+       {0xd2,
+        0x26,
+        0x6e,
+        0xc6,
+        0x7c,
+        0x05,
+        0xf0,
+        0xfc,
+        0x77,
+        0x95,
+        0x34,
+        0xa2,
+        0xfa,
+        0x7e,
+        0x6e,
+        0x36}},
+  };
+
+  std::optional<uint32_t> paddingStep;
+
+  static constexpr auto overhead = 1 + Crypto::Mac::arraySize + 1;
+};
+
 template <typename T>
 std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
                                gsl::span<uint8_t const> encryptedData)
@@ -440,6 +503,61 @@ void commonEncryptorTests(TestContext<T> ctx)
   }
 }
 
+template <typename T>
+void paddedEncryptorTests(TestContext<T> ctx)
+{
+  for (auto paddingStep : {1, 2, 5, 13})
+  {
+    auto const title = fmt::format("With a paddingStep of {}", paddingStep);
+
+    DYNAMIC_SECTION(title.c_str())
+    {
+      ctx.paddingStep = paddingStep;
+      commonEncryptorTests(ctx);
+    }
+  }
+
+  SECTION("encryptedSize should have a minimal value")
+  {
+    constexpr auto minimalPadding = Padding::minimalPadding();
+    ctx.paddingStep = std::nullopt;
+    for (auto clearSize : {0, 1, 8, 9})
+      CHECK(ctx.encryptedSize(clearSize) == minimalPadding + ctx.overhead);
+  }
+
+  SECTION("encryptedSize should use the padme algorithm in auto padding")
+  {
+    std::vector<std::pair<int, int>> const paddedWithAuto = {
+        {10, 10},
+        {11, 12},
+        {42, 44},
+        {250, 256},
+    };
+    ctx.paddingStep = std::nullopt;
+    for (auto [clearSize, paddedSize] : paddedWithAuto)
+      CHECK(ctx.encryptedSize(clearSize) == paddedSize + ctx.overhead);
+  }
+
+  SECTION("encryptedSize should use the paddingStep parameter correctly")
+  {
+    std::vector<std::pair<int, int>> const paddedToStepFive = {
+        {0, 5},
+        {2, 5},
+        {4, 5},
+        {5, 5},
+        {9, 10},
+        {10, 10},
+        {14, 15},
+        {40, 40},
+        {42, 45},
+        {45, 45},
+    };
+    ctx.paddingStep = 5;
+    for (auto [clearSize, paddedSize] : paddedToStepFive)
+      CHECK(ctx.encryptedSize(clearSize) == paddedSize + ctx.overhead);
+  }
+}
+
 TEST_CASE("EncryptorV2 tests")
 {
   TestContext<EncryptorV2> ctx;
@@ -553,4 +671,12 @@ TEST_CASE("extractResourceId should throw on a truncated buffer")
 
   TANKER_CHECK_THROWS_WITH_CODE(Encryptor::extractResourceId(encryptedData),
                                 Errc::InvalidArgument);
+}
+
+TEST_CASE("EncryptorV6 tests")
+{
+  TestContext<EncryptorV6> ctx;
+
+  commonEncryptorTests(ctx);
+  paddedEncryptorTests(ctx);
 }
