@@ -23,8 +23,6 @@ void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
   auto const dataVersionResult = Serialization::varint_read(encryptedData);
   auto const overheadSize = Trustchain::ResourceId::arraySize;
 
-  assert(dataVersionResult.first == EncryptorV3::version());
-
   if (dataVersionResult.second.size() < overheadSize)
   {
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
