@@ -222,7 +222,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
 
   auto const core2 = device.createCore();
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core2->start(alice.identity)),
-                                DataStore::Errc::DatabaseLocked);
+                                Tanker::Errors::Errc::PreconditionFailed);
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,

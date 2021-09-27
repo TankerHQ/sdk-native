@@ -36,9 +36,10 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   case Errc::InvalidDatabaseVersion:
   case Errc::DatabaseError:
   case Errc::RecordNotFound:
-  case Errc::DatabaseLocked:
   case Errc::DatabaseCorrupt:
     return make_error_condition(Errors::Errc::InternalError);
+  case Errc::DatabaseLocked:
+    return make_error_condition(Errors::Errc::PreconditionFailed);
   case Errc::DatabaseTooRecent:
     return make_error_condition(Errors::Errc::UpgradeRequired);
   }
