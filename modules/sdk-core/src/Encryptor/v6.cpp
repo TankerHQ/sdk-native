@@ -85,12 +85,14 @@ std::vector<std::uint8_t> EncryptorV6::padClearData(
 tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
     std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
 {
-  Serialization::varint_write(encryptedData, version());
+  auto const endOfVersion =
+      Serialization::varint_write(encryptedData, version());
   auto const key = Crypto::makeSymmetricKey();
   auto const iv = Crypto::AeadIv{};
   auto const paddedData = padClearData(clearData);
+  gsl::span<std::uint8_t const> additionalData(encryptedData, endOfVersion);
   auto const resourceId = Crypto::encryptAead(
-      key, iv.data(), encryptedData + versionSize, paddedData, {});
+      key, iv.data(), encryptedData + versionSize, paddedData, additionalData);
 
   TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
 }
@@ -104,7 +106,10 @@ tc::cotask<std::uint64_t> EncryptorV6::decrypt(
 
   auto const versionResult = Serialization::varint_read(encryptedData);
   auto const iv = Crypto::AeadIv{};
-  Crypto::decryptAead(key, iv.data(), decryptedData, versionResult.second, {});
+  gsl::span<std::uint8_t const> additionalData(encryptedData.data(),
+                                               versionResult.second.data());
+  Crypto::decryptAead(
+      key, iv.data(), decryptedData, versionResult.second, additionalData);
 
   auto const clearPaddedSize = EncryptorV3::decryptedSize(encryptedData);
   TC_RETURN(unpaddedSize(gsl::make_span(decryptedData, clearPaddedSize)));
