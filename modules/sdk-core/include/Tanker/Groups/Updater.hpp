@@ -39,6 +39,6 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
-    std::vector<Trustchain::GroupAction> const& entries);
+    gsl::span<Trustchain::GroupAction const> entries);
 }
 }
