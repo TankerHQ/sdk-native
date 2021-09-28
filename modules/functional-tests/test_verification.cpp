@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Format/StringView.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>

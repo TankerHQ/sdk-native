@@ -126,11 +126,13 @@ TEST_CASE("Group V1")
       REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       REQUIRE_CALL(aliceLocalUserAccessor, pull())
           .LR_RETURN(makeCoTask<Users::LocalUser const&>(aliceLocalUser));
+      // Storing it into a local variable is required to workaround a VS2019 ICE
+      auto const entry = makeEntries(bobGroupUpdated).back();
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           aliceLocalUserAccessor,
           aliceProvisionalUsersAccessor,
           static_cast<ExternalGroup>(bobGroup),
-          makeEntries(bobGroupUpdated).back()));
+          entry));
       GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
     }
   }
