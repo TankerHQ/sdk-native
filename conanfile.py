@@ -88,9 +88,9 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("boost/1.77.0", private=private)
+        self.requires("boost/1.77.0-r1", private=private)
         self.requires("libressl/3.2.5", private=private)
-        self.requires("fetchpp/0.14.0", private=private)
+        self.requires("fetchpp/0.14.0-r1", private=private)
         self.requires("sqlpp11/0.60", private=private)
         self.requires("sqlpp11-connector-sqlite3/0.30", private=private)
         self.requires("mgs/0.2.0", private=private)
@@ -100,7 +100,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.37.0", private=private)
         self.requires("nlohmann_json/3.10.2", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.39.0-r1", private=private)
+        self.requires("tconcurrent/0.39.0-r2", private=private)
         self.requires("date/3.0.0", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os in ("iOS", "Macos"):
@@ -121,7 +121,7 @@ class TankerConan(ConanFile):
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
             self.build_requires("doctest/2.4.6")
-            self.build_requires("doctest-async/2.4.7-r1")
+            self.build_requires("doctest-async/2.4.7-r2")
             self.build_requires("trompeloeil/38")
             if self.should_build_bench:
                 self.build_requires("benchmark/1.5.2")
