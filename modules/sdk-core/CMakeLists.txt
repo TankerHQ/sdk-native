@@ -145,6 +145,7 @@ add_library(tankercore STATIC
   src/ProvisionalUsers/Updater.cpp
   src/ProvisionalUsers/ProvisionalUserKeysStore.cpp
   src/ProvisionalUsers/Manager.cpp
+  src/ProvisionalUsers/PublicUser.cpp
   src/Groups/Group.cpp
   src/Groups/EntryGenerator.cpp
   src/Groups/GroupEncryptedKey.cpp

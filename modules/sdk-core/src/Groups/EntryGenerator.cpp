@@ -67,12 +67,12 @@ UserGroupCreation::v2::ProvisionalMembers generateGroupKeysForProvisionalUsers2(
   for (auto const& user : users)
   {
     auto const encryptedKeyOnce = Crypto::sealEncrypt(
-        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey());
     auto const encryptedKeyTwice =
-        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey());
 
-    keysForProvUsers.emplace_back(user.appSignaturePublicKey,
-                                  user.tankerSignaturePublicKey,
+    keysForProvUsers.emplace_back(user.appSignaturePublicKey(),
+                                  user.tankerSignaturePublicKey(),
                                   encryptedKeyTwice);
   }
   return keysForProvUsers;
@@ -86,14 +86,14 @@ UserGroupCreation::v3::ProvisionalMembers generateGroupKeysForProvisionalUsers3(
   for (auto const& user : users)
   {
     auto const encryptedKeyOnce = Crypto::sealEncrypt(
-        groupPrivateEncryptionKey, user.appEncryptionPublicKey);
+        groupPrivateEncryptionKey, user.appEncryptionPublicKey());
     auto const encryptedKeyTwice =
-        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey);
+        Crypto::sealEncrypt(encryptedKeyOnce, user.tankerEncryptionPublicKey());
 
-    keysForProvUsers.emplace_back(user.appSignaturePublicKey,
-                                  user.tankerSignaturePublicKey,
-                                  user.appEncryptionPublicKey,
-                                  user.tankerEncryptionPublicKey,
+    keysForProvUsers.emplace_back(user.appSignaturePublicKey(),
+                                  user.tankerSignaturePublicKey(),
+                                  user.appEncryptionPublicKey(),
+                                  user.tankerEncryptionPublicKey(),
                                   encryptedKeyTwice);
   }
   return keysForProvUsers;

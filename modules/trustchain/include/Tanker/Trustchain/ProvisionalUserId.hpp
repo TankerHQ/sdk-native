@@ -21,7 +21,11 @@ class ProvisionalUserId
                               ProvisionalUserId& k);
 };
 
+// replace with operator<=> in C++20
 bool operator<(ProvisionalUserId const& l, ProvisionalUserId const& r);
+bool operator>(ProvisionalUserId const& l, ProvisionalUserId const& r);
+bool operator<=(ProvisionalUserId const& l, ProvisionalUserId const& r);
+bool operator>=(ProvisionalUserId const& l, ProvisionalUserId const& r);
 
 TANKER_TRUSTCHAIN_ACTION_DECLARE_SERIALIZATION(ProvisionalUserId)
 TANKER_TRUSTCHAIN_ACTION_DECLARE_TO_JSON(ProvisionalUserId)

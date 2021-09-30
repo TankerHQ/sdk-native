@@ -254,7 +254,7 @@ using DeviceMap =
     boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
 
 std::vector<Trustchain::DeviceId> extractAuthors(
-    std::vector<Trustchain::GroupAction> const& entries)
+    gsl::span<Trustchain::GroupAction const> entries)
 {
   boost::container::flat_set<Trustchain::DeviceId> deviceIds;
   for (auto const& action : entries)
@@ -267,7 +267,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     Users::ILocalUserAccessor& localUserAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> previousGroup,
-    std::vector<Trustchain::GroupAction> const& actions)
+    gsl::span<Trustchain::GroupAction const> actions)
 {
   Crypto::EncryptionKeyPair lastKnownKey;
   auto lastKnownKeyBlockIt = actions.end();
@@ -337,7 +337,7 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     Users::IUserAccessor& userAccessor,
     ProvisionalUsers::IAccessor& provisionalUsersAccessor,
     std::optional<Group> const& previousGroup,
-    std::vector<Trustchain::GroupAction> const& entries)
+    gsl::span<Trustchain::GroupAction const> entries)
 {
   auto const authorIds = extractAuthors(entries);
   auto const devices =

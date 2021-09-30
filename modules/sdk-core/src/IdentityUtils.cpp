@@ -4,6 +4,10 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Utils.hpp>
 
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 namespace Tanker
 {
 Identity::PublicIdentity extractPublicIdentity(
@@ -42,57 +46,62 @@ PartitionedIdentities partitionIdentities(
   return out;
 }
 
+namespace
+{
+auto findErrorPred(Trustchain::UserId const& errId)
+{
+  return [&](auto const& id) {
+    if (auto const permId =
+            boost::variant2::get_if<Identity::PublicPermanentIdentity>(&id))
+      return permId->userId == errId;
+    return false;
+  };
+}
+
+auto findErrorPred(Trustchain::ProvisionalUserId const& errId)
+{
+  return [&](auto const& id) {
+    if (auto const provisionalId =
+            boost::variant2::get_if<Identity::PublicProvisionalIdentity>(&id))
+      return provisionalId->appSignaturePublicKey ==
+             errId.appSignaturePublicKey();
+    return false;
+  };
+}
+
+auto errorIdToClearId(std::vector<SPublicIdentity> const& sIds,
+                      std::vector<Identity::PublicIdentity> const& ids)
+{
+  return [&](auto const& errId) {
+    auto const it = ranges::find_if(ids, findErrorPred(errId));
+    if (it == ranges::end(ids))
+    {
+      if constexpr (std::is_same_v<decltype(errId), Trustchain::UserId const>)
+        throw Errors::AssertionError("identities not found");
+      else
+        throw Errors::AssertionError("provisional identities not found");
+    }
+    return sIds[it - ids.begin()];
+  };
+}
+}
+
 std::vector<SPublicIdentity> mapIdentitiesToStrings(
     std::vector<Trustchain::UserId> const& errorIds,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids)
 
 {
-  std::vector<SPublicIdentity> clearIds;
-  clearIds.reserve(ids.size());
-  for (auto const& errorId : errorIds)
-  {
-    using boost::variant2::get_if;
-    auto const idsIt =
-        std::find_if(ids.begin(), ids.end(), [&](auto const& id) {
-          if (auto const permId =
-                  get_if<Identity::PublicPermanentIdentity>(&id))
-            return permId->userId == errorId;
-          return false;
-        });
-
-    if (idsIt == ids.end())
-      throw Errors::AssertionError("identities not found");
-
-    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
-  }
-  return clearIds;
+  return errorIds | ranges::views::transform(errorIdToClearId(sIds, ids)) |
+         ranges::to<std::vector>;
 }
 
 std::vector<SPublicIdentity> mapIdentitiesToStrings(
-    std::vector<Trustchain::ProvisionalUserId> const& errorUsers,
+    std::vector<Trustchain::ProvisionalUserId> const& errorIds,
     std::vector<SPublicIdentity> const& sIds,
     std::vector<Identity::PublicIdentity> const& ids)
 {
-  std::vector<SPublicIdentity> clearIds;
-  clearIds.reserve(ids.size());
-  for (auto const& errorUser : errorUsers)
-  {
-    using boost::variant2::get_if;
-    auto const idsIt =
-        std::find_if(ids.begin(), ids.end(), [&](auto const& id) {
-          if (auto const provisionalId =
-                  get_if<Identity::PublicProvisionalIdentity>(&id))
-            return provisionalId->appSignaturePublicKey ==
-                   errorUser.appSignaturePublicKey();
-          return false;
-        });
-
-    if (idsIt == ids.end())
-      throw Errors::AssertionError("provisional identities not found");
-
-    clearIds.push_back(sIds[std::distance(ids.begin(), idsIt)]);
-  }
-  return clearIds;
+  return errorIds | ranges::views::transform(errorIdToClearId(sIds, ids)) |
+         ranges::to<std::vector>;
 }
 }

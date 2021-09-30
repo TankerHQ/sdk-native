@@ -1,5 +1,6 @@
 #include <Tanker/Groups/Accessor.hpp>
 
+#include <Tanker/Actions/Deduplicate.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
@@ -11,7 +12,15 @@
 #include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 
-#include <boost/container/flat_map.hpp>
+#include <range/v3/action/join.hpp>
+#include <range/v3/action/stable_sort.hpp>
+#include <range/v3/functional/on.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/chunk.hpp>
+#include <range/v3/view/group_by.hpp>
+#include <range/v3/view/map.hpp>
+#include <range/v3/view/set_algorithm.hpp>
+#include <range/v3/view/transform.hpp>
 
 TLOG_CATEGORY("GroupAccessor");
 
@@ -71,7 +80,7 @@ Accessor::getPublicEncryptionKeys(
 
   if (!out.notFound.empty())
   {
-    auto groupPullResult = TC_AWAIT(getGroups(out.notFound));
+    auto groupPullResult = TC_AWAIT(getGroups(std::move(out.notFound)));
 
     out.notFound = std::move(groupPullResult.notFound);
     for (auto const& group : groupPullResult.found)
@@ -117,76 +126,69 @@ Accessor::getEncryptionKeyPair(
     TC_RETURN(std::nullopt);
 }
 
-namespace
+auto Accessor::partitionGroups(std::vector<Trustchain::GroupAction> entries)
+    -> GroupMap
 {
-using GroupMap =
-    boost::container::flat_map<Trustchain::GroupId,
-                               std::vector<Trustchain::GroupAction>>;
-
-GroupMap partitionGroups(std::vector<Trustchain::GroupAction> const& entries)
-{
-  GroupMap out;
-  for (auto const& action : entries)
-  {
-    boost::variant2::visit(
-        overloaded{
-            [&](const Trustchain::Actions::UserGroupCreation&
-                    userGroupCreation) {
-              out[GroupId{userGroupCreation.publicSignatureKey()}].push_back(
-                  action);
-            },
-            [&](const Trustchain::Actions::UserGroupAddition&
-                    userGroupAddition) {
-              out[userGroupAddition.groupId()].push_back(action);
-            },
-        },
-        action);
-  }
-  return out;
+  entries |=
+      ranges::actions::stable_sort(ranges::less{}, Trustchain::getGroupId);
+  return entries |
+         ranges::views::group_by(
+             ranges::on(std::equal_to{}, Trustchain::getGroupId)) |
+         ranges::views::transform([](auto const& entries) {
+           return std::make_pair(Trustchain::getGroupId(entries.front()),
+                                 entries | ranges::to<std::vector>);
+         }) |
+         ranges::to<GroupMap>;
 }
+
+tc::cotask<std::vector<Trustchain::GroupAction>> Accessor::getGroupEntries(
+    gsl::span<Trustchain::GroupId const> groupIds)
+{
+  std::vector<std::vector<Trustchain::GroupAction>> batchedEntries;
+
+  for (auto const chunk : groupIds | ranges::views::chunk(ChunkSize))
+    batchedEntries.push_back(TC_AWAIT(_requester->getGroupBlocks(chunk)));
+  TC_RETURN(std::move(batchedEntries) | ranges::actions::join);
+}
+
+tc::cotask<std::vector<Group>> Accessor::processGroupEntries(
+    GroupMap const& groups)
+{
+  std::vector<Group> ret;
+  ret.reserve(groups.size());
+
+  for (auto const& [id, entries] : groups)
+  {
+    auto group =
+        TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
+                                                   *_userAccessor,
+                                                   *_provisionalUserAccessor,
+                                                   std::nullopt,
+                                                   entries));
+    if (!group)
+      throw Errors::AssertionError(fmt::format("group {} has no blocks", id));
+    ret.push_back(std::move(*group));
+    TC_AWAIT(_groupStore->put(ret.back()));
+  }
+  TC_RETURN(ret);
 }
 
 tc::cotask<Accessor::GroupPullResult> Accessor::getGroups(
-    std::vector<Trustchain::GroupId> const& groupIds)
+    std::vector<Trustchain::GroupId> groupIds)
 {
-  std::vector<Trustchain::GroupAction> entries;
-  entries.reserve(groupIds.size());
-  for (unsigned int i = 0; i < groupIds.size(); i += ChunkSize)
-  {
-    auto const count = std::min<unsigned int>(ChunkSize, groupIds.size() - i);
-    auto response = TC_AWAIT(
-        _requester->getGroupBlocks(gsl::make_span(groupIds).subspan(i, count)));
-    entries.insert(entries.end(),
-                   std::make_move_iterator(response.begin()),
-                   std::make_move_iterator(response.end()));
-  }
-  auto const groupMap = partitionGroups(entries);
+  groupIds |= Actions::deduplicate;
 
-  GroupPullResult out;
-  for (auto const& groupId : groupIds)
-  {
-    auto const groupEntriesIt = groupMap.find(groupId);
-    if (groupEntriesIt == groupMap.end())
-      out.notFound.push_back(groupId);
-    else
-    {
-      auto const group =
-          TC_AWAIT(GroupUpdater::processGroupEntries(*_localUserAccessor,
-                                                     *_userAccessor,
-                                                     *_provisionalUserAccessor,
-                                                     std::nullopt,
-                                                     groupEntriesIt->second));
-      if (!group)
-        throw Errors::AssertionError(
-            fmt::format("group {} has no blocks", groupId));
-      out.found.push_back(*group);
-    }
-  }
+  auto const groupMap = partitionGroups(TC_AWAIT(getGroupEntries(groupIds)));
+  auto const processedGroupIds = groupMap | ranges::views::keys;
+  auto const missingIds =
+      ranges::views::set_difference(groupIds, processedGroupIds);
 
-  // add all the groups to cache
-  for (auto const& group : out.found)
-    TC_AWAIT(_groupStore->put(group));
+  // ensure that the server did not return more groups than asked
+  if (ranges::distance(
+          ranges::views::set_difference(processedGroupIds, groupIds)) != 0)
+    throw Errors::AssertionError{"server returned more groups than asked"};
 
-  TC_RETURN(out);
+  TC_RETURN((Accessor::GroupPullResult{TC_AWAIT(processGroupEntries(groupMap)),
+                                       missingIds | ranges::to<std::vector>}));
 }
 }
