@@ -18,6 +18,7 @@
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <boost/container/flat_set.hpp>
+#include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
 
@@ -251,6 +252,63 @@ tc::cotask<Group> applyUserGroupAddition(
 
 namespace
 {
+class GroupEntryProcessor
+{
+public:
+  GroupEntryProcessor(Users::ILocalUserAccessor* localUserAccessor,
+                      ProvisionalUsers::IAccessor* provisionalUsersAccessor,
+                      gsl::span<Users::Device const> authors,
+                      std::optional<Group> group)
+    : _localUserAccessor(localUserAccessor),
+      _provisionalUsersAccessor(provisionalUsersAccessor),
+      _authors(authors),
+      _group(std::move(group))
+  {
+  }
+
+  std::optional<Group> retrieveGroup() &&
+  {
+    return std::move(_group);
+  }
+
+  tc::cotask<void> operator()(UserGroupCreation const& userGroupCreation) const
+  {
+    auto const& author = getAuthor(userGroupCreation);
+    auto const verifiedAction = Verif::verifyUserGroupCreation(
+        userGroupCreation, author, extractBaseGroup(_group));
+    _group = TC_AWAIT(applyUserGroupCreation(
+        *_localUserAccessor, *_provisionalUsersAccessor, verifiedAction));
+  }
+
+  tc::cotask<void> operator()(UserGroupAddition const& userGroupAddition) const
+  {
+    auto const& author = getAuthor(userGroupAddition);
+    auto const verifiedAction = Verif::verifyUserGroupAddition(
+        userGroupAddition, author, extractBaseGroup(_group));
+    _group = TC_AWAIT(applyUserGroupAddition(*_localUserAccessor,
+                                             *_provisionalUsersAccessor,
+                                             _group,
+                                             verifiedAction));
+  }
+
+private:
+  Users::Device const& getAuthor(Trustchain::GroupAction const& action) const
+  {
+    auto const authorIt = ranges::find_if(_authors, [&](auto const& device) {
+      return Trustchain::getAuthor(action).base() == device.id().base();
+    });
+    Verif::ensures(authorIt != _authors.end(),
+                   Verif::Errc::InvalidAuthor,
+                   "author not found");
+    return *authorIt;
+  }
+
+  Users::ILocalUserAccessor* _localUserAccessor;
+  ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
+  gsl::span<Users::Device const> _authors;
+  std::optional<Group> mutable _group;
+};
+
 tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
     Users::ILocalUserAccessor& localUserAccessor,
@@ -258,51 +316,17 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::optional<Group> previousGroup,
     gsl::span<Trustchain::GroupAction const> actions)
 {
-  Crypto::EncryptionKeyPair lastKnownKey;
-  auto lastKnownKeyBlockIt = actions.end();
-  for (auto it = actions.begin(); it != actions.end(); ++it)
+  GroupEntryProcessor processor{&localUserAccessor,
+                                &provisionalUsersAccessor,
+                                authors,
+                                std::move(previousGroup)};
+
+  // could be an accumulate if cotasks were usable in ranges...
+  for (auto const& action : actions)
   {
-    auto const& action = *it;
     try
     {
-      auto const authorIt =
-          std::find_if(authors.begin(), authors.end(), [&](auto const& device) {
-            return Trustchain::getAuthor(action).base() == device.id().base();
-          });
-      Verif::ensures(authorIt != authors.end(),
-                     Verif::Errc::InvalidAuthor,
-                     "author not found");
-      auto const& author = *authorIt;
-      TC_AWAIT(boost::variant2::visit(
-          overloaded{
-              [&](const Trustchain::Actions::UserGroupCreation&
-                      userGroupCreation) -> tc::cotask<void> {
-                auto const verifiedAction = Verif::verifyUserGroupCreation(
-                    action, author, extractBaseGroup(previousGroup));
-                previousGroup =
-                    TC_AWAIT(applyUserGroupCreation(localUserAccessor,
-                                                    provisionalUsersAccessor,
-                                                    verifiedAction));
-              },
-              [&](const Trustchain::Actions::UserGroupAddition&
-                      userGroupAddition) -> tc::cotask<void> {
-                auto const verifiedAction = Verif::verifyUserGroupAddition(
-                    action, author, extractBaseGroup(previousGroup));
-                previousGroup =
-                    TC_AWAIT(applyUserGroupAddition(localUserAccessor,
-                                                    provisionalUsersAccessor,
-                                                    previousGroup,
-                                                    verifiedAction));
-              },
-          },
-          action));
-
-      if (auto const internalGroup =
-              boost::variant2::get_if<InternalGroup>(&*previousGroup))
-      {
-        lastKnownKey = internalGroup->encryptionKeyPair;
-        lastKnownKeyBlockIt = it;
-      }
+      TC_AWAIT(boost::variant2::visit(processor, action));
     }
     catch (Errors::Exception const& err)
     {
@@ -317,7 +341,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     }
   }
 
-  TC_RETURN(previousGroup);
+  TC_RETURN(std::move(processor).retrieveGroup());
 }
 }
 
