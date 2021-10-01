@@ -35,16 +35,15 @@ namespace
 std::optional<
     std::pair<Crypto::SealedPrivateEncryptionKey, Crypto::EncryptionKeyPair>>
 findUserKeyPair(
-    std::vector<Crypto::EncryptionKeyPair> const& userKeys,
+    gsl::span<Crypto::EncryptionKeyPair const> userKeys,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
-    if (auto myKeyIt = std::find_if(userKeys.begin(),
-                                    userKeys.end(),
-                                    [&](auto const& userKey) {
-                                      return gek.first == userKey.publicKey;
-                                    });
+    if (auto myKeyIt = ranges::find_if(userKeys,
+                                       [&](auto const& userKey) {
+                                         return gek.first == userKey.publicKey;
+                                       });
         myKeyIt != userKeys.end())
       return std::make_pair(gek.second, *myKeyIt);
   }
@@ -74,10 +73,9 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Users::ILocalUserAccessor& localUserAccessor,
     UserGroupCreation::v2::Members const& groupKeys)
 {
-  auto const myKeysIt =
-      std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
-        return k.userId() == localUserAccessor.get().userId();
-      });
+  auto const myKeysIt = ranges::find_if(groupKeys, [&](auto const& k) {
+    return k.userId() == localUserAccessor.get().userId();
+  });
   if (myKeysIt == groupKeys.end())
     TC_RETURN(std::nullopt);
 
