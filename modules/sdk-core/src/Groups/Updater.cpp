@@ -17,8 +17,10 @@
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
-#include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 TLOG_CATEGORY(GroupUpdater);
 
@@ -33,16 +35,15 @@ namespace
 std::optional<
     std::pair<Crypto::SealedPrivateEncryptionKey, Crypto::EncryptionKeyPair>>
 findUserKeyPair(
-    std::vector<Crypto::EncryptionKeyPair> const& userKeys,
+    gsl::span<Crypto::EncryptionKeyPair const> userKeys,
     UserGroupCreation::v1::SealedPrivateEncryptionKeysForUsers const& groupKeys)
 {
   for (auto const& gek : groupKeys)
   {
-    if (auto myKeyIt = std::find_if(userKeys.begin(),
-                                    userKeys.end(),
-                                    [&](auto const& userKey) {
-                                      return gek.first == userKey.publicKey;
-                                    });
+    if (auto myKeyIt = ranges::find_if(userKeys,
+                                       [&](auto const& userKey) {
+                                         return gek.first == userKey.publicKey;
+                                       });
         myKeyIt != userKeys.end())
       return std::make_pair(gek.second, *myKeyIt);
   }
@@ -72,10 +73,9 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Users::ILocalUserAccessor& localUserAccessor,
     UserGroupCreation::v2::Members const& groupKeys)
 {
-  auto const myKeysIt =
-      std::find_if(groupKeys.begin(), groupKeys.end(), [&](auto const& k) {
-        return k.userId() == localUserAccessor.get().userId();
-      });
+  auto const myKeysIt = ranges::find_if(groupKeys, [&](auto const& k) {
+    return k.userId() == localUserAccessor.get().userId();
+  });
   if (myKeysIt == groupKeys.end())
     TC_RETURN(std::nullopt);
 
@@ -169,6 +169,30 @@ InternalGroup makeInternalGroup(
                        Trustchain::getHash(action),
                        previousGroup.lastKeyRotationBlockHash};
 }
+
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>>
+decryptGroupPrivateEncryptionKey(
+    Users::ILocalUserAccessor& localUserAccessor,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+    Trustchain::Actions::UserGroupAddition const& userGroupAddition)
+{
+  TC_RETURN(TC_AWAIT(userGroupAddition.visit(overloaded{
+      [&](UserGroupAddition::v1 const& uga)
+          -> tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> {
+        TC_RETURN(TC_AWAIT(decryptMyKey(
+            localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers())));
+      },
+      [&](auto const& uga)
+          -> tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> {
+        auto groupPrivateEncryptionKey =
+            TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
+        if (!groupPrivateEncryptionKey)
+          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+              provisionalUsersAccessor, uga.provisionalMembers()));
+        TC_RETURN(std::move(groupPrivateEncryptionKey));
+      },
+  })));
+}
 }
 
 tc::cotask<Group> applyUserGroupCreation(
@@ -220,29 +244,18 @@ tc::cotask<Group> applyUserGroupAddition(
   updateLastGroupBlock(*previousGroup, Trustchain::getHash(action));
 
   // I am already member of this group, don't try to decrypt keys again
-  if (auto const ig = boost::variant2::get_if<InternalGroup>(&*previousGroup))
-    TC_RETURN(*ig);
+  if (auto ig = boost::variant2::get_if<InternalGroup>(&*previousGroup))
+    TC_RETURN(std::move(*ig));
 
-  std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  TC_AWAIT(userGroupAddition.visit(overloaded{
-      [&](UserGroupAddition::v1 const& uga) -> tc::cotask<void> {
-        groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
-            localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers()));
-      },
-      [&](auto const& uga) -> tc::cotask<void> {
-        groupPrivateEncryptionKey =
-            TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
-        if (!groupPrivateEncryptionKey)
-          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-              provisionalUsersAccessor, uga.provisionalMembers()));
-      },
-  }));
+  auto const groupPrivateEncryptionKey =
+      TC_AWAIT(decryptGroupPrivateEncryptionKey(
+          localUserAccessor, provisionalUsersAccessor, userGroupAddition));
 
   // we checked above that this is an external group
   auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
 
   if (!groupPrivateEncryptionKey)
-    TC_RETURN(externalGroup);
+    TC_RETURN(std::move(externalGroup));
   else
     TC_RETURN(
         makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, action));
@@ -250,17 +263,62 @@ tc::cotask<Group> applyUserGroupAddition(
 
 namespace
 {
-using DeviceMap =
-    boost::container::flat_map<Trustchain::DeviceId, Users::Device>;
-
-std::vector<Trustchain::DeviceId> extractAuthors(
-    gsl::span<Trustchain::GroupAction const> entries)
+class GroupEntryProcessor
 {
-  boost::container::flat_set<Trustchain::DeviceId> deviceIds;
-  for (auto const& action : entries)
-    deviceIds.insert(Trustchain::DeviceId(Trustchain::getAuthor(action)));
-  return {deviceIds.begin(), deviceIds.end()};
-}
+public:
+  GroupEntryProcessor(Users::ILocalUserAccessor* localUserAccessor,
+                      ProvisionalUsers::IAccessor* provisionalUsersAccessor,
+                      gsl::span<Users::Device const> authors,
+                      std::optional<Group> group)
+    : _localUserAccessor(localUserAccessor),
+      _provisionalUsersAccessor(provisionalUsersAccessor),
+      _authors(authors),
+      _group(std::move(group))
+  {
+  }
+
+  std::optional<Group> retrieveGroup() &&
+  {
+    return std::move(_group);
+  }
+
+  tc::cotask<void> operator()(UserGroupCreation const& userGroupCreation) const
+  {
+    auto const& author = getAuthor(userGroupCreation);
+    auto const verifiedAction = Verif::verifyUserGroupCreation(
+        userGroupCreation, author, extractBaseGroup(_group));
+    _group = TC_AWAIT(applyUserGroupCreation(
+        *_localUserAccessor, *_provisionalUsersAccessor, verifiedAction));
+  }
+
+  tc::cotask<void> operator()(UserGroupAddition const& userGroupAddition) const
+  {
+    auto const& author = getAuthor(userGroupAddition);
+    auto const verifiedAction = Verif::verifyUserGroupAddition(
+        userGroupAddition, author, extractBaseGroup(_group));
+    _group = TC_AWAIT(applyUserGroupAddition(*_localUserAccessor,
+                                             *_provisionalUsersAccessor,
+                                             std::move(_group),
+                                             verifiedAction));
+  }
+
+private:
+  Users::Device const& getAuthor(Trustchain::GroupAction const& action) const
+  {
+    auto const authorIt = ranges::find_if(_authors, [&](auto const& device) {
+      return Trustchain::getAuthor(action).base() == device.id().base();
+    });
+    Verif::ensures(authorIt != _authors.end(),
+                   Verif::Errc::InvalidAuthor,
+                   "author not found");
+    return *authorIt;
+  }
+
+  Users::ILocalUserAccessor* _localUserAccessor;
+  ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
+  gsl::span<Users::Device const> _authors;
+  std::optional<Group> mutable _group;
+};
 
 tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::vector<Users::Device> const& authors,
@@ -269,51 +327,17 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     std::optional<Group> previousGroup,
     gsl::span<Trustchain::GroupAction const> actions)
 {
-  Crypto::EncryptionKeyPair lastKnownKey;
-  auto lastKnownKeyBlockIt = actions.end();
-  for (auto it = actions.begin(); it != actions.end(); ++it)
+  GroupEntryProcessor processor{&localUserAccessor,
+                                &provisionalUsersAccessor,
+                                authors,
+                                std::move(previousGroup)};
+
+  // could be an accumulate if cotasks were usable in ranges...
+  for (auto const& action : actions)
   {
-    auto const& action = *it;
     try
     {
-      auto const authorIt =
-          std::find_if(authors.begin(), authors.end(), [&](auto const& device) {
-            return Trustchain::getAuthor(action).base() == device.id().base();
-          });
-      Verif::ensures(authorIt != authors.end(),
-                     Verif::Errc::InvalidAuthor,
-                     "author not found");
-      auto const& author = *authorIt;
-      TC_AWAIT(boost::variant2::visit(
-          overloaded{
-              [&](const Trustchain::Actions::UserGroupCreation&
-                      userGroupCreation) -> tc::cotask<void> {
-                auto const verifiedAction = Verif::verifyUserGroupCreation(
-                    action, author, extractBaseGroup(previousGroup));
-                previousGroup =
-                    TC_AWAIT(applyUserGroupCreation(localUserAccessor,
-                                                    provisionalUsersAccessor,
-                                                    verifiedAction));
-              },
-              [&](const Trustchain::Actions::UserGroupAddition&
-                      userGroupAddition) -> tc::cotask<void> {
-                auto const verifiedAction = Verif::verifyUserGroupAddition(
-                    action, author, extractBaseGroup(previousGroup));
-                previousGroup =
-                    TC_AWAIT(applyUserGroupAddition(localUserAccessor,
-                                                    provisionalUsersAccessor,
-                                                    previousGroup,
-                                                    verifiedAction));
-              },
-          },
-          action));
-
-      if (auto const internalGroup =
-              boost::variant2::get_if<InternalGroup>(&*previousGroup))
-      {
-        lastKnownKey = internalGroup->encryptionKeyPair;
-        lastKnownKeyBlockIt = it;
-      }
+      TC_AWAIT(boost::variant2::visit(processor, action));
     }
     catch (Errors::Exception const& err)
     {
@@ -328,7 +352,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
     }
   }
 
-  TC_RETURN(previousGroup);
+  TC_RETURN(std::move(processor).retrieveGroup());
 }
 }
 
@@ -339,9 +363,12 @@ tc::cotask<std::optional<Group>> processGroupEntries(
     std::optional<Group> const& previousGroup,
     gsl::span<Trustchain::GroupAction const> entries)
 {
-  auto const authorIds = extractAuthors(entries);
-  auto const devices =
-      TC_AWAIT(userAccessor.pull(authorIds, Users::IRequester::IsLight::Yes));
+  auto authorIds = entries | ranges::views::transform([](auto const& action) {
+                     return Trustchain::DeviceId{Trustchain::getAuthor(action)};
+                   }) |
+                   ranges::to<std::vector>;
+  auto const devices = TC_AWAIT(
+      userAccessor.pull(std::move(authorIds), Users::IRequester::IsLight::Yes));
 
   // We are going to process group entries in which there are provisional
   // identities. We can't know in advance if one of these identity is us or
