@@ -171,6 +171,30 @@ InternalGroup makeInternalGroup(
                        Trustchain::getHash(action),
                        previousGroup.lastKeyRotationBlockHash};
 }
+
+tc::cotask<std::optional<Crypto::PrivateEncryptionKey>>
+decryptGroupPrivateEncryptionKey(
+    Users::ILocalUserAccessor& localUserAccessor,
+    ProvisionalUsers::IAccessor& provisionalUsersAccessor,
+    Trustchain::Actions::UserGroupAddition const& userGroupAddition)
+{
+  TC_RETURN(TC_AWAIT(userGroupAddition.visit(overloaded{
+      [&](UserGroupAddition::v1 const& uga)
+          -> tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> {
+        TC_RETURN(TC_AWAIT(decryptMyKey(
+            localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers())));
+      },
+      [&](auto const& uga)
+          -> tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> {
+        auto groupPrivateEncryptionKey =
+            TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
+        if (!groupPrivateEncryptionKey)
+          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
+              provisionalUsersAccessor, uga.provisionalMembers()));
+        TC_RETURN(std::move(groupPrivateEncryptionKey));
+      },
+  })));
+}
 }
 
 tc::cotask<Group> applyUserGroupCreation(
@@ -222,29 +246,18 @@ tc::cotask<Group> applyUserGroupAddition(
   updateLastGroupBlock(*previousGroup, Trustchain::getHash(action));
 
   // I am already member of this group, don't try to decrypt keys again
-  if (auto const ig = boost::variant2::get_if<InternalGroup>(&*previousGroup))
-    TC_RETURN(*ig);
+  if (auto ig = boost::variant2::get_if<InternalGroup>(&*previousGroup))
+    TC_RETURN(std::move(*ig));
 
-  std::optional<Crypto::PrivateEncryptionKey> groupPrivateEncryptionKey;
-  TC_AWAIT(userGroupAddition.visit(overloaded{
-      [&](UserGroupAddition::v1 const& uga) -> tc::cotask<void> {
-        groupPrivateEncryptionKey = TC_AWAIT(decryptMyKey(
-            localUserAccessor, uga.sealedPrivateEncryptionKeysForUsers()));
-      },
-      [&](auto const& uga) -> tc::cotask<void> {
-        groupPrivateEncryptionKey =
-            TC_AWAIT(decryptMyKey(localUserAccessor, uga.members()));
-        if (!groupPrivateEncryptionKey)
-          groupPrivateEncryptionKey = TC_AWAIT(decryptMyProvisionalKey(
-              provisionalUsersAccessor, uga.provisionalMembers()));
-      },
-  }));
+  auto const groupPrivateEncryptionKey =
+      TC_AWAIT(decryptGroupPrivateEncryptionKey(
+          localUserAccessor, provisionalUsersAccessor, userGroupAddition));
 
   // we checked above that this is an external group
   auto& externalGroup = boost::variant2::get<ExternalGroup>(*previousGroup);
 
   if (!groupPrivateEncryptionKey)
-    TC_RETURN(externalGroup);
+    TC_RETURN(std::move(externalGroup));
   else
     TC_RETURN(
         makeInternalGroup(externalGroup, *groupPrivateEncryptionKey, action));
@@ -287,7 +300,7 @@ public:
         userGroupAddition, author, extractBaseGroup(_group));
     _group = TC_AWAIT(applyUserGroupAddition(*_localUserAccessor,
                                              *_provisionalUsersAccessor,
-                                             _group,
+                                             std::move(_group),
                                              verifiedAction));
   }
 
