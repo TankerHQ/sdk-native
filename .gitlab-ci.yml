@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-09-01-1
+  ref: 2021-10-05-181
 
 .after-script/branch_name:
   after_script:
@@ -10,6 +10,12 @@ include:
 ###############
 # build stage #
 ###############
+
+.rules/build:
+  rules:
+    - !reference [.rules/mr/manual, rules]
+    - !reference [.rules/web/auto, rules]
+    - !reference [.rules/nightly, rules]
 
 build/linux:
   extends:
@@ -49,7 +55,7 @@ build/windows/shared:
   extends:
     - .build
     - .tags/windows
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
@@ -82,7 +88,7 @@ build/macos/x86_64/shared:
   extends:
     - .build
     - .tags/macos/x86_64
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -93,7 +99,7 @@ build/macos/arm/shared:
   extends:
     - .build
     - .tags/macos/arm
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -104,7 +110,7 @@ build/android/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -115,7 +121,7 @@ build/android/static:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -127,7 +133,7 @@ build/ios:
     - .build
       # build everything on the fast one
     - .tags/macos/arm
-    - .rules/mr/manual/web/auto/nightly
+    - .rules/build
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
