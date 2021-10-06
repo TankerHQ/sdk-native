@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-10-08-199
+  ref: 2021-10-08-203
 
 .after-script/branch_name:
   after_script:
@@ -11,18 +11,24 @@ include:
 # build stage #
 ###############
 
-.rules/build:
+.rules/build/manual:
   rules:
     - !reference [.rules/mr/manual, rules]
     - !reference [.rules/web/auto, rules]
     - !reference [.rules/nightly, rules]
     - !reference [.rules/push-master, rules]
 
+.rules/build/auto:
+  rules:
+    - !reference [.rules/mr/auto, rules]
+    - !reference [.rules/web/auto, rules]
+    - !reference [.rules/push-master-or-feat, rules]
+
 build/linux:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/auto/nightly
+    - .rules/build/auto
     - .bench-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -34,7 +40,7 @@ build/linux/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/mr/auto/nightly
+    - .rules/build/auto
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
     - .build-artifacts
@@ -45,7 +51,7 @@ build/windows:
   extends:
     - .build
     - .tags/windows
-    - .rules/mr/auto/nightly
+    - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
@@ -56,7 +62,7 @@ build/windows/shared:
   extends:
     - .build
     - .tags/windows
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
@@ -67,7 +73,7 @@ build/macos/x86_64:
   extends:
     - .build
     - .tags/macos/x86_64
-    - .rules/mr/auto/nightly
+    - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -78,7 +84,7 @@ build/macos/arm:
   extends:
     - .build
     - .tags/macos/arm
-    - .rules/mr/auto/nightly
+    - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -89,7 +95,7 @@ build/macos/x86_64/shared:
   extends:
     - .build
     - .tags/macos/x86_64
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -100,7 +106,7 @@ build/macos/arm/shared:
   extends:
     - .build
     - .tags/macos/arm
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -111,7 +117,7 @@ build/android/shared:
   extends:
     - .build
     - .tags/linux
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -122,7 +128,7 @@ build/android/static/http-backend:
   extends:
     - .build
     - .tags/linux
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -134,7 +140,7 @@ build/ios:
     - .build
       # build everything on the fast one
     - .tags/macos/arm
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -146,7 +152,7 @@ build/ios/http-backend:
     - .build
       # build everything on the fast one
     - .tags/macos/arm
-    - .rules/build
+    - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
@@ -439,11 +445,14 @@ bridge/ruby/macos/arm:
 # check stage #
 ###############
 
+.rules/check:
+  rules: !reference [.rules/build/auto, rules]
+
 check/e2e:
   extends:
     - .check
     - .tags/linux
-    - .rules/mr/auto/nightly
+    - .rules/check
     - .before-script/bump-files-on-release/bash
   image: registry.gitlab.com/tankerhq/docker/e2e:latest
   needs:
