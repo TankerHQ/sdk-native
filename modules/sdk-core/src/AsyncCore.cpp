@@ -207,11 +207,11 @@ tc::future<void> AsyncCore::encrypt(
   });
 }
 
-tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
-                                    gsl::span<uint8_t const> encryptedData)
+tc::future<uint64_t> AsyncCore::decrypt(uint8_t* decryptedData,
+                                        gsl::span<uint8_t const> encryptedData)
 {
-  return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.decrypt(decryptedData, encryptedData));
+  return runResumable([=]() -> tc::cotask<uint64_t> {
+    TC_RETURN(TC_AWAIT(this->_core.decrypt(decryptedData, encryptedData)));
   });
 }
 
@@ -232,7 +232,9 @@ tc::future<std::vector<uint8_t>> AsyncCore::decrypt(
 {
   return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
     std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-    TC_AWAIT(_core.decrypt(decryptedData.data(), encryptedData));
+    auto const clearSize =
+        TC_AWAIT(_core.decrypt(decryptedData.data(), encryptedData));
+    decryptedData.resize(clearSize);
     TC_RETURN(std::move(decryptedData));
   });
 }

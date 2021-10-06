@@ -33,13 +33,6 @@ struct TestContext<EncryptorV2>
     return EncryptorV2::encrypt(encryptedData, clearData);
   }
 
-  void decrypt(std::vector<uint8_t>& decryptedData,
-               Crypto::SymmetricKey const& key,
-               gsl::span<std::uint8_t const> encryptedData)
-  {
-    AWAIT_VOID(EncryptorV2::decrypt(decryptedData.data(), key, encryptedData));
-  }
-
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
       0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -62,13 +55,6 @@ struct TestContext<EncryptorV3>
     return EncryptorV3::encrypt(encryptedData, clearData);
   }
 
-  void decrypt(std::vector<uint8_t>& decryptedData,
-               Crypto::SymmetricKey const& key,
-               gsl::span<std::uint8_t const> encryptedData)
-  {
-    AWAIT_VOID(EncryptorV3::decrypt(decryptedData.data(), key, encryptedData));
-  }
-
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
       0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -88,13 +74,6 @@ struct TestContext<EncryptorV5>
   {
     return EncryptorV5::encrypt(
         encryptedData, clearData, resourceId, keyVector);
-  }
-
-  void decrypt(std::vector<uint8_t>& decryptedData,
-               Crypto::SymmetricKey const& key,
-               gsl::span<std::uint8_t const> encryptedData)
-  {
-    AWAIT_VOID(EncryptorV5::decrypt(decryptedData.data(), key, encryptedData));
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -137,15 +116,6 @@ struct TestContext<EncryptorV6>
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV6::encrypt(encryptedData, clearData);
-  }
-
-  void decrypt(std::vector<uint8_t>& decryptedData,
-               Crypto::SymmetricKey const& key,
-               gsl::span<std::uint8_t const> encryptedData)
-  {
-    auto const decryptedSize =
-        AWAIT(EncryptorV6::decrypt(decryptedData.data(), key, encryptedData));
-    decryptedData.resize(decryptedSize);
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -192,8 +162,9 @@ void commonEncryptorTests(TestContext<T> ctx)
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-
-    ctx.decrypt(decryptedData, metadata.key, encryptedData);
+    auto const decryptedSize =
+        AWAIT(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    decryptedData.resize(decryptedSize);
 
     CHECK(clearData == decryptedData);
   }
@@ -206,7 +177,9 @@ void commonEncryptorTests(TestContext<T> ctx)
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    ctx.decrypt(decryptedData, metadata.key, encryptedData);
+    auto const decryptedSize =
+        AWAIT(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    decryptedData.resize(decryptedSize);
 
     CHECK(clearData == decryptedData);
   }
@@ -217,7 +190,9 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(
         T::decryptedSize(ctx.encryptedTestVector));
-    ctx.decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector);
+    auto const decryptedSize = AWAIT(T::decrypt(
+        decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector));
+    decryptedData.resize(decryptedSize);
 
     CHECK(decryptedData == clearData);
   }
@@ -241,7 +216,8 @@ void commonEncryptorTests(TestContext<T> ctx)
     ctx.encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        ctx.decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector),
+        T::decrypt(
+            decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector),
         Errc::DecryptionFailed);
   }
 

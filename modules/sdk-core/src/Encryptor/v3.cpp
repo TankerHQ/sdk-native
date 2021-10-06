@@ -56,7 +56,7 @@ tc::cotask<EncryptionMetadata> EncryptorV3::encrypt(
   TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
 }
 
-tc::cotask<void> EncryptorV3::decrypt(
+tc::cotask<std::uint64_t> EncryptorV3::decrypt(
     std::uint8_t* decryptedData,
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
@@ -66,7 +66,7 @@ tc::cotask<void> EncryptorV3::decrypt(
   auto const versionResult = Serialization::varint_read(encryptedData);
   auto const iv = Crypto::AeadIv{};
   Crypto::decryptAead(key, iv.data(), decryptedData, versionResult.second, {});
-  TC_RETURN();
+  TC_RETURN(decryptedSize(encryptedData));
 }
 
 ResourceId EncryptorV3::extractResourceId(
