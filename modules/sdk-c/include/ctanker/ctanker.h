@@ -505,7 +505,7 @@ CTANKER_EXPORT tanker_future_t* tanker_encrypt(
  * \param data Array of bytes to decrypt.
  * \param data_size Size of the \p data argument.
  *
- * \return An empty future.
+ * \return A future that contains the size of the clear data cast to a void*.
  * \throws TANKER_ERROR_DECRYPT_FAILED The buffer was corrupt or truncated
  * \throws TANKER_ERROR_RESOURCE_KEY_NOT_FOUND The key was not found
  */

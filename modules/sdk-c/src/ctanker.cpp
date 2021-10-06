@@ -562,7 +562,10 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(
-      tanker->decrypt(decrypted_data, gsl::make_span(data, data_size)));
+      tanker->decrypt(decrypted_data, gsl::make_span(data, data_size))
+          .and_then(tc::get_synchronous_executor(), [](auto clearSize) {
+            return reinterpret_cast<void*>(clearSize);
+          }));
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,
