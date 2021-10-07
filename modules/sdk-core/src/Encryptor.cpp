@@ -56,7 +56,7 @@ uint64_t encryptedSize(uint64_t clearSize)
 {
   if (isHugeClearData(clearSize))
     return EncryptorV4::encryptedSize(clearSize);
-  return EncryptorV3::encryptedSize(clearSize);
+  return EncryptorV6::encryptedSize(clearSize);
 }
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
@@ -73,7 +73,7 @@ tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,
 {
   if (isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
-  TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+  TC_RETURN(TC_AWAIT(EncryptorV6::encrypt(encryptedData, clearData)));
 }
 
 tc::cotask<uint64_t> decrypt(uint8_t* decryptedData,
