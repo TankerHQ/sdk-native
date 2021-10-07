@@ -186,10 +186,20 @@ bench/linux/master:
 # bridge-check stage #
 ######################
 
+.rules/bridge/auto:
+  rules:
+    - !reference [.rules/mr/auto, rules]
+    - !reference [.rules/web/auto, rules]
+
+.rules/bridge/manual:
+  rules:
+    - !reference [.rules/mr/manual, rules]
+    - !reference [.rules/web/auto, rules]
+
 bridge/compat:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/linux
@@ -203,7 +213,7 @@ bridge/compat:
 bridge/ios:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/ios
@@ -216,7 +226,7 @@ bridge/ios:
 bridge/android:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/android/shared
@@ -229,7 +239,7 @@ bridge/android:
 bridge/rust/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/linux
@@ -243,7 +253,7 @@ bridge/rust/linux:
 bridge/rust/windows:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/windows/shared
@@ -257,7 +267,7 @@ bridge/rust/windows:
 bridge/rust/ios:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/ios
@@ -271,7 +281,7 @@ bridge/rust/ios:
 bridge/rust/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
@@ -285,7 +295,7 @@ bridge/rust/macos/x86_64:
 bridge/rust/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm
@@ -299,7 +309,7 @@ bridge/rust/macos/arm:
 bridge/rust/android:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/auto
+    - .rules/bridge/auto
     - .variables/bridge-common
   needs:
     - build/android/static
@@ -313,7 +323,7 @@ bridge/rust/android:
 bridge/python/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/linux
@@ -327,7 +337,7 @@ bridge/python/linux:
 bridge/python/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64
@@ -341,7 +351,7 @@ bridge/python/macos/x86_64:
 bridge/python/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm
@@ -356,7 +366,7 @@ bridge/python/macos/arm:
 bridge/python/windows:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/windows
@@ -370,7 +380,7 @@ bridge/python/windows:
 bridge/ruby/linux:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/linux/shared
@@ -384,7 +394,7 @@ bridge/ruby/linux:
 bridge/ruby/macos/x86_64:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/x86_64/shared
@@ -398,7 +408,7 @@ bridge/ruby/macos/x86_64:
 bridge/ruby/macos/arm:
   extends:
     - .bridge-check
-    - .rules/bridge-ci/manual
+    - .rules/bridge/manual
     - .variables/bridge-common
   needs:
     - build/macos/arm/shared
