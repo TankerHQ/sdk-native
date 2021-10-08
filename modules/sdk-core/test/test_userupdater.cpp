@@ -110,7 +110,7 @@ TEST_CASE("UserUpdater")
       auto const userKeys = Updater::recoverUserKeys(
           selfdevice.keys().encryptionKeyPair, sealedKeys);
       CHECK_EQ(userKeys.size(), 5);
-      CHECK_EQ(userKeys.back(), alice.userKeys().back());
+      CHECK_EQ(userKeys, alice.userKeys());
     }
   }
 }
