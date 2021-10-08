@@ -16,6 +16,7 @@
 #include <doctest/doctest.h>
 #include <trompeloeil.hpp>
 
+#include <range/v3/algorithm/find.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
 
@@ -78,11 +79,7 @@ TEST_CASE("Can create a group with two users")
   REQUIRE(group.members().size() == 2);
   REQUIRE(group.provisionalMembers().size() == 0);
   auto const groupEncryptedKey =
-      std::find_if(group.members().begin(),
-                   group.members().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.userId() == user.id();
-                   });
+      ranges::find(group.members(), user.id(), &UserGroupMember2::userId);
   REQUIRE(groupEncryptedKey != group.members().end());
   CHECK(groupEncryptedKey->userPublicKey() == user.userKeys().back().publicKey);
   CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
@@ -125,12 +122,9 @@ TEST_CASE("Can create a group with two provisional users")
   REQUIRE(group.members().size() == 0);
   REQUIRE(group.provisionalMembers().size() == 2);
   auto const groupEncryptedKey =
-      std::find_if(group.provisionalMembers().begin(),
-                   group.provisionalMembers().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.appPublicSignatureKey() ==
-                            provisionalUser.appSignatureKeyPair().publicKey;
-                   });
+      ranges::find(group.provisionalMembers(),
+                   provisionalUser.appSignatureKeyPair().publicKey,
+                   &UserGroupProvisionalMember3::appPublicSignatureKey);
   REQUIRE(groupEncryptedKey != group.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
         provisionalUser.tankerSignatureKeyPair().publicKey);
@@ -224,11 +218,7 @@ TEST_CASE("Can add users to a group")
   REQUIRE(groupAdd.provisionalMembers().size() == 0);
 
   auto const groupEncryptedKey =
-      std::find_if(groupAdd.members().begin(),
-                   groupAdd.members().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.userId() == user.id();
-                   });
+      ranges::find(groupAdd.members(), user.id(), &UserGroupMember2::userId);
   REQUIRE(groupEncryptedKey != groupAdd.members().end());
   CHECK(groupEncryptedKey->userPublicKey() == user.userKeys().back().publicKey);
   CHECK(Crypto::sealDecrypt(groupEncryptedKey->encryptedPrivateEncryptionKey(),
@@ -267,12 +257,9 @@ TEST_CASE("Can add provisional users to a group")
   REQUIRE(groupAdd.provisionalMembers().size() == 2);
 
   auto const groupEncryptedKey =
-      std::find_if(groupAdd.provisionalMembers().begin(),
-                   groupAdd.provisionalMembers().end(),
-                   [&](auto const& groupEncryptedKey) {
-                     return groupEncryptedKey.appPublicSignatureKey() ==
-                            provisionalUser.appSignatureKeyPair().publicKey;
-                   });
+      ranges::find(groupAdd.provisionalMembers(),
+                   provisionalUser.appSignatureKeyPair().publicKey,
+                   &UserGroupProvisionalMember3::appPublicSignatureKey);
   REQUIRE(groupEncryptedKey != groupAdd.provisionalMembers().end());
   CHECK(groupEncryptedKey->tankerPublicSignatureKey() ==
         provisionalUser.tankerSignatureKeyPair().publicKey);
