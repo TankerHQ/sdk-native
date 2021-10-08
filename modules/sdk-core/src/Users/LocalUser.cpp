@@ -3,6 +3,8 @@
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Log/Log.hpp>
 
+#include <range/v3/algorithm/find.hpp>
+
 TLOG_CATEGORY(LocalUser);
 
 namespace Tanker::Users
@@ -42,11 +44,9 @@ std::optional<Crypto::EncryptionKeyPair> LocalUser::findKeyPair(
     Crypto::PublicEncryptionKey const& publicKey) const
 {
 
-  if (auto it = std::find_if(
-          std::begin(_userKeys),
-          std::end(_userKeys),
-          [&](auto const& kp) { return kp.publicKey == publicKey; });
-      it != std::end(_userKeys))
+  if (auto it = ranges::find(
+          _userKeys, publicKey, &Crypto::EncryptionKeyPair::publicKey);
+      it != _userKeys.end())
     return *it;
   else
     return std::nullopt;
