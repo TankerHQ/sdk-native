@@ -18,6 +18,7 @@
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <boost/container/flat_set.hpp>
+#include <range/v3/algorithm/find.hpp>
 #include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
@@ -40,10 +41,8 @@ findUserKeyPair(
 {
   for (auto const& gek : groupKeys)
   {
-    if (auto myKeyIt = ranges::find_if(userKeys,
-                                       [&](auto const& userKey) {
-                                         return gek.first == userKey.publicKey;
-                                       });
+    if (auto myKeyIt = ranges::find(
+            userKeys, gek.first, &Crypto::EncryptionKeyPair::publicKey);
         myKeyIt != userKeys.end())
       return std::make_pair(gek.second, *myKeyIt);
   }
@@ -73,9 +72,10 @@ tc::cotask<std::optional<Crypto::PrivateEncryptionKey>> decryptMyKey(
     Users::ILocalUserAccessor& localUserAccessor,
     UserGroupCreation::v2::Members const& groupKeys)
 {
-  auto const myKeysIt = ranges::find_if(groupKeys, [&](auto const& k) {
-    return k.userId() == localUserAccessor.get().userId();
-  });
+  auto const myId = localUserAccessor.get().userId();
+  auto const myKeysIt =
+      ranges::find(groupKeys, myId, &UserGroupMember2::userId);
+
   if (myKeysIt == groupKeys.end())
     TC_RETURN(std::nullopt);
 
@@ -305,9 +305,9 @@ public:
 private:
   Users::Device const& getAuthor(Trustchain::GroupAction const& action) const
   {
-    auto const authorIt = ranges::find_if(_authors, [&](auto const& device) {
-      return Trustchain::getAuthor(action).base() == device.id().base();
-    });
+    auto const author =
+        static_cast<Trustchain::DeviceId>(Trustchain::getAuthor(action));
+    auto const authorIt = ranges::find(_authors, author, &Users::Device::id);
     Verif::ensures(authorIt != _authors.end(),
                    Verif::Errc::InvalidAuthor,
                    "author not found");

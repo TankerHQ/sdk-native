@@ -60,10 +60,12 @@ TEST_CASE("Group V1")
 
   auto aliceLocalUser = static_cast<Users::LocalUser>(alice);
 
+  REQUIRE_CALL(aliceLocalUserAccessor, get())
+      .LR_RETURN(aliceLocalUser)
+      .TIMES(AT_LEAST(0));
+
   SUBCASE("GroupCreation")
   {
-    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
-
     SUBCASE("handles creation of a group I am part of")
     {
       auto const testGroup =
@@ -108,7 +110,6 @@ TEST_CASE("Group V1")
       auto const bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsersV1(bob.devices()[0], {alice});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           aliceLocalUserAccessor,
           aliceProvisionalUsersAccessor,
@@ -123,7 +124,6 @@ TEST_CASE("Group V1")
       auto const charlie = generator.makeUser("charlie");
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsersV1(bob.devices()[0], {charlie});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       REQUIRE_CALL(aliceLocalUserAccessor, pull())
           .LR_RETURN(makeCoTask<Users::LocalUser const&>(aliceLocalUser));
       // Storing it into a local variable is required to workaround a VS2019 ICE
@@ -150,9 +150,12 @@ TEST_CASE("Group V2")
 
   auto const aliceLocalUser = static_cast<Users::LocalUser>(alice);
 
+  REQUIRE_CALL(aliceLocalUserAccessor, get())
+      .LR_RETURN(aliceLocalUser)
+      .TIMES(AT_LEAST(0));
+
   SUBCASE("GroupCreation")
   {
-    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
 
     SUBCASE("handles creation of a group I am part of")
     {
@@ -204,6 +207,10 @@ TEST_CASE("Group V2")
 
   SUBCASE("GroupAddition")
   {
+    REQUIRE_CALL(aliceLocalUserAccessor, get())
+        .LR_RETURN(aliceLocalUser)
+        .TIMES(AT_LEAST(0));
+
     SUBCASE("Alice sees Bob being added to her group")
     {
       auto aliceGroup = generator.makeGroupV2(alice.devices().front(), {alice});
@@ -221,7 +228,6 @@ TEST_CASE("Group V2")
       auto const bobGroup = generator.makeGroupV2(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsersV2(bob.devices()[0], {alice});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       REQUIRE_CALL(aliceLocalUserAccessor,
                    pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
@@ -239,7 +245,6 @@ TEST_CASE("Group V2")
       auto const charlie = generator.makeUser("charlie");
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsersV2(bob.devices()[0], {charlie});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           aliceLocalUserAccessor,
           aliceProvisionalUsersAccessor,
@@ -281,10 +286,12 @@ TEST_CASE("Group V3")
 
   auto const aliceLocalUser = static_cast<Users::LocalUser>(alice);
 
+  REQUIRE_CALL(aliceLocalUserAccessor, get())
+      .LR_RETURN(aliceLocalUser)
+      .TIMES(AT_LEAST(0));
+
   SUBCASE("GroupCreation")
   {
-    REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
-
     SUBCASE("handles creation of a group I am part of")
     {
       REQUIRE_CALL(aliceLocalUserAccessor,
@@ -350,7 +357,6 @@ TEST_CASE("Group V3")
       auto const bobGroup = generator.makeGroup(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsers(bob.devices()[0], {alice});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       REQUIRE_CALL(aliceLocalUserAccessor,
                    pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
@@ -368,7 +374,6 @@ TEST_CASE("Group V3")
       auto const charlie = generator.makeUser("charlie");
       auto bobGroupUpdated = bobGroup;
       bobGroupUpdated.addUsers(bob.devices()[0], {charlie});
-      REQUIRE_CALL(aliceLocalUserAccessor, get()).LR_RETURN(aliceLocalUser);
       auto const resultGroup = AWAIT(GroupUpdater::applyUserGroupAddition(
           aliceLocalUserAccessor,
           aliceProvisionalUsersAccessor,
