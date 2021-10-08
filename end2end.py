@@ -49,6 +49,7 @@ def main() -> None:
 
     with tankerci.working_directory(base_path / "sdk-js"):
         tankerci.js.yarn_install()
+        tankerci.js.run_yarn("build:ts")
 
     with tankerci.working_directory(base_path / "sdk-python"):
         # artifacts are downloaded in sdk-native/package by gitlab
