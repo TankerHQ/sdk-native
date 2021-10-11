@@ -143,7 +143,7 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
                                          char const* app_id,
                                          tanker_app_update_options_t* coptions)
 {
-  if (coptions->version != 1)
+  if (coptions->version != 2)
     throw Exception(
         make_error_code(Errc::InvalidArgument),
         fmt::format("options version should be {:d} instead of {:d}",

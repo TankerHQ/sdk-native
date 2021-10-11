@@ -14,6 +14,8 @@ enum class Method
   VerificationKey,
   OidcIdToken,
   PhoneNumber,
+  PreverifiedEmail,
+  PreverifiedPhoneNumber,
 
   Last,
 };

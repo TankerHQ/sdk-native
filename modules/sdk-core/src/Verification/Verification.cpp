@@ -46,6 +46,10 @@ VerificationMethod VerificationMethod::from(Verification const& v)
           [](ByEmail const& v) -> VerificationMethod { return v.email; },
           [](ByPhoneNumber const& v) -> VerificationMethod {
             return v.phoneNumber;
+          },
+          [](PreverifiedEmail const& v) -> VerificationMethod { return v; },
+          [](PreverifiedPhoneNumber const& v) -> VerificationMethod {
+            return v;
           }},
       v);
 }
@@ -61,12 +65,20 @@ tc::cotask<void> decryptMethods(
     else if (auto encryptedPhoneNumber = method.get_if<EncryptedPhoneNumber>())
       method = TC_AWAIT(
           decryptMethod<PhoneNumber>(*encryptedPhoneNumber, userSecret));
+    else if (auto encryptedEmail = method.get_if<EncryptedPreverifiedEmail>())
+      method = TC_AWAIT(
+          decryptMethod<PreverifiedEmail>(*encryptedEmail, userSecret));
+    else if (auto encryptedPhoneNumber =
+                 method.get_if<EncryptedPreverifiedPhoneNumber>())
+      method = TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
+          *encryptedPhoneNumber, userSecret));
   }
 }
 
 void from_json(nlohmann::json const& j, VerificationMethod& m)
 {
   auto const value = j.at("type").get<std::string>();
+  auto const isPreverified = j.at("is_preverified").get<bool>();
   if (value == "passphrase")
     m = Passphrase{};
   else if (value == "verificationKey")
@@ -77,14 +89,29 @@ void from_json(nlohmann::json const& j, VerificationMethod& m)
   {
     auto const email = j.at("encrypted_email").get<std::string>();
     auto const decodedEmail = mgs::base64::decode(email);
-    m = EncryptedEmail{decodedEmail.begin(), decodedEmail.end()};
+    if (isPreverified)
+    {
+      m = EncryptedPreverifiedEmail{decodedEmail.begin(), decodedEmail.end()};
+    }
+    else
+    {
+      m = EncryptedEmail{decodedEmail.begin(), decodedEmail.end()};
+    }
   }
   else if (value == "phone_number")
   {
     auto const phoneNumber = j.at("encrypted_phone_number").get<std::string>();
     auto const decodedPhoneNumber = mgs::base64::decode(phoneNumber);
-    m = EncryptedPhoneNumber{decodedPhoneNumber.begin(),
-                             decodedPhoneNumber.end()};
+    if (isPreverified)
+    {
+      m = EncryptedPreverifiedPhoneNumber{decodedPhoneNumber.begin(),
+                                          decodedPhoneNumber.end()};
+    }
+    else
+    {
+      m = EncryptedPhoneNumber{decodedPhoneNumber.begin(),
+                               decodedPhoneNumber.end()};
+    }
   }
   else
     throw formatEx(Errors::Errc::UpgradeRequired,

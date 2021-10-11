@@ -46,7 +46,7 @@ Verification::Verification cverificationToVerification(
         Errc::InvalidArgument,
         "no verification method specified in the tanker_verification_t struct");
   }
-  if (cverification->version != 4)
+  if (cverification->version != 5)
   {
     throw formatEx(Errc::InvalidArgument,
                    "unsupported tanker_verification_t struct version: {}",
@@ -92,6 +92,20 @@ Verification::Verification cverificationToVerification(
         PhoneNumber{cverification->phone_number_verification.phone_number},
         VerificationCode{
             cverification->phone_number_verification.verification_code}};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL: {
+    if (!cverification->preverified_email)
+      throw formatEx(Errc::InvalidArgument, "preverified email field is null");
+    verification = PreverifiedEmail{cverification->preverified_email};
+    break;
+  }
+  case TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER: {
+    if (!cverification->preverified_phone_number)
+      throw formatEx(Errc::InvalidArgument,
+                     "preverified phone number field is null");
+    verification =
+        PreverifiedPhoneNumber{cverification->preverified_phone_number};
     break;
   }
   default:
@@ -165,9 +179,13 @@ STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_OIDC_ID_TOKEN,
                   Verification::Method::OidcIdToken);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PHONE_NUMBER,
                   Verification::Method::PhoneNumber);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL,
+                  Verification::Method::PreverifiedEmail);
+STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER,
+                  Verification::Method::PreverifiedPhoneNumber);
 STATIC_ENUM_CHECK(TANKER_VERIFICATION_METHOD_LAST, Verification::Method::Last);
 
-static_assert(TANKER_VERIFICATION_METHOD_LAST == 6,
+static_assert(TANKER_VERIFICATION_METHOD_LAST == 8,
               "Please update the assertions above if you added a new "
               "unlock method");
 

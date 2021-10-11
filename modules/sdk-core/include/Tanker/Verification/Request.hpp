@@ -36,12 +36,28 @@ struct EncryptedPhoneNumberVerification
   VerificationCode verificationCode;
 };
 
+struct EncryptedPreverifiedEmailVerification
+{
+  Crypto::Hash hashedEmail;
+  EncryptedEmail encryptedEmail;
+};
+
+struct EncryptedPreverifiedPhoneNumberVerification
+{
+  PhoneNumber phoneNumber;
+  Crypto::Hash userSalt;
+  std::optional<Crypto::Hash> provisionalSalt;
+  EncryptedPhoneNumber encryptedPhoneNumber;
+};
+
 using RequestVerificationMethods =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
                              OidcIdToken,
-                             EncryptedPhoneNumberVerification>;
+                             EncryptedPhoneNumberVerification,
+                             EncryptedPreverifiedEmailVerification,
+                             EncryptedPreverifiedPhoneNumberVerification>;
 
 struct RequestWithVerif
 {
