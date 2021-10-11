@@ -188,6 +188,8 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
     body["oidc_provider"] = *options.oidcProvider;
   if (options.sessionCertificates)
     body["session_certificates_enabled"] = *options.sessionCertificates;
+  if (options.preverifiedVerification)
+    body["preverified_verification_enabled"] = *options.preverifiedVerification;
   auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
   request.content(body.dump());
   request.set(authorization::bearer(_idToken));

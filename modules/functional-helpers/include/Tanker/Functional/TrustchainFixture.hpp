@@ -31,6 +31,7 @@ struct TrustchainFixture
                                              AppProvisionalUser const& prov);
   tc::cotask<void> enableOidc();
   tc::cotask<void> set2fa(bool enable);
+  tc::cotask<void> enablePreverifiedMethods();
 };
 }
 }

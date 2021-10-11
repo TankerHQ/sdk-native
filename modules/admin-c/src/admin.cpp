@@ -157,6 +157,8 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
     appOptions.oidcProvider = coptions->oidc_client_provider;
   if (coptions->session_certificates)
     appOptions.sessionCertificates = *coptions->session_certificates;
+  if (coptions->preverified_verification)
+    appOptions.preverifiedVerification = *coptions->preverified_verification;
   return makeFuture(
       tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
                            appID = std::string(app_id),

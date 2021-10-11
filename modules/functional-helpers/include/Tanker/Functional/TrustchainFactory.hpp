@@ -29,7 +29,10 @@ public:
       bool storePrivateKey = true);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
-  tc::cotask<void> set2fa(Tanker::Trustchain::TrustchainId const& id, bool enable);
+  tc::cotask<void> set2fa(Tanker::Trustchain::TrustchainId const& id,
+                          bool enable);
+  tc::cotask<void> enablePreverifiedMethods(
+      Tanker::Trustchain::TrustchainId const& id);
 
 private:
   std::unique_ptr<Admin::Client> _admin;

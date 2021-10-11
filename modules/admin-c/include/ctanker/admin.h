@@ -23,6 +23,7 @@ typedef struct tanker_app_update_options
   char const* oidc_client_id;
   char const* oidc_client_provider;
   bool const* session_certificates;
+  bool const* preverified_verification;
 } tanker_app_update_options_t;
 
 #define TANKER_APP_UPDATE_OPTIONS_INIT \

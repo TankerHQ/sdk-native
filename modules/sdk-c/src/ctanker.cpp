@@ -141,6 +141,19 @@ void cVerificationMethodFromVerificationMethod(
         static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PHONE_NUMBER);
     c_verif_method.value = duplicateString(phoneNumber->c_str());
   }
+  else if (auto const preverifiedEmail = method.get_if<PreverifiedEmail>())
+  {
+    c_verif_method.verification_method_type =
+        static_cast<uint8_t>(TANKER_VERIFICATION_METHOD_PREVERIFIED_EMAIL);
+    c_verif_method.value = duplicateString(preverifiedEmail->c_str());
+  }
+  else if (auto const preverifiedPhoneNumber =
+               method.get_if<PreverifiedPhoneNumber>())
+  {
+    c_verif_method.verification_method_type = static_cast<uint8_t>(
+        TANKER_VERIFICATION_METHOD_PREVERIFIED_PHONE_NUMBER);
+    c_verif_method.value = duplicateString(preverifiedPhoneNumber->c_str());
+  }
   else
     throw AssertionError("unknown verification type");
 }
