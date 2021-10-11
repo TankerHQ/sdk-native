@@ -118,7 +118,7 @@ build/android/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
 
-build/android/static:
+build/android/static/http-backend:
   extends:
     - .build
     - .tags/linux
@@ -127,7 +127,7 @@ build/android/static:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release-static --profile android-armv8-release-static --profile android-x86-release-static --profile android-x86_64-release-static
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release-static-http_backend --profile android-armv8-release-static-http_backend --profile android-x86-release-static-http_backend --profile android-x86_64-release-static-http_backend
 
 build/ios:
   extends:
@@ -140,6 +140,18 @@ build/ios:
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
+
+build/ios/http-backend:
+  extends:
+    - .build
+      # build everything on the fast one
+    - .tags/macos/arm
+    - .rules/build
+    - .build-artifacts
+    - .before-script/bump-files-on-release/bash
+    - .after-script/branch_name
+  script:
+    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release-http_backend --profile ios-simulator-x86-release-http_backend --profile ios-simulator-x86_64-release-http_backend --profile ios-armv7-release-http_backend --profile ios-armv7s-release-http_backend --profile ios-armv8-release-http_backend
 
 nightly/coverage:
   extends:
@@ -274,10 +286,10 @@ bridge/rust/ios:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
-    - build/ios
+    - build/ios/http-backend
   variables:
     UPSTREAM_JOB_TARGET: ios
-    UPSTREAM_JOB_NAME: build/ios
+    UPSTREAM_JOB_NAME: build/ios/http-backend
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
@@ -316,10 +328,10 @@ bridge/rust/android:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
-    - build/android/static
+    - build/android/static/http-backend
   variables:
     UPSTREAM_JOB_TARGET: android
-    UPSTREAM_JOB_NAME: build/android/static
+    UPSTREAM_JOB_NAME: build/android/static/http-backend
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
