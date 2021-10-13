@@ -11,7 +11,8 @@
 #include <Tanker/Users/User.hpp>
 #include <Tanker/Users/UserAccessor.hpp>
 
-#include <algorithm>
+#include <range/v3/algorithm/find.hpp>
+
 #include <vector>
 
 using namespace Tanker::Trustchain;
@@ -123,12 +124,8 @@ std::optional<Crypto::SealedPrivateEncryptionKey>
 findUserKeyFromDeviceSealedKeys(Trustchain::DeviceId const& deviceId,
                                 SealedKeysForDevices const& keyForDevices)
 {
-  auto const sealedPrivateUserKey =
-      std::find_if(keyForDevices.begin(),
-                   keyForDevices.end(),
-                   [&](auto const& encryptedUserKey) {
-                     return encryptedUserKey.first == deviceId;
-                   });
+  auto const sealedPrivateUserKey = ranges::find(
+      keyForDevices, deviceId, &SealedKeysForDevices::value_type::first);
   if (sealedPrivateUserKey == keyForDevices.end())
     return std::nullopt;
   return sealedPrivateUserKey->second;

@@ -11,6 +11,8 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/WaitFor.hpp>
 
+#include <range/v3/algorithm/find.hpp>
+
 #include <doctest/doctest.h>
 
 #include "CheckDecrypt.hpp"
@@ -50,12 +52,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   auto aliceSecondDevice = alice.makeDevice();
   auto secondSession = TC_AWAIT(aliceSecondDevice.open());
 
-  auto const secondDeviceId = secondSession->deviceId().get();
+  auto const b64SecondDeviceId = secondSession->deviceId().get();
 
   tc::promise<void> wasEmitted;
   secondSession->connectDeviceRevoked([&] { wasEmitted.set_value({}); });
 
-  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(secondDeviceId)));
+  REQUIRE_NOTHROW(TC_AWAIT(aliceSession->revokeDevice(b64SecondDeviceId)));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(secondSession->encrypt(make_buffer("will fail"))),
@@ -64,11 +66,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   CHECK_NOTHROW(TC_AWAIT(waitFor(wasEmitted)));
 
   auto const devices = TC_AWAIT(aliceSession->getDeviceList());
+  auto const secondDeviceId = base64DecodeArgument<Trustchain::DeviceId>(
+      b64SecondDeviceId, "b64SecondDeviceId");
   auto const secondDeviceInList =
-      std::find_if(devices.begin(), devices.end(), [&](auto const& device) {
-        return device.id() == base64DecodeArgument<Trustchain::DeviceId>(
-                                  secondDeviceId, "secondDeviceId");
-      });
+      ranges::find(devices, secondDeviceId, &Users::Device::id);
   REQUIRE(secondDeviceInList != devices.end());
   CHECK(secondDeviceInList->isRevoked());
 

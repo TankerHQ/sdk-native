@@ -17,6 +17,17 @@
 #include <Tanker/Verif/Errors/ErrcCategory.hpp>
 #include <Tanker/Verif/TrustchainCreation.hpp>
 
+#include <range/v3/action/reverse.hpp>
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/iterator/operations.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/all.hpp>
+#include <range/v3/view/concat.hpp>
+#include <range/v3/view/reverse.hpp>
+#include <range/v3/view/single.hpp>
+#include <range/v3/view/slice.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <numeric>
 #include <tuple>
 
@@ -46,6 +57,27 @@ Crypto::EncryptionKeyPair checkedDecrypt(
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "public and private user key do not match");
   return {pubKey, decryptedKey};
+}
+
+auto decryptCurrentDeviceUserKey(
+    Crypto::EncryptionKeyPair const& devEncKP,
+    gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys)
+{
+  auto const selfEncKeyIt =
+      ranges::find_if(encryptedUserKeys,
+                      &Crypto::PublicEncryptionKey::is_null,
+                      &Crypto::SealedEncryptionKeyPair::publicKey);
+
+  if (selfEncKeyIt == encryptedUserKeys.end())
+  {
+    throw Errors::AssertionError(
+        "Did not find the encrypted user key for our device");
+  }
+
+  return std::make_pair(
+      Crypto::makeEncryptionKeyPair(
+          Crypto::sealDecrypt(selfEncKeyIt->sealedPrivateKey, devEncKP)),
+      ranges::distance(encryptedUserKeys.begin(), selfEncKeyIt));
 }
 }
 
@@ -210,43 +242,31 @@ std::vector<Crypto::EncryptionKeyPair> recoverUserKeys(
     Crypto::EncryptionKeyPair const& devEncKP,
     gsl::span<Crypto::SealedEncryptionKeyPair const> encryptedUserKeys)
 {
-  auto const firstEncKeys = encryptedUserKeys.begin();
-  auto const lastEncKeys = encryptedUserKeys.end();
+  using namespace ranges;
 
-  // First we find our key in the encrypted userkeys.
-  auto selfEncKeyIt =
-      std::find_if(firstEncKeys, lastEncKeys, [](auto const& encryptedUserKey) {
-        return encryptedUserKey.publicKey.is_null();
-      });
+  auto [deviceUserKeyPair, index] =
+      decryptCurrentDeviceUserKey(devEncKP, encryptedUserKeys);
 
-  if (selfEncKeyIt == lastEncKeys)
-    throw Errors::AssertionError(
-        "Did not find the encrypted user key for our device");
+  // keys have to be decrypted in reverse order, as they are encrypted with
+  // the next key
+  // i.e. kp[0] is encrypted with kp[1]
 
-  std::vector<Crypto::EncryptionKeyPair> userKeys(encryptedUserKeys.size());
-  auto const selfUserKeyIt = userKeys.begin() + (selfEncKeyIt - firstEncKeys);
+  auto previousKeys =
+      views::slice(encryptedUserKeys, 0, index) | views::reverse |
+      views::transform([kp = deviceUserKeyPair](auto const& sealedKey) mutable {
+        kp = checkedDecrypt(sealedKey, kp);
+        return kp;
+      }) |
+      // if we try to use views::reverse,it will reverse the transform_view, but
+      // since everything is lazy it will transform from the first key to the
+      // last, not the opposite!
+      to<std::vector> | actions::reverse;
+  auto nextKeys = views::slice(encryptedUserKeys, index + 1, ranges::end) |
+                  views::transform(bind_back(checkedDecrypt, devEncKP));
 
-  // Then we decrypt our user key.
-  *selfUserKeyIt = Crypto::makeEncryptionKeyPair(
-      Crypto::sealDecrypt(selfEncKeyIt->sealedPrivateKey, devEncKP));
-
-  // Second we decrypt the user keys before our device creation starting
-  // with the current user key in reverse order.
-  std::transform(std::make_reverse_iterator(selfEncKeyIt),
-                 encryptedUserKeys.rend(),
-                 std::make_reverse_iterator(selfUserKeyIt),
-                 [kp = *selfUserKeyIt](auto const& sealedKey) mutable {
-                   kp = checkedDecrypt(sealedKey, kp);
-                   return kp;
-                 });
-  // Third we decrypt the user keys with our device keys.
-  std::transform(std::next(selfEncKeyIt),
-                 encryptedUserKeys.end(),
-                 std::next(selfUserKeyIt),
-                 [&](auto const& sealedKey) {
-                   return checkedDecrypt(sealedKey, devEncKP);
-                 });
-  return userKeys;
+  return views::concat(
+             previousKeys, views::single(deviceUserKeyPair), nextKeys) |
+         to<std::vector>;
 }
 
 std::tuple<Trustchain::Context,

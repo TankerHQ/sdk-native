@@ -8,6 +8,12 @@
 #include <Tanker/Verif/Errors/Errc.hpp>
 #include <Tanker/Verif/Helpers.hpp>
 
+#include <range/v3/action/sort.hpp>
+#include <range/v3/algorithm/adjacent_find.hpp>
+#include <range/v3/algorithm/count_if.hpp>
+#include <range/v3/algorithm/find.hpp>
+#include <range/v3/functional/not_fn.hpp>
+
 #include <cassert>
 
 using namespace Tanker::Trustchain::Actions;
@@ -22,8 +28,8 @@ namespace
 template <typename T>
 bool has_duplicates(std::vector<T> vect)
 {
-  std::sort(vect.begin(), vect.end());
-  return std::adjacent_find(vect.begin(), vect.end()) != vect.end();
+  vect |= ranges::actions::sort;
+  return ranges::adjacent_find(vect) != vect.end();
 }
 
 void verifySubAction(DeviceRevocation1 const& deviceRevocation,
@@ -58,10 +64,8 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
             "A revocation V2 previousPublicEncryptionKey should be the same as "
             "its user userKey");
   }
-  size_t const nbrDevicesNotRevoked = std::count_if(
-      user.devices().begin(), user.devices().end(), [](auto const& device) {
-        return !device.isRevoked();
-      });
+  auto const nbrDevicesNotRevoked = static_cast<std::size_t>(ranges::count_if(
+      user.devices(), ranges::not_fn(&Users::Device::isRevoked)));
   ensures(deviceRevocation.sealedUserKeysForDevices().size() ==
               nbrDevicesNotRevoked - 1,
           Errc::InvalidUserKeys,
@@ -74,11 +78,8 @@ void verifySubAction(DeviceRevocation2 const& deviceRevocation,
             "A revocation V2 should not have the target deviceId in the "
             "userKeys field");
 
-    ensures(std::find_if(user.devices().begin(),
-                         user.devices().end(),
-                         [&](auto const& device) {
-                           return userKey.first == device.id();
-                         }) != user.devices().end(),
+    ensures(ranges::find(user.devices(), userKey.first, &Users::Device::id) !=
+                user.devices().end(),
             Errc::InvalidUserKeys,
             "A revocation V2 should not have a key for another user's device");
   }
