@@ -149,14 +149,14 @@ static void share_withGroup(benchmark::State& state, std::string const& groupId)
 }
 BENCHMARK_CAPTURE(share_withGroup,
                   4000,
-                  "8EySxOOyXktHkSOOgGAKCBRvIalV2iFObPGHk1QU63Q=")
+                  "P3acrxU9OyIrRpxWVVnqT3y44vyBkAD9TOp+sO/lls4=")
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
 
 static constexpr auto share_withGroupMultiAuthor = share_withGroup;
 BENCHMARK_CAPTURE(share_withGroupMultiAuthor,
                   4000,
-                  "rD3EO/d4S8dI20aybJUZcGiACV5kD298K8szq6ZWm0w=")
+                  "+fsavkQBHO0SC8mWaKFTRgzVkY3bnrWK/Ksrssp4AH8=")
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
 
@@ -189,6 +189,6 @@ static void share_nocache_withGroup(benchmark::State& state,
 }
 BENCHMARK_CAPTURE(share_nocache_withGroup,
                   4000,
-                  "8EySxOOyXktHkSOOgGAKCBRvIalV2iFObPGHk1QU63Q=")
+                  "P3acrxU9OyIrRpxWVVnqT3y44vyBkAD9TOp+sO/lls4=")
     ->Unit(benchmark::kMillisecond)
     ->UseRealTime();
