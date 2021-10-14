@@ -219,9 +219,9 @@ bench/linux/master:
     - !reference [.rules/mr/manual, rules]
     - !reference [.rules/web/auto, rules]
 
-bridge/compat:
+bridge/compat/linux:
+  stage: bridge-check
   extends:
-    - .bridge-check
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
@@ -233,9 +233,37 @@ bridge/compat:
     project: TankerHQ/compatibility-tests
     strategy: depend
 
-bridge/ios:
+bridge/compat/ios:
+  stage: bridge-check
   extends:
-    - .bridge-check
+    - .rules/bridge/auto
+    - .variables/bridge-common
+  needs:
+    - build/ios/http-backend
+  variables:
+    UPSTREAM_JOB_NAME: build/ios/http-backend
+    UPSTREAM_JOB_TARGET: ios
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
+bridge/compat/android:
+  stage: bridge-check
+  extends:
+    - .rules/bridge/auto
+    - .variables/bridge-common
+  needs:
+    - build/android/static/http-backend
+  variables:
+    UPSTREAM_JOB_NAME: build/android/static/http-backend
+    UPSTREAM_JOB_TARGET: android
+  trigger:
+    project: TankerHQ/compatibility-tests
+    strategy: depend
+
+bridge/ios:
+  stage: bridge-check
+  extends:
     - .rules/bridge/auto
     - .variables/bridge-common
   needs:
