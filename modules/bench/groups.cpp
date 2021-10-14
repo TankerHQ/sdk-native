@@ -31,9 +31,7 @@ static void createGroup(benchmark::State& state)
         Tanker::SPublicIdentity(makePublicIdentity(benchAppId, i)));
 
   auto const identity = Tanker::Identity::createIdentity(
-      benchAppId,
-      benchAppSecret,
-      createRandomUserId());
+      benchAppId, benchAppSecret, createRandomUserId());
   auto device = Device(getTrustchain().url, benchAppId, identity);
   auto tanker = AWAIT(device.open());
 
@@ -60,9 +58,7 @@ static void updateGroupMembers_addMembers(benchmark::State& state)
         Tanker::SPublicIdentity(makePublicIdentity(benchAppId, i)));
 
   auto const identity = Tanker::Identity::createIdentity(
-      benchAppId,
-      benchAppSecret,
-      createRandomUserId());
+      benchAppId, benchAppSecret, createRandomUserId());
   auto device = Device(getTrustchain().url, benchAppId, identity);
   auto tanker = AWAIT(device.open());
   auto const groupId = AWAIT(tanker->createGroup({Tanker::SPublicIdentity(
@@ -94,9 +90,7 @@ static void updateGroupMembers_removeMembers(benchmark::State& state)
               std::back_inserter(publicIdentitiesToRemove));
 
   auto const identity = Tanker::Identity::createIdentity(
-      benchAppId,
-      benchAppSecret,
-      createRandomUserId());
+      benchAppId, benchAppSecret, createRandomUserId());
   auto device = Device(getTrustchain().url, benchAppId, identity);
   auto tanker = AWAIT(device.open());
 
@@ -131,9 +125,7 @@ static void share_withGroup(benchmark::State& state, std::string const& groupId)
 {
   tc::async_resumable([&]() -> tc::cotask<void> {
     auto const identity = Tanker::Identity::createIdentity(
-        benchAppId,
-        benchAppSecret,
-        createRandomUserId());
+        benchAppId, benchAppSecret, createRandomUserId());
     auto device = Device(getTrustchain().url, benchAppId, identity);
     auto tanker = TC_AWAIT(device.open());
 
@@ -179,9 +171,7 @@ static void share_nocache_withGroup(benchmark::State& state,
     {
       state.PauseTiming();
       auto const identity = Tanker::Identity::createIdentity(
-          benchAppId,
-          benchAppSecret,
-          createRandomUserId());
+          benchAppId, benchAppSecret, createRandomUserId());
       auto device = Device(getTrustchain().url, benchAppId, identity);
       auto tanker = TC_AWAIT(device.open());
       auto const encryptedData = TC_AWAIT(tanker->encrypt(
