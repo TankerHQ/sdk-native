@@ -1,19 +1,22 @@
 #include <Helpers/JsonFile.hpp>
 
-#include <boost/filesystem/string_file.hpp>
 #include <nlohmann/json.hpp>
+
+#include <fstream>
 
 namespace Tanker
 {
 nlohmann::json loadJson(std::string const& src)
 {
-  std::string content;
-  boost::filesystem::load_string_file(src, content);
-  return nlohmann::json::parse(content);
+  std::ifstream ifs(src);
+
+  return nlohmann::json::parse(ifs);
 }
 
 void saveJson(std::string const& dest, nlohmann::json const& json)
 {
-  boost::filesystem::save_string_file(dest, json.dump());
+  std::ofstream ofs(dest, std::ios::trunc);
+  auto dump = json.dump();
+  ofs.write(dump.data(), dump.size());
 }
 }

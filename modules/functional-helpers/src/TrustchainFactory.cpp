@@ -1,12 +1,12 @@
 #include <Tanker/Functional/TrustchainFactory.hpp>
 
+#include <Helpers/JsonFile.hpp>
 #include <Tanker/Admin/Client.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
 #include <Helpers/Config.hpp>
 
-#include <boost/filesystem/string_file.hpp>
 #include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
@@ -83,15 +83,13 @@ tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
 void TrustchainFactory::saveTrustchainConfig(std::string const& path,
                                              TrustchainConfig const& config)
 {
-  boost::filesystem::save_string_file(path, nlohmann::json(config).dump());
+  saveJson(path, config);
 }
 
 TrustchainConfig TrustchainFactory::loadTrustchainConfig(
     std::string const& path)
 {
-  std::string content;
-  boost::filesystem::load_string_file(path, content);
-  return nlohmann::json::parse(content).get<TrustchainConfig>();
+  return loadJson(path).get<TrustchainConfig>();
 }
 }
 }
