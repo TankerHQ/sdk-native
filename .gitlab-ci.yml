@@ -22,6 +22,7 @@ include:
   rules:
     - !reference [.rules/mr/auto, rules]
     - !reference [.rules/web/auto, rules]
+    - !reference [.rules/nightly, rules]
     - !reference [.rules/push-master-or-feat, rules]
 
 build/linux:
