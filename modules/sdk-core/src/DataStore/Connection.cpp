@@ -8,11 +8,11 @@
 #include <Tanker/Log/Log.hpp>
 
 #include <boost/algorithm/hex.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <sqlite3.h>
 #include <sqlpp11/ppgen.h>
 #include <sqlpp11/sqlpp11.h>
 
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
@@ -125,7 +125,7 @@ ConnPtr createConnection(std::string const& dbPath,
       db->execute("DETACH DATABASE encrypted");
       db.reset();
 
-      boost::filesystem::rename(dbPath + ".tmp", dbPath);
+      std::filesystem::rename(dbPath + ".tmp", dbPath);
 
       db = std::make_unique<Connection>(sqlpp::sqlite3::connection_config{
           dbPath.c_str(),
