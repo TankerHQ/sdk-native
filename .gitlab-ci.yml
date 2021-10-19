@@ -179,8 +179,8 @@ nightly/coverage:
 ###############
 
 bench/linux:
+  stage: bench
   extends:
-    - .bench
     - .rules/mr/manual
   tags:
     - GCE-Runner-001
@@ -190,11 +190,9 @@ bench/linux:
   script:
     - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
 
-bench/linux/master:
-  extends:
-    - .bench
+bench/linux/nightly:
+  stage: bench
   rules:
-    - !reference [.rules/push-master, rules]
     - !reference [.rules/nightly, rules]
   tags:
     - GCE-Runner-001
