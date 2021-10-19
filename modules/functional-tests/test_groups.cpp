@@ -38,6 +38,20 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Bob can decrypt when multiple key publishes are available")
+{
+  auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+  auto myGroup2 = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
+
+  auto const clearData = "my clear data is clear";
+  auto const encryptedData =
+      TC_AWAIT(encrypt(*aliceSession, clearData, {}, {myGroup, myGroup2}));
+
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
                   "Alice uses encrypt to share with two groups")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
