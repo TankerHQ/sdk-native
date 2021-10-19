@@ -183,7 +183,7 @@ bench/linux:
     - .bench
     - .rules/mr/manual
   tags:
-    - LinuxSlave-4
+    - GCE-Runner-001
   needs:
     - build/linux
     - build/linux/shared
@@ -197,7 +197,7 @@ bench/linux/master:
     - !reference [.rules/push-master, rules]
     - !reference [.rules/nightly, rules]
   tags:
-    - LinuxSlave-4
+    - GCE-Runner-001
   needs:
     - build/linux
     - build/linux/shared
