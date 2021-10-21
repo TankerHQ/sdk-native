@@ -223,11 +223,16 @@ struct tanker_encrypt_options
   char const* const* share_with_groups;
   uint32_t nb_groups;
   bool share_with_self;
+
+  // if padding_step == 0 then automatic padding
+  // else if padding_step == 1 then padding disabled
+  // else pad to a multiple of padding_step
+  uint32_t padding_step;
 };
 
 #define TANKER_ENCRYPT_OPTIONS_INIT \
   {                                 \
-    3, NULL, 0, NULL, 0, true       \
+    4, NULL, 0, NULL, 0, true, 0    \
   }
 
 struct tanker_sharing_options
@@ -451,8 +456,12 @@ CTANKER_EXPORT tanker_future_t* tanker_get_verification_methods(
 /*!
  * Get the encrypted size from the clear size.
  * Must be called before encrypt to allocate the encrypted buffer.
+ * \param clear_size The length of the clear data.
+ * \param padding_step The same padding step that should be provided in the
+ * encryption options.
  */
-CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size);
+CTANKER_EXPORT uint64_t tanker_encrypted_size(uint64_t clear_size,
+                                              uint32_t padding_step);
 
 /*!
  * Get the decrypted size.

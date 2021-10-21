@@ -478,10 +478,12 @@ tc::cotask<void> Core::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf)
+    ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
-  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
+  auto const metadata =
+      TC_AWAIT(Encryptor::encrypt(encryptedData, clearData, paddingStep));
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
   {
@@ -515,16 +517,18 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf)
+    ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "encrypt");
   std::vector<uint8_t> encryptedData(
-      Encryptor::encryptedSize(clearData.size()));
+      Encryptor::encryptedSize(clearData.size(), paddingStep));
   TC_AWAIT(encrypt(encryptedData.data(),
                    clearData,
                    spublicIdentities,
                    sgroupIds,
-                   shareWithSelf));
+                   shareWithSelf,
+                   paddingStep));
   TC_RETURN(std::move(encryptedData));
 }
 

@@ -41,7 +41,7 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
 
   if (options)
   {
-    if (options->version != 3)
+    if (options->version != 4)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,

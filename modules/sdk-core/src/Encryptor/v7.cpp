@@ -39,10 +39,12 @@ void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 }
 }
 
-std::uint64_t EncryptorV7::encryptedSize(std::uint64_t clearSize)
+std::uint64_t EncryptorV7::encryptedSize(
+    std::uint64_t clearSize, std::optional<std::uint32_t> paddingStep)
 {
   return versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize +
-         Crypto::encryptedSize(Padding::paddedFromClearSize(clearSize));
+         Crypto::encryptedSize(
+             Padding::paddedFromClearSize(clearSize, paddingStep));
 }
 
 std::uint64_t EncryptorV7::decryptedSize(
@@ -56,14 +58,15 @@ tc::cotask<EncryptionMetadata> EncryptorV7::encrypt(
     std::uint8_t* encryptedData,
     gsl::span<std::uint8_t const> clearData,
     ResourceId const& resourceId,
-    Crypto::SymmetricKey const& key)
+    Crypto::SymmetricKey const& key,
+    std::optional<std::uint32_t> paddingStep)
 {
   Serialization::varint_write(encryptedData, version());
   ranges::copy(resourceId, encryptedData + versionSize);
   auto const iv = encryptedData + versionSize + ResourceId::arraySize;
   gsl::span<std::uint8_t const> associatedData(encryptedData, iv);
   Crypto::randomFill(gsl::make_span(iv, Crypto::AeadIv::arraySize));
-  auto const paddedData = Padding::padClearData(clearData);
+  auto const paddedData = Padding::padClearData(clearData, paddingStep);
   Crypto::encryptAead(key,
                       iv,
                       encryptedData + versionSize + ResourceId::arraySize +

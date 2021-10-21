@@ -4,10 +4,10 @@
 #include <Tanker/EncryptionMetadata.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <gsl/gsl-lite.hpp>
-#include <tconcurrent/coroutine.hpp>
-
 #include <cstdint>
+#include <gsl/gsl-lite.hpp>
+#include <optional>
+#include <tconcurrent/coroutine.hpp>
 
 namespace Tanker
 {
@@ -19,14 +19,16 @@ public:
     return 7u;
   }
 
-  static std::uint64_t encryptedSize(std::uint64_t clearSize);
+  static std::uint64_t encryptedSize(std::uint64_t clearSize,
+                                     std::optional<std::uint32_t> paddingStep);
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
   static tc::cotask<EncryptionMetadata> encrypt(
       std::uint8_t* encryptedData,
       gsl::span<std::uint8_t const> clearData,
       Trustchain::ResourceId const& resourceId,
-      Crypto::SymmetricKey const& key);
+      Crypto::SymmetricKey const& key,
+      std::optional<std::uint32_t> paddingStep);
   static tc::cotask<std::uint64_t> decrypt(
       std::uint8_t* decryptedData,
       Crypto::SymmetricKey const& symmetricKey,

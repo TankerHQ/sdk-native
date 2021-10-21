@@ -199,11 +199,16 @@ tc::future<void> AsyncCore::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
-    Core::ShareWithSelf shareWithSelf)
+    Core::ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   return runResumable([=]() -> tc::cotask<void> {
-    TC_AWAIT(this->_core.encrypt(
-        encryptedData, clearData, publicIdentities, groupIds, shareWithSelf));
+    TC_AWAIT(this->_core.encrypt(encryptedData,
+                                 clearData,
+                                 publicIdentities,
+                                 groupIds,
+                                 shareWithSelf,
+                                 paddingStep));
   });
 }
 
@@ -219,11 +224,12 @@ tc::future<std::vector<uint8_t>> AsyncCore::encrypt(
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
-    Core::ShareWithSelf shareWithSelf)
+    Core::ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
-    TC_RETURN(TC_AWAIT(
-        _core.encrypt(clearData, publicIdentities, groupIds, shareWithSelf)));
+    TC_RETURN(TC_AWAIT(_core.encrypt(
+        clearData, publicIdentities, groupIds, shareWithSelf, paddingStep)));
   });
 }
 
@@ -365,9 +371,10 @@ void AsyncCore::setLogHandler(Log::LogHandler handler)
   });
 }
 
-uint64_t AsyncCore::encryptedSize(uint64_t clearSize)
+uint64_t AsyncCore::encryptedSize(uint64_t clearSize,
+                                  std::optional<uint32_t> paddingStep)
 {
-  return Encryptor::encryptedSize(clearSize);
+  return Encryptor::encryptedSize(clearSize, paddingStep);
 }
 
 expected<uint64_t> AsyncCore::decryptedSize(

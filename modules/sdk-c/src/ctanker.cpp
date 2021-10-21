@@ -2,6 +2,7 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Encryptor/Padding.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -21,6 +22,7 @@
 
 #include "CNetwork.hpp"
 
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -231,6 +233,14 @@ std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
   if (httpHandlersCount == 0)
     return nullptr;
   return std::make_unique<CTankerBackend>(options);
+}
+
+std::optional<uint32_t> intPaddingToOptPadding(uint32_t padding_step)
+{
+  if (padding_step == Padding::Auto)
+    return std::nullopt;
+
+  return padding_step;
 }
 }
 
@@ -525,9 +535,10 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
       }));
 }
 
-uint64_t tanker_encrypted_size(uint64_t clear_size)
+uint64_t tanker_encrypted_size(uint64_t clear_size, uint32_t padding_step)
 {
-  return AsyncCore::encryptedSize(clear_size);
+  auto const paddingStepOpt = intPaddingToOptPadding(padding_step);
+  return AsyncCore::encryptedSize(clear_size, paddingStepOpt);
 }
 
 tanker_expected_t* tanker_decrypted_size(uint8_t const* encrypted_data,
@@ -560,9 +571,10 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
   std::vector<SPublicIdentity> spublicIdentities{};
   std::vector<SGroupId> sgroupIds{};
   bool shareWithSelf = true;
+  std::optional<uint32_t> paddingStepOpt;
   if (options)
   {
-    if (options->version != 3)
+    if (options->version != 4)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,
@@ -573,13 +585,16 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
     sgroupIds =
         to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
     shareWithSelf = options->share_with_self;
+
+    paddingStepOpt = intPaddingToOptPadding(options->padding_step);
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->encrypt(encrypted_data,
                                     gsl::make_span(data, data_size),
                                     spublicIdentities,
                                     sgroupIds,
-                                    Core::ShareWithSelf{shareWithSelf}));
+                                    Core::ShareWithSelf{shareWithSelf},
+                                    paddingStepOpt));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,

@@ -1,3 +1,4 @@
+#include "Tanker/Crypto/Mac.hpp"
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/Padding.hpp>
@@ -12,10 +13,14 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 
 #include <cstdint>
 #include <doctest/doctest.h>
+#include <fmt/core.h>
 #include <gsl/gsl-lite.hpp>
+#include <optional>
+#include <range/v3/view/zip.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -33,6 +38,11 @@ struct TestContext<EncryptorV2>
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV2::encrypt(encryptedData, clearData);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV2::encryptedSize(clearSize);
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -57,6 +67,11 @@ struct TestContext<EncryptorV3>
     return EncryptorV3::encrypt(encryptedData, clearData);
   }
 
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV3::encryptedSize(clearSize);
+  }
+
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
       0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
       0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -76,6 +91,11 @@ struct TestContext<EncryptorV5>
   {
     return EncryptorV5::encrypt(
         encryptedData, clearData, resourceId, keyVector);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV5::encryptedSize(clearSize);
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -117,7 +137,21 @@ struct TestContext<EncryptorV6>
       std::uint8_t* encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
-    return EncryptorV6::encrypt(encryptedData, clearData);
+    return EncryptorV6::encrypt(encryptedData, clearData, paddingStep);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    auto res = EncryptorV6::encryptedSize(clearSize, paddingStep);
+
+    if (paddingStep)
+    {
+      auto const paddedSize = res - overhead;
+      CHECK(paddedSize >= clearSize + 1);
+      CHECK(paddedSize % *paddingStep == 0);
+    }
+
+    return res;
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -129,6 +163,12 @@ struct TestContext<EncryptorV6>
       0x72, 0x81, 0x47, 0xf0, 0xca, 0xda, 0x29, 0x99, 0x6e, 0x4,
       0x3e, 0x6,  0x35, 0x7e, 0xb4, 0x72, 0x4f, 0x5b, 0x2d, 0x66,
       0xfe, 0xa,  0x95, 0xba, 0x66, 0x4,  0x30};
+
+  std::optional<uint32_t> paddingStep;
+
+  static constexpr auto overhead =
+      Serialization::varint_size(EncryptorV6::version()) +
+      Crypto::Mac::arraySize;
 };
 
 template <>
@@ -139,7 +179,12 @@ struct TestContext<EncryptorV7>
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV7::encrypt(
-        encryptedData, clearData, resourceId, keyVector);
+        encryptedData, clearData, resourceId, keyVector, paddingStep);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV7::encryptedSize(clearSize, paddingStep);
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
@@ -172,6 +217,13 @@ struct TestContext<EncryptorV7>
       0x28,
       0x7e,
   }};
+
+  std::optional<uint32_t> paddingStep;
+
+  static auto constexpr overhead =
+      Serialization::varint_size(EncryptorV7::version()) +
+      Trustchain::ResourceId::arraySize + Crypto::AeadIv::arraySize +
+      Crypto::Mac::arraySize;
 };
 }
 
@@ -196,7 +248,7 @@ void testEncryptDecrypt(TestContext<T> ctx,
 {
   SUBCASE(testTitle.c_str())
   {
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(ctx.encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
@@ -253,9 +305,9 @@ void commonEncryptorTests(TestContext<T> ctx)
   SUBCASE("encrypt should never give the same result twice")
   {
     auto const clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData1(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData1(ctx.encryptedSize(clearData.size()));
     AWAIT(ctx.encrypt(encryptedData1.data(), clearData));
-    std::vector<uint8_t> encryptedData2(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData2(ctx.encryptedSize(clearData.size()));
     AWAIT(ctx.encrypt(encryptedData2.data(), clearData));
 
     CHECK(encryptedData1 != encryptedData2);
@@ -277,11 +329,85 @@ void commonEncryptorTests(TestContext<T> ctx)
   SUBCASE("extractResourceId should give the same result as encrypt")
   {
     auto const clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(ctx.encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
     CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
+  }
+}
+
+template <typename T>
+void paddedEncryptorTests(TestContext<T> ctx)
+{
+  for (auto paddingStep : {2, 5, 13})
+  {
+    auto const title = fmt::format(
+        "{} format should pass commonEncryptorTests for a paddingStep of {}",
+        T::version(),
+        paddingStep);
+
+    SUBCASE(title.c_str())
+    {
+      ctx.paddingStep = paddingStep;
+      commonEncryptorTests(ctx);
+    }
+  }
+
+  SUBCASE("encryptedSize should have a minimal value")
+  {
+    constexpr auto minimalPadding = Padding::minimalPadding();
+    ctx.paddingStep = std::nullopt;
+    for (auto clearSize : {0, 1, 8, 9})
+    {
+      CHECK_EQ(ctx.encryptedSize(clearSize), minimalPadding + ctx.overhead);
+    }
+  }
+
+  SUBCASE("encryptedSize should use the padme algorithm in auto padding")
+  {
+    auto const clearSizes = {10, 11, 42, 250};
+    auto const paddedSizes = {12, 12, 44, 256};
+    ctx.paddingStep = std::nullopt;
+    for (auto [clearSize, paddedSize] :
+         ranges::views::zip(clearSizes, paddedSizes))
+    {
+      CHECK_EQ(ctx.encryptedSize(clearSize), paddedSize + ctx.overhead);
+    }
+  }
+
+  SUBCASE("encryptedSize should use the paddingStep parameter correctly")
+  {
+    auto const clearSizes = {0, 2, 4, 5, 9, 10, 14, 40, 42, 45};
+    auto const paddedToStepFive = {5, 5, 5, 10, 10, 15, 15, 45, 45, 50};
+    ctx.paddingStep = 5;
+    for (auto [clearSize, paddedSize] :
+         ranges::views::zip(clearSizes, paddedToStepFive))
+    {
+      CHECK_EQ(ctx.encryptedSize(clearSize), paddedSize + ctx.overhead);
+    }
+  }
+
+  SUBCASE("encryptedSize should throw if given a bad paddingStep")
+  {
+    ctx.paddingStep = 0;
+    CHECK_THROWS_AS(ctx.encryptedSize(42), Errors::AssertionError);
+    ctx.paddingStep = 1;
+    CHECK_THROWS_AS(ctx.encryptedSize(42), Errors::AssertionError);
+  }
+
+  SUBCASE("encrypt should throw if given a bad paddingStep")
+  {
+    auto const clearData = make_buffer("this is the data to encrypt");
+    std::vector<uint8_t> encryptedData(clearData.size() + 1 + ctx.overhead);
+
+    ctx.paddingStep = 0;
+    CHECK_THROWS_AS(TC_AWAIT(ctx.encrypt(encryptedData.data(), clearData)),
+                    Errors::AssertionError);
+
+    ctx.paddingStep = 1;
+    CHECK_THROWS_AS(TC_AWAIT(ctx.encrypt(encryptedData.data(), clearData)),
+                    Errors::AssertionError);
   }
 }
 
@@ -420,30 +546,7 @@ TEST_CASE("EncryptorV6 tests")
   TestContext<EncryptorV6> ctx;
 
   commonEncryptorTests(ctx);
-
-  SUBCASE("encryptedSize should return the right size")
-  {
-    auto const versionSize = Serialization::varint_size(EncryptorV6::version());
-    constexpr auto MacSize = Crypto::Mac::arraySize;
-    constexpr auto overhead = versionSize + MacSize;
-
-    SUBCASE("padding should have a minimal padding")
-    {
-      constexpr auto minimalPadding = Padding::minimalPadding();
-      CHECK_EQ(EncryptorV6::encryptedSize(0), minimalPadding + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(1), minimalPadding + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(8), minimalPadding + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(9), minimalPadding + overhead);
-    }
-
-    SUBCASE("encryptedSize should use the padme algorithm")
-    {
-      CHECK_EQ(EncryptorV6::encryptedSize(10), 12 + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(11), 12 + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(42), 44 + overhead);
-      CHECK_EQ(EncryptorV6::encryptedSize(250), 256 + overhead);
-    }
-  }
+  paddedEncryptorTests(ctx);
 }
 
 TEST_CASE("EncryptorV7 tests")
@@ -451,33 +554,5 @@ TEST_CASE("EncryptorV7 tests")
   TestContext<EncryptorV7> ctx;
 
   commonEncryptorTests(ctx);
-
-  SUBCASE("encryptedSize should return the right size")
-  {
-    auto const versionSize = Serialization::varint_size(EncryptorV7::version());
-    constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;
-    constexpr auto IvSize = Crypto::AeadIv::arraySize;
-    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
-
-    constexpr auto overhead = versionSize + ResourceIdSize + IvSize + MacSize;
-
-    SUBCASE("v7 should have a minimal padding")
-    {
-      constexpr auto minimalEncryptedSize =
-          Padding::minimalPadding() + overhead;
-
-      CHECK_EQ(EncryptorV7::encryptedSize(0), minimalEncryptedSize);
-      CHECK_EQ(EncryptorV7::encryptedSize(1), minimalEncryptedSize);
-      CHECK_EQ(EncryptorV7::encryptedSize(8), minimalEncryptedSize);
-      CHECK_EQ(EncryptorV7::encryptedSize(9), minimalEncryptedSize);
-    }
-
-    SUBCASE("encryptedSize should use the padme algorithm")
-    {
-      CHECK_EQ(EncryptorV7::encryptedSize(10), 12 + overhead);
-      CHECK_EQ(EncryptorV7::encryptedSize(11), 12 + overhead);
-      CHECK_EQ(EncryptorV7::encryptedSize(42), 44 + overhead);
-      CHECK_EQ(EncryptorV7::encryptedSize(250), 256 + overhead);
-    }
-  }
+  paddedEncryptorTests(ctx);
 }

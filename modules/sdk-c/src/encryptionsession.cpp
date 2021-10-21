@@ -17,7 +17,7 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
   bool shareWithSelf = true;
   if (options)
   {
-    if (options->version != 3)
+    if (options->version != 4)
     {
       return makeFuture(tc::make_exceptional_future<void>(
           formatEx(Errc::InvalidArgument,

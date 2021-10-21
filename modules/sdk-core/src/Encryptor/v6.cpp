@@ -40,10 +40,11 @@ void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 }
 }
 
-std::uint64_t EncryptorV6::encryptedSize(std::uint64_t clearSize)
+std::uint64_t EncryptorV6::encryptedSize(
+    std::uint64_t clearSize, std::optional<std::uint32_t> paddingStep)
 {
-  return versionSize +
-         Crypto::encryptedSize(Padding::paddedFromClearSize(clearSize));
+  return versionSize + Crypto::encryptedSize(Padding::paddedFromClearSize(
+                           clearSize, paddingStep));
 }
 
 std::uint64_t EncryptorV6::decryptedSize(
@@ -54,13 +55,15 @@ std::uint64_t EncryptorV6::decryptedSize(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV6::encrypt(
-    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
+    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t const> clearData,
+    std::optional<std::uint32_t> paddingStep)
 {
   auto const endOfVersion =
       Serialization::varint_write(encryptedData, version());
   auto const key = Crypto::makeSymmetricKey();
   auto const iv = Crypto::AeadIv{};
-  auto const paddedData = Padding::padClearData(clearData);
+  auto const paddedData = Padding::padClearData(clearData, paddingStep);
   gsl::span<std::uint8_t const> additionalData(encryptedData, endOfVersion);
   auto const resourceId = Crypto::encryptAead(
       key, iv.data(), encryptedData + versionSize, paddedData, additionalData);
