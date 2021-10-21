@@ -163,7 +163,7 @@ reference = "gitlab"
 
 [[package]]
 name = "conan"
-version = "1.40.2"
+version = "1.41.0"
 description = "Conan C/C++ package manager"
 category = "main"
 optional = false
@@ -174,7 +174,6 @@ bottle = ">=0.12.8,<0.13"
 colorama = ">=0.3.3,<0.5.0"
 distro = ">=1.0.2,<=1.6.0"
 fasteners = ">=0.14.1"
-future = ">=0.16.0,<0.19.0"
 Jinja2 = ">=2.9,<3"
 node-semver = "0.6.1"
 patch-ng = ">=1.17.4,<1.18"
@@ -265,19 +264,6 @@ importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
 mccabe = ">=0.6.0,<0.7.0"
 pycodestyle = ">=2.7.0,<2.8.0"
 pyflakes = ">=2.3.0,<2.4.0"
-
-[package.source]
-type = "legacy"
-url = "https://gitlab.com/api/v4/projects/20917546/packages/pypi/simple"
-reference = "gitlab"
-
-[[package]]
-name = "future"
-version = "0.18.2"
-description = "Clean single-source support for Python 3 and 2"
-category = "main"
-optional = false
-python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [package.source]
 type = "legacy"
@@ -791,7 +777,7 @@ reference = "gitlab"
 
 [[package]]
 name = "tankerci"
-version = "2021.9.3602"
+version = "2021.10.3640"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -799,7 +785,7 @@ python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 cli-ui = ">=0.10.0,<0.11.0"
-conan = "1.40.2"
+conan = "1.41.0"
 psutil = ">=5.6.7,<6.0.0"
 python-dotenv = ">=0.13.0,<0.14.0"
 python-gitlab = ">=2.0.0,<3.0.0"
@@ -1045,7 +1031,7 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 conan = [
-    {file = "conan-1.40.2.tar.gz", hash = "sha256:2dde4e484261f588167a2789874d26f518f13dab3217062d5cecd89f106cd181"},
+    {file = "conan-1.41.0.tar.gz", hash = "sha256:8323810fe9252e98f3e0194f149e3c814ece7d98553b410b1ce52d562b66f109"},
 ]
 contextlib2 = [
     {file = "contextlib2-21.6.0-py2.py3-none-any.whl", hash = "sha256:3fbdb64466afd23abaf6c977627b75b6139a5a3e8ce38405c5b413aed7a0471f"},
@@ -1065,9 +1051,6 @@ fasteners = [
 flake8 = [
     {file = "flake8-3.9.2-py2.py3-none-any.whl", hash = "sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907"},
     {file = "flake8-3.9.2.tar.gz", hash = "sha256:07528381786f2a6237b061f6e96610a4167b226cb926e2aa2b6b1d78057c576b"},
-]
-future = [
-    {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 idna = [
     {file = "idna-3.2-py3-none-any.whl", hash = "sha256:14475042e284991034cb48e06f6851428fb14c4dc953acd9be9a5e95c7b6dd7a"},
@@ -1387,8 +1370,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-1.0.0.tar.gz", hash = "sha256:7aab4e8785764e970774f4f3c8fb23c5acebe99546769032f5372933dae0d741"},
 ]
 tankerci = [
-    {file = "tankerci-2021.9.3602-py3-none-any.whl", hash = "sha256:eab9b8ae2c8bbef22d623b88683c8673594bfdebf4c6d440727ace3d7aec296a"},
-    {file = "tankerci-2021.9.3602.tar.gz", hash = "sha256:2cd05df087e5b71048c195bc17f0d24ddaa9c423afaaa14ec6f69028da9e9341"},
+    {file = "tankerci-2021.10.3640-py3-none-any.whl", hash = "sha256:5a67314ed5a65df936db0ebabfc6acc6a2e41bba749cd030a6a6a221c17f5d31"},
+    {file = "tankerci-2021.10.3640.tar.gz", hash = "sha256:4da54194de8bf7e111d92f55ec042e6b86c7a32c7c61287d06c6c1cb3fbca4f1"},
 ]
 tbump = [
     {file = "tbump-6.3.1-py3-none-any.whl", hash = "sha256:60a8b0e36654c705a359b0a1af289eff2397d4482a348219e150ee1169d63c7f"},
