@@ -85,23 +85,24 @@ Core::Core(std::string url,
            SdkInfo info,
            std::string dataPath,
            std::string cachePath,
-           std::unique_ptr<Network::Backend> backend)
+           std::unique_ptr<Network::Backend> networkBackend)
   : _url(std::move(url)),
     _instanceId(createInstanceId()),
     _info(std::move(info)),
     _dataPath(std::move(dataPath)),
     _cachePath(std::move(cachePath)),
-    _backend(backend ? std::move(backend) :
+    _networkBackend(networkBackend ?
+                        std::move(networkBackend) :
 #if TANKER_WITH_FETCHPP
-                       std::make_unique<Network::FetchppBackend>(_info)
+                        std::make_unique<Network::FetchppBackend>(_info)
 #else
-                       nullptr
+                        nullptr
 #endif
-                 ),
+                        ),
     _session(std::make_shared<Session>(
-        createHttpClient(_url, _instanceId, _info, _backend.get())))
+        createHttpClient(_url, _instanceId, _info, _networkBackend.get())))
 {
-  if (!_backend)
+  if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "no built-in HTTP backend, please provide one");
 }
@@ -133,7 +134,7 @@ Status Core::status() const
 void Core::reset()
 {
   _session = std::make_shared<Session>(
-      createHttpClient(_url, _instanceId, _info, _backend.get()));
+      createHttpClient(_url, _instanceId, _info, _networkBackend.get()));
 }
 
 template <typename F>

@@ -271,13 +271,14 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       "writable_path is null");
     }
 
-    std::unique_ptr<Tanker::Network::Backend> backend;
+    std::unique_ptr<Tanker::Network::Backend> networkBackend;
     if (options->version == 3 && options->http_send_request &&
         options->http_cancel_request)
     {
-      backend = std::make_unique<CTankerBackend>(options->http_send_request,
-                                                 options->http_cancel_request,
-                                                 options->http_data);
+      networkBackend =
+          std::make_unique<CTankerBackend>(options->http_send_request,
+                                           options->http_cancel_request,
+                                           options->http_data);
     }
 
     try
@@ -290,7 +291,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                         {options->sdk_type, trustchainId, options->sdk_version},
                         options->writable_path,
                         options->writable_path,
-                        std::move(backend)));
+                        std::move(networkBackend)));
     }
     catch (mgs::exceptions::exception const&)
     {
