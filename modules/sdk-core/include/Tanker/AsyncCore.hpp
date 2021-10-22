@@ -52,7 +52,8 @@ public:
             SdkInfo info,
             std::string dataPath,
             std::string cachePath,
-            std::unique_ptr<Network::Backend> networkBackend = nullptr);
+            std::unique_ptr<Network::Backend> networkBackend = nullptr,
+            std::unique_ptr<DataStore::Backend> datastoreBackend = nullptr);
   ~AsyncCore();
 
   tc::future<void> destroy();

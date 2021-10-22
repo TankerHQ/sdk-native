@@ -2,6 +2,7 @@
 #define CTANKER_SDK_TANKER_TANKER_H
 
 #include <ctanker/async.h>
+#include <ctanker/datastore.h>
 #include <ctanker/export.h>
 #include <ctanker/network.h>
 
@@ -137,11 +138,17 @@ struct tanker_options
   tanker_http_send_request_t http_send_request;
   tanker_http_cancel_request_t http_cancel_request;
   void* http_data;
+
+  char const* cache_path; /*!< Must not be NULL. */
+  tanker_datastore_options_t datastore_options;
 };
 
-#define TANKER_OPTIONS_INIT                           \
-  {                                                   \
-    3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL \
+#define TANKER_OPTIONS_INIT                                  \
+  {                                                          \
+    4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
+    {                                                        \
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL               \
+    }                                                        \
   }
 
 struct tanker_email_verification
