@@ -53,7 +53,7 @@ public:
        SdkInfo info,
        std::string dataPath,
        std::string cachePath,
-       std::unique_ptr<Network::Backend> backend);
+       std::unique_ptr<Network::Backend> networkBackend);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
@@ -176,7 +176,7 @@ private:
   std::string _dataPath;
   std::string _cachePath;
   SessionClosedHandler _sessionClosed;
-  std::unique_ptr<Network::Backend> _backend;
+  std::unique_ptr<Network::Backend> _networkBackend;
   std::shared_ptr<Session> _session;
 };
 }
