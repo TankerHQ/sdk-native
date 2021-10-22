@@ -190,6 +190,26 @@ void unpaddedEncryptorTests(TestContext<T> ctx)
 }
 
 template <typename T>
+void testEncryptDecrypt(TestContext<T> ctx,
+                        std::string const& testTitle,
+                        std::vector<uint8_t> const& clearData)
+{
+  SUBCASE(testTitle.c_str())
+  {
+    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+
+    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
+
+    std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
+    auto const decryptedSize =
+        AWAIT(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    decryptedData.resize(decryptedSize);
+
+    CHECK(clearData == decryptedData);
+  }
+}
+
+template <typename T>
 void commonEncryptorTests(TestContext<T> ctx)
 {
   SUBCASE("decryptedSize should throw if the buffer is truncated")
@@ -199,34 +219,22 @@ void commonEncryptorTests(TestContext<T> ctx)
                                   Errc::InvalidArgument);
   }
 
-  SUBCASE("encrypt/decrypt should work with an empty buffer")
+  SUBCASE("encrypt/decrypt should work with all buffer sizes")
   {
-    std::vector<uint8_t> clearData;
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    auto const buffers = {{},
+                          {0x80},
+                          make_buffer("small"),
+                          make_buffer("this is the data to encrypt")};
 
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
+    auto const names = {"empty", "one char", "small", "medium"};
 
-    std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    auto const decryptedSize =
-        AWAIT(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
-    decryptedData.resize(decryptedSize);
+    for (auto const& [buffer, name] : ranges::views::zip(buffers, names))
+    {
+      auto const title =
+          fmt::format("encrypt/decrypt should work with a {} buffer", name);
 
-    CHECK(clearData == decryptedData);
-  }
-
-  SUBCASE("encrypt/decrypt should work with a normal buffer")
-  {
-    auto const clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
-
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
-
-    std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    auto const decryptedSize =
-        AWAIT(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
-    decryptedData.resize(decryptedSize);
-
-    CHECK(clearData == decryptedData);
+      testEncryptDecrypt(ctx, title, buffer);
+    }
   }
 
   SUBCASE("decrypt should work with a test vector")
