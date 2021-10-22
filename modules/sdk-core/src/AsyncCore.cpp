@@ -112,12 +112,12 @@ AsyncCore::AsyncCore(std::string url,
                      SdkInfo info,
                      std::string dataPath,
                      std::string cachePath,
-                     std::unique_ptr<Network::Backend> backend)
+                     std::unique_ptr<Network::Backend> networkBackend)
   : _core(std::move(url),
           std::move(info),
           std::move(dataPath),
           std::move(cachePath),
-          std::move(backend))
+          std::move(networkBackend))
 {
 }
 
