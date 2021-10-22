@@ -47,7 +47,7 @@ Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
     localUserStore(userSecret, db2.get()),
     groupStore(&db),
     resourceKeyStore(userSecret, db2.get()),
-    provisionalUserKeysStore(&db)
+    provisionalUserKeysStore(userSecret, db2.get())
 {
 }
 

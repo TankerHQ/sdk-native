@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/Types/ProvisionalUserKeys.hpp>
 
 #include <optional>
@@ -8,11 +10,6 @@
 
 namespace Tanker
 {
-namespace DataStore
-{
-class Database;
-}
-
 class ProvisionalUserKeysStore
 {
 public:
@@ -21,7 +18,8 @@ public:
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore const&) = delete;
   ProvisionalUserKeysStore& operator=(ProvisionalUserKeysStore&&) = delete;
 
-  ProvisionalUserKeysStore(DataStore::Database* dbConn);
+  ProvisionalUserKeysStore(Crypto::SymmetricKey const& userSecret,
+                           DataStore::DataStore* db);
 
   tc::cotask<void> putProvisionalUserKeys(
       Crypto::PublicSignatureKey const& appPublicSigKey,
@@ -35,6 +33,7 @@ public:
       Crypto::PublicSignatureKey const& appPublicSignatureKey) const;
 
 private:
-  DataStore::Database* _db;
+  Crypto::SymmetricKey _userSecret;
+  DataStore::DataStore* _db;
 };
 }
