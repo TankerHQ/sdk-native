@@ -9,6 +9,8 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
+#include <range/v3/view/zip.hpp>
+
 #include <catch2/catch.hpp>
 
 using namespace Tanker;
@@ -112,6 +114,20 @@ std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
   AWAIT_VOID(T::decrypt(decryptedData, key, encryptedData));
   return decryptedData;
 }
+
+template <typename T>
+void testEncryptDecrypt(TestContext<T> ctx,
+                        std::string const& testTitle,
+                        std::vector<uint8_t> const& clearData)
+{
+  DYNAMIC_SECTION(testTitle)
+  {
+    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
+    auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
+    CHECK(clearData == decryptedData);
+  }
+}
 }
 
 template <typename T>
@@ -134,28 +150,22 @@ void commonEncryptorTests(TestContext<T> ctx)
                                   Errc::InvalidArgument);
   }
 
-  SECTION("encrypt/decrypt should work with an empty buffer")
+  SECTION("encrypt/decrypt should work with all buffer sizes")
   {
-    std::vector<uint8_t> clearData;
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    auto const buffers = {{},
+                          {0x80},
+                          make_buffer("small"),
+                          make_buffer("this is the data to encrypt")};
 
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
+    auto const names = {"empty", "one char", "small", "medium"};
 
-    auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
+    for (auto const& [buffer, name] : ranges::views::zip(buffers, names))
+    {
+      auto const title =
+          fmt::format("encrypt/decrypt should work with a {} buffer", name);
 
-    CHECK(clearData == decryptedData);
-  }
-
-  SECTION("encrypt/decrypt should work with a normal buffer")
-  {
-    auto clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
-
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
-
-    auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
-
-    CHECK(clearData == decryptedData);
+      testEncryptDecrypt(ctx, title, buffer);
+    }
   }
 
   SECTION("decrypt should work with a test vector")
