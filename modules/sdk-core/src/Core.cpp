@@ -36,6 +36,7 @@
 #ifdef TANKER_WITH_FETCHPP
 #include <Tanker/Network/FetchppBackend.hpp>
 #endif
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
@@ -85,7 +86,8 @@ Core::Core(std::string url,
            SdkInfo info,
            std::string dataPath,
            std::string cachePath,
-           std::unique_ptr<Network::Backend> networkBackend)
+           std::unique_ptr<Network::Backend> networkBackend,
+           std::unique_ptr<DataStore::Backend> datastoreBackend)
   : _url(std::move(url)),
     _instanceId(createInstanceId()),
     _info(std::move(info)),
@@ -99,8 +101,12 @@ Core::Core(std::string url,
                         nullptr
 #endif
                         ),
+    _datastoreBackend(datastoreBackend ?
+                          std::move(datastoreBackend) :
+                          std::make_unique<DataStore::SqliteBackend>()),
     _session(std::make_shared<Session>(
-        createHttpClient(_url, _instanceId, _info, _networkBackend.get())))
+        createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+        _datastoreBackend.get()))
 {
   if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
@@ -134,7 +140,8 @@ Status Core::status() const
 void Core::reset()
 {
   _session = std::make_shared<Session>(
-      createHttpClient(_url, _instanceId, _info, _networkBackend.get()));
+      createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+      _datastoreBackend.get());
 }
 
 template <typename F>
