@@ -21,6 +21,7 @@ add_library(ctanker ${tankerlib_type}
   include/ctanker/groups.h
   include/ctanker/encryptionsession.h
   include/ctanker/network.h
+  include/ctanker/datastore.h
 
   src/stream.cpp
   src/ctanker.cpp
@@ -28,6 +29,7 @@ add_library(ctanker ${tankerlib_type}
   src/groups.cpp
   src/encryptionsession.cpp
   src/network.cpp
+  src/datastore.cpp
 )
 
 generate_export_header(ctanker
