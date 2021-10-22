@@ -6,7 +6,8 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
-#include <Helpers/TransformTo.hpp>
+
+#include <range/v3/range/conversion.hpp>
 
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
@@ -53,7 +54,7 @@ TEST_CASE("Revocation tests")
     bob.addDevice();
     auto const encryptionKeyPair = Crypto::makeEncryptionKeyPair();
     auto const encryptedPrivateKeys = Revocation::encryptPrivateKeyForDevices(
-        Test::transformTo<std::vector<Users::Device>>(bob.devices()),
+        bob.devices() | ranges::to<std::vector<Users::Device>>,
         bob.devices().front().id(),
         encryptionKeyPair.privateKey);
 

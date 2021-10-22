@@ -14,7 +14,6 @@ add_library(tankertesthelpers STATIC
   include/Helpers/UniquePath.hpp
   include/Helpers/Buffers.hpp
   include/Helpers/WaitForSignal.hpp
-  include/Helpers/TransformTo.hpp
   include/Helpers/WaitFor.hpp
   include/Helpers/JsonFile.hpp
 
