@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Errc.hpp>
+#include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
@@ -586,210 +587,245 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice can get a session token after registerIdentity with an email")
+void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<tc::cotask<VerificationCode>(Email const&)> getVerificationCode)
 {
-  TC_AWAIT(enable2fa());
+  SUBCASE("Alice can get a session token after registerIdentity with an email")
+  {
+    auto const aliceEmail = Email{"alice123.test@tanker.io"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const emailVerif = Verification::ByEmail{
+        aliceEmail, VerificationCode{aliceVerificationCode}};
 
-  auto const aliceEmail = Email{"alice123.test@tanker.io"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif = Verification::ByEmail{
-      aliceEmail, VerificationCode{aliceVerificationCode}};
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto token = TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
+    CHECK(token.has_value());
+    CHECK(mgs::base64::decode(*token).size() > 0);
+  }
 
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto token = TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
-  CHECK(token.has_value());
-  CHECK(mgs::base64::decode(*token).size() > 0);
+  SUBCASE("Alice can get a session token after registerIdentity with a passphrase")
+  {
+    auto const alicePass = Passphrase{"alicealice"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto token = TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+    CHECK(token.has_value());
+  }
+
+  SUBCASE("Cannot get a session token after registerIdentity with a verification key")
+  {
+    auto const aliceEmail = Email{"alice@wonder.land"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto verificationKey = TC_AWAIT(aliceSession->generateVerificationKey());
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(aliceSession->registerIdentity(verificationKey, withToken)),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("Can check a session token with the REST API")
+  {
+    auto const alicePass = Passphrase{"alicealice"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto sessionToken =
+        TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+
+    std::string expectedMethod = "passphrase";
+    auto method = TC_AWAIT(checkSessionToken(trustchain.id,
+                                            trustchain.authToken,
+                                            alice.spublicIdentity().string(),
+                                            *sessionToken,
+                                            expectedMethod));
+    CHECK(method == expectedMethod);
+  }
+
+  SUBCASE("Fails to check a session token with the wrong method")
+  {
+    auto const alicePass = Passphrase{"alicealice"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto sessionToken =
+        TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+
+    std::string wrongMethod = "oidc_id_token";
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(checkSessionToken(trustchain.id,
+                                  trustchain.authToken,
+                                  alice.spublicIdentity().string(),
+                                  *sessionToken,
+                                  wrongMethod)),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("Fails to check an invalid session token")
+  {
+    auto const alicePass = Passphrase{"alicealice"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
+    std::string sessionToken = "This ain't a valid token";
+
+    std::string verifMethod = "passphrase";
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(checkSessionToken(trustchain.id,
+                                  trustchain.authToken,
+                                  alice.spublicIdentity().string(),
+                                  sessionToken,
+                                  verifMethod)),
+        Errc::InvalidArgument);
+  }
+
+  SUBCASE("Can check a session token with multiple allowed methods")
+  {
+    auto const aliceEmail = Email{"aaalice@tanker.io"};
+    auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const emailVerif =
+        Verification::ByEmail{aliceEmail, VerificationCode{verificationCode}};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto sessionToken =
+        TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
+
+    nlohmann::json expectedMethods = {
+        {{"type", "passphrase"}},
+        {{"type", "email"}, {"email", aliceEmail.string()}},
+    };
+    auto method = TC_AWAIT(checkSessionToken(trustchain.id,
+                                            trustchain.authToken,
+                                            alice.spublicIdentity().string(),
+                                            *sessionToken,
+                                            expectedMethods));
+    CHECK(method == "email");
+  }
 }
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
-    "Alice can get a session token after registerIdentity with a passphrase")
+    "When session_certificates is enabled")
 {
-  TC_AWAIT(enable2fa());
+  TC_AWAIT(set2fa(true));
 
-  auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
+  SUBCASE("Alice can use verifyIdentity when Ready to get a session token")
+  {
+    auto const aliceEmail = Email{"alice456.test@tanker.io"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+    auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto emailVerif = Verification::ByEmail{
+        aliceEmail, VerificationCode{aliceVerificationCode}};
+    TC_AWAIT(aliceSession->registerIdentity(emailVerif));
+    REQUIRE(aliceSession->status() == Status::Ready);
 
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto token = TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
-  CHECK(token.has_value());
+    auto withToken = Core::VerifyWithToken::Yes;
+    aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    emailVerif = Verification::ByEmail{aliceEmail,
+                                      VerificationCode{aliceVerificationCode}};
+    auto token = TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken));
+    CHECK(token.has_value());
+  }
+
+  SUBCASE("Alice can use setVerificationMethod to get a session token")
+  {
+    auto const aliceEmail = Email{"alice@wonder.land"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+    auto const passVerif = Passphrase("testpass");
+    TC_AWAIT(aliceSession->registerIdentity(passVerif));
+
+    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const emailVerif = Verification::ByEmail{
+        aliceEmail, VerificationCode{aliceVerificationCode}};
+
+    auto withToken = Core::VerifyWithToken::Yes;
+    auto token =
+        TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken));
+    CHECK(token.has_value());
+  }
+
+  generateDefault2FATests(trustchain, [this](Email const& email) { return getVerificationCode(email); });
 }
 
 TEST_CASE_FIXTURE(
     TrustchainFixture,
-    "Cannot get a session token after registerIdentity with a verification key")
+    "When session_certificates is disabled")
 {
-  TC_AWAIT(enable2fa());
+  TC_AWAIT(set2fa(false));
 
-  auto const aliceEmail = Email{"alice@wonder.land"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
+  SUBCASE("Alice cannot use verifyIdentity when Ready to get a session token")
+  {
+    auto const aliceEmail = Email{"alice456.test@tanker.io"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+    auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto emailVerif = Verification::ByEmail{
+        aliceEmail, VerificationCode{aliceVerificationCode}};
+    TC_AWAIT(aliceSession->registerIdentity(emailVerif));
+    REQUIRE(aliceSession->status() == Status::Ready);
 
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto verificationKey = TC_AWAIT(aliceSession->generateVerificationKey());
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(aliceSession->registerIdentity(verificationKey, withToken)),
-      Errc::InvalidArgument);
-}
+    auto withToken = Core::VerifyWithToken::Yes;
+    aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    emailVerif = Verification::ByEmail{aliceEmail,
+                                      VerificationCode{aliceVerificationCode}};
+    TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+        TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken)),
+        AppdErrc::BadRequest,
+        "Session certificate is disabled");
+  }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice can use verifyIdentity when Ready to get a session token")
-{
-  TC_AWAIT(enable2fa());
+  SUBCASE("Alice cannot use setVerificationMethod to get a session token")
+  {
+    auto const aliceEmail = Email{"alice@wonder.land"};
+    auto alice = trustchain.makeUser();
+    auto aliceDevice = alice.makeDevice();
+    auto const aliceSession = aliceDevice.createCore();
+    TC_AWAIT(aliceSession->start(alice.identity));
+    auto const passVerif = Passphrase("testpass");
+    TC_AWAIT(aliceSession->registerIdentity(passVerif));
 
-  auto const aliceEmail = Email{"alice456.test@tanker.io"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-  auto aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto emailVerif = Verification::ByEmail{
-      aliceEmail, VerificationCode{aliceVerificationCode}};
-  TC_AWAIT(aliceSession->registerIdentity(emailVerif));
-  REQUIRE(aliceSession->status() == Status::Ready);
+    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const emailVerif = Verification::ByEmail{
+        aliceEmail, VerificationCode{aliceVerificationCode}};
 
-  auto withToken = Core::VerifyWithToken::Yes;
-  aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  emailVerif = Verification::ByEmail{aliceEmail,
-                                     VerificationCode{aliceVerificationCode}};
-  auto token = TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken));
-  CHECK(token.has_value());
-}
+    auto withToken = Core::VerifyWithToken::Yes;
+    TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+        TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken)),
+        AppdErrc::BadRequest,
+        "Session certificate is disabled");
+  }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can use setVerificationMethod to get a session token")
-{
-  TC_AWAIT(enable2fa());
-
-  auto const aliceEmail = Email{"alice@wonder.land"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-  auto const passVerif = Passphrase("testpass");
-  TC_AWAIT(aliceSession->registerIdentity(passVerif));
-
-  auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif = Verification::ByEmail{
-      aliceEmail, VerificationCode{aliceVerificationCode}};
-
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto token =
-      TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken));
-  CHECK(token.has_value());
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Can check a session token with the REST API")
-{
-  TC_AWAIT(enable2fa());
-
-  auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto sessionToken =
-      TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
-
-  std::string expectedMethod = "passphrase";
-  auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                           trustchain.authToken,
-                                           alice.spublicIdentity().string(),
-                                           *sessionToken,
-                                           expectedMethod));
-  CHECK(method == expectedMethod);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Fails to check a session token with the wrong method")
-{
-  TC_AWAIT(enable2fa());
-
-  auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto sessionToken =
-      TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
-
-  std::string wrongMethod = "oidc_id_token";
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(checkSessionToken(trustchain.id,
-                                 trustchain.authToken,
-                                 alice.spublicIdentity().string(),
-                                 *sessionToken,
-                                 wrongMethod)),
-      Errc::InvalidArgument);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture, "Fails to check an invalid session token")
-{
-  TC_AWAIT(enable2fa());
-
-  auto const alicePass = Passphrase{"alicealice"};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-
-  auto withToken = Core::VerifyWithToken::Yes;
-  TC_AWAIT(aliceSession->registerIdentity(alicePass, withToken));
-  std::string sessionToken = "This ain't a valid token";
-
-  std::string verifMethod = "passphrase";
-  TANKER_CHECK_THROWS_WITH_CODE(
-      TC_AWAIT(checkSessionToken(trustchain.id,
-                                 trustchain.authToken,
-                                 alice.spublicIdentity().string(),
-                                 sessionToken,
-                                 verifMethod)),
-      Errc::InvalidArgument);
-}
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Can check a session token with multiple allowed methods")
-{
-  TC_AWAIT(enable2fa());
-
-  auto const aliceEmail = Email{"aaalice@tanker.io"};
-  auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
-  auto const emailVerif =
-      Verification::ByEmail{aliceEmail, VerificationCode{verificationCode}};
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = aliceDevice.createCore();
-  TC_AWAIT(aliceSession->start(alice.identity));
-
-  auto withToken = Core::VerifyWithToken::Yes;
-  auto sessionToken =
-      TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
-
-  nlohmann::json expectedMethods = {
-      {{"type", "passphrase"}},
-      {{"type", "email"}, {"email", aliceEmail.string()}},
-  };
-  auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                           trustchain.authToken,
-                                           alice.spublicIdentity().string(),
-                                           *sessionToken,
-                                           expectedMethods));
-  CHECK(method == "email");
+  generateDefault2FATests(trustchain, [this](Email const& email) { return getVerificationCode(email); });
 }
