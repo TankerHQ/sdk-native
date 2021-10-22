@@ -89,8 +89,10 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::unique_ptr<Network::HttpClient> httpClient)
+Session::Session(std::unique_ptr<Network::HttpClient> httpClient,
+                 DataStore::Backend* datastoreBackend)
   : _httpClient(std::move(httpClient)),
+    _datastoreBackend(datastoreBackend),
     _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -120,9 +122,8 @@ tc::cotask<void> Session::openStorage(
       userSecret(),
       TC_AWAIT(DataStore::createDatabase(getDbPath(dataPath, userId()),
                                          userSecret())),
-      // TODO The backend should come from above
-      DataStore::SqliteBackend().open(getDb2Path(dataPath, userId()),
-                                      getDb2Path(cachePath, userId())));
+      _datastoreBackend->open(getDb2Path(dataPath, userId()),
+                              getDb2Path(cachePath, userId())));
 }
 
 Session::Storage const& Session::storage() const

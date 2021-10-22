@@ -18,6 +18,7 @@
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
 
+#include "CDataStore.hpp"
 #include "CNetwork.hpp"
 
 #include <string>
@@ -238,12 +239,12 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       throw Exception(make_error_code(Errc::InvalidArgument),
                       "options is null");
     }
-    if (options->version != 2 && options->version != 3)
+    if (options->version != 2 && options->version != 3 && options->version != 4)
     {
       throw Exception(
           make_error_code(Errc::InvalidArgument),
           fmt::format("options version should be {:d} instead of {:d}",
-                      3,
+                      4,
                       options->version));
     }
     if (options->app_id == nullptr)
@@ -272,13 +273,36 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     }
 
     std::unique_ptr<Tanker::Network::Backend> networkBackend;
-    if (options->version == 3 && options->http_send_request &&
+    if (options->version >= 3 && options->http_send_request &&
         options->http_cancel_request)
     {
       networkBackend =
           std::make_unique<CTankerBackend>(options->http_send_request,
                                            options->http_cancel_request,
                                            options->http_data);
+    }
+
+    std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
+    char const* cache_path = nullptr;
+    if (options->version >= 4)
+    {
+      if (options->cache_path == nullptr)
+      {
+        throw Exception(make_error_code(Errc::InvalidArgument),
+                        "cache_path is null");
+      }
+      cache_path = options->cache_path;
+
+      if (options->datastore_options.open && options->datastore_options.close &&
+          options->datastore_options.nuke &&
+          options->datastore_options.put_serialized_device &&
+          options->datastore_options.find_serialized_device &&
+          options->datastore_options.put_cache_values &&
+          options->datastore_options.find_cache_values)
+      {
+        storageBackend =
+            std::make_unique<CTankerStorageBackend>(options->datastore_options);
+      }
     }
 
     try
@@ -290,8 +314,9 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
                         options->writable_path,
-                        options->writable_path,
-                        std::move(networkBackend)));
+                        cache_path,
+                        std::move(networkBackend),
+                        std::move(storageBackend)));
     }
     catch (mgs::exceptions::exception const&)
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
@@ -53,7 +54,8 @@ public:
        SdkInfo info,
        std::string dataPath,
        std::string cachePath,
-       std::unique_ptr<Network::Backend> networkBackend);
+       std::unique_ptr<Network::Backend> networkBackend,
+       std::unique_ptr<DataStore::Backend> datastoreBackend);
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
@@ -177,6 +179,7 @@ private:
   std::string _cachePath;
   SessionClosedHandler _sessionClosed;
   std::unique_ptr<Network::Backend> _networkBackend;
+  std::unique_ptr<DataStore::Backend> _datastoreBackend;
   std::shared_ptr<Session> _session;
 };
 }

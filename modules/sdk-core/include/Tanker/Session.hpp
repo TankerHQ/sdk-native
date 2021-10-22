@@ -67,7 +67,8 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::unique_ptr<Network::HttpClient> client);
+  Session(std::unique_ptr<Network::HttpClient> client,
+          DataStore::Backend* datastoreBackend);
   ~Session();
 
   tc::cotask<void> stop();
@@ -105,6 +106,7 @@ public:
 
 private:
   std::unique_ptr<Network::HttpClient> _httpClient;
+  DataStore::Backend* _datastoreBackend;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;
