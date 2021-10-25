@@ -16,6 +16,8 @@
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <boost/container/flat_map.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <algorithm>
 
@@ -41,12 +43,10 @@ tc::cotask<DeviceMap> extractAuthors(
 {
   DeviceMap out;
 
-  std::vector<Trustchain::DeviceId> authors(entries.size());
-  std::transform(
-      std::begin(entries),
-      std::end(entries),
-      std::begin(authors),
-      [](auto const& action) { return Trustchain::DeviceId{action.author()}; });
+  auto authors = entries | ranges::views::transform([](auto const& action) {
+                   return Trustchain::DeviceId{action.author()};
+                 }) |
+                 ranges::to<std::vector>;
   auto const pullResult =
       TC_AWAIT(userAccessor.pull(authors, Users::IRequester::IsLight::Yes));
   if (!pullResult.notFound.empty())
