@@ -10,6 +10,9 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Users/LocalUser.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <sqlpp11/sqlite3/insert_or.h>
 
 TLOG_CATEGORY(LocalUserStore);
@@ -134,17 +137,15 @@ LocalUserStore::getUserKeyPairs() const
       select(tab.public_encryption_key, tab.private_encryption_key)
           .from(tab)
           .unconditionally());
-  std::vector<Crypto::EncryptionKeyPair> keys;
-  std::transform(rows.begin(),
-                 rows.end(),
-                 std::back_inserter(keys),
-                 [](auto&& row) -> Crypto::EncryptionKeyPair {
-                   return {DataStore::extractBlob<Crypto::PublicEncryptionKey>(
-                               row.public_encryption_key),
-                           DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
-                               row.private_encryption_key)};
-                 });
-  TC_RETURN(keys);
+
+  auto keys = rows | ranges::views::transform([](auto&& row) {
+                return Crypto::EncryptionKeyPair{
+                    DataStore::extractBlob<Crypto::PublicEncryptionKey>(
+                        row.public_encryption_key),
+                    DataStore::extractBlob<Crypto::PrivateEncryptionKey>(
+                        row.private_encryption_key)};
+              });
+  TC_RETURN(keys | ranges::to<std::vector>);
 }
 
 tc::cotask<Trustchain::DeviceId> LocalUserStore::getDeviceId() const
