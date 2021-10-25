@@ -16,6 +16,9 @@
 #include <mgs/base64.hpp>
 #include <mgs/base64url.hpp>
 #include <nlohmann/json.hpp>
+#include <range/v3/functional/compose.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 namespace Tanker::Users
 {
@@ -24,47 +27,29 @@ namespace
 std::vector<Trustchain::UserAction> fromBlocksToUserActions(
     gsl::span<std::string const> blocks)
 {
-  std::vector<Trustchain::UserAction> entries;
-  entries.reserve(blocks.size());
-  std::transform(
-      std::begin(blocks),
-      std::end(blocks),
-      std::back_inserter(entries),
-      [](auto const& block) {
-        return Trustchain::deserializeUserAction(mgs::base64::decode(block));
-      });
-
-  return entries;
+  return blocks |
+         ranges::views::transform(ranges::compose(
+             &Trustchain::deserializeUserAction, mgs::base64::lazy_decode())) |
+         ranges::to<std::vector>;
 }
 
 std::vector<Trustchain::KeyPublishAction> fromBlocksToKeyPublishActions(
     gsl::span<std::string const> blocks)
 {
-  std::vector<Trustchain::KeyPublishAction> entries;
-  entries.reserve(blocks.size());
-  std::transform(std::begin(blocks),
-                 std::end(blocks),
-                 std::back_inserter(entries),
-                 [](auto const& block) {
-                   return Trustchain::deserializeKeyPublishAction(
-                       mgs::base64::decode(block));
-                 });
-
-  return entries;
+  return blocks |
+         ranges::views::transform(
+             ranges::compose(&Trustchain::deserializeKeyPublishAction,
+                             mgs::base64::lazy_decode())) |
+         ranges::to<std::vector>;
 }
 
 template <typename T>
 std::vector<std::string> base64KeyPublishActions(std::vector<T> const& actions)
 {
-  std::vector<std::string> ret;
-  ret.reserve(actions.size());
-  std::transform(std::begin(actions),
-                 std::end(actions),
-                 std::back_inserter(ret),
-                 [](auto const& block) {
-                   return mgs::base64::encode(Serialization::serialize(block));
-                 });
-  return ret;
+  return actions | ranges::views::transform([](auto const& action) {
+           return mgs::base64::encode(Serialization::serialize(action));
+         }) |
+         ranges::to<std::vector>;
 }
 }
 
