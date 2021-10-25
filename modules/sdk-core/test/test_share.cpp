@@ -64,11 +64,10 @@ void assertKeyPublishToUsersTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].resourceId() ==
-          std::get<Trustchain::ResourceId>(resourceKey));
+    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
     CHECK_EQ(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
                                  userKeyPairs[i]),
-             std::get<Crypto::SymmetricKey>(resourceKey));
+             resourceKey.key);
   }
 }
 
@@ -85,14 +84,13 @@ void assertKeyPublishToUsersTargetedAt(
           provisionalUsers[i].appSignatureKeyPair.publicKey);
     CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
           provisionalUsers[i].tankerSignatureKeyPair.publicKey);
-    CHECK(keyPublishes[i].resourceId() ==
-          std::get<Trustchain::ResourceId>(resourceKey));
+    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
     CHECK_EQ(
         Crypto::sealDecrypt(
             Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
                                 provisionalUsers[i].tankerEncryptionKeyPair),
             provisionalUsers[i].appEncryptionKeyPair),
-        std::get<Crypto::SymmetricKey>(resourceKey));
+        resourceKey.key);
   }
 }
 
@@ -107,11 +105,10 @@ void assertKeyPublishToGroupTargetedAt(
   {
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
-    CHECK(keyPublishes[i].resourceId() ==
-          std::get<Trustchain::ResourceId>(resourceKey));
+    CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
     CHECK_EQ(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
                                  userKeyPairs[i]),
-             std::get<Crypto::SymmetricKey>(resourceKey));
+             resourceKey.key);
   }
 }
 }

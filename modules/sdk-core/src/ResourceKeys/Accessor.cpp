@@ -29,7 +29,7 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
   auto const result = TC_AWAIT(findKeys({resourceId}));
   if (result.empty())
     TC_RETURN(std::nullopt);
-  TC_RETURN(std::get<Crypto::SymmetricKey>(result[0]));
+  TC_RETURN(result[0].key);
 }
 
 // Try to get the key, in order:
@@ -74,9 +74,7 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
     std::transform(out.begin(),
                    out.end(),
                    std::back_inserter(got),
-                   [](auto const& result) {
-                     return std::get<Trustchain::ResourceId>(result);
-                   });
+                   [](auto const& result) { return result.resourceId; });
 
     std::sort(requested.begin(), requested.end());
     std::sort(got.begin(), got.end());

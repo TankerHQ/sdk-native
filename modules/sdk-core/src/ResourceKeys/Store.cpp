@@ -54,8 +54,7 @@ tc::cotask<KeysResult> Store::getKeys(
   KeysResult result;
   result.reserve(resourceIds.size());
   for (auto const& resourceId : resourceIds)
-    result.emplace_back(
-        std::make_tuple(TC_AWAIT(getKey(resourceId)), resourceId));
+    result.push_back(KeyResult{TC_AWAIT(getKey(resourceId)), resourceId});
   TC_RETURN(result);
 }
 
