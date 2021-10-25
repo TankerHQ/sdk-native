@@ -63,18 +63,17 @@ Manager::Manager(Users::ILocalUserAccessor* localUserAccessor,
 tc::cotask<std::optional<ProvisionalUserKeys>> Manager::fetchProvisionalKeys(
     Identity::SecretProvisionalIdentity const& provisionalIdentity)
 {
-  auto optProvisionalKey =
-      TC_AWAIT(_provisionalUserKeysStore
-                   ->findProvisionalUserKeysByAppPublicEncryptionKey(
-                       provisionalIdentity.appEncryptionKeyPair.publicKey));
+  auto optProvisionalKey = TC_AWAIT(
+      _provisionalUserKeysStore->findProvisionalUserKeysByAppPublicSignatureKey(
+          provisionalIdentity.appSignatureKeyPair.publicKey));
 
   if (!optProvisionalKey)
   {
     TC_AWAIT(_provisionalUsersAccessor->refreshKeys());
     optProvisionalKey =
         TC_AWAIT(_provisionalUserKeysStore
-                     ->findProvisionalUserKeysByAppPublicEncryptionKey(
-                         provisionalIdentity.appEncryptionKeyPair.publicKey));
+                     ->findProvisionalUserKeysByAppPublicSignatureKey(
+                         provisionalIdentity.appSignatureKeyPair.publicKey));
   }
   TC_RETURN(std::move(optProvisionalKey));
 }
