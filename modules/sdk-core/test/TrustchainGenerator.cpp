@@ -710,13 +710,8 @@ ProvisionalUser Generator::makeProvisionalUser(std::string const& email)
 std::vector<Trustchain::Actions::DeviceCreation> Generator::makeEntryList(
     std::initializer_list<Device> devices)
 {
-  std::vector<Trustchain::Actions::DeviceCreation> entries;
-  entries.reserve(devices.size());
-  std::transform(std::begin(devices),
-                 std::end(devices),
-                 std::back_inserter(entries),
-                 [&](auto&& e) { return e.action; });
-  return entries;
+  return devices | ranges::views::transform(&Device::action) |
+         ranges::to<std::vector>;
 }
 
 std::vector<Trustchain::UserAction> Generator::makeEntryList(
