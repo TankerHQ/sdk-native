@@ -5,6 +5,8 @@
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 
+#include <gsl/gsl-lite.hpp>
+
 #include <optional>
 
 namespace Tanker::Users
@@ -35,6 +37,12 @@ public:
       std::vector<Trustchain::ResourceId> const& resourceId);
 
 private:
+  tc::cotask<ResourceKeys::KeysResult> findOrFetchKeys(
+      gsl::span<Trustchain::ResourceId const>);
+  [[noreturn]] void throwForMissingKeys(
+      gsl::span<Trustchain::ResourceId const> resourceIds,
+      ResourceKeys::KeysResult const& result);
+
   Users::IRequester* _requester;
   Users::ILocalUserAccessor* _localUserAccessor;
   Groups::IAccessor* _groupAccessor;
