@@ -31,8 +31,8 @@ public:
       Crypto::PublicSignatureKey const& appPublicSigKey,
       Crypto::PublicSignatureKey const& tankerPublicSigKey) const;
   tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-  findProvisionalUserKeysByAppPublicEncryptionKey(
-      Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const;
+  findProvisionalUserKeysByAppPublicSignatureKey(
+      Crypto::PublicSignatureKey const& appPublicSignatureKey) const;
 
 private:
   DataStore::Database* _db;

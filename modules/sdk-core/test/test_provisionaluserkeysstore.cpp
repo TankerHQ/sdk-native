@@ -86,8 +86,7 @@ TEST_CASE("ProvisionalUserKeysStore")
     AWAIT_VOID(store.putProvisionalUserKeys(
         appPubKey, tankerPubKey, {appKeys, tankerKeys}));
     auto const gotKeyPair =
-        AWAIT(store.findProvisionalUserKeysByAppPublicEncryptionKey(
-            appKeys.publicKey));
+        AWAIT(store.findProvisionalUserKeysByAppPublicSignatureKey(appPubKey));
 
     REQUIRE_UNARY(gotKeyPair.has_value());
     CHECK_EQ(appKeys, gotKeyPair->appKeys);
