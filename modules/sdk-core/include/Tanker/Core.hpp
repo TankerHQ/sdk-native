@@ -51,7 +51,8 @@ public:
 
   Core(std::string url,
        SdkInfo info,
-       std::string writablePath,
+       std::string dataPath,
+       std::string cachePath,
        std::unique_ptr<Network::Backend> backend);
   ~Core();
 
@@ -172,7 +173,8 @@ private:
   std::string _url;
   std::string _instanceId;
   SdkInfo _info;
-  std::string _writablePath;
+  std::string _dataPath;
+  std::string _cachePath;
   SessionClosedHandler _sessionClosed;
   std::unique_ptr<Network::Backend> _backend;
   std::shared_ptr<Session> _session;

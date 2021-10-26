@@ -34,7 +34,7 @@ AsyncCorePtr Device::createCore()
 std::unique_ptr<AsyncCore> Device::createAsyncCore()
 {
   return std::make_unique<AsyncCore>(
-      _trustchainUrl, getSdkInfo(), _storage->path);
+      _trustchainUrl, getSdkInfo(), _storage->path, _storage->path);
 }
 
 SdkInfo Device::getSdkInfo()

@@ -50,7 +50,8 @@ public:
 
   AsyncCore(std::string url,
             SdkInfo info,
-            std::string writablePath,
+            std::string dataPath,
+            std::string cachePath,
             std::unique_ptr<Network::Backend> backend = nullptr);
   ~AsyncCore();
 
