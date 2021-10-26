@@ -30,12 +30,12 @@ std::string getDbPath(std::string const& writablePath,
   return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
 }
 
-std::string getDb2Path(std::string const& writablePath,
+std::string getDb2Path(std::string const& path,
                        Trustchain::UserId const& userId)
 {
-  if (writablePath == ":memory:")
-    return writablePath;
-  return fmt::format(FMT_STRING("{:s}/{:S}"), writablePath, userId);
+  if (path == ":memory:")
+    return path;
+  return fmt::format(FMT_STRING("{:s}/{:S}"), path, userId);
 }
 }
 
@@ -111,17 +111,18 @@ Network::HttpClient& Session::httpClient()
 
 tc::cotask<void> Session::openStorage(
     Identity::SecretPermanentIdentity const& identity,
-    std::string const& writablePath)
+    std::string const& dataPath,
+    std::string const& cachePath)
 {
   assert(!_identity && !_storage);
   _identity = identity;
   _storage = std::make_unique<Storage>(
       userSecret(),
-      TC_AWAIT(DataStore::createDatabase(getDbPath(writablePath, userId()),
+      TC_AWAIT(DataStore::createDatabase(getDbPath(dataPath, userId()),
                                          userSecret())),
       // TODO The backend should come from above
-      DataStore::SqliteBackend().open(getDb2Path(writablePath, userId()),
-                                      getDb2Path(writablePath, userId())));
+      DataStore::SqliteBackend().open(getDb2Path(dataPath, userId()),
+                                      getDb2Path(cachePath, userId())));
 }
 
 Session::Storage const& Session::storage() const

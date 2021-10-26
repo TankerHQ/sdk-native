@@ -83,12 +83,14 @@ Core::~Core() = default;
 
 Core::Core(std::string url,
            SdkInfo info,
-           std::string writablePath,
+           std::string dataPath,
+           std::string cachePath,
            std::unique_ptr<Network::Backend> backend)
   : _url(std::move(url)),
     _instanceId(createInstanceId()),
     _info(std::move(info)),
-    _writablePath(std::move(writablePath)),
+    _dataPath(std::move(dataPath)),
+    _cachePath(std::move(cachePath)),
     _backend(backend ? std::move(backend) :
 #if TANKER_WITH_FETCHPP
                        std::make_unique<Network::FetchppBackend>(_info)
@@ -227,7 +229,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  TC_AWAIT(_session->openStorage(identity, _writablePath));
+  TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
   auto const optPubUserEncKey =
       TC_AWAIT(_session->requesters().userStatus(_session->userId()));
   if (!optPubUserEncKey)
