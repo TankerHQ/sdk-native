@@ -79,7 +79,8 @@ public:
 
   tc::cotask<void> openStorage(
       Identity::SecretPermanentIdentity const& identity,
-      std::string const& writablePath);
+      std::string const& dataPath,
+      std::string const& cachePath);
   Storage const& storage() const;
   Storage& storage();
 

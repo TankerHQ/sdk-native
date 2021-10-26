@@ -289,6 +289,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
                         options->writable_path,
+                        options->writable_path,
                         std::move(backend)));
     }
     catch (mgs::exceptions::exception const&)
