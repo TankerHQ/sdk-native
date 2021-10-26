@@ -21,11 +21,12 @@ import tankerci.reporting
 import tankerci.benchmark
 
 
-def build_and_check(profiles: List[str], coverage: bool) -> None:
+def build(profiles: List[str], coverage: bool, test: bool) -> None:
     for profile in profiles:
         build_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage)
         report_size(profile, build_path)
-        tankerci.cpp.check(build_path, coverage=coverage)
+        if test:
+            tankerci.cpp.check(build_path, coverage=coverage)
     recipe = Path.cwd() / "conanfile.py"
     shutil.copy(recipe, Path.cwd() / "package")
 
@@ -243,7 +244,8 @@ def report_size(profile: str, build_path: Path) -> None:
         else:
             args.extend(["--target", "install"])
         tankerci.run(
-            *args, env={**os.environ, "DESTDIR": temp_path},
+            *args,
+            env={**os.environ, "DESTDIR": temp_path},
         )
         package_path = Path.cwd() / "package" / profile
         package_path_relative = package_path.relative_to(*package_path.parts[:1])
@@ -277,11 +279,12 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(title="subcommands", dest="command")
 
-    build_and_test_parser = subparsers.add_parser("build-and-test")
-    build_and_test_parser.add_argument(
+    build_parser = subparsers.add_parser("build")
+    build_parser.add_argument(
         "--profile", dest="profiles", action="append", required=True
     )
-    build_and_test_parser.add_argument("--coverage", action="store_true")
+    build_parser.add_argument("--coverage", action="store_true")
+    build_parser.add_argument("--test", action="store_true")
 
     benchmark_artifact_parser = subparsers.add_parser("benchmark-artifact")
     benchmark_artifact_parser.add_argument(
@@ -305,8 +308,8 @@ def main() -> None:
         tankerci.conan.set_home_isolation()
         tankerci.conan.update_config()
 
-    if args.command == "build-and-test":
-        build_and_check(args.profiles, args.coverage)
+    if args.command == "build":
+        build(args.profiles, args.coverage, args.test)
     elif args.command == "benchmark-artifact":
         benchmark_artifact(
             profiles=args.profiles,
