@@ -26,6 +26,10 @@ public:
   {
   }
 
+  StringWrapper(char const* s) : base_t(s)
+  {
+  }
+
   StringWrapper(base_t::value_type const* s, std::size_t size) : base_t(s, size)
   {
   }
