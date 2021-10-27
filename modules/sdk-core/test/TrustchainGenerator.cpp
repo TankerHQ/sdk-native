@@ -14,7 +14,8 @@
 #include <Tanker/Types/SUserId.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 
-#include <Helpers/TransformTo.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 
 #include <functional>
 #include <iterator>
@@ -112,7 +113,7 @@ User::operator Users::User() const
                      (userKeys().size() > 0) ?
                          std::make_optional(userKeys().back().publicKey) :
                          std::nullopt,
-                     transformTo<std::vector<Users::Device>>(devices()));
+                     devices() | ranges::to<std::vector<Users::Device>>);
 }
 
 User::operator Users::LocalUser() const
@@ -190,8 +191,8 @@ void User::addUserKey(Crypto::EncryptionKeyPair const& userKp)
 
 std::vector<Trustchain::Actions::DeviceCreation> User::entries() const
 {
-  return transformTo<std::vector<Trustchain::Actions::DeviceCreation>>(
-      devices(), [](auto&& device) { return device.action; });
+  return devices() | ranges::views::transform(&Device::action) |
+         ranges::to<std::vector>;
 }
 
 std::deque<Device> const& User::devices() const
@@ -212,7 +213,7 @@ Trustchain::Actions::DeviceRevocation2 User::revokeDevice(Device& target)
       target.id(),
       _tid,
       *this,
-      transformTo<std::vector<Users::Device>>(devices()),
+      devices() | ranges::to<std::vector<Users::Device>>,
       newUserKey);
   addUserKey(newUserKey);
   return action;
@@ -264,7 +265,7 @@ auto createGroupActionV1(Trustchain::TrustchainId const& tid,
                          std::vector<User> const& users)
 {
   auto const keysForUsers = Groups::generateGroupKeysForUsers1(
-      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+      encKp.privateKey, users | ranges::to<std::vector<Users::User>>);
   return Groups::createUserGroupCreationV1Action(
       sigKp,
       encKp.publicKey,
@@ -282,10 +283,10 @@ auto createGroupActionV2(Trustchain::TrustchainId const& tid,
                          std::vector<ProvisionalUser> const& provisionalUsers)
 {
   auto groupMembers = Groups::generateGroupKeysForUsers2(
-      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+      encKp.privateKey, users | ranges::to<std::vector<Users::User>>);
   auto groupProvisionalMembers = Groups::generateGroupKeysForProvisionalUsers2(
       encKp.privateKey,
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+      provisionalUsers | ranges::to<std::vector<ProvisionalUsers::PublicUser>>);
 
   return Groups::createUserGroupCreationV2Action(
       sigKp,
@@ -305,10 +306,10 @@ auto createGroupActionV3(Trustchain::TrustchainId const& tid,
                          std::vector<ProvisionalUser> const& provisionalUsers)
 {
   auto groupMembers = Groups::generateGroupKeysForUsers2(
-      encKp.privateKey, transformTo<std::vector<Users::User>>(users));
+      encKp.privateKey, users | ranges::to<std::vector<Users::User>>);
   auto groupProvisionalMembers = Groups::generateGroupKeysForProvisionalUsers3(
       encKp.privateKey,
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+      provisionalUsers | ranges::to<std::vector<ProvisionalUsers::PublicUser>>);
 
   return Groups::createUserGroupCreationV3Action(
       sigKp,
@@ -447,7 +448,7 @@ Trustchain::Actions::UserGroupAddition Group::addUsersV1(
     Device const& author, std::vector<User> const& users)
 {
   auto const keysForUsers = Groups::generateGroupKeysForUsers1(
-      currentEncKp().privateKey, transformTo<std::vector<Users::User>>(users));
+      currentEncKp().privateKey, users | ranges::to<std::vector<Users::User>>);
 
   auto const groupAddition = Groups::createUserGroupAdditionV1Action(
       currentSigKp(),
@@ -467,10 +468,10 @@ Trustchain::Actions::UserGroupAddition Group::addUsersV2(
 {
   auto members = Groups::generateGroupKeysForUsers2(
       currentEncKp().privateKey,
-      transformTo<std::vector<Users::User>>(newUsers));
+      newUsers | ranges::to<std::vector<Users::User>>);
   auto provisionalMembers = Groups::generateGroupKeysForProvisionalUsers2(
       currentEncKp().privateKey,
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers));
+      provisionalUsers | ranges::to<std::vector<ProvisionalUsers::PublicUser>>);
 
   auto const groupAddition = Groups::createUserGroupAdditionV2Action(
       currentSigKp(),
@@ -490,8 +491,8 @@ Trustchain::Actions::UserGroupAddition Group::addUsers(
     std::vector<ProvisionalUser> const& provisionalUsers)
 {
   auto const groupAddition = Groups::Manager::makeUserGroupAdditionAction(
-      transformTo<std::vector<Users::User>>(newUsers),
-      transformTo<std::vector<ProvisionalUsers::PublicUser>>(provisionalUsers),
+      newUsers | ranges::to<std::vector<Users::User>>,
+      provisionalUsers | ranges::to<std::vector<ProvisionalUsers::PublicUser>>,
       *this,
       _tid,
       author.id(),
@@ -709,13 +710,8 @@ ProvisionalUser Generator::makeProvisionalUser(std::string const& email)
 std::vector<Trustchain::Actions::DeviceCreation> Generator::makeEntryList(
     std::initializer_list<Device> devices)
 {
-  std::vector<Trustchain::Actions::DeviceCreation> entries;
-  entries.reserve(devices.size());
-  std::transform(std::begin(devices),
-                 std::end(devices),
-                 std::back_inserter(entries),
-                 [&](auto&& e) { return e.action; });
-  return entries;
+  return devices | ranges::views::transform(&Device::action) |
+         ranges::to<std::vector>;
 }
 
 std::vector<Trustchain::UserAction> Generator::makeEntryList(

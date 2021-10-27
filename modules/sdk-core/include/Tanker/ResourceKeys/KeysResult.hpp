@@ -8,6 +8,14 @@
 
 namespace Tanker::ResourceKeys
 {
-using KeyResult = std::tuple<Crypto::SymmetricKey, Trustchain::ResourceId>;
+struct KeyResult
+{
+  Crypto::SymmetricKey key;
+  Trustchain::ResourceId resourceId;
+};
+
+bool operator==(KeyResult const& lhs, KeyResult const& rhs);
+bool operator!=(KeyResult const& lhs, KeyResult const& rhs);
+
 using KeysResult = std::vector<KeyResult>;
 }

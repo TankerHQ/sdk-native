@@ -6,6 +6,10 @@
 #include <string>
 #include <vector>
 
+#include <gsl/gsl-lite.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 template <typename Str = char*>
 Str duplicateString(std::string const& str)
 {
@@ -16,11 +20,5 @@ Str duplicateString(std::string const& str)
 template <typename T = std::string>
 inline auto to_vector(char const* const* tab, uint64_t size)
 {
-  std::vector<T> res;
-  res.reserve(size);
-  std::transform(
-      tab, std::next(tab, size), std::back_inserter(res), [](auto&& elem) {
-        return T{elem};
-      });
-  return res;
+  return ranges::make_subrange(tab, tab + size) | ranges::to<std::vector<T>>;
 }

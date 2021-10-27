@@ -7,6 +7,11 @@
 #include <Tanker/Users/ILocalUserAccessor.hpp>
 #include <Tanker/Users/IRequester.hpp>
 
+#include <range/v3/action/sort.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/set_algorithm.hpp>
+#include <range/v3/view/transform.hpp>
+
 TLOG_CATEGORY(ResourceKeys::Accessor);
 
 namespace Tanker::ResourceKeys
@@ -23,27 +28,26 @@ Accessor::Accessor(Users::IRequester* requester,
     _resourceKeyStore(resourceKeyStore)
 {
 }
+
 tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
     Trustchain::ResourceId const& resourceId)
 {
   auto const result = TC_AWAIT(findKeys({resourceId}));
   if (result.empty())
     TC_RETURN(std::nullopt);
-  TC_RETURN(std::get<Crypto::SymmetricKey>(result[0]));
+  TC_RETURN(result[0].key);
 }
 
-// Try to get the key, in order:
-// - from the resource key store
-// - from the tanker server
-// In all cases, we put the key in the resource key store
-tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
-    std::vector<Trustchain::ResourceId> const& resourceIds)
+tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
+    gsl::span<Trustchain::ResourceId const> resourceIds)
 {
   ResourceKeys::KeysResult out;
+
   std::vector<Trustchain::ResourceId> notFound;
+
   for (auto const& resourceId : resourceIds)
   {
-    auto const key = (TC_AWAIT(_resourceKeyStore->findKey(resourceId)));
+    auto const key = TC_AWAIT(_resourceKeyStore->findKey(resourceId));
     if (key)
       out.push_back({*key, resourceId});
     else
@@ -64,34 +68,32 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
       out.push_back(result);
     }
   }
+  TC_RETURN(std::move(out));
+}
 
-  if (out.size() != resourceIds.size())
-  {
-    std::vector<Trustchain::ResourceId> requested = resourceIds;
-    std::vector<Trustchain::ResourceId> got;
-    std::vector<Trustchain::ResourceId> missing;
+[[noreturn]] void Accessor::throwForMissingKeys(
+    gsl::span<Trustchain::ResourceId const> resourceIds,
+    ResourceKeys::KeysResult const& result)
+{
+  auto const requested =
+      resourceIds | ranges::to<std::vector> | ranges::actions::sort;
+  auto const got = result | ranges::views::transform(&KeyResult::resourceId) |
+                   ranges::to<std::vector> | ranges::actions::sort;
+  auto const missing = ranges::views::set_difference(requested, got);
 
-    std::transform(out.begin(),
-                   out.end(),
-                   std::back_inserter(got),
-                   [](auto const& result) {
-                     return std::get<Trustchain::ResourceId>(result);
-                   });
+  throw formatEx(Errors::Errc::InvalidArgument,
+                 "can't find keys for resource IDs: {:s}",
+                 fmt::join(missing, ", "));
+}
 
-    std::sort(requested.begin(), requested.end());
-    std::sort(got.begin(), got.end());
+tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
+    std::vector<Trustchain::ResourceId> const& resourceIds)
+{
+  auto keys = TC_AWAIT(findOrFetchKeys(resourceIds));
 
-    std::set_difference(requested.begin(),
-                        requested.end(),
-                        got.begin(),
-                        got.end(),
-                        std::back_inserter(missing));
+  if (keys.size() != resourceIds.size())
+    throwForMissingKeys(resourceIds, keys);
 
-    throw formatEx(Errors::Errc::InvalidArgument,
-                   "can't find keys for resource IDs: {:s}",
-                   fmt::join(missing, ", "));
-  }
-
-  TC_RETURN(out);
+  TC_RETURN(std::move(keys));
 }
 }

@@ -46,13 +46,12 @@ std::vector<Trustchain::Actions::KeyPublishToUser> generateShareBlocksToUsers(
   out.reserve(resourceKeys.size() * recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
-      out.push_back(
-          makeKeyPublishToUser(trustchainId,
-                               deviceId,
-                               signatureKey,
-                               recipientKey,
-                               std::get<Trustchain::ResourceId>(keyResource),
-                               std::get<Crypto::SymmetricKey>(keyResource)));
+      out.push_back(makeKeyPublishToUser(trustchainId,
+                                         deviceId,
+                                         signatureKey,
+                                         recipientKey,
+                                         keyResource.resourceId,
+                                         keyResource.key));
   return out;
 }
 
@@ -69,13 +68,12 @@ generateShareBlocksToProvisionalUsers(
   out.reserve(resourceKeys.size() * recipientProvisionalUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientProvisionalUserKeys)
-      out.push_back(makeKeyPublishToProvisionalUser(
-          trustchainId,
-          deviceId,
-          signatureKey,
-          recipientKey,
-          std::get<ResourceId>(keyResource),
-          std::get<Crypto::SymmetricKey>(keyResource)));
+      out.push_back(makeKeyPublishToProvisionalUser(trustchainId,
+                                                    deviceId,
+                                                    signatureKey,
+                                                    recipientKey,
+                                                    keyResource.resourceId,
+                                                    keyResource.key));
   return out;
 }
 
@@ -91,13 +89,12 @@ generateShareBlocksToGroups(
   out.reserve(resourceKeys.size() * recipientUserKeys.size());
   for (auto const& keyResource : resourceKeys)
     for (auto const& recipientKey : recipientUserKeys)
-      out.push_back(
-          makeKeyPublishToGroup(trustchainId,
-                                deviceId,
-                                signatureKey,
-                                recipientKey,
-                                std::get<Trustchain::ResourceId>(keyResource),
-                                std::get<Crypto::SymmetricKey>(keyResource)));
+      out.push_back(makeKeyPublishToGroup(trustchainId,
+                                          deviceId,
+                                          signatureKey,
+                                          recipientKey,
+                                          keyResource.resourceId,
+                                          keyResource.key));
   return out;
 }
 

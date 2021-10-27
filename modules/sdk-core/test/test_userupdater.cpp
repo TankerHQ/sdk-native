@@ -8,9 +8,10 @@
 #include <Tanker/Verif/Helpers.hpp>
 
 #include <Helpers/Await.hpp>
-#include <Helpers/TransformTo.hpp>
 
 #include <gsl/gsl-lite.hpp>
+
+#include <range/v3/range/conversion.hpp>
 
 #include <doctest/doctest.h>
 
@@ -38,7 +39,7 @@ TEST_CASE("UserUpdater")
   Tanker::Test::Generator generator;
   auto alice = generator.makeUser("Alice");
   auto aliceEntries =
-      Test::transformTo<std::vector<Trustchain::UserAction>>(alice.entries());
+      alice.entries() | ranges::to<std::vector<Trustchain::UserAction>>;
   auto const revokedEntry1 = revokeADeviceGetAnEntry(aliceEntries, alice);
   aliceEntries.push_back(revokedEntry1);
   aliceEntries.push_back(revokeADeviceGetAnEntry(aliceEntries, alice));

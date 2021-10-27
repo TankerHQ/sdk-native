@@ -6,30 +6,13 @@
 
 #include <mgs/base64.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <nlohmann/json.hpp>
 
 namespace Tanker::ProvisionalUsers
 {
-namespace
-{
-std::vector<Trustchain::Actions::ProvisionalIdentityClaim>
-fromBlocksToProvisionalIdentityClaims(std::vector<std::string> const& blocks)
-{
-  std::vector<Trustchain::Actions::ProvisionalIdentityClaim> entries;
-  entries.reserve(blocks.size());
-  std::transform(std::begin(blocks),
-                 std::end(blocks),
-                 std::back_inserter(entries),
-                 [](auto const& block) {
-                   return Serialization::deserialize<
-                       Trustchain::Actions::ProvisionalIdentityClaim>(
-                       mgs::base64::decode(block));
-                 });
-
-  return entries;
-}
-}
-
 Requester::Requester(Network::HttpClient* httpClient) : _httpClient(httpClient)
 {
 }
@@ -41,11 +24,14 @@ Requester::getClaimBlocks(Trustchain::UserId const& userId)
       fmt::format("users/{userId:#S}/provisional-identity-claims",
                   fmt::arg("userId", userId)));
   auto const res = TC_AWAIT(_httpClient->asyncGet(target));
-  auto ret = fromBlocksToProvisionalIdentityClaims(
-      res.value()
-          .at("provisional_identity_claims")
-          .get<std::vector<std::string>>());
-  TC_RETURN(std::move(ret));
+  auto decodedClaims =
+      res.value().at("provisional_identity_claims") |
+      ranges::views::transform([](auto const& block) {
+        return Serialization::deserialize<
+            Trustchain::Actions::ProvisionalIdentityClaim>(
+            mgs::base64::decode(block.template get<std::string>()));
+      });
+  TC_RETURN(decodedClaims | ranges::to<std::vector>);
 }
 
 tc::cotask<std::optional<TankerSecretProvisionalIdentity>>

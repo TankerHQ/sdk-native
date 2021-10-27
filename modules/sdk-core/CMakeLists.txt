@@ -138,6 +138,7 @@ add_library(tankercore STATIC
   src/ReceiveKey.cpp
   src/ResourceKeys/Store.cpp
   src/ResourceKeys/Accessor.cpp
+  src/ResourceKeys/KeysResult.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
   src/ProvisionalUsers/Accessor.cpp
