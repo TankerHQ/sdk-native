@@ -47,6 +47,12 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
           formatEx(Errc::InvalidArgument,
                    "unsupported tanker_encrypt_options struct version")));
     }
+    if (options->padding_step)
+    {
+      return makeFuture(tc::make_exceptional_future<void>(formatEx(
+          Errc::InternalError,
+          "padding_step option is not available for stream encryption")));
+    }
     spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
                                                    options->nb_users);
     sgroupIds =
