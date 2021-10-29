@@ -30,7 +30,7 @@ struct TrustchainFixture
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
   tc::cotask<void> enableOidc();
-  tc::cotask<void> enable2fa();
+  tc::cotask<void> set2fa(bool enable);
 };
 }
 }

@@ -34,8 +34,9 @@ int main(int argc, char** argv)
       tc::executor(tp),
       [&]() -> tc::cotask<void> {
         TC_AWAIT(TrustchainFixture::setUp());
-        AWAIT_VOID(TrustchainFixture::trustchainFactory().enable2fa(
-            TrustchainFixture{}.trustchain.id));
+        AWAIT_VOID(TrustchainFixture::trustchainFactory().set2fa(
+            TrustchainFixture{}.trustchain.id,
+            true));
         benchmark::Initialize(&argc, argv);
 #ifdef TANKER_ENABLE_TRACER
         fmt::print("Waiting for input...");

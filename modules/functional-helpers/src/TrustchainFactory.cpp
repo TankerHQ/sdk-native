@@ -65,11 +65,11 @@ tc::cotask<void> TrustchainFactory::enableOidc(
   TC_AWAIT(_admin->update(id, options));
 }
 
-tc::cotask<void> TrustchainFactory::enable2fa(
-    Tanker::Trustchain::TrustchainId const& id)
+tc::cotask<void> TrustchainFactory::set2fa(
+    Tanker::Trustchain::TrustchainId const& id, bool enable)
 {
   Admin::AppUpdateOptions options{};
-  options.sessionCertificates = true;
+  options.sessionCertificates = enable;
   TC_AWAIT(_admin->update(id, options));
 }
 
