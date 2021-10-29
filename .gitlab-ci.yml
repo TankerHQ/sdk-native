@@ -34,7 +34,7 @@ build/linux:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
     - mkdir -p bench-artifacts/linux-release/ && cp build/linux-release/bin/bench_tanker bench-artifacts/linux-release/
 
 build/linux/shared:
@@ -46,7 +46,7 @@ build/linux/shared:
     - .after-script/branch_name
     - .build-artifacts
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release-shared
 
 build/windows:
   extends:
@@ -57,7 +57,7 @@ build/windows:
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release
 
 build/windows/shared:
   extends:
@@ -68,7 +68,7 @@ build/windows/shared:
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile vs2019-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release-shared
 
 build/macos/x86_64:
   extends:
@@ -79,7 +79,7 @@ build/macos/x86_64:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-x86_64-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release
 
 build/macos/arm:
   extends:
@@ -90,7 +90,7 @@ build/macos/arm:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-armv8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release
 
 build/macos/x86_64/shared:
   extends:
@@ -101,7 +101,7 @@ build/macos/x86_64/shared:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-x86_64-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared
 
 build/macos/arm/shared:
   extends:
@@ -112,7 +112,7 @@ build/macos/arm/shared:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile macos-armv8-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release-shared
 
 build/android/shared:
   extends:
@@ -123,7 +123,7 @@ build/android/shared:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
 
 build/android/static/http-backend:
   extends:
@@ -134,7 +134,7 @@ build/android/static/http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile android-armv7-release-static-http_backend --profile android-armv8-release-static-http_backend --profile android-x86-release-static-http_backend --profile android-x86_64-release-static-http_backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release-static-http_backend --profile android-armv8-release-static-http_backend --profile android-x86-release-static-http_backend --profile android-x86_64-release-static-http_backend
 
 build/ios:
   extends:
@@ -146,7 +146,7 @@ build/ios:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
 build/ios/http-backend:
   extends:
@@ -158,7 +158,7 @@ build/ios/http-backend:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile ios-simulator-armv8-release-http_backend --profile ios-simulator-x86-release-http_backend --profile ios-simulator-x86_64-release-http_backend --profile ios-armv7-release-http_backend --profile ios-armv7s-release-http_backend --profile ios-armv8-release-http_backend
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release-http_backend --profile ios-simulator-x86-release-http_backend --profile ios-simulator-x86_64-release-http_backend --profile ios-armv7-release-http_backend --profile ios-armv7s-release-http_backend --profile ios-armv8-release-http_backend
 
 nightly/coverage:
   extends:
@@ -167,7 +167,7 @@ nightly/coverage:
     - .rules/nightly
   script:
     # Using linux-release profile, but CI script will force debug for Tanker only
-    - poetry run python run-ci.py --isolate-conan-user-home build-and-test --profile linux-release --coverage
+    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release --coverage
     - mv build/linux-release/coverage coverage
   artifacts:
     paths:
