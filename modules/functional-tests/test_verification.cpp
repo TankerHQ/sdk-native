@@ -461,7 +461,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
-            Verification::ByEmail{email, VerificationCode{"d3JvbmcK"}})),
+            Verification::ByEmail{email, VerificationCode{"00000000"}})),
         Errc::InvalidVerification);
     REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
   }
@@ -482,7 +482,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     {
       TANKER_CHECK_THROWS_WITH_CODE(
           TC_AWAIT(core2->verifyIdentity(
-              Verification::ByEmail{email, VerificationCode{"d3JvbmcK"}})),
+              Verification::ByEmail{email, VerificationCode{"00000000"}})),
           Errc::InvalidVerification);
       REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
     }
