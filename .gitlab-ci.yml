@@ -30,12 +30,11 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/build/auto
-    - .bench-artifacts
+    - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
-    - mkdir -p bench-artifacts/linux-release/ && cp build/linux-release/bin/bench_tanker bench-artifacts/linux-release/
 
 build/linux/shared:
   extends:
@@ -173,34 +172,6 @@ nightly/coverage:
     paths:
       - coverage/
     expire_in: 7 days
-
-###############
-# bench stage #
-###############
-
-bench/linux:
-  stage: bench
-  extends:
-    - .rules/mr/manual
-  tags:
-    - GCE-Runner-001
-  needs:
-    - build/linux
-    - build/linux/shared
-  script:
-    - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
-
-bench/linux/nightly:
-  stage: bench
-  rules:
-    - !reference [.rules/nightly, rules]
-  tags:
-    - GCE-Runner-001
-  needs:
-    - build/linux
-    - build/linux/shared
-  script:
-    - poetry run python run-ci.py benchmark-artifact --iterations 50 --profile linux-release --upload-results
 
 ######################
 # bridge-check stage #
