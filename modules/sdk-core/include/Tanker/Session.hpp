@@ -43,11 +43,9 @@ public:
   struct Storage
   {
     Storage(Crypto::SymmetricKey const& userSecret,
-            DataStore::Database db,
-            std::unique_ptr<DataStore::DataStore> db2);
+            std::unique_ptr<DataStore::DataStore> db);
 
-    DataStore::Database db;
-    std::unique_ptr<DataStore::DataStore> db2;
+    std::unique_ptr<DataStore::DataStore> db;
     Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
     ResourceKeys::Store resourceKeyStore;
