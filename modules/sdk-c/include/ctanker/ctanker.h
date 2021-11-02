@@ -135,20 +135,18 @@ struct tanker_options
   char const* sdk_type;      /*!< Must not be NULL. */
   char const* sdk_version;   /*!< Must not be NULL. */
 
-  tanker_http_send_request_t http_send_request;
-  tanker_http_cancel_request_t http_cancel_request;
-  void* http_data;
+  tanker_http_options_t http_options;
 
   char const* cache_path; /*!< Must not be NULL. */
   tanker_datastore_options_t datastore_options;
 };
 
-#define TANKER_OPTIONS_INIT                                  \
-  {                                                          \
-    4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, \
-    {                                                        \
-      NULL, NULL, NULL, NULL, NULL, NULL, NULL               \
-    }                                                        \
+#define TANKER_OPTIONS_INIT                                    \
+  {                                                            \
+    4, NULL, NULL, NULL, NULL, NULL, {NULL, NULL, NULL}, NULL, \
+    {                                                          \
+      NULL, NULL, NULL, NULL, NULL, NULL, NULL                 \
+    }                                                          \
   }
 
 struct tanker_email_verification
