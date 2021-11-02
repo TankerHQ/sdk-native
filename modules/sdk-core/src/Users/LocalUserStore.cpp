@@ -186,20 +186,27 @@ tc::cotask<std::optional<DeviceData>> LocalUserStore::getDeviceData() const
 {
   FUNC_TIMER(DB);
 
-  auto const encryptedPayload = _db->findSerializedDevice();
-  if (!encryptedPayload)
-    TC_RETURN(std::nullopt);
+  try
+  {
+    auto const encryptedPayload = _db->findSerializedDevice();
+    if (!encryptedPayload)
+      TC_RETURN(std::nullopt);
 
-  std::vector<uint8_t> payload(EncryptorV2::decryptedSize(*encryptedPayload));
-  TC_AWAIT(
-      EncryptorV2::decrypt(payload.data(), _userSecret, *encryptedPayload));
+    std::vector<uint8_t> payload(EncryptorV2::decryptedSize(*encryptedPayload));
+    TC_AWAIT(
+        EncryptorV2::decrypt(payload.data(), _userSecret, *encryptedPayload));
 
-  auto const device = deserializeEncryptedDevice(payload);
+    auto const device = deserializeEncryptedDevice(payload);
 
-  if (device.userKeys.empty())
-    throw Errors::DeviceUnusable("no user key found in database");
+    if (device.userKeys.empty())
+      throw Errors::DeviceUnusable("no user key found in database");
 
-  TC_RETURN(device);
+    TC_RETURN(device);
+  }
+  catch (Errors::Exception const& e)
+  {
+    DataStore::handleError(e);
+  }
 }
 
 tc::cotask<void> LocalUserStore::setDeviceData(DeviceData const& deviceData)
