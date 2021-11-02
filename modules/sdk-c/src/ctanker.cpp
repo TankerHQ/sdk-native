@@ -273,13 +273,10 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     }
 
     std::unique_ptr<Tanker::Network::Backend> networkBackend;
-    if (options->version >= 3 && options->http_send_request &&
-        options->http_cancel_request)
+    if (options->version >= 3 && options->http_options.send_request &&
+        options->http_options.cancel_request)
     {
-      networkBackend =
-          std::make_unique<CTankerBackend>(options->http_send_request,
-                                           options->http_cancel_request,
-                                           options->http_data);
+      networkBackend = std::make_unique<CTankerBackend>(options->http_options);
     }
 
     std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
