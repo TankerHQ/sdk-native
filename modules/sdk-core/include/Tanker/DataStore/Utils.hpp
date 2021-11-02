@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Errors/Exception.hpp>
+
 #include <cstdint>
 
 #include <gsl/gsl-lite.hpp>
@@ -13,5 +15,7 @@ T extractBlob(Field const& f)
 {
   return T(f.blob, f.blob + f.len);
 }
+
+[[noreturn]] void handleError(Errors::Exception const& e);
 }
 }

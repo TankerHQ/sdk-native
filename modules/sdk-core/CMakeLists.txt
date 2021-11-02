@@ -26,6 +26,7 @@ set(TANKER_CORE_DATASTORE_SRC
   src/DataStore/Connection.cpp
   src/DataStore/Database.cpp
   src/DataStore/Table.cpp
+  src/DataStore/Utils.cpp
   src/DbModels/DeviceKeyStore.cpp
   src/DbModels/Groups.cpp
   src/DbModels/GroupKeys.cpp
