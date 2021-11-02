@@ -22,16 +22,7 @@ namespace Tanker
 {
 namespace
 {
-std::string getDbPath(std::string const& writablePath,
-                      Trustchain::UserId const& userId)
-{
-  if (writablePath == ":memory:")
-    return writablePath;
-  return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
-}
-
-std::string getDb2Path(std::string const& path,
-                       Trustchain::UserId const& userId)
+std::string getDbPath(std::string const& path, Trustchain::UserId const& userId)
 {
   if (path == ":memory:")
     return path;
@@ -40,14 +31,12 @@ std::string getDb2Path(std::string const& path,
 }
 
 Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
-                          DataStore::Database pdb,
-                          std::unique_ptr<DataStore::DataStore> pdb2)
+                          std::unique_ptr<DataStore::DataStore> pdb)
   : db(std::move(pdb)),
-    db2(std::move(pdb2)),
-    localUserStore(userSecret, db2.get()),
-    groupStore(userSecret, db2.get()),
-    resourceKeyStore(userSecret, db2.get()),
-    provisionalUserKeysStore(userSecret, db2.get())
+    localUserStore(userSecret, db.get()),
+    groupStore(userSecret, db.get()),
+    resourceKeyStore(userSecret, db.get()),
+    provisionalUserKeysStore(userSecret, db.get())
 {
 }
 
@@ -120,10 +109,8 @@ tc::cotask<void> Session::openStorage(
   _identity = identity;
   _storage = std::make_unique<Storage>(
       userSecret(),
-      TC_AWAIT(DataStore::createDatabase(getDbPath(dataPath, userId()),
-                                         userSecret())),
-      _datastoreBackend->open(getDb2Path(dataPath, userId()),
-                              getDb2Path(cachePath, userId())));
+      _datastoreBackend->open(getDbPath(dataPath, userId()),
+                              getDbPath(cachePath, userId())));
 }
 
 Session::Storage const& Session::storage() const
