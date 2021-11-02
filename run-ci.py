@@ -184,7 +184,7 @@ def report_performance(
         master_size = fetch_lib_size_for_branch("master")
         new_size = fetch_lib_size_for_branch(branch)
         result_message = tankerci.benchmark.format_benchmark_table(
-            benchmark_aggregates, master_results, master_size, new_size
+            benchmark_aggregates, master_results, master_size, new_size, "dev"
         )
 
         tankerci.benchmark.post_gitlab_mr_message("sdk-native", result_message)
