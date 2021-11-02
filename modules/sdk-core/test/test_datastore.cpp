@@ -121,18 +121,6 @@ TEST_CASE("Connection encrypted" * doctest::test_suite("DataStore") *
     }
     REQUIRE_NOTHROW(createConnection(dbfile, key, true));
   }
-
-  SUBCASE("Fails to connect with an incorrect password")
-  {
-    Tanker::Crypto::SymmetricKey key;
-    Tanker::Crypto::randomFill(key);
-    {
-      auto dbPtr = createConnection(dbfile, key, true);
-    }
-    Tanker::Crypto::randomFill(key);
-    TANKER_CHECK_THROWS_WITH_CODE(createConnection(dbfile, key, true),
-                                  Errc::DatabaseCorrupt);
-  }
 }
 
 TEST_CASE("Table" * doctest::test_suite("DataStore"))
