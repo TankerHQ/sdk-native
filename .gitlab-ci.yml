@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-10-08-203
+  ref: 2021-11-03-227
 
 .after-script/branch_name:
   after_script:
@@ -187,6 +187,24 @@ nightly/coverage:
   rules:
     - !reference [.rules/mr/manual, rules]
     - !reference [.rules/web/auto, rules]
+
+bridge/bench/linux:
+  stage: bridge-check
+  extends:
+    - .rules/bridge/manual
+    - .variables/bridge-common
+  needs:
+    - build/linux
+    - build/linux/shared
+  variables:
+    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_TARGET: linux
+    UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
+    UPSTREAM_COMMIT_SHA: $CI_COMMIT_SHA
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/benchmarks
+    strategy: depend
 
 bridge/compat/linux:
   stage: bridge-check
