@@ -2,8 +2,8 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
-#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
+#include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
@@ -587,7 +587,12 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
-void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<tc::cotask<VerificationCode>(Email const&)> getVerificationCode)
+namespace
+{
+void generateDefault2FATests(
+    Functional::Trustchain& trustchain,
+    std::function<tc::cotask<VerificationCode>(Email const&)>
+        getVerificationCode)
 {
   SUBCASE("Alice can get a session token after registerIdentity with an email")
   {
@@ -596,17 +601,20 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
     auto aliceDevice = alice.makeDevice();
     auto const aliceSession = aliceDevice.createCore();
     TC_AWAIT(aliceSession->start(alice.identity));
-    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const aliceVerificationCode =
+        TC_AWAIT(getVerificationCode(aliceEmail));
     auto const emailVerif = Verification::ByEmail{
         aliceEmail, VerificationCode{aliceVerificationCode}};
 
     auto withToken = Core::VerifyWithToken::Yes;
-    auto token = TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
+    auto token =
+        TC_AWAIT(aliceSession->registerIdentity(emailVerif, withToken));
     CHECK(token.has_value());
     CHECK(mgs::base64::decode(*token).size() > 0);
   }
 
-  SUBCASE("Alice can get a session token after registerIdentity with a passphrase")
+  SUBCASE(
+      "Alice can get a session token after registerIdentity with a passphrase")
   {
     auto const alicePass = Passphrase{"alicealice"};
     auto alice = trustchain.makeUser();
@@ -619,7 +627,9 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
     CHECK(token.has_value());
   }
 
-  SUBCASE("Cannot get a session token after registerIdentity with a verification key")
+  SUBCASE(
+      "Cannot get a session token after registerIdentity with a verification "
+      "key")
   {
     auto const aliceEmail = Email{"alice@wonder.land"};
     auto alice = trustchain.makeUser();
@@ -648,10 +658,10 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
 
     std::string expectedMethod = "passphrase";
     auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                            trustchain.authToken,
-                                            alice.spublicIdentity().string(),
-                                            *sessionToken,
-                                            expectedMethod));
+                                             trustchain.authToken,
+                                             alice.spublicIdentity().string(),
+                                             *sessionToken,
+                                             expectedMethod));
     CHECK(method == expectedMethod);
   }
 
@@ -670,10 +680,10 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
     std::string wrongMethod = "oidc_id_token";
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(checkSessionToken(trustchain.id,
-                                  trustchain.authToken,
-                                  alice.spublicIdentity().string(),
-                                  *sessionToken,
-                                  wrongMethod)),
+                                   trustchain.authToken,
+                                   alice.spublicIdentity().string(),
+                                   *sessionToken,
+                                   wrongMethod)),
         Errc::InvalidArgument);
   }
 
@@ -692,10 +702,10 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
     std::string verifMethod = "passphrase";
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(checkSessionToken(trustchain.id,
-                                  trustchain.authToken,
-                                  alice.spublicIdentity().string(),
-                                  sessionToken,
-                                  verifMethod)),
+                                   trustchain.authToken,
+                                   alice.spublicIdentity().string(),
+                                   sessionToken,
+                                   verifMethod)),
         Errc::InvalidArgument);
   }
 
@@ -719,17 +729,16 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
         {{"type", "email"}, {"email", aliceEmail.string()}},
     };
     auto method = TC_AWAIT(checkSessionToken(trustchain.id,
-                                            trustchain.authToken,
-                                            alice.spublicIdentity().string(),
-                                            *sessionToken,
-                                            expectedMethods));
+                                             trustchain.authToken,
+                                             alice.spublicIdentity().string(),
+                                             *sessionToken,
+                                             expectedMethods));
     CHECK(method == "email");
   }
 }
+}
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "When session_certificates is enabled")
+TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is enabled")
 {
   TC_AWAIT(set2fa(true));
 
@@ -749,7 +758,7 @@ TEST_CASE_FIXTURE(
     auto withToken = Core::VerifyWithToken::Yes;
     aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
     emailVerif = Verification::ByEmail{aliceEmail,
-                                      VerificationCode{aliceVerificationCode}};
+                                       VerificationCode{aliceVerificationCode}};
     auto token = TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken));
     CHECK(token.has_value());
   }
@@ -764,7 +773,8 @@ TEST_CASE_FIXTURE(
     auto const passVerif = Passphrase("testpass");
     TC_AWAIT(aliceSession->registerIdentity(passVerif));
 
-    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const aliceVerificationCode =
+        TC_AWAIT(getVerificationCode(aliceEmail));
     auto const emailVerif = Verification::ByEmail{
         aliceEmail, VerificationCode{aliceVerificationCode}};
 
@@ -774,12 +784,12 @@ TEST_CASE_FIXTURE(
     CHECK(token.has_value());
   }
 
-  generateDefault2FATests(trustchain, [this](Email const& email) { return getVerificationCode(email); });
+  generateDefault2FATests(trustchain, [this](Email const& email) {
+    return getVerificationCode(email);
+  });
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "When session_certificates is disabled")
+TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
 {
   TC_AWAIT(set2fa(false));
 
@@ -799,7 +809,7 @@ TEST_CASE_FIXTURE(
     auto withToken = Core::VerifyWithToken::Yes;
     aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
     emailVerif = Verification::ByEmail{aliceEmail,
-                                      VerificationCode{aliceVerificationCode}};
+                                       VerificationCode{aliceVerificationCode}};
     TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
         TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken)),
         AppdErrc::BadRequest,
@@ -816,7 +826,8 @@ TEST_CASE_FIXTURE(
     auto const passVerif = Passphrase("testpass");
     TC_AWAIT(aliceSession->registerIdentity(passVerif));
 
-    auto const aliceVerificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
+    auto const aliceVerificationCode =
+        TC_AWAIT(getVerificationCode(aliceEmail));
     auto const emailVerif = Verification::ByEmail{
         aliceEmail, VerificationCode{aliceVerificationCode}};
 
@@ -827,5 +838,7 @@ TEST_CASE_FIXTURE(
         "Session certificate is disabled");
   }
 
-  generateDefault2FATests(trustchain, [this](Email const& email) { return getVerificationCode(email); });
+  generateDefault2FATests(trustchain, [this](Email const& email) {
+    return getVerificationCode(email);
+  });
 }
