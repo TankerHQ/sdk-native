@@ -587,6 +587,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
+namespace
+{
 void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<tc::cotask<VerificationCode>(Email const&)> getVerificationCode)
 {
   SUBCASE("Alice can get a session token after registerIdentity with an email")
@@ -725,6 +727,7 @@ void generateDefault2FATests(Functional::Trustchain& trustchain, std::function<t
                                             expectedMethods));
     CHECK(method == "email");
   }
+}
 }
 
 TEST_CASE_FIXTURE(
