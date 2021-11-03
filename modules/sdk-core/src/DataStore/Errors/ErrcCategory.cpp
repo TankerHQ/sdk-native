@@ -25,6 +25,8 @@ std::string ErrcCategory::message(int c) const
     return "database corrupt";
   case Errc::DatabaseTooRecent:
     return "database too recent";
+  case Errc::ConstraintFailed:
+    return "constraint failed";
   case Errc::Last:
     break;
   }
@@ -39,6 +41,7 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
   case Errc::DatabaseError:
   case Errc::RecordNotFound:
   case Errc::DatabaseCorrupt:
+  case Errc::ConstraintFailed:
     return make_error_condition(Errors::Errc::InternalError);
   case Errc::DatabaseLocked:
     return make_error_condition(Errors::Errc::PreconditionFailed);
