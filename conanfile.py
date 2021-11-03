@@ -67,13 +67,8 @@ class TankerConan(ConanFile):
         return True
 
     @property
-    def should_build_bench(self):
-        # develop is false when the package is used as a requirement.
-        return self.develop and not self.cross_building and self.settings.os == "Linux"
-
-    @property
     def should_build_tracer(self):
-        return self.should_build_bench and self.options.with_tracer
+        return self.options.with_tracer
 
     @property
     def sanitizer_flag(self):
@@ -123,8 +118,6 @@ class TankerConan(ConanFile):
             self.build_requires("doctest/2.4.6")
             self.build_requires("doctest-async/2.4.7-r2")
             self.build_requires("trompeloeil/38")
-            if self.should_build_bench:
-                self.build_requires("benchmark/1.5.2")
 
     def init_cmake(self):
         if self.cmake:
@@ -143,7 +136,6 @@ class TankerConan(ConanFile):
         if self.options.coroutinests:
             self.cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
         self.cmake.definitions["BUILD_TESTS"] = self.should_build_tests
-        self.cmake.definitions["BUILD_BENCH"] = self.should_build_bench
         self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer
         self.cmake.definitions["WARN_AS_ERROR"] = self.options.warn_as_error
         self.cmake.definitions["BUILD_TANKER_TOOLS"] = self.should_build_tools

@@ -131,10 +131,6 @@ if (BUILD_TESTS)
   add_subdirectory(modules/functional-tests)
 endif()
 
-if (BUILD_BENCH)
-  add_subdirectory(modules/bench)
-endif()
-
 if(${BUILD_TANKER_TOOLS})
   add_subdirectory(modules/cli)
 endif()
