@@ -15,6 +15,7 @@ enum class Errc
   DatabaseLocked,
   DatabaseCorrupt,
   DatabaseTooRecent,
+  ConstraintFailed,
 
   Last,
 };
