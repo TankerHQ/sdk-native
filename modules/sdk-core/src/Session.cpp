@@ -1,7 +1,6 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
