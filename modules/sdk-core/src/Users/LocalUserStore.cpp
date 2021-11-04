@@ -1,6 +1,5 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/DataStore/Utils.hpp>
 #include <Tanker/Encryptor/v2.hpp>
@@ -14,8 +13,6 @@
 
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
-
-#include <sqlpp11/sqlite3/insert_or.h>
 
 #include <range/v3/action/sort.hpp>
 #include <range/v3/range/conversion.hpp>
