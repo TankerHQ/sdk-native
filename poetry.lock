@@ -777,7 +777,7 @@ reference = "gitlab"
 
 [[package]]
 name = "tankerci"
-version = "2021.11.3670"
+version = "2021.11.3680"
 description = "Tanker CI library"
 category = "main"
 optional = false
@@ -1383,8 +1383,8 @@ tankeradminsdk = [
     {file = "tankeradminsdk-1.0.0.tar.gz", hash = "sha256:7aab4e8785764e970774f4f3c8fb23c5acebe99546769032f5372933dae0d741"},
 ]
 tankerci = [
-    {file = "tankerci-2021.11.3670-py3-none-any.whl", hash = "sha256:45b892cefe56220c8c4f4d7991c7623f005e9b511c50d87f160791857735ae15"},
-    {file = "tankerci-2021.11.3670.tar.gz", hash = "sha256:74313d00525b37732a26a86702c39d668dc281990742cef8f11ffb635f720035"},
+    {file = "tankerci-2021.11.3680-py3-none-any.whl", hash = "sha256:19c1ae54d0b1d090c9591147542f725588b48fdbec697a815a2f1cd2be51b624"},
+    {file = "tankerci-2021.11.3680.tar.gz", hash = "sha256:59438ca082e164026b67305ba859de25ec847d99f42cda4afb006df312aa4b0c"},
 ]
 tbump = [
     {file = "tbump-6.3.1-py3-none-any.whl", hash = "sha256:60a8b0e36654c705a359b0a1af289eff2397d4482a348219e150ee1169d63c7f"},

@@ -33,6 +33,5 @@ std::string const& appdUrl();
 std::string_view admindUrl();
 std::string const& idToken();
 OidcConfig const& oidcConfig();
-AppConfig const& benchmarkApp();
 }
 }

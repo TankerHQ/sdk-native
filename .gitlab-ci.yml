@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-10-08-203
+  ref: 2021-11-03-227
 
 .after-script/branch_name:
   after_script:
@@ -30,12 +30,11 @@ build/linux:
     - .build
     - .tags/linux
     - .rules/build/auto
-    - .bench-artifacts
+    - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
-    - mkdir -p bench-artifacts/linux-release/ && cp build/linux-release/bin/bench_tanker bench-artifacts/linux-release/
 
 build/linux/shared:
   extends:
@@ -174,34 +173,6 @@ nightly/coverage:
       - coverage/
     expire_in: 7 days
 
-###############
-# bench stage #
-###############
-
-bench/linux:
-  stage: bench
-  extends:
-    - .rules/mr/manual
-  tags:
-    - GCE-Runner-001
-  needs:
-    - build/linux
-    - build/linux/shared
-  script:
-    - poetry run python run-ci.py benchmark-artifact --iterations 15 --profile linux-release --compare-results
-
-bench/linux/nightly:
-  stage: bench
-  rules:
-    - !reference [.rules/nightly, rules]
-  tags:
-    - GCE-Runner-001
-  needs:
-    - build/linux
-    - build/linux/shared
-  script:
-    - poetry run python run-ci.py benchmark-artifact --iterations 50 --profile linux-release --upload-results
-
 ######################
 # bridge-check stage #
 ######################
@@ -216,6 +187,24 @@ bench/linux/nightly:
   rules:
     - !reference [.rules/mr/manual, rules]
     - !reference [.rules/web/auto, rules]
+
+bridge/bench/linux:
+  stage: bridge-check
+  extends:
+    - .rules/bridge/manual
+    - .variables/bridge-common
+  needs:
+    - build/linux
+    - build/linux/shared
+  variables:
+    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_TARGET: linux
+    UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
+    UPSTREAM_COMMIT_SHA: $CI_COMMIT_SHA
+    UPSTREAM_COMMIT_REF_NAME: $CI_COMMIT_REF_NAME
+  trigger:
+    project: TankerHQ/benchmarks
+    strategy: depend
 
 bridge/compat/linux:
   stage: bridge-check
