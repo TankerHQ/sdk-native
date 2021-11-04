@@ -1,24 +1,19 @@
 #include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/GroupKeys.hpp>
-#include <Tanker/DbModels/Groups.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
-#include <sqlpp11/sqlite3/insert_or.h>
+
+#include <tconcurrent/coroutine.hpp>
 
 #include <optional>
-#include <tconcurrent/coroutine.hpp>
 
 TLOG_CATEGORY(GroupStore);
 
 using Tanker::Trustchain::GroupId;
-
-using GroupsTable = Tanker::DbModels::groups::groups;
 
 namespace Tanker::Groups
 {

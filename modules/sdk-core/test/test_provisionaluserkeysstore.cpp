@@ -1,5 +1,4 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 

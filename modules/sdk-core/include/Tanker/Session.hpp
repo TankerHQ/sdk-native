@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Tanker/DataStore/Backend.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Requester.hpp>
