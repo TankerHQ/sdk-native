@@ -1,5 +1,4 @@
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/Groups/Accessor.hpp>
 #include <Tanker/Groups/Store.hpp>

@@ -1,9 +1,7 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
@@ -12,12 +10,9 @@
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
-#include <sqlpp11/sqlite3/insert_or.h>
-
 TLOG_CATEGORY(ResourceKeys::Store);
 
 using Tanker::Trustchain::ResourceId;
-using ResourceKeysTable = Tanker::DbModels::resource_keys::resource_keys;
 
 namespace Tanker::ResourceKeys
 {

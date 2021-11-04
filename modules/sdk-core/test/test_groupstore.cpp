@@ -1,7 +1,6 @@
 #include <Tanker/Groups/Store.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
 
 #include <Helpers/Await.hpp>
