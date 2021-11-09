@@ -1,10 +1,14 @@
 #pragma once
 
+#include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
-#include <cstdint>
+#include <tconcurrent/coroutine.hpp>
 
 #include <gsl/gsl-lite.hpp>
+
+#include <cstdint>
+#include <vector>
 
 namespace Tanker
 {
@@ -17,5 +21,11 @@ T extractBlob(Field const& f)
 }
 
 [[noreturn]] void handleError(Errors::Exception const& e);
+
+std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret,
+                                  gsl::span<uint8_t const> value);
+tc::cotask<std::vector<uint8_t>> decryptValue(
+    Crypto::SymmetricKey const& userSecret,
+    gsl::span<uint8_t const> encryptedValue);
 }
 }
