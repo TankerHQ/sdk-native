@@ -572,7 +572,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->setVerificationMethod(
             Verification::Verification{preverifiedEmail})),
-        AppdErrc::BadRequest);
+        AppdErrc::FeatureNotEnabled);
   }
 
   SUBCASE(
@@ -587,7 +587,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->setVerificationMethod(
             Verification::Verification{preverifiedPhoneNumber})),
-        AppdErrc::BadRequest);
+        AppdErrc::FeatureNotEnabled);
   }
 }
 

@@ -36,6 +36,7 @@ enum class AppdErrc
   NotAUserGroupMember,
   EmptyUserGroup,
   MissingUserGroupMembers,
+  FeatureNotEnabled,
 };
 
 std::error_code make_error_code(AppdErrc) noexcept;

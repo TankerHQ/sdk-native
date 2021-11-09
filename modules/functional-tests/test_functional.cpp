@@ -812,7 +812,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
                                        VerificationCode{aliceVerificationCode}};
     TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
         TC_AWAIT(aliceSession->verifyIdentity(emailVerif, withToken)),
-        AppdErrc::BadRequest,
+        AppdErrc::FeatureNotEnabled,
         "Session certificate is disabled");
   }
 
@@ -834,7 +834,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
     auto withToken = Core::VerifyWithToken::Yes;
     TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
         TC_AWAIT(aliceSession->setVerificationMethod(emailVerif, withToken)),
-        AppdErrc::BadRequest,
+        AppdErrc::FeatureNotEnabled,
         "Session certificate is disabled");
   }
 
