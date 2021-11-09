@@ -219,6 +219,56 @@ static_assert(
     "Please update the status assertions above if you added a new status");
 
 #undef STATIC_ENUM_CHECK
+
+std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
+    tanker_options_t const* options)
+{
+  std::unique_ptr<Tanker::Network::Backend> networkBackend;
+  if (options->version >= 3)
+  {
+    auto const httpHandlersCount = !!options->http_options.send_request +
+                                   !!options->http_options.cancel_request;
+    if (httpHandlersCount != 0 && httpHandlersCount != 2)
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "the provided HTTP implementation is incomplete");
+    if (httpHandlersCount > 0)
+      networkBackend = std::make_unique<CTankerBackend>(options->http_options);
+  }
+  return networkBackend;
+}
+
+std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
+    tanker_options_t const* options)
+{
+  std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
+  char const* cache_path = nullptr;
+  if (options->version >= 4)
+  {
+    if (options->cache_path == nullptr)
+    {
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "cache_path is null");
+    }
+    cache_path = options->cache_path;
+
+    auto const datastoreHandlersCount =
+        !!options->datastore_options.open + !!options->datastore_options.close +
+        !!options->datastore_options.nuke +
+        !!options->datastore_options.put_serialized_device +
+        !!options->datastore_options.find_serialized_device +
+        !!options->datastore_options.put_cache_values +
+        !!options->datastore_options.find_cache_values;
+    if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "the provided datastore implementation is incomplete");
+    if (datastoreHandlersCount > 0)
+    {
+      storageBackend =
+          std::make_unique<CTankerStorageBackend>(options->datastore_options);
+    }
+  }
+  return storageBackend;
+}
 }
 
 char const* tanker_version_string(void)
@@ -272,20 +322,11 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                       "writable_path is null");
     }
 
-    std::unique_ptr<Tanker::Network::Backend> networkBackend;
-    if (options->version >= 3)
-    {
-      auto const httpHandlersCount = !!options->http_options.send_request +
-                                     !!options->http_options.cancel_request;
-      if (httpHandlersCount != 0 && httpHandlersCount != 2)
-        throw Exception(make_error_code(Errc::InvalidArgument),
-                        "the provided HTTP implementation is incomplete");
-      if (httpHandlersCount > 0)
-        networkBackend =
-            std::make_unique<CTankerBackend>(options->http_options);
-    }
+    std::unique_ptr<Tanker::Network::Backend> networkBackend =
+        extractNetworkBackend(options);
+    std::unique_ptr<Tanker::DataStore::Backend> storageBackend =
+        extractStorageBackend(options);
 
-    std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
     char const* cache_path = nullptr;
     if (options->version >= 4)
     {
@@ -295,23 +336,6 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
                         "cache_path is null");
       }
       cache_path = options->cache_path;
-
-      auto const datastoreHandlersCount =
-          !!options->datastore_options.open +
-          !!options->datastore_options.close +
-          !!options->datastore_options.nuke +
-          !!options->datastore_options.put_serialized_device +
-          !!options->datastore_options.find_serialized_device +
-          !!options->datastore_options.put_cache_values +
-          !!options->datastore_options.find_cache_values;
-      if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
-        throw Exception(make_error_code(Errc::InvalidArgument),
-                        "the provided datastore implementation is incomplete");
-      if (datastoreHandlersCount > 0)
-      {
-        storageBackend =
-            std::make_unique<CTankerStorageBackend>(options->datastore_options);
-      }
     }
 
     try
