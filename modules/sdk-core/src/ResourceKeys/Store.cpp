@@ -49,8 +49,7 @@ tc::cotask<void> Store::putKey(ResourceId const& resourceId,
 
   auto const storeRid = serializeStoreKey(resourceId);
 
-  std::vector<uint8_t> encryptedKey(EncryptorV2::encryptedSize(key.size()));
-  EncryptorV2::encryptSync(encryptedKey.data(), key, _userSecret);
+  auto const encryptedKey = DataStore::encryptValue(_userSecret, key);
 
   std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
       keyValues{{storeRid, encryptedKey}};
@@ -85,9 +84,8 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     if (!result.at(0))
       TC_RETURN(std::nullopt);
 
-    auto const& encryptedKey = *result.at(0);
-    std::vector<uint8_t> key(EncryptorV2::decryptedSize(encryptedKey));
-    TC_AWAIT(EncryptorV2::decrypt(key.data(), _userSecret, encryptedKey));
+    auto const key =
+        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(Crypto::SymmetricKey{key});
   }

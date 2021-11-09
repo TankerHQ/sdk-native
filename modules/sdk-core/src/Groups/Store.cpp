@@ -169,9 +169,7 @@ tc::cotask<void> Store::put(Group const& group)
   auto const indexKeyBuffer = serializeIndexKey(getPublicEncryptionKey(group));
   auto const indexValueBuffer = serializeIndexValue(groupId);
 
-  std::vector<uint8_t> encryptedValue(
-      EncryptorV2::encryptedSize(valueBuffer.size()));
-  EncryptorV2::encryptSync(encryptedValue.data(), valueBuffer, _userSecret);
+  auto const encryptedValue = DataStore::encryptValue(_userSecret, valueBuffer);
 
   std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
       keyValues{{keyBuffer, encryptedValue},
@@ -193,11 +191,8 @@ tc::cotask<std::optional<Group>> Store::findById(GroupId const& groupId) const
     if (!result.at(0))
       TC_RETURN(std::nullopt);
 
-    auto const& encryptedValue = *result.at(0);
-    std::vector<uint8_t> decryptedValue(
-        EncryptorV2::decryptedSize(encryptedValue));
-    TC_AWAIT(EncryptorV2::decrypt(
-        decryptedValue.data(), _userSecret, encryptedValue));
+    auto const decryptedValue =
+        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(deserializeStoreValue(decryptedValue));
   }
@@ -237,11 +232,8 @@ tc::cotask<std::optional<Group>> Store::findByPublicEncryptionKey(
       // There's an index but no entry, weird...
       TC_RETURN(std::nullopt);
 
-    auto const& encryptedValue = *result.at(0);
-    std::vector<uint8_t> decryptedValue(
-        EncryptorV2::decryptedSize(encryptedValue));
-    TC_AWAIT(EncryptorV2::decrypt(
-        decryptedValue.data(), _userSecret, encryptedValue));
+    auto const decryptedValue =
+        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
 
     TC_RETURN(deserializeStoreValue(decryptedValue));
   }
