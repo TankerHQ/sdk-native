@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Errors/ErrcCategory.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Errors/ErrcCategory.hpp>
 
@@ -22,5 +23,32 @@ namespace Tanker::DataStore
   }
   else
     throw;
+}
+
+// We chose the V2 format for storage encryption.
+// V1 is deprecated
+// V3 has a fixed nonce, so it's not meant to be used multiple times with the
+// same key
+// V4 is for streams
+// V5 has a resource ID which we don't need
+// See https://github.com/TankerHQ/spec/blob/master/encryption_formats.md
+
+std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret,
+                                  gsl::span<uint8_t const> value)
+{
+  std::vector<uint8_t> encryptedValue(EncryptorV2::encryptedSize(value.size()));
+  EncryptorV2::encryptSync(encryptedValue.data(), value, userSecret);
+  return encryptedValue;
+}
+
+tc::cotask<std::vector<uint8_t>> decryptValue(
+    Crypto::SymmetricKey const& userSecret,
+    gsl::span<uint8_t const> encryptedValue)
+{
+  std::vector<uint8_t> decryptedValue(
+      EncryptorV2::decryptedSize(encryptedValue));
+  TC_AWAIT(
+      EncryptorV2::decrypt(decryptedValue.data(), userSecret, encryptedValue));
+  TC_RETURN(decryptedValue);
 }
 }

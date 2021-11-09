@@ -192,10 +192,8 @@ tc::cotask<std::optional<DeviceData>> LocalUserStore::getDeviceData() const
     if (!encryptedPayload)
       TC_RETURN(std::nullopt);
 
-    std::vector<uint8_t> payload(EncryptorV2::decryptedSize(*encryptedPayload));
-    TC_AWAIT(
-        EncryptorV2::decrypt(payload.data(), _userSecret, *encryptedPayload));
-
+    auto const payload =
+        TC_AWAIT(DataStore::decryptValue(_userSecret, *encryptedPayload));
     auto const device = deserializeEncryptedDevice(payload);
 
     if (device.userKeys.empty())
@@ -214,9 +212,7 @@ tc::cotask<void> LocalUserStore::setDeviceData(DeviceData const& deviceData)
   FUNC_TIMER(DB);
 
   auto const payload = serializeEncryptedDevice(deviceData);
-  std::vector<uint8_t> encryptedPayload(
-      EncryptorV2::encryptedSize(payload.size()));
-  EncryptorV2::encryptSync(encryptedPayload.data(), payload, _userSecret);
+  auto const encryptedPayload = DataStore::encryptValue(_userSecret, payload);
   _db->putSerializedDevice(encryptedPayload);
 
   TC_RETURN();
