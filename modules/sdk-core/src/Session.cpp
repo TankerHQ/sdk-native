@@ -15,6 +15,8 @@
 
 #include <fmt/format.h>
 
+using namespace std::string_view_literals;
+
 TLOG_CATEGORY("Session");
 
 namespace Tanker
@@ -113,7 +115,7 @@ tc::cotask<void> Session::openStorage(
       _datastoreBackend->open(getDbPath(dataPath, userId()),
                               getDbPath(cachePath, userId())));
 
-  auto const key = std::string_view("version");
+  auto const key = "version"sv;
   auto const keySpan = gsl::make_span(key).as_span<uint8_t const>();
   auto const keys = {keySpan};
 

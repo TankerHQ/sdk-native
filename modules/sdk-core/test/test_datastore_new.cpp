@@ -209,10 +209,19 @@ TEST_CASE("Nuke")
   Tanker::Crypto::randomFill(device);
   store->putSerializedDevice(device);
 
+  auto const key = "test key";
+  auto const value = "test value";
+  auto const keyValues = makeKeyValues({{key, value}});
+  store->putCacheValues(keyValues, OnConflict::Fail);
+
   REQUIRE_NOTHROW(store->nuke());
 
   // everything is deleted
   CHECK(!store->findSerializedDevice());
+
+  auto const keys = makeKeys({key});
+  CacheResult expected{std::nullopt};
+  CHECK(store->findCacheValues(keys) == expected);
 }
 
 TEST_SUITE_END();
