@@ -191,8 +191,9 @@ nightly/coverage:
 bridge/bench/linux:
   stage: bridge-check
   extends:
-    - .rules/bridge/manual
     - .variables/bridge-common
+  rules:
+    - !reference [.rules/mr/manual, rules]
   needs:
     - build/linux
     - build/linux/shared
