@@ -98,6 +98,37 @@ RequestWithVerif makeRequestWithVerif(
             checkNotEmpty(v.string(), "oidcIdToken");
             return v;
           },
+          [&](PreverifiedEmail const& v) -> RequestVerificationMethods {
+            checkNotEmpty(v.string(), "email");
+            EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.size()));
+            EncryptorV2::encryptSync(encryptedEmail.data(),
+                                     gsl::make_span(v).as_span<uint8_t const>(),
+                                     userSecret);
+
+            return EncryptedPreverifiedEmailVerification{
+                hashField(v), std::move(encryptedEmail)};
+          },
+          [&](PreverifiedPhoneNumber const& v) -> RequestVerificationMethods {
+            checkNotEmpty(v.string(), "phoneNumber");
+            EncryptedPhoneNumber encryptedPhoneNumber(
+                EncryptorV2::encryptedSize(v.size()));
+            EncryptorV2::encryptSync(
+                encryptedPhoneNumber.data(),
+                gsl::make_span(v).as_span<std::uint8_t const>(),
+                userSecret);
+
+            auto const provisionalSalt =
+                secretProvisionalSigKey.has_value() ?
+                    std::make_optional(
+                        hashField(secretProvisionalSigKey->privateKey)) :
+                    std::nullopt;
+
+            return EncryptedPreverifiedPhoneNumberVerification{
+                PhoneNumber{v.string()},
+                hashField(userSecret),
+                provisionalSalt,
+                std::move(encryptedPhoneNumber)};
+          },
       },
       verification);
   return {verif, withTokenNonce};
@@ -172,6 +203,22 @@ void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
           },
           [&](OidcIdToken const& t) { j["oidc_id_token"] = t.string(); },
           [](VerificationKey const& v) {},
+          [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
+            j["hashed_email"] = e.hashedEmail;
+            j["v2_encrypted_email"] = e.encryptedEmail;
+            j["is_preverified"] = true;
+          },
+          [&](Verification::EncryptedPreverifiedPhoneNumberVerification const&
+                  e) {
+            j["phone_number"] = e.phoneNumber;
+            j["encrypted_phone_number"] = e.encryptedPhoneNumber;
+            j["user_salt"] = e.userSalt;
+            j["is_preverified"] = true;
+            if (e.provisionalSalt)
+            {
+              j["provisional_salt"] = *e.provisionalSalt;
+            }
+          },
       },
       request);
 }

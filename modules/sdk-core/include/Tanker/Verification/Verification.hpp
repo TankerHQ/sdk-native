@@ -5,9 +5,13 @@
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/EncryptedPhoneNumber.hpp>
+#include <Tanker/Types/EncryptedPreverifiedEmail.hpp>
+#include <Tanker/Types/EncryptedPreverifiedPhoneNumber.hpp>
 #include <Tanker/Types/OidcIdToken.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
+#include <Tanker/Types/PreverifiedEmail.hpp>
+#include <Tanker/Types/PreverifiedPhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Types/VerificationKey.hpp>
 
@@ -36,19 +40,29 @@ struct ByPhoneNumber
   VerificationCode verificationCode;
 };
 
-using Verification = boost::variant2::
-    variant<VerificationKey, ByEmail, Passphrase, OidcIdToken, ByPhoneNumber>;
+using Verification = boost::variant2::variant<VerificationKey,
+                                              ByEmail,
+                                              Passphrase,
+                                              OidcIdToken,
+                                              ByPhoneNumber,
+                                              PreverifiedEmail,
+                                              PreverifiedPhoneNumber>;
 
 class VerificationMethod
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(VerificationMethod,
-                                                       (VerificationKey,
-                                                        EncryptedEmail,
-                                                        Email,
-                                                        Passphrase,
-                                                        OidcIdToken,
-                                                        EncryptedPhoneNumber,
-                                                        PhoneNumber))
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
+      VerificationMethod,
+      (VerificationKey,
+       EncryptedEmail,
+       Email,
+       Passphrase,
+       OidcIdToken,
+       EncryptedPhoneNumber,
+       PhoneNumber,
+       PreverifiedEmail,
+       PreverifiedPhoneNumber,
+       EncryptedPreverifiedEmail,
+       EncryptedPreverifiedPhoneNumber))
 
   static VerificationMethod from(Verification const& v);
 

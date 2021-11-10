@@ -328,6 +328,12 @@ tc::cotask<std::optional<std::string>> Core::registerIdentity(
     throw formatEx(Errc::InvalidArgument,
                    "cannot get a session token with a verification key");
   }
+  if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
+      boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot register identity with preverified methods");
+  }
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {
@@ -404,6 +410,14 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(
   {
     assertStatus(Status::IdentityVerificationNeeded, "verifyIdentity");
   }
+
+  if (boost::variant2::holds_alternative<PreverifiedEmail>(verification) ||
+      boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verification))
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "cannot verify identity with preverified methods");
+  }
+
   auto withTokenNonce = makeWithTokenRandomNonce(withToken);
   TC_AWAIT(resetOnFailure(
       [&]() -> tc::cotask<void> {

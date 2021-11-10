@@ -3,6 +3,7 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Format/StringView.hpp>
+#include <Tanker/Functional/Provisional.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
@@ -556,6 +557,351 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     methods = TC_AWAIT(core1->getVerificationMethods());
     REQUIRE(methods.size() == 1);
     CHECK(methods[0].get<PhoneNumber>() == newPhoneNumber);
+  }
+
+  SUBCASE(
+      "setVerificationMethod with preverified email throws if preverified "
+      "verification flag is "
+      "disabled")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    auto const preverifiedEmail = PreverifiedEmail{"superkirby@tanker.io"};
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->setVerificationMethod(
+            Verification::Verification{preverifiedEmail})),
+        AppdErrc::BadRequest);
+  }
+
+  SUBCASE(
+      "setVerificationMethod with preverified phone number throws if "
+      "preverified verification flag is disabled")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    auto const preverifiedPhoneNumber = PreverifiedPhoneNumber{"+33639982244"};
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->setVerificationMethod(
+            Verification::Verification{preverifiedPhoneNumber})),
+        AppdErrc::BadRequest);
+  }
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
+{
+  TC_AWAIT(enablePreverifiedMethods());
+  auto alice = trustchain.makeUser();
+  auto device1 = alice.makeDevice();
+  auto core1 = device1.createCore();
+  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
+             Status::IdentityRegistrationNeeded);
+
+  auto device2 = alice.makeDevice();
+  auto core2 = device2.createCore();
+
+  auto const email = Email{"kirby@tanker.io"};
+  auto const phoneNumber = PhoneNumber{"+33639982233"};
+
+  auto const preverifiedEmail = PreverifiedEmail{"superkirby@tanker.io"};
+  auto const emailOfPreverifiedEmail = Email{preverifiedEmail.string()};
+
+  SUBCASE(
+      "registerIdentity throws when verification method is preverified email")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(preverifiedEmail)),
+        Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+  }
+
+  SUBCASE("verifyIdentity throws when verification method is preverified email")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}})));
+
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+               Status::IdentityVerificationNeeded);
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(preverifiedEmail)),
+        Errc::InvalidArgument);
+
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+  }
+
+  SUBCASE(
+      "it registers with an email, updates to preverified email when calling "
+      "setVerificationMethod, and updates to normal email when verifying")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedEmail}));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {preverifiedEmail}));
+
+    TC_AWAIT(core2->start(alice.identity));
+    verificationCode = TC_AWAIT(getVerificationCode(emailOfPreverifiedEmail));
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
+        Verification::ByEmail{emailOfPreverifiedEmail, verificationCode})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
+  }
+
+  SUBCASE(
+      "it register with an email, updates to preverified email when calling "
+      "setVerificationMethod with the same email")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    auto const newPreverifiedEmail = PreverifiedEmail{"kirby@tanker.io"};
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{newPreverifiedEmail}));
+
+    // check that email is ok
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {newPreverifiedEmail}));
+  }
+
+  SUBCASE(
+      "It turns preverified email method into email method when calling "
+      "setVerificationMethod")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedEmail}));
+
+    verificationCode = TC_AWAIT(getVerificationCode(emailOfPreverifiedEmail));
+    TC_AWAIT(core1->setVerificationMethod(Verification::Verification{
+        Verification::ByEmail{emailOfPreverifiedEmail, verificationCode}}));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
+  }
+
+  SUBCASE(
+      "it turns preverified email method into email method when calling "
+      "verifyProvisionalIdentity")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedEmail}));
+
+    auto const secretProvisionalIdentity =
+        SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+            mgs::base64::encode(trustchain.id), emailOfPreverifiedEmail));
+    auto const publicProvisionalIdentity = SPublicIdentity(
+        Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+
+    auto const aliceProvisional =
+        Functional::AppProvisionalUser{emailOfPreverifiedEmail,
+                                       secretProvisionalIdentity,
+                                       publicProvisionalIdentity};
+
+    REQUIRE_NOTHROW(
+        TC_AWAIT(attachProvisionalIdentity(*core1, aliceProvisional)));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
+  }
+
+  SUBCASE("It adds preverified email as a new verification method")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedEmail}));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {phoneNumber, preverifiedEmail}));
+  }
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Verification with preverified phone number")
+{
+  TC_AWAIT(enablePreverifiedMethods());
+  auto alice = trustchain.makeUser();
+  auto device1 = alice.makeDevice();
+  auto core1 = device1.createCore();
+  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
+             Status::IdentityRegistrationNeeded);
+
+  auto device2 = alice.makeDevice();
+  auto core2 = device2.createCore();
+
+  auto const email = Email{"kirby@tanker.io"};
+  auto const phoneNumber = PhoneNumber{"+33639982233"};
+
+  auto const preverifiedPhoneNumber = PreverifiedPhoneNumber{"+33639982244"};
+  auto const phoneNumberOfPreverifiedPhoneNumber =
+      PhoneNumber{preverifiedPhoneNumber.string()};
+
+  SUBCASE(
+      "registerIdentity throws when verification method is preverified phone "
+      "number")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core1->registerIdentity(
+            PreverifiedPhoneNumber{preverifiedPhoneNumber})),
+        Errc::InvalidArgument);
+    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+  }
+
+  SUBCASE(
+      "verifyIdentity throws when verification method is preverified phone "
+      "number")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}})));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {email}));
+
+    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
+               Status::IdentityVerificationNeeded);
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(core2->verifyIdentity(
+            PreverifiedPhoneNumber{preverifiedPhoneNumber})),
+        Errc::InvalidArgument);
+
+    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+  }
+
+  SUBCASE(
+      "it registers with a phone number, updates to preverified phone number "
+      "when calling setVerificationMethod, and updates to normal phone number "
+      "when verifying")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedPhoneNumber}));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {preverifiedPhoneNumber}));
+
+    TC_AWAIT(core2->start(alice.identity));
+    verificationCode =
+        TC_AWAIT(getVerificationCode(phoneNumberOfPreverifiedPhoneNumber));
+    REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(Verification::ByPhoneNumber{
+        phoneNumberOfPreverifiedPhoneNumber, verificationCode})));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {phoneNumberOfPreverifiedPhoneNumber}));
+  }
+
+  SUBCASE(
+      "register with a phone number, updates to preverified phone number when "
+      "calling setVerificationMethod with the same phone number")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
+
+    auto const newPreverifiedPhoneNumber =
+        PreverifiedPhoneNumber{phoneNumber.string()};
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{newPreverifiedPhoneNumber}));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {newPreverifiedPhoneNumber}));
+  }
+
+  SUBCASE(
+      "It turns preverified phone number method into phone number method when "
+      "calling setVerificationMethod")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedPhoneNumber}));
+
+    verificationCode =
+        TC_AWAIT(getVerificationCode(phoneNumberOfPreverifiedPhoneNumber));
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{Verification::ByPhoneNumber{
+            phoneNumberOfPreverifiedPhoneNumber, verificationCode}}));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {phoneNumberOfPreverifiedPhoneNumber}));
+  }
+
+  SUBCASE(
+      "it turns preverified phone number method into phone number method when "
+      "calling verifyProvisionalIdentity")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedPhoneNumber}));
+
+    CHECK_NOTHROW(checkVerificationMethods(
+        TC_AWAIT(core1->getVerificationMethods()), {preverifiedPhoneNumber}));
+
+    auto const secretProvisionalIdentity =
+        SSecretProvisionalIdentity(Identity::createProvisionalIdentity(
+            mgs::base64::encode(trustchain.id),
+            phoneNumberOfPreverifiedPhoneNumber));
+    auto const publicProvisionalIdentity = SPublicIdentity(
+        Identity::getPublicIdentity(secretProvisionalIdentity.string()));
+
+    auto const aliceProvisional =
+        Functional::AppProvisionalUser{phoneNumberOfPreverifiedPhoneNumber,
+                                       secretProvisionalIdentity,
+                                       publicProvisionalIdentity};
+
+    REQUIRE_NOTHROW(
+        TC_AWAIT(attachProvisionalIdentity(*core1, aliceProvisional)));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {phoneNumberOfPreverifiedPhoneNumber}));
+  }
+
+  SUBCASE("It adds preverified phone number as a new verification method")
+  {
+    auto verificationCode = TC_AWAIT(getVerificationCode(email));
+    TC_AWAIT(core1->registerIdentity(Verification::Verification{
+        Verification::ByEmail{email, verificationCode}}));
+
+    TC_AWAIT(core1->setVerificationMethod(
+        Verification::Verification{preverifiedPhoneNumber}));
+
+    CHECK_NOTHROW(
+        checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
+                                 {email, preverifiedPhoneNumber}));
   }
 }
 

@@ -73,6 +73,14 @@ tc::cotask<void> TrustchainFactory::set2fa(
   TC_AWAIT(_admin->update(id, options));
 }
 
+tc::cotask<void> TrustchainFactory::enablePreverifiedMethods(
+    Tanker::Trustchain::TrustchainId const& id)
+{
+  Admin::AppUpdateOptions options;
+  options.preverifiedVerification = true;
+  TC_AWAIT(_admin->update(id, options));
+}
+
 tc::cotask<Trustchain::Ptr> TrustchainFactory::useTrustchain(
     std::string configPath)
 {

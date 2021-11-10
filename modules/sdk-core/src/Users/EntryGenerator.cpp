@@ -1,4 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 #include <Tanker/Users/EntryGenerator.hpp>
 #include <date/date.h>
@@ -52,6 +53,14 @@ Trustchain::Actions::VerificationMethodType verificationMethodType(
           },
           [](OidcIdToken const& v) -> VerificationMethodType {
             return VerificationMethodType::OidcIdToken;
+          },
+          [](PreverifiedEmail const& v) -> VerificationMethodType {
+            throw Errors::AssertionError(
+                "No verification method type for preverified email");
+          },
+          [](PreverifiedPhoneNumber const& v) -> VerificationMethodType {
+            throw Errors::AssertionError(
+                "No verification method type for preverified phone number");
           },
       },
       verification);
