@@ -1,6 +1,7 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -20,6 +21,8 @@ namespace Tanker
 {
 namespace
 {
+constexpr uint8_t Version = 1;
+
 std::string getDbPath(std::string const& path, Trustchain::UserId const& userId)
 {
   if (path == ":memory:")
@@ -109,6 +112,27 @@ tc::cotask<void> Session::openStorage(
       userSecret(),
       _datastoreBackend->open(getDbPath(dataPath, userId()),
                               getDbPath(cachePath, userId())));
+
+  auto const key = std::string_view("version");
+  auto const keySpan = gsl::make_span(key).as_span<uint8_t const>();
+  auto const keys = {keySpan};
+
+  auto const dbVersionResult = _storage->db->findCacheValues(keys);
+  if (!dbVersionResult[0])
+  {
+    auto const valueSpan = gsl::span<uint8_t const>(&Version, 1);
+    auto const keyValues = {std::pair{keySpan, valueSpan}};
+
+    _storage->db->putCacheValues(keyValues, DataStore::OnConflict::Fail);
+  }
+  // dbVersionResult has one row and one column
+  else if (auto const dbVersion = (*dbVersionResult[0]).at(0);
+           dbVersion != Version)
+  {
+    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
+                           "unsupported device storage version: {}",
+                           static_cast<int>(dbVersion));
+  }
 }
 
 Session::Storage const& Session::storage() const
