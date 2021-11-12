@@ -70,6 +70,8 @@ std::string AppdErrcCategory::message(int c) const
     return "empty user group";
   case AppdErrc::MissingUserGroupMembers:
     return "missing user group members";
+  case AppdErrc::FeatureNotEnabled:
+    return "feature not enabled";
   }
   return "unknown error";
 }
@@ -104,6 +106,7 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::VerificationMethodNotSet:
   case AppdErrc::VerificationKeyNotFound:
   case AppdErrc::Blocked:
+  case AppdErrc::FeatureNotEnabled:
     return make_error_condition(Errors::Errc::PreconditionFailed);
   case AppdErrc::TooManyAttempts:
     return make_error_condition(Errors::Errc::TooManyAttempts);
