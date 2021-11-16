@@ -158,7 +158,11 @@ class TankerConan(ConanFile):
             self.cmake.install()
 
     def deploy(self):
-        self.copy("*")
+        self.copy("include/*")
+        self.copy("*.a")
+        self.copy("*.lib")
+        self.copy("*.dll")
+        self.copy("*.so")
         if not self.options.tankerlib_shared:
             self.copy_deps("*.lib")
             self.copy_deps("*.a")
