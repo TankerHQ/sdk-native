@@ -169,7 +169,10 @@ class TankerConan(ConanFile):
 
     def package(self):
         self.init_cmake()
-        self.cmake.install()
+        if self.settings.build_type == "Release" and not self.settings.os == "Windows":
+            self.cmake.build(target="install/strip")
+        else:
+            self.cmake.install()
 
     def package_id(self):
         del self.info.options.warn_as_error
