@@ -18,6 +18,7 @@ add_library(tankertesthelpers STATIC
   include/Helpers/JsonFile.hpp
 
   src/Config.cpp
+  src/DataStoreTestUtils.cpp
   src/Email.cpp
   src/PhoneNumber.cpp
   src/TimeoutTerminate.cpp
@@ -42,4 +43,4 @@ install(TARGETS tankertesthelpers
   ARCHIVE DESTINATION lib
 )
 
-target_link_libraries(tankertesthelpers tankertrustchain tankererrors tankertypes CONAN_PKG::boost CONAN_PKG::nlohmann_json CONAN_PKG::fmt)
+target_link_libraries(tankertesthelpers tankertrustchain tankererrors tankertypes CONAN_PKG::boost CONAN_PKG::nlohmann_json CONAN_PKG::fmt CONAN_PKG::gsl-lite)
