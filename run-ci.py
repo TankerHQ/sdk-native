@@ -24,7 +24,6 @@ import tankerci.benchmark
 def build(profiles: List[str], coverage: bool, test: bool) -> None:
     for profile in profiles:
         build_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage)
-        report_size(profile, build_path)
         if test:
             tankerci.cpp.check(build_path, coverage=coverage)
     recipe = Path.cwd() / "conanfile.py"
@@ -208,65 +207,6 @@ def report_performance(
                     "profile": profile,
                 },
             )
-
-
-SIZE_PROFILE_TO_BUILD_TARGET = {
-    "android-armv7-release": "android-armv7",
-    "android-armv8-release": "android-armv8",
-    "android-x86_64-release": "android-x86_64",
-    "android-x86-release": "android-x86",
-    "linux-release-shared": "linux-x86_64",
-    "macos-armv8-release-shared": "macos-armv8",
-    "macos-x86_64-release-shared": "macos-x86_64",
-    "vs2019-release-shared": "windows-x86_64",
-}
-
-
-def report_size(profile: str, build_path: Path) -> None:
-    if not tankerci.reporting.can_send_metrics():
-        ui.info("InfluxDB environment variables not set, skipping metrics reporting")
-        return
-
-    if profile not in SIZE_PROFILE_TO_BUILD_TARGET:
-        ui.info(f"We don't track SDK size with profile {profile}, skipping report")
-        return
-
-    branch = get_branch_name()
-    if not branch:
-        ui.info("Not on a branch, skipping report")
-        return
-    _, commit_id = tankerci.git.run_captured(os.getcwd(), "rev-parse", "HEAD")
-
-    with tempfile.TemporaryDirectory() as temp_path:
-        args = ["cmake", "--build", str(build_path)]
-        if "vs2019" not in profile:
-            args.extend(["--target", "install/strip"])
-        else:
-            args.extend(["--target", "install"])
-        tankerci.run(
-            *args,
-            env={**os.environ, "DESTDIR": temp_path},
-        )
-        package_path = Path.cwd() / "package" / profile
-        package_path_relative = package_path.relative_to(*package_path.parts[:1])
-        if "vs2019" in profile:
-            lib_path = temp_path / package_path_relative / "bin/ctanker.dll"
-        elif "macos" in profile:
-            lib_path = temp_path / package_path_relative / "lib/libctanker.dylib"
-        else:
-            lib_path = temp_path / package_path_relative / "lib/libctanker.so"
-        size = lib_path.stat().st_size
-        ui.info(f"Tanker library size: {size / 1024}KiB")
-        tankerci.reporting.send_metric(
-            "benchmark",
-            tags={
-                "project": "sdk-native",
-                "branch": branch,
-                "build-target": SIZE_PROFILE_TO_BUILD_TARGET[profile],
-                "scenario": "size",
-            },
-            fields={"value": size, "commit_id": commit_id, "profile": profile},
-        )
 
 
 def main() -> None:
