@@ -77,10 +77,10 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       REQUIRE_NOTHROW(store->putCacheValues(keyValues, OnConflict::Fail));
     }
 
-    SUBCASE("puts a value and gets it back")
+    SUBCASE("puts a binary value and gets it back")
     {
-      auto const key = "test key";
-      auto const value = "test value";
+      char const key[] = "test\0 key";
+      char const value[] = "test\0 value";
       auto const keyValues = makeKeyValues({{key, value}});
       REQUIRE_NOTHROW(store->putCacheValues(keyValues, OnConflict::Fail));
 
@@ -89,18 +89,20 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("puts and gets multiple values at once")
+    SUBCASE("puts and gets multiple values at once, respecting order")
     {
-      auto const key = "test key";
-      auto const key2 = "test another key";
+      auto const key = "test key 1";
+      auto const key2 = "test key 2";
+      auto const unknownKey = "unknown";
       auto const value = "test value";
       auto const value2 = "test another value";
       auto const keyValues = makeKeyValues({{key, value}, {key2, value2}});
       REQUIRE_NOTHROW(store->putCacheValues(keyValues, OnConflict::Fail));
 
       // invert them, just to check that the order is respected
-      auto const keys = makeKeys({key2, key});
-      CacheResult expected{make_buffer(value2), make_buffer(value)};
+      auto const keys = makeKeys({key2, unknownKey, key});
+      CacheResult expected{
+          make_buffer(value2), std::nullopt, make_buffer(value)};
       CHECK(store->findCacheValues(keys) == expected);
     }
 
