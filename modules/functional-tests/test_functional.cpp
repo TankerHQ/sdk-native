@@ -8,6 +8,7 @@
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/IdentityUtils.hpp>
 #include <Tanker/Network/HttpClient.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Status.hpp>
