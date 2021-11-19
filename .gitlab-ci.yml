@@ -198,7 +198,7 @@ bridge/bench/linux:
     - build/linux
     - build/linux/shared
   variables:
-    UPSTREAM_JOB_NAME: build/linux
+    UPSTREAM_JOB_NAME: build/linux:build/linux/shared
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
     UPSTREAM_COMMIT_SHA: $CI_COMMIT_SHA
