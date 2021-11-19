@@ -75,6 +75,7 @@ makeKeyPublishToProvisionalUser(
     Crypto::SymmetricKey const& resourceKey);
 
 tc::cotask<KeyRecipients> generateRecipientList(
+    Trustchain::TrustchainId const& trustchainId,
     Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> publicIdentities,

@@ -843,3 +843,23 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
     return getVerificationCode(email);
   });
 }
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Alice cannot share with identity from a different trustchain")
+{
+  auto otherTrustchain = TC_AWAIT(trustchainFactory().createTrustchain());
+  auto eve = otherTrustchain->makeEmailProvisionalUser();
+
+  auto const clearData = "my clear data is clear";
+  std::vector<uint8_t> encryptedData;
+  REQUIRE_NOTHROW(encryptedData =
+                      TC_AWAIT(aliceSession->encrypt(make_buffer(clearData))));
+
+  auto resourceId = TC_AWAIT(AsyncCore::getResourceId(encryptedData));
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->share({resourceId}, {eve.publicIdentity}, {})),
+      Errors::Errc::InvalidArgument,
+      "public identity not in the trustchain");
+}

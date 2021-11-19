@@ -141,6 +141,7 @@ TEST_CASE("generateRecipientList")
             Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
     auto const recipients = AWAIT(Share::generateRecipientList(
+        generator.context().id(),
         userAccessor,
         groupAccessor,
         {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
@@ -174,6 +175,7 @@ TEST_CASE("generateRecipientList")
             {newGroup.currentEncKp().publicKey}, {}}));
 
     auto const recipients = AWAIT(Share::generateRecipientList(
+        generator.context().id(),
         userAccessor,
         groupAccessor,
         {},
@@ -204,6 +206,7 @@ TEST_CASE("generateRecipientList")
             Groups::Accessor::PublicEncryptionKeyPullResult{{}, {}}));
 
     auto const recipients = AWAIT(Share::generateRecipientList(
+        generator.context().id(),
         userAccessor,
         groupAccessor,
         {SPublicIdentity{
@@ -238,6 +241,7 @@ TEST_CASE("generateRecipientList")
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Share::generateRecipientList(
+            generator.context().id(),
             userAccessor,
             groupAccessor,
             {SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
@@ -262,6 +266,7 @@ TEST_CASE("generateRecipientList")
 
     TANKER_CHECK_THROWS_WITH_CODE(
         AWAIT(Share::generateRecipientList(
+            generator.context().id(),
             userAccessor,
             groupAccessor,
             {},
