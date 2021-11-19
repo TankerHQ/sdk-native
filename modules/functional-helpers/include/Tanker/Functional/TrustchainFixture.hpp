@@ -2,6 +2,7 @@
 
 #include <Tanker/Functional/Trustchain.hpp>
 #include <Tanker/Functional/TrustchainFactory.hpp>
+#include <Tanker/Identity/SecretIdentity.hpp>
 #include <Tanker/Types/Email.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 
@@ -29,6 +30,8 @@ struct TrustchainFixture
       PhoneNumber const& phoneNumber);
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
+  Trustchain createOtherTrustchain();
+
   tc::cotask<void> enableOidc();
   tc::cotask<void> set2fa(bool enable);
   tc::cotask<void> enablePreverifiedMethods();

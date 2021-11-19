@@ -147,6 +147,15 @@ tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
   TC_AWAIT(session.verifyProvisionalIdentity(verif));
 }
 
+Trustchain TrustchainFixture::createOtherTrustchain()
+{
+  Tanker::Trustchain::TrustchainId trustchainId;
+  Crypto::randomFill(trustchainId);
+  auto keyPair = Crypto::makeSignatureKeyPair();
+  return Trustchain(
+      "tcp://other.trustchain:1234", trustchainId, "none", keyPair);
+}
+
 tc::cotask<void> TrustchainFixture::enableOidc()
 {
   TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));

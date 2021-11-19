@@ -690,4 +690,34 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "Don't create group with public identity if not attached to the trustchain")
+{
+  auto otherTrustchain = createOtherTrustchain();
+  auto const eve = otherTrustchain.makeEmailProvisionalUser();
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(aliceSession->createGroup(
+          {bob.spublicIdentity(), eve.publicIdentity})),
+      Errors::Errc::InvalidArgument,
+      "public identity not in the trustchain");
+}
+
+TEST_CASE_FIXTURE(TrustchainFixture,
+                  "Don't add public identity to group if not in the trustchain")
+{
+  auto otherTrustchain = createOtherTrustchain();
+  auto const eve = otherTrustchain.makeEmailProvisionalUser();
+
+  auto const groupId = TC_AWAIT(aliceSession->createGroup(
+      {alice.spublicIdentity(), bob.spublicIdentity()}));
+
+  TANKER_CHECK_THROWS_WITH_CODE_AND_MESSAGE(
+      TC_AWAIT(
+          aliceSession->updateGroupMembers(groupId, {eve.publicIdentity}, {})),
+      Errors::Errc::InvalidArgument,
+      "public identity not in the trustchain");
+}
+
 TEST_SUITE_END();

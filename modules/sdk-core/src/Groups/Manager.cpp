@@ -28,13 +28,16 @@ namespace Tanker::Groups::Manager
 {
 namespace
 {
-ProcessedIdentities processIdentities(std::vector<SPublicIdentity> identities)
+ProcessedIdentities processIdentities(
+    Trustchain::TrustchainId const& trustchainId,
+    std::vector<SPublicIdentity> identities)
 {
   ProcessedIdentities ret;
   ret.spublicIdentities = std::move(identities) | Actions::deduplicate;
   ret.publicIdentities = ret.spublicIdentities |
                          ranges::views::transform(extractPublicIdentity) |
                          ranges::to<std::vector>;
+  ensureIdentitiesInTrustchain(ret.publicIdentities, trustchainId);
   ret.partitionedIdentities = partitionIdentities(ret.publicIdentities);
   return ret;
 }
@@ -125,7 +128,7 @@ tc::cotask<SGroupId> create(
     Crypto::PrivateSignatureKey const& privateSignatureKey)
 {
   auto const processedIdentities =
-      processIdentities(std::move(spublicIdentities));
+      processIdentities(trustchainId, std::move(spublicIdentities));
 
   auto const members =
       TC_AWAIT(fetchFutureMembers(userAccessor, processedIdentities));
@@ -242,9 +245,9 @@ auto createGroupEntries(Users::IUserAccessor& userAccessor,
   std::optional<Trustchain::Actions::UserGroupRemoval> groupRemoveEntry;
 
   auto const processedIdentitiesToAdd =
-      processIdentities(std::move(spublicIdentitiesToAdd));
+      processIdentities(trustchainId, std::move(spublicIdentitiesToAdd));
   auto const processedIdentitiesToRemove =
-      processIdentities(std::move(spublicIdentitiesToRemove));
+      processIdentities(trustchainId, std::move(spublicIdentitiesToRemove));
 
   if (!processedIdentitiesToAdd.spublicIdentities.empty())
   {
