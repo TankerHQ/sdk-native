@@ -241,16 +241,8 @@ std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
     tanker_options_t const* options)
 {
   std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
-  char const* cache_path = nullptr;
   if (options->version >= 4)
   {
-    if (options->cache_path == nullptr)
-    {
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "cache_path is null");
-    }
-    cache_path = options->cache_path;
-
     auto const datastoreHandlersCount =
         !!options->datastore_options.open + !!options->datastore_options.close +
         !!options->datastore_options.nuke +
