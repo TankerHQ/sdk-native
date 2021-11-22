@@ -223,43 +223,32 @@ static_assert(
 std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
     tanker_options_t const* options)
 {
-  std::unique_ptr<Tanker::Network::Backend> networkBackend;
-  if (options->version >= 3)
-  {
-    auto const httpHandlersCount = !!options->http_options.send_request +
-                                   !!options->http_options.cancel_request;
-    if (httpHandlersCount != 0 && httpHandlersCount != 2)
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "the provided HTTP implementation is incomplete");
-    if (httpHandlersCount > 0)
-      networkBackend = std::make_unique<CTankerBackend>(options->http_options);
-  }
-  return networkBackend;
+  auto const httpHandlersCount = !!options->http_options.send_request +
+                                 !!options->http_options.cancel_request;
+  if (httpHandlersCount != 0 && httpHandlersCount != 2)
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "the provided HTTP implementation is incomplete");
+  if (httpHandlersCount == 0)
+    return nullptr;
+  return std::make_unique<CTankerBackend>(options->http_options);
 }
 
 std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
     tanker_options_t const* options)
 {
-  std::unique_ptr<Tanker::DataStore::Backend> storageBackend;
-  if (options->version >= 4)
-  {
-    auto const datastoreHandlersCount =
-        !!options->datastore_options.open + !!options->datastore_options.close +
-        !!options->datastore_options.nuke +
-        !!options->datastore_options.put_serialized_device +
-        !!options->datastore_options.find_serialized_device +
-        !!options->datastore_options.put_cache_values +
-        !!options->datastore_options.find_cache_values;
-    if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
-      throw Exception(make_error_code(Errc::InvalidArgument),
-                      "the provided datastore implementation is incomplete");
-    if (datastoreHandlersCount > 0)
-    {
-      storageBackend =
-          std::make_unique<CTankerStorageBackend>(options->datastore_options);
-    }
-  }
-  return storageBackend;
+  auto const datastoreHandlersCount =
+      !!options->datastore_options.open + !!options->datastore_options.close +
+      !!options->datastore_options.nuke +
+      !!options->datastore_options.put_serialized_device +
+      !!options->datastore_options.find_serialized_device +
+      !!options->datastore_options.put_cache_values +
+      !!options->datastore_options.find_cache_values;
+  if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
+    throw Exception(make_error_code(Errc::InvalidArgument),
+                    "the provided datastore implementation is incomplete");
+  if (datastoreHandlersCount == 0)
+    return nullptr;
+  return std::make_unique<CTankerStorageBackend>(options->datastore_options);
 }
 }
 
@@ -281,7 +270,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       throw Exception(make_error_code(Errc::InvalidArgument),
                       "options is null");
     }
-    if (options->version != 2 && options->version != 3 && options->version != 4)
+    if (options->version != 4)
     {
       throw Exception(
           make_error_code(Errc::InvalidArgument),
@@ -319,15 +308,10 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     std::unique_ptr<Tanker::DataStore::Backend> storageBackend =
         extractStorageBackend(options);
 
-    char const* cache_path = nullptr;
-    if (options->version >= 4)
+    if (options->cache_path == nullptr)
     {
-      if (options->cache_path == nullptr)
-      {
-        throw Exception(make_error_code(Errc::InvalidArgument),
-                        "cache_path is null");
-      }
-      cache_path = options->cache_path;
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "cache_path is null");
     }
 
     try
@@ -339,7 +323,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
                         options->writable_path,
-                        cache_path,
+                        options->cache_path,
                         std::move(networkBackend),
                         std::move(storageBackend)));
     }
