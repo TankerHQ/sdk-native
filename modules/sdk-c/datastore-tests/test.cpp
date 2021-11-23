@@ -1,6 +1,15 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "test.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+
+// thread_local is not supported on iOS 9.0 on x86 platform
+#if TARGET_CPU_X86
+#define DOCTEST_THREAD_LOCAL
+#endif
+#endif
+
 #include <doctest/doctest.h>
 
 #include <Helpers/DataStoreTests.hpp>
