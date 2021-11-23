@@ -419,10 +419,13 @@ tanker_future_t* tanker_register_identity(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->registerIdentity(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->registerIdentity(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);
@@ -436,10 +439,13 @@ tanker_future_t* tanker_verify_identity(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->verifyIdentity(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->verifyIdentity(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);
@@ -504,10 +510,13 @@ tanker_future_t* tanker_set_verification_method(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->setVerificationMethod(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->setVerificationMethod(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);
