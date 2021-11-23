@@ -204,6 +204,7 @@ makeKeyPublishToProvisionalUser(
 }
 
 tc::cotask<KeyRecipients> generateRecipientList(
+    Trustchain::TrustchainId const& trustchainId,
     Users::IUserAccessor& userAccessor,
     Groups::IAccessor& groupAccessor,
     std::vector<SPublicIdentity> spublicIdentities,
@@ -221,6 +222,8 @@ tc::cotask<KeyRecipients> generateRecipientList(
   auto const publicIdentities =
       spublicIdentities | ranges::views::transform(extractPublicIdentity) |
       ranges::to<std::vector>;
+
+  ensureIdentitiesInTrustchain(publicIdentities, trustchainId);
 
   auto const partitionedIdentities = partitionIdentities(publicIdentities);
 
@@ -294,7 +297,7 @@ tc::cotask<void> share(Users::IUserAccessor& userAccessor,
                    ShareLimit);
 
   auto const keyRecipients = TC_AWAIT(generateRecipientList(
-      userAccessor, groupAccessor, publicIdentities, groupIds));
+      trustchainId, userAccessor, groupAccessor, publicIdentities, groupIds));
 
   auto const actions = generateShareBlocks(
       trustchainId, deviceId, signatureKey, resourceKeys, keyRecipients);

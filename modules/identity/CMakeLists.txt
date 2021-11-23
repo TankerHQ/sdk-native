@@ -50,6 +50,7 @@ target_link_libraries(
   CONAN_PKG::nlohmann_json
   CONAN_PKG::gsl-lite
   CONAN_PKG::mgs
+  CONAN_PKG::range-v3
 )
 
 install(TARGETS tankeridentity

@@ -4,9 +4,14 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Utils.hpp>
 
+#include <range/v3/algorithm/equal.hpp>
 #include <range/v3/algorithm/find_if.hpp>
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/cycle.hpp>
+#include <range/v3/view/single.hpp>
 #include <range/v3/view/transform.hpp>
+
+#include <boost/variant2/variant.hpp>
 
 namespace Tanker
 {

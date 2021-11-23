@@ -7,6 +7,8 @@
 #include <Tanker/Identity/SecretIdentity.hpp>
 
 #include <nlohmann/json.hpp>
+#include <range/v3/algorithm/all_of.hpp>
+#include <range/v3/functional/bind_back.hpp>
 
 namespace Tanker
 {
@@ -52,6 +54,27 @@ std::string getPublicIdentity(std::string const& secretIdentity)
   return to_string(
       boost::variant2::visit([](auto const& i) { return getPublicIdentity(i); },
                              extract<SecretIdentity>(secretIdentity)));
+}
+
+void ensureIdentitiesInTrustchain(
+    std::vector<PublicIdentity> const& publicIdentities,
+    Trustchain::TrustchainId const& trustchainId)
+{
+  auto proj = [](auto const& identity) {
+    return boost::variant2::visit(
+        [](auto const& identity) -> Trustchain::TrustchainId const& {
+          return identity.trustchainId;
+        },
+        identity);
+  };
+
+  auto pred = ranges::bind_back(std::equal_to{}, trustchainId);
+
+  if (!ranges::all_of(publicIdentities, pred, proj))
+  {
+    throw Errors::formatEx(Errors::Errc::InvalidArgument,
+                           "public identity not in the trustchain");
+  }
 }
 
 void from_json(nlohmann::json const& j, PublicIdentity& identity)

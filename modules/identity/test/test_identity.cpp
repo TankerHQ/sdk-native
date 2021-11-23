@@ -8,6 +8,7 @@
 #include <Tanker/Identity/Utils.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
 
+#include <Helpers/Email.hpp>
 #include <Helpers/Errors.hpp>
 
 #include <doctest/doctest.h>
@@ -178,6 +179,29 @@ void checkUserSecret(Tanker::Crypto::SymmetricKey const& userSecret,
                                     userId);
   if (check[0] != userSecret[USER_SECRET_SIZE - 1])
     throw std::invalid_argument("bad user secret");
+}
+
+PublicIdentity createTestPermanentIdentity(
+    Trustchain::TrustchainId const& trustchainId,
+    Crypto::PrivateSignatureKey const& trustchainPrivateKey)
+{
+  Trustchain::UserId userId;
+  Crypto::randomFill(userId);
+
+  auto identity = createIdentity(trustchainId, trustchainPrivateKey, userId);
+  return Identity::getPublicIdentity(identity);
+}
+
+PublicIdentity createTestProvisionalIdentity(
+    Trustchain::TrustchainId const& trustchainId)
+{
+  Trustchain::UserId userId;
+  Crypto::randomFill(userId);
+  auto const email = makeEmail();
+
+  auto identity =
+      Tanker::Identity::createProvisionalIdentity(trustchainId, email);
+  return Identity::getPublicIdentity(identity);
 }
 }
 
@@ -410,3 +434,78 @@ TEST_CASE("generateUserSecret can be checked")
   CHECK_NOTHROW(
       checkUserSecret(generateUserSecret(obfuscatedUserId), obfuscatedUserId));
 }
+
+TEST_SUITE_BEGIN("ensure public identity in trustchain");
+
+TEST_CASE("does not throw with an empty array")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+  CHECK_NOTHROW(ensureIdentitiesInTrustchain({}, otherTrustchainId));
+}
+
+TEST_CASE("does not throw with valid public identities")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+  auto kp = Crypto::makeSignatureKeyPair();
+
+  auto identity = createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
+  CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
+}
+
+TEST_CASE("does not throw with valid public provisional identities")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+
+  auto identity = createTestProvisionalIdentity(otherTrustchainId);
+  CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
+}
+
+TEST_CASE("throws with invalid identities")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+
+  auto identity =
+      createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
+      Errors::Errc::InvalidArgument);
+}
+
+TEST_CASE("throws with invalid provisional identities")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+
+  auto identity = createTestProvisionalIdentity(trustchainId);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
+      Errors::Errc::InvalidArgument);
+}
+
+TEST_CASE("throws with a mix of valid and invalid identities")
+{
+  Trustchain::TrustchainId otherTrustchainId;
+  Crypto::randomFill(otherTrustchainId);
+  auto kp = Crypto::makeSignatureKeyPair();
+
+  auto validIdentity =
+      createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
+  auto validProvisionalIdentity =
+      createTestProvisionalIdentity(otherTrustchainId);
+  auto invalidIdentity =
+      createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
+  auto invalidProvisionalIdentity = createTestProvisionalIdentity(trustchainId);
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      ensureIdentitiesInTrustchain({validIdentity,
+                                    invalidIdentity,
+                                    validProvisionalIdentity,
+                                    invalidProvisionalIdentity},
+                                   otherTrustchainId),
+      Errors::Errc::InvalidArgument);
+}
+TEST_SUITE_END();

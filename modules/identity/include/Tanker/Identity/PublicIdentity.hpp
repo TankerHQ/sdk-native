@@ -20,6 +20,10 @@ PublicIdentity getPublicIdentity(SecretProvisionalIdentity const& identity);
 
 std::string getPublicIdentity(std::string const& identity);
 
+void ensureIdentitiesInTrustchain(
+    std::vector<Identity::PublicIdentity> const& publicIdentities,
+    Trustchain::TrustchainId const& trustchainId);
+
 void from_json(nlohmann::json const& j, PublicIdentity& identity);
 void to_json(nlohmann::json& j, PublicIdentity const& identity);
 std::string to_string(PublicIdentity const& identity);
