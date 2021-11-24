@@ -221,34 +221,31 @@ static_assert(
 #undef STATIC_ENUM_CHECK
 
 std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
-    tanker_options_t const* options)
+    tanker_http_options_t const& options)
 {
-  auto const httpHandlersCount = !!options->http_options.send_request +
-                                 !!options->http_options.cancel_request;
+  auto const httpHandlersCount =
+      !!options.send_request + !!options.cancel_request;
   if (httpHandlersCount != 0 && httpHandlersCount != 2)
     throw Exception(make_error_code(Errc::InvalidArgument),
                     "the provided HTTP implementation is incomplete");
   if (httpHandlersCount == 0)
     return nullptr;
-  return std::make_unique<CTankerBackend>(options->http_options);
+  return std::make_unique<CTankerBackend>(options);
 }
 
 std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
-    tanker_options_t const* options)
+    tanker_datastore_options_t const& options)
 {
   auto const datastoreHandlersCount =
-      !!options->datastore_options.open + !!options->datastore_options.close +
-      !!options->datastore_options.nuke +
-      !!options->datastore_options.put_serialized_device +
-      !!options->datastore_options.find_serialized_device +
-      !!options->datastore_options.put_cache_values +
-      !!options->datastore_options.find_cache_values;
+      !!options.open + !!options.close + !!options.nuke +
+      !!options.put_serialized_device + !!options.find_serialized_device +
+      !!options.put_cache_values + !!options.find_cache_values;
   if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
     throw Exception(make_error_code(Errc::InvalidArgument),
                     "the provided datastore implementation is incomplete");
   if (datastoreHandlersCount == 0)
     return nullptr;
-  return std::make_unique<CTankerStorageBackend>(options->datastore_options);
+  return std::make_unique<CTankerStorageBackend>(options);
 }
 }
 
@@ -304,9 +301,9 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     }
 
     std::unique_ptr<Tanker::Network::Backend> networkBackend =
-        extractNetworkBackend(options);
+        extractNetworkBackend(options->http_options);
     std::unique_ptr<Tanker::DataStore::Backend> storageBackend =
-        extractStorageBackend(options);
+        extractStorageBackend(options->datastore_options);
 
     if (options->cache_path == nullptr)
     {
