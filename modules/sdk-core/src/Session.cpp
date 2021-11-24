@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -28,10 +29,21 @@ std::string getDbPath(std::string const& writablePath,
     return writablePath;
   return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
 }
+
+std::string getDb2Path(std::string const& path,
+                       Trustchain::UserId const& userId)
+{
+  if (path == ":memory:")
+    return path;
+  return fmt::format(FMT_STRING("{:s}/{:S}"), path, userId);
+}
 }
 
-Session::Storage::Storage(DataStore::Database pdb)
+Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
+                          DataStore::Database pdb,
+                          std::unique_ptr<DataStore::DataStore> pdb2)
   : db(std::move(pdb)),
+    db2(std::move(pdb2)),
     localUserStore(&db),
     groupStore(&db),
     resourceKeyStore(&db),
@@ -77,8 +89,10 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::unique_ptr<Network::HttpClient> httpClient)
+Session::Session(std::unique_ptr<Network::HttpClient> httpClient,
+                 DataStore::Backend* datastoreBackend)
   : _httpClient(std::move(httpClient)),
+    _datastoreBackend(datastoreBackend),
     _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -99,12 +113,17 @@ Network::HttpClient& Session::httpClient()
 
 tc::cotask<void> Session::openStorage(
     Identity::SecretPermanentIdentity const& identity,
-    std::string const& writablePath)
+    std::string const& dataPath,
+    std::string const& cachePath)
 {
   assert(!_identity && !_storage);
   _identity = identity;
-  _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
-      getDbPath(writablePath, userId()), userSecret())));
+  _storage = std::make_unique<Storage>(
+      userSecret(),
+      TC_AWAIT(DataStore::createDatabase(getDbPath(dataPath, userId()),
+                                         userSecret())),
+      _datastoreBackend->open(getDb2Path(dataPath, userId()),
+                              getDb2Path(cachePath, userId())));
 }
 
 Session::Storage const& Session::storage() const

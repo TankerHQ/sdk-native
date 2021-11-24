@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/DataStore/Database.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Groups/Accessor.hpp>
@@ -41,9 +42,12 @@ public:
 
   struct Storage
   {
-    Storage(DataStore::Database db);
+    Storage(Crypto::SymmetricKey const& userSecret,
+            DataStore::Database db,
+            std::unique_ptr<DataStore::DataStore> db2);
 
     DataStore::Database db;
+    std::unique_ptr<DataStore::DataStore> db2;
     Users::LocalUserStore localUserStore;
     Groups::Store groupStore;
     ResourceKeys::Store resourceKeyStore;
@@ -63,7 +67,8 @@ public:
     ResourceKeys::Accessor resourceKeyAccessor;
   };
 
-  Session(std::unique_ptr<Network::HttpClient> client);
+  Session(std::unique_ptr<Network::HttpClient> client,
+          DataStore::Backend* datastoreBackend);
   ~Session();
 
   tc::cotask<void> stop();
@@ -75,7 +80,8 @@ public:
 
   tc::cotask<void> openStorage(
       Identity::SecretPermanentIdentity const& identity,
-      std::string const& writablePath);
+      std::string const& dataPath,
+      std::string const& cachePath);
   Storage const& storage() const;
   Storage& storage();
 
@@ -100,6 +106,7 @@ public:
 
 private:
   std::unique_ptr<Network::HttpClient> _httpClient;
+  DataStore::Backend* _datastoreBackend;
   Requesters _requesters;
   std::unique_ptr<Storage> _storage;
   std::unique_ptr<Accessors> _accessors;

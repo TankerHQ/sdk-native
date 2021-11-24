@@ -50,8 +50,10 @@ public:
 
   AsyncCore(std::string url,
             SdkInfo info,
-            std::string writablePath,
-            std::unique_ptr<Network::Backend> backend = nullptr);
+            std::string dataPath,
+            std::string cachePath,
+            std::unique_ptr<Network::Backend> networkBackend = nullptr,
+            std::unique_ptr<DataStore::Backend> datastoreBackend = nullptr);
   ~AsyncCore();
 
   tc::future<void> destroy();

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.4)
 project(TankerSDK-Core)
 
 set(TANKER_CORE_DATASTORE_SRC
+  include/Tanker/DataStore/Backend.hpp
+  include/Tanker/DataStore/Sqlite/Backend.hpp
   include/Tanker/DataStore/Connection.hpp
   include/Tanker/DataStore/Database.hpp
   include/Tanker/DataStore/Table.hpp
@@ -20,6 +22,7 @@ set(TANKER_CORE_DATASTORE_SRC
   include/Tanker/DbModels/Versions.hpp
   include/Tanker/DbModels/Version.hpp
 
+  src/DataStore/Sqlite/Backend.cpp
   src/DataStore/Connection.cpp
   src/DataStore/Database.cpp
   src/DataStore/Table.cpp
