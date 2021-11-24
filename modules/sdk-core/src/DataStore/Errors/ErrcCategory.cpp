@@ -25,6 +25,8 @@ std::string ErrcCategory::message(int c) const
     return "database corrupt";
   case Errc::DatabaseTooRecent:
     return "database too recent";
+  case Errc::Last:
+    break;
   }
   return "unknown error";
 }
@@ -42,6 +44,8 @@ std::error_condition ErrcCategory::default_error_condition(int c) const noexcept
     return make_error_condition(Errors::Errc::PreconditionFailed);
   case Errc::DatabaseTooRecent:
     return make_error_condition(Errors::Errc::UpgradeRequired);
+  case Errc::Last:
+    break;
   }
   return std::error_condition(c, *this);
 }

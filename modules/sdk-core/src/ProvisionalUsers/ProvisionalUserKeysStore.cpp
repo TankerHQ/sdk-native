@@ -70,8 +70,8 @@ ProvisionalUserKeysStore::findProvisionalUserKeys(
 }
 
 tc::cotask<std::optional<Tanker::ProvisionalUserKeys>>
-ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicEncryptionKey(
-    Crypto::PublicEncryptionKey const& appPublicEncryptionKey) const
+ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicSignatureKey(
+    Crypto::PublicSignatureKey const& appPublicSignatureKey) const
 {
   FUNC_TIMER(DB);
   ProvisionalUserKeysTable tab{};
@@ -81,7 +81,7 @@ ProvisionalUserKeysStore::findProvisionalUserKeysByAppPublicEncryptionKey(
              tab.tanker_enc_priv,
              tab.tanker_enc_pub)
           .from(tab)
-          .where(tab.app_enc_pub == appPublicEncryptionKey.base()));
+          .where(tab.app_pub_sig_key == appPublicSignatureKey.base()));
   if (rows.empty())
     TC_RETURN(std::nullopt);
   auto const& row = rows.front();
