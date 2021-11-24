@@ -14,7 +14,7 @@
 
 #include <Helpers/DataStoreTests.hpp>
 
-#include "CDataStore.hpp"
+#include <ctanker/private/CDataStore.hpp>
 
 namespace
 {
