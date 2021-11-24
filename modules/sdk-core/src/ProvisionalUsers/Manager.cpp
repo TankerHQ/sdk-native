@@ -116,9 +116,10 @@ tc::cotask<AttachResult> Manager::claimProvisionalIdentity(
   try
   {
     auto const& userId = _localUserAccessor->get().userId();
-    auto verificationMethods =
+    auto genericVerificationMethods =
         TC_AWAIT(_unlockRequester->fetchVerificationMethods(userId));
-    TC_AWAIT(Verification::decryptMethods(verificationMethods, userSecret));
+    auto verificationMethods = TC_AWAIT(
+        Verification::decryptMethods(genericVerificationMethods, userSecret));
 
     if (findVerificationMethod(verificationMethods, method))
     {

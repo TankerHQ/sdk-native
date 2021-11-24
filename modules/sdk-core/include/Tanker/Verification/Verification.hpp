@@ -50,34 +50,48 @@ using Verification = boost::variant2::variant<VerificationKey,
 
 class VerificationMethod
 {
-  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
-      VerificationMethod,
-      (VerificationKey,
-       EncryptedEmail,
-       Email,
-       Passphrase,
-       OidcIdToken,
-       EncryptedPhoneNumber,
-       PhoneNumber,
-       PreverifiedEmail,
-       PreverifiedPhoneNumber,
-       EncryptedPreverifiedEmail,
-       EncryptedPreverifiedPhoneNumber))
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(VerificationMethod,
+                                                       (VerificationKey,
+                                                        Email,
+                                                        Passphrase,
+                                                        OidcIdToken,
+                                                        PhoneNumber,
+                                                        PreverifiedEmail,
+                                                        PreverifiedPhoneNumber))
 
   static VerificationMethod from(Verification const& v);
 
 private:
-  friend void from_json(nlohmann::json const&, VerificationMethod&);
   friend bool operator<(VerificationMethod const& a,
                         VerificationMethod const& b);
 };
 
-tc::cotask<void> decryptMethods(
-    std::vector<VerificationMethod>& encryptedMethods,
+class EncryptedVerificationMethod
+{
+  TANKER_TRUSTCHAIN_ACTION_VARIANT_IMPLEMENTATION_ZERO(
+      EncryptedVerificationMethod,
+      (EncryptedEmail,
+       EncryptedPhoneNumber,
+       EncryptedPreverifiedEmail,
+       EncryptedPreverifiedPhoneNumber))
+
+private:
+  friend bool operator<(EncryptedVerificationMethod const& a,
+                        EncryptedVerificationMethod const& b);
+};
+
+tc::cotask<std::vector<VerificationMethod>> decryptMethods(
+    std::vector<boost::variant2::variant<VerificationMethod,
+                                         EncryptedVerificationMethod>>& methods,
     Crypto::SymmetricKey const& userSecret);
 
-void to_json(nlohmann::json&, VerificationMethod const&) = delete;
-void from_json(nlohmann::json const&, VerificationMethod&);
+void to_json(nlohmann::json&,
+             boost::variant2::variant<VerificationMethod,
+                                      EncryptedVerificationMethod> const&) =
+    delete;
+void from_json(
+    nlohmann::json const&,
+    boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>&);
 
 void validateVerification(
     Verification const& verification,
