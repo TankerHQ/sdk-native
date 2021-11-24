@@ -38,3 +38,6 @@ private:
 
   tanker_datastore_t* _datastore;
 };
+
+std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
+    tanker_datastore_options_t const& options);

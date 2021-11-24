@@ -16,9 +16,9 @@
 #include <tconcurrent/thread_pool.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
+#include <ctanker/private/CDataStore.hpp>
 #include <ctanker/private/Utils.hpp>
 
-#include "CDataStore.hpp"
 #include "CNetwork.hpp"
 
 #include <string>
@@ -231,21 +231,6 @@ std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
   if (httpHandlersCount == 0)
     return nullptr;
   return std::make_unique<CTankerBackend>(options);
-}
-
-std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
-    tanker_datastore_options_t const& options)
-{
-  auto const datastoreHandlersCount =
-      !!options.open + !!options.close + !!options.nuke +
-      !!options.put_serialized_device + !!options.find_serialized_device +
-      !!options.put_cache_values + !!options.find_cache_values;
-  if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
-    throw Exception(make_error_code(Errc::InvalidArgument),
-                    "the provided datastore implementation is incomplete");
-  if (datastoreHandlersCount == 0)
-    return nullptr;
-  return std::make_unique<CTankerStorageBackend>(options);
 }
 }
 
