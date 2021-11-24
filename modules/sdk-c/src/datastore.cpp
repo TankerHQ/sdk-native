@@ -3,9 +3,8 @@
 #include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <ctanker/private/CDataStore.hpp>
 #include <ctanker/private/Utils.hpp>
-
-#include "CDataStore.hpp"
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/promise.hpp>
@@ -17,6 +16,22 @@ TLOG_CATEGORY(CTankerStorage);
 
 using namespace Tanker::DataStore;
 namespace Errors = Tanker::Errors;
+
+std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
+    tanker_datastore_options_t const& options)
+{
+  auto const datastoreHandlersCount =
+      !!options.open + !!options.close + !!options.nuke +
+      !!options.put_serialized_device + !!options.find_serialized_device +
+      !!options.put_cache_values + !!options.find_cache_values;
+  if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
+    throw Errors::Exception(
+        make_error_code(Errors::Errc::InvalidArgument),
+        "the provided datastore implementation is incomplete");
+  if (datastoreHandlersCount == 0)
+    return nullptr;
+  return std::make_unique<CTankerStorageBackend>(options);
+}
 
 #define STATIC_ENUM_CHECK(cval, cppval)           \
   static_assert(cval == static_cast<int>(cppval), \
