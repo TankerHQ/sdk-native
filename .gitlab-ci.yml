@@ -287,6 +287,7 @@ bridge/rust/linux:
     UPSTREAM_JOB_NAME: build/linux
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/rust/windows:
@@ -301,6 +302,7 @@ bridge/rust/windows:
     UPSTREAM_JOB_NAME: build/windows/shared
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/rust/ios:
@@ -315,6 +317,7 @@ bridge/rust/ios:
     UPSTREAM_JOB_NAME: build/ios/http-backend
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/rust/macos/x86_64:
@@ -329,6 +332,7 @@ bridge/rust/macos/x86_64:
     UPSTREAM_JOB_NAME: build/macos/x86_64
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/rust/macos/arm:
@@ -343,6 +347,7 @@ bridge/rust/macos/arm:
     UPSTREAM_JOB_NAME: build/macos/arm
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/rust/android:
@@ -357,6 +362,7 @@ bridge/rust/android:
     UPSTREAM_JOB_NAME: build/android/static/http-backend
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 bridge/python/linux:
@@ -428,6 +434,7 @@ bridge/ruby/linux:
     UPSTREAM_JOB_NAME: build/linux/shared
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: baba/disable-deploy-check
     strategy: depend
 
 bridge/ruby/macos/x86_64:
@@ -442,6 +449,7 @@ bridge/ruby/macos/x86_64:
     UPSTREAM_JOB_NAME: build/macos/x86_64/shared
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: baba/disable-deploy-check
     strategy: depend
 
 bridge/ruby/macos/arm:
@@ -456,6 +464,7 @@ bridge/ruby/macos/arm:
     UPSTREAM_JOB_NAME: build/macos/arm/shared
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: baba/disable-deploy-check
     strategy: depend
 
 ###############
@@ -577,6 +586,7 @@ bridge/ruby/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-ruby
+    branch: baba/disable-deploy-check
     strategy: depend
 
 bridge/rust/deploy:
@@ -597,6 +607,7 @@ bridge/rust/deploy:
     SDK_NATIVE_LATEST_CONAN_REFERENCE: tanker/$SDK_NATIVE_RELEASE_VERSION@
   trigger:
     project: TankerHQ/sdk-rust
+    branch: baba/remove-check-deploy
     strategy: depend
 
 #############################
