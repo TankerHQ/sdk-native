@@ -44,10 +44,10 @@ Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
                           std::unique_ptr<DataStore::DataStore> pdb2)
   : db(std::move(pdb)),
     db2(std::move(pdb2)),
-    localUserStore(&db),
-    groupStore(&db),
-    resourceKeyStore(&db),
-    provisionalUserKeysStore(&db)
+    localUserStore(userSecret, db2.get()),
+    groupStore(userSecret, db2.get()),
+    resourceKeyStore(userSecret, db2.get()),
+    provisionalUserKeysStore(userSecret, db2.get())
 {
 }
 

@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/ProvisionalUsers/ProvisionalUserKeysStore.hpp>
 
 #include <Helpers/Await.hpp>
@@ -11,11 +12,12 @@ using namespace Tanker;
 
 TEST_CASE("ProvisionalUserKeysStore")
 {
-  auto db = AWAIT(DataStore::createDatabase(":memory:"));
+  auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
+                                            DataStore::MemoryPath);
 
   SUBCASE("it should create and destroy a ProvisionalUserKeysStore")
   {
-    ProvisionalUserKeysStore store(&db);
+    ProvisionalUserKeysStore store({}, db.get());
   }
 
   SUBCASE("it should not find a non-existent provisional user")
@@ -23,7 +25,7 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const unexistentPubKey =
         make<Crypto::PublicSignatureKey>("unexistent");
 
-    ProvisionalUserKeysStore store(&db);
+    ProvisionalUserKeysStore store({}, db.get());
     CHECK_UNARY(!AWAIT(
         store.findProvisionalUserKeys(unexistentPubKey, unexistentPubKey)));
   }
@@ -36,7 +38,7 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const kp1 = Tanker::Crypto::makeEncryptionKeyPair();
     auto const kp2 = Tanker::Crypto::makeEncryptionKeyPair();
 
-    ProvisionalUserKeysStore store(&db);
+    ProvisionalUserKeysStore store({}, db.get());
 
     AWAIT_VOID(
         store.putProvisionalUserKeys(appPubKey, tankerPubKey, {kp1, kp2}));
@@ -58,7 +60,7 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const kp1 = Tanker::Crypto::makeEncryptionKeyPair();
     auto const kp2 = Tanker::Crypto::makeEncryptionKeyPair();
 
-    ProvisionalUserKeysStore store(&db);
+    ProvisionalUserKeysStore store({}, db.get());
 
     AWAIT_VOID(
         store.putProvisionalUserKeys(appPubKey, tankerPubKey, {kp1, kp2}));
@@ -81,7 +83,7 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const appKeys = Tanker::Crypto::makeEncryptionKeyPair();
     auto const tankerKeys = Tanker::Crypto::makeEncryptionKeyPair();
 
-    ProvisionalUserKeysStore store(&db);
+    ProvisionalUserKeysStore store({}, db.get());
 
     AWAIT_VOID(store.putProvisionalUserKeys(
         appPubKey, tankerPubKey, {appKeys, tankerKeys}));

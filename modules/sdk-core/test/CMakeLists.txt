@@ -1,6 +1,7 @@
 set(TEST_TANKER_EXTRA_SRC test_datastore.cpp test_datastore_new.cpp)
 
 add_executable(test_tanker
+  test_localuserstore.cpp
   test_groupstore.cpp
   test_groupaccessor.cpp
   test_groupupdater.cpp
