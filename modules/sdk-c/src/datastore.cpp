@@ -26,7 +26,7 @@ std::unique_ptr<Tanker::DataStore::Backend> extractStorageBackend(
       !!options.put_cache_values + !!options.find_cache_values;
   if (datastoreHandlersCount != 0 && datastoreHandlersCount != 7)
     throw Errors::Exception(
-        make_error_code(Errors::Errc::InvalidArgument),
+        make_error_code(Errors::Errc::InternalError),
         "the provided datastore implementation is incomplete");
   if (datastoreHandlersCount == 0)
     return nullptr;

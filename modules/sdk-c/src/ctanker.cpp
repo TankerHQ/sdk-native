@@ -226,7 +226,7 @@ std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
   auto const httpHandlersCount =
       !!options.send_request + !!options.cancel_request;
   if (httpHandlersCount != 0 && httpHandlersCount != 2)
-    throw Exception(make_error_code(Errc::InvalidArgument),
+    throw Exception(make_error_code(Errc::InternalError),
                     "the provided HTTP implementation is incomplete");
   if (httpHandlersCount == 0)
     return nullptr;
