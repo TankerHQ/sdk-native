@@ -2,11 +2,8 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/Connection.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
-#include <Tanker/DataStore/Table.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ResourceKeys.hpp>
 #include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Await.hpp>

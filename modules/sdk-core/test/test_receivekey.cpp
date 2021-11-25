@@ -1,6 +1,5 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 

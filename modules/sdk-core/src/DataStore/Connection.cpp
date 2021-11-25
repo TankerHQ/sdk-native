@@ -54,31 +54,6 @@ void makeExclusive(ConnPtr& db)
   // Yes, it actually (tries to) write, and takes the lock
   (*db)(update(access).set(access.last_access = 0).unconditionally());
 }
-
-bool isEncryptedDb(std::string const& dbPath)
-{
-  using namespace std::string_literals;
-
-  std::ifstream ifs{dbPath, std::ios::binary | std::ios::in};
-  if (!ifs.is_open())
-    return hasCipher();
-  auto const clearMagic = "SQLite format 3"s;
-  std::string buffer(clearMagic.size(), 0);
-
-  ifs.read(&buffer[0], clearMagic.size());
-  return hasCipher() && buffer != clearMagic;
-}
-
-std::string hexUserSecret(std::optional<Crypto::SymmetricKey> const& userSecret)
-{
-  if (!userSecret)
-    return {};
-  std::string hexkey = "x'";
-  boost::algorithm::hex(
-      userSecret->begin(), userSecret->end(), std::back_inserter(hexkey));
-  hexkey += "'";
-  return hexkey;
-}
 }
 
 ConnPtr createConnection(std::string const& dbPath,
@@ -86,16 +61,6 @@ ConnPtr createConnection(std::string const& dbPath,
                          bool exclusive)
 {
   TINFO("creating database {}", dbPath);
-  auto const isEncrypted = isEncryptedDb(dbPath);
-  if (isEncrypted && !hasCipher())
-  {
-    throw Errors::formatEx(
-        Errc::DatabaseError,
-        "database {} is encrypted but OpenSSL support is not enabled",
-        dbPath);
-  }
-  auto const shouldEncrypt = hasCipher() && isEncrypted;
-  auto const shouldMigrate = hasCipher() && !isEncrypted && userSecret;
   try
   {
     auto db = [&] {
@@ -105,38 +70,14 @@ ConnPtr createConnection(std::string const& dbPath,
           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
           "",
           false,
-          shouldEncrypt ? hexUserSecret(userSecret) : "",
+          "",
       });
     }();
-    // migrate from sqlcipher 3 to 4
-    db->execute("PRAGMA cipher_migrate");
-    // enable foreign key support
-    db->execute("PRAGMA foreign_keys = ON");
-    // for revocation (when wiping db)
-    db->execute("PRAGMA secure_delete = ON");
-
-    // migrate from clear to encrypted db
-    if (shouldMigrate)
-    {
-      auto const hexkey = hexUserSecret(userSecret);
-      db->execute(fmt::format(
-          R"(ATTACH DATABASE '{}.tmp' AS encrypted KEY "{}")", dbPath, hexkey));
-      db->execute("SELECT sqlcipher_export('encrypted')");
-      db->execute("DETACH DATABASE encrypted");
-      db.reset();
-
-      std::filesystem::rename(dbPath + ".tmp", dbPath);
-
-      db = std::make_unique<Connection>(sqlpp::sqlite3::connection_config{
-          dbPath.c_str(),
-          SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
-          "",
-          false,
-          hexkey});
-    }
 
     {
       SCOPE_TIMER("finalize open", DB);
+      // for revocation (when wiping db)
+      db->execute("PRAGMA secure_delete = ON");
       // Check the open succeeded
       db->execute("SELECT count(*) FROM sqlite_master");
       if (exclusive)
@@ -147,11 +88,7 @@ ConnPtr createConnection(std::string const& dbPath,
   catch (sqlpp::exception const& e)
   {
     std::string const msg = e.what();
-    if (msg.find("file is not a database") != std::string::npos)
-      throw Errors::Exception(
-          Errc::DatabaseCorrupt,
-          "database is corrupted, or an incorrect identity was used");
-    else if (msg.find("database is locked") != std::string::npos)
+    if (msg.find("database is locked") != std::string::npos)
       throw Errors::Exception(Errc::DatabaseLocked,
                               "database is locked by another Tanker instance");
     else

@@ -4,39 +4,21 @@ project(TankerSDK-Core)
 
 set(TANKER_CORE_DATASTORE_SRC
   include/Tanker/DataStore/Backend.hpp
-  include/Tanker/DataStore/Sqlite/Backend.hpp
-  include/Tanker/DataStore/Connection.hpp
-  include/Tanker/DataStore/Database.hpp
-  include/Tanker/DataStore/Table.hpp
   include/Tanker/DataStore/Utils.hpp
-  include/Tanker/DataStore/Version.hpp
   include/Tanker/DataStore/Errors/Errc.hpp
   include/Tanker/DataStore/Errors/ErrcCategory.hpp
-  include/Tanker/DbModels/DeviceKeyStore.hpp
-  include/Tanker/DbModels/Groups.hpp
-  include/Tanker/DbModels/GroupKeys.hpp
-  include/Tanker/DbModels/ResourceKeys.hpp
-  include/Tanker/DbModels/ProvisionalUserKeys.hpp
-  include/Tanker/DbModels/TrustchainInfo.hpp
-  include/Tanker/DbModels/UserKeys.hpp
-  include/Tanker/DbModels/Versions.hpp
-  include/Tanker/DbModels/Version.hpp
 
-  src/DataStore/Sqlite/Backend.cpp
-  src/DataStore/Connection.cpp
-  src/DataStore/Database.cpp
-  src/DataStore/Table.cpp
   src/DataStore/Utils.cpp
-  src/DbModels/DeviceKeyStore.cpp
-  src/DbModels/Groups.cpp
-  src/DbModels/GroupKeys.cpp
-  src/DbModels/ResourceKeys.cpp
-  src/DbModels/ProvisionalUserKeys.cpp
-  src/DbModels/TrustchainInfo.cpp
-  src/DbModels/UserKeys.cpp
-  src/DbModels/Versions.cpp
-  src/DbModels/Version.cpp
 )
+
+if (WITH_SQLITE)
+  set(TANKER_CORE_SQLITE_SRC
+    include/Tanker/DataStore/Sqlite/Backend.hpp
+    include/Tanker/DataStore/Connection.hpp
+    src/DataStore/Sqlite/Backend.cpp
+    src/DataStore/Connection.cpp
+  )
+endif()
 
 if (WITH_FETCHPP)
   set(TANKER_CORE_HTTP_SRC
@@ -185,6 +167,7 @@ add_library(tankercore STATIC
   src/EncryptionSession.cpp
 
   ${TANKER_CORE_DATASTORE_SRC}
+  ${TANKER_CORE_SQLITE_SRC}
   ${TANKER_CORE_HTTP_SRC}
 )
 
@@ -216,15 +199,16 @@ target_link_libraries(tankercore
   CONAN_PKG::nlohmann_json
   CONAN_PKG::enum-flags
   CONAN_PKG::range-v3
+  CONAN_PKG::date
 )
 
 if(WITH_FETCHPP)
   target_link_libraries(tankercore tankercacerts CONAN_PKG::fetchpp)
 endif()
 
-target_link_libraries(tankercore
-  CONAN_PKG::sqlpp11-connector-sqlite3
-)
+if(WITH_SQLITE)
+  target_link_libraries(tankercore CONAN_PKG::sqlpp11-connector-sqlite3)
+endif()
 
 install(TARGETS tankercore
   EXPORT tanker

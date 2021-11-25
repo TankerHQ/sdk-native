@@ -2,14 +2,11 @@
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ProvisionalUserKeys.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
-
-#include <sqlpp11/sqlite3/insert_or.h>
 
 TLOG_CATEGORY(ProvisionalUserKeysStore);
 

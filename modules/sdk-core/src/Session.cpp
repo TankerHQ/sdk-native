@@ -1,8 +1,7 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
-#include <Tanker/DataStore/Sqlite/Backend.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -22,16 +21,9 @@ namespace Tanker
 {
 namespace
 {
-std::string getDbPath(std::string const& writablePath,
-                      Trustchain::UserId const& userId)
-{
-  if (writablePath == ":memory:")
-    return writablePath;
-  return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
-}
+constexpr uint8_t Version = 1;
 
-std::string getDb2Path(std::string const& path,
-                       Trustchain::UserId const& userId)
+std::string getDbPath(std::string const& path, Trustchain::UserId const& userId)
 {
   if (path == ":memory:")
     return path;
@@ -40,14 +32,12 @@ std::string getDb2Path(std::string const& path,
 }
 
 Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
-                          DataStore::Database pdb,
-                          std::unique_ptr<DataStore::DataStore> pdb2)
+                          std::unique_ptr<DataStore::DataStore> pdb)
   : db(std::move(pdb)),
-    db2(std::move(pdb2)),
-    localUserStore(userSecret, db2.get()),
-    groupStore(userSecret, db2.get()),
-    resourceKeyStore(userSecret, db2.get()),
-    provisionalUserKeysStore(userSecret, db2.get())
+    localUserStore(userSecret, db.get()),
+    groupStore(userSecret, db.get()),
+    resourceKeyStore(userSecret, db.get()),
+    provisionalUserKeysStore(userSecret, db.get())
 {
 }
 
@@ -120,10 +110,29 @@ tc::cotask<void> Session::openStorage(
   _identity = identity;
   _storage = std::make_unique<Storage>(
       userSecret(),
-      TC_AWAIT(DataStore::createDatabase(getDbPath(dataPath, userId()),
-                                         userSecret())),
-      _datastoreBackend->open(getDb2Path(dataPath, userId()),
-                              getDb2Path(cachePath, userId())));
+      _datastoreBackend->open(getDbPath(dataPath, userId()),
+                              getDbPath(cachePath, userId())));
+
+  auto const key = std::string_view("version");
+  auto const keySpan = gsl::make_span(key).as_span<uint8_t const>();
+  auto const keys = {keySpan};
+
+  auto const dbVersionResult = _storage->db->findCacheValues(keys);
+  if (!dbVersionResult[0])
+  {
+    auto const valueSpan = gsl::span<uint8_t const>(&Version, 1);
+    auto const keyValues = {std::pair{keySpan, valueSpan}};
+
+    _storage->db->putCacheValues(keyValues, DataStore::OnConflict::Fail);
+  }
+  // dbVersionResult has one row and one column
+  else if (auto const dbVersion = (*dbVersionResult[0]).at(0);
+           dbVersion != Version)
+  {
+    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
+                           "unsupported device storage version: {}",
+                           static_cast<int>(dbVersion));
+  }
 }
 
 Session::Storage const& Session::storage() const

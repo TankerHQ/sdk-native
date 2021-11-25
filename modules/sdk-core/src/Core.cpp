@@ -36,7 +36,9 @@
 #ifdef TANKER_WITH_FETCHPP
 #include <Tanker/Network/FetchppBackend.hpp>
 #endif
+#ifdef TANKER_WITH_SQLITE
 #include <Tanker/DataStore/Sqlite/Backend.hpp>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
@@ -103,7 +105,12 @@ Core::Core(std::string url,
                         ),
     _datastoreBackend(datastoreBackend ?
                           std::move(datastoreBackend) :
-                          std::make_unique<DataStore::SqliteBackend>()),
+#if TANKER_WITH_SQLITE
+                          std::make_unique<DataStore::SqliteBackend>()
+#else
+                          nullptr
+#endif
+                          ),
     _session(std::make_shared<Session>(
         createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
         _datastoreBackend.get()))
@@ -111,6 +118,9 @@ Core::Core(std::string url,
   if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "no built-in HTTP backend, please provide one");
+  if (!_datastoreBackend)
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "no built-in storage backend, please provide one");
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const
@@ -759,8 +769,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 
 void Core::nukeDatabase()
 {
-  _session->storage().db.nuke();
-  _session->storage().db2->nuke();
+  _session->storage().db->nuke();
 }
 
 Trustchain::ResourceId Core::getResourceId(
