@@ -54,16 +54,21 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
       res.value().at("encrypted_verification_key").get<std::string>()));
 }
 
-tc::cotask<std::vector<VerificationMethod>> Requester::fetchVerificationMethods(
-    Trustchain::UserId const& userId)
+tc::cotask<std::vector<
+    boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>>>
+Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
 {
   using namespace fmt::literals;
   auto const res =
       TC_AWAIT(_httpClient->asyncGet(_httpClient->makeUrl(fmt::format(
           "users/{userId:#S}/verification-methods", "userId"_a = userId))));
-  TC_RETURN(res.value()
-                .at("verification_methods")
-                .get<std::vector<VerificationMethod>>());
+  auto value =
+      res.value()
+          .at("verification_methods")
+          .get<std::vector<
+              boost::variant2::variant<VerificationMethod,
+                                       EncryptedVerificationMethod>>>();
+  TC_RETURN(value);
 }
 
 tc::cotask<std::string> Requester::getSessionToken(

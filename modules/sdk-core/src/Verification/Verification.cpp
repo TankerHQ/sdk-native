@@ -54,28 +54,53 @@ VerificationMethod VerificationMethod::from(Verification const& v)
       v);
 }
 
-tc::cotask<void> decryptMethods(
-    std::vector<VerificationMethod>& encryptedMethods,
+tc::cotask<std::vector<VerificationMethod>> decryptMethods(
+    std::vector<boost::variant2::variant<VerificationMethod,
+                                         EncryptedVerificationMethod>>&
+        encryptedMethods,
     Crypto::SymmetricKey const& userSecret)
 {
+  std::vector<VerificationMethod> methods;
+  methods.reserve(encryptedMethods.size());
+
+  auto const decryptLambda =
+      [&](EncryptedVerificationMethod const& encryptedMethod) {
+        encryptedMethod.visit(overloaded{
+            [&](EncryptedEmail const& encryptedEmail) {
+              methods.push_back(
+                  TC_AWAIT(decryptMethod<Email>(encryptedEmail, userSecret)));
+            },
+            [&](EncryptedPhoneNumber const& encryptedPhoneNumber) {
+              methods.push_back(TC_AWAIT(decryptMethod<PhoneNumber>(
+                  encryptedPhoneNumber, userSecret)));
+            },
+            [&](EncryptedPreverifiedEmail const& encryptedEmail) {
+              methods.push_back(TC_AWAIT(
+                  decryptMethod<PreverifiedEmail>(encryptedEmail, userSecret)));
+            },
+            [&](EncryptedPreverifiedPhoneNumber const& encryptedPhoneNumber) {
+              methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
+                  encryptedPhoneNumber, userSecret)));
+            },
+
+        });
+      };
+
   for (auto& method : encryptedMethods)
   {
-    if (auto encryptedEmail = method.get_if<EncryptedEmail>())
-      method = TC_AWAIT(decryptMethod<Email>(*encryptedEmail, userSecret));
-    else if (auto encryptedPhoneNumber = method.get_if<EncryptedPhoneNumber>())
-      method = TC_AWAIT(
-          decryptMethod<PhoneNumber>(*encryptedPhoneNumber, userSecret));
-    else if (auto encryptedEmail = method.get_if<EncryptedPreverifiedEmail>())
-      method = TC_AWAIT(
-          decryptMethod<PreverifiedEmail>(*encryptedEmail, userSecret));
-    else if (auto encryptedPhoneNumber =
-                 method.get_if<EncryptedPreverifiedPhoneNumber>())
-      method = TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
-          *encryptedPhoneNumber, userSecret));
+    boost::variant2::visit(overloaded{decryptLambda,
+                                      [&](VerificationMethod const& method) {
+                                        methods.push_back(method);
+                                      }},
+                           method);
   }
+
+  TC_RETURN(methods);
 }
 
-void from_json(nlohmann::json const& j, VerificationMethod& m)
+void from_json(nlohmann::json const& j,
+               boost::variant2::variant<VerificationMethod,
+                                        EncryptedVerificationMethod>& m)
 {
   auto const value = j.at("type").get<std::string>();
   auto const isPreverified = j.at("is_preverified").get<bool>();
