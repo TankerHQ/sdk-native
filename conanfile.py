@@ -163,6 +163,7 @@ class TankerConan(ConanFile):
         self.copy("*.lib")
         self.copy("*.dll")
         self.copy("*.so")
+        self.copy("*.dylib")
         if not self.options.tankerlib_shared:
             self.copy_deps("*.lib")
             self.copy_deps("*.a")
