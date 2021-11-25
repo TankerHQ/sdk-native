@@ -5,6 +5,8 @@
 
 namespace Tanker::DataStore
 {
+inline constexpr auto MemoryPath = ":memory:";
+
 class SqliteBackend : public Backend
 {
 public:
