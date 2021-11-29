@@ -100,6 +100,8 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.18", private=private)
         self.requires("tconcurrent/0.39.0-r2", private=private)
         self.requires("date/3.0.0", private=private)
+        # doctest is needed to export datastore tests
+        self.requires("doctest/2.4.6", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os in ("iOS", "Macos"):
             self.requires("libcxx/11.1.0", private=private)
@@ -118,7 +120,6 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("doctest/2.4.6")
             self.build_requires("doctest-async/2.4.7-r2")
             self.build_requires("trompeloeil/38")
 
@@ -182,13 +183,11 @@ class TankerConan(ConanFile):
         del self.info.options.warn_as_error
 
     def package_info(self):
-        libs = [
-            "tanker_admin-c",
-            "ctanker",
-        ]
+        libs = ["tanker_admin-c", "ctanker", "tankerdatastoretests"]
         if not self.options.tankerlib_shared:
             libs.extend(
                 [
+                    "ctankerdatastore",
                     "tanker_async",
                     "tankerfunctionalhelpers",
                     "tankeradmin",
