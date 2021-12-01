@@ -15,9 +15,11 @@
 
 #include <fmt/format.h>
 
+#include <filesystem>
+
 using namespace std::string_view_literals;
 
-TLOG_CATEGORY("Session");
+TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
@@ -103,12 +105,31 @@ Network::HttpClient& Session::httpClient()
   return *_httpClient;
 }
 
+tc::cotask<void> Session::removeOldStorage(
+    Identity::SecretPermanentIdentity const& identity,
+    std::string const& dataPath)
+{
+  // Delete the db from <2.25
+  auto const oldStoragePath = fmt::format(
+      FMT_STRING("{:s}/tanker-{:S}.db"), dataPath, identity.delegation.userId);
+  std::error_code ec;
+  auto const deleted = std::filesystem::remove(oldStoragePath, ec);
+  if (deleted)
+    TINFO("Deleted old storage {}", oldStoragePath);
+  // Note: not found is not an error (NFINAE)
+  else if (ec)
+    TERROR("Failed to delete old storage {}: {}", oldStoragePath, ec.message());
+}
+
 tc::cotask<void> Session::openStorage(
     Identity::SecretPermanentIdentity const& identity,
     std::string const& dataPath,
     std::string const& cachePath)
 {
   assert(!_identity && !_storage);
+
+  removeOldStorage(identity, dataPath);
+
   _identity = identity;
   _storage = std::make_unique<Storage>(
       userSecret(),

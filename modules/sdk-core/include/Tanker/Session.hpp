@@ -109,5 +109,9 @@ private:
   std::unique_ptr<Accessors> _accessors;
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
+
+  tc::cotask<void> removeOldStorage(
+      Identity::SecretPermanentIdentity const& identity,
+      std::string const& dataPath);
 };
 }
