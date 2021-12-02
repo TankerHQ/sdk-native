@@ -107,30 +107,17 @@ tc::cotask<std::vector<UsedSecretUser>> processClaimEntries(
   std::vector<UsedSecretUser> out;
   for (auto const& action : actions)
   {
-    try
-    {
-      auto const authorIt = authors.find(Trustchain::DeviceId{action.author()});
-      Verif::ensures(authorIt != authors.end(),
-                     Verif::Errc::InvalidAuthor,
-                     "author not found");
-      auto const& author = authorIt->second;
+    auto const authorIt = authors.find(Trustchain::DeviceId{action.author()});
+    Verif::ensures(authorIt != authors.end(),
+                   Verif::Errc::InvalidAuthor,
+                   "author not found");
+    auto const& author = authorIt->second;
 
-      auto const verifiedAction =
-          Verif::verifyProvisionalIdentityClaim(action, author);
+    auto const verifiedAction =
+        Verif::verifyProvisionalIdentityClaim(action, author);
 
-      out.push_back(
-          TC_AWAIT(extractKeysToStore(localUserAccessor, verifiedAction)));
-    }
-    catch (Errors::Exception const& err)
-    {
-      if (err.errorCode().category() == Verif::ErrcCategory())
-      {
-        TERROR(
-            "skipping invalid claim block {}: {}", action.hash(), err.what());
-      }
-      else
-        throw;
-    }
+    out.push_back(
+        TC_AWAIT(extractKeysToStore(localUserAccessor, verifiedAction)));
   }
   TC_RETURN(out);
 }
