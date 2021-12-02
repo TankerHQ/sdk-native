@@ -25,7 +25,7 @@ include:
     - !reference [.rules/nightly, rules]
     - !reference [.rules/push-master-or-feat, rules]
 
-build/linux:
+.build/linux:
   extends:
     - .build
     - .tags/linux
@@ -36,7 +36,7 @@ build/linux:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
 
-build/linux/shared:
+.build/linux/shared:
   extends:
     - .build
     - .tags/linux
@@ -47,7 +47,7 @@ build/linux/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release-shared
 
-build/windows:
+.build/windows:
   extends:
     - .build
     - .tags/windows
@@ -58,7 +58,7 @@ build/windows:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release
 
-build/windows/shared:
+.build/windows/shared:
   extends:
     - .build
     - .tags/windows
@@ -69,7 +69,7 @@ build/windows/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release-shared
 
-build/macos/x86_64:
+.build/macos/x86_64:
   extends:
     - .build
     - .tags/macos/x86_64
@@ -80,7 +80,7 @@ build/macos/x86_64:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release
 
-build/macos/arm:
+.build/macos/arm:
   extends:
     - .build
     - .tags/macos/arm
@@ -91,7 +91,7 @@ build/macos/arm:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release
 
-build/macos/x86_64/shared:
+.build/macos/x86_64/shared:
   extends:
     - .build
     - .tags/macos/x86_64
@@ -102,7 +102,7 @@ build/macos/x86_64/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared
 
-build/macos/arm/shared:
+.build/macos/arm/shared:
   extends:
     - .build
     - .tags/macos/arm
@@ -113,7 +113,7 @@ build/macos/arm/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release-shared
 
-build/android/shared:
+.build/android/shared:
   extends:
     - .build
     - .tags/linux
@@ -124,7 +124,7 @@ build/android/shared:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
 
-build/android/static/http-backend:
+.build/android/static/http-backend:
   extends:
     - .build
     - .tags/linux
@@ -147,7 +147,7 @@ build/ios:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
 
-build/ios/http-backend:
+.build/ios/http-backend:
   extends:
     - .build
       # build everything on the fast one
@@ -188,7 +188,7 @@ nightly/coverage:
     - !reference [.rules/mr/manual, rules]
     - !reference [.rules/web/auto, rules]
 
-bridge/bench/linux:
+.bridge/bench/linux:
   stage: bridge-check
   extends:
     - .variables/bridge-common
@@ -208,7 +208,7 @@ bridge/bench/linux:
     project: TankerHQ/benchmarks
     strategy: depend
 
-bridge/compat/linux:
+.bridge/compat/linux:
   stage: bridge-check
   extends:
     - .rules/bridge/auto
@@ -239,7 +239,7 @@ bridge/ios:
     # FIXME
     branch: theo/compat
 
-bridge/android:
+.bridge/android:
   extends:
     - .bridge-check
     - .rules/bridge/auto
@@ -253,7 +253,7 @@ bridge/android:
     project: TankerHQ/sdk-android
     strategy: depend
 
-bridge/rust/linux:
+.bridge/rust/linux:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -268,7 +268,7 @@ bridge/rust/linux:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/windows:
+.bridge/rust/windows:
   extends:
     - .bridge-check
     - .rules/bridge/auto
@@ -283,7 +283,7 @@ bridge/rust/windows:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/ios:
+.bridge/rust/ios:
   extends:
     - .bridge-check
     - .rules/bridge/auto
@@ -298,7 +298,7 @@ bridge/rust/ios:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/macos/x86_64:
+.bridge/rust/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -313,7 +313,7 @@ bridge/rust/macos/x86_64:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/macos/arm:
+.bridge/rust/macos/arm:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -328,7 +328,7 @@ bridge/rust/macos/arm:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/rust/android:
+.bridge/rust/android:
   extends:
     - .bridge-check
     - .rules/bridge/auto
@@ -343,7 +343,7 @@ bridge/rust/android:
     project: TankerHQ/sdk-rust
     strategy: depend
 
-bridge/python/linux:
+.bridge/python/linux:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -358,7 +358,7 @@ bridge/python/linux:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/python/macos/x86_64:
+.bridge/python/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -373,7 +373,7 @@ bridge/python/macos/x86_64:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/python/macos/arm:
+.bridge/python/macos/arm:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -389,7 +389,7 @@ bridge/python/macos/arm:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/python/windows:
+.bridge/python/windows:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -404,7 +404,7 @@ bridge/python/windows:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/ruby/linux:
+.bridge/ruby/linux:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -419,7 +419,7 @@ bridge/ruby/linux:
     project: TankerHQ/sdk-ruby
     strategy: depend
 
-bridge/ruby/macos/x86_64:
+.bridge/ruby/macos/x86_64:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -434,7 +434,7 @@ bridge/ruby/macos/x86_64:
     project: TankerHQ/sdk-ruby
     strategy: depend
 
-bridge/ruby/macos/arm:
+.bridge/ruby/macos/arm:
   extends:
     - .bridge-check
     - .rules/bridge/manual
@@ -456,7 +456,7 @@ bridge/ruby/macos/arm:
 .rules/check:
   rules: !reference [.rules/build/auto, rules]
 
-check/e2e:
+.check/e2e:
   extends:
     - .check
     - .tags/linux
@@ -483,7 +483,7 @@ deploy:
   script:
     - poetry run python run-ci.py --isolate-conan-user-home deploy
 
-pages:
+.pages:
   extends:
     - .deploy
     - .tags/linux
@@ -517,7 +517,7 @@ bridge/ios/deploy:
     project: TankerHQ/sdk-ios
     strategy: depend
 
-bridge/android/deploy:
+.bridge/android/deploy:
   extends:
     - .bridge-deploy
     - .rules/bridge-release/android
@@ -533,7 +533,7 @@ bridge/android/deploy:
     project: TankerHQ/sdk-android
     strategy: depend
 
-bridge/python/deploy:
+.bridge/python/deploy:
   extends:
     - .bridge-deploy
     - .rules/bridge-release/python
@@ -552,7 +552,7 @@ bridge/python/deploy:
     project: TankerHQ/sdk-python
     strategy: depend
 
-bridge/ruby/deploy:
+.bridge/ruby/deploy:
   extends:
     - .bridge-deploy
     - .rules/bridge-release/ruby
@@ -570,7 +570,7 @@ bridge/ruby/deploy:
     project: TankerHQ/sdk-ruby
     strategy: depend
 
-bridge/rust/deploy:
+.bridge/rust/deploy:
   extends:
     - .bridge-deploy
     - .rules/bridge-release/rust
@@ -594,7 +594,7 @@ bridge/rust/deploy:
 # react-native-deploy stage #
 #############################
 
-bridge/react-native/deploy:
+.bridge/react-native/deploy:
   extends:
     - .react-native-deploy
     - .rules/bridge-release/react-native
