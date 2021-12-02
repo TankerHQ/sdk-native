@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-11-03-227
+  ref: theo/storage
 
 .after-script/branch_name:
   after_script:
@@ -198,6 +198,7 @@ bridge/bench/linux:
     - build/linux
     - build/linux/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_NAME: build/linux:build/linux/shared
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_IID
@@ -215,36 +216,9 @@ bridge/compat/linux:
   needs:
     - build/linux
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_NAME: build/linux
     UPSTREAM_JOB_TARGET: linux
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
-bridge/compat/ios:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/ios/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/ios/http-backend
-    UPSTREAM_JOB_TARGET: ios
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
-bridge/compat/android:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/android/static/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/android/static/http-backend
-    UPSTREAM_JOB_TARGET: android
   trigger:
     project: TankerHQ/compatibility-tests
     strategy: depend
@@ -257,10 +231,13 @@ bridge/ios:
   needs:
     - build/ios
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_NAME: build/ios
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/compat
 
 bridge/android:
   extends:
@@ -270,6 +247,7 @@ bridge/android:
   needs:
     - build/android/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_NAME: build/android/shared
   trigger:
     project: TankerHQ/sdk-android
@@ -283,6 +261,7 @@ bridge/rust/linux:
   needs:
     - build/linux
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux
   trigger:
@@ -297,6 +276,7 @@ bridge/rust/windows:
   needs:
     - build/windows/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: windows
     UPSTREAM_JOB_NAME: build/windows/shared
   trigger:
@@ -311,6 +291,7 @@ bridge/rust/ios:
   needs:
     - build/ios/http-backend
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: ios
     UPSTREAM_JOB_NAME: build/ios/http-backend
   trigger:
@@ -325,6 +306,7 @@ bridge/rust/macos/x86_64:
   needs:
     - build/macos/x86_64
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64
   trigger:
@@ -339,6 +321,7 @@ bridge/rust/macos/arm:
   needs:
     - build/macos/arm
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm
   trigger:
@@ -353,6 +336,7 @@ bridge/rust/android:
   needs:
     - build/android/static/http-backend
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: android
     UPSTREAM_JOB_NAME: build/android/static/http-backend
   trigger:
@@ -367,6 +351,7 @@ bridge/python/linux:
   needs:
     - build/linux
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux
   trigger:
@@ -381,6 +366,7 @@ bridge/python/macos/x86_64:
   needs:
     - build/macos/x86_64
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64
   trigger:
@@ -395,6 +381,7 @@ bridge/python/macos/arm:
   needs:
     - build/macos/arm
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm
     UPSTREAM_JOB_ARCH: arm
@@ -410,6 +397,7 @@ bridge/python/windows:
   needs:
     - build/windows
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: windows
     UPSTREAM_JOB_NAME: build/windows
   trigger:
@@ -424,6 +412,7 @@ bridge/ruby/linux:
   needs:
     - build/linux/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: linux
     UPSTREAM_JOB_NAME: build/linux/shared
   trigger:
@@ -438,6 +427,7 @@ bridge/ruby/macos/x86_64:
   needs:
     - build/macos/x86_64/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-x86_64
     UPSTREAM_JOB_NAME: build/macos/x86_64/shared
   trigger:
@@ -452,6 +442,7 @@ bridge/ruby/macos/arm:
   needs:
     - build/macos/arm/shared
   variables:
+    UPSTREAM_BRIDGE_STAGE: check
     UPSTREAM_JOB_TARGET: macos-arm
     UPSTREAM_JOB_NAME: build/macos/arm/shared
   trigger:
