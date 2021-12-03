@@ -343,7 +343,22 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
   auto response = TC_AWAIT(fetch(req));
   if (!response && response.error().ec == AppdErrc::InvalidToken)
   {
-    TC_AWAIT(authenticate());
+    // The access token we are using is invalid/expired.
+    //
+    // We could be in one of the following situations:
+    //
+    // 1. Another API call is already trying to re-authenticate
+    if (!_authenticating.is_ready())
+      TC_AWAIT(_authenticating);
+    // 2. This is the first API call to attempt a re-authentication. This
+    //    is also the recovery process when this API call occurs after a
+    //    previous re-authentication failure (i.e. access token is "")
+    else if (_accessToken == req.authorization)
+      TC_AWAIT(authenticate());
+    // (else)
+    // 3. Another API call already completed a re-authentication
+
+    // We can safely retry now with _accessToken
     req.authorization = _accessToken;
     TC_RETURN(TC_AWAIT(fetch(std::move(req))));
   }
