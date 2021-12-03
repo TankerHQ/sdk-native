@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-11-03-227
+  ref: 2021-11-10-229
 
 .after-script/branch_name:
   after_script:
@@ -221,34 +221,6 @@ bridge/compat/linux:
     project: TankerHQ/compatibility-tests
     strategy: depend
 
-bridge/compat/ios:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/ios/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/ios/http-backend
-    UPSTREAM_JOB_TARGET: ios
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
-bridge/compat/android:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/android/static/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/android/static/http-backend
-    UPSTREAM_JOB_TARGET: android
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
 bridge/ios:
   stage: bridge-check
   extends:
@@ -261,6 +233,8 @@ bridge/ios:
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: theo/compat
 
 bridge/android:
   extends:
