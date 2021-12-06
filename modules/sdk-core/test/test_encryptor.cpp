@@ -7,6 +7,7 @@
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v6.hpp>
+#include <Tanker/Encryptor/v7.hpp>
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
@@ -350,6 +351,74 @@ struct TestContext<EncryptorV6>
   static constexpr auto overhead = 1 + Crypto::Mac::arraySize + 1;
 };
 
+template <>
+struct TestContext<EncryptorV7>
+{
+  tc::cotask<EncryptionMetadata> encrypt(
+      gsl::span<std::uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData) const
+  {
+    return EncryptorV7::encrypt(encryptedData,
+                                clearData,
+                                Crypto::getRandom<Trustchain::ResourceId>(),
+                                Crypto::makeSymmetricKey(),
+                                paddingStep);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    auto const res = EncryptorV7::encryptedSize(clearSize, paddingStep);
+
+    if (paddingStep)
+    {
+      auto const paddedSize = res - overhead;
+      CAPTURE(*paddingStep);
+      CAPTURE(clearSize);
+      CAPTURE(paddedSize);
+      CHECK(paddedSize >= clearSize);
+      CHECK(paddedSize % *paddingStep == 0);
+    }
+
+    return res;
+  }
+
+  std::vector<TestVector> testVectors{
+      {{0x5c, 0x07, 0xdf, 0xd0, 0x6f, 0x79, 0x08, 0x50, 0xef, 0x66, 0xca,
+        0x78, 0x93, 0x53, 0xc0, 0x5b, 0x4f, 0xd0, 0xa7, 0xb8, 0x9c, 0xc8,
+        0x0d, 0x17, 0xb7, 0x61, 0xd0, 0x4d, 0x98, 0x31, 0x7e, 0x28},
+       make_buffer("this is very secret"),
+       {0x07, 0x30, 0x5f, 0x9c, 0xdd, 0x65, 0x42, 0xfe, 0x61, 0x23, 0xa6, 0x22,
+        0xf8, 0x4f, 0x16, 0xcd, 0x22, 0x4a, 0x73, 0xa8, 0x99, 0x95, 0x4f, 0xe6,
+        0x7c, 0x90, 0x12, 0xb2, 0x61, 0xd9, 0xf3, 0x3e, 0xa9, 0xb2, 0x56, 0x65,
+        0x5e, 0xde, 0xcf, 0xf2, 0xb4, 0x21, 0x23, 0x45, 0xdc, 0x34, 0xd7, 0xe8,
+        0x69, 0x5d, 0x0a, 0x7a, 0xeb, 0xa6, 0x32, 0x3a, 0x33, 0x28, 0x2f, 0x52,
+        0xfe, 0x2d, 0x84, 0x51, 0xd8, 0x50, 0x8b, 0xf8, 0x22, 0x78, 0x22, 0x09,
+        0x3c, 0xf1, 0x88, 0xc8, 0xf6, 0x75},
+       {0x30,
+        0x5f,
+        0x9c,
+        0xdd,
+        0x65,
+        0x42,
+        0xfe,
+        0x61,
+        0x23,
+        0xa6,
+        0x22,
+        0xf8,
+        0x4f,
+        0x16,
+        0xcd,
+        0x22}},
+  };
+
+  std::optional<uint32_t> paddingStep;
+
+  static auto constexpr overhead = 1 + Trustchain::ResourceId::arraySize +
+                                   Crypto::AeadIv::arraySize +
+                                   Crypto::Mac::arraySize + 1;
+};
+
 template <typename T>
 std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
                                gsl::span<uint8_t const> encryptedData)
@@ -676,6 +745,14 @@ TEST_CASE("extractResourceId should throw on a truncated buffer")
 TEST_CASE("EncryptorV6 tests")
 {
   TestContext<EncryptorV6> ctx;
+
+  commonEncryptorTests(ctx);
+  paddedEncryptorTests(ctx);
+}
+
+TEST_CASE("EncryptorV7 tests")
+{
+  TestContext<EncryptorV7> ctx;
 
   commonEncryptorTests(ctx);
   paddedEncryptorTests(ctx);
