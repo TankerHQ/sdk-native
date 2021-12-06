@@ -5,6 +5,7 @@
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v6.hpp>
+#include <Tanker/Encryptor/v7.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Varint.hpp>
 
@@ -128,6 +129,49 @@ struct TestContext<EncryptorV6>
       0x72, 0x81, 0x47, 0xf0, 0xca, 0xda, 0x29, 0x99, 0x6e, 0x4,
       0x3e, 0x6,  0x35, 0x7e, 0xb4, 0x72, 0x4f, 0x5b, 0x2d, 0x66,
       0xfe, 0xa,  0x95, 0xba, 0x66, 0x4,  0x30};
+};
+
+template <>
+struct TestContext<EncryptorV7>
+{
+  tc::cotask<EncryptionMetadata> encrypt(
+      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t const> clearData) const
+  {
+    return EncryptorV7::encrypt(
+        encryptedData, clearData, resourceId, keyVector);
+  }
+
+  Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
+      0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
+      0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
+      0xce, 0x77, 0x35, 0x8e, 0xa8, 0x31, 0xd7, 0x2f, 0x14, 0xdd}};
+  std::vector<std::uint8_t> encryptedTestVector{
+      0x07, 0xc1, 0x74, 0x53, 0x1e, 0xdd, 0x77, 0x77, 0x87, 0x2c, 0x02,
+      0x6e, 0xf2, 0x36, 0xdf, 0x28, 0x7e, 0xfe, 0x6f, 0xae, 0x05, 0xd7,
+      0xc1, 0x7c, 0xf2, 0x4c, 0x20, 0x91, 0xc1, 0xb7, 0xe7, 0xbc, 0x95,
+      0x15, 0xf0, 0x61, 0xe7, 0x03, 0x0b, 0x52, 0xe0, 0x05, 0x7c, 0x40,
+      0x68, 0x8f, 0x22, 0x89, 0xcf, 0x24, 0xe5, 0xa6, 0x88, 0x6d, 0xdf,
+      0xbf, 0xe4, 0xab, 0x24, 0x92, 0xf9, 0x8f, 0x02, 0xbe, 0xa0, 0x80,
+      0xa4, 0x49, 0x5a, 0x9a, 0x03, 0xaa, 0x5b, 0x6a, 0x47, 0x6f, 0x05};
+  Trustchain::ResourceId resourceId{std::vector<std::uint8_t>{
+      0xc1,
+      0x74,
+      0x53,
+      0x1e,
+      0xdd,
+      0x77,
+      0x77,
+      0x87,
+      0x2c,
+      0x02,
+      0x6e,
+      0xf2,
+      0x36,
+      0xdf,
+      0x28,
+      0x7e,
+  }};
 };
 }
 
@@ -390,6 +434,42 @@ TEST_CASE("EncryptorV6 tests")
       CHECK_EQ(EncryptorV6::encryptedSize(11), 12 + overhead);
       CHECK_EQ(EncryptorV6::encryptedSize(42), 44 + overhead);
       CHECK_EQ(EncryptorV6::encryptedSize(250), 256 + overhead);
+    }
+  }
+}
+
+TEST_CASE("EncryptorV7 tests")
+{
+  TestContext<EncryptorV7> ctx;
+
+  commonEncryptorTests(ctx);
+
+  SUBCASE("encryptedSize should return the right size")
+  {
+    auto const versionSize = Serialization::varint_size(EncryptorV7::version());
+    constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;
+    constexpr auto IvSize = Crypto::AeadIv::arraySize;
+    constexpr auto MacSize = Trustchain::ResourceId::arraySize;
+
+    constexpr auto overhead = versionSize + ResourceIdSize + IvSize + MacSize;
+
+    SUBCASE("v7 should have a minimal padding")
+    {
+      constexpr auto minimalEncryptedSize =
+          Padding::minimalPadding() + overhead;
+
+      CHECK_EQ(EncryptorV7::encryptedSize(0), minimalEncryptedSize);
+      CHECK_EQ(EncryptorV7::encryptedSize(1), minimalEncryptedSize);
+      CHECK_EQ(EncryptorV7::encryptedSize(8), minimalEncryptedSize);
+      CHECK_EQ(EncryptorV7::encryptedSize(9), minimalEncryptedSize);
+    }
+
+    SUBCASE("encryptedSize should use the padme algorithm")
+    {
+      CHECK_EQ(EncryptorV7::encryptedSize(10), 12 + overhead);
+      CHECK_EQ(EncryptorV7::encryptedSize(11), 12 + overhead);
+      CHECK_EQ(EncryptorV7::encryptedSize(42), 44 + overhead);
+      CHECK_EQ(EncryptorV7::encryptedSize(250), 256 + overhead);
     }
   }
 }
