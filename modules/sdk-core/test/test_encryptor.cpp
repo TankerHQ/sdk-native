@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/Padding.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v5.hpp>
@@ -293,22 +294,18 @@ TEST_CASE("extractResourceId should throw on a truncated buffer")
                                 Errc::InvalidArgument);
 }
 
-TEST_CASE("EncryptorV6 tests")
+TEST_CASE("Padding utilities tests")
 {
-  TestContext<EncryptorV6> ctx;
-
-  commonEncryptorTests(ctx);
-
   SUBCASE("padme should return the right values")
   {
-    CHECK_EQ(EncryptorV6::padme(0), 0);
-    CHECK_EQ(EncryptorV6::padme(1), 0);
+    CHECK_EQ(Padding::padme(0), 0);
+    CHECK_EQ(Padding::padme(1), 0);
 
-    CHECK_EQ(EncryptorV6::padme(2), 2);
-    CHECK_EQ(EncryptorV6::padme(9), 10);
-    CHECK_EQ(EncryptorV6::padme(42), 44);
-    CHECK_EQ(EncryptorV6::padme(666), 672);
-    CHECK_EQ(EncryptorV6::padme(1999), 2048);
+    CHECK_EQ(Padding::padme(2), 2);
+    CHECK_EQ(Padding::padme(9), 10);
+    CHECK_EQ(Padding::padme(42), 44);
+    CHECK_EQ(Padding::padme(666), 672);
+    CHECK_EQ(Padding::padme(1999), 2048);
   }
 
   SUBCASE(
@@ -316,54 +313,61 @@ TEST_CASE("EncryptorV6 tests")
       "values")
   {
     auto const paddedDataEmpty = gsl::make_span("").as_span<uint8_t const>();
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(paddedDataEmpty),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(paddedDataEmpty),
                                   Errc::DecryptionFailed);
 
     auto const paddedDataNormal =
         gsl::make_span("this is a test data").as_span<uint8_t const>();
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(paddedDataNormal),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(paddedDataNormal),
                                   Errc::DecryptionFailed);
 
     std::vector<uint8_t> trueAsBytes{0x74, 0x72, 0x75, 0x65};
 
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
                                   Errc::DecryptionFailed);
 
     trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x00, 0x00, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
                                   Errc::DecryptionFailed);
 
     trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42};
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
                                   Errc::DecryptionFailed);
 
     trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
                                   Errc::DecryptionFailed);
 
     trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(EncryptorV6::unpaddedSize(trueAsBytes),
+    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
                                   Errc::DecryptionFailed);
   }
 
   SUBCASE("unpaddedSize should return the right values")
   {
     std::vector<uint8_t> const eighty{0x80};
-    auto result = EncryptorV6::unpaddedSize(eighty);
+    auto result = Padding::unpaddedSize(eighty);
     CHECK_EQ(result, 0);
 
     std::vector<uint8_t> trueAsBytesPadded{0x74, 0x72, 0x75, 0x65, 0x80};
-    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    result = Padding::unpaddedSize(trueAsBytesPadded);
     CHECK_EQ(result, 4);
 
     trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00};
-    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    result = Padding::unpaddedSize(trueAsBytesPadded);
     CHECK_EQ(result, 4);
 
     trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x80, 0x00};
-    result = EncryptorV6::unpaddedSize(trueAsBytesPadded);
+    result = Padding::unpaddedSize(trueAsBytesPadded);
     CHECK_EQ(result, 7);
   }
+}
+
+TEST_CASE("EncryptorV6 tests")
+{
+  TestContext<EncryptorV6> ctx;
+
+  commonEncryptorTests(ctx);
 
   SUBCASE("encryptedSize should return the right size")
   {
@@ -373,7 +377,7 @@ TEST_CASE("EncryptorV6 tests")
 
     SUBCASE("padding should have a minimal padding")
     {
-      constexpr auto minimalPadding = EncryptorV6::minimalPadding();
+      constexpr auto minimalPadding = Padding::minimalPadding();
       CHECK_EQ(EncryptorV6::encryptedSize(0), minimalPadding + overhead);
       CHECK_EQ(EncryptorV6::encryptedSize(1), minimalPadding + overhead);
       CHECK_EQ(EncryptorV6::encryptedSize(8), minimalPadding + overhead);
