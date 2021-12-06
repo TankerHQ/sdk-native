@@ -82,9 +82,8 @@ tc::cotask<std::uint64_t> EncryptorV6::decrypt(
   Crypto::decryptAead(
       key, iv.data(), decryptedData, versionResult.second, additionalData);
 
-  auto const clearPaddedSize = EncryptorV3::decryptedSize(encryptedData);
-  TC_RETURN(
-      Padding::unpaddedSize(gsl::make_span(decryptedData, clearPaddedSize)));
+  auto const paddedSize = EncryptorV3::decryptedSize(encryptedData);
+  TC_RETURN(Padding::unpaddedSize(gsl::make_span(decryptedData, paddedSize)));
 }
 
 ResourceId EncryptorV6::extractResourceId(
