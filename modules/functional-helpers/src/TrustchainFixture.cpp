@@ -101,6 +101,19 @@ tc::cotask<void> TrustchainFixture::tearDown()
   _trustchainFactory.reset();
 }
 
+tc::cotask<VerificationKey> TrustchainFixture::registerUser(
+    Functional::User& user)
+{
+  auto device0 = user.makeDevice();
+  auto dummy = device0.createCore();
+  TC_AWAIT(dummy->start(user.identity));
+  auto verificationKey = TC_AWAIT(dummy->generateVerificationKey());
+  assert(dummy->status() == Status::IdentityRegistrationNeeded);
+  TC_AWAIT(dummy->registerIdentity(VerificationKey{verificationKey}));
+  TC_AWAIT(dummy->stop());
+  TC_RETURN(verificationKey);
+}
+
 tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
     Email const& email)
 {
