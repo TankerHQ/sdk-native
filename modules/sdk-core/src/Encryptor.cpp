@@ -6,6 +6,7 @@
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Encryptor/v6.hpp>
+#include <Tanker/Encryptor/v7.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
@@ -42,6 +43,8 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
     return std::forward<Callable>(cb)(EncryptorV5{});
   case EncryptorV6::version():
     return std::forward<Callable>(cb)(EncryptorV6{});
+  case EncryptorV7::version():
+    return std::forward<Callable>(cb)(EncryptorV7{});
   default:
     throw Errors::Exception(make_error_code(Errc::InvalidArgument),
                             "invalid encrypted data");
