@@ -248,6 +248,8 @@ bridge/android:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    # FIXME 
+    branch: theo/android_ci
 
 bridge/rust/linux:
   extends:
