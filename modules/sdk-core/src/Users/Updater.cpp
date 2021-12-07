@@ -150,79 +150,66 @@ processUserSealedKeys(Trustchain::DeviceId const& deviceId,
   bool foundThisDevice = false;
   for (auto const& action : actions)
   {
-    try
+    if (auto const deviceCreation =
+            boost::variant2::get_if<DeviceCreation>(&action))
     {
-      if (auto const deviceCreation =
-              boost::variant2::get_if<DeviceCreation>(&action))
+      auto const action =
+          Verif::verifyDeviceCreation(*deviceCreation, context, user);
+      user = applyDeviceCreationToUser(action, user);
+      auto const& device = user->devices().back();
+      if (device.id() == deviceId)
       {
-        auto const action =
-            Verif::verifyDeviceCreation(*deviceCreation, context, user);
-        user = applyDeviceCreationToUser(action, user);
-        auto const& device = user->devices().back();
-        if (device.id() == deviceId)
-        {
-          // These are very strange assertions, you could argue that they can't
-          // fail. Yet we have seen those cases in production, so these
-          // assertions will provide us with more information.
-          if (device.publicEncryptionKey() !=
-              deviceKeys.encryptionKeyPair.publicKey)
-            throw Errors::DeviceUnusable(fmt::format(
-                "found this device, but the public encryption key does not "
-                "match (device ID: {}, found key: {}, expected key: {})",
-                deviceId,
-                device.publicEncryptionKey(),
-                deviceKeys.encryptionKeyPair.publicKey));
-          if (device.publicSignatureKey() !=
-              deviceKeys.signatureKeyPair.publicKey)
-            throw Errors::DeviceUnusable(fmt::format(
-                "found this device, but the public signature key does not "
-                "match (device ID: {}, found key: {}, expected key: {})",
-                deviceId,
-                device.publicSignatureKey(),
-                deviceKeys.signatureKeyPair.publicKey));
-          if (auto const extractedKeys =
-                  extractEncryptedUserKey(*deviceCreation))
-            sealedKeys.push_back(*extractedKeys);
-          foundThisDevice = true;
-        }
-        else if (device.publicEncryptionKey() ==
-                 deviceKeys.encryptionKeyPair.publicKey)
-          throw Errors::DeviceUnusable(
-              fmt::format("found this device's public encryption key, but the "
-                          "device id does not match (public encryption key: "
-                          "{}, found device ID: {}, expected device ID: {})",
-                          deviceKeys.encryptionKeyPair.publicKey,
-                          device.id(),
-                          deviceId));
-        else if (device.publicSignatureKey() ==
-                 deviceKeys.signatureKeyPair.publicKey)
-          throw Errors::DeviceUnusable(
-              fmt::format("found this device's public signature key, but the "
-                          "device id does not match (public signature key: "
-                          "{}, found device ID: {}, expected device ID: {})",
-                          deviceKeys.signatureKeyPair.publicKey,
-                          device.id(),
-                          deviceId));
-      }
-      else if (auto const deviceRevocation =
-                   boost::variant2::get_if<DeviceRevocation>(&action))
-      {
-        auto const action =
-            Verif::verifyDeviceRevocation(*deviceRevocation, user);
-        if (auto const extractedKeys =
-                extractEncryptedUserKey(*deviceRevocation, deviceId))
+        // These are very strange assertions, you could argue that they can't
+        // fail. Yet we have seen those cases in production, so these
+        // assertions will provide us with more information.
+        if (device.publicEncryptionKey() !=
+            deviceKeys.encryptionKeyPair.publicKey)
+          throw Errors::DeviceUnusable(fmt::format(
+              "found this device, but the public encryption key does not "
+              "match (device ID: {}, found key: {}, expected key: {})",
+              deviceId,
+              device.publicEncryptionKey(),
+              deviceKeys.encryptionKeyPair.publicKey));
+        if (device.publicSignatureKey() !=
+            deviceKeys.signatureKeyPair.publicKey)
+          throw Errors::DeviceUnusable(fmt::format(
+              "found this device, but the public signature key does not "
+              "match (device ID: {}, found key: {}, expected key: {})",
+              deviceId,
+              device.publicSignatureKey(),
+              deviceKeys.signatureKeyPair.publicKey));
+        if (auto const extractedKeys = extractEncryptedUserKey(*deviceCreation))
           sealedKeys.push_back(*extractedKeys);
-        user = applyDeviceRevocationToUser(action, *user);
+        foundThisDevice = true;
       }
+      else if (device.publicEncryptionKey() ==
+               deviceKeys.encryptionKeyPair.publicKey)
+        throw Errors::DeviceUnusable(
+            fmt::format("found this device's public encryption key, but the "
+                        "device id does not match (public encryption key: "
+                        "{}, found device ID: {}, expected device ID: {})",
+                        deviceKeys.encryptionKeyPair.publicKey,
+                        device.id(),
+                        deviceId));
+      else if (device.publicSignatureKey() ==
+               deviceKeys.signatureKeyPair.publicKey)
+        throw Errors::DeviceUnusable(
+            fmt::format("found this device's public signature key, but the "
+                        "device id does not match (public signature key: "
+                        "{}, found device ID: {}, expected device ID: {})",
+                        deviceKeys.signatureKeyPair.publicKey,
+                        device.id(),
+                        deviceId));
     }
-    catch (Errors::Exception const& err)
+    else if (auto const deviceRevocation =
+                 boost::variant2::get_if<DeviceRevocation>(&action))
     {
-      if (err.errorCode().category() == Tanker::Verif::ErrcCategory())
-        TERROR("skipping invalid block {}: {}",
-               Trustchain::getHash(action),
-               err.what());
-      else
-        throw;
+      auto const action =
+          Verif::verifyDeviceRevocation(*deviceRevocation, user);
+      if (auto const extractedKeys =
+              extractEncryptedUserKey(*deviceRevocation, deviceId))
+        sealedKeys.push_back(*extractedKeys);
+      user = applyDeviceRevocationToUser(action, *user);
     }
   }
   if (!user.has_value())

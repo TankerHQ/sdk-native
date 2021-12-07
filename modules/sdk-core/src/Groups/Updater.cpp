@@ -334,23 +334,7 @@ tc::cotask<std::optional<Group>> processGroupEntriesWithAuthors(
 
   // could be an accumulate if cotasks were usable in ranges...
   for (auto const& action : actions)
-  {
-    try
-    {
-      TC_AWAIT(boost::variant2::visit(processor, action));
-    }
-    catch (Errors::Exception const& err)
-    {
-      if (err.errorCode().category() == Verif::ErrcCategory())
-      {
-        TERROR("skipping invalid group block {}: {}",
-               Trustchain::getHash(action),
-               err.what());
-      }
-      else
-        throw;
-    }
-  }
+    TC_AWAIT(boost::variant2::visit(processor, action));
 
   TC_RETURN(std::move(processor).retrieveGroup());
 }
