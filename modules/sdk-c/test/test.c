@@ -36,7 +36,7 @@ static void test_sign_up_sign_in(tanker_app_descriptor_t* app)
   char const* userId = "alice";
 
   tanker_options_t options = make_tanker_options(app);
-  options.writable_path = "testtmp/test-c";
+  options.persistent_path = "testtmp/test-c";
   options.cache_path = "testtmp/test-c";
 #ifdef _WIN32
   _mkdir("testtmp");

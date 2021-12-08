@@ -129,21 +129,20 @@ typedef void (*tanker_event_callback_t)(void* arg, void* data);
 struct tanker_options
 {
   uint8_t version;
-  char const* app_id;        /*!< Must not be NULL. */
-  char const* url;           /*!< Must not be NULL. */
-  char const* writable_path; /*!< Must not be NULL. */
-  char const* sdk_type;      /*!< Must not be NULL. */
-  char const* sdk_version;   /*!< Must not be NULL. */
+  char const* app_id;          /*!< Must not be NULL. */
+  char const* url;             /*!< Must not be NULL. */
+  char const* persistent_path; /*!< Must not be NULL. */
+  char const* cache_path;      /*!< Must not be NULL. */
+  char const* sdk_type;        /*!< Must not be NULL. */
+  char const* sdk_version;     /*!< Must not be NULL. */
 
   tanker_http_options_t http_options;
-
-  char const* cache_path; /*!< Must not be NULL. */
   tanker_datastore_options_t datastore_options;
 };
 
 #define TANKER_OPTIONS_INIT                                    \
   {                                                            \
-    4, NULL, NULL, NULL, NULL, NULL, {NULL, NULL, NULL}, NULL, \
+    4, NULL, NULL, NULL, NULL, NULL, NULL, {NULL, NULL, NULL}, \
     {                                                          \
       NULL, NULL, NULL, NULL, NULL, NULL, NULL                 \
     }                                                          \

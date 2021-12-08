@@ -29,11 +29,11 @@ TEST_CASE("DataStore")
 }
 
 int tanker_run_datastore_test(tanker_datastore_options_t* datastore_options,
-                              char const* writable_path,
+                              char const* persistent_path,
                               char const* output_path)
 {
   datastoreOptions = datastore_options;
-  writablePath = writable_path;
+  writablePath = persistent_path;
 
   doctest::Context context;
 
