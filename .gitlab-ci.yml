@@ -220,6 +220,8 @@ bridge/compat/linux:
   trigger:
     project: TankerHQ/compatibility-tests
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/ios:
   stage: bridge-check
@@ -234,7 +236,7 @@ bridge/ios:
     project: TankerHQ/sdk-ios
     strategy: depend
     # FIXME
-    branch: theo/compat
+    branch: feat/storage
 
 bridge/android:
   extends:
@@ -248,6 +250,8 @@ bridge/android:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/linux:
   extends:
@@ -262,6 +266,8 @@ bridge/rust/linux:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/windows:
   extends:
@@ -276,6 +282,8 @@ bridge/rust/windows:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/ios:
   extends:
@@ -290,6 +298,8 @@ bridge/rust/ios:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/macos/x86_64:
   extends:
@@ -304,6 +314,8 @@ bridge/rust/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/macos/arm:
   extends:
@@ -318,6 +330,8 @@ bridge/rust/macos/arm:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/android:
   extends:
@@ -332,6 +346,8 @@ bridge/rust/android:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/python/linux:
   extends:
@@ -346,6 +362,8 @@ bridge/python/linux:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/python/macos/x86_64:
   extends:
@@ -360,6 +378,8 @@ bridge/python/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/python/macos/arm:
   extends:
@@ -375,6 +395,8 @@ bridge/python/macos/arm:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/python/windows:
   extends:
@@ -389,6 +411,8 @@ bridge/python/windows:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/ruby/linux:
   extends:
@@ -403,6 +427,8 @@ bridge/ruby/linux:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/ruby/macos/x86_64:
   extends:
@@ -417,6 +443,8 @@ bridge/ruby/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/ruby/macos/arm:
   extends:
@@ -431,6 +459,8 @@ bridge/ruby/macos/arm:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 ###############
 # check stage #
@@ -499,6 +529,8 @@ bridge/ios/deploy:
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/android/deploy:
   extends:
@@ -515,6 +547,8 @@ bridge/android/deploy:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/python/deploy:
   extends:
@@ -534,6 +568,8 @@ bridge/python/deploy:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/ruby/deploy:
   extends:
@@ -552,6 +588,8 @@ bridge/ruby/deploy:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 bridge/rust/deploy:
   extends:
@@ -572,6 +610,8 @@ bridge/rust/deploy:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    # FIXME
+    branch: feat/storage
 
 #############################
 # react-native-deploy stage #
@@ -593,3 +633,5 @@ bridge/react-native/deploy:
   trigger:
     project: TankerHQ/sdk-react-native
     strategy: depend
+    # FIXME
+    branch: feat/storage
