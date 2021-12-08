@@ -279,10 +279,10 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     if (url == nullptr)
       url = "https://api.tanker.io";
 
-    if (options->writable_path == nullptr)
+    if (options->persistent_path == nullptr)
     {
       throw Exception(make_error_code(Errc::InvalidArgument),
-                      "writable_path is null");
+                      "persistent_path is null");
     }
 
     std::unique_ptr<Tanker::Network::Backend> networkBackend =
@@ -304,7 +304,7 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       return static_cast<void*>(
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
-                        options->writable_path,
+                        options->persistent_path,
                         options->cache_path,
                         std::move(networkBackend),
                         std::move(storageBackend)));
