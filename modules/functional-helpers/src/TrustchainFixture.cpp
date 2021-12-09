@@ -101,6 +101,20 @@ tc::cotask<void> TrustchainFixture::tearDown()
   _trustchainFactory.reset();
 }
 
+tc::cotask<VerificationKey> TrustchainFixture::registerUser(
+    Functional::User& user)
+{
+  auto device0 = user.makeDevice();
+  auto dummy = device0.createCore();
+  TC_AWAIT(dummy->start(user.identity));
+  auto verificationKey = TC_AWAIT(dummy->generateVerificationKey());
+  if (dummy->status() != Status::IdentityRegistrationNeeded)
+    throw std::runtime_error("Invalid status when registration users");
+  TC_AWAIT(dummy->registerIdentity(VerificationKey{verificationKey}));
+  TC_AWAIT(dummy->stop());
+  TC_RETURN(verificationKey);
+}
+
 tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
     Email const& email)
 {

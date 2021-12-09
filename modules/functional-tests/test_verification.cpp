@@ -27,7 +27,11 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <Tanker/Format/Enum.hpp>
+
 #include <doctest/doctest.h>
+
+#include <string>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -87,6 +91,66 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
 
   TC_RETURN(response.json().at("id_token").get<OidcIdToken>());
 }
+}
+
+namespace Tanker
+{
+inline doctest::String toString(Status status)
+{
+  return fmt::format("{}", status).c_str();
+}
+}
+
+TEST_CASE_FIXTURE(
+    TrustchainFixture,
+    "The session must be closed after a conflicting verification attempt")
+{
+  auto alice = trustchain.makeUser();
+  auto verificationKey = TC_AWAIT(registerUser(alice));
+
+  // we loop for a bit, hoping for the race to trigger itself
+  for (auto i = 1; i <= 10; ++i)
+  {
+    auto device1 = alice.makeDevice();
+    auto device2 = alice.makeDevice();
+    auto core1 = device1.createCore();
+    auto core2 = device2.createCore();
+
+    TC_AWAIT(core1->start(alice.identity));
+    TC_AWAIT(core2->start(alice.identity));
+    try
+    {
+      std::array<tc::future<void>, 2> futs;
+      futs[0] =
+          core1->verifyIdentity(VerificationKey{verificationKey}).to_void();
+      futs[1] =
+          core2->verifyIdentity(VerificationKey{verificationKey}).to_void();
+      auto res =
+          TC_AWAIT(tc::when_all(std::make_move_iterator(std::begin(futs)),
+                                std::make_move_iterator(std::end(futs))));
+
+      // we get() the futures to make them throw
+      res[0].get();
+      res[1].get();
+      INFO(fmt::format("racing lap {}/10", i));
+      CHECK(core2->status() == Status::Ready);
+      CHECK(core1->status() == Status::Ready);
+    }
+    catch (Tanker::Errors::Exception const& ex)
+    {
+      CAPTURE(core1->status());
+      CAPTURE(core2->status());
+      CHECK(((core2->status() == Status::Stopped &&
+              core1->status() == Status::Ready) ||
+             (core1->status() == Status::Stopped &&
+              core2->status() == Status::Ready)));
+      break;
+    }
+    TC_AWAIT(core2->stop());
+    TC_AWAIT(core1->stop());
+    if (i == 10)
+      FAIL("The race has not been triggered for 10 iterations");
+  }
 }
 
 TEST_CASE_FIXTURE(TrustchainFixture, "Verification")

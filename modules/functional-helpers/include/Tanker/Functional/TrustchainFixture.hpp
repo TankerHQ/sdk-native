@@ -30,6 +30,7 @@ struct TrustchainFixture
       PhoneNumber const& phoneNumber);
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
+  tc::cotask<VerificationKey> registerUser(Functional::User& user);
   Trustchain createOtherTrustchain();
 
   tc::cotask<void> enableOidc();
