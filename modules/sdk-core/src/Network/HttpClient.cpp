@@ -157,12 +157,12 @@ void HttpClient::setDeviceAuthData(
 }
 
 // Do not call anything else than fetch here to avoid recursive calls
-tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
+tc::cotask<void> HttpClient::authenticate()
 {
   if (!_authenticating.is_ready())
   {
     TC_AWAIT(_authenticating);
-    TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
+    TC_RETURN();
   }
 
   _accessToken.clear();
@@ -208,7 +208,7 @@ tc::cotask<HttpClient::AuthResponse> HttpClient::authenticate()
 
   TC_AWAIT(_authenticating);
 
-  TC_RETURN(_isRevoked ? AuthResponse::Revoked : AuthResponse::Ok);
+  TC_RETURN();
 }
 
 tc::cotask<void> HttpClient::deauthenticate()

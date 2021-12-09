@@ -808,3 +808,41 @@ TEST_CASE_METHOD(TrustchainFixture,
       Errors::Errc::InvalidArgument,
       "public identity not in the trustchain");
 }
+
+TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
+{
+  auto device1 = alice.makeDevice();
+
+  auto const clearData = make_buffer("my clear data is clear");
+  std::vector<uint8_t> encryptedData;
+  {
+    auto core = TC_AWAIT(device1.open());
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(core->encrypt(clearData)));
+  }
+  auto core = std::make_unique<AsyncCore>("https://no-api.tanker.io",
+                                          device1.getSdkInfo(),
+                                          device1.writablePath(),
+                                          device1.writablePath());
+
+  auto const status = TC_AWAIT(core->start(device1.identity()));
+  SECTION("Can open a Session")
+  {
+    REQUIRE(status == Tanker::Status::Ready);
+  }
+  SECTION("Can decrypt a resource offline")
+  {
+    auto const decrypted = TC_AWAIT(core->decrypt(encryptedData));
+    REQUIRE(decrypted == clearData);
+  }
+  SECTION("Throws if trying to encrypt")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->encrypt(clearData)),
+                                  Errors::Errc::NetworkError);
+  }
+  SECTION("Throws if trying to decrypt without the key")
+  {
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(aliceSession->encrypt(clearData)));
+    TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core->decrypt(encryptedData)),
+                                  Errors::Errc::NetworkError);
+  }
+}
