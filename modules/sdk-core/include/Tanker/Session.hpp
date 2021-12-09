@@ -95,7 +95,6 @@ public:
 
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
-  tc::cotask<Network::HttpClient::AuthResponse> authenticate();
   tc::cotask<void> finalizeOpening();
   tc::cotask<void> finalizeCreation(Trustchain::DeviceId const& deviceId,
                                     DeviceKeys const& deviceKeys);
