@@ -87,7 +87,7 @@ class TankerConan(ConanFile):
 
         self.requires("boost/1.77.0-r1", private=private)
         self.requires("libressl/3.2.5", private=private)
-        self.requires("fetchpp/0.14.0-r1", private=private)
+        self.requires("fetchpp/0.14.0-r2", private=private)
         if self.options.with_sqlite:
             self.requires("sqlpp11/0.60-r1", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r1", private=private)
