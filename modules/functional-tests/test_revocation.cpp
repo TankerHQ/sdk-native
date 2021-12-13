@@ -13,7 +13,7 @@
 
 #include <range/v3/algorithm/find.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "CheckDecrypt.hpp"
 
@@ -21,9 +21,7 @@ using namespace Tanker;
 using namespace Tanker::Errors;
 using Tanker::Functional::TrustchainFixture;
 
-TEST_SUITE_BEGIN("Revocation");
-
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can list her devices")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can list her devices")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -43,7 +41,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can list her devices")
   CHECK(deviceIds == expectedDeviceIds);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can revoke a device")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -76,8 +74,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can revoke a device")
   TC_AWAIT(aliceSecondDevice.open());
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Triggering self destruct twice doesn't crash")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Triggering self destruct twice doesn't crash")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -122,8 +120,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   CHECK(secondSession->status() == Status::Stopped);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can revoke a device while it is offline")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can revoke a device while it is offline")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -142,8 +140,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errc::DeviceRevoked);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can recreate a device and decrypt after a revocation")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can recreate a device and decrypt after a revocation")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -168,8 +166,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({secondSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "multiple devices can be successively revoked")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "multiple devices can be successively revoked")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -214,7 +212,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({secondSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
+TEST_CASE_METHOD(TrustchainFixture, "it can share with a user after a revoke")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -231,10 +229,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a user after a revoke")
   auto encrypted =
       TC_AWAIT(bobSession->encrypt(clearData, {alice.spublicIdentity()}));
   auto result_data = TC_AWAIT(aliceSession->decrypt(encrypted));
-  REQUIRE_EQ(result_data, clearData);
+  REQUIRE(result_data == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
+TEST_CASE_METHOD(TrustchainFixture, "it can share with a group after a revoke")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -253,7 +251,5 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can share with a group after a revoke")
   auto const encrypted =
       TC_AWAIT(bobSession->encrypt(clearData, {}, {groupId}));
   auto result_data = TC_AWAIT(aliceSession->decrypt(encrypted));
-  REQUIRE_EQ(result_data, clearData);
+  REQUIRE(result_data == clearData);
 }
-
-TEST_SUITE_END();

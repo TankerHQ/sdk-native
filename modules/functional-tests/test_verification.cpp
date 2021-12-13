@@ -29,7 +29,7 @@
 
 #include <Tanker/Format/Enum.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <string>
 
@@ -54,8 +54,8 @@ tc::cotask<Tanker::Status> expectVerification(
     std::string const& identity,
     Verification::Verification const& verification)
 {
-  REQUIRE_EQ(TC_AWAIT(session->start(identity)),
-             Status::IdentityVerificationNeeded);
+  REQUIRE(TC_AWAIT(session->start(identity)) ==
+          Status::IdentityVerificationNeeded);
   TC_AWAIT(session->verifyIdentity(verification));
   checkVerificationMethods(
       TC_AWAIT(session->getVerificationMethods()),
@@ -93,15 +93,7 @@ tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
 }
 }
 
-namespace Tanker
-{
-inline doctest::String toString(Status status)
-{
-  return fmt::format("{}", status).c_str();
-}
-}
-
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "The session must be closed after a conflicting verification attempt")
 {
@@ -153,13 +145,13 @@ TEST_CASE_FIXTURE(
   }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
+TEST_CASE_METHOD(TrustchainFixture, "Verification")
 {
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore();
-  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
-             Status::IdentityRegistrationNeeded);
+  REQUIRE(TC_AWAIT(core1->start(alice.identity)) ==
+          Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore();
@@ -168,58 +160,58 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   auto const email = Email{"kirby@tanker.io"};
   auto const phoneNumber = PhoneNumber{"+33639982233"};
 
-  SUBCASE("registerIdentity throws if passphrase is empty")
+  SECTION("registerIdentity throws if passphrase is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(Passphrase{""})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("registerIdentity throws if email is empty")
+  SECTION("registerIdentity throws if email is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(
             Verification::ByEmail{Email{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("registerIdentity throws if phone number is empty")
+  SECTION("registerIdentity throws if phone number is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(Verification::ByPhoneNumber{
             PhoneNumber{""}, VerificationCode{"12345678"}})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("registerIdentity throws if verificationCode is empty")
+  SECTION("registerIdentity throws if verificationCode is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(
             Verification::ByEmail{email, VerificationCode{""}})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("registerIdentity throws if OidcIdToken is empty")
+  SECTION("registerIdentity throws if OidcIdToken is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(OidcIdToken{""})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("registerIdentity throws if verificationKey is empty")
+  SECTION("registerIdentity throws if verificationKey is empty")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(VerificationKey{""})),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "registerIdentity throws adequate exception when verificationKey public "
       "signature key is corrupted")
   {
@@ -235,10 +227,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "registerIdentity throws adequate exception when verificationKey private "
       "signature key is corrupted")
   {
@@ -254,10 +246,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(verificationKey)),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "verify identity throws adequate exceptions when verificationKey public "
       "signature key is corrupted")
   {
@@ -278,15 +270,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto identity =
         mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
-             Status::IdentityVerificationNeeded);
+    CHECK(TC_AWAIT(core2->start(identity)) ==
+          Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "verify identity throws adequate exceptions when verificationKey private "
       "signature key is corrupted")
   {
@@ -307,15 +299,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto identity =
         mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
-             Status::IdentityVerificationNeeded);
+    CHECK(TC_AWAIT(core2->start(identity)) ==
+          Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "verify identity throws adequate exceptions when verificationKey private "
       "encryption key is corrupted")
   {
@@ -336,15 +328,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     auto identity =
         mgs::base64::encode(nlohmann::ordered_json(aliceIdentity).dump());
 
-    CHECK_EQ(TC_AWAIT(core2->start(identity)),
-             Status::IdentityVerificationNeeded);
+    CHECK(TC_AWAIT(core2->start(identity)) ==
+          Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(verificationKey)),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE("it creates an verificationKey and use it to add a second device")
+  SECTION("it creates an verificationKey and use it to add a second device")
   {
     auto verificationKey = TC_AWAIT(core1->generateVerificationKey());
     TC_AWAIT(core1->registerIdentity(verificationKey));
@@ -352,15 +344,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {VerificationKey{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(verificationKey)));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {VerificationKey{}}));
   }
 
-  SUBCASE("it sets a passphrase and adds a new device")
+  SECTION("it sets a passphrase and adds a new device")
   {
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->registerIdentity(Verification::Verification{passphrase})));
@@ -368,27 +360,27 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {Passphrase{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(passphrase)));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
   }
 
-  SUBCASE("it gets verification methods before verifying identity")
+  SECTION("it gets verification methods before verifying identity")
   {
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->registerIdentity(Verification::Verification{passphrase})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {Passphrase{}}));
   }
 
-  SUBCASE("it sets an email and adds a new device")
+  SECTION("it sets an email and adds a new device")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -397,8 +389,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(
         core2->verifyIdentity(Verification::ByEmail{email, verificationCode})));
@@ -407,7 +399,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core2->getVerificationMethods()), {email}));
   }
 
-  SUBCASE("it sets a phone number and adds a new device")
+  SECTION("it sets a phone number and adds a new device")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -416,8 +408,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {phoneNumber}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(
         Verification::ByPhoneNumber{phoneNumber, verificationCode})));
@@ -426,7 +418,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         TC_AWAIT(core2->getVerificationMethods()), {phoneNumber}));
   }
 
-  SUBCASE("it updates a verification passphrase")
+  SECTION("it updates a verification passphrase")
   {
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->registerIdentity(Verification::Verification{passphrase})));
@@ -435,12 +427,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(TC_AWAIT(core1->setVerificationMethod(
         Verification::Verification{newPassphrase})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(newPassphrase)));
   }
 
-  SUBCASE("it sets a phone number and then sets a passphrase")
+  SECTION("it sets a phone number and then sets a passphrase")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -453,8 +445,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         checkVerificationMethods(TC_AWAIT(core1->getVerificationMethods()),
                                  {phoneNumber, Passphrase{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(passphrase)));
 
     CHECK_NOTHROW(
@@ -462,7 +454,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                                  {phoneNumber, Passphrase{}}));
   }
 
-  SUBCASE("it sets an email and then sets a passphrase")
+  SECTION("it sets an email and then sets a passphrase")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -474,15 +466,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email, Passphrase{}}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     REQUIRE_NOTHROW(TC_AWAIT(core2->verifyIdentity(passphrase)));
 
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core2->getVerificationMethods()), {email, Passphrase{}}));
   }
 
-  SUBCASE(
+  SECTION(
       "it fails to set a verification method after using a verification key")
   {
     auto const verificationKey = TC_AWAIT(core1->generateVerificationKey());
@@ -494,7 +486,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                                   Errc::PreconditionFailed);
   }
 
-  SUBCASE("it fails to set a verification key after a verification method ")
+  SECTION("it fails to set a verification key after a verification method ")
   {
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(
         Verification::Verification{Passphrase{"new passphrase"}})));
@@ -503,35 +495,35 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
                                   Errc::PreconditionFailed);
   }
 
-  SUBCASE("it throws when trying to verify with an invalid passphrase")
+  SECTION("it throws when trying to verify with an invalid passphrase")
   {
     REQUIRE_NOTHROW(TC_AWAIT(
         core1->registerIdentity(Verification::Verification{passphrase})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(Passphrase{"wrongPass"})),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE("it throws when trying to verify with an invalid verification code")
+  SECTION("it throws when trying to verify with an invalid verification code")
   {
     auto const verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
         Verification::ByEmail{email, verificationCode}})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
             Verification::ByEmail{email, VerificationCode{"00000000"}})),
         Errc::InvalidVerification);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "it fails to unlock after trying too many times with an invalid "
       "verification code")
   {
@@ -541,32 +533,32 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
 
     auto const code = TC_AWAIT(getVerificationCode(email));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
     for (int i = 0; i < 3; ++i)
     {
       TANKER_CHECK_THROWS_WITH_CODE(
           TC_AWAIT(core2->verifyIdentity(
               Verification::ByEmail{email, VerificationCode{"00000000"}})),
           Errc::InvalidVerification);
-      REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+      REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
     }
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
             Verification::Verification{Verification::ByEmail{email, code}})),
         Errc::TooManyAttempts);
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE("it throws when trying to verify before registration")
+  SECTION("it throws when trying to verify before registration")
   {
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(core1->verifyIdentity(passphrase)),
                                   Errc::PreconditionFailed);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("It updates email verification method on setVerificationMethods")
+  SECTION("It updates email verification method on setVerificationMethods")
   {
     // register
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
@@ -594,7 +586,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK(methods[0].get<Email>() == newEmail);
   }
 
-  SUBCASE(
+  SECTION(
       "It updates phone number verification method on setVerificationMethods")
   {
     // register
@@ -623,7 +615,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
     CHECK(methods[0].get<PhoneNumber>() == newPhoneNumber);
   }
 
-  SUBCASE(
+  SECTION(
       "setVerificationMethod with preverified email throws if preverified "
       "verification flag is "
       "disabled")
@@ -639,7 +631,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
         AppdErrc::FeatureNotEnabled);
   }
 
-  SUBCASE(
+  SECTION(
       "setVerificationMethod with preverified phone number throws if "
       "preverified verification flag is disabled")
   {
@@ -655,14 +647,14 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification")
   }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
+TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
 {
   TC_AWAIT(enablePreverifiedMethods());
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore();
-  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
-             Status::IdentityRegistrationNeeded);
+  REQUIRE(TC_AWAIT(core1->start(alice.identity)) ==
+          Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore();
@@ -673,32 +665,32 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
   auto const preverifiedEmail = PreverifiedEmail{"superkirby@tanker.io"};
   auto const emailOfPreverifiedEmail = Email{preverifiedEmail.string()};
 
-  SUBCASE(
+  SECTION(
       "registerIdentity throws when verification method is preverified email")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core1->registerIdentity(preverifiedEmail)),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE("verifyIdentity throws when verification method is preverified email")
+  SECTION("verifyIdentity throws when verification method is preverified email")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
         Verification::ByEmail{email, verificationCode}})));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(preverifiedEmail)),
         Errc::InvalidArgument);
 
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "it registers with an email, updates to preverified email when calling "
       "setVerificationMethod, and updates to normal email when verifying")
   {
@@ -721,7 +713,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
         TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
   }
 
-  SUBCASE(
+  SECTION(
       "it register with an email, updates to preverified email when calling "
       "setVerificationMethod with the same email")
   {
@@ -738,7 +730,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
         TC_AWAIT(core1->getVerificationMethods()), {newPreverifiedEmail}));
   }
 
-  SUBCASE(
+  SECTION(
       "It turns preverified email method into email method when calling "
       "setVerificationMethod")
   {
@@ -757,7 +749,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
         TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
   }
 
-  SUBCASE(
+  SECTION(
       "it turns preverified email method into email method when calling "
       "verifyProvisionalIdentity")
   {
@@ -786,7 +778,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
         TC_AWAIT(core1->getVerificationMethods()), {emailOfPreverifiedEmail}));
   }
 
-  SUBCASE("It adds preverified email as a new verification method")
+  SECTION("It adds preverified email as a new verification method")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(phoneNumber));
     TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -801,15 +793,15 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification with preverified email")
   }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Verification with preverified phone number")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Verification with preverified phone number")
 {
   TC_AWAIT(enablePreverifiedMethods());
   auto alice = trustchain.makeUser();
   auto device1 = alice.makeDevice();
   auto core1 = device1.createCore();
-  REQUIRE_EQ(TC_AWAIT(core1->start(alice.identity)),
-             Status::IdentityRegistrationNeeded);
+  REQUIRE(TC_AWAIT(core1->start(alice.identity)) ==
+          Status::IdentityRegistrationNeeded);
 
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore();
@@ -821,7 +813,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   auto const phoneNumberOfPreverifiedPhoneNumber =
       PhoneNumber{preverifiedPhoneNumber.string()};
 
-  SUBCASE(
+  SECTION(
       "registerIdentity throws when verification method is preverified phone "
       "number")
   {
@@ -829,10 +821,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
         TC_AWAIT(core1->registerIdentity(
             PreverifiedPhoneNumber{preverifiedPhoneNumber})),
         Errc::InvalidArgument);
-    REQUIRE_EQ(core1->status(), Status::IdentityRegistrationNeeded);
+    REQUIRE(core1->status() == Status::IdentityRegistrationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "verifyIdentity throws when verification method is preverified phone "
       "number")
   {
@@ -843,18 +835,18 @@ TEST_CASE_FIXTURE(TrustchainFixture,
     CHECK_NOTHROW(checkVerificationMethods(
         TC_AWAIT(core1->getVerificationMethods()), {email}));
 
-    REQUIRE_EQ(TC_AWAIT(core2->start(alice.identity)),
-               Status::IdentityVerificationNeeded);
+    REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
+            Status::IdentityVerificationNeeded);
 
     TANKER_CHECK_THROWS_WITH_CODE(
         TC_AWAIT(core2->verifyIdentity(
             PreverifiedPhoneNumber{preverifiedPhoneNumber})),
         Errc::InvalidArgument);
 
-    REQUIRE_EQ(core2->status(), Status::IdentityVerificationNeeded);
+    REQUIRE(core2->status() == Status::IdentityVerificationNeeded);
   }
 
-  SUBCASE(
+  SECTION(
       "it registers with a phone number, updates to preverified phone number "
       "when calling setVerificationMethod, and updates to normal phone number "
       "when verifying")
@@ -880,7 +872,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                  {phoneNumberOfPreverifiedPhoneNumber}));
   }
 
-  SUBCASE(
+  SECTION(
       "register with a phone number, updates to preverified phone number when "
       "calling setVerificationMethod with the same phone number")
   {
@@ -898,7 +890,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                  {newPreverifiedPhoneNumber}));
   }
 
-  SUBCASE(
+  SECTION(
       "It turns preverified phone number method into phone number method when "
       "calling setVerificationMethod")
   {
@@ -920,7 +912,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                  {phoneNumberOfPreverifiedPhoneNumber}));
   }
 
-  SUBCASE(
+  SECTION(
       "it turns preverified phone number method into phone number method when "
       "calling verifyProvisionalIdentity")
   {
@@ -954,7 +946,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                  {phoneNumberOfPreverifiedPhoneNumber}));
   }
 
-  SUBCASE("It adds preverified phone number as a new verification method")
+  SECTION("It adds preverified phone number as a new verification method")
   {
     auto verificationCode = TC_AWAIT(getVerificationCode(email));
     TC_AWAIT(core1->registerIdentity(Verification::Verification{
@@ -969,15 +961,15 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
+TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
 {
   TC_AWAIT(enableOidc());
 
   auto martine = trustchain.makeUser();
   auto martineDevice = martine.makeDevice();
   auto martineLaptop = martineDevice.createCore();
-  REQUIRE_EQ(TC_AWAIT(martineLaptop->start(martine.identity)),
-             Status::IdentityRegistrationNeeded);
+  REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) ==
+          Status::IdentityRegistrationNeeded);
 
   auto martineDevice2 = martine.makeDevice();
   auto martinePhone = martineDevice2.createCore();
@@ -990,16 +982,16 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
     kevinIdToken = TC_AWAIT(getOidcToken(oidcConfig, "kevin"));
   }
 
-  SUBCASE("")
+  SECTION("")
   {
     REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(martineIdToken)));
 
-    SUBCASE("registers and verifies identity with an oidc id token")
+    SECTION("registers and verifies identity with an oidc id token")
     {
       REQUIRE_NOTHROW(TC_AWAIT(
           expectVerification(martinePhone, martine.identity, martineIdToken)));
     }
-    SUBCASE("fails to verify a token with incorrect signature")
+    SECTION("fails to verify a token with incorrect signature")
     {
       namespace ba = boost::algorithm;
       using b64 = mgs::base64url_nopad;
@@ -1016,7 +1008,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
               expectVerification(martinePhone, martine.identity, alteredToken)),
           Errc::InvalidVerification);
     }
-    SUBCASE("fails to verify a valid token for the wrong user")
+    SECTION("fails to verify a valid token for the wrong user")
     {
       TANKER_CHECK_THROWS_WITH_CODE(
           TC_AWAIT(
@@ -1024,23 +1016,23 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
           Errc::InvalidVerification);
     }
   }
-  SUBCASE("")
+  SECTION("")
   {
     auto const pass = Passphrase{"******"};
     REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
 
-    SUBCASE("updates and verifies with an oidc token")
+    SECTION("updates and verifies with an oidc token")
     {
       REQUIRE_NOTHROW(
           TC_AWAIT(martineLaptop->setVerificationMethod(martineIdToken)));
-      REQUIRE_EQ(TC_AWAIT(martinePhone->start(martine.identity)),
-                 Status::IdentityVerificationNeeded);
+      REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) ==
+              Status::IdentityVerificationNeeded);
       REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
       REQUIRE_NOTHROW(checkVerificationMethods(
           TC_AWAIT(martinePhone->getVerificationMethods()),
           {Passphrase{}, OidcIdToken{}}));
     }
-    SUBCASE(
+    SECTION(
         "fails to attach a provisional identity for the wrong google account")
     {
       auto const email = Email{"the-ceo@tanker.io"};
@@ -1049,13 +1041,13 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
               mgs::base64::encode(trustchain.id), email);
       auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
           SSecretProvisionalIdentity{martineProvisionalIdentity}));
-      REQUIRE_EQ(result.status, Tanker::Status::IdentityVerificationNeeded);
-      REQUIRE_EQ(result.verificationMethod, email);
+      REQUIRE(result.status == Tanker::Status::IdentityVerificationNeeded);
+      REQUIRE(result.verificationMethod == email);
       TANKER_CHECK_THROWS_WITH_CODE(
           TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken)),
           Errc::InvalidArgument);
     }
-    SUBCASE("decrypts data shared with an attached provisional identity")
+    SECTION("decrypts data shared with an attached provisional identity")
     {
       auto alice = trustchain.makeUser();
       auto aliceDevice = alice.makeDevice();
@@ -1075,11 +1067,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Verification through oidc")
 
       auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
           SSecretProvisionalIdentity{martineProvisionalIdentity}));
-      REQUIRE_EQ(result.status, Tanker::Status::IdentityVerificationNeeded);
-      REQUIRE_EQ(result.verificationMethod, martineEmail);
+      REQUIRE(result.status == Tanker::Status::IdentityVerificationNeeded);
+      REQUIRE(result.verificationMethod == martineEmail);
       TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken));
       auto const decrypted = TC_AWAIT(martineLaptop->decrypt(encrypted));
-      REQUIRE_EQ(clearText, decrypted);
+      REQUIRE(clearText == decrypted);
     }
   }
 }

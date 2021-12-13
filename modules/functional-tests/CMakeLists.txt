@@ -19,7 +19,7 @@ target_link_libraries(test_functional
   tankertesthelpers
   tankeradmin
   tankercore
-  CONAN_PKG::doctest-async
+  CONAN_PKG::catch2-async
 )
 
-add_test(NAME test_functional COMMAND test_functional --duration=true)
+add_test(NAME test_functional COMMAND test_functional --durations=true)
