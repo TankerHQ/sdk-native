@@ -42,6 +42,13 @@ public:
       RequestWithVerif const& verificationRequest,
       gsl::span<uint8_t const> encryptedVerificationKey) = 0;
 
+  virtual tc::cotask<void> enrollUser(
+      Trustchain::TrustchainId const& trustchainId,
+      Trustchain::UserId const& userId,
+      gsl::span<uint8_t const> userCreation,
+      gsl::span<RequestWithVerif const> verificationRequests,
+      gsl::span<uint8_t const> encryptedVerificationKey) = 0;
+
   virtual tc::cotask<void> createDevice(
       gsl::span<uint8_t const> deviceCreation) = 0;
 
