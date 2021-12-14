@@ -202,10 +202,9 @@ class TankerConan(ConanFile):
                     "tankererrors",
                     "tankerlog",
                     "tankerformat",
+                    "tankercacerts",
                 ]
             )
-            if self.options.with_fetchpp:
-                libs.append("tankercacerts")
 
         if self.sanitizer_flag:
             self.cpp_info.sharedlinkflags = [self.sanitizer_flag]
