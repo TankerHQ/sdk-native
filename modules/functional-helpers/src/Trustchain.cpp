@@ -2,6 +2,7 @@
 
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Types/Overloaded.hpp>
 
 #include <mgs/base64.hpp>
 
@@ -82,6 +83,34 @@ AppProvisionalUser Trustchain::makePhoneNumberProvisionalUser()
       Identity::getPublicIdentity(secretProvisionalIdentity.string()));
   return AppProvisionalUser{
       phoneNumber, secretProvisionalIdentity, publicProvisionalIdentity};
+}
+
+tc::cotask<void> Trustchain::attachProvisionalIdentity(
+    AsyncCore& session, AppProvisionalUser const& prov)
+{
+  auto const result =
+      TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
+  if (result.status == Status::Ready)
+    TC_RETURN();
+
+  if (result.status != Status::IdentityVerificationNeeded)
+    throw std::runtime_error("attachProvisionalIdentity: unexpected status!");
+
+  auto const verif = TC_AWAIT(boost::variant2::visit(
+      overloaded{
+          [&](Email const& v) -> tc::cotask<Verification::Verification> {
+            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+            TC_RETURN(
+                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
+          },
+          [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
+            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
+            TC_RETURN((Verification::ByPhoneNumber{
+                v, VerificationCode{verificationCode}}));
+          },
+      },
+      prov.value));
+  TC_AWAIT(session.verifyProvisionalIdentity(verif));
 }
 
 TrustchainConfig Trustchain::toConfig() const

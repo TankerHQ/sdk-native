@@ -25,9 +25,11 @@ struct TrustchainFixture
   static tc::cotask<void> setUp();
   static tc::cotask<void> tearDown();
 
-  tc::cotask<VerificationCode> getVerificationCode(Email const& email);
-  tc::cotask<VerificationCode> getVerificationCode(
-      PhoneNumber const& phoneNumber);
+  template <typename T>
+  tc::cotask<VerificationCode> getVerificationCode(T const& target)
+  {
+    TC_RETURN(TC_AWAIT(trustchain.getVerificationCode(target)));
+  }
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
   tc::cotask<VerificationKey> registerUser(Functional::User& user);

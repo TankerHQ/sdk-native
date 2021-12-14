@@ -115,50 +115,10 @@ tc::cotask<VerificationKey> TrustchainFixture::registerUser(
   TC_RETURN(verificationKey);
 }
 
-tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
-    Email const& email)
-{
-  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
-                                                trustchain.id,
-                                                trustchain.authToken,
-                                                email)));
-}
-
-tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
-    PhoneNumber const& phoneNumber)
-{
-  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
-                                                trustchain.id,
-                                                trustchain.authToken,
-                                                phoneNumber)));
-}
-
 tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
     AsyncCore& session, AppProvisionalUser const& prov)
 {
-  auto const result =
-      TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
-  if (result.status == Status::Ready)
-    TC_RETURN();
-
-  if (result.status != Status::IdentityVerificationNeeded)
-    throw std::runtime_error("attachProvisionalIdentity: unexpected status!");
-
-  auto const verif = TC_AWAIT(boost::variant2::visit(
-      overloaded{
-          [&](Email const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN(
-                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
-          },
-          [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Verification::ByPhoneNumber{
-                v, VerificationCode{verificationCode}}));
-          },
-      },
-      prov.value));
-  TC_AWAIT(session.verifyProvisionalIdentity(verif));
+  TC_AWAIT(trustchain.attachProvisionalIdentity(session, prov));
 }
 
 Trustchain TrustchainFixture::createOtherTrustchain()

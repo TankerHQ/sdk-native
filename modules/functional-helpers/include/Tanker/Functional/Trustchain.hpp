@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Helpers/Config.hpp>
+#include <Tanker/Admin/Client.hpp>
 #include <Tanker/Functional/Provisional.hpp>
 #include <Tanker/Functional/User.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
@@ -54,6 +56,18 @@ public:
   User makeUser();
   AppProvisionalUser makeEmailProvisionalUser();
   AppProvisionalUser makePhoneNumberProvisionalUser();
+
+  template <typename T>
+  tc::cotask<VerificationCode> getVerificationCode(T&& emailOrPhone)
+  {
+    TC_RETURN(
+        TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
+                                            id,
+                                            authToken,
+                                            std::forward<T>(emailOrPhone))));
+  }
+  tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
+                                             AppProvisionalUser const& prov);
 
   TrustchainConfig toConfig() const;
 
