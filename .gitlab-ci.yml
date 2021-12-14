@@ -221,34 +221,6 @@ bridge/compat/linux:
     project: TankerHQ/compatibility-tests
     strategy: depend
 
-bridge/compat/ios:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/ios/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/ios/http-backend
-    UPSTREAM_JOB_TARGET: ios
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
-bridge/compat/android:
-  stage: bridge-check
-  extends:
-    - .rules/bridge/auto
-    - .variables/bridge-common
-  needs:
-    - build/android/static/http-backend
-  variables:
-    UPSTREAM_JOB_NAME: build/android/static/http-backend
-    UPSTREAM_JOB_TARGET: android
-  trigger:
-    project: TankerHQ/compatibility-tests
-    strategy: depend
-
 bridge/ios:
   stage: bridge-check
   extends:
