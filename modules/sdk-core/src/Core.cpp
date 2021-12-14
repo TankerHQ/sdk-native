@@ -46,6 +46,7 @@
 #include <mgs/base64.hpp>
 
 #include <range/v3/range/conversion.hpp>
+#include <range/v3/view/remove_if.hpp>
 #include <range/v3/view/transform.hpp>
 
 #include <stdexcept>
@@ -295,6 +296,47 @@ tc::cotask<Status> Core::start(std::string const& identity)
   TC_RETURN(TC_AWAIT(resetOnFailure([&]() -> tc::cotask<Status> {
     TC_RETURN(TC_AWAIT(startImpl(identity)));
   })));
+}
+
+tc::cotask<void> Core::enrollUser(
+    std::string const& b64Identity,
+    std::vector<Verification::Verification> const& verifications)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::Stopped, "enrollUser");
+
+  auto const identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+
+  if (identity.trustchainId != _info.trustchainId)
+  {
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        "the provided identity was not signed by the private key of the "
+        "current app: expected app ID {} but got {}",
+        _info.trustchainId,
+        identity.trustchainId);
+  }
+
+  if (verifications.empty())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: should contain at least one preverified "
+                   "verification method");
+  }
+  else if ((verifications |
+            ranges::views::remove_if([](Verification::Verification const&
+                                            verification) {
+              return !boost::variant2::holds_alternative<PreverifiedEmail>(
+                         verification) &&
+                     !boost::variant2::holds_alternative<
+                         PreverifiedPhoneNumber>(verification);
+            })).empty())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: can only enroll user with preverified "
+                   "verification methods");
+  }
 }
 
 tc::cotask<void> Core::registerIdentityImpl(

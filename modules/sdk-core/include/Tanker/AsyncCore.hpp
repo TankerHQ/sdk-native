@@ -59,6 +59,9 @@ public:
   tc::future<void> destroy();
 
   tc::future<Status> start(std::string const& identity);
+  tc::future<void> enrollUser(
+      std::string const& identity,
+      std::vector<Verification::Verification> const& verifications);
   tc::future<void> stop();
 
   tc::future<std::optional<std::string>> registerIdentity(
