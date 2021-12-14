@@ -345,15 +345,15 @@ tc::cotask<void> Core::enrollUser(
                    "verification method ");
   }
 
-  auto const userCreationEntry =
+  auto const userCreation =
       generateGhostDevice(identity, generateGhostDeviceKeys(std::nullopt));
 
   TC_AWAIT(_session->requesters().enrollUser(
       identity.trustchainId,
       identity.delegation.userId,
-      Serialization::serialize(userCreationEntry.entry),
+      Serialization::serialize(userCreation.entry),
       Verification::makeRequestWithVerifs(verifications, identity.userSecret),
-      userCreationEntry.verificationKey));
+      userCreation.verificationKey));
 
   TC_AWAIT(_session->stop());
 }
@@ -363,49 +363,29 @@ tc::cotask<void> Core::registerIdentityImpl(
     std::optional<std::string> const& withTokenNonce)
 {
   TINFO("Registering identity {}", static_cast<void*>(this));
-  auto const verificationKey =
-      boost::variant2::get_if<VerificationKey>(&verification);
-  auto const ghostDeviceKeys =
-      verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
-                        DeviceKeys::create();
-  auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
+  auto const userCreation = generateGhostDevice(
+      _session->identity(), generateGhostDeviceKeys(verification));
 
-  auto const userKeyPair = Crypto::makeEncryptionKeyPair();
-  auto const userCreationEntry =
-      Users::createNewUserAction(_session->trustchainId(),
-                                 _session->identity().delegation,
-                                 ghostDeviceKeys.signatureKeyPair.publicKey,
-                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
-                                 userKeyPair);
   auto const deviceKeys = DeviceKeys::create();
-
   auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
-      Trustchain::DeviceId{userCreationEntry.hash()},
+      Trustchain::DeviceId{userCreation.entry.hash()},
       Identity::makeDelegation(_session->userId(),
-                               ghostDevice.privateSignatureKey),
+                               userCreation.ghostDevice.privateSignatureKey),
       deviceKeys.signatureKeyPair.publicKey,
       deviceKeys.encryptionKeyPair.publicKey,
-      userKeyPair);
-
-  auto const verificationKeyToSend = ghostDevice.toVerificationKey();
-  std::vector<uint8_t> encryptedVerificationKey(
-      EncryptorV2::encryptedSize(verificationKeyToSend.size()));
-  EncryptorV2::encryptSync(
-      encryptedVerificationKey.data(),
-      gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
-      _session->userSecret());
+      userCreation.userKeyPair);
 
   auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
 
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),
       _session->userId(),
-      Serialization::serialize(userCreationEntry),
+      Serialization::serialize(userCreation.entry),
       Serialization::serialize(firstDeviceEntry),
       Verification::makeRequestWithVerif(
           verification, _session->userSecret(), std::nullopt, withTokenNonce),
-      encryptedVerificationKey));
+      userCreation.verificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
