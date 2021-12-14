@@ -1,6 +1,6 @@
 #include <Tanker/ReceiveKey.hpp>
 
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include "GroupAccessorMock.hpp"
@@ -28,8 +28,9 @@ TEST_CASE("decryptAndStoreKey")
 
   auto const resource = Test::Resource();
 
-  auto db = AWAIT(DataStore::createDatabase(":memory:"));
-  ResourceKeys::Store resourceKeyStore(&db);
+  auto db = DataStore::SqliteBackend().open(":memory:", ":memory:");
+
+  ResourceKeys::Store resourceKeyStore({}, db.get());
   GroupAccessorMock receiverGroupAccessor;
   LocalUserAccessorMock receiverLocalUserAccessor;
   ProvisionalUsersAccessorMock receiverProvisionalUsersAccessor;

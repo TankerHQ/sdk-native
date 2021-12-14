@@ -36,6 +36,9 @@
 #ifdef TANKER_WITH_FETCHPP
 #include <Tanker/Network/FetchppBackend.hpp>
 #endif
+#ifdef TANKER_WITH_SQLITE
+#include <Tanker/DataStore/Sqlite/Backend.hpp>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/variant2/variant.hpp>
@@ -83,25 +86,41 @@ Core::~Core() = default;
 
 Core::Core(std::string url,
            SdkInfo info,
-           std::string writablePath,
-           std::unique_ptr<Network::Backend> backend)
+           std::string dataPath,
+           std::string cachePath,
+           std::unique_ptr<Network::Backend> networkBackend,
+           std::unique_ptr<DataStore::Backend> datastoreBackend)
   : _url(std::move(url)),
     _instanceId(createInstanceId()),
     _info(std::move(info)),
-    _writablePath(std::move(writablePath)),
-    _backend(backend ? std::move(backend) :
+    _dataPath(std::move(dataPath)),
+    _cachePath(std::move(cachePath)),
+    _networkBackend(networkBackend ?
+                        std::move(networkBackend) :
 #if TANKER_WITH_FETCHPP
-                       std::make_unique<Network::FetchppBackend>(_info)
+                        std::make_unique<Network::FetchppBackend>(_info)
 #else
-                       nullptr
+                        nullptr
 #endif
-                 ),
+                        ),
+    _datastoreBackend(datastoreBackend ?
+                          std::move(datastoreBackend) :
+#if TANKER_WITH_SQLITE
+                          std::make_unique<DataStore::SqliteBackend>()
+#else
+                          nullptr
+#endif
+                          ),
     _session(std::make_shared<Session>(
-        createHttpClient(_url, _instanceId, _info, _backend.get())))
+        createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+        _datastoreBackend.get()))
 {
-  if (!_backend)
+  if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "no built-in HTTP backend, please provide one");
+  if (!_datastoreBackend)
+    throw Errors::formatEx(Errors::Errc::InternalError,
+                           "no built-in storage backend, please provide one");
 }
 
 void Core::assertStatus(Status wanted, std::string const& action) const
@@ -131,7 +150,8 @@ Status Core::status() const
 void Core::reset()
 {
   _session = std::make_shared<Session>(
-      createHttpClient(_url, _instanceId, _info, _backend.get()));
+      createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
+      _datastoreBackend.get());
 }
 
 template <typename F>
@@ -227,7 +247,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  TC_AWAIT(_session->openStorage(identity, _writablePath));
+  TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
   auto const optPubUserEncKey =
       TC_AWAIT(_session->requesters().userStatus(_session->userId()));
   if (!optPubUserEncKey)
@@ -750,7 +770,7 @@ tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
 
 void Core::nukeDatabase()
 {
-  _session->storage().db.nuke();
+  _session->storage().db->nuke();
 }
 
 Trustchain::ResourceId Core::getResourceId(

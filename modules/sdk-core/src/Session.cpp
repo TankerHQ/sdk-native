@@ -1,7 +1,7 @@
 #include <Tanker/Session.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
+#include <Tanker/DataStore/Errors/Errc.hpp>
 #include <Tanker/Groups/Manager.hpp>
 #include <Tanker/Groups/Requester.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -15,27 +15,33 @@
 
 #include <fmt/format.h>
 
-TLOG_CATEGORY("Session");
+#include <filesystem>
+
+using namespace std::string_view_literals;
+
+TLOG_CATEGORY(Session);
 
 namespace Tanker
 {
 namespace
 {
-std::string getDbPath(std::string const& writablePath,
-                      Trustchain::UserId const& userId)
+constexpr uint8_t Version = 1;
+
+std::string getDbPath(std::string const& path, Trustchain::UserId const& userId)
 {
-  if (writablePath == ":memory:")
-    return writablePath;
-  return fmt::format(FMT_STRING("{:s}/tanker-{:S}.db"), writablePath, userId);
+  if (path == ":memory:")
+    return path;
+  return fmt::format(FMT_STRING("{:s}/{:S}"), path, userId);
 }
 }
 
-Session::Storage::Storage(DataStore::Database pdb)
+Session::Storage::Storage(Crypto::SymmetricKey const& userSecret,
+                          std::unique_ptr<DataStore::DataStore> pdb)
   : db(std::move(pdb)),
-    localUserStore(&db),
-    groupStore(&db),
-    resourceKeyStore(&db),
-    provisionalUserKeysStore(&db)
+    localUserStore(userSecret, db.get()),
+    groupStore(userSecret, db.get()),
+    resourceKeyStore(userSecret, db.get()),
+    provisionalUserKeysStore(userSecret, db.get())
 {
 }
 
@@ -77,8 +83,10 @@ Session::Requesters::Requesters(Network::HttpClient* httpClient)
 
 Session::~Session() = default;
 
-Session::Session(std::unique_ptr<Network::HttpClient> httpClient)
+Session::Session(std::unique_ptr<Network::HttpClient> httpClient,
+                 DataStore::Backend* datastoreBackend)
   : _httpClient(std::move(httpClient)),
+    _datastoreBackend(datastoreBackend),
     _requesters(_httpClient.get()),
     _storage(nullptr),
     _accessors(nullptr),
@@ -97,14 +105,67 @@ Network::HttpClient& Session::httpClient()
   return *_httpClient;
 }
 
+namespace
+{
+void removeStorageFile(std::string_view path)
+{
+  std::error_code ec;
+  auto const deleted = std::filesystem::remove(path, ec);
+  if (deleted)
+    TINFO("Deleted old storage {}", path);
+  // Note: not found is not an error (NFINAE)
+  else if (ec)
+    TERROR("Failed to delete old storage {}: {}", path, ec.message());
+}
+}
+
+tc::cotask<void> Session::removeOldStorage(
+    Identity::SecretPermanentIdentity const& identity,
+    std::string const& dataPath)
+{
+  // Delete the db from <2.25
+  removeStorageFile(fmt::format(
+      FMT_STRING("{:s}/tanker-{:S}.db"), dataPath, identity.delegation.userId));
+  removeStorageFile(fmt::format(FMT_STRING("{:s}/tanker-{:S}.db-journal"),
+                                dataPath,
+                                identity.delegation.userId));
+}
+
 tc::cotask<void> Session::openStorage(
     Identity::SecretPermanentIdentity const& identity,
-    std::string const& writablePath)
+    std::string const& dataPath,
+    std::string const& cachePath)
 {
   assert(!_identity && !_storage);
+
+  removeOldStorage(identity, dataPath);
+
   _identity = identity;
-  _storage = std::make_unique<Storage>(TC_AWAIT(DataStore::createDatabase(
-      getDbPath(writablePath, userId()), userSecret())));
+  _storage = std::make_unique<Storage>(
+      userSecret(),
+      _datastoreBackend->open(getDbPath(dataPath, userId()),
+                              getDbPath(cachePath, userId())));
+
+  auto const key = "version"sv;
+  auto const keySpan = gsl::make_span(key).as_span<uint8_t const>();
+  auto const keys = {keySpan};
+
+  auto const dbVersionResult = _storage->db->findCacheValues(keys);
+  if (!dbVersionResult[0])
+  {
+    auto const valueSpan = gsl::span<uint8_t const>(&Version, 1);
+    auto const keyValues = {std::pair{keySpan, valueSpan}};
+
+    _storage->db->putCacheValues(keyValues, DataStore::OnConflict::Fail);
+  }
+  // dbVersionResult has one row and one column
+  else if (auto const dbVersion = (*dbVersionResult[0]).at(0);
+           dbVersion != Version)
+  {
+    throw Errors::formatEx(DataStore::Errc::InvalidDatabaseVersion,
+                           "unsupported device storage version: {}",
+                           static_cast<int>(dbVersion));
+  }
 }
 
 Session::Storage const& Session::storage() const

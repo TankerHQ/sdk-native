@@ -13,6 +13,30 @@ endif()
 
 message(STATUS "Bulding tanker as ${tankerlib_type}")
 
+add_library(ctankerdatastore STATIC
+  include/ctanker/datastore.h
+  src/datastore.cpp
+)
+
+target_include_directories(ctankerdatastore
+  PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(ctankerdatastore PRIVATE
+  tankercore
+  tanker_utils-c
+)
+
+install(TARGETS ctankerdatastore
+  EXPORT ctankerdatastore
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
 add_library(ctanker ${tankerlib_type}
   include/ctanker.h
   include/ctanker/ctanker.h
@@ -63,6 +87,10 @@ tanker_link_libraries(ctanker PUBLIC
     tanker_async
 )
 
+target_link_libraries(ctanker PRIVATE
+  ctankerdatastore
+)
+
 target_include_directories(ctanker
   PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -85,3 +113,5 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/include DESTINATION .)
 if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
+
+add_subdirectory(datastore-tests)

@@ -2,6 +2,8 @@
 
 #include <Tanker/Crypto/EncryptionKeyPair.hpp>
 #include <Tanker/Crypto/PublicSignatureKey.hpp>
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/DeviceKeys.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
@@ -23,19 +25,27 @@ class Database;
 
 namespace Users
 {
+struct DeviceData
+{
+  Crypto::PublicSignatureKey trustchainPublicKey;
+  Trustchain::DeviceId deviceId;
+  DeviceKeys deviceKeys;
+  std::vector<Crypto::EncryptionKeyPair> userKeys;
+};
+
 class LocalUserStore
 {
 public:
-  LocalUserStore(DataStore::Database* dbCon);
+  LocalUserStore(Crypto::SymmetricKey const& userSecret,
+                 DataStore::DataStore* db);
 
   tc::cotask<void> initializeDevice(
-      Crypto::PublicSignatureKey const& trustchaniPublicKey,
+      Crypto::PublicSignatureKey const& trustchainPublicKey,
       Trustchain::DeviceId const& deviceId,
       DeviceKeys const& deviceKeys,
       std::vector<Crypto::EncryptionKeyPair> const& userKeys);
 
-  tc::cotask<void> putUserKeys(
-      gsl::span<Crypto::EncryptionKeyPair const> userKeys);
+  tc::cotask<void> putUserKeys(std::vector<Crypto::EncryptionKeyPair> userKeys);
 
   tc::cotask<std::optional<Crypto::PublicSignatureKey>>
   findTrustchainPublicSignatureKey() const;
@@ -46,13 +56,13 @@ public:
   tc::cotask<std::optional<DeviceKeys>> findDeviceKeys() const;
 
 private:
-  tc::cotask<void> setTrustchainPublicSignatureKey(
-      Crypto::PublicSignatureKey const& sigKey);
-  tc::cotask<void> setDeviceData(Trustchain::DeviceId const& deviceId,
-                                 DeviceKeys const& deviceKeys);
+  tc::cotask<void> setDeviceData(DeviceData const& deviceData);
+  tc::cotask<std::optional<DeviceData>> getDeviceData() const;
   tc::cotask<std::vector<Crypto::EncryptionKeyPair>> getUserKeyPairs() const;
 
-  DataStore::Database* _db;
+  Crypto::SymmetricKey _userSecret;
+
+  DataStore::DataStore* _db;
 };
 }
 }

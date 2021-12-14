@@ -279,6 +279,7 @@ AsyncCorePtr signUp(MainArgs const& args)
       {sdkType,
        mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
        sdkVersion},
+      ".",
       ".")};
 
   auto const status = core->start(identity).get();
@@ -303,6 +304,7 @@ AsyncCorePtr signIn(MainArgs const& args)
       {sdkType,
        mgs::base64::decode<Tanker::Trustchain::TrustchainId>(trustchainId),
        sdkVersion},
+      ".",
       ".")};
 
   Verification::Verification verification;

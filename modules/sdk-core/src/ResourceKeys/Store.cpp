@@ -1,25 +1,38 @@
 #include <Tanker/ResourceKeys/Store.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
-#include <Tanker/DataStore/Database.hpp>
 #include <Tanker/DataStore/Utils.hpp>
-#include <Tanker/DbModels/ResourceKeys.hpp>
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
-
-#include <sqlpp11/sqlite3/insert_or.h>
 
 TLOG_CATEGORY(ResourceKeys::Store);
 
 using Tanker::Trustchain::ResourceId;
-using ResourceKeysTable = Tanker::DbModels::resource_keys::resource_keys;
 
 namespace Tanker::ResourceKeys
 {
-Store::Store(DataStore::Database* dbConn) : _db(dbConn)
+namespace
+{
+std::string const KeyPrefix = "resourcekey-";
+
+std::vector<uint8_t> serializeStoreKey(ResourceId const& resourceId)
+{
+  std::vector<uint8_t> keyBuffer(KeyPrefix.size() + resourceId.size());
+  auto it = keyBuffer.data();
+  it = std::copy(KeyPrefix.begin(), KeyPrefix.end(), it);
+  it = Serialization::serialize(it, resourceId);
+  assert(it == keyBuffer.data() + keyBuffer.size());
+  return keyBuffer;
+}
+}
+
+Store::Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db)
+  : _userSecret(userSecret), _db(db)
 {
 }
 
@@ -28,10 +41,15 @@ tc::cotask<void> Store::putKey(ResourceId const& resourceId,
 {
   TINFO("Adding key for {}", resourceId);
   FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
 
-  (*_db->connection())(sqlpp::sqlite3::insert_or_ignore_into(tab).set(
-      tab.mac = resourceId.base(), tab.resource_key = key.base()));
+  auto const storeRid = serializeStoreKey(resourceId);
+
+  auto const encryptedKey = DataStore::encryptValue(_userSecret, key);
+
+  std::vector<std::pair<gsl::span<uint8_t const>, gsl::span<uint8_t const>>>
+      keyValues{{storeRid, encryptedKey}};
+
+  _db->putCacheValues(keyValues, DataStore::OnConflict::Ignore);
   TC_RETURN();
 }
 
@@ -48,27 +66,27 @@ tc::cotask<Crypto::SymmetricKey> Store::getKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<KeysResult> Store::getKeys(
-    gsl::span<ResourceId const> resourceIds) const
-{
-  KeysResult result;
-  result.reserve(resourceIds.size());
-  for (auto const& resourceId : resourceIds)
-    result.push_back(KeyResult{TC_AWAIT(getKey(resourceId)), resourceId});
-  TC_RETURN(result);
-}
-
 tc::cotask<std::optional<Crypto::SymmetricKey>> Store::findKey(
     ResourceId const& resourceId) const
 {
   FUNC_TIMER(DB);
-  ResourceKeysTable tab{};
-  auto rows = (*_db->connection())(
-      select(tab.resource_key).from(tab).where(tab.mac == resourceId.base()));
-  if (rows.empty())
-    TC_RETURN(std::nullopt);
-  auto const& row = rows.front();
 
-  TC_RETURN(DataStore::extractBlob<Crypto::SymmetricKey>(row.resource_key));
+  try
+  {
+    auto const storeRid = serializeStoreKey(resourceId);
+    auto const keys = {gsl::make_span(storeRid)};
+    auto const result = _db->findCacheValues(keys);
+    if (!result.at(0))
+      TC_RETURN(std::nullopt);
+
+    auto const key =
+        TC_AWAIT(DataStore::decryptValue(_userSecret, *result.at(0)));
+
+    TC_RETURN(Crypto::SymmetricKey{key});
+  }
+  catch (Errors::Exception const& e)
+  {
+    DataStore::handleError(e);
+  }
 }
 }

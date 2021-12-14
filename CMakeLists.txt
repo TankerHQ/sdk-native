@@ -27,6 +27,7 @@ option(WITH_TRACER "Enable tracer library" OFF)
 option(TANKERLIB_SHARED "whether to build the main tanker library as a shared" OFF)
 option(WARN_AS_ERROR "Add -Werror during compilation" OFF)
 option(WITH_FETCHPP "Add the built-in fetchpp HTTP backend" ON)
+option(WITH_SQLITE "Add the built-in sqlite storage backend" ON)
 
 add_definitions("-DGSL_THROW_ON_CONTRACT_VIOLATION")
 
@@ -48,6 +49,10 @@ endif()
 
 if (WITH_FETCHPP)
   add_definitions("-DTANKER_WITH_FETCHPP")
+endif()
+
+if (WITH_SQLITE)
+  add_definitions("-DTANKER_WITH_SQLITE")
 endif()
 
 if(BUILD_TESTS)

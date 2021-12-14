@@ -16,6 +16,7 @@
 #include <tconcurrent/thread_pool.hpp>
 
 #include <ctanker/async/private/CFuture.hpp>
+#include <ctanker/private/CDataStore.hpp>
 #include <ctanker/private/Utils.hpp>
 
 #include "CNetwork.hpp"
@@ -218,6 +219,19 @@ static_assert(
     "Please update the status assertions above if you added a new status");
 
 #undef STATIC_ENUM_CHECK
+
+std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
+    tanker_http_options_t const& options)
+{
+  auto const httpHandlersCount =
+      !!options.send_request + !!options.cancel_request;
+  if (httpHandlersCount != 0 && httpHandlersCount != 2)
+    throw Exception(make_error_code(Errc::InternalError),
+                    "the provided HTTP implementation is incomplete");
+  if (httpHandlersCount == 0)
+    return nullptr;
+  return std::make_unique<CTankerBackend>(options);
+}
 }
 
 char const* tanker_version_string(void)
@@ -238,12 +252,12 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       throw Exception(make_error_code(Errc::InvalidArgument),
                       "options is null");
     }
-    if (options->version != 2 && options->version != 3)
+    if (options->version != 4)
     {
       throw Exception(
           make_error_code(Errc::InvalidArgument),
           fmt::format("options version should be {:d} instead of {:d}",
-                      3,
+                      4,
                       options->version));
     }
     if (options->app_id == nullptr)
@@ -265,19 +279,21 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
     if (url == nullptr)
       url = "https://api.tanker.io";
 
-    if (options->writable_path == nullptr)
+    if (options->persistent_path == nullptr)
     {
       throw Exception(make_error_code(Errc::InvalidArgument),
-                      "writable_path is null");
+                      "persistent_path is null");
     }
 
-    std::unique_ptr<Tanker::Network::Backend> backend;
-    if (options->version == 3 && options->http_send_request &&
-        options->http_cancel_request)
+    std::unique_ptr<Tanker::Network::Backend> networkBackend =
+        extractNetworkBackend(options->http_options);
+    std::unique_ptr<Tanker::DataStore::Backend> storageBackend =
+        extractStorageBackend(options->datastore_options);
+
+    if (options->cache_path == nullptr)
     {
-      backend = std::make_unique<CTankerBackend>(options->http_send_request,
-                                                 options->http_cancel_request,
-                                                 options->http_data);
+      throw Exception(make_error_code(Errc::InvalidArgument),
+                      "cache_path is null");
     }
 
     try
@@ -288,8 +304,10 @@ tanker_future_t* tanker_create(const tanker_options_t* options)
       return static_cast<void*>(
           new AsyncCore(url,
                         {options->sdk_type, trustchainId, options->sdk_version},
-                        options->writable_path,
-                        std::move(backend)));
+                        options->persistent_path,
+                        options->cache_path,
+                        std::move(networkBackend),
+                        std::move(storageBackend)));
     }
     catch (mgs::exceptions::exception const&)
     {
@@ -383,10 +401,13 @@ tanker_future_t* tanker_register_identity(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->registerIdentity(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->registerIdentity(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);
@@ -400,10 +421,13 @@ tanker_future_t* tanker_verify_identity(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->verifyIdentity(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->verifyIdentity(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);
@@ -468,10 +492,13 @@ tanker_future_t* tanker_set_verification_method(
     tanker_verification_options_t const* cverif_opts)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto withToken = withTokenFromVerifOptions(cverif_opts);
-  auto const verification = cverificationToVerification(cverification);
   return makeFuture(
-      tanker->setVerificationMethod(verification, withToken)
+      tc::sync([&] {
+        auto withToken = withTokenFromVerifOptions(cverif_opts);
+        auto const verification = cverificationToVerification(cverification);
+        return tanker->setVerificationMethod(verification, withToken);
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto const& token) {
             if (!token.has_value())
               return static_cast<void*>(nullptr);

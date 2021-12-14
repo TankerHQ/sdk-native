@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Tanker/Crypto/SymmetricKey.hpp>
+#include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/ResourceKeys/KeysResult.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -20,11 +22,6 @@ namespace Crypto
 {
 class SymmetricKey;
 }
-
-namespace DataStore
-{
-class Database;
-}
 }
 
 namespace Tanker::ResourceKeys
@@ -37,20 +34,19 @@ public:
   Store& operator=(Store const&) = delete;
   Store& operator=(Store&&) = delete;
 
-  Store(DataStore::Database* dbConn);
+  Store(Crypto::SymmetricKey const& userSecret, DataStore::DataStore* db);
 
   tc::cotask<void> putKey(Trustchain::ResourceId const& resourceId,
                           Crypto::SymmetricKey const& key);
 
   tc::cotask<Crypto::SymmetricKey> getKey(
       Trustchain::ResourceId const& resourceId) const;
-  tc::cotask<KeysResult> getKeys(
-      gsl::span<Trustchain::ResourceId const> resourceIds) const;
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId) const;
 
 private:
-  DataStore::Database* _db;
+  Crypto::SymmetricKey _userSecret;
+  DataStore::DataStore* _db;
 };
 }

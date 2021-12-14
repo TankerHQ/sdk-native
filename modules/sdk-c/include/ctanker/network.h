@@ -39,6 +39,15 @@ typedef void (*tanker_http_cancel_request_t)(
     tanker_http_request_handle_t* request_handle,
     void* data);
 
+struct tanker_http_options
+{
+  tanker_http_send_request_t send_request;
+  tanker_http_cancel_request_t cancel_request;
+  void* data;
+};
+
+typedef struct tanker_http_options tanker_http_options_t;
+
 void tanker_http_handle_response(tanker_http_request_t*,
                                  tanker_http_response_t*);
 

@@ -15,6 +15,7 @@ class TankerConan(ConanFile):
         "coverage": [True, False],
         "coroutinests": [True, False],
         "with_fetchpp": [True, False],
+        "with_sqlite": [True, False],
     }
     default_options = {
         "tankerlib_shared": False,
@@ -25,6 +26,7 @@ class TankerConan(ConanFile):
         "coverage": False,
         "coroutinests": False,
         "with_fetchpp": True,
+        "with_sqlite": True,
     }
     exports_sources = "CMakeLists.txt", "modules/*", "cmake/*"
     generators = "cmake", "json", "ycm"
@@ -85,9 +87,10 @@ class TankerConan(ConanFile):
 
         self.requires("boost/1.77.0-r1", private=private)
         self.requires("libressl/3.2.5", private=private)
-        self.requires("fetchpp/0.14.0-r1", private=private)
-        self.requires("sqlpp11/0.60-r1", private=private)
-        self.requires("sqlpp11-connector-sqlite3/0.30-r1", private=private)
+        self.requires("fetchpp/0.14.0-r2", private=private)
+        if self.options.with_sqlite:
+            self.requires("sqlpp11/0.60-r1", private=private)
+            self.requires("sqlpp11-connector-sqlite3/0.30-r1", private=private)
         self.requires("mgs/0.2.0", private=private)
         self.requires("enum-flags/0.1a", private=private)
         self.requires("range-v3/0.11.0-r3", private=private)
@@ -97,6 +100,8 @@ class TankerConan(ConanFile):
         self.requires("libsodium/1.0.18", private=private)
         self.requires("tconcurrent/0.39.0-r2", private=private)
         self.requires("date/3.0.0", private=private)
+        # doctest is needed to export datastore tests
+        self.requires("doctest/2.4.6", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os in ("iOS", "Macos"):
             self.requires("libcxx/11.1.0", private=private)
@@ -115,7 +120,6 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("doctest/2.4.6")
             self.build_requires("doctest-async/2.4.7-r2")
             self.build_requires("trompeloeil/38")
 
@@ -147,6 +151,7 @@ class TankerConan(ConanFile):
         self.cmake.definitions["CMAKE_POSITION_INDEPENDENT_CODE"] = self.options.fPIC
         self.cmake.definitions["WITH_COVERAGE"] = self.options.coverage
         self.cmake.definitions["WITH_FETCHPP"] = self.options.with_fetchpp
+        self.cmake.definitions["WITH_SQLITE"] = self.options.with_sqlite
 
     def build(self):
         self.init_cmake()
@@ -179,13 +184,11 @@ class TankerConan(ConanFile):
         del self.info.options.warn_as_error
 
     def package_info(self):
-        libs = [
-            "tanker_admin-c",
-            "ctanker",
-        ]
+        libs = ["tanker_admin-c", "ctanker", "tankerdatastoretests"]
         if not self.options.tankerlib_shared:
             libs.extend(
                 [
+                    "ctankerdatastore",
                     "tanker_async",
                     "tankerfunctionalhelpers",
                     "tankeradmin",
