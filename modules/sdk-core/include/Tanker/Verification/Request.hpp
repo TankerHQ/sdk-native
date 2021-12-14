@@ -73,6 +73,10 @@ RequestWithVerif makeRequestWithVerif(
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);
 
+std::vector<RequestWithVerif> makeRequestWithVerifs(
+    std::vector<Verification> const& verification,
+    Crypto::SymmetricKey const& userSecret);
+
 struct EmailSessionRequest
 {
   Email email;

@@ -13,6 +13,9 @@
 #include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
 
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
+
 #include <boost/variant2/variant.hpp>
 
 namespace
@@ -132,6 +135,18 @@ RequestWithVerif makeRequestWithVerif(
       },
       verification);
   return {verif, withTokenNonce};
+}
+
+std::vector<RequestWithVerif> makeRequestWithVerifs(
+    std::vector<Verification> const& verifications,
+    Crypto::SymmetricKey const& userSecret)
+{
+  return verifications |
+         ranges::views::transform([&userSecret](auto const& verification) {
+           return makeRequestWithVerif(
+               verification, userSecret, std::nullopt, std::nullopt);
+         }) |
+         ranges::to<std::vector>;
 }
 
 void to_json(nlohmann::json& j, RequestWithVerif const& request)
