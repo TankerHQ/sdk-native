@@ -58,6 +58,7 @@ typedef struct tanker_email_verification tanker_email_verification_t;
 typedef struct tanker_phone_number_verification
     tanker_phone_number_verification_t;
 typedef struct tanker_verification tanker_verification_t;
+typedef struct tanker_verification_list tanker_verification_list_t;
 typedef struct tanker_verification_method tanker_verification_method_t;
 typedef struct tanker_verification_options tanker_verification_options_t;
 typedef struct tanker_encrypt_options tanker_encrypt_options_t;
@@ -95,6 +96,21 @@ struct tanker_verification_method_list
   tanker_verification_method_t* methods;
   uint32_t count;
 };
+
+/*!
+ * \brief The list of a user verifications
+ */
+struct tanker_verification_list
+{
+  uint8_t version;
+  tanker_verification_t* verifications;
+  uint32_t count;
+};
+
+#define TANKER_VERIFICATION_LIST_INIT \
+  {                                   \
+    1, NULL, 0                        \
+  }
 
 /*!
  * \brief a struct describing a log message
@@ -333,13 +349,30 @@ CTANKER_EXPORT tanker_expected_t* tanker_event_disconnect(
  * \param tanker a tanker tanker_t* instance.
  * \param identity the user identity.
  * \return a future of tanker_status
- * \throws TANKER_ERROR_INVALID_ARGUMENT \p indentity is NULL
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p identity is NULL
  * \throws TANKER_ERROR_OTHER could not connect to the Tanker server
  * or the server returned an error
  * \throws TANKER_ERROR_OTHER could not open the local storage
  */
 CTANKER_EXPORT tanker_future_t* tanker_start(tanker_t* tanker,
                                              char const* identity);
+
+/*!
+ * Enrolls a user to Tanker. And assigns its pre-verified verification methods
+ *
+ * \param tanker a tanker tanker_t* instance.
+ * \param identity the user identity.
+ * \param verifications the pre-verified verification methods of the user
+ * \return an expected of NULL
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p identity is NULL
+ * \throws TANKER_ERROR_INVALID_ARGUMENT \p verifications is ill-formed
+ * \throws TANKER_ERROR_NETWORK_ERROR could not connect to the Tanker server
+ * \throws TANKER_ERROR_CONFLICT the identity is already registered or enrolled
+ */
+CTANKER_EXPORT tanker_expected_t* tanker_enroll_user(
+    tanker_t* tanker,
+    char const* identity,
+    tanker_verification_list_t const* verifications);
 
 /*!
  * Register a verification method associated with an identity.

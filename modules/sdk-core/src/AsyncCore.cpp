@@ -146,6 +146,15 @@ tc::future<Status> AsyncCore::start(std::string const& identity)
   });
 }
 
+tc::future<void> AsyncCore::enrollUser(
+    std::string const& identity,
+    std::vector<Verification::Verification> const& verifications)
+{
+  return runResumable([=]() -> tc::cotask<void> {
+    TC_AWAIT(this->_core.enrollUser(identity, verifications));
+  });
+}
+
 tc::future<std::optional<std::string>> AsyncCore::registerIdentity(
     Verification::Verification const& verification,
     Core::VerifyWithToken withToken)

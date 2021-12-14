@@ -59,6 +59,9 @@ public:
   ~Core();
 
   tc::cotask<Status> start(std::string const& identity);
+  tc::cotask<void> enrollUser(
+      std::string const& identity,
+      std::vector<Verification::Verification> const& verifications);
   tc::cotask<std::optional<std::string>> registerIdentity(
       Verification::Verification const& verification,
       VerifyWithToken withToken);
@@ -142,6 +145,9 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
+  tc::cotask<void> enrollUserImpl(
+      std::string const& identity,
+      std::vector<Verification::Verification> const& verifications);
   tc::cotask<void> registerIdentityImpl(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
