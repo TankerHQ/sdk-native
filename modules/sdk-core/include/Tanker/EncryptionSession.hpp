@@ -25,7 +25,7 @@ public:
   Trustchain::ResourceId const& resourceId() const;
   Crypto::SymmetricKey const& sessionKey() const;
   std::shared_ptr<tc::task_canceler> canceler() const;
-  static std::uint64_t encryptedSize(std::uint64_t clearSize);
+  std::uint64_t encryptedSize(std::uint64_t clearSize) const;
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
   tc::cotask<EncryptionMetadata> encrypt(

@@ -52,7 +52,7 @@ TEST_SUITE("Ecryption session tests")
   {
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
 
     auto const metadata =
         AWAIT(encSession.encrypt(encryptedData.data(), clearData));
@@ -71,7 +71,7 @@ TEST_SUITE("Ecryption session tests")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
 
     auto const metadata =
         AWAIT(encSession.encrypt(encryptedData.data(), clearData));
@@ -90,10 +90,10 @@ TEST_SUITE("Ecryption session tests")
     auto clearData = make_buffer("this is the data to encrypt");
 
     std::vector<uint8_t> encryptedData1(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
     AWAIT(encSession.encrypt(encryptedData1.data(), clearData));
     std::vector<uint8_t> encryptedData2(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
     AWAIT(encSession.encrypt(encryptedData2.data(), clearData));
 
     CHECK(encryptedData1 != encryptedData2);
@@ -105,7 +105,7 @@ TEST_SUITE("Ecryption session tests")
     auto const clearData = make_buffer("this is very secret");
 
     std::vector<uint8_t> encryptedData(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
     auto const metadata =
         AWAIT(encSession.encrypt(encryptedData.data(), clearData));
 
@@ -126,7 +126,7 @@ TEST_SUITE("Ecryption session tests")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
 
     auto const metadata =
         AWAIT(encSession.encrypt(encryptedData.data(), clearData));
@@ -142,11 +142,11 @@ TEST_SUITE("Ecryption session tests")
     auto clearData2 = make_buffer("Gondwanatheria, an enigmatic extinct group");
 
     std::vector<uint8_t> encryptedData1(
-        EncryptionSession::encryptedSize(clearData1.size()));
+        encSession.encryptedSize(clearData1.size()));
     auto const meta1 =
         AWAIT(encSession.encrypt(encryptedData1.data(), clearData1));
     std::vector<uint8_t> encryptedData2(
-        EncryptionSession::encryptedSize(clearData2.size()));
+        encSession.encryptedSize(clearData2.size()));
     auto const meta2 =
         AWAIT(encSession.encrypt(encryptedData2.data(), clearData2));
 
@@ -161,11 +161,11 @@ TEST_SUITE("Ecryption session tests")
     auto clearData2 = make_buffer("It nests in hollows of gum trees");
 
     std::vector<uint8_t> encryptedData1(
-        EncryptionSession::encryptedSize(clearData1.size()));
+        encSession.encryptedSize(clearData1.size()));
     auto const meta1 =
         AWAIT(encSession.encrypt(encryptedData1.data(), clearData1));
     std::vector<uint8_t> encryptedData2(
-        EncryptionSession::encryptedSize(clearData2.size()));
+        encSession.encryptedSize(clearData2.size()));
     auto const meta2 =
         AWAIT(encSession.encrypt(encryptedData2.data(), clearData2));
 
@@ -177,7 +177,7 @@ TEST_SUITE("Ecryption session tests")
   {
     auto clearData = make_buffer("It nests in hollows of gum trees");
     std::vector<uint8_t> encryptedData(
-        EncryptionSession::encryptedSize(clearData.size()));
+        encSession.encryptedSize(clearData.size()));
 
     session.reset();
     TANKER_CHECK_THROWS_WITH_CODE(

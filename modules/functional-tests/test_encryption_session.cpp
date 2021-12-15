@@ -20,7 +20,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
 
   std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
-      EncryptionSession::encryptedSize(clearData.size()));
+      encSess.encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
 
@@ -35,7 +35,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for Bob")
 
   std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
-      EncryptionSession::encryptedSize(clearData.size()));
+      encSess.encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
 
@@ -51,7 +51,7 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   std::string const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData(
-      EncryptionSession::encryptedSize(clearData.size()));
+      encSess.encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
       TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),

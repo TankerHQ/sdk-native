@@ -40,9 +40,12 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
  *
  * \remark There is no tanker_encryption_session_decrypted_size, use
  * tanker_decrypted_size for the inverse operation
+ *
+ * \param session an encryption session
+ * \param clear_size the length of the clear data
  */
-CTANKER_EXPORT uint64_t
-tanker_encryption_session_encrypted_size(uint64_t clear_size);
+CTANKER_EXPORT uint64_t tanker_encryption_session_encrypted_size(
+    tanker_encryption_session_t* session, uint64_t clear_size);
 
 /*!
  * Get the session's permanent resource id
