@@ -5,6 +5,7 @@
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
+#include <optional>
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/task_canceler.hpp>
 
@@ -15,13 +16,8 @@ class Session;
 class EncryptionSession
 {
 public:
-  EncryptionSession(std::weak_ptr<Session> tankerSession);
-
-  static constexpr std::uint32_t version()
-  {
-    return EncryptorV5::version();
-  }
-
+  EncryptionSession(std::weak_ptr<Session> tankerSession,
+                    std::optional<std::uint32_t> paddingStep = std::nullopt);
   Trustchain::ResourceId const& resourceId() const;
   Crypto::SymmetricKey const& sessionKey() const;
   std::shared_ptr<tc::task_canceler> canceler() const;
@@ -38,5 +34,6 @@ private:
   std::shared_ptr<tc::task_canceler> _taskCanceler;
   Crypto::SymmetricKey _sessionKey;
   Trustchain::ResourceId _resourceId;
+  std::optional<std::uint32_t> _paddingStep;
 };
 }

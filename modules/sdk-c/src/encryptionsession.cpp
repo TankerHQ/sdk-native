@@ -1,6 +1,7 @@
 #include <ctanker/encryptionsession.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Encryptor/Padding.hpp>
 
 #include "Stream.hpp"
 #include <ctanker/async/private/CFuture.hpp>
@@ -9,12 +10,24 @@
 using namespace Tanker;
 using namespace Tanker::Errors;
 
+namespace
+{
+std::optional<uint32_t> intPaddingToOptPadding(uint32_t padding_step)
+{
+  if (padding_step == Padding::Auto)
+    return std::nullopt;
+
+  return padding_step;
+}
+}
+
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     tanker_t* ctanker, tanker_encrypt_options_t const* options)
 {
   std::vector<SPublicIdentity> spublicIdentities;
   std::vector<SGroupId> sgroupIds;
   bool shareWithSelf = true;
+  std::optional<uint32_t> paddingStepOpt;
   if (options)
   {
     if (options->version != 4)
@@ -28,13 +41,15 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     sgroupIds =
         to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
     shareWithSelf = options->share_with_self;
+    paddingStepOpt = intPaddingToOptPadding(options->padding_step);
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   auto sessFuture = tanker->makeEncryptionSession(
       spublicIdentities,
       sgroupIds,
-      static_cast<Core::ShareWithSelf>(shareWithSelf));
+      static_cast<Core::ShareWithSelf>(shareWithSelf),
+      paddingStepOpt);
   return makeFuture(
       sessFuture.and_then(tc::get_synchronous_executor(), [](auto const& sess) {
         // Horribly unsafe, but we have no way std::move from a shared_future

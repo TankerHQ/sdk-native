@@ -1,16 +1,22 @@
 #include <Tanker/EncryptionSession.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Encryptor/Padding.hpp>
 #include <Tanker/Encryptor/v5.hpp>
+#include <Tanker/Encryptor/v7.hpp>
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Serialization/Varint.hpp>
 
 namespace Tanker
 {
-EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession)
+EncryptionSession::EncryptionSession(std::weak_ptr<Session> tankerSession,
+                                     std::optional<std::uint32_t> paddingStep)
   : _tankerSession(tankerSession),
     _taskCanceler{std::make_shared<tc::task_canceler>()},
     _sessionKey{Crypto::makeSymmetricKey()},
-    _resourceId{Crypto::getRandom<Trustchain::ResourceId>()}
+    _resourceId{Crypto::getRandom<Trustchain::ResourceId>()},
+    _paddingStep(paddingStep)
 {
 }
 
@@ -43,20 +49,37 @@ std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
 
 std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize) const
 {
-  return EncryptorV5::encryptedSize(clearSize);
+  if (_paddingStep == Padding::Off)
+    return EncryptorV5::encryptedSize(clearSize);
+
+  return EncryptorV7::encryptedSize(clearSize, _paddingStep);
 }
 
 std::uint64_t EncryptionSession::decryptedSize(
-    gsl::span<const std::uint8_t> encryptedData)
+    gsl::span<std::uint8_t const> encryptedData)
 {
-  return EncryptorV5::decryptedSize(encryptedData);
+  auto const version = Serialization::varint_read(encryptedData).first;
+
+  if (version == EncryptorV5::version())
+    return EncryptorV5::decryptedSize(encryptedData);
+
+  else if (version == EncryptorV7::version())
+    return EncryptorV7::decryptedSize(encryptedData);
+
+  throw Errors::AssertionError(
+      fmt::format("wrong encryptor version {}", version));
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
-    std::uint8_t* encryptedData, gsl::span<const std::uint8_t> clearData)
+    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
 {
   assertSession("encrypt");
-  TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-      encryptedData, clearData, _resourceId, _sessionKey)));
+
+  if (_paddingStep == Padding::Off)
+    TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey)));
+
+  TC_RETURN(TC_AWAIT(EncryptorV7::encrypt(
+      encryptedData, clearData, _resourceId, _sessionKey, _paddingStep)));
 }
 }
