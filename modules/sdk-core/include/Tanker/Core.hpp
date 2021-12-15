@@ -140,7 +140,8 @@ public:
   tc::cotask<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& spublicIdentities,
       std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf);
+      ShareWithSelf shareWithSelf,
+      std::optional<uint32_t> paddingStep);
 
   Status status() const;
 
