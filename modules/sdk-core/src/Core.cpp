@@ -1008,10 +1008,11 @@ Core::makeDecryptionStream(Streams::InputSource cb)
 tc::cotask<EncryptionSession> Core::makeEncryptionSession(
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf)
+    ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "makeEncryptionSession");
-  EncryptionSession sess{_session};
+  EncryptionSession sess{_session, paddingStep};
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
   {
