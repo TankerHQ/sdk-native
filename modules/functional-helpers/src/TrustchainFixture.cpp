@@ -184,5 +184,10 @@ tc::cotask<void> TrustchainFixture::enablePreverifiedMethods()
 {
   TC_AWAIT(trustchainFactory().enablePreverifiedMethods(trustchain.id));
 }
+
+tc::cotask<void> TrustchainFixture::enableUserEnrollment()
+{
+  TC_AWAIT(trustchainFactory().setUserEnrollmentEnabled(trustchain.id));
+}
 }
 }
