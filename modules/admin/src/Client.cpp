@@ -190,6 +190,8 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
     body["session_certificates_enabled"] = *options.sessionCertificates;
   if (options.preverifiedVerification)
     body["preverified_verification_enabled"] = *options.preverifiedVerification;
+  if (options.userEnrollment)
+    body["enroll_users_enabled"] = *options.userEnrollment;
   auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
   request.content(body.dump());
   request.set(authorization::bearer(_idToken));

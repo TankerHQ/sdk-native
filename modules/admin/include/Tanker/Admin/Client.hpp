@@ -33,6 +33,7 @@ struct AppUpdateOptions
   std::optional<std::string> oidcClientId;
   std::optional<bool> sessionCertificates;
   std::optional<bool> preverifiedVerification;
+  std::optional<bool> userEnrollment;
 };
 
 void from_json(nlohmann::json const& j, App& app);
