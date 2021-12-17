@@ -1,7 +1,7 @@
 include:
   project: TankerHQ/gitlab-ci-files
   file: /native.yml
-  ref: 2021-11-03-227
+  ref: 2021-12-16-236
 
 .after-script/branch_name:
   after_script:
@@ -28,141 +28,140 @@ include:
 build/linux:
   extends:
     - .build
-    - .tags/linux
     - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release
+  tags: !reference [.tags/compilation-linux, tags]
 
 build/linux/shared:
   extends:
     - .build
-    - .tags/linux
     - .rules/build/auto
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
     - .build-artifacts
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile linux-release-shared
+  tags: !reference [.tags/compilation-linux, tags]
 
 build/windows:
   extends:
     - .build
-    - .tags/windows
     - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release
+  tags: !reference [.tags/compilation-windows, tags]
 
 build/windows/shared:
   extends:
     - .build
-    - .tags/windows
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/powershell
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile vs2019-release-shared
+  tags: !reference [.tags/compilation-windows, tags]
 
 build/macos/x86_64:
   extends:
     - .build
-    - .tags/macos/x86_64
     - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release
+  tags: !reference [.tags/macos/x86_64, tags]
 
 build/macos/arm:
   extends:
     - .build
-    - .tags/macos/arm
     - .rules/build/auto
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release
+  tags: !reference [.tags/macos/arm, tags]
 
 build/macos/x86_64/shared:
   extends:
     - .build
-    - .tags/macos/x86_64
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared
+  tags: !reference [.tags/macos/x86_64, tags]
 
 build/macos/arm/shared:
   extends:
     - .build
-    - .tags/macos/arm
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release-shared
+  tags: !reference [.tags/macos/arm, tags]
 
 build/android/shared:
   extends:
     - .build
-    - .tags/linux
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release --profile android-armv8-release --profile android-x86-release --profile android-x86_64-release --profile linux-release-shared
+  tags: !reference [.tags/compilation-linux, tags]
 
 build/android/static/http-backend:
   extends:
     - .build
-    - .tags/linux
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile android-armv7-release-static-http_backend --profile android-armv8-release-static-http_backend --profile android-x86-release-static-http_backend --profile android-x86_64-release-static-http_backend
+  tags: !reference [.tags/compilation-linux, tags]
 
 build/ios:
   extends:
     - .build
-      # build everything on the fast one
-    - .tags/macos/arm
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release --profile ios-simulator-x86-release --profile ios-simulator-x86_64-release --profile ios-armv7-release --profile ios-armv7s-release --profile ios-armv8-release
+  # build everything on the fast one
+  tags: !reference [.tags/macos/arm, tags]
 
 build/ios/http-backend:
   extends:
     - .build
-      # build everything on the fast one
-    - .tags/macos/arm
     - .rules/build/manual
     - .build-artifacts
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile ios-simulator-armv8-release-http_backend --profile ios-simulator-x86-release-http_backend --profile ios-simulator-x86_64-release-http_backend --profile ios-armv7-release-http_backend --profile ios-armv7s-release-http_backend --profile ios-armv8-release-http_backend
+  # build everything on the fast one
+  tags: !reference [.tags/macos/arm, tags]
 
 nightly/coverage:
   extends:
     - .build
-    - .tags/linux
     - .rules/nightly
   script:
     # Using linux-release profile, but CI script will force debug for Tanker only
@@ -172,6 +171,7 @@ nightly/coverage:
     paths:
       - coverage/
     expire_in: 7 days
+  tags: !reference [.tags/compilation-linux, tags]
 
 ######################
 # bridge-check stage #
@@ -440,7 +440,6 @@ bridge/ruby/macos/arm:
 check/e2e:
   extends:
     - .check
-    - .tags/linux
     - .rules/check
     - .before-script/bump-files-on-release/bash
   image: registry.gitlab.com/tankerhq/docker/e2e:latest
@@ -448,6 +447,7 @@ check/e2e:
     - build/linux
   script:
     - poetry run python end2end.py --isolate-conan-user-home --use-tanker=upstream --profile linux-release
+  tags: !reference [.tags/compilation-linux, tags]
 
 ################
 # deploy stage #
@@ -456,18 +456,17 @@ check/e2e:
 deploy:
   extends:
     - .deploy
-    - .tags/linux
     - .rules/deploy/native
   release:
     description: sdk-native v$SDK_NATIVE_RELEASE_VERSION
     tag_name: v$SDK_NATIVE_RELEASE_VERSION
   script:
     - poetry run python run-ci.py --isolate-conan-user-home deploy
+  tags: !reference [.tags/linux, tags]
 
 pages:
   extends:
     - .deploy
-    - .tags/linux
     - .rules/nightly
   needs:
     - nightly/coverage
@@ -477,6 +476,7 @@ pages:
     paths:
       - public
     expire_in: 7 days
+  tags: !reference [.tags/linux, tags]
 
 #######################
 # bridge-deploy stage #
