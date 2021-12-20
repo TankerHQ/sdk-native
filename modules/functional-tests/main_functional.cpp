@@ -1,5 +1,5 @@
-#define DOCTEST_CONFIG_IMPLEMENT
-#include <doctest/doctest.h>
+#define CATCH_CONFIG_RUNNER
+#include <catch2/catch.hpp>
 #include <iostream>
 
 #include <tconcurrent/coroutine.hpp>
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     Tanker::init();
 
     Tanker::TimeoutTerminate tt(5min);
-    doctest::Context context(argc, argv);
+    Catch::Session session;
 
     // We run the tests on a different thread than the default thread to be
     // closer to real use-cases. We can't run them on the main thread because we
@@ -32,7 +32,8 @@ int main(int argc, char* argv[])
                                tc::executor(tp),
                                [&]() -> tc::cotask<int> {
                                  TC_AWAIT(TrustchainFixture::setUp());
-                                 auto const ret = TC_AWAIT(context.run());
+                                 auto const ret =
+                                     TC_AWAIT(session.run(argc, argv));
                                  TC_AWAIT(TrustchainFixture::tearDown());
                                  TC_RETURN(ret);
                                })

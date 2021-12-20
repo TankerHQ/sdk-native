@@ -12,7 +12,7 @@
 #include <Helpers/Email.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "CheckDecrypt.hpp"
 
@@ -22,10 +22,8 @@ using namespace Errors;
 
 using namespace std::string_view_literals;
 
-TEST_SUITE_BEGIN("provisionals");
-
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt and share with a provisional user")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt and share with a provisional user")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -46,7 +44,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Alice cannot encrypt and share with two provisional users who "
     "have the same email address")
@@ -79,8 +77,8 @@ TEST_CASE_FIXTURE(
       "using multiple provisional identities for the same target");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt and share with multiple provisional users")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt and share with multiple provisional users")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -101,8 +99,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt and then share with a provisional user")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt and then share with a provisional user")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -121,7 +119,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Alice can encrypt and then share with multiple provisional users")
 {
@@ -147,8 +145,8 @@ TEST_CASE_FIXTURE(
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can claim the same provisional identity twice")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can claim the same provisional identity twice")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -165,8 +163,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can't share with a claimed provisional identity")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can't share with a claimed provisional identity")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -177,7 +175,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errors::Errc::IdentityAlreadyAttached);
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob can decrypt a provisional share claimed by a revoked device")
 {
@@ -200,9 +198,9 @@ TEST_CASE_FIXTURE(
   REQUIRE_NOTHROW(checkDecrypt({bobSession2}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can revoke a device, claim a provisional identity and "
-                  "decrypt on multiple devices")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can revoke a device, claim a provisional identity and "
+                 "decrypt on multiple devices")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -229,7 +227,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       {aliceSession, aliceThirdSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob can claim a provisional identity with a phone number verification")
 {
@@ -244,8 +242,8 @@ TEST_CASE_FIXTURE(
       Errors::Errc::IdentityAlreadyAttached);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can claim when there is nothing to claim")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can claim when there is nothing to claim")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -260,7 +258,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   TC_AWAIT(bobSession->verifyProvisionalIdentity(emailVerif));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob can attach an email provisional identity without verification")
 {
@@ -287,7 +285,7 @@ TEST_CASE_FIXTURE(
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob can attach a phone number provisional identity without verification")
 {
@@ -314,9 +312,9 @@ TEST_CASE_FIXTURE(
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Handles incorrect verification codes when verifying "
-                  "provisional identity")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Handles incorrect verification codes when verifying "
+                 "provisional identity")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const bobEmail = boost::variant2::get<Email>(bobProvisional.value);
@@ -332,9 +330,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidVerification);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Charlie cannot attach an already attached provisional "
-                  "identity")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Charlie cannot attach an already attached provisional "
+                 "identity")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -345,7 +343,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::IdentityAlreadyAttached);
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob cannot verify a provisionalIdentity without attaching it first")
 {
@@ -358,7 +356,7 @@ TEST_CASE_FIXTURE(
       Errc::PreconditionFailed);
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Bob's has multiple provisional identities with the same email")
 {
@@ -374,7 +372,7 @@ TEST_CASE_FIXTURE(
                                           bobEmail)};
   auto constexpr nb_ids = std::tuple_size_v<decltype(bobProvisionalIdentities)>;
 
-  SUBCASE("Alice can share with Bob provisional identities")
+  SECTION("Alice can share with Bob provisional identities")
   {
     for (auto const& id : bobProvisionalIdentities)
     {
@@ -394,7 +392,7 @@ TEST_CASE_FIXTURE(
       REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
     }
   }
-  SUBCASE(
+  SECTION(
       "Alice can share with Bob's not already attached provisional identities")
   {
     auto result = TC_AWAIT(bobSession->attachProvisionalIdentity(
@@ -422,5 +420,3 @@ TEST_CASE_FIXTURE(
     }
   }
 }
-
-TEST_SUITE_END();

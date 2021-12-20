@@ -18,7 +18,7 @@
 
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
@@ -88,9 +88,9 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
 }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it throws when starting a session when the identity appId "
-                  "is different from the one in tanker options")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "it throws when starting a session when the identity appId "
+                 "is different from the one in tanker options")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -106,7 +106,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
+TEST_CASE_METHOD(TrustchainFixture, "it can open/close a session")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -130,7 +130,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session")
   CHECK_NOTHROW(TC_AWAIT(core->stop()));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "it throws nice exceptions when giving the wrong identity type")
 {
@@ -152,8 +152,8 @@ TEST_CASE_FIXTURE(
       "got a provisional identity");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it throws nice exceptions when giving an incorrect identity")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "it throws nice exceptions when giving an incorrect identity")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -169,7 +169,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 DataStore::Errc::DatabaseCorrupt);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
+TEST_CASE_METHOD(TrustchainFixture, "it can open/close a session twice")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -202,7 +202,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can open/close a session twice")
   CHECK_NOTHROW(TC_AWAIT(waitFor(closeProm2)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
+TEST_CASE_METHOD(TrustchainFixture, "it can reopen a closed session")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -210,12 +210,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "it can reopen a closed session")
   auto const core = TC_AWAIT(device.open());
   TC_AWAIT(core->stop());
   REQUIRE(core->status() == Status::Stopped);
-  CHECK_EQ(TC_AWAIT(core->start(alice.identity)), Status::Ready);
-  CHECK_EQ(core->status(), Status::Ready);
+  CHECK(TC_AWAIT(core->start(alice.identity)) == Status::Ready);
+  CHECK(core->status() == Status::Ready);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it should prevent opening the same device twice")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "it should prevent opening the same device twice")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -227,8 +227,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Tanker::Errors::Errc::PreconditionFailed);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "it throws the correct error when the server is down")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "it throws the correct error when the server is down")
 {
   auto alice = trustchain.makeUser();
   auto device = alice.makeDevice();
@@ -252,7 +252,7 @@ void deauthSession(Tanker::AsyncCore& core)
 }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
+TEST_CASE_METHOD(TrustchainFixture, "a session of a new user can reauth")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -268,10 +268,10 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new user can reauth")
   REQUIRE_NOTHROW(decryptedData =
                       TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
-  REQUIRE_EQ(decryptedData, clearData);
+  REQUIRE(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
+TEST_CASE_METHOD(TrustchainFixture, "a session of a new device can reauth")
 {
   auto alice = trustchain.makeUser();
   {
@@ -290,11 +290,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "a session of a new device can reauth")
   REQUIRE_NOTHROW(decryptedData =
                       TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
-  REQUIRE_EQ(decryptedData, clearData);
+  REQUIRE(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "a session of an existing device can reauth")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "a session of an existing device can reauth")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -312,10 +312,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(decryptedData =
                       TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
-  REQUIRE_EQ(decryptedData, clearData);
+  REQUIRE(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
+TEST_CASE_METHOD(TrustchainFixture, "It can encrypt/decrypt")
 {
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -324,11 +324,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "It can encrypt/decrypt")
   REQUIRE_NOTHROW(decryptedData =
                       TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
-  REQUIRE_EQ(decryptedData, clearData);
+  REQUIRE(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "It can share explicitly with an equivalent self identity")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "It can share explicitly with an equivalent self identity")
 {
   auto alicepub = mgs::base64::decode(alice.spublicIdentity().string());
   alicepub.push_back(' ');
@@ -341,10 +341,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(decryptedData =
                       TC_AWAIT(aliceSession->decrypt(encryptedData)));
 
-  REQUIRE_EQ(decryptedData, clearData);
+  REQUIRE(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can stream encrypt/decrypt")
 {
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
@@ -353,11 +353,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream encrypt/decrypt")
   auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(encryptor));
 
   auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
-  CHECK_EQ(encryptor.resourceId(), decryptor.resourceId());
-  CHECK_EQ(decryptedData, clearData);
+  CHECK(encryptor.resourceId() == decryptor.resourceId());
+  CHECK(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream-encrypt and decrypt")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can stream-encrypt and decrypt")
 {
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
@@ -366,11 +366,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can stream-encrypt and decrypt")
   auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
-  CHECK_EQ(Core::getResourceId(encryptedData), encryptor.resourceId());
-  CHECK_EQ(decryptedData, clearData);
+  CHECK(Core::getResourceId(encryptedData) == encryptor.resourceId());
+  CHECK(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 {
   auto const clearData = make_buffer("my clear data is clear");
   auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
@@ -378,12 +378,12 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can encrypt and stream-decrypt")
       Streams::bufferViewToInputSource(encryptedData)));
 
   auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
-  CHECK_EQ(Core::getResourceId(encryptedData), decryptor.resourceId());
-  CHECK_EQ(decryptedData, clearData);
+  CHECK(Core::getResourceId(encryptedData) == decryptor.resourceId());
+  CHECK(decryptedData == clearData);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can encrypt and share with both of Alice's devices")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can encrypt and share with both of Alice's devices")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData =
@@ -393,8 +393,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({aliceSession, aliceSession2}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt and share with Bob and Charlie")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt and share with Bob and Charlie")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData =
@@ -406,8 +406,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can share a key he hasn't received yet")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can share a key he hasn't received yet")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData =
@@ -422,8 +422,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can encrypt without sharing with self")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can encrypt without sharing with self")
 {
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -435,8 +435,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice cannot encrypt without sharing with anybody")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot encrypt without sharing with anybody")
 {
   auto const clearData = make_buffer("my clear data is clear");
   std::vector<uint8_t> encryptedData;
@@ -446,8 +446,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can stream-encrypt without sharing with self")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can stream-encrypt without sharing with self")
 {
   auto const clearData = make_buffer("my clear data is clear");
   auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
@@ -461,8 +461,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice cannot stream-encrypt without sharing with anybody")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot stream-encrypt without sharing with anybody")
 {
   auto const clearData = make_buffer("my clear data is clear");
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->makeEncryptionStream(
@@ -473,7 +473,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
+TEST_CASE_METHOD(TrustchainFixture, "Alice shares with all her devices")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
@@ -481,8 +481,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice shares with all her devices")
       checkDecrypt({aliceSession, aliceSession2}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice's second device can decrypt old resources")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice's second device can decrypt old resources")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
@@ -491,7 +491,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({aliceSession2}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Bob will fail to decrypt without the key")
+TEST_CASE_METHOD(TrustchainFixture, "Bob will fail to decrypt without the key")
 {
   auto const clearData = make_buffer("my clear data is clear");
   auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
@@ -502,8 +502,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Bob will fail to decrypt without the key")
                                 Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can share many resources with Bob and Charlie")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can share many resources with Bob and Charlie")
 {
   auto const clearDatas = {
       "to be clear, ", "or not be clear, ", "that is the test case..."};
@@ -527,8 +527,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
         checkDecrypt({bobSession, charlieSession}, r.first, r.second)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can share multiple times the same resource with Bob")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can share multiple times the same resource with Bob")
 {
   auto const clearData = "my clear data is clear";
   auto const encryptedData = TC_AWAIT(encrypt(*aliceSession, clearData));
@@ -543,9 +543,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice cannot encrypt and share with more than 100 recipients")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot encrypt and share with more than 100 recipients")
 {
   std::vector<SPublicIdentity> identities;
   for (int i = 0; i < 101; ++i)
@@ -563,8 +562,8 @@ TEST_CASE_FIXTURE(
       Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice cannot encrypt and share with an illformed groupId")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot encrypt and share with an illformed groupId")
 {
   auto const clearData = make_buffer("my clear data is clear");
   TANKER_CHECK_THROWS_WITH_CODE(
@@ -596,7 +595,7 @@ void generateDefault2FATests(
     std::function<tc::cotask<VerificationCode>(Email const&)>
         getVerificationCode)
 {
-  SUBCASE("Alice can get a session token after registerIdentity with an email")
+  SECTION("Alice can get a session token after registerIdentity with an email")
   {
     auto const aliceEmail = Email{"alice123.test@tanker.io"};
     auto alice = trustchain.makeUser();
@@ -615,7 +614,7 @@ void generateDefault2FATests(
     CHECK(mgs::base64::decode(*token).size() > 0);
   }
 
-  SUBCASE(
+  SECTION(
       "Alice can get a session token after registerIdentity with a passphrase")
   {
     auto const alicePass = Passphrase{"alicealice"};
@@ -629,7 +628,7 @@ void generateDefault2FATests(
     CHECK(token.has_value());
   }
 
-  SUBCASE(
+  SECTION(
       "Cannot get a session token after registerIdentity with a verification "
       "key")
   {
@@ -646,7 +645,7 @@ void generateDefault2FATests(
         Errc::InvalidArgument);
   }
 
-  SUBCASE("Can check a session token with the REST API")
+  SECTION("Can check a session token with the REST API")
   {
     auto const alicePass = Passphrase{"alicealice"};
     auto alice = trustchain.makeUser();
@@ -667,7 +666,7 @@ void generateDefault2FATests(
     CHECK(method == expectedMethod);
   }
 
-  SUBCASE("Fails to check a session token with the wrong method")
+  SECTION("Fails to check a session token with the wrong method")
   {
     auto const alicePass = Passphrase{"alicealice"};
     auto alice = trustchain.makeUser();
@@ -689,7 +688,7 @@ void generateDefault2FATests(
         Errc::InvalidArgument);
   }
 
-  SUBCASE("Fails to check an invalid session token")
+  SECTION("Fails to check an invalid session token")
   {
     auto const alicePass = Passphrase{"alicealice"};
     auto alice = trustchain.makeUser();
@@ -711,7 +710,7 @@ void generateDefault2FATests(
         Errc::InvalidArgument);
   }
 
-  SUBCASE("Can check a session token with multiple allowed methods")
+  SECTION("Can check a session token with multiple allowed methods")
   {
     auto const aliceEmail = Email{"aaalice@tanker.io"};
     auto const verificationCode = TC_AWAIT(getVerificationCode(aliceEmail));
@@ -740,11 +739,11 @@ void generateDefault2FATests(
 }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is enabled")
+TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is enabled")
 {
   TC_AWAIT(set2fa(true));
 
-  SUBCASE("Alice can use verifyIdentity when Ready to get a session token")
+  SECTION("Alice can use verifyIdentity when Ready to get a session token")
   {
     auto const aliceEmail = Email{"alice456.test@tanker.io"};
     auto alice = trustchain.makeUser();
@@ -765,7 +764,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is enabled")
     CHECK(token.has_value());
   }
 
-  SUBCASE("Alice can use setVerificationMethod to get a session token")
+  SECTION("Alice can use setVerificationMethod to get a session token")
   {
     auto const aliceEmail = Email{"alice@wonder.land"};
     auto alice = trustchain.makeUser();
@@ -791,11 +790,11 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is enabled")
   });
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
+TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is disabled")
 {
   TC_AWAIT(set2fa(false));
 
-  SUBCASE("Alice cannot use verifyIdentity when Ready to get a session token")
+  SECTION("Alice cannot use verifyIdentity when Ready to get a session token")
   {
     auto const aliceEmail = Email{"alice456.test@tanker.io"};
     auto alice = trustchain.makeUser();
@@ -818,7 +817,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
         "Session certificate is disabled");
   }
 
-  SUBCASE("Alice cannot use setVerificationMethod to get a session token")
+  SECTION("Alice cannot use setVerificationMethod to get a session token")
   {
     auto const aliceEmail = Email{"alice@wonder.land"};
     auto alice = trustchain.makeUser();
@@ -845,9 +844,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "When session_certificates is disabled")
   });
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice cannot share with identity from a different trustchain")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot share with identity from a different trustchain")
 {
   auto otherTrustchain = TC_AWAIT(trustchainFactory().createTrustchain());
   auto eve = otherTrustchain->makeEmailProvisionalUser();

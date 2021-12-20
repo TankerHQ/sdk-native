@@ -10,22 +10,20 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "CheckDecrypt.hpp"
 
 using namespace Tanker;
 using Tanker::Functional::TrustchainFixture;
 
-TEST_SUITE_BEGIN("Groups");
-
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can create a group with Bob")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can create a group with Bob")
 {
   REQUIRE_NOTHROW(TC_AWAIT(aliceSession->createGroup(
       {bob.spublicIdentity(), alice.spublicIdentity()})));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
+TEST_CASE_METHOD(TrustchainFixture, "Alice uses encrypt to share with a group")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
@@ -37,8 +35,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice uses encrypt to share with a group")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can decrypt when multiple key publishes are available")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can decrypt when multiple key publishes are available")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
   auto myGroup2 = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
@@ -51,8 +49,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice uses encrypt to share with two groups")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice uses encrypt to share with two groups")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
   auto myGroup2 =
@@ -66,7 +64,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
+TEST_CASE_METHOD(TrustchainFixture, "Alice encrypts and shares with a group")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
 
@@ -79,8 +77,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice encrypts and shares with a group")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice encrypts and then shares with two groups")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice encrypts and then shares with two groups")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
   auto myGroup2 =
@@ -96,8 +94,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "updateGroupMembers throws when given an invalid arguments")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "updateGroupMembers throws when given an invalid arguments")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -137,7 +135,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
+TEST_CASE_METHOD(TrustchainFixture, "Can add users to a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -156,7 +154,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add users to a group")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can add two users at once to a group")
+TEST_CASE_METHOD(TrustchainFixture, "Can add two users at once to a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -173,7 +171,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add two users at once to a group")
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
+TEST_CASE_METHOD(TrustchainFixture, "Can transitively add users to a group")
 {
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
@@ -192,9 +190,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can transitively add users to a group")
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can't add Bob's already attached "
-                  "provisional identity to a group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can't add Bob's already attached "
+                 "provisional identity to a group")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
@@ -204,8 +202,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errors::Errc::IdentityAlreadyAttached);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice shares with a group with two provisional users")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice shares with a group with two provisional users")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
@@ -224,7 +222,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Alice shares with a group with Bob later added as a provisional user")
 {
@@ -244,9 +242,9 @@ TEST_CASE_FIXTURE(
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice shares with a group, with Bob and Charlie later added "
-                  "as provisional users")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice shares with a group, with Bob and Charlie later added "
+                 "as provisional users")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
@@ -269,9 +267,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       checkDecrypt({bobSession, charlieSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice shares with a group with Bob as a provisional user "
-                  "when Bob has already verified the group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice shares with a group with Bob as a provisional user "
+                 "when Bob has already verified the group")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -290,8 +288,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Creates a group with mixed identities and a missing")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Creates a group with mixed identities and a missing")
 {
   // This user isn't registered on the trustchain!
   auto const charlie = trustchain.makeUser();
@@ -315,7 +313,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   }
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can't do a no-op update to a group")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can't do a no-op update to a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -325,9 +323,9 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can't do a no-op update to a group")
       "no members to add or remove");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice shares with a group with Bob later added as a "
-                  "provisional user when Bob has already verified the group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice shares with a group with Bob later added as a "
+                 "provisional user when Bob has already verified the group")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -349,9 +347,9 @@ TEST_CASE_FIXTURE(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "It should share with a group after the device that "
-                  "created the group has been revoked")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "It should share with a group after the device that "
+                 "created the group has been revoked")
 {
   auto alice = trustchain.makeUser();
   auto aliceDevice = alice.makeDevice();
@@ -363,7 +361,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(bobSession->encrypt(make_buffer("paf"), {}, {myGroup})));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice can remove Bob from a group")
+TEST_CASE_METHOD(TrustchainFixture, "Alice can remove Bob from a group")
 {
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bob.spublicIdentity()}));
@@ -376,8 +374,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice can remove Bob from a group")
                                 Errors::AppdErrc::NotAUserGroupMember);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can remove Bob and Charlie from a group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can remove Bob and Charlie from a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity(),
@@ -395,7 +393,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::AppdErrc::NotAUserGroupMember);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users twice from a group")
+TEST_CASE_METHOD(TrustchainFixture, "Can remove users twice from a group")
 {
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), bob.spublicIdentity()}));
@@ -408,8 +406,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can remove users twice from a group")
                                 Errors::AppdErrc::NotAUserGroupMember);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Cannot remove someone who is not a member")
+TEST_CASE_METHOD(TrustchainFixture, "Cannot remove someone who is not a member")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -420,7 +417,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::AppdErrc::MissingUserGroupMembers);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Removed group members cannot decrypt")
+TEST_CASE_METHOD(TrustchainFixture, "Removed group members cannot decrypt")
 {
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
@@ -442,9 +439,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Removed group members cannot decrypt")
       TC_AWAIT(checkDecrypt({charlieSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Alice cannot decrypt when she removes herself from the group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot decrypt when she removes herself from the group")
 {
   auto const clearData = "my clear data is clear";
   std::vector<uint8_t> encryptedData;
@@ -461,7 +457,7 @@ TEST_CASE_FIXTURE(
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Can add and remove users from a group")
+TEST_CASE_METHOD(TrustchainFixture, "Can add and remove users from a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -476,7 +472,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Can add and remove users from a group")
                                 Errors::AppdErrc::NotAUserGroupMember);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Cannot remove the last user from a group")
+TEST_CASE_METHOD(TrustchainFixture, "Cannot remove the last user from a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -485,8 +481,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Cannot remove the last user from a group")
                                 Errors::AppdErrc::EmptyUserGroup);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Cannot add and remove the same user from a group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Cannot add and remove the same user from a group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -498,8 +494,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       "cannot both add and remove");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can remove a provisional group member")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can remove a provisional group member")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -518,8 +514,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can remove two provisional group members")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can remove two provisional group members")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
   auto const charlieProvisional = trustchain.makeEmailProvisionalUser();
@@ -547,8 +543,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Can remove provisional group members twice")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Can remove provisional group members twice")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -569,9 +565,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(
-    TrustchainFixture,
-    "Cannot add and remove the same provisional user from a group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Cannot add and remove the same provisional user from a group")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -586,7 +581,7 @@ TEST_CASE_FIXTURE(
       "cannot both add and remove");
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Can't remove claimed provisional group members as a provisional identity")
 {
@@ -603,7 +598,7 @@ TEST_CASE_FIXTURE(
       Errors::Errc::IdentityAlreadyAttached);
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Can remove claimed provisional group members as a permanent identity")
 {
@@ -625,8 +620,8 @@ TEST_CASE_FIXTURE(
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Claimed provisional identities can update group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Claimed provisional identities can update group")
 {
   auto const bobProvisional = trustchain.makeEmailProvisionalUser();
 
@@ -646,8 +641,8 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Bob can decrypt previous group shares with a group update")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Bob can decrypt previous group shares with a group update")
 {
   auto myGroup = TC_AWAIT(aliceSession->createGroup(
       {alice.spublicIdentity(), charlie.spublicIdentity()}));
@@ -664,7 +659,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
+TEST_CASE_METHOD(TrustchainFixture, "Cannot edit a group bob is not part of")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
@@ -676,8 +671,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Cannot edit a group bob is not part of")
       "user is not part of group");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Don't share with group creator if not in the group")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Don't share with group creator if not in the group")
 {
   auto const groupId =
       TC_AWAIT(aliceSession->createGroup({bob.spublicIdentity()}));
@@ -690,7 +685,7 @@ TEST_CASE_FIXTURE(TrustchainFixture,
                                 Errors::Errc::InvalidArgument);
 }
 
-TEST_CASE_FIXTURE(
+TEST_CASE_METHOD(
     TrustchainFixture,
     "Don't create group with public identity if not attached to the trustchain")
 {
@@ -704,8 +699,8 @@ TEST_CASE_FIXTURE(
       "public identity not in the trustchain");
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Don't add public identity to group if not in the trustchain")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Don't add public identity to group if not in the trustchain")
 {
   auto otherTrustchain = createOtherTrustchain();
   auto const eve = otherTrustchain.makeEmailProvisionalUser();
@@ -719,5 +714,3 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       Errors::Errc::InvalidArgument,
       "public identity not in the trustchain");
 }
-
-TEST_SUITE_END();

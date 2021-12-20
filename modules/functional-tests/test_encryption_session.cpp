@@ -6,7 +6,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "CheckDecrypt.hpp"
 
@@ -14,9 +14,7 @@ using namespace Tanker;
 using namespace Tanker::Errors;
 using Tanker::Functional::TrustchainFixture;
 
-TEST_SUITE_BEGIN("Encryption sessions");
-
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for herself")
+TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
 {
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
 
@@ -30,7 +28,7 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for herself")
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
+TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for Bob")
 {
   auto encSess =
       TC_AWAIT(aliceSession->makeEncryptionSession({bob.spublicIdentity()}));
@@ -45,8 +43,8 @@ TEST_CASE_FIXTURE(TrustchainFixture, "Alice's session can encrypt for Bob")
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice can session-encrypt without sharing with self")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can session-encrypt without sharing with self")
 {
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
       {bob.spublicIdentity()}, {}, Core::ShareWithSelf::No));
@@ -62,12 +60,10 @@ TEST_CASE_FIXTURE(TrustchainFixture,
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
 }
 
-TEST_CASE_FIXTURE(TrustchainFixture,
-                  "Alice cannot stream-encrypt without sharing with anybody")
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice cannot session-encrypt without sharing with anybody")
 {
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->makeEncryptionSession(
                                     {}, {}, Core::ShareWithSelf::No)),
                                 Errc::InvalidArgument);
 }
-
-TEST_SUITE_END();
