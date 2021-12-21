@@ -85,7 +85,7 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("boost/1.77.0-r1", private=private)
+        self.requires("boost/1.78.0-r1", private=private)
         self.requires("libressl/3.2.5", private=private)
         self.requires("fetchpp/0.14.0-r2", private=private)
         if self.options.with_sqlite:

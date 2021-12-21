@@ -11,6 +11,12 @@
 using namespace Tanker;
 using Tanker::Trustchain::GroupId;
 
+namespace Tanker
+{
+// Do not let doctest pickup variant2's operator<<
+inline std::ostream& operator<<(std::ostream& os, Group const&) = delete;
+}
+
 TEST_CASE("GroupStore")
 {
   auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
