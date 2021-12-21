@@ -21,6 +21,7 @@
 #include <ctanker/private/Utils.hpp>
 
 #include "CNetwork.hpp"
+#include "CPadding.hpp"
 
 #include <optional>
 #include <string>
@@ -233,14 +234,6 @@ std::unique_ptr<Tanker::Network::Backend> extractNetworkBackend(
   if (httpHandlersCount == 0)
     return nullptr;
   return std::make_unique<CTankerBackend>(options);
-}
-
-std::optional<uint32_t> intPaddingToOptPadding(uint32_t padding_step)
-{
-  if (padding_step == Padding::Auto)
-    return std::nullopt;
-
-  return padding_step;
 }
 }
 
@@ -537,7 +530,7 @@ tanker_future_t* tanker_get_verification_methods(tanker_t* ctanker)
 
 uint64_t tanker_encrypted_size(uint64_t clear_size, uint32_t padding_step)
 {
-  auto const paddingStepOpt = intPaddingToOptPadding(padding_step);
+  auto const paddingStepOpt = cPaddingToOptPadding(padding_step);
   return AsyncCore::encryptedSize(clear_size, paddingStepOpt);
 }
 
@@ -586,7 +579,7 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
         to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
     shareWithSelf = options->share_with_self;
 
-    paddingStepOpt = intPaddingToOptPadding(options->padding_step);
+    paddingStepOpt = cPaddingToOptPadding(options->padding_step);
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
   return makeFuture(tanker->encrypt(encrypted_data,

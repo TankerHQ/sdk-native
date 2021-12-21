@@ -4,22 +4,12 @@
 #include <Tanker/Encryptor/Padding.hpp>
 
 #include "Stream.hpp"
+#include "CPadding.hpp"
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
-
-namespace
-{
-std::optional<uint32_t> intPaddingToOptPadding(uint32_t padding_step)
-{
-  if (padding_step == Padding::Auto)
-    return std::nullopt;
-
-  return padding_step;
-}
-}
 
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     tanker_t* ctanker, tanker_encrypt_options_t const* options)
@@ -41,7 +31,7 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     sgroupIds =
         to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
     shareWithSelf = options->share_with_self;
-    paddingStepOpt = intPaddingToOptPadding(options->padding_step);
+    paddingStepOpt = cPaddingToOptPadding(options->padding_step);
   }
 
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
