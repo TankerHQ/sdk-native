@@ -501,7 +501,6 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(
        Errors::Errc::InvalidVerification,
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
-       Errors::Errc::Conflict,
        Errors::Errc::TooManyAttempts}));
 
   if (withToken == VerifyWithToken::No)
