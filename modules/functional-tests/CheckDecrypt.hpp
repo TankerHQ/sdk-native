@@ -8,10 +8,14 @@ inline tc::cotask<std::vector<uint8_t>> encrypt(
     AsyncCore& core,
     std::string const& data,
     std::vector<SPublicIdentity> const& publicIdentities = {},
-    std::vector<SGroupId> const& groupIds = {})
+    std::vector<SGroupId> const& groupIds = {},
+    std::optional<uint32_t> paddingStep = std::nullopt)
 {
-  TC_RETURN(
-      TC_AWAIT(core.encrypt(make_buffer(data), publicIdentities, groupIds)));
+  TC_RETURN(TC_AWAIT(core.encrypt(make_buffer(data),
+                                  publicIdentities,
+                                  groupIds,
+                                  Core::ShareWithSelf::Yes,
+                                  paddingStep)));
 }
 
 inline tc::cotask<std::string> decrypt(
