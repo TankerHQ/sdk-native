@@ -247,7 +247,7 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
+  _session->openStorage(identity, _dataPath, _cachePath);
   auto const optPubUserEncKey =
       TC_AWAIT(_session->requesters().userStatus(_session->userId()));
   if (!optPubUserEncKey)

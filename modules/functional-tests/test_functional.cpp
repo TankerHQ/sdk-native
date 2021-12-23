@@ -590,7 +590,7 @@ TEST_CASE_METHOD(TrustchainFixture,
 
 namespace
 {
-void generateDefault2FATests(
+tc::cotask<void> generateDefault2FATests(
     Functional::Trustchain& trustchain,
     std::function<tc::cotask<VerificationCode>(Email const&)>
         getVerificationCode)
@@ -785,9 +785,10 @@ TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is enabled")
     CHECK(token.has_value());
   }
 
-  generateDefault2FATests(trustchain, [this](Email const& email) {
-    return getVerificationCode(email);
-  });
+  TC_AWAIT(generateDefault2FATests(
+      trustchain, [this](Email const& email) -> tc::cotask<VerificationCode> {
+        TC_RETURN(TC_AWAIT(getVerificationCode(email)));
+      }));
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is disabled")
@@ -839,9 +840,10 @@ TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is disabled")
         "Session certificate is disabled");
   }
 
-  generateDefault2FATests(trustchain, [this](Email const& email) {
-    return getVerificationCode(email);
-  });
+  TC_AWAIT(generateDefault2FATests(
+      trustchain, [this](Email const& email) -> tc::cotask<VerificationCode> {
+        TC_RETURN(TC_AWAIT(getVerificationCode(email)));
+      }));
 }
 
 TEST_CASE_METHOD(TrustchainFixture,

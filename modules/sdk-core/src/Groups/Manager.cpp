@@ -230,13 +230,15 @@ void checkAddedAndRemoved(std::vector<T> usersToAdd,
   }
 }
 
-auto createGroupEntries(Users::IUserAccessor& userAccessor,
-                        Trustchain::TrustchainId const& trustchainId,
-                        InternalGroup const& group,
-                        Trustchain::DeviceId const& deviceId,
-                        Crypto::PrivateSignatureKey const& privateSignatureKey,
-                        std::vector<SPublicIdentity> spublicIdentitiesToAdd,
-                        std::vector<SPublicIdentity> spublicIdentitiesToRemove)
+tc::cotask<std::pair<std::optional<Trustchain::Actions::UserGroupAddition>,
+                     std::optional<Trustchain::Actions::UserGroupRemoval>>>
+createGroupEntries(Users::IUserAccessor& userAccessor,
+                   Trustchain::TrustchainId const& trustchainId,
+                   InternalGroup const& group,
+                   Trustchain::DeviceId const& deviceId,
+                   Crypto::PrivateSignatureKey const& privateSignatureKey,
+                   std::vector<SPublicIdentity> spublicIdentitiesToAdd,
+                   std::vector<SPublicIdentity> spublicIdentitiesToRemove)
 {
   MembersToAdd membersToAdd;
   MembersToRemove membersToRemove;
@@ -288,7 +290,8 @@ auto createGroupEntries(Users::IUserAccessor& userAccessor,
           ranges::to<std::vector>,
       membersToRemove.provisionalUsers,
       processedIdentitiesToAdd);
-  return std::make_pair(std::move(groupAddEntry), std::move(groupRemoveEntry));
+  TC_RETURN(
+      std::make_pair(std::move(groupAddEntry), std::move(groupRemoveEntry)));
 }
 }
 
@@ -309,13 +312,13 @@ tc::cotask<void> updateMembers(
 
   auto const group = TC_AWAIT(groupAccessor.getInternalGroup(groupId));
   auto const [groupAddEntry, groupRemoveEntry] =
-      createGroupEntries(userAccessor,
-                         trustchainId,
-                         group,
-                         deviceId,
-                         privateSignatureKey,
-                         std::move(spublicIdentitiesToAdd),
-                         std::move(spublicIdentitiesToRemove));
+      TC_AWAIT(createGroupEntries(userAccessor,
+                                  trustchainId,
+                                  group,
+                                  deviceId,
+                                  privateSignatureKey,
+                                  std::move(spublicIdentitiesToAdd),
+                                  std::move(spublicIdentitiesToRemove)));
 
   if (groupRemoveEntry)
     TC_AWAIT(requester.softUpdateGroup(*groupRemoveEntry, groupAddEntry));

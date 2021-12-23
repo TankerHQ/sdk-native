@@ -64,35 +64,41 @@ tc::cotask<std::vector<VerificationMethod>> decryptMethods(
   methods.reserve(encryptedMethods.size());
 
   auto const decryptLambda =
-      [&](EncryptedVerificationMethod const& encryptedMethod) {
-        encryptedMethod.visit(overloaded{
-            [&](EncryptedEmail const& encryptedEmail) {
-              methods.push_back(
-                  TC_AWAIT(decryptMethod<Email>(encryptedEmail, userSecret)));
-            },
-            [&](EncryptedPhoneNumber const& encryptedPhoneNumber) {
-              methods.push_back(TC_AWAIT(decryptMethod<PhoneNumber>(
-                  encryptedPhoneNumber, userSecret)));
-            },
-            [&](EncryptedPreverifiedEmail const& encryptedEmail) {
-              methods.push_back(TC_AWAIT(
-                  decryptMethod<PreverifiedEmail>(encryptedEmail, userSecret)));
-            },
-            [&](EncryptedPreverifiedPhoneNumber const& encryptedPhoneNumber) {
-              methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
-                  encryptedPhoneNumber, userSecret)));
-            },
+      [&](EncryptedVerificationMethod const& encryptedMethod)
+      -> tc::cotask<void> {
+    TC_AWAIT(encryptedMethod.visit(overloaded{
+        [&](EncryptedEmail const& encryptedEmail) -> tc::cotask<void> {
+          methods.push_back(
+              TC_AWAIT(decryptMethod<Email>(encryptedEmail, userSecret)));
+        },
+        [&](EncryptedPhoneNumber const& encryptedPhoneNumber)
+            -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(
+              decryptMethod<PhoneNumber>(encryptedPhoneNumber, userSecret)));
+        },
+        [&](EncryptedPreverifiedEmail const& encryptedEmail)
+            -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(
+              decryptMethod<PreverifiedEmail>(encryptedEmail, userSecret)));
+        },
+        [&](EncryptedPreverifiedPhoneNumber const& encryptedPhoneNumber)
+            -> tc::cotask<void> {
+          methods.push_back(TC_AWAIT(decryptMethod<PreverifiedPhoneNumber>(
+              encryptedPhoneNumber, userSecret)));
+        },
 
-        });
-      };
+    }));
+  };
 
   for (auto& method : encryptedMethods)
   {
-    boost::variant2::visit(overloaded{decryptLambda,
-                                      [&](VerificationMethod const& method) {
-                                        methods.push_back(method);
-                                      }},
-                           method);
+    TC_AWAIT(boost::variant2::visit(
+        overloaded{decryptLambda,
+                   [&](VerificationMethod const& method) -> tc::cotask<void> {
+                     methods.push_back(method);
+                     TC_RETURN();
+                   }},
+        method));
   }
 
   TC_RETURN(methods);
