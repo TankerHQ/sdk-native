@@ -61,6 +61,19 @@ User Trustchain::makeUser()
   return User(url, trustchainIdString, trustchainPrivateKeyString);
 }
 
+AppProvisionalUser Trustchain::makeProvisionalUser(ProvisionalUserType type)
+{
+  switch (type)
+  {
+  case ProvisionalUserType::Email:
+    return makeEmailProvisionalUser();
+  case ProvisionalUserType::PhoneNumber:
+    return makePhoneNumberProvisionalUser();
+  default:
+    throw std::runtime_error("unknown provisional user type");
+  }
+}
+
 AppProvisionalUser Trustchain::makeEmailProvisionalUser()
 {
   auto const email = makeEmail();

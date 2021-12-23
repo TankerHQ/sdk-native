@@ -28,6 +28,12 @@ void from_json(nlohmann::json const& j, TrustchainConfig& state);
 
 class TrustchainFactory;
 
+enum class ProvisionalUserType
+{
+  Email,
+  PhoneNumber,
+};
+
 class Trustchain
 {
 public:
@@ -54,6 +60,7 @@ public:
   Trustchain& operator=(Trustchain&&) = default;
 
   User makeUser();
+  AppProvisionalUser makeProvisionalUser(ProvisionalUserType type);
   AppProvisionalUser makeEmailProvisionalUser();
   AppProvisionalUser makePhoneNumberProvisionalUser();
 
