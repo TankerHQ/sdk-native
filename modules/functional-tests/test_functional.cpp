@@ -1,7 +1,6 @@
-#include <string>
-
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/DataStore/Errors/Errc.hpp>
+#include <Tanker/Encryptor/Padding.hpp>
 #include <Tanker/Errors/AppdErrc.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Identity/Extract.hpp>
@@ -861,4 +860,49 @@ TEST_CASE_METHOD(TrustchainFixture,
       TC_AWAIT(aliceSession->share({resourceId}, {eve.publicIdentity}, {})),
       Errors::Errc::InvalidArgument,
       "public identity not in the trustchain");
+}
+
+inline auto constexpr simpleEncryptionOverhead = 17;
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can use the padding encryption option")
+{
+  SECTION("encrypt/decrypt with auto padding")
+  {
+    std::string const clearData("my clear data is clear");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, std::nullopt)));
+
+    auto const lengthWithPadme = 24;
+    REQUIRE(encryptedData.size() - simpleEncryptionOverhead == lengthWithPadme);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with no padding")
+  {
+    std::string const clearData("my clear data is clear");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, Padding::Off)));
+
+    REQUIRE(encryptedData.size() - simpleEncryptionOverhead ==
+            clearData.size());
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with a padding step")
+  {
+    std::string const clearData("my clear data is clear");
+    auto const step = 13;
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*aliceSession, clearData, {}, {}, step)));
+
+    REQUIRE((encryptedData.size() - simpleEncryptionOverhead) % step == 0);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
 }
