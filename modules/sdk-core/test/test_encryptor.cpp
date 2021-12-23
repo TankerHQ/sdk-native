@@ -1,5 +1,5 @@
-#include "Tanker/Crypto/Mac.hpp"
 #include <Tanker/Crypto/AeadIv.hpp>
+#include <Tanker/Crypto/Mac.hpp>
 #include <Tanker/Encryptor.hpp>
 #include <Tanker/Encryptor/Padding.hpp>
 #include <Tanker/Encryptor/v2.hpp>
@@ -20,6 +20,7 @@
 #include <fmt/core.h>
 #include <gsl/gsl-lite.hpp>
 #include <optional>
+#include <range/v3/view/iota.hpp>
 #include <range/v3/view/zip.hpp>
 
 using namespace Tanker;
@@ -474,7 +475,7 @@ TEST_CASE("extractResourceId should throw on a truncated buffer")
 
 TEST_CASE("Padding utilities tests")
 {
-  SUBCASE("padme should return the right values")
+  SUBCASE("padme returns the right values")
   {
     CHECK_EQ(Padding::padme(0), 0);
     CHECK_EQ(Padding::padme(1), 0);
@@ -486,58 +487,45 @@ TEST_CASE("Padding utilities tests")
     CHECK_EQ(Padding::padme(1999), 2048);
   }
 
-  SUBCASE(
-      "unpaddedSize should throw if 0x80 is not found or followed by non 0x00 "
-      "values")
+  SUBCASE("unpaddedSize throws if no 0x80 or followed by non 0x00 bytes")
   {
-    auto const paddedDataEmpty = gsl::make_span("").as_span<uint8_t const>();
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(paddedDataEmpty),
-                                  Errc::DecryptionFailed);
-
-    auto const paddedDataNormal =
-        gsl::make_span("this is a test data").as_span<uint8_t const>();
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(paddedDataNormal),
-                                  Errc::DecryptionFailed);
-
-    std::vector<uint8_t> trueAsBytes{0x74, 0x72, 0x75, 0x65};
-
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
-                                  Errc::DecryptionFailed);
-
-    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x00, 0x00, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
-                                  Errc::DecryptionFailed);
-
-    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42};
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
-                                  Errc::DecryptionFailed);
-
-    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
-                                  Errc::DecryptionFailed);
-
-    trueAsBytes = {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00, 0x00};
-    TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(trueAsBytes),
-                                  Errc::DecryptionFailed);
+    for (auto const& data : {{},
+                             make_buffer("this data is a test data"),
+                             {0x74, 0x72, 0x75, 0x65},
+                             {0x74, 0x72, 0x75, 0x65, 0x00, 0x00, 0x00},
+                             {0x74, 0x72, 0x75, 0x65, 0x80, 0x42},
+                             {0x74, 0x72, 0x75, 0x65, 0x80, 0x42, 0x00},
+                             {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x42}})
+      TANKER_CHECK_THROWS_WITH_CODE(Padding::unpaddedSize(data),
+                                    Errc::DecryptionFailed);
   }
 
   SUBCASE("unpaddedSize should return the right values")
   {
-    std::vector<uint8_t> const eighty{0x80};
-    auto result = Padding::unpaddedSize(eighty);
-    CHECK_EQ(result, 0);
+    std::vector<std::vector<uint8_t>> const samples = {
+        {0x80},
+        {0x74, 0x72, 0x75, 0x65, 0x80},
+        {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00},
+        {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x80, 0x00},
+    };
 
-    std::vector<uint8_t> trueAsBytesPadded{0x74, 0x72, 0x75, 0x65, 0x80};
-    result = Padding::unpaddedSize(trueAsBytesPadded);
-    CHECK_EQ(result, 4);
+    auto const expectations = {
+        0,
+        4,
+        4,
+        7,
+    };
 
-    trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00};
-    result = Padding::unpaddedSize(trueAsBytesPadded);
-    CHECK_EQ(result, 4);
+    for (auto const [i, data, expected] :
+         ranges::views::zip(ranges::views::iota(0), samples, expectations))
+    {
+      // extra assignation required by doctest/clang to allow the capture
+      auto const index = i;
+      CAPTURE(index);
 
-    trueAsBytesPadded = {0x74, 0x72, 0x75, 0x65, 0x80, 0x00, 0x00, 0x80, 0x00};
-    result = Padding::unpaddedSize(trueAsBytesPadded);
-    CHECK_EQ(result, 7);
+      auto const actual = Padding::unpaddedSize(data);
+      CHECK_EQ(actual, expected);
+    }
   }
 }
 
