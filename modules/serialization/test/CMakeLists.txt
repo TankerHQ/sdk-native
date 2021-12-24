@@ -3,6 +3,6 @@ add_executable(test_serialization
 
   main.cpp
 )
-target_link_libraries(test_serialization tankerserialization tankertesthelpers CONAN_PKG::doctest)
+target_link_libraries(test_serialization tankerserialization tankertesthelpers CONAN_PKG::catch2)
 
 add_test(NAME test_serialization COMMAND test_serialization)
