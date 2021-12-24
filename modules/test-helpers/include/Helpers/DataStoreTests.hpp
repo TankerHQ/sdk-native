@@ -1,6 +1,6 @@
 #pragma once
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/DataStore/Backend.hpp>
@@ -22,14 +22,14 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
   Tanker::UniquePath testtmp{std::string(writablePath)};
   auto store = backend.open(testtmp.path, testtmp.path);
 
-  SUBCASE("Put and get device")
+  SECTION("Put and get device")
   {
-    SUBCASE("returns nullopt when there is no device")
+    SECTION("returns nullopt when there is no device")
     {
       CHECK(!store->findSerializedDevice());
     }
 
-    SUBCASE("can put and get a device")
+    SECTION("can put and get a device")
     {
       std::vector<uint8_t> device(128);
       Tanker::Crypto::randomFill(device);
@@ -37,7 +37,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findSerializedDevice() == device);
     }
 
-    SUBCASE("can close and reopen the db")
+    SECTION("can close and reopen the db")
     {
       std::vector<uint8_t> device(128);
       Tanker::Crypto::randomFill(device);
@@ -50,7 +50,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findSerializedDevice() == device);
     }
 
-    SUBCASE("can overwrite and get a device")
+    SECTION("can overwrite and get a device")
     {
       std::vector<uint8_t> device(128);
       Tanker::Crypto::randomFill(device);
@@ -61,9 +61,9 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
     }
   }
 
-  SUBCASE("Put and get cache values")
+  SECTION("Put and get cache values")
   {
-    SUBCASE("returns nothing if the value is not there")
+    SECTION("returns nothing if the value is not there")
     {
       auto const key = make_buffer("test key");
       auto const keys = {gsl::make_span(key)};
@@ -71,13 +71,13 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("puts no value at all")
+    SECTION("puts no value at all")
     {
       auto const keyValues = makeKeyValues({});
       REQUIRE_NOTHROW(store->putCacheValues(keyValues, OnConflict::Fail));
     }
 
-    SUBCASE("puts a binary value and gets it back")
+    SECTION("puts a binary value and gets it back")
     {
       char const key[] = "test\0 key";
       char const value[] = "test\0 value";
@@ -89,7 +89,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("puts and gets multiple values at once, respecting order")
+    SECTION("puts and gets multiple values at once, respecting order")
     {
       auto const key = "test key 1";
       auto const key2 = "test key 2";
@@ -106,7 +106,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("can close and reopen the db")
+    SECTION("can close and reopen the db")
     {
       auto const key = "test key";
       auto const value = "test value";
@@ -121,7 +121,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("overwrites a value and gets it back")
+    SECTION("overwrites a value and gets it back")
     {
       auto const key = "test key";
       auto const value = "test value";
@@ -137,7 +137,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("ignores conflicts on a value and gets it back")
+    SECTION("ignores conflicts on a value and gets it back")
     {
       auto const key = "test key";
       auto const value = "test value";
@@ -153,7 +153,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
       CHECK(store->findCacheValues(keys) == expected);
     }
 
-    SUBCASE("fails to overwrite a value when needed")
+    SECTION("fails to overwrite a value when needed")
     {
       auto const key = "test key";
       auto const value = "test value";
@@ -172,7 +172,7 @@ void runDataStoreTests(T& backend, std::string_view writablePath)
     }
   }
 
-  SUBCASE("Nuke")
+  SECTION("Nuke")
   {
     std::vector<uint8_t> device(128);
     Tanker::Crypto::randomFill(device);

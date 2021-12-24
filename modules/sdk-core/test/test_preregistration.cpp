@@ -5,7 +5,7 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/MakeCoTask.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "LocalUserAccessorMock.hpp"
 #include "TrustchainGenerator.hpp"
@@ -23,7 +23,7 @@ TEST_CASE("Preregistration")
       generator.makeProvisionalUser("alice.test@tanker.io");
   auto picEntry = alice.claim(provisionalUser);
 
-  SUBCASE("throws if the user key is not found")
+  SECTION("throws if the user key is not found")
   {
     REQUIRE_CALL(userLocalAccessor,
                  pullUserKeyPair(alice.userKeys().back().publicKey))
@@ -36,7 +36,7 @@ TEST_CASE("Preregistration")
         Errc::InternalError);
   }
 
-  SUBCASE("can decrypt a preregistration claim")
+  SECTION("can decrypt a preregistration claim")
   {
     REQUIRE_CALL(userLocalAccessor,
                  pullUserKeyPair(alice.userKeys().back().publicKey))
@@ -44,13 +44,13 @@ TEST_CASE("Preregistration")
 
     auto const gotKeys = AWAIT(ProvisionalUsers::Updater::extractKeysToStore(
         userLocalAccessor, picEntry));
-    CHECK_EQ(gotKeys.appSignaturePublicKey,
-             provisionalUser.appSignatureKeyPair().publicKey);
-    CHECK_EQ(gotKeys.tankerSignaturePublicKey,
-             provisionalUser.tankerSignatureKeyPair().publicKey);
-    CHECK_EQ(gotKeys.appEncryptionKeyPair,
-             provisionalUser.appEncryptionKeyPair());
-    CHECK_EQ(gotKeys.tankerEncryptionKeyPair,
-             provisionalUser.tankerEncryptionKeyPair());
+    CHECK(gotKeys.appSignaturePublicKey ==
+          provisionalUser.appSignatureKeyPair().publicKey);
+    CHECK(gotKeys.tankerSignaturePublicKey ==
+          provisionalUser.tankerSignatureKeyPair().publicKey);
+    CHECK(gotKeys.appEncryptionKeyPair ==
+          provisionalUser.appEncryptionKeyPair());
+    CHECK(gotKeys.tankerEncryptionKeyPair ==
+          provisionalUser.tankerEncryptionKeyPair());
   }
 }

@@ -12,7 +12,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -23,7 +23,7 @@ TEST_CASE("Revocation tests")
 
   UserAccessorMock userAccessorMock;
 
-  SUBCASE(
+  SECTION(
       "getUserFromUserId throws if userId does not have a user key (user V1)")
   {
     auto const alice = generator.makeUser("alice");
@@ -37,7 +37,7 @@ TEST_CASE("Revocation tests")
         Errc::InternalError);
   }
 
-  SUBCASE("getUserFromUserId correctly finds bob user")
+  SECTION("getUserFromUserId correctly finds bob user")
   {
     auto alice = generator.makeUser("alice");
     REQUIRE_CALL(userAccessorMock,
@@ -45,10 +45,10 @@ TEST_CASE("Revocation tests")
         .RETURN(makeCoTask(Users::IUserAccessor::UserPullResult{{alice}, {}}));
     auto const user =
         AWAIT(Revocation::getUserFromUserId(alice.id(), userAccessorMock));
-    CHECK_EQ(*user.userKey(), alice.userKeys().back().publicKey);
+    CHECK(*user.userKey() == alice.userKeys().back().publicKey);
   }
 
-  SUBCASE("devicePrivateKey can be encrypted & decrypted")
+  SECTION("devicePrivateKey can be encrypted & decrypted")
   {
     auto bob = generator.makeUser("bob");
     bob.addDevice();
@@ -58,11 +58,11 @@ TEST_CASE("Revocation tests")
         bob.devices().front().id(),
         encryptionKeyPair.privateKey);
 
-    REQUIRE_EQ(encryptedPrivateKeys.size(), 1);
+    REQUIRE(encryptedPrivateKeys.size() == 1);
 
     auto const decryptedPrivateKey = Revocation::decryptPrivateKeyForDevice(
         bob.devices().back().keys(), encryptedPrivateKeys[0].second);
 
-    CHECK_EQ(decryptedPrivateKey, encryptionKeyPair.privateKey);
+    CHECK(decryptedPrivateKey == encryptionKeyPair.privateKey);
   }
 }

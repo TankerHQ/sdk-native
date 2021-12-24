@@ -10,7 +10,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Errors;
@@ -109,7 +109,7 @@ struct TestContext<EncryptorV5>
 template <typename T>
 void commonEncryptorTests(TestContext<T> ctx)
 {
-  SUBCASE("decryptedSize and encryptedSize should be symmetrical")
+  SECTION("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(T::encryptedSize(0));
     Serialization::varint_write(a0.data(), T::version());
@@ -119,14 +119,14 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(T::decryptedSize(a42) == 42);
   }
 
-  SUBCASE("decryptedSize should throw if the buffer is truncated")
+  SECTION("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
     TANKER_CHECK_THROWS_WITH_CODE(T::decryptedSize(truncatedBuffer),
                                   Errc::InvalidArgument);
   }
 
-  SUBCASE("encrypt/decrypt should work with an empty buffer")
+  SECTION("encrypt/decrypt should work with an empty buffer")
   {
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
@@ -140,7 +140,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(clearData == decryptedData);
   }
 
-  SUBCASE("encrypt/decrypt should work with a normal buffer")
+  SECTION("encrypt/decrypt should work with a normal buffer")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
@@ -153,7 +153,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(clearData == decryptedData);
   }
 
-  SUBCASE("decrypt should work with a test vector")
+  SECTION("decrypt should work with a test vector")
   {
     auto const clearData = make_buffer("this is very secret");
 
@@ -165,7 +165,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(decryptedData == clearData);
   }
 
-  SUBCASE("encrypt should never give the same result twice")
+  SECTION("encrypt should never give the same result twice")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(T::encryptedSize(clearData.size()));
@@ -176,7 +176,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(encryptedData1 != encryptedData2);
   }
 
-  SUBCASE("decrypt should not work with a corrupted buffer")
+  SECTION("decrypt should not work with a corrupted buffer")
   {
     auto const clearData = make_buffer("this is very secret");
 
@@ -191,7 +191,7 @@ void commonEncryptorTests(TestContext<T> ctx)
         Errc::DecryptionFailed);
   }
 
-  SUBCASE("extractResourceId should give the same result as encrypt")
+  SECTION("extractResourceId should give the same result as encrypt")
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
@@ -208,7 +208,7 @@ TEST_CASE("EncryptorV2 tests")
 
   commonEncryptorTests(ctx);
 
-  SUBCASE("encryptedSize should return the right size")
+  SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = Serialization::varint_size(EncryptorV2::version());
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
@@ -224,7 +224,7 @@ TEST_CASE("EncryptorV3 tests")
 
   commonEncryptorTests(ctx);
 
-  SUBCASE("encryptedSize should return the right size")
+  SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = Serialization::varint_size(EncryptorV3::version());
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
@@ -239,7 +239,7 @@ TEST_CASE("EncryptorV5 tests")
 
   commonEncryptorTests(ctx);
 
-  SUBCASE("encryptedSize should return the right size")
+  SECTION("encryptedSize should return the right size")
   {
     auto const versionSize = Serialization::varint_size(EncryptorV5::version());
     constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;

@@ -14,7 +14,7 @@
 
 #include <trompeloeil.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain::Actions;
@@ -35,7 +35,7 @@ TEST_CASE("decryptAndStoreKey")
   LocalUserAccessorMock receiverLocalUserAccessor;
   ProvisionalUsersAccessorMock receiverProvisionalUsersAccessor;
 
-  SUBCASE("should process a key publish to user action")
+  SECTION("should process a key publish to user action")
   {
     auto const keyPublishEntry =
         generator.shareWith(senderDevice, receiver, resource);
@@ -51,7 +51,7 @@ TEST_CASE("decryptAndStoreKey")
                                               keyPublishEntry));
   }
 
-  SUBCASE("should process a key publish to group action")
+  SECTION("should process a key publish to group action")
   {
     auto const group = receiver.makeGroup();
     auto const keyPublishEntry =
@@ -67,7 +67,7 @@ TEST_CASE("decryptAndStoreKey")
                                               keyPublishEntry));
   }
 
-  SUBCASE("should process a key publish to provisional user")
+  SECTION("should process a key publish to provisional user")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail.com");
 
@@ -87,5 +87,5 @@ TEST_CASE("decryptAndStoreKey")
                                               receiverProvisionalUsersAccessor,
                                               keyPublishEntry));
   }
-  CHECK_EQ(AWAIT(resourceKeyStore.getKey(resource.id())), resource.key());
+  CHECK(AWAIT(resourceKeyStore.getKey(resource.id())) == resource.key());
 }

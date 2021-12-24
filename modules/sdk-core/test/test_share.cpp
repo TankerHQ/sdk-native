@@ -20,7 +20,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <trompeloeil.hpp>
 
@@ -65,9 +65,8 @@ void assertKeyPublishToUsersTargetedAt(
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
-    CHECK_EQ(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
-                                 userKeyPairs[i]),
-             resourceKey.key);
+    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
+                              userKeyPairs[i]) == resourceKey.key);
   }
 }
 
@@ -85,12 +84,10 @@ void assertKeyPublishToUsersTargetedAt(
     CHECK(keyPublishes[i].tankerPublicSignatureKey() ==
           provisionalUsers[i].tankerSignatureKeyPair.publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
-    CHECK_EQ(
-        Crypto::sealDecrypt(
-            Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
-                                provisionalUsers[i].tankerEncryptionKeyPair),
-            provisionalUsers[i].appEncryptionKeyPair),
-        resourceKey.key);
+    CHECK(Crypto::sealDecrypt(
+              Crypto::sealDecrypt(keyPublishes[i].twoTimesSealedSymmetricKey(),
+                                  provisionalUsers[i].tankerEncryptionKeyPair),
+              provisionalUsers[i].appEncryptionKeyPair) == resourceKey.key);
   }
 }
 
@@ -106,9 +103,8 @@ void assertKeyPublishToGroupTargetedAt(
     CHECK(keyPublishes[i].recipientPublicEncryptionKey() ==
           userKeyPairs[i].publicKey);
     CHECK(keyPublishes[i].resourceId() == resourceKey.resourceId);
-    CHECK_EQ(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
-                                 userKeyPairs[i]),
-             resourceKey.key);
+    CHECK(Crypto::sealDecrypt(keyPublishes[i].sealedSymmetricKey(),
+                              userKeyPairs[i]) == resourceKey.key);
   }
 }
 }
@@ -124,7 +120,7 @@ TEST_CASE("generateRecipientList")
   UserAccessorMock userAccessor;
   GroupAccessorMock groupAccessor;
 
-  SUBCASE("a new user should return their user key")
+  SECTION("a new user should return their user key")
   {
 
     REQUIRE_CALL(
@@ -155,7 +151,7 @@ TEST_CASE("generateRecipientList")
         recipients.recipientUserKeys, {newUser.userKeys().back().publicKey});
   }
 
-  SUBCASE("a new group should return their group key")
+  SECTION("a new group should return their group key")
   {
 
     auto const newGroup = keySender.makeGroup({newUser});
@@ -188,7 +184,7 @@ TEST_CASE("generateRecipientList")
         recipients.recipientGroupKeys, {newGroup.currentEncKp().publicKey});
   }
 
-  SUBCASE("a provisional user should return their provisional keys")
+  SECTION("a provisional user should return their provisional keys")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
@@ -228,7 +224,7 @@ TEST_CASE("generateRecipientList")
           provisionalUser.tankerEncryptionKeyPair().publicKey);
   }
 
-  SUBCASE("a not-found user should throw")
+  SECTION("a not-found user should throw")
   {
     REQUIRE_CALL(
         userAccessor,
@@ -250,7 +246,7 @@ TEST_CASE("generateRecipientList")
         make_error_code(Errc::InvalidArgument));
   }
 
-  SUBCASE("a not-found group should throw")
+  SECTION("a not-found group should throw")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 
@@ -282,7 +278,7 @@ TEST_CASE("generateShareBlocks")
   auto const& keySender = generator.makeUser("keySender");
   auto const& keySenderDevice = keySender.devices().front();
 
-  SUBCASE("for a user should generate one KeyPublishToUser block")
+  SECTION("for a user should generate one KeyPublishToUser block")
   {
     ResourceKeys::KeysResult resourceKeys = {
         {make<Crypto::SymmetricKey>("symmkey"),
@@ -302,7 +298,7 @@ TEST_CASE("generateShareBlocks")
         resourceKeys[0], blocks.keyPublishesToUsers, {newUserKeyPair});
   }
 
-  SUBCASE("for a user should generate one KeyPublishToProvisionalUser block")
+  SECTION("for a user should generate one KeyPublishToProvisionalUser block")
   {
     auto const provisionalUser = generator.makeProvisionalUser("bob@gmail");
 
@@ -323,7 +319,7 @@ TEST_CASE("generateShareBlocks")
                                       {provisionalUser});
   }
 
-  SUBCASE("for a group should generate one KeyPublishToGroup block")
+  SECTION("for a group should generate one KeyPublishToGroup block")
   {
     auto const newGroup = keySender.makeGroup({newUser});
 

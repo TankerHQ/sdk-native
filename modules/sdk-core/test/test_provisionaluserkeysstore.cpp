@@ -5,7 +5,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 
@@ -14,22 +14,22 @@ TEST_CASE("ProvisionalUserKeysStore")
   auto db = DataStore::SqliteBackend().open(DataStore::MemoryPath,
                                             DataStore::MemoryPath);
 
-  SUBCASE("it should create and destroy a ProvisionalUserKeysStore")
+  SECTION("it should create and destroy a ProvisionalUserKeysStore")
   {
     ProvisionalUserKeysStore store({}, db.get());
   }
 
-  SUBCASE("it should not find a non-existent provisional user")
+  SECTION("it should not find a non-existent provisional user")
   {
     auto const unexistentPubKey =
         make<Crypto::PublicSignatureKey>("unexistent");
 
     ProvisionalUserKeysStore store({}, db.get());
-    CHECK_UNARY(!AWAIT(
+    CHECK(!AWAIT(
         store.findProvisionalUserKeys(unexistentPubKey, unexistentPubKey)));
   }
 
-  SUBCASE("it should find a key that was inserted")
+  SECTION("it should find a key that was inserted")
   {
     auto const appPubKey = make<Crypto::PublicSignatureKey>("app pub key...");
     auto const tankerPubKey =
@@ -44,12 +44,12 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const gotKeyPair =
         AWAIT(store.findProvisionalUserKeys(appPubKey, tankerPubKey));
 
-    REQUIRE_UNARY(gotKeyPair.has_value());
-    CHECK_EQ(kp1, gotKeyPair->appKeys);
-    CHECK_EQ(kp2, gotKeyPair->tankerKeys);
+    REQUIRE(gotKeyPair.has_value());
+    CHECK(kp1 == gotKeyPair->appKeys);
+    CHECK(kp2 == gotKeyPair->tankerKeys);
   }
 
-  SUBCASE("it should not find a key with either signature keys are false")
+  SECTION("it should not find a key with either signature keys are false")
   {
     auto const unexistentPubKey =
         make<Crypto::PublicSignatureKey>("unexistent");
@@ -66,15 +66,15 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const gotKeyPair =
         AWAIT(store.findProvisionalUserKeys(unexistentPubKey, tankerPubKey));
 
-    REQUIRE_UNARY(!gotKeyPair.has_value());
+    REQUIRE(!gotKeyPair.has_value());
 
     auto const gotKeyPair2 =
         AWAIT(store.findProvisionalUserKeys(appPubKey, unexistentPubKey));
 
-    REQUIRE_UNARY(!gotKeyPair2.has_value());
+    REQUIRE(!gotKeyPair2.has_value());
   }
 
-  SUBCASE("it should find a key by app public encryption key")
+  SECTION("it should find a key by app public encryption key")
   {
     auto const appPubKey = make<Crypto::PublicSignatureKey>("app pub key...");
     auto const tankerPubKey =
@@ -89,8 +89,8 @@ TEST_CASE("ProvisionalUserKeysStore")
     auto const gotKeyPair =
         AWAIT(store.findProvisionalUserKeysByAppPublicSignatureKey(appPubKey));
 
-    REQUIRE_UNARY(gotKeyPair.has_value());
-    CHECK_EQ(appKeys, gotKeyPair->appKeys);
-    CHECK_EQ(tankerKeys, gotKeyPair->tankerKeys);
+    REQUIRE(gotKeyPair.has_value());
+    CHECK(appKeys == gotKeyPair->appKeys);
+    CHECK(tankerKeys == gotKeyPair->tankerKeys);
   }
 }

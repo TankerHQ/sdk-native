@@ -1,16 +1,7 @@
-#define DOCTEST_CONFIG_IMPLEMENT
+#define CATCH_CONFIG_RUNNER
 #include "test.h"
 
-#ifdef __APPLE__
-#include <TargetConditionals.h>
-
-// thread_local is not supported on iOS 9.0 on x86 platform
-#if TARGET_CPU_X86
-#define DOCTEST_THREAD_LOCAL
-#endif
-#endif
-
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <Helpers/DataStoreTests.hpp>
 
@@ -35,10 +26,13 @@ int tanker_run_datastore_test(tanker_datastore_options_t* datastore_options,
   datastoreOptions = datastore_options;
   writablePath = persistent_path;
 
-  doctest::Context context;
+  Catch::Session context;
 
   if (output_path)
-    context.setOption("-out", output_path);
+  {
+    char const* const opts[] = {"--out", output_path};
+    context.applyCommandLine(2, opts);
+  }
 
   return context.run();
 }

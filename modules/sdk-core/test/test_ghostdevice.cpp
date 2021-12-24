@@ -5,7 +5,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 

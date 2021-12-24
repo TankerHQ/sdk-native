@@ -12,7 +12,7 @@
 
 #include <boost/variant2/variant.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 
@@ -24,30 +24,28 @@ template <typename R>
 void GroupMatcher(Group const& resultGroup, Test::Group const& testGroup)
 {
   auto const group = boost::variant2::get_if<R>(&resultGroup);
-  REQUIRE_UNARY(group);
-  CHECK_EQ(group->lastBlockHash, testGroup.lastBlockHash());
-  CHECK_EQ(group->lastKeyRotationBlockHash,
-           testGroup.lastKeyRotationBlockHash());
-  CHECK_EQ(group->id, testGroup.id());
+  REQUIRE(group);
+  CHECK(group->lastBlockHash == testGroup.lastBlockHash());
+  CHECK(group->lastKeyRotationBlockHash ==
+        testGroup.lastKeyRotationBlockHash());
+  CHECK(group->id == testGroup.id());
   if constexpr (std::is_same_v<R, InternalGroup>)
   {
-    CHECK_EQ(group->encryptionKeyPair, testGroup.currentEncKp());
-    CHECK_EQ(group->signatureKeyPair, testGroup.currentSigKp());
+    CHECK(group->encryptionKeyPair == testGroup.currentEncKp());
+    CHECK(group->signatureKeyPair == testGroup.currentSigKp());
   }
   else if constexpr (std::is_same_v<R, ExternalGroup>)
   {
-    CHECK_EQ(group->publicEncryptionKey, testGroup.currentEncKp().publicKey);
-    CHECK_EQ(group->publicSignatureKey, testGroup.currentSigKp().publicKey);
+    CHECK(group->publicEncryptionKey == testGroup.currentEncKp().publicKey);
+    CHECK(group->publicSignatureKey == testGroup.currentSigKp().publicKey);
     auto const decrypted = Crypto::sealDecrypt(
         group->encryptedPrivateSignatureKey, testGroup.currentEncKp());
-    CHECK_EQ(decrypted, testGroup.currentSigKp().privateKey);
+    CHECK(decrypted == testGroup.currentSigKp().privateKey);
   }
   else
     static_assert(sizeof(R) && false, "please add the new group type");
 }
 }
-
-TEST_SUITE_BEGIN("GroupUpdater");
 
 TEST_CASE("Group V1")
 {
@@ -63,9 +61,9 @@ TEST_CASE("Group V1")
       .LR_RETURN(aliceLocalUser)
       .TIMES(AT_LEAST(0));
 
-  SUBCASE("GroupCreation")
+  SECTION("GroupCreation")
   {
-    SUBCASE("handles creation of a group I am part of")
+    SECTION("handles creation of a group I am part of")
     {
       auto const testGroup =
           generator.makeGroupV1(alice.devices().front(), {alice});
@@ -77,7 +75,7 @@ TEST_CASE("Group V1")
       GroupMatcher<InternalGroup>(resultGroup, testGroup);
     }
 
-    SUBCASE("handles creation of a group I am *not* part of")
+    SECTION("handles creation of a group I am *not* part of")
     {
       auto const group = generator.makeGroupV1(bob.devices().front(), {bob});
       REQUIRE_CALL(aliceLocalUserAccessor, pull())
@@ -90,9 +88,9 @@ TEST_CASE("Group V1")
       GroupMatcher<ExternalGroup>(resultGroup, group);
     }
   }
-  SUBCASE("GroupAddition")
+  SECTION("GroupAddition")
   {
-    SUBCASE("Alice sees Bob being added to her group")
+    SECTION("Alice sees Bob being added to her group")
     {
       auto aliceGroup = generator.makeGroupV1(alice.devices()[0], {alice});
       aliceGroup.addUsersV1(alice.devices()[0], {bob});
@@ -104,7 +102,7 @@ TEST_CASE("Group V1")
       GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
     }
 
-    SUBCASE("Alice sees herself being added to Bob's group")
+    SECTION("Alice sees herself being added to Bob's group")
     {
       auto const bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
@@ -117,7 +115,7 @@ TEST_CASE("Group V1")
       GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE("Alice sees Charlie being added to Bob's group")
+    SECTION("Alice sees Charlie being added to Bob's group")
     {
       auto bobGroup = generator.makeGroupV1(bob.devices()[0], {bob});
       auto const charlie = generator.makeUser("charlie");
@@ -153,10 +151,10 @@ TEST_CASE("Group V2")
       .LR_RETURN(aliceLocalUser)
       .TIMES(AT_LEAST(0));
 
-  SUBCASE("GroupCreation")
+  SECTION("GroupCreation")
   {
 
-    SUBCASE("handles creation of a group I am part of")
+    SECTION("handles creation of a group I am part of")
     {
       auto const group =
           generator.makeGroupV2(alice.devices().front(), {alice});
@@ -172,7 +170,7 @@ TEST_CASE("Group V2")
       GroupMatcher<InternalGroup>(resultGroup, group);
     }
 
-    SUBCASE("handles creation of a group I am *not* part of")
+    SECTION("handles creation of a group I am *not* part of")
     {
       auto const bobGroup = generator.makeGroupV2(bob.devices().front(), {bob});
 
@@ -184,7 +182,7 @@ TEST_CASE("Group V2")
       GroupMatcher<ExternalGroup>(resultGroup, bobGroup);
     }
 
-    SUBCASE(
+    SECTION(
         "handles creation of a group I am part of through a provisional "
         "identity")
     {
@@ -204,13 +202,13 @@ TEST_CASE("Group V2")
     }
   }
 
-  SUBCASE("GroupAddition")
+  SECTION("GroupAddition")
   {
     REQUIRE_CALL(aliceLocalUserAccessor, get())
         .LR_RETURN(aliceLocalUser)
         .TIMES(AT_LEAST(0));
 
-    SUBCASE("Alice sees Bob being added to her group")
+    SECTION("Alice sees Bob being added to her group")
     {
       auto aliceGroup = generator.makeGroupV2(alice.devices().front(), {alice});
       aliceGroup.addUsersV2(alice.devices()[0], {bob});
@@ -222,7 +220,7 @@ TEST_CASE("Group V2")
       GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
     }
 
-    SUBCASE("Alice sees herself being added to Bob's group")
+    SECTION("Alice sees herself being added to Bob's group")
     {
       auto const bobGroup = generator.makeGroupV2(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
@@ -238,7 +236,7 @@ TEST_CASE("Group V2")
       GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE("Alice sees Charlie being added to Bob's group")
+    SECTION("Alice sees Charlie being added to Bob's group")
     {
       auto bobGroup = generator.makeGroupV2(bob.devices()[0], {bob});
       auto const charlie = generator.makeUser("charlie");
@@ -252,7 +250,7 @@ TEST_CASE("Group V2")
       GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE(
+    SECTION(
         "Alice sees herself being added to Bob's group as a provisional user")
     {
       auto bobGroup = generator.makeGroupV2(bob.devices()[0], {bob}, {});
@@ -289,9 +287,9 @@ TEST_CASE("Group V3")
       .LR_RETURN(aliceLocalUser)
       .TIMES(AT_LEAST(0));
 
-  SUBCASE("GroupCreation")
+  SECTION("GroupCreation")
   {
-    SUBCASE("handles creation of a group I am part of")
+    SECTION("handles creation of a group I am part of")
     {
       REQUIRE_CALL(aliceLocalUserAccessor,
                    pullUserKeyPair(alice.userKeys().back().publicKey))
@@ -306,7 +304,7 @@ TEST_CASE("Group V3")
       GroupMatcher<InternalGroup>(resultGroup, group);
     }
 
-    SUBCASE("handles creation of a group I am *not* part of")
+    SECTION("handles creation of a group I am *not* part of")
     {
       auto const bobGroup = bob.makeGroup();
 
@@ -318,7 +316,7 @@ TEST_CASE("Group V3")
       GroupMatcher<ExternalGroup>(resultGroup, bobGroup);
     }
 
-    SUBCASE(
+    SECTION(
         "handles creation of a group I am part of through a provisional "
         "identity")
     {
@@ -337,9 +335,9 @@ TEST_CASE("Group V3")
     }
   }
 
-  SUBCASE("GroupAddition")
+  SECTION("GroupAddition")
   {
-    SUBCASE("Alice sees Bob being added to her group")
+    SECTION("Alice sees Bob being added to her group")
     {
       auto aliceGroup = generator.makeGroup(alice.devices()[0], {alice});
       aliceGroup.addUsers(alice.devices()[0], {bob});
@@ -351,7 +349,7 @@ TEST_CASE("Group V3")
       GroupMatcher<InternalGroup>(resultGroup, aliceGroup);
     }
 
-    SUBCASE("Alice sees herself being added to Bob's group")
+    SECTION("Alice sees herself being added to Bob's group")
     {
       auto const bobGroup = generator.makeGroup(bob.devices()[0], {bob});
       auto bobGroupUpdated = bobGroup;
@@ -367,7 +365,7 @@ TEST_CASE("Group V3")
       GroupMatcher<InternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE("Alice sees Charlie being added to Bob's group")
+    SECTION("Alice sees Charlie being added to Bob's group")
     {
       auto bobGroup = generator.makeGroup(bob.devices()[0], {bob});
       auto const charlie = generator.makeUser("charlie");
@@ -381,7 +379,7 @@ TEST_CASE("Group V3")
       GroupMatcher<ExternalGroup>(resultGroup, bobGroupUpdated);
     }
 
-    SUBCASE(
+    SECTION(
         "Alice sees herself being added to Bob's group as a provisional user")
     {
       auto bobGroup = generator.makeGroup(bob.devices()[0], {bob}, {});
@@ -401,5 +399,3 @@ TEST_CASE("Group V3")
     }
   }
 }
-
-TEST_SUITE_END();

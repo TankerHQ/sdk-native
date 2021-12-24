@@ -1,5 +1,3 @@
-set(TEST_TANKER_EXTRA_SRC test_datastore.cpp test_datastore_new.cpp)
-
 add_executable(test_tanker
   test_localuserstore.cpp
   test_groupstore.cpp
@@ -21,18 +19,18 @@ add_executable(test_tanker
   test_verif.cpp
   test_revocation.cpp
   test_preregistration.cpp
+  test_datastore.cpp
+  test_datastore_new.cpp
 
   TrustchainGenerator.hpp
   TrustchainGenerator.cpp
 
   main.cpp
-
-  ${TEST_TANKER_EXTRA_SRC}
 )
 target_link_libraries(test_tanker
   tankercore
   tankertesthelpers
-  CONAN_PKG::doctest
+  CONAN_PKG::catch2
   CONAN_PKG::trompeloeil
 )
-add_test(NAME test_tanker COMMAND test_tanker --duration=true)
+add_test(NAME test_tanker COMMAND test_tanker --durations=true)

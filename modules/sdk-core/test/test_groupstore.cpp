@@ -6,7 +6,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using Tanker::Trustchain::GroupId;
@@ -33,48 +33,42 @@ TEST_CASE("GroupStore")
       make<Crypto::Hash>("last block hash"),
       make<Crypto::Hash>("last key rotation block hash"),
   };
-  SUBCASE("it should not find a non-existent group")
+  SECTION("it should not find a non-existent group")
   {
     auto const unexistentGroupId = make<GroupId>("unexistent");
     auto const unexistentGroupKey =
         make<Crypto::PublicEncryptionKey>("unexistent");
 
-    CHECK_EQ(
-        AWAIT(groupStore.findInternalByPublicEncryptionKey(unexistentGroupKey)),
-        std::nullopt);
-    CHECK_EQ(AWAIT(groupStore.findById(unexistentGroupId)), std::nullopt);
-    CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(unexistentGroupKey)),
-             std::nullopt);
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
+              unexistentGroupKey)) == std::nullopt);
+    CHECK(AWAIT(groupStore.findById(unexistentGroupId)) == std::nullopt);
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(unexistentGroupKey)) ==
+          std::nullopt);
   }
 
-  SUBCASE("it should find a group that was inserted")
+  SECTION("it should find a group that was inserted")
   {
     AWAIT_VOID(groupStore.put(group));
-    CHECK_EQ(AWAIT(groupStore.findById(group.id)).value(), Group{group});
-    CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
-                       group.encryptionKeyPair.publicKey))
-                 .value(),
-             group);
-    CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(
-                       group.encryptionKeyPair.publicKey))
-                 .value(),
-             Group{group});
+    CHECK(AWAIT(groupStore.findById(group.id)).value() == Group{group});
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
+                    group.encryptionKeyPair.publicKey))
+              .value() == group);
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(
+                    group.encryptionKeyPair.publicKey))
+              .value() == Group{group});
   }
 
-  SUBCASE("it should find an external group that was inserted")
+  SECTION("it should find an external group that was inserted")
   {
     AWAIT_VOID(groupStore.put(externalGroup));
-    CHECK_EQ(AWAIT(groupStore.findById(group.id)).value(),
-             Group{externalGroup});
-    CHECK_EQ(AWAIT(groupStore.findByPublicEncryptionKey(
-                 group.encryptionKeyPair.publicKey)),
-             Group{externalGroup});
-    CHECK_EQ(AWAIT(groupStore.findInternalByPublicEncryptionKey(
-                 group.encryptionKeyPair.publicKey)),
-             std::nullopt);
+    CHECK(AWAIT(groupStore.findById(group.id)).value() == Group{externalGroup});
+    CHECK(AWAIT(groupStore.findByPublicEncryptionKey(
+              group.encryptionKeyPair.publicKey)) == Group{externalGroup});
+    CHECK(AWAIT(groupStore.findInternalByPublicEncryptionKey(
+              group.encryptionKeyPair.publicKey)) == std::nullopt);
   }
 
-  SUBCASE("it should overwrite a group that was previously inserted")
+  SECTION("it should overwrite a group that was previously inserted")
   {
     AWAIT_VOID(groupStore.put(group));
     auto group2 = group;
@@ -83,10 +77,10 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastKeyRotationBlockHash = make<Crypto::Hash>("and another one");
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
+    CHECK(AWAIT(groupStore.findById(group2.id)).value() == Group{group2});
   }
 
-  SUBCASE(
+  SECTION(
       "it should overwrite an external group with a fullgroup (we got added to "
       "a group)")
   {
@@ -97,10 +91,10 @@ TEST_CASE("GroupStore")
     group2.lastBlockHash = make<Crypto::Hash>("other last");
     group2.lastKeyRotationBlockHash = make<Crypto::Hash>("and another one");
     AWAIT_VOID(groupStore.put(group2));
-    CHECK_EQ(AWAIT(groupStore.findById(group2.id)).value(), Group{group2});
+    CHECK(AWAIT(groupStore.findById(group2.id)).value() == Group{group2});
   }
 
-  SUBCASE(
+  SECTION(
       "it should overwrite a full group with an external group (we got removed "
       "from the group)")
   {
@@ -114,7 +108,7 @@ TEST_CASE("GroupStore")
     externalGroup2.lastKeyRotationBlockHash =
         make<Crypto::Hash>("and another one");
     AWAIT_VOID(groupStore.put(externalGroup2));
-    CHECK_EQ(AWAIT(groupStore.findById(externalGroup2.id)).value(),
-             Group{externalGroup2});
+    CHECK(AWAIT(groupStore.findById(externalGroup2.id)).value() ==
+          Group{externalGroup2});
   }
 }
