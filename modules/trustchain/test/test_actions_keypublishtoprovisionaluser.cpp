@@ -4,15 +4,15 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("KeyPublishToProvisionalUser serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a KeyPublishToProvisionalUser")
+  SECTION("it should serialize/deserialize a KeyPublishToProvisionalUser")
   {
     // clang-format off
     std::array<std::uint8_t const, 341> constexpr serializedKeyPublishToProvisionalUser = {
@@ -89,8 +89,7 @@ TEST_CASE("Serialization test vectors")
     auto const skp = Serialization::serialize(kp);
     CHECK(std::equal(
         skp.begin(), skp.end(), serializedKeyPublishToProvisionalUser.begin()));
-    CHECK_EQ(Serialization::deserialize<KeyPublishToProvisionalUser>(
-                 serializedKeyPublishToProvisionalUser),
-             kp);
+    CHECK(Serialization::deserialize<KeyPublishToProvisionalUser>(
+              serializedKeyPublishToProvisionalUser) == kp);
   }
 }

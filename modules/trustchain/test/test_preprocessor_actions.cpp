@@ -1,7 +1,7 @@
 #include <Tanker/Trustchain/Preprocessor/Actions/Implementation.hpp>
 #include <Tanker/Trustchain/Preprocessor/Actions/VariantImplementation.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <ostream>
 #include <string>
@@ -50,7 +50,7 @@ class VariantTest
 
 TEST_CASE("Preprocessor tests")
 {
-  SUBCASE("Action implementation")
+  SECTION("Action implementation")
   {
     PreprocessorTest pt{"test", {0, 1, 2}, {42}};
     PreprocessorTest pt2{"tes", {0, 1, 2}, {42}};
@@ -62,7 +62,7 @@ TEST_CASE("Preprocessor tests")
     CHECK(pt != pt2);
   }
 
-  SUBCASE("Action variant implementation")
+  SECTION("Action variant implementation")
   {
     VariantTest vt{CustomType{42}};
     VariantTest vt2{std::vector<char>{42}};

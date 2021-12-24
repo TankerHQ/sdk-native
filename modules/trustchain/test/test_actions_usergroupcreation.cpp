@@ -6,15 +6,15 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("UserGroupCreation serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupCreation1")
+  SECTION("it should serialize/deserialize a UserGroupCreation1")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupCreation = {
@@ -137,7 +137,7 @@ TEST_CASE("Serialization test vectors")
               serializedUserGroupCreation) == ugc);
   }
 
-  SUBCASE("it should serialize/deserialize a UserGroupCreation2")
+  SECTION("it should serialize/deserialize a UserGroupCreation2")
   {
     auto const userGroupCreation = UserGroupCreation2{
         make<TrustchainId>("trustchain id"),
@@ -311,7 +311,7 @@ TEST_CASE("Serialization test vectors")
           userGroupCreation);
   }
 
-  SUBCASE("it should serialize/deserialize a UserGroupCreation3")
+  SECTION("it should serialize/deserialize a UserGroupCreation3")
   {
     auto const userGroupCreation = UserGroupCreation3{
         make<TrustchainId>("trustchain id"),

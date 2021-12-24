@@ -6,15 +6,15 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("UserGroupAddition serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupAddition1")
+  SECTION("it should serialize/deserialize a UserGroupAddition1")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupAddition = {
@@ -120,7 +120,7 @@ TEST_CASE("Serialization test vectors")
               serializedUserGroupAddition) == uga);
   }
 
-  SUBCASE("it should serialize/deserialize a UserGroupAddition2")
+  SECTION("it should serialize/deserialize a UserGroupAddition2")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupAddition = {
@@ -278,13 +278,13 @@ TEST_CASE("Serialization test vectors")
                                     author,
                                     hash,
                                     signature};
-    
+
     CHECK(Serialization::serialize(uga) == serializedUserGroupAddition);
     CHECK(Serialization::deserialize<UserGroupAddition::v2>(
               serializedUserGroupAddition) == uga);
   }
 
-  SUBCASE("it should serialize/deserialize a UserGroupAddition3")
+  SECTION("it should serialize/deserialize a UserGroupAddition3")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupAddition = {
