@@ -143,12 +143,12 @@ struct TestContext<EncryptorV6>
 
   auto encryptedSize(uint64_t clearSize) const
   {
-    auto res = EncryptorV6::encryptedSize(clearSize, paddingStep);
+    auto const res = EncryptorV6::encryptedSize(clearSize, paddingStep);
 
     if (paddingStep)
     {
       auto const paddedSize = res - overhead;
-      CHECK(paddedSize >= clearSize + 1);
+      CHECK(paddedSize > clearSize);
       CHECK(paddedSize % *paddingStep == 0);
     }
 
@@ -185,7 +185,16 @@ struct TestContext<EncryptorV7>
 
   auto encryptedSize(uint64_t clearSize) const
   {
-    return EncryptorV7::encryptedSize(clearSize, paddingStep);
+    auto const res = EncryptorV7::encryptedSize(clearSize, paddingStep);
+
+    if (paddingStep)
+    {
+      auto const paddedSize = res - overhead;
+      CHECK(paddedSize > clearSize);
+      CHECK(paddedSize % *paddingStep == 0);
+    }
+
+    return res;
   }
 
   Crypto::SymmetricKey keyVector{std::vector<std::uint8_t>{
