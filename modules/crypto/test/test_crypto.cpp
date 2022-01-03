@@ -7,7 +7,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <gsl/gsl-lite.hpp>
 #include <mgs/base64.hpp>
 #include <mgs/base64url.hpp>
@@ -41,7 +41,7 @@ TEST_CASE("aead")
       gsl::make_span("This is a test buffer").as_span<uint8_t const>();
   auto const key = makeSymmetricKey();
 
-  SUBCASE("it should encrypt/decrypt an empty buffer")
+  SECTION("it should encrypt/decrypt an empty buffer")
   {
     std::vector<uint8_t> empty;
     std::vector<uint8_t> encryptedBuffer(encryptedSize(empty.size()));
@@ -54,7 +54,7 @@ TEST_CASE("aead")
     CHECK(decryptedBuffer.empty());
   }
 
-  SUBCASE("it should encrypt/decrypt a buffer")
+  SECTION("it should encrypt/decrypt a buffer")
   {
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
@@ -66,7 +66,7 @@ TEST_CASE("aead")
     CHECK(buf == gsl::make_span(decryptedBuffer));
   }
 
-  SUBCASE("it should encrypt/decrypt a buffer smarter")
+  SECTION("it should encrypt/decrypt a buffer smarter")
   {
     auto aeadBufferData = encryptAead(key, buf, {});
     auto aead = makeAeadBuffer<uint8_t>(aeadBufferData);
@@ -77,10 +77,10 @@ TEST_CASE("aead")
 
     auto paf = decryptAead(key, aeadBufferData, {});
 
-    REQUIRE_EQ(buf, gsl::make_span(paf));
+    REQUIRE(buf == gsl::make_span(paf));
   }
 
-  SUBCASE("it should fail to decrypt a corrupted buffer")
+  SECTION("it should fail to decrypt a corrupted buffer")
   {
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
@@ -95,7 +95,7 @@ TEST_CASE("aead")
         Errc::AeadDecryptionFailed);
   }
 
-  SUBCASE("it should encrypt/decrypt a buffer and verify additional data")
+  SECTION("it should encrypt/decrypt a buffer and verify additional data")
   {
     auto const additional =
         gsl::make_span("Another test buffer").as_span<const uint8_t>();
@@ -111,7 +111,7 @@ TEST_CASE("aead")
     CHECK(buf == gsl::make_span(decryptedBuffer));
   }
 
-  SUBCASE("it should fail to verify corrupted additional data")
+  SECTION("it should fail to verify corrupted additional data")
   {
     auto additionals = std::string("Another test buffer");
     auto const additional =
@@ -133,7 +133,7 @@ TEST_CASE("aead")
                                   Errc::AeadDecryptionFailed);
   }
 
-  SUBCASE("it should be able to derive an IV")
+  SECTION("it should be able to derive an IV")
   {
     AeadIv iv{};
     randomFill(iv);
@@ -154,7 +154,7 @@ TEST_CASE("asymmetric")
   auto const aliceKeyPair = makeEncryptionKeyPair();
   auto const bobKeyPair = makeEncryptionKeyPair();
 
-  SUBCASE("it should encrypt/decrypt a buffer")
+  SECTION("it should encrypt/decrypt a buffer")
   {
     auto const enc =
         asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
@@ -164,7 +164,7 @@ TEST_CASE("asymmetric")
     CHECK(gsl::make_span(dec) == buf);
   }
 
-  SUBCASE("it should fail to decrypt a corrupted buffer")
+  SECTION("it should fail to decrypt a corrupted buffer")
   {
     auto enc = asymEncrypt(buf, aliceKeyPair.privateKey, bobKeyPair.publicKey);
     ++enc[8];
@@ -173,7 +173,7 @@ TEST_CASE("asymmetric")
         Errc::AsymmetricDecryptionFailed);
   }
 
-  SUBCASE("it should fail to decrypt a buffer too small")
+  SECTION("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -181,7 +181,7 @@ TEST_CASE("asymmetric")
         Errc::InvalidEncryptedDataSize);
   }
 
-  SUBCASE("it should fail to decrypt with the wrong key")
+  SECTION("it should fail to decrypt with the wrong key")
   {
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
@@ -191,7 +191,7 @@ TEST_CASE("asymmetric")
         Errc::AsymmetricDecryptionFailed);
   }
 
-  SUBCASE("it should make encryption keypair from private encryption key")
+  SECTION("it should make encryption keypair from private encryption key")
   {
     auto const privateKey =
         make<PrivateEncryptionKey>("This is a private encryption key");
@@ -199,13 +199,13 @@ TEST_CASE("asymmetric")
     CHECK(kp.privateKey == privateKey);
   }
 
-  SUBCASE("it should make signature keypair from private signature key")
+  SECTION("it should make signature keypair from private signature key")
   {
     auto const originalKeyPair = makeSignatureKeyPair();
     auto kp = makeSignatureKeyPair(originalKeyPair.privateKey);
     CHECK(kp.privateKey == originalKeyPair.privateKey);
     CHECK(kp.publicKey == originalKeyPair.publicKey);
-    SUBCASE("Check if the keypair works")
+    SECTION("Check if the keypair works")
     {
       auto data = Tanker::make_buffer("signed by ..."s);
       auto sig = sign(data, kp.privateKey);
@@ -213,13 +213,13 @@ TEST_CASE("asymmetric")
     }
   }
 
-  SUBCASE("it should derive public signature key from private key")
+  SECTION("it should derive public signature key from private key")
   {
     auto const keyPair = makeSignatureKeyPair();
     CHECK(derivePublicKey(keyPair.privateKey) == keyPair.publicKey);
   }
 
-  SUBCASE("it should derive public encryption key from private key")
+  SECTION("it should derive public encryption key from private key")
   {
     auto const keyPair = makeEncryptionKeyPair();
     CHECK(derivePublicKey(keyPair.privateKey) == keyPair.publicKey);
@@ -231,7 +231,7 @@ TEST_CASE("asymmetric seal")
   auto const buf = gsl::make_span("Test buffer").as_span<uint8_t const>();
   auto const bobKeyPair = makeEncryptionKeyPair();
 
-  SUBCASE("it should encrypt/decrypt an empty buffer")
+  SECTION("it should encrypt/decrypt an empty buffer")
   {
     std::vector<uint8_t> empty;
     auto const enc = sealEncrypt(empty, bobKeyPair.publicKey);
@@ -240,7 +240,7 @@ TEST_CASE("asymmetric seal")
     CHECK(dec.empty());
   }
 
-  SUBCASE("it should encrypt/decrypt a buffer")
+  SECTION("it should encrypt/decrypt a buffer")
   {
     auto const enc = sealEncrypt(buf, bobKeyPair.publicKey);
     auto const dec = sealDecrypt(enc, bobKeyPair);
@@ -248,7 +248,7 @@ TEST_CASE("asymmetric seal")
     CHECK(gsl::make_span(dec) == buf);
   }
 
-  SUBCASE("it should fail to decrypt a corrupted buffer")
+  SECTION("it should fail to decrypt a corrupted buffer")
   {
     auto enc = sealEncrypt(buf, bobKeyPair.publicKey);
     ++enc[8];
@@ -256,14 +256,14 @@ TEST_CASE("asymmetric seal")
                                   Errc::SealedDecryptionFailed);
   }
 
-  SUBCASE("it should fail to decrypt a buffer too small")
+  SECTION("it should fail to decrypt a buffer too small")
   {
     std::vector<uint8_t> enc(5);
     TANKER_CHECK_THROWS_WITH_CODE(sealDecrypt(enc, bobKeyPair),
                                   Errc::InvalidSealedDataSize);
   }
 
-  SUBCASE("it should fail to decrypt with the wrong key")
+  SECTION("it should fail to decrypt with the wrong key")
   {
     auto const charlieKeyPair = makeEncryptionKeyPair();
 
@@ -275,21 +275,21 @@ TEST_CASE("asymmetric seal")
 
 TEST_CASE("prehashPassword")
 {
-  SUBCASE("throw on empty password")
+  SECTION("throw on empty password")
   {
     TANKER_CHECK_THROWS_WITH_CODE(prehashPassword(""), Errc::InvalidBufferSize);
   }
 
-  SUBCASE("should match our test vector")
+  SECTION("should match our test vector")
   {
     auto const input = "super secretive password";
     auto const expected = mgs::base64::decode<Hash>(
         "UYNRgDLSClFWKsJ7dl9uPJjhpIoEzadksv/Mf44gSHI=");
 
-    CHECK_EQ(prehashPassword(input), expected);
+    CHECK(prehashPassword(input) == expected);
   }
 
-  SUBCASE("should match our test vector")
+  SECTION("should match our test vector")
   {
     // "test éå 한국어 😃"
     char const input[] =
@@ -298,38 +298,38 @@ TEST_CASE("prehashPassword")
     auto const expected = mgs::base64::decode<Hash>(
         "Pkn/pjub2uwkBDpt2HUieWOXP5xLn0Zlen16ID4C7jI=");
 
-    CHECK_EQ(prehashPassword(input), expected);
+    CHECK(prehashPassword(input) == expected);
   }
 }
 
 template <typename T>
 void test_format(T const& var)
 {
-  SUBCASE("be implicitly encoded")
+  SECTION("be implicitly encoded")
   {
     auto formated = fmt::format("{}", var);
-    REQUIRE_EQ(formated, mgs::base64::encode(var));
+    REQUIRE(formated == mgs::base64::encode(var));
   }
-  SUBCASE("be annoyingly encoded")
+  SECTION("be annoyingly encoded")
   {
     auto formated = fmt::format("{:}", var);
-    REQUIRE_EQ(formated, mgs::base64::encode(var));
+    REQUIRE(formated == mgs::base64::encode(var));
   }
-  SUBCASE("be safely encoded")
+  SECTION("be safely encoded")
   {
     auto formated = fmt::format("{:S}", var);
-    REQUIRE_EQ(formated, mgs::base64url::encode(var));
+    REQUIRE(formated == mgs::base64url::encode(var));
   }
-  SUBCASE("be explicitly encoded")
+  SECTION("be explicitly encoded")
   {
     auto formated = fmt::format("{:s}", var);
-    REQUIRE_EQ(formated, mgs::base64::encode(var));
+    REQUIRE(formated == mgs::base64::encode(var));
   }
-  SUBCASE("be jsonifiyed")
+  SECTION("be jsonifiyed")
   {
-    REQUIRE_EQ(nlohmann::json(var), mgs::base64::encode(var));
+    REQUIRE(nlohmann::json(var) == mgs::base64::encode(var));
   }
-  SUBCASE("complain")
+  SECTION("complain")
   {
     REQUIRE_THROWS_AS(fmt::format("{", var), fmt::format_error);
   }

@@ -6,15 +6,15 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("UserGroupRemoval serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a UserGroupRemoval")
+  SECTION("it should serialize/deserialize a UserGroupRemoval")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupRemoval = {

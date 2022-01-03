@@ -1,4 +1,4 @@
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Format/Enum.hpp>
@@ -33,19 +33,19 @@ TEST_CASE("print a formated log")
   std::string err = "this is a vary naughty error";
   Tanker::Log::setLogHandler(nullptr);
 
-  SUBCASE("Print a log")
+  SECTION("Print a log")
   {
     TLOG(Info, "this a log");
     TLOG(Info, "this a '{:^26s}' log", "formatted");
   }
 
-  SUBCASE("Set a loghandler")
+  SECTION("Set a loghandler")
   {
     Tanker::Log::setLogHandler(&myLogHandler);
     TINFO("I am the message");
   }
 
-  SUBCASE("Reset a LogHandler")
+  SECTION("Reset a LogHandler")
   {
     Tanker::Log::setLogHandler(&myLogHandler);
     TINFO("I am the message");
@@ -53,12 +53,12 @@ TEST_CASE("print a formated log")
     TINFO("I am the message no handler");
   }
 
-  SUBCASE("Print a simple info")
+  SECTION("Print a simple info")
   {
     TINFO("didn't find the error");
   }
 
-  SUBCASE("Print a formated info")
+  SECTION("Print a formated info")
   {
     TINFO(
         "didn't find the error {0}!, "
@@ -69,26 +69,26 @@ TEST_CASE("print a formated log")
         1.4);
   }
 
-  SUBCASE("Print a status")
+  SECTION("Print a status")
   {
-    CHECK_EQ(fmt::format("this is is a Status {:e}", Tanker::Status::Ready),
-             R"!(this is is a Status 1 Ready)!");
-    CHECK_EQ(fmt::format("this is is a Status {}", Tanker::Status::Ready),
-             R"!(this is is a Status 1 Ready)!");
+    CHECK(fmt::format("this is is a Status {:e}", Tanker::Status::Ready) ==
+          R"!(this is is a Status 1 Ready)!");
+    CHECK(fmt::format("this is is a Status {}", Tanker::Status::Ready) ==
+          R"!(this is is a Status 1 Ready)!");
   }
 
-  SUBCASE("Print a Nature")
+  SECTION("Print a Nature")
   {
-    CHECK_EQ(fmt::format("this is is a Nature {:e}", Nature::KeyPublishToUser),
-             R"!(this is is a Nature 8 KeyPublishToUser)!");
+    CHECK(fmt::format("this is is a Nature {:e}", Nature::KeyPublishToUser) ==
+          R"!(this is is a Nature 8 KeyPublishToUser)!");
   }
 
-  SUBCASE("Print the fear")
+  SECTION("Print the fear")
   {
     TERROR("This is bad");
   }
 
-  SUBCASE("It format a ResourceId")
+  SECTION("It format a ResourceId")
   {
     auto resourceId =
         Tanker::make<Tanker::Trustchain::ResourceId>("awesome, isn't it?");

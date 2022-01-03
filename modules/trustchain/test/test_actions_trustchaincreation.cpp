@@ -4,7 +4,7 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
@@ -19,9 +19,9 @@ TEST_CASE("TrustchainCreation tests")
   CHECK(tc.publicSignatureKey() == publicSignatureKey);
 }
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("TrustchainCreation serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a TrustchainCreation")
+  SECTION("it should serialize/deserialize a TrustchainCreation")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedTrustchainCreation = {

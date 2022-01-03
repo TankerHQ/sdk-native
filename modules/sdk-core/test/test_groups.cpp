@@ -13,7 +13,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <trompeloeil.hpp>
 
 #include <range/v3/algorithm/find.hpp>

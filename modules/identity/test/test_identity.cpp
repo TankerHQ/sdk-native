@@ -11,7 +11,7 @@
 #include <Helpers/Email.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <gsl/gsl-lite.hpp>
 #include <mgs/base64.hpp>
 #include <nlohmann/json.hpp>
@@ -210,85 +210,85 @@ TEST_CASE("checkUserSecret")
   CHECK_NOTHROW(checkUserSecret(userSecret, obfuscatedUserId));
 }
 
-TEST_SUITE("generate Identity")
+TEST_CASE("generate Identity")
 {
-  TEST_CASE("should throw given empty userId")
+  SECTION("should throw given empty userId")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         createIdentity("trustchainID", "privateKey", ""_uid),
         Errc::InvalidUserId);
   }
 
-  TEST_CASE("should throw given empty trustchainId")
+  SECTION("should throw given empty trustchainId")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         createIdentity("", "privateKey", "userId"_uid),
         Errc::InvalidTrustchainId);
   }
 
-  TEST_CASE("should throw given empty privateKey")
+  SECTION("should throw given empty privateKey")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         createIdentity("trustchainId", "", "userId"_uid),
         Errc::InvalidTrustchainPrivateKey);
   }
 
-  TEST_CASE("We can create an identity from strings")
+  SECTION("We can create an identity from strings")
   {
     CHECK_NOTHROW(createIdentity(
         trustchainIdString, trustchainPrivateKeyString, suserId));
   }
 }
 
-TEST_SUITE("generate provisional Identity")
+TEST_CASE("generate provisional Identity")
 {
-  TEST_CASE("should throw given empty trustchainId")
+  SECTION("should throw given empty trustchainId")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         createProvisionalIdentity("", Email{userEmail}),
         Errc::InvalidTrustchainId);
   }
 
-  TEST_CASE("should throw given empty email")
+  SECTION("should throw given empty email")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         createProvisionalIdentity("trustchainId", Email{""}),
         Errc::InvalidEmail);
   }
 
-  TEST_CASE("We can create a provisional identity from strings")
+  SECTION("We can create a provisional identity from strings")
   {
     CHECK_NOTHROW(
         createProvisionalIdentity(trustchainIdString, Email{userEmail}));
   }
 }
 
-TEST_SUITE("serialization")
+TEST_CASE("serialization")
 {
-  TEST_CASE(
+  SECTION(
       "We can de/reserialize a secret permanent identity from a good string")
   {
     auto const identity =
         extract<SecretPermanentIdentity>(GOOD_SECRET_PERMANENT_IDENTITY);
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.delegation, delegation);
-    CHECK_EQ(identity.userSecret, userSecret);
-    CHECK_EQ(to_string(identity), GOOD_SECRET_PERMANENT_IDENTITY);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.delegation == delegation);
+    CHECK(identity.userSecret == userSecret);
+    CHECK(to_string(identity) == GOOD_SECRET_PERMANENT_IDENTITY);
   }
 
-  TEST_CASE(
+  SECTION(
       "We can de/reserialize a public permanent identity from a good string")
   {
     auto const publicIdentity =
         extract<PublicIdentity>(GOOD_PUBLIC_PERMANENT_IDENTITY);
     auto const publicPermanentIdentity =
         boost::variant2::get<PublicPermanentIdentity>(publicIdentity);
-    CHECK_EQ(publicPermanentIdentity.trustchainId, trustchainId);
-    CHECK_EQ(publicPermanentIdentity.userId, obfuscatedUserId);
-    CHECK_EQ(to_string(publicIdentity), GOOD_PUBLIC_PERMANENT_IDENTITY);
+    CHECK(publicPermanentIdentity.trustchainId == trustchainId);
+    CHECK(publicPermanentIdentity.userId == obfuscatedUserId);
+    CHECK(to_string(publicIdentity) == GOOD_PUBLIC_PERMANENT_IDENTITY);
   }
 
-  TEST_CASE(
+  SECTION(
       "We cannot deserialize a secret permanent identity as a public permanent "
       "identity")
   {
@@ -297,73 +297,72 @@ TEST_SUITE("serialization")
         Errc::InvalidType);
   }
 
-  TEST_CASE(
+  SECTION(
       "We can de/reserialize an email secret provisional identity from a good "
       "string")
   {
     auto const identity =
         extract<SecretProvisionalIdentity>(GOOD_SECRET_PROVISIONAL_IDENTITY);
 
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.value, userEmail);
-    CHECK_EQ(identity.target, TargetType::Email);
-    CHECK_EQ(identity.appSignatureKeyPair.publicKey, appSignaturePublicKey);
-    CHECK_EQ(identity.appSignatureKeyPair.privateKey, appSignaturePrivateKey);
-    CHECK_EQ(identity.appEncryptionKeyPair.publicKey, appEncryptionPublicKey);
-    CHECK_EQ(identity.appEncryptionKeyPair.privateKey, appEncryptionPrivateKey);
-    CHECK_EQ(to_string(identity), GOOD_SECRET_PROVISIONAL_IDENTITY);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.value == userEmail);
+    CHECK(identity.target == TargetType::Email);
+    CHECK(identity.appSignatureKeyPair.publicKey == appSignaturePublicKey);
+    CHECK(identity.appSignatureKeyPair.privateKey == appSignaturePrivateKey);
+    CHECK(identity.appEncryptionKeyPair.publicKey == appEncryptionPublicKey);
+    CHECK(identity.appEncryptionKeyPair.privateKey == appEncryptionPrivateKey);
+    CHECK(to_string(identity) == GOOD_SECRET_PROVISIONAL_IDENTITY);
   }
 
-  TEST_CASE(
+  SECTION(
       "We can de/reserialize a phone number secret provisional identity from a "
       "good string")
   {
     auto const identity = extract<SecretProvisionalIdentity>(
         GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY);
 
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.value, phoneNumber);
-    CHECK_EQ(identity.target, TargetType::PhoneNumber);
-    CHECK_EQ(identity.appSignatureKeyPair.publicKey,
-             phoneNumberAppSignaturePublicKey);
-    CHECK_EQ(identity.appSignatureKeyPair.privateKey,
-             phoneNumberAppSignaturePrivateKey);
-    CHECK_EQ(identity.appEncryptionKeyPair.publicKey,
-             phoneNumberAppEncryptionPublicKey);
-    CHECK_EQ(identity.appEncryptionKeyPair.privateKey,
-             phoneNumberAppEncryptionPrivateKey);
-    CHECK_EQ(to_string(identity),
-             GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.value == phoneNumber);
+    CHECK(identity.target == TargetType::PhoneNumber);
+    CHECK(identity.appSignatureKeyPair.publicKey ==
+          phoneNumberAppSignaturePublicKey);
+    CHECK(identity.appSignatureKeyPair.privateKey ==
+          phoneNumberAppSignaturePrivateKey);
+    CHECK(identity.appEncryptionKeyPair.publicKey ==
+          phoneNumberAppEncryptionPublicKey);
+    CHECK(identity.appEncryptionKeyPair.privateKey ==
+          phoneNumberAppEncryptionPrivateKey);
+    CHECK(to_string(identity) == GOOD_SECRET_PHONE_NUMBER_PROVISIONAL_IDENTITY);
   }
 
-  TEST_CASE("We can deserialize an unhashed email public provisional identity")
+  SECTION("We can deserialize an unhashed email public provisional identity")
   {
     auto const identity = extract<PublicProvisionalIdentity>(
         GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
 
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.value, userEmail);
-    CHECK_EQ(identity.target, TargetType::Email);
-    CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
-    CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
-    CHECK_EQ(to_string(identity), GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.value == userEmail);
+    CHECK(identity.target == TargetType::Email);
+    CHECK(identity.appSignaturePublicKey == appSignaturePublicKey);
+    CHECK(identity.appEncryptionPublicKey == appEncryptionPublicKey);
+    CHECK(to_string(identity) == GOOD_OLD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 
-  TEST_CASE("We can deserialize a hashed email public provisional identity")
+  SECTION("We can deserialize a hashed email public provisional identity")
   {
     auto const identity =
         extract<PublicProvisionalIdentity>(GOOD_PUBLIC_PROVISIONAL_IDENTITY);
     auto hashedEmail = mgs::base64::encode(Crypto::generichash(
         gsl::make_span(userEmail).as_span<std::uint8_t const>()));
 
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.value, hashedEmail);
-    CHECK_EQ(identity.target, TargetType::HashedEmail);
-    CHECK_EQ(identity.appSignaturePublicKey, appSignaturePublicKey);
-    CHECK_EQ(identity.appEncryptionPublicKey, appEncryptionPublicKey);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.value == hashedEmail);
+    CHECK(identity.target == TargetType::HashedEmail);
+    CHECK(identity.appSignaturePublicKey == appSignaturePublicKey);
+    CHECK(identity.appEncryptionPublicKey == appEncryptionPublicKey);
   }
 
-  TEST_CASE("We can deserialize a phone number public provisional identity")
+  SECTION("We can deserialize a phone number public provisional identity")
   {
     auto const identity = extract<PublicProvisionalIdentity>(
         GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY);
@@ -375,14 +374,12 @@ TEST_SUITE("serialization")
     auto const hashedPhoneNumber =
         mgs::base64::encode(Crypto::generichash(buffer));
 
-    CHECK_EQ(identity.trustchainId, trustchainId);
-    CHECK_EQ(identity.value, hashedPhoneNumber);
-    CHECK_EQ(identity.target, TargetType::HashedPhoneNumber);
-    CHECK_EQ(identity.appSignaturePublicKey, phoneNumberAppSignaturePublicKey);
-    CHECK_EQ(identity.appEncryptionPublicKey,
-             phoneNumberAppEncryptionPublicKey);
-    CHECK_EQ(to_string(identity),
-             GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY);
+    CHECK(identity.trustchainId == trustchainId);
+    CHECK(identity.value == hashedPhoneNumber);
+    CHECK(identity.target == TargetType::HashedPhoneNumber);
+    CHECK(identity.appSignaturePublicKey == phoneNumberAppSignaturePublicKey);
+    CHECK(identity.appEncryptionPublicKey == phoneNumberAppEncryptionPublicKey);
+    CHECK(to_string(identity) == GOOD_PUBLIC_PHONE_NUMBER_PROVISIONAL_IDENTITY);
   }
 }
 
@@ -395,9 +392,9 @@ TEST_CASE(
       Errc::InvalidType);
 }
 
-TEST_SUITE("getPublicIdentity")
+TEST_CASE("getPublicIdentity")
 {
-  TEST_CASE("get a public identity from a secret permanent identity")
+  SECTION("get a public identity from a secret permanent identity")
   {
     auto const identityStr = createIdentity(
         trustchainIdString, trustchainPrivateKeyString, "alice"_uid);
@@ -406,12 +403,12 @@ TEST_SUITE("getPublicIdentity")
     auto const aliceO = obfuscateUserId("alice"_uid, trustchainId);
     auto const p =
         boost::variant2::get_if<PublicPermanentIdentity>(&publicIdentity);
-    REQUIRE_UNARY(p);
-    CHECK_EQ(p->trustchainId, trustchainId);
-    CHECK_EQ(p->userId, aliceO);
+    REQUIRE(p);
+    CHECK(p->trustchainId == trustchainId);
+    CHECK(p->userId == aliceO);
   }
 
-  TEST_CASE("get a public identity from a secret provisional identity")
+  SECTION("get a public identity from a secret provisional identity")
   {
     auto const b64PublicIdentity =
         getPublicIdentity(GOOD_SECRET_PROVISIONAL_IDENTITY);
@@ -419,13 +416,13 @@ TEST_SUITE("getPublicIdentity")
     auto const p =
         boost::variant2::get_if<PublicProvisionalIdentity>(&publicIdentity);
 
-    REQUIRE_UNARY(p);
-    CHECK_EQ(p->trustchainId, trustchainId);
-    CHECK_EQ(p->target, TargetType::HashedEmail);
-    CHECK_EQ(p->value, b64HashedEmail);
-    CHECK_EQ(p->appSignaturePublicKey, appSignaturePublicKey);
-    CHECK_EQ(p->appEncryptionPublicKey, appEncryptionPublicKey);
-    CHECK_EQ(b64PublicIdentity, GOOD_PUBLIC_PROVISIONAL_IDENTITY);
+    REQUIRE(p);
+    CHECK(p->trustchainId == trustchainId);
+    CHECK(p->target == TargetType::HashedEmail);
+    CHECK(p->value == b64HashedEmail);
+    CHECK(p->appSignaturePublicKey == appSignaturePublicKey);
+    CHECK(p->appEncryptionPublicKey == appEncryptionPublicKey);
+    CHECK(b64PublicIdentity == GOOD_PUBLIC_PROVISIONAL_IDENTITY);
   }
 }
 
@@ -435,77 +432,79 @@ TEST_CASE("generateUserSecret can be checked")
       checkUserSecret(generateUserSecret(obfuscatedUserId), obfuscatedUserId));
 }
 
-TEST_SUITE_BEGIN("ensure public identity in trustchain");
-
-TEST_CASE("does not throw with an empty array")
+TEST_CASE("ensure public identity in trustchain")
 {
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-  CHECK_NOTHROW(ensureIdentitiesInTrustchain({}, otherTrustchainId));
+  SECTION("does not throw with an empty array")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+    CHECK_NOTHROW(ensureIdentitiesInTrustchain({}, otherTrustchainId));
+  }
+
+  SECTION("does not throw with valid public identities")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+    auto kp = Crypto::makeSignatureKeyPair();
+
+    auto identity =
+        createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
+    CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
+  }
+
+  SECTION("does not throw with valid public provisional identities")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+
+    auto identity = createTestProvisionalIdentity(otherTrustchainId);
+    CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
+  }
+
+  SECTION("throws with invalid identities")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+
+    auto identity =
+        createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
+        Errors::Errc::InvalidArgument);
+  }
+
+  SECTION("throws with invalid provisional identities")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+
+    auto identity = createTestProvisionalIdentity(trustchainId);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
+        Errors::Errc::InvalidArgument);
+  }
+
+  SECTION("throws with a mix of valid and invalid identities")
+  {
+    Trustchain::TrustchainId otherTrustchainId;
+    Crypto::randomFill(otherTrustchainId);
+    auto kp = Crypto::makeSignatureKeyPair();
+
+    auto validIdentity =
+        createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
+    auto validProvisionalIdentity =
+        createTestProvisionalIdentity(otherTrustchainId);
+    auto invalidIdentity =
+        createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
+    auto invalidProvisionalIdentity =
+        createTestProvisionalIdentity(trustchainId);
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        ensureIdentitiesInTrustchain({validIdentity,
+                                      invalidIdentity,
+                                      validProvisionalIdentity,
+                                      invalidProvisionalIdentity},
+                                     otherTrustchainId),
+        Errors::Errc::InvalidArgument);
+  }
 }
-
-TEST_CASE("does not throw with valid public identities")
-{
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-  auto kp = Crypto::makeSignatureKeyPair();
-
-  auto identity = createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
-  CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
-}
-
-TEST_CASE("does not throw with valid public provisional identities")
-{
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-
-  auto identity = createTestProvisionalIdentity(otherTrustchainId);
-  CHECK_NOTHROW(ensureIdentitiesInTrustchain({identity}, otherTrustchainId));
-}
-
-TEST_CASE("throws with invalid identities")
-{
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-
-  auto identity =
-      createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
-  TANKER_CHECK_THROWS_WITH_CODE(
-      ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
-      Errors::Errc::InvalidArgument);
-}
-
-TEST_CASE("throws with invalid provisional identities")
-{
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-
-  auto identity = createTestProvisionalIdentity(trustchainId);
-  TANKER_CHECK_THROWS_WITH_CODE(
-      ensureIdentitiesInTrustchain({identity}, otherTrustchainId),
-      Errors::Errc::InvalidArgument);
-}
-
-TEST_CASE("throws with a mix of valid and invalid identities")
-{
-  Trustchain::TrustchainId otherTrustchainId;
-  Crypto::randomFill(otherTrustchainId);
-  auto kp = Crypto::makeSignatureKeyPair();
-
-  auto validIdentity =
-      createTestPermanentIdentity(otherTrustchainId, kp.privateKey);
-  auto validProvisionalIdentity =
-      createTestProvisionalIdentity(otherTrustchainId);
-  auto invalidIdentity =
-      createTestPermanentIdentity(trustchainId, trustchainPrivateKey);
-  auto invalidProvisionalIdentity = createTestProvisionalIdentity(trustchainId);
-
-  TANKER_CHECK_THROWS_WITH_CODE(
-      ensureIdentitiesInTrustchain({validIdentity,
-                                    invalidIdentity,
-                                    validProvisionalIdentity,
-                                    invalidProvisionalIdentity},
-                                   otherTrustchainId),
-      Errors::Errc::InvalidArgument);
-}
-TEST_SUITE_END();

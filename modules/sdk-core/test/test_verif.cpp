@@ -15,7 +15,7 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Crypto/Format/Format.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "TrustchainGenerator.hpp"
 
@@ -35,7 +35,7 @@ auto& extract(U& action)
 void deviceCreationCommonChecks(DeviceCreation const& deviceEntry,
                                 Trustchain::Context const& context)
 {
-  SUBCASE("it should reject an incorrectly signed delegation for a device")
+  SECTION("it should reject an incorrectly signed delegation for a device")
   {
     unconstify(deviceEntry.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -43,7 +43,7 @@ void deviceCreationCommonChecks(DeviceCreation const& deviceEntry,
         Errc::InvalidDelegationSignature);
   }
 
-  SUBCASE("should reject an incorrectly signed device")
+  SECTION("should reject an incorrectly signed device")
   {
     unconstify(deviceEntry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -51,7 +51,7 @@ void deviceCreationCommonChecks(DeviceCreation const& deviceEntry,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should accept a valid DeviceCreation")
+  SECTION("should accept a valid DeviceCreation")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(
@@ -59,7 +59,7 @@ void deviceCreationCommonChecks(DeviceCreation const& deviceEntry,
         Errc::UserAlreadyExists);
   }
 
-  SUBCASE("should accept a valid DeviceCreation")
+  SECTION("should accept a valid DeviceCreation")
   {
     CHECK_NOTHROW(
         Verif::verifyDeviceCreation(deviceEntry, context, std::nullopt));
@@ -70,7 +70,7 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
                                 Trustchain::Context const& context,
                                 DeviceCreation const& secondDeviceEntry)
 {
-  SUBCASE("it should reject a device creation when author device is revoked")
+  SECTION("it should reject a device creation when author device is revoked")
   {
     auto& authorDevice = tankerUser.devices().front();
     unconstify(authorDevice).setRevoked();
@@ -79,7 +79,7 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
         Errc::InvalidAuthor);
   }
 
-  SUBCASE("it should reject an incorrectly signed delegation for a device")
+  SECTION("it should reject an incorrectly signed delegation for a device")
   {
     unconstify(secondDeviceEntry.delegationSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -87,7 +87,7 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
         Errc::InvalidDelegationSignature);
   }
 
-  SUBCASE("should reject an incorrectly signed device")
+  SECTION("should reject an incorrectly signed device")
   {
     unconstify(secondDeviceEntry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -95,7 +95,7 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject an incorrect userId")
+  SECTION("should reject an incorrect userId")
   {
     unconstify(secondDeviceEntry.author())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -103,14 +103,14 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
         Errc::InvalidUserId);
   }
 
-  SUBCASE("should reject a DeviceCreation with a missing author")
+  SECTION("should reject a DeviceCreation with a missing author")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceCreation(secondDeviceEntry, context, std::nullopt),
         Errc::InvalidAuthor);
   }
 
-  SUBCASE("should accept a valid DeviceCreation")
+  SECTION("should accept a valid DeviceCreation")
   {
     CHECK_NOTHROW(
         Verif::verifyDeviceCreation(secondDeviceEntry, context, tankerUser));
@@ -120,7 +120,7 @@ void deviceCreationCommonChecks(Users::User const& tankerUser,
 void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
                                   Users::User& user)
 {
-  SUBCASE("should reject an incorrectly signed DeviceRevocation")
+  SECTION("should reject an incorrectly signed DeviceRevocation")
   {
     unconstify(deviceRevocation.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -128,7 +128,7 @@ void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a revocation from a revoked device")
+  SECTION("should reject a revocation from a revoked device")
   {
     unconstify(user.devices()[0]).setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -136,14 +136,14 @@ void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
         Errc::AuthorIsRevoked);
   }
 
-  SUBCASE("should reject a revocation when user is not found")
+  SECTION("should reject a revocation when user is not found")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(deviceRevocation, std::nullopt),
         Errc::InvalidAuthor);
   }
 
-  SUBCASE("should reject a revocation of an already revoked device")
+  SECTION("should reject a revocation of an already revoked device")
   {
     unconstify(user.devices()[1]).setRevoked();
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -151,7 +151,7 @@ void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
         Errc::InvalidTargetDevice);
   }
 
-  SUBCASE("should accept a valid deviceRevocation")
+  SECTION("should accept a valid deviceRevocation")
   {
     CHECK_NOTHROW(Verif::verifyDeviceRevocation(deviceRevocation, user));
   }
@@ -160,14 +160,14 @@ void deviceRevocationCommonChecks(DeviceRevocation const& deviceRevocation,
 void testUserGroupCreationCommon(Users::Device const& authorDevice,
                                  UserGroupCreation const& gcEntry)
 {
-  SUBCASE("should reject a UserGroupCreation if the group already exists")
+  SECTION("should reject a UserGroupCreation if the group already exists")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice, ExternalGroup{}),
         Errc::InvalidGroup);
   }
 
-  SUBCASE("should reject an incorrectly signed UserGroupCreation")
+  SECTION("should reject an incorrectly signed UserGroupCreation")
   {
     unconstify(gcEntry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -175,7 +175,7 @@ void testUserGroupCreationCommon(Users::Device const& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a UserGroupCreation with invalid selfSignature")
+  SECTION("should reject a UserGroupCreation with invalid selfSignature")
   {
     unconstify(gcEntry.selfSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -183,7 +183,7 @@ void testUserGroupCreationCommon(Users::Device const& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should accept a valid UserGroupCreation")
+  SECTION("should accept a valid UserGroupCreation")
   {
     CHECK_NOTHROW(
         Verif::verifyUserGroupCreation(gcEntry, authorDevice, std::nullopt));
@@ -196,14 +196,14 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
 {
   auto const baseGroup = BaseGroup{group};
 
-  SUBCASE("should reject a UserGroupAddition for an unknown group")
+  SECTION("should reject a UserGroupAddition for an unknown group")
   {
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, std::nullopt),
         Errc::InvalidGroup);
   }
 
-  SUBCASE("should reject an incorrectly signed UserGroupAddition")
+  SECTION("should reject an incorrectly signed UserGroupAddition")
   {
     unconstify(gaEntry.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -211,7 +211,7 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a UserGroupAddition with invalid selfSignature")
+  SECTION("should reject a UserGroupAddition with invalid selfSignature")
   {
     unconstify(gaEntry.selfSignature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -219,7 +219,7 @@ void testUserGroupAdditionCommon(Test::Device const& authorDevice,
         Errc::InvalidSignature);
   }
 
-  SUBCASE("should accept a valid UserGroupAddition")
+  SECTION("should accept a valid UserGroupAddition")
   {
     CHECK_NOTHROW(
         Verif::verifyUserGroupAddition(gaEntry, authorDevice, baseGroup));
@@ -233,17 +233,17 @@ TEST_CASE("Verif TrustchainCreation")
   auto const rootEntry = generator.rootBlock();
   auto const& trustchainId = generator.context().id();
 
-  SUBCASE("Entry level")
+  SECTION("Entry level")
   {
-    SUBCASE("Valid TrustchainCreation block")
+    SECTION("Valid TrustchainCreation block")
     {
       CHECK_NOTHROW(Verif::verifyTrustchainCreation(rootEntry, trustchainId));
     }
   }
 
-  SUBCASE("Contextual level")
+  SECTION("Contextual level")
   {
-    SUBCASE("TrustchainId mismatch")
+    SECTION("TrustchainId mismatch")
     {
       Trustchain::TrustchainId trustchainId(rootEntry.hash());
       trustchainId[0]++;
@@ -253,7 +253,7 @@ TEST_CASE("Verif TrustchainCreation")
           Errc::InvalidHash);
     }
 
-    SUBCASE("Valid TrustchainCreation block")
+    SECTION("Valid TrustchainCreation block")
     {
       Trustchain::TrustchainId trustchainId(rootEntry.hash());
 
@@ -289,7 +289,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v3 author")
 
   deviceCreationCommonChecks(user, generator.context(), deviceEntry);
 
-  SUBCASE("should reject an incorrect userKey")
+  SECTION("should reject an incorrect userKey")
   {
     auto& dc3 = extract<DeviceCreation3>(deviceEntry);
 
@@ -315,7 +315,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
   auto& secondDevice = user.addDevice();
   auto const deviceEntry = secondDevice.action;
 
-  SUBCASE("should reject a device creation 3 if the user has no user key")
+  SECTION("should reject a device creation 3 if the user has no user key")
   {
     auto tankerUser = Users::User{user};
     unconstify(tankerUser.userKey()) = std::nullopt;
@@ -326,7 +326,7 @@ TEST_CASE("Verif DeviceCreation v3 - DeviceCreation v1 author")
         Errc::InvalidUserKey);
   }
 
-  SUBCASE("should reject an incorrect userKey")
+  SECTION("should reject an incorrect userKey")
   {
     auto& dc3 = extract<DeviceCreation3>(deviceEntry);
 
@@ -352,7 +352,7 @@ TEST_CASE("Verif DeviceCreation v1 - DeviceCreation v1 author")
 
   deviceCreationCommonChecks(alice, generator.context(), deviceEntry);
 
-  SUBCASE("should reject a device creation v1 if the user has a userKey")
+  SECTION("should reject a device creation v1 if the user has a userKey")
   {
     auto const keyPair = Crypto::makeEncryptionKeyPair();
     alice.addUserKey(keyPair);
@@ -372,12 +372,12 @@ TEST_CASE("Verif DeviceRevocationV1")
 
   auto const revokeEntry = alice.revokeDeviceV1(secondDevice);
 
-  SUBCASE("common")
+  SECTION("common")
   {
     deviceRevocationCommonChecks(revokeEntry, aliceUser);
   }
 
-  SUBCASE("should reject a revocation for another user's device")
+  SECTION("should reject a revocation for another user's device")
   {
     auto bob = generator.makeUserV1("bob");
     auto bobDevice = bob.makeDeviceV1();
@@ -387,7 +387,7 @@ TEST_CASE("Verif DeviceRevocationV1")
         Verif::verifyDeviceRevocation(action, aliceUser), Errc::InvalidUser);
   }
 
-  SUBCASE("should reject a revocation whose user has a userKey")
+  SECTION("should reject a revocation whose user has a userKey")
   {
     unconstify(aliceUser.userKey()) = Crypto::makeEncryptionKeyPair().publicKey;
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -406,7 +406,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto aliceUser = Users::User{alice};
   auto const action = alice.revokeDevice(secondDevice);
 
-  SUBCASE("common")
+  SECTION("common")
   {
     deviceRevocationCommonChecks(action, aliceUser);
   }
@@ -417,7 +417,7 @@ TEST_CASE("Verif DeviceRevocationV2")
   auto const bobUser = Users::User{bob};
   auto entryUserV1 = bob.revokeDeviceForMigration(bobDevice, bobOtherDevice);
 
-  SUBCASE(
+  SECTION(
       "should reject a revocation whose user has no userKey when "
       "PreviousPublicEncryptionKey is not a zero array")
   {
@@ -428,7 +428,7 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidEncryptionKey);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a revocation whose user has no userKey when the "
       "EncryptedKeyForPreviousUserKey is not a zero array")
   {
@@ -438,14 +438,14 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidUserKey);
   }
 
-  SUBCASE("should reject a revocation for another user's device")
+  SECTION("should reject a revocation for another user's device")
   {
     auto const revokeEntry = alice.revokeDevice(bobOtherDevice);
     TANKER_CHECK_THROWS_WITH_CODE(
         Verif::verifyDeviceRevocation(revokeEntry, bobUser), Errc::InvalidUser);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a revocation whose user has a userKey when the "
       "previousEncryptedKey does not match the userKey")
   {
@@ -456,7 +456,7 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidEncryptionKey);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a DeviceRevocation2 whose userKeys field does not have "
       "exactly one element per device")
   {
@@ -469,7 +469,7 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidUserKeys);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a DeviceCreationV2 with a userKey fields that contains "
       "the target device of the revocation")
   {
@@ -486,7 +486,7 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidUserKeys);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a DeviceRevocation whose userKeys fields has a device "
       "that does not belong to the author's devices")
   {
@@ -504,7 +504,7 @@ TEST_CASE("Verif DeviceRevocationV2")
         Errc::InvalidUserKeys);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a DeviceRevocation whose userKeys fields has a duplicates")
   {
     auto& sealedUserKeysForDevices =
@@ -525,21 +525,21 @@ TEST_CASE("Verif UserGroupCreation")
   auto const alice = generator.makeUser("alice");
   auto& firstDevice = alice.devices().front();
 
-  SUBCASE("V1")
+  SECTION("V1")
   {
     auto const aliceGroup = generator.makeGroupV1(firstDevice, {alice});
     testUserGroupCreationCommon(
         firstDevice,
         boost::variant2::get<UserGroupCreation>(aliceGroup.entries().front()));
   }
-  SUBCASE("V2")
+  SECTION("V2")
   {
     auto const aliceGroup = generator.makeGroupV2(firstDevice, {alice});
     testUserGroupCreationCommon(
         firstDevice,
         boost::variant2::get<UserGroupCreation>(aliceGroup.entries().front()));
   }
-  SUBCASE("V3")
+  SECTION("V3")
   {
     auto const aliceGroup = generator.makeGroup(firstDevice, {alice});
     testUserGroupCreationCommon(
@@ -555,7 +555,7 @@ TEST_CASE("Verif UserGroupAddition")
   auto alice = generator.makeUser("alice");
   auto const& aliceDevice = alice.addDevice();
   auto const bob = generator.makeUser("bob");
-  SUBCASE("V1")
+  SECTION("V1")
   {
     auto aliceGroup = generator.makeGroupV1(aliceDevice, {alice});
     auto const previousGroup = aliceGroup;
@@ -563,7 +563,7 @@ TEST_CASE("Verif UserGroupAddition")
     testUserGroupAdditionCommon(
         aliceDevice, aliceGroup.addUsersV1(aliceDevice, {bob}), previousGroup);
   }
-  SUBCASE("V2")
+  SECTION("V2")
   {
     auto aliceGroup = generator.makeGroupV2(aliceDevice, {alice});
     auto const previousGroup = aliceGroup;
@@ -571,7 +571,7 @@ TEST_CASE("Verif UserGroupAddition")
     testUserGroupAdditionCommon(
         aliceDevice, aliceGroup.addUsersV2(aliceDevice, {bob}), previousGroup);
   }
-  SUBCASE("V3")
+  SECTION("V3")
   {
     auto aliceGroup = generator.makeGroup(aliceDevice, {alice});
     auto const previousGroup = aliceGroup;
@@ -592,7 +592,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
 
   auto& authorDevice = alice.devices().front();
 
-  SUBCASE("should reject an incorrectly signed ProvisionalIdentityClaim")
+  SECTION("should reject an incorrectly signed ProvisionalIdentityClaim")
   {
     unconstify(provisionalIdentityClaim.signature())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
@@ -600,7 +600,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
                                   Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a ProvisionalIdentityClaim with invalid app signature")
+  SECTION("should reject a ProvisionalIdentityClaim with invalid app signature")
   {
     unconstify(provisionalIdentityClaim.authorSignatureByAppKey())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
@@ -608,7 +608,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
                                   Errc::InvalidSignature);
   }
 
-  SUBCASE(
+  SECTION(
       "should reject a ProvisionalIdentityClaim with invalid tanker "
       "signature")
   {
@@ -618,7 +618,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
                                   Errc::InvalidSignature);
   }
 
-  SUBCASE("should reject a ProvisionalIdentityClaim with an incorrect user ID")
+  SECTION("should reject a ProvisionalIdentityClaim with an incorrect user ID")
   {
     unconstify(authorDevice.userId())[0]++;
     TANKER_CHECK_THROWS_WITH_CODE(Verif::verifyProvisionalIdentityClaim(
@@ -626,7 +626,7 @@ TEST_CASE("Verif ProvisionalIdentityClaim")
                                   Errc::InvalidUserId);
   }
 
-  SUBCASE("should accept a valid ProvisionalIdentityClaim")
+  SECTION("should accept a valid ProvisionalIdentityClaim")
   {
     CHECK_NOTHROW(Verif::verifyProvisionalIdentityClaim(
         provisionalIdentityClaim, authorDevice));

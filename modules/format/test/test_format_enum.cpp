@@ -1,11 +1,8 @@
 #include <Tanker/Format/Enum.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <fmt/core.h>
 
-// VERY IMPORTANT to include this:
-// https://github.com/onqtam/doctest/issues/183
-#include <ostream>
 #include <string>
 
 namespace
@@ -32,9 +29,9 @@ std::string to_string(Test t)
 
 TEST_CASE("Formatting an enum")
 {
-  CHECK_EQ(fmt::format("my enum {}", Test::One), R"!(my enum 1 One)!");
-  CHECK_EQ(fmt::format("my enum {:}", Test::Two), R"!(my enum 2 Two)!");
-  CHECK_EQ(fmt::format("my enum {:s}", Test::Two), R"!(my enum Two)!");
-  CHECK_EQ(fmt::format("my enum {:d}", Test::Two), R"!(my enum 2)!");
-  CHECK_EQ(fmt::format("my enum {:e}", Test::One), R"!(my enum 1 One)!");
+  CHECK(fmt::format("my enum {}", Test::One) == R"!(my enum 1 One)!");
+  CHECK(fmt::format("my enum {:}", Test::Two) == R"!(my enum 2 Two)!");
+  CHECK(fmt::format("my enum {:s}", Test::Two) == R"!(my enum Two)!");
+  CHECK(fmt::format("my enum {:d}", Test::Two) == R"!(my enum 2)!");
+  CHECK(fmt::format("my enum {:e}", Test::One) == R"!(my enum 1 One)!");
 }

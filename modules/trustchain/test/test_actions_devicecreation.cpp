@@ -11,7 +11,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
@@ -19,7 +19,7 @@ using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("DeviceCreation tests")
 {
-  SUBCASE("DeviceCreation variant functions")
+  SECTION("DeviceCreation variant functions")
   {
     DeviceCreation dc;
 
@@ -33,7 +33,7 @@ TEST_CASE("DeviceCreation tests")
           Nature::DeviceCreation1);
   }
 
-  SUBCASE("DeviceCreation v2 conversion to v1")
+  SECTION("DeviceCreation v2 conversion to v1")
   {
     Crypto::PublicSignatureKey ephemeralPublicSignatureKey{};
     UserId userId{};
@@ -44,7 +44,7 @@ TEST_CASE("DeviceCreation tests")
 
     REQUIRE(lastReset.is_null());
 
-    SUBCASE("can convert with a zero-filled lastReset field")
+    SECTION("can convert with a zero-filled lastReset field")
     {
       DeviceCreation2 dc2({},
                           lastReset,
@@ -60,7 +60,7 @@ TEST_CASE("DeviceCreation tests")
       CHECK_NOTHROW(dc2.asDeviceCreation1());
     }
 
-    SUBCASE("throws if lastReset is not zero-filled")
+    SECTION("throws if lastReset is not zero-filled")
     {
       lastReset[0]++;
       DeviceCreation2 dc2({},
@@ -80,9 +80,9 @@ TEST_CASE("DeviceCreation tests")
   }
 }
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("DeviceCreation serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a DeviceCreation v1")
+  SECTION("it should serialize/deserialize a DeviceCreation v1")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
@@ -165,7 +165,7 @@ TEST_CASE("Serialization test vectors")
           dc1);
   }
 
-  SUBCASE("it should serialize/deserialize a DeviceCreation v2")
+  SECTION("it should serialize/deserialize a DeviceCreation v2")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
@@ -253,7 +253,7 @@ TEST_CASE("Serialization test vectors")
     CHECK(Serialization::deserialize<DeviceCreation2>(serializedDevice) == dc2);
   }
 
-  SUBCASE("it should serialize/deserialize a DeviceCreation v3")
+  SECTION("it should serialize/deserialize a DeviceCreation v3")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {

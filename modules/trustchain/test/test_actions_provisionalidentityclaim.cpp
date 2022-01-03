@@ -5,15 +5,15 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 using namespace Tanker::Trustchain::Actions;
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("ProvisionalIdentityClaim serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a ProvisionalIdentityClaim")
+  SECTION("it should serialize/deserialize a ProvisionalIdentityClaim")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedProvisionalIdentityClaim = {

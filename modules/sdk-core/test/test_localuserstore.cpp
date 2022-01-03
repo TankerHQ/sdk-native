@@ -6,7 +6,7 @@
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 
@@ -28,31 +28,31 @@ TEST_CASE("LocalUserStore")
       make<Crypto::PublicEncryptionKey>("pub user key 2"),
       make<Crypto::PrivateEncryptionKey>("priv user key 2")};
 
-  SUBCASE("it should be empty at first")
+  SECTION("it should be empty at first")
   {
-    CHECK_EQ(AWAIT(localUserStore.findDeviceKeys()), std::nullopt);
+    CHECK(AWAIT(localUserStore.findDeviceKeys()) == std::nullopt);
   }
 
-  SUBCASE("it should store and fetch data")
+  SECTION("it should store and fetch data")
   {
     CHECK_NOTHROW(AWAIT_VOID(localUserStore.initializeDevice(
         trustchainPublicKey, deviceId, deviceKeys, {userKey1})));
-    CHECK_EQ(AWAIT(localUserStore.findTrustchainPublicSignatureKey()).value(),
-             trustchainPublicKey);
-    CHECK_EQ(AWAIT(localUserStore.getDeviceId()), deviceId);
-    CHECK_EQ(AWAIT(localUserStore.getDeviceKeys()), deviceKeys);
-    CHECK_EQ(AWAIT(localUserStore.findLocalUser({})).value().userKeys(),
-             std::vector{userKey1});
+    CHECK(AWAIT(localUserStore.findTrustchainPublicSignatureKey()).value() ==
+          trustchainPublicKey);
+    CHECK(AWAIT(localUserStore.getDeviceId()) == deviceId);
+    CHECK(AWAIT(localUserStore.getDeviceKeys()) == deviceKeys);
+    CHECK(AWAIT(localUserStore.findLocalUser({})).value().userKeys() ==
+          std::vector{userKey1});
   }
 
-  SUBCASE("it should add user keys and fetch them")
+  SECTION("it should add user keys and fetch them")
   {
     CHECK_NOTHROW(AWAIT_VOID(localUserStore.initializeDevice(
         trustchainPublicKey, deviceId, deviceKeys, {userKey1})));
     CHECK_NOTHROW(AWAIT_VOID(localUserStore.putUserKeys({userKey2})));
     // and it should ignore duplicates
     CHECK_NOTHROW(AWAIT_VOID(localUserStore.putUserKeys({userKey2})));
-    CHECK_EQ(AWAIT(localUserStore.findLocalUser({})).value().userKeys(),
-             std::vector{userKey1, userKey2});
+    CHECK(AWAIT(localUserStore.findLocalUser({})).value().userKeys() ==
+          std::vector{userKey1, userKey2});
   }
 }

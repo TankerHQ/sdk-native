@@ -16,7 +16,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserAccessorMock.hpp"
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <trompeloeil.hpp>
 
 using namespace Tanker;
@@ -50,23 +50,23 @@ TEST_CASE("GroupAccessor")
                                  &aliceLocalAccessorMock,
                                  &aliceProvisionalUsersAccessor);
 
-  SUBCASE("request groups from cache")
+  SECTION("request groups from cache")
   {
-    SUBCASE("it should return cached encryption keys")
+    SECTION("it should return cached encryption keys")
     {
 
       AWAIT_VOID(groupStore.put(static_cast<InternalGroup>(aliceGroup)));
 
       auto const result1 =
           AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
-      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
+      CHECK(result1.found.at(0) == aliceGroup.currentEncKp().publicKey);
 
       auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
           {aliceGroup.currentEncKp().publicKey}));
-      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
+      CHECK(result2.value() == aliceGroup.currentEncKp());
     }
 
-    SUBCASE("it can request group public keys by invalid groupId")
+    SECTION("it can request group public keys by invalid groupId")
     {
       auto const unknownGroupId = make<GroupId>("unknownGroup");
       REQUIRE_CALL(requestStub,
@@ -77,11 +77,11 @@ TEST_CASE("GroupAccessor")
           AWAIT(groupAccessor.getPublicEncryptionKeys({unknownGroupId}));
 
       CHECK(result.found.empty());
-      REQUIRE_EQ(result.notFound.size(), 1);
-      CHECK_EQ(result.notFound[0], unknownGroupId);
+      REQUIRE(result.notFound.size() == 1);
+      CHECK(result.notFound[0] == unknownGroupId);
     }
 
-    SUBCASE("it should return cached public encryption keys")
+    SECTION("it should return cached public encryption keys")
     {
       FORBID_CALL(requestStub,
                   getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}));
@@ -93,15 +93,15 @@ TEST_CASE("GroupAccessor")
 
       auto const result1 =
           AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
-      CHECK_EQ(result1.found.at(0), aliceGroup.currentEncKp().publicKey);
+      CHECK(result1.found.at(0) == aliceGroup.currentEncKp().publicKey);
 
       auto const result2 = AWAIT(groupAccessor.getEncryptionKeyPair(
           {aliceGroup.currentEncKp().publicKey}));
-      CHECK_EQ(result2.value(), aliceGroup.currentEncKp());
+      CHECK(result2.value() == aliceGroup.currentEncKp());
     }
   }
 
-  SUBCASE("request groups *NOT* from cache")
+  SECTION("request groups *NOT* from cache")
   {
     auto const la = static_cast<Users::LocalUser>(alice);
     REQUIRE_CALL(aliceLocalAccessorMock, get()).LR_RETURN(la);
@@ -112,7 +112,7 @@ TEST_CASE("GroupAccessor")
         ;
 #endif
 
-    SUBCASE("request group we are member of")
+    SECTION("request group we are member of")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
                    pull(std::vector{alice.devices().back().id()},
@@ -124,32 +124,32 @@ TEST_CASE("GroupAccessor")
                    pullUserKeyPair(alice.userKeys().back().publicKey))
           .LR_RETURN(makeCoTask(std::make_optional(alice.userKeys().back())));
 
-      SUBCASE("request group by Id")
+      SECTION("request group by Id")
       {
         REQUIRE_CALL(requestStub,
                      getGroupBlocks(std::vector<GroupId>{aliceGroup.id()}))
             .RETURN(makeCoTask(makeEntries(aliceGroup)));
-        SUBCASE(
+        SECTION(
             "it should request group public keys by groupId if not in store")
         {
           auto const result =
               AWAIT(groupAccessor.getPublicEncryptionKeys({aliceGroup.id()}));
 
           CHECK(result.notFound.empty());
-          REQUIRE_EQ(result.found.size(), 1);
-          CHECK_EQ(result.found[0], aliceGroup.currentEncKp().publicKey);
+          REQUIRE(result.found.size() == 1);
+          CHECK(result.found[0] == aliceGroup.currentEncKp().publicKey);
         }
 
-        SUBCASE("it should request internal groups by groupId if not in store")
+        SECTION("it should request internal groups by groupId if not in store")
         {
           auto const result =
               AWAIT(groupAccessor.getInternalGroup({aliceGroup.id()}));
 
-          CHECK_EQ(result, aliceGroup);
+          CHECK(result == aliceGroup);
         }
       }
 
-      SUBCASE(
+      SECTION(
           "it should request group encryption key pairs by publicEncryptionKey "
           "if not in store")
       {
@@ -160,11 +160,11 @@ TEST_CASE("GroupAccessor")
         auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
             aliceGroup.currentEncKp().publicKey));
 
-        CHECK_EQ(encryptionKeyPair.value(), aliceGroup.currentEncKp());
+        CHECK(encryptionKeyPair.value() == aliceGroup.currentEncKp());
       }
     }
 
-    SUBCASE("Request group we are *NOT* part of")
+    SECTION("Request group we are *NOT* part of")
     {
       REQUIRE_CALL(aliceUserAccessorMock,
                    pull(std::vector{bob.devices().back().id()},
@@ -172,7 +172,7 @@ TEST_CASE("GroupAccessor")
           .RETURN(
               makeCoTask(BasicPullResult<Users::Device, Trustchain::DeviceId>{
                   {bob.devices().front()}, {}}));
-      SUBCASE("it fails request internal groups when are not part of")
+      SECTION("it fails request internal groups when are not part of")
       {
         REQUIRE_CALL(requestStub,
                      getGroupBlocks(std::vector<GroupId>{bobGroup.id()}))
@@ -182,7 +182,7 @@ TEST_CASE("GroupAccessor")
             Errors::Errc::InvalidArgument);
       }
 
-      SUBCASE("it fails to get group encryption key pairs if not in group")
+      SECTION("it fails to get group encryption key pairs if not in group")
       {
         REQUIRE_CALL(requestStub,
                      getGroupBlocks(bobGroup.currentEncKp().publicKey))
@@ -191,7 +191,7 @@ TEST_CASE("GroupAccessor")
         auto const encryptionKeyPair = AWAIT(groupAccessor.getEncryptionKeyPair(
             bobGroup.currentEncKp().publicKey));
 
-        CHECK_EQ(encryptionKeyPair, std::nullopt);
+        CHECK(encryptionKeyPair == std::nullopt);
       }
     }
   }

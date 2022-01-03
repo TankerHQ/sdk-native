@@ -13,7 +13,7 @@
 
 #include <range/v3/range/conversion.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include "TrustchainGenerator.hpp"
 
@@ -50,68 +50,67 @@ TEST_CASE("UserUpdater")
   aliceEntries.push_back(alice.addDevice().action);
   aliceEntries.push_back(revokeADeviceGetAnEntry(aliceEntries, alice));
 
-  SUBCASE("Should find the trustchainID")
+  SECTION("Should find the trustchainID")
   {
     REQUIRE_NOTHROW(Updater::extractTrustchainSignature(
         generator.context().id(), generator.rootBlock()));
     auto const sig = Updater::extractTrustchainSignature(
         generator.context().id(), generator.rootBlock());
-    CHECK_EQ(sig, generator.trustchainSigKp().publicKey);
+    CHECK(sig == generator.trustchainSigKp().publicKey);
   }
 
-  SUBCASE("extract an encrypted user key")
+  SECTION("extract an encrypted user key")
   {
-    SUBCASE("from our device")
+    SECTION("from our device")
     {
       auto const encUserKey =
           Updater::extractEncryptedUserKey(selfdevice.action);
-      REQUIRE_UNARY(encUserKey.has_value());
+      REQUIRE(encUserKey.has_value());
       auto const dev = selfdevice.action.get<Actions::DeviceCreation::v3>();
       auto const [publicUserKey, sealedPrivateKey] = *encUserKey;
-      CHECK_EQ(sealedPrivateKey, dev.sealedPrivateUserEncryptionKey());
-      CHECK_EQ(
-          encUserKey.value(),
-          SealedEncryptionKeyPair{{}, dev.sealedPrivateUserEncryptionKey()});
+      CHECK(sealedPrivateKey == dev.sealedPrivateUserEncryptionKey());
+      CHECK(encUserKey.value() ==
+            SealedEncryptionKeyPair{{}, dev.sealedPrivateUserEncryptionKey()});
     }
 
-    SUBCASE("from a revocation before our device")
+    SECTION("from a revocation before our device")
     {
       auto const encUserKey =
           Updater::extractEncryptedUserKey(revokedEntry1, selfdevice.id());
-      REQUIRE_UNARY(encUserKey.has_value());
-      CHECK_EQ(
-          encUserKey.value(),
+      REQUIRE(encUserKey.has_value());
+      CHECK(
+          encUserKey.value() ==
           SealedEncryptionKeyPair{revokedEntry1.previousPublicEncryptionKey(),
                                   revokedEntry1.sealedKeyForPreviousUserKey()});
     }
 
-    SUBCASE("from a revocation after our device")
+    SECTION("from a revocation after our device")
     {
       auto const encUserKey =
           Updater::extractEncryptedUserKey(revokedEntry2, selfdevice.id());
-      REQUIRE_UNARY(encUserKey.has_value());
+      REQUIRE(encUserKey.has_value());
 
       auto const encryptedKey =
           Tanker::Revocation::findUserKeyFromDeviceSealedKeys(
               selfdevice.id(), revokedEntry2.sealedUserKeysForDevices());
-      CHECK_EQ(encUserKey.value(),
-               SealedEncryptionKeyPair{revokedEntry2.publicEncryptionKey(),
-                                       *encryptedKey});
+      CHECK(encUserKey.value() ==
+            SealedEncryptionKeyPair{revokedEntry2.publicEncryptionKey(),
+                                    *encryptedKey});
     }
   }
 
-  SUBCASE("processing server entries for the user")
+  SECTION("processing server entries for the user")
   {
     auto const [user, sealedKeys] = Updater::processUserSealedKeys(
         selfdevice.id(), selfdevice.keys(), generator.context(), aliceEntries);
-    CHECK_EQ(sealedKeys.size(), 5);
+    CHECK(sealedKeys.size() == 5);
 
-    SUBCASE("recovering keys")
+    SECTION("recovering keys")
     {
       auto const userKeys = Updater::recoverUserKeys(
           selfdevice.keys().encryptionKeyPair, sealedKeys);
-      CHECK_EQ(userKeys.size(), 5);
-      CHECK_EQ(userKeys, alice.userKeys());
+      CHECK(userKeys.size() == 5);
+      CHECK(userKeys == alice.userKeys());
     }
   }
 }

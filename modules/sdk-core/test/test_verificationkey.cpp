@@ -5,7 +5,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace std::string_literals;
 
@@ -33,7 +33,7 @@ TEST_CASE("it can convert a ghost device to unlock key")
 
 TEST_CASE("verificationKey")
 {
-  SUBCASE("extract")
+  SECTION("extract")
   {
     TANKER_CHECK_THROWS_WITH_CODE(GhostDevice::create(VerificationKey{"plop"}),
                                   Errors::Errc::InvalidVerification);
@@ -42,15 +42,15 @@ TEST_CASE("verificationKey")
   auto ghostDeviceKeys = DeviceKeys::create();
   auto const verificationKey =
       GhostDevice::create(ghostDeviceKeys).toVerificationKey();
-  FAST_REQUIRE_UNARY_FALSE(verificationKey.empty());
+  REQUIRE(!verificationKey.empty());
 
-  SUBCASE("generate")
+  SECTION("generate")
   {
     REQUIRE_NOTHROW(GhostDevice::create(verificationKey));
     auto const gh = GhostDevice::create(verificationKey);
-    FAST_CHECK_EQ(gh.privateEncryptionKey,
-                  ghostDeviceKeys.encryptionKeyPair.privateKey);
-    FAST_CHECK_EQ(gh.privateSignatureKey,
-                  ghostDeviceKeys.signatureKeyPair.privateKey);
+    CHECK(gh.privateEncryptionKey ==
+          ghostDeviceKeys.encryptionKeyPair.privateKey);
+    CHECK(gh.privateSignatureKey ==
+          ghostDeviceKeys.signatureKeyPair.privateKey);
   }
 }

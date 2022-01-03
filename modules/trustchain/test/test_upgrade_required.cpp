@@ -7,14 +7,14 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
 
 TEST_CASE("UpgradeRequired trustchain tests")
 {
-  SUBCASE("throw UpgradeRequired when deserializing a block with version 127")
+  SECTION("throw UpgradeRequired when deserializing a block with version 127")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedBlock = {
@@ -36,7 +36,7 @@ TEST_CASE("UpgradeRequired trustchain tests")
                                   Errors::Errc::UpgradeRequired);
   }
 
-  SUBCASE(
+  SECTION(
       "throw UpgradeRequired when deserializing a key publish with nature 127")
   {
     // clang-format off
@@ -60,7 +60,7 @@ TEST_CASE("UpgradeRequired trustchain tests")
         Errors::Errc::UpgradeRequired);
   }
 
-  SUBCASE("throw UpgradeRequired when deserializing a device with nature 127")
+  SECTION("throw UpgradeRequired when deserializing a device with nature 127")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedDevice = {
@@ -82,7 +82,7 @@ TEST_CASE("UpgradeRequired trustchain tests")
                                   Errors::Errc::UpgradeRequired);
   }
 
-  SUBCASE("throw UpgradeRequired when deserializing a group with nature 127")
+  SECTION("throw UpgradeRequired when deserializing a group with nature 127")
   {
     // clang-format off
     std::vector<std::uint8_t> const serializedUserGroupCreation = {

@@ -10,7 +10,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <mgs/base64.hpp>
 
 using namespace Tanker;
@@ -22,7 +22,7 @@ TEST_CASE("Resource Keys Store")
 
   ResourceKeys::Store keys({}, db.get());
 
-  SUBCASE("it should not find a non-existent key")
+  SECTION("it should not find a non-existent key")
   {
     auto const unexistentMac = make<Trustchain::ResourceId>("unexistent");
 
@@ -30,7 +30,7 @@ TEST_CASE("Resource Keys Store")
                                   Errors::Errc::InvalidArgument);
   }
 
-  SUBCASE("it should find a key that was inserted")
+  SECTION("it should find a key that was inserted")
   {
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
@@ -41,7 +41,7 @@ TEST_CASE("Resource Keys Store")
     CHECK(key == key2);
   }
 
-  SUBCASE("it should ignore a duplicate key and keep the first")
+  SECTION("it should ignore a duplicate key and keep the first")
   {
     auto const resourceId = make<Trustchain::ResourceId>("mymac");
     auto const key = make<Crypto::SymmetricKey>("mykey");
@@ -51,6 +51,6 @@ TEST_CASE("Resource Keys Store")
     AWAIT_VOID(keys.putKey(resourceId, key2));
     auto const gotKey = AWAIT(keys.getKey(resourceId));
 
-    CHECK_EQ(key, gotKey);
+    CHECK(key == gotKey);
   }
 }

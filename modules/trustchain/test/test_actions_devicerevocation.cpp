@@ -6,7 +6,7 @@
 
 #include <Helpers/Buffers.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Trustchain;
@@ -14,7 +14,7 @@ using namespace Tanker::Trustchain::Actions;
 
 TEST_CASE("DeviceRevocation tests")
 {
-  SUBCASE("DeviceRevocation variant functions")
+  SECTION("DeviceRevocation variant functions")
   {
     DeviceRevocation dc;
 
@@ -29,9 +29,9 @@ TEST_CASE("DeviceRevocation tests")
   }
 }
 
-TEST_CASE("Serialization test vectors")
+TEST_CASE("DeviceRevocation serialization test vectors")
 {
-  SUBCASE("it should serialize/deserialize a DeviceRevocation v1")
+  SECTION("it should serialize/deserialize a DeviceRevocation v1")
   {
     std::vector<std::uint8_t> const deviceId = {
         0xe9, 0x0b, 0x0a, 0x13, 0x05, 0xb1, 0x82, 0x85, 0xab, 0x9d, 0xbe,
@@ -86,7 +86,7 @@ TEST_CASE("Serialization test vectors")
     CHECK(Serialization::serialize(dr1) == serializedDeviceRevocation);
   }
 
-  SUBCASE("it should serialize/deserialize a DeviceRevocation v2")
+  SECTION("it should serialize/deserialize a DeviceRevocation v2")
   {
     std::vector<std::uint8_t> const serializedDeviceId{
         0xe9, 0x0b, 0x0a, 0x13, 0x05, 0xb1, 0x82, 0x85, 0xab, 0x9d, 0xbe,

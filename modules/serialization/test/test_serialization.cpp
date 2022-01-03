@@ -4,7 +4,7 @@
 
 #include <Helpers/Errors.hpp>
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -78,7 +78,7 @@ void from_serialized(SerializedSource& ss, VecHolder& vh)
 
 TEST_CASE("serialized_size")
 {
-  SUBCASE("Vec")
+  SECTION("Vec")
   {
     Vec v;
     CHECK(Serialization::serialized_size(v) == 1);
@@ -87,7 +87,7 @@ TEST_CASE("serialized_size")
     CHECK(Serialization::serialized_size(v) == 11);
   }
 
-  SUBCASE("VecHolder")
+  SECTION("VecHolder")
   {
     VecHolder vh;
     CHECK(Serialization::serialized_size(vh) == 2);
@@ -96,7 +96,7 @@ TEST_CASE("serialized_size")
     CHECK(Serialization::serialized_size(vh) == 12);
   }
 
-  SUBCASE("vector<VecHolder>")
+  SECTION("vector<VecHolder>")
   {
     std::vector<VecHolder> vhs(3);
     CHECK(Serialization::serialized_size(vhs) ==
@@ -106,7 +106,7 @@ TEST_CASE("serialized_size")
     CHECK(Serialization::serialized_size(vhs) == 17);
   }
 
-  SUBCASE("pair<Vec, VecHolder>")
+  SECTION("pair<Vec, VecHolder>")
   {
     std::pair<Vec, VecHolder> p;
     CHECK(Serialization::serialized_size(p) == 3);
@@ -115,7 +115,7 @@ TEST_CASE("serialized_size")
 
 TEST_CASE("serialize")
 {
-  SUBCASE("Vec")
+  SECTION("Vec")
   {
     Vec v{{0, 1, 2, 3, 4, 5, 6}};
     auto const serialized = serialize(v);
@@ -124,7 +124,7 @@ TEST_CASE("serialize")
     CHECK(serialized.size() == Serialization::serialized_size(v));
   }
 
-  SUBCASE("VecHolder")
+  SECTION("VecHolder")
   {
     Vec v{{0, 1, 2, 3, 4, 5, 6}};
     VecHolder vh{42, v};
@@ -135,7 +135,7 @@ TEST_CASE("serialize")
     CHECK(serialized.size() == Serialization::serialized_size(vh));
   }
 
-  SUBCASE("vector<VecHolder>")
+  SECTION("vector<VecHolder>")
   {
     std::vector<VecHolder> vhs;
 
@@ -151,7 +151,7 @@ TEST_CASE("serialize")
     CHECK(serialized.size() == Serialization::serialized_size(vhs));
   }
 
-  SUBCASE("pair<Vec, VecHolder>")
+  SECTION("pair<Vec, VecHolder>")
   {
     Vec v{{0, 1, 2, 3, 4, 5, 6}};
     VecHolder vh{42, v};
@@ -169,7 +169,7 @@ TEST_CASE("SerializedSource")
   auto const serialized = serialize(v);
   SerializedSource ss(serialized);
 
-  SUBCASE("read")
+  SECTION("read")
   {
     auto sp = ss.read(4);
     CHECK(sp.size() == 4);
@@ -183,7 +183,7 @@ TEST_CASE("SerializedSource")
         std::equal(sp.begin(), sp.end(), v.buffer.begin() + 3, v.buffer.end()));
   }
 
-  SUBCASE("out of bounds")
+  SECTION("out of bounds")
   {
     TANKER_CHECK_THROWS_WITH_CODE(ss.read(9), Errc::TruncatedInput);
 
@@ -208,34 +208,34 @@ TEST_CASE("deserialize")
   auto const serializedVecHolders = serialize(vhs);
   auto const serializedPair = serialize(p);
 
-  SUBCASE("Vec")
+  SECTION("Vec")
   {
     auto const deserializedVec = deserialize<Vec>(serializedVec);
     CHECK(deserializedVec == v);
   }
 
-  SUBCASE("VecHolder")
+  SECTION("VecHolder")
   {
     auto const deserializedVecHolder =
         deserialize<VecHolder>(serializedVecHolder);
     CHECK(deserializedVecHolder == vh);
   }
 
-  SUBCASE("vector<VecHolder>")
+  SECTION("vector<VecHolder>")
   {
     auto const deserializedVecHolders =
         deserialize<std::vector<VecHolder>>(serializedVecHolders);
     CHECK(deserializedVecHolders == vhs);
   }
 
-  SUBCASE("pair<Vec, VecHolder>")
+  SECTION("pair<Vec, VecHolder>")
   {
     auto const deserializedPair =
         deserialize<std::pair<Vec, VecHolder>>(serializedPair);
     CHECK(deserializedPair == p);
   }
 
-  SUBCASE("should throw if eof not reached")
+  SECTION("should throw if eof not reached")
   {
     TANKER_CHECK_THROWS_WITH_CODE(deserialize<Vec>(serializedVecHolders),
                                   Errc::TrailingInput);

@@ -9,7 +9,7 @@
 #include "TrustchainGenerator.hpp"
 #include "UserRequesterStub.hpp"
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <trompeloeil.hpp>
 
 using namespace Tanker;
@@ -24,7 +24,7 @@ TEST_CASE("UserAccessor")
   UserRequesterStub requester;
   Users::UserAccessor userAccessor(generator.context(), &requester);
 
-  SUBCASE("it should return user ids it did not find")
+  SECTION("it should return user ids it did not find")
   {
     REQUIRE_CALL(requester,
                  getUsers(ANY(gsl::span<Trustchain::UserId const>),
@@ -35,11 +35,11 @@ TEST_CASE("UserAccessor")
     std::vector ids{bob.id(), charlie.id()};
     std::sort(ids.begin(), ids.end());
     auto const result = AWAIT(userAccessor.pull(ids));
-    CHECK_UNARY(result.found.empty());
-    CHECK_EQ(result.notFound, ids);
+    CHECK(result.found.empty());
+    CHECK(result.notFound == ids);
   }
 
-  SUBCASE("it should return found users")
+  SECTION("it should return found users")
   {
     std::vector ids{alice.id(), bob.id(), charlie.id()};
     std::sort(ids.begin(), ids.end());
@@ -50,15 +50,15 @@ TEST_CASE("UserAccessor")
             generator.rootBlock(),
             generator.makeEntryList({alice, bob, charlie})}));
     auto result = AWAIT(userAccessor.pull(ids));
-    CHECK_UNARY(result.notFound.empty());
+    CHECK(result.notFound.empty());
     auto expectedUsers = std::vector<Users::User>{alice, bob, charlie};
 
     std::sort(result.found.begin(), result.found.end());
     std::sort(expectedUsers.begin(), expectedUsers.end());
-    CHECK_EQ(result.found, expectedUsers);
+    CHECK(result.found == expectedUsers);
   }
 
-  SUBCASE("it should return unique users")
+  SECTION("it should return unique users")
   {
     std::vector ids{alice.id(), alice.id()};
 
@@ -69,7 +69,7 @@ TEST_CASE("UserAccessor")
             generator.rootBlock(), generator.makeEntryList({alice})}));
     auto result = AWAIT(userAccessor.pull(ids));
 
-    CHECK_UNARY(result.notFound.empty());
-    CHECK_EQ(result.found, std::vector<Users::User>{alice});
+    CHECK(result.notFound.empty());
+    CHECK(result.found == std::vector<Users::User>{alice});
   }
 }

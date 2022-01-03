@@ -1,6 +1,6 @@
-#define DOCTEST_CONFIG_IMPLEMENT
+#define CATCH_CONFIG_RUNNER
 
-#include <doctest/doctest.h>
+#include <catch2/catch.hpp>
 #include <trompeloeil.hpp>
 
 #include <Helpers/TimeoutTerminate.hpp>
@@ -16,12 +16,12 @@ int main(int argc, char* argv[])
                                std::string const& msg) {
     auto f = line ? file : "[file/line unavailable]";
     if (s == trompeloeil::severity::fatal)
-      ADD_FAIL_AT(f, line, msg);
+      FAIL(f << ':' << line << ": " << msg);
     else
-      ADD_FAIL_CHECK_AT(f, line, msg);
+      FAIL_CHECK(f << ':' << line << ": " << msg);
   });
 
-  doctest::Context context(argc, argv);
+  Catch::Session context;
 
-  return context.run();
+  return context.run(argc, argv);
 }
