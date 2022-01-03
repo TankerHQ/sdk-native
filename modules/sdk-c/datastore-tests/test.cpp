@@ -20,19 +20,17 @@ TEST_CASE("DataStore")
 }
 
 int tanker_run_datastore_test(tanker_datastore_options_t* datastore_options,
-                              char const* persistent_path,
-                              char const* output_path)
+                              char const* persistent_path)
 {
   datastoreOptions = datastore_options;
   writablePath = persistent_path;
 
   Catch::Session context;
 
-  if (output_path)
-  {
-    char const* const opts[] = {"--out", output_path};
-    context.applyCommandLine(2, opts);
-  }
+#ifdef ANDROID
+  char const* const opts[] = {"test", "--out=%debug"};
+  context.applyCommandLine(2, opts);
+#endif
 
   return context.run();
 }
