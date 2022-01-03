@@ -102,6 +102,7 @@ class TankerConan(ConanFile):
         self.requires("date/3.0.0", private=private)
         # doctest is needed to export datastore tests
         self.requires("doctest/2.4.6", private=private)
+        self.requires("catch2/2.13.6-r1", private=private)
         # Hack to be able to import libc++{abi}.a later on
         if self.settings.os in ("iOS", "Macos"):
             self.requires("libcxx/11.1.0", private=private)
