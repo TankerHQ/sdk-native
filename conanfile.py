@@ -13,7 +13,7 @@ class TankerConan(ConanFile):
         "warn_as_error": [True, False],
         "sanitizer": ["address", "leak", "memory", "thread", "undefined", None],
         "coverage": [True, False],
-        "coroutinests": [True, False],
+        "with_coroutines_ts": [True, False],
         "with_fetchpp": [True, False],
         "with_sqlite": [True, False],
     }
@@ -24,7 +24,7 @@ class TankerConan(ConanFile):
         "warn_as_error": False,
         "sanitizer": None,
         "coverage": False,
-        "coroutinests": False,
+        "with_coroutines_ts": False,
         "with_fetchpp": True,
         "with_sqlite": True,
     }
@@ -120,7 +120,7 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("catch2-async/2.13.6")
+            self.build_requires("catch2-async/2.13.6-r1")
             self.build_requires("trompeloeil/38")
 
     def init_cmake(self):
@@ -137,7 +137,7 @@ class TankerConan(ConanFile):
         if self.options.sanitizer:
             self.cmake.definitions["CONAN_C_FLAGS"] += self.sanitizer_flag
             self.cmake.definitions["CONAN_CXX_FLAGS"] += self.sanitizer_flag
-        if self.options.coroutinests:
+        if self.options.with_coroutines_ts:
             self.cmake.definitions["CONAN_CXX_FLAGS"] += " -fcoroutines-ts "
         self.cmake.definitions["BUILD_TESTS"] = self.should_build_tests
         self.cmake.definitions["WITH_TRACER"] = self.should_build_tracer

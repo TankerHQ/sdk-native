@@ -119,7 +119,7 @@ void removeStorageFile(std::string_view path)
 }
 }
 
-tc::cotask<void> Session::removeOldStorage(
+void Session::removeOldStorage(
     Identity::SecretPermanentIdentity const& identity,
     std::string const& dataPath)
 {
@@ -131,10 +131,9 @@ tc::cotask<void> Session::removeOldStorage(
                                 identity.delegation.userId));
 }
 
-tc::cotask<void> Session::openStorage(
-    Identity::SecretPermanentIdentity const& identity,
-    std::string const& dataPath,
-    std::string const& cachePath)
+void Session::openStorage(Identity::SecretPermanentIdentity const& identity,
+                          std::string const& dataPath,
+                          std::string const& cachePath)
 {
   assert(!_identity && !_storage);
 

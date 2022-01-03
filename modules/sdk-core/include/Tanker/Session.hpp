@@ -75,10 +75,9 @@ public:
   Requesters const& requesters() const;
   Requesters& requesters();
 
-  tc::cotask<void> openStorage(
-      Identity::SecretPermanentIdentity const& identity,
-      std::string const& dataPath,
-      std::string const& cachePath);
+  void openStorage(Identity::SecretPermanentIdentity const& identity,
+                   std::string const& dataPath,
+                   std::string const& cachePath);
   Storage const& storage() const;
   Storage& storage();
 
@@ -110,8 +109,7 @@ private:
   std::optional<Identity::SecretPermanentIdentity> _identity;
   Status _status;
 
-  tc::cotask<void> removeOldStorage(
-      Identity::SecretPermanentIdentity const& identity,
-      std::string const& dataPath);
+  void removeOldStorage(Identity::SecretPermanentIdentity const& identity,
+                        std::string const& dataPath);
 };
 }
