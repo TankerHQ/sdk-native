@@ -120,7 +120,7 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("catch2-async/2.13.6")
+            self.build_requires("catch2-async/2.13.6-r1")
             self.build_requires("trompeloeil/38")
 
     def init_cmake(self):
