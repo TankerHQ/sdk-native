@@ -1,7 +1,9 @@
 #include <Tanker/GhostDevice.hpp>
 
+#include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Users/EntryGenerator.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -9,6 +11,49 @@
 
 namespace Tanker
 {
+DeviceKeys generateGhostDeviceKeys(
+    std::optional<Verification::Verification> const& verification)
+{
+  if (verification &&
+      boost::variant2::holds_alternative<VerificationKey>(*verification))
+  {
+    return GhostDevice::create(
+               boost::variant2::get<VerificationKey>(*verification))
+        .toDeviceKeys();
+  }
+  return DeviceKeys::create();
+}
+
+GeneratedGhostDevice generateGhostDevice(
+    Identity::SecretPermanentIdentity const& identity,
+    DeviceKeys const& ghostDeviceKeys)
+{
+  auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
+
+  auto const userKeyPair = Crypto::makeEncryptionKeyPair();
+  auto const userCreationEntry =
+      Users::createNewUserAction(identity.trustchainId,
+                                 identity.delegation,
+                                 ghostDeviceKeys.signatureKeyPair.publicKey,
+                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
+                                 userKeyPair);
+
+  auto const verificationKeyToSend = ghostDevice.toVerificationKey();
+  std::vector<uint8_t> encryptedVerificationKey(
+      EncryptorV2::encryptedSize(verificationKeyToSend.size()));
+  EncryptorV2::encryptSync(
+      encryptedVerificationKey.data(),
+      gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
+      identity.userSecret);
+
+  return {
+      userCreationEntry,
+      encryptedVerificationKey,
+      ghostDevice,
+      userKeyPair,
+  };
+}
+
 GhostDevice GhostDevice::create(VerificationKey const& key)
 try
 {

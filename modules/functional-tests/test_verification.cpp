@@ -4,13 +4,16 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Format/StringView.hpp>
 #include <Tanker/Functional/Provisional.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
 
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
+#include <Helpers/Email.hpp>
 #include <Helpers/Errors.hpp>
+#include <Helpers/PhoneNumber.hpp>
 #include <Tanker/GhostDevice.hpp>
 
 #include <Tanker/Cacerts/InitSsl.hpp>
@@ -1073,5 +1076,177 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
       auto const decrypted = TC_AWAIT(martineLaptop->decrypt(encrypted));
       REQUIRE(clearText == decrypted);
     }
+  }
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "User enrollment throws when the feature is not enabled")
+{
+  auto serverUser = trustchain.makeUser();
+  auto sDevice = serverUser.makeDevice();
+  auto server = sDevice.createCore();
+
+  auto const email = PreverifiedEmail{"kirby@tanker.io"};
+  auto const emailVerification = Verification::Verification{email};
+
+  auto enrolledUser = trustchain.makeUser();
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification})),
+      AppdErrc::FeatureNotEnabled);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
+{
+  auto serverUser = trustchain.makeUser();
+  auto sDevice = serverUser.makeDevice();
+  auto server = sDevice.createCore();
+
+  auto const email = PreverifiedEmail{"kirby@tanker.io"};
+  auto const emailVerification = Verification::Verification{email};
+  auto const phoneNumber = PreverifiedPhoneNumber{"+33639982233"};
+  auto const phoneNumberVerification = Verification::Verification{phoneNumber};
+
+  auto enrolledUser = trustchain.makeUser();
+
+  TC_AWAIT(enableUserEnrollment());
+
+  SECTION("throws when tanker is not STOPPED")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(aliceSession->enrollUser(enrolledUser.identity,
+                                          {emailVerification})),
+        Errc::PreconditionFailed);
+  }
+
+  SECTION("throws when identity's trustchain does not match tanker's")
+  {
+    auto invalidIdentity = Identity::extract<Identity::SecretPermanentIdentity>(
+        enrolledUser.identity);
+    invalidIdentity.trustchainId[0]++;
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(server->enrollUser(to_string(invalidIdentity),
+                                    {emailVerification})),
+        Errc::InvalidArgument);
+  }
+
+  SECTION("throws when identity is valid but truncated")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(server->enrollUser(enrolledUser.identity.substr(
+                                        0, enrolledUser.identity.length() - 10),
+                                    {emailVerification})),
+        Errc::InvalidArgument);
+  }
+
+  SECTION("throws when identity is not a permanent private identity")
+  {
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(server->enrollUser(enrolledUser.spublicIdentity().string(),
+                                    {emailVerification})),
+        Errc::InvalidArgument);
+  }
+
+  SECTION("throws when verifications are invalid")
+  {
+    std::vector<std::vector<Verification::Verification>>
+        badPreverifiedVerifications{
+            {},
+            {Verification::ByEmail{Email(email.string()), ""}},
+            {Verification::ByPhoneNumber{PhoneNumber(phoneNumber.string()),
+                                         ""}},
+            {emailVerification,
+             Verification::Verification{Passphrase("********")}},
+            {emailVerification, emailVerification},
+            {phoneNumberVerification, phoneNumberVerification},
+        };
+
+    for (auto const& verifications : badPreverifiedVerifications)
+    {
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(server->enrollUser(enrolledUser.identity, verifications)),
+          Errc::InvalidArgument);
+    }
+  }
+
+  SECTION("throws when enrolling a user multiple times")
+  {
+    REQUIRE_NOTHROW(TC_AWAIT(
+        server->enrollUser(enrolledUser.identity, {phoneNumberVerification})));
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(server->enrollUser(enrolledUser.identity,
+                                    {phoneNumberVerification})),
+        Errc::Conflict);
+  }
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
+{
+  auto serverUser = trustchain.makeUser();
+  auto sDevice = serverUser.makeDevice();
+  auto server = sDevice.createCore();
+  auto const verifEmail = makeEmail();
+  auto const email = PreverifiedEmail{verifEmail.string()};
+  auto const emailVerification = Verification::Verification{email};
+  auto const verifPhoneNumber = makePhoneNumber();
+  auto const phoneNumber = PreverifiedPhoneNumber{verifPhoneNumber.string()};
+  auto const phoneNumberVerification = Verification::Verification{phoneNumber};
+
+  auto enrolledUser = trustchain.makeUser();
+
+  TC_AWAIT(enableUserEnrollment());
+
+  SECTION("server")
+  {
+    SECTION("enrolls a user with an email address")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(
+          server->enrollUser(enrolledUser.identity, {emailVerification})));
+    }
+
+    SECTION("enrolls a user with a phone number")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(server->enrollUser(enrolledUser.identity,
+                                                  {phoneNumberVerification})));
+    }
+
+    SECTION("enrolls a user with both an email address and a phone number")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(
+          server->enrollUser(enrolledUser.identity,
+                             {emailVerification, phoneNumberVerification})));
+    }
+
+    SECTION("stays STOPPED after enrolling a user")
+    {
+      REQUIRE_NOTHROW(TC_AWAIT(
+          server->enrollUser(enrolledUser.identity,
+                             {emailVerification, phoneNumberVerification})));
+      CHECK(server->status() == Status::Stopped);
+    }
+  }
+
+  SECTION("enrolled user must verify new devices")
+  {
+    auto device1 = enrolledUser.makeDevice();
+    auto device2 = enrolledUser.makeDevice();
+    auto enrolledUserLaptop = device1.createCore();
+    auto enrolledUserPhone = device2.createCore();
+
+    TC_AWAIT(server->enrollUser(enrolledUser.identity,
+                                {emailVerification, phoneNumberVerification}));
+
+    auto verificationCode = TC_AWAIT(getVerificationCode(verifEmail));
+    REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+            Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+        Verification::ByEmail{verifEmail, verificationCode})));
+
+    verificationCode = TC_AWAIT(getVerificationCode(verifPhoneNumber));
+    REQUIRE(TC_AWAIT(enrolledUserPhone->start(enrolledUser.identity)) ==
+            Status::IdentityVerificationNeeded);
+    REQUIRE_NOTHROW(TC_AWAIT(enrolledUserPhone->verifyIdentity(
+        Verification::ByPhoneNumber{verifPhoneNumber, verificationCode})));
   }
 }
