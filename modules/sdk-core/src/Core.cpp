@@ -45,8 +45,7 @@
 #include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
 
-#include <range/v3/range/conversion.hpp>
-#include <range/v3/view/remove_if.hpp>
+#include <range/v3/algorithm/count_if.hpp>
 #include <range/v3/view/transform.hpp>
 
 #include <stdexcept>
@@ -324,19 +323,39 @@ tc::cotask<void> Core::enrollUser(
                    "verifications: should contain at least one preverified "
                    "verification method");
   }
-  else if ((verifications |
-            ranges::views::remove_if([](Verification::Verification const&
-                                            verification) {
-              return !boost::variant2::holds_alternative<PreverifiedEmail>(
-                         verification) &&
-                     !boost::variant2::holds_alternative<
-                         PreverifiedPhoneNumber>(verification);
-            })).empty())
+
+  uint64_t nbEmails = ranges::count_if(verifications, [](auto const& verif) {
+    return boost::variant2::holds_alternative<PreverifiedEmail>(verif);
+  });
+  uint64_t nbPhones = ranges::count_if(verifications, [](auto const& verif) {
+    return boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verif);
+  });
+
+  if (nbEmails + nbPhones != verifications.size())
   {
     throw formatEx(Errc::InvalidArgument,
                    "verifications: can only enroll user with preverified "
                    "verification methods");
   }
+
+  if (nbEmails > 1 || nbPhones > 1)
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: contains at most one of each preverified "
+                   "verification method ");
+  }
+
+  auto const userCreationEntry =
+      generateGhostDevice(identity, generateGhostDeviceKeys(std::nullopt));
+
+  TC_AWAIT(_session->requesters().enrollUser(
+      identity.trustchainId,
+      identity.delegation.userId,
+      Serialization::serialize(userCreationEntry.entry),
+      Verification::makeRequestWithVerifs(verifications, identity.userSecret),
+      userCreationEntry.verificationKey));
+
+  TC_AWAIT(_session->stop());
 }
 
 tc::cotask<void> Core::registerIdentityImpl(
