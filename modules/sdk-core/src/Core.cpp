@@ -304,6 +304,7 @@ tc::cotask<void> Core::enrollUser(
   FUNC_TIMER(Proc);
   assertStatus(Status::Stopped, "enrollUser");
 
+  TINFO("Enrolling User {}", static_cast<void*>(this));
   auto const identity =
       Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
