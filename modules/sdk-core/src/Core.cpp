@@ -82,7 +82,10 @@ std::string createInstanceId()
 }
 }
 
-Core::~Core() = default;
+Core::~Core()
+{
+  TINFO("Destroying core {}", static_cast<void*>(this));
+}
 
 Core::Core(std::string url,
            SdkInfo info,
@@ -115,6 +118,7 @@ Core::Core(std::string url,
         createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
         _datastoreBackend.get()))
 {
+  TINFO("Creating core {}", static_cast<void*>(this));
   if (!_networkBackend)
     throw Errors::formatEx(Errors::Errc::InternalError,
                            "no built-in HTTP backend, please provide one");
@@ -210,6 +214,7 @@ decltype(std::declval<F>()()) Core::resetOnFailure(
 
 tc::cotask<void> Core::stop()
 {
+  TINFO("Stopping core {}", static_cast<void*>(this));
   if (status() == Status::Stopped)
     TC_RETURN();
 
@@ -221,6 +226,7 @@ tc::cotask<void> Core::stop()
 
 void Core::quickStop()
 {
+  TINFO("Quick stopping core {}", static_cast<void*>(this));
   // This function may be called by AsyncCore to reset everything when start()
   // fails. In these cases, we still need to call reset(), but not trigger
   // sessionClosed.
@@ -235,6 +241,7 @@ void Core::quickStop()
 
 tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
 {
+  TINFO("Starting core {}", static_cast<void*>(this));
   auto const identity =
       Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
 
@@ -291,6 +298,7 @@ tc::cotask<void> Core::registerIdentityImpl(
     Verification::Verification const& verification,
     std::optional<std::string> const& withTokenNonce)
 {
+  TINFO("Registering identity {}", static_cast<void*>(this));
   auto const verificationKey =
       boost::variant2::get_if<VerificationKey>(&verification);
   auto const ghostDeviceKeys =
@@ -374,6 +382,7 @@ tc::cotask<void> Core::verifyIdentityImpl(
     Verification::Verification const& verification,
     std::optional<std::string> const& withTokenNonce)
 {
+  TINFO("Verifying identity {}", static_cast<void*>(this));
   auto const verificationKey =
       TC_AWAIT(getVerificationKey(verification, withTokenNonce));
   try
