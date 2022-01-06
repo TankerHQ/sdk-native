@@ -84,7 +84,10 @@ std::string createInstanceId()
 
 Core::~Core()
 {
+// Tracking a bug on Android, but this line causes a dead lock on ruby
+#ifdef ANDROID
   TINFO("Destroying core {}", static_cast<void*>(this));
+#endif
 }
 
 Core::Core(std::string url,
