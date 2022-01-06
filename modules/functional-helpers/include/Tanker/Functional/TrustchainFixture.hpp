@@ -10,14 +10,11 @@ namespace Tanker
 {
 namespace Functional
 {
-struct TrustchainFixture
+struct TrustchainFixtureSimple
 {
   Trustchain& trustchain;
-  User &alice, &bob, &charlie;
-  Device &aliceDevice, &aliceDevice2, &bobDevice, &charlieDevice;
-  AsyncCorePtr &aliceSession, &aliceSession2, &bobSession, &charlieSession;
 
-  TrustchainFixture();
+  TrustchainFixtureSimple();
   static TrustchainFactory& trustchainFactory();
 
   static Trustchain& getTrustchain();
@@ -38,6 +35,15 @@ struct TrustchainFixture
   tc::cotask<void> enableOidc();
   tc::cotask<void> enablePreverifiedMethods();
   tc::cotask<void> enableUserEnrollment();
+};
+
+struct TrustchainFixture : TrustchainFixtureSimple
+{
+  User &alice, &bob, &charlie;
+  Device &aliceDevice, &aliceDevice2, &bobDevice, &charlieDevice;
+  AsyncCorePtr &aliceSession, &aliceSession2, &bobSession, &charlieSession;
+
+  TrustchainFixture();
 };
 }
 }
