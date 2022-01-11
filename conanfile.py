@@ -85,9 +85,9 @@ class TankerConan(ConanFile):
     def requirements(self):
         private = self.options.tankerlib_shared == True
 
-        self.requires("boost/1.78.0-r1", private=private)
+        self.requires("boost/1.78.0-r3", private=private)
         self.requires("libressl/3.2.5", private=private)
-        self.requires("fetchpp/0.14.0-r2", private=private)
+        self.requires("fetchpp/0.15.1-r1", private=private)
         if self.options.with_sqlite:
             self.requires("sqlpp11/0.60-r1", private=private)
             self.requires("sqlpp11-connector-sqlite3/0.30-r2", private=private)
@@ -98,7 +98,7 @@ class TankerConan(ConanFile):
         self.requires("gsl-lite/0.37.0", private=private)
         self.requires("nlohmann_json/3.10.2", private=private)
         self.requires("libsodium/1.0.18", private=private)
-        self.requires("tconcurrent/0.39.0-r2", private=private)
+        self.requires("tconcurrent/0.40.0-r1", private=private)
         self.requires("date/3.0.0", private=private)
         # catch2 is needed to export datastore tests
         self.requires("catch2/2.13.6-r1", private=private)
@@ -120,7 +120,7 @@ class TankerConan(ConanFile):
         if self.should_build_tools:
             self.build_requires("docopt.cpp/0.6.2")
         if self.should_build_tests:
-            self.build_requires("catch2-async/2.13.6-r1")
+            self.build_requires("catch2-async/2.13.6-r2")
             self.build_requires("trompeloeil/38")
 
     def init_cmake(self):
