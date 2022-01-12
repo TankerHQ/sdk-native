@@ -4,18 +4,17 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 
+#include <range/v3/algorithm/contains.hpp>
+
 namespace Tanker
 {
 namespace Streams
 {
-constexpr std::uint32_t Header::currentVersion;
-constexpr std::uint32_t Header::serializedSize;
-constexpr std::uint32_t Header::defaultEncryptedChunkSize;
-
-Header::Header(std::uint32_t encryptedChunkSize,
+Header::Header(std::uint32_t version,
+               std::uint32_t encryptedChunkSize,
                Trustchain::ResourceId const& resourceId,
                Crypto::AeadIv const& seed)
-  : _version(Header::currentVersion),
+  : _version(version),
     _encryptedChunkSize(encryptedChunkSize),
     _resourceId(resourceId),
     _seed(seed)
@@ -47,7 +46,7 @@ void from_serialized(Serialization::SerializedSource& ss, Header& header)
   using namespace Tanker::Errors;
 
   header._version = Serialization::deserialize<uint8_t>(ss);
-  if (header._version != Header::currentVersion)
+  if (!ranges::contains(Header::versions, header._version))
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported version: {}", header._version);
@@ -66,7 +65,7 @@ void from_serialized(Serialization::SerializedSource& ss, Header& header)
 
 std::uint8_t* to_serialized(std::uint8_t* it, Header const& header)
 {
-  it = Serialization::serialize<uint8_t>(it, Header::currentVersion);
+  it = Serialization::serialize<uint8_t>(it, header.version());
   it = Serialization::serialize<uint32_t>(it, header.encryptedChunkSize());
   it = Serialization::serialize(it, header.resourceId());
   return Serialization::serialize(it, header.seed());

@@ -58,8 +58,10 @@ tc::cotask<void> EncryptionStream::encryptChunk()
   auto output = prepareWrite(Header::serializedSize +
                              Crypto::encryptedSize(clearInput.size()));
 
-  Header const header(
-      _encryptedChunkSize, _resourceId, Crypto::getRandom<Crypto::AeadIv>());
+  Header const header(4u,
+                      _encryptedChunkSize,
+                      _resourceId,
+                      Crypto::getRandom<Crypto::AeadIv>());
   Serialization::serialize(output.data(), header);
   auto const iv = Crypto::deriveIv(header.seed(), _chunkIndex);
   ++_chunkIndex;
