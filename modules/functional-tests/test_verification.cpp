@@ -4,6 +4,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Format/StringView.hpp>
 #include <Tanker/Functional/Provisional.hpp>
+#include <Tanker/GhostDevice.hpp>
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
@@ -14,7 +15,8 @@
 #include <Helpers/Email.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/PhoneNumber.hpp>
-#include <Tanker/GhostDevice.hpp>
+
+#include "CheckDecrypt.hpp"
 
 #include <Tanker/Cacerts/InitSsl.hpp>
 
@@ -1088,11 +1090,23 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   auto const email = PreverifiedEmail{"kirby@tanker.io"};
   auto const emailVerification = Verification::Verification{email};
+  auto const phoneNumber = PreverifiedPhoneNumber{"+33639982233"};
+  auto const phoneNumberVerification = Verification::Verification{phoneNumber};
 
   auto enrolledUser = trustchain.makeUser();
 
   TANKER_CHECK_THROWS_WITH_CODE(
       TC_AWAIT(server->enrollUser(enrolledUser.identity, {emailVerification})),
+      AppdErrc::FeatureNotEnabled);
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(
+          server->enrollUser(enrolledUser.identity, {phoneNumberVerification})),
+      AppdErrc::FeatureNotEnabled);
+
+  TANKER_CHECK_THROWS_WITH_CODE(
+      TC_AWAIT(server->enrollUser(
+          enrolledUser.identity, {emailVerification, phoneNumberVerification})),
       AppdErrc::FeatureNotEnabled);
 }
 
@@ -1179,6 +1193,22 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment errors")
                                     {phoneNumberVerification})),
         Errc::Conflict);
   }
+
+  SECTION("throws when enrolling a registered user")
+  {
+    auto const device = enrolledUser.makeDevice();
+    auto const core = sDevice.createCore();
+
+    REQUIRE_NOTHROW(TC_AWAIT(core->start(enrolledUser.identity)));
+    auto const verifiedPhone = PhoneNumber(phoneNumber.string());
+    REQUIRE_NOTHROW(TC_AWAIT(core->registerIdentity(Verification::ByPhoneNumber{
+        verifiedPhone, TC_AWAIT(getVerificationCode(verifiedPhone))})));
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        TC_AWAIT(server->enrollUser(enrolledUser.identity,
+                                    {phoneNumberVerification})),
+        Errc::Conflict);
+  }
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
@@ -1186,7 +1216,9 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
   auto serverUser = trustchain.makeUser();
   auto sDevice = serverUser.makeDevice();
   auto server = sDevice.createCore();
-  auto const verifEmail = makeEmail();
+  auto const provisionalIdentity = trustchain.makeEmailProvisionalUser();
+  auto const verifEmail =
+      boost::variant2::get<Email>(provisionalIdentity.value);
   auto const email = PreverifiedEmail{verifEmail.string()};
   auto const emailVerification = Verification::Verification{email};
   auto const verifPhoneNumber = makePhoneNumber();
@@ -1227,26 +1259,106 @@ TEST_CASE_METHOD(TrustchainFixture, "User enrollment")
     }
   }
 
-  SECTION("enrolled user must verify new devices")
+  SECTION("enrolled user")
   {
+    auto const clearData = "new enrollment feature";
     auto device1 = enrolledUser.makeDevice();
-    auto device2 = enrolledUser.makeDevice();
     auto enrolledUserLaptop = device1.createCore();
-    auto enrolledUserPhone = device2.createCore();
 
     TC_AWAIT(server->enrollUser(enrolledUser.identity,
                                 {emailVerification, phoneNumberVerification}));
-
     auto verificationCode = TC_AWAIT(getVerificationCode(verifEmail));
-    REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
-            Status::IdentityVerificationNeeded);
-    REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
-        Verification::ByEmail{verifEmail, verificationCode})));
 
-    verificationCode = TC_AWAIT(getVerificationCode(verifPhoneNumber));
-    REQUIRE(TC_AWAIT(enrolledUserPhone->start(enrolledUser.identity)) ==
-            Status::IdentityVerificationNeeded);
-    REQUIRE_NOTHROW(TC_AWAIT(enrolledUserPhone->verifyIdentity(
-        Verification::ByPhoneNumber{verifPhoneNumber, verificationCode})));
+    auto const disposableIdentity = trustchain.makeUser();
+    TC_AWAIT(server->start(disposableIdentity.identity));
+    auto verificationKey = TC_AWAIT(server->generateVerificationKey());
+    TC_AWAIT(server->registerIdentity(VerificationKey{verificationKey}));
+
+    SECTION("must verify new devices")
+    {
+      auto device2 = enrolledUser.makeDevice();
+      auto enrolledUserPhone = device2.createCore();
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+          Verification::ByEmail{verifEmail, verificationCode})));
+
+      verificationCode = TC_AWAIT(getVerificationCode(verifPhoneNumber));
+      REQUIRE(TC_AWAIT(enrolledUserPhone->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserPhone->verifyIdentity(
+          Verification::ByPhoneNumber{verifPhoneNumber, verificationCode})));
+    }
+
+    SECTION("can attache a provisional identity")
+    {
+      std::vector<uint8_t> encryptedData = TC_AWAIT(
+          encrypt(*server, clearData, {provisionalIdentity.publicIdentity}));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+          Verification::ByEmail{verifEmail, verificationCode})));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->attachProvisionalIdentity(
+                           provisionalIdentity.secretIdentity))
+                  .status == Status::Ready);
+
+      REQUIRE_NOTHROW(
+          checkDecrypt({enrolledUserLaptop}, clearData, encryptedData));
+    }
+
+    SECTION("access data shared before first verification")
+    {
+      std::vector<uint8_t> encryptedData = TC_AWAIT(
+          encrypt(*server, clearData, {enrolledUser.spublicIdentity()}));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+          Verification::ByEmail{verifEmail, verificationCode})));
+
+      REQUIRE_NOTHROW(
+          checkDecrypt({enrolledUserLaptop}, clearData, encryptedData));
+    }
+
+    SECTION("can be added to group before first verification")
+    {
+      auto const groupId =
+          TC_AWAIT(server->createGroup({enrolledUser.spublicIdentity()}));
+      std::vector<uint8_t> encryptedData =
+          TC_AWAIT(encrypt(*server, clearData, {}, {groupId}));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+          Verification::ByEmail{verifEmail, verificationCode})));
+
+      REQUIRE_NOTHROW(
+          checkDecrypt({enrolledUserLaptop}, clearData, encryptedData));
+    }
+
+    SECTION(
+        "decrypts data shared with a provisional identity through a group "
+        "before first verification")
+    {
+      auto const groupId =
+          TC_AWAIT(server->createGroup({provisionalIdentity.publicIdentity}));
+      std::vector<uint8_t> encryptedData =
+          TC_AWAIT(encrypt(*server, clearData, {}, {groupId}));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->start(enrolledUser.identity)) ==
+              Status::IdentityVerificationNeeded);
+      REQUIRE_NOTHROW(TC_AWAIT(enrolledUserLaptop->verifyIdentity(
+          Verification::ByEmail{verifEmail, verificationCode})));
+
+      REQUIRE(TC_AWAIT(enrolledUserLaptop->attachProvisionalIdentity(
+                           provisionalIdentity.secretIdentity))
+                  .status == Status::Ready);
+
+      REQUIRE_NOTHROW(
+          checkDecrypt({enrolledUserLaptop}, clearData, encryptedData));
+    }
   }
 }
