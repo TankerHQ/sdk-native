@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Functional/Device.hpp>
+#include <Tanker/Trustchain/UserId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SUserId.hpp>
 
@@ -30,6 +31,8 @@ public:
   tc::cotask<std::vector<Device>> makeDevices(std::size_t nb);
 
   SPublicIdentity spublicIdentity() const;
+  Tanker::Trustchain::UserId userId() const;
+  Crypto::SymmetricKey userSecret() const;
 };
 
 void to_json(nlohmann::json& j, User const& state);

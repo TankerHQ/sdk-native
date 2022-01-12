@@ -1,6 +1,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Tanker/Functional/User.hpp>
+#include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicIdentity.hpp>
 #include <Tanker/Identity/SecretPermanentIdentity.hpp>
 
@@ -52,6 +53,18 @@ tc::cotask<std::vector<Device>> User::makeDevices(std::size_t nb)
 SPublicIdentity User::spublicIdentity() const
 {
   return SPublicIdentity{Identity::getPublicIdentity(identity)};
+}
+
+Tanker::Trustchain::UserId User::userId() const
+{
+  return Identity::extract<Identity::SecretPermanentIdentity>(identity)
+      .delegation.userId;
+}
+
+Crypto::SymmetricKey User::userSecret() const
+{
+  return Identity::extract<Identity::SecretPermanentIdentity>(identity)
+      .userSecret;
 }
 
 void to_json(nlohmann::json& j, User const& user)
