@@ -4,7 +4,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/Helpers.hpp>
@@ -103,7 +103,7 @@ tc::cotask<std::uint64_t> EncryptorV4::decrypt(
 {
   auto const initialSize = decryptedData.size();
 
-  auto decryptor = TC_AWAIT(DecryptionStream::create(
+  auto decryptor = TC_AWAIT(DecryptionStreamV4::create(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 

@@ -1,5 +1,5 @@
 #include <Tanker/Crypto/Crypto.hpp>
-#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
@@ -59,7 +59,7 @@ std::vector<uint8_t> decryptAllStream(
     std::function<tc::cotask<Crypto::SymmetricKey>(
         Trustchain::ResourceId const& id)> const& keyFinder)
 {
-  auto decryptor = AWAIT(DecryptionStream::create(source, keyFinder));
+  auto decryptor = AWAIT(DecryptionStreamV4::create(source, keyFinder));
 
   return AWAIT(readAllStream(decryptor));
 }

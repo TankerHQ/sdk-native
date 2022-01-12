@@ -22,7 +22,7 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -973,7 +973,7 @@ Core::makeDecryptionStream(Streams::InputSource cb)
       TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
     };
 
-    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
     auto const resourceId = streamDecryptor.resourceId();
     TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
