@@ -7,6 +7,7 @@ add_library(tankerstreams
   include/Tanker/Streams/DecryptionStream.hpp
   include/Tanker/Streams/DecryptionStreamImpl.hpp
   include/Tanker/Streams/DecryptionStreamV4.hpp
+  include/Tanker/Streams/DecryptionStreamV8.hpp
   include/Tanker/Streams/Detail/BufferedStreamImpl.hpp
   include/Tanker/Streams/EncryptionStream.hpp
   include/Tanker/Streams/EncryptionStreamImpl.hpp
@@ -18,6 +19,7 @@ add_library(tankerstreams
   include/Tanker/Streams/PeekableInputSource.hpp
 
   src/DecryptionStreamV4.cpp
+  src/DecryptionStreamV8.cpp
   src/EncryptionStreamV4.cpp
   src/EncryptionStreamV8.cpp
   src/Header.cpp
