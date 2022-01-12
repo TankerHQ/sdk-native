@@ -83,7 +83,7 @@ void from_json(nlohmann::json const& j, App& app)
 
 Client::Client(std::string_view host_url,
                std::string_view idToken,
-               fetchpp::net::executor ex)
+               fetchpp::net::any_io_executor ex)
   : _baseUrl("/apps", fetchpp::http::url(host_url)),
     _idToken{idToken},
     _client(ex, std::chrono::seconds(10), Cacerts::create_ssl_context())
