@@ -115,6 +115,19 @@ Verification::Verification cverificationToVerification(
   return verification;
 }
 
+std::vector<Verification::Verification> cverificationListToVerifications(
+    tanker_verification_list_t const* cverifications)
+{
+  return ranges::make_subrange(
+             cverifications->verifications,
+             cverifications->verifications + cverifications->count) |
+         ranges::views::transform(
+             [](tanker_verification_t const& cverification) {
+               return cverificationToVerification(&cverification);
+             }) |
+         ranges::to<std::vector>;
+}
+
 void cVerificationMethodFromVerificationMethod(
     tanker_verification_method_t& c_verif_method,
     Verification::VerificationMethod const& method)
@@ -388,11 +401,26 @@ tanker_future_t* tanker_start(tanker_t* ctanker, char const* identity)
         Exception(make_error_code(Errc::InvalidArgument), "identity is null")));
 
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->start(std::string(identity))
-          .and_then(tc::get_synchronous_executor(), [](auto status) {
-            return reinterpret_cast<void*>(status);
-          }));
+  return makeFuture(tanker->start(identity).and_then(
+      tc::get_synchronous_executor(),
+      [](auto status) { return reinterpret_cast<void*>(status); }));
+}
+
+tanker_expected_t* tanker_enroll_user(
+    tanker_t* ctanker,
+    char const* identity,
+    tanker_verification_list_t const* cverifications)
+{
+  if (identity == nullptr)
+    return makeFuture(tc::make_exceptional_future<void>(
+        Exception(make_error_code(Errc::InvalidArgument), "identity is null")));
+
+  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tc::sync([&] {
+                      auto const verifications =
+                          cverificationListToVerifications(cverifications);
+                      return tanker->enrollUser(identity, verifications);
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_register_identity(

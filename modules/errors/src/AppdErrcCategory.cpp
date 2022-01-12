@@ -72,6 +72,8 @@ std::string AppdErrcCategory::message(int c) const
     return "missing user group members";
   case AppdErrc::FeatureNotEnabled:
     return "feature not enabled";
+  case AppdErrc::Conflict:
+    return "conflict";
   }
   return "unknown error";
 }
@@ -120,6 +122,8 @@ std::error_condition AppdErrcCategory::default_error_condition(
   case AppdErrc::EmptyUserGroup:
   case AppdErrc::MissingUserGroupMembers:
     return make_error_condition(Errors::Errc::InvalidArgument);
+  case AppdErrc::Conflict:
+    return make_error_condition(Errors::Errc::Conflict);
   }
   return std::error_condition(c, *this);
 }

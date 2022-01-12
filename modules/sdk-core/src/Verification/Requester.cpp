@@ -114,6 +114,27 @@ tc::cotask<void> Requester::createUser(
   _httpClient->setAccessToken(std::move(accessToken));
 }
 
+tc::cotask<void> Requester::enrollUser(
+    Trustchain::TrustchainId const& trustchainId,
+    Trustchain::UserId const& userId,
+    gsl::span<uint8_t const> userCreation,
+    gsl::span<RequestWithVerif const> verificationRequests,
+    gsl::span<uint8_t const> encryptedVerificationKey)
+{
+  nlohmann::json body{
+      {"app_id", trustchainId},
+      {"user_id", userId},
+      {"ghost_device_creation", mgs::base64::encode(userCreation)},
+      {"encrypted_verification_key",
+       mgs::base64::encode(encryptedVerificationKey)},
+      {"verifications", verificationRequests},
+  };
+  auto const target = _httpClient->makeUrl(
+      fmt::format("users/{userId:#S}/enroll", fmt::arg("userId", userId)));
+
+  TC_AWAIT(_httpClient->asyncPost(target, std::move(body))).value();
+}
+
 tc::cotask<void> Requester::createDevice(
     gsl::span<uint8_t const> deviceCreation)
 {

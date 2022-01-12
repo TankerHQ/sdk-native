@@ -145,11 +145,11 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
 {
   return makeFuture(
       tc::sync([&] {
-        if (coptions->version != 2)
+        if (coptions->version != 2 && coptions->version != 3)
           throw Exception(
               make_error_code(Errc::InvalidArgument),
               fmt::format("options version should be {:d} instead of {:d}",
-                          2,
+                          3,
                           coptions->version));
 
         Admin::AppUpdateOptions appOptions{};
@@ -162,6 +162,9 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
         if (coptions->preverified_verification)
           appOptions.preverifiedVerification =
               *coptions->preverified_verification;
+        // user_enrollment is introduced with version 3
+        if (coptions->version >= 3 && coptions->user_enrollment)
+          appOptions.userEnrollment = *coptions->user_enrollment;
 
         return tc::async_resumable(
             [admin = reinterpret_cast<Admin::Client*>(admin),

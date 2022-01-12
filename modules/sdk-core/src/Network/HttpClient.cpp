@@ -55,6 +55,7 @@ boost::container::flat_map<std::string_view, AppdErrc> const appdErrorMap{
     {"empty_user_group", AppdErrc::EmptyUserGroup},
     {"missing_user_group_members", AppdErrc::MissingUserGroupMembers},
     {"feature_not_enabled", AppdErrc::FeatureNotEnabled},
+    {"conflict", AppdErrc::Conflict},
 };
 
 AppdErrc getErrorFromCode(std::string_view code)

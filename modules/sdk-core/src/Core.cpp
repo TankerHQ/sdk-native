@@ -45,7 +45,7 @@
 #include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
 
-#include <range/v3/range/conversion.hpp>
+#include <range/v3/algorithm/count_if.hpp>
 #include <range/v3/view/transform.hpp>
 
 #include <stdexcept>
@@ -297,54 +297,96 @@ tc::cotask<Status> Core::start(std::string const& identity)
   })));
 }
 
+tc::cotask<void> Core::enrollUser(
+    std::string const& b64Identity,
+    std::vector<Verification::Verification> const& verifications)
+{
+  FUNC_TIMER(Proc);
+  assertStatus(Status::Stopped, "enrollUser");
+
+  TINFO("Enrolling User {}", static_cast<void*>(this));
+  auto const identity =
+      Identity::extract<Identity::SecretPermanentIdentity>(b64Identity);
+
+  if (identity.trustchainId != _info.trustchainId)
+  {
+    throw Errors::formatEx(
+        Errors::Errc::InvalidArgument,
+        "the provided identity was not signed by the private key of the "
+        "current app: expected app ID {} but got {}",
+        _info.trustchainId,
+        identity.trustchainId);
+  }
+
+  if (verifications.empty())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: should contain at least one preverified "
+                   "verification method");
+  }
+
+  uint64_t nbEmails = ranges::count_if(verifications, [](auto const& verif) {
+    return boost::variant2::holds_alternative<PreverifiedEmail>(verif);
+  });
+  uint64_t nbPhones = ranges::count_if(verifications, [](auto const& verif) {
+    return boost::variant2::holds_alternative<PreverifiedPhoneNumber>(verif);
+  });
+
+  if (nbEmails + nbPhones != verifications.size())
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: can only enroll user with preverified "
+                   "verification methods");
+  }
+
+  if (nbEmails > 1 || nbPhones > 1)
+  {
+    throw formatEx(Errc::InvalidArgument,
+                   "verifications: contains at most one of each preverified "
+                   "verification method ");
+  }
+
+  auto const userCreation =
+      generateGhostDevice(identity, generateGhostDeviceKeys(std::nullopt));
+
+  TC_AWAIT(_session->requesters().enrollUser(
+      identity.trustchainId,
+      identity.delegation.userId,
+      Serialization::serialize(userCreation.entry),
+      Verification::makeRequestWithVerifs(verifications, identity.userSecret),
+      userCreation.verificationKey));
+
+  TC_AWAIT(_session->stop());
+}
+
 tc::cotask<void> Core::registerIdentityImpl(
     Verification::Verification const& verification,
     std::optional<std::string> const& withTokenNonce)
 {
   TINFO("Registering identity {}", static_cast<void*>(this));
-  auto const verificationKey =
-      boost::variant2::get_if<VerificationKey>(&verification);
-  auto const ghostDeviceKeys =
-      verificationKey ? GhostDevice::create(*verificationKey).toDeviceKeys() :
-                        DeviceKeys::create();
-  auto const ghostDevice = GhostDevice::create(ghostDeviceKeys);
+  auto const userCreation = generateGhostDevice(
+      _session->identity(), generateGhostDeviceKeys(verification));
 
-  auto const userKeyPair = Crypto::makeEncryptionKeyPair();
-  auto const userCreationEntry =
-      Users::createNewUserAction(_session->trustchainId(),
-                                 _session->identity().delegation,
-                                 ghostDeviceKeys.signatureKeyPair.publicKey,
-                                 ghostDeviceKeys.encryptionKeyPair.publicKey,
-                                 userKeyPair);
   auto const deviceKeys = DeviceKeys::create();
-
   auto const firstDeviceEntry = Users::createNewDeviceAction(
       _session->trustchainId(),
-      Trustchain::DeviceId{userCreationEntry.hash()},
+      Trustchain::DeviceId{userCreation.entry.hash()},
       Identity::makeDelegation(_session->userId(),
-                               ghostDevice.privateSignatureKey),
+                               userCreation.ghostDevice.privateSignatureKey),
       deviceKeys.signatureKeyPair.publicKey,
       deviceKeys.encryptionKeyPair.publicKey,
-      userKeyPair);
-
-  auto const verificationKeyToSend = ghostDevice.toVerificationKey();
-  std::vector<uint8_t> encryptedVerificationKey(
-      EncryptorV2::encryptedSize(verificationKeyToSend.size()));
-  EncryptorV2::encryptSync(
-      encryptedVerificationKey.data(),
-      gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
-      _session->userSecret());
+      userCreation.userKeyPair);
 
   auto const deviceId = Trustchain::DeviceId{firstDeviceEntry.hash()};
 
   TC_AWAIT(_session->requesters().createUser(
       _session->trustchainId(),
       _session->userId(),
-      Serialization::serialize(userCreationEntry),
+      Serialization::serialize(userCreation.entry),
       Serialization::serialize(firstDeviceEntry),
       Verification::makeRequestWithVerif(
           verification, _session->userSecret(), std::nullopt, withTokenNonce),
-      encryptedVerificationKey));
+      userCreation.verificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
 
@@ -459,7 +501,6 @@ tc::cotask<std::optional<std::string>> Core::verifyIdentity(
        Errors::Errc::InvalidVerification,
        Errors::Errc::InvalidArgument,
        Errors::Errc::PreconditionFailed,
-       Errors::Errc::Conflict,
        Errors::Errc::TooManyAttempts}));
 
   if (withToken == VerifyWithToken::No)
