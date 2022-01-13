@@ -63,8 +63,9 @@ tc::cotask<void> DecryptionStream::readHeader()
   {
     if (buffer.size() != Header::serializedSize)
     {
-      throw Exception(make_error_code(Errc::IOError),
-                      "could not read encrypted input header");
+      throw Exception(
+          make_error_code(Errc::DecryptionFailed),
+          "truncated buffer: could not read encrypted input header");
     }
     Serialization::deserialize_to(buffer, _header);
   }
