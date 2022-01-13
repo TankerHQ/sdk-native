@@ -57,9 +57,12 @@ std::uint64_t EncryptorV4::decryptedSize(
   if (ss.remaining_size() < Crypto::Mac::arraySize)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   auto const chunks = encryptedData.size() / header.encryptedChunkSize();
+  auto const lastEncryptedChunkSize =
+      encryptedData.size() % header.encryptedChunkSize();
+  if (lastEncryptedChunkSize < Crypto::AeadIv::arraySize + headerSize)
+    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
   auto const lastClearChunkSize =
-      (encryptedData.size() % header.encryptedChunkSize()) -
-      Crypto::AeadIv::arraySize - headerSize;
+      lastEncryptedChunkSize - Crypto::AeadIv::arraySize - headerSize;
   return chunks * clearChunkSize(header.encryptedChunkSize()) +
          Crypto::decryptedSize(lastClearChunkSize);
 }
