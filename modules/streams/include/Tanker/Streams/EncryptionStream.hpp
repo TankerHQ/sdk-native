@@ -17,27 +17,22 @@ namespace Tanker
 {
 namespace Streams
 {
-class EncryptionStream : BufferedStream<EncryptionStream>
+template <typename Derived>
+class EncryptionStream : protected BufferedStream<Derived>
 {
-  friend BufferedStream<EncryptionStream>;
+  friend BufferedStream<Derived>;
 
 public:
-  explicit EncryptionStream(
-      InputSource,
-      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
-  EncryptionStream(
-      InputSource,
-      Trustchain::ResourceId const& resourceId,
-      Crypto::SymmetricKey const& key,
-      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
-
-  using BufferedStream<EncryptionStream>::operator();
+  using BufferedStream<Derived>::operator();
 
   Trustchain::ResourceId const& resourceId() const;
   Crypto::SymmetricKey const& symmetricKey() const;
 
-private:
-  tc::cotask<void> encryptChunk();
+protected:
+  EncryptionStream(InputSource,
+                   Trustchain::ResourceId const& resourceId,
+                   Crypto::SymmetricKey const& key,
+                   std::uint32_t encryptedChunkSize);
 
   tc::cotask<void> processInput();
 
@@ -48,3 +43,5 @@ private:
 };
 }
 }
+
+#include <Tanker/Streams/EncryptionStreamImpl.hpp>

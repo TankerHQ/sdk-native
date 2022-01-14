@@ -5,7 +5,7 @@
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
 #include <Tanker/Streams/DecryptionStream.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 
@@ -86,7 +86,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     Crypto::SymmetricKey const& key,
     std::uint32_t encryptedChunkSize)
 {
-  EncryptionStream encryptor(
+  EncryptionStreamV4 encryptor(
       bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
 
   while (auto const nbRead = TC_AWAIT(encryptor(encryptedData)))

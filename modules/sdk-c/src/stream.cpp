@@ -3,7 +3,6 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 
 #include <mgs/base64.hpp>

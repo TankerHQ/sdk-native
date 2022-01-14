@@ -7,7 +7,6 @@
 #include <Tanker/Oidc/NonceManager.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/OidcNonce.hpp>

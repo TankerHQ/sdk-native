@@ -23,6 +23,7 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
@@ -909,7 +910,7 @@ Core::makeEncryptionStream(
     ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
-  Streams::EncryptionStream encryptor(std::move(cb));
+  Streams::EncryptionStreamV4 encryptor(std::move(cb));
   auto const resourceId = encryptor.resourceId();
 
   auto spublicIdentitiesWithUs = spublicIdentities;

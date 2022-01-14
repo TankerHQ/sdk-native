@@ -1,6 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Streams/DecryptionStream.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/Helpers.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
@@ -67,7 +67,7 @@ std::vector<uint8_t> decryptAllStream(
 
 TEST_CASE("Throws when underlying read fails", "[streamencryption]")
 {
-  EncryptionStream encryptor(failRead);
+  EncryptionStreamV4 encryptor(failRead);
 
   auto const mockKeyFinder = [](auto) -> tc::cotask<Crypto::SymmetricKey> {
     TC_RETURN(Crypto::SymmetricKey());
@@ -84,7 +84,7 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
       24 + 5 * Streams::Header::defaultEncryptedChunkSize);
   Crypto::randomFill(buffer);
 
-  EncryptionStream encryptor(bufferViewToInputSource(buffer));
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(buffer));
 
   auto const decrypted = decryptAllStream(encryptor, makeKeyFinder(encryptor));
 
@@ -103,7 +103,7 @@ TEST_CASE(
   auto readCallback = bufferViewToInputSource(buffer);
   auto timesCallbackCalled = 0;
 
-  EncryptionStream encryptor(
+  EncryptionStreamV4 encryptor(
       [&timesCallbackCalled, cb = std::move(readCallback)](
           gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
         ++timesCallbackCalled;
@@ -155,7 +155,7 @@ TEST_CASE("Corrupted buffer", "[streamencryption]")
   std::vector<std::uint8_t> buffer(16);
   Crypto::randomFill(buffer);
 
-  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(buffer), smallChunkSize);
   auto const encrypted = AWAIT(readAllStream(encryptor));
   auto corrupted = encrypted;
   // corrupt the end of the first chunk
@@ -174,7 +174,7 @@ TEST_CASE("Different headers between chunks", "[streamencryption]")
   std::vector<std::uint8_t> buffer(16);
   Crypto::randomFill(buffer);
 
-  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(buffer), smallChunkSize);
   auto const encrypted = AWAIT(readAllStream(encryptor));
   auto corrupted = encrypted;
   // change the resource id in the second header
@@ -194,7 +194,7 @@ TEST_CASE("Wrong chunk order", "[streamencryption]")
   std::vector<std::uint8_t> buffer(18);
   Crypto::randomFill(buffer);
 
-  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(buffer), smallChunkSize);
   auto const encrypted = AWAIT(readAllStream(encryptor));
   auto corrupted = encrypted;
   // Swap the first two chunks
@@ -215,7 +215,7 @@ TEST_CASE("Invalid encryptedChunkSize", "[streamencryption]")
   std::vector<std::uint8_t> buffer(16);
   Crypto::randomFill(buffer);
 
-  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  EncryptionStreamV4 encryptor(bufferViewToInputSource(buffer), smallChunkSize);
   auto const encrypted = AWAIT(readAllStream(encryptor));
 
   SECTION("with an encryptedChunkSize too small")
