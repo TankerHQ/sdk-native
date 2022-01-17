@@ -46,12 +46,6 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
   return EncryptorV5::encryptedSize(clearSize);
 }
 
-std::uint64_t EncryptionSession::decryptedSize(
-    gsl::span<const std::uint8_t> encryptedData)
-{
-  return EncryptorV5::decryptedSize(encryptedData);
-}
-
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
     std::uint8_t* encryptedData, gsl::span<const std::uint8_t> clearData)
 {

@@ -35,17 +35,6 @@ protected:
 
 }
 
-TEST_CASE(
-    "EncryptionSession: decryptedSize and encryptedSize should be symmetrical")
-{
-  std::vector<uint8_t> a0(EncryptionSession::encryptedSize(0));
-  Serialization::varint_write(a0.data(), EncryptionSession::version());
-  std::vector<uint8_t> a42(EncryptionSession::encryptedSize(42));
-  Serialization::varint_write(a42.data(), EncryptionSession::version());
-  CHECK(EncryptionSession::decryptedSize(a0) == 0);
-  CHECK(EncryptionSession::decryptedSize(a42) == 42);
-}
-
 TEST_CASE_METHOD(
     FixtureEncrytionSession,
     "EncryptionSession: encrypt/decrypt should work with an empty buffer")
@@ -57,8 +46,7 @@ TEST_CASE_METHOD(
   auto const metadata =
       AWAIT(encSession.encrypt(encryptedData.data(), clearData));
 
-  std::vector<uint8_t> decryptedData(
-      EncryptionSession::decryptedSize(encryptedData));
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
   AWAIT_VOID(
       Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
@@ -77,8 +65,7 @@ TEST_CASE_METHOD(
   auto const metadata =
       AWAIT(encSession.encrypt(encryptedData.data(), clearData));
 
-  std::vector<uint8_t> decryptedData(
-      EncryptionSession::decryptedSize(encryptedData));
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
   AWAIT_VOID(
       Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
 
@@ -112,8 +99,7 @@ TEST_CASE_METHOD(
   auto const metadata =
       AWAIT(encSession.encrypt(encryptedData.data(), clearData));
 
-  std::vector<uint8_t> decryptedData(
-      EncryptionSession::decryptedSize(encryptedData));
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
   encryptedData[2]++;
 
