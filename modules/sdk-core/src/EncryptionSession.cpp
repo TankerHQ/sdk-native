@@ -1,6 +1,8 @@
 #include <Tanker/EncryptionSession.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
@@ -43,14 +45,21 @@ std::shared_ptr<tc::task_canceler> EncryptionSession::canceler() const
 
 std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
 {
-  return EncryptorV5::encryptedSize(clearSize);
+  if (Encryptor::isHugeClearData(clearSize))
+    return EncryptorV4::encryptedSize(clearSize);
+  else
+    return EncryptorV5::encryptedSize(clearSize);
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
     std::uint8_t* encryptedData, gsl::span<const std::uint8_t> clearData)
 {
   assertSession("encrypt");
-  TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-      encryptedData, clearData, _resourceId, _sessionKey)));
+  if (Encryptor::isHugeClearData(clearData.size()))
+    TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey)));
+  else
+    TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
+        encryptedData, clearData, _resourceId, _sessionKey)));
 }
 }

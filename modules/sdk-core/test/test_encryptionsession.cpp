@@ -1,5 +1,7 @@
+#include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Encryptor/v4.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -65,6 +67,31 @@ TEST_CASE_METHOD(
   auto const metadata =
       AWAIT(encSession.encrypt(encryptedData.data(), clearData));
 
+  auto const expectedVersionNumber = 5;
+  CHECK(encryptedData[0] == expectedVersionNumber);
+
+  std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
+  AWAIT_VOID(
+      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+
+  CHECK(clearData == decryptedData);
+}
+
+TEST_CASE_METHOD(
+    FixtureEncrytionSession,
+    "EncryptionSession: encrypt/decrypt should work with a huge buffer")
+{
+  std::vector<uint8_t> clearData(1024 * 1024 * 2);
+  Crypto::randomFill(clearData);
+  std::vector<uint8_t> encryptedData(
+      EncryptionSession::encryptedSize(clearData.size()));
+
+  auto const metadata =
+      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+
+  auto const expectedVersionNumber = 4;
+  CHECK(encryptedData[0] == expectedVersionNumber);
+
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
   AWAIT_VOID(
       Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
@@ -122,6 +149,22 @@ TEST_CASE_METHOD(
 
   CHECK(encSession.resourceId() == metadata.resourceId);
   CHECK(EncryptorV5::extractResourceId(encryptedData) == metadata.resourceId);
+}
+
+TEST_CASE_METHOD(FixtureEncrytionSession,
+                 "Session with huge data's resourceId should match metadata "
+                 "and V4 resource ID")
+{
+  std::vector<uint8_t> clearData(1024 * 1024 * 2);
+  Crypto::randomFill(clearData);
+  std::vector<uint8_t> encryptedData(
+      EncryptionSession::encryptedSize(clearData.size()));
+
+  auto const metadata =
+      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+
+  CHECK(encSession.resourceId() == metadata.resourceId);
+  CHECK(EncryptorV4::extractResourceId(encryptedData) == metadata.resourceId);
 }
 
 TEST_CASE_METHOD(
