@@ -113,11 +113,30 @@ TEST_CASE("EncryptorStream: encrypt/decrypt should work with a large buffer")
 }
 
 TEST_CASE(
+    "EncryptorStream: decryptedSize should detect a buffer truncated too hard")
+{
+  // This data takes a bit more than one chunk
+  std::vector<uint8_t> clearData(1024 * 1024);
+  Crypto::randomFill(clearData);
+
+  std::vector<uint8_t> encryptedData(
+      EncryptorV4::encryptedSize(clearData.size()));
+
+  AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+
+  // Only take the first chunk
+  std::vector<uint8_t> truncatedData(encryptedData.begin(),
+                                     encryptedData.begin() + 1024 * 1024);
+
+  TANKER_CHECK_THROWS_WITH_CODE(EncryptorV4::decryptedSize(truncatedData),
+                                Errc::InvalidArgument);
+}
+
+TEST_CASE(
     "EncryptorStream: Should not be able to decrypt a buffer without the last "
     "chunk")
 {
-  // This data is supposed to be exactly one chunk so a second chunk will be
-  // added to guarantee the integrity of the data
+  // This data takes a bit more than one chunk
   std::vector<uint8_t> clearData(1024 * 1024);
   Crypto::randomFill(clearData);
 
@@ -127,12 +146,13 @@ TEST_CASE(
   auto const metadata =
       AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
 
+  // Only take the first chunk
   std::vector<uint8_t> truncatedData(encryptedData.begin(),
-                                     encryptedData.end() -
-                                         Crypto::AeadIv::arraySize -
-                                         Trustchain::ResourceId::arraySize);
+                                     encryptedData.begin() + 1024 * 1024);
 
-  std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(truncatedData));
+  // decryptedSize will throw on the truncatedData, so do it on encryptedData
+  // just to allocate enough room
+  std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT_VOID(EncryptorV4::decrypt(
