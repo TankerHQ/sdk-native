@@ -2,6 +2,7 @@
 
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/Streams/BufferedStream.hpp>
+#include <Tanker/Streams/Header.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
@@ -21,11 +22,14 @@ class EncryptionStream : BufferedStream<EncryptionStream>
   friend BufferedStream<EncryptionStream>;
 
 public:
-  explicit EncryptionStream(InputSource);
-  EncryptionStream(InputSource, std::uint32_t encryptedChunkSize);
-  EncryptionStream(InputSource,
-                   Trustchain::ResourceId const& resourceId,
-                   Crypto::SymmetricKey const& key);
+  explicit EncryptionStream(
+      InputSource,
+      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
+  EncryptionStream(
+      InputSource,
+      Trustchain::ResourceId const& resourceId,
+      Crypto::SymmetricKey const& key,
+      std::uint32_t encryptedChunkSize = Header::defaultEncryptedChunkSize);
 
   using BufferedStream<EncryptionStream>::operator();
 
