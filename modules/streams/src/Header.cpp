@@ -46,13 +46,13 @@ void from_serialized(Serialization::SerializedSource& ss, Header& header)
 {
   using namespace Tanker::Errors;
 
-  header._version = ss.read_varint();
+  header._version = Serialization::deserialize<uint8_t>(ss);
   if (header._version != Header::currentVersion)
   {
     throw formatEx(
         Errc::InvalidArgument, "unsupported version: {}", header._version);
   }
-  Serialization::deserialize_to(ss, header._encryptedChunkSize);
+  Serialization::deserialize_to<uint32_t>(ss, header._encryptedChunkSize);
   if (header._encryptedChunkSize <
       Header::serializedSize + Crypto::Mac::arraySize)
   {
@@ -66,8 +66,8 @@ void from_serialized(Serialization::SerializedSource& ss, Header& header)
 
 std::uint8_t* to_serialized(std::uint8_t* it, Header const& header)
 {
-  it = Serialization::varint_write(it, Header::currentVersion);
-  it = Serialization::serialize(it, header.encryptedChunkSize());
+  it = Serialization::serialize<uint8_t>(it, Header::currentVersion);
+  it = Serialization::serialize<uint32_t>(it, header.encryptedChunkSize());
   it = Serialization::serialize(it, header.resourceId());
   return Serialization::serialize(it, header.seed());
 }

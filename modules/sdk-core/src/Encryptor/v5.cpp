@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
@@ -14,30 +13,27 @@ namespace Tanker
 {
 namespace
 {
-auto const versionSize = Serialization::varint_size(EncryptorV5::version());
+auto const versionSize = 1;
+auto const overheadSize = versionSize + ResourceId::arraySize +
+                          Crypto::AeadIv::arraySize + Crypto::Mac::arraySize;
 
 // version 5 format layout:
 // [version, 1B] [resourceid, 16B] [iv, 24B] [[ciphertext, variable] [MAC, 16B]]
 void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
-  auto const dataVersionResult = Serialization::varint_read(encryptedData);
-  auto const overheadSize =
-      ResourceId::arraySize + Crypto::AeadIv::arraySize + ResourceId::arraySize;
-
-  assert(dataVersionResult.first == EncryptorV5::version());
-
-  if (dataVersionResult.second.size() < overheadSize)
+  if (encryptedData.size() < overheadSize)
   {
     throw Errors::formatEx(Errors::Errc::InvalidArgument,
                            "truncated encrypted buffer");
   }
+
+  assert(encryptedData[0] == EncryptorV5::version());
 }
 }
 
 std::uint64_t EncryptorV5::encryptedSize(std::uint64_t clearSize)
 {
-  return versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize +
-         Crypto::encryptedSize(clearSize);
+  return clearSize + overheadSize;
 }
 
 std::uint64_t EncryptorV5::decryptedSize(
@@ -45,10 +41,7 @@ std::uint64_t EncryptorV5::decryptedSize(
 {
   checkEncryptedFormat(encryptedData);
 
-  auto const versionResult = Serialization::varint_read(encryptedData);
-  return Crypto::decryptedSize(versionResult.second.size() -
-                               ResourceId::arraySize -
-                               Crypto::AeadIv::arraySize);
+  return encryptedData.size() - overheadSize;
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
@@ -57,7 +50,7 @@ tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
-  Serialization::varint_write(encryptedData, version());
+  encryptedData[0] = version();
   std::copy(resourceId.begin(), resourceId.end(), encryptedData + versionSize);
   auto const iv = encryptedData + versionSize + ResourceId::arraySize;
   Crypto::randomFill(gsl::make_span(iv, Crypto::AeadIv::arraySize));

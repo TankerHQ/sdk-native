@@ -2,7 +2,6 @@
 
 #include <Tanker/Crypto/AeadIv.hpp>
 #include <Tanker/Serialization/SerializedSource.hpp>
-#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <gsl/gsl-lite.hpp>
@@ -18,10 +17,10 @@ class Header
 {
 public:
   static constexpr std::uint32_t currentVersion = 4u;
+  static constexpr std::uint32_t versionSize = 1u;
   static constexpr std::uint32_t defaultEncryptedChunkSize = 1024 * 1024;
   static constexpr std::uint32_t serializedSize =
-      Serialization::varint_size(Header::currentVersion) +
-      sizeof(std::uint32_t) + Trustchain::ResourceId::arraySize +
+      versionSize + sizeof(std::uint32_t) + Trustchain::ResourceId::arraySize +
       Crypto::AeadIv::arraySize;
 
   Header() = default;
