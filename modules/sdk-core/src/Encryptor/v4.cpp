@@ -4,7 +4,6 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Streams/DecryptionStream.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/Header.hpp>
@@ -22,12 +21,13 @@ namespace Tanker
 namespace
 {
 constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
-auto const versionSize = Serialization::varint_size(EncryptorV4::version());
-auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
+constexpr auto versionSize = 1;
+constexpr auto headerSize =
+    versionSize + sizeOfChunkSize + ResourceId::arraySize;
 
 // version 4 format layout:
 // N * chunk of encryptedChunkSize:
-// header: [version, varint] [chunkSize, 4B] [ResourceId, 16B]
+// header: [version, 1B] [chunkSize, 4B] [ResourceId, 16B]
 // content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
 
 constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)

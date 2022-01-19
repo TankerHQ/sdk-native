@@ -3,7 +3,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <stdexcept>
@@ -15,27 +14,24 @@ namespace Tanker
 {
 namespace
 {
-auto const versionSize = Serialization::varint_size(EncryptorV2::version());
+constexpr auto versionSize = 1;
+constexpr auto overheadSize =
+    versionSize + Crypto::AeadIv::arraySize + Crypto::Mac::arraySize;
 
 // version 2 format layout:
 // [version, 1B] [IV, 24B] [[ciphertext, variable] [MAC, 16B]]
 void checkEncryptedFormat(gsl::span<std::uint8_t const> encryptedData)
 {
-  auto const dataVersionResult = Serialization::varint_read(encryptedData);
-  auto const overheadSize =
-      Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize;
-
-  assert(dataVersionResult.first == EncryptorV2::version());
-
-  if (dataVersionResult.second.size() < overheadSize)
+  if (encryptedData.size() < overheadSize)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
+
+  assert(encryptedData[0] == EncryptorV2::version());
 }
 }
 
 std::uint64_t EncryptorV2::encryptedSize(std::uint64_t clearSize)
 {
-  return versionSize + Crypto::AeadIv::arraySize +
-         Crypto::encryptedSize(clearSize);
+  return clearSize + overheadSize;
 }
 
 std::uint64_t EncryptorV2::decryptedSize(
@@ -43,12 +39,7 @@ std::uint64_t EncryptorV2::decryptedSize(
 {
   checkEncryptedFormat(encryptedData);
 
-  auto const versionResult = Serialization::varint_read(encryptedData);
-  if (versionResult.second.size() <
-      Crypto::AeadIv::arraySize + Trustchain::ResourceId::arraySize)
-    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  return Crypto::decryptedSize(versionResult.second.size() -
-                               Crypto::AeadIv::arraySize);
+  return encryptedData.size() - overheadSize;
 }
 
 EncryptionMetadata EncryptorV2::encryptSync(
@@ -56,7 +47,7 @@ EncryptionMetadata EncryptorV2::encryptSync(
     gsl::span<std::uint8_t const> clearData,
     Crypto::SymmetricKey const& key)
 {
-  Serialization::varint_write(encryptedData, version());
+  encryptedData[0] = version();
   auto const iv = encryptedData + versionSize;
   Crypto::randomFill(gsl::span<std::uint8_t>(iv, Crypto::AeadIv::arraySize));
   auto const resourceId = Crypto::encryptAead(
@@ -79,21 +70,13 @@ tc::cotask<void> EncryptorV2::decrypt(
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
-  try
-  {
-    checkEncryptedFormat(encryptedData);
+  checkEncryptedFormat(encryptedData);
 
-    auto const versionRemoved =
-        Serialization::varint_read(encryptedData).second;
-    auto const iv = versionRemoved.data();
-    auto const cipherText = versionRemoved.subspan(Crypto::AeadIv::arraySize);
-    Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
-    TC_RETURN();
-  }
-  catch (gsl::fail_fast const&)
-  {
-    throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  }
+  auto const versionRemoved = encryptedData.subspan(versionSize);
+  auto const iv = versionRemoved.data();
+  auto const cipherText = versionRemoved.subspan(Crypto::AeadIv::arraySize);
+  Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
+  TC_RETURN();
 }
 
 ResourceId EncryptorV2::extractResourceId(
@@ -101,7 +84,7 @@ ResourceId EncryptorV2::extractResourceId(
 {
   checkEncryptedFormat(encryptedData);
 
-  auto const cypherText = Serialization::varint_read(encryptedData).second;
+  auto const cypherText = encryptedData.subspan(versionSize);
   return ResourceId{Crypto::extractMac(cypherText)};
 }
 }
