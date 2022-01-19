@@ -13,9 +13,10 @@ namespace Tanker
 {
 namespace
 {
-auto const versionSize = 1;
-auto const overheadSize = versionSize + ResourceId::arraySize +
-                          Crypto::AeadIv::arraySize + Crypto::Mac::arraySize;
+constexpr auto versionSize = 1;
+constexpr auto overheadSize = versionSize + ResourceId::arraySize +
+                              Crypto::AeadIv::arraySize +
+                              Crypto::Mac::arraySize;
 
 // version 5 format layout:
 // [version, 1B] [resourceid, 16B] [iv, 24B] [[ciphertext, variable] [MAC, 16B]]

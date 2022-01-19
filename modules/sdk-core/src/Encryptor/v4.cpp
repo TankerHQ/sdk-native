@@ -21,8 +21,9 @@ namespace Tanker
 namespace
 {
 constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
-auto const versionSize = 1;
-auto const headerSize = versionSize + sizeOfChunkSize + ResourceId::arraySize;
+constexpr auto versionSize = 1;
+constexpr auto headerSize =
+    versionSize + sizeOfChunkSize + ResourceId::arraySize;
 
 // version 4 format layout:
 // N * chunk of encryptedChunkSize:
