@@ -57,7 +57,7 @@ RequestWithVerif makeRequestWithVerif(
             EncryptedEmail encryptedEmail(
                 EncryptorV2::encryptedSize(v.email.size()));
             EncryptorV2::encryptSync(
-                encryptedEmail.data(),
+                encryptedEmail,
                 gsl::make_span(v.email).as_span<uint8_t const>(),
                 userSecret);
 
@@ -72,7 +72,7 @@ RequestWithVerif makeRequestWithVerif(
             EncryptedPhoneNumber encryptedPhoneNumber(
                 EncryptorV2::encryptedSize(v.phoneNumber.size()));
             EncryptorV2::encryptSync(
-                encryptedPhoneNumber.data(),
+                encryptedPhoneNumber,
                 gsl::make_span(v.phoneNumber).as_span<std::uint8_t const>(),
                 userSecret);
 
@@ -104,7 +104,7 @@ RequestWithVerif makeRequestWithVerif(
           [&](PreverifiedEmail const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.string(), "email");
             EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.size()));
-            EncryptorV2::encryptSync(encryptedEmail.data(),
+            EncryptorV2::encryptSync(encryptedEmail,
                                      gsl::make_span(v).as_span<uint8_t const>(),
                                      userSecret);
 
@@ -116,7 +116,7 @@ RequestWithVerif makeRequestWithVerif(
             EncryptedPhoneNumber encryptedPhoneNumber(
                 EncryptorV2::encryptedSize(v.size()));
             EncryptorV2::encryptSync(
-                encryptedPhoneNumber.data(),
+                encryptedPhoneNumber,
                 gsl::make_span(v).as_span<std::uint8_t const>(),
                 userSecret);
 

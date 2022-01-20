@@ -43,17 +43,17 @@ std::uint64_t EncryptorV2::decryptedSize(
 }
 
 EncryptionMetadata EncryptorV2::encryptSync(
-    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     Crypto::SymmetricKey const& key)
 {
   encryptedData[0] = version();
-  auto const iv = encryptedData + versionSize;
-  Crypto::randomFill(gsl::span<std::uint8_t>(iv, Crypto::AeadIv::arraySize));
+  auto const iv = encryptedData.subspan(versionSize, Crypto::AeadIv::arraySize);
+  Crypto::randomFill(iv);
   auto const resourceId = Crypto::encryptAead(
       key,
-      iv,
-      encryptedData + versionSize + Crypto::AeadIv::arraySize,
+      iv.data(),
+      encryptedData.data() + versionSize + Crypto::AeadIv::arraySize,
       clearData,
       {});
   return EncryptionMetadata{ResourceId(resourceId), key};
@@ -63,8 +63,7 @@ tc::cotask<EncryptionMetadata> EncryptorV2::encrypt(
     gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData)
 {
-  TC_RETURN(
-      encryptSync(encryptedData.data(), clearData, Crypto::makeSymmetricKey()));
+  TC_RETURN(encryptSync(encryptedData, clearData, Crypto::makeSymmetricKey()));
 }
 
 tc::cotask<void> EncryptorV2::decrypt(
