@@ -52,14 +52,15 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
-    std::uint8_t* encryptedData, gsl::span<const std::uint8_t> clearData)
+    gsl::span<std::uint8_t> encryptedData,
+    gsl::span<const std::uint8_t> clearData)
 {
   assertSession("encrypt");
   if (Encryptor::isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
-        encryptedData, clearData, _resourceId, _sessionKey)));
+        encryptedData.data(), clearData, _resourceId, _sessionKey)));
   else
     TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-        encryptedData, clearData, _resourceId, _sessionKey)));
+        encryptedData.data(), clearData, _resourceId, _sessionKey)));
 }
 }

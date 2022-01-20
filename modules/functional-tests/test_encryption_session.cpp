@@ -22,7 +22,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
-      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
+      TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
@@ -37,7 +37,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for Bob")
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
-      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
+      TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({bobSession}, clearData, encryptedData)));
@@ -53,7 +53,7 @@ TEST_CASE_METHOD(TrustchainFixture,
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
   REQUIRE_NOTHROW(
-      TC_AWAIT(encSess.encrypt(encryptedData.data(), make_buffer(clearData))));
+      TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
                                 Errc::InvalidArgument);
   REQUIRE_NOTHROW(
