@@ -46,19 +46,21 @@ std::uint64_t EncryptorV5::decryptedSize(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
-    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
   encryptedData[0] = version();
-  std::copy(resourceId.begin(), resourceId.end(), encryptedData + versionSize);
-  auto const iv = encryptedData + versionSize + ResourceId::arraySize;
-  Crypto::randomFill(gsl::make_span(iv, Crypto::AeadIv::arraySize));
+  std::copy(
+      resourceId.begin(), resourceId.end(), encryptedData.data() + versionSize);
+  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
+                                        Crypto::AeadIv::arraySize);
+  Crypto::randomFill(iv);
   Crypto::encryptAead(key,
-                      iv,
-                      encryptedData + versionSize + ResourceId::arraySize +
-                          Crypto::AeadIv::arraySize,
+                      iv.data(),
+                      encryptedData.data() + versionSize +
+                          ResourceId::arraySize + Crypto::AeadIv::arraySize,
                       clearData,
                       resourceId);
   TC_RETURN((EncryptionMetadata{resourceId, key}));

@@ -535,7 +535,7 @@ tc::cotask<void> Core::encrypt(
 {
   assertStatus(Status::Ready, "encrypt");
   auto const metadata =
-      TC_AWAIT(Encryptor::encrypt(encryptedData.data(), clearData));
+      TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
   {

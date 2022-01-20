@@ -28,7 +28,8 @@ public:
                                         gsl::span<std::uint8_t const> clearData,
                                         Crypto::SymmetricKey const& key);
   static tc::cotask<EncryptionMetadata> encrypt(
-      uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
+      gsl::span<uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData);
   static tc::cotask<void> decrypt(gsl::span<std::uint8_t> decryptedData,
                                   Crypto::SymmetricKey const& key,
                                   gsl::span<std::uint8_t const> encryptedData);

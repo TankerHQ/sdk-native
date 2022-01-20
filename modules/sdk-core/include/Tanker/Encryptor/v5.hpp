@@ -23,7 +23,7 @@ public:
   static std::uint64_t decryptedSize(
       gsl::span<std::uint8_t const> encryptedData);
   static tc::cotask<EncryptionMetadata> encrypt(
-      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData,
       Trustchain::ResourceId const& resourceId,
       Crypto::SymmetricKey const& key);

@@ -44,13 +44,14 @@ std::uint64_t EncryptorV3::decryptedSize(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV3::encrypt(
-    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
+    gsl::span<std::uint8_t> encryptedData,
+    gsl::span<std::uint8_t const> clearData)
 {
   encryptedData[0] = version();
   auto const key = Crypto::makeSymmetricKey();
   auto const iv = Crypto::AeadIv{};
   auto const resourceId = Crypto::encryptAead(
-      key, iv.data(), encryptedData + versionSize, clearData, {});
+      key, iv.data(), encryptedData.data() + versionSize, clearData, {});
   TC_RETURN((EncryptionMetadata{ResourceId(resourceId), key}));
 }
 

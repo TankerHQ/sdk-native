@@ -58,9 +58,9 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
   assertSession("encrypt");
   if (Encryptor::isHugeClearData(clearData.size()))
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(
-        encryptedData.data(), clearData, _resourceId, _sessionKey)));
+        encryptedData, clearData, _resourceId, _sessionKey)));
   else
     TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
-        encryptedData.data(), clearData, _resourceId, _sessionKey)));
+        encryptedData, clearData, _resourceId, _sessionKey)));
 }
 }

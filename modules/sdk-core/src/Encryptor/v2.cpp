@@ -60,9 +60,11 @@ EncryptionMetadata EncryptorV2::encryptSync(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV2::encrypt(
-    std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData)
+    gsl::span<std::uint8_t> encryptedData,
+    gsl::span<std::uint8_t const> clearData)
 {
-  TC_RETURN(encryptSync(encryptedData, clearData, Crypto::makeSymmetricKey()));
+  TC_RETURN(
+      encryptSync(encryptedData.data(), clearData, Crypto::makeSymmetricKey()));
 }
 
 tc::cotask<void> EncryptorV2::decrypt(
