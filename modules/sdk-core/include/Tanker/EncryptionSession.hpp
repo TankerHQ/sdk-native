@@ -26,8 +26,6 @@ public:
   Crypto::SymmetricKey const& sessionKey() const;
   std::shared_ptr<tc::task_canceler> canceler() const;
   static std::uint64_t encryptedSize(std::uint64_t clearSize);
-  static std::uint64_t decryptedSize(
-      gsl::span<std::uint8_t const> encryptedData);
   tc::cotask<EncryptionMetadata> encrypt(
       std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
 

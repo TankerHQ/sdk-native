@@ -12,6 +12,8 @@ namespace Tanker
 {
 namespace Encryptor
 {
+bool isHugeClearData(uint64_t dataSize);
+
 uint64_t encryptedSize(uint64_t clearSize);
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData);
 tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,

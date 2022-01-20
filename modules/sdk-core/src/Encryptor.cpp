@@ -21,11 +21,6 @@ namespace Encryptor
 {
 namespace
 {
-constexpr bool isHugeClearData(uint64_t dataSize)
-{
-  return dataSize > Streams::Header::defaultEncryptedChunkSize;
-}
-
 template <typename Callable>
 decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 {
@@ -44,6 +39,11 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
                             "invalid encrypted data");
   }
 }
+}
+
+bool isHugeClearData(uint64_t dataSize)
+{
+  return dataSize > Streams::Header::defaultEncryptedChunkSize;
 }
 
 uint64_t encryptedSize(uint64_t clearSize)

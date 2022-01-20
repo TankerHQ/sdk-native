@@ -72,8 +72,22 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
-  EncryptionStream encryptor(bufferViewToInputSource(clearData),
-                             encryptedChunkSize);
+  TC_RETURN(TC_AWAIT(encrypt(encryptedData,
+                             clearData,
+                             Crypto::getRandom<Trustchain::ResourceId>(),
+                             Crypto::makeSymmetricKey(),
+                             encryptedChunkSize)));
+}
+
+tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
+    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t const> clearData,
+    Trustchain::ResourceId const& resourceId,
+    Crypto::SymmetricKey const& key,
+    std::uint32_t encryptedChunkSize)
+{
+  EncryptionStream encryptor(
+      bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
 
   while (auto const nbRead =
              TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))

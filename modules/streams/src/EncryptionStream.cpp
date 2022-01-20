@@ -4,7 +4,6 @@
 #include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Serialization/Serialization.hpp>
-#include <Tanker/Streams/Header.hpp>
 
 using namespace Tanker::Errors;
 
@@ -20,29 +19,26 @@ constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
 }
 }
 
-EncryptionStream::EncryptionStream(InputSource cb)
-  : EncryptionStream(std::move(cb), Header::defaultEncryptedChunkSize)
-{
-}
-
 EncryptionStream::EncryptionStream(InputSource cb,
                                    std::uint32_t encryptedChunkSize)
-  : BufferedStream(std::move(cb)), _encryptedChunkSize(encryptedChunkSize)
+  : EncryptionStream(std::move(cb),
+                     Crypto::getRandom<Trustchain::ResourceId>(),
+                     Crypto::makeSymmetricKey(),
+                     encryptedChunkSize)
 {
-  if (encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
-    throw AssertionError("invalid encrypted chunk size");
-  Crypto::randomFill(_resourceId);
-  _key = Crypto::makeSymmetricKey();
 }
 
 EncryptionStream::EncryptionStream(InputSource cb,
                                    Trustchain::ResourceId const& resourceId,
-                                   Crypto::SymmetricKey const& key)
+                                   Crypto::SymmetricKey const& key,
+                                   std::uint32_t encryptedChunkSize)
   : BufferedStream(std::move(cb)),
-    _encryptedChunkSize(Header::defaultEncryptedChunkSize),
+    _encryptedChunkSize(encryptedChunkSize),
     _resourceId{resourceId},
     _key{key}
 {
+  if (encryptedChunkSize < Header::serializedSize + Crypto::Mac::arraySize)
+    throw AssertionError("invalid encrypted chunk size");
 }
 
 Trustchain::ResourceId const& EncryptionStream::resourceId() const

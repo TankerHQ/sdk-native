@@ -31,6 +31,13 @@ public:
       gsl::span<std::uint8_t const> clearData,
       std::uint32_t encryptedChunkSize =
           Streams::Header::defaultEncryptedChunkSize);
+  static tc::cotask<EncryptionMetadata> encrypt(
+      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t const> clearData,
+      Trustchain::ResourceId const& resourceId,
+      Crypto::SymmetricKey const& key,
+      std::uint32_t encryptedChunkSize =
+          Streams::Header::defaultEncryptedChunkSize);
 
   static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
                                   Crypto::SymmetricKey const& key,
