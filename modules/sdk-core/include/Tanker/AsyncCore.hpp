@@ -78,12 +78,12 @@ public:
   Tanker::Status status() const;
 
   tc::future<void> encrypt(
-      uint8_t* encryptedData,
+      gsl::span<uint8_t> encryptedData,
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
-  tc::future<void> decrypt(uint8_t* decryptedData,
+  tc::future<void> decrypt(gsl::span<uint8_t> decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::future<std::vector<uint8_t>> encrypt(

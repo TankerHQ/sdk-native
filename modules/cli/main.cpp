@@ -433,7 +433,7 @@ int main(int argc, char* argv[])
       std::vector<uint8_t> encrypted(
           AsyncCore::encryptedSize(cleartext.size()));
 
-      core->encrypt(encrypted.data(),
+      core->encrypt(encrypted,
                     gsl::make_span(cleartext).as_span<uint8_t const>(),
                     shareToPublicIdentities,
                     shareWithGroups,
@@ -450,7 +450,7 @@ int main(int argc, char* argv[])
       std::vector<uint8_t> decrypted(
           AsyncCore::decryptedSize(encrypteddata).get());
 
-      core->decrypt(decrypted.data(),
+      core->decrypt(decrypted,
                     gsl::make_span(encrypteddata).as_span<uint8_t const>())
           .get();
       fmt::print(

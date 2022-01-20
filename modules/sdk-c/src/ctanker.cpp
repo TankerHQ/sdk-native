@@ -603,11 +603,12 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
     shareWithSelf = options->share_with_self;
   }
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(encrypted_data,
-                                    gsl::make_span(data, data_size),
-                                    spublicIdentities,
-                                    sgroupIds,
-                                    Core::ShareWithSelf{shareWithSelf}));
+  return makeFuture(tanker->encrypt(
+      gsl::span(encrypted_data, AsyncCore::encryptedSize(data_size)),
+      gsl::make_span(data, data_size),
+      spublicIdentities,
+      sgroupIds,
+      Core::ShareWithSelf{shareWithSelf}));
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
@@ -616,8 +617,13 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
                                 uint64_t data_size)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(
-      tanker->decrypt(decrypted_data, gsl::make_span(data, data_size)));
+  return makeFuture(tc::sync([&] {
+                      auto encryptedSpan = gsl::make_span(data, data_size);
+                      auto decryptedSpan = gsl::make_span(
+                          decrypted_data,
+                          AsyncCore::decryptedSize(encryptedSpan).get());
+                      return tanker->decrypt(decryptedSpan, encryptedSpan);
+                    }).unwrap());
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,

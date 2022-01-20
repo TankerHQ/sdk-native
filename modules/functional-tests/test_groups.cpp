@@ -340,7 +340,7 @@ TEST_CASE_METHOD(TrustchainFixture,
 
   // verify the group
   std::vector<uint8_t> useless(AsyncCore::encryptedSize(0));
-  TC_AWAIT(bobSession->encrypt(useless.data(), {}, {}, {myGroup}));
+  TC_AWAIT(bobSession->encrypt(useless, {}, {}, {myGroup}));
 
   TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
 
