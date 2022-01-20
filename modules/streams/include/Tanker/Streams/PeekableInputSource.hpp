@@ -28,6 +28,8 @@ private:
   std::uint64_t _pos = 0;
 
   InputSource _underlyingStream;
+
+  tc::cotask<void> fillBuffer(std::uint64_t bytesNeeded);
 };
 }
 }

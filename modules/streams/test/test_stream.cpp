@@ -73,6 +73,51 @@ TEST_CASE("peeks past the end and reads an underlying stream",
   CHECK(out == buffer);
 }
 
+TEST_CASE("peek multiple times", "[peekableinputsource]")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
+
+  peek = AWAIT(peekable.peek(10));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 10));
+
+  peek = AWAIT(peekable.peek(40));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 40));
+
+  peek = AWAIT(peekable.peek(100));
+  // We reached the end of the buffer, so fewer bytes are available
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
+}
+
+TEST_CASE("peek multiple times with a pre-filled peeking buffer",
+          "[peekableinputsource]")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  AWAIT(peekable.peek(10));
+  {
+    std::vector<uint8_t> toRead(5);
+    AWAIT(peekable(toRead));
+  }
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 30));
+
+  peek = AWAIT(peekable.peek(10));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 10));
+
+  peek = AWAIT(peekable.peek(40));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 40));
+
+  peek = AWAIT(peekable.peek(100));
+  // We reached the end of the buffer, so fewer bytes are available
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 45));
+}
+
 TEST_CASE("alternate between peeks and read on a long underlying stream",
           "[peekableinputsource]")
 {
