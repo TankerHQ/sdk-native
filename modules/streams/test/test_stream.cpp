@@ -31,21 +31,6 @@ tc::cotask<std::int64_t> failRead(std::uint8_t*, std::int64_t)
   throw Exception(make_error_code(Errc::IOError), "failRead");
 }
 
-tc::cotask<std::vector<std::uint8_t>> decryptData(DecryptionStream& decryptor)
-{
-  std::vector<std::uint8_t> decrypted(
-      24 + 5 * Streams::Header::defaultEncryptedChunkSize);
-  auto it = decrypted.data();
-  std::int64_t totalRead{};
-  while (auto const nbRead = TC_AWAIT(decryptor(it, 1024 * 1024 / 2)))
-  {
-    totalRead += nbRead;
-    it += nbRead;
-  }
-  decrypted.resize(totalRead);
-  TC_RETURN(std::move(decrypted));
-}
-
 auto fillAndMakePeekableSource(std::vector<uint8_t>& buffer)
 {
   Crypto::randomFill(buffer);
@@ -148,7 +133,7 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
 
   auto decryptor = AWAIT(DecryptionStream::create(encryptor, keyFinder));
 
-  auto const decrypted = AWAIT(decryptData(decryptor));
+  auto const decrypted = AWAIT(readAllStream(decryptor));
 
   CHECK(decrypted.size() == buffer.size());
   CHECK(decrypted == buffer);
@@ -210,7 +195,7 @@ TEST_CASE("Decrypt test vector", "[streamencryption]")
   auto decryptor = AWAIT(DecryptionStream::create(
       bufferViewToInputSource(encryptedTestVector), mockKeyFinder));
 
-  auto const decrypted = AWAIT(decryptData(decryptor));
+  auto const decrypted = AWAIT(readAllStream(decryptor));
 
   CHECK(decrypted == clearData);
 }
@@ -258,7 +243,7 @@ TEST_CASE("Different headers between chunks", "[streamencryption]")
   auto decryptor = AWAIT(DecryptionStream::create(
       bufferViewToInputSource(invalidHeaders), mockKeyFinder));
 
-  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(decryptData(decryptor)),
+  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(readAllStream(decryptor)),
                                 Errors::Errc::DecryptionFailed);
 }
 
