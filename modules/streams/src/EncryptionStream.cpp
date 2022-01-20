@@ -60,10 +60,11 @@ tc::cotask<void> EncryptionStream::encryptChunk()
 
   Header const header(
       _encryptedChunkSize, _resourceId, Crypto::getRandom<Crypto::AeadIv>());
-  auto const it = Serialization::serialize(output.data(), header);
+  Serialization::serialize(output.data(), header);
   auto const iv = Crypto::deriveIv(header.seed(), _chunkIndex);
   ++_chunkIndex;
-  Crypto::encryptAead(_key, iv.data(), it, clearInput, {});
+  auto const cipherText = output.subspan(Header::serializedSize);
+  Crypto::encryptAead(_key, iv, cipherText, clearInput, {});
 }
 
 tc::cotask<void> EncryptionStream::processInput()

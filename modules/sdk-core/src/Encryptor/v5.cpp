@@ -56,13 +56,10 @@ tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
       resourceId.begin(), resourceId.end(), encryptedData.data() + versionSize);
   auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
                                         Crypto::AeadIv::arraySize);
+  auto const cipherText = encryptedData.subspan(
+      versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize);
   Crypto::randomFill(iv);
-  Crypto::encryptAead(key,
-                      iv.data(),
-                      encryptedData.data() + versionSize +
-                          ResourceId::arraySize + Crypto::AeadIv::arraySize,
-                      clearData,
-                      resourceId);
+  Crypto::encryptAead(key, iv, cipherText, clearData, resourceId);
   TC_RETURN((EncryptionMetadata{resourceId, key}));
 }
 
@@ -75,10 +72,11 @@ tc::cotask<void> EncryptorV5::decrypt(
 
   auto const resourceId =
       encryptedData.subspan(versionSize, ResourceId::arraySize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize);
+  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
+                                        Crypto::AeadIv::arraySize);
   auto const data = encryptedData.subspan(versionSize + ResourceId::arraySize +
                                           Crypto::AeadIv::arraySize);
-  Crypto::decryptAead(key, iv.data(), decryptedData.data(), data, resourceId);
+  Crypto::decryptAead(key, iv, decryptedData, data, resourceId);
   TC_RETURN();
 }
 

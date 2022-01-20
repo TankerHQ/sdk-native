@@ -94,7 +94,7 @@ tc::cotask<void> DecryptionStream::decryptChunk()
   auto const iv = Crypto::deriveIv(_header.seed(), _chunkIndex);
   ++_chunkIndex;
   auto output = prepareWrite(Crypto::decryptedSize(encryptedInput.size()));
-  Crypto::decryptAead(_key, iv.data(), output.data(), encryptedInput, {});
+  Crypto::decryptAead(_key, iv, output, encryptedInput, {});
 }
 
 tc::cotask<void> DecryptionStream::processInput()

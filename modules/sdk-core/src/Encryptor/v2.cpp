@@ -49,13 +49,11 @@ EncryptionMetadata EncryptorV2::encryptSync(
 {
   encryptedData[0] = version();
   auto const iv = encryptedData.subspan(versionSize, Crypto::AeadIv::arraySize);
+  auto const cipherText =
+      encryptedData.subspan(versionSize + Crypto::AeadIv::arraySize);
   Crypto::randomFill(iv);
-  auto const resourceId = Crypto::encryptAead(
-      key,
-      iv.data(),
-      encryptedData.data() + versionSize + Crypto::AeadIv::arraySize,
-      clearData,
-      {});
+  auto const resourceId =
+      Crypto::encryptAead(key, iv, cipherText, clearData, {});
   return EncryptionMetadata{ResourceId(resourceId), key};
 }
 
@@ -73,10 +71,10 @@ tc::cotask<void> EncryptorV2::decrypt(
 {
   checkEncryptedFormat(encryptedData);
 
-  auto const versionRemoved = encryptedData.subspan(versionSize);
-  auto const iv = versionRemoved.data();
-  auto const cipherText = versionRemoved.subspan(Crypto::AeadIv::arraySize);
-  Crypto::decryptAead(key, iv, decryptedData.data(), cipherText, {});
+  auto const iv = encryptedData.subspan(versionSize, Crypto::AeadIv::arraySize);
+  auto const cipherText =
+      encryptedData.subspan(versionSize + Crypto::AeadIv::arraySize);
+  Crypto::decryptAead(key, iv, decryptedData, cipherText, {});
   TC_RETURN();
 }
 

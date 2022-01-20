@@ -46,10 +46,10 @@ TEST_CASE("aead")
     std::vector<uint8_t> empty;
     std::vector<uint8_t> encryptedBuffer(encryptedSize(empty.size()));
     AeadIv iv{};
-    encryptAead(key, iv.data(), encryptedBuffer.data(), empty, {});
+    encryptAead(key, iv, encryptedBuffer, empty, {});
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    decryptAead(key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {});
+    decryptAead(key, iv, decryptedBuffer, encryptedBuffer, {});
 
     CHECK(decryptedBuffer.empty());
   }
@@ -58,10 +58,10 @@ TEST_CASE("aead")
   {
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
-    encryptAead(key, iv.data(), encryptedBuffer.data(), buf, {});
+    encryptAead(key, iv, encryptedBuffer, buf, {});
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    decryptAead(key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {});
+    decryptAead(key, iv, decryptedBuffer, encryptedBuffer, {});
 
     CHECK(buf == gsl::make_span(decryptedBuffer));
   }
@@ -84,14 +84,13 @@ TEST_CASE("aead")
   {
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
-    encryptAead(key, iv.data(), encryptedBuffer.data(), buf, {});
+    encryptAead(key, iv, encryptedBuffer, buf, {});
 
     ++encryptedBuffer[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
     TANKER_CHECK_THROWS_WITH_CODE(
-        decryptAead(
-            key, iv.data(), decryptedBuffer.data(), encryptedBuffer, {}),
+        decryptAead(key, iv, decryptedBuffer, encryptedBuffer, {}),
         Errc::AeadDecryptionFailed);
   }
 
@@ -102,11 +101,10 @@ TEST_CASE("aead")
 
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
-    encryptAead(key, iv.data(), encryptedBuffer.data(), buf, additional);
+    encryptAead(key, iv, encryptedBuffer, buf, additional);
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    decryptAead(
-        key, iv.data(), decryptedBuffer.data(), encryptedBuffer, additional);
+    decryptAead(key, iv, decryptedBuffer, encryptedBuffer, additional);
 
     CHECK(buf == gsl::make_span(decryptedBuffer));
   }
@@ -120,17 +118,14 @@ TEST_CASE("aead")
 
     std::vector<uint8_t> encryptedBuffer(encryptedSize(buf.size()));
     AeadIv iv{};
-    encryptAead(key, iv.data(), encryptedBuffer.data(), buf, additional);
+    encryptAead(key, iv, encryptedBuffer, buf, additional);
 
     ++additionals[0];
 
     std::vector<uint8_t> decryptedBuffer(decryptedSize(encryptedBuffer.size()));
-    TANKER_CHECK_THROWS_WITH_CODE(decryptAead(key,
-                                              iv.data(),
-                                              decryptedBuffer.data(),
-                                              encryptedBuffer,
-                                              additional),
-                                  Errc::AeadDecryptionFailed);
+    TANKER_CHECK_THROWS_WITH_CODE(
+        decryptAead(key, iv, decryptedBuffer, encryptedBuffer, additional),
+        Errc::AeadDecryptionFailed);
   }
 
   SECTION("it should be able to derive an IV")
