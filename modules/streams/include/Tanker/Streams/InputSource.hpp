@@ -2,6 +2,8 @@
 
 #include <tconcurrent/coroutine.hpp>
 
+#include <gsl/gsl-lite.hpp>
+
 #include <cstdint>
 #include <functional>
 
@@ -15,6 +17,6 @@ namespace Streams
 //
 // Throws if an error occurred.
 using InputSource =
-    std::function<tc::cotask<std::int64_t>(std::uint8_t* out, std::int64_t n)>;
+    std::function<tc::cotask<std::int64_t>(gsl::span<std::uint8_t> out)>;
 }
 }

@@ -19,7 +19,7 @@ public:
 
   Trustchain::ResourceId const& resourceId() const;
 
-  tc::cotask<std::int64_t> operator()(std::uint8_t* buffer, std::size_t size);
+  tc::cotask<std::int64_t> operator()(gsl::span<std::uint8_t> buffer);
 
 private:
   InputSource _source;

@@ -95,7 +95,7 @@ tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
   return makeFuture(stream->canceler.run([&]() mutable {
     return tc::async_resumable([=]() -> tc::cotask<void*> {
       TC_RETURN(reinterpret_cast<void*>(
-          TC_AWAIT(stream->inputSource(buffer, buffer_size))));
+          TC_AWAIT(stream->inputSource(gsl::make_span(buffer, buffer_size)))));
     });
   }));
 }

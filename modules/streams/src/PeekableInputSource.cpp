@@ -22,8 +22,8 @@ tc::cotask<gsl::span<std::uint8_t const>> PeekableInputSource::peek(
   while (writePos - _pos < size)
   {
     _buffer.resize(writePos + toAsk);
-    auto const nbRead =
-        TC_AWAIT(_underlyingStream(_buffer.data() + writePos, toAsk));
+    auto const nbRead = TC_AWAIT(
+        _underlyingStream(gsl::make_span(_buffer.data() + writePos, toAsk)));
     if (!nbRead)
       break;
     writePos += nbRead;
@@ -33,13 +33,14 @@ tc::cotask<gsl::span<std::uint8_t const>> PeekableInputSource::peek(
       _buffer.data() + _pos, std::min<std::uint64_t>(size, writePos - _pos)));
 }
 
-tc::cotask<std::int64_t> PeekableInputSource::operator()(std::uint8_t* buffer,
-                                                         std::size_t size)
+tc::cotask<std::int64_t> PeekableInputSource::operator()(
+    gsl::span<std::uint8_t> buffer)
 {
   if (!_buffer.empty())
   {
-    auto const toRead = std::min<std::uint64_t>(size, _buffer.size() - _pos);
-    std::copy_n(_buffer.begin() + _pos, toRead, buffer);
+    auto const toRead =
+        std::min<std::uint64_t>(buffer.size(), _buffer.size() - _pos);
+    std::copy_n(_buffer.begin() + _pos, toRead, buffer.data());
     _pos += toRead;
     if (_pos == _buffer.size())
     {
@@ -50,7 +51,7 @@ tc::cotask<std::int64_t> PeekableInputSource::operator()(std::uint8_t* buffer,
   }
   else
   {
-    TC_RETURN(TC_AWAIT(_underlyingStream(buffer, size)));
+    TC_RETURN(TC_AWAIT(_underlyingStream(buffer)));
   }
 }
 }

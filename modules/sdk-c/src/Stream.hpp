@@ -7,15 +7,15 @@
 
 inline auto wrapCallback(tanker_stream_input_source_t cb, void* additional_data)
 {
-  return [=](std::uint8_t* out, std::int64_t n) -> tc::cotask<std::int64_t> {
+  return [=](gsl::span<std::uint8_t> out) -> tc::cotask<std::int64_t> {
     tc::promise<std::int64_t> p;
     // Do not forget to take the promise by ref, the lambda will be deleted as
     // soon as it has run.
     // We are in a coroutine, capturing a stack variable is ok, because we await
     // until the operation finishes.
     tc::dispatch_on_thread_context([=, &p]() mutable {
-      cb(out,
-         n,
+      cb(out.data(),
+         out.size(),
          reinterpret_cast<tanker_stream_read_operation_t*>(&p),
          additional_data);
     });

@@ -19,7 +19,7 @@ class BufferedStream
 public:
   explicit BufferedStream(InputSource);
 
-  tc::cotask<std::int64_t> operator()(std::uint8_t* out, std::int64_t n);
+  tc::cotask<std::int64_t> operator()(gsl::span<std::uint8_t> out);
 
 protected:
   // returns a view to the read input, which size can be at most n
@@ -36,8 +36,7 @@ private:
     Error,
   };
 
-  tc::cotask<std::int64_t> copyBufferedOutput(std::uint8_t* out,
-                                              std::int64_t n);
+  tc::cotask<std::int64_t> copyBufferedOutput(gsl::span<std::uint8_t> out);
 
   InputSource _cb;
   std::vector<std::uint8_t> _input;

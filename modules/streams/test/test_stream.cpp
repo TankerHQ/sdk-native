@@ -26,7 +26,7 @@ Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
     0x8e, 0xf7, 0xfe, 0x7b, 0xd1, 0xf6, 0xb,  0xf1, 0x5c, 0xa4, 0x32,
     0x1e, 0xe4, 0xaa, 0x18, 0xe1, 0x97, 0xbf, 0xf4, 0x5e, 0xfe});
 
-tc::cotask<std::int64_t> failRead(std::uint8_t*, std::int64_t)
+tc::cotask<std::int64_t> failRead(gsl::span<std::uint8_t>)
 {
   throw Exception(make_error_code(Errc::IOError), "failRead");
 }
@@ -112,7 +112,7 @@ TEST_CASE("Throws when underlying read fails", "[streamencryption]")
     TC_RETURN(Crypto::SymmetricKey());
   };
 
-  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor(nullptr, 0)), Errc::IOError);
+  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor({})), Errc::IOError);
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(DecryptionStream::create(failRead, mockKeyFinder)), Errc::IOError);
 }
@@ -152,25 +152,24 @@ TEST_CASE(
 
   EncryptionStream encryptor(
       [&timesCallbackCalled, cb = std::move(readCallback)](
-          std::uint8_t* out,
-          std::int64_t n) mutable -> tc::cotask<std::int64_t> {
+          gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
         ++timesCallbackCalled;
-        TC_RETURN(TC_AWAIT(cb(out, n)));
+        TC_RETURN(TC_AWAIT(cb(out)));
       });
 
   std::vector<std::uint8_t> encryptedBuffer(
       Streams::Header::defaultEncryptedChunkSize);
 
-  AWAIT(encryptor(encryptedBuffer.data(),
-                  Streams::Header::defaultEncryptedChunkSize));
+  AWAIT(encryptor(gsl::make_span(encryptedBuffer)
+                      .subspan(0, Streams::Header::defaultEncryptedChunkSize)));
   CHECK(timesCallbackCalled == 1);
-  AWAIT(encryptor(encryptedBuffer.data(), 0));
+  AWAIT(encryptor({}));
   CHECK(timesCallbackCalled == 2);
   // returns immediately
-  AWAIT(encryptor(encryptedBuffer.data(), 0));
+  AWAIT(encryptor({}));
   CHECK(timesCallbackCalled == 2);
-  AWAIT(encryptor(encryptedBuffer.data(),
-                  Streams::Header::defaultEncryptedChunkSize));
+  AWAIT(encryptor(gsl::make_span(encryptedBuffer)
+                      .subspan(0, Streams::Header::defaultEncryptedChunkSize)));
   CHECK(timesCallbackCalled == 2);
 }
 

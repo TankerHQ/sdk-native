@@ -89,8 +89,8 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
   EncryptionStream encryptor(
       bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
 
-  while (auto const nbRead =
-             TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
+  while (auto const nbRead = TC_AWAIT(
+             encryptor(gsl::make_span(encryptedData, encryptedChunkSize))))
     encryptedData += nbRead;
 
   TC_RETURN(
@@ -106,8 +106,7 @@ tc::cotask<void> EncryptorV4::decrypt(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
-  while (auto const nbRead = TC_AWAIT(decryptor(
-             decryptedData.data(), Header::defaultEncryptedChunkSize)))
+  while (auto const nbRead = TC_AWAIT(decryptor(decryptedData)))
     decryptedData = decryptedData.subspan(nbRead);
 }
 

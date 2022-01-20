@@ -19,11 +19,11 @@ BufferedStream<Derived>::BufferedStream(InputSource cb) : _cb(std::move(cb))
 
 template <typename Derived>
 tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(
-    std::uint8_t* out, std::int64_t n)
+    gsl::span<std::uint8_t> out)
 {
   auto const toRead =
-      std::min<std::int64_t>(n, _output.size() - _currentPosition);
-  std::copy_n(_output.begin() + _currentPosition, toRead, out);
+      std::min<std::int64_t>(out.size(), _output.size() - _currentPosition);
+  std::copy_n(_output.begin() + _currentPosition, toRead, out.data());
   _currentPosition += toRead;
   if (_currentPosition == static_cast<std::int64_t>(_output.size()))
   {
@@ -57,8 +57,8 @@ gsl::span<std::uint8_t> BufferedStream<Derived>::prepareWrite(
 }
 
 template <typename Derived>
-tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(std::uint8_t* out,
-                                                             std::int64_t n)
+tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
+    gsl::span<std::uint8_t> out)
 {
   using namespace Errors;
 
@@ -77,7 +77,7 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(std::uint8_t* out,
       _currentPosition = 0;
       // fallthrough
     case State::BufferedOutput:
-      TC_RETURN(TC_AWAIT(copyBufferedOutput(out, n)));
+      TC_RETURN(TC_AWAIT(copyBufferedOutput(out)));
     }
   }
   catch (std::exception const&)
