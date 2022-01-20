@@ -50,8 +50,7 @@ TEST_CASE_METHOD(
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -71,8 +70,7 @@ TEST_CASE_METHOD(
   CHECK(encryptedData[0] == expectedVersionNumber);
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -93,8 +91,7 @@ TEST_CASE_METHOD(
   CHECK(encryptedData[0] == expectedVersionNumber);
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -131,8 +128,8 @@ TEST_CASE_METHOD(
   encryptedData[2]++;
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT_VOID(Encryptor::decrypt(
-          decryptedData.data(), metadata.key, encryptedData)),
+      AWAIT_VOID(
+          Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
       Errc::DecryptionFailed);
 }
 

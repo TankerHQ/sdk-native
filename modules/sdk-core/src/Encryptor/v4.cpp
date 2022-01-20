@@ -98,7 +98,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
 }
 
 tc::cotask<void> EncryptorV4::decrypt(
-    std::uint8_t* decryptedData,
+    gsl::span<std::uint8_t> decryptedData,
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
@@ -106,9 +106,9 @@ tc::cotask<void> EncryptorV4::decrypt(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
-  while (auto const nbRead = TC_AWAIT(
-             decryptor(decryptedData, Header::defaultEncryptedChunkSize)))
-    decryptedData += nbRead;
+  while (auto const nbRead = TC_AWAIT(decryptor(
+             decryptedData.data(), Header::defaultEncryptedChunkSize)))
+    decryptedData = decryptedData.subspan(nbRead);
 }
 
 ResourceId EncryptorV4::extractResourceId(

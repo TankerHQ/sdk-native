@@ -135,7 +135,7 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
 
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
 
     CHECK(clearData == decryptedData);
   }
@@ -148,7 +148,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
 
     CHECK(clearData == decryptedData);
   }
@@ -159,8 +159,8 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(
         T::decryptedSize(ctx.encryptedTestVector));
-    AWAIT_VOID(T::decrypt(
-        decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector));
+    AWAIT_VOID(
+        T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector));
 
     CHECK(decryptedData == clearData);
   }
@@ -186,8 +186,8 @@ void commonEncryptorTests(TestContext<T> ctx)
     ctx.encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(T::decrypt(
-            decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector)),
+        AWAIT_VOID(
+            T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector)),
         Errc::DecryptionFailed);
   }
 

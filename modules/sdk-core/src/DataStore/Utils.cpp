@@ -47,8 +47,7 @@ tc::cotask<std::vector<uint8_t>> decryptValue(
 {
   std::vector<uint8_t> decryptedValue(
       EncryptorV2::decryptedSize(encryptedValue));
-  TC_AWAIT(
-      EncryptorV2::decrypt(decryptedValue.data(), userSecret, encryptedValue));
+  TC_AWAIT(EncryptorV2::decrypt(decryptedValue, userSecret, encryptedValue));
   TC_RETURN(decryptedValue);
 }
 }

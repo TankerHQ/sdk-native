@@ -70,7 +70,7 @@ tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,
   TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
 }
 
-tc::cotask<void> decrypt(uint8_t* decryptedData,
+tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
                          Crypto::SymmetricKey const& key,
                          gsl::span<uint8_t const> encryptedData)
 {

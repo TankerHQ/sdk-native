@@ -587,7 +587,7 @@ tc::cotask<void> Core::decrypt(gsl::span<uint8_t> decryptedData,
 
   auto const key = TC_AWAIT(getResourceKey(resourceId));
 
-  TC_AWAIT(Encryptor::decrypt(decryptedData.data(), key, encryptedData));
+  TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
@@ -752,7 +752,7 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
-      verificationKey.data(), _session->userSecret(), encryptedKey));
+      verificationKey, _session->userSecret(), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 

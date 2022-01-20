@@ -24,10 +24,10 @@ tc::cotask<Ret> decryptMethod(T const& encrypted,
 {
   Ret decrypted(EncryptorV2::decryptedSize(encrypted), 0);
 
-  TC_AWAIT(
-      EncryptorV2::decrypt(reinterpret_cast<std::uint8_t*>(decrypted.data()),
-                           userSecret,
-                           encrypted));
+  TC_AWAIT(EncryptorV2::decrypt(
+      gsl::make_span(decrypted).template as_span<uint8_t>(),
+      userSecret,
+      encrypted));
   TC_RETURN(decrypted);
 }
 }

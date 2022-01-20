@@ -29,7 +29,7 @@ public:
                                         Crypto::SymmetricKey const& key);
   static tc::cotask<EncryptionMetadata> encrypt(
       uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
-  static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
+  static tc::cotask<void> decrypt(gsl::span<std::uint8_t> decryptedData,
                                   Crypto::SymmetricKey const& key,
                                   gsl::span<std::uint8_t const> encryptedData);
   static Trustchain::ResourceId extractResourceId(
