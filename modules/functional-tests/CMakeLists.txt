@@ -11,7 +11,6 @@ add_executable(test_functional
   test_verification.cpp
   test_groups.cpp
   test_provisional.cpp
-  test_revocation.cpp
   test_encryption_session.cpp
 )
 

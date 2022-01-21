@@ -806,18 +806,6 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
                                              identity->appSignatureKeyPair)));
 }
 
-tc::cotask<void> Core::revokeDevice(Trustchain::DeviceId const& deviceId)
-{
-  assertStatus(Status::Ready, "revokeDevice");
-  auto const& localUser =
-      TC_AWAIT(_session->accessors().localUserAccessor.pull());
-  TC_AWAIT(Revocation::revokeDevice(deviceId,
-                                    _session->trustchainId(),
-                                    localUser,
-                                    _session->accessors().userAccessor,
-                                    _session->requesters()));
-}
-
 void Core::nukeDatabase()
 {
   _session->storage().db->nuke();

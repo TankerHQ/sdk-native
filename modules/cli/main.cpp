@@ -50,7 +50,6 @@ static const char USAGE[] =
       tcli signup <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--unlock-password=<unlockpassword>] <userid>
       tcli signin <trustchainurl> <trustchainid> (--identity=<identity>|--trustchain-private-key=<trustchainprivatekey>) [--verification-key=<verificationkey>] [--unlock-password=<unlockpassword>] <userid>
       tcli getdeviceid <trustchainurl> <trustchainid> <userid>
-      tcli revoke <trustchainurl> <trustchainid> <userid> <deviceid>
       tcli encrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <cleartext> [--share=<shareto>] [--dont-share-with-self] [--share-with-identity=<identity>] [--share-with-group=<groupid>]
       tcli decrypt <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> <encrypteddata>
       tcli creategroup <trustchainurl> <trustchainid> [--trustchain-private-key=<trustchainprivatekey>] <userid> [--with-user=<memberuserid>]... [--with-public-identity=<memberpublicidentity>]...
@@ -391,13 +390,6 @@ int main(int argc, char* argv[])
       auto const core = signIn(args);
 
       fmt::print("device id: {}", core->deviceId().get());
-    }
-    else if (args.at("revoke").asBool())
-    {
-      auto const core = signIn(args);
-
-      auto const deviceId = args.at("<deviceid>").asString();
-      core->revokeDevice(Tanker::SDeviceId{deviceId}).get();
     }
     else if (args.at("encrypt").asBool())
     {

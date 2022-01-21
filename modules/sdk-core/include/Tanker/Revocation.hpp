@@ -44,12 +44,6 @@ SealedKeysForDevices encryptPrivateKeyForDevices(
     Trustchain::DeviceId const& deviceId,
     Crypto::PrivateEncryptionKey const& encryptionPrivateKey);
 
-tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId,
-                              Trustchain::TrustchainId const& trustchainId,
-                              Users::LocalUser const& localUser,
-                              Users::IUserAccessor& userAccessor,
-                              Users::IRequester& requester);
-
 Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceAction(
     Trustchain::DeviceId const& targetDeviceId,
     Trustchain::TrustchainId const& trustchainId,

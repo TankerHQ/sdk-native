@@ -38,9 +38,6 @@ public:
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) override;
 
-  tc::cotask<void> revokeDevice(
-      Trustchain::Actions::DeviceRevocation const& deviceRevocation) override;
-
   tc::cotask<std::map<
       HashedEmail,
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>

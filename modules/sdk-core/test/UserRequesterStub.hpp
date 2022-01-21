@@ -15,10 +15,6 @@ public:
   MAKE_MOCK1(postResourceKeys,
              tc::cotask<void>(Share::ShareActions const&),
              override);
-  MAKE_MOCK1(revokeDevice,
-             tc::cotask<void>(
-                 Trustchain::Actions::DeviceRevocation const& deviceRevocation),
-             override);
   MAKE_MOCK2(
       getEncryptionKey,
       tc::cotask<IRequester::GetEncryptionKeyResult>(
