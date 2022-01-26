@@ -13,9 +13,8 @@
 
 #include <range/v3/algorithm/find.hpp>
 
-#include <catch2/catch.hpp>
-
 #include "CheckDecrypt.hpp"
+#include "test_suite.hpp"
 
 using namespace Tanker;
 using namespace Tanker::Errors;

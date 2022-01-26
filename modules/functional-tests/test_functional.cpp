@@ -18,22 +18,23 @@
 
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
-#include <catch2/catch.hpp>
-
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Config.hpp>
 #include <Helpers/Errors.hpp>
 #include <Helpers/WaitFor.hpp>
 
-#include "CheckDecrypt.hpp"
-
-#include <boost/scope_exit.hpp>
-
 #include <fetchpp/fetch.hpp>
 #include <fetchpp/http/authorization.hpp>
 #include <fetchpp/http/request.hpp>
 
+#include <boost/scope_exit.hpp>
+
+#include <range/v3/view/take.hpp>
+
 #include <tconcurrent/asio_use_future.hpp>
+
+#include "CheckDecrypt.hpp"
+#include "test_suite.hpp"
 
 using namespace std::string_literals;
 

@@ -16,8 +16,6 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/PhoneNumber.hpp>
 
-#include "CheckDecrypt.hpp"
-
 #include <Tanker/Cacerts/InitSsl.hpp>
 
 #include <mgs/base64url.hpp>
@@ -32,9 +30,8 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 
-#include <Tanker/Format/Enum.hpp>
-
-#include <catch2/catch.hpp>
+#include "CheckDecrypt.hpp"
+#include "test_suite.hpp"
 
 #include <string>
 
