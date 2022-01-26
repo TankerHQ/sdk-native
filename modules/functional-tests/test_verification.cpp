@@ -16,22 +16,17 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/PhoneNumber.hpp>
 
-#include <Tanker/Cacerts/InitSsl.hpp>
 
 #include <mgs/base64url.hpp>
-
-#include <fetchpp/fetch.hpp>
-
-#include <tconcurrent/asio_use_future.hpp>
-
-#include <nlohmann/json.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 
 #include "CheckDecrypt.hpp"
-#include "test_suite.hpp"
+#include "HttpHelpers.hpp"
+
+#include "TestSuite.hpp"
 
 #include <string>
 
@@ -65,34 +60,6 @@ tc::cotask<Tanker::Status> expectVerification(
   TC_RETURN(session->status());
 }
 
-tc::cotask<OidcIdToken> getOidcToken(TestConstants::OidcConfig& oidcConfig,
-                                     std::string userName)
-{
-  auto const payload = nlohmann::json{
-      {"client_id", oidcConfig.clientId},
-      {"client_secret", oidcConfig.clientSecret},
-      {"grant_type", "refresh_token"},
-      {"refresh_token", oidcConfig.users.at(userName).refreshToken},
-  };
-
-  using namespace fetchpp;
-
-  auto const url = http::url("https://www.googleapis.com/oauth2/v4/token");
-  auto req = http::request(http::verb::post, url);
-  req.content(payload.dump());
-  auto response = TC_AWAIT(fetchpp::async_fetch(
-      tc::get_default_executor().get_io_service().get_executor(),
-      Cacerts::get_ssl_context(),
-      std::move(req),
-      tc::asio::use_future));
-  if (response.result() != http::status::ok)
-    throw Errors::formatEx(Errors::Errc::NetworkError,
-                           "invalid status google id token request: {}: {}",
-                           response.result_int(),
-                           http::obsolete_reason(response.result()));
-
-  TC_RETURN(response.json().at("id_token").get<OidcIdToken>());
-}
 }
 
 TEST_CASE_METHOD(

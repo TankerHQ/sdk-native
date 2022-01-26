@@ -10,7 +10,7 @@
 #include <Helpers/Buffers.hpp>
 #include <Helpers/Errors.hpp>
 
-#include "test_suite.hpp"
+#include "TestSuite.hpp"
 
 #include "CheckDecrypt.hpp"
 

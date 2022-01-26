@@ -1,6 +1,8 @@
 #pragma once
 
+#include <Tanker/Crypto/Format/Format.hpp>
 #include <Tanker/Format/Enum.hpp>
+
 #include <range/v3/view/take.hpp>
 
 #include <catch2/catch.hpp>

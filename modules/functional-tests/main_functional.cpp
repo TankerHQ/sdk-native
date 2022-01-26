@@ -1,11 +1,11 @@
 #define CATCH_CONFIG_RUNNER
-#include <catch2/catch.hpp>
 #include <iostream>
 
 #include <tconcurrent/coroutine.hpp>
 #include <tconcurrent/executor.hpp>
 #include <tconcurrent/thread_pool.hpp>
 
+#include "TestSuite.hpp"
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Init.hpp>
