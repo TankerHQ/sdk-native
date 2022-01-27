@@ -70,7 +70,7 @@ public:
       VerifyWithToken withToken);
 
   tc::cotask<void> encrypt(
-      uint8_t* encryptedData,
+      gsl::span<uint8_t> encryptedData,
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& spublicIdentities,
       std::vector<SGroupId> const& sgroupIds,
@@ -82,7 +82,7 @@ public:
       std::vector<SGroupId> const& sgroupIds,
       ShareWithSelf shareWithSelf);
 
-  tc::cotask<void> decrypt(uint8_t* decryptedData,
+  tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
                            gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<std::vector<uint8_t>> decrypt(

@@ -20,12 +20,12 @@ template <typename T>
 tc::cotask<int64_t> readStream(gsl::span<uint8_t> out, T&& source)
 {
   auto totalRead = 0lu;
-  while (totalRead != out.size())
+  while (!out.empty())
   {
-    auto const nbRead = TC_AWAIT(std::forward<T>(source)(
-        out.data() + totalRead, out.size() - totalRead));
+    auto const nbRead = TC_AWAIT(std::forward<T>(source)(out));
     if (nbRead == 0)
       break;
+    out = out.subspan(nbRead);
     totalRead += nbRead;
   }
   TC_RETURN(totalRead);
@@ -46,7 +46,7 @@ tc::cotask<std::vector<uint8_t>> readAllStream(T&& source)
       availableRoom = blockSize;
     }
     auto const nbRead =
-        TC_AWAIT(std::forward<T>(source)(&out[pos], availableRoom));
+        TC_AWAIT(std::forward<T>(source)(gsl::make_span(out).subspan(pos)));
     if (nbRead == 0)
     {
       out.resize(pos + nbRead);

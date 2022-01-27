@@ -527,14 +527,15 @@ tc::cotask<std::string> Core::getSessionToken(
 }
 
 tc::cotask<void> Core::encrypt(
-    uint8_t* encryptedData,
+    gsl::span<uint8_t> encryptedData,
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
     ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "encrypt");
-  auto const metadata = TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
+  auto const metadata =
+      TC_AWAIT(Encryptor::encrypt(encryptedData, clearData));
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
   {
@@ -573,15 +574,12 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
   assertStatus(Status::Ready, "encrypt");
   std::vector<uint8_t> encryptedData(
       Encryptor::encryptedSize(clearData.size()));
-  TC_AWAIT(encrypt(encryptedData.data(),
-                   clearData,
-                   spublicIdentities,
-                   sgroupIds,
-                   shareWithSelf));
+  TC_AWAIT(encrypt(
+      encryptedData, clearData, spublicIdentities, sgroupIds, shareWithSelf));
   TC_RETURN(std::move(encryptedData));
 }
 
-tc::cotask<void> Core::decrypt(uint8_t* decryptedData,
+tc::cotask<void> Core::decrypt(gsl::span<uint8_t> decryptedData,
                                gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
@@ -597,7 +595,7 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
 {
   assertStatus(Status::Ready, "decrypt");
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  TC_AWAIT(decrypt(decryptedData.data(), encryptedData));
+  TC_AWAIT(decrypt(decryptedData, encryptedData));
 
   TC_RETURN(std::move(decryptedData));
 }
@@ -754,7 +752,7 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
-      verificationKey.data(), _session->userSecret(), encryptedKey));
+      verificationKey, _session->userSecret(), encryptedKey));
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 

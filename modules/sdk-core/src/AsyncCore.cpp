@@ -204,7 +204,7 @@ Tanker::Status AsyncCore::status() const
 }
 
 tc::future<void> AsyncCore::encrypt(
-    uint8_t* encryptedData,
+    gsl::span<uint8_t> encryptedData,
     gsl::span<uint8_t const> clearData,
     std::vector<SPublicIdentity> const& publicIdentities,
     std::vector<SGroupId> const& groupIds,
@@ -216,7 +216,7 @@ tc::future<void> AsyncCore::encrypt(
   });
 }
 
-tc::future<void> AsyncCore::decrypt(uint8_t* decryptedData,
+tc::future<void> AsyncCore::decrypt(gsl::span<uint8_t> decryptedData,
                                     gsl::span<uint8_t const> encryptedData)
 {
   return runResumable([=]() -> tc::cotask<void> {
@@ -241,7 +241,7 @@ tc::future<std::vector<uint8_t>> AsyncCore::decrypt(
 {
   return runResumable([=]() -> tc::cotask<std::vector<uint8_t>> {
     std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-    TC_AWAIT(_core.decrypt(decryptedData.data(), encryptedData));
+    TC_AWAIT(_core.decrypt(decryptedData, encryptedData));
     TC_RETURN(std::move(decryptedData));
   });
 }

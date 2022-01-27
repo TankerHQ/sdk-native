@@ -16,9 +16,9 @@ Trustchain::ResourceId const& DecryptionStreamAdapter::resourceId() const
 }
 
 tc::cotask<std::int64_t> DecryptionStreamAdapter::operator()(
-    std::uint8_t* buffer, std::size_t size)
+    gsl::span<std::uint8_t> buffer)
 {
-  return _source(buffer, size);
+  return _source(buffer);
 }
 }
 }

@@ -46,13 +46,11 @@ TEST_CASE("EncryptorStream: encrypt/decrypt should work with an empty buffer")
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
-  auto const metadata =
-      AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
-  AWAIT_VOID(
-      EncryptorV4::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(EncryptorV4::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -63,15 +61,14 @@ TEST_CASE(
   std::vector<uint8_t> clearData;
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
-  auto const metadata =
-      AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
   encryptedData.back()++;
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT_VOID(EncryptorV4::decrypt(
-          decryptedData.data(), metadata.key, encryptedData)),
+      AWAIT_VOID(
+          EncryptorV4::decrypt(decryptedData, metadata.key, encryptedData)),
       Errc::DecryptionFailed);
 }
 
@@ -81,13 +78,11 @@ TEST_CASE("EncryptorStream: encrypt/decrypt should work with a normal buffer")
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
-  AWAIT_VOID(
-      EncryptorV4::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(EncryptorV4::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -101,13 +96,11 @@ TEST_CASE("EncryptorStream: encrypt/decrypt should work with a large buffer")
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
-  AWAIT_VOID(
-      EncryptorV4::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(EncryptorV4::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -122,7 +115,7 @@ TEST_CASE(
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
 
-  AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
   // Only take the first chunk
   std::vector<uint8_t> truncatedData(encryptedData.begin(),
@@ -143,8 +136,7 @@ TEST_CASE(
   std::vector<uint8_t> encryptedData(
       EncryptorV4::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(EncryptorV4::encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(EncryptorV4::encrypt(encryptedData, clearData));
 
   // Only take the first chunk
   std::vector<uint8_t> truncatedData(encryptedData.begin(),
@@ -155,8 +147,8 @@ TEST_CASE(
   std::vector<uint8_t> decryptedData(EncryptorV4::decryptedSize(encryptedData));
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT_VOID(EncryptorV4::decrypt(
-          decryptedData.data(), metadata.key, truncatedData)),
+      AWAIT_VOID(
+          EncryptorV4::decrypt(decryptedData, metadata.key, truncatedData)),
       Errc::DecryptionFailed);
 }
 
@@ -165,10 +157,10 @@ TEST_CASE("EncryptorStream: encrypt should never give the same result twice")
   auto clearData = make_buffer("this is the data to encrypt");
   std::vector<uint8_t> encryptedData1(
       EncryptorV4::encryptedSize(clearData.size()));
-  AWAIT(EncryptorV4::encrypt(encryptedData1.data(), clearData));
+  AWAIT(EncryptorV4::encrypt(encryptedData1, clearData));
   std::vector<uint8_t> encryptedData2(
       EncryptorV4::encryptedSize(clearData.size()));
-  AWAIT(EncryptorV4::encrypt(encryptedData2.data(), clearData));
+  AWAIT(EncryptorV4::encrypt(encryptedData2, clearData));
 
   CHECK(encryptedData1 != encryptedData2);
 }
@@ -194,7 +186,7 @@ TEST_CASE("EncryptorStream: Should be able to decrypt an empty test buffer")
       EncryptorV4::decryptedSize(emptyTestVector));
 
   AWAIT_VOID(EncryptorV4::decrypt(
-      decryptedData.data(), Crypto::SymmetricKey{keyVector}, emptyTestVector));
+      decryptedData, Crypto::SymmetricKey{keyVector}, emptyTestVector));
 
   CHECK(clearData == decryptedData);
 }
@@ -220,9 +212,8 @@ TEST_CASE("EncryptorStream: Should be able to decrypt a test vector V4")
   std::vector<uint8_t> decryptedData(
       EncryptorV4::decryptedSize(encryptedTestVector));
 
-  AWAIT_VOID(EncryptorV4::decrypt(decryptedData.data(),
-                                  Crypto::SymmetricKey{keyVector},
-                                  encryptedTestVector));
+  AWAIT_VOID(EncryptorV4::decrypt(
+      decryptedData, Crypto::SymmetricKey{keyVector}, encryptedTestVector));
 
   CHECK(clearData == decryptedData);
 }
@@ -255,9 +246,8 @@ TEST_CASE(
   std::vector<uint8_t> decryptedData(
       EncryptorV4::decryptedSize(encryptedTestVector));
 
-  AWAIT_VOID(EncryptorV4::decrypt(decryptedData.data(),
-                                  Crypto::SymmetricKey{keyVector},
-                                  encryptedTestVector));
+  AWAIT_VOID(EncryptorV4::decrypt(
+      decryptedData, Crypto::SymmetricKey{keyVector}, encryptedTestVector));
 
   CHECK(clearData == decryptedData);
 }

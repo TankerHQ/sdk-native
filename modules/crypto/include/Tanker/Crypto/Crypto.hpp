@@ -152,8 +152,8 @@ size_t decryptedSize(ConstAeadSpans const&);
 gsl::span<uint8_t const> extractMac(gsl::span<uint8_t const> encryptedData);
 // returns the Mac
 gsl::span<uint8_t const> encryptAead(SymmetricKey const& key,
-                                     uint8_t const* iv,
-                                     uint8_t* encryptedData,
+                                     gsl::span<uint8_t const> iv,
+                                     gsl::span<uint8_t> encryptedData,
                                      gsl::span<uint8_t const> clearData,
                                      gsl::span<uint8_t const> associatedData);
 
@@ -162,8 +162,8 @@ std::vector<uint8_t> encryptAead(SymmetricKey const& key,
                                  gsl::span<uint8_t const> ad = {});
 
 void decryptAead(SymmetricKey const& key,
-                 uint8_t const* iv,
-                 uint8_t* clearData,
+                 gsl::span<uint8_t const> iv,
+                 gsl::span<uint8_t> clearData,
                  gsl::span<uint8_t const> encryptedData,
                  gsl::span<uint8_t const> associatedData);
 

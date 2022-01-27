@@ -12,11 +12,10 @@ template <typename T>
 InputSource bufferToInputSourceImpl(T&& buffer)
 {
   return [index = 0u, buffer = std::forward<T>(buffer)](
-             std::uint8_t* out,
-             std::int64_t n) mutable -> tc::cotask<std::int64_t> {
+             gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
     auto const toRead =
-        std::min(n, static_cast<std::int64_t>(buffer.size()) - index);
-    std::copy_n(buffer.data() + index, toRead, out);
+        std::min<std::uint64_t>(out.size(), buffer.size() - index);
+    std::copy_n(buffer.data() + index, toRead, out.data());
     index += toRead;
     TC_RETURN(toRead);
   };

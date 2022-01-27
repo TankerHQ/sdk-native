@@ -68,7 +68,7 @@ std::uint64_t EncryptorV4::decryptedSize(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
-    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     std::uint32_t encryptedChunkSize)
 {
@@ -80,7 +80,7 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
-    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     Trustchain::ResourceId const& resourceId,
     Crypto::SymmetricKey const& key,
@@ -89,16 +89,15 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
   EncryptionStream encryptor(
       bufferViewToInputSource(clearData), resourceId, key, encryptedChunkSize);
 
-  while (auto const nbRead =
-             TC_AWAIT(encryptor(encryptedData, encryptedChunkSize)))
-    encryptedData += nbRead;
+  while (auto const nbRead = TC_AWAIT(encryptor(encryptedData)))
+    encryptedData = encryptedData.subspan(nbRead);
 
   TC_RETURN(
       (EncryptionMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
 }
 
 tc::cotask<void> EncryptorV4::decrypt(
-    std::uint8_t* decryptedData,
+    gsl::span<std::uint8_t> decryptedData,
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
@@ -106,9 +105,8 @@ tc::cotask<void> EncryptorV4::decrypt(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
-  while (auto const nbRead = TC_AWAIT(
-             decryptor(decryptedData, Header::defaultEncryptedChunkSize)))
-    decryptedData += nbRead;
+  while (auto const nbRead = TC_AWAIT(decryptor(decryptedData)))
+    decryptedData = decryptedData.subspan(nbRead);
 }
 
 ResourceId EncryptorV4::extractResourceId(

@@ -24,7 +24,7 @@ template <>
 struct TestContext<EncryptorV2>
 {
   tc::cotask<EncryptionMetadata> encrypt(
-      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV2::encrypt(encryptedData, clearData);
@@ -46,7 +46,7 @@ template <>
 struct TestContext<EncryptorV3>
 {
   tc::cotask<EncryptionMetadata> encrypt(
-      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV3::encrypt(encryptedData, clearData);
@@ -66,7 +66,7 @@ template <>
 struct TestContext<EncryptorV5>
 {
   tc::cotask<EncryptionMetadata> encrypt(
-      std::uint8_t* encryptedData,
+      gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV5::encrypt(
@@ -131,11 +131,11 @@ void commonEncryptorTests(TestContext<T> ctx)
     std::vector<uint8_t> clearData;
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
 
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
+    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
 
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
 
     CHECK(clearData == decryptedData);
   }
@@ -145,10 +145,10 @@ void commonEncryptorTests(TestContext<T> ctx)
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
 
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
+    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
     std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    AWAIT_VOID(T::decrypt(decryptedData.data(), metadata.key, encryptedData));
+    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
 
     CHECK(clearData == decryptedData);
   }
@@ -159,8 +159,8 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     std::vector<uint8_t> decryptedData(
         T::decryptedSize(ctx.encryptedTestVector));
-    AWAIT_VOID(T::decrypt(
-        decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector));
+    AWAIT_VOID(
+        T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector));
 
     CHECK(decryptedData == clearData);
   }
@@ -169,9 +169,9 @@ void commonEncryptorTests(TestContext<T> ctx)
   {
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData1(T::encryptedSize(clearData.size()));
-    AWAIT(ctx.encrypt(encryptedData1.data(), clearData));
+    AWAIT(ctx.encrypt(encryptedData1, clearData));
     std::vector<uint8_t> encryptedData2(T::encryptedSize(clearData.size()));
-    AWAIT(ctx.encrypt(encryptedData2.data(), clearData));
+    AWAIT(ctx.encrypt(encryptedData2, clearData));
 
     CHECK(encryptedData1 != encryptedData2);
   }
@@ -186,8 +186,8 @@ void commonEncryptorTests(TestContext<T> ctx)
     ctx.encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(T::decrypt(
-            decryptedData.data(), ctx.keyVector, ctx.encryptedTestVector)),
+        AWAIT_VOID(
+            T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector)),
         Errc::DecryptionFailed);
   }
 
@@ -196,7 +196,7 @@ void commonEncryptorTests(TestContext<T> ctx)
     auto clearData = make_buffer("this is the data to encrypt");
     std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
 
-    auto const metadata = AWAIT(ctx.encrypt(encryptedData.data(), clearData));
+    auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
     CHECK(T::extractResourceId(encryptedData) == metadata.resourceId);
   }

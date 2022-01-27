@@ -24,12 +24,13 @@ public:
       gsl::span<std::uint8_t const> encryptedData);
   // encrypt returns a cotask to implement the Encryptor concept, but it doesn't
   // need to be async, so encryptSync is the synchronous variant
-  static EncryptionMetadata encryptSync(uint8_t* encryptedData,
+  static EncryptionMetadata encryptSync(gsl::span<uint8_t> encryptedData,
                                         gsl::span<std::uint8_t const> clearData,
                                         Crypto::SymmetricKey const& key);
   static tc::cotask<EncryptionMetadata> encrypt(
-      uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
-  static tc::cotask<void> decrypt(std::uint8_t* decryptedData,
+      gsl::span<uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData);
+  static tc::cotask<void> decrypt(gsl::span<std::uint8_t> decryptedData,
                                   Crypto::SymmetricKey const& key,
                                   gsl::span<std::uint8_t const> encryptedData);
   static Trustchain::ResourceId extractResourceId(

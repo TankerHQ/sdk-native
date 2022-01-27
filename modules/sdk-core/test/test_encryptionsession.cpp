@@ -45,13 +45,11 @@ TEST_CASE_METHOD(
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -64,15 +62,13 @@ TEST_CASE_METHOD(
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   auto const expectedVersionNumber = 5;
   CHECK(encryptedData[0] == expectedVersionNumber);
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -86,15 +82,13 @@ TEST_CASE_METHOD(
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   auto const expectedVersionNumber = 4;
   CHECK(encryptedData[0] == expectedVersionNumber);
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  AWAIT_VOID(
-      Encryptor::decrypt(decryptedData.data(), metadata.key, encryptedData));
+  AWAIT_VOID(Encryptor::decrypt(decryptedData, metadata.key, encryptedData));
 
   CHECK(clearData == decryptedData);
 }
@@ -107,10 +101,10 @@ TEST_CASE_METHOD(
 
   std::vector<uint8_t> encryptedData1(
       EncryptionSession::encryptedSize(clearData.size()));
-  AWAIT(encSession.encrypt(encryptedData1.data(), clearData));
+  AWAIT(encSession.encrypt(encryptedData1, clearData));
   std::vector<uint8_t> encryptedData2(
       EncryptionSession::encryptedSize(clearData.size()));
-  AWAIT(encSession.encrypt(encryptedData2.data(), clearData));
+  AWAIT(encSession.encrypt(encryptedData2, clearData));
 
   CHECK(encryptedData1 != encryptedData2);
 }
@@ -123,16 +117,15 @@ TEST_CASE_METHOD(
 
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
 
   encryptedData[2]++;
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT_VOID(Encryptor::decrypt(
-          decryptedData.data(), metadata.key, encryptedData)),
+      AWAIT_VOID(
+          Encryptor::decrypt(decryptedData, metadata.key, encryptedData)),
       Errc::DecryptionFailed);
 }
 
@@ -144,8 +137,7 @@ TEST_CASE_METHOD(
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   CHECK(encSession.resourceId() == metadata.resourceId);
   CHECK(EncryptorV5::extractResourceId(encryptedData) == metadata.resourceId);
@@ -160,8 +152,7 @@ TEST_CASE_METHOD(FixtureEncrytionSession,
   std::vector<uint8_t> encryptedData(
       EncryptionSession::encryptedSize(clearData.size()));
 
-  auto const metadata =
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData));
+  auto const metadata = AWAIT(encSession.encrypt(encryptedData, clearData));
 
   CHECK(encSession.resourceId() == metadata.resourceId);
   CHECK(EncryptorV4::extractResourceId(encryptedData) == metadata.resourceId);
@@ -176,12 +167,10 @@ TEST_CASE_METHOD(
 
   std::vector<uint8_t> encryptedData1(
       EncryptionSession::encryptedSize(clearData1.size()));
-  auto const meta1 =
-      AWAIT(encSession.encrypt(encryptedData1.data(), clearData1));
+  auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
   std::vector<uint8_t> encryptedData2(
       EncryptionSession::encryptedSize(clearData2.size()));
-  auto const meta2 =
-      AWAIT(encSession.encrypt(encryptedData2.data(), clearData2));
+  auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
   CHECK(meta1.resourceId == meta2.resourceId);
 }
@@ -196,12 +185,10 @@ TEST_CASE_METHOD(
 
   std::vector<uint8_t> encryptedData1(
       EncryptionSession::encryptedSize(clearData1.size()));
-  auto const meta1 =
-      AWAIT(encSession.encrypt(encryptedData1.data(), clearData1));
+  auto const meta1 = AWAIT(encSession.encrypt(encryptedData1, clearData1));
   std::vector<uint8_t> encryptedData2(
       EncryptionSession::encryptedSize(clearData2.size()));
-  auto const meta2 =
-      AWAIT(encSession.encrypt(encryptedData2.data(), clearData2));
+  auto const meta2 = AWAIT(encSession.encrypt(encryptedData2, clearData2));
 
   CHECK(meta1.resourceId == meta2.resourceId);
 }
@@ -216,7 +203,7 @@ TEST_CASE_METHOD(
 
   session.reset();
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(encSession.encrypt(encryptedData.data(), clearData)),
+      AWAIT(encSession.encrypt(encryptedData, clearData)),
       Errc::PreconditionFailed);
 
   TANKER_CHECK_THROWS_WITH_CODE(encSession.resourceId(),

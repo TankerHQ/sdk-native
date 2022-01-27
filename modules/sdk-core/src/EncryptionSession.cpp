@@ -52,7 +52,8 @@ std::uint64_t EncryptionSession::encryptedSize(std::uint64_t clearSize)
 }
 
 tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
-    std::uint8_t* encryptedData, gsl::span<const std::uint8_t> clearData)
+    gsl::span<std::uint8_t> encryptedData,
+    gsl::span<const std::uint8_t> clearData)
 {
   assertSession("encrypt");
   if (Encryptor::isHugeClearData(clearData.size()))

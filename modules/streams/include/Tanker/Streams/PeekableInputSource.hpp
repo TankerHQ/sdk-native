@@ -21,13 +21,15 @@ public:
 
   tc::cotask<gsl::span<std::uint8_t const>> peek(std::uint64_t size);
 
-  tc::cotask<std::int64_t> operator()(std::uint8_t* buffer, std::size_t size);
+  tc::cotask<std::int64_t> operator()(gsl::span<std::uint8_t> buffer);
 
 private:
   std::vector<std::uint8_t> _buffer;
   std::uint64_t _pos = 0;
 
   InputSource _underlyingStream;
+
+  tc::cotask<void> fillBuffer(std::uint64_t bytesNeeded);
 };
 }
 }

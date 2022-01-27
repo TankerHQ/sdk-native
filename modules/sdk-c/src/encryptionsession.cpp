@@ -74,8 +74,10 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_encrypt(
   auto session = reinterpret_cast<EncryptionSession*>(csession);
   return makeFuture(session->canceler()->run([&]() mutable {
     return tc::async_resumable([=]() -> tc::cotask<void> {
+      auto const encryptedSpan =
+          gsl::make_span(encrypted_data, session->encryptedSize(data_size));
       TC_AWAIT(
-          session->encrypt(encrypted_data, gsl::make_span(data, data_size)));
+          session->encrypt(encryptedSpan, gsl::make_span(data, data_size)));
     });
   }));
 }

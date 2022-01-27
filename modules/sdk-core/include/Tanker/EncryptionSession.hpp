@@ -27,7 +27,8 @@ public:
   std::shared_ptr<tc::task_canceler> canceler() const;
   static std::uint64_t encryptedSize(std::uint64_t clearSize);
   tc::cotask<EncryptionMetadata> encrypt(
-      std::uint8_t* encryptedData, gsl::span<std::uint8_t const> clearData);
+      gsl::span<std::uint8_t> encryptedData,
+      gsl::span<std::uint8_t const> clearData);
 
 private:
   void assertSession(const char* action) const;

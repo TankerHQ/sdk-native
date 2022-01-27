@@ -62,7 +62,7 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
   });
 }
 
-tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,
+tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
                                        gsl::span<uint8_t const> clearData)
 {
   if (isHugeClearData(clearData.size()))
@@ -70,7 +70,7 @@ tc::cotask<EncryptionMetadata> encrypt(uint8_t* encryptedData,
   TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
 }
 
-tc::cotask<void> decrypt(uint8_t* decryptedData,
+tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
                          Crypto::SymmetricKey const& key,
                          gsl::span<uint8_t const> encryptedData)
 {

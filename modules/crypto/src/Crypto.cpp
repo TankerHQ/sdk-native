@@ -1,5 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 
+#include <Tanker/Errors/AssertionError.hpp>
 #include <Tanker/Errors/Exception.hpp>
 
 #include <sodium/crypto_aead_xchacha20poly1305.h>
@@ -207,23 +208,29 @@ gsl::span<uint8_t const> extractMac(gsl::span<uint8_t const> encryptedData)
 }
 
 gsl::span<uint8_t const> encryptAead(SymmetricKey const& key,
-                                     uint8_t const* iv,
-                                     uint8_t* encryptedData,
+                                     gsl::span<uint8_t const> iv,
+                                     gsl::span<uint8_t> encryptedData,
                                      gsl::span<uint8_t const> clearData,
                                      gsl::span<uint8_t const> associatedData)
 {
-  crypto_aead_xchacha20poly1305_ietf_encrypt(encryptedData,
+  if (encryptedData.size() <
+      clearData.size() + crypto_aead_xchacha20poly1305_ietf_ABYTES)
+    throw Errors::AssertionError(
+        "encryptAead: encryptedData buffer is too short");
+  if (iv.size() != crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
+    throw Errors::AssertionError("encryptAead: iv buffer is of the wrong size");
+
+  crypto_aead_xchacha20poly1305_ietf_encrypt(encryptedData.data(),
                                              nullptr,
                                              clearData.data(),
                                              clearData.size(),
                                              associatedData.data(),
                                              associatedData.size(),
                                              nullptr,
-                                             iv,
+                                             iv.data(),
                                              key.data());
 
-  return gsl::make_span(encryptedData + clearData.size(),
-                        crypto_aead_xchacha20poly1305_ietf_ABYTES);
+  return encryptedData.subspan(clearData.size());
 }
 
 std::size_t encryptedSize(ConstAeadSpans const& aead)
@@ -244,29 +251,31 @@ std::vector<uint8_t> encryptAead(SymmetricKey const& key,
                                   Crypto::Mac::arraySize);
   auto aeadBuffer = makeAeadBuffer<uint8_t>(ptr);
   Crypto::randomFill(aeadBuffer.iv);
-  encryptAead(key,
-              aeadBuffer.iv.data(),
-              aeadBuffer.encryptedData.data(),
-              clearData,
-              ad);
+  encryptAead(key, aeadBuffer.iv, aeadBuffer.encryptedData, clearData, ad);
   return ptr;
 }
 
 void decryptAead(SymmetricKey const& key,
-                 uint8_t const* iv,
-                 uint8_t* clearData,
+                 gsl::span<uint8_t const> iv,
+                 gsl::span<uint8_t> clearData,
                  gsl::span<uint8_t const> encryptedData,
                  gsl::span<uint8_t const> associatedData)
 {
+  if (clearData.size() <
+      encryptedData.size() - crypto_aead_xchacha20poly1305_ietf_ABYTES)
+    throw Errors::AssertionError("decryptAead: clearData buffer is too short");
+  if (iv.size() != crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
+    throw Errors::AssertionError("decryptAead: iv buffer is of the wrong size");
+
   auto const error =
-      crypto_aead_xchacha20poly1305_ietf_decrypt(clearData,
+      crypto_aead_xchacha20poly1305_ietf_decrypt(clearData.data(),
                                                  nullptr,
                                                  nullptr,
                                                  encryptedData.data(),
                                                  encryptedData.size(),
                                                  associatedData.data(),
                                                  associatedData.size(),
-                                                 iv,
+                                                 iv.data(),
                                                  key.data());
   if (error != 0)
     throw Exception(Errc::AeadDecryptionFailed, "MAC verification failed");
@@ -278,8 +287,7 @@ std::vector<uint8_t> decryptAead(SymmetricKey const& key,
 {
   auto const aeadBuffer = makeAeadBuffer(aeadData);
   std::vector<uint8_t> res(decryptedSize(aeadBuffer));
-  decryptAead(
-      key, aeadBuffer.iv.data(), res.data(), aeadBuffer.encryptedData, ad);
+  decryptAead(key, aeadBuffer.iv, res, aeadBuffer.encryptedData, ad);
   return res;
 }
 

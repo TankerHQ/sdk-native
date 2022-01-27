@@ -26,24 +26,9 @@ Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
     0x8e, 0xf7, 0xfe, 0x7b, 0xd1, 0xf6, 0xb,  0xf1, 0x5c, 0xa4, 0x32,
     0x1e, 0xe4, 0xaa, 0x18, 0xe1, 0x97, 0xbf, 0xf4, 0x5e, 0xfe});
 
-tc::cotask<std::int64_t> failRead(std::uint8_t*, std::int64_t)
+tc::cotask<std::int64_t> failRead(gsl::span<std::uint8_t>)
 {
   throw Exception(make_error_code(Errc::IOError), "failRead");
-}
-
-tc::cotask<std::vector<std::uint8_t>> decryptData(DecryptionStream& decryptor)
-{
-  std::vector<std::uint8_t> decrypted(
-      24 + 5 * Streams::Header::defaultEncryptedChunkSize);
-  auto it = decrypted.data();
-  std::int64_t totalRead{};
-  while (auto const nbRead = TC_AWAIT(decryptor(it, 1024 * 1024 / 2)))
-  {
-    totalRead += nbRead;
-    it += nbRead;
-  }
-  decrypted.resize(totalRead);
-  TC_RETURN(std::move(decrypted));
 }
 
 auto fillAndMakePeekableSource(std::vector<uint8_t>& buffer)
@@ -88,6 +73,51 @@ TEST_CASE("peeks past the end and reads an underlying stream",
   CHECK(out == buffer);
 }
 
+TEST_CASE("peek multiple times", "[peekableinputsource]")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
+
+  peek = AWAIT(peekable.peek(10));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 10));
+
+  peek = AWAIT(peekable.peek(40));
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 40));
+
+  peek = AWAIT(peekable.peek(100));
+  // We reached the end of the buffer, so fewer bytes are available
+  CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
+}
+
+TEST_CASE("peek multiple times with a pre-filled peeking buffer",
+          "[peekableinputsource]")
+{
+  std::vector<uint8_t> buffer(50);
+  auto peekable = fillAndMakePeekableSource(buffer);
+
+  AWAIT(peekable.peek(10));
+  {
+    std::vector<uint8_t> toRead(5);
+    AWAIT(peekable(toRead));
+  }
+
+  auto peek = AWAIT(peekable.peek(30));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 30));
+
+  peek = AWAIT(peekable.peek(10));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 10));
+
+  peek = AWAIT(peekable.peek(40));
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 40));
+
+  peek = AWAIT(peekable.peek(100));
+  // We reached the end of the buffer, so fewer bytes are available
+  CHECK(peek == gsl::make_span(buffer).subspan(5, 45));
+}
+
 TEST_CASE("alternate between peeks and read on a long underlying stream",
           "[peekableinputsource]")
 {
@@ -127,7 +157,7 @@ TEST_CASE("Throws when underlying read fails", "[streamencryption]")
     TC_RETURN(Crypto::SymmetricKey());
   };
 
-  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor(nullptr, 0)), Errc::IOError);
+  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor({})), Errc::IOError);
   TANKER_CHECK_THROWS_WITH_CODE(
       AWAIT(DecryptionStream::create(failRead, mockKeyFinder)), Errc::IOError);
 }
@@ -148,7 +178,7 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
 
   auto decryptor = AWAIT(DecryptionStream::create(encryptor, keyFinder));
 
-  auto const decrypted = AWAIT(decryptData(decryptor));
+  auto const decrypted = AWAIT(readAllStream(decryptor));
 
   CHECK(decrypted.size() == buffer.size());
   CHECK(decrypted == buffer);
@@ -167,25 +197,24 @@ TEST_CASE(
 
   EncryptionStream encryptor(
       [&timesCallbackCalled, cb = std::move(readCallback)](
-          std::uint8_t* out,
-          std::int64_t n) mutable -> tc::cotask<std::int64_t> {
+          gsl::span<std::uint8_t> out) mutable -> tc::cotask<std::int64_t> {
         ++timesCallbackCalled;
-        TC_RETURN(TC_AWAIT(cb(out, n)));
+        TC_RETURN(TC_AWAIT(cb(out)));
       });
 
   std::vector<std::uint8_t> encryptedBuffer(
       Streams::Header::defaultEncryptedChunkSize);
 
-  AWAIT(encryptor(encryptedBuffer.data(),
-                  Streams::Header::defaultEncryptedChunkSize));
+  AWAIT(encryptor(gsl::make_span(encryptedBuffer)
+                      .subspan(0, Streams::Header::defaultEncryptedChunkSize)));
   CHECK(timesCallbackCalled == 1);
-  AWAIT(encryptor(encryptedBuffer.data(), 0));
+  AWAIT(encryptor({}));
   CHECK(timesCallbackCalled == 2);
   // returns immediately
-  AWAIT(encryptor(encryptedBuffer.data(), 0));
+  AWAIT(encryptor({}));
   CHECK(timesCallbackCalled == 2);
-  AWAIT(encryptor(encryptedBuffer.data(),
-                  Streams::Header::defaultEncryptedChunkSize));
+  AWAIT(encryptor(gsl::make_span(encryptedBuffer)
+                      .subspan(0, Streams::Header::defaultEncryptedChunkSize)));
   CHECK(timesCallbackCalled == 2);
 }
 
@@ -210,7 +239,7 @@ TEST_CASE("Decrypt test vector", "[streamencryption]")
   auto decryptor = AWAIT(DecryptionStream::create(
       bufferViewToInputSource(encryptedTestVector), mockKeyFinder));
 
-  auto const decrypted = AWAIT(decryptData(decryptor));
+  auto const decrypted = AWAIT(readAllStream(decryptor));
 
   CHECK(decrypted == clearData);
 }
@@ -258,7 +287,7 @@ TEST_CASE("Different headers between chunks", "[streamencryption]")
   auto decryptor = AWAIT(DecryptionStream::create(
       bufferViewToInputSource(invalidHeaders), mockKeyFinder));
 
-  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(decryptData(decryptor)),
+  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(readAllStream(decryptor)),
                                 Errors::Errc::DecryptionFailed);
 }
 

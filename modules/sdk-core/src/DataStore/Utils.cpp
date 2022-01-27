@@ -37,7 +37,7 @@ std::vector<uint8_t> encryptValue(Crypto::SymmetricKey const& userSecret,
                                   gsl::span<uint8_t const> value)
 {
   std::vector<uint8_t> encryptedValue(EncryptorV2::encryptedSize(value.size()));
-  EncryptorV2::encryptSync(encryptedValue.data(), value, userSecret);
+  EncryptorV2::encryptSync(encryptedValue, value, userSecret);
   return encryptedValue;
 }
 
@@ -47,8 +47,7 @@ tc::cotask<std::vector<uint8_t>> decryptValue(
 {
   std::vector<uint8_t> decryptedValue(
       EncryptorV2::decryptedSize(encryptedValue));
-  TC_AWAIT(
-      EncryptorV2::decrypt(decryptedValue.data(), userSecret, encryptedValue));
+  TC_AWAIT(EncryptorV2::decrypt(decryptedValue, userSecret, encryptedValue));
   TC_RETURN(decryptedValue);
 }
 }

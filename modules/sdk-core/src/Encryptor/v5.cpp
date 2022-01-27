@@ -46,26 +46,25 @@ std::uint64_t EncryptorV5::decryptedSize(
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV5::encrypt(
-    std::uint8_t* encryptedData,
+    gsl::span<std::uint8_t> encryptedData,
     gsl::span<std::uint8_t const> clearData,
     ResourceId const& resourceId,
     Crypto::SymmetricKey const& key)
 {
   encryptedData[0] = version();
-  std::copy(resourceId.begin(), resourceId.end(), encryptedData + versionSize);
-  auto const iv = encryptedData + versionSize + ResourceId::arraySize;
-  Crypto::randomFill(gsl::make_span(iv, Crypto::AeadIv::arraySize));
-  Crypto::encryptAead(key,
-                      iv,
-                      encryptedData + versionSize + ResourceId::arraySize +
-                          Crypto::AeadIv::arraySize,
-                      clearData,
-                      resourceId);
+  std::copy(
+      resourceId.begin(), resourceId.end(), encryptedData.data() + versionSize);
+  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
+                                        Crypto::AeadIv::arraySize);
+  auto const cipherText = encryptedData.subspan(
+      versionSize + ResourceId::arraySize + Crypto::AeadIv::arraySize);
+  Crypto::randomFill(iv);
+  Crypto::encryptAead(key, iv, cipherText, clearData, resourceId);
   TC_RETURN((EncryptionMetadata{resourceId, key}));
 }
 
 tc::cotask<void> EncryptorV5::decrypt(
-    std::uint8_t* decryptedData,
+    gsl::span<std::uint8_t> decryptedData,
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
@@ -73,10 +72,11 @@ tc::cotask<void> EncryptorV5::decrypt(
 
   auto const resourceId =
       encryptedData.subspan(versionSize, ResourceId::arraySize);
-  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize);
+  auto const iv = encryptedData.subspan(versionSize + ResourceId::arraySize,
+                                        Crypto::AeadIv::arraySize);
   auto const data = encryptedData.subspan(versionSize + ResourceId::arraySize +
                                           Crypto::AeadIv::arraySize);
-  Crypto::decryptAead(key, iv.data(), decryptedData, data, resourceId);
+  Crypto::decryptAead(key, iv, decryptedData, data, resourceId);
   TC_RETURN();
 }
 

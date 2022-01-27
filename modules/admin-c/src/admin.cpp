@@ -90,6 +90,7 @@ void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
 {
   free(const_cast<char*>(app->name));
   free(const_cast<char*>(app->id));
+  free(const_cast<char*>(app->auth_token));
   free(const_cast<char*>(app->private_key));
   free(const_cast<char*>(app->public_key));
   delete app;

@@ -42,7 +42,7 @@ GeneratedGhostDevice generateGhostDevice(
   std::vector<uint8_t> encryptedVerificationKey(
       EncryptorV2::encryptedSize(verificationKeyToSend.size()));
   EncryptorV2::encryptSync(
-      encryptedVerificationKey.data(),
+      encryptedVerificationKey,
       gsl::make_span(verificationKeyToSend).as_span<uint8_t const>(),
       identity.userSecret);
 
