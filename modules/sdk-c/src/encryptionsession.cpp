@@ -54,10 +54,11 @@ CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(
   return makeFuture(tc::async([=] { delete session; }));
 }
 
-CTANKER_EXPORT uint64_t
-tanker_encryption_session_encrypted_size(uint64_t clearSize)
+CTANKER_EXPORT uint64_t tanker_encryption_session_encrypted_size(
+    tanker_encryption_session_t* csession, uint64_t clearSize)
 {
-  return EncryptionSession::encryptedSize(clearSize);
+  auto const session = reinterpret_cast<EncryptionSession*>(csession);
+  return session->encryptedSize(clearSize);
 }
 
 CTANKER_EXPORT tanker_expected_t* tanker_encryption_session_get_resource_id(
