@@ -16,7 +16,6 @@
 #include <Helpers/Errors.hpp>
 #include <Helpers/PhoneNumber.hpp>
 
-
 #include <mgs/base64url.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
