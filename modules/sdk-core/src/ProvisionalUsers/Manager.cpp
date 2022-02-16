@@ -154,7 +154,8 @@ tc::cotask<AttachResult> Manager::attachProvisionalIdentity(
   if (TC_AWAIT(fetchProvisionalKeys(provisionalIdentity)))
     TC_RETURN((AttachResult{Tanker::Status::Ready, std::nullopt}));
 
-  TC_RETURN(TC_AWAIT(claimProvisionalIdentity(provisionalIdentity, userSecret)));
+  TC_RETURN(
+      TC_AWAIT(claimProvisionalIdentity(provisionalIdentity, userSecret)));
 }
 
 tc::cotask<void> Manager::verifyProvisionalIdentity(

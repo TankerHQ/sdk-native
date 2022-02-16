@@ -21,8 +21,8 @@ tc::cotask<gsl::span<std::uint8_t const>> PeekableInputSource::peek(
     TC_AWAIT(fillBuffer(size - bytesAvailable));
 
   auto const availableToRead = gsl::make_span(_buffer).subspan(_pos);
-  auto const result =
-      availableToRead.subspan(0, std::min<std::uint64_t>(availableToRead.size(), size));
+  auto const result = availableToRead.subspan(
+      0, std::min<std::uint64_t>(availableToRead.size(), size));
   TC_RETURN(result);
 }
 
