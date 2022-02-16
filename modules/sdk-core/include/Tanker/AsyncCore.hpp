@@ -126,8 +126,6 @@ public:
   tc::future<SDeviceId> deviceId() const;
   tc::future<std::vector<Users::Device>> getDeviceList();
 
-  tc::future<void> revokeDevice(SDeviceId const& deviceId);
-
   static void setLogHandler(Log::LogHandler handler);
 
   static uint64_t encryptedSize(uint64_t clearSize);

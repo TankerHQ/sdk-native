@@ -135,17 +135,6 @@ tc::cotask<void> Requester::postResourceKeys(Share::ShareActions const& actions)
           .value();
 }
 
-tc::cotask<void> Requester::revokeDevice(
-    Trustchain::Actions::DeviceRevocation const& deviceRevocation)
-{
-  TC_AWAIT(
-      _httpClient->asyncPost(
-          _httpClient->makeUrl("device-revocations"),
-          {{"device_revocation",
-            mgs::base64::encode(Serialization::serialize(deviceRevocation))}}))
-      .value();
-}
-
 tc::cotask<IRequester::GetEncryptionKeyResult> Requester::getEncryptionKey(
     Trustchain::UserId const& userId,
     Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey)

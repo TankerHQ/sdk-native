@@ -334,15 +334,6 @@ tc::future<std::vector<Users::Device>> AsyncCore::getDeviceList()
   });
 }
 
-tc::future<void> AsyncCore::revokeDevice(SDeviceId const& deviceId)
-{
-  return runResumable([this, deviceId]() -> tc::cotask<void> {
-    TC_AWAIT(
-        this->_core.revokeDevice(base64DecodeArgument<Trustchain::DeviceId>(
-            deviceId.string(), "device id")));
-  });
-}
-
 void AsyncCore::connectSessionClosed(std::function<void()> cb)
 {
   this->_core.setSessionClosedHandler(

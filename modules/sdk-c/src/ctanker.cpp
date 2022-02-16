@@ -692,12 +692,6 @@ tanker_future_t* tanker_verify_provisional_identity(
                     }).unwrap());
 }
 
-tanker_future_t* tanker_revoke_device(tanker_t* ctanker, char const* device_id)
-{
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->revokeDevice(SDeviceId(device_id)));
-}
-
 void tanker_free_buffer(void const* buffer)
 {
   free(const_cast<void*>(buffer));

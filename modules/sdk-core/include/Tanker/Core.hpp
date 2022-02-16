@@ -110,8 +110,6 @@ public:
   tc::cotask<void> verifyProvisionalIdentity(
       Verification::Verification const& verification);
 
-  tc::cotask<void> revokeDevice(Trustchain::DeviceId const& deviceId);
-
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 

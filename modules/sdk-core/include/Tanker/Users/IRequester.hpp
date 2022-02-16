@@ -64,8 +64,6 @@ public:
   virtual tc::cotask<GetEncryptionKeyResult> getEncryptionKey(
       Trustchain::UserId const& userId,
       Crypto::PublicSignatureKey const& ghostDevicePublicSignatureKey) = 0;
-  virtual tc::cotask<void> revokeDevice(
-      Trustchain::Actions::DeviceRevocation const& deviceRevocation) = 0;
   virtual tc::cotask<std::map<
       HashedEmail,
       std::pair<Crypto::PublicSignatureKey, Crypto::PublicEncryptionKey>>>

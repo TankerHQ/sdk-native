@@ -92,23 +92,6 @@ Trustchain::Actions::DeviceRevocation2 makeRevokeDeviceAction(
       sealedUserKeys);
 }
 
-tc::cotask<void> revokeDevice(DeviceId const& deviceId,
-                              TrustchainId const& trustchainId,
-                              Users::LocalUser const& localUser,
-                              Users::IUserAccessor& userAccessor,
-                              Users::IRequester& requester)
-{
-  TC_AWAIT(ensureDeviceIsFromUser(deviceId, localUser.userId(), userAccessor));
-  auto const user =
-      TC_AWAIT(getUserFromUserId(localUser.userId(), userAccessor));
-
-  auto const newUserKey = Crypto::makeEncryptionKeyPair();
-
-  auto clientEntry = makeRevokeDeviceAction(
-      deviceId, trustchainId, localUser, user.devices(), newUserKey);
-  TC_AWAIT(requester.revokeDevice(clientEntry));
-}
-
 Crypto::PrivateEncryptionKey decryptPrivateKeyForDevice(
     DeviceKeys const& deviceKeys,
     Crypto::SealedPrivateEncryptionKey const& encryptedPrivateEncryptionKey)

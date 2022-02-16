@@ -603,22 +603,6 @@ CTANKER_EXPORT tanker_future_t* tanker_attach_provisional_identity(
 CTANKER_EXPORT tanker_future_t* tanker_verify_provisional_identity(
     tanker_t* session, tanker_verification_t const* verification);
 
-/*!
- * Revoke a device by device id.
- *
- * \param session A tanker tanker_t* instance.
- * \pre tanker_status == TANKER_STATUS_READY
- * \param device_id the device identifier as returned by tanker_device_id().
- *
- * \return An empty future.
- * \throws TANKER_DEVICE_NOT_FOUND The device_id in parameter does not
- * corresponds to a valid device
- * \throws TANKER_INVALID_ARGUMENT The device_id in parameter correspond to
- * another user's device.
- */
-CTANKER_EXPORT tanker_future_t* tanker_revoke_device(tanker_t* session,
-                                                     char const* device_id);
-
 CTANKER_EXPORT void tanker_free_buffer(void const* buffer);
 
 CTANKER_EXPORT void tanker_free_device_list(tanker_device_list_t* list);

@@ -177,58 +177,6 @@ TEST_CASE_METHOD(TrustchainFixture,
 
 TEST_CASE_METHOD(
     TrustchainFixture,
-    "Bob can decrypt a provisional share claimed by a revoked device")
-{
-  auto const bobProvisional = trustchain.makeEmailProvisionalUser();
-
-  auto const clearData = "my clear data is clear";
-  std::vector<uint8_t> encryptedData = TC_AWAIT(
-      encrypt(*aliceSession, clearData, {bobProvisional.publicIdentity}));
-
-  auto bob = trustchain.makeUser();
-  auto bobDevice = bob.makeDevice();
-  auto bobSession = TC_AWAIT(bobDevice.open());
-
-  TC_AWAIT(attachProvisionalIdentity(*bobSession, bobProvisional));
-
-  TC_AWAIT(bobSession->revokeDevice(bobSession->deviceId().get()));
-
-  auto bobDevice2 = bob.makeDevice();
-  auto bobSession2 = TC_AWAIT(bobDevice2.open());
-  REQUIRE_NOTHROW(checkDecrypt({bobSession2}, clearData, encryptedData));
-}
-
-TEST_CASE_METHOD(TrustchainFixture,
-                 "Alice can revoke a device, claim a provisional identity and "
-                 "decrypt on multiple devices")
-{
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto const aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto aliceSecondDevice = alice.makeDevice();
-  auto aliceSecondSession = TC_AWAIT(aliceSecondDevice.open());
-  REQUIRE_NOTHROW(TC_AWAIT(
-      aliceSecondSession->revokeDevice(aliceSecondSession->deviceId().get())));
-
-  auto aliceThirdDevice = alice.makeDevice();
-  auto aliceThirdSession = TC_AWAIT(aliceThirdDevice.open());
-
-  auto const aliceProvisional = trustchain.makeEmailProvisionalUser();
-
-  auto const clearData = "my clear data is clear";
-
-  auto const encryptedData = TC_AWAIT(
-      encrypt(*bobSession, clearData, {aliceProvisional.publicIdentity}));
-
-  TC_AWAIT(attachProvisionalIdentity(*aliceSession, aliceProvisional));
-
-  REQUIRE_NOTHROW(checkDecrypt(
-      {aliceSession, aliceThirdSession}, clearData, encryptedData));
-}
-
-TEST_CASE_METHOD(
-    TrustchainFixture,
     "Bob can claim a provisional identity with a phone number verification")
 {
   auto const bobProvisionalIdentity =

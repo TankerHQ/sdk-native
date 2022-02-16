@@ -347,20 +347,6 @@ TEST_CASE_METHOD(TrustchainFixture,
   REQUIRE_NOTHROW(checkDecrypt({bobSession}, clearData, encryptedData));
 }
 
-TEST_CASE_METHOD(TrustchainFixture,
-                 "It should share with a group after the device that "
-                 "created the group has been revoked")
-{
-  auto alice = trustchain.makeUser();
-  auto aliceDevice = alice.makeDevice();
-  auto aliceSession = TC_AWAIT(aliceDevice.open());
-
-  auto myGroup = TC_AWAIT(aliceSession->createGroup({alice.spublicIdentity()}));
-  TC_AWAIT(aliceSession->revokeDevice(TC_AWAIT(aliceSession->deviceId())));
-  REQUIRE_NOTHROW(
-      TC_AWAIT(bobSession->encrypt(make_buffer("paf"), {}, {myGroup})));
-}
-
 TEST_CASE_METHOD(TrustchainFixture, "Alice can remove Bob from a group")
 {
   auto const groupId = TC_AWAIT(aliceSession->createGroup(
