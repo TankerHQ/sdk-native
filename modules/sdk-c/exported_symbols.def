@@ -36,7 +36,6 @@ tanker_promise_destroy
 tanker_promise_get_future
 tanker_promise_set_value
 tanker_register_identity
-tanker_revoke_device
 tanker_set_log_handler
 tanker_set_verification_method
 tanker_share
