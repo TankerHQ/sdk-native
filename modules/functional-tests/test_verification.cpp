@@ -125,8 +125,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
   auto core2 = device2.createCore();
 
   auto const passphrase = Passphrase{"my passphrase"};
-  auto const email = Email{"kirby@tanker.io"};
-  auto const phoneNumber = PhoneNumber{"+33639982233"};
+  auto const email = makeEmail();
+  auto const phoneNumber = makePhoneNumber();
 
   SECTION("registerIdentity throws if passphrase is empty")
   {
@@ -482,6 +482,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
     REQUIRE_NOTHROW(TC_AWAIT(core1->registerIdentity(Verification::Verification{
         Verification::ByEmail{email, verificationCode}})));
 
+    auto const code = TC_AWAIT(getVerificationCode(email));
+
     REQUIRE(TC_AWAIT(core2->start(alice.identity)) ==
             Status::IdentityVerificationNeeded);
     TANKER_CHECK_THROWS_WITH_CODE(
@@ -534,7 +536,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
         Verification::ByEmail{email, verificationCode}}));
 
     // update email
-    auto const newEmail = Email{"alice.test@tanker.io"};
+    auto const newEmail = makeEmail();
     verificationCode = TC_AWAIT(getVerificationCode(newEmail));
     TC_AWAIT(core1->setVerificationMethod(Verification::Verification{
         Verification::ByEmail{newEmail, verificationCode}}));
@@ -563,7 +565,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification")
         Verification::ByPhoneNumber{phoneNumber, verificationCode}}));
 
     // update phone number
-    auto const newPhoneNumber = PhoneNumber{"+33639982244"};
+    auto const newPhoneNumber = makePhoneNumber();
     verificationCode = TC_AWAIT(getVerificationCode(newPhoneNumber));
     TC_AWAIT(core1->setVerificationMethod(Verification::Verification{
         Verification::ByPhoneNumber{newPhoneNumber, verificationCode}}));
@@ -627,8 +629,8 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification with preverified email")
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore();
 
-  auto const email = Email{"kirby@tanker.io"};
-  auto const phoneNumber = PhoneNumber{"+33639982233"};
+  auto const email = makeEmail();
+  auto const phoneNumber = makePhoneNumber();
 
   auto const preverifiedEmail = PreverifiedEmail{"superkirby@tanker.io"};
   auto const emailOfPreverifiedEmail = Email{preverifiedEmail.string()};
@@ -774,8 +776,8 @@ TEST_CASE_METHOD(TrustchainFixture,
   auto device2 = alice.makeDevice();
   auto core2 = device2.createCore();
 
-  auto const email = Email{"kirby@tanker.io"};
-  auto const phoneNumber = PhoneNumber{"+33639982233"};
+  auto const email = makeEmail();
+  auto const phoneNumber = makePhoneNumber();
 
   auto const preverifiedPhoneNumber = PreverifiedPhoneNumber{"+33639982244"};
   auto const phoneNumberOfPreverifiedPhoneNumber =
@@ -1003,7 +1005,7 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
     SECTION(
         "fails to attach a provisional identity for the wrong google account")
     {
-      auto const email = Email{"the-ceo@tanker.io"};
+      auto const email = makeEmail();
       auto const martineProvisionalIdentity =
           Identity::createProvisionalIdentity(
               mgs::base64::encode(trustchain.id), email);
