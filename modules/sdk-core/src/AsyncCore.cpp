@@ -1,6 +1,7 @@
 #include <Tanker/AsyncCore.hpp>
 
 #include <Tanker/Encryptor.hpp>
+#include <Tanker/Errors/DeviceUnusable.hpp>
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/Status.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
@@ -80,6 +81,12 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
       TC_RETURN(TC_AWAIT(f()));
     }
   }
+  catch (Errors::DeviceUnusable const& ex)
+  {
+    eptr = std::current_exception();
+    TERROR("Device is unusable: {}", ex.what());
+    isUnusable = true;
+  }
   catch (Errors::Exception const& ex)
   {
     eptr = std::current_exception();
@@ -87,14 +94,6 @@ std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
     {
       TINFO("Device is revoked: {}", ex.what());
       isRevoked = true;
-    }
-    else if (ex.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
-             ex.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
-             ex.errorCode() == Errors::AppdErrc::DeviceNotFound)
-    {
-      eptr = std::current_exception();
-      TERROR("Device is unusable: {}", ex.what());
-      isUnusable = true;
     }
     else
       throw;
