@@ -237,6 +237,14 @@ tc::cotask<std::optional<DeviceKeys>> Session::findDeviceKeys() const
   TC_RETURN(TC_AWAIT(storage().localUserStore.findDeviceKeys()));
 }
 
+tc::cotask<Network::HttpClient::AuthResponse> Session::authenticate()
+{
+  _httpClient->setDeviceAuthData(
+      TC_AWAIT(storage().localUserStore.getDeviceId()),
+      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
+  TC_RETURN(TC_AWAIT(_httpClient->authenticate()));
+}
+
 tc::cotask<void> Session::finalizeCreation(Trustchain::DeviceId const& deviceId,
                                            DeviceKeys const& deviceKeys)
 {
@@ -261,9 +269,6 @@ tc::cotask<void> Session::finalizeOpening()
       &requesters(),
       TC_AWAIT(Users::LocalUserAccessor::create(
           userId(), trustchainId(), &_requesters, &storage().localUserStore)));
-  _httpClient->setDeviceAuthData(
-      TC_AWAIT(storage().localUserStore.getDeviceId()),
-      TC_AWAIT(storage().localUserStore.getDeviceKeys()).signatureKeyPair);
   setStatus(Status::Ready);
 }
 

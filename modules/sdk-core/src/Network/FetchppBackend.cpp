@@ -43,26 +43,19 @@ fetchpp::http::verb toFetchppVerb(HttpMethod method)
 
 FetchppBackend::FetchppBackend(SdkInfo sdkInfo,
                                std::chrono::nanoseconds timeout)
-  : _cl(std::make_shared<fetchpp::client>(
-        tc::get_default_executor().get_io_service().get_executor(),
+  : _cl(tc::get_default_executor().get_io_service().get_executor(),
         timeout,
-        Cacerts::create_ssl_context())),
+        Cacerts::create_ssl_context()),
     _sdkInfo(std::move(sdkInfo))
 {
   auto proxies = fetchpp::http::proxy_from_environment();
   if (auto proxyIt = proxies.find(http::proxy_scheme::https);
       proxyIt != proxies.end())
     TINFO("HTTPS proxy detected: {}", proxyIt->second.url());
-  _cl->set_proxies(std::move(proxies));
+  _cl.set_proxies(std::move(proxies));
 }
 
-FetchppBackend::~FetchppBackend()
-{
-  _cl->async_stop([cl = _cl](std::error_code ec) mutable {
-    if (ec)
-      TERROR("failed to close: {}", ec.message());
-  });
-}
+FetchppBackend::~FetchppBackend() = default;
 
 tc::cotask<HttpResponse> FetchppBackend::fetch(HttpRequest req)
 {
@@ -78,7 +71,7 @@ tc::cotask<HttpResponse> FetchppBackend::fetch(HttpRequest req)
     request.content(req.body);
     request.prepare_payload();
     auto const fResponse =
-        TC_AWAIT(_cl->async_fetch(std::move(request), tc::asio::use_future));
+        TC_AWAIT(_cl.async_fetch(std::move(request), tc::asio::use_future));
 
     HttpResponse response;
     response.statusCode = fResponse.result_int();
