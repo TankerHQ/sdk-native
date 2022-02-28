@@ -86,6 +86,10 @@ std::unique_ptr<DataStore> CTankerStorageBackend::open(
 {
   tanker_datastore_t* db;
   std::exception_ptr err;
+  TINFO("Opening databases {} and {} ({})",
+        dataPath,
+        cachePath,
+        static_cast<void*>(this));
   tc::dispatch_on_thread_context([&] {
     return _options.open(&err, &db, dataPath.c_str(), cachePath.c_str());
   });
@@ -101,6 +105,7 @@ CTankerStorageDataStore::CTankerStorageDataStore(
 
 CTankerStorageDataStore::~CTankerStorageDataStore()
 {
+  TINFO("Closing databases ({})", static_cast<void*>(this));
   tc::dispatch_on_thread_context([&] { _options.close(_datastore); });
 }
 
