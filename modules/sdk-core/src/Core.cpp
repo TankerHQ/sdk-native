@@ -119,7 +119,8 @@ Core::Core(std::string url,
                           ),
     _session(std::make_shared<Session>(
         createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
-        _datastoreBackend.get()))
+        _datastoreBackend.get())),
+    _oidcManager(std::make_shared<OidcNonceManager>())
 {
   TINFO("Creating core {}", static_cast<void*>(this));
   if (!_networkBackend)
@@ -524,6 +525,14 @@ tc::cotask<std::string> Core::getSessionToken(
 
   TC_RETURN(TC_AWAIT(_session->requesters().getSessionToken(
       _session->userId(), serializedSessCert, withTokenNonce)));
+}
+
+tc::cotask<OidcNonce> Core::createOidcNonce()
+{
+  FUNC_TIMER(Proc);
+  TINFO("Create OIDC nonce {}", static_cast<void*>(this));
+
+  TC_RETURN(_oidcManager->createOidcNonce());
 }
 
 tc::cotask<void> Core::encrypt(

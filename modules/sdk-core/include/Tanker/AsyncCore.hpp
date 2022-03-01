@@ -8,6 +8,7 @@
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Types/Email.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/SDeviceId.hpp>
 #include <Tanker/Types/SGroupId.hpp>
@@ -69,6 +70,8 @@ public:
   tc::future<std::optional<std::string>> verifyIdentity(
       Verification::Verification const& verification,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
+
+  tc::future<OidcNonce> createOidcNonce();
 
   tc::future<std::string> getSessionToken(
       Verification::Verification const& verification,

@@ -198,6 +198,13 @@ tc::future<void> AsyncCore::stop()
   return fut;
 }
 
+tc::future<OidcNonce> AsyncCore::createOidcNonce()
+{
+  return runResumable([=]() -> tc::cotask<OidcNonce> {
+    TC_RETURN(TC_AWAIT(this->_core.createOidcNonce()));
+  });
+}
+
 Tanker::Status AsyncCore::status() const
 {
   return this->_core.status();

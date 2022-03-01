@@ -469,6 +469,15 @@ tanker_future_t* tanker_stop(tanker_t* ctanker)
   return makeFuture(tanker->stop());
 }
 
+tanker_future_t* tanker_create_oidc_nonce(tanker_t* ctanker)
+{
+  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->createOidcNonce().and_then(
+      tc::get_synchronous_executor(), [](auto const& oidcNonce) {
+        return static_cast<void*>(duplicateString(oidcNonce.string()));
+      }));
+}
+
 enum tanker_status tanker_status(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);

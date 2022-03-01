@@ -4,11 +4,13 @@
 #include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
+#include <Tanker/Oidc/OidcNonceManager.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
@@ -67,6 +69,8 @@ public:
   tc::cotask<std::optional<std::string>> verifyIdentity(
       Verification::Verification const& verification,
       VerifyWithToken withToken);
+
+  tc::cotask<OidcNonce> createOidcNonce();
 
   tc::cotask<void> encrypt(
       gsl::span<uint8_t> encryptedData,
@@ -180,5 +184,6 @@ private:
   std::unique_ptr<Network::Backend> _networkBackend;
   std::unique_ptr<DataStore::Backend> _datastoreBackend;
   std::shared_ptr<Session> _session;
+  std::shared_ptr<OidcNonceManager> _oidcManager;
 };
 }
