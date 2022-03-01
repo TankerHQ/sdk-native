@@ -71,6 +71,34 @@ void commonStreamTests()
         decryptAllStream<DecStream>(failRead, mockKeyFinder), Errc::IOError);
   }
 
+  SECTION("Encrypt/decrypt with small chunks")
+  {
+    static constexpr auto smallClearChunkSize =
+        smallChunkSize - EncStream::overhead;
+
+    auto const bufferSize = GENERATE(
+        0,                       // empty buffer
+        2,                       // single chunk
+        smallClearChunkSize + 2, // one chunk and a half
+        2 * smallClearChunkSize, // exactly 2 chunks (and one empty one)
+        300                      // lots of chunks
+    );
+    CAPTURE(bufferSize);
+
+    std::vector<std::uint8_t> buffer(bufferSize);
+    Crypto::randomFill(buffer);
+
+    EncStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+
+    auto decryptor =
+        AWAIT(DecStream::create(encryptor, makeKeyFinder(encryptor)));
+
+    auto const decrypted = AWAIT(readAllStream(decryptor));
+
+    CHECK(decrypted.size() == buffer.size());
+    CHECK(decrypted == buffer);
+  }
+
   SECTION("Encrypt/decrypt huge buffer")
   {
     std::vector<std::uint8_t> buffer(
