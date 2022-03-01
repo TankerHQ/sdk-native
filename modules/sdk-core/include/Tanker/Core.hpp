@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Tanker/AttachResult.hpp>
+#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
@@ -22,6 +23,7 @@
 #include <tconcurrent/coroutine.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -83,13 +85,15 @@ public:
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& spublicIdentities,
       std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf);
+      ShareWithSelf shareWithSelf,
+      std::optional<uint32_t> paddingStep);
 
   tc::cotask<std::vector<uint8_t>> encrypt(
       gsl::span<uint8_t const> clearData,
       std::vector<SPublicIdentity> const& spublicIdentities,
       std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf);
+      ShareWithSelf shareWithSelf,
+      std::optional<uint32_t> paddingStep);
 
   tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
                                gsl::span<uint8_t const> encryptedData);

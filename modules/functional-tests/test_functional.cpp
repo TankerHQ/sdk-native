@@ -808,3 +808,49 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
                                   Errors::Errc::NetworkError);
   }
 }
+
+inline auto constexpr simpleEncryptionOverhead = 17;
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can use the padding encryption option")
+{
+  SECTION("encrypt/decrypt with auto padding")
+  {
+    std::string const clearData("my clear data is clear");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, std::nullopt)));
+
+    auto const lengthWithPadme = 22;
+    REQUIRE(encryptedData.size() - simpleEncryptionOverhead - 1 ==
+            lengthWithPadme);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with no padding")
+  {
+    std::string const clearData("my clear data is clear");
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(encrypt(
+                        *aliceSession, clearData, {}, {}, Padding::Off)));
+
+    REQUIRE(encryptedData.size() - simpleEncryptionOverhead ==
+            clearData.size());
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+
+  SECTION("encrypt/decrypt with a padding step")
+  {
+    std::string const clearData("my clear data is clear");
+    auto const step = 13;
+    std::vector<uint8_t> encryptedData;
+    REQUIRE_NOTHROW(encryptedData = TC_AWAIT(
+                        encrypt(*aliceSession, clearData, {}, {}, step)));
+
+    REQUIRE((encryptedData.size() - simpleEncryptionOverhead - 1) % step == 0);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+}
