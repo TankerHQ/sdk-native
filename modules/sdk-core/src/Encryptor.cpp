@@ -1,6 +1,7 @@
 #include <Tanker/Encryptor.hpp>
 
 #include <Tanker/Crypto/Crypto.hpp>
+#include <Tanker/Crypto/Padding.hpp>
 #include <Tanker/Encryptor/v2.hpp>
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v4.hpp>
@@ -55,11 +56,19 @@ bool isHugeClearData(uint64_t dataSize)
   return dataSize > Streams::Header::defaultEncryptedChunkSize;
 }
 
-uint64_t encryptedSize(uint64_t clearSize)
+uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
 {
   if (isHugeClearData(clearSize))
+  {
+    // For now, there is no padded stream encryptor so we ignore the paddingStep
+    // argument in case of an automatic redirection
     return EncryptorV4::encryptedSize(clearSize);
-  return EncryptorV3::encryptedSize(clearSize);
+  }
+
+  if (paddingStep == Padding::Off)
+    return EncryptorV3::encryptedSize(clearSize);
+
+  return EncryptorV6::encryptedSize(clearSize, paddingStep);
 }
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
@@ -76,11 +85,21 @@ uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 }
 
 tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
-                                       gsl::span<uint8_t const> clearData)
+                                       gsl::span<uint8_t const> clearData,
+                                       std::optional<uint32_t> paddingStep)
 {
   if (isHugeClearData(clearData.size()))
+  {
+    // For now, there is no padded stream encryptor so we ignore the paddingStep
+    // argument in case of an automatic redirection
     TC_RETURN(TC_AWAIT(EncryptorV4::encrypt(encryptedData, clearData)));
-  TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+  }
+
+  if (paddingStep == Padding::Off)
+    TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
+
+  TC_RETURN(
+      TC_AWAIT(EncryptorV6::encrypt(encryptedData, clearData, paddingStep)));
 }
 
 tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
