@@ -71,6 +71,18 @@ Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
   TC_RETURN(value);
 }
 
+tc::cotask<OidcChallenge> Requester::getOidcChallenge(
+    Trustchain::UserId const& userId, OidcNonce const& nonce)
+{
+  using namespace fmt::literals;
+  nlohmann::json body{{"nonce", nonce}};
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      _httpClient->makeUrl(fmt::format("users/{userId:#S}/oidc/challenges",
+                                       "userId"_a = userId)),
+      std::move(body)));
+  TC_RETURN(res.value().at("challenge").get<OidcChallenge>());
+}
+
 tc::cotask<std::string> Requester::getSessionToken(
     Trustchain::UserId const& userId,
     gsl::span<uint8_t const> sessionCertificate,

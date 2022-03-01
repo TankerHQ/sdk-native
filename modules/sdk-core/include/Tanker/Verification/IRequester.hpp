@@ -3,6 +3,8 @@
 #include <Tanker/Crypto/PublicEncryptionKey.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 #include <Tanker/Trustchain/UserId.hpp>
+#include <Tanker/Types/OidcChallenge.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Verification/Request.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -28,6 +30,9 @@ public:
       std::vector<boost::variant2::variant<VerificationMethod,
                                            EncryptedVerificationMethod>>>
   fetchVerificationMethods(Trustchain::UserId const& userId) = 0;
+
+  virtual tc::cotask<OidcChallenge> getOidcChallenge(
+      Trustchain::UserId const& userId, OidcNonce const& nonce) = 0;
 
   virtual tc::cotask<std::string> getSessionToken(
       Trustchain::UserId const& userId,
