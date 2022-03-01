@@ -55,6 +55,11 @@ struct TestContext<EncryptorV2>
     return EncryptorV2::encrypt(encryptedData, clearData);
   }
 
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV2::encryptedSize(clearSize);
+  }
+
   std::vector<TestVector> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -94,6 +99,11 @@ struct TestContext<EncryptorV3>
     return EncryptorV3::encrypt(encryptedData, clearData);
   }
 
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV3::encryptedSize(clearSize);
+  }
+
   std::vector<TestVector> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -129,6 +139,11 @@ struct TestContext<EncryptorV4>
       gsl::span<std::uint8_t const> clearData) const
   {
     return EncryptorV4::encrypt(encryptedData, clearData);
+  }
+
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV4::encryptedSize(clearSize);
   }
 
   std::vector<TestVector> testVectors{
@@ -236,6 +251,11 @@ struct TestContext<EncryptorV5>
                                 Crypto::makeSymmetricKey());
   }
 
+  auto encryptedSize(uint64_t clearSize) const
+  {
+    return EncryptorV5::encryptedSize(clearSize);
+  }
+
   std::vector<TestVector> testVectors{
       {{0x76, 0xd,  0x8e, 0x80, 0x5c, 0xbc, 0xa8, 0xb6, 0xda, 0xea, 0xcf,
         0x66, 0x46, 0xca, 0xd7, 0xeb, 0x4f, 0x3a, 0xbc, 0x69, 0xac, 0x9b,
@@ -285,7 +305,7 @@ void testEncryptDecrypt(TestContext<T> ctx,
 {
   DYNAMIC_SECTION(testTitle)
   {
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData(ctx.encryptedSize(clearData.size()));
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
     auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
     CHECK(clearData == decryptedData);
@@ -294,29 +314,20 @@ void testEncryptDecrypt(TestContext<T> ctx,
 }
 
 template <typename T>
-void commonEncryptorTests(TestContext<T> ctx)
+void unpaddedEncryptorTests(TestContext<T> ctx)
 {
   SECTION("decryptedSize and encryptedSize should be symmetrical")
   {
-    std::vector<uint8_t> buf(T::encryptedSize(0));
+    std::vector<uint8_t> buf(ctx.encryptedSize(0));
     buf[0] = T::version();
     // This helps stream tests, and is irrelevant for other encryptors
     Serialization::serialize<uint32_t>(
         buf.data() + 1, Streams::Header::defaultEncryptedChunkSize);
     CHECK(T::decryptedSize(buf) == 0);
-    buf.resize(T::encryptedSize(42));
+    buf.resize(ctx.encryptedSize(42));
     CHECK(T::decryptedSize(buf) == 42);
     buf.resize(T::encryptedSize(4 * oneMiB));
     CHECK(T::decryptedSize(buf) == 4 * oneMiB);
-  }
-
-  SECTION("extractResourceId should throw on a truncated buffer")
-  {
-    std::vector<uint8_t> buf(1);
-    buf[0] = T::version();
-
-    TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
-                                  Errc::InvalidArgument);
   }
 
   SECTION("extractResourceId should throw on a truncated buffer")
@@ -327,7 +338,11 @@ void commonEncryptorTests(TestContext<T> ctx)
     TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
                                   Errc::InvalidArgument);
   }
+}
 
+template <typename T>
+void commonEncryptorTests(TestContext<T> ctx)
+{
   SECTION("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
@@ -369,10 +384,10 @@ void commonEncryptorTests(TestContext<T> ctx)
 
   SECTION("encrypt should never give the same result twice")
   {
-    auto clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData1(T::encryptedSize(clearData.size()));
+    auto const clearData = make_buffer("this is the data to encrypt");
+    std::vector<uint8_t> encryptedData1(ctx.encryptedSize(clearData.size()));
     AWAIT(ctx.encrypt(encryptedData1, clearData));
-    std::vector<uint8_t> encryptedData2(T::encryptedSize(clearData.size()));
+    std::vector<uint8_t> encryptedData2(ctx.encryptedSize(clearData.size()));
     AWAIT(ctx.encrypt(encryptedData2, clearData));
 
     CHECK(encryptedData1 != encryptedData2);
@@ -416,8 +431,8 @@ void commonEncryptorTests(TestContext<T> ctx)
 
   SECTION("extractResourceId should give the same result as encrypt")
   {
-    auto clearData = make_buffer("this is the data to encrypt");
-    std::vector<uint8_t> encryptedData(T::encryptedSize(clearData.size()));
+    auto const clearData = make_buffer("this is the data to encrypt");
+    std::vector<uint8_t> encryptedData(ctx.encryptedSize(clearData.size()));
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
@@ -429,6 +444,7 @@ TEST_CASE("EncryptorV2 tests")
 {
   TestContext<EncryptorV2> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SECTION("encryptedSize should return the right size")
@@ -445,6 +461,7 @@ TEST_CASE("EncryptorV3 tests")
 {
   TestContext<EncryptorV3> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SECTION("encryptedSize should return the right size")
@@ -514,6 +531,7 @@ TEST_CASE("EncryptorV5 tests")
 {
   TestContext<EncryptorV5> ctx;
 
+  unpaddedEncryptorTests(ctx);
   commonEncryptorTests(ctx);
 
   SECTION("encryptedSize should return the right size")
