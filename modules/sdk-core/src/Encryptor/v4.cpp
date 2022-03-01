@@ -43,8 +43,9 @@ std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize,
   auto const chunkSize = clearChunkSize(encryptedChunkSize);
   auto const chunks = clearSize / chunkSize;
   auto const lastClearChunkSize = clearSize % chunkSize;
-  return chunks * encryptedChunkSize + headerSize + Crypto::AeadIv::arraySize +
-         Crypto::encryptedSize(lastClearChunkSize);
+  auto const lastEncryptedChunkSize = headerSize + Crypto::AeadIv::arraySize +
+                                      Crypto::encryptedSize(lastClearChunkSize);
+  return chunks * encryptedChunkSize + lastEncryptedChunkSize;
 }
 
 std::uint64_t EncryptorV4::decryptedSize(
@@ -61,10 +62,10 @@ std::uint64_t EncryptorV4::decryptedSize(
       encryptedData.size() % header.encryptedChunkSize();
   if (lastEncryptedChunkSize < Crypto::AeadIv::arraySize + headerSize)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  auto const lastClearChunkSize =
-      lastEncryptedChunkSize - Crypto::AeadIv::arraySize - headerSize;
+  auto const lastClearChunkSize = Crypto::decryptedSize(
+      lastEncryptedChunkSize - Crypto::AeadIv::arraySize - headerSize);
   return chunks * clearChunkSize(header.encryptedChunkSize()) +
-         Crypto::decryptedSize(lastClearChunkSize);
+         lastClearChunkSize;
 }
 
 tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
