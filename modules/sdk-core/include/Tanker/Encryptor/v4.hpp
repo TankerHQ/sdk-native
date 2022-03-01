@@ -38,11 +38,10 @@ public:
       Crypto::SymmetricKey const& key,
       std::uint32_t encryptedChunkSize =
           Streams::Header::defaultEncryptedChunkSize);
-
-  static tc::cotask<void> decrypt(gsl::span<std::uint8_t> decryptedData,
-                                  Crypto::SymmetricKey const& key,
-                                  gsl::span<std::uint8_t const> encryptedData);
-
+  static tc::cotask<std::uint64_t> decrypt(
+      gsl::span<std::uint8_t> decryptedData,
+      Crypto::SymmetricKey const& key,
+      gsl::span<std::uint8_t const> encryptedData);
   static Trustchain::ResourceId extractResourceId(
       gsl::span<std::uint8_t const> encryptedData);
 };

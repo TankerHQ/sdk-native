@@ -96,17 +96,27 @@ tc::cotask<EncryptionMetadata> EncryptorV4::encrypt(
       (EncryptionMetadata{encryptor.resourceId(), encryptor.symmetricKey()}));
 }
 
-tc::cotask<void> EncryptorV4::decrypt(
+tc::cotask<std::uint64_t> EncryptorV4::decrypt(
     gsl::span<std::uint8_t> decryptedData,
     Crypto::SymmetricKey const& key,
     gsl::span<std::uint8_t const> encryptedData)
 {
+  auto const initialSize = decryptedData.size();
+
   auto decryptor = TC_AWAIT(DecryptionStream::create(
       bufferViewToInputSource(encryptedData),
       [&key](auto) -> tc::cotask<Crypto::SymmetricKey> { TC_RETURN(key); }));
 
   while (auto const nbRead = TC_AWAIT(decryptor(decryptedData)))
     decryptedData = decryptedData.subspan(nbRead);
+
+  if (!decryptedData.empty())
+    throw Errors::AssertionError(fmt::format(
+        "EncryptorV4: got less than expected data (expected: {}, missing: {})",
+        initialSize,
+        decryptedData.size()));
+
+  TC_RETURN(initialSize);
 }
 
 ResourceId EncryptorV4::extractResourceId(

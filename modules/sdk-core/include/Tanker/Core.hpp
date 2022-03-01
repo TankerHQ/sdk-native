@@ -86,8 +86,8 @@ public:
       std::vector<SGroupId> const& sgroupIds,
       ShareWithSelf shareWithSelf);
 
-  tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
-                           gsl::span<uint8_t const> encryptedData);
+  tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                               gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);

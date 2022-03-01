@@ -272,7 +272,9 @@ std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
                                gsl::span<uint8_t const> encryptedData)
 {
   std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-  AWAIT_VOID(T::decrypt(decryptedData, key, encryptedData));
+  auto const decryptedSize =
+      AWAIT(T::decrypt(decryptedData, key, encryptedData));
+  decryptedData.resize(decryptedSize);
   return decryptedData;
 }
 

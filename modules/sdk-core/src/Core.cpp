@@ -643,15 +643,15 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
   TC_RETURN(std::move(encryptedData));
 }
 
-tc::cotask<void> Core::decrypt(gsl::span<uint8_t> decryptedData,
-                               gsl::span<uint8_t const> encryptedData)
+tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
+                                   gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
   auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
   auto const key = TC_AWAIT(getResourceKey(resourceId));
 
-  TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
+  TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData)));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
@@ -659,7 +659,8 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
 {
   assertStatus(Status::Ready, "decrypt");
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  TC_AWAIT(decrypt(decryptedData, encryptedData));
+  auto const clearSize = TC_AWAIT(decrypt(decryptedData, encryptedData));
+  decryptedData.resize(clearSize);
 
   TC_RETURN(std::move(decryptedData));
 }

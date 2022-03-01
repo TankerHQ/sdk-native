@@ -74,9 +74,9 @@ tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
   TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
 }
 
-tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
-                         Crypto::SymmetricKey const& key,
-                         gsl::span<uint8_t const> encryptedData)
+tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                             Crypto::SymmetricKey const& key,
+                             gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.size() < 1)
     throw Errors::Exception(Serialization::Errc::TruncatedInput,
@@ -84,10 +84,11 @@ tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
 
   auto const version = encryptedData[0];
 
-  TC_AWAIT(
-      performEncryptorAction(version, [&](auto encryptor) -> tc::cotask<void> {
-        TC_AWAIT(encryptor.decrypt(decryptedData, key, encryptedData));
-      }));
+  TC_RETURN(TC_AWAIT(performEncryptorAction(
+      version, [&](auto encryptor) -> tc::cotask<uint64_t> {
+        TC_RETURN(
+            TC_AWAIT(encryptor.decrypt(decryptedData, key, encryptedData)));
+      })));
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
