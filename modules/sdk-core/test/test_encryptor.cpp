@@ -135,12 +135,13 @@ void commonEncryptorTests(TestContext<T> ctx)
 {
   SECTION("decryptedSize and encryptedSize should be symmetrical")
   {
-    std::vector<uint8_t> a0(T::encryptedSize(0));
-    a0[0] = T::version();
-    std::vector<uint8_t> a42(T::encryptedSize(42));
-    a42[0] = T::version();
-    CHECK(T::decryptedSize(a0) == 0);
-    CHECK(T::decryptedSize(a42) == 42);
+    std::vector<uint8_t> buf(T::encryptedSize(0));
+    buf[0] = T::version();
+    CHECK(T::decryptedSize(buf) == 0);
+    buf.resize(T::encryptedSize(42));
+    CHECK(T::decryptedSize(buf) == 42);
+    buf.resize(T::encryptedSize(4 * 1024 * 1024));
+    CHECK(T::decryptedSize(buf) == 4 * 1024 * 1024);
   }
 
   SECTION("decryptedSize should throw if the buffer is truncated")
@@ -193,7 +194,23 @@ void commonEncryptorTests(TestContext<T> ctx)
   {
     auto const clearData = make_buffer("this is very secret");
 
-    ctx.encryptedTestVector[2]++;
+    // These tests try to corrupt buffers at arbitrary positions
+    SECTION("corrupt begin")
+    {
+      ctx.encryptedTestVector[7]++;
+    }
+
+    SECTION("corrupt middle")
+    {
+      // The MAC (present in all formats) takes 16 bytes at the end, so this
+      // falls 4 bytes before that.
+      ctx.encryptedTestVector[ctx.encryptedTestVector.size() - 20]++;
+    }
+
+    SECTION("corrupt end")
+    {
+      ctx.encryptedTestVector.back()++;
+    }
 
     TANKER_CHECK_THROWS_WITH_CODE(
         doDecrypt<T>(ctx.keyVector, ctx.encryptedTestVector),
