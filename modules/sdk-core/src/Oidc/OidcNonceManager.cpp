@@ -35,7 +35,7 @@ std::optional<OidcNonce> OidcNonceManager::getTestNonce() const
 
 constexpr auto CHALLENGE_BYTE_LENGTH = 24;
 OidcSignedChallenge OidcNonceManager::signOidcChallenge(
-    OidcNonce const& nonce, OidcChallenge const& challenge)
+    OidcNonce const& nonce, OidcChallenge const& challenge) const
 {
   static std::string const CHALLENGE_PREFIX{"oidc-verification-prefix"};
 

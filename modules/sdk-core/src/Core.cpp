@@ -17,6 +17,7 @@
 #include <Tanker/Identity/Extract.hpp>
 #include <Tanker/Identity/PublicPermanentIdentity.hpp>
 #include <Tanker/Log/Log.hpp>
+#include <Tanker/Oidc/Nonce.hpp>
 #include <Tanker/ProvisionalUsers/Requester.hpp>
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
@@ -31,6 +32,7 @@
 #include <Tanker/Users/LocalUserStore.hpp>
 #include <Tanker/Users/Requester.hpp>
 #include <Tanker/Utils.hpp>
+#include <Tanker/Verification/Request.hpp>
 #include <Tanker/Verification/Requester.hpp>
 
 #ifdef TANKER_WITH_FETCHPP
@@ -79,6 +81,61 @@ std::string createInstanceId()
   auto rd = std::array<uint8_t, 16>{};
   Crypto::randomFill(rd);
   return mgs::base64::encode(rd);
+}
+
+tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
+    Verification::IRequester& requester,
+    OidcNonceManager const& nonceManager,
+    Trustchain::UserId const& userId,
+    OidcIdToken const& oidcIdToken,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce)
+{
+  if (oidcIdToken.length() == 0)
+  {
+    throw formatEx(Errc::InvalidArgument, "oidcIdToken should not be empty");
+  }
+
+  auto const testNonce = nonceManager.getTestNonce();
+  auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
+
+  base64DecodeArgument<Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
+  auto const challenge = TC_AWAIT(requester.getOidcChallenge(userId, nonce));
+  auto const verification = Verification::OidcIdTokenWithChallenge{
+      oidcIdToken,
+      nonceManager.signOidcChallenge(nonce, challenge),
+      testNonce,
+  };
+
+  auto const verificationRequest = Verification::makeRequestWithVerif(
+      verification, userSecret, secretProvisionalSigKey, withTokenNonce);
+  TC_RETURN(verificationRequest);
+}
+
+tc::cotask<Verification::RequestWithVerif> formatRequestWithVerif(
+    Verification::IRequester& requester,
+    OidcNonceManager const& nonceManager,
+    Trustchain::UserId const& userId,
+    Verification::Verification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce)
+{
+  if (auto const v = boost::variant2::get_if<OidcIdToken>(&verification))
+  {
+    auto const res = TC_AWAIT(challengeOidcToken(requester,
+                                                 nonceManager,
+                                                 userId,
+                                                 *v,
+                                                 userSecret,
+                                                 secretProvisionalSigKey,
+                                                 withTokenNonce));
+    TC_RETURN(res);
+  }
+
+  TC_RETURN(Verification::makeRequestWithVerif(
+      verification, userSecret, secretProvisionalSigKey, withTokenNonce));
 }
 }
 
@@ -385,8 +442,13 @@ tc::cotask<void> Core::registerIdentityImpl(
       _session->userId(),
       Serialization::serialize(userCreation.entry),
       Serialization::serialize(firstDeviceEntry),
-      Verification::makeRequestWithVerif(
-          verification, _session->userSecret(), std::nullopt, withTokenNonce),
+      TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                      *_oidcManager,
+                                      _session->userId(),
+                                      verification,
+                                      _session->userSecret(),
+                                      std::nullopt,
+                                      withTokenNonce)),
       userCreation.verificationKey));
   TC_AWAIT(_session->finalizeCreation(deviceId, deviceKeys));
 }
@@ -712,8 +774,13 @@ tc::cotask<std::optional<std::string>> Core::setVerificationMethod(
   {
     TC_AWAIT(_session->requesters().setVerificationMethod(
         _session->userId(),
-        Verification::makeRequestWithVerif(
-            method, _session->userSecret(), std::nullopt, withTokenNonce)));
+        TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                        *_oidcManager,
+                                        _session->userId(),
+                                        method,
+                                        _session->userSecret(),
+                                        std::nullopt,
+                                        withTokenNonce))));
   }
   catch (Errors::Exception const& e)
   {
@@ -758,10 +825,13 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
   auto const encryptedKey =
       TC_AWAIT(_session->requesters().fetchVerificationKey(
           _session->userId(),
-          Verification::makeRequestWithVerif(verification,
-                                             _session->userSecret(),
-                                             std::nullopt,
-                                             withTokenNonce)));
+          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                          *_oidcManager,
+                                          _session->userId(),
+                                          verification,
+                                          _session->userSecret(),
+                                          std::nullopt,
+                                          withTokenNonce))));
   std::vector<uint8_t> verificationKey(
       EncryptorV2::decryptedSize(encryptedKey));
   TC_AWAIT(EncryptorV2::decrypt(
@@ -815,9 +885,13 @@ tc::cotask<void> Core::verifyProvisionalIdentity(
   Verification::validateVerification(verification, *identity);
   TC_AWAIT(
       _session->accessors().provisionalUsersManager.verifyProvisionalIdentity(
-          Verification::makeRequestWithVerif(verification,
-                                             _session->userSecret(),
-                                             identity->appSignatureKeyPair)));
+          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                          *_oidcManager,
+                                          _session->userId(),
+                                          verification,
+                                          _session->userSecret(),
+                                          identity->appSignatureKeyPair,
+                                          std::nullopt))));
 }
 
 void Core::nukeDatabase()
