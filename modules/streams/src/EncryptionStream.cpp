@@ -65,6 +65,9 @@ tc::cotask<void> EncryptionStream::encryptChunk()
   ++_chunkIndex;
   auto const cipherText = output.subspan(Header::serializedSize);
   Crypto::encryptAead(_key, iv, cipherText, clearInput, {});
+
+  if (isInputEndOfStream())
+    endOutputStream();
 }
 
 tc::cotask<void> EncryptionStream::processInput()

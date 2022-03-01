@@ -27,7 +27,7 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(
   _currentPosition += toRead;
   if (_currentPosition == static_cast<std::int64_t>(_output.size()))
   {
-    if (_cb)
+    if (!_processingComplete)
       _state = State::NoOutput;
     else
       _state = State::EndOfStream;
@@ -39,6 +39,9 @@ template <typename Derived>
 tc::cotask<gsl::span<std::uint8_t const>>
 BufferedStream<Derived>::readInputSource(std::int64_t n)
 {
+  if (!_cb)
+    TC_RETURN(gsl::span<std::uint8_t const>());
+
   _input.resize(n);
   auto const totalRead = TC_AWAIT(readStream(_input, _cb));
   if (totalRead < n)
@@ -87,6 +90,19 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
     throw;
   }
   throw AssertionError("unknown state");
+}
+
+template <typename Derived>
+bool BufferedStream<Derived>::isInputEndOfStream()
+{
+  return !_cb;
+}
+
+template <typename Derived>
+void BufferedStream<Derived>::endOutputStream()
+{
+  _processingComplete = true;
+  _cb = nullptr;
 }
 }
 }

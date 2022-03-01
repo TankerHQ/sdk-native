@@ -95,6 +95,9 @@ tc::cotask<void> DecryptionStream::decryptChunk()
   ++_chunkIndex;
   auto output = prepareWrite(Crypto::decryptedSize(encryptedInput.size()));
   Crypto::decryptAead(_key, iv, output, encryptedInput, {});
+
+  if (isInputEndOfStream())
+    endOutputStream();
 }
 
 tc::cotask<void> DecryptionStream::processInput()
