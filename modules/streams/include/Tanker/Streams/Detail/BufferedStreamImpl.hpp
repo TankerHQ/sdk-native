@@ -104,5 +104,15 @@ void BufferedStream<Derived>::endOutputStream()
   _processingComplete = true;
   _cb = nullptr;
 }
+
+template <typename Derived>
+void BufferedStream<Derived>::shrinkOutput(std::uint64_t n)
+{
+  if (n > _output.size())
+    throw Errors::AssertionError(
+        "attempting to enlarge buffer with shrinkOutput()");
+
+  _output.resize(n);
+}
 }
 }

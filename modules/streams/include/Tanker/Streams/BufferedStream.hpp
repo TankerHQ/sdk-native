@@ -29,6 +29,7 @@ protected:
 
   bool isInputEndOfStream();
   void endOutputStream();
+  void shrinkOutput(std::uint64_t n);
 
 private:
   enum class State
