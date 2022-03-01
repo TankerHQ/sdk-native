@@ -52,6 +52,9 @@ add_library(ctanker ${tankerlib_type}
   src/groups.cpp
   src/encryptionsession.cpp
   src/network.cpp
+
+  src/CPadding.hpp
+  src/CPadding.cpp
 )
 
 generate_export_header(ctanker
