@@ -1,5 +1,6 @@
 add_executable(test_tanker_crypto
   test_crypto.cpp
+  test_padding.cpp
   main.cpp
 )
 
