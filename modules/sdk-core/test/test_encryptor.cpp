@@ -4,7 +4,6 @@
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Serialization/Varint.hpp>
 
 #include <Helpers/Await.hpp>
 #include <Helpers/Buffers.hpp>
@@ -112,9 +111,9 @@ void commonEncryptorTests(TestContext<T> ctx)
   SECTION("decryptedSize and encryptedSize should be symmetrical")
   {
     std::vector<uint8_t> a0(T::encryptedSize(0));
-    Serialization::varint_write(a0.data(), T::version());
+    a0[0] = T::version();
     std::vector<uint8_t> a42(T::encryptedSize(42));
-    Serialization::varint_write(a42.data(), T::version());
+    a42[0] = T::version();
     CHECK(T::decryptedSize(a0) == 0);
     CHECK(T::decryptedSize(a42) == 42);
   }
@@ -210,7 +209,7 @@ TEST_CASE("EncryptorV2 tests")
 
   SECTION("encryptedSize should return the right size")
   {
-    auto const versionSize = Serialization::varint_size(EncryptorV2::version());
+    auto const versionSize = 1;
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     CHECK(EncryptorV2::encryptedSize(0) == versionSize + 0 + MacSize + IvSize);
@@ -226,7 +225,7 @@ TEST_CASE("EncryptorV3 tests")
 
   SECTION("encryptedSize should return the right size")
   {
-    auto const versionSize = Serialization::varint_size(EncryptorV3::version());
+    auto const versionSize = 1;
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
     CHECK(EncryptorV3::encryptedSize(0) == versionSize + 0 + MacSize);
     CHECK(EncryptorV3::encryptedSize(1) == versionSize + 1 + MacSize);
@@ -241,7 +240,7 @@ TEST_CASE("EncryptorV5 tests")
 
   SECTION("encryptedSize should return the right size")
   {
-    auto const versionSize = Serialization::varint_size(EncryptorV5::version());
+    auto const versionSize = 1;
     constexpr auto ResourceIdSize = Trustchain::ResourceId::arraySize;
     constexpr auto IvSize = Crypto::AeadIv::arraySize;
     constexpr auto MacSize = Trustchain::ResourceId::arraySize;
