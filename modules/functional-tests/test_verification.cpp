@@ -931,6 +931,45 @@ TEST_CASE_METHOD(TrustchainFixture,
   }
 }
 
+TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
+{
+  TC_AWAIT(enableOidc());
+
+  auto martine = trustchain.makeUser();
+  auto martineDevice = martine.makeDevice();
+  auto martineLaptop = martineDevice.createCore();
+  REQUIRE(TC_AWAIT(martineLaptop->start(martine.identity)) ==
+          Status::IdentityRegistrationNeeded);
+
+  auto oidcConfig = TestConstants::oidcConfig();
+
+  OidcIdToken martineIdToken, kevinIdToken;
+  {
+    martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
+  }
+
+  SECTION("")
+  {
+    auto const pass = Passphrase{"******"};
+    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+
+    SECTION("fails to attach a provisional identity using OIDC")
+    {
+      auto const email = makeEmail();
+      auto const martineProvisionalIdentity =
+          Identity::createProvisionalIdentity(
+              mgs::base64::encode(trustchain.id), email);
+      auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
+          SSecretProvisionalIdentity{martineProvisionalIdentity}));
+      REQUIRE(result.status == Tanker::Status::IdentityVerificationNeeded);
+      REQUIRE(result.verificationMethod == email);
+      TANKER_CHECK_THROWS_WITH_CODE(
+          TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken)),
+          Errc::InvalidArgument);
+    }
+  }
+}
+
 TEST_CASE_METHOD(TrustchainFixture,
                  "User enrollment throws when the feature is not enabled")
 {
