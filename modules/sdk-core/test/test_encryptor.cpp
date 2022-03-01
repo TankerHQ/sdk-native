@@ -199,6 +199,15 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(T::decryptedSize(buf) == 4 * 1024 * 1024);
   }
 
+  SECTION("extractResourceId should throw on a truncated buffer")
+  {
+    std::vector<uint8_t> buf(1);
+    buf[0] = T::version();
+
+    TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
+                                  Errc::InvalidArgument);
+  }
+
   SECTION("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
