@@ -12,4 +12,14 @@ OidcNonce OidcNonceManager::createOidcNonce()
   nonceMap.emplace(nonce, signatureKeyPair.privateKey);
   return nonce;
 };
+
+void OidcNonceManager::setTestNonce(OidcNonce const& nonce)
+{
+  _testNonce = nonce;
+}
+
+std::optional<OidcNonce> OidcNonceManager::getTestNonce() const
+{
+  return _testNonce;
+}
 }

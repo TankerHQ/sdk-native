@@ -8,6 +8,7 @@
 #include <Tanker/Types/EncryptedPreverifiedEmail.hpp>
 #include <Tanker/Types/EncryptedPreverifiedPhoneNumber.hpp>
 #include <Tanker/Types/OidcIdToken.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/PreverifiedEmail.hpp>

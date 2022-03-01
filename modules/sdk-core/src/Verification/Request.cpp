@@ -7,6 +7,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
@@ -17,6 +18,8 @@
 #include <range/v3/view/transform.hpp>
 
 #include <boost/variant2/variant.hpp>
+
+TLOG_CATEGORY(Tanker::Verification);
 
 namespace
 {
@@ -43,7 +46,7 @@ Ret hashField(T const& field)
 namespace Tanker::Verification
 {
 RequestWithVerif makeRequestWithVerif(
-    Verification const& verification,
+    RequestVerification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
@@ -99,6 +102,13 @@ RequestWithVerif makeRequestWithVerif(
           },
           [](OidcIdToken const& v) -> RequestVerificationMethods {
             checkNotEmpty(v.string(), "oidcIdToken");
+            return v;
+          },
+          [](OidcIdTokenWithChallenge const& v) -> RequestVerificationMethods {
+            // sanity checks are performed before fetching the challenge
+            TINFO(
+                "'testNonce' field should be used for tests purposes only. It "
+                "will be rejected for non-test Tanker application");
             return v;
           },
           [&](PreverifiedEmail const& v) -> RequestVerificationMethods {
@@ -217,6 +227,14 @@ void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
             j["hashed_passphrase"] = p;
           },
           [&](OidcIdToken const& t) { j["oidc_id_token"] = t.string(); },
+          [&](Verification::OidcIdTokenWithChallenge const& t) {
+            j["oidc_id_token"] = t.oidcIdToken.string();
+            j["oidc_challenge"] = t.oidcChallenge.string();
+            if (t.oidcTestNonce)
+            {
+              j["oidc_test_nonce"] = t.oidcTestNonce->string();
+            }
+          },
           [](VerificationKey const& v) {},
           [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
             j["hashed_email"] = e.hashedEmail;

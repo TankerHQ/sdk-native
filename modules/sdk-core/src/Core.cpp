@@ -535,6 +535,11 @@ tc::cotask<OidcNonce> Core::createOidcNonce()
   TC_RETURN(_oidcManager->createOidcNonce());
 }
 
+void Core::setOidcTestNonce(OidcNonce const& nonce)
+{
+  _oidcManager->setTestNonce(nonce);
+}
+
 tc::cotask<void> Core::encrypt(
     gsl::span<uint8_t> encryptedData,
     gsl::span<uint8_t const> clearData,

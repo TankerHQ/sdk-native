@@ -205,6 +205,13 @@ tc::future<OidcNonce> AsyncCore::createOidcNonce()
   });
 }
 
+tc::future<void> AsyncCore::setOidcTestNonce(OidcNonce const& nonce)
+{
+  return tc::sync([=]() {
+    this->_core.setOidcTestNonce(nonce);
+  });
+}
+
 Tanker::Status AsyncCore::status() const
 {
   return this->_core.status();

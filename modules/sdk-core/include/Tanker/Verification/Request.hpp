@@ -6,6 +6,7 @@
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
+#include <Tanker/Types/OidcChallenge.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Verification/Verification.hpp>
@@ -50,11 +51,28 @@ struct EncryptedPreverifiedPhoneNumberVerification
   EncryptedPhoneNumber encryptedPhoneNumber;
 };
 
+struct OidcIdTokenWithChallenge
+{
+  OidcIdToken oidcIdToken;
+  OidcSignedChallenge oidcChallenge;
+  std::optional<OidcNonce> oidcTestNonce;
+};
+
+using RequestVerification = boost::variant2::variant<VerificationKey,
+                                                     ByEmail,
+                                                     Passphrase,
+                                                     OidcIdToken,
+                                                     OidcIdTokenWithChallenge,
+                                                     ByPhoneNumber,
+                                                     PreverifiedEmail,
+                                                     PreverifiedPhoneNumber>;
+
 using RequestVerificationMethods =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
                              OidcIdToken,
+                             OidcIdTokenWithChallenge,
                              EncryptedPhoneNumberVerification,
                              EncryptedPreverifiedEmailVerification,
                              EncryptedPreverifiedPhoneNumberVerification>;
@@ -68,7 +86,7 @@ struct RequestWithVerif
 void to_json(nlohmann::json&, RequestWithVerif const&);
 
 RequestWithVerif makeRequestWithVerif(
-    Verification const& verification,
+    RequestVerification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);

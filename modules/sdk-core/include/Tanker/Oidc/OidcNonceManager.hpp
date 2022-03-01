@@ -16,7 +16,11 @@ class OidcNonceManager
 public:
   OidcNonce createOidcNonce();
 
+  void setTestNonce(OidcNonce const& nonce);
+  std::optional<OidcNonce> getTestNonce() const;
+
 private:
+  std::optional<OidcNonce> _testNonce;
   boost::container::flat_map<OidcNonce, Crypto::PrivateSignatureKey> nonceMap{};
 };
 }

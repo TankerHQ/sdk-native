@@ -71,6 +71,7 @@ public:
       VerifyWithToken withToken);
 
   tc::cotask<OidcNonce> createOidcNonce();
+  void setOidcTestNonce(OidcNonce const& nonce);
 
   tc::cotask<void> encrypt(
       gsl::span<uint8_t> encryptedData,

@@ -478,6 +478,12 @@ tanker_future_t* tanker_create_oidc_nonce(tanker_t* ctanker)
       }));
 }
 
+tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* ctanker, char const* nonce)
+{
+  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+  return makeFuture(tanker->setOidcTestNonce(nonce));
+}
+
 enum tanker_status tanker_status(tanker_t* ctanker)
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
