@@ -1,4 +1,5 @@
 add_executable(test_tanker_streams
+  test_peekableinputsource.cpp
   test_stream.cpp
 
   main.cpp
