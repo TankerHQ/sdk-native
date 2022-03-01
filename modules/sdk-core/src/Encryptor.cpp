@@ -84,9 +84,10 @@ tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
 
   auto const version = encryptedData[0];
 
-  return performEncryptorAction(version, [&](auto encryptor) {
-    return encryptor.decrypt(decryptedData, key, encryptedData);
-  });
+  TC_AWAIT(
+      performEncryptorAction(version, [&](auto encryptor) -> tc::cotask<void> {
+        TC_AWAIT(encryptor.decrypt(decryptedData, key, encryptedData));
+      }));
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
