@@ -103,6 +103,15 @@ struct TestContext<EncryptorV5>
       0x7e,
   }};
 };
+
+template <typename T>
+std::vector<uint8_t> doDecrypt(Crypto::SymmetricKey const& key,
+                               gsl::span<uint8_t const> encryptedData)
+{
+  std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
+  AWAIT_VOID(T::decrypt(decryptedData, key, encryptedData));
+  return decryptedData;
+}
 }
 
 template <typename T>
@@ -132,9 +141,7 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
-    std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-
-    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
+    auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
@@ -146,8 +153,7 @@ void commonEncryptorTests(TestContext<T> ctx)
 
     auto const metadata = AWAIT(ctx.encrypt(encryptedData, clearData));
 
-    std::vector<uint8_t> decryptedData(T::decryptedSize(encryptedData));
-    AWAIT_VOID(T::decrypt(decryptedData, metadata.key, encryptedData));
+    auto const decryptedData = doDecrypt<T>(metadata.key, encryptedData);
 
     CHECK(clearData == decryptedData);
   }
@@ -156,10 +162,8 @@ void commonEncryptorTests(TestContext<T> ctx)
   {
     auto const clearData = make_buffer("this is very secret");
 
-    std::vector<uint8_t> decryptedData(
-        T::decryptedSize(ctx.encryptedTestVector));
-    AWAIT_VOID(
-        T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector));
+    auto const decryptedData =
+        doDecrypt<T>(ctx.keyVector, ctx.encryptedTestVector);
 
     CHECK(decryptedData == clearData);
   }
@@ -179,14 +183,10 @@ void commonEncryptorTests(TestContext<T> ctx)
   {
     auto const clearData = make_buffer("this is very secret");
 
-    std::vector<uint8_t> decryptedData(
-        T::decryptedSize(ctx.encryptedTestVector));
-
     ctx.encryptedTestVector[2]++;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT_VOID(
-            T::decrypt(decryptedData, ctx.keyVector, ctx.encryptedTestVector)),
+        doDecrypt<T>(ctx.keyVector, ctx.encryptedTestVector),
         Errc::DecryptionFailed);
   }
 
