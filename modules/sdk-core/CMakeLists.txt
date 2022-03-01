@@ -48,6 +48,8 @@ add_library(tankercore STATIC
   include/Tanker/Network/HttpRequest.hpp
   include/Tanker/Network/HttpClient.hpp
   include/Tanker/Network/Backend.hpp
+  include/Tanker/Oidc/Nonce.hpp
+  include/Tanker/Oidc/OidcNonceManager.hpp
   include/Tanker/Index.hpp
   include/Tanker/ReceiveKey.hpp
   include/Tanker/ProvisionalUsers/Accessor.hpp
@@ -127,6 +129,7 @@ add_library(tankercore STATIC
   src/ResourceKeys/KeysResult.cpp
   src/Share.cpp
   src/IdentityUtils.cpp
+  src/Oidc/OidcNonceManager.cpp
   src/ProvisionalUsers/Accessor.cpp
   src/ProvisionalUsers/Requester.cpp
   src/ProvisionalUsers/Updater.cpp
