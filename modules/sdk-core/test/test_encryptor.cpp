@@ -317,6 +317,15 @@ void commonEncryptorTests(TestContext<T> ctx)
                                   Errc::InvalidArgument);
   }
 
+  SECTION("extractResourceId should throw on a truncated buffer")
+  {
+    std::vector<uint8_t> buf(1);
+    Serialization::varint_write(buf.data(), T::version());
+
+    TANKER_CHECK_THROWS_WITH_CODE(T::extractResourceId(buf),
+                                  Errc::InvalidArgument);
+  }
+
   SECTION("decryptedSize should throw if the buffer is truncated")
   {
     std::vector<std::uint8_t> const truncatedBuffer(1, T::version());
