@@ -75,7 +75,14 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
       throw Exception(make_error_code(Errc::IOError),
                       "buffered stream is in an error state");
     case State::NoOutput:
-      TC_AWAIT(static_cast<Derived&>(*this).processInput());
+      _output.clear();
+      while (_output.empty() && !_processingComplete)
+        TC_AWAIT(static_cast<Derived&>(*this).processInput());
+      if (_output.empty())
+      {
+        _state = State::EndOfStream;
+        TC_RETURN(0);
+      }
       _state = State::BufferedOutput;
       _currentPosition = 0;
       // fallthrough
