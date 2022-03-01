@@ -30,10 +30,23 @@ tc::cotask<std::int64_t> failRead(gsl::span<std::uint8_t>)
 {
   throw Exception(make_error_code(Errc::IOError), "failRead");
 }
+
+auto makeKeyFinder(Trustchain::ResourceId const& resourceId,
+                   Crypto::SymmetricKey const& key)
+{
+  return [=](Trustchain::ResourceId const& id)
+             -> tc::cotask<Crypto::SymmetricKey> {
+    CHECK(id == resourceId);
+    TC_RETURN(key);
+  };
 }
 
-namespace
+template <typename T>
+auto makeKeyFinder(T const& encryptor)
 {
+  return makeKeyFinder(encryptor.resourceId(), encryptor.symmetricKey());
+}
+
 auto const mockKeyFinder =
     [](Trustchain::ResourceId const& id) -> tc::cotask<Crypto::SymmetricKey> {
   TC_RETURN(key);
@@ -60,14 +73,9 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
   Crypto::randomFill(buffer);
 
   EncryptionStream encryptor(bufferViewToInputSource(buffer));
-  auto const keyFinder =
-      [&, key = encryptor.symmetricKey()](Trustchain::ResourceId const& id)
-      -> tc::cotask<Crypto::SymmetricKey> {
-    CHECK(id == encryptor.resourceId());
-    TC_RETURN(key);
-  };
 
-  auto decryptor = AWAIT(DecryptionStream::create(encryptor, keyFinder));
+  auto decryptor =
+      AWAIT(DecryptionStream::create(encryptor, makeKeyFinder(encryptor)));
 
   auto const decrypted = AWAIT(readAllStream(decryptor));
 
