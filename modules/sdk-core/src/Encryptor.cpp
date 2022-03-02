@@ -7,8 +7,8 @@
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Serialization/Errors/Errc.hpp>
 
-#include <Tanker/Serialization/Varint.hpp>
 #include <Tanker/Streams/Header.hpp>
 
 using Tanker::Trustchain::ResourceId;
@@ -55,7 +55,11 @@ uint64_t encryptedSize(uint64_t clearSize)
 
 uint64_t decryptedSize(gsl::span<uint8_t const> encryptedData)
 {
-  auto const version = Serialization::varint_read(encryptedData).first;
+  if (encryptedData.size() < 1)
+    throw Errors::Exception(Serialization::Errc::TruncatedInput,
+                            "Could not read version");
+
+  auto const version = encryptedData[0];
 
   return performEncryptorAction(version, [=](auto encryptor) {
     return encryptor.decryptedSize(encryptedData);
@@ -74,7 +78,11 @@ tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
                          Crypto::SymmetricKey const& key,
                          gsl::span<uint8_t const> encryptedData)
 {
-  auto const version = Serialization::varint_read(encryptedData).first;
+  if (encryptedData.size() < 1)
+    throw Errors::Exception(Serialization::Errc::TruncatedInput,
+                            "Could not read version");
+
+  auto const version = encryptedData[0];
 
   return performEncryptorAction(version, [&](auto encryptor) {
     return encryptor.decrypt(decryptedData, key, encryptedData);
@@ -83,7 +91,11 @@ tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)
 {
-  auto const version = Serialization::varint_read(encryptedData).first;
+  if (encryptedData.size() < 1)
+    throw Errors::Exception(Serialization::Errc::TruncatedInput,
+                            "Could not read version");
+
+  auto const version = encryptedData[0];
 
   return performEncryptorAction(version, [&](auto encryptor) {
     return encryptor.extractResourceId(encryptedData);
