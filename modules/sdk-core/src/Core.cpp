@@ -844,14 +844,10 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
     std::optional<std::string> const& withTokenNonce)
 {
   using boost::variant2::get_if;
-  using boost::variant2::holds_alternative;
 
   if (auto const verificationKey = get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
-  else if (holds_alternative<Verification::ByEmail>(verification) ||
-           holds_alternative<Verification::ByPhoneNumber>(verification) ||
-           holds_alternative<Passphrase>(verification) ||
-           holds_alternative<OidcIdToken>(verification))
+  else if (!Verification::isPreverified(verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));
   throw AssertionError("invalid verification, unreachable code");
 }
