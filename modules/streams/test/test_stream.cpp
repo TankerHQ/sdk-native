@@ -21,6 +21,8 @@ using namespace Tanker::Streams;
 
 namespace
 {
+constexpr auto smallChunkSize = 0x46;
+
 Crypto::SymmetricKey const key(std::vector<std::uint8_t>{
     0xa,  0x7,  0x3d, 0xd0, 0x2c, 0x2d, 0x17, 0xf9, 0x49, 0xd9, 0x35,
     0x8e, 0xf7, 0xfe, 0x7b, 0xd1, 0xf6, 0xb,  0xf1, 0x5c, 0xa4, 0x32,
@@ -31,118 +33,22 @@ tc::cotask<std::int64_t> failRead(gsl::span<std::uint8_t>)
   throw Exception(make_error_code(Errc::IOError), "failRead");
 }
 
-auto fillAndMakePeekableSource(std::vector<uint8_t>& buffer)
+auto makeKeyFinder(Trustchain::ResourceId const& resourceId,
+                   Crypto::SymmetricKey const& key)
 {
-  Crypto::randomFill(buffer);
-  auto source = bufferViewToInputSource(buffer);
-  return PeekableInputSource(source);
-}
-}
-
-TEST_CASE("reads an underlying stream", "[peekableinputsource]")
-{
-  std::vector<uint8_t> buffer(50);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  auto out = AWAIT(readAllStream(peekable));
-  CHECK(out == buffer);
+  return [=](Trustchain::ResourceId const& id)
+             -> tc::cotask<Crypto::SymmetricKey> {
+    CHECK(id == resourceId);
+    TC_RETURN(key);
+  };
 }
 
-TEST_CASE("peeks and reads an underlying stream", "[peekableinputsource]")
+template <typename T>
+auto makeKeyFinder(T const& encryptor)
 {
-  std::vector<uint8_t> buffer(50);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  auto peek = AWAIT(peekable.peek(30));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
-
-  auto out = AWAIT(readAllStream(peekable));
-  CHECK(out == buffer);
+  return makeKeyFinder(encryptor.resourceId(), encryptor.symmetricKey());
 }
 
-TEST_CASE("peeks past the end and reads an underlying stream",
-          "[peekableinputsource]")
-{
-  std::vector<uint8_t> buffer(50);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  auto peek = AWAIT(peekable.peek(70));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
-
-  auto out = AWAIT(readAllStream(peekable));
-  CHECK(out == buffer);
-}
-
-TEST_CASE("peek multiple times", "[peekableinputsource]")
-{
-  std::vector<uint8_t> buffer(50);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  auto peek = AWAIT(peekable.peek(30));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
-
-  peek = AWAIT(peekable.peek(10));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 10));
-
-  peek = AWAIT(peekable.peek(40));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 40));
-
-  peek = AWAIT(peekable.peek(100));
-  // We reached the end of the buffer, so fewer bytes are available
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 50));
-}
-
-TEST_CASE("peek multiple times with a pre-filled peeking buffer",
-          "[peekableinputsource]")
-{
-  std::vector<uint8_t> buffer(50);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  AWAIT(peekable.peek(10));
-  {
-    std::vector<uint8_t> toRead(5);
-    AWAIT(peekable(toRead));
-  }
-
-  auto peek = AWAIT(peekable.peek(30));
-  CHECK(peek == gsl::make_span(buffer).subspan(5, 30));
-
-  peek = AWAIT(peekable.peek(10));
-  CHECK(peek == gsl::make_span(buffer).subspan(5, 10));
-
-  peek = AWAIT(peekable.peek(40));
-  CHECK(peek == gsl::make_span(buffer).subspan(5, 40));
-
-  peek = AWAIT(peekable.peek(100));
-  // We reached the end of the buffer, so fewer bytes are available
-  CHECK(peek == gsl::make_span(buffer).subspan(5, 45));
-}
-
-TEST_CASE("alternate between peeks and read on a long underlying stream",
-          "[peekableinputsource]")
-{
-  std::vector<uint8_t> buffer(5 * 1024 * 1024);
-  auto peekable = fillAndMakePeekableSource(buffer);
-
-  auto peek = AWAIT(peekable.peek(30));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 30));
-
-  peek = AWAIT(peekable.peek(1200));
-  CHECK(peek == gsl::make_span(buffer).subspan(0, 1200));
-
-  std::vector<uint8_t> begin(1000);
-  AWAIT(readStream(begin, peekable));
-  CHECK(gsl::make_span(begin) == gsl::make_span(buffer).subspan(0, 1000));
-
-  peek = AWAIT(peekable.peek(10));
-  CHECK(peek == gsl::make_span(buffer).subspan(1000, 10));
-
-  auto out = AWAIT(readAllStream(peekable));
-  CHECK(gsl::make_span(out) == gsl::make_span(buffer).subspan(1000));
-}
-
-namespace
-{
 auto const mockKeyFinder =
     [](Trustchain::ResourceId const& id) -> tc::cotask<Crypto::SymmetricKey> {
   TC_RETURN(key);
@@ -169,14 +75,9 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
   Crypto::randomFill(buffer);
 
   EncryptionStream encryptor(bufferViewToInputSource(buffer));
-  auto const keyFinder =
-      [&, key = encryptor.symmetricKey()](Trustchain::ResourceId const& id)
-      -> tc::cotask<Crypto::SymmetricKey> {
-    CHECK(id == encryptor.resourceId());
-    TC_RETURN(key);
-  };
 
-  auto decryptor = AWAIT(DecryptionStream::create(encryptor, keyFinder));
+  auto decryptor =
+      AWAIT(DecryptionStream::create(encryptor, makeKeyFinder(encryptor)));
 
   auto const decrypted = AWAIT(readAllStream(decryptor));
 
@@ -244,48 +145,38 @@ TEST_CASE("Decrypt test vector", "[streamencryption]")
   CHECK(decrypted == clearData);
 }
 
-TEST_CASE("Truncated header", "[streamencryption]")
+TEST_CASE("Corrupted buffer", "[streamencryption]")
 {
-  auto const truncated = std::vector<uint8_t>(
-      {0x4,  0x46, 0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xbe, 0x2b, 0x27,
-       0x32, 0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0xcd, 0x7,  0xd0, 0x3a,
-       0xc8, 0x74, 0xe1, 0x8,  0x7e, 0x5e, 0xaa, 0xa2, 0x82, 0xd8, 0x8b, 0xf5,
-       0xed, 0x22, 0xe6, 0x30, 0xbb, 0xaa, 0x9d, 0x71, 0xe3, 0x9a, 0x4,  0x22,
-       0x67, 0x3d, 0xdf, 0xcf, 0x28, 0x48, 0xe2, 0xeb, 0x4b, 0xb4, 0x30, 0x92,
-       0x70, 0x23, 0x49, 0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a, 0x4,  0x46, 0x0,
-       0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b, 0x27, 0x32, 0xc9,
-       0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0x3f, 0x34, 0xf3, 0xd3, 0x23, 0x90,
-       0xfc, 0x6,  0x35, 0xda, 0x99, 0x1e, 0x81, 0xdf, 0x88, 0xfc, 0x21, 0x1e,
-       0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6, 0xbe, 0x54, 0xd4,
-       0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47, 0x30,
-       0x40, 0x2f, 0xe8, 0xf4, 0x50});
-  auto inputSource = bufferViewToInputSource(truncated);
+  std::vector<std::uint8_t> buffer(16);
+  Crypto::randomFill(buffer);
+
+  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  auto const encrypted = AWAIT(readAllStream(encryptor));
+  auto corrupted = encrypted;
+  // corrupt the end of the first chunk
+  corrupted.erase(corrupted.begin() + smallChunkSize - 1);
+
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(inputSource, mockKeyFinder)),
+      AWAIT(DecryptionStream::create(bufferViewToInputSource(corrupted),
+                                     makeKeyFinder(encryptor))),
       Errors::Errc::DecryptionFailed);
 }
 
 TEST_CASE("Different headers between chunks", "[streamencryption]")
 {
-  auto clearData = make_buffer("this is a secret");
+  constexpr auto smallChunkSize = 0x46;
 
-  // encryptedChunkSize is different
-  auto invalidHeaders = std::vector<uint8_t>(
-      {0x4,  0x46, 0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b,
-       0x27, 0x32, 0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0xcd, 0x7,  0xd0,
-       0x3a, 0xc8, 0x74, 0xe1, 0x8,  0x7e, 0x5e, 0xaa, 0xa2, 0x82, 0xd8, 0x8b,
-       0xf5, 0xed, 0x22, 0xe6, 0x30, 0xbb, 0xaa, 0x9d, 0x71, 0xe3, 0x9a, 0x4,
-       0x22, 0x67, 0x3d, 0xdf, 0xcf, 0x28, 0x48, 0xe2, 0xeb, 0x4b, 0xb4, 0x30,
-       0x92, 0x70, 0x23, 0x49, 0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a, 0x4,  0x45,
-       0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b, 0x27, 0x32,
-       0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0x3f, 0x34, 0xf3, 0xd3, 0x23,
-       0x90, 0xfc, 0x6,  0x35, 0xda, 0x99, 0x1e, 0x81, 0xdf, 0x88, 0xfc, 0x21,
-       0x1e, 0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6, 0xbe, 0x54,
-       0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47,
-       0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
+  std::vector<std::uint8_t> buffer(16);
+  Crypto::randomFill(buffer);
+
+  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  auto const encrypted = AWAIT(readAllStream(encryptor));
+  auto corrupted = encrypted;
+  // change the resource id in the second header
+  --corrupted[smallChunkSize + 1 + 4];
 
   auto decryptor = AWAIT(DecryptionStream::create(
-      bufferViewToInputSource(invalidHeaders), mockKeyFinder));
+      bufferViewToInputSource(corrupted), makeKeyFinder(encryptor)));
 
   TANKER_CHECK_THROWS_WITH_CODE(AWAIT(readAllStream(decryptor)),
                                 Errors::Errc::DecryptionFailed);
@@ -293,65 +184,61 @@ TEST_CASE("Different headers between chunks", "[streamencryption]")
 
 TEST_CASE("Wrong chunk order", "[streamencryption]")
 {
-  auto reversedTestVector = std::vector<uint8_t>({
-      0x4,  0x46, 0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b,
-      0x27, 0x32, 0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0x3f, 0x34, 0xf3,
-      0xd3, 0x23, 0x90, 0xfc, 0x6,  0x35, 0xda, 0x99, 0x1e, 0x81, 0xdf, 0x88,
-      0xfc, 0x21, 0x1e, 0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6,
-      0xbe, 0x54, 0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6,
-      0x44, 0x47, 0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50, 0x4,  0x46, 0x0,  0x0,
-      0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b, 0x27, 0x32, 0xc9, 0xa,
-      0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0xcd, 0x7,  0xd0, 0x3a, 0xc8, 0x74, 0xe1,
-      0x8,  0x7e, 0x5e, 0xaa, 0xa2, 0x82, 0xd8, 0x8b, 0xf5, 0xed, 0x22, 0xe6,
-      0x30, 0xbb, 0xaa, 0x9d, 0x71, 0xe3, 0x9a, 0x4,  0x22, 0x67, 0x3d, 0xdf,
-      0xcf, 0x28, 0x48, 0xe2, 0xeb, 0x4b, 0xb4, 0x30, 0x92, 0x70, 0x23, 0x49,
-      0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a,
-  });
+  constexpr auto smallChunkSize = 0x46;
 
-  auto inputSource = bufferViewToInputSource(reversedTestVector);
+  // Takes exactly 2 chunks + 1 empty chunk
+  std::vector<std::uint8_t> buffer(18);
+  Crypto::randomFill(buffer);
+
+  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  auto const encrypted = AWAIT(readAllStream(encryptor));
+  auto corrupted = encrypted;
+  // Swap the first two chunks
+  std::rotate(corrupted.begin(),
+              corrupted.begin() + smallChunkSize,
+              corrupted.begin() + 2 * smallChunkSize);
+
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(inputSource, mockKeyFinder)),
+      AWAIT(DecryptionStream::create(bufferViewToInputSource(corrupted),
+                                     makeKeyFinder(encryptor))),
       Errors::Errc::DecryptionFailed);
 }
 
 TEST_CASE("Invalid encryptedChunkSize", "[streamencryption]")
 {
-  // encryptedChunkSize == 2, less than the strict minimum
-  auto invalidSizeTestVector = std::vector<uint8_t>(
-      {0x4,  0x02, 0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b,
-       0x27, 0x32, 0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0xcd, 0x7,  0xd0,
-       0x3a, 0xc8, 0x74, 0xe1, 0x8,  0x7e, 0x5e, 0xaa, 0xa2, 0x82, 0xd8, 0x8b,
-       0xf5, 0xed, 0x22, 0xe6, 0x30, 0xbb, 0xaa, 0x9d, 0x71, 0xe3, 0x9a, 0x4,
-       0x22, 0x67, 0x3d, 0xdf, 0xcf, 0x28, 0x48, 0xe2, 0xeb, 0x4b, 0xb4, 0x30,
-       0x92, 0x70, 0x23, 0x49, 0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a, 0x4,  0x02,
-       0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b, 0x27, 0x32,
-       0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0x3f, 0x34, 0xf3, 0xd3, 0x23,
-       0x90, 0xfc, 0x6,  0x35, 0xda, 0x99, 0x1e, 0x81, 0xdf, 0x88, 0xfc, 0x21,
-       0x1e, 0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6, 0xbe, 0x54,
-       0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47,
-       0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
+  constexpr auto smallChunkSize = 0x46;
 
-  // encryptedChunkSize == 69, but the chunk is of size 70
-  auto smallSizeTestVector = std::vector<uint8_t>(
-      {0x4,  0x45, 0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b,
-       0x27, 0x32, 0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0xcd, 0x7,  0xd0,
-       0x3a, 0xc8, 0x74, 0xe1, 0x8,  0x7e, 0x5e, 0xaa, 0xa2, 0x82, 0xd8, 0x8b,
-       0xf5, 0xed, 0x22, 0xe6, 0x30, 0xbb, 0xaa, 0x9d, 0x71, 0xe3, 0x9a, 0x4,
-       0x22, 0x67, 0x3d, 0xdf, 0xcf, 0x28, 0x48, 0xe2, 0xeb, 0x4b, 0xb4, 0x30,
-       0x92, 0x70, 0x23, 0x49, 0x1c, 0xc9, 0x31, 0xcb, 0xda, 0x1a, 0x4,  0x45,
-       0x0,  0x0,  0x0,  0x40, 0xec, 0x8d, 0x84, 0xad, 0xbe, 0x2b, 0x27, 0x32,
-       0xc9, 0xa,  0x1e, 0xc6, 0x8f, 0x2b, 0xdb, 0x3f, 0x34, 0xf3, 0xd3, 0x23,
-       0x90, 0xfc, 0x6,  0x35, 0xda, 0x99, 0x1e, 0x81, 0xdf, 0x88, 0xfc, 0x21,
-       0x1e, 0xed, 0x3a, 0x28, 0x2d, 0x51, 0x82, 0x77, 0x7c, 0xf6, 0xbe, 0x54,
-       0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47,
-       0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
+  std::vector<std::uint8_t> buffer(16);
+  Crypto::randomFill(buffer);
 
-  TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(
-          bufferViewToInputSource(invalidSizeTestVector), mockKeyFinder)),
-      Errors::Errc::DecryptionFailed);
-  TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(
-          bufferViewToInputSource(smallSizeTestVector), mockKeyFinder)),
-      Errors::Errc::DecryptionFailed);
+  EncryptionStream encryptor(bufferViewToInputSource(buffer), smallChunkSize);
+  auto const encrypted = AWAIT(readAllStream(encryptor));
+
+  SECTION("with an encryptedChunkSize too small")
+  {
+    auto invalidSizeTestVector = encrypted;
+    // set encryptedChunkSize to 2 in all chunks, less than the strict minimum
+    invalidSizeTestVector[1] = 2;
+    invalidSizeTestVector[smallChunkSize + 1] = 2;
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT(DecryptionStream::create(
+            bufferViewToInputSource(invalidSizeTestVector),
+            makeKeyFinder(encryptor))),
+        Errors::Errc::DecryptionFailed);
+  }
+
+  SECTION("with a corrupted encryptedChunkSize")
+  {
+    auto smallSizeTestVector = encrypted;
+    // set encryptedChunkSize to 69, but the chunk is originally of size 70
+    smallSizeTestVector[1] = 69;
+    smallSizeTestVector[smallChunkSize + 1] = 69;
+
+    TANKER_CHECK_THROWS_WITH_CODE(
+        AWAIT(DecryptionStream::create(
+            bufferViewToInputSource(smallSizeTestVector),
+            makeKeyFinder(encryptor))),
+        Errors::Errc::DecryptionFailed);
+  }
 }
