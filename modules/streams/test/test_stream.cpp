@@ -49,10 +49,10 @@ auto makeKeyFinder(T const& encryptor)
   return makeKeyFinder(encryptor.resourceId(), encryptor.symmetricKey());
 }
 
-auto const mockKeyFinder =
-    [](Trustchain::ResourceId const& id) -> tc::cotask<Crypto::SymmetricKey> {
+tc::cotask<Crypto::SymmetricKey> mockKeyFinder(Trustchain::ResourceId const& id)
+{
   TC_RETURN(key);
-};
+}
 }
 
 TEST_CASE("Throws when underlying read fails", "[streamencryption]")
