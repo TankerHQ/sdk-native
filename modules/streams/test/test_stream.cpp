@@ -53,6 +53,16 @@ tc::cotask<Crypto::SymmetricKey> mockKeyFinder(Trustchain::ResourceId const& id)
 {
   TC_RETURN(key);
 }
+
+std::vector<uint8_t> decryptAllStream(
+    InputSource source,
+    std::function<tc::cotask<Crypto::SymmetricKey>(
+        Trustchain::ResourceId const& id)> const& keyFinder)
+{
+  auto decryptor = AWAIT(DecryptionStream::create(source, keyFinder));
+
+  return AWAIT(readAllStream(decryptor));
+}
 }
 
 TEST_CASE("Throws when underlying read fails", "[streamencryption]")
@@ -64,8 +74,8 @@ TEST_CASE("Throws when underlying read fails", "[streamencryption]")
   };
 
   TANKER_CHECK_THROWS_WITH_CODE(AWAIT(encryptor({})), Errc::IOError);
-  TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(failRead, mockKeyFinder)), Errc::IOError);
+  TANKER_CHECK_THROWS_WITH_CODE(decryptAllStream(failRead, mockKeyFinder),
+                                Errc::IOError);
 }
 
 TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
@@ -76,10 +86,7 @@ TEST_CASE("Encrypt/decrypt huge buffer", "[streamencryption]")
 
   EncryptionStream encryptor(bufferViewToInputSource(buffer));
 
-  auto decryptor =
-      AWAIT(DecryptionStream::create(encryptor, makeKeyFinder(encryptor)));
-
-  auto const decrypted = AWAIT(readAllStream(decryptor));
+  auto const decrypted = decryptAllStream(encryptor, makeKeyFinder(encryptor));
 
   CHECK(decrypted.size() == buffer.size());
   CHECK(decrypted == buffer);
@@ -137,10 +144,8 @@ TEST_CASE("Decrypt test vector", "[streamencryption]")
        0xd4, 0x92, 0xcd, 0x86, 0xd4, 0x88, 0x55, 0x20, 0x1f, 0xd6, 0x44, 0x47,
        0x30, 0x40, 0x2f, 0xe8, 0xf4, 0x50});
 
-  auto decryptor = AWAIT(DecryptionStream::create(
-      bufferViewToInputSource(encryptedTestVector), mockKeyFinder));
-
-  auto const decrypted = AWAIT(readAllStream(decryptor));
+  auto const decrypted = decryptAllStream(
+      bufferViewToInputSource(encryptedTestVector), mockKeyFinder);
 
   CHECK(decrypted == clearData);
 }
@@ -157,8 +162,8 @@ TEST_CASE("Corrupted buffer", "[streamencryption]")
   corrupted.erase(corrupted.begin() + smallChunkSize - 1);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(bufferViewToInputSource(corrupted),
-                                     makeKeyFinder(encryptor))),
+      decryptAllStream(bufferViewToInputSource(corrupted),
+                       makeKeyFinder(encryptor)),
       Errors::Errc::DecryptionFailed);
 }
 
@@ -175,11 +180,10 @@ TEST_CASE("Different headers between chunks", "[streamencryption]")
   // change the resource id in the second header
   --corrupted[smallChunkSize + 1 + 4];
 
-  auto decryptor = AWAIT(DecryptionStream::create(
-      bufferViewToInputSource(corrupted), makeKeyFinder(encryptor)));
-
-  TANKER_CHECK_THROWS_WITH_CODE(AWAIT(readAllStream(decryptor)),
-                                Errors::Errc::DecryptionFailed);
+  TANKER_CHECK_THROWS_WITH_CODE(
+      decryptAllStream(bufferViewToInputSource(corrupted),
+                       makeKeyFinder(encryptor)),
+      Errors::Errc::DecryptionFailed);
 }
 
 TEST_CASE("Wrong chunk order", "[streamencryption]")
@@ -199,8 +203,8 @@ TEST_CASE("Wrong chunk order", "[streamencryption]")
               corrupted.begin() + 2 * smallChunkSize);
 
   TANKER_CHECK_THROWS_WITH_CODE(
-      AWAIT(DecryptionStream::create(bufferViewToInputSource(corrupted),
-                                     makeKeyFinder(encryptor))),
+      decryptAllStream(bufferViewToInputSource(corrupted),
+                       makeKeyFinder(encryptor)),
       Errors::Errc::DecryptionFailed);
 }
 
@@ -222,9 +226,8 @@ TEST_CASE("Invalid encryptedChunkSize", "[streamencryption]")
     invalidSizeTestVector[smallChunkSize + 1] = 2;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(DecryptionStream::create(
-            bufferViewToInputSource(invalidSizeTestVector),
-            makeKeyFinder(encryptor))),
+        decryptAllStream(bufferViewToInputSource(invalidSizeTestVector),
+                         makeKeyFinder(encryptor)),
         Errors::Errc::DecryptionFailed);
   }
 
@@ -236,9 +239,8 @@ TEST_CASE("Invalid encryptedChunkSize", "[streamencryption]")
     smallSizeTestVector[smallChunkSize + 1] = 69;
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        AWAIT(DecryptionStream::create(
-            bufferViewToInputSource(smallSizeTestVector),
-            makeKeyFinder(encryptor))),
+        decryptAllStream(bufferViewToInputSource(smallSizeTestVector),
+                         makeKeyFinder(encryptor)),
         Errors::Errc::DecryptionFailed);
   }
 }
