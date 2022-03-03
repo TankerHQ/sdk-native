@@ -23,6 +23,7 @@
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
+#include <Tanker/Streams/DecryptionStreamV8.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
@@ -966,26 +967,33 @@ Core::makeDecryptionStream(Streams::InputSource cb)
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, "empty stream");
-  if (version[0] == 4)
-  {
-    auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
-        -> tc::cotask<Crypto::SymmetricKey> {
-      TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
-    };
 
+  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+      -> tc::cotask<Crypto::SymmetricKey> {
+    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+  };
+  switch (version[0])
+  {
+  case 4: {
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
     auto const resourceId = streamDecryptor.resourceId();
     TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
   }
-  else
-  {
+  case 8: {
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(
+        std::move(peekableSource), std::move(resourceKeyFinder)));
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor),
+                              streamDecryptor.resourceId()));
+  }
+  default: {
     auto encryptedData =
         TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
     TC_RETURN(std::make_tuple(
         Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
         resourceId));
+  }
   }
   throw AssertionError("makeDecryptionStream: unreachable code");
 }
