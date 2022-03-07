@@ -827,7 +827,8 @@ void Core::setHttpSessionToken(std::string_view token)
   this->_session->httpClient().setAccessToken(token);
 }
 
-tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
+tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
@@ -835,6 +836,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
   Streams::EncryptionStream encryptor(std::move(cb));
+  auto const resourceId = encryptor.resourceId();
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
@@ -844,7 +846,7 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
             _session->trustchainId(), _session->userId()})});
 
     TC_AWAIT(_session->storage().resourceKeyStore.putKey(
-        encryptor.resourceId(), encryptor.symmetricKey()));
+        resourceId, encryptor.symmetricKey()));
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
@@ -861,11 +863,11 @@ tc::cotask<Streams::EncryptionStream> Core::makeEncryptionStream(
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
                         _session->requesters(),
-                        {{encryptor.symmetricKey(), encryptor.resourceId()}},
+                        {{encryptor.symmetricKey(), resourceId}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
 
-  TC_RETURN(std::move(encryptor));
+  TC_RETURN(std::make_tuple(std::move(encryptor), resourceId));
 }
 
 tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
@@ -881,8 +883,8 @@ tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(
   TC_RETURN(*key);
 }
 
-tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
-    Streams::InputSource cb)
+tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+Core::makeDecryptionStream(Streams::InputSource cb)
 {
   assertStatus(Status::Ready, "makeDecryptionStream");
   auto peekableSource = Streams::PeekableInputSource(std::move(cb));
@@ -898,15 +900,15 @@ tc::cotask<Streams::DecryptionStreamAdapter> Core::makeDecryptionStream(
 
     auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
-    TC_RETURN(Streams::DecryptionStreamAdapter(std::move(streamDecryptor),
-                                               streamDecryptor.resourceId()));
+    auto const resourceId = streamDecryptor.resourceId();
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
   }
   else
   {
     auto encryptedData =
         TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
-    TC_RETURN(Streams::DecryptionStreamAdapter(
+    TC_RETURN(std::make_tuple(
         Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
         resourceId));
   }

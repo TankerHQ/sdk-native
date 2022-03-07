@@ -5,7 +5,6 @@
 #include <Tanker/Log/LogHandler.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Status.hpp>
-#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Types/Email.hpp>
@@ -133,14 +132,15 @@ public:
   static expected<uint64_t> decryptedSize(
       gsl::span<uint8_t const> encryptedData);
 
-  tc::future<Streams::EncryptionStream> makeEncryptionStream(
+  tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  makeEncryptionStream(
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
 
-  tc::future<Streams::DecryptionStreamAdapter> makeDecryptionStream(
-      Streams::InputSource);
+  tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+      makeDecryptionStream(Streams::InputSource);
 
   tc::future<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& publicIdentities = {},

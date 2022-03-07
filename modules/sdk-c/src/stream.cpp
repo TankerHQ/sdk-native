@@ -3,7 +3,6 @@
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Streams/DecryptionStreamAdapter.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Types/SResourceId.hpp>
 
@@ -61,14 +60,13 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
                                  spublicIdentities,
                                  sgroupIds,
                                  Core::ShareWithSelf{shareWithSelf})
-          .and_then(tc::get_synchronous_executor(),
-                    [](Streams::EncryptionStream encryptor) {
-                      auto c_stream = new tanker_stream;
-                      c_stream->resourceId = SResourceId{
-                          mgs::base64::encode(encryptor.resourceId())};
-                      c_stream->inputSource = std::move(encryptor);
-                      return static_cast<void*>(c_stream);
-                    }));
+          .and_then(tc::get_synchronous_executor(), [](auto encryptor) {
+            auto c_stream = new tanker_stream;
+            c_stream->resourceId =
+                SResourceId{mgs::base64::encode(std::get<1>(encryptor))};
+            c_stream->inputSource = std::move(std::get<0>(encryptor));
+            return static_cast<void*>(c_stream);
+          }));
 }
 
 tanker_future_t* tanker_stream_decrypt(tanker_t* session,
@@ -78,14 +76,13 @@ tanker_future_t* tanker_stream_decrypt(tanker_t* session,
   auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
       tanker->makeDecryptionStream(wrapCallback(cb, data))
-          .and_then(tc::get_synchronous_executor(),
-                    [](Streams::DecryptionStreamAdapter decryptor) {
-                      auto c_stream = new tanker_stream;
-                      c_stream->resourceId = SResourceId{
-                          mgs::base64::encode(decryptor.resourceId())};
-                      c_stream->inputSource = std::move(decryptor);
-                      return static_cast<void*>(c_stream);
-                    }));
+          .and_then(tc::get_synchronous_executor(), [](auto decryptor) {
+            auto c_stream = new tanker_stream;
+            c_stream->resourceId =
+                SResourceId{mgs::base64::encode(std::get<1>(decryptor))};
+            c_stream->inputSource = std::move(std::get<0>(decryptor));
+            return static_cast<void*>(c_stream);
+          }));
 }
 
 tanker_future_t* tanker_stream_read(tanker_stream_t* stream,
