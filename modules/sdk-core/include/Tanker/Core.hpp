@@ -141,9 +141,6 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
-  tc::cotask<void> enrollUserImpl(
-      std::string const& identity,
-      std::vector<Verification::Verification> const& verifications);
   tc::cotask<void> registerIdentityImpl(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
