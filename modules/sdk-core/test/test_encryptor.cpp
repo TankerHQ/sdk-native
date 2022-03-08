@@ -21,6 +21,8 @@ using namespace Tanker::Errors;
 
 namespace
 {
+static constexpr auto oneMiB = 1024 * 1024;
+
 struct TestVector
 {
   Crypto::SymmetricKey key;
@@ -302,8 +304,8 @@ void commonEncryptorTests(TestContext<T> ctx)
     CHECK(T::decryptedSize(buf) == 0);
     buf.resize(T::encryptedSize(42));
     CHECK(T::decryptedSize(buf) == 42);
-    buf.resize(T::encryptedSize(4 * 1024 * 1024));
-    CHECK(T::decryptedSize(buf) == 4 * 1024 * 1024);
+    buf.resize(T::encryptedSize(4 * oneMiB));
+    CHECK(T::decryptedSize(buf) == 4 * oneMiB);
   }
 
   SECTION("extractResourceId should throw on a truncated buffer")
@@ -445,7 +447,7 @@ TEST_CASE("EncryptorV3 tests")
   SECTION("when the last chunk is missing")
   {
     // This data takes a bit more than one chunk
-    std::vector<uint8_t> clearData(1024 * 1024);
+    std::vector<uint8_t> clearData(oneMiB);
     Crypto::randomFill(clearData);
 
     std::vector<uint8_t> encryptedData(
@@ -455,7 +457,7 @@ TEST_CASE("EncryptorV3 tests")
 
     // Only take the first chunk
     std::vector<uint8_t> truncatedData(encryptedData.begin(),
-                                       encryptedData.begin() + 1024 * 1024);
+                                       encryptedData.begin() + oneMiB);
 
     SECTION("decryptedSize throws")
     {
