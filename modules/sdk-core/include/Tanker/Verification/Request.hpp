@@ -66,7 +66,7 @@ using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      PreverifiedEmail,
                                                      PreverifiedPhoneNumber>;
 
-using RequestVerificationMethods =
+using RequestVerificationPayload =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
@@ -78,7 +78,7 @@ using RequestVerificationMethods =
 
 struct RequestWithVerif
 {
-  RequestVerificationMethods verification;
+  RequestVerificationPayload verification;
   std::optional<std::string> withTokenNonce;
 };
 
@@ -131,15 +131,15 @@ RequestWithSession makeRequestWithSession(
 namespace nlohmann
 {
 template <typename SFINAE>
-struct adl_serializer<Tanker::Verification::RequestVerificationMethods, SFINAE>
+struct adl_serializer<Tanker::Verification::RequestVerificationPayload, SFINAE>
 {
   static void to_json(
       nlohmann::json& j,
-      Tanker::Verification::RequestVerificationMethods const& request);
+      Tanker::Verification::RequestVerificationPayload const& request);
 
   static void from_json(
       nlohmann::json const& j,
-      Tanker::Verification::RequestVerificationMethods& request) = delete;
+      Tanker::Verification::RequestVerificationPayload& request) = delete;
 };
 
 template <typename SFINAE>

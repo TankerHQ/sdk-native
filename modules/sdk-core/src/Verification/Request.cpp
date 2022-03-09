@@ -53,7 +53,7 @@ RequestWithVerif makeRequestWithVerif(
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](ByEmail const& v) -> RequestVerificationMethods {
+          [&](ByEmail const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
@@ -68,7 +68,7 @@ RequestWithVerif makeRequestWithVerif(
                                               std::move(encryptedEmail),
                                               v.verificationCode};
           },
-          [&](ByPhoneNumber const& v) -> RequestVerificationMethods {
+          [&](ByPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
 
@@ -92,22 +92,22 @@ RequestWithVerif makeRequestWithVerif(
                 std::move(encryptedPhoneNumber),
                 v.verificationCode};
           },
-          [](Passphrase const& p) -> RequestVerificationMethods {
+          [](Passphrase const& p) -> RequestVerificationPayload {
             checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
           },
-          [](VerificationKey const& v) -> RequestVerificationMethods {
+          [](VerificationKey const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "verificationKey");
             return v;
           },
-          [](OidcIdTokenWithChallenge const& v) -> RequestVerificationMethods {
+          [](OidcIdTokenWithChallenge const& v) -> RequestVerificationPayload {
             // sanity checks are performed before fetching the challenge
             TINFO(
                 "'testNonce' field should be used for tests purposes only. It "
                 "will be rejected for non-test Tanker application");
             return v;
           },
-          [&](PreverifiedEmail const& v) -> RequestVerificationMethods {
+          [&](PreverifiedEmail const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "email");
             EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.size()));
             EncryptorV2::encryptSync(encryptedEmail,
@@ -117,7 +117,7 @@ RequestWithVerif makeRequestWithVerif(
             return EncryptedPreverifiedEmailVerification{
                 hashField(v), std::move(encryptedEmail)};
           },
-          [&](PreverifiedPhoneNumber const& v) -> RequestVerificationMethods {
+          [&](PreverifiedPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "phoneNumber");
             EncryptedPhoneNumber encryptedPhoneNumber(
                 EncryptorV2::encryptedSize(v.size()));
@@ -223,8 +223,8 @@ void to_json(nlohmann::json& j, RequestWithSession const& request)
 namespace nlohmann
 {
 template <>
-void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
-    json& j, Tanker::Verification::RequestVerificationMethods const& request)
+void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
+    json& j, Tanker::Verification::RequestVerificationPayload const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
