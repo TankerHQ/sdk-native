@@ -14,6 +14,7 @@ add_executable(test_tanker
   test_share.cpp
   test_ghostdevice.cpp
   test_verificationkey.cpp
+  test_requestwithverif.cpp
   test_useraccessor.cpp
   test_groups.cpp
   test_verif.cpp

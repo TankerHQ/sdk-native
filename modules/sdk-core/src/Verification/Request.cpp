@@ -100,10 +100,6 @@ RequestWithVerif makeRequestWithVerif(
             checkNotEmpty(v.string(), "verificationKey");
             return v;
           },
-          [](OidcIdToken const& v) -> RequestVerificationMethods {
-            checkNotEmpty(v.string(), "oidcIdToken");
-            return v;
-          },
           [](OidcIdTokenWithChallenge const& v) -> RequestVerificationMethods {
             // sanity checks are performed before fetching the challenge
             TINFO(
@@ -145,6 +141,31 @@ RequestWithVerif makeRequestWithVerif(
       },
       verification);
   return {verif, withTokenNonce};
+}
+
+RequestWithVerif makeRequestWithVerif(
+    Verification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce)
+{
+  using boost::variant2::get_if;
+  using boost::variant2::holds_alternative;
+  if (auto const v = get_if<OidcIdToken>(&verification))
+  {
+    checkNotEmpty(v->string(), "oidcIdToken");
+    return {*v, withTokenNonce};
+  }
+
+  auto verif = boost::variant2::visit(
+      overloaded{[&](auto const& v) -> RequestVerification { return v; },
+                 [&](OidcIdToken const& v) -> RequestVerification {
+                   throw std::bad_variant_access{};
+                 }},
+      verification);
+
+  return makeRequestWithVerif(
+      verif, userSecret, secretProvisionalSigKey, withTokenNonce);
 }
 
 std::vector<RequestWithVerif> makeRequestWithVerifs(

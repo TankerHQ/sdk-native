@@ -61,7 +61,6 @@ struct OidcIdTokenWithChallenge
 using RequestVerification = boost::variant2::variant<VerificationKey,
                                                      ByEmail,
                                                      Passphrase,
-                                                     OidcIdToken,
                                                      OidcIdTokenWithChallenge,
                                                      ByPhoneNumber,
                                                      PreverifiedEmail,
@@ -87,6 +86,12 @@ void to_json(nlohmann::json&, RequestWithVerif const&);
 
 RequestWithVerif makeRequestWithVerif(
     RequestVerification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce = std::nullopt);
+
+RequestWithVerif makeRequestWithVerif(
+    Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce = std::nullopt);
