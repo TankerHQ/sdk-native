@@ -292,12 +292,14 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can stream encrypt/decrypt")
 {
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
-      Streams::bufferViewToInputSource(clearData)));
-  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(encryptor));
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData)));
+  auto [decryptorStream, decryptorResourceId] =
+      TC_AWAIT(aliceSession->makeDecryptionStream(encryptorStream));
 
-  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
-  CHECK(encryptor.resourceId() == decryptor.resourceId());
+  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptorStream));
+  CHECK(encryptorResourceId == decryptorResourceId);
   CHECK(decryptedData == clearData);
 }
 
@@ -305,12 +307,13 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can stream-encrypt and decrypt")
 {
   std::vector<uint8_t> clearData(1024 * 1024 * 5);
   Crypto::randomFill(clearData);
-  auto encryptor = TC_AWAIT(aliceSession->makeEncryptionStream(
-      Streams::bufferViewToInputSource(clearData)));
-  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData)));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
   auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
 
-  CHECK(Core::getResourceId(encryptedData) == encryptor.resourceId());
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
   CHECK(decryptedData == clearData);
 }
 
@@ -318,11 +321,12 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 {
   auto const clearData = make_buffer("my clear data is clear");
   auto const encryptedData = TC_AWAIT(aliceSession->encrypt(clearData));
-  auto decryptor = TC_AWAIT(aliceSession->makeDecryptionStream(
-      Streams::bufferViewToInputSource(encryptedData)));
+  auto [decryptorStream, decryptorResourceId] =
+      TC_AWAIT(aliceSession->makeDecryptionStream(
+          Streams::bufferViewToInputSource(encryptedData)));
 
-  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptor));
-  CHECK(Core::getResourceId(encryptedData) == decryptor.resourceId());
+  auto decryptedData = TC_AWAIT(Streams::readAllStream(decryptorStream));
+  CHECK(Core::getResourceId(encryptedData) == decryptorResourceId);
   CHECK(decryptedData == clearData);
 }
 
@@ -399,7 +403,8 @@ TEST_CASE_METHOD(TrustchainFixture,
       {bob.spublicIdentity()},
       {},
       Core::ShareWithSelf::No));
-  auto const encryptedData = TC_AWAIT(Streams::readAllStream(encryptor));
+  auto const encryptedData =
+      TC_AWAIT(Streams::readAllStream(std::get<0>(encryptor)));
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->decrypt(encryptedData)),
                                 Errc::InvalidArgument);
   REQUIRE_NOTHROW(TC_AWAIT(bobSession->decrypt(encryptedData)));

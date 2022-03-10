@@ -5,7 +5,6 @@ project(tankerstreams)
 add_library(tankerstreams
   include/Tanker/Streams/BufferedStream.hpp
   include/Tanker/Streams/DecryptionStream.hpp
-  include/Tanker/Streams/DecryptionStreamAdapter.hpp
   include/Tanker/Streams/Detail/BufferedStreamImpl.hpp
   include/Tanker/Streams/EncryptionStream.hpp
   include/Tanker/Streams/InputSource.hpp
@@ -14,7 +13,6 @@ add_library(tankerstreams
   include/Tanker/Streams/PeekableInputSource.hpp
 
   src/DecryptionStream.cpp
-  src/DecryptionStreamAdapter.cpp
   src/EncryptionStream.cpp
   src/Header.cpp
   src/Helpers.cpp
