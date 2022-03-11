@@ -149,20 +149,19 @@ RequestWithVerif makeRequestWithVerif(
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
 {
-  using boost::variant2::get_if;
-  using boost::variant2::holds_alternative;
-  if (auto const v = get_if<OidcIdToken>(&verification))
+  namespace bv2 = boost::variant2;
+  if (auto const v = bv2::get_if<OidcIdToken>(&verification))
   {
     checkNotEmpty(v->string(), "oidcIdToken");
     return {*v, withTokenNonce};
   }
 
-  auto verif = boost::variant2::visit(
-      overloaded{[&](auto const& v) -> RequestVerification { return v; },
-                 [&](OidcIdToken const& v) -> RequestVerification {
-                   throw std::bad_variant_access{};
-                 }},
-      verification);
+  auto verif =
+      bv2::visit(overloaded{[&](auto const& v) -> RequestVerification { return v; },
+                       [&](OidcIdToken const& v) -> RequestVerification {
+                         throw bv2::bad_variant_access{};
+                       }},
+            verification);
 
   return makeRequestWithVerif(
       verif, userSecret, secretProvisionalSigKey, withTokenNonce);
@@ -247,13 +246,13 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;
           },
-          [&](OidcIdToken const& t) { j["oidc_id_token"] = t.string(); },
+          [&](OidcIdToken const& t) { j["oidc_id_token"] = t; },
           [&](Verification::OidcIdTokenWithChallenge const& t) {
-            j["oidc_id_token"] = t.oidcIdToken.string();
-            j["oidc_challenge"] = t.oidcChallenge.string();
+            j["oidc_id_token"] = t.oidcIdToken;
+            j["oidc_challenge"] = t.oidcChallenge;
             if (t.oidcTestNonce)
             {
-              j["oidc_test_nonce"] = t.oidcTestNonce->string();
+              j["oidc_test_nonce"] = *t.oidcTestNonce;
             }
           },
           [](VerificationKey const& v) {},

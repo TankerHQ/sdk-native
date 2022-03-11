@@ -11,6 +11,9 @@
 
 namespace Tanker::Oidc
 {
+inline constexpr auto CHALLENGE_BYTE_LENGTH = 24;
+inline constexpr std::string_view CHALLENGE_PREFIX = "oidc-verification-prefix";
+
 class NonceManager
 {
 public:

@@ -179,4 +179,11 @@ void validateVerification(
           "verification phone number does not match provisional identity");
   }
 }
+
+bool isPreverified(Verification const& v)
+{
+  using boost::variant2::holds_alternative;
+  return holds_alternative<PreverifiedEmail>(v) ||
+         holds_alternative<PreverifiedPhoneNumber>(v);
+}
 }

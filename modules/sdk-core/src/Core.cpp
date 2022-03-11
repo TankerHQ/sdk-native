@@ -92,7 +92,7 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
 {
-  if (oidcIdToken.length() == 0)
+  if (oidcIdToken.size() == 0)
   {
     throw formatEx(Errc::InvalidArgument, "oidcIdToken should not be empty");
   }
@@ -100,7 +100,9 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
   auto const testNonce = nonceManager.testNonce();
   auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
 
-  base64DecodeArgument<Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
+  // Only checking nonce format
+  (void)base64DecodeArgument<Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
+
   auto const challenge = TC_AWAIT(requester.getOidcChallenge(userId, nonce));
   auto const verification = Verification::OidcIdTokenWithChallenge{
       oidcIdToken,
@@ -591,9 +593,6 @@ tc::cotask<std::string> Core::getSessionToken(
 
 tc::cotask<Oidc::Nonce> Core::createOidcNonce()
 {
-  FUNC_TIMER(Proc);
-  TINFO("Create OIDC nonce {}", static_cast<void*>(this));
-
   TC_RETURN(_oidcManager->createOidcNonce());
 }
 

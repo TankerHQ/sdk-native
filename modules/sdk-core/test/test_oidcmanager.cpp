@@ -25,8 +25,6 @@ std::vector<uint8_t> makeBuffer(size_t size)
 TEST_CASE("Oidc::NonceManager")
 {
   NonceManager nonceManager{};
-  auto const challengeSize = 24;
-  auto const prefix = "oidc-verification-prefix";
 
   SECTION("creates a different nonce each time")
   {
@@ -38,15 +36,22 @@ TEST_CASE("Oidc::NonceManager")
 
   SECTION("rejects ill-formed challenge")
   {
-    auto const wrongPrefix = fmt::format(
-        "wrong-prefix{}", mgs::base64::encode(makeBuffer(challengeSize)));
-    auto b64Challenge = mgs::base64url::encode(makeBuffer(challengeSize));
+    auto const wrongPrefix =
+        fmt::format("wrong-prefix{}",
+                    mgs::base64::encode(makeBuffer(CHALLENGE_BYTE_LENGTH)));
+    auto b64Challenge =
+        mgs::base64url::encode(makeBuffer(CHALLENGE_BYTE_LENGTH));
     b64Challenge[2] = '-';
-    auto const wrongEncoding = fmt::format("{}{}", prefix, b64Challenge);
-    auto const challengeTooLong = fmt::format(
-        "{}{}", prefix, mgs::base64::encode(makeBuffer(challengeSize + 1)));
-    auto const challengeTooShort = fmt::format(
-        "{}{}", prefix, mgs::base64::encode(makeBuffer(challengeSize - 1)));
+    auto const wrongEncoding =
+        fmt::format("{}{}", CHALLENGE_PREFIX, b64Challenge);
+    auto const challengeTooLong =
+        fmt::format("{}{}",
+                    CHALLENGE_PREFIX,
+                    mgs::base64::encode(makeBuffer(CHALLENGE_BYTE_LENGTH + 1)));
+    auto const challengeTooShort =
+        fmt::format("{}{}",
+                    CHALLENGE_PREFIX,
+                    mgs::base64::encode(makeBuffer(CHALLENGE_BYTE_LENGTH - 1)));
 
     auto const nonce = nonceManager.createOidcNonce();
 
@@ -69,8 +74,10 @@ TEST_CASE("Oidc::NonceManager")
   {
     auto const nonce =
         Nonce{mgs::base64::encode(makeBuffer(PublicSignatureKey::arraySize))};
-    auto const challenge =
-        Challenge{prefix + mgs::base64::encode(makeBuffer(challengeSize))};
+    auto const challenge = Challenge{
+        fmt::format("{}{}",
+                    CHALLENGE_PREFIX,
+                    mgs::base64::encode(makeBuffer(CHALLENGE_BYTE_LENGTH)))};
 
     TANKER_CHECK_THROWS_WITH_CODE(
         nonceManager.signOidcChallenge(nonce, challenge),
@@ -80,14 +87,15 @@ TEST_CASE("Oidc::NonceManager")
   SECTION("signs given challenge with nonce private key")
   {
     auto const nonce = nonceManager.createOidcNonce();
-    auto const challengeData = makeBuffer(challengeSize);
-    auto const challenge =
-        Challenge{prefix + mgs::base64::encode(challengeData)};
+    auto const challengeData = makeBuffer(CHALLENGE_BYTE_LENGTH);
+    auto const challenge = Challenge{fmt::format(
+        "{}{}", CHALLENGE_PREFIX, mgs::base64::encode(challengeData))};
 
     auto const signedChallenge =
         mgs::base64::decode(nonceManager.signOidcChallenge(nonce, challenge));
 
-    auto const begin = std::next(std::cbegin(signedChallenge), challengeSize);
+    auto const begin =
+        std::next(std::cbegin(signedChallenge), CHALLENGE_BYTE_LENGTH);
     auto const signature = Signature(begin, std::cend(signedChallenge));
     auto const pubKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>{
         mgs::base64::decode(nonce)};

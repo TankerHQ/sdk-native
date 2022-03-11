@@ -98,12 +98,7 @@ void validateVerification(
     Verification const& verification,
     Identity::SecretProvisionalIdentity const& provisionalIdentity);
 
-inline bool isPreverified(Verification const& v)
-{
-  using boost::variant2::holds_alternative;
-  return holds_alternative<PreverifiedEmail>(v) ||
-         holds_alternative<PreverifiedPhoneNumber>(v);
-}
+bool isPreverified(Verification const& v);
 
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {

@@ -9,7 +9,6 @@
 #include <nlohmann/json.hpp>
 
 #include <range/v3/algorithm/starts_with.hpp>
-#include <range/v3/range/conversion.hpp>
 #include <range/v3/view/concat.hpp>
 
 namespace Tanker::Oidc
@@ -21,7 +20,7 @@ Nonce NonceManager::createOidcNonce()
   auto const nonce = Nonce{mgs::base64::encode(signatureKeyPair.publicKey)};
   nonceMap.emplace(nonce, signatureKeyPair.privateKey);
   return nonce;
-};
+}
 
 void NonceManager::setTestNonce(Nonce const& nonce)
 {
@@ -33,12 +32,10 @@ std::optional<Nonce> NonceManager::testNonce() const
   return _testNonce;
 }
 
-constexpr auto CHALLENGE_BYTE_LENGTH = 24;
-SignedChallenge NonceManager::signOidcChallenge(
-    Nonce const& nonce, Challenge const& challenge) const
+namespace
 {
-  static std::string const CHALLENGE_PREFIX{"oidc-verification-prefix"};
-
+std::vector<uint8_t> decodeChallenge(Challenge const& challenge)
+{
   using b64 = mgs::base64;
 
   if (!ranges::starts_with(challenge, CHALLENGE_PREFIX))
@@ -58,11 +55,23 @@ SignedChallenge NonceManager::signOidcChallenge(
     throw formatEx(Errors::Errc::InternalError,
                    "illformed oidc challenge: invalid base64");
   }
-  if (std::size(challengeData) != CHALLENGE_BYTE_LENGTH)
+
+  if (challengeData.size() != CHALLENGE_BYTE_LENGTH)
   {
     throw formatEx(Errors::Errc::InternalError,
                    "illformed oidc challenge: invalid challenge size");
   }
+
+  return challengeData;
+}
+}
+
+SignedChallenge NonceManager::signOidcChallenge(
+    Nonce const& nonce, Challenge const& challenge) const
+{
+  using b64 = mgs::base64;
+
+  auto const challengeData = decodeChallenge(challenge);
 
   auto const privateKey = nonceMap.find(nonce);
   if (privateKey == std::end(nonceMap))
@@ -73,11 +82,9 @@ SignedChallenge NonceManager::signOidcChallenge(
   }
 
   auto const signature = Crypto::sign(challengeData, privateKey->second);
-  auto const payload = ranges::views::concat(challengeData, signature.base()) |
-                       ranges::to<std::vector>;
-
+  auto const payload = ranges::views::concat(challengeData, signature.base());
   return SignedChallenge{b64::encode(payload)};
-};
+}
 
 Nonce extractNonce(OidcIdToken const& idToken)
 {
@@ -91,5 +98,5 @@ Nonce extractNonce(OidcIdToken const& idToken)
 
   auto const j = nlohmann::json::parse(jwtPayload);
   return j.at("nonce").get<Nonce>();
-};
+}
 }
