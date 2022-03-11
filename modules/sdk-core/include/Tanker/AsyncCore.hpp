@@ -71,8 +71,8 @@ public:
       Verification::Verification const& verification,
       Core::VerifyWithToken withToken = Core::VerifyWithToken::No);
 
-  tc::future<OidcNonce> createOidcNonce();
-  tc::future<void> setOidcTestNonce(OidcNonce const& nonce);
+  tc::future<Oidc::Nonce> createOidcNonce();
+  tc::future<void> setOidcTestNonce(Oidc::Nonce const& nonce);
 
   tc::future<std::string> getSessionToken(
       Verification::Verification const& verification,

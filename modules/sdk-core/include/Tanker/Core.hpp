@@ -4,7 +4,7 @@
 #include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
-#include <Tanker/Oidc/OidcNonceManager.hpp>
+#include <Tanker/Oidc/NonceManager.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
@@ -70,8 +70,8 @@ public:
       Verification::Verification const& verification,
       VerifyWithToken withToken);
 
-  tc::cotask<OidcNonce> createOidcNonce();
-  void setOidcTestNonce(OidcNonce const& nonce);
+  tc::cotask<Oidc::Nonce> createOidcNonce();
+  void setOidcTestNonce(Oidc::Nonce const& nonce);
 
   tc::cotask<void> encrypt(
       gsl::span<uint8_t> encryptedData,
@@ -185,6 +185,6 @@ private:
   std::unique_ptr<Network::Backend> _networkBackend;
   std::unique_ptr<DataStore::Backend> _datastoreBackend;
   std::shared_ptr<Session> _session;
-  std::shared_ptr<OidcNonceManager> _oidcManager;
+  std::shared_ptr<Oidc::NonceManager> _oidcManager;
 };
 }

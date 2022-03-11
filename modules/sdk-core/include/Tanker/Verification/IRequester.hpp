@@ -31,8 +31,8 @@ public:
                                            EncryptedVerificationMethod>>>
   fetchVerificationMethods(Trustchain::UserId const& userId) = 0;
 
-  virtual tc::cotask<OidcChallenge> getOidcChallenge(
-      Trustchain::UserId const& userId, OidcNonce const& nonce) = 0;
+  virtual tc::cotask<Oidc::Challenge> getOidcChallenge(
+      Trustchain::UserId const& userId, Oidc::Nonce const& nonce) = 0;
 
   virtual tc::cotask<std::string> getSessionToken(
       Trustchain::UserId const& userId,

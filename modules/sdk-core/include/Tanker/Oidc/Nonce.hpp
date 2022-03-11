@@ -5,16 +5,13 @@
 #include <Tanker/Types/OidcIdToken.hpp>
 #include <Tanker/Types/OidcNonce.hpp>
 
-namespace Tanker
+namespace Tanker::Oidc
 {
-namespace Oidc
-{
-OidcNonce extractNonce(OidcIdToken const& idToken);
+Nonce extractNonce(OidcIdToken const& idToken);
 class RawNonce
   : public Crypto::BasicCryptographicType<RawNonce,
                                           Crypto::PublicSignatureKey::arraySize>
 {
   using base_t::base_t;
 };
-}
 }

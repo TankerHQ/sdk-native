@@ -2,9 +2,9 @@
 
 #include <Tanker/Types/StringWrapper.hpp>
 
-namespace Tanker
+namespace Tanker::Oidc
 {
-using OidcChallenge = StringWrapper<struct OidcChallengeTag>;
+using Challenge = StringWrapper<struct ChallengeTag>;
 
-using OidcSignedChallenge = StringWrapper<struct OidcSignedChallengeTag>;
+using SignedChallenge = StringWrapper<struct SignedChallengeTag>;
 }

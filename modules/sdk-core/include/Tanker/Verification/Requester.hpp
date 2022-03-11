@@ -42,8 +42,8 @@ public:
                                                   EncryptedVerificationMethod>>>
   fetchVerificationMethods(Trustchain::UserId const& userId) override;
 
-  tc::cotask<OidcChallenge> getOidcChallenge(Trustchain::UserId const& userId,
-                                             OidcNonce const& nonce) override;
+  tc::cotask<Oidc::Challenge> getOidcChallenge(
+      Trustchain::UserId const& userId, Oidc::Nonce const& nonce) override;
 
   tc::cotask<std::string> getSessionToken(
       Trustchain::UserId const& userId,

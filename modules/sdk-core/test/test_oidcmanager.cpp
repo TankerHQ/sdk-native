@@ -3,13 +3,14 @@
 #include <Helpers/Errors.hpp>
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Errors/Errc.hpp>
-#include <Tanker/Oidc/OidcNonceManager.hpp>
+#include <Tanker/Oidc/NonceManager.hpp>
 
 #include <mgs/base64.hpp>
 #include <mgs/base64url.hpp>
 
 using namespace Tanker;
 using namespace Tanker::Crypto;
+using namespace Tanker::Oidc;
 
 namespace
 {
@@ -21,9 +22,9 @@ std::vector<uint8_t> makeBuffer(size_t size)
 }
 }
 
-TEST_CASE("OidcNonceManager")
+TEST_CASE("Oidc::NonceManager")
 {
-  OidcNonceManager nonceManager{};
+  NonceManager nonceManager{};
   auto const challengeSize = 24;
   auto const prefix = "oidc-verification-prefix";
 
@@ -50,25 +51,26 @@ TEST_CASE("OidcNonceManager")
     auto const nonce = nonceManager.createOidcNonce();
 
     TANKER_CHECK_THROWS_WITH_CODE(
-        nonceManager.signOidcChallenge(nonce, OidcChallenge{wrongPrefix}),
+        nonceManager.signOidcChallenge(nonce, Oidc::Challenge{wrongPrefix}),
         Errors::Errc::InternalError);
     TANKER_CHECK_THROWS_WITH_CODE(
-        nonceManager.signOidcChallenge(nonce, OidcChallenge{wrongEncoding}),
+        nonceManager.signOidcChallenge(nonce, Oidc::Challenge{wrongEncoding}),
         Errors::Errc::InternalError);
+    TANKER_CHECK_THROWS_WITH_CODE(nonceManager.signOidcChallenge(
+                                      nonce, Oidc::Challenge{challengeTooLong}),
+                                  Errors::Errc::InternalError);
     TANKER_CHECK_THROWS_WITH_CODE(
-        nonceManager.signOidcChallenge(nonce, OidcChallenge{challengeTooLong}),
-        Errors::Errc::InternalError);
-    TANKER_CHECK_THROWS_WITH_CODE(
-        nonceManager.signOidcChallenge(nonce, OidcChallenge{challengeTooShort}),
+        nonceManager.signOidcChallenge(nonce,
+                                       Oidc::Challenge{challengeTooShort}),
         Errors::Errc::InternalError);
   }
 
   SECTION("rejects unknown nonce")
   {
-    auto const nonce = OidcNonce{
-        mgs::base64::encode(makeBuffer(PublicSignatureKey::arraySize))};
+    auto const nonce =
+        Nonce{mgs::base64::encode(makeBuffer(PublicSignatureKey::arraySize))};
     auto const challenge =
-        OidcChallenge{prefix + mgs::base64::encode(makeBuffer(challengeSize))};
+        Challenge{prefix + mgs::base64::encode(makeBuffer(challengeSize))};
 
     TANKER_CHECK_THROWS_WITH_CODE(
         nonceManager.signOidcChallenge(nonce, challenge),
@@ -80,7 +82,7 @@ TEST_CASE("OidcNonceManager")
     auto const nonce = nonceManager.createOidcNonce();
     auto const challengeData = makeBuffer(challengeSize);
     auto const challenge =
-        OidcChallenge{prefix + mgs::base64::encode(challengeData)};
+        Challenge{prefix + mgs::base64::encode(challengeData)};
 
     auto const signedChallenge =
         mgs::base64::decode(nonceManager.signOidcChallenge(nonce, challenge));

@@ -198,14 +198,14 @@ tc::future<void> AsyncCore::stop()
   return fut;
 }
 
-tc::future<OidcNonce> AsyncCore::createOidcNonce()
+tc::future<Oidc::Nonce> AsyncCore::createOidcNonce()
 {
-  return runResumable([=]() -> tc::cotask<OidcNonce> {
+  return runResumable([=]() -> tc::cotask<Oidc::Nonce> {
     TC_RETURN(TC_AWAIT(this->_core.createOidcNonce()));
   });
 }
 
-tc::future<void> AsyncCore::setOidcTestNonce(OidcNonce const& nonce)
+tc::future<void> AsyncCore::setOidcTestNonce(Oidc::Nonce const& nonce)
 {
   return tc::sync([=]() { this->_core.setOidcTestNonce(nonce); });
 }

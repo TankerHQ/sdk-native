@@ -1,6 +1,6 @@
 #include <Tanker/Crypto/Crypto.hpp>
 #include <Tanker/Oidc/Nonce.hpp>
-#include <Tanker/Oidc/OidcNonceManager.hpp>
+#include <Tanker/Oidc/NonceManager.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -12,30 +12,30 @@
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/concat.hpp>
 
-namespace Tanker
+namespace Tanker::Oidc
 {
-OidcNonce OidcNonceManager::createOidcNonce()
+Nonce NonceManager::createOidcNonce()
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
 
-  auto const nonce = OidcNonce{mgs::base64::encode(signatureKeyPair.publicKey)};
+  auto const nonce = Nonce{mgs::base64::encode(signatureKeyPair.publicKey)};
   nonceMap.emplace(nonce, signatureKeyPair.privateKey);
   return nonce;
 };
 
-void OidcNonceManager::setTestNonce(OidcNonce const& nonce)
+void NonceManager::setTestNonce(Nonce const& nonce)
 {
   _testNonce = nonce;
 }
 
-std::optional<OidcNonce> OidcNonceManager::getTestNonce() const
+std::optional<Nonce> NonceManager::testNonce() const
 {
   return _testNonce;
 }
 
 constexpr auto CHALLENGE_BYTE_LENGTH = 24;
-OidcSignedChallenge OidcNonceManager::signOidcChallenge(
-    OidcNonce const& nonce, OidcChallenge const& challenge) const
+SignedChallenge NonceManager::signOidcChallenge(
+    Nonce const& nonce, Challenge const& challenge) const
 {
   static std::string const CHALLENGE_PREFIX{"oidc-verification-prefix"};
 
@@ -76,10 +76,10 @@ OidcSignedChallenge OidcNonceManager::signOidcChallenge(
   auto const payload = ranges::views::concat(challengeData, signature.base()) |
                        ranges::to<std::vector>;
 
-  return OidcSignedChallenge{b64::encode(payload)};
+  return SignedChallenge{b64::encode(payload)};
 };
 
-OidcNonce Oidc::extractNonce(OidcIdToken const& idToken)
+Nonce extractNonce(OidcIdToken const& idToken)
 {
   namespace ba = boost::algorithm;
   using b64 = mgs::base64url_nopad;
@@ -90,8 +90,6 @@ OidcNonce Oidc::extractNonce(OidcIdToken const& idToken)
   auto const jwtPayload = b64::decode(res[2]);
 
   auto const j = nlohmann::json::parse(jwtPayload);
-  auto const nonce = j.at("nonce").get<std::string>();
-
-  return OidcNonce{nonce};
+  return j.at("nonce").get<Nonce>();
 };
 }

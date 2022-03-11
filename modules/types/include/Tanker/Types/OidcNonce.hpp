@@ -2,7 +2,7 @@
 
 #include <Tanker/Types/StringWrapper.hpp>
 
-namespace Tanker
+namespace Tanker::Oidc
 {
-using OidcNonce = StringWrapper<struct OidcNonceTag>;
+using Nonce = StringWrapper<struct NonceTag>;
 }

@@ -54,8 +54,8 @@ struct EncryptedPreverifiedPhoneNumberVerification
 struct OidcIdTokenWithChallenge
 {
   OidcIdToken oidcIdToken;
-  OidcSignedChallenge oidcChallenge;
-  std::optional<OidcNonce> oidcTestNonce;
+  Oidc::SignedChallenge oidcChallenge;
+  std::optional<Oidc::Nonce> oidcTestNonce;
 };
 
 using RequestVerification = boost::variant2::variant<VerificationKey,

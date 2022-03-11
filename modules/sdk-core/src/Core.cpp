@@ -85,7 +85,7 @@ std::string createInstanceId()
 
 tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
     Verification::IRequester& requester,
-    OidcNonceManager const& nonceManager,
+    Oidc::NonceManager const& nonceManager,
     Trustchain::UserId const& userId,
     OidcIdToken const& oidcIdToken,
     Crypto::SymmetricKey const& userSecret,
@@ -97,7 +97,7 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
     throw formatEx(Errc::InvalidArgument, "oidcIdToken should not be empty");
   }
 
-  auto const testNonce = nonceManager.getTestNonce();
+  auto const testNonce = nonceManager.testNonce();
   auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
 
   base64DecodeArgument<Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
@@ -115,7 +115,7 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
 
 tc::cotask<Verification::RequestWithVerif> formatRequestWithVerif(
     Verification::IRequester& requester,
-    OidcNonceManager const& nonceManager,
+    Oidc::NonceManager const& nonceManager,
     Trustchain::UserId const& userId,
     Verification::Verification const& verification,
     Crypto::SymmetricKey const& userSecret,
@@ -177,7 +177,7 @@ Core::Core(std::string url,
     _session(std::make_shared<Session>(
         createHttpClient(_url, _instanceId, _info, _networkBackend.get()),
         _datastoreBackend.get())),
-    _oidcManager(std::make_shared<OidcNonceManager>())
+    _oidcManager(std::make_shared<Oidc::NonceManager>())
 {
   TINFO("Creating core {}", static_cast<void*>(this));
   if (!_networkBackend)
@@ -589,7 +589,7 @@ tc::cotask<std::string> Core::getSessionToken(
       _session->userId(), serializedSessCert, withTokenNonce)));
 }
 
-tc::cotask<OidcNonce> Core::createOidcNonce()
+tc::cotask<Oidc::Nonce> Core::createOidcNonce()
 {
   FUNC_TIMER(Proc);
   TINFO("Create OIDC nonce {}", static_cast<void*>(this));
@@ -597,7 +597,7 @@ tc::cotask<OidcNonce> Core::createOidcNonce()
   TC_RETURN(_oidcManager->createOidcNonce());
 }
 
-void Core::setOidcTestNonce(OidcNonce const& nonce)
+void Core::setOidcTestNonce(Oidc::Nonce const& nonce)
 {
   _oidcManager->setTestNonce(nonce);
 }
