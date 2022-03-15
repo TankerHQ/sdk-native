@@ -1,0 +1,5 @@
+*.py     text  eol=crlf
+*.yml    text  eol=crlf
+*.patch  text  eol=crlf
+*.txt    text  eol=crlf
+*.cmake  text  eof=crlf
