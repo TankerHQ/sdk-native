@@ -90,11 +90,6 @@ Client::Client(std::string_view host_url,
 {
 }
 
-void Client::setIdToken(std::string_view idToken)
-{
-  _idToken = idToken;
-}
-
 fetchpp::http::url Client::make_url(
     std::optional<Trustchain::TrustchainId> id) const
 {

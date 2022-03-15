@@ -44,7 +44,6 @@ public:
   Client(std::string_view url,
          std::string_view idToken,
          fetchpp::net::any_io_executor ex);
-  void setIdToken(std::string_view idToken);
 
   tc::cotask<App> createTrustchain(std::string_view name,
                                    Crypto::SignatureKeyPair const& keypair,
