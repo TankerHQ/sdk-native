@@ -53,28 +53,6 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
       }));
 }
 
-tanker_future_t* tanker_admin_create_app_with_env_id(tanker_admin_t* admin,
-                                                     char const* name,
-                                                     char const* env_id)
-{
-  return makeFuture(
-      tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
-                           name = std::string(name),
-                           envId = std::string(env_id)]() -> tc::cotask<void*> {
-        const auto appSignatureKeyPair(Crypto::makeSignatureKeyPair());
-        const auto app = TC_AWAIT(
-            admin->createTrustchain(name, appSignatureKeyPair, envId, true));
-        using fmt::to_string;
-        TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
-            duplicateString(name),
-            duplicateString(to_string(app.id)),
-            duplicateString(app.authToken),
-            duplicateString(to_string(appSignatureKeyPair.privateKey)),
-            duplicateString(to_string(appSignatureKeyPair.publicKey)),
-        }));
-      }));
-}
-
 tanker_future_t* tanker_admin_delete_app(tanker_admin_t* admin,
                                          char const* app_id)
 {
