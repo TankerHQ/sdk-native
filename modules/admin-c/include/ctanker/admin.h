@@ -14,7 +14,6 @@ typedef struct tanker_app_descriptor
   char const* id;
   char const* auth_token;
   char const* private_key;
-  char const* public_key;
 } tanker_app_descriptor_t;
 
 typedef struct tanker_app_update_options

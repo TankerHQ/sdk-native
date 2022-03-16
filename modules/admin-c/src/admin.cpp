@@ -48,7 +48,6 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
             duplicateString(to_string(app.id)),
             duplicateString(app.authToken),
             duplicateString(to_string(appSignatureKeyPair.privateKey)),
-            duplicateString(to_string(appSignatureKeyPair.publicKey)),
         }));
       }));
 }
@@ -70,7 +69,6 @@ void tanker_admin_app_descriptor_free(tanker_app_descriptor_t* app)
   free(const_cast<char*>(app->id));
   free(const_cast<char*>(app->auth_token));
   free(const_cast<char*>(app->private_key));
-  free(const_cast<char*>(app->public_key));
   delete app;
 }
 
