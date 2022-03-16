@@ -38,19 +38,16 @@ void from_json(nlohmann::json const& j, TrustchainConfig& config)
 Trustchain::Trustchain(std::string url,
                        Tanker::Trustchain::TrustchainId id,
                        std::string authToken,
-                       Crypto::SignatureKeyPair keypair)
+                       Crypto::PrivateSignatureKey privateSignatureKey)
   : url(std::move(url)),
     id(std::move(id)),
     authToken(std::move(authToken)),
-    keyPair(std::move(keypair))
+    keyPair(Crypto::makeSignatureKeyPair(privateSignatureKey))
 {
 }
 
 Trustchain::Trustchain(TrustchainConfig const& config)
-  : Trustchain(config.url,
-               config.id,
-               config.authToken,
-               Crypto::makeSignatureKeyPair(config.privateKey))
+  : Trustchain(config.url, config.id, config.authToken, config.privateKey)
 {
 }
 
@@ -97,13 +94,16 @@ Trustchain::Ptr Trustchain::make(TrustchainConfig const& config)
   return std::make_unique<Trustchain>(config);
 }
 
-Trustchain::Ptr Trustchain::make(std::string url,
-                                 Tanker::Trustchain::TrustchainId id,
-                                 std::string authToken,
-                                 Crypto::SignatureKeyPair keypair)
+Trustchain::Ptr Trustchain::make(
+    std::string url,
+    Tanker::Trustchain::TrustchainId id,
+    std::string authToken,
+    Crypto::PrivateSignatureKey privateSignatureKey)
 {
-  return std::make_unique<Trustchain>(
-      std::move(url), std::move(id), std::move(authToken), std::move(keypair));
+  return std::make_unique<Trustchain>(std::move(url),
+                                      std::move(id),
+                                      std::move(authToken),
+                                      std::move(privateSignatureKey));
 }
 }
 }

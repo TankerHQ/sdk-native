@@ -6,16 +6,22 @@ extern "C" {
 
 using namespace Tanker;
 
-char const* get_config_app_url()
+char const* get_config_app_management_token()
 {
-  return TestConstants::appdUrl().c_str();
+  return TestConstants::appManagementToken().data();
 }
 
-char const* get_config_admin_url()
+char const* get_config_app_management_url()
 {
-  return TestConstants::admindUrl().data();
+  return TestConstants::appManagementUrl().data();
 }
-char const* get_config_id_token()
+
+char const* get_config_app_url()
 {
-  return TestConstants::idToken().c_str();
+  return TestConstants::appdUrl().data();
+}
+
+char const* get_config_environment_name()
+{
+  return TestConstants::environmentName().data();
 }

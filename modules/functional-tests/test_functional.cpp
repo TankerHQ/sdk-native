@@ -798,7 +798,8 @@ TEST_CASE_METHOD(TrustchainFixture, "When session_certificates is disabled")
 TEST_CASE_METHOD(TrustchainFixture,
                  "Alice cannot share with identity from a different trustchain")
 {
-  auto otherTrustchain = TC_AWAIT(trustchainFactory().createTrustchain());
+  auto otherTrustchain = TC_AWAIT(trustchainFactory().createTrustchain(
+      "other_trustchain_functional_native"));
   auto eve = otherTrustchain->makeEmailProvisionalUser();
 
   auto const clearData = "my clear data is clear";

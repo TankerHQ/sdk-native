@@ -18,16 +18,20 @@
 using namespace Tanker;
 using namespace Tanker::Errors;
 
-tanker_future_t* tanker_admin_connect(char const* url, char const* id_token)
+tanker_future_t* tanker_admin_connect(char const* app_management_url,
+                                      char const* app_management_token,
+                                      char const* environment_name)
 {
   return makeFuture(tc::async_resumable(
-      [url = std::string(url),
-       idToken = std::string(id_token)]() -> tc::cotask<void*> {
+      [appManagementUrl = std::string(app_management_url),
+       appManagementToken = std::string(app_management_token),
+       environmentName = std::string(environment_name)]() -> tc::cotask<void*> {
         Crypto::init();
         Cacerts::init();
         const auto admin = new Admin::Client(
-            url,
-            idToken,
+            appManagementUrl,
+            appManagementToken,
+            environmentName,
             tc::get_default_executor().get_io_service().get_executor());
         TC_RETURN(static_cast<void*>(admin));
       }));
@@ -39,15 +43,13 @@ tanker_future_t* tanker_admin_create_app(tanker_admin_t* admin,
   return makeFuture(
       tc::async_resumable([admin = reinterpret_cast<Admin::Client*>(admin),
                            name = std::string(name)]() -> tc::cotask<void*> {
-        const auto appSignatureKeyPair(Crypto::makeSignatureKeyPair());
-        const auto app =
-            TC_AWAIT(admin->createTrustchain(name, appSignatureKeyPair, true));
+        const auto app = TC_AWAIT(admin->createTrustchain(name));
         using fmt::to_string;
         TC_RETURN(static_cast<void*>(new tanker_app_descriptor_t{
             duplicateString(name),
             duplicateString(to_string(app.id)),
             duplicateString(app.authToken),
-            duplicateString(to_string(appSignatureKeyPair.privateKey)),
+            duplicateString(to_string(app.secret)),
         }));
       }));
 }

@@ -36,12 +36,16 @@ typedef struct tanker_admin tanker_admin_t;
 /*!
  * Authenticates to the Tanker admin server API
  *
- * \param url The URL of the tanker server to connect to
- * \param id_token The authentication token string for the admin API
+ * \param app_management_url URL for the management API
+ * \param app_management_token Authentication token string for the app
+ *  management API
+ * \param environment_name Name of the environment where apps will be created
  * \return The admin instance. Free with tanker_admin_destroy.
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_connect(
-    char const* url, char const* id_token);
+    char const* app_management_url,
+    char const* app_management_token,
+    char const* environment_name);
 
 /*!
  * Creates a new test app

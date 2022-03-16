@@ -28,10 +28,11 @@ struct AppConfig
   std::string appSecret;
 };
 
-std::string const& trustchaindUrl();
+std::string const& appManagementToken();
+std::string const& appManagementUrl();
 std::string const& appdUrl();
-std::string_view admindUrl();
-std::string const& idToken();
+std::string const& environmentName();
+std::string const& trustchaindUrl();
 OidcConfig const& oidcConfig();
 }
 }
