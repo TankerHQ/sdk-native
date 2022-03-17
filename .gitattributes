@@ -1,5 +1,5 @@
-*.py     text  eol=crlf
-*.yml    text  eol=crlf
-*.patch  text  eol=crlf
-*.txt    text  eol=crlf
-*.cmake  text  eof=crlf
+*.py     text  eol=lf
+*.yml    text  eol=lf
+*.patch  text  eol=lf
+*.txt    text  eol=lf
+*.cmake  text  eof=lf
