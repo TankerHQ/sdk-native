@@ -81,9 +81,12 @@ SignedChallenge NonceManager::signOidcChallenge(
                    nonce);
   }
 
-  auto const signature = Crypto::sign(challengeData, privateKey->second);
-  auto const payload = ranges::views::concat(challengeData, signature.base());
-  return SignedChallenge{b64::encode(payload)};
+  auto const signature =
+      b64::encode(Crypto::sign(challengeData, privateKey->second));
+  return SignedChallenge{
+      Challenge{b64::encode(challengeData)},
+      ChallengeSignature{signature},
+  };
 }
 
 Nonce extractNonce(OidcIdToken const& idToken)

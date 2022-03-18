@@ -6,5 +6,11 @@ namespace Tanker::Oidc
 {
 using Challenge = StringWrapper<struct ChallengeTag>;
 
-using SignedChallenge = StringWrapper<struct SignedChallengeTag>;
+using ChallengeSignature = StringWrapper<struct ChallengeSignatureTag>;
+
+struct SignedChallenge
+{
+  Challenge challenge;
+  ChallengeSignature signature;
+};
 }

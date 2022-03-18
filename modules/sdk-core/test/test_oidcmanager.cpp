@@ -92,11 +92,10 @@ TEST_CASE("Oidc::NonceManager")
         "{}{}", CHALLENGE_PREFIX, mgs::base64::encode(challengeData))};
 
     auto const signedChallenge =
-        mgs::base64::decode(nonceManager.signOidcChallenge(nonce, challenge));
+        nonceManager.signOidcChallenge(nonce, challenge);
 
-    auto const begin =
-        std::next(std::cbegin(signedChallenge), CHALLENGE_BYTE_LENGTH);
-    auto const signature = Signature(begin, std::cend(signedChallenge));
+    auto const signature =
+        Signature(mgs::base64::decode(signedChallenge.signature));
     auto const pubKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>{
         mgs::base64::decode(nonce)};
 

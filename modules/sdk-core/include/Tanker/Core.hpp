@@ -117,13 +117,14 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>> makeEncryptionStream(
-      Streams::InputSource,
-      std::vector<SPublicIdentity> const& suserIds,
-      std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf);
+  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  makeEncryptionStream(Streams::InputSource,
+                       std::vector<SPublicIdentity> const& suserIds,
+                       std::vector<SGroupId> const& sgroupIds,
+                       ShareWithSelf shareWithSelf);
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>> makeDecryptionStream(Streams::InputSource);
+  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+      makeDecryptionStream(Streams::InputSource);
 
   tc::cotask<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& spublicIdentities,

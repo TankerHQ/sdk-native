@@ -156,12 +156,12 @@ RequestWithVerif makeRequestWithVerif(
     return {*v, withTokenNonce};
   }
 
-  auto verif =
-      bv2::visit(overloaded{[&](auto const& v) -> RequestVerification { return v; },
-                       [&](OidcIdToken const& v) -> RequestVerification {
-                         throw bv2::bad_variant_access{};
-                       }},
-            verification);
+  auto verif = bv2::visit(
+      overloaded{[&](auto const& v) -> RequestVerification { return v; },
+                 [&](OidcIdToken const& v) -> RequestVerification {
+                   throw bv2::bad_variant_access{};
+                 }},
+      verification);
 
   return makeRequestWithVerif(
       verif, userSecret, secretProvisionalSigKey, withTokenNonce);
@@ -249,7 +249,8 @@ void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
           [&](OidcIdToken const& t) { j["oidc_id_token"] = t; },
           [&](Verification::OidcIdTokenWithChallenge const& t) {
             j["oidc_id_token"] = t.oidcIdToken;
-            j["oidc_challenge"] = t.oidcChallenge;
+            j["oidc_challenge"] = t.oidcChallenge.challenge;
+            j["oidc_challenge_signature"] = t.oidcChallenge.signature;
             if (t.oidcTestNonce)
             {
               j["oidc_test_nonce"] = *t.oidcTestNonce;
