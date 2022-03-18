@@ -23,6 +23,7 @@ struct App
 {
   Trustchain::TrustchainId id;
   std::string authToken;
+  Crypto::PrivateSignatureKey secret;
   std::optional<std::string> oidcProvider;
   std::optional<std::string> oidcClientId;
 };
@@ -41,18 +42,12 @@ void from_json(nlohmann::json const& j, App& app);
 class Client
 {
 public:
-  Client(std::string_view url,
-         std::string_view idToken,
+  Client(std::string_view appManagementUrl,
+         std::string_view appManagementToken,
+         std::string_view environmentName,
          fetchpp::net::any_io_executor ex);
-  void setIdToken(std::string_view idToken);
 
-  tc::cotask<App> createTrustchain(std::string_view name,
-                                   Crypto::SignatureKeyPair const& keypair,
-                                   bool isTest);
-  tc::cotask<App> createTrustchain(std::string_view name,
-                                   Crypto::SignatureKeyPair const& keypair,
-                                   std::string_view environmentId,
-                                   bool isTest);
+  tc::cotask<App> createTrustchain(std::string_view name);
   tc::cotask<App> update(Trustchain::TrustchainId const& trustchainId,
                          AppUpdateOptions const& options);
   tc::cotask<void> deleteTrustchain(
@@ -62,7 +57,8 @@ private:
   fetchpp::http::url make_url(
       std::optional<Trustchain::TrustchainId> id = std::nullopt) const;
   fetchpp::http::url const _baseUrl;
-  std::string _idToken;
+  std::string _appManagementToken;
+  std::string _environmentName;
   fetchpp::client _client;
 };
 

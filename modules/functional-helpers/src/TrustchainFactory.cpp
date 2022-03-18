@@ -2,6 +2,7 @@
 
 #include <Helpers/JsonFile.hpp>
 #include <Tanker/Admin/Client.hpp>
+#include <Tanker/Crypto/PrivateSignatureKey.hpp>
 #include <Tanker/Init.hpp>
 #include <Tanker/Trustchain/TrustchainId.hpp>
 
@@ -18,8 +19,9 @@ namespace Functional
 {
 TrustchainFactory::TrustchainFactory()
   : _admin(std::make_unique<Admin::Client>(
-        TestConstants::admindUrl(),
-        TestConstants::idToken(),
+        TestConstants::appManagementUrl(),
+        TestConstants::appManagementToken(),
+        TestConstants::environmentName(),
         tc::get_default_executor().get_io_service().get_executor()))
 {
 }
@@ -38,21 +40,13 @@ tc::cotask<void> TrustchainFactory::deleteTrustchain(
 }
 
 tc::cotask<Trustchain::Ptr> TrustchainFactory::createTrustchain(
-    std::optional<std::string> trustchainName,
-    bool isTest,
-    bool storePrivateKey)
+    std::string const& name)
 {
-  auto kp = Crypto::makeSignatureKeyPair();
-  auto trustchainDefault = Tanker::Trustchain::TrustchainId{};
-  Crypto::randomFill(trustchainDefault);
-  auto app = TC_AWAIT(_admin->createTrustchain(
-      trustchainName.value_or(mgs::base64::encode(trustchainDefault)),
-      kp,
-      isTest));
+  auto const app = TC_AWAIT(_admin->createTrustchain(name));
   TC_RETURN(Trustchain::make(TestConstants::appdUrl(),
                              std::move(app.id),
                              std::move(app.authToken),
-                             kp));
+                             std::move(app.secret)));
 }
 
 tc::cotask<void> TrustchainFactory::enableOidc(

@@ -27,7 +27,7 @@ tc::cotask<void> createTrustchain()
   assert(!testState.trustchain);
   testState.trustchain =
       TC_AWAIT(TrustchainFixture::trustchainFactory().createTrustchain(
-          "trustchain_functional_native", true));
+          "trustchain_functional_native"));
 
   // If you add something here, you might need to delete it in
   // deleteTrustchain() below
@@ -167,7 +167,7 @@ Trustchain TrustchainFixture::createOtherTrustchain()
   Crypto::randomFill(trustchainId);
   auto keyPair = Crypto::makeSignatureKeyPair();
   return Trustchain(
-      "tcp://other.trustchain:1234", trustchainId, "none", keyPair);
+      "tcp://other.trustchain:1234", trustchainId, "none", keyPair.privateKey);
 }
 
 tc::cotask<void> TrustchainFixture::enableOidc()

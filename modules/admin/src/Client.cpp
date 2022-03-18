@@ -75,24 +75,22 @@ void from_json(nlohmann::json const& j, App& app)
 {
   j.at("id").get_to(app.id);
   j.at("auth_token").get_to(app.authToken);
+  j.at("secret").get_to(app.secret);
   if (auto value = j.at("oidc_client_id").get<std::string>(); !value.empty())
     app.oidcClientId = value;
   if (auto value = j.at("oidc_provider").get<std::string>(); !value.empty())
     app.oidcProvider = value;
 }
 
-Client::Client(std::string_view host_url,
-               std::string_view idToken,
+Client::Client(std::string_view appManagementUrl,
+               std::string_view appManagementToken,
+               std::string_view environmentName,
                fetchpp::net::any_io_executor ex)
-  : _baseUrl("/apps", fetchpp::http::url(host_url)),
-    _idToken{idToken},
+  : _baseUrl("/v1/apps", fetchpp::http::url(appManagementUrl)),
+    _appManagementToken(appManagementToken),
+    _environmentName(environmentName),
     _client(ex, std::chrono::seconds(10), Cacerts::create_ssl_context())
 {
-}
-
-void Client::setIdToken(std::string_view idToken)
-{
-  _idToken = idToken;
 }
 
 fetchpp::http::url Client::make_url(
@@ -100,63 +98,34 @@ fetchpp::http::url Client::make_url(
 {
   using fetchpp::http::url;
   if (id)
-    return url(fmt::format("/apps/{:#S}", id.value()), _baseUrl);
+    return url(fmt::format("/v1/apps/{:#S}", id.value()), _baseUrl);
   return _baseUrl;
 }
 
-tc::cotask<App> Client::createTrustchain(
-    std::string_view name, Crypto::SignatureKeyPair const& keyPair, bool isTest)
+tc::cotask<App> Client::createTrustchain(std::string_view name)
 {
-  auto request =
-      fetchpp::http::request(verb::get, url("/environments", _baseUrl));
-  request.set(authorization::bearer(_idToken));
-  request.set(field::accept, "application/json");
-  auto const response =
-      TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
-  if (response.result() != status::ok)
-    throw errorReport(Errors::AppdErrc::InternalError,
-                      "could not get environments",
-                      response);
-  auto const envs = response.json().at("environments");
-  if (envs.empty())
-    throw errorReport(
-        Errors::AppdErrc::InternalError, "environment list is empty", response);
-
-  auto env_id = envs[0].at("id").get<std::string>();
-  TC_RETURN(TC_AWAIT(createTrustchain(name, keyPair, env_id, isTest)));
-}
-
-tc::cotask<App> Client::createTrustchain(
-    std::string_view name,
-    Crypto::SignatureKeyPair const& keyPair,
-    std::string_view environmentId,
-    bool isTest)
-{
-  using namespace Tanker::Trustchain;
-  Actions::TrustchainCreation const action(keyPair.publicKey);
-  TrustchainId const trustchainId{action.hash()};
-
   auto message = nlohmann::json{
       {"name", name},
-      {"root_block", mgs::base64::encode(Serialization::serialize(action))},
-      {"environment_id", environmentId},
+      {"environment_name", _environmentName},
   };
-  if (isTest)
-    message["private_signature_key"] = keyPair.privateKey;
 
   auto request = fetchpp::http::request(verb::post, make_url());
   request.content(message.dump());
-  request.set(authorization::bearer(_idToken));
+  request.set(authorization::bearer(_appManagementToken));
   request.set(field::accept, "application/json");
-  TINFO("creating trustchain {} {:#S} on environment ",
-        name,
-        trustchainId,
-        environmentId);
 
   auto const response =
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));
   if (response.result() == status::created)
-    TC_RETURN(response.json().at("app"));
+  {
+    auto app = response.json().at("app").get<App>();
+    TINFO("created trustchain {} {:#S} on environment {}",
+          name,
+          app.secret,
+          _environmentName);
+    TC_RETURN(app);
+  }
+
   throw errorReport(
       Errors::AppdErrc::InternalError, "could not create trustchain", response);
 }
@@ -166,7 +135,7 @@ tc::cotask<void> Client::deleteTrustchain(
 {
   auto request = fetchpp::http::request(fetchpp::http::verb::delete_,
                                         make_url(trustchainId));
-  request.set(authorization::bearer(_idToken));
+  request.set(authorization::bearer(_appManagementToken));
   request.set(field::accept, "application/json");
   TINFO("deleting trustchain {:#S}", trustchainId);
   auto response =
@@ -194,7 +163,7 @@ tc::cotask<App> Client::update(Trustchain::TrustchainId const& trustchainId,
     body["enroll_users_enabled"] = *options.userEnrollment;
   auto request = fetchpp::http::request(verb::patch, make_url(trustchainId));
   request.content(body.dump());
-  request.set(authorization::bearer(_idToken));
+  request.set(authorization::bearer(_appManagementToken));
   request.set(field::accept, "application/json");
   auto const response =
       TC_AWAIT(_client.async_fetch(std::move(request), tc::asio::use_future));

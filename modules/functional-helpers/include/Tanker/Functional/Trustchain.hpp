@@ -41,13 +41,13 @@ public:
   static Ptr make(std::string url,
                   Tanker::Trustchain::TrustchainId id,
                   std::string authToken,
-                  Crypto::SignatureKeyPair keypair);
+                  Crypto::PrivateSignatureKey privateSignatureKey);
 
   Trustchain(TrustchainConfig const& config);
   Trustchain(std::string url,
              Tanker::Trustchain::TrustchainId id,
              std::string authToken,
-             Crypto::SignatureKeyPair keypair);
+             Crypto::PrivateSignatureKey privateSignatureKey);
   Trustchain(Trustchain&&) = default;
   Trustchain& operator=(Trustchain&&) = default;
 

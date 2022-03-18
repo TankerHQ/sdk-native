@@ -14,7 +14,6 @@ typedef struct tanker_app_descriptor
   char const* id;
   char const* auth_token;
   char const* private_key;
-  char const* public_key;
 } tanker_app_descriptor_t;
 
 typedef struct tanker_app_update_options
@@ -37,12 +36,16 @@ typedef struct tanker_admin tanker_admin_t;
 /*!
  * Authenticates to the Tanker admin server API
  *
- * \param url The URL of the tanker server to connect to
- * \param id_token The authentication token string for the admin API
+ * \param app_management_url URL for the management API
+ * \param app_management_token Authentication token string for the app
+ *  management API
+ * \param environment_name Name of the environment where apps will be created
  * \return The admin instance. Free with tanker_admin_destroy.
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_connect(
-    char const* url, char const* id_token);
+    char const* app_management_url,
+    char const* app_management_token,
+    char const* environment_name);
 
 /*!
  * Creates a new test app
@@ -52,14 +55,6 @@ TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_connect(
  */
 TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_create_app(
     tanker_admin_t* admin, char const* name);
-/*!
- * Creates a new test app on the specified environment id
- *
- * \return The app_descriptor. Free with
- * tanker_admin_app_descriptor_free
- */
-TANKER_ADMIN_C_EXPORT tanker_future_t* tanker_admin_create_app_with_env_id(
-    tanker_admin_t* admin, char const* name, char const* env_id);
 
 /*!
  * Deletes the app permanently

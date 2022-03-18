@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <stdexcept>
+#include <string_view>
 
 namespace Tanker
 {
@@ -36,9 +37,15 @@ OidcConfig const& oidcConfig()
   return oidc;
 }
 
-std::string const& trustchaindUrl()
+std::string const& appManagementToken()
 {
-  static auto const value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
+  static auto const value = getSafeEnv("TANKER_MANAGEMENT_API_ACCESS_TOKEN");
+  return value;
+}
+
+std::string const& appManagementUrl()
+{
+  static auto const value = getSafeEnv("TANKER_MANAGEMENT_API_URL");
   return value;
 }
 
@@ -48,15 +55,16 @@ std::string const& appdUrl()
   return value;
 }
 
-std::string_view admindUrl()
+std::string const& environmentName()
 {
-  static auto const value = getSafeEnv("TANKER_ADMIND_URL");
+  static auto const value =
+      getSafeEnv("TANKER_MANAGEMENT_API_DEFAULT_ENVIRONMENT_NAME");
   return value;
 }
 
-std::string const& idToken()
+std::string const& trustchaindUrl()
 {
-  static auto const value = getSafeEnv("TANKER_ID_TOKEN");
+  static auto const value = getSafeEnv("TANKER_TRUSTCHAIND_URL");
   return value;
 }
 }
