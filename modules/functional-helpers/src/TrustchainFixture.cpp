@@ -175,11 +175,6 @@ tc::cotask<void> TrustchainFixture::enableOidc()
   TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));
 }
 
-tc::cotask<void> TrustchainFixture::set2fa(bool enable)
-{
-  TC_AWAIT(trustchainFactory().set2fa(trustchain.id, enable));
-}
-
 tc::cotask<void> TrustchainFixture::enablePreverifiedMethods()
 {
   TC_AWAIT(trustchainFactory().enablePreverifiedMethods(trustchain.id));

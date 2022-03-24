@@ -21,14 +21,13 @@ typedef struct tanker_app_update_options
   uint8_t version;
   char const* oidc_client_id;
   char const* oidc_client_provider;
-  bool const* session_certificates;
   bool const* preverified_verification;
   bool const* user_enrollment;
 } tanker_app_update_options_t;
 
 #define TANKER_APP_UPDATE_OPTIONS_INIT \
   {                                    \
-    3, NULL, NULL, NULL, NULL, NULL    \
+    4, NULL, NULL, NULL, NULL          \
   }
 
 typedef struct tanker_admin tanker_admin_t;

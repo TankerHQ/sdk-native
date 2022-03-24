@@ -32,7 +32,6 @@ struct AppUpdateOptions
 {
   std::optional<std::string> oidcProvider;
   std::optional<std::string> oidcClientId;
-  std::optional<bool> sessionCertificates;
   std::optional<bool> preverifiedVerification;
   std::optional<bool> userEnrollment;
 };
