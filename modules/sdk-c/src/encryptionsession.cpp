@@ -88,14 +88,12 @@ tanker_future_t* tanker_encryption_session_stream_encrypt(
 {
   auto session = reinterpret_cast<EncryptionSession*>(csession);
   return makeFuture(tc::sync([&] {
-    auto resourceId = session->resourceId();
-    auto key = session->sessionKey();
     auto wrappedCb = wrapCallback(cb, additional_data);
-    Streams::EncryptionStream encryptor(std::move(wrappedCb), resourceId, key);
+    auto [encryptor, resourceId] =
+        session->makeEncryptionStream(std::move(wrappedCb));
 
     auto c_stream = new tanker_stream;
-    c_stream->resourceId =
-        SResourceId{mgs::base64::encode(encryptor.resourceId())};
+    c_stream->resourceId = SResourceId{mgs::base64::encode(resourceId)};
     c_stream->inputSource = std::move(encryptor);
     return static_cast<void*>(c_stream);
   }));

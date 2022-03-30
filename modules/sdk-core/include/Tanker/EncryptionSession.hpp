@@ -3,6 +3,7 @@
 #include <Tanker/Crypto/SymmetricKey.hpp>
 #include <Tanker/EncryptionMetadata.hpp>
 #include <Tanker/Encryptor/v5.hpp>
+#include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/ResourceId.hpp>
 
 #include <tconcurrent/coroutine.hpp>
@@ -29,6 +30,8 @@ public:
   tc::cotask<EncryptionMetadata> encrypt(
       gsl::span<std::uint8_t> encryptedData,
       gsl::span<std::uint8_t const> clearData);
+  std::tuple<Streams::InputSource, Trustchain::ResourceId> makeEncryptionStream(
+      Streams::InputSource cb);
 
 private:
   void assertSession(const char* action) const;
