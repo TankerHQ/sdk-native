@@ -380,6 +380,65 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice can encrypt and stream-decrypt")
 }
 
 TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can stream-encrypt with auto padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          std::nullopt));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Alice can stream-encrypt with no padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          Padding::Off));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice can stream-encrypt with a padding of 500")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto [encryptorStream, encryptorResourceId] =
+      TC_AWAIT(aliceSession->makeEncryptionStream(
+          Streams::bufferViewToInputSource(clearData),
+          {},
+          {},
+          Core::ShareWithSelf::Yes,
+          500));
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(Core::getResourceId(encryptedData) == encryptorResourceId);
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
                  "Bob can encrypt and share with both of Alice's devices")
 {
   auto const clearData = "my clear data is clear";
