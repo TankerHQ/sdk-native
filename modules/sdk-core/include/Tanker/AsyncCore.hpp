@@ -144,7 +144,8 @@ public:
       Streams::InputSource,
       std::vector<SPublicIdentity> const& suserIds = {},
       std::vector<SGroupId> const& sgroupIds = {},
-      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
+      Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes,
+      std::optional<uint32_t> paddingStep = std::nullopt);
 
   tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
       makeDecryptionStream(Streams::InputSource);
