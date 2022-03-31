@@ -2,7 +2,6 @@
 
 #include <Tanker/AsyncCore.hpp>
 #include <Tanker/Crypto/Padding.hpp>
-#include <Tanker/Streams/EncryptionStreamV4.hpp>
 
 #include "CPadding.hpp"
 #include "Stream.hpp"
