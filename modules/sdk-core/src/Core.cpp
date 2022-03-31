@@ -25,6 +25,7 @@
 #include <Tanker/Streams/DecryptionStreamV4.hpp>
 #include <Tanker/Streams/DecryptionStreamV8.hpp>
 #include <Tanker/Streams/EncryptionStreamV4.hpp>
+#include <Tanker/Streams/EncryptionStreamV8.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
@@ -1075,11 +1076,28 @@ Core::makeEncryptionStream(
     Streams::InputSource cb,
     std::vector<SPublicIdentity> const& spublicIdentities,
     std::vector<SGroupId> const& sgroupIds,
-    ShareWithSelf shareWithSelf)
+    ShareWithSelf shareWithSelf,
+    std::optional<uint32_t> paddingStep)
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
-  Streams::EncryptionStreamV4 encryptor(std::move(cb));
-  auto const resourceId = encryptor.resourceId();
+  Streams::InputSource encryptorStream;
+  Trustchain::ResourceId resourceId;
+  Crypto::SymmetricKey symmetricKey;
+
+  if (paddingStep == Padding::Off)
+  {
+    Streams::EncryptionStreamV4 encryptor(std::move(cb));
+    resourceId = encryptor.resourceId();
+    symmetricKey = encryptor.symmetricKey();
+    encryptorStream = std::move(encryptor);
+  }
+  else
+  {
+    Streams::EncryptionStreamV8 encryptor(std::move(cb), paddingStep);
+    resourceId = encryptor.resourceId();
+    symmetricKey = encryptor.symmetricKey();
+    encryptorStream = std::move(encryptor);
+  }
 
   auto spublicIdentitiesWithUs = spublicIdentities;
   if (shareWithSelf == ShareWithSelf::Yes)
@@ -1088,8 +1106,8 @@ Core::makeEncryptionStream(
         SPublicIdentity{to_string(Identity::PublicPermanentIdentity{
             _session->trustchainId(), _session->userId()})});
 
-    TC_AWAIT(_session->storage().resourceKeyStore.putKey(
-        resourceId, encryptor.symmetricKey()));
+    TC_AWAIT(
+        _session->storage().resourceKeyStore.putKey(resourceId, symmetricKey));
   }
   else if (spublicIdentities.empty() && sgroupIds.empty())
   {
@@ -1106,11 +1124,11 @@ Core::makeEncryptionStream(
                         localUser.deviceId(),
                         localUser.deviceKeys().signatureKeyPair.privateKey,
                         _session->requesters(),
-                        {{encryptor.symmetricKey(), resourceId}},
+                        {{symmetricKey, resourceId}},
                         spublicIdentitiesWithUs,
                         sgroupIds));
 
-  TC_RETURN(std::make_tuple(std::move(encryptor), resourceId));
+  TC_RETURN(std::make_tuple(std::move(encryptorStream), resourceId));
 }
 
 tc::cotask<Crypto::SymmetricKey> Core::getResourceKey(

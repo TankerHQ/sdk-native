@@ -412,14 +412,15 @@ tc::future<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
 AsyncCore::makeEncryptionStream(Streams::InputSource cb,
                                 std::vector<SPublicIdentity> const& suserIds,
                                 std::vector<SGroupId> const& sgroupIds,
-                                Core::ShareWithSelf shareWithSelf)
+                                Core::ShareWithSelf shareWithSelf,
+                                std::optional<uint32_t> paddingStep)
 {
   return runResumable(
       [=, cb = std::move(cb)]()
           -> tc::cotask<
               std::tuple<Streams::InputSource, Trustchain::ResourceId>> {
         TC_RETURN(TC_AWAIT(this->_core.makeEncryptionStream(
-            std::move(cb), suserIds, sgroupIds, shareWithSelf)));
+            std::move(cb), suserIds, sgroupIds, shareWithSelf, paddingStep)));
       });
 }
 
