@@ -26,6 +26,13 @@ Crypto::Hash verificationTargetHash(
     target = Crypto::generichash(
         gsl::make_span(emailVerif->email).as_span<uint8_t const>());
   }
+  else if (auto const phoneNumberVerif =
+               boost::variant2::get_if<Verification::ByPhoneNumber>(
+                   &verification))
+  {
+    target = Crypto::generichash(
+        gsl::make_span(phoneNumberVerif->phoneNumber).as_span<uint8_t const>());
+  }
   else
   {
     target.fill(0);
