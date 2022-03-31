@@ -1,6 +1,8 @@
 #include <Tanker/Functional/TrustchainFixture.hpp>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Encryptor/v4.hpp>
+#include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Errors/Errc.hpp>
 
 #include <Helpers/Buffers.hpp>
@@ -19,6 +21,7 @@ using namespace std::string_literals;
 namespace
 {
 constexpr auto fiveMiB = 5 * 1024 * 1024;
+constexpr auto almostFiveMiB = fiveMiB - 30;
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
@@ -156,4 +159,70 @@ TEST_CASE_METHOD(TrustchainFixture,
     REQUIRE_NOTHROW(
         TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
   }
+
+  SECTION(
+      "session encrypt/decrypt with a huge padding step should select the v8 "
+      "format")
+  {
+    auto const step = 2 * 1024 * 1024;
+    auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
+        {}, {}, Core::ShareWithSelf::Yes, step));
+
+    auto const clearData = "my clear data is clear"s;
+    std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
+    REQUIRE_NOTHROW(
+        TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
+
+    CHECK(encryptedData[0] == 0x08);
+    REQUIRE_NOTHROW(
+        TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  }
+}
+
+TEST_CASE_METHOD(
+    TrustchainFixture,
+    "Alice can session-encrypt/decrypt a huge buffer with auto padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
+      {}, {}, Core::ShareWithSelf::Yes, std::nullopt));
+  std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
+  TC_AWAIT(encSess.encrypt(encryptedData, clearData));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) == fiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(
+    TrustchainFixture,
+    "Alice can session-encrypt/decrypt a huge buffer with no padding")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
+      {}, {}, Core::ShareWithSelf::Yes, Padding::Off));
+  std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
+  TC_AWAIT(encSess.encrypt(encryptedData, clearData));
+  CHECK(EncryptorV4::decryptedSize(encryptedData) == almostFiveMiB);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
+}
+
+TEST_CASE_METHOD(
+    TrustchainFixture,
+    "Alice can session-encrypt/decrypt a huge buffer with a padding of 500")
+{
+  std::vector<uint8_t> clearData(almostFiveMiB);
+  Crypto::randomFill(clearData);
+  auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession(
+      {}, {}, Core::ShareWithSelf::Yes, 500));
+  std::vector<uint8_t> encryptedData(encSess.encryptedSize(clearData.size()));
+  TC_AWAIT(encSess.encrypt(encryptedData, clearData));
+  CHECK(EncryptorV8::decryptedSize(encryptedData) % 500 == 0);
+  auto decryptedData = TC_AWAIT(aliceSession->decrypt(encryptedData));
+
+  CHECK(decryptedData == clearData);
 }
