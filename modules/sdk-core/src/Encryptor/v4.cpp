@@ -22,29 +22,23 @@ namespace
 {
 constexpr auto sizeOfChunkSize = sizeof(std::uint32_t);
 constexpr auto versionSize = 1;
-constexpr auto headerSize =
-    versionSize + sizeOfChunkSize + ResourceId::arraySize;
+constexpr auto headerSize = versionSize + sizeOfChunkSize +
+                            ResourceId::arraySize + Crypto::AeadIv::arraySize;
+constexpr auto chunkOverhead = headerSize + Crypto::Mac::arraySize;
 
 // version 4 format layout:
 // N * chunk of encryptedChunkSize:
-// header: [version, 1B] [chunkSize, 4B] [ResourceId, 16B]
-// content: [IV seed, 24B] [ciphertext, variable] [MAC, 16B]
-
-constexpr std::uint32_t clearChunkSize(std::uint32_t encryptedChunkSize)
-{
-  return encryptedChunkSize - headerSize - Crypto::AeadIv::arraySize -
-         Trustchain::ResourceId::arraySize;
-}
+// header: [version, 1B] [chunkSize, 4B] [ResourceId, 16B] [IV seed, 24B]
+// content: [ciphertext, variable] [MAC, 16B]
 }
 
 std::uint64_t EncryptorV4::encryptedSize(std::uint64_t clearSize,
                                          std::uint32_t encryptedChunkSize)
 {
-  auto const chunkSize = clearChunkSize(encryptedChunkSize);
+  auto const chunkSize = encryptedChunkSize - chunkOverhead;
   auto const chunks = clearSize / chunkSize;
   auto const lastClearChunkSize = clearSize % chunkSize;
-  auto const lastEncryptedChunkSize = headerSize + Crypto::AeadIv::arraySize +
-                                      Crypto::encryptedSize(lastClearChunkSize);
+  auto const lastEncryptedChunkSize = lastClearChunkSize + chunkOverhead;
   return chunks * encryptedChunkSize + lastEncryptedChunkSize;
 }
 
@@ -60,11 +54,10 @@ std::uint64_t EncryptorV4::decryptedSize(
   auto const chunks = encryptedData.size() / header.encryptedChunkSize();
   auto const lastEncryptedChunkSize =
       encryptedData.size() % header.encryptedChunkSize();
-  if (lastEncryptedChunkSize < Crypto::AeadIv::arraySize + headerSize)
+  if (lastEncryptedChunkSize < chunkOverhead)
     throw formatEx(Errc::InvalidArgument, "truncated encrypted buffer");
-  auto const lastClearChunkSize = Crypto::decryptedSize(
-      lastEncryptedChunkSize - Crypto::AeadIv::arraySize - headerSize);
-  return chunks * clearChunkSize(header.encryptedChunkSize()) +
+  auto const lastClearChunkSize = lastEncryptedChunkSize - chunkOverhead;
+  return chunks * (header.encryptedChunkSize() - chunkOverhead) +
          lastClearChunkSize;
 }
 
