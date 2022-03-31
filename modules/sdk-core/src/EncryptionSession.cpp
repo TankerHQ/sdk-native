@@ -5,6 +5,7 @@
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Exception.hpp>
+#include <Tanker/Streams/EncryptionStream.hpp>
 
 namespace Tanker
 {
@@ -62,5 +63,13 @@ tconcurrent::cotask<Tanker::EncryptionMetadata> EncryptionSession::encrypt(
   else
     TC_RETURN(TC_AWAIT(EncryptorV5::encrypt(
         encryptedData, clearData, _resourceId, _sessionKey)));
+}
+
+std::tuple<Streams::InputSource, Trustchain::ResourceId>
+EncryptionSession::makeEncryptionStream(Streams::InputSource cb)
+{
+  return std::make_tuple(
+      Streams::EncryptionStream(std::move(cb), _resourceId, _sessionKey),
+      _resourceId);
 }
 }

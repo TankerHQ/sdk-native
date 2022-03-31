@@ -14,6 +14,11 @@ using namespace Tanker;
 using namespace Tanker::Errors;
 using Tanker::Functional::TrustchainFixture;
 
+namespace
+{
+constexpr auto fiveMiB = 5 * 1024 * 1024;
+}
+
 TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
 {
   auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
@@ -26,6 +31,23 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for herself")
 
   REQUIRE_NOTHROW(
       TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
+}
+
+TEST_CASE_METHOD(TrustchainFixture,
+                 "Alice's session can encrypt a huge resource")
+{
+  auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
+
+  std::string clearData(fiveMiB, 42);
+  std::vector<uint8_t> encryptedData(
+      EncryptionSession::encryptedSize(clearData.size()));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(encSess.encrypt(encryptedData, make_buffer(clearData))));
+
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({aliceSession}, clearData, encryptedData)));
+  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
 }
 
 TEST_CASE_METHOD(TrustchainFixture, "Alice's session can encrypt for Bob")
@@ -66,4 +88,20 @@ TEST_CASE_METHOD(TrustchainFixture,
   TANKER_CHECK_THROWS_WITH_CODE(TC_AWAIT(aliceSession->makeEncryptionSession(
                                     {}, {}, Core::ShareWithSelf::No)),
                                 Errc::InvalidArgument);
+}
+
+TEST_CASE_METHOD(TrustchainFixture, "Alice can session-encrypt a stream")
+{
+  auto encSess = TC_AWAIT(aliceSession->makeEncryptionSession());
+
+  auto const clearText = "my clear data is clear";
+  auto const clearData = make_buffer(clearText);
+  auto const [encryptorStream, resourceId] =
+      encSess.makeEncryptionStream(Streams::bufferViewToInputSource(clearData));
+
+  auto encryptedData = TC_AWAIT(Streams::readAllStream(encryptorStream));
+  REQUIRE_NOTHROW(
+      TC_AWAIT(checkDecrypt({aliceSession}, clearText, encryptedData)));
+  CHECK(resourceId == encSess.resourceId());
+  CHECK(Core::getResourceId(encryptedData) == encSess.resourceId());
 }
