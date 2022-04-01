@@ -1,11 +1,21 @@
 import argparse
+import os
 
 from pathlib import Path
+from typing import Dict
 
 import tankerci.cpp
 import tankerci.conan
 from tankerci.conan import TankerSource
 import tankerci.js
+import tankerci.tanker_configs
+
+
+def get_env() -> Dict[str, str]:
+    return {
+        **os.environ.copy(),
+        **tankerci.tanker_configs.get_dotenv_vars_for_env("staging"),
+    }
 
 
 def use_packaged_tanker(artifacts_path: Path, profile: str) -> None:
@@ -67,9 +77,10 @@ def main() -> None:
         )
         tankerci.run("poetry", "install")
 
+    env = get_env()
     with tankerci.working_directory(base_path / "qa-python-js"):
         tankerci.run("poetry", "install")
-        tankerci.run("poetry", "run", "pytest", "--verbose", "--capture=no")
+        tankerci.run("poetry", "run", "pytest", "--verbose", "--capture=no", env=env)
 
 
 if __name__ == "__main__":
