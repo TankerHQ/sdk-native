@@ -8,7 +8,7 @@ import platform
 import math
 
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Dict, List, Optional, Any
 import cli_ui as ui  # noqa
 import tempfile
 import gitlab
@@ -19,13 +19,22 @@ import tankerci.cpp
 import tankerci.git
 import tankerci.reporting
 import tankerci.benchmark
+import tankerci.tanker_configs
+
+
+def get_env() -> Dict[str, str]:
+    return {
+        **os.environ.copy(),
+        **tankerci.tanker_configs.get_dotenv_vars_for_env("staging"),
+    }
 
 
 def build(profiles: List[str], coverage: bool, test: bool) -> None:
+    env = get_env()
     for profile in profiles:
         build_path = tankerci.cpp.build(profile, make_package=True, coverage=coverage)
         if test:
-            tankerci.cpp.check(build_path, coverage=coverage)
+            tankerci.cpp.check(build_path, coverage=coverage, env=env)
     recipe = Path.cwd() / "conanfile.py"
     shutil.copy(recipe, Path.cwd() / "package")
 
@@ -131,12 +140,14 @@ def report_performance(
     if not bench_binary.exists():
         ui.fatal("No benchmark binary to run")
 
+    env = get_env()
     tankerci.run(
         str(bench_binary),
         f"--benchmark_out={bench_output}",
         "--benchmark_out_format=json",
         f"--benchmark_repetitions={iterations}",
         "--benchmark_report_aggregates_only",
+        env=env,
     )
 
     bench_results = json.loads(bench_output.read_text())
