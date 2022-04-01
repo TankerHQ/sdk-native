@@ -16,9 +16,9 @@ url = "https://gitlab.com/api/v4/projects/20917546/packages/pypi/simple"
 secondary = true
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.8.3"
-black = "^19.10b0"
-mypy = "^0.790"
+flake8 = "^4.0.1"
+black = "^22.3.0"
+mypy = "^0.942"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
