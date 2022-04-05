@@ -97,7 +97,7 @@ Nonce extractNonce(OidcIdToken const& idToken)
   std::vector<std::string> res;
   ba::split(res, idToken, ba::is_any_of("."));
 
-  auto const jwtPayload = b64::decode(res[2]);
+  auto const jwtPayload = b64::decode(res[1]);
 
   auto const j = nlohmann::json::parse(jwtPayload);
   return j.at("nonce").get<Nonce>();
