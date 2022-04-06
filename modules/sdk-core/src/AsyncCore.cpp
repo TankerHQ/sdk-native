@@ -198,6 +198,18 @@ tc::future<void> AsyncCore::stop()
   return fut;
 }
 
+tc::future<Oidc::Nonce> AsyncCore::createOidcNonce()
+{
+  return runResumable([=]() -> tc::cotask<Oidc::Nonce> {
+    TC_RETURN(TC_AWAIT(this->_core.createOidcNonce()));
+  });
+}
+
+tc::future<void> AsyncCore::setOidcTestNonce(Oidc::Nonce const& nonce)
+{
+  return tc::sync([=]() { this->_core.setOidcTestNonce(nonce); });
+}
+
 Tanker::Status AsyncCore::status() const
 {
   return this->_core.status();

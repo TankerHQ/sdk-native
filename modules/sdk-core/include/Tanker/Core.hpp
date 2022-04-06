@@ -4,11 +4,13 @@
 #include <Tanker/DataStore/Backend.hpp>
 #include <Tanker/EncryptionSession.hpp>
 #include <Tanker/Network/HttpClient.hpp>
+#include <Tanker/Oidc/NonceManager.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
 #include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/SGroupId.hpp>
 #include <Tanker/Types/SPublicIdentity.hpp>
 #include <Tanker/Types/SResourceId.hpp>
@@ -68,6 +70,9 @@ public:
       Verification::Verification const& verification,
       VerifyWithToken withToken);
 
+  tc::cotask<Oidc::Nonce> createOidcNonce();
+  void setOidcTestNonce(Oidc::Nonce const& nonce);
+
   tc::cotask<void> encrypt(
       gsl::span<uint8_t> encryptedData,
       gsl::span<uint8_t const> clearData,
@@ -112,13 +117,14 @@ public:
   Trustchain::DeviceId const& deviceId() const;
   tc::cotask<std::vector<Users::Device>> getDeviceList() const;
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>> makeEncryptionStream(
-      Streams::InputSource,
-      std::vector<SPublicIdentity> const& suserIds,
-      std::vector<SGroupId> const& sgroupIds,
-      ShareWithSelf shareWithSelf);
+  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+  makeEncryptionStream(Streams::InputSource,
+                       std::vector<SPublicIdentity> const& suserIds,
+                       std::vector<SGroupId> const& sgroupIds,
+                       ShareWithSelf shareWithSelf);
 
-  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>> makeDecryptionStream(Streams::InputSource);
+  tc::cotask<std::tuple<Streams::InputSource, Trustchain::ResourceId>>
+      makeDecryptionStream(Streams::InputSource);
 
   tc::cotask<EncryptionSession> makeEncryptionSession(
       std::vector<SPublicIdentity> const& spublicIdentities,
@@ -141,9 +147,6 @@ public:
 
 private:
   tc::cotask<Status> startImpl(std::string const& b64Identity);
-  tc::cotask<void> enrollUserImpl(
-      std::string const& identity,
-      std::vector<Verification::Verification> const& verifications);
   tc::cotask<void> registerIdentityImpl(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
@@ -183,5 +186,6 @@ private:
   std::unique_ptr<Network::Backend> _networkBackend;
   std::unique_ptr<DataStore::Backend> _datastoreBackend;
   std::shared_ptr<Session> _session;
+  std::shared_ptr<Oidc::NonceManager> _oidcManager;
 };
 }

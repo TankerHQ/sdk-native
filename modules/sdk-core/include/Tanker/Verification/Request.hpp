@@ -6,6 +6,7 @@
 #include <Tanker/Trustchain/HashedPassphrase.hpp>
 #include <Tanker/Types/BufferWrapper.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
+#include <Tanker/Types/OidcChallenge.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/VerificationCode.hpp>
 #include <Tanker/Verification/Verification.hpp>
@@ -50,22 +51,44 @@ struct EncryptedPreverifiedPhoneNumberVerification
   EncryptedPhoneNumber encryptedPhoneNumber;
 };
 
-using RequestVerificationMethods =
+struct OidcIdTokenWithChallenge
+{
+  OidcIdToken oidcIdToken;
+  Oidc::SignedChallenge oidcChallenge;
+  std::optional<Oidc::Nonce> oidcTestNonce;
+};
+
+using RequestVerification = boost::variant2::variant<VerificationKey,
+                                                     ByEmail,
+                                                     Passphrase,
+                                                     OidcIdTokenWithChallenge,
+                                                     ByPhoneNumber,
+                                                     PreverifiedEmail,
+                                                     PreverifiedPhoneNumber>;
+
+using RequestVerificationPayload =
     boost::variant2::variant<VerificationKey,
                              EncryptedEmailVerification,
                              Trustchain::HashedPassphrase,
                              OidcIdToken,
+                             OidcIdTokenWithChallenge,
                              EncryptedPhoneNumberVerification,
                              EncryptedPreverifiedEmailVerification,
                              EncryptedPreverifiedPhoneNumberVerification>;
 
 struct RequestWithVerif
 {
-  RequestVerificationMethods verification;
+  RequestVerificationPayload verification;
   std::optional<std::string> withTokenNonce;
 };
 
 void to_json(nlohmann::json&, RequestWithVerif const&);
+
+RequestWithVerif makeRequestWithVerif(
+    RequestVerification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce = std::nullopt);
 
 RequestWithVerif makeRequestWithVerif(
     Verification const& verification,
@@ -108,15 +131,15 @@ RequestWithSession makeRequestWithSession(
 namespace nlohmann
 {
 template <typename SFINAE>
-struct adl_serializer<Tanker::Verification::RequestVerificationMethods, SFINAE>
+struct adl_serializer<Tanker::Verification::RequestVerificationPayload, SFINAE>
 {
   static void to_json(
       nlohmann::json& j,
-      Tanker::Verification::RequestVerificationMethods const& request);
+      Tanker::Verification::RequestVerificationPayload const& request);
 
   static void from_json(
       nlohmann::json const& j,
-      Tanker::Verification::RequestVerificationMethods& request) = delete;
+      Tanker::Verification::RequestVerificationPayload& request) = delete;
 };
 
 template <typename SFINAE>

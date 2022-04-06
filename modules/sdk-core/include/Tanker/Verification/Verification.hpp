@@ -8,6 +8,7 @@
 #include <Tanker/Types/EncryptedPreverifiedEmail.hpp>
 #include <Tanker/Types/EncryptedPreverifiedPhoneNumber.hpp>
 #include <Tanker/Types/OidcIdToken.hpp>
+#include <Tanker/Types/OidcNonce.hpp>
 #include <Tanker/Types/Passphrase.hpp>
 #include <Tanker/Types/PhoneNumber.hpp>
 #include <Tanker/Types/PreverifiedEmail.hpp>
@@ -96,6 +97,8 @@ void from_json(
 void validateVerification(
     Verification const& verification,
     Identity::SecretProvisionalIdentity const& provisionalIdentity);
+
+bool isPreverified(Verification const& v);
 
 inline bool operator<(VerificationMethod const& a, VerificationMethod const& b)
 {

@@ -157,8 +157,7 @@ void validateVerification(
   namespace ba = boost::algorithm;
 
   if (!(bv::holds_alternative<ByEmail>(verification) ||
-        bv::holds_alternative<ByPhoneNumber>(verification) ||
-        bv::holds_alternative<OidcIdToken>(verification)))
+        bv::holds_alternative<ByPhoneNumber>(verification)))
     throw Errors::Exception(
         make_error_code(Errors::Errc::InvalidArgument),
         "unknown verification method for provisional identity");
@@ -179,26 +178,12 @@ void validateVerification(
           make_error_code(Errors::Errc::InvalidArgument),
           "verification phone number does not match provisional identity");
   }
-  else if (auto const oidcIdToken = bv::get_if<OidcIdToken>(&verification))
-  {
-    std::string jwtEmail;
-    try
-    {
-      std::vector<std::string> res;
-      ba::split(res, *oidcIdToken, ba::is_any_of("."));
-      nlohmann::json::parse(mgs::base64url_nopad::decode(res.at(1)))
-          .at("email")
-          .get_to(jwtEmail);
-    }
-    catch (...)
-    {
-      throw Errors::Exception(make_error_code(Errors::Errc::InvalidArgument),
-                              "Failed to parse verification oidcIdToken");
-    }
-    if (jwtEmail != provisionalIdentity.value)
-      throw Errors::Exception(
-          make_error_code(Errors::Errc::InvalidArgument),
-          "verification does not match provisional identity");
-  }
+}
+
+bool isPreverified(Verification const& v)
+{
+  using boost::variant2::holds_alternative;
+  return holds_alternative<PreverifiedEmail>(v) ||
+         holds_alternative<PreverifiedPhoneNumber>(v);
 }
 }

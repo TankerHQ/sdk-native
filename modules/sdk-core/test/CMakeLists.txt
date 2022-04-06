@@ -7,12 +7,14 @@ add_executable(test_tanker
   test_resourcekeystore.cpp
   test_provisionaluserkeysstore.cpp
   test_log.cpp
+  test_oidcmanager.cpp
   test_encryptor.cpp
   test_encryptionsession.cpp
   test_receivekey.cpp
   test_share.cpp
   test_ghostdevice.cpp
   test_verificationkey.cpp
+  test_requestwithverif.cpp
   test_useraccessor.cpp
   test_groups.cpp
   test_verif.cpp

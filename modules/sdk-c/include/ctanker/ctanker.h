@@ -423,6 +423,18 @@ CTANKER_EXPORT tanker_future_t* tanker_verify_identity(
 CTANKER_EXPORT tanker_future_t* tanker_stop(tanker_t* tanker);
 
 /*!
+ * Create a nonce to use in the oidc authorization code flow
+ * \param tanker A tanker tanker_t* instance.
+ * \pre tanker must be allocated with tanker_create().
+ */
+CTANKER_EXPORT tanker_future_t* tanker_create_oidc_nonce(tanker_t* tanker);
+
+/*!
+ * Set the nonce to use while testing oidc verification
+ */
+CTANKER_EXPORT tanker_future_t* tanker_set_oidc_test_nonce(tanker_t* tanker, char const* nonce);
+
+/*!
  * The current Tanker status.
  * \param tanker A tanker tanker_t* instance.
  * \pre tanker must be allocated with tanker_create().

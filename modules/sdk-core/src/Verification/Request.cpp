@@ -7,6 +7,7 @@
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Identity/SecretProvisionalIdentity.hpp>
+#include <Tanker/Log/Log.hpp>
 #include <Tanker/Types/EncryptedEmail.hpp>
 #include <Tanker/Types/Overloaded.hpp>
 
@@ -17,6 +18,8 @@
 #include <range/v3/view/transform.hpp>
 
 #include <boost/variant2/variant.hpp>
+
+TLOG_CATEGORY(Tanker::Verification);
 
 namespace
 {
@@ -43,14 +46,14 @@ Ret hashField(T const& field)
 namespace Tanker::Verification
 {
 RequestWithVerif makeRequestWithVerif(
-    Verification const& verification,
+    RequestVerification const& verification,
     Crypto::SymmetricKey const& userSecret,
     std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
     std::optional<std::string> const& withTokenNonce)
 {
   auto verif = boost::variant2::visit(
       overloaded{
-          [&](ByEmail const& v) -> RequestVerificationMethods {
+          [&](ByEmail const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.email.string(), "email");
 
@@ -65,7 +68,7 @@ RequestWithVerif makeRequestWithVerif(
                                               std::move(encryptedEmail),
                                               v.verificationCode};
           },
-          [&](ByPhoneNumber const& v) -> RequestVerificationMethods {
+          [&](ByPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.verificationCode.string(), "verification code");
             checkNotEmpty(v.phoneNumber.string(), "phoneNumber");
 
@@ -89,19 +92,22 @@ RequestWithVerif makeRequestWithVerif(
                 std::move(encryptedPhoneNumber),
                 v.verificationCode};
           },
-          [](Passphrase const& p) -> RequestVerificationMethods {
+          [](Passphrase const& p) -> RequestVerificationPayload {
             checkNotEmpty(p.string(), "passphrase");
             return Trustchain::HashedPassphrase{hashField(p)};
           },
-          [](VerificationKey const& v) -> RequestVerificationMethods {
+          [](VerificationKey const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "verificationKey");
             return v;
           },
-          [](OidcIdToken const& v) -> RequestVerificationMethods {
-            checkNotEmpty(v.string(), "oidcIdToken");
+          [](OidcIdTokenWithChallenge const& v) -> RequestVerificationPayload {
+            // sanity checks are performed before fetching the challenge
+            TINFO(
+                "'testNonce' field should be used for tests purposes only. It "
+                "will be rejected for non-test Tanker application");
             return v;
           },
-          [&](PreverifiedEmail const& v) -> RequestVerificationMethods {
+          [&](PreverifiedEmail const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "email");
             EncryptedEmail encryptedEmail(EncryptorV2::encryptedSize(v.size()));
             EncryptorV2::encryptSync(encryptedEmail,
@@ -111,7 +117,7 @@ RequestWithVerif makeRequestWithVerif(
             return EncryptedPreverifiedEmailVerification{
                 hashField(v), std::move(encryptedEmail)};
           },
-          [&](PreverifiedPhoneNumber const& v) -> RequestVerificationMethods {
+          [&](PreverifiedPhoneNumber const& v) -> RequestVerificationPayload {
             checkNotEmpty(v.string(), "phoneNumber");
             EncryptedPhoneNumber encryptedPhoneNumber(
                 EncryptorV2::encryptedSize(v.size()));
@@ -135,6 +141,30 @@ RequestWithVerif makeRequestWithVerif(
       },
       verification);
   return {verif, withTokenNonce};
+}
+
+RequestWithVerif makeRequestWithVerif(
+    Verification const& verification,
+    Crypto::SymmetricKey const& userSecret,
+    std::optional<Crypto::SignatureKeyPair> const& secretProvisionalSigKey,
+    std::optional<std::string> const& withTokenNonce)
+{
+  namespace bv2 = boost::variant2;
+  if (auto const v = bv2::get_if<OidcIdToken>(&verification))
+  {
+    checkNotEmpty(v->string(), "oidcIdToken");
+    return {*v, withTokenNonce};
+  }
+
+  auto verif = bv2::visit(
+      overloaded{[&](auto const& v) -> RequestVerification { return v; },
+                 [&](OidcIdToken const& v) -> RequestVerification {
+                   throw bv2::bad_variant_access{};
+                 }},
+      verification);
+
+  return makeRequestWithVerif(
+      verif, userSecret, secretProvisionalSigKey, withTokenNonce);
 }
 
 std::vector<RequestWithVerif> makeRequestWithVerifs(
@@ -192,8 +222,8 @@ void to_json(nlohmann::json& j, RequestWithSession const& request)
 namespace nlohmann
 {
 template <>
-void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
-    json& j, Tanker::Verification::RequestVerificationMethods const& request)
+void adl_serializer<Tanker::Verification::RequestVerificationPayload>::to_json(
+    json& j, Tanker::Verification::RequestVerificationPayload const& request)
 {
   using namespace Tanker;
   boost::variant2::visit(
@@ -216,7 +246,16 @@ void adl_serializer<Tanker::Verification::RequestVerificationMethods>::to_json(
           [&](Trustchain::HashedPassphrase const& p) {
             j["hashed_passphrase"] = p;
           },
-          [&](OidcIdToken const& t) { j["oidc_id_token"] = t.string(); },
+          [&](OidcIdToken const& t) { j["oidc_id_token"] = t; },
+          [&](Verification::OidcIdTokenWithChallenge const& t) {
+            j["oidc_id_token"] = t.oidcIdToken;
+            j["oidc_challenge"] = t.oidcChallenge.challenge;
+            j["oidc_challenge_signature"] = t.oidcChallenge.signature;
+            if (t.oidcTestNonce)
+            {
+              j["oidc_test_nonce"] = *t.oidcTestNonce;
+            }
+          },
           [](VerificationKey const& v) {},
           [&](Verification::EncryptedPreverifiedEmailVerification const& e) {
             j["hashed_email"] = e.hashedEmail;
