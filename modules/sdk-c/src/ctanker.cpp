@@ -601,30 +601,33 @@ tanker_future_t* tanker_encrypt(tanker_t* ctanker,
                                 uint64_t data_size,
                                 tanker_encrypt_options_t const* options)
 {
-  std::vector<SPublicIdentity> spublicIdentities{};
-  std::vector<SGroupId> sgroupIds{};
-  bool shareWithSelf = true;
-  if (options)
-  {
-    if (options->version != 3)
-    {
-      return makeFuture(tc::make_exceptional_future<void>(
-          formatEx(Errc::InvalidArgument,
-                   "unsupported tanker_encrypt_options struct version")));
-    }
-    spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
-                                                   options->nb_users);
-    sgroupIds =
-        to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
-    shareWithSelf = options->share_with_self;
-  }
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tanker->encrypt(
-      gsl::span(encrypted_data, AsyncCore::encryptedSize(data_size)),
-      gsl::make_span(data, data_size),
-      spublicIdentities,
-      sgroupIds,
-      Core::ShareWithSelf{shareWithSelf}));
+  return makeFuture(
+      tc::sync([&] {
+        std::vector<SPublicIdentity> spublicIdentities{};
+        std::vector<SGroupId> sgroupIds{};
+        bool shareWithSelf = true;
+        if (options)
+        {
+          if (options->version != 3)
+          {
+            throw formatEx(Errc::InvalidArgument,
+                           "unsupported tanker_encrypt_options struct version");
+          }
+          spublicIdentities = to_vector<SPublicIdentity>(
+              options->share_with_users, options->nb_users, "share_with_users");
+          sgroupIds = to_vector<SGroupId>(options->share_with_groups,
+                                          options->nb_groups,
+                                          "share_with_groups");
+          shareWithSelf = options->share_with_self;
+        }
+        auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+        return tanker->encrypt(
+            gsl::span(encrypted_data, AsyncCore::encryptedSize(data_size)),
+            gsl::make_span(data, data_size),
+            spublicIdentities,
+            sgroupIds,
+            Core::ShareWithSelf{shareWithSelf});
+      }).unwrap());
 }
 
 tanker_future_t* tanker_decrypt(tanker_t* ctanker,
@@ -647,27 +650,31 @@ tanker_future_t* tanker_share(tanker_t* ctanker,
                               uint64_t nb_resource_ids,
                               tanker_sharing_options_t const* options)
 {
-  if (!options)
-  {
-    return makeFuture(tc::make_exceptional_future<void>(formatEx(
-        Errc::InvalidArgument, "tanker_sharing_options must not be NULL")));
-  }
+  return makeFuture(
+      tc::sync([&] {
+        if (!options)
+        {
+          throw formatEx(Errc::InvalidArgument,
+                         "tanker_sharing_options must not be NULL");
+        }
 
-  if (options->version != 1)
-  {
-    return makeFuture(tc::make_exceptional_future<void>(
-        formatEx(Errc::InvalidArgument,
-                 "unsupported tanker_sharing_options struct version")));
-  }
+        if (options->version != 1)
+        {
+          throw formatEx(Errc::InvalidArgument,
+                         "unsupported tanker_sharing_options struct version");
+        }
 
-  auto const spublicIdentities =
-      to_vector<SPublicIdentity>(options->share_with_users, options->nb_users);
-  auto const sgroupIds =
-      to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
-  auto const resources = to_vector<SResourceId>(resource_ids, nb_resource_ids);
-  auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
+        auto const spublicIdentities = to_vector<SPublicIdentity>(
+            options->share_with_users, options->nb_users, "share_with_users");
+        auto const sgroupIds = to_vector<SGroupId>(options->share_with_groups,
+                                                   options->nb_groups,
+                                                   "share_with_groups");
+        auto const resources = to_vector<SResourceId>(
+            resource_ids, nb_resource_ids, "resource_ids");
+        auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
-  return makeFuture(tanker->share(resources, spublicIdentities, sgroupIds));
+        return tanker->share(resources, spublicIdentities, sgroupIds);
+      }).unwrap());
 }
 
 tanker_future_t* tanker_attach_provisional_identity(

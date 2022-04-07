@@ -12,34 +12,37 @@ using namespace Tanker::Errors;
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_open(
     tanker_t* ctanker, tanker_encrypt_options_t const* options)
 {
-  std::vector<SPublicIdentity> spublicIdentities;
-  std::vector<SGroupId> sgroupIds;
-  bool shareWithSelf = true;
-  if (options)
-  {
-    if (options->version != 3)
-    {
-      return makeFuture(tc::make_exceptional_future<void>(
-          formatEx(Errc::InvalidArgument,
-                   "unsupported tanker_encrypt_options struct version")));
-    }
-    spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
-                                                   options->nb_users);
-    sgroupIds =
-        to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
-    shareWithSelf = options->share_with_self;
-  }
-
-  auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  auto sessFuture = tanker->makeEncryptionSession(
-      spublicIdentities,
-      sgroupIds,
-      static_cast<Core::ShareWithSelf>(shareWithSelf));
   return makeFuture(
-      sessFuture.and_then(tc::get_synchronous_executor(), [](auto sess) {
-        auto sessPtr = new EncryptionSession(std::move(sess));
-        return reinterpret_cast<void*>(sessPtr);
-      }));
+      tc::sync([&] {
+        std::vector<SPublicIdentity> spublicIdentities;
+        std::vector<SGroupId> sgroupIds;
+        bool shareWithSelf = true;
+        if (options)
+        {
+          if (options->version != 3)
+          {
+            throw formatEx(Errc::InvalidArgument,
+                           "unsupported tanker_encrypt_options struct version");
+          }
+          spublicIdentities = to_vector<SPublicIdentity>(
+              options->share_with_users, options->nb_users, "share_with_users");
+          sgroupIds = to_vector<SGroupId>(options->share_with_groups,
+                                          options->nb_groups,
+                                          "share_with_groups");
+          shareWithSelf = options->share_with_self;
+        }
+
+        auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
+        return tanker->makeEncryptionSession(
+            spublicIdentities,
+            sgroupIds,
+            static_cast<Core::ShareWithSelf>(shareWithSelf));
+      })
+          .unwrap()
+          .and_then(tc::get_synchronous_executor(), [](auto sess) {
+            auto sessPtr = new EncryptionSession(std::move(sess));
+            return reinterpret_cast<void*>(sessPtr);
+          }));
 }
 
 CTANKER_EXPORT tanker_future_t* tanker_encryption_session_close(

@@ -34,32 +34,34 @@ tanker_future_t* tanker_stream_encrypt(tanker_t* session,
                                        void* additional_data,
                                        tanker_encrypt_options_t const* options)
 {
-  std::vector<SPublicIdentity> spublicIdentities{};
-  std::vector<SGroupId> sgroupIds{};
-  bool shareWithSelf = true;
-
-  if (options)
-  {
-    if (options->version != 3)
-    {
-      return makeFuture(tc::make_exceptional_future<void>(
-          formatEx(Errc::InvalidArgument,
-                   "unsupported tanker_encrypt_options struct version")));
-    }
-    spublicIdentities = to_vector<SPublicIdentity>(options->share_with_users,
-                                                   options->nb_users);
-    sgroupIds =
-        to_vector<SGroupId>(options->share_with_groups, options->nb_groups);
-    shareWithSelf = options->share_with_self;
-  }
-
-  auto tanker = reinterpret_cast<AsyncCore*>(session);
   return makeFuture(
-      tanker
-          ->makeEncryptionStream(wrapCallback(cb, additional_data),
-                                 spublicIdentities,
-                                 sgroupIds,
-                                 Core::ShareWithSelf{shareWithSelf})
+      tc::sync([&] {
+        std::vector<SPublicIdentity> spublicIdentities{};
+        std::vector<SGroupId> sgroupIds{};
+        bool shareWithSelf = true;
+
+        if (options)
+        {
+          if (options->version != 3)
+          {
+            throw formatEx(Errc::InvalidArgument,
+                           "unsupported tanker_encrypt_options struct version");
+          }
+          spublicIdentities = to_vector<SPublicIdentity>(
+              options->share_with_users, options->nb_users, "share_with_users");
+          sgroupIds = to_vector<SGroupId>(options->share_with_groups,
+                                          options->nb_groups,
+                                          "share_with_groups");
+          shareWithSelf = options->share_with_self;
+        }
+
+        auto tanker = reinterpret_cast<AsyncCore*>(session);
+        return tanker->makeEncryptionStream(wrapCallback(cb, additional_data),
+                                            spublicIdentities,
+                                            sgroupIds,
+                                            Core::ShareWithSelf{shareWithSelf});
+      })
+          .unwrap()
           .and_then(tc::get_synchronous_executor(), [](auto encryptor) {
             auto c_stream = new tanker_stream;
             c_stream->resourceId =
