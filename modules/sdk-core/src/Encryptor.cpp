@@ -25,6 +25,8 @@ namespace Encryptor
 {
 namespace
 {
+constexpr auto STREAM_THRESHOLD = 1024 * 1024;
+
 template <typename Callable>
 decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 {
@@ -53,8 +55,8 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
 
 bool isHugeClearData(uint64_t dataSize, std::optional<uint32_t> paddingStep)
 {
-  return Padding::paddedFromClearSize(dataSize, paddingStep) >
-         Streams::Header::defaultEncryptedChunkSize;
+  return Padding::paddedFromClearSize(dataSize, paddingStep) >=
+         STREAM_THRESHOLD;
 }
 
 uint64_t encryptedSize(uint64_t clearSize, std::optional<uint32_t> paddingStep)
