@@ -124,11 +124,11 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
 {
   return makeFuture(
       tc::sync([&] {
-        if (coptions->version != 2 && coptions->version != 3)
+        if (coptions->version != 3 && coptions->version != 4)
           throw Exception(
               make_error_code(Errc::InvalidArgument),
               fmt::format("options version should be {:d} instead of {:d}",
-                          3,
+                          4,
                           coptions->version));
 
         Admin::AppUpdateOptions appOptions{};
@@ -136,8 +136,6 @@ tanker_future_t* tanker_admin_app_update(tanker_admin_t* admin,
           appOptions.oidcClientId = coptions->oidc_client_id;
         if (coptions->oidc_client_provider)
           appOptions.oidcProvider = coptions->oidc_client_provider;
-        if (coptions->session_certificates)
-          appOptions.sessionCertificates = *coptions->session_certificates;
         if (coptions->preverified_verification)
           appOptions.preverifiedVerification =
               *coptions->preverified_verification;

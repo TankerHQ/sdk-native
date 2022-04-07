@@ -34,7 +34,6 @@ struct TrustchainFixture
   Trustchain createOtherTrustchain();
 
   tc::cotask<void> enableOidc();
-  tc::cotask<void> set2fa(bool enable);
   tc::cotask<void> enablePreverifiedMethods();
   tc::cotask<void> enableUserEnrollment();
 };
