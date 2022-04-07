@@ -24,8 +24,6 @@ tc::cotask<std::string> checkSessionToken(Trustchain::TrustchainId appId,
                                     {"public_identity", publicIdentity},
                                     {"session_token", sessionToken},
                                     {"allowed_methods", allowedMethods}});
-  auto endpoint =
-      fmt::format("/v2/apps/{:#S}/verification/session-token", appId);
   auto req =
       fetchpp::http::request(verb::post,
                              url("/verification/session-token",
