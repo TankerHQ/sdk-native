@@ -16,7 +16,8 @@ tanker_future_t* tanker_create_group(
     uint64_t nb_public_identities_to_add)
 {
   auto const members = to_vector<SPublicIdentity>(public_identities_to_add,
-                                                  nb_public_identities_to_add);
+                                                  nb_public_identities_to_add,
+                                                  "public_identities");
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
 
   return makeFuture(tanker->createGroup(members).and_then(
@@ -35,9 +36,11 @@ tanker_future_t* tanker_update_group_members(
 {
   auto const tanker = reinterpret_cast<AsyncCore*>(ctanker);
   auto const public_identities_to_add_vec = to_vector<SPublicIdentity>(
-      public_identities_to_add, nb_public_identities_to_add);
-  auto const public_identities_to_remove_vec = to_vector<SPublicIdentity>(
-      public_identities_to_remove, nb_public_identities_to_remove);
+      public_identities_to_add, nb_public_identities_to_add, "users_to_add");
+  auto const public_identities_to_remove_vec =
+      to_vector<SPublicIdentity>(public_identities_to_remove,
+                                 nb_public_identities_to_remove,
+                                 "users_to_remove");
 
   return makeFuture(
       tanker->updateGroupMembers(SGroupId{group_id},
