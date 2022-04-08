@@ -317,33 +317,21 @@ tc::cotask<Status> Core::startImpl(std::string const& b64Identity)
         _info.trustchainId,
         identity.trustchainId);
   }
-  _session->openStorage(identity, _dataPath, _cachePath);
-  auto const optPubUserEncKey =
-      TC_AWAIT(_session->requesters().userStatus(_session->userId()));
-  if (!optPubUserEncKey)
-    _session->setStatus(Status::IdentityRegistrationNeeded);
-  else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
-           !optDeviceKeys.has_value())
-    _session->setStatus(Status::IdentityVerificationNeeded);
+  TC_AWAIT(_session->openStorage(identity, _dataPath, _cachePath));
+  auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
+  if (!optDeviceKeys.has_value())
+  {
+    auto const optPubUserEncKey =
+        TC_AWAIT(_session->requesters().userStatus(_session->userId()));
+    if (!optPubUserEncKey)
+      _session->setStatus(Status::IdentityRegistrationNeeded);
+    else if (auto const optDeviceKeys = TC_AWAIT(_session->findDeviceKeys());
+             !optDeviceKeys.has_value())
+      _session->setStatus(Status::IdentityVerificationNeeded);
+  }
   else
   {
-    try
-    {
-      auto const authResponse = TC_AWAIT(_session->authenticate());
-      TC_AWAIT(_session->finalizeOpening());
-      if (authResponse == Network::HttpClient::AuthResponse::Revoked)
-        throw formatEx(Errors::AppdErrc::DeviceRevoked,
-                       "authentication reported that this device was revoked");
-    }
-    catch (Errors::Exception const& e)
-    {
-      if (e.errorCode() == Errors::AppdErrc::InvalidChallengePublicKey ||
-          e.errorCode() == Errors::AppdErrc::InvalidChallengeSignature ||
-          e.errorCode() == Errors::AppdErrc::DeviceNotFound)
-        throw Errors::DeviceUnusable(e.what());
-      else
-        throw;
-    }
+    TC_AWAIT(_session->finalizeOpening());
   }
   TC_RETURN(status());
 }

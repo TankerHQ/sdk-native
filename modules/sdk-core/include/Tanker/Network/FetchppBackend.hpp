@@ -26,7 +26,7 @@ public:
   tc::cotask<HttpResponse> fetch(HttpRequest req) override;
 
 private:
-  fetchpp::client _cl;
+  std::shared_ptr<fetchpp::client> _cl;
   SdkInfo _sdkInfo;
 };
 }

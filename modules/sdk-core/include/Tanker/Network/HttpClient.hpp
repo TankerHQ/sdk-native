@@ -44,12 +44,6 @@ using HttpResult = boost::outcome_v2::result<nlohmann::json, HttpError>;
 class HttpClient
 {
 public:
-  enum class AuthResponse
-  {
-    Ok,
-    Revoked,
-  };
-
   HttpClient(std::string baseUrl, std::string instanceId, Backend* backend);
   HttpClient(HttpClient const&) = delete;
   HttpClient(HttpClient&&) = delete;
@@ -71,7 +65,6 @@ public:
                       nlohmann::json const& query) const;
   std::string makeQueryString(nlohmann::json const& query) const;
 
-  tc::cotask<AuthResponse> authenticate();
   tc::cotask<void> deauthenticate();
 
   void setAccessToken(std::string_view accessToken);
@@ -91,6 +84,7 @@ private:
 
   tc::shared_future<void> _authenticating = tc::make_ready_future().to_shared();
 
+  tc::cotask<void> authenticate();
   HttpRequest makeRequest(HttpMethod method,
                           std::string_view url,
                           nlohmann::json const& data);
