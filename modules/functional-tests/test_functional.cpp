@@ -567,10 +567,10 @@ TEST_CASE_METHOD(TrustchainFixture, "Alice has network issues", "[net]")
     auto core = TC_AWAIT(device1.open());
     REQUIRE_NOTHROW(encryptedData = TC_AWAIT(core->encrypt(clearData)));
   }
-  auto core = std::make_unique<AsyncCore>("https://no-api.tanker.io",
-                                          device1.getSdkInfo(),
-                                          device1.writablePath(),
-                                          device1.writablePath());
+  auto core = Functional::makeAsyncCore("https://no-api.tanker.io",
+                                        device1.getSdkInfo(),
+                                        device1.writablePath(),
+                                        device1.writablePath());
 
   auto const status = TC_AWAIT(core->start(device1.identity()));
   SECTION("Can open a Session")
