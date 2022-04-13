@@ -219,6 +219,7 @@ bridge/bench/linux:
   trigger:
     project: TankerHQ/benchmarks
     strategy: depend
+    branch: backport/1.45
 
 bridge/compat/linux:
   stage: bridge-check
@@ -233,6 +234,7 @@ bridge/compat/linux:
   trigger:
     project: TankerHQ/compatibility-tests
     strategy: depend
+    branch: backport/1.45
 
 bridge/ios:
   stage: bridge-check
@@ -246,6 +248,7 @@ bridge/ios:
   trigger:
     project: TankerHQ/sdk-ios
     strategy: depend
+    branch: backport/1.45
 
 bridge/android:
   extends:
@@ -259,6 +262,7 @@ bridge/android:
   trigger:
     project: TankerHQ/sdk-android
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/linux:
   extends:
@@ -273,6 +277,7 @@ bridge/rust/linux:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/windows:
   extends:
@@ -287,6 +292,7 @@ bridge/rust/windows:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/ios:
   extends:
@@ -301,6 +307,7 @@ bridge/rust/ios:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/macos/x86_64:
   extends:
@@ -315,6 +322,7 @@ bridge/rust/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/macos/arm:
   extends:
@@ -329,6 +337,7 @@ bridge/rust/macos/arm:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/rust/android:
   extends:
@@ -343,6 +352,7 @@ bridge/rust/android:
   trigger:
     project: TankerHQ/sdk-rust
     strategy: depend
+    branch: backport/1.45
 
 bridge/python/linux:
   extends:
@@ -357,6 +367,7 @@ bridge/python/linux:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    branch: backport/1.45
 
 bridge/python/macos/x86_64:
   extends:
@@ -371,6 +382,7 @@ bridge/python/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    branch: backport/1.45
 
 bridge/python/macos/arm:
   extends:
@@ -386,6 +398,7 @@ bridge/python/macos/arm:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    branch: backport/1.45
 
 bridge/python/windows:
   extends:
@@ -400,6 +413,7 @@ bridge/python/windows:
   trigger:
     project: TankerHQ/sdk-python
     strategy: depend
+    branch: backport/1.45
 
 bridge/ruby/linux:
   extends:
@@ -414,6 +428,7 @@ bridge/ruby/linux:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    branch: backport/1.45
 
 bridge/ruby/macos/x86_64:
   extends:
@@ -428,6 +443,7 @@ bridge/ruby/macos/x86_64:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    branch: backport/1.45
 
 bridge/ruby/macos/arm:
   extends:
@@ -442,6 +458,7 @@ bridge/ruby/macos/arm:
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
+    branch: backport/1.45
 
 ###############
 # check stage #
