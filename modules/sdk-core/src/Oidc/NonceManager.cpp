@@ -17,7 +17,8 @@ Nonce NonceManager::createOidcNonce()
 {
   auto const signatureKeyPair = Crypto::makeSignatureKeyPair();
 
-  auto const nonce = Nonce{mgs::base64::encode(signatureKeyPair.publicKey)};
+  auto const nonce =
+      Nonce{mgs::base64url_nopad::encode(signatureKeyPair.publicKey)};
   nonceMap.emplace(nonce, signatureKeyPair.privateKey);
   return nonce;
 }
