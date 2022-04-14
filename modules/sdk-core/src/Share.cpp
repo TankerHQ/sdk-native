@@ -20,6 +20,8 @@
 
 #include <boost/variant2/variant.hpp>
 
+#include <mgs/base64.hpp>
+
 #include <range/v3/range/conversion.hpp>
 #include <range/v3/view/transform.hpp>
 
@@ -215,7 +217,7 @@ tc::cotask<KeyRecipients> generateRecipientList(
 
   auto const groupIds = sgroupIds |
                         ranges::views::transform([](auto&& sgroupId) {
-                          return base64DecodeArgument<Trustchain::GroupId>(
+                          return decodeArgument<mgs::base64, Trustchain::GroupId>(
                               sgroupId.string(), "group id");
                         }) |
                         ranges::to<std::vector>;

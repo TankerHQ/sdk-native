@@ -102,8 +102,8 @@ TEST_CASE("Oidc::NonceManager")
 
   SECTION("rejects unknown nonce")
   {
-    auto const nonce =
-        Nonce{mgs::base64::encode(makeBuffer(PublicSignatureKey::arraySize))};
+    auto const nonce = Nonce{mgs::base64url_nopad::encode(
+        makeBuffer(PublicSignatureKey::arraySize))};
     auto const challenge = Challenge{
         fmt::format("{}{}",
                     CHALLENGE_PREFIX,
@@ -127,7 +127,7 @@ TEST_CASE("Oidc::NonceManager")
     auto const signature =
         Signature(mgs::base64::decode(signedChallenge.signature));
     auto const pubKey = AsymmetricKey<KeyType::Public, KeyUsage::Signature>{
-        mgs::base64::decode(nonce)};
+        mgs::base64url_nopad::decode(nonce)};
 
     CHECK_NOTHROW(verify(challengeData, signature, pubKey));
   }
