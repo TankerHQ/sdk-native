@@ -15,14 +15,14 @@
 
 namespace Tanker
 {
-template <typename T, typename String>
-T base64DecodeArgument(String const& b64, std::string const& argName)
+template <typename Codec, typename T, typename String>
+T decodeArgument(String const& b64, std::string const& argName)
 {
   using namespace Tanker::Errors;
 
   try
   {
-    return mgs::base64::decode<T>(b64);
+    return Codec::template decode<T>(b64);
   }
   catch (mgs::exceptions::exception const&)
   {

@@ -46,6 +46,7 @@
 #include <boost/variant2/variant.hpp>
 #include <mgs/base16.hpp>
 #include <mgs/base64.hpp>
+#include <mgs/base64url.hpp>
 
 #include <range/v3/algorithm/count_if.hpp>
 #include <range/v3/view/transform.hpp>
@@ -101,7 +102,8 @@ tc::cotask<Verification::RequestWithVerif> challengeOidcToken(
   auto const nonce = testNonce ? *testNonce : Oidc::extractNonce(oidcIdToken);
 
   // Only checking nonce format
-  (void)base64DecodeArgument<Oidc::RawNonce>(nonce, "oidcIdToken.nonce");
+  (void)decodeArgument<mgs::base64url_nopad, Oidc::RawNonce>(nonce,
+                                                      "oidcIdToken.nonce");
 
   auto const challenge = TC_AWAIT(requester.getOidcChallenge(userId, nonce));
   auto const verification = Verification::OidcIdTokenWithChallenge{
@@ -690,7 +692,7 @@ tc::cotask<void> Core::share(
 
   auto const resourceIds =
       sresourceIds | ranges::views::transform([](auto&& resourceId) {
-        return base64DecodeArgument<Trustchain::ResourceId>(resourceId,
+        return decodeArgument<mgs::base64, Trustchain::ResourceId>(resourceId,
                                                             "resource id");
       }) |
       ranges::to<std::vector> | Actions::deduplicate;
@@ -731,7 +733,7 @@ tc::cotask<void> Core::updateGroupMembers(
 {
   assertStatus(Status::Ready, "updateGroupMembers");
   auto const groupId =
-      base64DecodeArgument<Trustchain::GroupId>(groupIdString, "group id");
+      decodeArgument<mgs::base64, Trustchain::GroupId>(groupIdString, "group id");
 
   auto const& localUser = _session->accessors().localUserAccessor.get();
   TC_AWAIT(Groups::Manager::updateMembers(
