@@ -12,6 +12,8 @@ add_executable(test_functional
   test_groups.cpp
   test_provisional.cpp
   test_encryption_session.cpp
+
+  CheckDecrypt.cpp
 )
 
 target_link_libraries(test_functional

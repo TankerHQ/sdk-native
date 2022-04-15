@@ -20,6 +20,7 @@
     }                                             \
     catch (::Tanker::Errors::Exception const& e)  \
     {                                             \
+      CAPTURE(e.what());                          \
       CHECK(e.errorCode() == code);               \
     }                                             \
   } while (0)
@@ -34,8 +35,8 @@
     }                                                                  \
     catch (::Tanker::Errors::Exception const& e)                       \
     {                                                                  \
-      CHECK(e.errorCode() == code);                                    \
       CAPTURE(e.what());                                               \
+      CHECK(e.errorCode() == code);                                    \
       CHECK(std::string(e.what()).find(message) != std::string::npos); \
     }                                                                  \
   } while (0)
@@ -50,6 +51,7 @@
     }                                                                      \
     catch (::Tanker::Errors::Exception const& e)                           \
     {                                                                      \
+      CAPTURE(e.what());                                                   \
       CHECK(e.errorCode() == code);                                        \
       CHECK(e.errorCondition() == condition);                              \
     }                                                                      \

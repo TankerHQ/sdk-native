@@ -57,7 +57,7 @@ tc::cotask<InternalGroup> Accessor::getInternalGroup(
           [&](InternalGroup const& group) { return group; },
           [&](ExternalGroup const& group) -> InternalGroup {
             throw formatEx(Errors::Errc::InvalidArgument,
-                           "user is not part of group {:s}",
+                           "user is not a member of this group {:s}",
                            groupId);
           },
       },

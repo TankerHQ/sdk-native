@@ -26,7 +26,7 @@ tc::cotask<void> createTrustchain()
 {
   assert(!testState.trustchain);
   testState.trustchain =
-      TC_AWAIT(TrustchainFixture::trustchainFactory().createTrustchain(
+      TC_AWAIT(TrustchainFixtureSimple::trustchainFactory().createTrustchain(
           "trustchain_functional_native"));
 
   // If you add something here, you might need to delete it in
@@ -63,45 +63,34 @@ tc::cotask<void> deleteTrustchain()
 }
 }
 
-TrustchainFixture::TrustchainFixture()
-  : trustchain(*testState.trustchain),
-    alice(*testState.alice),
-    bob(*testState.bob),
-    charlie(*testState.charlie),
-    aliceDevice(*testState.aliceDevice),
-    aliceDevice2(*testState.aliceDevice2),
-    bobDevice(*testState.bobDevice),
-    charlieDevice(*testState.charlieDevice),
-    aliceSession(testState.aliceSession),
-    aliceSession2(testState.aliceSession2),
-    bobSession(testState.bobSession),
-    charlieSession(testState.charlieSession)
+TrustchainFixtureSimple::TrustchainFixtureSimple()
+  : trustchain(*testState.trustchain)
 {
 }
 
-TrustchainFactory& TrustchainFixture::trustchainFactory()
+TrustchainFactory& TrustchainFixtureSimple::trustchainFactory()
 {
   return *_trustchainFactory;
 }
 
-Trustchain& TrustchainFixture::getTrustchain()
+Trustchain& TrustchainFixtureSimple::getTrustchain()
 {
   return *testState.trustchain;
 }
 
-tc::cotask<void> TrustchainFixture::setUp()
+tc::cotask<void> TrustchainFixtureSimple::setUp()
 {
   _trustchainFactory = TC_AWAIT(TrustchainFactory::create());
   TC_AWAIT(createTrustchain());
 }
 
-tc::cotask<void> TrustchainFixture::tearDown()
+tc::cotask<void> TrustchainFixtureSimple::tearDown()
 {
   TC_AWAIT(deleteTrustchain());
   _trustchainFactory.reset();
 }
 
-tc::cotask<VerificationKey> TrustchainFixture::registerUser(
+tc::cotask<VerificationKey> TrustchainFixtureSimple::registerUser(
     Functional::User& user)
 {
   auto device0 = user.makeDevice();
@@ -115,53 +104,13 @@ tc::cotask<VerificationKey> TrustchainFixture::registerUser(
   TC_RETURN(verificationKey);
 }
 
-tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
-    Email const& email)
-{
-  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
-                                                trustchain.id,
-                                                trustchain.authToken,
-                                                email)));
-}
-
-tc::cotask<VerificationCode> TrustchainFixture::getVerificationCode(
-    PhoneNumber const& phoneNumber)
-{
-  TC_RETURN(TC_AWAIT(Admin::getVerificationCode(TestConstants::trustchaindUrl(),
-                                                trustchain.id,
-                                                trustchain.authToken,
-                                                phoneNumber)));
-}
-
-tc::cotask<void> TrustchainFixture::attachProvisionalIdentity(
+tc::cotask<void> TrustchainFixtureSimple::attachProvisionalIdentity(
     AsyncCore& session, AppProvisionalUser const& prov)
 {
-  auto const result =
-      TC_AWAIT(session.attachProvisionalIdentity(prov.secretIdentity));
-  if (result.status == Status::Ready)
-    TC_RETURN();
-
-  if (result.status != Status::IdentityVerificationNeeded)
-    throw std::runtime_error("attachProvisionalIdentity: unexpected status!");
-
-  auto const verif = TC_AWAIT(boost::variant2::visit(
-      overloaded{
-          [&](Email const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN(
-                (Verification::ByEmail{v, VerificationCode{verificationCode}}));
-          },
-          [&](PhoneNumber const& v) -> tc::cotask<Verification::Verification> {
-            auto const verificationCode = TC_AWAIT(getVerificationCode(v));
-            TC_RETURN((Verification::ByPhoneNumber{
-                v, VerificationCode{verificationCode}}));
-          },
-      },
-      prov.value));
-  TC_AWAIT(session.verifyProvisionalIdentity(verif));
+  TC_AWAIT(trustchain.attachProvisionalIdentity(session, prov));
 }
 
-Trustchain TrustchainFixture::createOtherTrustchain()
+Trustchain TrustchainFixtureSimple::createOtherTrustchain()
 {
   Tanker::Trustchain::TrustchainId trustchainId;
   Crypto::randomFill(trustchainId);
@@ -170,19 +119,34 @@ Trustchain TrustchainFixture::createOtherTrustchain()
       "tcp://other.trustchain:1234", trustchainId, "none", keyPair.privateKey);
 }
 
-tc::cotask<void> TrustchainFixture::enableOidc()
+tc::cotask<void> TrustchainFixtureSimple::enableOidc()
 {
   TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));
 }
 
-tc::cotask<void> TrustchainFixture::enablePreverifiedMethods()
+tc::cotask<void> TrustchainFixtureSimple::enablePreverifiedMethods()
 {
   TC_AWAIT(trustchainFactory().enablePreverifiedMethods(trustchain.id));
 }
 
-tc::cotask<void> TrustchainFixture::enableUserEnrollment()
+tc::cotask<void> TrustchainFixtureSimple::enableUserEnrollment()
 {
   TC_AWAIT(trustchainFactory().setUserEnrollmentEnabled(trustchain.id));
+}
+
+TrustchainFixture::TrustchainFixture()
+  : alice(*testState.alice),
+    bob(*testState.bob),
+    charlie(*testState.charlie),
+    aliceDevice(*testState.aliceDevice),
+    aliceDevice2(*testState.aliceDevice2),
+    bobDevice(*testState.bobDevice),
+    charlieDevice(*testState.charlieDevice),
+    aliceSession(testState.aliceSession),
+    aliceSession2(testState.aliceSession2),
+    bobSession(testState.bobSession),
+    charlieSession(testState.charlieSession)
+{
 }
 }
 }

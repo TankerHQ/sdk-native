@@ -10,14 +10,11 @@ namespace Tanker
 {
 namespace Functional
 {
-struct TrustchainFixture
+struct TrustchainFixtureSimple
 {
   Trustchain& trustchain;
-  User &alice, &bob, &charlie;
-  Device &aliceDevice, &aliceDevice2, &bobDevice, &charlieDevice;
-  AsyncCorePtr &aliceSession, &aliceSession2, &bobSession, &charlieSession;
 
-  TrustchainFixture();
+  TrustchainFixtureSimple();
   static TrustchainFactory& trustchainFactory();
 
   static Trustchain& getTrustchain();
@@ -25,9 +22,11 @@ struct TrustchainFixture
   static tc::cotask<void> setUp();
   static tc::cotask<void> tearDown();
 
-  tc::cotask<VerificationCode> getVerificationCode(Email const& email);
-  tc::cotask<VerificationCode> getVerificationCode(
-      PhoneNumber const& phoneNumber);
+  template <typename T>
+  tc::cotask<VerificationCode> getVerificationCode(T const& target)
+  {
+    TC_RETURN(TC_AWAIT(trustchain.getVerificationCode(target)));
+  }
   tc::cotask<void> attachProvisionalIdentity(AsyncCore& session,
                                              AppProvisionalUser const& prov);
   tc::cotask<VerificationKey> registerUser(Functional::User& user);
@@ -36,6 +35,15 @@ struct TrustchainFixture
   tc::cotask<void> enableOidc();
   tc::cotask<void> enablePreverifiedMethods();
   tc::cotask<void> enableUserEnrollment();
+};
+
+struct TrustchainFixture : TrustchainFixtureSimple
+{
+  User &alice, &bob, &charlie;
+  Device &aliceDevice, &aliceDevice2, &bobDevice, &charlieDevice;
+  AsyncCorePtr &aliceSession, &aliceSession2, &bobSession, &charlieSession;
+
+  TrustchainFixture();
 };
 }
 }
