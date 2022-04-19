@@ -496,6 +496,7 @@ bridge/bump-native-compat-tests:
   trigger:
     project: TankerHQ/compatibility-tests
     strategy: depend
+  allow_failure: true
 
 bridge/ios/deploy:
   extends:
