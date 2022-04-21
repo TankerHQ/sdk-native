@@ -181,7 +181,7 @@ private:
   void nukeAndStop();
 
   template <typename F>
-  auto runResumable(F&& f, bool stopCheck = true);
+  auto runResumable(F&& f);
   template <typename F>
   std::invoke_result_t<F> runResumableImpl(F f);
 };

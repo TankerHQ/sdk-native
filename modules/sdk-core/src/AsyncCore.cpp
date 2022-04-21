@@ -42,13 +42,13 @@ auto makeEventHandler(tc::lazy::task_canceler& taskCanceler,
 }
 
 template <typename F>
-auto AsyncCore::runResumable(F&& f, bool stopCheck)
+auto AsyncCore::runResumable(F&& f)
 {
   using Func = std::decay_t<F>;
   using ReturnValue =
       typename tc::detail::task_return_type<std::invoke_result_t<F>>::type;
 
-  if (_stopping && !stopCheck)
+  if (_stopping)
     tc::make_exceptional_future<ReturnValue>(std::make_exception_ptr(
         Errors::formatEx(Errors::Errc::PreconditionFailed,
                          "the Tanker session is closing")));
