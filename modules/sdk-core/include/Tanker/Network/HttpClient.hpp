@@ -15,6 +15,7 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include <tconcurrent/coroutine.hpp>
+#include <tconcurrent/semaphore.hpp>
 
 #include <chrono>
 #include <string_view>
@@ -40,6 +41,8 @@ std::error_code make_error_code(HttpError const& e);
 [[noreturn]] void outcome_throw_as_system_error_with_payload(HttpError e);
 
 using HttpResult = boost::outcome_v2::result<nlohmann::json, HttpError>;
+
+static inline constexpr auto ConcurrentRequestCount = 4;
 
 class HttpClient
 {
@@ -77,6 +80,7 @@ private:
   std::string _instanceId;
   std::string _accessToken;
   Backend* _backend;
+  tc::semaphore _semaphore{ConcurrentRequestCount};
 
   Trustchain::DeviceId _deviceId;
   Crypto::SignatureKeyPair _deviceSignatureKeyPair;

@@ -368,6 +368,8 @@ tc::cotask<HttpResult> HttpClient::authenticatedFetch(HttpRequest req)
 
 tc::cotask<HttpResult> HttpClient::fetch(HttpRequest req)
 {
+  auto const lock = TC_AWAIT(_semaphore.get_scope_lock());
+
   FUNC_TIMER(Net);
   TINFO("{} {}", httpMethodToString(req.method), req.url);
   auto res = TC_AWAIT(_backend->fetch(req));
