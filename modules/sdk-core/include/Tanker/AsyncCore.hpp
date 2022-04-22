@@ -161,6 +161,8 @@ public:
 private:
   Core _core;
 
+  // We need this variable to make sure no one calls stop() and another
+  // operation at the same time on different threads.
   std::atomic<bool> _stopping{false};
 
   // this signal is special compared to the other two because we need to do
