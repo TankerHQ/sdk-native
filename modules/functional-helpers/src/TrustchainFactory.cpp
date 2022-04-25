@@ -59,6 +59,28 @@ tc::cotask<void> TrustchainFactory::enableOidc(
   TC_AWAIT(_admin->update(id, options));
 }
 
+std::string to_string(PSCProvider provider)
+{
+  switch (provider)
+  {
+  case PSCProvider::PSC_BAS:
+    return "pro-sante-bas";
+  case PSCProvider::PSC_BAS_NO_EXPIRY:
+    return "pro-sante-bas-no-expiry";
+  default:
+    throw std::logic_error("unknown PSC provider");
+  }
+}
+
+tc::cotask<void> TrustchainFactory::enablePSCOidc(
+    Tanker::Trustchain::TrustchainId const& id, PSCProvider const& provider)
+{
+  Admin::AppUpdateOptions options{};
+  options.oidcClientId = "doctolib-dev";
+  options.oidcProvider = to_string(provider);
+  TC_AWAIT(_admin->update(id, options));
+}
+
 tc::cotask<void> TrustchainFactory::enablePreverifiedMethods(
     Tanker::Trustchain::TrustchainId const& id)
 {

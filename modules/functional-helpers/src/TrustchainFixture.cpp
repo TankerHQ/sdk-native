@@ -124,6 +124,12 @@ tc::cotask<void> TrustchainFixtureSimple::enableOidc()
   TC_AWAIT(trustchainFactory().enableOidc(trustchain.id));
 }
 
+tc::cotask<void> TrustchainFixtureSimple::enablePSCOidc(
+    PSCProvider const& provider)
+{
+  TC_AWAIT(trustchainFactory().enablePSCOidc(trustchain.id, provider));
+}
+
 tc::cotask<void> TrustchainFixtureSimple::enablePreverifiedMethods()
 {
   TC_AWAIT(trustchainFactory().enablePreverifiedMethods(trustchain.id));
