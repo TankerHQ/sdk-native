@@ -1,10 +1,12 @@
 #include <ctanker/encryptionsession.h>
 
 #include <Tanker/AsyncCore.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 
-#include "Stream.hpp"
 #include <ctanker/async/private/CFuture.hpp>
 #include <ctanker/private/Utils.hpp>
+
+#include "Stream.hpp"
 
 using namespace Tanker;
 using namespace Tanker::Errors;

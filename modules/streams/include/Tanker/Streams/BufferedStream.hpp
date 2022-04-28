@@ -27,6 +27,10 @@ protected:
   // sets the state to BufferedOutput
   gsl::span<std::uint8_t> prepareWrite(std::int64_t toWrite);
 
+  bool isInputEndOfStream();
+  void endOutputStream();
+  void shrinkOutput(std::uint64_t n);
+
 private:
   enum class State
   {
@@ -42,6 +46,7 @@ private:
   std::vector<std::uint8_t> _input;
   std::vector<std::uint8_t> _output;
   State _state{State::NoOutput};
+  bool _processingComplete = false;
   std::int64_t _currentPosition{};
 };
 }

@@ -22,7 +22,9 @@
 #include <Tanker/Revocation.hpp>
 #include <Tanker/Session.hpp>
 #include <Tanker/Share.hpp>
-#include <Tanker/Streams/DecryptionStream.hpp>
+#include <Tanker/Streams/DecryptionStreamV4.hpp>
+#include <Tanker/Streams/DecryptionStreamV8.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 #include <Tanker/Streams/PeekableInputSource.hpp>
 #include <Tanker/Tracer/ScopeTimer.hpp>
 #include <Tanker/Trustchain/Actions/SessionCertificate.hpp>
@@ -643,15 +645,15 @@ tc::cotask<std::vector<uint8_t>> Core::encrypt(
   TC_RETURN(std::move(encryptedData));
 }
 
-tc::cotask<void> Core::decrypt(gsl::span<uint8_t> decryptedData,
-                               gsl::span<uint8_t const> encryptedData)
+tc::cotask<uint64_t> Core::decrypt(gsl::span<uint8_t> decryptedData,
+                                   gsl::span<uint8_t const> encryptedData)
 {
   assertStatus(Status::Ready, "decrypt");
   auto const resourceId = Encryptor::extractResourceId(encryptedData);
 
   auto const key = TC_AWAIT(getResourceKey(resourceId));
 
-  TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData));
+  TC_RETURN(TC_AWAIT(Encryptor::decrypt(decryptedData, key, encryptedData)));
 }
 
 tc::cotask<std::vector<uint8_t>> Core::decrypt(
@@ -659,7 +661,8 @@ tc::cotask<std::vector<uint8_t>> Core::decrypt(
 {
   assertStatus(Status::Ready, "decrypt");
   std::vector<uint8_t> decryptedData(Encryptor::decryptedSize(encryptedData));
-  TC_AWAIT(decrypt(decryptedData, encryptedData));
+  auto const clearSize = TC_AWAIT(decrypt(decryptedData, encryptedData));
+  decryptedData.resize(clearSize);
 
   TC_RETURN(std::move(decryptedData));
 }
@@ -908,7 +911,7 @@ Core::makeEncryptionStream(
     ShareWithSelf shareWithSelf)
 {
   assertStatus(Status::Ready, "makeEncryptionStream");
-  Streams::EncryptionStream encryptor(std::move(cb));
+  Streams::EncryptionStreamV4 encryptor(std::move(cb));
   auto const resourceId = encryptor.resourceId();
 
   auto spublicIdentitiesWithUs = spublicIdentities;
@@ -964,26 +967,33 @@ Core::makeDecryptionStream(Streams::InputSource cb)
   auto const version = TC_AWAIT(peekableSource.peek(1));
   if (version.empty())
     throw formatEx(Errc::InvalidArgument, "empty stream");
-  if (version[0] == 4)
-  {
-    auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
-        -> tc::cotask<Crypto::SymmetricKey> {
-      TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
-    };
 
-    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStream::create(
+  auto resourceKeyFinder = [this](Trustchain::ResourceId const& resourceId)
+      -> tc::cotask<Crypto::SymmetricKey> {
+    TC_RETURN(TC_AWAIT(this->getResourceKey(resourceId)));
+  };
+  switch (version[0])
+  {
+  case 4: {
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV4::create(
         std::move(peekableSource), std::move(resourceKeyFinder)));
     auto const resourceId = streamDecryptor.resourceId();
     TC_RETURN(std::make_tuple(std::move(streamDecryptor), resourceId));
   }
-  else
-  {
+  case 8: {
+    auto streamDecryptor = TC_AWAIT(Streams::DecryptionStreamV8::create(
+        std::move(peekableSource), std::move(resourceKeyFinder)));
+    TC_RETURN(std::make_tuple(std::move(streamDecryptor),
+                              streamDecryptor.resourceId()));
+  }
+  default: {
     auto encryptedData =
         TC_AWAIT(Streams::readAllStream(std::move(peekableSource)));
     auto const resourceId = Encryptor::extractResourceId(encryptedData);
     TC_RETURN(std::make_tuple(
         Streams::bufferToInputSource(TC_AWAIT(decrypt(encryptedData))),
         resourceId));
+  }
   }
   throw AssertionError("makeDecryptionStream: unreachable code");
 }

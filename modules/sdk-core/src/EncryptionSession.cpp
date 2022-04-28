@@ -5,7 +5,7 @@
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
 #include <Tanker/Errors/Exception.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
+#include <Tanker/Streams/EncryptionStreamV4.hpp>
 
 namespace Tanker
 {
@@ -69,7 +69,7 @@ std::tuple<Streams::InputSource, Trustchain::ResourceId>
 EncryptionSession::makeEncryptionStream(Streams::InputSource cb)
 {
   return std::make_tuple(
-      Streams::EncryptionStream(std::move(cb), _resourceId, _sessionKey),
+      Streams::EncryptionStreamV4(std::move(cb), _resourceId, _sessionKey),
       _resourceId);
 }
 }

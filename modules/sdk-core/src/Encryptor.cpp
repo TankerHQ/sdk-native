@@ -5,6 +5,9 @@
 #include <Tanker/Encryptor/v3.hpp>
 #include <Tanker/Encryptor/v4.hpp>
 #include <Tanker/Encryptor/v5.hpp>
+#include <Tanker/Encryptor/v6.hpp>
+#include <Tanker/Encryptor/v7.hpp>
+#include <Tanker/Encryptor/v8.hpp>
 #include <Tanker/Errors/Errc.hpp>
 #include <Tanker/Errors/Exception.hpp>
 #include <Tanker/Serialization/Errors/Errc.hpp>
@@ -34,6 +37,12 @@ decltype(auto) performEncryptorAction(std::uint32_t version, Callable&& cb)
     return std::forward<Callable>(cb)(EncryptorV4{});
   case EncryptorV5::version():
     return std::forward<Callable>(cb)(EncryptorV5{});
+  case EncryptorV6::version():
+    return std::forward<Callable>(cb)(EncryptorV6{});
+  case EncryptorV7::version():
+    return std::forward<Callable>(cb)(EncryptorV7{});
+  case EncryptorV8::version():
+    return std::forward<Callable>(cb)(EncryptorV8{});
   default:
     throw Errors::Exception(make_error_code(Errc::InvalidArgument),
                             "invalid encrypted data");
@@ -74,9 +83,9 @@ tc::cotask<EncryptionMetadata> encrypt(gsl::span<uint8_t> encryptedData,
   TC_RETURN(TC_AWAIT(EncryptorV3::encrypt(encryptedData, clearData)));
 }
 
-tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
-                         Crypto::SymmetricKey const& key,
-                         gsl::span<uint8_t const> encryptedData)
+tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                             Crypto::SymmetricKey const& key,
+                             gsl::span<uint8_t const> encryptedData)
 {
   if (encryptedData.size() < 1)
     throw Errors::Exception(Serialization::Errc::TruncatedInput,
@@ -84,9 +93,11 @@ tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
 
   auto const version = encryptedData[0];
 
-  return performEncryptorAction(version, [&](auto encryptor) {
-    return encryptor.decrypt(decryptedData, key, encryptedData);
-  });
+  TC_RETURN(TC_AWAIT(performEncryptorAction(
+      version, [&](auto encryptor) -> tc::cotask<uint64_t> {
+        TC_RETURN(
+            TC_AWAIT(encryptor.decrypt(decryptedData, key, encryptedData)));
+      })));
 }
 
 ResourceId extractResourceId(gsl::span<uint8_t const> encryptedData)

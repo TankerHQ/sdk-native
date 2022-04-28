@@ -16,7 +16,7 @@ namespace Streams
 class Header
 {
 public:
-  static constexpr std::uint32_t currentVersion = 4u;
+  static constexpr auto versions = {4u, 8u};
   static constexpr std::uint32_t versionSize = 1u;
   static constexpr std::uint32_t defaultEncryptedChunkSize = 1024 * 1024;
   static constexpr std::uint32_t serializedSize =
@@ -24,7 +24,8 @@ public:
       Crypto::AeadIv::arraySize;
 
   Header() = default;
-  Header(std::uint32_t encryptedChunkSize,
+  Header(std::uint32_t version,
+         std::uint32_t encryptedChunkSize,
          Trustchain::ResourceId const& resourceId,
          Crypto::AeadIv const& seed);
 

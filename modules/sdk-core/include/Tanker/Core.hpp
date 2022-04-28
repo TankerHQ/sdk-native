@@ -7,7 +7,6 @@
 #include <Tanker/Oidc/NonceManager.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
 #include <Tanker/SdkInfo.hpp>
-#include <Tanker/Streams/EncryptionStream.hpp>
 #include <Tanker/Streams/InputSource.hpp>
 #include <Tanker/Trustchain/DeviceId.hpp>
 #include <Tanker/Types/OidcNonce.hpp>
@@ -86,8 +85,8 @@ public:
       std::vector<SGroupId> const& sgroupIds,
       ShareWithSelf shareWithSelf);
 
-  tc::cotask<void> decrypt(gsl::span<uint8_t> decryptedData,
-                           gsl::span<uint8_t const> encryptedData);
+  tc::cotask<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                               gsl::span<uint8_t const> encryptedData);
 
   tc::cotask<std::vector<uint8_t>> decrypt(
       gsl::span<uint8_t const> encryptedData);

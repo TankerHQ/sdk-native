@@ -636,13 +636,17 @@ tanker_future_t* tanker_decrypt(tanker_t* ctanker,
                                 uint64_t data_size)
 {
   auto tanker = reinterpret_cast<AsyncCore*>(ctanker);
-  return makeFuture(tc::sync([&] {
-                      auto encryptedSpan = gsl::make_span(data, data_size);
-                      auto decryptedSpan = gsl::make_span(
-                          decrypted_data,
-                          AsyncCore::decryptedSize(encryptedSpan).get());
-                      return tanker->decrypt(decryptedSpan, encryptedSpan);
-                    }).unwrap());
+  return makeFuture(
+      tc::sync([&] {
+        auto encryptedSpan = gsl::make_span(data, data_size);
+        auto decryptedSpan = gsl::make_span(
+            decrypted_data, AsyncCore::decryptedSize(encryptedSpan).get());
+        return tanker->decrypt(decryptedSpan, encryptedSpan);
+      })
+          .unwrap()
+          .and_then(tc::get_synchronous_executor(), [](auto clearSize) {
+            return reinterpret_cast<void*>(clearSize);
+          }));
 }
 
 tanker_future_t* tanker_share(tanker_t* ctanker,

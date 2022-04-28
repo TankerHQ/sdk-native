@@ -27,7 +27,7 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::copyBufferedOutput(
   _currentPosition += toRead;
   if (_currentPosition == static_cast<std::int64_t>(_output.size()))
   {
-    if (_cb)
+    if (!_processingComplete)
       _state = State::NoOutput;
     else
       _state = State::EndOfStream;
@@ -39,6 +39,9 @@ template <typename Derived>
 tc::cotask<gsl::span<std::uint8_t const>>
 BufferedStream<Derived>::readInputSource(std::int64_t n)
 {
+  if (!_cb)
+    TC_RETURN(gsl::span<std::uint8_t const>());
+
   _input.resize(n);
   auto const totalRead = TC_AWAIT(readStream(_input, _cb));
   if (totalRead < n)
@@ -72,7 +75,14 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
       throw Exception(make_error_code(Errc::IOError),
                       "buffered stream is in an error state");
     case State::NoOutput:
-      TC_AWAIT(static_cast<Derived&>(*this).processInput());
+      _output.clear();
+      while (_output.empty() && !_processingComplete)
+        TC_AWAIT(static_cast<Derived&>(*this).processInput());
+      if (_output.empty())
+      {
+        _state = State::EndOfStream;
+        TC_RETURN(0);
+      }
       _state = State::BufferedOutput;
       _currentPosition = 0;
       // fallthrough
@@ -87,6 +97,29 @@ tc::cotask<std::int64_t> BufferedStream<Derived>::operator()(
     throw;
   }
   throw AssertionError("unknown state");
+}
+
+template <typename Derived>
+bool BufferedStream<Derived>::isInputEndOfStream()
+{
+  return !_cb;
+}
+
+template <typename Derived>
+void BufferedStream<Derived>::endOutputStream()
+{
+  _processingComplete = true;
+  _cb = nullptr;
+}
+
+template <typename Derived>
+void BufferedStream<Derived>::shrinkOutput(std::uint64_t n)
+{
+  if (n > _output.size())
+    throw Errors::AssertionError(
+        "attempting to enlarge buffer with shrinkOutput()");
+
+  _output.resize(n);
 }
 }
 }

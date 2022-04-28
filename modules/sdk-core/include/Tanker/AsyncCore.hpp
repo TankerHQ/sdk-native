@@ -86,8 +86,8 @@ public:
       std::vector<SPublicIdentity> const& publicIdentities = {},
       std::vector<SGroupId> const& groupIds = {},
       Core::ShareWithSelf shareWithSelf = Core::ShareWithSelf::Yes);
-  tc::future<void> decrypt(gsl::span<uint8_t> decryptedData,
-                           gsl::span<uint8_t const> encryptedData);
+  tc::future<uint64_t> decrypt(gsl::span<uint8_t> decryptedData,
+                               gsl::span<uint8_t const> encryptedData);
 
   tc::future<std::vector<uint8_t>> encrypt(
       gsl::span<uint8_t const> clearData,
