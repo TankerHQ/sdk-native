@@ -12,6 +12,8 @@ namespace Functional
 {
 struct TrustchainFixtureSimple
 {
+  using PSCProvider = Functional::PSCProvider;
+
   Trustchain& trustchain;
 
   TrustchainFixtureSimple();
@@ -33,6 +35,8 @@ struct TrustchainFixtureSimple
   Trustchain createOtherTrustchain();
 
   tc::cotask<void> enableOidc();
+
+  tc::cotask<void> enablePSCOidc(Functional::PSCProvider const&);
   tc::cotask<void> enablePreverifiedMethods();
   tc::cotask<void> enableUserEnrollment();
 };

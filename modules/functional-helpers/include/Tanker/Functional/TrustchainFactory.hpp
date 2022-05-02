@@ -11,6 +11,15 @@ namespace Tanker
 {
 namespace Functional
 {
+
+enum class PSCProvider
+{
+  PSC_BAS,
+  PSC_BAS_NO_EXPIRY,
+};
+
+std::string to_string(PSCProvider provider);
+
 class TrustchainFactory
 {
 public:
@@ -26,6 +35,8 @@ public:
   tc::cotask<Trustchain::Ptr> createTrustchain(std::string const& name);
   tc::cotask<Trustchain::Ptr> useTrustchain(std::string configPath);
   tc::cotask<void> enableOidc(Tanker::Trustchain::TrustchainId const& id);
+  tc::cotask<void> enablePSCOidc(Tanker::Trustchain::TrustchainId const& id,
+                                 PSCProvider const& provider);
   tc::cotask<void> enablePreverifiedMethods(
       Tanker::Trustchain::TrustchainId const& id);
   tc::cotask<void> setUserEnrollmentEnabled(

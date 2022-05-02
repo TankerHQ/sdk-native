@@ -59,6 +59,18 @@ tc::cotask<Tanker::Status> expectVerification(
   TC_RETURN(session->status());
 }
 
+OidcIdToken alterOidcTokenSignature(OidcIdToken const& idToken)
+{
+  namespace ba = boost::algorithm;
+  using b64 = mgs::base64url_nopad;
+
+  std::vector<std::string> res;
+  auto itSig = ba::split(res, idToken, ba::is_any_of(".")).rbegin();
+  auto alterSig = b64::decode(*itSig);
+  ++alterSig[5];
+  *itSig = b64::encode(alterSig);
+  return OidcIdToken{ba::join(res, ".")};
+}
 }
 
 TEST_CASE_METHOD(
@@ -933,8 +945,6 @@ TEST_CASE_METHOD(TrustchainFixture,
 
 TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
 {
-  TC_AWAIT(enableOidc());
-
   auto martine = trustchain.makeUser();
   auto martineDevice = martine.makeDevice();
   auto martineLaptop = martineDevice.createCore();
@@ -944,23 +954,14 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
   auto martineDevice2 = martine.makeDevice();
   auto martinePhone = martineDevice2.createCore();
 
-  auto oidcConfig = TestConstants::oidcConfig();
-
-  OidcIdToken martineIdToken, kevinIdToken;
+  SECTION("with Google Oidc provider")
   {
-    martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
-    kevinIdToken = TC_AWAIT(getOidcToken(oidcConfig, "kevin"));
-  }
+    TC_AWAIT(enableOidc());
+    auto oidcConfig = TestConstants::oidcConfig();
+    auto const martineIdToken = TC_AWAIT(getOidcToken(oidcConfig, "martine"));
+    auto const kevinIdToken = TC_AWAIT(getOidcToken(oidcConfig, "kevin"));
 
-  SECTION("registers with an oidc id token")
-  {
-    auto const testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
-    martineLaptop->setOidcTestNonce(testNonce);
-    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(martineIdToken)));
-  }
-
-  SECTION("")
-  {
+    SECTION("registers with an oidc id token")
     {
       auto const testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
       martineLaptop->setOidcTestNonce(testNonce);
@@ -968,77 +969,126 @@ TEST_CASE_METHOD(TrustchainFixture, "Verification through oidc")
           TC_AWAIT(martineLaptop->registerIdentity(martineIdToken)));
     }
 
-    SECTION("registers and verifies identity with an oidc id token")
+    SECTION("")
     {
-      auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
-      martinePhone->setOidcTestNonce(testNonce);
-      REQUIRE_NOTHROW(TC_AWAIT(
-          expectVerification(martinePhone, martine.identity, martineIdToken)));
-    }
-    SECTION("fails to verify a token with incorrect signature")
-    {
-      namespace ba = boost::algorithm;
-      using b64 = mgs::base64url_nopad;
+      auto const testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
+      martineLaptop->setOidcTestNonce(testNonce);
+      TC_AWAIT(martineLaptop->registerIdentity(martineIdToken));
 
-      std::vector<std::string> res;
-      auto itSig = ba::split(res, martineIdToken, ba::is_any_of(".")).rbegin();
-      auto alterSig = b64::decode(*itSig);
-      ++alterSig[5];
-      *itSig = b64::encode(alterSig);
+      SECTION("verifies identity with an oidc id token")
+      {
+        auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+        martinePhone->setOidcTestNonce(testNonce);
+        REQUIRE_NOTHROW(TC_AWAIT(expectVerification(
+            martinePhone, martine.identity, martineIdToken)));
+      }
 
-      auto const alteredToken = OidcIdToken{ba::join(res, ".")};
-      auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
-      martinePhone->setOidcTestNonce(testNonce);
-      TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(
-              expectVerification(martinePhone, martine.identity, alteredToken)),
-          Errc::InvalidVerification);
+      SECTION("fails to verify a token with incorrect signature")
+      {
+        auto const alteredToken = alterOidcTokenSignature(martineIdToken);
+
+        auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+        martinePhone->setOidcTestNonce(testNonce);
+        TANKER_CHECK_THROWS_WITH_CODE(
+            TC_AWAIT(expectVerification(
+                martinePhone, martine.identity, alteredToken)),
+            Errc::InvalidVerification);
+      }
+
+      SECTION("fails to verify a valid token for the wrong user")
+      {
+        auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+        martinePhone->setOidcTestNonce(testNonce);
+        TANKER_CHECK_THROWS_WITH_CODE(
+            TC_AWAIT(expectVerification(
+                martinePhone, martine.identity, kevinIdToken)),
+            Errc::InvalidVerification);
+      }
     }
-    SECTION("fails to verify a valid token for the wrong user")
+
+    SECTION("")
     {
-      auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
-      martinePhone->setOidcTestNonce(testNonce);
-      TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(
-              expectVerification(martinePhone, martine.identity, kevinIdToken)),
-          Errc::InvalidVerification);
+      auto const pass = Passphrase{"******"};
+      REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
+
+      SECTION("updates and verifies with an oidc token")
+      {
+        auto testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
+        martineLaptop->setOidcTestNonce(testNonce);
+        REQUIRE_NOTHROW(
+            TC_AWAIT(martineLaptop->setVerificationMethod(martineIdToken)));
+        REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) ==
+                Status::IdentityVerificationNeeded);
+        testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+        martinePhone->setOidcTestNonce(testNonce);
+        REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
+        REQUIRE_NOTHROW(checkVerificationMethods(
+            TC_AWAIT(martinePhone->getVerificationMethods()),
+            {Passphrase{}, OidcIdToken{}}));
+      }
+      SECTION("fails to attach a provisional identity using OIDC")
+      {
+        auto const email = makeEmail();
+        auto const martineProvisionalIdentity =
+            Identity::createProvisionalIdentity(
+                mgs::base64::encode(trustchain.id), email);
+        auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
+            SSecretProvisionalIdentity{martineProvisionalIdentity}));
+        REQUIRE(result.status == Tanker::Status::IdentityVerificationNeeded);
+        REQUIRE(result.verificationMethod == email);
+        auto const testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
+        martinePhone->setOidcTestNonce(testNonce);
+        TANKER_CHECK_THROWS_WITH_CODE(
+            TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken)),
+            Errc::InvalidArgument);
+      }
     }
   }
-  SECTION("")
-  {
-    auto const pass = Passphrase{"******"};
-    REQUIRE_NOTHROW(TC_AWAIT(martineLaptop->registerIdentity(pass)));
 
-    SECTION("updates and verifies with an oidc token")
+  SECTION("with Pro Sante Connect")
+  {
+    auto const pscIdToken = OidcIdToken{
+        "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJjaDNLZkFqOXZhX2tUZ2"
+        "xGY01tTWlQVXZaSkNyU2l0NXZyeGVfZVgzbWpNIn0."
+        "eyJleHAiOjE2NTA4OTI4MTAsImlhdCI6MTY1MDg5Mjc1MCwiYXV0aF90aW1lIjoxNjUwOD"
+        "kyNjQ4LCJqdGkiOiJmMWRmZTlmNy1kZmE5LTQ1NmYtODM5Mi1mYzAzNTZjN2I0OTAiLCJp"
+        "c3MiOiJodHRwczovL2F1dGguYmFzLmVzdy5lc2FudGUuZ291di5mci9hdXRoL3JlYWxtcy"
+        "9lc2FudGUtd2FsbGV0IiwiYXVkIjoiZG9jdG9saWItZGV2Iiwic3ViIjoiZjo1NTBkYzFj"
+        "OC1kOTdiLTRiMWUtYWM4Yy04ZWI0NDcxY2Y5ZGQ6QU5TMjAyMjAzMzEwOTAzNDYiLCJ0eX"
+        "AiOiJJRCIsImF6cCI6ImRvY3RvbGliLWRldiIsIm5vbmNlIjoib2w0YmtycDRpWkFTc2tE"
+        "Y1ZneG5RWnZhcjRUMi96Y21DR0VJZFB4NC9CWT0iLCJzZXNzaW9uX3N0YXRlIjoiZDczYj"
+        "RkZjUtNzkzMS00OTg0LWEwNDctNjQxNzA4MDE2MTA1IiwiYXRfaGFzaCI6IktEcm1UVElQ"
+        "OWJhWExqSC1PalJVNEEiLCJzaWQiOiJkNzNiNGRmNS03OTMxLTQ5ODQtYTA0Ny02NDE3MD"
+        "gwMTYxMDUiLCJhY3IiOiJlaWRhczEiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZl"
+        "cnJlZF91c2VybmFtZSI6IkFOUzIwMjIwMzMxMDkwMzQ2In0.ZNrxshN13FBHWhMvzeVy_"
+        "O7e5TUd-JkDcvoOM_pvwHz8Y_"
+        "lDkR1q1fcbFv6ktSlfklli01nhcR8OGvamSBumTc9VaODt1R2kQilR8EUNnE0plUsomx6r"
+        "nlHHzCj-UpiKPfGCk_ds2xPzKNp98CPlcSrOg8eyAjA2qWuGe4B89nNjm_"
+        "88g7tr2BqJ8zKcfEqV1dxVprAZ-7wgBxCxicQucb4hHlRIOWi5CPI35eEVKL7HyUqN-"
+        "nbMmsIBekPU27zjRwYPqjH63u3Le0YCntrZBwWzsW0g33B-"
+        "GPSo9GIeyFtoCm4CuybSiMhwEBriltDPJbCkPdmOQR37U1keTO1hAw"};
+
+    SECTION("rejects expired token on pro-sante-bas")
     {
-      auto testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
-      martineLaptop->setOidcTestNonce(testNonce);
-      REQUIRE_NOTHROW(
-          TC_AWAIT(martineLaptop->setVerificationMethod(martineIdToken)));
-      REQUIRE(TC_AWAIT(martinePhone->start(martine.identity)) ==
-              Status::IdentityVerificationNeeded);
-      testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+      TC_AWAIT(enablePSCOidc(PSCProvider::PSC_BAS));
+
+      auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
       martinePhone->setOidcTestNonce(testNonce);
-      REQUIRE_NOTHROW(TC_AWAIT(martinePhone->verifyIdentity(martineIdToken)));
-      REQUIRE_NOTHROW(checkVerificationMethods(
-          TC_AWAIT(martinePhone->getVerificationMethods()),
-          {Passphrase{}, OidcIdToken{}}));
-    }
-    SECTION("fails to attach a provisional identity using OIDC")
-    {
-      auto const email = makeEmail();
-      auto const martineProvisionalIdentity =
-          Identity::createProvisionalIdentity(
-              mgs::base64::encode(trustchain.id), email);
-      auto const result = TC_AWAIT(martineLaptop->attachProvisionalIdentity(
-          SSecretProvisionalIdentity{martineProvisionalIdentity}));
-      REQUIRE(result.status == Tanker::Status::IdentityVerificationNeeded);
-      REQUIRE(result.verificationMethod == email);
-      auto const testNonce = TC_AWAIT(martineLaptop->createOidcNonce());
-      martinePhone->setOidcTestNonce(testNonce);
+
+      TC_AWAIT(martinePhone->start(martine.identity));
       TANKER_CHECK_THROWS_WITH_CODE(
-          TC_AWAIT(martineLaptop->verifyProvisionalIdentity(martineIdToken)),
-          Errc::InvalidArgument);
+          TC_AWAIT(martinePhone->registerIdentity(pscIdToken)),
+          Errc::InvalidVerification);
+    }
+
+    SECTION("accepts expired token on pro-sante-bas-no-expiry")
+    {
+      TC_AWAIT(enablePSCOidc(PSCProvider::PSC_BAS_NO_EXPIRY));
+
+      auto const testNonce = TC_AWAIT(martinePhone->createOidcNonce());
+      TC_AWAIT(martinePhone->start(martine.identity));
+      martinePhone->setOidcTestNonce(testNonce);
+      REQUIRE_NOTHROW(TC_AWAIT(martinePhone->registerIdentity(pscIdToken)));
     }
   }
 }
