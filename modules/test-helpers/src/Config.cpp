@@ -4,6 +4,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include <chrono>
 #include <stdexcept>
 #include <string_view>
 
@@ -35,6 +36,25 @@ OidcConfig const& oidcConfig()
                    {getSafeEnv("TANKER_OIDC_MARTINE_EMAIL"),
                     getSafeEnv("TANKER_OIDC_MARTINE_REFRESH_TOKEN")}}}};
   return oidc;
+}
+
+std::chrono::minutes maxExecutionTimeout()
+{
+  using namespace std::string_view_literals;
+  static auto const key = "TANKER_MAX_TEST_EXECUTION_TIMEOUT"sv;
+  static auto const value = [] {
+    auto v = getSafeEnv(key);
+    try
+    {
+      return std::chrono::minutes{std::stoi(v)};
+    }
+    catch (std::exception& e)
+    {
+      throw std::runtime_error(fmt::format("Bad value for {}", key));
+    }
+  }();
+
+  return value;
 }
 
 std::string const& appManagementToken()

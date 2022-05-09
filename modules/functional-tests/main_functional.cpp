@@ -6,6 +6,7 @@
 #include <tconcurrent/thread_pool.hpp>
 
 #include "TestSuite.hpp"
+#include <Helpers/Config.hpp>
 #include <Helpers/TimeoutTerminate.hpp>
 #include <Tanker/Functional/TrustchainFixture.hpp>
 #include <Tanker/Init.hpp>
@@ -19,7 +20,7 @@ int main(int argc, char* argv[])
   {
     Tanker::init();
 
-    Tanker::TimeoutTerminate tt(5min);
+    Tanker::TimeoutTerminate tt(Tanker::TestConstants::maxExecutionTimeout());
     Catch::Session session;
 
     // We run the tests on a different thread than the default thread to be
