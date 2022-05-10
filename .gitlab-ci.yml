@@ -77,6 +77,7 @@ build/macos/x86_64:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
+    - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release
   tags: !reference [.tags/macos/x86_64, tags]
 
@@ -99,6 +100,7 @@ build/macos/x86_64/shared:
     - .before-script/bump-files-on-release/bash
     - .after-script/branch_name
   script:
+    - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared
   tags: !reference [.tags/macos/x86_64, tags]
 
