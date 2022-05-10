@@ -22,6 +22,7 @@ add_executable(test_tanker
   test_preregistration.cpp
   test_datastore.cpp
   test_datastore_new.cpp
+  test_taskcoalescer.cpp
 
   TrustchainGenerator.hpp
   TrustchainGenerator.cpp
