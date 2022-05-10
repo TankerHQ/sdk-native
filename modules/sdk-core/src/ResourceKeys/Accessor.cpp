@@ -38,11 +38,10 @@ tc::cotask<std::optional<Crypto::SymmetricKey>> Accessor::findKey(
   TC_RETURN(result[0].key);
 }
 
-tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
+tc::cotask<KeysResult> Accessor::findOrFetchKeys(
     gsl::span<Trustchain::ResourceId const> resourceIds)
 {
-  ResourceKeys::KeysResult out;
-
+  KeysResult out;
   std::vector<Trustchain::ResourceId> notFound;
 
   for (auto const& resourceId : resourceIds)
@@ -65,6 +64,7 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
                                                   *_groupAccessor,
                                                   *_provisionalUsersAccessor,
                                                   action));
+
       out.push_back(result);
     }
   }
@@ -73,7 +73,7 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
 
 [[noreturn]] void Accessor::throwForMissingKeys(
     gsl::span<Trustchain::ResourceId const> resourceIds,
-    ResourceKeys::KeysResult const& result)
+    KeysResult const& result)
 {
   auto const requested =
       resourceIds | ranges::to<std::vector> | ranges::actions::sort;
@@ -86,10 +86,15 @@ tc::cotask<ResourceKeys::KeysResult> Accessor::findOrFetchKeys(
                  fmt::join(missing, ", "));
 }
 
-tc::cotask<ResourceKeys::KeysResult> Accessor::findKeys(
+tc::cotask<KeysResult> Accessor::findKeys(
     std::vector<Trustchain::ResourceId> const& resourceIds)
 {
-  auto keys = TC_AWAIT(findOrFetchKeys(resourceIds));
+  auto keys = TC_AWAIT(_cache.run(
+      [&](std::vector<Trustchain::ResourceId> const& keys)
+          -> tc::cotask<KeysResult> {
+        TC_RETURN(TC_AWAIT(findOrFetchKeys(keys)));
+      },
+      resourceIds));
 
   if (keys.size() != resourceIds.size())
     throwForMissingKeys(resourceIds, keys);

@@ -4,10 +4,9 @@
 #include <Tanker/Groups/IAccessor.hpp>
 #include <Tanker/ProvisionalUsers/IAccessor.hpp>
 #include <Tanker/ResourceKeys/Store.hpp>
+#include <Tanker/TaskCoalescer.hpp>
 
 #include <gsl/gsl-lite.hpp>
-
-#include <optional>
 
 namespace Tanker::Users
 {
@@ -33,20 +32,21 @@ public:
 
   tc::cotask<std::optional<Crypto::SymmetricKey>> findKey(
       Trustchain::ResourceId const& resourceId);
-  tc::cotask<ResourceKeys::KeysResult> findKeys(
+  tc::cotask<KeysResult> findKeys(
       std::vector<Trustchain::ResourceId> const& resourceId);
 
 private:
-  tc::cotask<ResourceKeys::KeysResult> findOrFetchKeys(
-      gsl::span<Trustchain::ResourceId const>);
+  tc::cotask<KeysResult> findOrFetchKeys(
+      gsl::span<Trustchain::ResourceId const> resourceIds);
   [[noreturn]] void throwForMissingKeys(
       gsl::span<Trustchain::ResourceId const> resourceIds,
-      ResourceKeys::KeysResult const& result);
+      KeysResult const& result);
 
   Users::IRequester* _requester;
   Users::ILocalUserAccessor* _localUserAccessor;
   Groups::IAccessor* _groupAccessor;
   ProvisionalUsers::IAccessor* _provisionalUsersAccessor;
   Store* _resourceKeyStore;
+  Tanker::TaskCoalescer<KeyResult> _cache;
 };
 }
