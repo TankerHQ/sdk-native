@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <map>
 #include <string>
 #include <string_view>
@@ -34,5 +35,6 @@ std::string const& appdUrl();
 std::string const& environmentName();
 std::string const& trustchaindUrl();
 OidcConfig const& oidcConfig();
+std::chrono::minutes maxExecutionTimeout();
 }
 }
