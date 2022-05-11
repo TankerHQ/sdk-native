@@ -53,6 +53,9 @@ class TankerConan(ConanFile):
         if self.cross_building:
             return False
 
+        if not self.options.with_fetchpp or not self.options.with_sqlite:
+            return False
+
         return True
 
     @property
