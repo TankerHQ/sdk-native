@@ -42,16 +42,11 @@ auto makeEventHandler(tc::lazy::task_canceler& taskCanceler,
 }
 
 template <typename F>
-auto AsyncCore::runResumable(F&& f, bool stopCheck)
+auto AsyncCore::runResumable(F&& f)
 {
   using Func = std::decay_t<F>;
   using ReturnValue =
       typename tc::detail::task_return_type<std::invoke_result_t<F>>::type;
-
-  if (_stopping && !stopCheck)
-    tc::make_exceptional_future<ReturnValue>(std::make_exception_ptr(
-        Errors::formatEx(Errors::Errc::PreconditionFailed,
-                         "the Tanker session is closing")));
 
   return tc::submit_to_future<ReturnValue>(_taskCanceler.wrap(tc::lazy::connect(
       tc::lazy::async(tc::get_default_executor()),
@@ -65,6 +60,10 @@ auto AsyncCore::runResumable(F&& f, bool stopCheck)
 template <typename F>
 std::invoke_result_t<F> AsyncCore::runResumableImpl(F f)
 {
+  if (_stopping)
+    // Throw the same exception as if tconcurrent had canceled the call itself
+    throw tc::operation_canceled{};
+
   bool isRevoked = false;
   bool isUnusable = false;
   std::exception_ptr eptr;
@@ -176,10 +175,11 @@ tc::future<std::optional<std::string>> AsyncCore::verifyIdentity(
 
 tc::future<void> AsyncCore::stop()
 {
-  // Set _stopping so that we reject all new calls
+  // Do not try to stop twice at the same time
   if (_stopping.exchange(true))
-    tc::make_exceptional_future<void>(std::make_exception_ptr(Errors::formatEx(
-        Errors::Errc::PreconditionFailed, "the Tanker session is closing")));
+    return tc::make_exceptional_future<void>(
+        Errors::formatEx(Errors::Errc::PreconditionFailed,
+                         "the Tanker session is already stopping"));
 
   auto fut = tc::async_resumable([&]() -> tc::cotask<void> {
     BOOST_SCOPE_EXIT_ALL(&)

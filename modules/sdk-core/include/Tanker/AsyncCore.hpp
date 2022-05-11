@@ -161,6 +161,8 @@ public:
 private:
   Core _core;
 
+  // We need this variable to make sure no one calls stop() and another
+  // operation at the same time on different threads.
   std::atomic<bool> _stopping{false};
 
   // this signal is special compared to the other two because we need to do
@@ -181,7 +183,7 @@ private:
   void nukeAndStop();
 
   template <typename F>
-  auto runResumable(F&& f, bool stopCheck = true);
+  auto runResumable(F&& f);
   template <typename F>
   std::invoke_result_t<F> runResumableImpl(F f);
 };
