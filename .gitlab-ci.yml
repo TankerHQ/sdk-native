@@ -103,18 +103,6 @@ build/macos/arm:
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release
   tags: !reference [.tags/macos/arm, tags]
 
-build/macos/x86_64/shared:
-  extends:
-    - .build
-    - .rules/build/manual
-    - .build-artifacts
-    - .before-script/bump-files-on-release/bash
-    - .after-script/branch_name
-  script:
-    - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared
-  tags: !reference [.tags/macos/x86_64, tags]
-
 build/macos/x86_64/shared/no-http-backend:
   extends:
     - .build
@@ -126,17 +114,6 @@ build/macos/x86_64/shared/no-http-backend:
     - export TANKER_MAX_TEST_EXECUTION_TIMEOUT=10
     - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-x86_64-release-shared-no-http-backend
   tags: !reference [.tags/macos/x86_64, tags]
-
-build/macos/arm/shared:
-  extends:
-    - .build
-    - .rules/build/manual
-    - .build-artifacts
-    - .before-script/bump-files-on-release/bash
-    - .after-script/branch_name
-  script:
-    - poetry run python run-ci.py --isolate-conan-user-home build --test --profile macos-armv8-release-shared
-  tags: !reference [.tags/macos/arm, tags]
 
 build/macos/arm/shared/no-http-backend:
   extends:
@@ -430,10 +407,10 @@ bridge/ruby/linux:
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/linux/shared
+    - build/linux/shared/no-http-backend
   variables:
     UPSTREAM_JOB_TARGET: linux
-    UPSTREAM_JOB_NAME: build/linux/shared
+    UPSTREAM_JOB_NAME: build/linux/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
@@ -444,10 +421,10 @@ bridge/ruby/macos/x86_64:
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/macos/x86_64/shared
+    - build/macos/x86_64/shared/no-http-backend
   variables:
     UPSTREAM_JOB_TARGET: macos-x86_64
-    UPSTREAM_JOB_NAME: build/macos/x86_64/shared
+    UPSTREAM_JOB_NAME: build/macos/x86_64/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
@@ -458,10 +435,10 @@ bridge/ruby/macos/arm:
     - .rules/bridge/manual
     - .variables/bridge-common
   needs:
-    - build/macos/arm/shared
+    - build/macos/arm/shared/no-http-backend
   variables:
     UPSTREAM_JOB_TARGET: macos-arm
-    UPSTREAM_JOB_NAME: build/macos/arm/shared
+    UPSTREAM_JOB_NAME: build/macos/arm/shared/no-http-backend
   trigger:
     project: TankerHQ/sdk-ruby
     strategy: depend
