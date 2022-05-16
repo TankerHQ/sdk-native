@@ -64,11 +64,13 @@ void swapSecondChunk(std::vector<uint8_t>& a, std::vector<uint8_t>& b)
   assert(a.size() > 2 * smallChunkSize);
   assert(a[1] == smallChunkSize);
 
+#if !NDEBUG
   auto const resourceIdA = gsl::make_span(a).subspan(5, 16);
   auto const resourceIdB = gsl::make_span(a).subspan(5, 16);
 
   assert(resourceIdA == resourceIdB &&
          "for this to work, the buffers must use the same key and resource id");
+#endif
 
   auto const rangeA = gsl::make_span(a).subspan(smallChunkSize, smallChunkSize);
   auto const rangeB = gsl::make_span(b).subspan(smallChunkSize, smallChunkSize);
