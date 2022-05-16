@@ -42,4 +42,4 @@ tc::cotask<void> checkGroup(Tanker::SGroupId const& groupId,
   TC_AWAIT(checkUpdateGroup(usersInGroup, groupId));
   TC_AWAIT(checkDecryptFails(usersNotInGroup, buffers));
   TC_AWAIT(checkUpdateGroupFails(usersNotInGroup, groupId));
-};
+}
