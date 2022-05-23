@@ -156,6 +156,10 @@ private:
   tc::cotask<VerificationKey> fetchVerificationKey(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);
+  tc::cotask<VerificationKey> fetchE2eVerificationKey(
+      Verification::Verification const& verification,
+      Crypto::SymmetricKey const& e2eEncryptionKey,
+      std::optional<std::string> const& withTokenNonce);
   tc::cotask<VerificationKey> getVerificationKey(
       Verification::Verification const& verification,
       std::optional<std::string> const& withTokenNonce);

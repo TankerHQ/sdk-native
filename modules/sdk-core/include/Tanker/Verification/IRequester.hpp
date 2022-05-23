@@ -26,6 +26,10 @@ public:
       Trustchain::UserId const& userId,
       RequestWithVerif const& verificationRequest) = 0;
 
+  virtual tc::cotask<std::vector<std::uint8_t>> fetchE2eVerificationKey(
+      Trustchain::UserId const& userId,
+      RequestWithVerif const& verificationRequest) = 0;
+
   virtual tc::cotask<
       std::vector<boost::variant2::variant<VerificationMethod,
                                            EncryptedVerificationMethod>>>

@@ -882,6 +882,28 @@ tc::cotask<VerificationKey> Core::fetchVerificationKey(
   TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
 }
 
+tc::cotask<VerificationKey> Core::fetchE2eVerificationKey(
+    Verification::Verification const& verification,
+    Crypto::SymmetricKey const& e2eEncryptionKey,
+    std::optional<std::string> const& withTokenNonce)
+{
+  auto const encryptedKey =
+      TC_AWAIT(_session->requesters().fetchE2eVerificationKey(
+          _session->userId(),
+          TC_AWAIT(formatRequestWithVerif(_session->requesters(),
+                                          *_oidcManager,
+                                          _session->userId(),
+                                          verification,
+                                          _session->userSecret(),
+                                          std::nullopt,
+                                          withTokenNonce))));
+  std::vector<uint8_t> verificationKey(
+      EncryptorV2::decryptedSize(encryptedKey));
+  TC_AWAIT(
+      EncryptorV2::decrypt(verificationKey, e2eEncryptionKey, encryptedKey));
+  TC_RETURN(VerificationKey(verificationKey.begin(), verificationKey.end()));
+}
+
 tc::cotask<VerificationKey> Core::getVerificationKey(
     Verification::Verification const& verification,
     std::optional<std::string> const& withTokenNonce)
@@ -890,6 +912,12 @@ tc::cotask<VerificationKey> Core::getVerificationKey(
 
   if (auto const verificationKey = get_if<VerificationKey>(&verification))
     TC_RETURN(*verificationKey);
+  else if (auto const e2ePassphrase = get_if<E2ePassphrase>(&verification))
+  {
+    auto const passphraseKey = e2ePassphraseKeyDerivation(*e2ePassphrase);
+    TC_RETURN(TC_AWAIT(
+        fetchE2eVerificationKey(verification, passphraseKey, withTokenNonce)));
+  }
   else if (!Verification::isPreverified(verification))
     TC_RETURN(TC_AWAIT(fetchVerificationKey(verification, withTokenNonce)));
   throw AssertionError("invalid verification, unreachable code");

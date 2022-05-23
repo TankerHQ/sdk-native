@@ -54,6 +54,18 @@ tc::cotask<std::vector<std::uint8_t>> Requester::fetchVerificationKey(
       res.value().at("encrypted_verification_key_for_user_secret").get<std::string>()));
 }
 
+tc::cotask<std::vector<std::uint8_t>> Requester::fetchE2eVerificationKey(
+    Trustchain::UserId const& userId, RequestWithVerif const& request)
+{
+  using namespace fmt::literals;
+  auto const res = TC_AWAIT(_httpClient->asyncPost(
+      _httpClient->makeUrl(fmt::format("users/{userId:#S}/verification-key",
+                                       "userId"_a = userId)),
+      {{"verification", request}}));
+  TC_RETURN(mgs::base64::decode<std::vector<std::uint8_t>>(
+      res.value().at("encrypted_verification_key_for_e2e_passphrase").get<std::string>()));
+}
+
 tc::cotask<std::vector<
     boost::variant2::variant<VerificationMethod, EncryptedVerificationMethod>>>
 Requester::fetchVerificationMethods(Trustchain::UserId const& userId)
